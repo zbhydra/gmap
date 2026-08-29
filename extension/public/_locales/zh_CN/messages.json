@@ -1,0 +1,18 @@
+{
+  "extensionName": {
+    "message": "TG Video Downloader | Download Private Media",
+    "description": "Chrome 网上应用店扩展名称"
+  },
+  "extensionDescription": {
+    "message": "保存 Telegram 视频、文件和图片 — 包括私人频道与禁止下载的消息。支持批量与大文件。",
+    "description": "Chrome 网上应用店扩展描述 - 最多132字符"
+  },
+  "actionTitle": {
+    "message": "打开 TG 下载器",
+    "description": "浏览器动作标题"
+  },
+  "popupDescription": {
+    "message": "TG 下载器 · 私密频道保存",
+    "description": "Popup 页面描述"
+  }
+}

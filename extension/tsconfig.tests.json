@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["chrome", "node", "vitest/globals"]
+  },
+  "include": [
+    "src/vite-env.d.ts",
+    "tests/unit/background-website-auth.spec.ts",
+    "tests/unit/auth-website-token-exchange.spec.ts",
+    "tests/unit/auth-store.spec.ts"
+  ],
+  "exclude": []
+}

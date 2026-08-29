@@ -1,0 +1,27 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import { localePaths } from '../../i18n/ui'
+import { getContent, type Locale } from '../../i18n/content'
+
+export function getStaticPaths() {
+  return Object.entries(localePaths)
+    .map(([locale, path]) => {
+      if (locale === 'en-US') return []
+      return {
+        params: { lang: path },
+        props: { locale }
+      }
+    })
+    .flat()
+}
+
+const { locale } = Astro.props as { locale: Locale }
+const t = getContent(locale)
+---
+
+<Layout locale={locale}>
+  <section class="home-placeholder">
+    <h1>{t.layout.nav.home}</h1>
+    <p>GMap</p>
+  </section>
+</Layout>

@@ -1,0 +1,21 @@
+{
+  "name": "Telegram Media Downloader",
+  "short_name": "TG Downloader",
+  "description": "Easily download images and videos from Telegram Web. Supports restricted channels and private groups without any permission verification.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3390ec",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}

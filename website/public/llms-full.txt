@@ -1,0 +1,85 @@
+# TG Downloader
+
+> Full content index for TG Downloader. Use this file when `/llms.txt` is too compact and an AI agent needs the main product pages, platform downloaders, language entrances, technical indexes, and update pages.
+
+## Core Product
+
+- [TG Downloader Home](https://telegramdownloadmedia.com/): Main Telegram video download entry with link parsing, private-channel guidance, troubleshooting, and Chrome extension installation path.
+- [Pricing](https://telegramdownloadmedia.com/pricing/): Buy one-time Credits or upgrade to Unlimited monthly plugin access.
+- [About TG Downloader](https://telegramdownloadmedia.com/about/): Product identity, website and extension responsibilities, privacy principles, and access boundaries.
+- [Contact TG Downloader](https://telegramdownloadmedia.com/contact/): Public support channel for account, download, extension, billing, and privacy questions.
+- [Short LLMs index](https://telegramdownloadmedia.com/llms.txt): Compact AI-readable summary of the website and its highest-value pages.
+
+## Platform Downloaders
+
+- [Telegram Video Downloader](https://telegramdownloadmedia.com/): Parse accessible Telegram links on the web and continue in TG Downloader for private-channel or larger save workflows.
+- [Pricing](https://telegramdownloadmedia.com/pricing/): Credits packages and Unlimited monthly subscription checkout.
+- [TikTok Downloader](https://telegramdownloadmedia.com/tiktok-downloader/): Parse public TikTok links and download supported videos without watermark.
+- [X Twitter Downloader](https://telegramdownloadmedia.com/x-downloader/): Parse public X or Twitter video status links and download videos or GIF media.
+- [Vimeo Downloader](https://telegramdownloadmedia.com/vimeo-downloader/): Parse public Vimeo video links and download available video sources.
+- [Instagram Downloader](https://telegramdownloadmedia.com/instagram-downloader/): Parse public Instagram posts for photos, Reels, and carousel media.
+- [Threads Downloader](https://telegramdownloadmedia.com/threads-downloader/): Parse public Threads posts for videos and photos.
+
+## Telegram Workflows
+
+- [Product changelog](https://telegramdownloadmedia.com/changelog/): Track Telegram download updates, media workflow changes, larger file support, and release notes.
+
+## Download Disabled Channel Workaround Pages
+
+
+## Language Entrances
+
+- [English](https://telegramdownloadmedia.com/): Default English homepage.
+- [Simplified Chinese](https://telegramdownloadmedia.com/zh-cn/): Simplified Chinese homepage.
+- [Traditional Chinese](https://telegramdownloadmedia.com/zh-tw/): Traditional Chinese homepage.
+- [Japanese](https://telegramdownloadmedia.com/ja/): Japanese homepage.
+- [Korean](https://telegramdownloadmedia.com/ko/): Korean homepage.
+- [Spanish](https://telegramdownloadmedia.com/es/): Spanish homepage.
+- [Portuguese](https://telegramdownloadmedia.com/pt/): Portuguese homepage for the current `pt-BR` locale path.
+- [German](https://telegramdownloadmedia.com/de/): German homepage.
+- [French](https://telegramdownloadmedia.com/fr/): French homepage.
+- [Russian](https://telegramdownloadmedia.com/ru/): Russian homepage.
+- [Italian](https://telegramdownloadmedia.com/it/): Italian homepage.
+- [Vietnamese](https://telegramdownloadmedia.com/vi/): Vietnamese homepage.
+- [Thai](https://telegramdownloadmedia.com/th/): Thai homepage.
+- [Indonesian](https://telegramdownloadmedia.com/id/): Indonesian homepage.
+
+## Updates
+
+- [Changelog](https://telegramdownloadmedia.com/changelog/): Product release notes and Telegram media workflow updates.
+
+## Technical Indexes
+
+- [Sitemap index](https://telegramdownloadmedia.com/sitemap.xml): Main XML sitemap index exposed through robots.txt.
+- [Sitemap index alias](https://telegramdownloadmedia.com/sitemap_index.xml): Alias with the same sitemap index content.
+- [Flat sitemap](https://telegramdownloadmedia.com/sitemap-0.xml): Flat XML sitemap containing all canonical website URLs.
+- [English sitemap](https://telegramdownloadmedia.com/en-sitemap.xml): English canonical pages.
+- [Simplified Chinese sitemap](https://telegramdownloadmedia.com/zh-cn-sitemap.xml): Simplified Chinese canonical pages.
+- [Traditional Chinese sitemap](https://telegramdownloadmedia.com/zh-tw-sitemap.xml): Traditional Chinese canonical pages.
+- [Japanese sitemap](https://telegramdownloadmedia.com/ja-sitemap.xml): Japanese canonical pages.
+- [Korean sitemap](https://telegramdownloadmedia.com/ko-sitemap.xml): Korean canonical pages.
+- [Spanish sitemap](https://telegramdownloadmedia.com/es-sitemap.xml): Spanish canonical pages.
+- [Portuguese sitemap](https://telegramdownloadmedia.com/pt-br-sitemap.xml): Portuguese canonical pages.
+- [German sitemap](https://telegramdownloadmedia.com/de-sitemap.xml): German canonical pages.
+- [French sitemap](https://telegramdownloadmedia.com/fr-sitemap.xml): French canonical pages.
+- [Russian sitemap](https://telegramdownloadmedia.com/ru-sitemap.xml): Russian canonical pages.
+- [Italian sitemap](https://telegramdownloadmedia.com/it-sitemap.xml): Italian canonical pages.
+- [Vietnamese sitemap](https://telegramdownloadmedia.com/vi-sitemap.xml): Vietnamese canonical pages.
+- [Thai sitemap](https://telegramdownloadmedia.com/th-sitemap.xml): Thai canonical pages.
+- [Indonesian sitemap](https://telegramdownloadmedia.com/id-sitemap.xml): Indonesian canonical pages.
+
+## Key Facts
+
+- Product name: TG Downloader.
+- Site domain: `telegramdownloadmedia.com`.
+- Platform type: Browser website plus Chrome extension assisted Telegram Web workflow.
+- Website parser pages: Telegram, TikTok, X/Twitter, Vimeo, Instagram, and Threads.
+- Telegram extension workflow: Designed for media already visible to the user in Telegram Web, including private-channel, restricted-save, large-file, and batch queue workflows.
+- Language coverage: 14 locales using per-language sitemap files.
+- Safety boundary: TG Downloader should not ask for Telegram passwords, verification codes, API credentials, or session files.
+
+## Contact
+
+- [About](https://telegramdownloadmedia.com/about/)
+- [Contact](https://telegramdownloadmedia.com/contact/)
+- [Changelog](https://telegramdownloadmedia.com/changelog/)

@@ -1,0 +1,68 @@
+app:
+  name: "{APP_NAME}"
+  version: "0.1.0"
+  host: "0.0.0.0"
+  port: {BACKEND_PORT_PY}
+  debug: false
+  env: "dev"
+  public_api_base_url: "{PUBLIC_API_BASE_URL}"
+  public_website_base_url: "{PUBLIC_WEBSITE_BASE_URL}"
+
+database:
+  host: "{DB_HOST}"
+  port: 3306
+  user: "{DB_USER}"
+  password: "{DB_PASSWD}"
+  database: "{DB_NAME}"
+  pool_size: 50
+  max_overflow: 100
+
+logging:
+  level: "{LOGGER_LEVEL}"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "log/app.log"
+
+api:
+  title: "gmap-api"
+  description: "API for gmap application"
+  version: "0.1.0"
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+
+auth:
+  jwt_secret_key: "abcabcss$%^&*()_+"
+  jwt_algorithm: "HS256"
+  google_client_id: "{GOOGLE_CLIENT_ID}"
+  # 可选：仅新自定义 Google 按钮 OAuth code flow 需要，留空不影响 One Tap 和旧 callback。
+  google_client_secret: "{GOOGLE_CLIENT_SECRET}"
+  access_token_expire: 2592000
+  refresh_token_expire: 5184000
+  refresh_token_remember_days: 30
+  max_login_attempts: 5
+  lock_duration_minutes: 30
+  rate_limit_times: 10
+  rate_limit_period: 60
+
+admin:
+  access_token_expire: 1800
+  refresh_token_expire: 604800
+
+redis:
+  host: "{REDIS_HOST}"
+  port: {REDIS_PORT}
+  db: 0
+  password: {REDIS_PASSWORD}
+  pool_size: 5000
+  pool_timeout: 5
+  key_prefix: "{APP_NAME}"
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  retry_on_timeout: true
+  retry_attempts: 3
+
+feishu_alarm:
+  enabled: true
+  webhook_url: "https://open.feishu.cn/open-apis/bot/v2/hook/34cd20d4-3cf4-4358-9757-0617714e3a1e"
+  timeout_seconds: 5
+
+{SMTP_CONFIG}

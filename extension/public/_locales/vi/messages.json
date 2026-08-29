@@ -1,0 +1,18 @@
+{
+  "extensionName": {
+    "message": "TG Video Downloader | Download Private Media",
+    "description": "Tên tiện ích mở rộng Chrome Web Store"
+  },
+  "extensionDescription": {
+    "message": "Lưu video, tệp và ảnh Telegram — kể cả kênh riêng và tin nhắn chặn tải. Hỗ trợ hàng loạt và tệp lớn.",
+    "description": "Mô tả tiện ích mở rộng Chrome Web Store - tối đa 132 ký tự"
+  },
+  "actionTitle": {
+    "message": "Mở TG Downloader",
+    "description": "Browser action title"
+  },
+  "popupDescription": {
+    "message": "TG Downloader · Private Channel Saver",
+    "description": "Popup page description"
+  }
+}

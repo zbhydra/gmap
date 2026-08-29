@@ -1,0 +1,8 @@
+{
+  "registers": [
+    "src/background/background-register.ts"
+  ],
+  "generatedFiles": [
+    "src/popup/rpc/background.rpc.ts"
+  ]
+}

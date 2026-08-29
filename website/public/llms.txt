@@ -1,0 +1,39 @@
+# TG Downloader
+
+> Browser-based and Chrome extension assisted Telegram media downloader for accessible Telegram links, private-channel workflows, restricted posts, large files, and batch saves.
+
+## Core Product
+
+- [TG Downloader Home](https://telegramdownloadmedia.com/): Main Telegram video download entry with link parsing, private-channel guidance, troubleshooting, and installation path for Telegram Web workflows.
+- [Pricing](https://telegramdownloadmedia.com/pricing/): Buy one-time Credits or upgrade to Unlimited monthly plugin access.
+- [About TG Downloader](https://telegramdownloadmedia.com/about/): Product identity, website and extension responsibilities, privacy principles, and access boundaries.
+- [Contact TG Downloader](https://telegramdownloadmedia.com/contact/): Public support channel for account, download, extension, billing, and privacy questions.
+- [Full content index](https://telegramdownloadmedia.com/llms-full.txt): Complete AI-readable page index including platform downloaders, language entrances, technical indexes, plans, and updates.
+
+## Download Tools
+
+- [TikTok Downloader](https://telegramdownloadmedia.com/tiktok-downloader/): Parse public TikTok links and download videos without watermark when the source is supported.
+- [X Twitter Downloader](https://telegramdownloadmedia.com/x-downloader/): Parse public X or Twitter video status links and download videos or GIF media.
+- [Vimeo Downloader](https://telegramdownloadmedia.com/vimeo-downloader/): Parse public Vimeo video links and download available video sources.
+- [Instagram Downloader](https://telegramdownloadmedia.com/instagram-downloader/): Parse public Instagram posts for photos, Reels, and carousel media.
+- [Threads Downloader](https://telegramdownloadmedia.com/threads-downloader/): Parse public Threads posts for videos and photos.
+
+## Updates
+
+- [Changelog](https://telegramdownloadmedia.com/changelog/): Release notes for Telegram download workflow changes, larger file support, and product updates.
+- [Sitemap](https://telegramdownloadmedia.com/sitemap.xml): XML sitemap index for canonical pages and per-language sitemap files.
+
+## Key Facts
+
+- Platform type: Browser website plus Chrome extension assisted Telegram Web workflow.
+- Default language: English.
+- Language coverage: 14 website locales.
+- Supported website parser pages: Telegram, TikTok, X/Twitter, Vimeo, Instagram, and Threads.
+- Telegram extension workflow: Designed for Telegram Web media that is visible to the user, including private-channel and restricted-save situations where the user already has access.
+- Safety boundary: TG Downloader should not ask for Telegram passwords, verification codes, API credentials, or session files.
+
+## Contact
+
+- [About](https://telegramdownloadmedia.com/about/)
+- [Contact](https://telegramdownloadmedia.com/contact/)
+- [Changelog](https://telegramdownloadmedia.com/changelog/)

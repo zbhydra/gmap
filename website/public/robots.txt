@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /extension-login/
+Disallow: /paypal/cancel/
+Disallow: /paypal/success/
+
+# AI-readable site indexes
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+# Sitemap reference
+Sitemap: https://telegramdownloadmedia.com/sitemap.xml

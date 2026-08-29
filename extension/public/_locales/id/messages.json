@@ -1,0 +1,18 @@
+{
+  "extensionName": {
+    "message": "TG Video Downloader | Download Private Media",
+    "description": "Nama ekstensi Chrome Web Store"
+  },
+  "extensionDescription": {
+    "message": "Simpan video, berkas, dan gambar Telegram — bahkan channel privat dan pesan tanpa unduh. Dukungan batch dan berkas besar.",
+    "description": "Deskripsi ekstensi Chrome Web Store - maks 132 karakter"
+  },
+  "actionTitle": {
+    "message": "Buka TG Downloader",
+    "description": "Browser action title"
+  },
+  "popupDescription": {
+    "message": "TG Downloader · Private Channel Saver",
+    "description": "Popup page description"
+  }
+}

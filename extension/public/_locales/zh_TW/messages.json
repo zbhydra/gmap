@@ -1,0 +1,18 @@
+{
+  "extensionName": {
+    "message": "TG Video Downloader | Download Private Media",
+    "description": "Chrome 線上應用程式商店擴充功能名稱"
+  },
+  "extensionDescription": {
+    "message": "儲存 Telegram 影片、檔案與圖片 — 包含私人頻道與禁止下載的訊息。支援批次與大檔案。",
+    "description": "Chrome 線上應用程式商店擴充功能描述 - 最多132字元"
+  },
+  "actionTitle": {
+    "message": "開啟 Telegram 媒體下載助手",
+    "description": "瀏覽器動作標題"
+  },
+  "popupDescription": {
+    "message": "歡迎使用 Telegram 媒體下載助手",
+    "description": "Popup 頁面描述"
+  }
+}

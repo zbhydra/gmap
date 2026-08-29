@@ -1,0 +1,18 @@
+{
+  "extensionName": {
+    "message": "TG Video Downloader | Download Private Media",
+    "description": "Chrome 웹 스토어 확장 프로그램 이름"
+  },
+  "extensionDescription": {
+    "message": "Telegram 동영상·파일·이미지 저장. 개인 채널과 저장 불가 메시지도 지원. 일괄 저장과 대용량 파일 지원.",
+    "description": "Chrome 웹 스토어 확장 프로그램 설명 - 132자까지"
+  },
+  "actionTitle": {
+    "message": "TG Downloader 열기",
+    "description": "브라우저 작업 제목"
+  },
+  "popupDescription": {
+    "message": "TG Downloader · Private Channel Saver",
+    "description": "팝업 페이지 설명"
+  }
+}

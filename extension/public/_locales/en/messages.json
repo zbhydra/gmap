@@ -1,0 +1,18 @@
+{
+  "extensionName": {
+    "message": "TG Video Downloader | Download Private Media",
+    "description": "Extension name for Chrome Web Store"
+  },
+  "extensionDescription": {
+    "message": "Save Telegram videos, files and images — even private channels and download-disabled messages. Supports batch and large files.",
+    "description": "Extension description for Chrome Web Store - 132 chars max"
+  },
+  "actionTitle": {
+    "message": "Open TG Downloader",
+    "description": "Browser action title"
+  },
+  "popupDescription": {
+    "message": "TG Downloader · Private Channel Saver",
+    "description": "Popup page description"
+  }
+}

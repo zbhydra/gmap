@@ -1,0 +1,36 @@
+# 依赖与构建产物
+node_modules/
+dist/
+.astro/
+coverage/
+.vite/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 日志与系统文件
+log/
+*.log
+.DS_Store
+
+# 真实运行配置(密钥/密码不入库,入库的是 .example 模板)
+config.yaml
+**/.env.prod
+**/.env.prod-*
+**/.env.test
+**/.env.download
+**/.env.production
+
+# 临时与调研产物(docs/scratch 约定不入 git)
+docs/scratch/
+
+# 测试产物
+test-results/
+playwright-report/
+blob-report/
+**/.env.*.download
