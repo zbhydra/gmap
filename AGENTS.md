@@ -54,14 +54,14 @@ monorepo，各子项目独立用 **pnpm** 管理（无根 workspace）。
 | 目录               | 职责                          | 技术栈                  | 规范                              |
 | ------------------ | ----------------------------- | ----------------------- | --------------------------------- |
 | `backend/`         | 后端 API                      | Python + FastAPI        | spec-python / spec-mysql / spec-redis |
-| `extension/`       | 浏览器插件端                  | Chrome MV3 + Vue 3      | spec-extension                    |
+| `extension/`       | Maps Extractor 插件端(TG 业务已移除) | Chrome MV3 + Vue 3      | spec-extension                    |
 | `website/`         | 主站                          | Astro                   | spec-website                      |
 | `admin/`           | 管理后台                      | 独立 Vue + Naive UI SPA | —                                 |
 | `docs/`            | 需求 / 技术 / 计划文档          | —                       | spec-docs                         |
 
 **跨端事实**：客户端接口前缀 `/api/client/*`，后台前缀 `/api/admin/*`；后端业务时区统一为 `America/New_York`（见 `backend/src/app/utils/time.py`），不是 UTC。
 
-`docs/` 结构：`feat/` 按域组织的产品与技术文档（`000.架构` 是地基域，`001`~`011` 是业务域，`archive/` 是已废弃快照）、`references/specs/` 项目规范、`references/curated/` 调研数据、`research/` 可复用调研结论、`seo-skill/` SEO 内容工作区、`scratch/` 临时文件（不入 git）。写 / 改 docs 前读 `spec-docs.md`。
+`docs/` 结构：`ROADMAP.md` 项目进度大盘（功能全景 / 状态 / 阶段，接手任何工作先读它）、`feat/` 按域组织的产品与技术文档（`000.架构` 是地基域，`001`~`011` 是 Telegram 产品线业务域，`013`~`015` 是 Maps Extractor 新线域，`archive/` 是已废弃快照）、`references/specs/` 项目规范、`references/curated/` 调研数据、`research/` 可复用调研结论、`seo-skill/` SEO 内容工作区、`scratch/` 临时文件（不入 git，含 Maps 竞品逆向材料）。写 / 改 docs 前读 `spec-docs.md`。
 
 ## 5 · 交付标准
 

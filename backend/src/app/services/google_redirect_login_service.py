@@ -30,8 +30,8 @@ GOOGLE_REDIRECT_CODE_PARAM = "google_login_code"
 GOOGLE_REDIRECT_ERROR_PARAM = "google_login_error"
 GOOGLE_REDIRECT_EMAIL_VERIFY_PARAM = "google_email_verification"
 GOOGLE_REDIRECT_ALLOWED_HOST_SUFFIXES = (
-    "gmap.example.com",       # 占位:生产域名确定后替换
-    "gmap-b.example.com",    # 占位:生产域名确定后替换
+    "gmap.example.com",  # 占位:生产域名确定后替换
+    "gmap-b.example.com",  # 占位:生产域名确定后替换
 )
 GOOGLE_REDIRECT_ALLOWED_LOCAL_HOSTS = {"localhost", "127.0.0.1"}
 

@@ -1,7 +1,7 @@
 {
-  "name": "extension-template",
+  "name": "extension-maps-extractor",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev-edge-current.mjs",
@@ -36,8 +36,6 @@
   },
   "dependencies": {
     "archiver": "^7.0.1",
-    "markdown-it": "^14.1.0",
-    "mediabunny": "1.46.0",
     "pinia": "^3.0.3",
     "vue": "^3.5.18",
     "vue-i18n": "^11.1.12"
@@ -48,7 +46,6 @@
     "@playwright/test": "^1.57.0",
     "@tailwindcss/vite": "^4.1.13",
     "@types/chrome": "^0.1.11",
-    "@types/markdown-it": "^14.1.2",
     "@types/node": "24.4.0",
     "@typescript-eslint/parser": "^8.53.1",
     "@vitejs/plugin-vue": "^6.0.1",

@@ -9,9 +9,9 @@
 import { vi } from 'vitest'
 import { chrome } from './mocks/chrome-api'
 
-vi.stubGlobal('__API_BASE_URL__', 'https://tg-download-api.telegramdownloadmedia.com')
+vi.stubGlobal('__API_BASE_URL__', 'https://api.example.com')
 vi.stubGlobal('__DEV__', false)
-vi.stubGlobal('__WEBSITE_BASE_URL__', 'https://telegramdownloadmedia.com')
+vi.stubGlobal('__WEBSITE_BASE_URL__', 'https://www.example.com')
 vi.stubGlobal('__ALI_SLS_MARK_CONFIG__', {
   enabled: true,
   endpoint: 'https://tg-download.ap-southeast-1.log.aliyuncs.com',
@@ -60,7 +60,7 @@ chrome.tabs.sendMessage = vi.fn((tabId: number, message: any, callback?: any) =>
 chrome.tabs.query = vi.fn(() => Promise.resolve([
   {
     id: 1,
-    url: 'https://web.telegram.org/',
+    url: 'https://www.google.com/maps',
     active: true,
     currentWindow: true
   }

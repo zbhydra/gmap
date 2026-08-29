@@ -3,4 +3,3 @@
  */
 
 export * from './base'
-export * from './injected'

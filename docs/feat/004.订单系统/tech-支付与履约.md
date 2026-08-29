@@ -19,7 +19,7 @@
 
 - 自动续费订阅走本订单系统。首期订单由用户点击创建,后续每次 provider 自动扣款成功时由 webhook 创建续费订单;订阅域只负责订单履约时给 `user_subscriptions` 加时间。
 - 积分包商品:定价读取在积分域;履约发货(`user_credit_service.add_balance_in_session`,加 Credits 余额)在积分域。本文件只描述"订单侧 `check_product` 按积分包类别分发到积分域"的契约面。
-- 下载消费积分(下载扣 Credits)与下载授权 token 不在本域,见 `@../003.积分系统/feat.md` 与 `@../002.下载功能/feat.md`。
+- 下载消费积分(下载扣 Credits)不在本域,见 `@../003.积分系统/feat.md`。
 
 ## 1. 客户端接口规格
 

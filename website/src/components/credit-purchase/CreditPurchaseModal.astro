@@ -4,10 +4,10 @@
  *
  * 这里只展示 Credits 商品包；支付方式选择和订单等待统一交给公共 OrderCheckoutModal。
  */
-import type { DownloadWorkspaceContent } from '../../download/schema'
+import type { AccountContent } from '../../i18n/schema'
 
 const { copy, deferController = false } = Astro.props as {
-  copy: DownloadWorkspaceContent
+  copy: AccountContent
   /** 是否由下载工作区渐进加载入口统一加载 controller。 */
   deferController?: boolean
 }

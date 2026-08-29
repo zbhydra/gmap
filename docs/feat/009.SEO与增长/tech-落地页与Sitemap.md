@@ -10,7 +10,6 @@
 > - 签到后端:`@tech-签到活动.md`
 > - website 目录结构、Astro 技术栈、构建配置:`@../000.架构/overview.md` `@../000.架构/tech-website.md`
 > - 14 语言清单/locale→URL 路径映射:`@../010.多语言/tech-website多语言.md`
-> - 下载工作区组件:`@../002.下载功能/feat.md`
 
 ## 1. 平台 SEO 落地页(website)
 

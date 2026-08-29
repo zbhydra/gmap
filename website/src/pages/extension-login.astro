@@ -5,22 +5,22 @@
  * 流程：检查 website token → 未登录时打开公共登录弹窗 → 登录完成后通知插件换取
  * extension token → 收到插件确认后展示成功态、返回按钮和 10 秒倒计时。
  */
-import DownloadAuthModal from '../download/components/DownloadAuthModal.astro'
+import AuthModal from '../components/auth/AuthModal.astro'
 import Layout from '../layouts/Layout.astro'
 import { content } from '../i18n/content'
 
-const workspaceCopy = content['en-US'].pages.homepage.workspace
+const accountCopy = content['en-US'].pages.account
 const authCopy = {
-  sendingCode: workspaceCopy.auth.sendingCode,
-  sendCodeSuccess: workspaceCopy.auth.sendCodeSuccess,
-  continueWithGoogle: workspaceCopy.auth.continueWithGoogle,
-  googleLoading: workspaceCopy.auth.googleLoading,
-  enterEmailFirst: workspaceCopy.errors.enterEmailFirst,
-  enterEmailAndCode: workspaceCopy.errors.enterEmailAndCode,
-  sendCodeFailed: workspaceCopy.errors.sendCodeFailed,
-  googleSignInFailed: workspaceCopy.errors.googleSignInFailed,
-  googleClientMissing: workspaceCopy.errors.googleClientMissing,
-  signInFailed: workspaceCopy.errors.signInFailed
+  sendingCode: accountCopy.auth.sendingCode,
+  sendCodeSuccess: accountCopy.auth.sendCodeSuccess,
+  continueWithGoogle: accountCopy.auth.continueWithGoogle,
+  googleLoading: accountCopy.auth.googleLoading,
+  enterEmailFirst: accountCopy.auth.enterEmailFirst,
+  enterEmailAndCode: accountCopy.auth.enterEmailAndCode,
+  sendCodeFailed: accountCopy.auth.sendCodeFailed,
+  googleSignInFailed: accountCopy.auth.googleSignInFailed,
+  googleClientMissing: accountCopy.auth.googleClientMissing,
+  signInFailed: accountCopy.auth.signInFailed
 }
 ---
 
@@ -69,7 +69,7 @@ const authCopy = {
       data-extension-login-auth-copy
       set:html={JSON.stringify(authCopy)}
     />
-    <DownloadAuthModal copy={workspaceCopy} idPrefix="extension-login" />
+    <AuthModal copy={accountCopy} idPrefix="extension-login" />
   </main>
 </Layout>
 

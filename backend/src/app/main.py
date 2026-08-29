@@ -180,7 +180,6 @@ def _include_business_routes(app_instance: FastAPI) -> None:
     from app.api.client.credit_client import router as credit_router
     from app.api.client.mark_client import router as mark_router
     from app.api.client.order_client import router as order_router
-    from app.api.client.quota_client import router as quota_router
     from app.api.client.subscription_client import router as subscription_router
     from app.api.external.external_system_dashboard import (
         router as external_system_dashboard_router,
@@ -193,7 +192,6 @@ def _include_business_routes(app_instance: FastAPI) -> None:
     app_instance.include_router(auth_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(checkin_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(credit_router, prefix="/api/client", tags=["client"])
-    app_instance.include_router(quota_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(
         subscription_router, prefix="/api/client", tags=["client"]
     )

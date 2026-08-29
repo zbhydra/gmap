@@ -28,17 +28,10 @@ from app.services.counter_service import counter_service
 from app.services.subscription_review_reward_service import (
     subscription_review_reward_service,
 )
-from app.services.config_public_service import config_public_service
 from app.services.subscription_status_service import subscription_status_service
 from app.utils.response import ResponseUtils
 
 router = APIRouter(prefix="/subscription", tags=["订阅管理"])
-
-# 反馈群的邀请入口与公开网页入口随订阅状态一起返回，避免 Popup 增加独立请求。
-_EXTENSION_TELEGRAM_FEEDBACK_URL_CONFIG_KEY = "extension_telegram_feedback_url"
-_EXTENSION_TELEGRAM_FEEDBACK_GROUP_USERNAME_CONFIG_KEY = (
-    "extension_telegram_feedback_group_username"
-)
 
 
 @router.get(
@@ -129,14 +122,7 @@ def _serialize_checkout_plans(
                 "duration_days": plan.product.duration_days,
                 "display_currency": plan.product.display_currency,
                 "display_amount": plan.product.display_amount,
-                "daily_limit": metadata.daily_limit,
-                "extension_daily_download_limit": (
-                    metadata.extension_daily_download_limit
-                ),
                 "auto_renew": metadata.auto_renew,
-                "proxy_user_rate_limit_mb_per_second": (
-                    metadata.proxy_user_rate_limit_mb_per_second
-                ),
                 "payment_channels": payment_channels,
             }
         )
@@ -151,32 +137,11 @@ async def get_subscription_status(
     """获取当前用户订阅状态
 
     支持已登录和未登录用户：
-    - 已登录：使用 user_id 获取订阅配置和配额
-    - 未登录：返回游客免费订阅（user_id=0），配额基于 device_id 统计
-    - 既没有 token 也没有 device_id：返回 401 错误
+    - 已登录：返回当前订阅配置
+    - 未登录：返回游客免费订阅（user_id=0）
     """
-
-    if current_user.user_id > 0:
-        u_id = str(current_user.user_id)
-    else:
-        u_id = current_user.validated_device_id()
 
     data = await subscription_status_service.build_status_data(
         user_id=current_user.user_id,
-        quota_u_id=u_id,
     )
-    public_config = await config_public_service.get_lists()
-    raw_feedback_url = public_config.get(_EXTENSION_TELEGRAM_FEEDBACK_URL_CONFIG_KEY)
-    raw_feedback_group_username = public_config.get(
-        _EXTENSION_TELEGRAM_FEEDBACK_GROUP_USERNAME_CONFIG_KEY
-    )
-    data["telegram_feedback_url"] = (
-        raw_feedback_url.strip() if isinstance(raw_feedback_url, str) else ""
-    )
-    data["telegram_feedback_group_username"] = (
-        raw_feedback_group_username.strip()
-        if isinstance(raw_feedback_group_username, str)
-        else ""
-    )
-
     return ResponseUtils.ok(data)

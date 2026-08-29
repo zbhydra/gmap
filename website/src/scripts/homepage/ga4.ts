@@ -5,8 +5,6 @@
  * 可能不存在，因此所有调用点都必须经过本辅助函数做 safe guard。
  */
 
-import { safeUserLinkHost } from '../../download/scripts/url'
-
 type GA4EventParamValue = string | number | boolean | undefined
 
 type GtagFn = (command: 'event', name: string, params?: Record<string, GA4EventParamValue>) => void
@@ -40,11 +38,6 @@ export function reportGA4Event(
   } catch {
     // 防止埋点异常影响主流程。
   }
-}
-
-/** 从 Telegram 链接中安全提取 host，失败返回 'invalid'。 */
-export function safeLinkHost(link: string): string {
-  return safeUserLinkHost(link)
 }
 
 /** 从异常中提取简短原因字符串。 */

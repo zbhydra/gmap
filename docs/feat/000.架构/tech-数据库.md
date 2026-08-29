@@ -86,7 +86,6 @@ backend/src/app/models/
 - 默认拒绝导出 `config_payment_channel.config_json` 里包含 `token`、`client_secret`、`webhook_secret_token` 等敏感字段的行；只有明确生成私有产物且不提交仓库时才允许加 `--include-sensitive`。
 - 配置表是开发/部署真实配置，只能由该人工导出工具读取并生成产物；业务代码和测试仍禁止写入或清理 `config_*` 表。
 
-下载角色（`app.role=download`）**不跑结构同步、不连业务库**（见 `@../001.节点系统/tech-节点发布.md`）。
 
 ## 5. 索引规则（概要）
 

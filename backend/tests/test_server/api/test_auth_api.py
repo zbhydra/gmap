@@ -392,8 +392,7 @@ class TestAuthGetMeAPI:
         assert "user" not in data
         assert "credits_balance" in data
         assert data["subscription"]["period"] in {"free", "month"}
-        assert data["subscription"]["daily_limit"] == 5
-        assert "extension_download" in data["subscription"]
+        assert "auto_renew" in data["subscription"]
 
     async def test_get_me_subscription_config_failure_degrades(
         self, async_client, make_test_email, monkeypatch
@@ -440,7 +439,6 @@ class TestAuthGetMeAPI:
         assert data["subscription"]["status"] == "unavailable"
         assert data["subscription"]["period"] == "unavailable"
         assert data["subscription"]["display_name"] == "Subscription unavailable"
-        assert data["subscription"]["daily_limit"] == 0
 
     async def test_get_me_without_token_fails(self, async_client):
         """Test getting user info without auth token returns error."""
@@ -1056,7 +1054,7 @@ class TestGoogleLoginAPI:
         monkeypatch.setattr(
             settings.app,
             "public_api_base_url",
-            "https://tg-download-api.gmap.example.com",
+            "https://api.gmap.example.com",
         )
         monkeypatch.setattr(
             settings.app,
@@ -1096,8 +1094,7 @@ class TestGoogleLoginAPI:
         assert parsed_location.path == "/o/oauth2/v2/auth"
         assert query["client_id"] == [google_client_id]
         assert query["redirect_uri"] == [
-            "https://tg-download-api.gmap.example.com"
-            "/api/client/auth/google/oauth/callback"
+            "https://api.gmap.example.com" "/api/client/auth/google/oauth/callback"
         ]
         assert query["response_type"] == ["code"]
         assert query["scope"] == ["openid email profile"]
@@ -1252,7 +1249,7 @@ class TestGoogleLoginAPI:
         monkeypatch.setattr(
             settings.app,
             "public_api_base_url",
-            "https://tg-download-api.gmap.example.com",
+            "https://api.gmap.example.com",
         )
 
         async def fake_consume_oauth_state(state: str) -> str:
@@ -1300,8 +1297,7 @@ class TestGoogleLoginAPI:
         assert exchange_calls == [
             (
                 "oauth-code-1",
-                "https://tg-download-api.gmap.example.com"
-                "/api/client/auth/google/oauth/callback",
+                "https://api.gmap.example.com" "/api/client/auth/google/oauth/callback",
             )
         ]
 
@@ -1484,7 +1480,7 @@ class TestGoogleLoginAPI:
         monkeypatch.setattr(
             settings.app,
             "public_api_base_url",
-            "https://tg-download-api.gmap.example.com",
+            "https://api.gmap.example.com",
         )
 
         async def fake_consume_oauth_state(_state: str) -> str:

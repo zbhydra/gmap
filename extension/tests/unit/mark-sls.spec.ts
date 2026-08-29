@@ -49,7 +49,7 @@ describe('extension SLS mark', () => {
     const { STORAGE_KEYS } = await import('../../src/core/api/config')
 
     const result = await markApi.record(
-      MARK_TYPE.DOWNLOAD_CLICK,
+      MARK_TYPE.POPUP_OPEN,
       'url=https://example.com/download/video.mp4?token=secret access_token=abc123',
       { pageUrl: 'https://web.telegram.org/k/#@chat' }
     )
@@ -68,7 +68,7 @@ describe('extension SLS mark', () => {
     expect(url.searchParams.get('__source__')).toBe('extension')
     expect(url.searchParams.get('site')).toBe('extension')
     expect(url.searchParams.get('client_product')).toBe('extension')
-    expect(url.searchParams.get('mark_type')).toBe(MARK_TYPE.DOWNLOAD_CLICK)
+    expect(url.searchParams.get('mark_type')).toBe(MARK_TYPE.POPUP_OPEN)
     expect(url.searchParams.get('device_id')).toBe('device-123')
     expect(url.searchParams.get('page_path')).toBe('/k/')
     expect(url.searchParams.get('first_opened_at')).toBe('0')

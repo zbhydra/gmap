@@ -21,7 +21,6 @@
   "dependencies": {
     "@astrojs/vue": "^5.0.4",
     "astro": "^5.5.2",
-    "mediabunny": "1.46.0",
     "vue": "^3.5.18"
   },
   "devDependencies": {

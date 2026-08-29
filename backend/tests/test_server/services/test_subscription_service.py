@@ -87,105 +87,40 @@ async def test_get_user_subscription_returns_free_placeholder_for_expired_row(
 
 
 def test_subscription_product_metadata_parses_root_fields():
-    """订阅商品 metadata 用同名结构统一解析。"""
+    """订阅商品 metadata 用同名结构统一解析，未知字段忽略。"""
     metadata = SubscriptionProductMetadata.from_metadata(
         {
-            "extension_daily_download_limit": -1,
             "auto_renew": True,
-            "proxy_user_rate_limit_mb_per_second": 5,
             "ignored": "ok",
         },
         product_id="unlimited",
         period="month",
     )
 
-    assert metadata.extension_daily_download_limit == -1
-    assert metadata.daily_limit == -1
     assert metadata.auto_renew is True
-    assert metadata.proxy_user_rate_limit_mb_per_second == 5
 
 
-def test_subscription_product_metadata_accepts_fractional_user_rate():
-    """用户限速支持 0.5 MB/s 这种小数配置。"""
-    metadata = SubscriptionProductMetadata.from_metadata(
-        {
-            "extension_daily_download_limit": 5,
-            "proxy_user_rate_limit_mb_per_second": 0.5,
-        },
-        product_id="free",
-    )
-
-    assert metadata.proxy_user_rate_limit_mb_per_second == 0.5
-
-
-def test_subscription_product_metadata_rejects_invalid_daily_limit():
-    """每日额度字段缺失或非法时按配置错误处理。"""
-    with pytest.raises(AppCommonException) as exc_info:
-        SubscriptionProductMetadata.from_metadata(
-            {
-                "extension_daily_download_limit": "5",
-            },
-            product_id="free",
-        )
-
-    assert exc_info.value.code == CommonCode.PAYMENT_GATEWAY_ERROR
-    assert "product_id=free" in exc_info.value.ext_msg
-    assert "extension_daily_download_limit" in exc_info.value.ext_msg
-
-
-def test_subscription_product_metadata_defaults_invalid_user_rate_to_zero():
-    """用户限速字段缺失或非法时按不限速处理。"""
-    metadata = SubscriptionProductMetadata.from_metadata(
-        {
-            "extension_daily_download_limit": 5,
-            "proxy_user_rate_limit_mb_per_second": "bad",
-        },
-        product_id="free",
-    )
-
-    assert metadata.proxy_user_rate_limit_mb_per_second == 0
-
-
-def test_subscription_product_metadata_uses_configured_paid_values():
-    """付费商品的额度和续费方式由配置决定。"""
-    metadata = SubscriptionProductMetadata.from_metadata(
-        {
-            "daily_limit": 100,
-            "auto_renew": False,
-        },
-        product_id="unlimited",
-    )
-
-    assert metadata.daily_limit == 100
-    assert metadata.extension_daily_download_limit == 100
-    assert metadata.auto_renew is False
-
-
-def test_subscription_product_metadata_defaults_free_limit_to_five():
-    """Free 档没有旧 metadata 时按 5 次/天契约解析。"""
+def test_subscription_product_metadata_defaults_free_auto_renew_to_false():
+    """Free 档没有旧 metadata 时默认不自动续费。"""
     metadata = SubscriptionProductMetadata.from_metadata(
         {},
         product_id="free_v2",
         period=SubscriptionPeriodEnum.FREE,
     )
 
-    assert metadata.daily_limit == 5
-    assert metadata.extension_daily_download_limit == 5
     assert metadata.auto_renew is False
 
 
-def test_subscription_product_metadata_rejects_missing_paid_metadata():
-    """付费商品缺少必填额度时返回可定位的配置错误。"""
+def test_subscription_product_metadata_rejects_invalid_auto_renew():
+    """自动续费开关非法时按配置错误处理。"""
     with pytest.raises(AppCommonException) as exc_info:
         SubscriptionProductMetadata.from_metadata(
-            {},
-            product_id="unlimited",
-            period=SubscriptionPeriodEnum.MONTH,
+            {"auto_renew": "yes"},
+            product_id="free",
         )
 
     assert exc_info.value.code == CommonCode.PAYMENT_GATEWAY_ERROR
-    assert "product_id=unlimited" in exc_info.value.ext_msg
-    assert "daily_limit" in exc_info.value.ext_msg
+    assert "product_id=free" in exc_info.value.ext_msg
 
 
 @pytest.mark.asyncio
@@ -328,7 +263,6 @@ async def test_get_user_subscription_config_uses_free_for_placeholder(monkeypatc
 
     assert subscription.expires_at is None
     assert config.product_id == "free"
-    assert metadata.daily_limit == 5
     assert metadata.auto_renew is False
 
 

@@ -1,6 +1,6 @@
 # TG Downloader
 
-> Full content index for TG Downloader. Use this file when `/llms.txt` is too compact and an AI agent needs the main product pages, platform downloaders, language entrances, technical indexes, and update pages.
+> Full content index for TG Downloader. Use this file when `/llms.txt` is too compact and an AI agent needs the main product pages, language entrances, and update pages.
 
 ## Core Product
 
@@ -10,22 +10,9 @@
 - [Contact TG Downloader](https://telegramdownloadmedia.com/contact/): Public support channel for account, download, extension, billing, and privacy questions.
 - [Short LLMs index](https://telegramdownloadmedia.com/llms.txt): Compact AI-readable summary of the website and its highest-value pages.
 
-## Platform Downloaders
-
-- [Telegram Video Downloader](https://telegramdownloadmedia.com/): Parse accessible Telegram links on the web and continue in TG Downloader for private-channel or larger save workflows.
-- [Pricing](https://telegramdownloadmedia.com/pricing/): Credits packages and Unlimited monthly subscription checkout.
-- [TikTok Downloader](https://telegramdownloadmedia.com/tiktok-downloader/): Parse public TikTok links and download supported videos without watermark.
-- [X Twitter Downloader](https://telegramdownloadmedia.com/x-downloader/): Parse public X or Twitter video status links and download videos or GIF media.
-- [Vimeo Downloader](https://telegramdownloadmedia.com/vimeo-downloader/): Parse public Vimeo video links and download available video sources.
-- [Instagram Downloader](https://telegramdownloadmedia.com/instagram-downloader/): Parse public Instagram posts for photos, Reels, and carousel media.
-- [Threads Downloader](https://telegramdownloadmedia.com/threads-downloader/): Parse public Threads posts for videos and photos.
-
-## Telegram Workflows
+## Product Pages
 
 - [Product changelog](https://telegramdownloadmedia.com/changelog/): Track Telegram download updates, media workflow changes, larger file support, and release notes.
-
-## Download Disabled Channel Workaround Pages
-
 
 ## Language Entrances
 

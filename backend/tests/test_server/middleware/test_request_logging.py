@@ -176,7 +176,9 @@ class TestRequestLoggingMiddleware:
         self, middleware: RequestLoggingMiddleware
     ) -> None:
         """OPTIONS 仍写响应头，但不产生 access log。"""
-        request = _mock_request(method="OPTIONS", path="/api/client/media/parse-v2")
+        request = _mock_request(
+            method="OPTIONS", path="/api/client/subscription/status"
+        )
         response = _mock_response()
         call_next = AsyncMock(return_value=response)
 

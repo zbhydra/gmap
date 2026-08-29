@@ -5,23 +5,23 @@
  * 复用 DownloadAuthModal 的 HTML/CSS 和 homepage auth runtime，避免 Pricing 复制
  * 大量登录表单；外层只注入 Pricing controller 所需的精简文案 payload。
  */
-import DownloadAuthModal from '../../download/components/DownloadAuthModal.astro'
-import type { DownloadWorkspaceContent } from '../../download/schema'
+import AuthModal from '../auth/AuthModal.astro'
+import type { AccountContent } from '../../i18n/schema'
 
 const { copy } = Astro.props as {
-  copy: DownloadWorkspaceContent
+  copy: AccountContent
 }
 const authCopy = {
   sendingCode: copy.auth.sendingCode,
   sendCodeSuccess: copy.auth.sendCodeSuccess,
   continueWithGoogle: copy.auth.continueWithGoogle,
   googleLoading: copy.auth.googleLoading,
-  enterEmailFirst: copy.errors.enterEmailFirst,
-  enterEmailAndCode: copy.errors.enterEmailAndCode,
-  sendCodeFailed: copy.errors.sendCodeFailed,
-  googleSignInFailed: copy.errors.googleSignInFailed,
-  googleClientMissing: copy.errors.googleClientMissing,
-  signInFailed: copy.errors.signInFailed
+  enterEmailFirst: copy.auth.enterEmailFirst,
+  enterEmailAndCode: copy.auth.enterEmailAndCode,
+  sendCodeFailed: copy.auth.sendCodeFailed,
+  googleSignInFailed: copy.auth.googleSignInFailed,
+  googleClientMissing: copy.auth.googleClientMissing,
+  signInFailed: copy.auth.signInFailed
 }
 ---
 
@@ -32,7 +32,7 @@ const authCopy = {
     data-pricing-auth-copy
     set:html={JSON.stringify(authCopy)}
   />
-  <DownloadAuthModal copy={copy} skinClass="pricing-auth-modal" idPrefix="pricing" />
+  <AuthModal copy={copy} skinClass="pricing-auth-modal" idPrefix="pricing" />
 </div>
 
 <script>

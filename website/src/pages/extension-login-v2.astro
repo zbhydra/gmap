@@ -7,12 +7,12 @@
  * 「返回 Telegram」由 background 根据 sender.tab.id 关闭登录页并聚焦已有 Telegram tab，
  * 页面 window.close() 仅作兜底。
  */
-import DownloadAuthModal from '../download/components/DownloadAuthModal.astro'
+import AuthModal from '../components/auth/AuthModal.astro'
 import Layout from '../layouts/Layout.astro'
 import { content } from '../i18n/content'
 
 const pageCopy = content['en-US'].pages.extensionLoginV2
-const workspaceCopy = content['en-US'].pages.homepage.workspace
+const accountCopy = content['en-US'].pages.account
 const statusCopy = {
   checkingState: pageCopy.checkingState,
   signInRequiredState: pageCopy.signInRequiredState,
@@ -37,16 +37,16 @@ const statusCopy = {
   retryButtonLabel: pageCopy.retryButtonLabel
 }
 const authCopy = {
-  sendingCode: workspaceCopy.auth.sendingCode,
-  sendCodeSuccess: workspaceCopy.auth.sendCodeSuccess,
-  continueWithGoogle: workspaceCopy.auth.continueWithGoogle,
-  googleLoading: workspaceCopy.auth.googleLoading,
-  enterEmailFirst: workspaceCopy.errors.enterEmailFirst,
-  enterEmailAndCode: workspaceCopy.errors.enterEmailAndCode,
-  sendCodeFailed: workspaceCopy.errors.sendCodeFailed,
-  googleSignInFailed: workspaceCopy.errors.googleSignInFailed,
-  googleClientMissing: workspaceCopy.errors.googleClientMissing,
-  signInFailed: workspaceCopy.errors.signInFailed
+  sendingCode: accountCopy.auth.sendingCode,
+  sendCodeSuccess: accountCopy.auth.sendCodeSuccess,
+  continueWithGoogle: accountCopy.auth.continueWithGoogle,
+  googleLoading: accountCopy.auth.googleLoading,
+  enterEmailFirst: accountCopy.auth.enterEmailFirst,
+  enterEmailAndCode: accountCopy.auth.enterEmailAndCode,
+  sendCodeFailed: accountCopy.auth.sendCodeFailed,
+  googleSignInFailed: accountCopy.auth.googleSignInFailed,
+  googleClientMissing: accountCopy.auth.googleClientMissing,
+  signInFailed: accountCopy.auth.signInFailed
 }
 ---
 
@@ -93,7 +93,7 @@ const authCopy = {
       data-extension-login-auth-copy
       set:html={JSON.stringify({ status: statusCopy, auth: authCopy })}
     />
-    <DownloadAuthModal copy={workspaceCopy} idPrefix="extension-login-v2" />
+    <AuthModal copy={accountCopy} idPrefix="extension-login-v2" />
   </main>
 </Layout>
 

@@ -55,5 +55,3 @@ export interface BackgroundRecordMarkResponse {
   /** 是否已成功记录打点。 */
   recorded: boolean
 }
-
-

@@ -1,9 +1,7 @@
 """
 Admin 管理后台鉴权依赖。
 
-本文件提供两类鉴权：
-1. `get_admin_user()`：业务服务器管理接口使用，解码 access JWT 后回查管理员表。
-2. `get_admin_jwt_only()`：节点本地管理接口使用，只验签 access JWT，不访问 DB/Redis。
+提供 `get_admin_user()`：解码 access JWT 后回查管理员表。
 """
 
 from dataclasses import dataclass
@@ -23,48 +21,12 @@ security = HTTPBearer(auto_error=False)
 class AdminContext:
     """管理员上下文"""
 
-    #: admin 表主键，节点本地 JWT-only 模式来自 token.user_id。
+    #: admin 表主键。
     admin_id: int
-    #: 管理员展示名；节点本地 JWT-only 模式来自 token.email。
+    #: 管理员展示名。
     username: str
     #: 原始 admin access JWT，用于透传或审计。
     token: str
-
-
-async def get_admin_jwt_only(
-    credentials: Optional[HTTPAuthorizationCredentials] = Security(security),
-) -> AdminContext:
-    """
-    只依赖 JWT 的节点本地 admin 鉴权。
-
-    校验流程：
-    1. 从 Authorization: Bearer 读取 token。
-    2. `JwtUnit.decode_token()` 验签、校验算法和 exp。
-    3. 要求 type=ADMIN_ACCESS、user_id>0、jti 非空。
-
-    本依赖禁止回查管理员表、禁止访问 Redis，download role 可安全使用。
-    """
-    if credentials is None:
-        raise UserAuthFailedException("Missing admin access token")
-
-    token = credentials.credentials
-    jwt_data = JwtUnit.decode_token(token)
-    if not jwt_data:
-        raise UserAuthFailedException("Invalid admin access token")
-    if jwt_data.type != TokenType.ADMIN_ACCESS:
-        raise UserAuthFailedException("Invalid admin token type")
-    if jwt_data.exp <= 0:
-        raise UserAuthFailedException("Invalid admin token exp")
-    if jwt_data.user_id <= 0:
-        raise UserAuthFailedException("Invalid admin user_id")
-    if not jwt_data.jti.strip():
-        raise UserAuthFailedException("Invalid admin token jti")
-
-    return AdminContext(
-        admin_id=jwt_data.user_id,
-        username=jwt_data.email,
-        token=token,
-    )
 
 
 async def get_admin_user(

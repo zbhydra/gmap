@@ -130,14 +130,14 @@ class TestDashboardAPI:
             MarkLogModel(  # type: ignore[call-arg]
                 user_id=active_users[0].user_id,
                 device_id=device_a,
-                mark_type="content_open",
+                mark_type=MarkType.WEB_EXTENSION_INSTALL_CLICK.value,
                 mark_msg="",
                 mark_time=_local_timestamp(2026, 3, 28, 10, 0),
             ),
             MarkLogModel(  # type: ignore[call-arg]
                 user_id=active_users[0].user_id,
                 device_id=device_a,
-                mark_type="content_open",
+                mark_type=MarkType.WEB_EXTENSION_INSTALL_CLICK.value,
                 mark_msg="",
                 mark_time=_local_timestamp(2026, 3, 28, 11, 0),
             ),
@@ -151,23 +151,9 @@ class TestDashboardAPI:
             MarkLogModel(  # type: ignore[call-arg]
                 user_id=active_users[1].user_id,
                 device_id=device_b,
-                mark_type=MarkType.WEB_PRICING_OPEN_FROM_EXTENSION.value,
-                mark_msg='{"utm_source":"extension","source":"quota_upgrade_button"}',
-                mark_time=_local_timestamp(2026, 3, 28, 11, 25),
-            ),
-            MarkLogModel(  # type: ignore[call-arg]
-                user_id=active_users[1].user_id,
-                device_id=device_b,
                 mark_type=MarkType.WEB_EXTENSION_STORE_REVIEW_CLICK.value,
                 mark_msg="",
                 mark_time=_local_timestamp(2026, 3, 28, 11, 26),
-            ),
-            MarkLogModel(  # type: ignore[call-arg]
-                user_id=active_users[1].user_id,
-                device_id=device_b,
-                mark_type="download_click",
-                mark_msg="",
-                mark_time=_local_timestamp(2026, 3, 28, 11, 30),
             ),
             MarkLogModel(  # type: ignore[call-arg]
                 user_id=active_users[1].user_id,
@@ -186,14 +172,14 @@ class TestDashboardAPI:
             MarkLogModel(  # type: ignore[call-arg]
                 user_id=active_users[2].user_id,
                 device_id=device_c,
-                mark_type="popup_open",
+                mark_type=MarkType.WEB_EXTENSION_INSTALL_CLICK.value,
                 mark_msg="",
                 mark_time=_local_timestamp(2026, 3, 27, 8, 30),
             ),
             MarkLogModel(  # type: ignore[call-arg]
                 user_id=active_users[3].user_id,
                 device_id=device_old,
-                mark_type="content_open",
+                mark_type="web_first_opened",
                 mark_msg="",
                 mark_time=int(
                     datetime(
@@ -238,33 +224,28 @@ class TestDashboardAPI:
         assert today.registered_count == baseline_today.registered_count + 2
         assert yesterday.registered_count == baseline_yesterday.registered_count + 1
         assert (
-            today.metrics["content_open"].event_count
-            == baseline_today.metrics["content_open"].event_count + 2
+            today.metrics[MarkType.WEB_EXTENSION_INSTALL_CLICK.value].event_count
+            == baseline_today.metrics[
+                MarkType.WEB_EXTENSION_INSTALL_CLICK.value
+            ].event_count
+            + 2
         )
         assert (
-            today.metrics["content_open"].device_count
-            == baseline_today.metrics["content_open"].device_count + 1
-        )
-        assert (
-            today.metrics["download_click"].event_count
-            == baseline_today.metrics["download_click"].event_count + 1
+            today.metrics[MarkType.WEB_EXTENSION_INSTALL_CLICK.value].device_count
+            == baseline_today.metrics[
+                MarkType.WEB_EXTENSION_INSTALL_CLICK.value
+            ].device_count
+            + 1
         )
         assert (
             data.mark_types.index("web_first_opened")
-            < data.mark_types.index(MarkType.WEB_PRICING_OPEN_FROM_EXTENSION.value)
             < data.mark_types.index(MarkType.WEB_EXTENSION_STORE_REVIEW_CLICK.value)
-            < data.mark_types.index("web_parse_click")
+            < data.mark_types.index(MarkType.WEB_EXTENSION_INSTALL_CLICK.value)
+            < data.mark_types.index("web_credit_purchase_modal_open")
         )
         assert (
             today.metrics["web_first_opened"].event_count
             == baseline_today.metrics["web_first_opened"].event_count + 1
-        )
-        assert (
-            today.metrics[MarkType.WEB_PRICING_OPEN_FROM_EXTENSION.value].event_count
-            == baseline_today.metrics[
-                MarkType.WEB_PRICING_OPEN_FROM_EXTENSION.value
-            ].event_count
-            + 1
         )
         assert (
             today.metrics[MarkType.WEB_EXTENSION_STORE_REVIEW_CLICK.value].event_count
@@ -291,8 +272,11 @@ class TestDashboardAPI:
             == baseline_today.metrics["web_credit_purchase_buy_click"].event_count + 1
         )
         assert (
-            yesterday.metrics["popup_open"].event_count
-            == baseline_yesterday.metrics["popup_open"].event_count + 1
+            yesterday.metrics[MarkType.WEB_EXTENSION_INSTALL_CLICK.value].event_count
+            == baseline_yesterday.metrics[
+                MarkType.WEB_EXTENSION_INSTALL_CLICK.value
+            ].event_count
+            + 1
         )
 
         response = await async_client.get(
@@ -311,12 +295,9 @@ class TestDashboardAPI:
         assert f"7D 活跃 {data.summary.active_users_7d}" in body
         assert "日期（Y-m-d）" in body
         assert "注册人数" in body
-        assert "content_open" in body
         assert "web_first_opened" in body
-        assert MarkType.WEB_PRICING_OPEN_FROM_EXTENSION.value in body
         assert MarkType.WEB_EXTENSION_STORE_REVIEW_CLICK.value in body
-        assert "download_click" in body
-        assert "popup_open" in body
+        assert MarkType.WEB_EXTENSION_INSTALL_CLICK.value in body
         assert "web_credit_purchase_modal_open" in body
         assert "web_credit_purchase_buy_click" in body
         assert "2026-03-28" in body

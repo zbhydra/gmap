@@ -36,7 +36,7 @@ class TestMarkAPI:
             response = await async_client.post(
                 "/api/client/mark/record",
                 json={
-                    "mark_type": "web_parse_success",
+                    "mark_type": "web_first_opened",
                     "mark_msg": '{"url":"https://t.me/example/123"}',
                 },
                 headers={
@@ -50,7 +50,7 @@ class TestMarkAPI:
         assert response.status_code == 200
         assert response.json()["data"] == {"recorded": True}
         assert captured == {
-            "mark_type": "web_parse_success",
+            "mark_type": "web_first_opened",
             "mark_msg": '{"url":"https://t.me/example/123"}',
             "first_opened_at": 0,
             "user_id": 42,

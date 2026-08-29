@@ -41,14 +41,6 @@ export interface HomepageUserSubscription {
   display_name: string
   /** 到期时间，后端可能返回秒或毫秒时间戳；为空表示无到期时间。 */
   expires_at: number | null
-  /** 每日下载额度；小于 0 时前端展示为无限。 */
-  daily_limit: number
-  /** 今日已使用次数。 */
-  used: number
-  /** 今日剩余次数；小于 0 时前端展示为无限。 */
-  remaining: number
-  /** 下次重置日期。 */
-  reset_date: string
   /** 是否自动续费。 */
   auto_renew: boolean
 }

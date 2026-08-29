@@ -10,7 +10,7 @@ import OrderCheckoutModal from '../order-checkout/OrderCheckoutModal.astro'
 import PricingAuthModal from './PricingAuthModal.astro'
 import PricingCancellationGuideModal from './PricingCancellationGuideModal.astro'
 import PricingSubscriptionConfirmModal from './PricingSubscriptionConfirmModal.astro'
-import type { DownloadWorkspaceContent } from '../../download/schema'
+import type { AccountContent } from '../../i18n/schema'
 
 interface PricingPageContent {
   seo: {
@@ -162,9 +162,9 @@ interface PricingPageContent {
   }
 }
 
-const { copy, workspaceCopy, extensionInstallUrl, showHero = false, showSubscription = true } = Astro.props as {
+const { copy, accountCopy, extensionInstallUrl, showHero = false, showSubscription = true } = Astro.props as {
   copy: PricingPageContent
-  workspaceCopy: DownloadWorkspaceContent
+  accountCopy: AccountContent
   extensionInstallUrl: string
   /** 是否渲染页面 hero 标题区（默认关闭，保持既有页面不变）。 */
   showHero?: boolean
@@ -209,7 +209,7 @@ const { copy, workspaceCopy, extensionInstallUrl, showHero = false, showSubscrip
                 type="button"
                 class="pricing-avatar"
                 data-pricing-account-button
-                aria-label={workspaceCopy.checkin.accountButtonLabel}
+                aria-label={accountCopy.checkin.accountButtonLabel}
                 aria-expanded="false"
               >
                 <img class="pricing-avatar-image" data-pricing-user-avatar alt="" hidden />
@@ -219,12 +219,12 @@ const { copy, workspaceCopy, extensionInstallUrl, showHero = false, showSubscrip
                 class="pricing-account-menu"
                 data-pricing-account-menu
                 role="menu"
-                aria-label={workspaceCopy.checkin.accountMenuLabel}
+                aria-label={accountCopy.checkin.accountMenuLabel}
                 hidden
               >
                 <div class="pricing-account-email" data-pricing-account-email role="presentation"></div>
                 <button type="button" class="pricing-account-logout" data-pricing-account-logout role="menuitem">
-                  {workspaceCopy.auth.logout}
+                  {accountCopy.auth.logout}
                 </button>
               </div>
             </div>
@@ -386,8 +386,8 @@ const { copy, workspaceCopy, extensionInstallUrl, showHero = false, showSubscrip
     </article>
   </template>
 
-  <PricingAuthModal copy={workspaceCopy} />
-  <OrderCheckoutModal copy={workspaceCopy} />
+  <PricingAuthModal copy={accountCopy} />
+  <OrderCheckoutModal copy={accountCopy} />
   {copy.subscription.reviewReward && (
     <PricingSubscriptionConfirmModal copy={copy.subscription} extensionInstallUrl={extensionInstallUrl} />
   )}

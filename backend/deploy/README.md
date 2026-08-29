@@ -35,11 +35,10 @@ bash backend/deploy/health_check.sh backend/deploy/.env.test  # 本地传 .env
 
 - 连接服务器使用服务器登录私钥（`SSH_PRIVATE_KEY_PATH` 在 .env 内或 ~/.ssh/）
 - 拉取 Git 仓库使用 `backend/deploy/key/git_key`（与 .env 解耦；专 key 专用）
-- 每次 `init.sh` / `deploy.sh` 都会基于 `backend/config.yaml.example` + .env 内 DB / SMTP / APP_NAME / LOGGER_LEVEL / PUBLIC_API_BASE_URL / PUBLIC_WEBSITE_BASE_URL / GOOGLE_CLIENT_ID / APP_ROLE / DOWNLOAD_TOKEN_*，以及可选的 GOOGLE_CLIENT_SECRET 字段覆盖生成远端 `backend/config.yaml`
-- 每次 `init.sh` / `deploy.sh` 都会基于 .env 内 `DEPLOY_DIR` / `BACKEND_PORT_PY` 渲染 supervisor，并基于 `NGINX_SERVER_NAME` / `BACKEND_PORT_PY` 渲染业务 API Nginx 配置；业务 Nginx 只监听 80，HTTPS 由外层 CL 代理终止，并按下载节点口径关闭代理缓冲以避免大流写入 `proxy_temp`
+- 每次 `init.sh` / `deploy.sh` 都会基于 `backend/config.yaml.example` + .env 内 DB / SMTP / APP_NAME / LOGGER_LEVEL / PUBLIC_API_BASE_URL / PUBLIC_WEBSITE_BASE_URL / GOOGLE_CLIENT_ID，以及可选的 GOOGLE_CLIENT_SECRET 字段覆盖生成远端 `backend/config.yaml`
+- 每次 `init.sh` / `deploy.sh` 都会基于 .env 内 `DEPLOY_DIR` / `BACKEND_PORT_PY` 渲染 supervisor，并基于 `NGINX_SERVER_NAME` / `BACKEND_PORT_PY` 渲染业务 API Nginx 配置；业务 Nginx 只监听 80，HTTPS 由外层 CL 代理终止
 - Supervisor 停止服务时，Uvicorn 立即停止接收新请求，存量请求最多等待 10 秒；超时后取消存量请求并退出，Supervisor 同样以 10 秒作为进程组强制终止上限
 - 业务 supervisor 与 Nginx 配置文件名使用 `APP_NAME`；部署时会清理旧的 `tg-download.conf` 和旧域名 vhost 文件，避免同机双进程或重复 server_name
-- 下载节点独立脚本基于 `backend/config.download.yaml.example` + `backend/deploy/.env.download` 内节点差异字段生成远端 `backend/config.yaml`
 - `backend/config.yaml` 不入 git
 - Telegram Stars bot token 与 webhook secret 只配置到 DB 表 `config_payment_channel.config_json`,不写入 `.env.*` 或 `backend/config.yaml`;webhook 公网地址读取 `app.public_api_base_url`,Bot API 地址为代码常量
 
@@ -141,15 +140,12 @@ backend/deploy/
 应用名称从 .env 内 `APP_NAME` 读取；它会进入 Redis key 前缀，测试服和正式服共用 Redis 时必须不同。
 同一台机器部署多套环境时，`APP_NAME` 也会作为 supervisor program 名和 Nginx vhost 文件名，必须不同。
 同机部署正式服和测试服时，至少要分别配置不同的 `APP_NAME` / `DEPLOY_DIR` / `BACKUP_DIR` / `BACKEND_PORT_PY` / `NGINX_SERVER_NAME` / `DB_USER` / `DB_NAME`。
-业务进程角色从 .env 内 `APP_ROLE` 读取，业务部署入口只允许 `business`。
 后端运行日志级别从 .env 内 `LOGGER_LEVEL` 读取，正式环境建议 `WARNING`，避免普通 `INFO` 请求日志刷 supervisor。
-下载节点使用 `.env.download.example`、`config.download.yaml.example` 和独立脚本；`app.role` 固定写在下载节点模板里。
 对外 API 根地址从 .env 内 `PUBLIC_API_BASE_URL` 读取，用于生成后端返回的 API 绝对地址。
 对外 Website 根地址从 .env 内 `PUBLIC_WEBSITE_BASE_URL` 读取，用于 Google redirect 登录后跳回网站。
 Google Data OAuth 授权完成后跳回管理后台的地址由 Admin SPA 发起授权时传入，不进入业务后端发布配置。
 Google 登录 Client ID 从 .env 内 `GOOGLE_CLIENT_ID` 读取，用于后端校验 Google ID Token 的 `aud`。
 Google OAuth Client Secret 从 .env 内 `GOOGLE_CLIENT_SECRET` 读取，可留空；仅新自定义按钮 OAuth code flow 需要，只写入后端 `auth.google_client_secret`，不进入前端 PUBLIC 配置。
-下载 token 签发私钥从 .env 内 `DOWNLOAD_TOKEN_PRIVATE_KEY` 读取；验签公钥从 `DOWNLOAD_TOKEN_PUBLIC_KEYS` 多行 YAML 列表块读取，业务服务器至少配置一条当前公钥，密钥轮换期间可保留上一轮公钥。
 SMTP 账号列表从 .env 内 `SMTP_CONFIG` 多行 YAML 块读取。Redis 连接从 .env 内 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` 读取（可选，缺省走本机 127.0.0.1:6379 无密码；空字符串与 null 等价；部署脚本会把密码渲染成安全 YAML 字符串，密码可包含引号、反斜杠、`@`、`/`、`#`、`?` 等特殊字符）。数据库名来自 `.env.*`：
 
 ```yaml
@@ -162,7 +158,6 @@ database: "{DB_NAME}"
 - 远端业务 supervisor 和 Nginx 配置会按 `.env.*` 重新渲染，路径、端口、域名和证书路径不要写死在模板里
 - 部署前会先备份旧配置到备份目录
 - 业务服务器需要保留的线上配置应写入 `backend/config.yaml.example` 或 `.env.*`
-- 下载节点需要保留的公共配置应写入 `backend/config.download.yaml.example`，节点差异写入 `.env.download`
 
 ## Telegram Stars webhook 注册
 
@@ -256,14 +251,10 @@ bash backend/deploy/deploy.sh backend/deploy/.env.test --skip-health-check
 - `backend/config.yaml.example`
 - `.env.*` 里的 `DB_HOST` / `DB_USER` / `DB_PASSWD` / `DB_NAME`
 - `.env.*` 里的 `APP_NAME`
-- `.env.*` 里的 `APP_ROLE`
 - `.env.*` 里的 `PUBLIC_API_BASE_URL`
 - `.env.*` 里的 `PUBLIC_WEBSITE_BASE_URL`
 - `.env.*` 里的 `GOOGLE_CLIENT_ID`
 - `.env.*` 里的可选 `GOOGLE_CLIENT_SECRET`
-- `.env.*` 里的 `DOWNLOAD_TOKEN_ALGORITHM`
-- `.env.*` 里的 `DOWNLOAD_TOKEN_PRIVATE_KEY`
-- `.env.*` 里的 `DOWNLOAD_TOKEN_PUBLIC_KEYS`
 - `.env.*` 里的 `SMTP_CONFIG`
 - `.env.*` 里的 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD`（可选，缺省走本机）
 - `.env.*` 里的 `BACKEND_PORT_PY`

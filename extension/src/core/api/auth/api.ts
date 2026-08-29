@@ -5,107 +5,16 @@
  */
 
 import { httpClient } from '../index'
-import { API, HTTP_HEADERS, STORAGE_KEYS } from '../config'
+import { API, STORAGE_KEYS } from '../config'
 import { storageManager } from '../../storage'
 import type { UserInfo } from '../../types'
 import { logger } from '../../utils/logger'
 import { ApiError } from '../client/types'
 
-/** 官网 token 换取插件 token 的响应。 */
-export interface ExtensionTokenExchangeResponse {
-  /** 插件访问令牌。 */
-  extension_access_token: string
-  /** 插件刷新令牌。 */
-  extension_refresh_token: string
-  /** 令牌类型。 */
-  token_type: string
-  /** 访问令牌过期时间（秒）。 */
-  expires_in: number
-  /** 当前用户信息。 */
-  user: UserInfo
-}
-
-/** 官网 token 换取插件 token 的请求体。 */
-interface ExtensionTokenExchangeRequest {
-  /** 当前插件旧 access token，存在时用于后端尽量撤销。 */
-  old_extension_access_token?: string
-  /** 当前插件旧 refresh token，存在时用于后端尽量撤销。 */
-  old_extension_refresh_token?: string
-}
-
-/** 确认插件 token 签发响应字段完整，避免异常响应写入半截登录态。 */
-function assertExtensionTokenExchangeResponse(
-  result: ExtensionTokenExchangeResponse
-): ExtensionTokenExchangeResponse {
-  if (
-    !result.extension_access_token ||
-    !result.extension_refresh_token ||
-    !result.user ||
-    typeof result.user.user_id !== 'number'
-  ) {
-    throw new ApiError(
-      'Extension token exchange returned incomplete auth data',
-      500,
-      'INVALID_EXTENSION_TOKEN_RESPONSE'
-    )
-  }
-
-  return result
-}
-
 /**
  * 认证 API 函数集合
  */
 export const authApi = {
-  /**
-   * 使用官网 access token 换取插件 token。
-   */
-  exchangeWebsiteTokenForExtensionAuth: async (
-    webAccessToken: string
-  ): Promise<ExtensionTokenExchangeResponse> => {
-    const oldAccessToken = await storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN)
-    const oldRefreshToken = await storageManager.get<string>(STORAGE_KEYS.REFRESH_TOKEN)
-    const requestBody: ExtensionTokenExchangeRequest = {}
-
-    if (oldAccessToken) {
-      requestBody.old_extension_access_token = oldAccessToken
-    }
-
-    if (oldRefreshToken) {
-      requestBody.old_extension_refresh_token = oldRefreshToken
-    }
-
-    const result = assertExtensionTokenExchangeResponse(
-      await httpClient.post<ExtensionTokenExchangeResponse>(
-        API.ENDPOINTS.AUTH_EXTENSION_TOKEN,
-        requestBody,
-        {
-          requireAuth: false,
-          skipErrorToast: true,
-          skipRequestLog: true,
-          preserveAuthOnUnauthorized: true,
-          headers: {
-            Authorization: HTTP_HEADERS.AUTH_PREFIX + webAccessToken
-          }
-        }
-      )
-    )
-
-    await storageManager.setMany({
-      [STORAGE_KEYS.ACCESS_TOKEN]: result.extension_access_token,
-      [STORAGE_KEYS.REFRESH_TOKEN]: result.extension_refresh_token,
-      [STORAGE_KEYS.USER_INFO]: {
-        user_id: result.user.user_id,
-        email: result.user.email,
-        full_name: result.user.full_name,
-        avatar_url: result.user.avatar_url,
-        created_at: result.user.created_at
-      }
-    })
-
-    return result
-  },
-
   /**
    * 获取当前用户信息
    */

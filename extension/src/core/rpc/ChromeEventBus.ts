@@ -33,7 +33,7 @@ import { logger } from '../utils/logger'
  * const emitter = new ChromeEventEmitter<ExtensionEvents>()
  *
  * // 发送事件到所有监听者
- * emitter.emit('showUpgradeModal', { resetAt: Date.now() + 60_000 })
+ * emitter.emit('noticeShown', { message: 'hi' })
  * ```
  */
 export class ChromeEventEmitter<TEvents extends EventDefinition> {
@@ -117,7 +117,7 @@ export class ChromeEventEmitter<TEvents extends EventDefinition> {
  * const subscriber = new ChromeEventSubscriber<ExtensionEvents>()
  *
  * // 订阅事件
- * subscriber.on('showUpgradeModal', payload => {
+ * subscriber.on('noticeShown', payload => {
  *   console.info(payload.resetAt)
  *   showModal.value = true
  * })

@@ -1,8 +1,6 @@
 """外部系统大盘服务测试。"""
 
-import asyncio
 from datetime import datetime
-import json
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -114,5 +112,3 @@ async def test_get_dashboard_uses_admin_utc_plus_8_range_for_today_statistics(
     assert "external_dashboard_stage_timing: stage=today_registered" in caplog.text
     assert "external_dashboard_stage_timing: stage=today_paid_orders" in caplog.text
     assert "external_dashboard_stage_timing: stage=service_total" in caplog.text
-
-

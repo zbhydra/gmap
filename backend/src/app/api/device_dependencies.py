@@ -2,7 +2,7 @@
 
 from typing import NoReturn
 
-from fastapi import Header, Request
+from fastapi import Request
 
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
@@ -51,27 +51,3 @@ async def require_trusted_client_device(
             ip=verify_result.ip,
             logo_ip=verify_result.logo_ip,
         )
-
-
-async def require_parse_pre_v2_trusted_client_device(
-    request: Request,
-    x_device_id: str | None = Header(None, alias="X-Device-Id"),
-) -> None:
-    """在 parse-pre-v2 用户上下文依赖前完成设备可信校验。"""
-    await require_trusted_client_device(
-        request=request,
-        device_id=x_device_id,
-        operation="parse_media_pre_v2",
-    )
-
-
-async def require_download_pre_v2_trusted_client_device(
-    request: Request,
-    x_device_id: str | None = Header(None, alias="X-Device-Id"),
-) -> None:
-    """在 download-pre-v2 登录用户依赖前完成设备可信校验。"""
-    await require_trusted_client_device(
-        request=request,
-        device_id=x_device_id,
-        operation="download_pre_v2",
-    )

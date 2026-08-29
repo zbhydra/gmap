@@ -116,7 +116,7 @@ const tabs = {
     return Promise.resolve([
       {
         id: 1,
-        url: 'https://web.telegram.org/',
+        url: 'https://www.google.com/maps',
         active: true,
         currentWindow: true
       }
@@ -126,7 +126,7 @@ const tabs = {
   get: vi.fn((tabId: number) => {
     return Promise.resolve({
       id: tabId,
-      url: 'https://web.telegram.org/',
+      url: 'https://www.google.com/maps',
       active: true
     } as Tab)
   }),

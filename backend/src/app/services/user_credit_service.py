@@ -87,7 +87,6 @@ class UserCreditService:
         user_id: int,
         amount: int,
         reason: str,
-        resource_key: str | None = None,
         metadata_json: str | None = None,
     ) -> CreditBalanceChangeResult:
         """独立事务增加用户 Credits 余额并写入正向流水。"""
@@ -98,7 +97,6 @@ class UserCreditService:
                 user_id=user_id,
                 amount=amount,
                 reason=reason,
-                resource_key=resource_key,
                 metadata_json=metadata_json,
             )
             await db.commit()
@@ -111,7 +109,6 @@ class UserCreditService:
         user_id: int,
         amount: int,
         reason: str,
-        resource_key: str | None = None,
         metadata_json: str | None = None,
     ) -> CreditBalanceChangeResult:
         """在调用方事务内增加余额，仅供充值履约绑定订单事务使用。"""
@@ -121,7 +118,6 @@ class UserCreditService:
             user_id=user_id,
             amount=amount,
             reason=reason,
-            resource_key=resource_key,
         )
         now_ms = timestamp_now()
         await self._ensure_account(db, user_id=user_id, now_ms=now_ms)
@@ -130,7 +126,6 @@ class UserCreditService:
             user_id=user_id,
             change_amount=amount,
             reason=reason,
-            resource_key=resource_key,
             metadata_json=metadata_json,
             created_at=now_ms,
         )
@@ -155,7 +150,6 @@ class UserCreditService:
         user_id: int,
         amount: int,
         reason: str,
-        resource_key: str | None = None,
         metadata_json: str | None = None,
     ) -> CreditBalanceCutResult:
         """独立事务扣减用户 Credits 余额，余额不足时不写流水。"""
@@ -165,7 +159,6 @@ class UserCreditService:
             user_id=user_id,
             amount=amount,
             reason=reason,
-            resource_key=resource_key,
         )
         async with get_async_session() as db:
             result = await self.cut_balance_in_session(
@@ -173,7 +166,6 @@ class UserCreditService:
                 user_id=user_id,
                 amount=amount,
                 reason=reason,
-                resource_key=resource_key,
                 metadata_json=metadata_json,
             )
             if not result.allowed:
@@ -189,7 +181,6 @@ class UserCreditService:
         user_id: int,
         amount: int,
         reason: str,
-        resource_key: str | None = None,
         metadata_json: str | None = None,
     ) -> CreditBalanceCutResult:
         """在调用方事务内扣减余额；只做原子扣款和流水写入。"""
@@ -220,7 +211,6 @@ class UserCreditService:
             user_id=user_id,
             change_amount=-amount,
             reason=reason,
-            resource_key=resource_key,
             metadata_json=metadata_json,
             created_at=now_ms,
         )
@@ -269,7 +259,6 @@ class UserCreditService:
         user_id: int,
         amount: int,
         reason: str,
-        resource_key: str | None,
     ) -> None:
         """校验公共余额变更字段，避免写入不可追踪流水。"""
 
@@ -287,14 +276,6 @@ class UserCreditService:
                 ),
             )
         self._validate_text_field(action, "reason", reason, 32)
-        if resource_key is not None and len(resource_key) != 32:
-            raise AppCommonException(
-                CommonCode.CREDIT_INVALID_REQUEST,
-                ext_msg=(
-                    f"user_credit.{action}: resource_key must be 32 chars, "
-                    f"user_id={user_id}, length={len(resource_key)}"
-                ),
-            )
 
     async def _validate_client_price(
         self,

@@ -8,9 +8,6 @@ import { storageManager } from '@/core/storage'
 import { STORAGE_KEYS } from '@/core/api/config'
 import { initializeRuntimeLogger } from './runtimeConfig'
 
-const UNINSTALL_SURVEY_URL =
-  'https://docs.google.com/forms/d/e/1FAIpQLSeCZwJtiwoFdME8MHzmpBn98HUIi4V-DIutGCz3toBu7Qyezg/viewform?usp=publish-editor'
-
 /**
  * 初始化 device_id
  * Background service worker 只有一个实例，不会有竞态问题
@@ -24,14 +21,6 @@ async function initDeviceId() {
   }
 }
 
-/**
- * 注册扩展卸载后的反馈问卷地址
- */
-async function registerUninstallSurveyUrl() {
-  await chrome.runtime.setUninstallURL(UNINSTALL_SURVEY_URL)
-  logger.info('[Background] Registered uninstall survey URL')
-}
-
 // 启动时立即初始化
 initializeRuntimeLogger().catch(error => {
   logger.error('[BackgroundRuntimeConfig] 初始化日志配置失败:', error)
@@ -41,11 +30,7 @@ initDeviceId().catch(error => {
   logger.error('[Background] Failed to initialize device_id:', error)
 })
 
-registerUninstallSurveyUrl().catch(error => {
-  logger.error('[Background] Failed to register uninstall survey URL:', error)
-})
-
-logger.info('[TG-Download-Extension] Background Service Worker 已启动')
+logger.info('[GMaps-Extension] Background Service Worker 已启动')
 logger.info('Background service worker initialized')
 
 // 初始化消息路由器

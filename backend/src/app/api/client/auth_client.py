@@ -587,7 +587,6 @@ async def get_me(ctx: UserContext = Depends(get_current_user)):
     data = (await user_service.build_client_user_info(user)).model_dump()
     data["subscription"] = await subscription_status_service.build_status_data(
         user_id=ctx.user_id,
-        quota_u_id=str(ctx.user_id),
     )
     return ResponseUtils.ok(data)
 

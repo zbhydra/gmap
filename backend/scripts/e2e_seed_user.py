@@ -6,8 +6,6 @@ Website 真实回归专用的用户种子脚本。
 ----
 website 端真实回归需要可重复准备不同业务状态。本脚本按显式场景负责：
 
-- ``parse-download``：幂等创建固定解析下载账号，写入远未来 Unlimited 到期时间，
-  重置媒体下载 Credits/下载记录并补足余额。
 - ``pricing-review-reward``：幂等创建独立 Pricing 账号，删除其订阅记录与
   ``SUBSCRIPTION_REVIEW_REWARD_CLAIMED`` lifetime Counter，并从真实 MySQL 回读
   确认账号无有效订阅且永久领取次数为零。
@@ -15,24 +13,24 @@ website 端真实回归需要可重复准备不同业务状态。本脚本按显
   并把该 token 写入 Redis（``store_token``），
   最后把 ``{token, user_id, email, device_id, scenario}`` 以单行 JSON 打到 stdout 供
   Playwright globalSetup 读取。
-- ``cleanup``：按场景固定 email 软删用户、删订阅、撤销该用户全部 token、清该用户
-  当日配额 Redis key，并删除媒体下载 Credits/下载记录，让回归账号不残留脏数据。
+- ``cleanup``：按场景固定 email 软删用户、删订阅、撤销该用户全部 token、
+  删除 Credits 流水与账户，让回归账号不残留脏数据。
 
 设计取舍
 --------
 - 复用现有 service（``user_service`` / ``subscription_service`` /
   ``user_token_service``）与 ``JwtUnit``，不手插表、不引入依赖注入（遵守项目规范）。
-- token 用后端 ``settings.auth.jwt_secret_key`` 签名。**仅签名不够**：前端下载
-  走 ``/api/client/media/direct-download-intent`` → ``get_current_user`` →
-  ``check_strict`` → ``user_token_service.verify_token``，后者校验 token 的
+- token 用后端 ``settings.auth.jwt_secret_key`` 签名。**仅签名不够**：
+  登录态接口走 ``get_current_user`` → ``check_strict`` →
+  ``user_token_service.verify_token``，后者校验 token 的
   md5 是否在 Redis ``access_token:{user_id}`` ZSet 中；故 seed 必须额外
-  ``store_token`` 把 token 注册进 Redis，否则下载会 401。
+  ``store_token`` 把 token 注册进 Redis，否则登录态接口会 401。
 - stdout 只输出最终结果 JSON；日志与诊断走 stderr，避免污染 globalSetup 解析。
 
 流程
 ----
 seed:    确保场景用户存在 → 准备并验证场景状态 → 签 token → store 进 Redis → 打印 JSON
-cleanup: 查用户 → 清配额/限流 → 撤销 token → 删订阅 → 删 Credits/下载记录 → 软删用户
+cleanup: 查用户 → 撤销 token → 删订阅 → 删 Credits 状态 → 软删用户
 """
 
 from __future__ import annotations
@@ -55,35 +53,27 @@ if str(SRC_DIR) not in sys.path:
 from app.constants.auth import TokenType  # noqa: E402
 from app.constants.client_product import ClientProductEnum  # noqa: E402
 from app.constants.counter import CounterId  # noqa: E402
-from app.constants.quota import QuotaTypeEnum  # noqa: E402
-from app.core.database import (
+from app.core.database import (  # noqa: E402
     check_db_connection,
     close_engine,
     get_async_session,
-)  # noqa: E402
-from app.core.redis import redis_client  # noqa: E402
+)
 from app.models.counter_user_lifetime_model import (  # noqa: E402
     CounterUserLifetimeModel,
 )
 from app.models.subscription_model import UserSubscriptionModel  # noqa: E402
 from app.models.user_credit_account_model import UserCreditAccountModel  # noqa: E402
 from app.models.user_credit_log_model import UserCreditLogModel  # noqa: E402
-from app.models.user_download_record_model import UserDownloadRecordModel  # noqa: E402
 from app.services.counter_service import counter_service  # noqa: E402
-from app.services.quota_service import quota_service  # noqa: E402
 from app.services.subscription_service import subscription_service  # noqa: E402
-from app.services.user_credit_service import user_credit_service  # noqa: E402
 from app.services.user_service import user_service  # noqa: E402
 from app.services.user_token_service import user_token_service  # noqa: E402
 from app.utils.jwt import JwtData, JwtUnit  # noqa: E402
-from app.utils.redis_fixed_limiter import RedisFixedLimiter  # noqa: E402
-from app.utils.time import timestamp_now  # noqa: E402
 
 
 class SeedScenario(str, Enum):
     """可由真实 smoke 显式选择的用户业务状态。"""
 
-    PARSE_DOWNLOAD = "parse-download"
     PRICING_REVIEW_REWARD = "pricing-review-reward"
 
 
@@ -99,11 +89,6 @@ class SeedScenarioConfig:
 # 每个真实 smoke 使用独立固定账号，既保证单场景幂等，也避免不同 smoke 互相改状态。
 # .test 顶级域不会真实存在，避免误发邮件或撞上真实用户。
 SEED_SCENARIO_CONFIGS: dict[SeedScenario, SeedScenarioConfig] = {
-    SeedScenario.PARSE_DOWNLOAD: SeedScenarioConfig(
-        email="e2e-parse-smoke@telegramdownloadmedia.test",
-        password="E2eParseSmoke!2026",
-        full_name="E2E Parse Smoke",
-    ),
     SeedScenario.PRICING_REVIEW_REWARD: SeedScenarioConfig(
         email="e2e-pricing-review-reward-smoke@telegramdownloadmedia.test",
         password="E2ePricingReviewRewardSmoke!2026",
@@ -112,30 +97,6 @@ SEED_SCENARIO_CONFIGS: dict[SeedScenario, SeedScenarioConfig] = {
 }
 # 注入前端 localStorage 的 device_id；需同时满足前端当前 UUID 校验与后端请求校验。
 E2E_DEVICE_ID = "123e4567-e89b-42d3-a456-426614174000"
-# Unlimited 订阅 expires_at（毫秒）：user_subscriptions 只保存 Unlimited 到期时间，
-# expires_at > now 时代表 Unlimited，None/过期一律降级 Free。
-# 真实 smoke 只需要稳定登录态和足够 Credits，远未来时间避免订阅态波动。
-SUBSCRIPTION_EXPIRES_MS_AHEAD = 100 * 365 * 24 * 60 * 60 * 1000
-# 发布前真实下载会按媒体大小扣 Credits；seed 每轮重置后补到固定余额，避免余额
-# 随重复运行无限增长，也避免历史下载记录触发 6 小时免扣导致回归不真实。
-E2E_CREDITS_TARGET_BALANCE = 200
-E2E_CREDITS_SEED_REASON = "e2e_parse_smoke_seed"
-# 真实 smoke 会连续跑多平台；seed 时清理固定 e2e 用户的当前限流窗口，避免历史运行污染。
-E2E_FIXED_LIMITERS: tuple[tuple[str, int], ...] = (
-    ("tiktok_parse", 10),
-    ("tiktok_download", 60),
-    ("vimeo_parse", 10),
-    ("vimeo_direct_intent", 60),
-    ("x_parse", 10),
-    ("x_direct_intent", 60),
-    ("instagram_parse", 10),
-    ("instagram_direct_intent", 60),
-    ("threads_parse", 10),
-    ("threads_direct_intent", 60),
-    ("reddit_parse", 10),
-    ("reddit_direct_intent", 60),
-    ("reddit_client_mux_intent", 60),
-)
 
 
 async def _ensure_user_id(config: SeedScenarioConfig) -> int:
@@ -166,28 +127,22 @@ async def _seed(scenario: SeedScenario) -> dict[str, object]:
     config = SEED_SCENARIO_CONFIGS[scenario]
     user_id = await _ensure_user_id(config)
 
-    if scenario == SeedScenario.PARSE_DOWNLOAD:
-        await _seed_parse_download_state(user_id)
-    else:
+    if scenario == SeedScenario.PRICING_REVIEW_REWARD:
         await _seed_pricing_review_reward_state(user_id)
 
     token, expire = JwtUnit.create_access_token(
         JwtData(user_id=user_id, email=config.email),
     )
 
-    # 关键：仅签名不够。下载链路 /direct-download-intent 走 get_current_user，
-    # check_strict() 会校验 token md5 是否在 Redis access_token:{user_id} ZSet 中；
-    # 不 store 则下载 401。expire 为 Unix 秒级过期戳，作为 ZSet score。
+    # 关键：仅签名不够。登录态接口走 get_current_user，check_strict() 会校验
+    # token md5 是否在 Redis access_token:{user_id} ZSet 中；
+    # 不 store 则登录态接口 401。expire 为 Unix 秒级过期戳，作为 ZSet score。
     await user_token_service.store_token(
         token,
         user_id,
         TokenType.USER_ACCESS,
         expire,
     )
-
-    # 重置当日下载配额，保证每次发版回归都从 0 配额起跑，不受历史运行累积影响。
-    await _delete_quota_keys(user_id)
-    await _reset_fixed_limiters(user_id)
 
     return {
         "token": token,
@@ -196,17 +151,6 @@ async def _seed(scenario: SeedScenario) -> dict[str, object]:
         "device_id": E2E_DEVICE_ID,
         "scenario": scenario.value,
     }
-
-
-async def _seed_parse_download_state(user_id: int) -> None:
-    """保持解析下载 smoke 的 Unlimited 与 Credits seed 行为。"""
-
-    await subscription_service.update_user_subscription(
-        user_id,
-        timestamp_now() + SUBSCRIPTION_EXPIRES_MS_AHEAD,
-    )
-    await _reset_media_credit_data(user_id)
-    await _ensure_credits(user_id)
 
 
 async def _seed_pricing_review_reward_state(user_id: int) -> None:
@@ -237,15 +181,10 @@ async def _seed_pricing_review_reward_state(user_id: int) -> None:
         )
 
 
-async def _reset_media_credit_data(user_id: int) -> None:
-    """删除固定 e2e 用户的媒体下载 Credits 状态，保证每轮真实 smoke 独立。"""
+async def _reset_credit_data(user_id: int) -> None:
+    """删除固定 e2e 用户的 Credits 状态，保证每轮真实 smoke 独立。"""
 
     async with get_async_session() as db:
-        await db.execute(
-            delete(UserDownloadRecordModel).where(
-                UserDownloadRecordModel.user_id == user_id
-            )
-        )
         await db.execute(
             delete(UserCreditLogModel).where(UserCreditLogModel.user_id == user_id)
         )
@@ -255,41 +194,6 @@ async def _reset_media_credit_data(user_id: int) -> None:
             )
         )
         await db.commit()
-
-
-async def _ensure_credits(user_id: int) -> None:
-    """把固定 e2e 用户 Credits 余额补到真实 smoke 所需目标值。"""
-
-    balance = await user_credit_service.get_balance(user_id)
-    if balance >= E2E_CREDITS_TARGET_BALANCE:
-        return
-
-    await user_credit_service.add_balance(
-        user_id=user_id,
-        amount=E2E_CREDITS_TARGET_BALANCE - balance,
-        reason=E2E_CREDITS_SEED_REASON,
-    )
-
-
-async def _delete_quota_keys(user_id: int) -> None:
-    """删除该用户当日 Web 配额 key，保证下次从 0 开始。"""
-
-    # 回归仅经由 web 端，故只清 WEB 下载/播放维度的配额 key。
-    user_key = str(user_id)
-    keys = [
-        quota_service.build_quota_key(user_key, QuotaTypeEnum.WEB_DOWNLOAD),
-        quota_service.build_quota_key(user_key, QuotaTypeEnum.WEB_PLAY),
-    ]
-    redis = await redis_client.get_client()
-    await redis.delete(*keys)
-
-
-async def _reset_fixed_limiters(user_id: int) -> None:
-    """清理 e2e 用户在真实 smoke 相关平台中的当前固定窗口限流 key。"""
-
-    user_key = str(user_id)
-    for key_prefix, window in E2E_FIXED_LIMITERS:
-        await RedisFixedLimiter(key_prefix=key_prefix).reset(user_key, window)
 
 
 async def _delete_review_reward_counter(user_id: int) -> None:
@@ -307,7 +211,7 @@ async def _delete_review_reward_counter(user_id: int) -> None:
 
 
 async def _cleanup(scenario: SeedScenario) -> dict[str, object]:
-    """软删 e2e 用户 + 删订阅 + 清配额 key；不存在则视为已干净。"""
+    """软删 e2e 用户 + 删订阅 + 删 Credits 状态；不存在则视为已干净。"""
 
     config = SEED_SCENARIO_CONFIGS[scenario]
     existing = await user_service.get_user_by_email(config.email)
@@ -321,14 +225,12 @@ async def _cleanup(scenario: SeedScenario) -> dict[str, object]:
 
     user_id = existing.user_id
 
-    # 先清配额 key（依赖 user_id），再撤销 token，删订阅，最后软删用户。
-    await _delete_quota_keys(user_id)
-    await _reset_fixed_limiters(user_id)
+    # 先撤销 token，删订阅，删 Credits 状态，最后软删用户。
     await user_token_service.revoke_all_user_tokens(user_id)
     await subscription_service.delete(user_id)
     if scenario == SeedScenario.PRICING_REVIEW_REWARD:
         await _delete_review_reward_counter(user_id)
-    await _reset_media_credit_data(user_id)
+    await _reset_credit_data(user_id)
     await user_service.update(user_id, is_del=True)
 
     return {
@@ -352,8 +254,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--scenario",
         choices=[scenario.value for scenario in SeedScenario],
-        default=SeedScenario.PARSE_DOWNLOAD.value,
-        help="账号场景；默认 parse-download 保持既有解析下载 smoke 行为",
+        default=SeedScenario.PRICING_REVIEW_REWARD.value,
+        help="账号场景；默认 pricing-review-reward",
     )
     return parser.parse_args()
 

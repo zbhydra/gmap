@@ -5,7 +5,7 @@
 
 from typing import Optional
 
-from sqlalchemy import CHAR, BigInteger, Integer, String, Text
+from sqlalchemy import BigInteger, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseDBModel
@@ -37,11 +37,6 @@ class UserCreditLogModel(BaseDBModel):
         String(32),
         nullable=False,
         comment="变更原因",
-    )
-    resource_key: Mapped[Optional[str]] = mapped_column(
-        CHAR(32),
-        nullable=True,
-        comment="website 下载资源指纹，MD5 hex",
     )
     metadata_json: Mapped[Optional[str]] = mapped_column(
         "metadata",

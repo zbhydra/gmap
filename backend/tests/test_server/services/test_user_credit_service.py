@@ -55,7 +55,6 @@ def test_registration_bonus_insert_uses_database_metadata_column() -> None:
         user_id=1,
         change_amount=10,
         reason="registration_bonus",
-        resource_key=None,
         metadata_json=None,
         created_at=1,
     )

@@ -11,7 +11,7 @@ monorepo，各前端子项目独立用 pnpm 管理（无根 workspace），后�
 | --- | --- | --- | --- |
 | **backend** | `backend/` | Python 3 + FastAPI + SQLAlchemy(async) + aiomysql + Redis | 业务服务器（`business` 角色）与执行节点（`download` 角色）共用同一份代码；API、调度、crons、支付、节点管理全在这。详见 `@tech-backend.md` |
 | **website** | `website/` | Astro 5 + Vue 3 岛屿 + Tailwind，nginx 部署 | 面向终端用户的 SEO 多语言站点（14 语言），主域 `telegramdownloadmedia.com`，引导下载与安装 extension。详见 `@tech-website.md` |
-| **extension** | `extension/` | Vue 3 + Pinia + vue-i18n + Tailwind，**Chrome Manifest V3** | 跑在 `web.telegram.org` 的浏览器插件，跨上下文 RPC、本地下载引导、与 backend 同一套 HTTP 契约。详见 `@tech-extension.md` |
+| **extension** | `extension/` | Vue 3 + Pinia + vue-i18n + Tailwind，**Chrome Manifest V3** | Maps Extractor 插件（TG 下载业务已移除，改造中），跨上下文 RPC、与 backend 同一套 HTTP 契约。详见 `@tech-extension.md` |
 | **admin** | `admin/` | Vue 3 + Naive UI + vue-router + Pinia | 独立 SPA 管理后台（节点/订单/渠道/TG 客户端/mark-log 诊断），走 `/api/admin/*`。详见 `@tech-extension.md` 末尾 |
 
 ### 1.1 本地开发端口
@@ -70,7 +70,6 @@ extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式
 ```
 
 要点：
-- **业务服务器与执行节点是同一份代码、两个角色**（`app.role` = `business` / `download`），节点发布不需要业务数据库、不跑数据库结构同步。详见 `@../001.节点系统/tech-节点发布.md`。
 - **website / extension / admin 走同一套后端 HTTP 契约**，客户端前缀 `/api/client/*`、后台前缀 `/api/admin/*`。接口只用 GET 和 POST（见 `@../../../AGENTS.md` §3）。
 - **SLS 日志双写在 website 前端**，不在 backend Python 侧（后端用标准 logging：控制台 + 文件）。见 `@tech-website.md` 与 `feat.033`。
 

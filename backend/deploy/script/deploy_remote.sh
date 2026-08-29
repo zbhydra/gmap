@@ -202,11 +202,6 @@ generate_config_from_example() {
     local google_client_id_escaped
     local google_client_secret_escaped
     local public_website_base_url_escaped
-    local download_token_algorithm_escaped
-    local download_token_private_key_escaped
-    local download_token_public_keys
-    local resource_token_secret_escaped
-    local service_node_internal_auth_token_escaped
     local logger_level_escaped
     local redis_host_escaped
     local redis_port_escaped

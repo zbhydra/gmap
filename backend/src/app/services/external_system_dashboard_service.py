@@ -6,7 +6,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import time
-from typing import cast
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import case, func, select

@@ -1,5 +1,6 @@
 # 000 · 架构 · 浏览器插件 + 管理后台
 
+> ⚠️ **历史状态(2026-08-29)**:`extension/` 已改造为 Maps Extractor 插件(013 域),本文描述的 Telegram 注入/下载架构不再存在于代码中,仅作历史与机制参考;Maps 插件的合同以 `../../013.Maps插件/` 为准。
 > **插件是 Chrome Manifest V3**（`vite-plugin-web-extension` + `@types/chrome`）。本文件记录插件 `extension/` 与管理后台 `admin/` 的稳定结构和已确认契约。规则条文见根 `@../../../AGENTS.md` 与 `@../../references/specs/spec-extension.md`。
 
 ## A. 浏览器插件 `extension/`

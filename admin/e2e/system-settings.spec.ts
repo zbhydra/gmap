@@ -8,8 +8,6 @@
  * - 完整 API Key 不写入 localStorage。
  * - 刷新配置缓存命中正确 POST，并展示刷新结果。
  * - Google 数据采集状态、授权跳转、断开授权和手动采集关键路径。
- * - Telegram DOM 空对象读取、宽松对象保存和非法 JSON 拦截。
- * - Telegram Config 独立加载、宽松对象保存、失败重试和输入校验。
  */
 import { expect, test, type Page } from "@playwright/test";
 import { registerE2eBrowserIdentity } from "../scripts/playwright-browser-identity.mjs";
@@ -124,36 +122,6 @@ interface GoogleDataCollectOnceMockData {
   collected_at: number;
 }
 
-/** Telegram DOM 配置中的任意 JSON value。 */
-type TelegramDomJsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | TelegramDomJsonValue[]
-  | { [key: string]: TelegramDomJsonValue };
-
-/** Telegram DOM 全局稀疏覆盖 mock。 */
-interface TelegramDomConfigMockData {
-  /** 字段由不同版本扩展各自消费，mock 不维护字段清单。 */
-  [key: string]: TelegramDomJsonValue;
-}
-
-/** Telegram Config 中的任意 JSON value。 */
-type TelegramConfigJsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | TelegramConfigJsonValue[]
-  | { [key: string]: TelegramConfigJsonValue };
-
-/** 新版扩展使用的 Telegram 全局稀疏配置 mock。 */
-interface TelegramConfigMockData {
-  /** 字段由不同版本扩展各自消费，mock 不维护字段清单。 */
-  [key: string]: TelegramConfigJsonValue;
-}
-
 /** 本文件 route.fulfill 可返回的数据联合。 */
 type MockResponseData =
   | DashboardMockData
@@ -164,9 +132,7 @@ type MockResponseData =
   | GoogleDataConfigUpdateMockData
   | GoogleDataAuthorizationUrlMockData
   | GoogleDataDisconnectMockData
-  | GoogleDataCollectOnceMockData
-  | TelegramDomConfigMockData
-  | TelegramConfigMockData;
+  | GoogleDataCollectOnceMockData;
 
 /** 后端统一成功响应。 */
 function successResponse(data: MockResponseData) {
@@ -229,13 +195,11 @@ async function loginAsAdmin(page: Page) {
 /** 切换系统设置顶部 tab。 */
 async function openSettingsTab(
   page: Page,
-  tab: "api-key" | "google-data" | "telegram-dom" | "telegram-config",
+  tab: "api-key" | "google-data",
 ) {
   const tabText = {
     "api-key": "API Key",
     "google-data": "google 数据采集",
-    "telegram-dom": "Telegram DOM",
-    "telegram-config": "Telegram Config",
   }[tab];
   await page.locator(".n-tabs-nav").getByText(tabText, { exact: true }).click();
 }
@@ -270,20 +234,10 @@ async function mockSystemSettingsApi(page: Page) {
   let googleDataDisconnectCallCount = 0;
   let googleDataCollectCallCount = 0;
   let googleDataConfigSaveCallCount = 0;
-  let telegramDomConfig: TelegramDomConfigMockData = {};
-  let telegramDomGetCallCount = 0;
-  let telegramDomSaveCallCount = 0;
-  let lastTelegramDomSaveBody: TelegramDomConfigMockData | null = null;
-  let telegramConfig: TelegramConfigMockData = {};
-  let telegramConfigGetCallCount = 0;
-  let telegramConfigSaveCallCount = 0;
-  let lastTelegramConfigSaveBody: TelegramConfigMockData | null = null;
   let lastGoogleDataConfigSaveBody: GoogleDataConfigUpdateMockData | null = null;
   let lastGoogleDataAuthorizeBody: GoogleDataAuthorizationUrlRequestMockData | null =
     null;
   let failGoogleDataStatus = false;
-  let failTelegramConfigGet = false;
-  let failTelegramConfigSave = false;
   let googleDataAuthorizeFailure: { code: number; message: string } | null = null;
 
   await page.route("**/api/admin/system-settings/api-key", async (route) => {
@@ -322,46 +276,6 @@ async function mockSystemSettingsApi(page: Page) {
           refreshed_at: 1780977800000,
         }),
       );
-    },
-  );
-
-  await page.route("**/api/admin/system-settings/telegram-dom", async (route) => {
-    if (route.request().method() === "GET") {
-      telegramDomGetCallCount += 1;
-      await route.fulfill(successResponse(telegramDomConfig));
-      return;
-    }
-
-    expect(route.request().method()).toBe("POST");
-    telegramDomSaveCallCount += 1;
-    telegramDomConfig =
-      route.request().postDataJSON() as TelegramDomConfigMockData;
-    lastTelegramDomSaveBody = telegramDomConfig;
-    await route.fulfill(successResponse(telegramDomConfig));
-  });
-
-  await page.route(
-    "**/api/admin/system-settings/telegram-config",
-    async (route) => {
-      if (route.request().method() === "GET") {
-        telegramConfigGetCallCount += 1;
-        if (failTelegramConfigGet) {
-          await route.fulfill(failedResponse("telegram config load failed"));
-          return;
-        }
-        await route.fulfill(successResponse(telegramConfig));
-        return;
-      }
-
-      expect(route.request().method()).toBe("POST");
-      telegramConfigSaveCallCount += 1;
-      if (failTelegramConfigSave) {
-        await route.fulfill(failedResponse("telegram config save failed"));
-        return;
-      }
-      telegramConfig = route.request().postDataJSON() as TelegramConfigMockData;
-      lastTelegramConfigSaveBody = telegramConfig;
-      await route.fulfill(successResponse(telegramConfig));
     },
   );
 
@@ -477,18 +391,6 @@ async function mockSystemSettingsApi(page: Page) {
     setGoogleDataAuthorizeBusinessFailure: (code: number, message: string) => {
       googleDataAuthorizeFailure = { code, message };
     },
-    /** 更新 Telegram DOM mock，供配置隔离断言使用。 */
-    setTelegramDomConfig: (next: TelegramDomConfigMockData) => {
-      telegramDomConfig = next;
-    },
-    /** 控制 Telegram Config 读取接口是否失败。 */
-    setTelegramConfigGetFailure: (next: boolean) => {
-      failTelegramConfigGet = next;
-    },
-    /** 控制 Telegram Config 保存接口是否失败。 */
-    setTelegramConfigSaveFailure: (next: boolean) => {
-      failTelegramConfigSave = next;
-    },
     /** 当前生成接口调用次数。 */
     generateCallCount: () => generateCallCount,
     /** 当前刷新缓存接口调用次数。 */
@@ -503,22 +405,10 @@ async function mockSystemSettingsApi(page: Page) {
     googleDataCollectCallCount: () => googleDataCollectCallCount,
     /** 当前 Google 配置保存接口调用次数。 */
     googleDataConfigSaveCallCount: () => googleDataConfigSaveCallCount,
-    /** 当前 Telegram DOM 查询次数。 */
-    telegramDomGetCallCount: () => telegramDomGetCallCount,
-    /** 当前 Telegram DOM 保存次数。 */
-    telegramDomSaveCallCount: () => telegramDomSaveCallCount,
-    /** 当前 Telegram Config 查询次数。 */
-    telegramConfigGetCallCount: () => telegramConfigGetCallCount,
-    /** 当前 Telegram Config 保存次数。 */
-    telegramConfigSaveCallCount: () => telegramConfigSaveCallCount,
     /** 最近一次 Google 授权创建请求。 */
     lastGoogleDataAuthorizeBody: () => lastGoogleDataAuthorizeBody,
     /** 最近一次 Google 配置保存请求。 */
     lastGoogleDataConfigSaveBody: () => lastGoogleDataConfigSaveBody,
-    /** 最近一次 Telegram DOM 保存请求。 */
-    lastTelegramDomSaveBody: () => lastTelegramDomSaveBody,
-    /** 最近一次 Telegram Config 保存请求。 */
-    lastTelegramConfigSaveBody: () => lastTelegramConfigSaveBody,
   };
 }
 
@@ -580,129 +470,6 @@ test("刷新配置缓存命中 POST 并展示成功结果", async ({ page }) => 
   await expect(page.getByText("config_public_service")).toBeVisible();
   await expect(page.getByText("payment_config_service")).toBeVisible();
   expect(api.refreshCacheCallCount()).toBe(1);
-});
-
-test("Telegram DOM 读取空对象并宽松保存，非法 JSON 不提交", async ({
-  page,
-}) => {
-  await loginAsAdmin(page);
-  const api = await mockSystemSettingsApi(page);
-  const editor = page.locator(".telegram-dom-input textarea");
-  const configText = `{
-  "aMessageSelector": ".Message, .new-message",
-  "futureKey": { "enabled": true },
-  "aSidebarObservedAttributes": ["class", 1],
-  "arbitrary": null
-}`;
-
-  await page.goto("/system-settings");
-  await openSettingsTab(page, "telegram-dom");
-  await expect(editor).toHaveValue("{}");
-  expect(api.telegramDomGetCallCount()).toBe(1);
-
-  await openSettingsTab(page, "api-key");
-  await openSettingsTab(page, "telegram-dom");
-  expect(api.telegramDomGetCallCount()).toBe(1);
-
-  await editor.fill(configText);
-  await page.getByRole("button", { name: "保存 Telegram DOM" }).click();
-  await expect(
-    page.locator(".n-message__content", { hasText: "Telegram DOM 已保存" }),
-  ).toBeVisible();
-  await expect(editor).toHaveValue(configText);
-  expect(api.telegramDomSaveCallCount()).toBe(1);
-  expect(api.lastTelegramDomSaveBody()).toEqual({
-    aMessageSelector: ".Message, .new-message",
-    futureKey: { enabled: true },
-    aSidebarObservedAttributes: ["class", 1],
-    arbitrary: null,
-  });
-
-  await editor.fill("{");
-  await page.getByRole("button", { name: "保存 Telegram DOM" }).click();
-  await expect(page.getByText("请输入合法 JSON")).toBeVisible();
-  expect(api.telegramDomSaveCallCount()).toBe(1);
-});
-
-test("Telegram Config 独立读写，失败可重试且非法输入不提交", async ({
-  page,
-}) => {
-  await loginAsAdmin(page);
-  const api = await mockSystemSettingsApi(page);
-  const editor = page.locator(".telegram-config-input textarea");
-  const configText = `{
-  "dom": { "aMessageSelector": ".Message[data-message-id]" },
-  "download": { "opfsThresholdBytes": 209715200, "futureKey": true },
-  "futureGroup": { "enabled": null }
-}`;
-  api.setTelegramDomConfig({ aMessageSelector: ".legacy-message" });
-  api.setTelegramConfigGetFailure(true);
-
-  await page.goto("/system-settings");
-  await openSettingsTab(page, "telegram-config");
-  await expect(
-    page
-      .locator(".n-alert", { hasText: "Telegram Config 读取失败" })
-      .getByText("telegram config load failed"),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "保存 Telegram Config" }),
-  ).toBeDisabled();
-  expect(api.telegramConfigGetCallCount()).toBe(1);
-
-  api.setTelegramConfigGetFailure(false);
-  await page
-    .locator(".n-alert", { hasText: "Telegram Config 读取失败" })
-    .getByRole("button", { name: "重新读取" })
-    .click();
-  await expect(editor).toHaveValue("{}");
-  expect(api.telegramConfigGetCallCount()).toBe(2);
-
-  await openSettingsTab(page, "api-key");
-  await openSettingsTab(page, "telegram-config");
-  expect(api.telegramConfigGetCallCount()).toBe(2);
-
-  await editor.fill(configText);
-  await page.getByRole("button", { name: "保存 Telegram Config" }).click();
-  await expect(
-    page.locator(".n-message__content", { hasText: "Telegram Config 已保存" }),
-  ).toBeVisible();
-  await expect(editor).toHaveValue(configText);
-  expect(api.telegramConfigSaveCallCount()).toBe(1);
-  expect(api.lastTelegramConfigSaveBody()).toEqual({
-    dom: { aMessageSelector: ".Message[data-message-id]" },
-    download: { opfsThresholdBytes: 209715200, futureKey: true },
-    futureGroup: { enabled: null },
-  });
-  expect(api.telegramDomGetCallCount()).toBe(0);
-  expect(api.telegramDomSaveCallCount()).toBe(0);
-
-  await editor.fill("{");
-  await page.getByRole("button", { name: "保存 Telegram Config" }).click();
-  await expect(page.getByText("请输入合法 JSON")).toBeVisible();
-  expect(api.telegramConfigSaveCallCount()).toBe(1);
-
-  await editor.fill("[]");
-  await page.getByRole("button", { name: "保存 Telegram Config" }).click();
-  await expect(page.getByText("JSON 顶层必须是对象")).toBeVisible();
-  expect(api.telegramConfigSaveCallCount()).toBe(1);
-
-  const unsavedText = `{ "download": { "opfsThresholdBytes": 0 } }`;
-  api.setTelegramConfigSaveFailure(true);
-  await editor.fill(unsavedText);
-  await page.getByRole("button", { name: "保存 Telegram Config" }).click();
-  await expect(
-    page.locator(".n-message__content", { hasText: "telegram config save failed" }),
-  ).toBeVisible();
-  await expect(editor).toHaveValue(unsavedText);
-  expect(api.telegramConfigSaveCallCount()).toBe(2);
-
-  await openSettingsTab(page, "telegram-dom");
-  await expect(page.locator(".telegram-dom-input textarea")).toHaveValue(
-    JSON.stringify({ aMessageSelector: ".legacy-message" }, null, 2),
-  );
-  expect(api.telegramDomGetCallCount()).toBe(1);
-  expect(api.telegramDomSaveCallCount()).toBe(0);
 });
 
 test("Google 数据状态失败时不影响 API Key 区块，并提供重试入口", async ({

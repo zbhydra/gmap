@@ -1,7 +1,7 @@
 /**
  * 系统设置 API。
  *
- * 提供配置缓存刷新、当前管理员外部 API Key、Google 数据采集、Telegram DOM 和 Telegram Config 配置操作。
+ * 提供配置缓存刷新、当前管理员外部 API Key 和 Google 数据采集配置操作。
  */
 import request from "./request";
 
@@ -13,18 +13,6 @@ export type JsonValue =
   | null
   | JsonValue[]
   | { [key: string]: JsonValue };
-
-/** Telegram DOM 全局稀疏覆盖对象。 */
-export interface TelegramDomConfig {
-  /** 配置键由扩展消费；Admin 不维护字段清单。 */
-  [key: string]: JsonValue;
-}
-
-/** 新版扩展使用的 Telegram 全局稀疏配置对象。 */
-export interface TelegramConfig {
-  /** 配置键由扩展消费；Admin 不维护字段清单。 */
-  [key: string]: JsonValue;
-}
 
 /** 当前管理员 API Key 展示元信息。 */
 export interface AdminApiKeyMeta {
@@ -138,36 +126,6 @@ export function generateAdminApiKey() {
 export function refreshConfigCache() {
   return request.post<never, ConfigCacheRefreshResult>(
     "/system-settings/config-cache/refresh",
-  );
-}
-
-/** 读取 Telegram DOM 全局稀疏覆盖。 */
-export function getTelegramDomConfig() {
-  return request.get<never, TelegramDomConfig>(
-    "/system-settings/telegram-dom",
-  );
-}
-
-/** 原样覆盖保存 Telegram DOM 全局稀疏对象。 */
-export function saveTelegramDomConfig(data: TelegramDomConfig) {
-  return request.post<TelegramDomConfig, TelegramDomConfig>(
-    "/system-settings/telegram-dom",
-    data,
-  );
-}
-
-/** 读取新版扩展使用的 Telegram 全局稀疏配置。 */
-export function getTelegramConfig() {
-  return request.get<never, TelegramConfig>(
-    "/system-settings/telegram-config",
-  );
-}
-
-/** 原样覆盖保存新版扩展使用的 Telegram 全局稀疏对象。 */
-export function saveTelegramConfig(data: TelegramConfig) {
-  return request.post<TelegramConfig, TelegramConfig>(
-    "/system-settings/telegram-config",
-    data,
   );
 }
 

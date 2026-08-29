@@ -1,6 +1,7 @@
 # Extension 工程规范（MV3 插件）
 
 > `extension/` 浏览器插件代码**强制规范**。写/改 extension 前必读。
+> ⚠️ 2026-08-29 起 `extension/` 为 Maps Extractor 插件(013 域);本文中 Telegram 页面/下载相关条款失效,工程规范(MV3/RPC/i18n/测试)继续适用。
 > 技术栈：Manifest V3 + Vue 3 + Pinia + Vue I18n + Vite 7（vite-plugin-web-extension）。
 > 关联：[[spec-website]]、注释与错误定位见 [[spec-code]]。
 

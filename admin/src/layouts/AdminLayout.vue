@@ -4,7 +4,7 @@
   结构：
   NLayout
   ├── NLayoutSider（可折叠侧边栏）
-  │   └── NMenu（Dashboard / 服务节点 / TG Clients / 日志排查 / 下载详情 / 订单管理 / 渠道设置 / 系统设置）
+  │   └── NMenu（Dashboard / 订单管理 / 系统设置）
   └── NLayout
       ├── NLayoutHeader（顶栏：标题 + 登出按钮）
       └── NLayoutContent（RouterView）

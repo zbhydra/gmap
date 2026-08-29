@@ -136,5 +136,3 @@ def test_registry_registers_order_fulfillment_compensation() -> None:
 
     assert spec.kind == "interval"
     assert spec.interval_seconds == 60
-
-

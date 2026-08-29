@@ -5,8 +5,6 @@
   1. 刷新当前业务进程内配置读取缓存，并展示刷新时间和服务列表。
   2. 查询、生成和重新生成当前管理员外部 API Key；完整 key 仅在弹窗中一次性展示。
   3. 编辑 Google 数据采集配置，查询授权状态，发起授权、断开授权和手动采集。
-  4. 读取和保存 Telegram DOM 全局稀疏覆盖对象。
-  5. 读取和保存新版扩展使用的 Telegram 全局稀疏配置对象。
 -->
 <template>
   <div class="system-settings-view">
@@ -353,111 +351,6 @@
           </section>
         </NTabPane>
 
-        <NTabPane
-          name="telegram-dom"
-          :tab="t('systemSettings.tabTelegramDom')"
-        >
-          <section>
-            <NAlert
-              v-if="telegramDomLoadError"
-              class="unknown-alert"
-              type="error"
-              :title="t('systemSettings.telegramDomLoadFailedTitle')"
-            >
-              <NSpace vertical size="small">
-                <NText>{{ telegramDomLoadError }}</NText>
-                <NButton
-                  size="small"
-                  :loading="telegramDomLoading"
-                  @click="loadTelegramDomConfig"
-                >
-                  {{ t("systemSettings.telegramDomRetry") }}
-                </NButton>
-              </NSpace>
-            </NAlert>
-
-            <NSpin :show="telegramDomLoading">
-              <NForm :disabled="telegramDomSaving">
-                <NFormItem
-                  :label="t('systemSettings.telegramDomJsonLabel')"
-                  :validation-status="telegramDomValidationError ? 'error' : undefined"
-                  :feedback="telegramDomValidationError"
-                >
-                  <NInput
-                    v-model:value="telegramDomText"
-                    class="telegram-dom-input"
-                    type="textarea"
-                    :rows="18"
-                    placeholder="{}"
-                  />
-                </NFormItem>
-                <div class="form-actions">
-                  <NButton
-                    type="primary"
-                    :loading="telegramDomSaving"
-                    :disabled="!telegramDomLoaded"
-                    @click="handleSaveTelegramDomConfig"
-                  >
-                    {{ t("systemSettings.saveTelegramDom") }}
-                  </NButton>
-                </div>
-              </NForm>
-            </NSpin>
-          </section>
-        </NTabPane>
-
-        <NTabPane
-          name="telegram-config"
-          :tab="t('systemSettings.tabTelegramConfig')"
-        >
-          <section>
-            <NAlert
-              v-if="telegramConfigLoadError"
-              class="unknown-alert"
-              type="error"
-              :title="t('systemSettings.telegramConfigLoadFailedTitle')"
-            >
-              <NSpace vertical size="small">
-                <NText>{{ telegramConfigLoadError }}</NText>
-                <NButton
-                  size="small"
-                  :loading="telegramConfigLoading"
-                  @click="loadTelegramConfig"
-                >
-                  {{ t("systemSettings.telegramConfigRetry") }}
-                </NButton>
-              </NSpace>
-            </NAlert>
-
-            <NSpin :show="telegramConfigLoading">
-              <NForm :disabled="telegramConfigSaving">
-                <NFormItem
-                  :label="t('systemSettings.telegramConfigJsonLabel')"
-                  :validation-status="telegramConfigValidationError ? 'error' : undefined"
-                  :feedback="telegramConfigValidationError"
-                >
-                  <NInput
-                    v-model:value="telegramConfigText"
-                    class="telegram-config-input"
-                    type="textarea"
-                    :rows="18"
-                    placeholder="{}"
-                  />
-                </NFormItem>
-                <div class="form-actions">
-                  <NButton
-                    type="primary"
-                    :loading="telegramConfigSaving"
-                    :disabled="!telegramConfigLoaded"
-                    @click="handleSaveTelegramConfig"
-                  >
-                    {{ t("systemSettings.saveTelegramConfig") }}
-                  </NButton>
-                </div>
-              </NForm>
-            </NSpin>
-          </section>
-        </NTabPane>
       </NTabs>
     </NCard>
 
@@ -484,7 +377,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -515,20 +408,13 @@ import {
   generateAdminApiKey,
   getAdminApiKeyMeta,
   getGoogleDataStatus,
-  getTelegramConfig,
-  getTelegramDomConfig,
   refreshConfigCache,
   saveGoogleDataConfig,
-  saveTelegramConfig,
-  saveTelegramDomConfig,
   type AdminApiKeyMeta,
   type ConfigCacheRefreshResult,
   type GoogleDataConfigUpdateRequest,
   type GoogleDataCollectOnceResult,
   type GoogleDataStatus,
-  type JsonValue,
-  type TelegramConfig,
-  type TelegramDomConfig,
 } from "@/api/system-settings";
 import { formatAdminTimeMs } from "@/utils/time";
 
@@ -546,14 +432,6 @@ const googleDataAuthorizing = ref(false);
 const googleDataDisconnecting = ref(false);
 const googleDataCollecting = ref(false);
 const googleDataSaving = ref(false);
-const telegramDomLoading = ref(false);
-const telegramDomSaving = ref(false);
-const telegramDomLoaded = ref(false);
-const telegramDomLoadAttempted = ref(false);
-const telegramConfigLoading = ref(false);
-const telegramConfigSaving = ref(false);
-const telegramConfigLoaded = ref(false);
-const telegramConfigLoadAttempted = ref(false);
 const activeTab = ref("config-cache");
 const cacheRefreshResult = ref<ConfigCacheRefreshResult | null>(null);
 const apiKeyMeta = ref<AdminApiKeyMeta | null>(null);
@@ -561,12 +439,6 @@ const googleDataStatus = ref<GoogleDataStatus | null>(null);
 const googleDataCollectResult = ref<GoogleDataCollectOnceResult | null>(null);
 const generatedApiKey = ref("");
 const showGeneratedApiKeyModal = ref(false);
-const telegramDomText = ref("{}");
-const telegramDomLoadError = ref("");
-const telegramDomValidationError = ref("");
-const telegramConfigText = ref("{}");
-const telegramConfigLoadError = ref("");
-const telegramConfigValidationError = ref("");
 const googleDataConfigForm = ref<GoogleDataConfigUpdateRequest>({
   client_id: "",
   client_secret: "",
@@ -874,138 +746,6 @@ function getErrorMessage(error: Error | null, fallback: string) {
   return error?.message || fallback;
 }
 
-/** 首次进入 Telegram DOM tab 时读取当前稀疏对象。 */
-async function loadTelegramDomConfig() {
-  telegramDomLoadAttempted.value = true;
-  telegramDomLoading.value = true;
-  telegramDomLoadError.value = "";
-  try {
-    const config = await getTelegramDomConfig();
-    telegramDomText.value = JSON.stringify(config, null, 2);
-    telegramDomLoaded.value = true;
-  } catch (error) {
-    console.error("SystemSettingsView.loadTelegramDomConfig() 加载失败:", error);
-    telegramDomLoaded.value = false;
-    telegramDomLoadError.value = getErrorMessage(
-      error instanceof Error ? error : null,
-      t("systemSettings.telegramDomLoadFailed"),
-    );
-    message.error(telegramDomLoadError.value);
-  } finally {
-    telegramDomLoading.value = false;
-  }
-}
-
-/** 只校验合法 JSON 和顶层对象，不判断字段、值类型或 selector。 */
-function parseTelegramDomConfig(): TelegramDomConfig | null {
-  let parsed: JsonValue;
-  try {
-    parsed = JSON.parse(telegramDomText.value) as JsonValue;
-  } catch (error) {
-    console.error("SystemSettingsView.parseTelegramDomConfig() JSON 解析失败:", error);
-    telegramDomValidationError.value = t("systemSettings.telegramDomJsonInvalid");
-    return null;
-  }
-
-  if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
-    telegramDomValidationError.value = t(
-      "systemSettings.telegramDomTopObjectInvalid",
-    );
-    return null;
-  }
-
-  return parsed as TelegramDomConfig;
-}
-
-/** 原样保存当前文本解析出的 Telegram DOM 稀疏对象。 */
-async function handleSaveTelegramDomConfig() {
-  const config = parseTelegramDomConfig();
-  if (config === null) return;
-
-  telegramDomSaving.value = true;
-  try {
-    await saveTelegramDomConfig(config);
-    message.success(t("systemSettings.telegramDomSaveSuccess"));
-  } catch (error) {
-    console.error("SystemSettingsView.handleSaveTelegramDomConfig() 保存失败:", error);
-    message.error(
-      getErrorMessage(
-        error instanceof Error ? error : null,
-        t("systemSettings.telegramDomSaveFailed"),
-      ),
-    );
-  } finally {
-    telegramDomSaving.value = false;
-  }
-}
-
-/** 首次进入 Telegram Config tab 时读取当前稀疏对象。 */
-async function loadTelegramConfig() {
-  telegramConfigLoadAttempted.value = true;
-  telegramConfigLoading.value = true;
-  telegramConfigLoadError.value = "";
-  try {
-    const config = await getTelegramConfig();
-    telegramConfigText.value = JSON.stringify(config, null, 2);
-    telegramConfigLoaded.value = true;
-  } catch (error) {
-    console.error("SystemSettingsView.loadTelegramConfig() 加载失败:", error);
-    telegramConfigLoaded.value = false;
-    telegramConfigLoadError.value = getErrorMessage(
-      error instanceof Error ? error : null,
-      t("systemSettings.telegramConfigLoadFailed"),
-    );
-    message.error(telegramConfigLoadError.value);
-  } finally {
-    telegramConfigLoading.value = false;
-  }
-}
-
-/** 只校验合法 JSON 和顶层对象，具体字段由各版本扩展消费。 */
-function parseTelegramConfig(): TelegramConfig | null {
-  let parsed: JsonValue;
-  try {
-    parsed = JSON.parse(telegramConfigText.value) as JsonValue;
-  } catch (error) {
-    console.error("SystemSettingsView.parseTelegramConfig() JSON 解析失败:", error);
-    telegramConfigValidationError.value = t(
-      "systemSettings.telegramConfigJsonInvalid",
-    );
-    return null;
-  }
-
-  if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
-    telegramConfigValidationError.value = t(
-      "systemSettings.telegramConfigTopObjectInvalid",
-    );
-    return null;
-  }
-
-  return parsed as TelegramConfig;
-}
-
-/** 原样保存当前文本解析出的 Telegram 稀疏配置对象。 */
-async function handleSaveTelegramConfig() {
-  const config = parseTelegramConfig();
-  if (config === null) return;
-
-  telegramConfigSaving.value = true;
-  try {
-    await saveTelegramConfig(config);
-    message.success(t("systemSettings.telegramConfigSaveSuccess"));
-  } catch (error) {
-    console.error("SystemSettingsView.handleSaveTelegramConfig() 保存失败:", error);
-    message.error(
-      getErrorMessage(
-        error instanceof Error ? error : null,
-        t("systemSettings.telegramConfigSaveFailed"),
-      ),
-    );
-  } finally {
-    telegramConfigSaving.value = false;
-  }
-}
-
 /** 根据当前状态决定直接生成或先确认重新生成。 */
 function handleGenerateApiKey() {
   if (apiKeyMeta.value === null) {
@@ -1105,31 +845,6 @@ onMounted(() => {
   void loadGoogleDataStatus();
 });
 
-watch(activeTab, (tab) => {
-  if (
-    tab === "telegram-dom" &&
-    !telegramDomLoadAttempted.value &&
-    !telegramDomLoading.value
-  ) {
-    void loadTelegramDomConfig();
-  }
-
-  if (
-    tab === "telegram-config" &&
-    !telegramConfigLoadAttempted.value &&
-    !telegramConfigLoading.value
-  ) {
-    void loadTelegramConfig();
-  }
-});
-
-watch(telegramDomText, () => {
-  telegramDomValidationError.value = "";
-});
-
-watch(telegramConfigText, () => {
-  telegramConfigValidationError.value = "";
-});
 </script>
 
 <style scoped>
@@ -1157,16 +872,6 @@ watch(telegramConfigText, () => {
 
 .google-data-config-form {
   margin-bottom: 16px;
-}
-
-:deep(.telegram-dom-input textarea) {
-  min-height: 360px;
-  font-family: "Geist Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-}
-
-:deep(.telegram-config-input textarea) {
-  min-height: 360px;
-  font-family: "Geist Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 .google-data-config-grid {

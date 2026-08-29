@@ -3,7 +3,7 @@
 
 流程：
 1. 从启用的 `config_payment_channel.channel_code=telegram_stars` 读取配置。
-2. 请求业务实例 `/api/system/health`，确认公网 API 指向 business role。
+2. 请求业务实例 `/api/system/health`，确认公网 API 可用。
 3. 调用 Telegram Bot API `setWebhook`。
 4. 调用 `getWebhookInfo` 验收 webhook URL 与错误信息。
 """

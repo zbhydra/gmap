@@ -1,7 +1,7 @@
 /**
  * 管理后台通用用户信息弹窗 API。
  *
- * 封装用户 profile、最近下载和订单列表三个只读接口。
+ * 封装用户 profile 和订单列表两个只读接口。
  */
 import request from "./request";
 import type { AdminOrder } from "./orders";
@@ -75,28 +75,6 @@ export interface AdminUserProfileData {
   credits: AdminUserCreditsInfo;
   /** 订阅信息。 */
   subscription: AdminUserSubscriptionInfo;
-}
-
-/** 用户最近下载记录。 */
-export interface AdminUserDownloadRecord {
-  /** 下载记录 ID。 */
-  id: number;
-  /** website 下载资源指纹。 */
-  resource_key: string;
-  /** 平台。 */
-  platform: string;
-  /** 规范化链接。 */
-  canonical_link: string;
-  /** 资源 ID。 */
-  source_id: string;
-  /** 文件名。 */
-  filename: string | null;
-  /** 文件大小，字节。 */
-  size_bytes: number | null;
-  /** 本次实际扣除 Credits。 */
-  credits_cost: number;
-  /** 下载时间，毫秒时间戳。 */
-  created_at: number;
 }
 
 /** 分页参数。 */

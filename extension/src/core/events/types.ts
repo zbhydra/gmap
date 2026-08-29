@@ -2,13 +2,9 @@
  * 扩展单向事件类型。
  *
  * 只用于 Chrome/DOM EventBus 的通知链路，不承载 req-resp RPC。
+ * 事件基建（EventDefinition / EventMessage / isEventMessage）是通用底座；
+ * 业务事件在对应功能落地时按需补充定义。
  */
-
-import type { DownloadQueueSnapshot, MessageObject } from '@/core/types'
-import type { DownloadProgressDetail } from '@/core/protocol/injected'
-
-/** A 版本 injected 侧栏媒体缓存更新后通知 content 重扫的 DOM 事件名。 */
-export const A_SIDEBAR_CACHE_UPDATED_EVENT = 'tg-dl:a-sidebar-cache-updated'
 
 /** EventBus 可传递的事件 payload。 */
 export type EventPayload = object | string | number | boolean | null | void
@@ -55,22 +51,8 @@ export function isEventMessage(
   return value.__event__ === true && typeof value.event === 'string'
 }
 
-/** popup/content 之间的 Chrome 单向事件。 */
-export interface ExtensionEvents extends EventDefinition {
-  /** 显示升级弹窗。 */
-  showUpgradeModal: { resetAt?: number }
-  /** 升级订阅弹窗从隐藏进入显示。 */
-  upgradeModalOpened: void
-  /** 当前页面未完成下载任务发生变化。 */
-  downloadQueueUpdated: DownloadQueueSnapshot
-}
+/** popup/content/background 之间的 Chrome 单向事件。暂无业务事件，落地时补充。 */
+export interface ExtensionEvents extends EventDefinition {}
 
-/** content 内部 DOM 单向事件。 */
-export interface ContentEvents extends EventDefinition {
-  /** 消息列表更新。 */
-  messagesUpdated: { messages: MessageObject[] }
-  /** 页面下载按钮使用的非可信瞬时下载进度。 */
-  downloadProgress: DownloadProgressDetail
-  /** injected script 就绪。 */
-  injectedReady: void
-}
+/** content 内部 DOM 单向事件。暂无业务事件，落地时补充。 */
+export interface ContentEvents extends EventDefinition {}

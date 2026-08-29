@@ -6,11 +6,11 @@
  *
  * 职责：
  * - spawn 后端 seed 脚本（backend/scripts/e2e_seed_user.py --action seed），
- *   并用 E2E_SEED_SCENARIO 显式选择账号业务状态；未指定时保持 parse-download。
+ *   并用 E2E_SEED_SCENARIO 显式选择账号业务状态；未指定时保持 pricing-review-reward。
  *   脚本会建对应 e2e 用户、签 token 并 store 进 Redis，
  *   把 {token, user_id, email, device_id} 单行 JSON 打到 stdout。
  * - 解析 stdout 最后一行 JSON，写入 process.env.E2E_ACCESS_TOKEN /
- *   E2E_DEVICE_ID，供 parse-download-smoke.spec.ts 注入 localStorage。
+ *   E2E_DEVICE_ID，供 e2e spec 注入 localStorage。
  *
  * 设计取舍：
  * - website→backend 的路径耦合集中在此处一个常量，便于维护。
@@ -33,7 +33,7 @@ const BACKEND_PYTHON = process.env.E2E_BACKEND_PYTHON || path.join(BACKEND_DIR, 
 /** seed 脚本相对 backend 根目录路径。 */
 const SEED_SCRIPT = 'scripts/e2e_seed_user.py';
 /** 后端 seed 场景；Pricing smoke 必须显式选择其专用领取前状态。 */
-const SEED_SCENARIO = process.env.E2E_SEED_SCENARIO || 'parse-download';
+const SEED_SCENARIO = process.env.E2E_SEED_SCENARIO || 'pricing-review-reward';
 
 /** seed 脚本 stdout 的结果结构。 */
 interface SeedResult {

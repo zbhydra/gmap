@@ -82,14 +82,7 @@ async function dispatchInstallClickMark(target: HTMLElement): Promise<void> {
       filename: document.title,
       type: target.getAttribute(GA_EVENT_ATTR) ?? 'chrome_web_store_click',
       size: 0,
-      link: anchor.href,
-      // 安装按钮 mark 不关联实际媒体平台，硬编码 telegram 满足 MediaPost 类型约束。
-      platform: 'telegram',
-      downloadMode: 'proxy',
-      capabilities: {
-        download: false,
-        play: false
-      }
+      link: anchor.href
     }
   ])
 

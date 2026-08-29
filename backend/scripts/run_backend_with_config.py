@@ -3,7 +3,7 @@
 
 该脚本只给本地 smoke/诊断使用：
 1. 在导入 app.main 前把 app.core.config.settings 替换为指定配置。
-2. 用当前配置里的 app.host/app.port/app.role 创建并启动 FastAPI app。
+2. 用当前配置里的 app.host/app.port 创建并启动 FastAPI app。
 3. 不修改 backend/config.yaml，也不改变线上 supervisor/uvicorn 入口。
 """
 

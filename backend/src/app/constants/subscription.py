@@ -1,7 +1,6 @@
 """订阅周期常量和商品 metadata 配置。"""
 
 import enum
-import math
 from typing import Any
 
 from pydantic import (
@@ -26,7 +25,6 @@ class SubscriptionPeriodEnum(str, enum.Enum):
 
 FREE_SUBSCRIPTION_PRODUCT_ID = "free"
 UNLIMITED_SUBSCRIPTION_PRODUCT_ID = "unlimited"
-FREE_EXTENSION_DAILY_DOWNLOAD_LIMIT = 5
 
 
 class SubscriptionProductMetadata(BaseModel):
@@ -34,13 +32,7 @@ class SubscriptionProductMetadata(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    daily_limit: int = Field(description="插件端每日下载额度，-1 表示不限次数")
-    extension_daily_download_limit: int = Field(description="插件端每日下载额度")
     auto_renew: bool = Field(default=False, description="是否自动续费")
-    proxy_user_rate_limit_mb_per_second: float = Field(
-        default=0,
-        description="用户 proxy 下载限速，单位 MB/s",
-    )
 
     @classmethod
     def from_metadata(
@@ -82,47 +74,10 @@ class SubscriptionProductMetadata(BaseModel):
             product_id == FREE_SUBSCRIPTION_PRODUCT_ID
         )
 
-        if (
-            "daily_limit" not in metadata
-            and "extension_daily_download_limit" in metadata
-        ):
-            metadata["daily_limit"] = metadata["extension_daily_download_limit"]
-
-        if is_free:
-            if "daily_limit" not in metadata:
-                metadata["daily_limit"] = FREE_EXTENSION_DAILY_DOWNLOAD_LIMIT
-            if "auto_renew" not in metadata:
-                metadata["auto_renew"] = False
-        if "extension_daily_download_limit" not in metadata:
-            metadata["extension_daily_download_limit"] = metadata.get("daily_limit")
+        if is_free and "auto_renew" not in metadata:
+            metadata["auto_renew"] = False
 
         return metadata
-
-    @field_validator(
-        "daily_limit",
-        "extension_daily_download_limit",
-        mode="before",
-    )
-    @classmethod
-    def _validate_daily_limit(cls, value: object) -> int:
-        """每日额度必须是 int，且 -1 表示不限次数。"""
-        if isinstance(value, bool) or not isinstance(value, int):
-            raise ValueError(f"must be integer, value={value!r}")
-        if value < -1:
-            raise ValueError(f"must be greater than or equal to -1, value={value}")
-        return value
-
-    @field_validator("proxy_user_rate_limit_mb_per_second", mode="before")
-    @classmethod
-    def _normalize_proxy_user_rate_limit(cls, value: object) -> float:
-        """用户限速字段缺失或非法时按不限速处理。"""
-        if (
-            isinstance(value, bool)
-            or not isinstance(value, int | float)
-            or not math.isfinite(value)
-        ):
-            return 0
-        return max(0, value)
 
     @field_validator("auto_renew", mode="before")
     @classmethod

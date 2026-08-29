@@ -13,7 +13,8 @@ docs/feat/
     references/          # 源 feat 索引、引用资源
     plans/               # 执行文档
     changelog.md
-  001.节点系统/ ~ 011.Pricing页/     # 业务域：产品功能
+  001.节点系统/ ~ 011.Pricing页/     # 业务域：Telegram 产品线
+  013.Maps插件/ ~ 015.工具与增长/    # 业务域：Maps Extractor 新线（进度大盘见 docs/ROADMAP.md）
     feat.md              # 产品需求
     tech-*.md            # 技术实现
     references/

@@ -1,4 +1,5 @@
-export interface HomepageWorkspaceContent {
+/** Pricing / 扩展登录页共用的账户区文案（登录弹窗、Credits 购买、账户菜单）。 */
+export interface AccountContent {
   auth: {
     eyebrow: string
     title: string
@@ -26,46 +27,24 @@ export interface HomepageWorkspaceContent {
     logout: string
     /** website 积分单位文案。 */
     creditsLabel: string
-  }
-  quota: {
-    eyebrow: string
-    title: string
-    planLabel: string
-    remainingLabel: string
-    dailyLimitLabel: string
-    unlimited: string
+    /** 未输入邮箱时点击发送验证码的提示。 */
+    enterEmailFirst: string
+    /** 未输入邮箱或验证码时点击登录的提示。 */
+    enterEmailAndCode: string
+    /** 验证码发送失败提示。 */
+    sendCodeFailed: string
+    /** Google 登录失败提示。 */
+    googleSignInFailed: string
+    /** Google Client ID 未配置提示。 */
+    googleClientMissing: string
+    /** 登录失败通用提示。 */
+    signInFailed: string
   }
   checkin: {
-    /** Credits 胶囊无余额时的占位文案。 */
-    creditsLoading: string
-    /** Credits 胶囊按钮无障碍文案。 */
-    creditsButtonLabel: string
     /** 账户按钮无障碍文案。 */
     accountButtonLabel: string
     /** 账户菜单无障碍文案。 */
     accountMenuLabel: string
-    /** 签到弹窗标题。 */
-    title: string
-    /** 今日可领取奖励说明，支持 {credits} 占位符。 */
-    todayRewardText: string
-    /** 已领取结果说明，支持 {credits} 占位符。 */
-    claimedRewardText: string
-    /** 距离下次可领取倒计时，支持 {time} 占位符。 */
-    nextCountdown: string
-    /** 下次可领取绝对时间，支持 {time} 占位符。 */
-    nextAt: string
-    /** 主领取按钮文案，支持 {credits} 占位符。 */
-    claimButton: string
-    /** 领取中的按钮文案。 */
-    claimingButton: string
-    /** 暂不领取按钮文案。 */
-    notNow: string
-    /** 关闭弹窗按钮文案。 */
-    close: string
-    /** 签到状态加载失败文案。 */
-    loadFailed: string
-    /** 签到领取失败文案。 */
-    claimFailed: string
   }
   /** Credits 不足时打开的购买弹窗文案。 */
   creditPurchase: {
@@ -150,167 +129,6 @@ export interface HomepageWorkspaceContent {
     /** 登录失效文案。 */
     authExpired: string
   }
-  parse: {
-    eyebrow: string
-    title: string
-    helperText?: string
-    failureTitle?: string
-    failureDescription?: string
-    failureCta?: string
-    privateChannelDescription?: string
-    unsupportedLinkError?: string
-    /** Telegram 邀请链接不是具体消息链接时的提示。 */
-    telegramInviteLinkError?: string
-    /** Telegram 频道或聊天入口页缺少消息 ID 时的提示。 */
-    telegramMessageListLinkError?: string
-    /** Telegram Web 页面链接需要插件处理时的提示。 */
-    telegramWebLinkError?: string
-    messageLinkGuideTitle?: string
-    messageLinkGuideDesktopInstruction?: string
-    messageLinkGuideMobileInstruction?: string
-    messageLinkGuideRetryHint?: string
-    messageLinkGuideTrigger?: string
-    linkLabel: string
-    linkPlaceholder: string
-    clearInput?: string
-    submit: string
-    submitting: string
-    noResults: string
-    download: string
-    downloading: string
-    /** 下载前浏览器存储检测中文案。 */
-    checkingStorage?: string
-    play?: string
-    preparingPlayback?: string
-    preparingMp4?: string
-    closePlayer?: string
-    continuePlayback?: string
-    upgradeToPlay?: string
-    playQuotaExhausted?: string
-    playerRestoring?: string
-    playerRestoredPaused?: string
-    playerResumeFailed?: string
-    playerRefreshing?: string
-    playerRecreating?: string
-    playerUnsupported?: string
-    playerSessionExpired?: string
-    playerFailed?: string
-    playQuotaUnavailable?: string
-    playQuotaReached?: string
-    playerResourceBusy?: string
-    downloadAll: string
-    downloadingAll?: string
-    platformTelegram: string
-    platformTikTok: string
-    platformInstagram?: string
-    platformThreads?: string
-    platformReddit?: string
-    platformDouyin?: string
-    unknownSize: string
-    resumeNotice?: string
-    resumeAction?: string
-    pendingRestartText?: string
-    pendingRestartButton?: string
-    resumeUnavailableText?: string
-    resumeDismiss?: string
-    resuming?: string
-    largeFileExtensionInlineChromeTitle?: string
-    largeFileExtensionInlineChromeDescription?: string
-    largeFileExtensionInlineChromeCta?: string
-    largeFileExtensionInlineEdgeTitle?: string
-    largeFileExtensionInlineEdgeDescription?: string
-    largeFileExtensionInlineEdgeCta?: string
-  }
-  errors: {
-    enterEmailFirst: string
-    enterEmailAndCode: string
-    sendCodeFailed: string
-    googleSignInFailed: string
-    googleClientMissing: string
-    restoreSessionFailed: string
-    signInFailed: string
-    logoutFailed: string
-    loadQuotaFailed: string
-    enterLink: string
-    /** 用户输入不是合法 URL 时的本地校验提示。 */
-    invalidLink?: string
-    parseFailed: string
-    downloadFailed: string
-    /** 网站端出于安全策略不允许直接下载该文件类型时的插件引导文案。 */
-    unsafeFileTypeUseExtension?: string
-    /** 网站端不允许直接下载文件类型时的确认弹窗标题。 */
-    unsafeFileTypeConfirmTitle?: string
-    /** 网站端不允许直接下载文件类型时确认查看插件卡片的按钮文案。 */
-    unsafeFileTypeConfirmViewExtension?: string
-    /** 网站端不允许直接下载文件类型时取消查看插件卡片的按钮文案。 */
-    unsafeFileTypeConfirmCancel?: string
-    /** 浏览器本地存储不足时的插件引导文案，支持 {file_size}/{available_space}/{required_space}。 */
-    browserStorageInsufficientUseExtension?: string
-    /** 浏览器本地存储不足时的确认弹窗标题。 */
-    browserStorageInsufficientConfirmTitle?: string
-    /** 浏览器本地存储不足时确认查看插件卡片的按钮文案。 */
-    browserStorageInsufficientConfirmViewExtension?: string
-    /** 浏览器本地存储不足时取消查看插件卡片的按钮文案。 */
-    browserStorageInsufficientConfirmCancel?: string
-    downloadNetworkInterrupted?: string
-    unsupportedDownloadMode?: string
-    clientMuxFailed?: string
-    clientMuxTooLarge?: string
-    trackFetchFailed?: string
-    unsupportedPlatform: string
-    tiktokUnsupported: string
-    vimeoParseFailed?: string
-    xParseFailed?: string
-    instagramParseFailed?: string
-    instagramImageParseFailed?: string
-    threadsParseFailed?: string
-    redditParseFailed?: string
-    douyinParseFailed?: string
-    quotaExceeded: string
-    rateLimitExceeded: string
-  }
-  downloadAll: {
-    allSuccess: string
-    partialFailed: string
-    allFailed: string
-  }
-  requiresClient: {
-    privateChannel: string
-    privateChannelCta?: string
-    restrictedFile: string
-    floodWait?: string
-  }
-}
-
-export type DownloadWorkspaceContent = HomepageWorkspaceContent
-
-export interface FeatureMessage {
-  title: string
-  description: string
-  details: string[]
-}
-
-export interface StepMessage {
-  title: string
-  description: string
-}
-
-export interface HomepageHowToMessage {
-  title: string
-  subtitle: string
-  steps: StepMessage[]
-}
-
-export interface TechSpecsMessage {
-  title: string
-  browsersLabel: string
-  browsers: string
-  telegramVersionsLabel: string
-  telegramVersions: string
-  permissionsLabel: string
-  permissions: string
-  updatesLabel: string
-  updates: string
 }
 
 export interface FAQItemMessage {
@@ -328,176 +146,6 @@ export interface ChangelogEntryMessage {
 }
 
 /** 平台落地页特性卡片 */
-export interface PlatformFeatureMessage {
-  /** 特性标题 */
-  title: string
-  /** 特性描述 */
-  description: string
-}
-
-/** 通用信息表格的一行数据 */
-export interface InfoTableRowMessage {
-  /** 一行的单元格文本，顺序与 headers 对应；长度应等于 headers 列数 */
-  cells: string[]
-}
-
-/** 通用信息表格区块（首页情景匹配表 / 方法对比表共用） */
-export interface InfoTableMessage {
-  /** 区块标题 */
-  title: string
-  /** 引导句（表格上方说明）。situation 有；comparison 无（飞书原文标题后直接表格），故可选 */
-  intro?: string
-  /** 表头文本，列数应等于每行 cells 长度 */
-  headers: string[]
-  /** 数据行 */
-  rows: InfoTableRowMessage[]
-}
-
-/** 文章页目录链接 */
-export interface GuideLinkMessage {
-  /** 显示文案 */
-  label: string
-  /** 页面内锚点，不含 # */
-  anchor: string
-}
-
-/** 文章页普通段落 */
-export interface GuideParagraphMessage {
-  /** 段落文本 */
-  text: string
-}
-
-/** 文章页列表 */
-export interface GuideListMessage {
-  /** 列表条目 */
-  items: string[]
-}
-
-/** 文章页正文区块 */
-export interface GuideSectionMessage {
-  /** section id，用于锚点和 JSON-LD step url */
-  id: string
-  /** H2 标题 */
-  title: string
-  /** 普通段落 */
-  paragraphs: GuideParagraphMessage[]
-  /** 可选 bullet 或 numbered list */
-  list?: GuideListMessage
-  /** 可选提示段 */
-  note?: string
-}
-
-/** 文章页快速答案 */
-export interface GuideQuickAnswerMessage {
-  /** Quick answer 标题 */
-  title: string
-  /** 快速处理步骤 */
-  items: string[]
-  /** 风险提示 */
-  warning: string
-}
-
-/** 文章页方法对比表 */
-export interface GuideComparisonTableMessage {
-  /** H2 标题 */
-  title: string
-  /** 表头 */
-  headers: string[]
-  /** 表格行 */
-  rows: InfoTableRowMessage[]
-}
-
-/** HowTo 单个步骤 */
-export interface GuideHowToStepMessage {
-  /** HowTo step 名称 */
-  name: string
-  /** 对应页面锚点 */
-  anchor: string
-  /** HowTo step 文本 */
-  text: string
-}
-
-/** HowTo 结构化数据和可见步骤 */
-export interface GuideHowToMessage {
-  /** HowTo 名称 */
-  name: string
-  /** HowTo 描述 */
-  description: string
-  /** ISO 8601 duration，例如 PT5M */
-  totalTime: string
-  /** HowTo 工具名称列表 */
-  tools: string[]
-  /** HowTo 步骤 */
-  steps: GuideHowToStepMessage[]
-}
-
-/** Telegram 禁下载频道 workaround SEO 落地页内容 */
-export interface DownloadDisabledChannelWorkaroundPageContent {
-  /** SEO meta */
-  seo: {
-    /** HTML title */
-    title: string
-    /** meta description */
-    description: string
-  }
-  /** 导航和页脚入口文案 */
-  linkLabel: string
-  /** breadcrumb 文案 */
-  breadcrumb: {
-    /** 首页文案 */
-    home: string
-    /** 当前页面文案 */
-    current: string
-  }
-  /** Hero 区块 */
-  hero: {
-    /** H1 */
-    title: string
-    /** 导语 */
-    intro: string
-    /** 图片 alt */
-    imageAlt: string
-  }
-  /** 页面下载工作区专用文案，避免复用首页关键词标题 */
-  workspace: {
-    /** 小提示文本，渲染为 p 而不是 heading */
-    title: string
-    /** 主操作按钮 */
-    submit: string
-    /** 输入框下方说明 */
-    helperText: string
-  }
-  /** Quick answer callout */
-  quickAnswer: GuideQuickAnswerMessage
-  /** 目录 */
-  toc: {
-    /** 目录标题 */
-    title: string
-    /** 锚点列表 */
-    items: GuideLinkMessage[]
-  }
-  /** 正文章节 */
-  sections: GuideSectionMessage[]
-  /** 方法对比表 */
-  comparison: GuideComparisonTableMessage
-  /** FAQ */
-  faq: {
-    /** FAQ 标题 */
-    title: string
-    /** 问答列表 */
-    items: FAQItemMessage[]
-  }
-  /** HowTo 可见步骤和结构化数据来源 */
-  howTo: GuideHowToMessage
-  /** 结论区块 */
-  bottomLine: {
-    /** H2 标题 */
-    title: string
-    /** 结论正文 */
-    text: string
-  }
-}
-
 /** 扩展登录页 v2（externally_connectable 协议）文案。 */
 export interface ExtensionLoginV2PageContent {
   /** <title>。 */
@@ -553,94 +201,6 @@ export interface ExtensionLoginV2PageContent {
 }
 
 /** 首页 Solutions 方案卡（标题 + 描述 + "use when" 条件列表） */
-export interface HomepageSolutionMessage {
-  /** 方案标题 */
-  title: string
-  /** 方案说明 */
-  description: string
-  /** "Use this method when:" 标签文案 */
-  useWhenLabel: string
-  /** 适用条件 bullet 列表 */
-  useWhen: string[]
-}
-
-/** 首页排错清单区块（飞书 "If the Telegram Video Link Does Not Work" 独立 H2） */
-export interface HomepageTroubleMessage {
-  /** 排错区块标题 */
-  title: string
-  /** 引导段 */
-  intro: string
-  /** 排错清单条目 */
-  items: string[]
-}
-
-/** 首页合规声明区块（飞书 "Important Permission Note" 独立 H2） */
-export interface HomepagePermissionMessage {
-  /** 合规声明标题 */
-  title: string
-  /** 合规声明正文 */
-  note: string
-}
-
-/** 平台互链卡片 */
-export interface PlatformCrossLinkMessage {
-  /** 显示标题 */
-  label: string
-  /** 相对路径，如 '/tiktok-downloader/' — 不含 locale prefix */
-  href: string
-  /** 简短描述 */
-  description: string
-}
-
-/** 单个平台落地页的完整内容 */
-export interface PlatformDownloaderPageContent {
-  /** SEO 元信息 */
-  seo: {
-    /** 页面标题 */
-    title: string
-    /** meta description */
-    description: string
-    /** meta keywords */
-    keywords: string
-  }
-  /** 覆盖 DownloadWorkspace 的 parse 区域字段 */
-  workspace: {
-    /** workspace 标题 */
-    title: string
-    /** 辅助说明 */
-    helperText: string
-    /** 输入框 placeholder */
-    linkPlaceholder: string
-  }
-  /** 平台特性区块 */
-  features: {
-    /** 区块标题 */
-    title: string
-    /** 区块副标题 */
-    subtitle: string
-    /** 3 个特性卡片 */
-    items: PlatformFeatureMessage[]
-  }
-  /** HowTo 步骤区块 */
-  howTo: HomepageHowToMessage
-  /** FAQ 区块 */
-  faq: {
-    /** 区块标题 */
-    title: string
-    /** 区块描述 */
-    description?: string
-    /** FAQ 问答列表 */
-    items: FAQItemMessage[]
-  }
-  /** 平台互链区块 */
-  crossLinks: {
-    /** 区块标题 */
-    title: string
-    /** 互链卡片列表 */
-    items: PlatformCrossLinkMessage[]
-  }
-}
-
 /** Pricing 页面内容。 */
 export interface PricingPageContent {
   /** SEO 元信息。 */
@@ -854,89 +414,9 @@ export interface SiteContent {
   common: {
     installCta: string
   }
-  sections: {
-    features: {
-      title: string
-      subtitle: string
-      metaDescription?: string
-      items: FeatureMessage[]
-    }
-    steps: {
-      title: string
-      subtitle: string
-      metaDescription?: string
-      items: StepMessage[]
-    }
-    cta: {
-      title: string
-      description: string
-    }
-    techSpecs: TechSpecsMessage
-  }
   pages: {
-    homepage: {
-      hero: {
-        title: string
-        description: string
-      }
-      stats: {
-        users: string
-        downloads: string
-      }
-      /** 首页独立 SEO meta（不复用全站 site.*），private video downloader 口径，取自飞书 SEO Title/Meta */
-      seo: {
-        /** <title>：飞书 SEO Title「Telegram Private Video Downloader: Download Any Private Media」 */
-        title: string
-        /** <meta description>：飞书 Meta Description */
-        description: string
-        /** <meta keywords>：逗号分隔，private 口径关键词 */
-        keywords: string
-      }
-      /** Hero 信任徽标（恰好 4 个短文本，飞书 Trust Points 原文） */
-      heroTrustPoints: [string, string, string, string]
-      /** 情景匹配表（飞书 "Start Here: Which Situation Matches Yours?"，有 intro 引导段） */
-      situation: InfoTableMessage
-      /** Solutions 四方案区块（飞书 "What Works for Private Telegram Videos?"） */
-      solutions: {
-        /** 区块标题 */
-        title: string
-        /** 定义段：飞书 "A private Telegram video usually means..." */
-        intro: string
-        /** Quick answer 强调段（飞书独立加粗段，与 intro 分列） */
-        quickAnswer: string
-        /** 四张方案卡 */
-        items: HomepageSolutionMessage[]
-      }
-      /** Why Use 六卖点区块（飞书 "Why Use an Online..."，标题后有引导段） */
-      benefits: {
-        /** 区块标题 */
-        title: string
-        /** 引导段：飞书 "A good downloader should help you answer one question quickly..." */
-        intro: string
-        /** 六张卖点卡，复用 PlatformFeatureMessage 的 {title, description} */
-        items: PlatformFeatureMessage[]
-      }
-      /** 排错清单（飞书 "If the Telegram Video Link Does Not Work" 独立 H2） */
-      troubleshooting: HomepageTroubleMessage
-      /** 合规声明（飞书 "Important Permission Note" 独立 H2） */
-      permission: HomepagePermissionMessage
-      /** 方法对比表（飞书 "Choose the Right Telegram Download Method"，标题后直接表格，无 intro） */
-      comparison: InfoTableMessage
-      howTo?: HomepageHowToMessage
-      faq: {
-        title: string
-        description?: string
-        items: FAQItemMessage[]
-      }
-      workspace: HomepageWorkspaceContent
-      /** 首页底部平台互链区块 */
-      crossLinks?: {
-        /** 区块标题 */
-        title: string
-        /** 互链卡片列表 */
-        items: PlatformCrossLinkMessage[]
-      }
-    }
+    /** Pricing / 扩展登录页共用的账户区文案。 */
+    account: AccountContent
     changelog: {
       title: string
       description: string
@@ -948,18 +428,8 @@ export interface SiteContent {
         fixes: string
       }
     }
-    /** 平台 SEO 落地页内容 */
-    platformDownloaders: {
-      tiktok: PlatformDownloaderPageContent
-      x: PlatformDownloaderPageContent
-      vimeo: PlatformDownloaderPageContent
-      instagram: PlatformDownloaderPageContent
-      threads: PlatformDownloaderPageContent
-    }
     /** Pricing 页面内容。 */
     pricing: PricingPageContent
-    /** Telegram 禁下载频道 workaround SEO 落地页内容 */
-    downloadDisabledChannelWorkaround: DownloadDisabledChannelWorkaroundPageContent
     /** 扩展登录页 v2（externally_connectable 协议）文案 */
     extensionLoginV2: ExtensionLoginV2PageContent
   }

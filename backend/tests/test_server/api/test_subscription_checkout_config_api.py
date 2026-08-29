@@ -35,10 +35,7 @@ async def test_subscription_checkout_configs_returns_supported_prices(
     assert plan["product_name"] == "Unlimited"
     assert plan["period"] == "month"
     assert plan["duration_days"] == 30
-    assert plan["daily_limit"] == -1
-    assert plan["extension_daily_download_limit"] == -1
-    assert "web_daily_download_limit" not in plan
-    assert "web_daily_play_limit" not in plan
+    assert "daily_limit" not in plan
     assert plan["auto_renew"] is True
     assert len(plan["payment_channels"]) >= 1
     assert all(channel["payment_method"] for channel in plan["payment_channels"])

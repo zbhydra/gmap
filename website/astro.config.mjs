@@ -31,14 +31,6 @@ export default defineConfig({
     inlineStylesheets: 'always'
   },
   vite: {
-    optimizeDeps: {
-      include: ['mediabunny']
-    },
-    resolve: {
-      alias: {
-        mediabunny: path.resolve(__dirname, 'node_modules/mediabunny')
-      }
-    },
     server: {
       strictPort: true,
       proxy: {

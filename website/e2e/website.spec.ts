@@ -240,12 +240,8 @@ test.describe('Website Navigation', () => {
     await page.goto('/')
   })
 
-  test('home page opens with parse-first workspace', async ({ page }) => {
-    await expect(page).toHaveTitle(/Telegram/)
-    await expect(page.locator('[data-download-results-panel]')).toBeVisible()
-    await expect(page.locator('[data-download-parse-input]')).toBeVisible()
-    await expect(page.locator('[data-homepage-howto]')).toBeVisible()
-    await expect(page.locator('[data-homepage-faq]')).toBeVisible()
+  test('home page renders the GMap placeholder', async ({ page }) => {
+    await expect(page.locator('.home-placeholder')).toBeVisible()
   })
 
   test('primary nav removes the no-limits entry', async ({
@@ -255,18 +251,13 @@ test.describe('Website Navigation', () => {
     test.skip(isMobile, 'Desktop navigation links are hidden on mobile')
 
     const navLinks = page.locator('.nav-links a')
-    await expect(navLinks).toHaveCount(3)
+    await expect(navLinks).toHaveCount(2)
     await expect(navLinks.nth(0)).toContainText('Home')
     await expect(navLinks.nth(1)).toHaveAttribute('href', '/pricing/')
     await expect(navLinks.nth(1)).toContainText('Pricing')
-    await expect(navLinks.nth(2)).toHaveAttribute('href', '/telegram-download-disabled-channel-workaround/')
     await expect(page.locator('.nav-links')).not.toContainText('No Limits')
-    await expect(page.locator('.nav-links')).not.toContainText('Features')
-    await expect(page.locator('.nav-links')).not.toContainText('Guide')
-    await expect(page.locator('.nav-links')).not.toContainText('FAQ')
     await expect(page.locator('.nav-links')).not.toContainText('Changelog')
     await expect(page.locator('.nav-links a[href="/pricing/"]')).toHaveCount(1)
-    await expect(page.locator('.footer-link-groups a[href="/pricing/"]')).toHaveCount(0)
   })
 
   test('mobile nav removes the no-limits entry', async ({ page, isMobile }) => {
@@ -806,13 +797,13 @@ test.describe('Multi-language Pages', () => {
 
       test('should load home page', async ({ page }) => {
         await page.goto(basePath)
-        await expect(page.locator('[data-download-parse-input]')).toBeVisible()
+        await expect(page.locator('.home-placeholder')).toBeVisible()
       })
 
       test('should keep the reduced nav size', async ({ page }) => {
         await page.goto(basePath)
         const navLinks = page.locator('.nav-links a')
-        await expect(navLinks).toHaveCount(3)
+        await expect(navLinks).toHaveCount(2)
         await expect(page.locator('.nav-links a[href$="/pricing/"]')).toHaveCount(1)
       })
     })
@@ -824,8 +815,7 @@ test.describe('Responsive Design', () => {
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/')
 
-    await expect(page.locator('.hero')).toBeVisible()
-    await expect(page.locator('[data-download-parse-input]')).toBeVisible()
+    await expect(page.locator('.home-placeholder')).toBeVisible()
 
     const navLinks = page.locator('.nav-links')
     const isVisible = await navLinks.isVisible().catch(() => false)
@@ -836,8 +826,7 @@ test.describe('Responsive Design', () => {
     await page.setViewportSize({ width: 1440, height: 960 })
     await page.goto('/')
 
-    await expect(page.locator('.hero')).toBeVisible()
-    await expect(page.locator('[data-download-parse-input]')).toBeVisible()
+    await expect(page.locator('.home-placeholder')).toBeVisible()
   })
 })
 

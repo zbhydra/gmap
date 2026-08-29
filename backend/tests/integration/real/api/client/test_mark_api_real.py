@@ -150,7 +150,7 @@ async def test_real_record_mark_persists_complete_max_length_message(
     response = await real_async_client.post(
         "/api/client/mark/record",
         json={
-            "mark_type": MarkType.WEB_DOWNLOAD_STORAGE_PREFLIGHT_BLOCKED.value,
+            "mark_type": MarkType.WEB_EXTENSION_INSTALL_CLICK.value,
             "mark_msg": mark_msg,
             "first_opened_at": 1_762_345_678_901,
         },
@@ -172,7 +172,7 @@ async def test_real_record_mark_persists_complete_max_length_message(
         row = result.scalar_one()
 
     assert row.user_id == 0
-    assert row.mark_type == MarkType.WEB_DOWNLOAD_STORAGE_PREFLIGHT_BLOCKED.value
+    assert row.mark_type == MarkType.WEB_EXTENSION_INSTALL_CLICK.value
     assert row.mark_msg == mark_msg
     assert len(row.mark_msg) == MAX_MARK_MSG_LENGTH
     assert json.loads(row.mark_msg)["test_run_id"] == test_run_id
@@ -194,7 +194,7 @@ async def test_real_record_mark_rejects_overflow_without_database_write(
         real_async_client,
         device_id=device_id,
         payload={
-            "mark_type": MarkType.WEB_DOWNLOAD_STORAGE_PREFLIGHT_BLOCKED.value,
+            "mark_type": MarkType.WEB_EXTENSION_INSTALL_CLICK.value,
             "mark_msg": mark_msg,
         },
         expected_location=["body", "mark_msg"],
@@ -211,7 +211,7 @@ async def test_real_record_mark_persists_empty_min_length_message(
     device_id = make_real_mark_device_id("mark-min")
     response = await real_async_client.post(
         "/api/client/mark/record",
-        json={"mark_type": MarkType.WEB_PAGE_OPEN.value},
+        json={"mark_type": MarkType.WEB_FIRST_OPENED.value},
         headers={"X-Device-Id": device_id},
     )
 
@@ -227,47 +227,7 @@ async def test_real_record_mark_persists_empty_min_length_message(
         row = result.scalar_one()
 
     assert row.mark_msg == ""
-    assert row.mark_type == MarkType.WEB_PAGE_OPEN.value
-
-
-async def test_real_record_mark_persists_pricing_extension_entry(
-    real_async_client,
-    make_real_mark_device_id: Callable[[str], str],
-) -> None:
-    """插件升级入口曝光必须以新类型和完整来源参数写入 MySQL。"""
-
-    device_id = make_real_mark_device_id("pricing-extension-entry")
-    mark_msg = json.dumps(
-        {
-            "utm_source": "extension",
-            "source": "quota_upgrade_button",
-        },
-        separators=(",", ":"),
-    )
-    response = await real_async_client.post(
-        "/api/client/mark/record",
-        json={
-            "mark_type": MarkType.WEB_PRICING_OPEN_FROM_EXTENSION.value,
-            "mark_msg": mark_msg,
-            "first_opened_at": 1_762_345_678_901,
-        },
-        headers={"X-Device-Id": device_id},
-    )
-
-    body = response.json()
-    assert response.status_code == 200
-    assert body["code"] == 10000
-    assert body["data"] == {"recorded": True}
-
-    async with get_async_session() as db:
-        result = await db.execute(
-            select(MarkLogModel).where(MarkLogModel.device_id == device_id)
-        )
-        row = result.scalar_one()
-
-    assert row.mark_type == MarkType.WEB_PRICING_OPEN_FROM_EXTENSION.value
-    assert row.mark_msg == mark_msg
-    assert row.first_opened_at == 1_762_345_678_901
+    assert row.mark_type == MarkType.WEB_FIRST_OPENED.value
 
 
 async def test_real_record_mark_persists_extension_store_review_click(
@@ -325,7 +285,7 @@ async def test_real_record_mark_persists_literal_special_characters(
     response = await real_async_client.post(
         "/api/client/mark/record",
         json={
-            "mark_type": MarkType.WEB_DOWNLOAD_FAILED.value,
+            "mark_type": MarkType.WEB_CREDIT_PURCHASE_MODAL_OPEN.value,
             "mark_msg": owned_mark_msg,
         },
         headers={"X-Device-Id": device_id},
@@ -370,7 +330,7 @@ async def test_real_record_mark_rejects_wrong_message_type_without_database_writ
         real_async_client,
         device_id=device_id,
         payload={
-            "mark_type": MarkType.WEB_DOWNLOAD_FAILED.value,
+            "mark_type": MarkType.WEB_CREDIT_PURCHASE_MODAL_OPEN.value,
             "mark_msg": ["not", "a", "string"],
         },
         expected_location=["body", "mark_msg"],

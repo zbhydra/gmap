@@ -7,7 +7,6 @@
 import type {
   BackgroundGetRuntimeConfigResponse,
   BackgroundGetStateResponse,
-  BackgroundOpenExtensionLoginResponse,
   BackgroundPingResponse,
   BackgroundRecordMarkRequest,
   BackgroundRecordMarkResponse
@@ -36,15 +35,10 @@ export const Handler = {
     return declarationOnly('background.getRuntimeConfig')
   },
 
-  /** 打开官网插件登录页。 */
-  openExtensionLogin(): Promise<BackgroundOpenExtensionLoginResponse> {
-    return declarationOnly('background.openExtensionLogin')
-  },
-
   /** 由 background 代 content script 记录打点。 */
   recordMark(_params: BackgroundRecordMarkRequest): Promise<BackgroundRecordMarkResponse> {
     return declarationOnly('background.recordMark')
-  },
+  }
 }
 
 /** background register handler 类型。 */
@@ -58,8 +52,6 @@ export const METHOD_TARGETS = {
   getState: ['popup'],
   /** getRuntimeConfig 允许 popup 调用。 */
   getRuntimeConfig: ['popup'],
-  /** openExtensionLogin 只允许 popup 调用。 */
-  openExtensionLogin: ['popup'],
   /** recordMark 允许 popup 调用，统一由 background 写 SLS。 */
   recordMark: ['popup']
 } as const satisfies Record<keyof BackgroundHandler, readonly ('content' | 'popup')[]>
@@ -72,8 +64,6 @@ export const METHOD_TRANSPORTS = {
   getState: ['chrome'],
   /** getRuntimeConfig 使用 Chrome message。 */
   getRuntimeConfig: ['chrome'],
-  /** openExtensionLogin 使用 Chrome message。 */
-  openExtensionLogin: ['chrome'],
   /** recordMark 使用 Chrome message。 */
   recordMark: ['chrome']
 } as const satisfies Record<keyof BackgroundHandler, readonly ['chrome']>
@@ -86,8 +76,6 @@ export const METHOD_REQUEST_LIMITS = {
   getState: 1024,
   /** getRuntimeConfig 无业务参数。 */
   getRuntimeConfig: 1024,
-  /** openExtensionLogin 无业务参数。 */
-  openExtensionLogin: 1024,
   /** recordMark 携带打点类型和附加信息。 */
   recordMark: 4096
 } as const satisfies Record<keyof BackgroundHandler, number>
@@ -100,8 +88,6 @@ export const METHOD_RESPONSE_LIMITS = {
   getState: 16384,
   /** getRuntimeConfig 返回轻量扩展配置。 */
   getRuntimeConfig: 1024,
-  /** openExtensionLogin 返回打开结果。 */
-  openExtensionLogin: 1024,
   /** recordMark 返回记录结果。 */
   recordMark: 1024
 } as const satisfies Record<keyof BackgroundHandler, number>

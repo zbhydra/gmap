@@ -13,7 +13,6 @@ class MarkLogModel(BaseDBModel):
 
     __tablename__ = "mark_logs"
     __table_args__ = (
-        # 服务 admin_mark_log_service.list_web_parse_failed_logs 的 WHERE mark_type 查询。
         Index(
             "idx_mark_type",
             "mark_type",

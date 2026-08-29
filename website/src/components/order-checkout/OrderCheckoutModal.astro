@@ -6,11 +6,11 @@
  * - 支付方式选择：展示调用方传入的商品摘要和渠道
  * - 订单等待：外部支付页打开后轮询订单状态
  */
-import type { DownloadWorkspaceContent } from '../../download/schema'
+import type { AccountContent } from '../../i18n/schema'
 import type { OrderCheckoutCopy } from './order-checkout-types'
 
 const { copy, deferController = false } = Astro.props as {
-  copy: DownloadWorkspaceContent
+  copy: AccountContent
   /** 是否由下载工作区渐进加载入口统一加载 controller。 */
   deferController?: boolean
 }

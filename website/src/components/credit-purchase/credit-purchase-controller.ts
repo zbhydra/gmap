@@ -17,7 +17,7 @@ import {
   recordHomepageMark
 } from '../../scripts/homepage/mark'
 import { sanitizeMarkText } from '../../scripts/homepage/mark-sanitizer'
-import type { DownloadWorkspaceContent } from '../../download/schema'
+import type { AccountContent } from '../../i18n/schema'
 import {
   formatCreditDisplayPrice,
   formatCreditDisplayUnitPrice,
@@ -56,7 +56,7 @@ import {
 } from '../order-checkout/order-checkout-types'
 
 /** Credits 购买弹窗文案。 */
-type CreditPurchaseCopy = DownloadWorkspaceContent['creditPurchase']
+type CreditPurchaseCopy = AccountContent['creditPurchase']
 
 /** Credits 购买弹窗使用的网页 mark 类型。 */
 type CreditPurchaseMarkType = (typeof HOMEPAGE_MARK_TYPE)[keyof typeof HOMEPAGE_MARK_TYPE]

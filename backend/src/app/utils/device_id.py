@@ -29,12 +29,4 @@ def validate_request_device_id(device_id: str | None) -> str:
             CommonCode.INVALID_DEVICE_ID,
             ext_msg=f"X-Device-Id contains illegal characters: {device_id!r}",
         )
-    if device_id.isdigit():
-        raise AppCommonException(
-            CommonCode.QUOTA_INVALID_REQUEST,
-            ext_msg=(
-                "X-Device-Id cannot be numeric because anonymous uid shares "
-                f"namespace with user_id, value={device_id!r}"
-            ),
-        )
     return device_id

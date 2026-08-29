@@ -11,21 +11,17 @@ type ExtensionDevWebExtensionConfig = Partial<Pick<PluginOptions, 'disableAutoLa
 const EDGE_CURRENT_DEV_BROWSER = 'edge-current'
 
 const DEFAULT_DEV_API_BASE_URL = 'http://localhost:9600'
-const DEFAULT_PROD_API_BASE_URL = 'https://tg-download-api.telegramdownloadmedia.com'
+// TODO(maps): Maps 产品后端域名确定后替换。
+const DEFAULT_PROD_API_BASE_URL = 'https://api.example.com'
 const DEFAULT_DEV_WEBSITE_BASE_URL = 'http://localhost:9620'
-const DEFAULT_PROD_WEBSITE_BASE_URL = 'https://telegramdownloadmedia.com'
-const PROD_WWW_WEBSITE_BASE_URL = 'https://www.telegramdownloadmedia.com'
-const DEFAULT_PROD_ALI_SLS_PROJECT = 'tg-download'
+// TODO(maps): Maps 官网域名确定后替换。
+const DEFAULT_PROD_WEBSITE_BASE_URL = 'https://www.example.com'
+const PROD_WWW_WEBSITE_BASE_URL = 'https://www.example.com'
+const DEFAULT_PROD_ALI_SLS_PROJECT = 'gmaps'
 const DEFAULT_PROD_ALI_SLS_HOST = 'ap-southeast-1.log.aliyuncs.com'
-const DEFAULT_PROD_ALI_SLS_LOGSTORE = 'tg-download-mark-log'
+const DEFAULT_PROD_ALI_SLS_LOGSTORE = 'gmaps-mark-log'
 const DEFAULT_ALI_SLS_TOPIC = 'mark-log'
 const DEFAULT_ALI_SLS_SOURCE = 'extension'
-/** Chrome Web Store 正式扩展的 public key；仅生产 manifest 使用。 */
-const CHROME_WEB_STORE_PUBLIC_KEY =
-  'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqgjG7AMYxHq3TDVPItnHlSBueH0+qFcbO9a2OYIv8FWxs85DooiJy7Er23iBNkO1G8wQarwgfrCpaXVF/dZYoV/B2eShFq1Uhtev549EZK4kUsHX5zyXJdbsHu8uu9RQw079PUauINK9Xjcfq3nyH0J6yzHYwzz6/hY7LSOqspDPw+E/j+aC7liOO9Q0JDB44qmOP3j0WzwfKEZpUnyZR/arh2YqbH1WUOWNH28ennte4Rgdrp/TpHcaBaOEgqk9IsFMeivEnGMMwbZ6ckqZwdiW3Ig0KDmNlTqz6D12LDX4laSZUkjGdq1k1Zn8XZb1fZckdMKFWvPlRV/SH1KrAQIDAQAB'
-/** 独立安装的开发/预发布扩展 public key；固定 ID 且不占用商店扩展身份。 */
-const PRE_RELEASE_EXTENSION_PUBLIC_KEY =
-  'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1E9XKmGBooN+ctDD0EOutRbe+jtSy+U9M5OB2jaBCL4kG1PAXZ1dl8slaYZP6iAqJ/efUBRKfldAODiHlJK1ybGvcXTg9f1elP4VPfjkKttPA6dxE73DefF/vegbZPYRLQeFNynLKQRd1z/v+G4e4DdZEKHKwj7zG8wYAW++Tbr+o3aOYsGzl6EPHgZ78q0GNURSDDyFhhRUST/PDfWh6EhmVOt2S3JbtlVRCuSBtJaYY8h8TPdMS+HMVyY3oZtSiD5PiGY8lHRmcWH96myJRyoLl9Pn6KGNuAgo3UQFOHtY+wv1VlxzbE6fKdImbnfVltAhRWrZU0W6UDpdz7rV3wIDAQAB'
 const DEFAULT_PROD_WEBSITE_ORIGIN = toOrigin(DEFAULT_PROD_WEBSITE_BASE_URL)
 const PROD_WWW_WEBSITE_ORIGIN = toOrigin(PROD_WWW_WEBSITE_BASE_URL)
 
@@ -246,11 +242,8 @@ export default defineConfig({
       skipManifestValidation: true, // 禁用schema验证 ,不然会卡主很多
       manifest: () => ({
         manifest_version: 3,
-        key: extensionBuildEnv.releaseChannel === 'store'
-          ? CHROME_WEB_STORE_PUBLIC_KEY
-          : PRE_RELEASE_EXTENSION_PUBLIC_KEY,
         name: '__MSG_extensionName__',
-        version: '1.4.0',
+        version: '0.1.0',
         default_locale: 'en',
         description: '__MSG_extensionDescription__',
         permissions: ['storage'],
@@ -278,9 +271,9 @@ export default defineConfig({
         background: {
           service_worker: 'src/background/index.ts'
         },
-        // 官网来源白名单经 externally_connectable 授权（登录桥接与打点）。
+        // TODO(maps): 官网登录桥决策后恢复 externally_connectable 白名单。
         externally_connectable: {
-          matches: [...extensionBuildEnv.externallyConnectableMatches]
+          matches: []
         }
       })
     })

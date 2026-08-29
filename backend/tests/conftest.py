@@ -76,19 +76,6 @@ async def _delete_test_owned_rows(session) -> None:
             {"email_pattern": email_pattern},
         )
 
-    if users_exists and await _table_exists(session, "user_download_records"):
-        await session.execute(
-            text(
-                """
-                DELETE FROM user_download_records
-                WHERE user_id IN (
-                    SELECT user_id FROM users WHERE email LIKE :email_pattern
-                )
-                """
-            ),
-            {"email_pattern": email_pattern},
-        )
-
     if users_exists and await _table_exists(session, "user_ip_registers"):
         await session.execute(
             text(
