@@ -34,3 +34,6 @@ test-results/
 playwright-report/
 blob-report/
 **/.env.*.download
+
+# 根级临时与调研产物(AGENTS 约定 scratch/ 不入 git)
+scratch/

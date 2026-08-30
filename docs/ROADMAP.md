@@ -91,3 +91,4 @@
 - 2026-08-30 B1 登录实测完成:竞品 Online 任务台(hydra 账号)界面/任务生命周期/后端云函数契约全量抓取——云端 Parse 端点 `cloud.gmapsextractor.com/parse/functions/*`(submitKeywords/getTaskStatus/getCloudUsage/isPro),与插件共用账号与付费判定;Free 档 1000 records/月实测扣减 322。详见 `feat/014.Maps云端/references/B1`。014 域 feat/references 同步。
 - 2026-08-29 工程落点已决并完成第 1 步:`extension/` 原地改造为 Maps 插件底座(TG 下载业务/官网桥/升级弹窗/manual 用例删除,保留 RPC/构建/HTTP/打点/远端配置/i18n 测试底座;manifest 中性化 version 0.1.0;locales 英文基线)。验证:build 通过、单测 121/121、lint 零警告。下一步 = A1 搜索闭环。
 - 2026-08-29 三项更新:①阶段 1 改为 A1–A13 全量交付(验收 = 功能面对齐竞品 v2.5.1,已拍板架构差异除外),估时 7–9 周,实施顺序见 `feat/013.Maps插件/feat.md`;②A7 升级为 🔍 完成(源码级:列表模式 = A1 通道 + UI/滚动变体,URL 标记 `data=!4m2!10m1!1e1`,仅剩实现期登录态验证点);③待决:插件工程落点(monorepo 子项目 vs 独立仓库)阻塞阶段 1 第 1 步,其余全部可开工。
+- 2026-08-30 UI token 选型拍板:全项目采用 **Material You**(06 亮 / 06D 暗,曾短暂选型 Aurora Glass 后弃用);旧 Geist 规范整体替换为 Material You token 合同(`design.md` 亮色 / `design.dark.md` 暗色,暗色主题为本次新增),状态实底色引入 `*-fg` 深字配对合同;12 皮肤全组件探索稿在 `scratch/design-explore/`(不入 git)。

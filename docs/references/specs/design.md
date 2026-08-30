@@ -1,501 +1,189 @@
 ---
-version: alpha
-name: Geist
-description: Vercel’s Geist design system, Light theme (the Dark theme is documented at design.dark.md).
+version: 1.0
+name: Material You
+theme: light
+description: GMap Extractor 全项目 UI token 合同之亮色主题；暗色主题同名 token 见 design.dark.md，交互与组件规则以本文件为唯一来源。
+source: 风格选型探索稿 scratch/design-explore/gmap-ui-styles.html（不入 git），方案 06 / 06D；token 合同以本文件为准。
 colors:
-  primary: "#171717"
-  secondary: "#4d4d4d"
-  tertiary: "#006bff"
-  neutral: "#f2f2f2"
-  background-100: "#ffffff"
-  background-200: "#fafafa"
-  gray-100: "#f2f2f2"
-  gray-200: "#ebebeb"
-  gray-300: "#e6e6e6"
-  gray-400: "#eaeaea"
-  gray-500: "#c9c9c9"
-  gray-600: "#a8a8a8"
-  gray-700: "#8f8f8f"
-  gray-800: "#7d7d7d"
-  gray-900: "#4d4d4d"
-  gray-1000: "#171717"
-  gray-alpha-100: "#0000000d"
-  gray-alpha-200: "#00000015"
-  gray-alpha-300: "#0000001a"
-  gray-alpha-400: "#00000014"
-  gray-alpha-500: "#00000036"
-  gray-alpha-600: "#0000003d"
-  gray-alpha-700: "#00000070"
-  gray-alpha-800: "#00000082"
-  gray-alpha-900: "#000000b3"
-  gray-alpha-1000: "#000000e8"
-  blue-100: "#f0f7ff"
-  blue-200: "#e9f4ff"
-  blue-300: "#dfefff"
-  blue-400: "#cae7ff"
-  blue-500: "#94ccff"
-  blue-600: "#48aeff"
-  blue-700: "#006bff"
-  blue-800: "#0059ec"
-  blue-900: "#005ff2"
-  blue-1000: "#002359"
-  red-100: "#ffeeef"
-  red-200: "#ffe8ea"
-  red-300: "#ffe3e4"
-  red-400: "#ffd7d6"
-  red-500: "#ffb1b3"
-  red-600: "#ff676d"
-  red-700: "#fc0035"
-  red-800: "#ea001d"
-  red-900: "#d8001b"
-  red-1000: "#47000c"
-  amber-100: "#fff6de"
-  amber-200: "#fff4cf"
-  amber-300: "#fff1c1"
-  amber-400: "#ffdc73"
-  amber-500: "#ffc543"
-  amber-600: "#ffa600"
-  amber-700: "#ffae00"
-  amber-800: "#ff9300"
-  amber-900: "#aa4d00"
-  amber-1000: "#561900"
-  green-100: "#ecfdec"
-  green-200: "#e5fce7"
-  green-300: "#d3fad1"
-  green-400: "#b9f5bc"
-  green-500: "#82eb8d"
-  green-600: "#4ce15e"
-  green-700: "#28a948"
-  green-800: "#279141"
-  green-900: "#107d32"
-  green-1000: "#003a00"
-  teal-100: "#defffb"
-  teal-200: "#ddfef6"
-  teal-300: "#ccf9f1"
-  teal-400: "#b1f7ec"
-  teal-500: "#52f0db"
-  teal-600: "#00e3c4"
-  teal-700: "#00ac96"
-  teal-800: "#00927f"
-  teal-900: "#007f70"
-  teal-1000: "#003f34"
-  purple-100: "#faf0ff"
-  purple-200: "#f9f0ff"
-  purple-300: "#f6e8ff"
-  purple-400: "#f2d9ff"
-  purple-500: "#dfa7ff"
-  purple-600: "#c979ff"
-  purple-700: "#a000f8"
-  purple-800: "#8500d1"
-  purple-900: "#7d00cc"
-  purple-1000: "#2f004e"
-  pink-100: "#ffe8f6"
-  pink-200: "#ffe8f3"
-  pink-300: "#ffdfeb"
-  pink-400: "#ffd3e1"
-  pink-500: "#fdb3cc"
-  pink-600: "#f97ea7"
-  pink-700: "#f22782"
-  pink-800: "#e4106e"
-  pink-900: "#c41562"
-  pink-1000: "#460523"
-  # Wide-gamut accent variants in oklch for P3 displays (sRGB hex above is the fallback)
-  blue-100-p3: "oklch(97.32% 0.0141 251.56)"
-  blue-200-p3: "oklch(96.29% 0.0195 250.59)"
-  blue-300-p3: "oklch(94.58% 0.0293 249.84870859673202)"
-  blue-400-p3: "oklch(91.58% 0.0473 245.11621922481282)"
-  blue-500-p3: "oklch(82.75% 0.0979 248.48)"
-  blue-600-p3: "oklch(73.08% 0.1583 248.133320980386)"
-  blue-700-p3: "oklch(57.61% 0.2508 258.23)"
-  blue-800-p3: "oklch(51.51% 0.2399 257.85)"
-  blue-900-p3: "oklch(53.18% 0.2399 256.9900584162342)"
-  blue-1000-p3: "oklch(26.67% 0.1099 254.34)"
-  red-100-p3: "oklch(96.5% 0.0223 13.09)"
-  red-200-p3: "oklch(95.41% 0.0299 14.252646656611997)"
-  red-300-p3: "oklch(94.33% 0.0369 15.011509923860523)"
-  red-400-p3: "oklch(91.51% 0.0471 19.8)"
-  red-500-p3: "oklch(84.47% 0.1018 17.71)"
-  red-600-p3: "oklch(71.12% 0.1881 21.22)"
-  red-700-p3: "oklch(62.56% 0.2524 23.03)"
-  red-800-p3: "oklch(58.19% 0.2482 25.15)"
-  red-900-p3: "oklch(54.99% 0.232 25.29)"
-  red-1000-p3: "oklch(24.8% 0.1041 18.86)"
-  amber-100-p3: "oklch(97.48% 0.0331 85.79)"
-  amber-200-p3: "oklch(96.81% 0.0495 90.24227879900472)"
-  amber-300-p3: "oklch(95.93% 0.0636 90.52)"
-  amber-400-p3: "oklch(91.02% 0.1322 88.25)"
-  amber-500-p3: "oklch(86.55% 0.1583 79.63)"
-  amber-600-p3: "oklch(80.25% 0.1953 73.59)"
-  amber-700-p3: "oklch(81.87% 0.1969 76.46)"
-  amber-800-p3: "oklch(77.21% 0.1991 64.28)"
-  amber-900-p3: "oklch(52.79% 0.1496 54.65)"
-  amber-1000-p3: "oklch(30.83% 0.099 45.48)"
-  green-100-p3: "oklch(97.59% 0.0289 145.42)"
-  green-200-p3: "oklch(96.92% 0.037 147.15)"
-  green-300-p3: "oklch(94.6% 0.0674 144.23)"
-  green-400-p3: "oklch(91.49% 0.0976 146.24)"
-  green-500-p3: "oklch(85.45% 0.1627 146.3)"
-  green-600-p3: "oklch(80.25% 0.214 145.18)"
-  green-700-p3: "oklch(64.58% 0.1746 147.27)"
-  green-800-p3: "oklch(57.81% 0.1507 147.5)"
-  green-900-p3: "oklch(51.75% 0.1453 147.65)"
-  green-1000-p3: "oklch(29.15% 0.1197 147.38)"
-  teal-100-p3: "oklch(97.72% 0.0359 186.7)"
-  teal-200-p3: "oklch(97.06% 0.0347 180.66)"
-  teal-300-p3: "oklch(94.92% 0.0478 182.07)"
-  teal-400-p3: "oklch(92.76% 0.0718 183.78)"
-  teal-500-p3: "oklch(86.88% 0.1344 182.42)"
-  teal-600-p3: "oklch(81.5% 0.161 178.96)"
-  teal-700-p3: "oklch(64.92% 0.1572 181.95)"
-  teal-800-p3: "oklch(57.53% 0.1392 181.66)"
-  teal-900-p3: "oklch(52.08% 0.1251 182.93)"
-  teal-1000-p3: "oklch(32.11% 0.0788 179.82)"
-  purple-100-p3: "oklch(96.65% 0.0244 312.1890119359961)"
-  purple-200-p3: "oklch(96.73% 0.0228 309.8)"
-  purple-300-p3: "oklch(94.85% 0.0364 310.15)"
-  purple-400-p3: "oklch(91.77% 0.0614 312.82)"
-  purple-500-p3: "oklch(81.26% 0.1409 310.8)"
-  purple-600-p3: "oklch(72.07% 0.2083 308.19)"
-  purple-700-p3: "oklch(55.5% 0.3008 306.12)"
-  purple-800-p3: "oklch(48.58% 0.2638 305.73)"
-  purple-900-p3: "oklch(47.18% 0.2579 304)"
-  purple-1000-p3: "oklch(23.96% 0.13 305.66)"
-  pink-100-p3: "oklch(95.69% 0.0359 344.6218910697224)"
-  pink-200-p3: "oklch(95.71% 0.0321 353.14)"
-  pink-300-p3: "oklch(93.83% 0.0451 356.29)"
-  pink-400-p3: "oklch(91.12% 0.0573 358.82)"
-  pink-500-p3: "oklch(84.28% 0.0915 356.99)"
-  pink-600-p3: "oklch(74.33% 0.1547 0.24)"
-  pink-700-p3: "oklch(63.52% 0.238 1.01)"
-  pink-800-p3: "oklch(59.51% 0.2339 4.21)"
-  pink-900-p3: "oklch(53.5% 0.2058 2.84)"
-  pink-1000-p3: "oklch(26% 0.0977 359)"
+  bg: "#ffffff"
+  bg-image: "linear-gradient(180deg,#e9f1fd 0%,rgba(233,241,253,.55) 300px,rgba(233,241,253,0) 560px)"
+  surface: "#ffffff"
+  surface-2: "#f0f4f9"
+  border: "#dde3ea"
+  border-strong: "#b9c2cd"
+  text: "#1f1f1f"
+  text-2: "#5f6368"
+  text-3: "#80868b"
+  primary: "#1a73e8"
+  primary-hover: "#1765cc"
+  primary-fg: "#ffffff"
+  primary-soft: "#e8f0fe"
+  accent: "#188038"
+  accent-fg: "#ffffff"
+  accent-soft: "#e6f4ea"
+  ok: "#188038"
+  ok-fg: "#ffffff"
+  ok-soft: "#e6f4ea"
+  warn: "#b26a00"
+  warn-fg: "#ffffff"
+  warn-soft: "#fef7e0"
+  bad: "#d93025"
+  bad-fg: "#ffffff"
+  bad-soft: "#fce8e6"
+  link: "#1a73e8"
+  ring: "#1a73e8"
+  overlay: "rgba(32,33,36,0.50)"
+  head-bg: "rgba(255,255,255,0.90)"
 typography:
-  heading-72:
-    fontFamily: Geist Sans
-    fontSize: 72px
+  font-display: "Plus Jakarta Sans, PingFang SC, Microsoft YaHei, sans-serif"
+  font-body: "Plus Jakarta Sans, PingFang SC, Microsoft YaHei, sans-serif"
+  font-mono: "Azeret Mono, ui-monospace, SFMono-Regular, Menlo, monospace"
+  display-hero:
+    fontSize: "clamp(36px, 4.8vw, 58px)"
     fontWeight: 600
-    lineHeight: 72px
-    letterSpacing: -4.32px
-  heading-64:
-    fontFamily: Geist Sans
-    fontSize: 64px
-    fontWeight: 600
-    lineHeight: 64px
-    letterSpacing: -3.84px
-  heading-56:
-    fontFamily: Geist Sans
-    fontSize: 56px
-    fontWeight: 600
-    lineHeight: 56px
-    letterSpacing: -3.36px
-  heading-48:
-    fontFamily: Geist Sans
-    fontSize: 48px
-    fontWeight: 600
-    lineHeight: 56px
-    letterSpacing: -2.88px
-  heading-40:
-    fontFamily: Geist Sans
-    fontSize: 40px
-    fontWeight: 600
-    lineHeight: 48px
-    letterSpacing: -2.4px
+    lineHeight: 1.05
+    letterSpacing: "-0.025em"
   heading-32:
-    fontFamily: Geist Sans
     fontSize: 32px
     fontWeight: 600
     lineHeight: 40px
-    letterSpacing: -1.28px
+    letterSpacing: "-0.02em"
   heading-24:
-    fontFamily: Geist Sans
     fontSize: 24px
     fontWeight: 600
     lineHeight: 32px
-    letterSpacing: -0.96px
+    letterSpacing: "-0.015em"
   heading-20:
-    fontFamily: Geist Sans
     fontSize: 20px
     fontWeight: 600
-    lineHeight: 26px
-    letterSpacing: -0.4px
-  heading-16:
-    fontFamily: Geist Sans
-    fontSize: 16px
-    fontWeight: 600
-    lineHeight: 24px
-    letterSpacing: -0.32px
-  heading-14:
-    fontFamily: Geist Sans
-    fontSize: 14px
-    fontWeight: 600
-    lineHeight: 20px
-    letterSpacing: -0.28px
-  button-16:
-    fontFamily: Geist Sans
-    fontSize: 16px
-    fontWeight: 500
-    lineHeight: 20px
-  button-14:
-    fontFamily: Geist Sans
-    fontSize: 14px
-    fontWeight: 500
-    lineHeight: 20px
-  button-12:
-    fontFamily: Geist Sans
-    fontSize: 12px
-    fontWeight: 500
-    lineHeight: 16px
-  label-20:
-    fontFamily: Geist Sans
-    fontSize: 20px
-    fontWeight: 400
-    lineHeight: 32px
-  label-18:
-    fontFamily: Geist Sans
-    fontSize: 18px
-    fontWeight: 400
-    lineHeight: 20px
-  label-16:
-    fontFamily: Geist Sans
-    fontSize: 16px
-    fontWeight: 400
-    lineHeight: 20px
-  label-14:
-    fontFamily: Geist Sans
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 20px
-  label-14-mono:
-    fontFamily: Geist Mono
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 20px
-  label-13:
-    fontFamily: Geist Sans
-    fontSize: 13px
-    fontWeight: 400
-    lineHeight: 16px
-  label-13-mono:
-    fontFamily: Geist Mono
-    fontSize: 13px
-    fontWeight: 400
-    lineHeight: 20px
-  label-12:
-    fontFamily: Geist Sans
-    fontSize: 12px
-    fontWeight: 400
-    lineHeight: 16px
-  label-12-mono:
-    fontFamily: Geist Mono
-    fontSize: 12px
-    fontWeight: 400
-    lineHeight: 16px
-  copy-24:
-    fontFamily: Geist Sans
-    fontSize: 24px
-    fontWeight: 400
-    lineHeight: 36px
-  copy-20:
-    fontFamily: Geist Sans
-    fontSize: 20px
-    fontWeight: 400
-    lineHeight: 36px
-  copy-18:
-    fontFamily: Geist Sans
-    fontSize: 18px
-    fontWeight: 400
     lineHeight: 28px
-  copy-16:
-    fontFamily: Geist Sans
+  heading-16:
+    fontSize: 16px
+    fontWeight: 600
+    lineHeight: 24px
+  body-16:
     fontSize: 16px
     fontWeight: 400
-    lineHeight: 24px
-  copy-14:
-    fontFamily: Geist Sans
+    lineHeight: 1.6
+  body-14:
     fontSize: 14px
     fontWeight: 400
-    lineHeight: 20px
-  copy-14-mono:
-    fontFamily: Geist Mono
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 20px
-  copy-13:
-    fontFamily: Geist Sans
+    lineHeight: 1.6
+  label-13:
     fontSize: 13px
-    fontWeight: 400
+    fontWeight: 500
     lineHeight: 18px
-  copy-13-mono:
-    fontFamily: Geist Mono
-    fontSize: 13px
-    fontWeight: 400
-    lineHeight: 18px
+  mono-kicker:
+    fontFamily: "{typography.font-mono}"
+    fontSize: 11px
+    fontWeight: 500
+    lineHeight: 16px
+    letterSpacing: "0.08em~0.14em"
+    textTransform: uppercase
+  button:
+    fontSize: "14px(默认)/15px(large)"
+    fontWeight: 500
 spacing:
-  1: 4px
-  2: 8px
-  3: 12px
-  4: 16px
-  6: 24px
-  8: 32px
-  10: 40px
-  16: 64px
-  24: 96px
   base: 4px
+  scale: [4, 8, 12, 16, 24, 32, 40, 64, 96]
+  container: "max-width 1120px，左右留白 28px"
+  breakpoints: "单列阈值 960px"
 rounded:
-  sm: 6px
-  md: 12px
-  lg: 16px
-  full: 9999px
-components:
-  button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.background-100}"
-    typography: "{typography.button-14}"
-    rounded: "{rounded.sm}"
-    padding: "0 10px"
-    height: 40px
-  button-secondary:
-    backgroundColor: "{colors.background-100}"
-    textColor: "{colors.primary}"
-    typography: "{typography.button-14}"
-    rounded: "{rounded.sm}"
-    padding: "0 10px"
-    height: 40px
-  button-tertiary:
-    textColor: "{colors.primary}"
-    typography: "{typography.button-14}"
-    rounded: "{rounded.sm}"
-    padding: "0 10px"
-    height: 40px
-  button-error:
-    backgroundColor: "{colors.red-800}"
-    textColor: "#ffffff"
-    typography: "{typography.button-14}"
-    rounded: "{rounded.sm}"
-    padding: "0 10px"
-    height: 40px
-  button-small:
-    typography: "{typography.button-14}"
-    rounded: "{rounded.sm}"
-    padding: "0 6px"
-    height: 32px
-  button-large:
-    typography: "{typography.button-16}"
-    rounded: "{rounded.sm}"
-    padding: "0 14px"
-    height: 48px
-  input:
-    backgroundColor: "{colors.background-100}"
-    textColor: "{colors.primary}"
-    typography: "{typography.label-14}"
-    rounded: "{rounded.sm}"
-    padding: "0 12px"
-    height: 40px
-  input-small:
-    typography: "{typography.label-14}"
-    rounded: "{rounded.sm}"
-    padding: "0 12px"
-    height: 32px
-  input-large:
-    typography: "{typography.label-16}"
-    rounded: "{rounded.sm}"
-    padding: "0 12px"
-    height: 48px
+  sm: 10px
+  md: 16px
+  lg: 24px
+  full: 999px
+  button: "{rounded.full}"
+elevation:
+  shadow-card: "0 1px 2px rgba(60,64,67,.10), 0 3px 8px rgba(60,64,67,.06)"
+  shadow-pop: "0 4px 10px rgba(60,64,67,.14), 0 14px 36px rgba(60,64,67,.14)"
+  shadow-modal: "0 24px 60px rgba(60,64,67,.28)"
 ---
 
-# Geist
+# Material You · 亮色主题
 
-## Overview
+## 0 · 总览
 
-Geist is Vercel’s design system for building consistent, developer-focused interfaces. The aesthetic is minimal and high-contrast: plenty of whitespace, restrained color, and content set on near-neutral surfaces. Prioritize readability and accessibility, and use color to signal state or hierarchy rather than decoration.
+Material You 是 GMap Extractor 四端（website / extension / admin / 营销物料）统一的 UI token 合同。核心语言：**Google Material 3 近亲——白底、顶部蓝调渐变带、Google 蓝主色、胶囊（pill）按钮与 chip 生态**。选它的理由：用户在 Google Maps 环境中使用产品，Material 语言带来最高信任度与零违和感，且组件规范成熟、四端落地最快。
 
-This is the Light theme. The Dark theme uses the same token names with different values and lives at `/design.dark.md`. Colors are sRGB hex with Display P3 equivalents.
+- 本文 = 亮色主题全量合同；暗色主题同名 token 换值，见 `design.dark.md`；交互与组件规则只在本文维护，暗色文件只写差异。
+- **实现层只允许消费语义 token（CSS 自定义属性，变量名与本文 YAML 键一致，前缀 `--`），禁止硬编码色值、圆角、投影。**
+- token 全集的参考实现（全组件换肤验证）在探索稿 `scratch/design-explore/gmap-ui-styles.html`（不入 git）；该文件与本合同冲突时，以本文件为准并回改探索稿。
 
-## Colors
+## 1 · 颜色
 
-Each non-background scale runs 10 steps (`100`–`1000`), and the step encodes intent, not just lightness:
+语义层级（状态色与主/强调色均配 `-soft` 柔和底与 `-fg` 实底文字色）：
 
-- `100` default background
-- `200` hover background
-- `300` active background
-- `400` default border
-- `500` hover border
-- `600` active border
-- `700` solid fill, high contrast
-- `800` solid fill, hover
-- `900` secondary text and icons
-- `1000` primary text and icons
+| 层级 | token | 用途 |
+| --- | --- | --- |
+| 页面 | `bg`、`bg-image` | 页面底色；`bg-image` 是顶部蓝调渐变带，**全站唯一允许的渐变** |
+| 卡面 | `surface`、`surface-2` | 卡片/浮层实底白面；`surface-2` 为行 hover、表头带、弹窗底条、禁用底 |
+| 边框 | `border`、`border-strong` | 常规分隔线；`border-strong` 用于输入框、强分隔 |
+| 文字 | `text` / `text-2` / `text-3` | 正文 / 次级说明 / 辅助元信息（时间、ID、占位符） |
+| 主色 | `primary` + `hover` + `fg` + `soft` | 唯一品牌行动色（Google 蓝）；`soft` 用于图标底、激活 tab 底、计数徽章 |
+| 强调 | `accent` + `fg` + `soft` | 次级信息色（Google 绿，成功/筛选 chip），不与主色混用于同一控件 |
+| 状态 | `ok` / `warn` / `bad`（各带 `-soft` 与 `-fg`） | 成功 / 警告 / 危险；`-fg` 是状态色作**实底**时的文字色（暗色主题下翻转为深字，亮色恒为白） |
+| 链接与焦点 | `link`、`ring` | 文字链接；键盘焦点环（`ring` 22% 不透明度、3px 扩散） |
+| 浮层 | `overlay`、`head-bg` | 弹窗遮罩；吸顶导航底（90% 白 + 轻模糊可选） |
 
-`background-100` is the primary page and card surface; `background-200` is a secondary surface for subtle separation. The `gray-alpha-*` tokens are translucent, so they layer over any background; use them for borders, dividers, overlays, and hover states. Solid `gray-*` holds its contrast on any surface, so use it for text and opaque fills. Accent scales carry meaning: `blue` for success, links, and focus; `red` for errors; `amber` for warnings; plus `green`, `teal`, `purple`, and `pink`. Use the hex tokens everywhere; each accent scale also ships a `*-p3` wide-gamut value in `oklch()` for Display P3 screens. The Dark theme redefines the same names at `/design.dark.md`.
+对比度基线：正文与按钮文字满足 WCAG AA（≥ 4.5:1）；`text-3` 仅用于 ≥ 12px 的辅助信息。
 
-## Typography
+## 2 · 字体
 
-Geist Sans sets UI and prose; Geist Mono sets code, data, and tabular figures. Both are open-source. The `typography` tokens above carry concrete `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, and `letterSpacing`:
+- 展示与正文同族（Plus Jakarta Sans，Google Sans 的开源替位；中文回退 PingFang SC / Microsoft YaHei），等宽用 Azeret Mono。
+- 标题 600 + 负字距；`display-hero` 用于首屏主标题，其余按 `heading-*` 降级使用。
+- 等宽字体的职责：数据（表格数字、ID、金额）、小节 kicker（大写 + 0.08~0.14em 字距）、状态徽章、kbd 快捷键提示。数字场景必须开 `font-variant-numeric: tabular-nums` 并右对齐。
+- 单视图字体重量不超过两档（如 400 + 600）。
 
-- Headings, `heading-72` through `heading-14`, title pages and sections; `letterSpacing` tightens as the size grows.
-- Labels, `label-20` through `label-12`, carry single-line, scannable text: navigation, form labels, table headers, metadata.
-- Copy, `copy-24` through `copy-13`, set multi-line body text with a taller `lineHeight`.
-- Buttons, `button-16` through `button-12`, are medium-weight labels for buttons and compact controls.
+## 3 · 布局与间距
 
-`copy-14` and `label-14` cover most text. The `-mono` tokens pair Geist Mono with the same metrics; prefer tabular figures when numbers need to align.
+- 4px 基准：组内 8px、组间 16px、区块间 32~40px、区块上下 64px。
+- 内容列 `max-width: 1120px`，两侧留白 28px；960px 以下单列。
+- 卡片内边距默认 24px，紧凑面板 20~22px。
 
-## Layout
+## 4 · 面与投影
 
-Spacing follows a 4px scale: 4, 8, 12, 16, 24, 32, 40, 64, 96px. Keep a three-step rhythm: 8px inside a group, 16px between groups, 32–40px between sections. Cards use 24px padding, 16px when compact and 32px for hero areas. Center content in a 1200px column with side padding that grows at wider breakpoints, and make every layout work on mobile and desktop. Breakpoints are `sm` 401px, `md` 601px, `lg` 961px, `xl` 1200px, and `2xl` 1400px.
+无玻璃、无 backdrop-filter。层级靠**实底面色 + 柔和投影**：
 
-## Elevation & Depth
+- `surface`（纯白）承载卡片、导航、浮层；`surface-2`（蓝灰 `#f0f4f9`）做二级面。
+- 投影三档：`shadow-card`（静态卡）/ `shadow-pop`（下拉、Toast、推荐定价档）/ `shadow-modal`（弹窗）。禁止给文字、chip、表格行加投影。
+- 顶部渐变带（`bg-image`）只允许出现在页面背景层，高度约 300~560px，用于首屏氛围；不得移到卡片或按钮上。
 
-Hierarchy comes from tonal surfaces and borders first, so shadows stay subtle. Apply these `box-shadow` values for the light theme:
+## 5 · 形状与圆角
 
-- Raised cards: `0 2px 2px rgba(0, 0, 0, 0.04)`
-- Popovers and menus: `0 1px 1px rgba(0, 0, 0, 0.02), 0 4px 8px -4px rgba(0, 0, 0, 0.04), 0 16px 24px -8px rgba(0, 0, 0, 0.06)`
-- Modals and dialogs: `0 1px 1px rgba(0, 0, 0, 0.02), 0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 24px 32px -8px rgba(0, 0, 0, 0.06)`
+`sm 10 / md 16 / lg 24 / full`：输入框与小元素用 `sm`，卡片/弹窗/菜单用 `md`，大面板与遮罩容器用 `lg`，胶囊（按钮、chip、徽章、开关、头像、分页钮）用 `full`；**按钮固定 `button = full`（pill）**。同一组件族内圆角一致，不混用方角。
 
-Tooltips take the lightest of these. Pair each elevation with the matching radius below.
+## 6 · 动效
 
-## Motion
+- 只为状态变化服务：150ms 状态、200ms 浮层、300ms 弹窗；缓动 `cubic-bezier(0.175, 0.885, 0.32, 1.1)`。
+- 允许：入场 fadeUp 交错（≤ 0.45s）、hover 反馈、进度条推进、骨架屏 shimmer（1.5s 线性循环）。
+- 禁止：自发光/呼吸类循环动画、滚动视差、渐变层动效。长任务进度优先用骨架屏 + 进度条组合表达。
 
-Use motion only when it clarifies a change, never for decoration. Most interactions should feel instant: a duration of `0ms` is often the snappiest and best choice, and the call is context-dependent. When motion genuinely helps, such as revealing or moving an element, keep it short and physical with the easing `cubic-bezier(0.175, 0.885, 0.32, 1.1)`: roughly 150ms for state changes, 200ms for popovers and tooltips, and 300ms for overlays and modals. Avoid long, looping, or attention-grabbing animation, and honor `prefers-reduced-motion` by dropping nonessential motion.
+## 7 · 组件关键值
 
-## Shapes
+| 组件 | 关键规格 |
+| --- | --- |
+| 按钮 | 五语义：primary（`primary` 实底 + `primary-fg` 字）、outline（`surface` 底 + `border-strong` 边）、ghost（透明）、danger（`bad` 实底 + `bad-fg` 字）、link（`link` 色 + 下划线）；高 40 / 33(small) / 48(large)，pill 圆角；loading 在按钮内嵌 14px spinner；禁用整体 0.42 不透明 + not-allowed；`:focus-visible` 用 `ring` 2px 外描边 |
+| 输入 | 高 40，padding 0 14px，`border-strong` 1px 边，圆角 `sm`；focus = 边框转 `ring` + 3px `ring` 22% 扩散；invalid = 边框转 `bad` + 同规则扩散 + 12px 错误文案；disabled = `surface-2` 底 + `text-3` 字；textarea 最小高 86px；select 原生 + appearance 接管 + CSS 绘制箭头 |
+| 徽章 chip | 高 24，`font-mono` 11.5px/600，胶囊；`-soft` 底 + 同色文字 + 6px 实色圆点（颜色之外的状态通道） |
+| 标签 tag | 胶囊 + `border-strong` 1px 边，右侧 15px 圆形删除钮 |
+| 提示条 alert | 四态：`-soft` 混入做底、状态色 35% 混入做边框；左侧 20px 状态色实心圆图标（`*-fg` 字色），右侧关闭 ×；标题 13px/600 + 说明 13px `text-2` |
+| 数据表格 | 容器 = 卡面 + `border` + `shadow-card`；表头 `font-mono` 10.5px 大写 + `text-3`；行分隔 `border`，hover `surface-2`；数字列右对齐 tabular-nums；状态列用 chip；行尾操作为 29px 图标钮；工具栏与分页条底色 `surface-2` |
+| 分页 | 31px 胶囊钮，当前页 `primary` 实底 + `primary-fg` 字 |
+| Tabs | 下划线式：激活 = `primary` 字 + 2px 线；计数徽章用 `primary-soft` 底 `primary` 字；未激活 `text-2` |
+| Toast | 右上角堆叠；卡面 + `border` + `shadow-pop`；左侧 20px 状态色实心圆图标（`*-fg` 字色）；标题 13px/600 + 说明 12px `text-2`；自动消失可手动关 |
+| 弹窗 | `overlay` 遮罩；面板 `surface` + `border` + `shadow-modal` + 圆角 `lg`；头部标题 + 右上 ×，正文 13.5px `text-2`，底部操作条 `surface-2` + 上边框；危险确认主操作用 danger 按钮 |
+| 下拉菜单 | 宽 ~240px，`surface` + `border` + `shadow-pop`，内边距 6px；项高 ~34px、hover `surface-2`、圆角 `full`；头部署头像（`primary` 实底 + `primary-fg` 首字母）+ 邮箱/额度小字；右侧 kbd 提示（mono 10px + 边框）；危险项 `bad` 色 |
+| Tooltip | 反色样式：底 = `text`，字 = `bg`，11.5px mono，带同色小三角，上/下两个方位 |
+| 进度 | 条 8px / 细 4px，`surface-2` 底 + `primary` 填充，胶囊；spinner 22px、2.5px 边、`primary` 22% 轨道；骨架屏 `surface-2 → border → surface-2` 渐变位移 |
+| 空态 | 虚线 `border-strong` 边框 + `surface` 底；圆形图标位 + 标题 + 指向第一个动作的说明 + primary small 按钮 |
 
-Radii stay tight: 6px for everyday surfaces and controls, 12px for menus and modals, 16px for fullscreen surfaces. Reserve 9999px for pills, avatars, and circular controls. Keep one radius family per view rather than mixing rounded and sharp corners.
+## 8 · Do / Don't
 
-## Components
-
-The `components` tokens above give ready-to-use values per element (`backgroundColor`, `textColor`, `rounded`, `height`) drawn from this theme:
-
-- Primary button: solid `gray-1000` fill with a `background-100` label, for the single most important action on a view.
-- Secondary button: `background-100` fill with a translucent `gray-alpha-400` border.
-- Tertiary button: transparent fill with `gray-1000` text for low-emphasis actions; it tints with `gray-alpha` on hover.
-- Error button: solid `red-800` fill with white text, for destructive actions.
-- Input: `background-100` fill, translucent border, 6px radius.
-
-The variant tokens are the default medium (40px) size. Use the `button-small`/`input-small` (32px) and `button-large`/`input-large` (48px) tokens for the other sizes; large buttons step up to `button-16`. Hover and active states step up the scale: a `100` fill becomes `200` on hover and `300` on active, and borders move from `400` to `500` to `600`. Disabled uses a `gray-100` fill, `gray-700` text, and a not-allowed cursor. Focus shows a two-layer ring (`box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #006bff`): a 2px gap in the surface color, then a 2px `blue-700` ring.
-
-## Voice & Content
-
-Copy is part of the design; keep it precise and free of filler.
-
-- Use Title Case for labels, buttons, titles, and tabs; sentence case for body, helper text, and toasts.
-- Name actions with a verb and a noun (`Deploy Project`, `Delete Member`), never `Confirm`, `OK`, or a bare verb.
-- Write errors as what happened plus what to do next: `Build failed. Bundle exceeds 50 MB. Reduce it or raise the limit.`
-- Toasts name the specific thing that changed, drop the trailing period, and never say `successfully`: `Project deleted`, not `Successfully deleted the project.`
-- Empty states point to the first action: `No deployments yet. Push to your Git repository to create one.`
-- Use the present participle with an ellipsis for in-progress states: `Deploying…`, `Saving…`.
-- Use numerals (`3 projects`), curly quotes, and the ellipsis character; skip `please` and marketing superlatives.
-
-## Do's and Don'ts
-
-- Use the gray scale to rank information: `1000` for primary text, `900` for secondary, `700` for disabled.
-- Keep solid accent color for state and the single most important action on a view.
-- Hold WCAG AA contrast (4.5:1 for body text).
-- Show the focus ring on every interactive element at `:focus-visible`, and never remove an outline without a visible replacement.
-- Apply the typography tokens instead of setting font size, line height, or weight by hand.
-- Don’t signal state with color alone; pair it with an icon or text label.
-- Don’t use `background-200` as a general fill; it is for subtle separation only.
-- Don’t mix rounded and sharp corners, or more than two font weights, in one view.
-- Don’t swap `gray-*` for `background-*`; they are separate scales.
-
-×
+- 只消费语义 token；新增 token 必须亮暗双主题同步定义并回填本文件与 `design.dark.md`。
+- **状态色作实底时文字必须用对应 `-fg`**，不得写死白色——这是亮暗双主题共用的合同（暗色下 `-fg` 是深字）。
+- 单视图只放一个 primary 实心主按钮；`accent` 与 `primary` 不进同一控件。
+- 状态不得只靠颜色，一律颜色 + 圆点/图标/文字。
+- 渐变只允许出现在 `bg-image` 顶部带；禁止渐变文字、渐变按钮、彩色投影。
+- 键盘可达：所有可交互元素 `:focus-visible` 显示 `ring`；不得移除 outline 而无替代。
+- 中英文混排时中文回退字体固定为 PingFang SC / Microsoft YaHei，不引入第二套无衬线家族。
