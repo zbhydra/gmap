@@ -67,6 +67,17 @@ SaaS 队列为 [River](https://riverqueue.com)（Postgres 实现，FIFO，无抢
 
 每行结果第一列 `input_id` 关联来源搜索，但默认是随机 UUID、关键词文本不落盘（`gmaps/searchjob.go:48`）。输入行支持 `关键词#!#自定义ID` 语法（`runner/jobs.go:245`），派任务时拼好即可让 `input_id` 等价于 Search Keyword 列。API 模式同样适用（共用解析函数）。
 
+### 4.6 SaaS 通信机制：worker 直连 Postgres，不走 REST API
+
+REST API 只服务一种角色：**提交任务的客户端**（内部仅往队列表插行）。worker 与主节点之间没有任何 HTTP 通信——两者都是 Postgres 的客户端，队列的传输层就是 Postgres 本身（River）。证据链：
+
+1. worker 进程入口：SaaS compose 的 `command: ["worker"]` 走 `RunModeDatabase` 模式（`main.go:72` → `runnerFactory` → `databaserunner.New`），该模式的判定条件就是带了 DSN（`runner/runner.go:237`）；DSN 由 `-dsn` 参数提供（`runner/runner.go:118`）。
+2. worker 对 DSN 的用途：`sql.Open("pgx", dsn)` 直开 Postgres 连接（`runner/databaserunner/databaserunner.go:175-176`），完成领任务、写结果、更新状态、读 `app_config`（`rqueue/worker_jobs.go` 直接 `pool.QueryRow`）。
+3. DSN 来源：cloud-init 给 worker 写入 `.env` 的 `DATABASE_URL={{DATABASE_URL}}`（`infra/cloudinit/cloudinit.go`），指向 `GenerateDBScript` 建的 Postgres（`infra/vps/scripts.go`）。
+4. 无其他传输层：`go.mod` 队列依赖仅 `riverqueue/river` + `riverpgxv5`，无 Redis/RabbitMQ。`DATABASE_URL` 不可达则 worker 连任务都领不到，**5432 可达性是该架构的硬前提**（见 §9）。
+
+设计含义：worker 只需**出站**连数据库，天然躲在 NAT 后、无入站 API 端口（唯一入站是 2222/SSH，仅供 Admin 健康检查旁路）；代价是 Postgres 成为咽喉——既是存储又是队列，承载全部 worker 的连接与轮询，这也是 §9 内网化不是可选项的原因。50 worker 以内规模 Postgres 无压力。
+
 ## 5. 字段覆盖对照（Outscraper 风格 34 列 schema）
 
 对照源码 `gmaps/entry.go` 的 `Entry` 结构与 CSV 列：
@@ -137,6 +148,8 @@ SaaS 队列为 [River](https://riverqueue.com)（Postgres 实现，FIFO，无抢
 
 ## 9. 安全要点（重要）
 
+Postgres 在此架构中不仅是存储、还是唯一的任务传输通道（§4.6），所以它的网络暴露面就是整个系统的安全边界。
+
 - **默认部署把 Postgres 开在公网**：DB 脚本 `5432:5432` 全网卡映射 + `pg_hba` 接受 `0.0.0.0/0`（仅 TLS + scram 密码防护），主服务器 UFW 未放行 5432 也未覆盖 DB 主机（`infra/vps/scripts.go`）。风险必须处理。
 - **修复路径**（DO/Hetzner 免费原生支持）：
   1. 同 VPC / Cloud Network 内网互联，`DATABASE_URL` 填私网 IP（该字段是纯字符串，填私网即走私网）；
@@ -159,7 +172,7 @@ SaaS 队列为 [River](https://riverqueue.com)（Postgres 实现，FIFO，无抢
 
 ## 11. 主要参考
 
-- 仓库源码（浅克隆逐文件核对）：`runner/webrunner/`、`web/job.go`、`rqueue/`、`infra/cloudinit/`、`infra/vps/scripts.go`、`gmaps/entry.go`
+- 仓库源码（浅克隆逐文件核对）：`runner/runner.go`、`runner/webrunner/`、`runner/databaserunner/`、`web/job.go`、`rqueue/`、`infra/cloudinit/`、`infra/vps/scripts.go`、`gmaps/entry.go`
 - [gosom/google-maps-scraper](https://github.com/gosom/google-maps-scraper) · [SaaS 文档](https://github.com/gosom/google-maps-scraper/blob/main/docs/saas.md) · [issue #38](https://github.com/gosom/google-maps-scraper/issues/38)
 - [Hetzner 调价公告（2026-06-15）](https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/) · [Hetzner Network zone FAQ](https://docs.hetzner.com/networking/networks/faq/)
 - [DigitalOcean Droplets 定价](https://www.digitalocean.com/pricing/droplets)

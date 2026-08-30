@@ -36,8 +36,8 @@
 | # | 功能 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- |
 | B1 | Online Scraper(关键词批量任务,云端执行) | 官网 pricing tab=online | 🔍浅(内部未调研,选型见 research 方案调研) | ⬜ |
-| B2 | Scraper API / Reviews API / Photos API | 官网 /google-maps-*-api | 🔍浅 | ⬜ |
-| B3 | MCP 接口 | 官网首页提及 | ⬜ | ⬜ |
+| B2 | Scraper API / Reviews API / Photos API | 官方 Postman 文档(v2 三端点契约) | 🔍 | ⬜ |
+| B3 | MCP Server(Claude/Cursor/VSCode/Codex 接入) | 官网落地页 | 🔍 | ⬜ |
 | B4 | 抓取引擎(gosom/google-maps-scraper SaaS Edition + 代理池) | research 方案调研 §4/§6 | 🔍 | ⬜ |
 | B5 | 云端 POC:封锁率 / 资源画像 / Postgres 内网化(Gate) | research 方案调研 §9/§10 | 🔍 | ⬜ |
 
@@ -59,7 +59,7 @@
 | D1 | 免费工具矩阵(email-checker、merge-csv、license-generator、Place ID Finder、坐标转换等约 7 个) | 官网 /tools | 🔍浅 | ⬜ |
 | D2 | 竞品对比页(约 10 篇:vs Outscraper / Apify 等) | 官网 /articles | ⬜ | ⬜ |
 | D3 | Guides 博客 | 官网 /guides | ⬜ | ⬜ |
-| D4 | Affiliates 联盟计划 | 官网 /affiliates | ⬜ | ⬜ |
+| D4 | Affiliates 联盟计划(25% 循环佣金) | 官网 /affiliates 营销页 | 🔍(门户内部需注册) | ⏸ 暂不做 |
 | D5 | 营销站(Astro 模板复用,多语言) | ♻️ `010.多语言` 基建 + website/ 模板 | ♻️ | ⬜ |
 | D6 | SEO 基建(sitemap / llms.txt / GSC / GA4) | ♻️ `009.SEO与增长` | ♻️ | ⬜ |
 
@@ -68,10 +68,10 @@
 | 阶段 | 内容 | 前置 | 估时 |
 | --- | --- | --- | --- |
 | **Gate · 云端 POC** | B5:一台 CX43 + `-c 8` 实跑,封锁率/资源画像/DB 内网化;**只 Gate 云端路线,不阻塞插件** | 无 | 3–5 天 |
-| **阶段 1 · 插件全量** | **A1–A13 全部 13 项**,验收 = 功能面对齐竞品 v2.5.1(已拍板的架构差异除外:不强制登录、自研服务端、不上 Chrome 商店)。顺序:A1 地基(骨架+远程配置+搜索闭环)→ A2/A3/A5/A8 采集导出主链 → A6 批量面板 → A9/A12 打磨 → A11 账号配额(扩 007/003)→ A4 服务端自研+接入 → A10 集成 → A7(先补逆向)→ A13 上架 | 无,可立即启动 | 7–9 周 |
-| **阶段 2 · 云端服务** | B4 + B1/B2 部署与 credits 对接 | Gate 通过 | 2–3 周 |
+| **阶段 1 · 插件全量** | **A1–A13 全部 13 项**,验收 = 功能面对齐竞品 v2.5.1(已拍板的架构差异除外:不强制登录、自研服务端、不上 Chrome 商店)。顺序:A1 地基(骨架+远程配置+搜索闭环)→ A2/A3/A5/A8 采集导出主链 → A6 批量面板 → A9/A12 打磨 → A11 账号配额(扩 007/003)→ A4 服务端自研+接入 → A10 集成 → A7(已调研完毕)→ A13 上架 | 无,可立即启动 | 7–9 周 |
+| **阶段 2 · 云端服务** | B4 + B1/B2 部署与 credits 对接。**与阶段 1 并行**:技术栈零交集(Go/gosom vs TS/MV3);唯一耦合点 = 003 计量对接,故 **C2 计费骨架决策(额度池形状)提前至阶段 1 早期** | Gate 通过;C2 骨架决策 | 2–3 周 |
 | **阶段 3 · 营销站 + 商业化** | D5 + C2/C5 定价决策与接入;Edge/Firefox 商店页 | 阶段 1 | 1–2 周 |
-| **阶段 4 · 内容与增长** | D1–D4 铺底后持续运营 | 阶段 3 | 铺底 2 周+ |
+| **阶段 4 · 内容与增长** | D1–D3 铺底后持续运营(D4 联盟暂不做) | 阶段 3 | 铺底 2 周+ |
 
 成本与部署细节见 `@research/google-maps-scraping-方案调研.md`(服务器 €90–130/月 + 代理 $100–500/月,代理是大头)。
 
@@ -85,5 +85,9 @@
 
 - 2026-08-29 建立大盘:功能全景 A13/B5/C6/D6 项,来源为 11 篇竞品逆向(`scratch/G-MAPS-EXTRACTOR-v2.5.1/research/`)、官网 pricing/tools/api 抓取与 `research/google-maps-scraping-方案调研.md`。调研状态:插件侧 13 项已完成,云端/工具/内容侧多为 🔍浅 或 ⬜。
 - 2026-08-29 调研细节落位:建立 `feat/013.Maps插件/`(feat + references A1–A13 逐功能竞品调研,含已拍板决策)与 `feat/014.Maps云端/`、`feat/015.工具与增长/`(feat + B1/B2/D1 竞品口径初版);B4/B5 细节指向 research 方案调研;D2–D4、B3 仍 ⬜。A 组 13 项全部具备立项条件。
+- 2026-08-30 A7 登录态实测完成(013 最后一个验证点关闭):当前 Maps 列表页 URL 仍含 `10m1!1e1` 标记,但竞品的精确触发子串在深层保存列表页失效(`4m2` → `4m6!1m2` 漂移)——我方必须宽松匹配 + 远程配置,照抄竞品会漏抓深层列表。至此 013/014/015 三域调研全部完成,无未知项。
+- 2026-08-30 hydra 拍板:D4 联盟计划**暂不做**(调研成果保留于 015 域,启动时无需重新调研);阶段 4 范围调整为 D1–D3。
+- 2026-08-30 调研缺口清零:B2 API v2 契约(Postman 官方文档,search/photos/reviews 三端点 + Bearer + fid 体系)、B3 MCP 落地页、D1 代表工具交互全部补齐入档;全部功能仅剩 D4 联盟(需注册)与 A7 登录态 URL 验证(实现期)两个外部依赖项。
+- 2026-08-30 B1 登录实测完成:竞品 Online 任务台(hydra 账号)界面/任务生命周期/后端云函数契约全量抓取——云端 Parse 端点 `cloud.gmapsextractor.com/parse/functions/*`(submitKeywords/getTaskStatus/getCloudUsage/isPro),与插件共用账号与付费判定;Free 档 1000 records/月实测扣减 322。详见 `feat/014.Maps云端/references/B1`。014 域 feat/references 同步。
 - 2026-08-29 工程落点已决并完成第 1 步:`extension/` 原地改造为 Maps 插件底座(TG 下载业务/官网桥/升级弹窗/manual 用例删除,保留 RPC/构建/HTTP/打点/远端配置/i18n 测试底座;manifest 中性化 version 0.1.0;locales 英文基线)。验证:build 通过、单测 121/121、lint 零警告。下一步 = A1 搜索闭环。
 - 2026-08-29 三项更新:①阶段 1 改为 A1–A13 全量交付(验收 = 功能面对齐竞品 v2.5.1,已拍板架构差异除外),估时 7–9 周,实施顺序见 `feat/013.Maps插件/feat.md`;②A7 升级为 🔍 完成(源码级:列表模式 = A1 通道 + UI/滚动变体,URL 标记 `data=!4m2!10m1!1e1`,仅剩实现期登录态验证点);③待决:插件工程落点(monorepo 子项目 vs 独立仓库)阻塞阶段 1 第 1 步,其余全部可开工。

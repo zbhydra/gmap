@@ -1,0 +1,671 @@
+[
+  {
+    "name": "Le Cafe Coffee",
+    "address": "661 Lexington Ave, New York, NY 10022",
+    "categories": [
+      "Coffee shop",
+      "Delivery Restaurant",
+      "Restaurant"
+    ],
+    "phone_1": "(646) 682-7384",
+    "phones": [
+      [
+        "(646) 682-7384",
+        1
+      ],
+      [
+        "+1 646-682-7384",
+        2
+      ]
+    ],
+    "website": "http://lecafecoffee.com/",
+    "domain": "lecafecoffee.com",
+    "rating": 4.5,
+    "reviews": 261,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJU2cGwuRYwokR1yb7K2YK9WQ&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7597355,
+    "long": -73.9697968,
+    "place_id": "ChIJU2cGwuRYwokR1yb7K2YK9WQ",
+    "kgmid": "/g/11c1pcnzbf",
+    "fid": "0x89c258e4c2066753:0x64f50a662bfb26d7",
+    "timezone": "America/New_York",
+    "street": [
+      "661 Lexington Ave"
+    ],
+    "municipality": [
+      "New York, NY 10022"
+    ],
+    "claim_url": "",
+    "owner": "Le Cafe Coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Cafe Hatou",
+    "address": "Lower Level, 875 3rd Ave Store D, New York, NY 10022",
+    "categories": [
+      "Coffee shop",
+      "Cafe",
+      "Sandwich shop"
+    ],
+    "website": "http://www.cafehatou.com/",
+    "domain": "cafehatou.com",
+    "rating": 4.7,
+    "reviews": 71,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJW7wU9epZwokRADGJmBNcoas&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7571905,
+    "long": -73.9691844,
+    "place_id": "ChIJW7wU9epZwokRADGJmBNcoas",
+    "kgmid": "/g/11vqk30f41",
+    "fid": "0x89c259eaf514bc5b:0xaba15c1398893100",
+    "timezone": "America/New_York",
+    "street": [
+      "Lower Level"
+    ],
+    "municipality": [
+      "875 3rd Ave Store D"
+    ],
+    "claim_url": "",
+    "owner": "Cafe Hatou (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Devoción",
+    "address": "600 Lexington Ave, New York, NY 10022",
+    "categories": [
+      "Coffee shop"
+    ],
+    "phone_1": "(929) 262-1241",
+    "phones": [
+      [
+        "(929) 262-1241",
+        1
+      ],
+      [
+        "+1 929-262-1241",
+        2
+      ]
+    ],
+    "website": "http://devocion.com/",
+    "domain": "devocion.com",
+    "rating": 4.6,
+    "reviews": 455,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJlT3peYFZwokRkTXxmSnvS4g&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.758131999999996,
+    "long": -73.9713838,
+    "place_id": "ChIJlT3peYFZwokRkTXxmSnvS4g",
+    "kgmid": "/g/11tgddbpjp",
+    "fid": "0x89c2598179e93d95:0x884bef2999f13591",
+    "timezone": "America/New_York",
+    "street": [
+      "600 Lexington Ave"
+    ],
+    "municipality": [
+      "New York, NY 10022"
+    ],
+    "claim_url": "",
+    "owner": "Devoción (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Ground Central Coffee Company",
+    "address": "55 E 52nd St, New York, NY 10055",
+    "categories": [
+      "Coffee shop"
+    ],
+    "phone_1": "(646) 370-3265",
+    "phones": [
+      [
+        "(646) 370-3265",
+        1
+      ],
+      [
+        "+1 646-370-3265",
+        2
+      ]
+    ],
+    "website": "https://www.groundcentral.com/",
+    "domain": "groundcentral.com",
+    "rating": 4.3,
+    "reviews": 867,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJNVLpmZxZwokR0_U6BMq5I-w&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.758837199999995,
+    "long": -73.9735985,
+    "place_id": "ChIJNVLpmZxZwokR0_U6BMq5I-w",
+    "kgmid": "/g/11zgm5sy72",
+    "fid": "0x89c2599c99e95235:0xec23b9ca043af5d3",
+    "timezone": "America/New_York",
+    "street": [
+      "55 E 52nd St"
+    ],
+    "municipality": [
+      "New York, NY 10055"
+    ],
+    "claim_url": "",
+    "owner": "Ground Central Coffee Company (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Blank Street",
+    "address": "830 3rd Ave, New York, NY 10022",
+    "categories": [
+      "Coffee shop",
+      "Cafe",
+      "Pastry shop"
+    ],
+    "website": "https://app.blankstreet.com/MjLw",
+    "domain": "app.blankstreet.com",
+    "rating": 4.6,
+    "reviews": 332,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJ6Ut94KRZwokRS6TsJWWJ7CI&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7564053,
+    "long": -73.9707437,
+    "place_id": "ChIJ6Ut94KRZwokRS6TsJWWJ7CI",
+    "kgmid": "/g/11tf_mkxns",
+    "fid": "0x89c259a4e07d4be9:0x22ec896525eca44b",
+    "timezone": "America/New_York",
+    "street": [
+      "830 3rd Ave"
+    ],
+    "municipality": [
+      "New York, NY 10022"
+    ],
+    "claim_url": "",
+    "owner": "Blank Street (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Gold coffee",
+    "address": "491 3rd Ave, New York, NY 10016",
+    "categories": [
+      "Coffee shop"
+    ],
+    "website": "https://service-page-help.web.app/gold-coffee",
+    "domain": "service-page-help.web.app",
+    "rating": 4.9,
+    "reviews": 1828,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJm-xEoHxZwokRTStZFhfbrKA&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7451277,
+    "long": -73.9783508,
+    "place_id": "ChIJm-xEoHxZwokRTStZFhfbrKA",
+    "kgmid": "/g/11kqkzz1cl",
+    "fid": "0x89c2597ca044ec9b:0xa0acdb1716592b4d",
+    "timezone": "America/New_York",
+    "street": [
+      "491 3rd Ave"
+    ],
+    "municipality": [
+      "New York, NY 10016"
+    ],
+    "claim_url": "",
+    "owner": "Gold coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Black Fox Coffee",
+    "address": "Garden, 550 Madison Ave, New York, NY 10022",
+    "categories": [
+      "Coffee shop",
+      "Coffee store"
+    ],
+    "website": "http://www.blackfoxcoffee.com/",
+    "domain": "blackfoxcoffee.com",
+    "rating": 4.5,
+    "reviews": 343,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJyV6HYy1ZwokRvQgn3lwGuJE&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.76134,
+    "long": -73.9737435,
+    "place_id": "ChIJyV6HYy1ZwokRvQgn3lwGuJE",
+    "kgmid": "/g/11sbp41b9w",
+    "fid": "0x89c2592d63875ec9:0x91b8065cde2708bd",
+    "timezone": "America/New_York",
+    "street": [
+      "Garden"
+    ],
+    "municipality": [
+      "550 Madison Ave"
+    ],
+    "claim_url": "",
+    "owner": "Black Fox Coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Gregorys Coffee",
+    "address": "880 3rd Ave, New York, NY 10022",
+    "categories": [
+      "Coffee shop"
+    ],
+    "phone_1": "(877) 212-5813",
+    "phones": [
+      [
+        "(877) 212-5813",
+        1
+      ],
+      [
+        "+1 877-212-5813",
+        2
+      ]
+    ],
+    "website": "https://gregoryscoffee.com/",
+    "domain": "gregoryscoffee.com",
+    "rating": 4.3,
+    "reviews": 177,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJY-9OYONYwokRGu6JhNBwq-s&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.758125299999996,
+    "long": -73.9695875,
+    "place_id": "ChIJY-9OYONYwokRGu6JhNBwq-s",
+    "kgmid": "/g/11fx8zrlb5",
+    "fid": "0x89c258e3604eef63:0xebab70d08489ee1a",
+    "timezone": "America/New_York",
+    "street": [
+      "880 3rd Ave"
+    ],
+    "municipality": [
+      "New York, NY 10022"
+    ],
+    "claim_url": "",
+    "owner": "Gregorys Coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Le Cafe Coffee",
+    "address": "909 3rd Ave, New York, NY 10022",
+    "categories": [
+      "Coffee shop"
+    ],
+    "website": "http://www.lecafecoffee.com/",
+    "domain": "lecafecoffee.com",
+    "rating": 4.2,
+    "reviews": 5,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJXXeVWV9ZwokRXTw1_qjME8Q&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7583293,
+    "long": -73.96798869999999,
+    "place_id": "ChIJXXeVWV9ZwokRXTw1_qjME8Q",
+    "kgmid": "/g/11rqh_7h2q",
+    "fid": "0x89c2595f5995775d:0xc413cca8fe353c5d",
+    "timezone": "America/New_York",
+    "street": [
+      "909 3rd Ave"
+    ],
+    "municipality": [
+      "New York, NY 10022"
+    ],
+    "claim_url": "",
+    "owner": "Le Cafe Coffee (Owner)",
+    "price": null
+  },
+  {
+    "name": "Le Cafe Coffee",
+    "address": "1427 6th Ave, New York, NY 10019",
+    "categories": [
+      "Coffee shop"
+    ],
+    "website": "https://lecafecoffee.com/",
+    "domain": "lecafecoffee.com",
+    "rating": 4.6,
+    "reviews": 276,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJ-Y-kFABZwokRIpR1-ZpuRjQ&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.765291,
+    "long": -73.9767121,
+    "place_id": "ChIJ-Y-kFABZwokRIpR1-ZpuRjQ",
+    "kgmid": "/g/11ld95sfh0",
+    "fid": "0x89c2590014a48ff9:0x34466e9af9759422",
+    "timezone": "America/New_York",
+    "street": [
+      "1427 6th Ave"
+    ],
+    "municipality": [
+      "New York, NY 10019"
+    ],
+    "claim_url": "",
+    "owner": "Le Cafe Coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Say Coffee",
+    "address": "346 E 59th St, New York, NY 10022",
+    "categories": [
+      "Coffee shop"
+    ],
+    "phone_1": "(347) 906-4391",
+    "phones": [
+      [
+        "(347) 906-4391",
+        1
+      ],
+      [
+        "+1 347-906-4391",
+        2
+      ]
+    ],
+    "website": "http://www.saycoffee.us/",
+    "domain": "saycoffee.us",
+    "rating": 4.8,
+    "reviews": 333,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJFzxBUZhZwokRH0svnozCDbo&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7597138,
+    "long": -73.9624599,
+    "place_id": "ChIJFzxBUZhZwokRH0svnozCDbo",
+    "kgmid": "/g/11m65k468k",
+    "fid": "0x89c2599851413c17:0xba0dc28c9e2f4b1f",
+    "timezone": "America/New_York",
+    "street": [
+      "346 E 59th St"
+    ],
+    "municipality": [
+      "New York, NY 10022"
+    ],
+    "claim_url": "",
+    "owner": "Say Coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "787 Coffee",
+    "address": "401 E 58th St, New York, NY 10022",
+    "categories": [
+      "Coffee shop"
+    ],
+    "phone_1": "(646) 649-3196",
+    "phones": [
+      [
+        "(646) 649-3196",
+        1
+      ],
+      [
+        "+1 646-649-3196",
+        2
+      ]
+    ],
+    "website": "http://787coffee.com/",
+    "domain": "787coffee.com",
+    "rating": 4.9,
+    "reviews": 2891,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJK0YMWmdZwokRwRsOreYzArU&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7589167,
+    "long": -73.962008,
+    "place_id": "ChIJK0YMWmdZwokRwRsOreYzArU",
+    "kgmid": "/g/11jycr2fwk",
+    "fid": "0x89c259675a0c462b:0xb50233e6ad0e1bc1",
+    "timezone": "America/New_York",
+    "street": [
+      "401 E 58th St"
+    ],
+    "municipality": [
+      "New York, NY 10022"
+    ],
+    "claim_url": "",
+    "owner": "787 Coffee (Owner)",
+    "price": "$10–20"
+  },
+  {
+    "name": "Birch Coffee",
+    "address": "240 E 54th St, New York, NY 10022",
+    "categories": [
+      "Coffee shop"
+    ],
+    "phone_1": "(212) 686-1444",
+    "phones": [
+      [
+        "(212) 686-1444",
+        1
+      ],
+      [
+        "+1 212-686-1444",
+        2
+      ]
+    ],
+    "website": "http://birchcoffee.com/",
+    "domain": "birchcoffee.com",
+    "rating": 4.3,
+    "reviews": 82,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJG6ZFFOlZwokRr5ioyQcmw-M&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7574551,
+    "long": -73.9674876,
+    "place_id": "ChIJG6ZFFOlZwokRr5ioyQcmw-M",
+    "kgmid": "/g/11tb5vjspv",
+    "fid": "0x89c259e91445a61b:0xe3c32607c9a898af",
+    "timezone": "America/New_York",
+    "street": [
+      "240 E 54th St"
+    ],
+    "municipality": [
+      "New York, NY 10022"
+    ],
+    "claim_url": "",
+    "owner": "Birch Coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Down Under Coffee",
+    "address": "1000 8th Ave, New York, NY 10019",
+    "categories": [
+      "Coffee shop"
+    ],
+    "rating": 4.7,
+    "reviews": 74,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJRQbaGIhZwokR52JdZ_sZISw&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.767054,
+    "long": -73.98297649999999,
+    "place_id": "ChIJRQbaGIhZwokR52JdZ_sZISw",
+    "kgmid": "/g/11vfblmz4v",
+    "fid": "0x89c2598818da0645:0x2c2119fb675d62e7",
+    "timezone": "America/New_York",
+    "street": [
+      "1000 8th Ave"
+    ],
+    "municipality": [
+      "New York, NY 10019"
+    ],
+    "claim_url": "https://business.google.com/create?fp=317985137946",
+    "owner": "Down Under Coffee (Owner)",
+    "price": "$10–20"
+  },
+  {
+    "name": "Sip and Co",
+    "address": "41 W 58th St, New York, NY 10019",
+    "categories": [
+      "Coffee shop",
+      "Bakery",
+      "Breakfast restaurant",
+      "Cafe",
+      "Dessert shop",
+      "Lunch restaurant"
+    ],
+    "phone_1": "(516) 960-2283",
+    "phones": [
+      [
+        "(516) 960-2283",
+        1
+      ],
+      [
+        "+1 516-960-2283",
+        2
+      ]
+    ],
+    "website": "http://sipandco.co/",
+    "domain": "sipandco.co",
+    "rating": 4.5,
+    "reviews": 765,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJK4Gklg1ZwokRmDGLQSxEaUI&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7647538,
+    "long": -73.9758633,
+    "place_id": "ChIJK4Gklg1ZwokRmDGLQSxEaUI",
+    "kgmid": "/g/11mhqrz9x_",
+    "fid": "0x89c2590d96a4812b:0x4269442c418b3198",
+    "timezone": "America/New_York",
+    "street": [
+      "41 W 58th St"
+    ],
+    "municipality": [
+      "New York, NY 10019"
+    ],
+    "claim_url": "",
+    "owner": "Sip and Co (Owner)",
+    "price": "$10–20"
+  },
+  {
+    "name": "L B Coffee",
+    "address": "454 E 84th St Store Front, New York, NY 10028",
+    "categories": [
+      "Coffee shop"
+    ],
+    "phone_1": "(646) 410-2818",
+    "phones": [
+      [
+        "(646) 410-2818",
+        1
+      ],
+      [
+        "+1 646-410-2818",
+        2
+      ]
+    ],
+    "website": "https://lbcoffeenyc.com/",
+    "domain": "lbcoffeenyc.com",
+    "rating": 4.9,
+    "reviews": 381,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJhcA7rstZwokR2UOjvUcQPkQ&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.774620999999996,
+    "long": -73.9484401,
+    "place_id": "ChIJhcA7rstZwokR2UOjvUcQPkQ",
+    "kgmid": "/g/11y0plvyll",
+    "fid": "0x89c259cbae3bc085:0x443e1047bda343d9",
+    "timezone": "America/New_York",
+    "street": [
+      "454 E 84th St Store Front"
+    ],
+    "municipality": [
+      "New York, NY 10028"
+    ],
+    "claim_url": "",
+    "owner": "L B Coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Blank Street",
+    "address": "500 Lexington Ave, New York, NY 10017",
+    "categories": [
+      "Coffee shop"
+    ],
+    "website": "http://blankstreet.com/",
+    "domain": "blankstreet.com",
+    "rating": 4.8,
+    "reviews": 663,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJ1SIh98hZwokRuEuNic36pJg&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7549549,
+    "long": -73.9737512,
+    "place_id": "ChIJ1SIh98hZwokRuEuNic36pJg",
+    "kgmid": "/g/11t1l5dph2",
+    "fid": "0x89c259c8f72122d5:0x98a4facd898d4bb8",
+    "timezone": "America/New_York",
+    "street": [
+      "500 Lexington Ave"
+    ],
+    "municipality": [
+      "New York, NY 10017"
+    ],
+    "claim_url": "",
+    "owner": "Blank Street (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Le Cafe Coffee",
+    "address": "1330 6th Ave, New York, NY 10019",
+    "categories": [
+      "Coffee shop"
+    ],
+    "website": "https://lecafecoffee.com/",
+    "domain": "lecafecoffee.com",
+    "rating": 4.4,
+    "reviews": 244,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJlbnXAVJZwokRsw3kHnE26RI&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7620794,
+    "long": -73.97842,
+    "place_id": "ChIJlbnXAVJZwokRsw3kHnE26RI",
+    "kgmid": "/g/11xzy9q723",
+    "fid": "0x89c2595201d7b995:0x12e936711ee40db3",
+    "timezone": "America/New_York",
+    "street": [
+      "1330 6th Ave"
+    ],
+    "municipality": [
+      "New York, NY 10019"
+    ],
+    "claim_url": "",
+    "owner": "Le Cafe Coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "787 coffee",
+    "address": "245 W 46th St, New York, NY 10036",
+    "categories": [
+      "Coffee shop"
+    ],
+    "phone_1": "(646) 596-7178",
+    "phones": [
+      [
+        "(646) 596-7178",
+        1
+      ],
+      [
+        "+1 646-596-7178",
+        2
+      ]
+    ],
+    "website": "https://www.787coffee.com/",
+    "domain": "787coffee.com",
+    "rating": 4.9,
+    "reviews": 3532,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJfbedxbZZwokRpbnR5BBdz1c&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7597441,
+    "long": -73.9875048,
+    "place_id": "ChIJfbedxbZZwokRpbnR5BBdz1c",
+    "kgmid": "/g/11y31_2b88",
+    "fid": "0x89c259b6c59db77d:0x57cf5d10e4d1b9a5",
+    "timezone": "America/New_York",
+    "street": [
+      "245 W 46th St"
+    ],
+    "municipality": [
+      "New York, NY 10036"
+    ],
+    "claim_url": "",
+    "owner": "787 coffee (Owner)",
+    "price": "$1–10"
+  },
+  {
+    "name": "Tenpa’s Coffee",
+    "address": "1069 1st Ave, New York, NY 10022",
+    "categories": [
+      "Cafe"
+    ],
+    "phone_1": "(212) 510-7511",
+    "phones": [
+      [
+        "(212) 510-7511",
+        1
+      ],
+      [
+        "+1 212-510-7511",
+        2
+      ]
+    ],
+    "rating": 4.9,
+    "reviews": 234,
+    "review_url": "https://search.google.com/local/reviews?placeid=ChIJRWiqZS5ZwokRQo3cJgtfut8&q=coffee+in+manhattan&authuser=0&hl=en&gl=US",
+    "lat": 40.7592977,
+    "long": -73.9624243,
+    "place_id": "ChIJRWiqZS5ZwokRQo3cJgtfut8",
+    "kgmid": "/g/11p055hc2k",
+    "fid": "0x89c2592e65aa6845:0xdfba5f0b26dc8d42",
+    "timezone": "America/New_York",
+    "street": [
+      "1069 1st Ave"
+    ],
+    "municipality": [
+      "New York, NY 10022"
+    ],
+    "claim_url": "",
+    "owner": "Tenpa’s Coffee (Owner)",
+    "price": "$1–10"
+  }
+]

@@ -1,25 +1,29 @@
-# B2 · API 三件套竞品口径(调研初版)
+# B2 · API 三件套竞品口径(2026-08-30 Postman 文档抓取)
 
-> Roadmap:B2 · 调研:🔍浅(落地页口径;细节在其 Postman 文档,未深挖)
+> Roadmap:B2 · 调研:✅ 完成(官方 Postman 文档:documenter.getpostman.com/view/2218135/2s9YymJRMi)
 
 ## 功能定义
 
-面向开发者的 HTTP 接口:Google Maps 商家搜索(Scraper API)、评论(Reviews API)、照片(Photos API),按请求计费,接入客户自有系统。
+面向开发者的同步 REST API:搜索(Places)、照片(Photos)、评论(Reviews)三端点,Bearer token 认证,直挂云端域名。
 
-## 用户操作(竞品,据落地页)
+## 接口契约(实测文档)
 
-1. 官网登录后获取 API 凭证;对照其 Postman 文档调用。
-2. 提交任务 → 轮询/webhook 取结果;限流 **300 requests/分钟**(落地页明示)。
-3. 三个产品页:`/google-maps-scraper-api`、`/google-maps-reviews-scraper-api`、`/google-maps-photos-scraper-api`;Reviews API 按 FID(`0x…:0x…`)提取公开评论——佐证其走非官方通道(官方 API 用 place_id 体系,见 research 方案调研 §2)。
-4. 计量维度:requests/月(独立于插件与 Online 的套餐,2026-08 官网三 tab 分列)。
+基础:`https://cloud.gmapsextractor.com/api/v2/*`,`Content-Type: application/json`,`Authorization: Bearer <token>`。
 
-## 竞品实现逻辑(推断)
+| 端点 | Body | 响应 |
+| --- | --- | --- |
+| `POST /v2/search` | `q`(查询词)、`page`(1–10,每页 20 条)、`ll`(`@lat,lng,zoom` 地理偏置)、`extra`(true 时含 Email+社媒)、`hl`(语言) | places 列表(同插件 36 列口径) |
+| `POST /v2/photos` | `fid`(`0x…:0x…`)、`page` | `{photos:[{photoUrl}]}`(lh3 CDN URL) |
+| `POST /v2/reviews` | `fid`、`page`、`sort_by`(1 相关 / 2 最新 / 3 最高 / 4 最低) | `{reviews:[{id,…}]}` |
 
-- 商业服务通用封装:POST 任务 → 队列 → 结果 JSON;频控 + 代理池 + 缓存是壁垒(research 方案调研 §2)。
-- gosom 自带 REST API 模式(`POST /api/v1/jobs` → 轮询 → `/download`,OpenAPI 文档),可作为我方 API 层的直接基座。
+- **无 webhook**——同步 REST 返回,配合分页拉取;`/v1/search` 已弃用。
+- 已知限制(官方文档承认):「near me」类关键词地理定位不准,建议查询词带城市/州/邮编。
+- `extra=true` 即 013 A4 的服务端补全能力——API 与插件共用同一补全服务。
+- ID 体系:photos/reviews 用 fid(非 place_id),与 Maps 内部要素 ID 一致(见 research 方案调研 §5 ID 速查表)。
+- 限流:落地页口径 300 requests/分钟(文档未列错误码表,限流/鉴权错误码待我方对接实测)。
 
 ## 我方落地要点
 
-- API 网关 = backend 新增 `/api/client/maps/*` 接口组(密钥发放、计费扣 credits、任务转发 gosom、结果代理),归 003/004 现有契约扩展;具体 spec 立项时写本域 tech。
-- FID/CID/Place ID/kgmid 的 ID 体系速查表见 `research/google-maps-scraping-方案调研.md` §5,API 参数设计直接引用。
-- 竞品 Postman 文档值得在阶段 2 立项时抓取补齐:接口形状、错误码、webhook 事件集(本轮未挖)。
+- 我方 API 走 gosom(`POST /api/v1/jobs` 异步任务)与竞品的同步 REST 不同构——交互设计二选一:对齐竞品同步简单端点(小数据量),或保留任务制(大数据量);可在 B2 立项时按目标客户定,或两者都出(轻查询同步 + 大任务异步)。
+- fid 依赖:photos/reviews 以 fid 为键,我方导出 schema 已含 Fid 列(A5),天然兼容。
+- 密钥管理、计费扣减归 backend(003/007 扩展)。
