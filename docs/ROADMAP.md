@@ -61,7 +61,7 @@
 | D3 | Guides 博客 | 官网 /guides | ⬜ | ⬜ |
 | D4 | Affiliates 联盟计划(25% 循环佣金) | 官网 /affiliates 营销页 | 🔍(门户内部需注册) | ⏸ 暂不做 |
 | D5 | 营销站(Astro 模板复用,多语言) | ♻️ `010.多语言` 基建 + website/ 模板 | ♻️ | ⬜ |
-| D6 | SEO 基建(sitemap / llms.txt / GSC / GA4) | ♻️ `009.SEO与增长` | ♻️ | ⬜ |
+| D6 | SEO 基建(sitemap / llms.txt;GSC/GA4 后台采集已退役,改用官方控制台) | ♻️ `009.SEO与增长` | ♻️ | ⬜ |
 
 ### E · Bing 插件(`016.Bing插件`,2026-08-30 立项)
 

@@ -1,5 +1,20 @@
 # 009 · SEO 与增长 - 变更记录
 
+## 2026-08-31 移除后台 GSC/GA4 运行时指标采集
+
+**Why**:GSC/GA4 运行时采集的后端主体(service/model/cron/admin 接口/快照表)此前已随后端清理移除,仅剩管理后台设置页 tab 与零散死代码;运营观测改用 Search Console 与 GA4 官方控制台即可,不再维护自建采集链路。
+
+**删除**:
+
+- `admin/src/views/SystemSettingsView.vue` 的「google 数据采集」tab 及配置/授权/断开/手动采集全部逻辑;系统设置页只剩「配置表缓存」「API Key」两个 tab。
+- `admin/src/api/system-settings.ts` 的 GoogleData* 类型与 5 个接口封装;`admin/src/i18n/` 中英两份的 tabGoogleData/googleData* 文案。
+- `admin/e2e/system-settings.spec.ts` 的 Google 数据 mock 与 7 条相关用例。
+- 后端 `admin_system_settings.py` 遗留的 GoogleData* 请求模型、`common_code.py` 的 31001-31004 错误码与 14 个 locale 对应消息。
+- `tech-GSC与GA4采集.md` 与 `plans/001.GSC与GA4采集扩展.md` 两份文档。
+- `feat.md` 中 GSC/GA4 采集的功能范围、业务流程、数据口径、验收与埋点条目。
+
+**保留**:官网公开页面的 GA4 + Microsoft Clarity 访问分析(含营销站 GA4 埋点)是网站访问分析能力,与后台采集无关,不受影响。
+
 ## 2026-08-14 移除 TGD Pro Changelog 页面
 
 **Why**：`website-tgd-pro` 不再对外提供产品更新日志，需要同时撤下导航入口、静态页面与机器索引，避免搜索引擎继续发现失效内容。

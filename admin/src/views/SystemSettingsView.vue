@@ -4,7 +4,6 @@
   功能：
   1. 刷新当前业务进程内配置读取缓存，并展示刷新时间和服务列表。
   2. 查询、生成和重新生成当前管理员外部 API Key；完整 key 仅在弹窗中一次性展示。
-  3. 编辑 Google 数据采集配置，查询授权状态，发起授权、断开授权和手动采集。
 -->
 <template>
   <div class="system-settings-view">
@@ -116,241 +115,6 @@
           </section>
         </NTabPane>
 
-        <NTabPane
-          name="google-data"
-          :tab="t('systemSettings.tabGoogleData')"
-        >
-          <section>
-          <NAlert
-            class="window-policy-alert"
-            type="info"
-            :title="t('systemSettings.googleDataWindowPolicyTitle')"
-          >
-            {{ t("systemSettings.googleDataWindowPolicyDescription") }}
-          </NAlert>
-
-          <NForm
-            class="google-data-config-form"
-            label-placement="top"
-            :disabled="googleDataSaving"
-          >
-            <div class="google-data-config-grid">
-              <NFormItem :label="t('systemSettings.googleDataClientId')">
-                <NInput
-                  v-model:value="googleDataConfigForm.client_id"
-                  :placeholder="t('systemSettings.googleDataClientIdPlaceholder')"
-                />
-              </NFormItem>
-              <NFormItem :label="t('systemSettings.googleDataClientSecret')">
-                <NInput
-                  v-model:value="googleDataConfigForm.client_secret"
-                  type="password"
-                  show-password-on="click"
-                  :placeholder="clientSecretPlaceholder"
-                />
-              </NFormItem>
-              <NFormItem :label="t('systemSettings.googleDataGscSiteUrl')">
-                <NInput
-                  v-model:value="googleDataConfigForm.gsc_site_url"
-                  :placeholder="t('systemSettings.googleDataGscSiteUrlPlaceholder')"
-                />
-              </NFormItem>
-              <NFormItem :label="t('systemSettings.googleDataGa4PropertyId')">
-                <NInput
-                  v-model:value="googleDataConfigForm.ga4_property_id"
-                  :placeholder="t('systemSettings.googleDataGa4PropertyIdPlaceholder')"
-                />
-              </NFormItem>
-            </div>
-            <div class="form-actions">
-              <NSpace size="small" justify="end">
-                <NButton
-                  type="primary"
-                  :loading="googleDataSaving"
-                  @click="handleSaveGoogleDataConfig"
-                >
-                  {{ t("systemSettings.saveGoogleDataConfig") }}
-                </NButton>
-                <NButton
-                  v-if="!googleDataAuthorized"
-                  type="primary"
-                  ghost
-                  :loading="googleDataAuthorizing"
-                  :disabled="!canAuthorizeGoogleData"
-                  @click="handleAuthorizeGoogleData"
-                >
-                  {{ t("systemSettings.authorizeGoogleData") }}
-                </NButton>
-                <template v-else>
-                  <NButton
-                    type="primary"
-                    ghost
-                    :loading="googleDataAuthorizing"
-                    :disabled="!canAuthorizeGoogleData"
-                    @click="handleAuthorizeGoogleData"
-                  >
-                    {{ t("systemSettings.reauthorizeGoogleData") }}
-                  </NButton>
-                  <NButton
-                    type="error"
-                    ghost
-                    :loading="googleDataDisconnecting"
-                    :disabled="!canDisconnectGoogleData"
-                    @click="handleDisconnectGoogleData"
-                  >
-                    {{ t("systemSettings.disconnectGoogleData") }}
-                  </NButton>
-                  <NButton
-                    type="primary"
-                    :loading="googleDataCollecting"
-                    :disabled="!canCollectGoogleData"
-                    @click="handleCollectGoogleDataOnce"
-                  >
-                    {{ t("systemSettings.collectGoogleDataOnce") }}
-                  </NButton>
-                </template>
-              </NSpace>
-            </div>
-          </NForm>
-
-          <NAlert
-            v-if="showGoogleDataUnknownAlert"
-            class="unknown-alert"
-            type="warning"
-            :title="t('systemSettings.googleDataUnknownTitle')"
-          >
-            <NSpace vertical size="small">
-              <NText>{{ t("systemSettings.googleDataUnknownDescription") }}</NText>
-              <NButton
-                size="small"
-                :loading="googleDataLoading"
-                @click="loadGoogleDataStatus"
-              >
-                {{ t("common.refresh") }}
-              </NButton>
-            </NSpace>
-          </NAlert>
-
-          <NAlert
-            v-if="showGoogleDataConfigAlert"
-            class="unknown-alert"
-            type="warning"
-            :title="t('systemSettings.googleDataConfigMissingTitle')"
-          >
-            {{ t("systemSettings.googleDataConfigMissingDescription") }}
-          </NAlert>
-
-          <NSpin :show="googleDataLoading">
-            <NDescriptions
-              label-placement="left"
-              :column="1"
-              bordered
-              size="small"
-            >
-              <NDescriptionsItem :label="t('systemSettings.googleDataConfigStatus')">
-                <NTag :type="googleDataStatus === null ? 'default' : googleDataConfigured ? 'success' : 'warning'">
-                  {{ googleDataStatus === null
-                    ? "-"
-                    : googleDataConfigured
-                      ? t("systemSettings.configured")
-                      : t("systemSettings.notConfigured") }}
-                </NTag>
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataAuthStatus')">
-                <NTag :type="googleDataAuthorized ? 'success' : 'default'">
-                  {{ googleDataStatus === null
-                    ? "-"
-                    : googleDataAuthorized
-                      ? t("systemSettings.authorized")
-                      : t("systemSettings.notAuthorized") }}
-                </NTag>
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataClientId')">
-                <code>{{ googleDataStatus?.client_id || "-" }}</code>
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataClientSecret')">
-                <NTag
-                  :type="googleDataStatus?.client_secret_configured ? 'success' : 'default'"
-                >
-                  {{ googleDataStatus?.client_secret_configured
-                    ? t("systemSettings.configured")
-                    : t("systemSettings.notConfigured") }}
-                </NTag>
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataGscSiteUrl')">
-                <code>{{ googleDataStatus?.gsc_site_url || "-" }}</code>
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataGa4PropertyId')">
-                <code>{{ googleDataStatus?.ga4_property_id || "-" }}</code>
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataLastAuthorizedAt')">
-                {{ formatTime(googleDataStatus?.last_authorized_at ?? null) }}
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataLastGscSuccessAt')">
-                {{ formatTime(googleDataStatus?.last_gsc_success_at ?? null) }}
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataLastGscError')">
-                {{ googleDataStatus?.last_gsc_error_msg || "-" }}
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataLastGa4SuccessAt')">
-                {{ formatTime(googleDataStatus?.last_ga4_success_at ?? null) }}
-              </NDescriptionsItem>
-              <NDescriptionsItem :label="t('systemSettings.googleDataLastGa4Error')">
-                {{ googleDataStatus?.last_ga4_error_msg || "-" }}
-              </NDescriptionsItem>
-            </NDescriptions>
-          </NSpin>
-
-          <NAlert
-            v-if="googleDataCollectResult"
-            class="result-alert collect-result-alert"
-            :type="googleDataCollectResult.errors.length > 0 ? 'warning' : 'success'"
-            :title="t('systemSettings.googleDataCollectResultTitle')"
-          >
-            <NSpace vertical size="small">
-              <NDescriptions
-                label-placement="left"
-                :column="1"
-                bordered
-                size="small"
-              >
-                <NDescriptionsItem :label="t('systemSettings.googleDataCollectedAt')">
-                  {{ formatTime(googleDataCollectResult.collected_at) }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('systemSettings.googleDataCollectGscSaved')">
-                  <NTag :type="googleDataCollectResult.gsc_saved ? 'success' : 'default'">
-                    {{ googleDataCollectResult.gsc_saved
-                      ? t("systemSettings.saved")
-                      : t("systemSettings.notSaved") }}
-                  </NTag>
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('systemSettings.googleDataCollectGa4Saved')">
-                  <NTag :type="googleDataCollectResult.ga4_saved ? 'success' : 'default'">
-                    {{ googleDataCollectResult.ga4_saved
-                      ? t("systemSettings.saved")
-                      : t("systemSettings.notSaved") }}
-                  </NTag>
-                </NDescriptionsItem>
-              </NDescriptions>
-              <NText strong>{{ t("systemSettings.googleDataCollectErrors") }}</NText>
-              <NList
-                v-if="googleDataCollectResult.errors.length > 0"
-                size="small"
-                bordered
-              >
-                <NListItem
-                  v-for="errorText in googleDataCollectResult.errors"
-                  :key="errorText"
-                >
-                  {{ errorText }}
-                </NListItem>
-              </NList>
-              <NText v-else>{{ t("systemSettings.googleDataNoCollectErrors") }}</NText>
-            </NSpace>
-          </NAlert>
-          </section>
-        </NTabPane>
-
       </NTabs>
     </NCard>
 
@@ -379,16 +143,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
 import {
   NAlert,
   NButton,
   NCard,
   NDescriptions,
   NDescriptionsItem,
-  NForm,
-  NFormItem,
-  NInput,
   NList,
   NListItem,
   NModal,
@@ -402,49 +162,26 @@ import {
   useMessage,
 } from "naive-ui";
 import {
-  collectGoogleDataOnce,
-  createGoogleDataAuthorizationUrl,
-  disconnectGoogleData,
   generateAdminApiKey,
   getAdminApiKeyMeta,
-  getGoogleDataStatus,
   refreshConfigCache,
-  saveGoogleDataConfig,
   type AdminApiKeyMeta,
   type ConfigCacheRefreshResult,
-  type GoogleDataConfigUpdateRequest,
-  type GoogleDataCollectOnceResult,
-  type GoogleDataStatus,
 } from "@/api/system-settings";
 import { formatAdminTimeMs } from "@/utils/time";
 
 const { t } = useI18n();
-const route = useRoute();
-const router = useRouter();
 const dialog = useDialog();
 const message = useMessage();
 
 const refreshingCache = ref(false);
 const apiKeyLoading = ref(false);
 const generatingApiKey = ref(false);
-const googleDataLoading = ref(false);
-const googleDataAuthorizing = ref(false);
-const googleDataDisconnecting = ref(false);
-const googleDataCollecting = ref(false);
-const googleDataSaving = ref(false);
 const activeTab = ref("config-cache");
 const cacheRefreshResult = ref<ConfigCacheRefreshResult | null>(null);
 const apiKeyMeta = ref<AdminApiKeyMeta | null>(null);
-const googleDataStatus = ref<GoogleDataStatus | null>(null);
-const googleDataCollectResult = ref<GoogleDataCollectOnceResult | null>(null);
 const generatedApiKey = ref("");
 const showGeneratedApiKeyModal = ref(false);
-const googleDataConfigForm = ref<GoogleDataConfigUpdateRequest>({
-  client_id: "",
-  client_secret: "",
-  gsc_site_url: "",
-  ga4_property_id: "",
-});
 
 /** 只有已知 API Key 状态时才允许生成，避免加载失败时绕过重新生成确认。 */
 const canGenerateApiKey = computed(
@@ -454,74 +191,6 @@ const canGenerateApiKey = computed(
 /** API Key 状态未知时给管理员明确重试入口。 */
 const showApiKeyUnknownAlert = computed(
   () => !apiKeyLoading.value && apiKeyMeta.value === null,
-);
-
-/** Google 数据后端配置完整时才允许授权或采集。 */
-const googleDataConfigured = computed(
-  () => googleDataStatus.value?.configured === true,
-);
-
-/** 当前表单是否足够保存并发起 Google 授权。 */
-const googleDataFormConfigured = computed(() => {
-  const form = googleDataConfigForm.value;
-  return Boolean(
-    form.client_id.trim() &&
-      (form.client_secret.trim() ||
-        googleDataStatus.value?.client_secret_configured === true) &&
-      form.gsc_site_url.trim() &&
-      form.ga4_property_id.trim(),
-  );
-});
-
-/** Google 数据已有授权时展示授权后的操作组。 */
-const googleDataAuthorized = computed(
-  () => googleDataStatus.value?.authorized === true,
-);
-
-/** 当前表单可保存时即可授权；点击授权会先保存表单再跳转。 */
-const canAuthorizeGoogleData = computed(
-  () =>
-    !googleDataLoading.value &&
-    !googleDataAuthorizing.value &&
-    !googleDataSaving.value &&
-    googleDataFormConfigured.value,
-);
-
-/** 已知授权状态下才允许断开，避免状态失败时误导管理员。 */
-const canDisconnectGoogleData = computed(
-  () =>
-    !googleDataLoading.value &&
-    !googleDataDisconnecting.value &&
-    googleDataAuthorized.value,
-);
-
-/** 手动采集依赖完整配置和有效授权。 */
-const canCollectGoogleData = computed(
-  () =>
-    !googleDataLoading.value &&
-    !googleDataCollecting.value &&
-    googleDataConfigured.value &&
-    googleDataAuthorized.value,
-);
-
-/** Google 数据状态未知时给管理员明确重试入口。 */
-const showGoogleDataUnknownAlert = computed(
-  () => !googleDataLoading.value && googleDataStatus.value === null,
-);
-
-/** 当前表单缺失时禁用授权/采集，并说明需要先补配置。 */
-const showGoogleDataConfigAlert = computed(
-  () =>
-    !googleDataLoading.value &&
-    googleDataStatus.value !== null &&
-    !googleDataFormConfigured.value,
-);
-
-/** 密钥已配置时，空输入表示保留服务端已保存密钥。 */
-const clientSecretPlaceholder = computed(() =>
-  googleDataStatus.value?.client_secret_configured === true
-    ? t("systemSettings.googleDataClientSecretKeepPlaceholder")
-    : t("systemSettings.googleDataClientSecretPlaceholder"),
 );
 
 /** 格式化毫秒时间戳。 */
@@ -549,37 +218,6 @@ async function loadApiKeyMeta() {
   }
 }
 
-/** 初始加载 Google 数据采集状态，失败时只影响本区块。 */
-async function loadGoogleDataStatus() {
-  googleDataLoading.value = true;
-  try {
-    googleDataStatus.value = null;
-    googleDataStatus.value = await getGoogleDataStatus();
-    syncGoogleDataConfigForm(googleDataStatus.value);
-  } catch (error) {
-    console.error("SystemSettingsView.loadGoogleDataStatus() 加载失败:", error);
-    message.error(
-      getErrorMessage(
-        error instanceof Error ? error : null,
-        t("systemSettings.googleDataLoadFailed"),
-      ),
-    );
-    googleDataStatus.value = null;
-  } finally {
-    googleDataLoading.value = false;
-  }
-}
-
-/** 把公开状态同步到可编辑表单；密钥不回显。 */
-function syncGoogleDataConfigForm(status: GoogleDataStatus) {
-  googleDataConfigForm.value = {
-    client_id: status.client_id,
-    client_secret: "",
-    gsc_site_url: status.gsc_site_url,
-    ga4_property_id: status.ga4_property_id,
-  };
-}
-
 /** 刷新配置读取缓存。 */
 async function handleRefreshConfigCache() {
   refreshingCache.value = true;
@@ -597,148 +235,6 @@ async function handleRefreshConfigCache() {
   } finally {
     refreshingCache.value = false;
   }
-}
-
-/** 保存 Google 数据采集配置，后端会清空 system_data 缓存。 */
-async function handleSaveGoogleDataConfig() {
-  googleDataSaving.value = true;
-  try {
-    await saveGoogleDataConfigFromForm(true);
-    message.success(t("systemSettings.googleDataConfigSaveSuccess"));
-  } catch (error) {
-    console.error("SystemSettingsView.handleSaveGoogleDataConfig() 保存失败:", error);
-    message.error(
-      getErrorMessage(
-        error instanceof Error ? error : null,
-        t("systemSettings.googleDataConfigSaveFailed"),
-      ),
-    );
-  } finally {
-    googleDataSaving.value = false;
-  }
-}
-
-/** 保存 Google 数据采集表单，并同步公开状态。 */
-async function saveGoogleDataConfigFromForm(clearCollectResult: boolean) {
-  googleDataStatus.value = await saveGoogleDataConfig(googleDataConfigForm.value);
-  syncGoogleDataConfigForm(googleDataStatus.value);
-  if (clearCollectResult) {
-    googleDataCollectResult.value = null;
-  }
-}
-
-/** 创建 Google OAuth 授权 URL，并交给浏览器跳转。 */
-async function handleAuthorizeGoogleData() {
-  if (!googleDataFormConfigured.value) {
-    message.warning(t("systemSettings.googleDataConfigMissingDescription"));
-    return;
-  }
-
-  googleDataAuthorizing.value = true;
-  try {
-    await saveGoogleDataConfigFromForm(true);
-    const data = await createGoogleDataAuthorizationUrl({
-      admin_return_base_url: window.location.origin,
-    });
-    window.location.href = data.authorization_url;
-  } catch (error) {
-    console.error("SystemSettingsView.handleAuthorizeGoogleData() 授权失败:", error);
-    message.error(
-      getErrorMessage(
-        error instanceof Error ? error : null,
-        t("systemSettings.googleDataAuthorizeFailed"),
-      ),
-    );
-  } finally {
-    googleDataAuthorizing.value = false;
-  }
-}
-
-/** 断开 Google 数据采集授权前先二次确认。 */
-function handleDisconnectGoogleData() {
-  dialog.warning({
-    title: t("systemSettings.disconnectGoogleData"),
-    content: t("systemSettings.disconnectGoogleDataConfirm"),
-    positiveText: t("common.confirm"),
-    negativeText: t("common.cancel"),
-    onPositiveClick: () => {
-      void disconnectGoogleDataAfterConfirm();
-    },
-  });
-}
-
-/** 断开 Google 数据采集授权并刷新状态。 */
-async function disconnectGoogleDataAfterConfirm() {
-  googleDataDisconnecting.value = true;
-  try {
-    await disconnectGoogleData();
-    googleDataCollectResult.value = null;
-    message.success(t("systemSettings.googleDataDisconnectSuccess"));
-    await loadGoogleDataStatus();
-  } catch (error) {
-    console.error(
-      "SystemSettingsView.disconnectGoogleDataAfterConfirm() 断开失败:",
-      error,
-    );
-    message.error(
-      getErrorMessage(
-        error instanceof Error ? error : null,
-        t("systemSettings.googleDataDisconnectFailed"),
-      ),
-    );
-  } finally {
-    googleDataDisconnecting.value = false;
-  }
-}
-
-/** 手动触发一次 Google 数据采集；后端允许部分失败，结果如实展示。 */
-async function handleCollectGoogleDataOnce() {
-  if (!googleDataConfigured.value) {
-    message.warning(t("systemSettings.googleDataConfigMissingDescription"));
-    return;
-  }
-  if (!googleDataAuthorized.value) {
-    message.warning(t("systemSettings.googleDataNeedAuthorizeDescription"));
-    return;
-  }
-
-  googleDataCollecting.value = true;
-  try {
-    const collectResult = await collectGoogleDataOnce();
-    googleDataCollectResult.value = collectResult;
-    showGoogleDataCollectMessage(collectResult);
-    await loadGoogleDataStatus();
-  } catch (error) {
-    console.error(
-      "SystemSettingsView.handleCollectGoogleDataOnce() 采集失败:",
-      error,
-    );
-    message.error(
-      getErrorMessage(
-        error instanceof Error ? error : null,
-        t("systemSettings.googleDataCollectFailed"),
-      ),
-    );
-  } finally {
-    googleDataCollecting.value = false;
-  }
-}
-
-/** 根据 GSC/GA4 分侧保存结果提示；接口 200 时也可能包含部分失败。 */
-function showGoogleDataCollectMessage(result: GoogleDataCollectOnceResult) {
-  if (result.errors.length === 0) {
-    message.success(t("systemSettings.googleDataCollectSuccess"));
-    return;
-  }
-
-  const errorText = result.errors.join("\n");
-  if (result.gsc_saved || result.ga4_saved) {
-    message.warning(
-      `${t("systemSettings.googleDataCollectPartialFailed")}: ${errorText}`,
-    );
-    return;
-  }
-  message.error(`${t("systemSettings.googleDataCollectFailed")}: ${errorText}`);
 }
 
 /** 优先展示后端返回的业务错误 msg，避免丢失可定位原因。 */
@@ -816,33 +312,8 @@ async function handleCopyGeneratedApiKey() {
   }
 }
 
-/** 展示 OAuth callback 结果，并清理一次性 query 参数。 */
-async function handleGoogleDataOAuthCallbackQuery() {
-  const authorized = route.query.google_data_authorized;
-  const error = route.query.google_data_error;
-  const hasAuthorizedQuery = authorized === "1";
-  const hasErrorQuery = typeof error === "string" && error.length > 0;
-
-  if (!hasAuthorizedQuery && !hasErrorQuery) {
-    return;
-  }
-
-  if (hasAuthorizedQuery) {
-    message.success(t("systemSettings.googleDataAuthorizedSuccess"));
-  } else {
-    message.error(t("systemSettings.googleDataAuthorizedFailed", { error }));
-  }
-
-  const nextQuery = { ...route.query };
-  delete nextQuery.google_data_authorized;
-  delete nextQuery.google_data_error;
-  await router.replace({ path: route.path, query: nextQuery, hash: route.hash });
-}
-
 onMounted(() => {
-  void handleGoogleDataOAuthCallbackQuery();
   void loadApiKeyMeta();
-  void loadGoogleDataStatus();
 });
 
 </script>
@@ -864,25 +335,6 @@ onMounted(() => {
 
 .unknown-alert {
   margin-bottom: 16px;
-}
-
-.window-policy-alert {
-  margin-bottom: 16px;
-}
-
-.google-data-config-form {
-  margin-bottom: 16px;
-}
-
-.google-data-config-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 16px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .api-key-box {
@@ -911,13 +363,8 @@ onMounted(() => {
     flex-direction: column;
   }
 
-  .tab-actions,
-  .form-actions {
+  .tab-actions {
     justify-content: stretch;
-  }
-
-  .google-data-config-grid {
-    grid-template-columns: 1fr;
   }
 }
 </style>

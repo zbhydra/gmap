@@ -62,10 +62,6 @@
         "CHECKIN_CAMPAIGN_ENDED": "The check-in campaign has ended",
         "CHECKIN_CONFIG_INVALID": "Check-in configuration is invalid",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "서버가 사용 중입니다. 잠시 후 다시 시도해 주세요.",
-        "GOOGLE_DATA_CONFIG_INCOMPLETE": "Google data collection is not configured",
-        "GOOGLE_DATA_OAUTH_STATE_INVALID": "Google authorization has expired, please try again",
-        "GOOGLE_DATA_OAUTH_TOKEN_FAILED": "Google authorization failed, please retry",
-        "GOOGLE_DATA_COLLECT_FAILED": "Google data collection failed, please retry",
         "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot 동기화에 실패했습니다. HubSpot을 다시 연결한 후 시도해 주세요",
         "MAPS_USAGE_UNAVAILABLE": "Maps quota 서비스를 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요"
     },

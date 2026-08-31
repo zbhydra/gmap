@@ -4,7 +4,6 @@ from dataclasses import asdict
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 from app.api.admin_dependencies import AdminContext, get_admin_user
 from app.services.admin_api_key_service import admin_api_key_service
@@ -12,21 +11,6 @@ from app.services.admin_system_settings_service import admin_system_settings_ser
 from app.utils.response import ResponseUtils
 
 router = APIRouter(prefix="/system-settings", tags=["admin-system-settings"])
-
-
-class GoogleDataConfigUpdateRequest(BaseModel):
-    """后台保存 Google 数据采集配置请求。"""
-
-    client_id: str = ""
-    client_secret: str = ""
-    gsc_site_url: str = ""
-    ga4_property_id: str = ""
-
-
-class GoogleDataAuthorizationUrlRequest(BaseModel):
-    """后台创建 Google 数据采集授权 URL 请求。"""
-
-    admin_return_base_url: str
 
 
 @router.get("/api-key")

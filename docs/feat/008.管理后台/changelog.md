@@ -1,5 +1,19 @@
 # 008 · 管理后台 · 变更记录
 
+## 2026-08-31 移除系统设置 Google 数据采集 tab,清理外部 API 死文档
+
+**为什么**:GSC/GA4 运行时采集后端主体已随后端清理移除,管理后台设置页的「google 数据采集」tab 与零散死代码一并退役;运营观测改用 Search Console 与 GA4 官方控制台。
+
+**变更**:
+
+- `SystemSettingsView.vue` 删除「google 数据采集」tab 及配置/授权/断开/手动采集逻辑;页面只剩「配置表缓存」「API Key」两个 tab。
+- `admin/src/api/system-settings.ts` 删除 GoogleData* 类型与 5 个接口封装;中英 i18n 删除对应文案。
+- `admin/e2e/system-settings.spec.ts` 删除 Google 数据 mock 与 7 条用例。
+- 后端 `admin_system_settings.py` 删除遗留 GoogleData* 请求模型;`common_code.py` 删除 31001-31004 错误码;14 个 locale 删除对应消息。
+- `tech-系统设置.md` 删除「Google 数据采集」章节(以及早前已下线的 Telegram DOM / Telegram Config 死章节),范围收口为两个 tab。
+- `tech-外部API.md` 删除 `google_metrics` 响应字段与已下线节点系统的 `nodes` / 内部快照章节,大盘响应收口为 5 个统计字段(以 `external_system_dashboard_service.py` 为准)。
+- `feat.md` 系统设置范围与 UI 描述同步收敛为两个 tab。
+
 ## 2026-08-31 新增用户积分记录接口
 
 **为什么**:运营查看用户当前积分时,还需要直接追溯每次获得和消耗,避免再手工查询积分流水表。

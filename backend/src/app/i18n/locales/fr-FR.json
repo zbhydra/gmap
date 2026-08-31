@@ -70,10 +70,6 @@
         "CHECKIN_CAMPAIGN_ENDED": "The check-in campaign has ended",
         "CHECKIN_CONFIG_INVALID": "Check-in configuration is invalid",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "Le serveur est occupé. Veuillez réessayer plus tard.",
-        "GOOGLE_DATA_CONFIG_INCOMPLETE": "Google data collection is not configured",
-        "GOOGLE_DATA_OAUTH_STATE_INVALID": "Google authorization has expired, please try again",
-        "GOOGLE_DATA_OAUTH_TOKEN_FAILED": "Google authorization failed, please retry",
-        "GOOGLE_DATA_COLLECT_FAILED": "Google data collection failed, please retry",
         "MAPS_HUBSPOT_SYNC_FAILED": "Échec de la synchronisation HubSpot. Reconnectez HubSpot puis réessayez",
         "MAPS_USAGE_UNAVAILABLE": "Le service de quota Maps est momentanément indisponible. Veuillez réessayer plus tard"
     },

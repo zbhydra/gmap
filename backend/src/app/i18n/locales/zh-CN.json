@@ -75,10 +75,6 @@
         "CHECKIN_CAMPAIGN_ENDED": "签到活动已结束",
         "CHECKIN_CONFIG_INVALID": "签到配置异常",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "服务器繁忙，请稍后重试",
-        "GOOGLE_DATA_CONFIG_INCOMPLETE": "Google 数据采集配置不完整",
-        "GOOGLE_DATA_OAUTH_STATE_INVALID": "Google 授权已过期，请重新授权",
-        "GOOGLE_DATA_OAUTH_TOKEN_FAILED": "Google 授权失败，请重试",
-        "GOOGLE_DATA_COLLECT_FAILED": "Google 数据采集失败，请重试",
         "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot 同步失败，请重新连接 HubSpot 后重试",
         "MAPS_USAGE_UNAVAILABLE": "Maps 配额服务暂不可用，请稍后重试"
     },

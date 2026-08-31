@@ -37,8 +37,6 @@ __all__ = [
     "ConfigPaymentChannelModel",
     "ConfigSubscriptionProductPriceModel",
     "CronTaskCursorModel",
-    "GoogleDataOAuthTokenModel",
-    "GoogleMetricSnapshotModel",
     "SystemDataModel",
     "UserCheckinCampaignModel",
     "UserCheckinRecordModel",

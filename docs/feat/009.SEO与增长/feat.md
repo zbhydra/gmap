@@ -46,7 +46,6 @@
 - **长尾文章落地页**:针对精准长尾关键词建文章型 SEO 页(如禁下载频道 workaround),14 语言版本;页面含 Hero+工具区、Quick answer、目录、正文章节、方法对比表、FAQ、结论;注入 Article + BreadcrumbList + FAQPage + HowTo 结构化数据;进入导航 Solution 分组和页脚内链。
 - **导航与安装 CTA**:首页导航精简(只保留必要入口);Install Now 安装按钮增加浏览器插件识别图标(拼图形状),让用户点击前知道这是 Chrome 扩展入口。
 - **官方 X 身份入口**:主站 14 语言 Footer 的 Company 分组与 Contact 页展示官方 X 账号 `@TGDownload`;链接在新标签页打开;邮件仍是主要支持渠道;全站机器可读身份声明关联同一账号。
-- **GSC/GA4 运行时指标采集**:在管理后台由管理员手动完成 Google OAuth 只读授权,后端 cron 定期采集 GSC 的 24H / 7D / 28D 点击、曝光、平均点击率、平均排名,以及 GA4 的最近 30 分钟活跃用户和 today / 7D / 28D 活跃用户,写入统一 JSON 快照表;详见 `@tech-GSC与GA4采集.md`。
 
 ### 不包含
 
@@ -56,7 +55,7 @@
 - **签到不做金融级补偿设计**:允许出错让用户重试。
 - **llms.txt 不当 robots/sitemap/训练授权文件**:只是一份 AI 可读目录,不能控制爬虫抓取,也不保证搜索排名;不新增易过期的 AI crawler 专用 User-Agent 规则。
 - **llms-full.txt 不自动展开 sitemap 全部 canonical URL**:避免生成长而低价值的重复列表。
-- **GSC/GA4 运行时采集不做**:Search Console URL Inspection、sitemap 提交、关键词/页面明细排行、GA4 事件明细、告警、趋势图、数据补偿重算、多站点多属性管理、Google Service Account 授权、Google 授权账号邮箱展示。
+- **后台 GSC/GA4 运行时指标采集已移除**(2026-08-31):不再提供后台 Google OAuth 授权、cron 定时采集与快照落库;运营观测改用 Google Search Console 与 GA4 官方控制台。
 - **robots.txt 不自动提交或调用 Search Console sitemap 提交接口**。
 
 ## 现状说明(以代码为准)
@@ -102,15 +101,6 @@
 9. 今日已签到时点 Credits 仍打开状态弹窗;第 1-13 天展示已领取和下次可领取倒计时,第 14 天只展示最终领取结果。
 10. 第 14 天结束后活动永久结束,不再弹、点 Credits 不再打开签到弹窗,但账户按钮和 Credits 余额仍展示。
 
-### GSC/GA4 运行时指标采集
-
-1. 管理员进入管理后台「系统设置」,点击 Google 数据授权按钮。
-2. 后端生成 Google OAuth 授权地址,管理员在 Google 页面同意 Search Console 与 GA4 只读权限。
-3. Google 回调到后端,后端换取 refresh token 并保存授权状态。
-4. cron 按固定间隔刷新 access token,分别请求 GSC Search Analytics 与 GA4 Data API。
-5. 每次采集分别写入 GSC 与 GA4 两条 JSON 快照;某一侧失败不影响另一侧落库。
-6. 授权失效、属性配置错误或 Google 返回权限错误时,本轮记录日志并跳过失败侧;管理员回到系统设置页重新授权或修正配置后,下一轮恢复。
-
 ## 非功能性需求
 
 - **不新增第三方依赖**;不新增依赖注入(service 是进程级单例,backend api 层可用 `Depends`)。
@@ -122,7 +112,6 @@
 - **lastmod 必须代表页面内容或结构的最后一次有效变更**,不能用构建时间;优先 git 提交时间,无 git 时退文件 mtime 并打 warning。
 - **llms 文件只写当前源码能确认的页面和能力**,不写无法确认的承诺。
 - **i18n**:所有面向用户文案支持 14 语言;Lighthouse 移动端 Performance 目标 85+。
-- **GSC/GA4 数据口径**:GSC 24H 依赖 Search Console fresh/hourly 数据,允许后续修正,不承诺与 UI 卡片永久完全一致,也不把截图一致性作为验收;GSC 7D / 28D 使用 Search Analytics 最终或普通聚合数据;GA4 最近 30 分钟活跃用户使用 Realtime API;GA4 today / 7D / 28D 活跃用户使用 Core Reporting API 的自然日 date range,不承诺滚动到秒的 24 小时去重;后台必须展示 GSC 与 GA4 各自窗口时区和日期范围,避免误读为同一口径。
 - **抛错带可定位 msg**。
 
 ## 验收标准
@@ -136,7 +125,6 @@
 - 签到:老用户首次进入签到系统从当天起算 14 天;第 1-7 天签到发 6 Credits、第 8-14 天发 3 Credits、第 15 天起不可签且接口活动日封顶为 14;同一自然日只能成功一次;不支持补签;首页登录态入口是圆形账户按钮 + Credits 徽标(不显示邮箱全文);账户按钮下拉仅含退出登录;点 Credits 活动未结束时打开签到弹窗;活动结束后点 Credits 不再弹;当天首次进入可签到时自动弹;当天关闭后不再自动弹;移动端布局可用不依赖 hover;今日可签弹窗展示"现在可领取"不展示未来倒计时;第 1-13 天已签弹窗展示下次可领取倒计时与绝对时间,第 14 天已签不再展示下一次领取时间;命中 IP 注册权益风控的账号首次进入只得到已结束活动,不会看到可领取奖励。
 - 导航与 CTA:Install 按钮含拼图插件图标 + i18n 文案 + 跳转 Chrome Web Store;Solution 下拉分组就位并跳 workaround 页(当前最终状态)。
 - 官方 X 入口:14 语言 Footer 与 Contact 页都能看到本地化账号标签;链接统一指向 `https://x.com/TGDownload`;Contact 同时保留邮件支持;全站主体结构化数据和 X Card 元数据声明该官方账号。
-- GSC/GA4 采集:管理员可在后台完成 Google OAuth 只读授权;授权成功后 cron 能写入 `GSC` 与 `GA4` 两类快照;GSC 快照含 `24h`、`7d`、`28d` 的 `clicks`、`impressions`、`ctr`、`position`;GA4 快照含 `realtime_30m.active_users` 与 `today`、`7d`、`28d` 的 `active_users`;每个窗口都保存并展示窗口口径;GSC 与 GA4 最近成功时间和错误摘要分开展示;撤销授权或配置错误时页面能提示需要重新授权或修正配置,不影响其他后台模块。
 
 ## 用户操作逻辑与 UI 元素
 
@@ -217,14 +205,12 @@
 - **签到弹窗**:新增 website 埋点字段,不新增复杂事件体系——首页签到弹窗自动展示、手动点击 Credits 打开、点击签到成功、关闭签到弹窗,各自记录活动日序号、当日奖励、弹窗来源(自动/手动)、领取结果、Credits 余额等字段(具体字段名见 `@tech-签到活动.md`)。
 - **Install CTA**:沿用现有 `outbound_chrome_store_click`,不改变其 GA 埋点。
 - **官方 X 入口**:统一上报 `official_x_click`,`source` 区分 `footer` / `contact`,`target=official_x`,外链地址由全局点击委派自动附带。
-- **GSC/GA4 采集**:内部后台运维能力,不新增用户行为埋点;采集成功/失败只写后端结构化日志与数据库快照。
 
 ## 关联文档
 
 - 平台落地页生成、Sitemap 多语言生成器、长尾文章页结构:`@tech-落地页与Sitemap.md`
 - llms.txt 内容规则、导航与 Install CTA:`@tech-LLMs与增长入口.md`
 - 签到活动后端(活动规则/Credits 发放/接口):`@tech-签到活动.md`
-- GSC/GA4 运行时授权与采集:`@tech-GSC与GA4采集.md`
 - 变更记录:`@changelog.md`
 - website 目录结构/构建配置/Astro 集成机制:`@../000.架构/overview.md`
 - 14 语言清单/locale→URL 路径映射/文案 key 规则:`@../010.多语言/feat.md`
