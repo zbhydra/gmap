@@ -12,11 +12,11 @@ const isDev = process.env.NODE_ENV !== 'production'
 const basePath = '/'
 // https://astro.build/config
 export default defineConfig({
-  site: isDev ? 'http://localhost:9620' : 'https://telegramdownloadmedia.com',
+  site: isDev ? 'http://localhost:7620' : 'https://telegramdownloadmedia.com',
   base: basePath,
   trailingSlash: 'ignore',
   server: {
-    port: 9620
+    port: 7620
   },
   devToolbar: {
     enabled: false
@@ -35,7 +35,7 @@ export default defineConfig({
       strictPort: true,
       proxy: {
         '^/assets/icons/(?:logo|credits)\\.svg(?:\\?.*)?$': {
-          target: 'http://localhost:9600',
+          target: 'http://localhost:7600',
           changeOrigin: true
         }
       },

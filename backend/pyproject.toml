@@ -51,7 +51,6 @@ dev = [
 
 [project.scripts]
 server = "app.main:main_entry"
-dev = "app.main:main_entry --reload"
 
 
 [build-system]

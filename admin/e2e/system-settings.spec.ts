@@ -556,7 +556,7 @@ test("未授权 Google 数据时点击授权会跳转到授权 URL", async ({ pa
   expect(api.googleDataConfigSaveCallCount()).toBe(1);
   expect(api.googleDataAuthorizeCallCount()).toBe(1);
   expect(api.lastGoogleDataAuthorizeBody()).toEqual({
-    admin_return_base_url: "http://127.0.0.1:9610",
+    admin_return_base_url: "http://127.0.0.1:7610",
   });
 });
 
@@ -592,7 +592,7 @@ test("Google 授权创建业务失败时展示后端返回消息", async ({ page
   expect(api.googleDataConfigSaveCallCount()).toBe(1);
   expect(api.googleDataAuthorizeCallCount()).toBe(1);
   expect(api.lastGoogleDataAuthorizeBody()).toEqual({
-    admin_return_base_url: "http://127.0.0.1:9610",
+    admin_return_base_url: "http://127.0.0.1:7610",
   });
 });
 

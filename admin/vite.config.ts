@@ -1,7 +1,7 @@
 /**
  * Vite 构建配置
  *
- * 开发服务器代理 /api → localhost:9600（后端 FastAPI）
+ * 开发服务器代理 /api → localhost:7600（后端 FastAPI）
  */
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
@@ -15,17 +15,17 @@ export default defineConfig({
     },
   },
   server: {
-    port: 9610,
+    port: 7610,
     strictPort: true,
     proxy: {
       "/api": {
-        target: "http://localhost:9600",
+        target: "http://localhost:7600",
         changeOrigin: true,
       },
     },
   },
   preview: {
-    port: 9610,
+    port: 7610,
     strictPort: true,
   },
   build: {

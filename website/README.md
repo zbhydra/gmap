@@ -91,7 +91,7 @@ Google OAuth login returns to the backend OAuth callback under
 `PUBLIC_API_BASE_URL`. Add the backend OAuth callback URI to Google Console:
 
 - `https://tg-download-api.telegramdownloadmedia.com/api/client/auth/google/oauth/callback`
-- `http://localhost:9600/api/client/auth/google/oauth/callback`
+- `http://localhost:7600/api/client/auth/google/oauth/callback`
 
 Update `astro.config.mjs` to change:
 

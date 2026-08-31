@@ -790,7 +790,7 @@ test.describe('Multi-language Pages', () => {
           {
             name: 'user-language',
             value: locale.code,
-            url: 'http://localhost:9620'
+            url: 'http://localhost:7620'
           }
         ])
       })

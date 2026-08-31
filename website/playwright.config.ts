@@ -33,7 +33,7 @@ const REAL_SMOKE_SPECS = [PARSE_SMOKE_SPEC, PRICING_REVIEW_REWARD_SMOKE_SPEC];
 // 真实后端 base；设了才跑真实 smoke，否则 webServer 退回假地址、globalSetup no-op。
 const realApiBaseUrl = process.env.E2E_REAL_API_BASE_URL;
 // 允许并行工作区用独立端口跑 website e2e，避免复用其他 checkout 的 dev server。
-const webPort = process.env.E2E_WEB_PORT ?? '9620';
+const webPort = process.env.E2E_WEB_PORT ?? '7620';
 
 export default defineConfig({
   testDir: './e2e',

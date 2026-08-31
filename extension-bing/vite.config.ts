@@ -10,10 +10,10 @@ type ExtensionDevWebExtensionConfig = Partial<Pick<PluginOptions, 'disableAutoLa
 /** `scripts/dev-edge-current.mjs` 注入的开发浏览器模式标识。 */
 const EDGE_CURRENT_DEV_BROWSER = 'edge-current'
 
-const DEFAULT_DEV_API_BASE_URL = 'http://localhost:9600'
+const DEFAULT_DEV_API_BASE_URL = 'http://localhost:7600'
 // TODO(maps): Maps 产品后端域名确定后替换。
 const DEFAULT_PROD_API_BASE_URL = 'https://api.example.com'
-const DEFAULT_DEV_WEBSITE_BASE_URL = 'http://localhost:9620'
+const DEFAULT_DEV_WEBSITE_BASE_URL = 'http://localhost:7620'
 // TODO(maps): Maps 官网域名确定后替换。
 const DEFAULT_PROD_WEBSITE_BASE_URL = 'https://www.example.com'
 const PROD_WWW_WEBSITE_BASE_URL = 'https://www.example.com'

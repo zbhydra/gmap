@@ -171,7 +171,7 @@ OAuth 2.0 Web Client 的 Authorized redirect URIs 需包含:
 ```text
 https://tg-download-api.telegramdownloadmedia.com/api/client/auth/google/oauth/callback
 https://api.telegramvideodownload.pro/api/client/auth/google/oauth/callback
-http://localhost:9600/api/client/auth/google/oauth/callback
+http://localhost:7600/api/client/auth/google/oauth/callback
 ```
 
 新手动按钮只跳后端 OAuth authorize,不接触 `GOOGLE_CLIENT_SECRET`。
@@ -287,7 +287,7 @@ https://telegramdownloadmedia.com/*
 https://www.telegramdownloadmedia.com/*
 ```
 
-开发环境按精确 website 本地 origin 增加 `http://localhost:9620/*`;运行时扩展侧仍要求 `sender.origin` ∈ 白名单。
+开发环境按精确 website 本地 origin 增加 `http://localhost:7620/*`;运行时扩展侧仍要求 `sender.origin` ∈ 白名单。
 
 **旧页面 `/extension-login` 与旧 postMessage + content script 桥零改动保留**。已发布旧扩展(≤1.3.0)的二进制写死 `EXTENSION_LOGIN_PATH=/extension-login`,且其 bridge 注入官网全域,无法召回升级;新扩展 `buildExtensionLoginUrl()` 指向 v2 路径,天然分流。旧页继续经 postMessage 信号让旧扩展读取 `homepage_access_token` 完成同步。
 

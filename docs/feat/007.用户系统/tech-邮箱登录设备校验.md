@@ -49,7 +49,7 @@ website 在用户访问页面后,先通过一个真实图片请求建立"当前�
 开发环境保持同一个图片路径,不在前端代码里切换 URL:
 
 ```text
-http://127.0.0.1:9620/assets/icons/credits.svg
+http://127.0.0.1:7620/assets/icons/credits.svg
 ```
 
 `website/astro.config.mjs` 的 Vite dev server 增加精确 proxy,把该路径转发到本地后端:
@@ -58,7 +58,7 @@ http://127.0.0.1:9620/assets/icons/credits.svg
 server: {
   proxy: {
     '/assets/icons/credits.svg': {
-      target: process.env.PUBLIC_API_BASE_URL || 'http://localhost:9600',
+      target: process.env.PUBLIC_API_BASE_URL || 'http://localhost:7600',
       changeOrigin: true
     }
   }
@@ -68,7 +68,7 @@ server: {
 规则:
 
 - Cookie 不设置 `Domain`,不设置 `Secure`;`Path=/`, `SameSite=Lax` 保持不变。
-- 前端页面、Cookie 和图片路径都使用同一个 host;手工打开 `localhost:9620` 或 `127.0.0.1:9620` 都可以,同一次调试不要混用。
+- 前端页面、Cookie 和图片路径都使用同一个 host;手工打开 `localhost:7620` 或 `127.0.0.1:7620` 都可以,同一次调试不要混用。
 - 本地后端未启动时,图片请求可以失败;邮箱验证码接口会返回刷新重试错误,不做 mock 放行。
 - `pnpm dev` 支持完整链路;`pnpm build && pnpm preview` 不带 dev proxy,完整链路需要用本地 nginx 或直接跑 dev server。
 
@@ -198,7 +198,7 @@ location = /assets/icons/credits.svg {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header CF-Connecting-IP $http_cf_connecting_ip;
     proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_pass http://127.0.0.1:9600;
+    proxy_pass http://127.0.0.1:7600;
 }
 ```
 
@@ -244,7 +244,7 @@ website:
 ```bash
 cd website
 pnpm build
-PUBLIC_API_BASE_URL=http://localhost:9600 pnpm dev --host 127.0.0.1 --port 9620
+PUBLIC_API_BASE_URL=http://localhost:7600 pnpm dev --host 127.0.0.1 --port 7620
 ```
 
 重点测试:

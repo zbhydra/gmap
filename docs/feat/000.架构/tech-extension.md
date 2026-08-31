@@ -84,10 +84,10 @@ extension/src/
 
 ### A6. 与 backend 通信
 
-- `vite.config.ts`：打包时注入 `__API_BASE_URL__` / `__WEBSITE_BASE_URL__`，运行时代码不直接读 `import.meta.env`。默认 dev 为 `http://localhost:9600` + `http://localhost:9620`，默认 prod 为 `https://tg-download-api.telegramdownloadmedia.com` + `https://telegramdownloadmedia.com`；可用 `EXTENSION_API_BASE_URL` / `EXTENSION_WEBSITE_BASE_URL` 覆盖。
+- `vite.config.ts`：打包时注入 `__API_BASE_URL__` / `__WEBSITE_BASE_URL__`，运行时代码不直接读 `import.meta.env`。默认 dev 为 `http://localhost:7600` + `http://localhost:7620`，默认 prod 为 `https://tg-download-api.telegramdownloadmedia.com` + `https://telegramdownloadmedia.com`；可用 `EXTENSION_API_BASE_URL` / `EXTENSION_WEBSITE_BASE_URL` 覆盖。
 - `core/api/config.ts`：消费打包注入的 API / Website base URL；所有端点完整路径常量集中在此。
 - 生产 manifest 写入 Chrome Web Store public key,正式包 ID 固定为 `lflkobgaibapekhjnfhkaeagdnojjnla`;开发/预发布 manifest 写入独立 public key,ID 固定为 `cknimihpjagocmakbkplpjdcgjlbnkec`。`pnpm build` 生成商店包,`pnpm build:dev` 生成 localhost 开发包,`pnpm build:pre-release` 生成连接生产服务的预发布包。两个身份可同时安装,且重新构建、移动目录或重新添加都不改变 ID。public key 可提交,私钥不进入仓库。
-- manifest `host_permissions` / 站点 `content_scripts.matches` / `externally_connectable.matches` / `web_accessible_resources` 按 dev/prod 与 `src/platforms/registry.ts` 生成，`vite.config.ts` 只消费该注册表：host_permissions 只含平台域，API 域依赖后端通配 CORS，官网登录桥接域经 `externally_connectable.matches` 授权（与官网 origin 白名单同源生成，dev/prod 一致）；prod 包不包含 `localhost:9600` / `localhost:9620`，dev 包不默认请求线上官网；平台关闭时会在编译期移除对应平台页面、CDN 权限与暴露样式资源。站点 content / injected 使用平台独立 entry，关闭平台不会静态加载该平台业务模块。官网登录桥接始终保留，登录页 URL 不传扩展 ID。
+- manifest `host_permissions` / 站点 `content_scripts.matches` / `externally_connectable.matches` / `web_accessible_resources` 按 dev/prod 与 `src/platforms/registry.ts` 生成，`vite.config.ts` 只消费该注册表：host_permissions 只含平台域，API 域依赖后端通配 CORS，官网登录桥接域经 `externally_connectable.matches` 授权（与官网 origin 白名单同源生成，dev/prod 一致）；prod 包不包含 `localhost:7600` / `localhost:7620`，dev 包不默认请求线上官网；平台关闭时会在编译期移除对应平台页面、CDN 权限与暴露样式资源。站点 content / injected 使用平台独立 entry，关闭平台不会静态加载该平台业务模块。官网登录桥接始终保留，登录页 URL 不传扩展 ID。
 - `core/api/client/HttpClient.ts` + `interceptors.ts`：自封装 HttpClient，拦截器链注入 `deviceId / token / Accept-Language / headers`，5xx 重试、401 刷新 token。
 - 与 website 走**同一套后端 `/api/client/*` 契约**。
 
@@ -134,7 +134,7 @@ admin/deploy/       # deploy.sh + tg-admin.conf（nginx）+ .env.example
 
 ### B4. 与 backend 通信
 
-- `api/request.ts`：axios 实例 `baseURL = "/api/admin"`，dev 由 Vite proxy（`vite.config.ts` 把 `/api` → `localhost:9600`）转发到后端 FastAPI。
+- `api/request.ts`：axios 实例 `baseURL = "/api/admin"`，dev 由 Vite proxy（`vite.config.ts` 把 `/api` → `localhost:7600`）转发到后端 FastAPI。
 - 响应拦截器解包 `{ code, data, msg }` 信封：`code !== 10000` 抛 `BusinessError`；401 自动用 refresh_token 续签（Promise 去重防并发），失败清登录态跳 `/login`。
 - 各业务 api 文件（orders / dashboard / service-nodes 等）基于此实例封装。
 
@@ -144,6 +144,6 @@ admin/deploy/       # deploy.sh + tg-admin.conf（nginx）+ .env.example
 
 - **website**（Astro 静态站，nginx）面向终端用户做 SEO/落地页，引导安装 extension。
 - **extension**（Chrome MV3）运行在 `PLATFORM_REGISTRY[*].releaseStatus` 启用的平台页面，跨上下文 RPC 使用 chrome message + DOM event；登录、额度等 HTTP 能力调用同一后端 `tg-download-api.telegramdownloadmedia.com`（9680）。
-- **admin**（独立 Vue SPA，nginx @ admin 域，Vite proxy → :9600）管后台，走 `/api/admin/*`。
+- **admin**（独立 Vue SPA，nginx @ admin 域，Vite proxy → :7600）管后台，走 `/api/admin/*`。
 - website 与 admin 无代码共享；website 运行时代码在其 `src/` 内（components、download、scripts/homepage），无独立共享包；extension 的 `core/` 是其内部共享层。
 - 三个前端 + 后端 business 共用同一套 HTTP 契约与错误信封（`{code,data,msg}`，`code=10000` 为成功）。

@@ -15,7 +15,7 @@ MapsGrab 营销站（新线，从 website/ TG 站复制改造的工程底座）�
 # 安装依赖
 pnpm install
 
-# 启动开发服务器（端口 9630，全仓专属）
+# 启动开发服务器（端口 7630，全仓专属）
 pnpm dev
 
 # 构建生产产物（astro check + astro build）

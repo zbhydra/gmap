@@ -20,14 +20,14 @@ monorepo，各前端子项目独立用 pnpm 管理（无根 workspace），后�
 
 | 端口 | 服务 | 配置来源 |
 | --- | --- | --- |
-| `9610` | admin 管理后台 | `admin/vite.config.ts` |
-| `9620` | website 主站 | `website/astro.config.mjs` |
-| `9600` | backend business 业务服务 | `backend/config.yaml` |
-| `9601` | backend download 执行节点 | `backend/config.download.yaml` |
+| `7610` | admin 管理后台 | `admin/vite.config.ts` |
+| `7620` | website 主站 | `website/astro.config.mjs` |
+| `7600` | backend business 业务服务 | `backend/config.yaml` |
+| `7601` | backend download 执行节点 | `backend/config.download.yaml` |
 
 extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式运行 `pnpm dev:extension` 时固定使用 `5173`。
 
-测试保留 `4332`（website 独立 E2E）和 `9602`（第二个 download E2E 节点），不属于日常应用端口。MySQL `3306`、Redis `6379` 与 Edge CDP `9222` 是外部基础设施或调试工具端口，也不计入上述 5 个应用端口。
+测试保留 `4332`（website 独立 E2E）和 `7602`（第二个 download E2E 节点），不属于日常应用端口。MySQL `3306`、Redis `6379` 与 Edge CDP `9222` 是外部基础设施或调试工具端口，也不计入上述 5 个应用端口。
 
 ## 2. 技术栈速查
 

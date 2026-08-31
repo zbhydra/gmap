@@ -11,11 +11,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const basePath = '/'
 // https://astro.build/config
 export default defineConfig({
-  site: process.env.NODE_ENV === 'production' ? SITE_PLACEHOLDER : 'http://localhost:9630',
+  site: process.env.NODE_ENV === 'production' ? SITE_PLACEHOLDER : 'http://localhost:7630',
   base: basePath,
   trailingSlash: 'ignore',
   server: {
-    port: 9630
+    port: 7630
   },
   devToolbar: {
     enabled: false
@@ -35,7 +35,7 @@ export default defineConfig({
       proxy: {
         // 设备可信校验图标由后端返回并写 device_trust，dev 下反代到本地后端（购买/登录链路基座）。
         '^/assets/icons/(?:logo|credits)\\.svg(?:\\?.*)?$': {
-          target: 'http://localhost:9600',
+          target: 'http://localhost:7600',
           changeOrigin: true
         }
       },

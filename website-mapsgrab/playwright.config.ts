@@ -5,7 +5,7 @@
  * webServer 把 PUBLIC_API_BASE_URL 指向假地址 http://homepage-api.test，
  * spec 内 page.route 拦截后端请求，验证的是前端 UI 行为。
  *
- * 端口：默认 9630（本工程专属）；允许 E2E_WEB_PORT 覆盖，供并行工作区隔离。
+ * 端口：默认 7630（本工程专属）；允许 E2E_WEB_PORT 覆盖，供并行工作区隔离。
  * 真实后端回归 smoke（seed 注入 / globalSetup）待 W5 购买链路接入时随真实场景重建。
  */
 import { defineConfig, devices } from '@playwright/test';
@@ -17,7 +17,7 @@ import {
 } from './scripts/playwright-browser-identity.mjs';
 
 // 允许并行工作区用独立端口跑 e2e，避免复用其他 checkout 的 dev server。
-const webPort = process.env.E2E_WEB_PORT ?? '9630';
+const webPort = process.env.E2E_WEB_PORT ?? '7630';
 
 export default defineConfig({
   testDir: './e2e',
