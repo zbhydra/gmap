@@ -13,28 +13,53 @@ import { registerE2eBrowserIdentity } from '../scripts/playwright-browser-identi
 registerE2eBrowserIdentity(test)
 
 test.describe('Website Shell', () => {
-  test('primary nav exposes home, extension, online, download and pricing entries', async ({ page, isMobile }) => {
+  test('primary nav exposes home, extension, online, API, download and pricing entries', async ({ page, isMobile }) => {
     await page.goto('/')
     // 960px 断点以下桌面导航隐藏，改断言移动端菜单
     const scope = isMobile ? page.locator('.mobile-nav') : page.locator('.nav-links')
     await expect(scope.locator('a').filter({ hasText: 'Home' })).toBeVisible()
     await expect(scope.locator('a').filter({ hasText: 'Extension' })).toBeVisible()
-    // Online 占位入口：渲染但非链接（span 占位，无 href，点击无效不 404），与首页占位卡同语义
-    const onlineEntry = scope.locator('.nav-link-placeholder')
+    // Online 真链接（015 U1）：指向落地页
+    const onlineEntry = scope.locator('a[data-cta="nav-online"]')
     await expect(onlineEntry).toBeVisible()
-    await expect(onlineEntry).toContainText('Online')
-    await expect(onlineEntry).toHaveAttribute('aria-disabled', 'true')
-    await expect(onlineEntry).not.toHaveAttribute('href')
+    await expect(onlineEntry).toHaveAttribute('href', '/online-scraper/')
     await expect(scope.locator('a').filter({ hasText: 'Download' })).toBeVisible()
     await expect(scope.locator('a').filter({ hasText: 'Pricing' })).toBeVisible()
-    // 点击占位入口不发生导航（移动端菜单默认折叠，先展开再点击）
-    const urlBefore = page.url()
+    if (isMobile) {
+      // 移动端：API 四子项平铺
+      await page.locator('.mobile-menu-btn').click()
+      await expect(scope.locator('a[data-cta="nav-api-scraper"]')).toBeVisible()
+      await expect(scope.locator('a[data-cta="nav-api-reviews"]')).toBeVisible()
+      await expect(scope.locator('a[data-cta="nav-api-photos"]')).toBeVisible()
+      await expect(scope.locator('a[data-cta="nav-api-mcp"]')).toBeVisible()
+    } else {
+      // 桌面端：API 下拉（复用语言切换下拉模式）
+      await expect(scope.locator('.nav-api-switcher .lang-btn')).toBeVisible()
+      await expect(scope.locator('.nav-api-switcher .lang-option')).toHaveCount(4)
+    }
+  })
+
+  test('desktop API dropdown expands and navigates to a landing page', async ({ page }) => {
+    const width = page.viewportSize()?.width ?? 0
+    test.skip(width <= 960, '桌面下拉，仅桌面断点验证')
+    await page.goto('/')
+    const apiBtn = page.locator('.nav-api-switcher .lang-btn')
+    const dropdown = page.locator('.nav-api-switcher .lang-dropdown')
+    await expect(dropdown).not.toHaveClass(/show/)
+    await apiBtn.click()
+    await expect(dropdown).toHaveClass(/show/)
+    await dropdown.locator('a[data-cta="nav-api-scraper"]').click()
+    await expect(page).toHaveURL(/\/google-maps-scraper-api\//)
+  })
+
+  test('nav Online entry leads to the online scraper landing page', async ({ page, isMobile }) => {
+    await page.goto('/')
+    const scope = isMobile ? page.locator('.mobile-nav') : page.locator('.nav-links')
     if (isMobile) {
       await page.locator('.mobile-menu-btn').click()
-      await expect(scope.locator('a').filter({ hasText: 'Home' })).toBeVisible()
     }
-    await onlineEntry.click()
-    await expect(page).toHaveURL(urlBefore)
+    await scope.locator('a[data-cta="nav-online"]').click()
+    await expect(page).toHaveURL(/\/online-scraper\//)
   })
 
   test('nav install CTA leads to the download page with attribution attributes', async ({ page, isMobile }) => {
@@ -61,10 +86,12 @@ test.describe('Website Shell', () => {
   test('language switcher renders with the single EN baseline locale', async ({ page, isMobile }) => {
     test.skip(isMobile, '语言切换器在移动端断点隐藏，桌面验证即可')
     await page.goto('/')
-    await expect(page.locator('.lang-btn')).toContainText('English')
-    await page.locator('.lang-btn').click()
-    await expect(page.locator('.lang-dropdown')).toHaveClass(/show/)
-    await expect(page.locator('.lang-option')).toHaveCount(1)
+    // 导航 API 下拉复用 .lang-btn/.lang-dropdown 类名，断言作用域限定在 nav-actions 的语言切换器
+    const switcher = page.locator('.nav-actions .lang-switcher')
+    await expect(switcher.locator('.lang-btn')).toContainText('English')
+    await switcher.locator('.lang-btn').click()
+    await expect(switcher.locator('.lang-dropdown')).toHaveClass(/show/)
+    await expect(switcher.locator('.lang-option')).toHaveCount(1)
   })
 })
 
@@ -98,14 +125,19 @@ test.describe('Home Page', () => {
     expect(href).toContain('utm_medium=home-hero')
   })
 
-  test('online and api product cards are placeholders without navigation', async ({ page }) => {
+  test('online and api product cards link to their landing pages', async ({ page }) => {
     await page.goto('/')
-    for (const cardId of ['online', 'api']) {
-      const card = page.locator(`[data-product-card="${cardId}"]`)
-      await expect(card).toHaveAttribute('aria-disabled', 'true')
-      // 占位卡不渲染链接（点击无效，不 404）
-      await expect(card.locator('a')).toHaveCount(0)
-      await expect(card).toContainText(/Coming soon/i)
+    const expectations: Array<[string, RegExp]> = [
+      ['online', /\/online-scraper\//],
+      ['api', /\/google-maps-scraper-api\//]
+    ]
+    for (const [cardId, urlPattern] of expectations) {
+      const cardLink = page.locator(`[data-product-card="${cardId}"] a.product-link`)
+      await expect(cardLink).toBeVisible()
+      await expect(cardLink).toHaveAttribute('href', urlPattern)
+      await cardLink.click()
+      await expect(page).toHaveURL(urlPattern)
+      await page.goBack()
     }
   })
 

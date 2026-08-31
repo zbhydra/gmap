@@ -358,6 +358,25 @@ function getRouteSourceFiles(routePath) {
     ]
   }
 
+  // 015 U1：Online / API 落地页 ×5，root + [lang] 双路由，共用 LandingPage 组件与 i18n 字典。
+  const LANDING_ROUTE_SLUGS = {
+    '/online-scraper/': 'online-scraper',
+    '/google-maps-scraper-api/': 'google-maps-scraper-api',
+    '/google-maps-reviews-scraper-api/': 'google-maps-reviews-scraper-api',
+    '/google-maps-photos-api/': 'google-maps-photos-api',
+    '/google-maps-scraper-mcp/': 'google-maps-scraper-mcp'
+  }
+  const landingSlug = LANDING_ROUTE_SLUGS[normalized]
+  if (landingSlug) {
+    return [
+      `src/pages/${landingSlug}.astro`,
+      `src/pages/[lang]/${landingSlug}.astro`,
+      'src/components/pages/LandingPage.astro',
+      'src/i18n/schema.ts',
+      'src/i18n/lang/en-US.ts'
+    ]
+  }
+
   throw new Error(`languageSitemap: route source files are not mapped for routePath=${normalized}`)
 }
 

@@ -66,7 +66,7 @@ const faqSchema = {
       </div>
     </section>
 
-    <!-- ② 三产品形态卡（Online / API 为占位卡，点击无效） -->
+    <!-- ② 三产品形态卡（插件 / Online / API 均为链接卡） -->
     <section class="products" aria-labelledby="home-products-title">
       <div class="container">
         <header class="section-header">
@@ -76,32 +76,21 @@ const faqSchema = {
         </header>
         <div class="product-grid">
           {page.products.items.map(item => (
-            item.status === 'available' ? (
-              <article class="product-card" data-product-card={item.id}>
-                <p class="product-badge is-available">{page.products.availableLabel}</p>
-                <h3>{item.name}</h3>
-                <p class="product-tagline">{item.tagline}</p>
-                <p class="product-description">{item.description}</p>
-                <ul class="product-bullets">
-                  {item.bullets.map(bullet => <li>{bullet}</li>)}
-                </ul>
-                <a class="product-link" href={item.href} data-cta={`home-product-${item.id}`}>
-                  {item.ctaLabel}
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                    <path d="M3 7h8M7.5 3.5 11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </a>
-              </article>
-            ) : (
-              <!-- 占位卡：无链接无交互（点击无效，不 404）；aria-disabled 标注不可用状态 -->
-              <article class="product-card is-coming-soon" data-product-card={item.id} aria-disabled="true">
-                <p class="product-badge">{page.products.comingSoonLabel}</p>
-                <h3>{item.name}</h3>
-                <p class="product-tagline">{item.tagline}</p>
-                <p class="product-description">{item.description}</p>
-                <p class="product-soon-note">{item.ctaLabel}</p>
-              </article>
-            )
+            <article class="product-card" data-product-card={item.id}>
+              <p class="product-badge is-available">{page.products.availableLabel}</p>
+              <h3>{item.name}</h3>
+              <p class="product-tagline">{item.tagline}</p>
+              <p class="product-description">{item.description}</p>
+              <ul class="product-bullets">
+                {item.bullets.map(bullet => <li>{bullet}</li>)}
+              </ul>
+              <a class="product-link" href={item.href} data-cta={`home-product-${item.id}`}>
+                {item.ctaLabel}
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M3 7h8M7.5 3.5 11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            </article>
           ))}
         </div>
       </div>
@@ -257,11 +246,6 @@ const faqSchema = {
     box-shadow: var(--shadow-card);
   }
 
-  .product-card.is-coming-soon {
-    box-shadow: none;
-    background: var(--surface-2);
-  }
-
   .product-badge {
     align-self: flex-start;
     padding: 2px 10px;
@@ -272,12 +256,6 @@ const faqSchema = {
     font-size: 11.5px;
     font-weight: 600;
     line-height: 20px;
-  }
-
-  .product-card.is-coming-soon .product-badge {
-    background: var(--surface);
-    color: var(--text-2);
-    border: 1px solid var(--border);
   }
 
   .product-card h3 {
@@ -346,14 +324,6 @@ const faqSchema = {
     color: var(--primary-hover);
     text-decoration: underline;
     text-underline-offset: 4px;
-  }
-
-  .product-soon-note {
-    margin-top: auto;
-    padding-top: var(--space-6);
-    color: var(--text-2);
-    font-size: 13px;
-    font-weight: 600;
   }
 
   /* ③ 社证占位 */

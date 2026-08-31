@@ -87,6 +87,12 @@ const contactPath = `${currentLocalePath}contact/`;
 const pricingPath = `${currentLocalePath}pricing/`;
 const extensionPath = `${currentLocalePath}extension/`;
 const downloadPath = `${currentLocalePath}download/`;
+// Online / API 落地页（015 U1）：导航真链接，root + [lang] 双路由。
+const onlinePath = `${currentLocalePath}online-scraper/`;
+const apiScraperPath = `${currentLocalePath}google-maps-scraper-api/`;
+const apiReviewsPath = `${currentLocalePath}google-maps-reviews-scraper-api/`;
+const apiPhotosPath = `${currentLocalePath}google-maps-photos-api/`;
+const apiMcpPath = `${currentLocalePath}google-maps-scraper-mcp/`;
 // 导航 Install CTA 指向下载页：商店上架前商店链接只在下载页维护占位（W2），上架后回填各渠道常量。
 const installHref = downloadPath;
 const languageOptionLinks = Object.entries(localePaths).map(([key, path]) => {
@@ -102,6 +108,7 @@ const isHomeActive = normalizedCurrentPath === currentLocalePath;
 const isPricingActive = normalizedCurrentPath === pricingPath;
 const isExtensionActive = normalizedCurrentPath === extensionPath;
 const isDownloadActive = normalizedCurrentPath === downloadPath;
+const isOnlineActive = normalizedCurrentPath === onlinePath;
 const schemaName = 'MapsGrab';
 const siteHomeUrl = new URL('/', Astro.site).href;
 const organizationId = new URL('/#organization', Astro.site).href;
@@ -398,27 +405,11 @@ const structuredDataItems = [
         background: var(--surface-2);
       }
 
-      /* Online 占位项：非链接不可跳转，视觉降级为不可用态（design.md 禁用 = surface-2 底 + text-3 字） */
-      .nav-links .nav-link-placeholder {
-        display: inline-flex;
-        align-items: center;
+      /* 导航内 API 下拉：复用 .lang-switcher/.lang-btn/.lang-dropdown 全套样式；
+         仅收紧按钮内边距，使下拉触发钮与相邻导航链接视觉等高 */
+      .nav-api-switcher .lang-btn {
         padding: 10px 14px;
-        border-radius: var(--rounded-full);
-        background: var(--surface-2);
-        color: var(--text-3);
-        font-size: 14px;
-        font-weight: 600;
-        cursor: default;
-      }
-
-      .mobile-nav .nav-link-placeholder {
-        display: block;
-        padding: var(--space-3) 14px;
-        border-radius: var(--rounded-md);
-        background: var(--surface-2);
-        color: var(--text-3);
-        font-weight: 600;
-        cursor: default;
+        min-height: 0;
       }
 
       .nav-links a:focus-visible,
@@ -609,8 +600,9 @@ const structuredDataItems = [
         transition: max-height var(--transition-normal) ease-out;
       }
 
+      /* 展开高度覆盖 Home/Extension/Online/API×4/Download/Pricing 平铺项（015 U1） */
       .mobile-nav.open {
-        max-height: 420px;
+        max-height: 640px;
       }
 
       .mobile-nav-inner {
@@ -845,10 +837,24 @@ const structuredDataItems = [
           <a href={extensionPath} class={isExtensionActive ? 'active' : ''} data-cta="nav-extension">
             {t.layout.nav.extension}
           </a>
-          {/* Online 占位入口：span 占位（非链接，无跳转目标，点击无效不 404），与首页占位卡同语义 */}
-          <span class="nav-link-placeholder" aria-disabled="true">
+          <a href={onlinePath} class={isOnlineActive ? 'active' : ''} data-cta="nav-online">
             {t.layout.nav.online}
-          </span>
+          </a>
+          {/* API 下拉：交互复用语言切换下拉模式（.lang-switcher/.lang-btn/.lang-dropdown + language-switcher 脚本） */}
+          <div class="lang-switcher nav-api-switcher">
+            <button class="lang-btn" aria-label={t.layout.nav.api}>
+              {t.layout.nav.api}
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="lang-dropdown">
+              <a class="lang-option" href={apiScraperPath} data-cta="nav-api-scraper">{t.layout.nav.apiScraper}</a>
+              <a class="lang-option" href={apiReviewsPath} data-cta="nav-api-reviews">{t.layout.nav.apiReviews}</a>
+              <a class="lang-option" href={apiPhotosPath} data-cta="nav-api-photos">{t.layout.nav.apiPhotos}</a>
+              <a class="lang-option" href={apiMcpPath} data-cta="nav-api-mcp">{t.layout.nav.apiMcp}</a>
+            </div>
+          </div>
           <a href={downloadPath} class={isDownloadActive ? 'active' : ''} data-cta="nav-download">
             {t.layout.nav.download}
           </a>
@@ -927,10 +933,14 @@ const structuredDataItems = [
           <a href={extensionPath} class={isExtensionActive ? 'active' : ''} data-cta="nav-extension">
             {t.layout.nav.extension}
           </a>
-          {/* Online 占位入口：span 占位（非链接，无跳转目标，点击无效不 404） */}
-          <span class="nav-link-placeholder" aria-disabled="true">
+          <a href={onlinePath} class={isOnlineActive ? 'active' : ''} data-cta="nav-online">
             {t.layout.nav.online}
-          </span>
+          </a>
+          {/* API 四子项：移动端平铺（无下拉） */}
+          <a href={apiScraperPath} data-cta="nav-api-scraper">{t.layout.nav.apiScraper}</a>
+          <a href={apiReviewsPath} data-cta="nav-api-reviews">{t.layout.nav.apiReviews}</a>
+          <a href={apiPhotosPath} data-cta="nav-api-photos">{t.layout.nav.apiPhotos}</a>
+          <a href={apiMcpPath} data-cta="nav-api-mcp">{t.layout.nav.apiMcp}</a>
           <a href={downloadPath} class={isDownloadActive ? 'active' : ''} data-cta="nav-download">
             {t.layout.nav.download}
           </a>

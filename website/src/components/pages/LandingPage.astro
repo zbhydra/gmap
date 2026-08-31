@@ -1,0 +1,357 @@
+---
+/**
+ * Online / API 落地页渲染器（015 U1，五页共用模板）。
+ *
+ * 结构：hero（无效主按钮 + Pricing 真链接）→ 能力清单 → FAQ → CTA 行动区。
+ * 页内未落地功能按钮（开始采集 / 获取 Key 类）渲染为 aria-disabled 的
+ * `<button type="button" data-pending-cta>`，无 JS handler——点击无跳转、无请求、
+ * 不埋点；014 云端落地时替换为真交互。内容走 i18n 字典（LandingPageContent）。
+ */
+import Layout from '../../layouts/Layout.astro'
+import type { Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import { getLandingPageContent, type LandingPageId } from '../../i18n/landing'
+import MediaSlot from '../site/MediaSlot.astro'
+
+interface Props {
+  /** 落地页标识（路由 slug，决定装配哪一页字典内容）。 */
+  pageId: LandingPageId
+  /** 当前 locale 路由。 */
+  locale?: Locale
+}
+
+const { pageId, locale = 'en-US' } = Astro.props as Props
+const page = getLandingPageContent(pageId, locale)
+// locale 前缀（en-US 为空）；后续语言走 [lang]/ 路由时链接自动带上前缀。
+const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const pricingPath = `${localePrefix}/pricing/`
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: page.faq.items.map(item => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer
+    }
+  }))
+}
+---
+
+<Layout
+  locale={locale}
+  title={page.seo.title}
+  description={page.seo.description}
+  includeSoftwareApplicationSchema={false}
+  structuredData={[faqSchema]}
+>
+  <div class="landing" data-landing-page={pageId}>
+    <!-- hero：主 CTA 为无效按钮（未落地功能），次 CTA 指向 Pricing -->
+    <section class="hero" aria-labelledby="landing-hero-title">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">{page.hero.eyebrow}</p>
+          <h1 id="landing-hero-title">{page.hero.title}</h1>
+          <p class="hero-description">{page.hero.description}</p>
+          <div class="hero-actions">
+            <button type="button" class="btn-primary" aria-disabled="true" data-pending-cta>
+              {page.hero.primaryCta}
+            </button>
+            <a
+              class="btn-secondary"
+              href={`${pricingPath}?utm_source=website&utm_medium=${pageId}-hero&utm_campaign=pricing`}
+              data-cta={`${pageId}-hero-pricing`}
+            >{page.hero.secondaryCta}</a>
+          </div>
+        </div>
+        <MediaSlot variant="browser" ratio="4 / 3" label={page.hero.visualLabel} class="hero-visual" />
+      </div>
+    </section>
+
+    <!-- 能力清单 -->
+    <section class="features" aria-labelledby="landing-features-title">
+      <div class="container">
+        <header class="section-header">
+          <p class="eyebrow">{page.features.eyebrow}</p>
+          <h2 id="landing-features-title">{page.features.title}</h2>
+          <p class="section-description">{page.features.description}</p>
+        </header>
+        <div class="feature-grid">
+          {page.features.items.map(item => (
+            <article class="feature-card">
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ：原生 details/summary，零 JS -->
+    <section class="faq" aria-labelledby="landing-faq-title">
+      <div class="container faq-inner">
+        <header class="section-header">
+          <p class="eyebrow">FAQ</p>
+          <h2 id="landing-faq-title">{page.faq.title}</h2>
+        </header>
+        <div class="faq-list">
+          {page.faq.items.map((item, index) => (
+            <details class="faq-item" data-faq-item={index}>
+              <summary>{item.question}</summary>
+              <p>{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA 行动区：按钮为无效按钮 -->
+    <section class="cta-band" aria-labelledby="landing-cta-title">
+      <div class="container cta-inner">
+        <h2 id="landing-cta-title">{page.cta.title}</h2>
+        <p>{page.cta.description}</p>
+        <button type="button" class="btn-primary" aria-disabled="true" data-pending-cta>
+          {page.cta.button}
+        </button>
+        {page.cta.note && <p class="cta-note">{page.cta.note}</p>}
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .landing {
+    padding-top: var(--space-10);
+  }
+
+  .eyebrow {
+    color: var(--primary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .section-header h2,
+  .hero h1 {
+    margin-top: var(--space-2);
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--text);
+  }
+
+  .hero h1 {
+    max-width: 760px;
+    font-size: clamp(32px, 4.2vw, 50px);
+    line-height: 1.08;
+  }
+
+  .section-header h2 {
+    font-size: 32px;
+    line-height: 40px;
+    letter-spacing: -0.02em;
+  }
+
+  .section-description {
+    max-width: 680px;
+    margin-top: var(--space-3);
+    color: var(--text-2);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .btn-primary:focus-visible,
+  .btn-secondary:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  /* hero */
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: var(--space-16);
+    align-items: center;
+    padding: var(--space-10) 0 var(--space-16);
+  }
+
+  .hero-visual {
+    min-width: 0;
+  }
+
+  .hero-description {
+    max-width: 680px;
+    margin-top: var(--space-4);
+    color: var(--text-2);
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+
+  /* 未落地功能按钮：可聚焦但视觉降级（design.md 禁用语义 = 降透明度），无 handler 点击无效 */
+  button[aria-disabled='true'] {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  /* 能力清单 */
+  .features {
+    padding: var(--space-16) 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6);
+    margin-top: var(--space-8);
+  }
+
+  .feature-card {
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--bg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .feature-card h3 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 26px;
+    color: var(--text);
+  }
+
+  .feature-card p {
+    margin-top: var(--space-2);
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* FAQ */
+  .faq {
+    padding: var(--space-16) 0;
+  }
+
+  .faq-inner {
+    max-width: 800px;
+  }
+
+  .faq-list {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+
+  .faq-item {
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--surface);
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .faq-item[open] {
+    background: var(--surface-2);
+  }
+
+  .faq-item summary {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.6;
+    cursor: pointer;
+  }
+
+  .faq-item summary:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  .faq-item p {
+    margin-top: var(--space-2);
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* CTA 行动区 */
+  .cta-band {
+    padding: var(--space-16) 0 var(--space-24);
+  }
+
+  .cta-inner {
+    padding: var(--space-16) var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    text-align: center;
+  }
+
+  .cta-inner h2 {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 40px;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .cta-inner > p {
+    max-width: 560px;
+    margin: var(--space-3) auto 0;
+    color: var(--text-2);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .cta-inner .btn-primary {
+    margin-top: var(--space-6);
+  }
+
+  .cta-note {
+    margin-top: var(--space-3);
+    color: var(--text-3);
+    font-size: 13px;
+  }
+
+  @media (max-width: 960px) {
+    .feature-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-8);
+      padding: var(--space-6) 0 var(--space-10);
+    }
+
+    .features,
+    .faq {
+      padding: var(--space-10) 0;
+    }
+
+    .cta-band {
+      padding: var(--space-10) 0 var(--space-16);
+    }
+
+    .cta-inner {
+      padding: var(--space-10) var(--space-4);
+    }
+  }
+</style>

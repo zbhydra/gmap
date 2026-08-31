@@ -25,18 +25,27 @@ export function buildLanguageSwitchUrl(targetPath: string, currentHref: string):
   return `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`
 }
 
-/** 初始化页头语言切换器。 */
+/** 初始化页头下拉交互（语言切换器 + 同模式的导航 API 下拉）。 */
 export function initializeLanguageSwitcher(): void {
-  const languageButton = document.querySelector<HTMLButtonElement>(LANGUAGE_BUTTON_SELECTOR)
-  const languageDropdown = document.querySelector<HTMLElement>(LANGUAGE_DROPDOWN_SELECTOR)
+  const dropdowns = Array.from(document.querySelectorAll<HTMLElement>(LANGUAGE_DROPDOWN_SELECTOR))
 
-  languageButton?.addEventListener('click', event => {
-    event.stopPropagation()
-    languageDropdown?.classList.toggle('show')
+  // 同模式可以有多个下拉（导航 API 下拉复用 .lang-btn/.lang-dropdown），逐个绑定，
+  // 打开一个时互斥关闭其余，点击外部全部关闭。
+  document.querySelectorAll<HTMLButtonElement>(LANGUAGE_BUTTON_SELECTOR).forEach(button => {
+    const dropdown = button.parentElement?.querySelector<HTMLElement>(LANGUAGE_DROPDOWN_SELECTOR)
+    button.addEventListener('click', event => {
+      event.stopPropagation()
+      dropdowns.forEach(other => {
+        if (other !== dropdown) {
+          other.classList.remove('show')
+        }
+      })
+      dropdown?.classList.toggle('show')
+    })
   })
 
   document.addEventListener('click', () => {
-    languageDropdown?.classList.remove('show')
+    dropdowns.forEach(dropdown => dropdown.classList.remove('show'))
   })
 
   const languageOptions = document.querySelectorAll<HTMLButtonElement>(LANGUAGE_OPTION_SELECTOR)
