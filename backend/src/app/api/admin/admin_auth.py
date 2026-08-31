@@ -56,16 +56,31 @@ async def login(req: AdminLoginRequest) -> dict:
     """
     # 1. 验证码校验
     if not await captcha_service.verify_captcha(req.captcha_id, req.captcha_code):
-        raise AppCommonException(CommonCode.ADMIN_CAPTCHA_FAILED)
+        raise AppCommonException(
+            CommonCode.ADMIN_CAPTCHA_FAILED,
+            ext_msg=(
+                "admin_auth.login: 图片验证码校验失败: "
+                f"captcha_id={req.captcha_id}, username={req.username}"
+            ),
+        )
 
     # 2. 用户名 + 密码校验
     admin = await admin_service.authenticate(req.username, req.password)
     if not admin:
-        raise AppCommonException(CommonCode.ADMIN_AUTH_FAILED)
+        raise AppCommonException(
+            CommonCode.ADMIN_AUTH_FAILED,
+            ext_msg=f"admin_auth.login: 管理员用户名或密码错误: username={req.username}",
+        )
 
     # 3. 检查 is_active
     if not admin.is_active:
-        raise AppCommonException(CommonCode.ADMIN_INACTIVE)
+        raise AppCommonException(
+            CommonCode.ADMIN_INACTIVE,
+            ext_msg=(
+                "admin_auth.login: 管理员账号已停用: "
+                f"admin_id={admin.admin_id}, username={req.username}"
+            ),
+        )
 
     # 4. 签发 access token 和 refresh token
     access_token, refresh_token, access_expire, refresh_expire = (

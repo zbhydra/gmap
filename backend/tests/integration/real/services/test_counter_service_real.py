@@ -228,7 +228,7 @@ async def test_real_counter_schema_has_exact_columns_comments_and_indexes(
                 ),
                 {"table_name": table_name},
             )
-            assert dict(column_result.all()) == column_comments
+            assert {row[0]: row[1] for row in column_result} == column_comments
 
             index_result = await db.execute(
                 text(

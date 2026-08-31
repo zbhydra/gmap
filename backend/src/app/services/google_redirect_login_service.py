@@ -142,7 +142,10 @@ class GoogleRedirectLoginService:
     async def consume_oauth_state(self, state: str) -> str:
         """原子消费 OAuth state，并返回它绑定的 return_to。"""
         if not state.strip():
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg="google_redirect_login_service.consume_oauth_state: OAuth state 为空",
+            )
 
         redis = await redis_client.get_client()
         value: object = await redis.eval(  # type: ignore[misc]
@@ -157,7 +160,13 @@ class GoogleRedirectLoginService:
             self._build_state_key(self._hash_code(state.strip())),
         )
         if value is None:
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_redirect_login_service.consume_oauth_state: "
+                    "OAuth state 不存在或已过期/已被消费"
+                ),
+            )
 
         try:
             if isinstance(value, bytes):
@@ -178,7 +187,13 @@ class GoogleRedirectLoginService:
             if not isinstance(return_to, str) or not return_to.strip():
                 raise ValueError("oauth state payload return_to is invalid")
         except (TypeError, ValueError, json.JSONDecodeError) as exc:
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS) from exc
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_redirect_login_service.consume_oauth_state: "
+                    f"OAuth state 票据载荷非法: error={type(exc).__name__}: {exc}"
+                ),
+            ) from exc
 
         return return_to
 
@@ -200,7 +215,10 @@ class GoogleRedirectLoginService:
     async def consume_login_code(self, code: str) -> int:
         """原子消费一次性 code，并返回对应 user_id。"""
         if not code.strip():
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg="google_redirect_login_service.consume_login_code: 一次性 code 为空",
+            )
 
         redis = await redis_client.get_client()
         value: object = await redis.eval(  # type: ignore[misc]
@@ -215,7 +233,13 @@ class GoogleRedirectLoginService:
             self._build_key(self._hash_code(code.strip())),
         )
         if value is None:
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_redirect_login_service.consume_login_code: "
+                    "一次性 code 不存在或已过期/已被消费"
+                ),
+            )
 
         try:
             if isinstance(value, bytes):
@@ -237,10 +261,22 @@ class GoogleRedirectLoginService:
                 raise ValueError("login code payload user_id is not an integer")
             user_id = user_id_value
         except (TypeError, ValueError, json.JSONDecodeError) as exc:
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS) from exc
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_redirect_login_service.consume_login_code: "
+                    f"一次性 code 票据载荷非法: error={type(exc).__name__}: {exc}"
+                ),
+            ) from exc
 
         if user_id <= 0:
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_redirect_login_service.consume_login_code: "
+                    f"一次性 code 票据的 user_id 非法: user_id={user_id}"
+                ),
+            )
 
         return user_id
 
@@ -274,7 +310,13 @@ class GoogleRedirectLoginService:
         fallback_base_url = settings.app.public_website_base_url.strip()
         if not fallback_base_url:
             logger.error("Google redirect failed: app.public_website_base_url is empty")
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_redirect_login_service._get_redirect_fallback_url: "
+                    "settings.app.public_website_base_url 为空"
+                ),
+            )
 
         fallback_parts = urlsplit(fallback_base_url)
         return urlunsplit(

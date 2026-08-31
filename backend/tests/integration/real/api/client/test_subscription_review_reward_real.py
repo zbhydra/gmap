@@ -190,15 +190,15 @@ async def test_real_review_reward_checkout_configs_return_anonymous_and_account_
     )
 
     assert anonymous_response.status_code == 200
-    assert anonymous_response.json()["code"] == 10000
+    assert anonymous_response.json()["code"] == CommonCode.SUCCESS
     assert anonymous_response.json()["data"]["review_reward_enabled"] is True
     assert anonymous_response.json()["data"]["review_reward_claimed_count"] == 0
     assert invalid_token_response.status_code == 200
-    assert invalid_token_response.json()["code"] == 10000
+    assert invalid_token_response.json()["code"] == CommonCode.SUCCESS
     assert invalid_token_response.json()["data"]["review_reward_enabled"] is True
     assert invalid_token_response.json()["data"]["review_reward_claimed_count"] == 0
     assert account_response.status_code == 200
-    assert account_response.json()["code"] == 10000
+    assert account_response.json()["code"] == CommonCode.SUCCESS
     assert account_response.json()["data"]["review_reward_enabled"] is True
     assert account_response.json()["data"]["review_reward_claimed_count"] == 2
 
@@ -234,7 +234,7 @@ async def test_real_review_reward_checkout_configs_treat_revoked_token_as_anonym
 
     assert revoked is True
     assert response.status_code == 200
-    assert response.json()["code"] == 10000
+    assert response.json()["code"] == CommonCode.SUCCESS
     assert response.json()["data"]["review_reward_claimed_count"] == 0
 
 
@@ -258,7 +258,7 @@ async def test_real_review_reward_first_claim_creates_seven_day_subscription(
     after_ms = timestamp_now()
 
     assert response.status_code == 200
-    assert response.json()["code"] == 10000
+    assert response.json()["code"] == CommonCode.SUCCESS
     assert response.json()["data"] == {
         "result": "granted",
         "review_reward_claimed_count": 1,
@@ -309,10 +309,10 @@ async def test_real_review_reward_claim_extends_active_subscription_once(
 
     expected_expires_at = original_expires_at + _REVIEW_REWARD_DAYS * _DAY_MS
     assert first_response.status_code == 200
-    assert first_response.json()["code"] == 10000
+    assert first_response.json()["code"] == CommonCode.SUCCESS
     assert first_response.json()["data"]["result"] == "granted"
     assert second_response.status_code == 200
-    assert second_response.json()["code"] == 10000
+    assert second_response.json()["code"] == CommonCode.SUCCESS
     assert second_response.json()["data"] == {
         "result": "already_claimed",
         "review_reward_claimed_count": 1,
@@ -354,12 +354,14 @@ async def test_real_review_reward_concurrent_claims_only_extend_once(
     bodies = [response.json() for response in responses]
     assert all(response.status_code == 200 for response in responses)
     assert all(
-        body["code"] in {10000, CommonCode.SUBSCRIPTION_REVIEW_REWARD_BUSY.value}
+        body["code"]
+        in {CommonCode.SUCCESS, CommonCode.SUBSCRIPTION_REVIEW_REWARD_BUSY.value}
         for body in bodies
     )
     assert (
         sum(
-            body["code"] == 10000 and body["data"].get("result") == "granted"
+            body["code"] == CommonCode.SUCCESS
+            and body["data"].get("result") == "granted"
             for body in bodies
         )
         == 1

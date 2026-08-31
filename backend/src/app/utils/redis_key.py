@@ -1,3 +1,5 @@
+"""Redis key 构建工具：为 key 统一追加配置前缀，避免多环境键冲突。"""
+
 from app.core.config import settings
 
 

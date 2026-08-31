@@ -14,6 +14,7 @@ import pytest
 from app.constants.maps_usage import build_dedup_key, build_usage_key
 from app.core.redis import redis_client
 from app.utils.redis_key import build_redis_key
+from app.i18n.common_code import CommonCode
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
@@ -27,7 +28,7 @@ def _device_header() -> dict[str, str]:
 def _usage_payload(body: dict) -> dict:
     """剥响应信封，返回 data 载荷。"""
 
-    assert body["code"] == 10000, body
+    assert body["code"] == CommonCode.SUCCESS, body
     return body["data"]
 
 

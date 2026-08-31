@@ -65,7 +65,8 @@ async def send_feishu_alarm(
     except Exception as exc:
         logger.error(
             "Feishu alarm send failed "
-            f"title={title} dedup_key={dedup_key} error={exc}"
+            f"title={title} dedup_key={dedup_key} error={exc}",
+            exc_info=True,
         )
 
 
@@ -88,7 +89,10 @@ async def _try_redis_dedup(*, dedup_key: str, dedup_seconds: int) -> bool | None
         key = build_redis_key(f"feishu_alarm:{dedup_key}")
         created = await redis.set(key, "1", ex=dedup_seconds, nx=True)
     except Exception as exc:
-        logger.error(f"Feishu alarm Redis dedup failed key={dedup_key} error={exc}")
+        logger.error(
+            f"Feishu alarm Redis dedup failed key={dedup_key} error={exc}",
+            exc_info=True,
+        )
         return None
     return bool(created)
 

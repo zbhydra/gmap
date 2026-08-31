@@ -1,3 +1,5 @@
+"""支付回调请求 Pydantic 模型。"""
+
 from pydantic import BaseModel, Field
 
 

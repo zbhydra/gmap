@@ -1,3 +1,5 @@
+"""JWT 签发与校验工具：access/refresh token 的生成、解码与载荷构造。"""
+
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 import time
@@ -153,5 +155,5 @@ class JwtUnit:
             return jwt_data
         except Exception as e:
             if report_failure:
-                logger.error(f"Failed to decode token: {e}")
+                logger.error(f"Failed to decode token: {e}", exc_info=True)
             return None

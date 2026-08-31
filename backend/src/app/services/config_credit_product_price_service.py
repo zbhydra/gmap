@@ -6,7 +6,6 @@ from sqlalchemy import select
 
 from app.constants.config_cache import CONFIG_CACHE_TTL_MS
 from app.core.database import get_async_session
-from app.core.singleton import singleton
 from app.models.config_credit_product_price_model import ConfigCreditProductPriceModel
 from app.utils.time import timestamp_now
 
@@ -22,7 +21,6 @@ class ConfigCreditProductPriceRow:
     provider_sku: str | None
 
 
-@singleton
 class ConfigCreditProductPriceService:
     """Credits 积分包渠道价格配置表读取服务。"""
 

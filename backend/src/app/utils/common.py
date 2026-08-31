@@ -1,3 +1,5 @@
+"""通用工具函数：客户端 IP 解析、语言环境（Locale）判定等杂项能力。"""
+
 import hashlib
 from typing import Optional
 from app.i18n import LocaleContext

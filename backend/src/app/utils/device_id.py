@@ -14,7 +14,10 @@ def validate_request_device_id(device_id: str | None) -> str:
     if not device_id:
         raise AppCommonException(
             CommonCode.INVALID_DEVICE_ID,
-            ext_msg="X-Device-Id header is missing or empty",
+            ext_msg=(
+                "device_id.validate_request_device_id: "
+                "X-Device-Id header is missing or empty"
+            ),
         )
     if len(device_id) > _DEVICE_ID_MAX_LENGTH:
         raise AppCommonException(

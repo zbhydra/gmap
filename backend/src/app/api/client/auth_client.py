@@ -204,9 +204,21 @@ async def _send_email_verify_code_or_raise(
     result = await email_verification_service.send_verify_code(email, language)
 
     if result == SendResult.RATE_LIMITED:
-        raise AppCommonException(code=CommonCode.EMAIL_VERIFY_SEND_TOO_FREQUENT)
+        raise AppCommonException(
+            code=CommonCode.EMAIL_VERIFY_SEND_TOO_FREQUENT,
+            ext_msg=(
+                "auth_client._send_email_verify_code_or_raise: 邮箱验证码发送触发频率限制: "
+                f"email={email}"
+            ),
+        )
     if result == SendResult.SEND_FAILED:
-        raise AppCommonException(code=CommonCode.EMAIL_VERIFY_SEND_FAILED)
+        raise AppCommonException(
+            code=CommonCode.EMAIL_VERIFY_SEND_FAILED,
+            ext_msg=(
+                "auth_client._send_email_verify_code_or_raise: 邮箱验证码发送失败: "
+                f"email={email}"
+            ),
+        )
 
 
 def _serialize_login_response(login_response: LoginResponse) -> dict:
@@ -237,9 +249,21 @@ def _ensure_user_can_login(user: UserModel) -> None:
     """检查用户当前状态是否允许登录。"""
     status_value = user.user_status()
     if status_value == UserLoginStatus.LOCKED:
-        raise AppCommonException(code=CommonCode.AUTH_ACCOUNT_LOCKED)
+        raise AppCommonException(
+            code=CommonCode.AUTH_ACCOUNT_LOCKED,
+            ext_msg=(
+                "auth_client._ensure_user_can_login: 用户账号已锁定: "
+                f"user_id={user.user_id}, email={user.email}"
+            ),
+        )
     if status_value == UserLoginStatus.DELETED:
-        raise AppCommonException(code=CommonCode.USER_NOT_FOUND)
+        raise AppCommonException(
+            code=CommonCode.USER_NOT_FOUND,
+            ext_msg=(
+                "auth_client._ensure_user_can_login: 用户已删除不允许登录: "
+                f"user_id={user.user_id}, email={user.email}"
+            ),
+        )
 
 
 async def _enforce_extension_token_rate_limit(
@@ -395,7 +419,10 @@ async def register(data: RegisterRequest, request: Request):
     # 检查邮箱是否已存在
     existing = await user_service.get_user_by_email(data.email)
     if existing:
-        raise AppCommonException(code=CommonCode.USER_EMAIL_EXISTS)
+        raise AppCommonException(
+            code=CommonCode.USER_EMAIL_EXISTS,
+            ext_msg=f"auth_client.register: 注册邮箱已存在: email={data.email}",
+        )
 
     # 创建用户并赠送注册 Credits
     user = await user_service.create_user_with_registration_bonus(
@@ -430,7 +457,13 @@ async def login(data: LoginRequest, request: Request):
         logger.warning(
             f"Blocked IP {ip_address} attempted login, remaining: {remaining_time}s",
         )
-        raise AppCommonException(code=CommonCode.AUTH_IP_BLOCKED)
+        raise AppCommonException(
+            code=CommonCode.AUTH_IP_BLOCKED,
+            ext_msg=(
+                "auth_client.login: 登录 IP 处于封禁期: "
+                f"ip={ip_address}, remaining_seconds={remaining_time}"
+            ),
+        )
 
     # 验证用户凭据
     user = await user_auth_service.authenticate_user(data.email, data.password)
@@ -449,10 +482,23 @@ async def login(data: LoginRequest, request: Request):
                 f"IP {ip_address} exceeded login rate limit, "
                 f"blocked for {IP_BLOCK_DURATION}s",
             )
-            raise AppCommonException(code=CommonCode.AUTH_IP_BLOCKED)
+            raise AppCommonException(
+                code=CommonCode.AUTH_IP_BLOCKED,
+                ext_msg=(
+                    "auth_client.login: 密码登录失败次数超限触发 IP 封禁: "
+                    f"ip={ip_address}, max_attempts={LOGIN_RATE_LIMIT_MAX_ATTEMPTS}, "
+                    f"window_seconds={LOGIN_RATE_LIMIT_WINDOW}"
+                ),
+            )
 
         await user_auth_service.update_failed_login(data.email)
-        raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+        raise AppCommonException(
+            code=CommonCode.AUTH_INVALID_CREDENTIALS,
+            ext_msg=(
+                "auth_client.login: 邮箱或密码错误: "
+                f"email={data.email}, ip={ip_address}"
+            ),
+        )
 
     _ensure_user_can_login(user)
 
@@ -489,7 +535,13 @@ async def create_extension_token(
         logger.error(
             f"User not found for user_id={ctx.user_id} in /extension-token endpoint"
         )
-        raise AppCommonException(code=CommonCode.USER_NOT_FOUND)
+        raise AppCommonException(
+            code=CommonCode.USER_NOT_FOUND,
+            ext_msg=(
+                "auth_client.create_extension_token: Website token 有效但用户不存在: "
+                f"user_id={ctx.user_id}, ip={ctx.ip}"
+            ),
+        )
 
     _ensure_user_can_login(user)
 
@@ -522,11 +574,23 @@ async def refresh_token(data: RefreshTokenRequest):
     """
     jwt_data = JwtUnit.decode_token(data.refresh_token)
     if not jwt_data:
-        raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+        # refresh token 属敏感凭据，ext_msg 不记录其内容
+        raise AppCommonException(
+            code=CommonCode.AUTH_INVALID_CREDENTIALS,
+            ext_msg=(
+                "auth_client.refresh_token: refresh token 解析失败或 payload 非法"
+            ),
+        )
 
     user = await user_service.get_by_id(jwt_data.user_id)
     if not user:
-        raise AppCommonException(code=CommonCode.USER_NOT_FOUND)
+        raise AppCommonException(
+            code=CommonCode.USER_NOT_FOUND,
+            ext_msg=(
+                "auth_client.refresh_token: refresh token 对应的用户不存在: "
+                f"user_id={jwt_data.user_id}, token_type={jwt_data.type}"
+            ),
+        )
 
     _ensure_user_can_login(user)
 
@@ -535,7 +599,13 @@ async def refresh_token(data: RefreshTokenRequest):
         jwt_data.user_id,
     )
     if not ok:
-        raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+        raise AppCommonException(
+            code=CommonCode.AUTH_INVALID_CREDENTIALS,
+            ext_msg=(
+                "auth_client.refresh_token: refresh token 白名单校验失败（含宽限期）: "
+                f"user_id={jwt_data.user_id}, token_type={TokenType.USER_REFRESH.value}"
+            ),
+        )
 
     new_access_token, new_refresh_token, expires_in = (
         user_auth_service.create_tokens_for_user(user)
@@ -544,7 +614,15 @@ async def refresh_token(data: RefreshTokenRequest):
     new_access_jwt_data = JwtUnit.decode_token(new_access_token)
     new_refresh_jwt_data = JwtUnit.decode_token(new_refresh_token)
     if not new_access_jwt_data or not new_refresh_jwt_data:
-        raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+        raise AppCommonException(
+            code=CommonCode.INTERNAL_SERVER_ERROR,
+            ext_msg=(
+                "auth_client.refresh_token: 轮换后新签发的 token 解码失败: "
+                f"user_id={jwt_data.user_id}, "
+                f"access_decoded={new_access_jwt_data is not None}, "
+                f"refresh_decoded={new_refresh_jwt_data is not None}"
+            ),
+        )
 
     new_access_expires_at = new_access_jwt_data.exp
     new_refresh_expires_at = new_refresh_jwt_data.exp
@@ -583,7 +661,12 @@ async def get_me(ctx: UserContext = Depends(get_current_user)):
     user = await user_service.get_by_id(ctx.user_id)
     if not user:
         logger.error(f"User not found for user_id={ctx.user_id} in /me endpoint")
-        raise AppCommonException(code=CommonCode.USER_NOT_FOUND)
+        raise AppCommonException(
+            code=CommonCode.USER_NOT_FOUND,
+            ext_msg=(
+                "auth_client.get_me: token 有效但用户不存在: " f"user_id={ctx.user_id}"
+            ),
+        )
 
     data = (await user_service.build_client_user_info(user)).model_dump()
     data["subscription"] = await subscription_status_service.build_status_data(
@@ -646,7 +729,13 @@ async def email_verify_login(
     # 验证验证码
     is_valid = await email_verification_service.verify_code(data.email, data.code)
     if not is_valid:
-        raise AppCommonException(code=CommonCode.EMAIL_VERIFY_CODE_INVALID)
+        raise AppCommonException(
+            code=CommonCode.EMAIL_VERIFY_CODE_INVALID,
+            ext_msg=(
+                "auth_client.email_verify_login: 邮箱验证码校验失败（无效或超次数）: "
+                f"email={data.email}"
+            ),
+        )
 
     # 获取用户，不存在则创建（带并发保护）
     user = await user_service.get_user_by_email(data.email)
@@ -675,9 +764,16 @@ async def email_verify_login(
             if not user:
                 # 理论上不应该发生，但作为保险
                 logger.error(
-                    f"Failed to create user after IntegrityError for {data.email}"
+                    f"Failed to create user after IntegrityError for {data.email}",
+                    exc_info=True,
                 )
-                raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+                raise AppCommonException(
+                    code=CommonCode.INTERNAL_SERVER_ERROR,
+                    ext_msg=(
+                        "auth_client.email_verify_login: 并发注册冲突后重查用户仍不存在: "
+                        f"email={data.email}, register_method=email_code"
+                    ),
+                )
 
     # 检查用户状态并完成登录
     _ensure_user_can_login(user)
@@ -728,7 +824,15 @@ async def google_oauth_authorize(request: Request, return_to: str | None = None)
         )
         if not allowed:
             logger.warning(f"Google OAuth authorize rate limited ip={ip_address}")
-            raise AppCommonException(code=CommonCode.RATE_LIMIT_EXCEEDED)
+            raise AppCommonException(
+                code=CommonCode.RATE_LIMIT_EXCEEDED,
+                ext_msg=(
+                    "auth_client.google_oauth_authorize: Google OAuth 授权触发频率限制: "
+                    f"ip={ip_address}, "
+                    f"limit={_GOOGLE_OAUTH_AUTHORIZE_RATE_LIMIT_MAX}, "
+                    f"window_seconds={_GOOGLE_OAUTH_AUTHORIZE_RATE_LIMIT_WINDOW}"
+                ),
+            )
 
         normalized_return_to = google_redirect_login_service.normalize_oauth_return_to(
             return_to
@@ -751,7 +855,9 @@ async def google_oauth_authorize(request: Request, return_to: str | None = None)
         logger.warning(f"Google OAuth authorize failed with code={exc.code.name}")
         return _google_redirect_error_response(exc.code.name.lower(), None)
     except Exception as exc:
-        logger.error(f"Google OAuth authorize failed unexpectedly: {exc}")
+        logger.error(
+            f"Google OAuth authorize failed unexpectedly: {exc}", exc_info=True
+        )
         return _google_redirect_error_response(
             CommonCode.INTERNAL_SERVER_ERROR.name.lower(),
             None,
@@ -814,7 +920,7 @@ async def google_oauth_callback(
         logger.warning(f"Google OAuth callback failed with code={exc.code.name}")
         return _google_redirect_error_response(exc.code.name.lower(), redirect_state)
     except Exception as exc:
-        logger.error(f"Google OAuth callback failed unexpectedly: {exc}")
+        logger.error(f"Google OAuth callback failed unexpectedly: {exc}", exc_info=True)
         return _google_redirect_error_response(
             CommonCode.INTERNAL_SERVER_ERROR.name.lower(),
             redirect_state,
@@ -830,7 +936,13 @@ async def google_redirect_exchange(
     user_id = await google_redirect_login_service.consume_login_code(data.code)
     user = await user_service.get_by_id(user_id)
     if not user:
-        raise AppCommonException(code=CommonCode.USER_NOT_FOUND)
+        raise AppCommonException(
+            code=CommonCode.USER_NOT_FOUND,
+            ext_msg=(
+                "auth_client.google_redirect_exchange: 一次性 code 对应的用户不存在: "
+                f"user_id={user_id}"
+            ),
+        )
 
     _ensure_user_can_login(user)
     login_response = await _complete_login_flow(user, request)

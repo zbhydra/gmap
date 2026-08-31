@@ -11,6 +11,7 @@ POST /api/client/auth/extension-token | Y | centralized | optional-body | pydant
 
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
+from typing import Any
 import uuid
 
 from httpx import AsyncClient
@@ -108,8 +109,12 @@ async def _issue_extension_token(
     *,
     payload: dict[str, str] | None = None,
     forwarded_for: str | None = None,
-) -> dict[str, object]:
-    """调用插件 token 签发接口并返回 data。"""
+) -> dict[str, Any]:
+    """调用插件 token 签发接口并返回 data。
+
+    HTTP JSON 响应无静态结构（response.json() 本身是 Any），
+    这里保持 dict[str, Any]，由各断言处做具体的 isinstance 校验。
+    """
 
     headers = {
         "Authorization": f"Bearer {web_access_token}",
@@ -133,7 +138,7 @@ async def _issue_extension_token(
         )
     assert response.status_code == 200
     body = response.json()
-    assert body["code"] == 10000
+    assert body["code"] == CommonCode.SUCCESS
     data = body["data"]
     assert isinstance(data, dict)
     return data
@@ -237,7 +242,7 @@ async def test_real_extension_token_issues_registered_tokens_and_refresh_works(
         headers={"Authorization": f"Bearer {extension_access_token}"},
     )
     assert me_response.status_code == 200
-    assert me_response.json()["code"] == 10000
+    assert me_response.json()["code"] == CommonCode.SUCCESS
     assert me_response.json()["data"]["user_id"] == user.user_id
 
     refresh_response = await real_async_client.post(
@@ -245,7 +250,7 @@ async def test_real_extension_token_issues_registered_tokens_and_refresh_works(
         json={"refresh_token": extension_refresh_token},
     )
     assert refresh_response.status_code == 200
-    assert refresh_response.json()["code"] == 10000
+    assert refresh_response.json()["code"] == CommonCode.SUCCESS
     assert refresh_response.json()["data"]["access_token"] != extension_access_token
 
 

@@ -58,7 +58,13 @@ class GoogleAuthService:
         client_id = settings.auth.google_client_id.strip()
         if not client_id:
             logger.error("Google login failed: auth.google_client_id is not configured")
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service.verify_id_token: Google Client ID 未配置: "
+                    "settings.auth.google_client_id 为空"
+                ),
+            )
 
         key = await self._get_public_key_for_token(credential)
         payload = self._decode_and_validate(credential, key, client_id)
@@ -66,21 +72,45 @@ class GoogleAuthService:
         issuer = payload.get("iss")
         if issuer not in GOOGLE_ISSUERS:
             logger.warning(f"Google login failed: invalid issuer {issuer}")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service.verify_id_token: ID token issuer 非法: "
+                    f"iss={issuer}"
+                ),
+            )
 
         email = payload.get("email")
         if not isinstance(email, str) or not email.strip():
             logger.warning("Google login failed: verified token has no email")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service.verify_id_token: ID token 缺少 email 声明: "
+                    f"iss={issuer}, sub={payload.get('sub')}"
+                ),
+            )
 
         if payload.get("email_verified") is not True:
             logger.warning("Google login failed: email is not verified")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service.verify_id_token: email 未通过 Google 验证: "
+                    f"email={email}, email_verified={payload.get('email_verified')}"
+                ),
+            )
 
         subject = payload.get("sub")
         if not isinstance(subject, str) or not subject.strip():
             logger.warning("Google login failed: verified token has no subject")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service.verify_id_token: ID token 缺少 sub 声明: "
+                    f"email={email}"
+                ),
+            )
 
         full_name = payload.get("name")
         avatar_url = payload.get("picture")
@@ -110,7 +140,16 @@ class GoogleAuthService:
                 "Google OAuth login failed: auth.google_client_id or "
                 "auth.google_client_secret is not configured"
             )
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service.exchange_oauth_code_for_id_token: "
+                    "OAuth Client 配置缺失: "
+                    f"client_id_empty={not client_id}, "
+                    "client_secret_empty="
+                    f"{not client_secret}"
+                ),
+            )
 
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(8.0)) as client:
@@ -131,9 +170,16 @@ class GoogleAuthService:
                     "Google OAuth login failed: token request failed",
                     exc,
                     fallback_url=GOOGLE_OAUTH_TOKEN_URL,
-                )
+                ),
+                exc_info=True,
             )
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR) from exc
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service.exchange_oauth_code_for_id_token: "
+                    f"Google token 接口请求失败: redirect_uri={redirect_uri}"
+                ),
+            ) from exc
 
         if response.status_code >= 400:
             logger.warning(
@@ -141,24 +187,52 @@ class GoogleAuthService:
                 f"url={GOOGLE_OAUTH_TOKEN_URL} status={response.status_code} "
                 f"body={_response_body_for_log(response)}"
             )
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service.exchange_oauth_code_for_id_token: "
+                    "Google token 接口拒绝该授权 code: "
+                    f"status={response.status_code}, redirect_uri={redirect_uri}"
+                ),
+            )
 
         try:
             payload = response.json()
         except ValueError as exc:
             logger.error(
-                f"Google OAuth login failed: token response is not JSON: {exc}"
+                f"Google OAuth login failed: token response is not JSON: {exc}",
+                exc_info=True,
             )
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR) from exc
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service.exchange_oauth_code_for_id_token: "
+                    "Google token 响应不是合法 JSON: "
+                    f"status={response.status_code}"
+                ),
+            ) from exc
 
         if not isinstance(payload, dict):
             logger.error("Google OAuth login failed: token response is not an object")
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service.exchange_oauth_code_for_id_token: "
+                    f"Google token 响应不是 object: status={response.status_code}"
+                ),
+            )
 
         id_token = payload.get("id_token")
         if not isinstance(id_token, str) or not id_token.strip():
             logger.warning("Google OAuth login failed: token response has no id_token")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service.exchange_oauth_code_for_id_token: "
+                    "Google token 响应缺少 id_token: "
+                    f"payload_keys={sorted(payload.keys())}"
+                ),
+            )
 
         return id_token
 
@@ -211,7 +285,15 @@ class GoogleAuthService:
             logger.error(
                 "Google OAuth failed: google_client_id or google_client_secret is empty"
             )
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service._get_oauth_client_config: "
+                    "OAuth Client 配置缺失: "
+                    f"client_id_empty={not client_id}, "
+                    f"client_secret_empty={not client_secret}"
+                ),
+            )
         return client_id, client_secret
 
     def _is_authoritative_email(
@@ -232,16 +314,34 @@ class GoogleAuthService:
             header = jwt.get_unverified_header(credential)  # type: ignore[attr-defined]
         except Exception as exc:
             logger.warning(f"Google login failed: invalid token header: {exc}")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS) from exc
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service._get_public_key_for_token: "
+                    f"ID token header 解析失败: error={type(exc).__name__}: {exc}"
+                ),
+            ) from exc
 
         if header.get("alg") != "RS256":
             logger.warning("Google login failed: token alg is not RS256")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service._get_public_key_for_token: "
+                    f"ID token 签名算法不是 RS256: alg={header.get('alg')}"
+                ),
+            )
 
         kid = header.get("kid")
         if not isinstance(kid, str) or not kid:
             logger.warning("Google login failed: token header has no kid")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service._get_public_key_for_token: "
+                    f"ID token header 缺少 kid: alg={header.get('alg')}"
+                ),
+            )
 
         jwk = await self._find_jwk(kid)
         if jwk is None:
@@ -249,7 +349,13 @@ class GoogleAuthService:
 
         if jwk is None:
             logger.warning("Google login failed: token kid is not in Google JWKS")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service._get_public_key_for_token: "
+                    f"Google JWKS 中找不到 kid 对应公钥: kid={kid}"
+                ),
+            )
 
         return RSAAlgorithm.from_jwk(json.dumps(jwk))
 
@@ -279,9 +385,16 @@ class GoogleAuthService:
                     "Google login failed: JWKS request failed",
                     exc,
                     fallback_url=GOOGLE_JWKS_URL,
-                )
+                ),
+                exc_info=True,
             )
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR) from exc
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service._get_jwks: Google JWKS 请求失败: "
+                    f"url={GOOGLE_JWKS_URL}"
+                ),
+            ) from exc
 
         try:
             payload = response.json()
@@ -290,9 +403,16 @@ class GoogleAuthService:
                 "Google login failed: JWKS response is not JSON, "
                 f"url={GOOGLE_JWKS_URL}, status={response.status_code}, "
                 f"body={_response_body_for_log(response)}, "
-                f"error={type(exc).__name__}: {exc}"
+                f"error={type(exc).__name__}: {exc}",
+                exc_info=True,
             )
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR) from exc
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service._get_jwks: Google JWKS 响应不是合法 JSON: "
+                    f"url={GOOGLE_JWKS_URL}, status={response.status_code}"
+                ),
+            ) from exc
 
         keys = payload.get("keys") if isinstance(payload, dict) else None
         if not isinstance(keys, list):
@@ -301,7 +421,13 @@ class GoogleAuthService:
                 f"url={GOOGLE_JWKS_URL}, status={response.status_code}, "
                 f"body={_response_body_for_log(response)}"
             )
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service._get_jwks: Google JWKS 响应缺少 keys: "
+                    f"url={GOOGLE_JWKS_URL}, status={response.status_code}"
+                ),
+            )
 
         self._jwks = [key for key in keys if isinstance(key, dict)]
         self._jwks_expires_at = now + self._parse_cache_ttl(response.headers)
@@ -340,14 +466,29 @@ class GoogleAuthService:
             )
         except jwt.ExpiredSignatureError as exc:  # type: ignore[attr-defined]
             logger.warning("Google login failed: token expired")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS) from exc
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg="google_auth_service._decode_and_validate: ID token 已过期",
+            ) from exc
         except jwt.InvalidTokenError as exc:  # type: ignore[attr-defined]
             logger.warning(f"Google login failed: token validation failed: {exc}")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS) from exc
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service._decode_and_validate: ID token 验签或声明校验失败: "
+                    f"error={type(exc).__name__}: {exc}"
+                ),
+            ) from exc
 
         if not isinstance(payload, dict):
             logger.warning("Google login failed: decoded payload is not an object")
-            raise AppCommonException(code=CommonCode.AUTH_INVALID_CREDENTIALS)
+            raise AppCommonException(
+                code=CommonCode.AUTH_INVALID_CREDENTIALS,
+                ext_msg=(
+                    "google_auth_service._decode_and_validate: "
+                    "ID token 解码结果不是 object"
+                ),
+            )
 
         return payload
 
@@ -356,14 +497,27 @@ class GoogleAuthService:
         api_base_url = settings.app.public_api_base_url.strip()
         if not api_base_url:
             logger.error("Google OAuth failed: app.public_api_base_url is empty")
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service._build_public_api_url: "
+                    "settings.app.public_api_base_url 为空"
+                ),
+            )
 
         base_parts = urlsplit(api_base_url)
         if not base_parts.scheme or not base_parts.netloc:
             logger.error(
                 f"Invalid public API base URL for Google OAuth: {api_base_url}"
             )
-            raise AppCommonException(code=CommonCode.INTERNAL_SERVER_ERROR)
+            raise AppCommonException(
+                code=CommonCode.INTERNAL_SERVER_ERROR,
+                ext_msg=(
+                    "google_auth_service._build_public_api_url: "
+                    f"public_api_base_url 不是合法绝对 URL: value={api_base_url}, "
+                    f"path={path}"
+                ),
+            )
         return urlunsplit(
             (
                 base_parts.scheme,

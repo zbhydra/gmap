@@ -126,7 +126,7 @@ async def init_db() -> None:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
+        logger.error(f"Failed to initialize database: {e}", exc_info=True)
         raise
 
 
@@ -141,7 +141,7 @@ async def check_db_connection() -> bool:
         logger.info("Database connection successful")
         return True
     except Exception as e:
-        logger.error(f"Database connection failed: {e}")
+        logger.error(f"Database connection failed: {e}", exc_info=True)
         return False
 
 

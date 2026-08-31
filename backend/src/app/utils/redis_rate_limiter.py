@@ -98,5 +98,5 @@ class RedisRateLimiter:
                 del self._local_limits[key]
             return True
         except Exception as e:
-            logger.error(f"Failed to reset rate limit for '{key}': {e}")
+            logger.error(f"Failed to reset rate limit for '{key}': {e}", exc_info=True)
             return False

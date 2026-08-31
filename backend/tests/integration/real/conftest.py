@@ -1,5 +1,6 @@
 """Real 集成测试专用 fixture。"""
 
+import inspect
 from collections.abc import AsyncIterator
 
 import pytest
@@ -72,6 +73,8 @@ async def real_redis_ready() -> None:
     """
     try:
         redis = await redis_client.get_client()
-        await redis.ping()
+        ping_result = redis.ping()
+        if inspect.isawaitable(ping_result):
+            await ping_result
     except Exception as exc:
         pytest.skip(f"REAL_REDIS_UNAVAILABLE: Redis 不可用，跳过 real 测试: {exc}")

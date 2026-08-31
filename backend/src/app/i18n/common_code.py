@@ -14,6 +14,9 @@ class CommonCode(IntEnum):
     采用字符串枚举，便于与 JSON 翻译文件映射。
     """
 
+    # ========== 通用 ==========
+    SUCCESS = 10000  # 请求成功
+
     # ========== 通用错误 (1000-1099) ==========
     INTERNAL_SERVER_ERROR = 500  # 未捕获服务端异常
     INVALID_REQUEST = 400  # 请求参数或业务前置条件非法

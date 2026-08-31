@@ -3,6 +3,9 @@
 提供通用的 CRUD 操作模板
 """
 
+import asyncio
+import sys
+
 from abc import ABC
 from typing import Any, Generic, Optional, Type, TypeVar
 
@@ -124,11 +127,9 @@ class ShardedService(BaseService[ModelType], Generic[ModelType]):
 
         shard_index = shard_key % shard_count
         suffix = f"{shard_index:02d}"
-        class_name = f"{getattr(self.model_class, "__tablename_base__")}_{suffix}"
+        class_name = f'{getattr(self.model_class, "__tablename_base__")}_{suffix}'
 
         # 从模块中获取动态生成的分表类
-        import sys
-
         module = sys.modules[self.model_class.__module__]
         return getattr(module, class_name, self.model_class)
 
@@ -149,8 +150,6 @@ class ShardedService(BaseService[ModelType], Generic[ModelType]):
         Returns:
             所有分表的查询结果合并列表
         """
-        import asyncio
-
         shard_count = getattr(self.model_class, "_shard_count")
 
         # 确定要查询的分片

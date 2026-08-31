@@ -32,7 +32,9 @@ class RedisQueue:
             # 如果组已存在，返回 True
             if "BUSYGROUP" in str(e):
                 return True
-            logger.error(f"Failed to create consumer group '{group_name}': {e}")
+            logger.error(
+                f"Failed to create consumer group '{group_name}': {e}", exc_info=True
+            )
             return False
 
     async def add_message(self, stream_name: str, data: dict[str, Any]) -> str | None:
@@ -48,7 +50,9 @@ class RedisQueue:
             message_id = await redis.xadd(redis_key, converted_data)  # type: ignore[arg-type]
             return str(message_id) if message_id else None
         except Exception as e:
-            logger.error(f"Failed to add message to '{stream_name}': {e}")
+            logger.error(
+                f"Failed to add message to '{stream_name}': {e}", exc_info=True
+            )
             return None
 
     async def read_group(
@@ -95,7 +99,9 @@ class RedisQueue:
 
             return messages
         except Exception as e:
-            logger.error(f"Failed to read from group '{group_name}': {e}")
+            logger.error(
+                f"Failed to read from group '{group_name}': {e}", exc_info=True
+            )
             return []
 
     async def acknowledge(
@@ -109,5 +115,7 @@ class RedisQueue:
             result = await redis.xack(redis_key, group_name, message_id)
             return result > 0
         except Exception as e:
-            logger.error(f"Failed to acknowledge message '{message_id}': {e}")
+            logger.error(
+                f"Failed to acknowledge message '{message_id}': {e}", exc_info=True
+            )
             return False

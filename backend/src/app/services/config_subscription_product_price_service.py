@@ -6,7 +6,6 @@ from sqlalchemy import select
 
 from app.constants.config_cache import CONFIG_CACHE_TTL_MS
 from app.core.database import get_async_session
-from app.core.singleton import singleton
 from app.models.config_subscription_product_price_model import (
     ConfigSubscriptionProductPriceModel,
 )
@@ -24,7 +23,6 @@ class ConfigSubscriptionProductPriceRow:
     provider_sku: str | None
 
 
-@singleton
 class ConfigSubscriptionProductPriceService:
     """订阅商品渠道价格配置表读取服务。"""
 

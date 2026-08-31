@@ -2,6 +2,7 @@
 
 import json
 import asyncio
+import random
 import time
 from collections.abc import Sequence
 from enum import Enum
@@ -23,7 +24,6 @@ from app.constants.order import (
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.core.database import get_async_session
-from app.core.singleton import singleton
 from app.models.order_model import OrderModel
 from app.provider.payment.payment_base import (
     AfterOrderSuccessContext,
@@ -60,7 +60,6 @@ OrderListOrder = Literal[
 ]
 
 
-@singleton
 class OrderService(BaseService[OrderModel]):
     """订单核心服务"""
 
@@ -1130,7 +1129,7 @@ class OrderService(BaseService[OrderModel]):
                 return True
             except Exception as e:
                 await db.rollback()
-                logger.error(f"Failed to update order {order_no}: {e}")
+                logger.error(f"Failed to update order {order_no}: {e}", exc_info=True)
                 return False
 
     def _validate_paid_amount(
@@ -1501,8 +1500,6 @@ class OrderService(BaseService[OrderModel]):
 
         格式: ORD + 时间戳(毫秒) + 4位随机数
         """
-        import random
-
         timestamp = int(time.time() * 1000)
         random_part = random.randint(0, 9999)
         return f"ORD{timestamp}{random_part:04d}"

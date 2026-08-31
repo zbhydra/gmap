@@ -134,7 +134,7 @@ async def _register_and_login(
     )
     assert register_response.status_code == 200
     assert register_response.json()["code"] in (
-        10000,
+        CommonCode.SUCCESS,
         CommonCode.USER_EMAIL_EXISTS.value,
     )
 
@@ -145,7 +145,7 @@ async def _register_and_login(
     )
     assert login_response.status_code == 200
     login_body = login_response.json()
-    assert login_body["code"] == 10000
+    assert login_body["code"] == CommonCode.SUCCESS
     return str(login_body["data"]["access_token"])
 
 
@@ -155,7 +155,7 @@ async def _first_credit_checkout_config(real_async_client) -> dict[str, object]:
     response = await real_async_client.get("/api/client/credit/checkout-configs")
     assert response.status_code == 200
     body = response.json()
-    assert body["code"] == 10000
+    assert body["code"] == CommonCode.SUCCESS
     configs = body["data"]["checkout_configs"]
     if not configs:
         pytest.skip("REAL_SCHEMA_UNAVAILABLE: 缺少可购买 Credits 配置")
@@ -182,7 +182,7 @@ async def test_real_credit_checkout_configs_include_default_three_packages(
     assert response.status_code == 200
     body = response.json()
 
-    assert body["code"] == 10000
+    assert body["code"] == CommonCode.SUCCESS
     configs = body["data"]["checkout_configs"]
     assert [item["product_id"] for item in configs] == [
         "credit_50",
@@ -223,7 +223,7 @@ async def test_real_credit_order_create_requests_telegram_invoice(
     assert response.status_code == 200
     if body["code"] == CommonCode.PAYMENT_GATEWAY_ERROR.value:
         pytest.fail(f"Telegram invoice 创建失败: {body}")
-    assert body["code"] == 10000
+    assert body["code"] == CommonCode.SUCCESS
     data = body["data"]
     real_purchase_cleanup_state.order_nos.append(str(data["order_no"]))
     payment_data = data["payment_data"]
@@ -252,9 +252,11 @@ async def test_real_credit_order_rejects_stale_price_without_order(
     real_purchase_cleanup_state.emails.append(email)
     token = await _register_and_login(real_async_client, email=email)
     checkout_config = await _first_credit_checkout_config(real_async_client)
+    stale_amount = checkout_config["amount"]
+    assert isinstance(stale_amount, int)
     stale_request = {
         **checkout_config,
-        "amount": int(checkout_config["amount"]) + 1_000_000,
+        "amount": stale_amount + 1_000_000,
     }
 
     response = await real_async_client.post(

@@ -26,6 +26,7 @@ async def execute_claimed_task(
             "定时任务执行超时 task_key=%s timeout=%s",
             spec.task_key,
             task_timeout_seconds,
+            exc_info=True,
         )
         business_task.cancel()
         _consume_later(spec.task_key, business_task)

@@ -88,6 +88,30 @@ from app.middleware import (
 )
 from fastapi import FastAPI
 
+# 路由模块会级联拉起全部 service / provider 依赖图，统一在模块顶部一次性加载。
+from app.api.admin.admin_auth import router as admin_auth_router
+from app.api.admin.admin_dashboard import router as admin_dashboard_router
+from app.api.admin.admin_order_analytics import router as admin_order_analytics_router
+from app.api.admin.admin_orders import router as admin_orders_router
+from app.api.admin.admin_system_settings import router as admin_system_settings_router
+from app.api.admin.admin_users import router as admin_users_router
+from app.api.callback.paypal_callback import router as paypal_callback_router
+from app.api.callback.telegram_callback import router as telegram_callback_router
+from app.api.callback.test_pay_callback import router as callback_router
+from app.api.client.auth_client import router as auth_router
+from app.api.client.checkin_client import router as checkin_router
+from app.api.client.credit_client import router as credit_router
+from app.api.client.credits_asset_client import router as credits_asset_router
+from app.api.client.maps_client import router as maps_router
+from app.api.client.mark_client import router as mark_router
+from app.api.client.order_client import router as order_router
+from app.api.client.subscription_client import router as subscription_router
+from app.api.external.external_system_dashboard import (
+    router as external_system_dashboard_router,
+)
+from app.api.system.dashboard import router as dashboard_router
+from app.api.system.health import router as health_router
+
 
 # 设置日志
 setup_logger("server")
@@ -98,6 +122,7 @@ GRACEFUL_SHUTDOWN_TIMEOUT_SECONDS = 10
 
 async def _start_cron_scheduler() -> None:
     """启动定时任务调度器。"""
+    # 原因：调度器装配延迟到应用启动阶段，import 主模块时不触发。
     from app.crons.crons import cron_scheduler
 
     await cron_scheduler.start()
@@ -105,6 +130,7 @@ async def _start_cron_scheduler() -> None:
 
 async def _stop_cron_scheduler() -> None:
     """停止定时任务调度器。"""
+    # 原因：同 _start_cron_scheduler，延迟到启动阶段导入。
     from app.crons.crons import cron_scheduler
 
     await cron_scheduler.stop()
@@ -112,6 +138,7 @@ async def _stop_cron_scheduler() -> None:
 
 async def _shutdown_database_resources() -> None:
     """关闭业务数据库资源。"""
+    # 原因：引擎关闭动作延迟到应用退出阶段执行，import 主模块时不初始化数据库。
     from app.core.database import close_engine
 
     await close_engine()
@@ -161,33 +188,6 @@ def _include_api_info(app_instance: FastAPI) -> None:
 
 def _include_business_routes(app_instance: FastAPI) -> None:
     """挂载业务路由。"""
-    from app.api.admin.admin_auth import router as admin_auth_router
-    from app.api.admin.admin_dashboard import router as admin_dashboard_router
-    from app.api.admin.admin_order_analytics import (
-        router as admin_order_analytics_router,
-    )
-    from app.api.admin.admin_orders import router as admin_orders_router
-    from app.api.admin.admin_users import router as admin_users_router
-    from app.api.admin.admin_system_settings import (
-        router as admin_system_settings_router,
-    )
-    from app.api.callback.telegram_callback import router as telegram_callback_router
-    from app.api.callback.paypal_callback import router as paypal_callback_router
-    from app.api.callback.test_pay_callback import router as callback_router
-    from app.api.client.auth_client import router as auth_router
-    from app.api.client.checkin_client import router as checkin_router
-    from app.api.client.credits_asset_client import router as credits_asset_router
-    from app.api.client.credit_client import router as credit_router
-    from app.api.client.maps_client import router as maps_router
-    from app.api.client.mark_client import router as mark_router
-    from app.api.client.order_client import router as order_router
-    from app.api.client.subscription_client import router as subscription_router
-    from app.api.external.external_system_dashboard import (
-        router as external_system_dashboard_router,
-    )
-    from app.api.system.dashboard import router as dashboard_router
-    from app.api.system.health import router as health_router
-
     app_instance.include_router(health_router, prefix="/api/system", tags=["system"])
     app_instance.include_router(dashboard_router, prefix="/api/system", tags=["system"])
     app_instance.include_router(auth_router, prefix="/api/client", tags=["client"])

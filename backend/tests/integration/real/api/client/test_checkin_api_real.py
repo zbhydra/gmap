@@ -187,17 +187,17 @@ async def test_real_checkin_entry_and_claim_use_current_database_schema(
     )
 
     assert entry_response.status_code == 200
-    assert entry_response.json()["code"] == 10000
+    assert entry_response.json()["code"] == CommonCode.SUCCESS
     assert entry_response.json()["data"]["today_claimed"] is False
 
     assert claim_response.status_code == 200
     claim_body = claim_response.json()
-    assert claim_body["code"] == 10000
+    assert claim_body["code"] == CommonCode.SUCCESS
     assert claim_body["data"]["reward_credits"] in {3, 6}
     assert claim_body["data"]["today_claimed"] is True
 
     assert second_claim_response.status_code == 200
-    assert second_claim_response.json()["code"] != 10000
+    assert second_claim_response.json()["code"] != CommonCode.SUCCESS
 
     async with get_async_session() as db:
         campaign_count = await db.scalar(
@@ -251,7 +251,7 @@ async def test_real_checkin_claim_again_after_db_cross_day_shift(
     )
     assert first_claim_response.status_code == 200
     first_claim_body = first_claim_response.json()
-    assert first_claim_body["code"] == 10000
+    assert first_claim_body["code"] == CommonCode.SUCCESS
 
     today_start_at = get_today_start_timestamp()
     previous_day_claim_at = today_start_at - 1
@@ -274,12 +274,12 @@ async def test_real_checkin_claim_again_after_db_cross_day_shift(
     )
 
     assert entry_response.status_code == 200
-    assert entry_response.json()["code"] == 10000
+    assert entry_response.json()["code"] == CommonCode.SUCCESS
     assert entry_response.json()["data"]["today_claimed"] is False
 
     assert second_claim_response.status_code == 200
     second_claim_body = second_claim_response.json()
-    assert second_claim_body["code"] == 10000
+    assert second_claim_body["code"] == CommonCode.SUCCESS
 
     async with get_async_session() as db:
         campaign = (
@@ -328,7 +328,7 @@ async def test_real_checkin_rejects_corrupt_fifteenth_campaign_day(
         headers=headers,
     )
     assert initial_entry_response.status_code == 200
-    assert initial_entry_response.json()["code"] == 10000
+    assert initial_entry_response.json()["code"] == CommonCode.SUCCESS
 
     today_start_at = get_today_start_timestamp()
     today_date = timestamp_to_datetime(today_start_at).date()
@@ -358,7 +358,7 @@ async def test_real_checkin_rejects_corrupt_fifteenth_campaign_day(
 
     entry_body = entry_response.json()
     assert entry_response.status_code == 200
-    assert entry_body["code"] == 10000
+    assert entry_body["code"] == CommonCode.SUCCESS
     assert entry_body["data"]["campaign_ended"] is True
     assert entry_body["data"]["day_index"] == 14
     assert entry_body["data"]["today_reward_credits"] == 0
@@ -410,7 +410,7 @@ async def test_real_checkin_final_day_claim_has_no_next_claim_time(
         headers=headers,
     )
     assert initial_entry_response.status_code == 200
-    assert initial_entry_response.json()["code"] == 10000
+    assert initial_entry_response.json()["code"] == CommonCode.SUCCESS
 
     today_start_at = get_today_start_timestamp()
     today_date = timestamp_to_datetime(today_start_at).date()
@@ -435,7 +435,7 @@ async def test_real_checkin_final_day_claim_has_no_next_claim_time(
 
     claim_body = claim_response.json()
     assert claim_response.status_code == 200
-    assert claim_body["code"] == 10000
+    assert claim_body["code"] == CommonCode.SUCCESS
     assert claim_body["data"]["day_index"] == 14
     assert claim_body["data"]["reward_credits"] == 3
     assert claim_body["data"]["next_claim_at"] is None

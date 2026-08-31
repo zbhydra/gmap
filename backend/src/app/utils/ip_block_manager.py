@@ -41,7 +41,7 @@ class IPBlockManager:
             exists = await redis.exists(redis_key)
             return bool(exists)
         except Exception as e:
-            logger.error(f"Failed to check IP block status: {e}")
+            logger.error(f"Failed to check IP block status: {e}", exc_info=True)
             # Redis 故障时放行（fail-open），避免因 Redis 故障影响服务可用性
             return False
 
@@ -67,7 +67,7 @@ class IPBlockManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to block IP {ip_address}: {e}")
+            logger.error(f"Failed to block IP {ip_address}: {e}", exc_info=True)
             return False
 
     async def get_remaining_time(self, ip_address: str) -> int:
@@ -86,7 +86,9 @@ class IPBlockManager:
             ttl = await redis.ttl(redis_key)
             return max(0, ttl)
         except Exception as e:
-            logger.error(f"Failed to get remaining time for IP {ip_address}: {e}")
+            logger.error(
+                f"Failed to get remaining time for IP {ip_address}: {e}", exc_info=True
+            )
             return 0
 
     async def unblock(self, ip_address: str) -> bool:
@@ -106,5 +108,5 @@ class IPBlockManager:
             logger.info(f"IP {ip_address} unblocked")
             return True
         except Exception as e:
-            logger.error(f"Failed to unblock IP {ip_address}: {e}")
+            logger.error(f"Failed to unblock IP {ip_address}: {e}", exc_info=True)
             return False

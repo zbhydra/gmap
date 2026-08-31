@@ -18,6 +18,7 @@ from sqlalchemy import delete, func, select, text
 from app.constants.mark import MAX_MARK_MSG_LENGTH, MarkType
 from app.core.database import get_async_session, get_engine
 from app.models.mark_log_model import MarkLogModel
+from app.i18n.common_code import CommonCode
 
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
@@ -162,7 +163,7 @@ async def test_real_record_mark_persists_complete_max_length_message(
 
     body = response.json()
     assert response.status_code == 200
-    assert body["code"] == 10000
+    assert body["code"] == CommonCode.SUCCESS
     assert body["data"] == {"recorded": True}
 
     async with get_async_session() as db:
@@ -217,7 +218,7 @@ async def test_real_record_mark_persists_empty_min_length_message(
 
     body = response.json()
     assert response.status_code == 200
-    assert body["code"] == 10000
+    assert body["code"] == CommonCode.SUCCESS
     assert body["data"] == {"recorded": True}
 
     async with get_async_session() as db:
@@ -249,7 +250,7 @@ async def test_real_record_mark_persists_extension_store_review_click(
 
     body = response.json()
     assert response.status_code == 200
-    assert body["code"] == 10000
+    assert body["code"] == CommonCode.SUCCESS
     assert body["data"] == {"recorded": True}
 
     async with get_async_session() as db:
@@ -293,7 +294,7 @@ async def test_real_record_mark_persists_literal_special_characters(
 
     body = response.json()
     assert response.status_code == 200
-    assert body["code"] == 10000
+    assert body["code"] == CommonCode.SUCCESS
 
     async with get_async_session() as db:
         stored_mark_msg = await db.scalar(

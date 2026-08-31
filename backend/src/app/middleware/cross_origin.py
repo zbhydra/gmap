@@ -1,3 +1,5 @@
+"""CORS 跨域中间件：处理 OPTIONS 预检请求并注入跨域响应头。"""
+
 from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware

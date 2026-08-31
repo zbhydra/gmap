@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.provider.payment.tg_star import TELEGRAM_STARS_PAYMENT_METHOD
 from app.services.order_service import order_service
 from app.services.payment_service import payment_service
+from app.utils.time import system_timezone
 from app.utils.response import ResponseUtils
 
 router = APIRouter(prefix="/telegram", tags=["telegram-callback"])
@@ -65,14 +66,16 @@ def _write_raw_callback_log(request: Request, body: bytes) -> None:
 
     log_dir = Path(settings.root_path) / _TELEGRAM_PAYMENT_LOG_DIR
     log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = log_dir / f"{datetime.now().strftime('%Y-%m-%d')}.log"
+    log_file = log_dir / f"{datetime.now(system_timezone()).strftime('%Y-%m-%d')}.log"
     headers = {
         key: value
         for key, value in request.headers.items()
         if key.lower() != _SECRET_HEADER
     }
     entry = {
-        "received_at": datetime.now().isoformat(timespec="milliseconds"),
+        "received_at": datetime.now(system_timezone()).isoformat(
+            timespec="milliseconds"
+        ),
         "path": request.url.path,
         "headers": headers,
         "body": body.decode("utf-8", errors="replace"),

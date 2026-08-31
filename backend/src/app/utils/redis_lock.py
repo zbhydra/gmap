@@ -63,7 +63,7 @@ class RedisLock:
                 return None
 
         except Exception as e:
-            logger.error(f"Failed to acquire lock '{key}': {e}")
+            logger.error(f"Failed to acquire lock '{key}': {e}", exc_info=True)
             raise
 
     async def release(self, key: str, lock_value: str) -> bool:
@@ -85,7 +85,7 @@ class RedisLock:
             )  # type: ignore[misc]
             return int(result) > 0
         except Exception as e:
-            logger.error(f"Failed to release lock '{key}': {e}")
+            logger.error(f"Failed to release lock '{key}': {e}", exc_info=True)
             return False
 
     @asynccontextmanager

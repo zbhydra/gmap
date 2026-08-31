@@ -1,10 +1,12 @@
 """历史 token key 清理脚本的真实 Redis 测试。"""
 
 import hashlib
+import inspect
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 import pytest
+from redis.asyncio import Redis
 
 from app.core.config import settings
 from app.core.redis import redis_client
@@ -13,6 +15,15 @@ from scripts.cleanup_expired_token_keys import (
     _read_key_expiration,
     cleanup_expired_token_keys,
 )
+
+
+async def _expiretime(redis: Redis, key: str) -> int:
+    """redis-py 7.x 在 async 客户端上把 expiretime 声明为同步返回 int，运行时实际是 awaitable。"""
+
+    value = redis.expiretime(key)
+    if inspect.isawaitable(value):
+        return await value
+    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,7 +111,7 @@ async def test_real_cleanup_dry_run_reports_without_modifying_redis(
     assert stats.active_max_score_keys == 1
     assert await redis.ttl(active_key) == -1
     assert await redis.ttl(expired_key) == -1
-    assert await redis.expiretime(existing_ttl_key) == existing_expire_at
+    assert await _expiretime(redis, existing_ttl_key) == existing_expire_at
     for key, members in before_members.items():
         assert await redis.zrange(key, 0, -1, withscores=True) == members
     assert (
@@ -138,9 +149,9 @@ async def test_real_cleanup_execute_sets_ttl_isolated_and_is_repeatable(
 
     assert first_stats.scanned_keys == 3
     assert first_stats.keys_without_ttl == 2
-    assert await redis.expiretime(active_key) == active_score
+    assert await _expiretime(redis, active_key) == active_score
     assert not await redis.exists(expired_key)
-    assert await redis.expiretime(existing_ttl_key) == existing_expire_at
+    assert await _expiretime(redis, existing_ttl_key) == existing_expire_at
     assert await redis.zrange(active_key, 0, -1, withscores=True) == active_members
     assert await redis.zrange(existing_ttl_key, 0, -1, withscores=True) == (
         existing_members

@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from sqlalchemy import select
 
 from app.core.database import get_async_session
-from app.core.singleton import singleton
 from app.constants.config_cache import CONFIG_CACHE_TTL_MS
 from app.models.config_subscription_product_model import ConfigSubscriptionProductModel
 from app.utils.time import timestamp_now
@@ -26,7 +25,6 @@ class ConfigSubscriptionProductRow:
     metadata_json: str | None
 
 
-@singleton
 class ConfigSubscriptionProductService:
     """订阅商品配置表读取服务。"""
 

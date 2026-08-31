@@ -10,6 +10,7 @@ import pytest
 from sqlalchemy import text
 
 from app.core.database import get_engine
+from app.i18n.common_code import CommonCode
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
@@ -45,7 +46,7 @@ async def test_real_subscription_status_returns_free_plan_for_anonymous(
     body = response.json()
 
     assert response.status_code == 200
-    assert body["code"] == 10000
+    assert body["code"] == CommonCode.SUCCESS
     assert body["data"]["period"] == "free"
     assert body["data"]["status"] == "active"
     assert "daily_limit" not in body["data"]

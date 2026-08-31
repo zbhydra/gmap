@@ -1,3 +1,5 @@
+"""业务异常定义：AppCommonException 及认证失败等派生异常，携带 CommonCode 错误码供中间件统一翻译。"""
+
 from app.i18n.common_code import CommonCode
 
 

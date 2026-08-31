@@ -32,6 +32,7 @@ async def compensate_paid_pending_orders() -> None:
             "order_fulfillment_compensation scan_failed task_key=%s error=%s",
             ORDER_FULFILLMENT_COMPENSATION_TASK_KEY,
             exc,
+            exc_info=True,
         )
         return
 
@@ -54,6 +55,7 @@ async def compensate_paid_pending_orders() -> None:
                 order.product_id,
                 order.callback_status,
                 exc,
+                exc_info=True,
             )
             continue
 

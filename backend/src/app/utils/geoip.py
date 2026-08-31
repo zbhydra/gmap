@@ -36,7 +36,7 @@ class GeoIPService:
         except FileNotFoundError:
             logger.warning(f"GeoIP database not found: {self._mmdb_path}")
         except Exception as e:
-            logger.error(f"Failed to load GeoIP database: {e}")
+            logger.error(f"Failed to load GeoIP database: {e}", exc_info=True)
 
     def get_country(self, ip: str) -> Optional[str]:
         """根据 IP 获取国家代码（ISO 3166-1 alpha-2），失败返回 None"""

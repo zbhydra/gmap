@@ -1,3 +1,5 @@
+"""系统健康检查路由：探测数据库连通性并返回服务状态。"""
+
 from fastapi import APIRouter
 
 from app.utils.logger import logger
@@ -25,5 +27,5 @@ async def health_check():
             return HealthResponse(msg="unhealthy")
 
     except Exception as e:
-        logger.error(f"Error during health check: {e}")
+        logger.error(f"Error during health check: {e}", exc_info=True)
         return HealthResponse(msg="unhealthy")

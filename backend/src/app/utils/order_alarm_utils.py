@@ -137,6 +137,7 @@ def _create_alarm_task(
             "order_no=%s alarm_type=%s",
             order_no,
             alarm_type,
+            exc_info=True,
         )
 
 

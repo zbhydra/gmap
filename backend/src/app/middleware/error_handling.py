@@ -1,3 +1,5 @@
+"""全局错误处理中间件：统一捕获 AppCommonException 与未处理异常，翻译错误码并转换为标准响应。"""
+
 from collections.abc import Callable
 
 from app.i18n.common_code import CommonCode
@@ -25,13 +27,13 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         except AppCommonException as e:
             # 业务异常 - 翻译后返回（透传 data 字段）
-            logger.error(f"{e.code} - {e.ext_msg}")
+            logger.error(f"{e.code} - {e.ext_msg}", exc_info=True)
             return ResponseUtils.error(e.code, locale, data=e.data)
         except ValidationError as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
             return ResponseUtils.error(CommonCode.VALIDATION_ERROR, locale)
         except UserAuthFailedException as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
             return Response(
                 status_code=401,
             )

@@ -34,7 +34,7 @@ async def create_database_if_not_exists():
             logger.info(f"Database '{db_config.database}' created or already exists")
             return True
     except Exception as e:
-        logger.error(f"Failed to create database: {e}")
+        logger.error(f"Failed to create database: {e}", exc_info=True)
         return False
     finally:
         await engine.dispose()
@@ -80,7 +80,7 @@ async def execute_sql_file(sql_file_path: str) -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"Failed to execute SQL file {sql_file_path}: {e}")
+        logger.error(f"Failed to execute SQL file {sql_file_path}: {e}", exc_info=True)
         return False
 
 
@@ -159,7 +159,9 @@ async def create_tables():
             logger.info("All tables created successfully using SQLAlchemy fallback")
             return True
         except Exception as e:
-            logger.error(f"Failed to create tables with SQLAlchemy fallback: {e}")
+            logger.error(
+                f"Failed to create tables with SQLAlchemy fallback: {e}", exc_info=True
+            )
             return False
 
 
@@ -185,7 +187,7 @@ async def verify_database():
             logger.info("Database verification completed successfully")
             return True
     except Exception as e:
-        logger.error(f"Database verification failed: {e}")
+        logger.error(f"Database verification failed: {e}", exc_info=True)
         return False
 
 

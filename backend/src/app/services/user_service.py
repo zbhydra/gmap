@@ -236,7 +236,8 @@ class UserService(BaseService[UserModel]):
             if not user:
                 logger.error(
                     "External login user missing after IntegrityError: "
-                    f"email={email}, register_method={register_method}"
+                    f"email={email}, register_method={register_method}",
+                    exc_info=True,
                 )
                 raise AppCommonException(
                     code=CommonCode.INTERNAL_SERVER_ERROR,

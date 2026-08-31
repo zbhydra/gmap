@@ -1,3 +1,5 @@
+"""测试用支付回调路由：模拟支付网关回调以联调订单流程，禁止在生产使用。"""
+
 from app.schemas.callback_schema import TestPayCallBack
 from app.utils.logger import logger
 from fastapi import APIRouter

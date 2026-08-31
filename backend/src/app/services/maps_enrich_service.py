@@ -409,7 +409,9 @@ class MapsEnrichService:
             return _SiteDataPayload.model_validate_json(raw)
         except ValueError:
             logger.error(
-                f"maps_enrich_service._read_cache: 缓存载荷非法，按未命中处理: domain={cache_domain}"
+                "maps_enrich_service._read_cache: 缓存载荷非法，按未命中处理: "
+                f"domain={cache_domain}",
+                exc_info=True,
             )
             return None
 

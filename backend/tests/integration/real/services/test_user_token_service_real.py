@@ -2,11 +2,13 @@
 
 import hashlib
 import asyncio
+import inspect
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 import pytest
+from redis.asyncio import Redis
 
 from app.constants.auth import REFRESH_TOKEN_GRACE_PERIOD_SECONDS, TokenType
 from app.core.redis import redis_client
@@ -30,6 +32,15 @@ def _token_hash(token: str) -> str:
     """按生产合同计算 Redis member。"""
 
     return hashlib.md5(token.encode()).hexdigest()
+
+
+async def _expiretime(redis: Redis, key: str) -> int:
+    """redis-py 7.x 在 async 客户端上把 expiretime 声明为同步返回 int，运行时实际是 awaitable。"""
+
+    value = redis.expiretime(key)
+    if inspect.isawaitable(value):
+        return await value
+    return value
 
 
 @pytest.fixture
@@ -90,7 +101,7 @@ async def test_real_store_token_sets_ttl_and_removes_expired_members(
         expires_at,
     )
 
-    assert await redis.expiretime(key) == expires_at
+    assert await _expiretime(redis, key) == expires_at
     assert await redis.zscore(key, _token_hash(expired_token)) is None
     assert int(await redis.zscore(key, _token_hash(new_token))) == expires_at
 
@@ -126,7 +137,7 @@ async def test_real_rotate_refresh_token_accepts_legacy_key_and_sets_current_ttl
         new_expires_at,
     )
 
-    assert await redis.expiretime(real_user_token_state.refresh_key) == new_expires_at
+    assert await _expiretime(redis, real_user_token_state.refresh_key) == new_expires_at
     assert (
         await redis.zscore(real_user_token_state.refresh_key, _token_hash(old_token))
         is None
@@ -211,7 +222,9 @@ async def test_real_store_same_second_jwt_tokens_with_equal_expiration(
         second_expires_at,
     )
 
-    assert await redis.expiretime(real_user_token_state.access_key) == second_expires_at
+    assert (
+        await _expiretime(redis, real_user_token_state.access_key) == second_expires_at
+    )
     assert await redis.zcard(real_user_token_state.access_key) == 2
     assert await user_token_service.verify_token(
         first_token,

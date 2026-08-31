@@ -87,7 +87,7 @@ class EmailVerificationService:
             await redis.set(redis_key, code, ex=EMAIL_VERIFY_CODE_EXPIRE_SECONDS)
             logger.info(f"Verification code generated for {email}")
         except Exception as e:
-            logger.error(f"Failed to store verification code: {e}")
+            logger.error(f"Failed to store verification code: {e}", exc_info=True)
             return SendResult.SEND_FAILED
 
         # 发送邮件
@@ -161,7 +161,7 @@ class EmailVerificationService:
             return False
 
         except Exception as e:
-            logger.error(f"Failed to verify code: {e}")
+            logger.error(f"Failed to verify code: {e}", exc_info=True)
             return False
 
     async def clear_verify_data(self, email: str) -> None:
@@ -175,7 +175,7 @@ class EmailVerificationService:
             await redis.delete(self._build_key(email))
             await redis.delete(self._build_attempts_key(email))
         except Exception as e:
-            logger.error(f"Failed to clear verification data: {e}")
+            logger.error(f"Failed to clear verification data: {e}", exc_info=True)
 
 
 # 全局服务实例

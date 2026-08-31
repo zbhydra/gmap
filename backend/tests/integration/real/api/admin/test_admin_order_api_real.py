@@ -224,7 +224,7 @@ async def test_real_admin_orders_list_and_detail_are_read_only(
     list_body = list_response.json()
 
     assert list_response.status_code == 200
-    assert list_body["code"] == 10000
+    assert list_body["code"] == CommonCode.SUCCESS
     assert [row["order_no"] for row in list_body["data"]["rows"]] == [order.order_no]
     assert list_body["data"]["rows"][0]["user_email"] == email
     assert (
@@ -240,7 +240,7 @@ async def test_real_admin_orders_list_and_detail_are_read_only(
     after = await _get_real_order(order.order_no)
 
     assert detail_response.status_code == 200
-    assert detail_body["code"] == 10000
+    assert detail_body["code"] == CommonCode.SUCCESS
     assert detail_body["data"]["payment_data"] == {"url": "https://t.me/real-admin"}
     assert detail_body["data"]["extra_metadata"] == {"source": "real-admin"}
     assert detail_body["data"]["payment_transaction_id"] == "real-transaction-target"

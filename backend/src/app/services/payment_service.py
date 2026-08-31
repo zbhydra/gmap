@@ -72,7 +72,10 @@ class PaymentService:
         except PaymentProviderError as exc:
             raise AppCommonException(
                 CommonCode.PAYMENT_GATEWAY_ERROR,
-                ext_msg=str(exc),
+                ext_msg=(
+                    "payment_service._create_provider: 支付渠道 provider 构造失败: "
+                    f"channel_code={channel_code}, error={exc}"
+                ),
             ) from exc
 
     def is_supported_method(self, payment_method: str) -> bool:

@@ -5,7 +5,7 @@
 
 import os
 from collections.abc import Sequence
-from typing import Annotated
+from typing import Annotated, Any
 from urllib.parse import quote
 
 import yaml  # type: ignore
@@ -301,8 +301,13 @@ class Settings:
             raise ValueError("config root must be a mapping")
         return {str(key): value for key, value in config_data.items()}
 
-    def _config_section(self, name: str) -> dict[str, object]:
-        """读取一个 YAML mapping 配置段，避免错误结构延迟到字段校验后才暴露。"""
+    def _config_section(self, name: str) -> dict[str, Any]:
+        """读取一个 YAML mapping 配置段，避免错误结构延迟到字段校验后才暴露。
+
+        返回值类型必须是 dict[str, Any]：pydantic v2 的 mypy 插件为 BaseSettings
+        子类合成按字段类型的 __init__ 签名，`**` 展开的值类型为 object 时
+        无法匹配任一字段类型，这是 pydantic 泛型构造的已知限制。
+        """
         section = self._config_data.get(name, {})
         if section is None:
             return {}

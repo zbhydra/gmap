@@ -20,7 +20,6 @@ from app.constants.payment import (
     TELEGRAM_STARS_CURRENCY,
     TELEGRAM_STARS_PAYMENT_METHOD,
 )
-from app.core.singleton import singleton
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.services.config_credit_product_price_service import (
@@ -102,7 +101,6 @@ class CreditCheckoutConfigSnapshot:
     loaded_at: int
 
 
-@singleton
 class CreditCheckoutConfigService:
     """Credits checkout 配置读取服务。"""
 
@@ -325,7 +323,7 @@ class CreditCheckoutConfigService:
         except json.JSONDecodeError as exc:
             raise AppCommonException(
                 CommonCode.PAYMENT_GATEWAY_ERROR,
-                ext_msg=context,
+                ext_msg=f"{context}: 配置 JSON 解析失败",
             ) from exc
         if not isinstance(parsed, dict):
             raise AppCommonException(
@@ -441,6 +439,7 @@ class CreditCheckoutConfigService:
     ) -> list[dict[str, object]]:
         """返回商品当前仍可用且已有 provider 的渠道价格列表。"""
 
+        # 原因：避免与 payment_service 循环依赖
         from app.services.payment_service import payment_service
 
         latest_channels: list[dict[str, object]] = []
