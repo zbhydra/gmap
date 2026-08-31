@@ -4,12 +4,15 @@
  *
  * 商店未上架：商店链接与 release zip 资产均为 href="#" 占位（点击不 404），
  * 上架后仅回填内容常量，不动结构。CTA 带 data-cta 归因属性（事件经 W6 GA4 通道上报）。
+ * 图文分区（015 D5 图文改造，对齐竞品逐步截图教程）：hero/zip/渠道步骤配图走
+ * MediaSlot 占位，素材产出后仅回填 src，不动结构。
  */
 import Layout from '../../layouts/Layout.astro'
 import { getContent, type Locale } from '../../i18n/content'
 import { localePaths } from '../../i18n/ui'
 import { getCompanyContent } from '../../company/companyContent'
 import { DEVELOPER_EMAIL } from '../../lib/contact'
+import MediaSlot from '../site/MediaSlot.astro'
 
 interface Props {
   /** 当前 locale 路由。 */
@@ -35,12 +38,13 @@ const RELEASE_ZIP_URL_PLACEHOLDER = '#'
   includeSoftwareApplicationSchema={false}
 >
   <div class="dl-page" data-download-page>
-    <!-- hero -->
+    <!-- hero（宽幅产品截图位） -->
     <section class="hero" aria-labelledby="dl-hero-title">
       <div class="container hero-inner">
         <p class="eyebrow">{page.hero.eyebrow}</p>
         <h1 id="dl-hero-title">{page.hero.title}</h1>
         <p class="hero-description">{page.hero.description}</p>
+        <MediaSlot variant="browser" ratio="21 / 9" label={page.hero.visualLabel} class="hero-visual" />
       </div>
     </section>
 
@@ -48,15 +52,18 @@ const RELEASE_ZIP_URL_PLACEHOLDER = '#'
     <section class="zip" aria-labelledby="dl-zip-title">
       <div class="container">
         <div class="zip-card">
-          <h2 id="dl-zip-title">{page.zip.title}</h2>
-          <p>{page.zip.description}</p>
-          <a
-            class="btn-primary"
-            href={RELEASE_ZIP_URL_PLACEHOLDER}
-            data-cta="download-zip"
-            aria-describedby="dl-zip-note"
-          >{page.zip.button}</a>
-          <p class="zip-note" id="dl-zip-note">{page.zip.note}</p>
+          <div class="zip-copy">
+            <h2 id="dl-zip-title">{page.zip.title}</h2>
+            <p>{page.zip.description}</p>
+            <a
+              class="btn-primary"
+              href={RELEASE_ZIP_URL_PLACEHOLDER}
+              data-cta="download-zip"
+              aria-describedby="dl-zip-note"
+            >{page.zip.button}</a>
+            <p class="zip-note" id="dl-zip-note">{page.zip.note}</p>
+          </div>
+          <MediaSlot variant="file" ratio="4 / 3" label={page.zip.visualLabel} class="zip-visual" />
         </div>
       </div>
     </section>
@@ -81,6 +88,12 @@ const RELEASE_ZIP_URL_PLACEHOLDER = '#'
                 <li>
                   <p class="step-title">{step.title}</p>
                   {step.details.map(detail => <p>{detail}</p>)}
+                  <MediaSlot
+                    variant="browser"
+                    ratio="16 / 9"
+                    label={step.mediaLabel}
+                    class="step-visual"
+                  />
                 </li>
               ))}
             </ol>
@@ -159,12 +172,20 @@ const RELEASE_ZIP_URL_PLACEHOLDER = '#'
     line-height: 1.6;
   }
 
+  .hero-visual {
+    margin-top: var(--space-8);
+  }
+
   /* 直装 zip */
   .zip {
     padding: var(--space-6) 0 var(--space-10);
   }
 
   .zip-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: center;
     padding: var(--space-8);
     border: 1px solid var(--border);
     border-radius: var(--rounded-md);
@@ -172,17 +193,17 @@ const RELEASE_ZIP_URL_PLACEHOLDER = '#'
     box-shadow: var(--shadow-card);
   }
 
-  .zip-card h2 {
-    font-size: 24px;
-    line-height: 32px;
-  }
-
-  .zip-card > p {
+  .zip-copy > p {
     max-width: 640px;
     margin-top: var(--space-2);
     color: var(--text-2);
     font-size: 15px;
     line-height: 1.6;
+  }
+
+  .zip-card h2 {
+    font-size: 24px;
+    line-height: 32px;
   }
 
   .zip-card .btn-primary {
@@ -287,6 +308,11 @@ const RELEASE_ZIP_URL_PLACEHOLDER = '#'
     line-height: 1.6;
   }
 
+  .step-visual {
+    max-width: 520px;
+    margin-top: var(--space-4);
+  }
+
   /* 帮助 */
   .help {
     padding: var(--space-10) 0 var(--space-24);
@@ -331,7 +357,12 @@ const RELEASE_ZIP_URL_PLACEHOLDER = '#'
   }
 
   @media (max-width: 960px) {
-    .zip-card,
+    .zip-card {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-6);
+      padding: var(--space-6) var(--space-4);
+    }
+
     .channel-card {
       padding: var(--space-6) var(--space-4);
     }

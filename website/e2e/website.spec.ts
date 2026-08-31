@@ -151,6 +151,24 @@ test.describe('Extension Product Page', () => {
     await expect(page.locator('a[data-cta="extension-install-download"]')).toBeVisible()
     await expect(page.locator('a[data-cta="extension-band-install"]')).toBeVisible()
   })
+
+  test('renders media-rich sections with placeholder slots (015 D5 图文改造)', async ({ page }) => {
+    await page.goto('/extension/')
+    // hero 右侧配图位 + showcase 双图位 + demo 视频位 + 安装三步配图位 = 7 个占位槽
+    await expect(page.locator('[data-media-slot]')).toHaveCount(7)
+    // showcase：插件面板位 + 导出文件位 + 示例数据下载占位（点击不 404）
+    await expect(page.locator('.showcase [data-media-slot="browser"]')).toBeVisible()
+    await expect(page.locator('.showcase [data-media-slot="file"]')).toBeVisible()
+    const demoData = page.locator('a[data-cta="extension-demo-data"]')
+    await expect(demoData).toBeVisible()
+    await expect(demoData).toHaveAttribute('href', '#')
+    // demo 视频占位区在版本说明段之前
+    await expect(page.locator('.demo [data-media-slot]')).toBeVisible()
+    // 每个安装步骤都带配图位
+    await expect(page.locator('.install-step [data-media-slot]')).toHaveCount(3)
+    // 占位槽是无障碍可见的（role=img + aria-label）
+    await expect(page.locator('.hero [data-media-slot]')).toHaveAttribute('aria-label', /screenshot coming soon/i)
+  })
 })
 
 test.describe('Download Page', () => {
@@ -172,6 +190,16 @@ test.describe('Download Page', () => {
     }
     await expect(page.locator('[data-channel="edge"] .channel-steps li')).toHaveCount(4)
     await expect(page.locator('[data-channel="firefox"] .channel-steps li')).toHaveCount(3)
+  })
+
+  test('renders media-rich hero, zip and per-step slots (015 D5 图文改造)', async ({ page }) => {
+    await page.goto('/download/')
+    // hero 宽幅位 + zip 文件位 + edge 四步 + firefox 三步 = 9 个占位槽
+    await expect(page.locator('[data-media-slot]')).toHaveCount(9)
+    await expect(page.locator('.hero [data-media-slot="browser"]')).toBeVisible()
+    await expect(page.locator('.zip-card [data-media-slot="file"]')).toBeVisible()
+    await expect(page.locator('[data-channel="edge"] [data-media-slot]')).toHaveCount(4)
+    await expect(page.locator('[data-channel="firefox"] [data-media-slot]')).toHaveCount(3)
   })
 })
 

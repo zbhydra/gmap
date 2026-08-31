@@ -284,6 +284,13 @@ export const enUS: SiteContent = {
           }
         ]
       },
+      demo: {
+        eyebrow: 'Demo',
+        title: 'Watch the full workflow',
+        description:
+          'A short walkthrough of the whole loop: install, search on Google Maps, collect, enrich, and export.',
+        videoLabel: 'Product demo video — coming soon'
+      },
       versionNotes: {
         eyebrow: 'Release notes',
         title: 'Version notes',
@@ -316,21 +323,27 @@ export const enUS: SiteContent = {
             details: [
               'Grab the Edge or Firefox build from the Download page.',
               'The zip is the same package that ships to the stores.'
-            ]
+            ],
+            mediaLabel:
+              'The Download page with the release zip card — screenshot coming soon'
           },
           {
             title: 'Load it in your browser',
             details: [
               'Edge / Chromium: enable Developer mode on the extensions page and load the unzipped folder.',
               'Firefox: load the add-on temporarily from the debugging page.'
-            ]
+            ],
+            mediaLabel:
+              'Developer mode on and the MapsGrab card loaded on the extensions page — screenshot coming soon'
           },
           {
             title: 'Open Google Maps and grab',
             details: [
               'Search on Google Maps — the MapsGrab panel appears on the page.',
               'Start extracting, then export when the run finishes.'
-            ]
+            ],
+            mediaLabel:
+              'The MapsGrab panel collecting results on a Google Maps search — screenshot coming soon'
           }
         ],
         downloadCta: 'Go to the Download page'
@@ -353,14 +366,17 @@ export const enUS: SiteContent = {
         eyebrow: 'Download',
         title: 'Install MapsGrab',
         description:
-          'Pick your browser below. Store listings are being finalized — until then, the direct-install zip carries the exact same package.'
+          'Pick your browser below. Store listings are being finalized — until then, the direct-install zip carries the exact same package.',
+        visualLabel:
+          'MapsGrab pinned in the browser toolbar on a Google Maps search — screenshot coming soon'
       },
       zip: {
         title: 'Direct install (release zip)',
         description:
           'The release zip is the identical package submitted to both stores. Load it manually while store listings are in review.',
         button: 'Download release zip',
-        note: 'Release asset link is being prepared — it will attach to the public release of version 0.1.0.'
+        note: 'Release asset link is being prepared — it will attach to the public release of version 0.1.0.',
+        visualLabel: 'The MapsGrab release zip file — screenshot coming soon'
       },
       channels: [
         {
@@ -373,22 +389,30 @@ export const enUS: SiteContent = {
           steps: [
             {
               title: 'Download and unzip',
-              details: ['Download the release zip above and unzip it to a folder you keep.']
+              details: ['Download the release zip above and unzip it to a folder you keep.'],
+              mediaLabel:
+                'The release zip in the browser downloads bar — screenshot coming soon'
             },
             {
               title: 'Open the extensions page',
-              details: ['In Edge, Chromium, or Brave, open the extensions management page.']
+              details: ['In Edge, Chromium, or Brave, open the extensions management page.'],
+              mediaLabel:
+                'The Edge extensions management page — screenshot coming soon'
             },
             {
               title: 'Enable Developer mode',
-              details: ['Toggle Developer mode in the extensions page sidebar.']
+              details: ['Toggle Developer mode in the extensions page sidebar.'],
+              mediaLabel:
+                'Developer mode toggled on in the extensions page sidebar — screenshot coming soon'
             },
             {
               title: 'Load the unpacked folder',
               details: [
                 'Click "Load unpacked" and select the unzipped folder.',
                 'The MapsGrab panel appears on Google Maps search pages.'
-              ]
+              ],
+              mediaLabel:
+                'Load unpacked with the MapsGrab card added — screenshot coming soon'
             }
           ]
         },
@@ -402,18 +426,24 @@ export const enUS: SiteContent = {
           steps: [
             {
               title: 'Download and unzip',
-              details: ['Download the release zip above and unzip it to a folder you keep.']
+              details: ['Download the release zip above and unzip it to a folder you keep.'],
+              mediaLabel:
+                'The release zip in the browser downloads bar — screenshot coming soon'
             },
             {
               title: 'Open the debugging page',
-              details: ['Navigate to about:debugging, then choose "This Firefox".']
+              details: ['Navigate to about:debugging, then choose "This Firefox".'],
+              mediaLabel:
+                'The about:debugging page with "This Firefox" selected — screenshot coming soon'
             },
             {
               title: 'Load the add-on',
               details: [
                 'Click "Load Temporary Add-on…" and pick manifest.json inside the unzipped folder.',
                 'A temporary add-on reloads when Firefox restarts — the AMO listing above makes it permanent once live.'
-              ]
+              ],
+              mediaLabel:
+                'Load Temporary Add-on picking manifest.json — screenshot coming soon'
             }
           ]
         }
