@@ -5,7 +5,7 @@ set -e
 # 远程执行脚本 - 在目标服务器上执行初始化
 #
 # 用法: (由 init.sh 自动调用，无需手动执行)
-#   bash deploy_init.sh <repo_url> <branch> <deploy_dir> <git_key_path> <db_host> <db_user> <db_passwd> <smtp_config_b64> <public_api_base_url> <google_client_id> <google_client_secret_or_empty> <public_website_base_url> [backend_port_py] [nginx_server_name] [app_name] [db_name] [backup_dir] [logger_level] [--force]
+#   bash deploy_init.sh <repo_url> <branch> <deploy_dir> <git_key_path> <db_host> <db_user> <db_passwd> <smtp_config_b64> <public_api_base_url> <google_client_id> <google_client_secret_or_empty> <public_website_base_url> <backend_port_py> <nginx_server_name> <app_name> <db_name> <backup_dir> <logger_level> <redis_host> <redis_port> <redis_password_b64_or_empty> [--force]
 #
 # 此脚本将:
 # 1. 安装 uv
@@ -17,34 +17,39 @@ set -e
 # 7. 健康检查
 ###############################################################################
 
+# 所有环境配置一律由调用方显式传入，脚本不做任何默认值回退。
 REPO_URL="$1"
-BRANCH="${2:-main}"
+BRANCH="$2"
 DEPLOY_DIR="$3"
 GIT_SSH_KEY_PATH="$4"
-DB_HOST="${5:-127.0.0.1}"
-DB_USER="${6:-gmap}"
-DB_PASSWD="${7:-Y4HHpJ*_VUN9t6sx}"
+DB_HOST="$5"
+DB_USER="$6"
+DB_PASSWD="$7"
 SMTP_CONFIG_B64="$8"
 PUBLIC_API_BASE_URL="$9"
 GOOGLE_CLIENT_ID="${10}"
 GOOGLE_CLIENT_SECRET="${11}"
 PUBLIC_WEBSITE_BASE_URL="${12}"
-BACKEND_PORT_PY="${13:-9600}"
-NGINX_SERVER_NAME="${14:-}"
-APP_NAME="${15:-}"
-DB_NAME="${16:-}"
-BACKUP_DIR="${17:-}"
-LOGGER_LEVEL="${18:-WARNING}"
-# Redis 连接（可选，缺省走本机默认；REDIS_PASSWORD 走 base64 透传，避免特殊字符破坏 sed）
-REDIS_HOST="${19:-127.0.0.1}"
-REDIS_PORT="${20:-6379}"
-REDIS_PASSWORD_B64="${21:-}"
+BACKEND_PORT_PY="${13}"
+NGINX_SERVER_NAME="${14}"
+APP_NAME="${15}"
+DB_NAME="${16}"
+BACKUP_DIR="${17}"
+LOGGER_LEVEL="${18}"
+# REDIS_PASSWORD 走 base64 透传，避免特殊字符破坏 sed；留空表示无密码 Redis。
+REDIS_HOST="${19}"
+REDIS_PORT="${20}"
+REDIS_PASSWORD_B64="${21}"
 FORCE=""
 
-if [[ "$LOGGER_LEVEL" == --* ]]; then
-    LOGGER_LEVEL="WARNING"
+if [ -z "$BRANCH" ]; then
+    echo "ERROR: 缺少分支参数: branch" >&2
+    exit 1
 fi
-
+if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWD" ] || [ -z "$DB_NAME" ]; then
+    echo "ERROR: 缺少数据库配置参数: db_host/db_user/db_passwd/db_name" >&2
+    exit 1
+fi
 if [ -z "$SMTP_CONFIG_B64" ]; then
     echo "ERROR: 缺少 SMTP 配置参数" >&2
     exit 1
@@ -83,6 +88,10 @@ if [ -z "$BACKEND_PORT_PY" ]; then
 fi
 if [ -z "$NGINX_SERVER_NAME" ]; then
     echo "ERROR: 缺少业务 nginx server_name 参数" >&2
+    exit 1
+fi
+if [ -z "$REDIS_HOST" ] || [ -z "$REDIS_PORT" ]; then
+    echo "ERROR: 缺少 Redis 连接参数: redis_host/redis_port" >&2
     exit 1
 fi
 
@@ -618,7 +627,10 @@ health_check() {
     local health_url
     local retry_count=0
 
-    port=$(grep -oP 'port:\s*\K\d+' config.yaml 2>/dev/null | head -n 1 || echo "9600")
+    port=$(grep -oP 'port:\s*\K\d+' config.yaml 2>/dev/null | head -n 1)
+    if [ -z "$port" ]; then
+        error_exit "未能从 backend/config.yaml 读取 server 端口，无法执行健康检查"
+    fi
     health_url="http://127.0.0.1:${port}/api/system/health"
 
     while true; do

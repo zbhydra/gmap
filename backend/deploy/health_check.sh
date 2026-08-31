@@ -6,8 +6,10 @@ set -e
 #
 # 用法:
 #   ./health_check.sh                                  # 远端 cwd backend；从 config.yaml 读 port
-#   ./health_check.sh <env_file>                       # 本地：从 .env 读 BACKEND_PORT_PY
-#   ./health_check.sh http://host:9600/api/system/health  # 直接传 URL
+#   ./health_check.sh <env_file>                       # 本地：从 .env 读 BACKEND_PORT_PY / SERVER_HOST
+#   ./health_check.sh http://host:<port>/api/system/health  # 直接传 URL
+#
+# 端口一律来自显式输入（URL / .env / config.yaml），读取不到立即报错，不做默认值回退。
 ###############################################################################
 
 LOG_FILE="health_check.log"
@@ -44,8 +46,14 @@ if [ -n "$1" ]; then
     elif [ -f "$1" ]; then
         # shellcheck disable=SC1090
         source "$1"
-        PORT="${BACKEND_PORT_PY:-9600}"
-        HOST="${SERVER_HOST:-127.0.0.1}"
+        if [ -z "$BACKEND_PORT_PY" ]; then
+            error_exit ".env 缺少 BACKEND_PORT_PY，无法拼装健康检查 URL: $1"
+        fi
+        if [ -z "$SERVER_HOST" ]; then
+            error_exit ".env 缺少 SERVER_HOST，无法拼装健康检查 URL: $1"
+        fi
+        PORT="$BACKEND_PORT_PY"
+        HOST="$SERVER_HOST"
         HEALTH_URL="http://${HOST}:${PORT}/api/system/health"
     else
         error_exit "首参既不是 URL 也不是 .env 文件: $1"
@@ -55,7 +63,10 @@ fi
 # 仍未确定 → fallback 到 config.yaml
 if [ -z "$HEALTH_URL" ]; then
     if [ -f "config.yaml" ]; then
-        PORT=$(grep -oP 'port:\s*\K\d+' config.yaml 2>/dev/null | head -n 1 || echo "9600")
+        PORT=$(grep -oP 'port:\s*\K\d+' config.yaml 2>/dev/null | head -n 1)
+        if [ -z "$PORT" ]; then
+            error_exit "未能从 config.yaml 读取 server 端口，无法拼装健康检查 URL"
+        fi
         HEALTH_URL="http://127.0.0.1:$PORT/api/system/health"
         APP_NAME="$(read_app_name_from_config)"
     else

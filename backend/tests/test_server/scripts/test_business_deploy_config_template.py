@@ -69,7 +69,7 @@ def _business_config_replacements(
     """返回可加载业务配置所需的基础占位符值。"""
     return {
         "APP_NAME": "gmap-server",
-        "BACKEND_PORT_PY": "9600",
+        "BACKEND_PORT_PY": "7600",
         "DB_HOST": "127.0.0.1",
         "DB_USER": "gmap",
         "DB_PASSWD": "password",

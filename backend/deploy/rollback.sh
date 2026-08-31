@@ -159,7 +159,10 @@ start_service() {
 health_check() {
     log "执行健康检查..."
 
-    PORT=$(grep -oP 'port:\s*\K\d+' config.yaml 2>/dev/null | head -n 1 || echo "9600")
+    PORT=$(grep -oP 'port:\s*\K\d+' config.yaml 2>/dev/null | head -n 1)
+    if [ -z "$PORT" ]; then
+        error_exit "未能从 config.yaml 读取 server 端口，无法执行健康检查"
+    fi
     HOST="127.0.0.1"
 
     MAX_RETRIES=6

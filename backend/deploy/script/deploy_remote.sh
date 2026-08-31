@@ -5,7 +5,7 @@ set -e
 # 远程执行脚本 - 在目标服务器上执行部署更新
 #
 # 用法: (由 deploy.sh 自动调用，无需手动执行)
-#   bash deploy_remote.sh <deploy_dir> <backup_dir> <keep_versions> <git_key_path> <db_host> <db_user> <db_passwd> <smtp_config_b64> <public_api_base_url> <google_client_id> <google_client_secret_or_empty> <public_website_base_url> [backend_port_py] [nginx_server_name] [app_name] [db_name] [logger_level] [--no-backup] [--skip-health-check]
+#   bash deploy_remote.sh <deploy_dir> <backup_dir> <keep_versions> <git_key_path> <db_host> <db_user> <db_passwd> <smtp_config_b64> <public_api_base_url> <google_client_id> <google_client_secret_or_empty> <public_website_base_url> <backend_port_py> <nginx_server_name> <app_name> <db_name> <logger_level> <redis_host> <redis_port> <redis_password_b64_or_empty> [--no-backup] [--skip-health-check]
 #
 # 此脚本将:
 # 1. 备份当前版本
@@ -18,9 +18,10 @@ set -e
 # 8. 健康检查
 ###############################################################################
 
+# 所有环境配置一律由调用方显式传入，脚本不做任何默认值回退。
 DEPLOY_DIR="$1"
 BACKUP_DIR="$2"
-KEEP_VERSIONS="${3:-5}"
+KEEP_VERSIONS="$3"
 GIT_SSH_KEY_PATH="$4"
 DB_HOST="$5"
 DB_USER="$6"
@@ -30,22 +31,22 @@ PUBLIC_API_BASE_URL="$9"
 GOOGLE_CLIENT_ID="${10}"
 GOOGLE_CLIENT_SECRET="${11}"
 PUBLIC_WEBSITE_BASE_URL="${12}"
-BACKEND_PORT_PY="${13:-9600}"
-NGINX_SERVER_NAME="${14:-}"
-APP_NAME="${15:-}"
-DB_NAME="${16:-}"
-LOGGER_LEVEL="${17:-WARNING}"
-# Redis 连接（可选，缺省走本机默认；REDIS_PASSWORD 走 base64 透传，避免特殊字符破坏 sed）
-REDIS_HOST="${18:-127.0.0.1}"
-REDIS_PORT="${19:-6379}"
-REDIS_PASSWORD_B64="${20:-}"
+BACKEND_PORT_PY="${13}"
+NGINX_SERVER_NAME="${14}"
+APP_NAME="${15}"
+DB_NAME="${16}"
+LOGGER_LEVEL="${17}"
+# REDIS_PASSWORD 走 base64 透传，避免特殊字符破坏 sed；留空表示无密码 Redis。
+REDIS_HOST="${18}"
+REDIS_PORT="${19}"
+REDIS_PASSWORD_B64="${20}"
 SKIP_BACKUP=""
 SKIP_HEALTH_CHECK=""
 
-if [[ "$LOGGER_LEVEL" == --* ]]; then
-    LOGGER_LEVEL="WARNING"
+if [ -z "$KEEP_VERSIONS" ]; then
+    echo "ERROR: 缺少备份保留版本数参数: keep_versions" >&2
+    exit 1
 fi
-
 if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWD" ] || [ -z "$DB_NAME" ]; then
     echo "ERROR: 缺少数据库配置参数: db_host/db_user/db_passwd/db_name" >&2
     exit 1
@@ -76,6 +77,10 @@ if [ -z "$BACKEND_PORT_PY" ]; then
 fi
 if [ -z "$NGINX_SERVER_NAME" ]; then
     echo "ERROR: 缺少业务 nginx server_name 参数" >&2
+    exit 1
+fi
+if [ -z "$REDIS_HOST" ] || [ -z "$REDIS_PORT" ]; then
+    echo "ERROR: 缺少 Redis 连接参数: redis_host/redis_port" >&2
     exit 1
 fi
 

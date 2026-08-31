@@ -146,7 +146,7 @@ backend/deploy/
 Google Data OAuth 授权完成后跳回管理后台的地址由 Admin SPA 发起授权时传入，不进入业务后端发布配置。
 Google 登录 Client ID 从 .env 内 `GOOGLE_CLIENT_ID` 读取，用于后端校验 Google ID Token 的 `aud`。
 Google OAuth Client Secret 从 .env 内 `GOOGLE_CLIENT_SECRET` 读取，可留空；仅新自定义按钮 OAuth code flow 需要，只写入后端 `auth.google_client_secret`，不进入前端 PUBLIC 配置。
-SMTP 账号列表从 .env 内 `SMTP_CONFIG` 多行 YAML 块读取。Redis 连接从 .env 内 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` 读取（可选，缺省走本机 127.0.0.1:6379 无密码；空字符串与 null 等价；部署脚本会把密码渲染成安全 YAML 字符串，密码可包含引号、反斜杠、`@`、`/`、`#`、`?` 等特殊字符）。数据库名来自 `.env.*`：
+SMTP 账号列表从 .env 内 `SMTP_CONFIG` 多行 YAML 块读取。Redis 连接从 .env 内 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` 读取（前两项必填；REDIS_PASSWORD 空字符串与 null 等价，表示无密码；部署脚本会把密码渲染成安全 YAML 字符串，密码可包含引号、反斜杠、`@`、`/`、`#`、`?` 等特殊字符）。数据库名来自 `.env.*`：
 
 ```yaml
 database: "{DB_NAME}"
@@ -256,7 +256,7 @@ bash backend/deploy/deploy.sh backend/deploy/.env.test --skip-health-check
 - `.env.*` 里的 `GOOGLE_CLIENT_ID`
 - `.env.*` 里的可选 `GOOGLE_CLIENT_SECRET`
 - `.env.*` 里的 `SMTP_CONFIG`
-- `.env.*` 里的 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD`（可选，缺省走本机）
+- `.env.*` 里的 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD`（REDIS_PASSWORD 留空表示无密码）
 - `.env.*` 里的 `BACKEND_PORT_PY`
 - `.env.*` 里的 `NGINX_SERVER_NAME`
 - DB `config_payment_channel.config_json` 里的 Telegram Stars 配置变更后，需重新执行 `uv run python scripts/register_telegram_webhook.py`
