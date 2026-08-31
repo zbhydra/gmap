@@ -80,7 +80,8 @@ class CallbackStatus(int, enum.Enum):
 | `callback_status` | Integer | `NOT_CALLED.value` | 履约回调状态枚举 |
 | `payment_method` | String(32) | null | 支付方式;未选择或历史订单允许为空 |
 | `payment_data` | Text | null | 支付入口数据(JSON);Telegram Stars 为 `{"payment_url": "https://t.me/...", "url": "https://t.me/..."}`;PayPal 为 `{"payment_url": "https://www.paypal.com/checkoutnow?token=...", "approval_url": "...", "channel_order_id": "...", "paypal_order_id": "..."}` |
-| `payment_channel_order_no` | String(256) | null | 支付渠道扣款号;Telegram 为 `telegram_payment_charge_id`;PayPal 一次性订单为 PayPal order id,自动续费订单为本次扣款 transaction/capture id |
+| `payment_channel_order_no` | String(256) | null | 支付渠道订单标识;Telegram 为 `telegram_payment_charge_id`;PayPal 一次性订单为 PayPal order id,自动续费订单为本次扣款 transaction/capture id |
+| `payment_transaction_id` | String(256) | null | 支付渠道实际交易流水 ID;渠道未提供时为空;不建索引 |
 | `payment_channel_uid` | String(64) | null | 付款人渠道 UID;仅用于渠道退款等渠道操作,不参与订单归属 |
 | `paid_amount` | BigInteger | null | 渠道回调支付金额,统一 6 位精度整数 |
 | `paid_currency` | String(8) | null | 渠道回调支付币种 |
@@ -108,9 +109,9 @@ class CallbackStatus(int, enum.Enum):
 
 ### 3.2 不建独立支付流水表
 
-首期不建 `payment_records`。渠道查单号(`payment_channel_order_no`)、付款人渠道 UID(`payment_channel_uid`)、实付金额(`paid_amount / paid_currency`)、完整支付快照(写入 `extra_metadata`)都进订单表,避免为普通订阅 / 积分包购买引入额外金融级流水模型。
+首期不建 `payment_records`。渠道查单号(`payment_channel_order_no`)、实际交易流水 ID(`payment_transaction_id`)、付款人渠道 UID(`payment_channel_uid`)、实付金额(`paid_amount / paid_currency`)、完整支付快照(写入 `extra_metadata`)都进订单表,避免为普通订阅 / 积分包购买引入额外金融级流水模型。
 
-PayPal 一次性订单的 `payment_channel_order_no` 保存 PayPal order id,因为 `CHECKOUT.ORDER.APPROVED` webhook 需要在本地订单仍未支付时查回订单并触发服务端 capture。PayPal 自动续费订单的 `payment_channel_order_no` 保存本次扣款 transaction/capture id,用于同一扣款 webhook 去重;长期 subscription id 写入 `extra_metadata.channel_subscription_id` 或 `user_subscriptions.channel_subscription_id`。
+PayPal 一次性订单的 `payment_channel_order_no` 保存 PayPal order id,因为 `CHECKOUT.ORDER.APPROVED` webhook 需要在本地订单仍未支付时查回订单并触发服务端 capture;`payment_transaction_id` 保存 capture id。PayPal 自动续费订单的两个字段都保存本次扣款 transaction/capture id,前者用于同一扣款 webhook 去重;长期 subscription id 写入 `extra_metadata.channel_subscription_id` 或 `user_subscriptions.channel_subscription_id`。
 
 后续实现站内取消自动续费时,取消动作不创建订单、不修改历史订单状态。订阅域使用 `user_subscriptions.channel_subscription_id` 调渠道取消后续扣款,订单表继续只记录已发生的首期和续费扣款。当前站内取消自动续费暂不实现。
 
@@ -353,7 +354,7 @@ class OrderCreateParam:         # 校验后的落单快照(check_product 返回)
 
 ### 9.3 订单列表查询过滤实现
 
-`order_lists` / `count_orders` 共用 `_apply_order_list_filters`,所有过滤条件在 SQL `WHERE` 完成,禁止先 SELECT 全量再在 Python 里逐行过滤(遵循项目规范)。支持过滤:`ids / order_nos / order_no_like / user_ids / order_statuses / callback_statuses / product_classes / product_ids / payment_methods / payment_channel_order_no_like / created_before_ms / created_after_ms / updated_before_ms / updated_after_ms / expires_after_ms / has_payment_data`。
+`order_lists` / `count_orders` 共用 `_apply_order_list_filters`,所有过滤条件在 SQL `WHERE` 完成,禁止先 SELECT 全量再在 Python 里逐行过滤(遵循项目规范)。支持过滤:`ids / order_nos / order_no_like / user_ids / order_statuses / callback_statuses / product_classes / product_ids / payment_methods / payment_channel_order_no_like / payment_transaction_id_like / created_before_ms / created_after_ms / updated_before_ms / updated_after_ms / expires_after_ms / has_payment_data`。
 
 排序 `order_by` 支持枚举:`created_at_asc / created_at_desc / updated_at_asc / updated_at_desc / id_asc / id_desc`,每个枚举映射到带 `id` 次级排序的元组,保证分页稳定。
 

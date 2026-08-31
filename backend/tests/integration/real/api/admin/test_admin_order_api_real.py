@@ -150,6 +150,7 @@ async def _create_real_order(
         callback_status=CallbackStatus.SUCCESS.value,
         payment_method="real_legacy_pay",
         payment_channel_order_no=f"real-channel-{label}",
+        payment_transaction_id=f"real-transaction-{label}",
         payment_channel_uid="real-uid",
         paid_amount=880_000_000,
         paid_currency="XTR",
@@ -193,7 +194,7 @@ async def test_real_admin_orders_list_and_detail_are_read_only(
     real_admin_order_cleanup: _CleanupState,
     make_test_email,
 ) -> None:
-    """真实数据库中按邮箱、渠道订单号、商品和支付方式查询订单并查看详情。"""
+    """真实数据库中按邮箱、渠道订单号、流水 ID 等条件查询并查看详情。"""
     headers = {"Authorization": f"Bearer {real_admin_token_for_orders}"}
     email = make_test_email("real-admin-order")
     user = await _create_real_user(email=email, cleanup=real_admin_order_cleanup)
@@ -211,6 +212,7 @@ async def test_real_admin_orders_list_and_detail_are_read_only(
         params={
             "user_email": email.split("@", maxsplit=1)[0],
             "payment_channel_order_no": "target",
+            "payment_transaction_id": "transaction-target",
             "order_status": OrderStatus.PAID.value,
             "callback_status": CallbackStatus.SUCCESS.value,
             "product_id": "real-historical-plan",
@@ -225,6 +227,10 @@ async def test_real_admin_orders_list_and_detail_are_read_only(
     assert list_body["code"] == 10000
     assert [row["order_no"] for row in list_body["data"]["rows"]] == [order.order_no]
     assert list_body["data"]["rows"][0]["user_email"] == email
+    assert (
+        list_body["data"]["rows"][0]["payment_transaction_id"]
+        == "real-transaction-target"
+    )
 
     detail_response = await real_async_client.get(
         f"/api/admin/orders/{order.order_no}",
@@ -237,6 +243,7 @@ async def test_real_admin_orders_list_and_detail_are_read_only(
     assert detail_body["code"] == 10000
     assert detail_body["data"]["payment_data"] == {"url": "https://t.me/real-admin"}
     assert detail_body["data"]["extra_metadata"] == {"source": "real-admin"}
+    assert detail_body["data"]["payment_transaction_id"] == "real-transaction-target"
     assert after.order_status == before.order_status
     assert after.callback_status == before.callback_status
     assert after.updated_at == before.updated_at

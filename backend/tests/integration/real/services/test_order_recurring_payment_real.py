@@ -155,6 +155,7 @@ async def test_real_recurring_callback_concurrency_creates_and_fulfills_once(
     assert renewal_order.user_id == cleanup.user_id
     assert renewal_order.order_status == OrderStatus.PAID.value
     assert renewal_order.callback_status == CallbackStatus.SUCCESS.value
+    assert renewal_order.payment_transaction_id == renewal_channel_order_no
 
     subscription_after = await _get_subscription(cleanup.user_id)
     assert subscription_after is not None

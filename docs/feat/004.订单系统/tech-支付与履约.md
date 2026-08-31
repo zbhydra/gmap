@@ -514,9 +514,9 @@ class PaymentBase(ABC):
 3. 校验 capture 状态为完成态,并取第一个 completed capture。
 4. 校验 `purchase_units[].reference_id/custom_id` 至少一个等于本地 `order_no`。
 5. 校验 capture 金额 `currency_code == order.currency` 且归一化金额等于 `order.amount`。
-6. 返回 `CallbackVerificationResult(valid=True, order_no, channel_order_no, channel_uid, amount, currency, extra_metadata)`。
+6. 返回 `CallbackVerificationResult(valid=True, order_no, channel_order_no, channel_uid, amount, currency, transaction_id, extra_metadata)`。
 
-`channel_order_no` 使用 PayPal order id,保持和创建支付时预写入的 `orders.payment_channel_order_no` 一致;PayPal capture id 写入 `extra_metadata.paypal_capture_id` 和原始支付快照,不覆盖查单键。`channel_uid` 优先使用 payer id;capture 响应常见路径为 `payer.payer_id`,webhook 事件常见路径为 `resource.payer.payer_id`;缺失时允许为空,不影响履约。
+`channel_order_no` 使用 PayPal order id,保持和创建支付时预写入的 `orders.payment_channel_order_no` 一致;PayPal capture id 写入 `orders.payment_transaction_id` 和原始支付快照,不覆盖查单键。`channel_uid` 优先使用 payer id;capture 响应常见路径为 `payer.payer_id`,webhook 事件常见路径为 `resource.payer.payer_id`;缺失时允许为空,不影响履约。
 
 幂等:
 

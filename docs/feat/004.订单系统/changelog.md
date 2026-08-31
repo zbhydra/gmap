@@ -1,5 +1,12 @@
 # 004 · 订单系统 - 变更记录
 
+## 2026-08-31 记录支付交易流水 ID
+
+- 订单新增可空的 `payment_transaction_id`，统一保存 Provider 回调提供的实际交易标识（PayPal capture id / sale id，Telegram Stars 为 `telegram_payment_charge_id`）。
+- Admin 订单列表支持按流水 ID 模糊查询，订单列表行与详情返回流水 ID 字段。
+- 流水 ID 不建索引；渠道未提供时保持为空。
+- 新增一次性回填脚本 `scripts/backfill_paypal_transaction_ids.py`，从历史 PayPal 回调快照提取 capture ID 回填存量已支付订单，默认 dry-run，传 `--execute` 才写库。
+
 ## 2026-08-10 统一 Telegram Terms Website 配置
 
 - Telegram Bot `/terms` 不再使用代码内固定域名，统一读取 `config.yaml` 的 `app.public_website_base_url`。
