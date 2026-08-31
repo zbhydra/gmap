@@ -1,25 +1,26 @@
 ---
 /**
- * Pricing 页面 DOM 壳（MapsGrab 三档套餐版，W5）。
+ * Pricing 页面 DOM 壳（三产品线 tab 版）。
  *
- * 首屏展示账户状态与 MapsGrab 插件三档套餐卡（Free / Pro / Business，SSR），
- * Pro/Business 购买按钮由 pricing-page-controller.ts 接支付配置后启用；
- * Online / API 为占位卡，不可购（点击无效，不 404）。支付流程交给公共
+ * Online / Extension / API 三条产品线各一个 tab；SSR 静态渲染全部档位卡，
+ * 付费卡购买按钮由 pricing-page-controller.ts 接支付配置后启用。tab 切换、
+ * 账户区按当前线展示订阅摘要均在 controller 内完成。支付流程交给公共
  * OrderCheckoutModal，避免本页维护第二套支付弹窗和订单轮询。
  */
 import OrderCheckoutModal from '../order-checkout/OrderCheckoutModal.astro'
 import PricingAuthModal from './PricingAuthModal.astro'
 import PricingCancellationGuideModal from './PricingCancellationGuideModal.astro'
-import type { AccountContent, PricingPageContent } from '../../i18n/schema'
+import type { AccountContent, PricingPageContent, PricingTabId } from '../../i18n/schema'
 
 interface Props {
   copy: PricingPageContent
   accountCopy: AccountContent
-  /** Free 档安装引导指向的下载页路径。 */
-  downloadPath: string
+  /** 各 tab Free 卡引导落地页路径（键为 PricingTabId）。 */
+  freeCtaPaths: Record<PricingTabId, string>
 }
 
-const { copy, accountCopy, downloadPath } = Astro.props as Props
+const { copy, accountCopy, freeCtaPaths } = Astro.props as Props
+const tabIds: PricingTabId[] = ['online', 'extension', 'api']
 ---
 
 <section
@@ -91,83 +92,100 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
     </aside>
 
     <section class="pricing-plans" aria-labelledby="pricing-plans-title">
-      <header class="section-header">
-        <p class="eyebrow">{copy.plans.eyebrow}</p>
-        <h2 id="pricing-plans-title">{copy.plans.title}</h2>
-        <p class="section-description">{copy.plans.description}</p>
-      </header>
+      <h2 id="pricing-plans-title" class="visually-hidden">{copy.hero.title}</h2>
 
-      <div class="plans-grid">
+      <div class="pricing-tabs" role="tablist" aria-label={copy.hero.eyebrow}>
         {
-          copy.plans.cards.map(card => (
-            <article
-              class:list={['plan-card', { 'plan-card-featured': card.id === 'pro' }]}
-              data-plan-card={card.id}
+          tabIds.map((tabId, index) => (
+            <button
+              type="button"
+              class="pricing-tab"
+              role="tab"
+              id={`pricing-tab-${tabId}`}
+              data-pricing-tab={tabId}
+              aria-selected={index === 0 ? 'true' : 'false'}
+              aria-controls={`pricing-panel-${tabId}`}
             >
-              {card.id === 'pro' && <p class="plan-badge">{copy.popularLabel}</p>}
-              <h3 class="plan-name">{card.name}</h3>
-              <p class="plan-tagline">{card.tagline}</p>
-              <p class="plan-price-row">
-                <span class="plan-price">{card.price}</span>
-                <span class="plan-period">{card.periodLabel}</span>
-              </p>
-              <p class="plan-quota">{card.quota}</p>
-              {card.status === 'free' ? (
-                <a class="plan-button plan-button-secondary" href={downloadPath} data-cta="pricing-free-install">
-                  {card.ctaLabel}
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  class="plan-button plan-button-primary"
-                  data-pricing-buy={card.id}
-                  data-ga-event="upgrade_cta_click"
-                  data-ga-source="pricing"
-                  data-ga-location="plan_card"
-                  data-ga-plan={card.id}
-                  disabled
-                >
-                  {card.ctaLabel}
-                </button>
-              )}
-              <p class="pricing-inline-error" data-plan-error={card.id} hidden></p>
-              <ul class="plan-features">
-                {card.features.map(feature => (
-                  <li>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                      <path d="M4.5 12.5 9.8 17.8 19.5 6.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
+              {copy.tabLabels[tabId]}
+            </button>
           ))
         }
       </div>
+
+      {
+        tabIds.map((tabId, index) => {
+          const tab = copy.tabs[tabId]
+          return (
+            <div
+              class="pricing-panel"
+              role="tabpanel"
+              id={`pricing-panel-${tabId}`}
+              data-pricing-panel={tabId}
+              aria-labelledby={`pricing-tab-${tabId}`}
+              hidden={index !== 0}
+            >
+              <header class="pricing-panel-header">
+                <p class="eyebrow">{tab.eyebrow}</p>
+                <h3>{tab.title}</h3>
+                <p class="section-description">{tab.description}</p>
+              </header>
+              <div class="plans-grid">
+                {tab.cards.map(card => (
+                  <article
+                    class:list={['plan-card', { 'plan-card-featured': card.featured }]}
+                    data-plan-card={card.productId ?? card.id}
+                  >
+                    {card.featured && <p class="plan-badge">{copy.popularLabel}</p>}
+                    <h4 class="plan-name">{card.name}</h4>
+                    <p class="plan-tagline">{card.tagline}</p>
+                    <p class="plan-price-row">
+                      <span class="plan-price">{card.price}</span>
+                      <span class="plan-period">{card.periodLabel}</span>
+                    </p>
+                    <p class="plan-quota">{card.quota}</p>
+                    {card.status === 'free' || !card.productId ? (
+                      <a
+                        class="plan-button plan-button-secondary"
+                        href={freeCtaPaths[tabId]}
+                        data-cta={`pricing-free-${tabId}`}
+                      >
+                        {card.ctaLabel}
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        class="plan-button plan-button-primary"
+                        data-pricing-buy={card.productId}
+                        data-ga-event="upgrade_cta_click"
+                        data-ga-source="pricing"
+                        data-ga-location="plan_card"
+                        data-ga-plan={card.productId}
+                        disabled
+                      >
+                        {card.ctaLabel}
+                      </button>
+                    )}
+                    <p class="pricing-inline-error" data-plan-error={card.productId ?? card.id} hidden />
+                    <ul class="plan-features">
+                      {card.features.map(feature => (
+                        <li>
+                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M4.5 12.5 9.8 17.8 19.5 6.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+              <p class="plan-quota-note">{tab.quotaNote}</p>
+            </div>
+          )
+        })
+      }
 
       <p class="pricing-inline-status" data-pricing-plans-status>{copy.plans.loading}</p>
-      <p class="plan-quota-note">{copy.plans.quotaNote}</p>
-    </section>
-
-    <section class="pricing-coming-soon" aria-labelledby="pricing-coming-soon-title">
-      <header class="section-header">
-        <p class="eyebrow">{copy.comingSoon.eyebrow}</p>
-        <h2 id="pricing-coming-soon-title">{copy.comingSoon.title}</h2>
-        <p class="section-description">{copy.comingSoon.description}</p>
-      </header>
-      <div class="plans-grid plans-grid-coming-soon">
-        {
-          copy.comingSoon.items.map(item => (
-            <article class="plan-card plan-card-placeholder" data-coming-soon-card={item.id} aria-disabled="true">
-              <p class="plan-badge plan-badge-placeholder">{copy.comingSoon.comingSoonLabel}</p>
-              <h3 class="plan-name">{item.name}</h3>
-              <p class="plan-tagline">{item.tagline}</p>
-              <p class="plan-placeholder-description">{item.description}</p>
-            </article>
-          ))
-        }
-      </div>
     </section>
 
     <section class="pricing-faq" data-pricing-faq aria-labelledby="pricing-faq-title">
@@ -450,21 +468,95 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
     color: var(--text);
   }
 
-  /* ---------- 套餐卡 ---------- */
+  /* ---------- 产品线 Tab ---------- */
   .pricing-plans {
     display: grid;
+    justify-items: center;
     gap: var(--space-6);
+    width: 100%;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .pricing-tabs {
+    display: inline-flex;
+    gap: var(--space-1);
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-full);
+    background: var(--surface-2);
+  }
+
+  .pricing-tab {
+    min-height: 40px;
+    padding: 0 var(--space-5);
+    border-radius: var(--rounded-full);
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 800;
+    transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .pricing-tab:hover {
+    color: var(--text);
+  }
+
+  .pricing-tab[aria-selected='true'] {
+    background: var(--primary);
+    color: var(--primary-fg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .pricing-tab:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  .pricing-panel {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-6);
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pricing-panel-header {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    text-align: center;
+  }
+
+  .pricing-panel-header .eyebrow {
+    color: var(--text-3);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .pricing-panel-header h3 {
+    font-size: clamp(20px, 2.6vw, 26px);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
   }
 
   .plans-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: var(--space-4);
     align-items: stretch;
-  }
-
-  .plans-grid-coming-soon {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
   }
 
   .plan-card {
@@ -472,7 +564,7 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
     display: grid;
     align-content: start;
     gap: var(--space-3);
-    padding: var(--space-6) var(--space-6) var(--space-6);
+    padding: var(--space-6) var(--space-5);
     border: 1px solid var(--border);
     border-radius: var(--rounded-md);
     background: var(--surface);
@@ -482,12 +574,6 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
   .plan-card-featured {
     border: 2px solid var(--primary);
     box-shadow: var(--shadow-pop);
-  }
-
-  .plan-card-placeholder {
-    align-content: start;
-    background: var(--surface-2);
-    box-shadow: none;
   }
 
   .plan-badge {
@@ -506,15 +592,6 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
     white-space: nowrap;
   }
 
-  .plan-badge-placeholder {
-    position: static;
-    transform: none;
-    justify-self: start;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-3);
-  }
-
   .plan-name {
     font-size: 18px;
     font-weight: 800;
@@ -530,11 +607,12 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
   .plan-price-row {
     display: flex;
     align-items: baseline;
+    flex-wrap: wrap;
     gap: var(--space-2);
   }
 
   .plan-price {
-    font-size: 36px;
+    font-size: 32px;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1;
@@ -542,7 +620,7 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
 
   .plan-period {
     color: var(--text-3);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
   }
 
@@ -552,14 +630,8 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
     border-radius: var(--rounded-sm);
     background: var(--surface-2);
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
-  }
-
-  .plan-card-placeholder .plan-placeholder-description {
-    color: var(--text-2);
-    font-size: 14px;
-    line-height: 1.65;
   }
 
   .plan-button {
@@ -618,7 +690,7 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
     align-items: flex-start;
     gap: var(--space-2);
     color: var(--text-2);
-    font-size: 14px;
+    font-size: 13.5px;
     line-height: 1.5;
   }
 
@@ -633,7 +705,6 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
 
   .plan-quota-note {
     max-width: 620px;
-    justify-self: center;
     color: var(--text-3);
     font-size: 13px;
     line-height: 1.6;
@@ -731,13 +802,22 @@ const { copy, accountCopy, downloadPath } = Astro.props as Props
   }
 
   @media (max-width: 960px) {
-    .plans-grid,
-    .plans-grid-coming-soon {
+    .plans-grid {
       grid-template-columns: minmax(0, 1fr);
     }
 
     .pricing-account {
       justify-self: stretch;
+    }
+
+    .pricing-tabs {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .pricing-tab {
+      flex: 1 1 0;
+      padding: 0 var(--space-2);
     }
   }
 </style>

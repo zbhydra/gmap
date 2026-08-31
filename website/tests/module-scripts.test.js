@@ -196,7 +196,7 @@ test('homepage keeps fonts off the critical path and leaves the GA4 slot empty',
   assert.equal(/<link\b[^>]+rel="stylesheet"/i.test(html), false)
 })
 
-test('Pricing copy keeps the three MapsGrab tiers and checkout shell fields defined', async () => {
+test('Pricing copy keeps the three product-line tabs and checkout shell fields defined', async () => {
   const imported = await importCompiledTypescriptModule(
     'src/i18n/pricing.ts',
     'pricing.js',
@@ -209,18 +209,36 @@ test('Pricing copy keeps the three MapsGrab tiers and checkout shell fields defi
     assert.ok(content.seo.title)
     assert.ok(content.hero.title)
     assert.ok(content.account.signedOutTitle)
-    // C2 套餐口径：Free 1,000 / Pro $39 100,000 / Business $99 500,000 records/月
-    const cards = content.plans.cards
-    assert.deepEqual(cards.map(card => card.id), ['free', 'pro', 'business'])
-    assert.match(cards[0].quota, /1,000 records/)
-    assert.equal(cards[1].price, '$39')
-    assert.match(cards[1].quota, /100,000 records/)
-    assert.equal(cards[2].price, '$99')
-    assert.match(cards[2].quota, /500,000 records/)
+    // 三条产品线 tab 齐全
+    assert.deepEqual(Object.keys(content.tabs), ['online', 'extension', 'api'])
+    assert.deepEqual(Object.keys(content.tabLabels), ['online', 'extension', 'api'])
+    // Extension 线 C2 套餐口径：Free 1,000 / Pro $39 100,000 / Business $99 500,000 records/月
+    const extensionCards = content.tabs.extension.cards
+    assert.deepEqual(extensionCards.map(card => card.id), ['free', 'pro', 'business'])
+    assert.match(extensionCards[0].quota, /1,000 records/)
+    assert.equal(extensionCards[1].price, '$39')
+    assert.match(extensionCards[1].quota, /100,000 records/)
+    assert.equal(extensionCards[2].price, '$99')
+    assert.match(extensionCards[2].quota, /500,000 records/)
     // Free 引导安装，Pro/Business 接购买链路
-    assert.deepEqual(cards.map(card => card.status), ['free', 'buyable', 'buyable'])
-    // Online / API 占位卡不可购
-    assert.deepEqual(content.comingSoon.items.map(item => item.id), ['online', 'api'])
+    assert.deepEqual(extensionCards.map(card => card.status), ['free', 'buyable', 'buyable'])
+    assert.deepEqual(extensionCards.map(card => card.productId), [null, 'maps_pro', 'maps_business'])
+    // Online 线五档 SKU 与一次性口径
+    assert.deepEqual(
+      content.tabs.online.cards.map(card => card.productId),
+      [null, 'online_lite', 'online_basic', 'online_growth', 'online_pro']
+    )
+    for (const card of content.tabs.online.cards.filter(item => item.status === 'buyable')) {
+      assert.match(card.periodLabel, /one-time/)
+    }
+    // API 线五档 SKU 与一次性口径
+    assert.deepEqual(
+      content.tabs.api.cards.map(card => card.productId),
+      [null, 'api_basic', 'api_professional', 'api_business', 'api_scale']
+    )
+    for (const card of content.tabs.api.cards.filter(item => item.status === 'buyable')) {
+      assert.match(card.periodLabel, /one-time/)
+    }
     assert.ok(content.faq.items.length > 0)
     // 取消指引：PayPal 渠道路径
     assert.ok(content.cancellationGuide.paths.length > 0)
@@ -364,8 +382,8 @@ test('About and Contact pages expose localized trust content and structured data
 
 test('every built page exposes complete title, description and Open Graph metadata', async () => {
   const htmlFiles = await collectHtmlFiles(distDir)
-  // 15 内容页 + 2 个 PayPal 回跳页 + 1 个插件登录桥接页（noindex）
-  assert.equal(htmlFiles.length, 18)
+  // 20 内容页（含 Online Scraper / API / MCP / Bing 桥接）+ 2 个 PayPal 回跳页 + 1 个插件登录桥接页（noindex）
+  assert.equal(htmlFiles.length, 23)
 
   const descriptionsByRoute = new Map()
   for (const filePath of htmlFiles) {
@@ -3229,7 +3247,7 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
           period: 'month',
           duration_days: 30,
           auto_renew: true,
-          monthly_records: productId === 'maps_pro' ? 100000 : 500000,
+          monthly_quota: productId === 'maps_pro' ? 100000 : 500000,
           payment_channels: [{
             payment_method: 'paypal',
             payment_method_name: 'PayPal',
@@ -3248,7 +3266,7 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
           period: 'month',
           duration_days: 30,
           auto_renew: true,
-          monthly_records: null,
+          monthly_quota: null,
           payment_channels: [{
             payment_method: 'paypal',
             payment_method_name: 'PayPal',
@@ -3277,12 +3295,12 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
     const subscriptionData = await module.listSubscriptionCheckoutConfigs(context)
     assert.equal(subscriptionData.plans.length, 2)
 
-    // pickMapsPlans 只取 maps 产品线，按 product_id 索引
-    const mapsPlans = module.pickMapsPlans(subscriptionData.plans)
+    // pickPlansByLine 只取 maps 产品线，按 product_id 索引
+    const mapsPlans = module.pickPlansByLine(subscriptionData.plans, 'maps')
     assert.equal([...mapsPlans.keys()].sort().join(','), 'maps_pro')
     const plan = mapsPlans.get('maps_pro')
     assert.equal(plan.product_line, 'maps')
-    assert.equal(plan.monthly_records, 100000)
+    assert.equal(plan.monthly_quota, 100000)
     assert.equal(module.formatPricingDisplayPrice(plan), '$39.00')
 
     const channel = module.getDefaultPricingPaymentChannel(plan.payment_channels)
@@ -3329,7 +3347,7 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
   })
   const buyableCards = new Map()
   for (const productId of ['maps_pro', 'maps_business']) {
-    buyableCards.set(productId, { buy: makeElement(), error: makeElement() })
+    buyableCards.set(productId, { line: 'extension', buy: makeElement(), error: makeElement() })
   }
   const elements = {
     accountError: makeElement(),
@@ -3368,7 +3386,7 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
         period: 'month',
         duration_days: 30,
         auto_renew: true,
-        monthly_records: 100000,
+        monthly_quota: 100000,
         payment_channels: [{
           payment_method: 'paypal',
           payment_method_name: 'PayPal',
@@ -3453,7 +3471,7 @@ test('PayPal success return page polls order status every 3 seconds and switches
       'We could not confirm this order automatically. Return to the original window or try refreshing your payment status there.'
   })
 
-  const runScenario = async ({ productId, productLine, expectedTitle, expectedMessageFragment }) => {
+  const runScenario = async ({ productId, productClass, expectedTitle, expectedMessageFragment }) => {
     const { module, cleanup } = await importPayPalReturnModule()
     const previousFetch = globalThis.fetch
     const previousWindow = globalThis.window
@@ -3530,9 +3548,8 @@ test('PayPal success return page polls order status every 3 seconds and switches
           msg: 'success',
           data: {
             order_no: 'ORD-PAYPAL-RETURN',
-            product_class: 1,
+            product_class: productClass,
             product_id: productId,
-            product_line: productLine,
             product_name: productId,
             amount: 39000000,
             currency: 'USD',
@@ -3592,23 +3609,29 @@ test('PayPal success return page polls order status every 3 seconds and switches
     }
   }
 
-  // extension 线（含旧后端缺 product_line 的响应）保持 Credits 口径
+  // Credits 订单（product_class=RECHARGE）保持 Credits 口径
   await runScenario({
     productId: 'credit_50',
-    productLine: 'extension',
+    productClass: 2,
     expectedTitle: 'Credits added',
     expectedMessageFragment: 'Credits have been added'
   })
   await runScenario({
     productId: 'unlimited',
-    productLine: undefined,
+    productClass: 2,
     expectedTitle: 'Credits added',
     expectedMessageFragment: 'Credits have been added'
   })
-  // maps 线按订单快照切换为订阅口径
+  // 订阅类订单（maps / maps_online 各线）按 product_class 切换为订阅口径
   await runScenario({
     productId: 'maps_pro',
-    productLine: 'maps',
+    productClass: 1,
+    expectedTitle: 'Subscription activated',
+    expectedMessageFragment: 'MapsGrab plan is active'
+  })
+  await runScenario({
+    productId: 'online_lite',
+    productClass: 1,
     expectedTitle: 'Subscription activated',
     expectedMessageFragment: 'MapsGrab plan is active'
   })

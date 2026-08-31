@@ -1,6 +1,6 @@
 ---
 /**
- * Pricing 产品页（MapsGrab 三档套餐，W5）。
+ * Pricing 产品页（三产品线 tab 套餐）。
  *
  * Astro SSG 页面只负责 i18n、SEO 和 shared Pricing shell 装配；
  * 购买/登录交互在 src/components/pricing 的命令式 DOM controller。
@@ -9,6 +9,7 @@ import PricingPageShell from '../pricing/PricingPageShell.astro'
 import Layout from '../../layouts/Layout.astro'
 import { getContent, type Locale } from '../../i18n/content'
 import { localePaths } from '../../i18n/ui'
+import type { PricingTabId } from '../../i18n/schema'
 
 interface Props {
   locale?: Locale
@@ -19,6 +20,13 @@ const t = getContent(locale)
 const pricing = t.pages.pricing
 const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
 const downloadPath = `${localePrefix}/download/`
+
+// 各 tab Free 卡的引导落地页（不可购买，只做产品入口）
+const freeCtaPaths: Record<PricingTabId, string> = {
+  online: `${localePrefix}/online-scraper/`,
+  extension: downloadPath,
+  api: `${localePrefix}/google-maps-scraper-api/`
+}
 
 // 购买答疑 FAQPage 结构化数据：经 Layout 的 structuredData prop 注入 <head>
 const faqSchema = {
@@ -33,20 +41,22 @@ const faqSchema = {
     }
   }))
 }
-// 三档套餐结构化数据：对齐竞品口径的 Offer 列表（卡面价 = SSR 营销展示事实）
+// 三产品线套餐结构化数据：Offer 列表按线展开（卡面价 = SSR 营销展示事实）
 const plansSchema = {
   '@context': 'https://schema.org',
   '@type': 'Product',
-  name: 'MapsGrab Extension Plans',
+  name: 'MapsGrab Plans',
   description: pricing.seo.description,
   brand: { '@type': 'Brand', name: 'MapsGrab' },
-  offers: pricing.plans.cards.map(card => ({
-    '@type': 'Offer',
-    name: card.name,
-    price: card.price.replace('$', ''),
-    priceCurrency: 'USD',
-    category: card.quota
-  }))
+  offers: (Object.keys(pricing.tabs) as PricingTabId[]).flatMap(tabId =>
+    pricing.tabs[tabId].cards.map(card => ({
+      '@type': 'Offer',
+      name: `MapsGrab ${pricing.tabLabels[tabId]} ${card.name}`,
+      price: card.price.replace('$', ''),
+      priceCurrency: 'USD',
+      category: card.quota
+    }))
+  )
 }
 ---
 
@@ -57,5 +67,9 @@ const plansSchema = {
   structuredData={[faqSchema, plansSchema]}
   includeSoftwareApplicationSchema={false}
 >
-  <PricingPageShell copy={pricing} accountCopy={t.pages.account} downloadPath={downloadPath} />
+  <PricingPageShell
+    copy={pricing}
+    accountCopy={t.pages.account}
+    freeCtaPaths={freeCtaPaths}
+  />
 </Layout>

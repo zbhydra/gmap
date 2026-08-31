@@ -2,7 +2,7 @@
 
 > 当前源码实现口径。覆盖订阅商品配置、用户订阅状态、订单履约续期。
 > 实现状态:站内取消自动续费暂不实现;相关字段、接口和履约补充为后续保留方案。
-> 产品线扩展(2026-08-31,C2 裁决落地):订阅按产品线隔离——`extension`(插件下载 Unlimited)与 `maps`(MapsGrab 月度 records 套餐);同一账号可同时持有不同产品线的有效订阅。
+> 产品线扩展(2026-08-31,C2 裁决落地):订阅按产品线隔离——`extension`(插件下载 Unlimited)、`maps`(MapsGrab 插件月度 records 套餐)、`maps_online`(云端 Online Scraper 月度 records 套餐)与 `maps_api`(Scraper API 月度 requests 套餐);同一账号可同时持有不同产品线的有效订阅。
 > 关联:`@tech-额度与速率档位.md` `@../011.Pricing页/tech-pricing与自动续费.md` `@../011.Pricing页/tech-实现与配置.md`
 
 ## 当前订阅档位
@@ -13,8 +13,16 @@
 | `unlimited` | `extension` | `month` | Unlimited | 30 | 插件下载不限次数 |
 | `maps_pro` | `maps` | `month` | Maps Pro | 30 | 100,000 records/月 |
 | `maps_business` | `maps` | `month` | Maps Business | 30 | 500,000 records/月 |
+| `online_lite` | `maps_online` | `month` | Online Lite | 30 | 20,000 records/月 |
+| `online_basic` | `maps_online` | `month` | Online Basic | 30 | 80,000 records/月 |
+| `online_growth` | `maps_online` | `month` | Online Growth | 30 | 250,000 records/月 |
+| `online_pro` | `maps_online` | `month` | Online Pro | 30 | 500,000 records/月 |
+| `api_basic` | `maps_api` | `month` | API Basic | 30 | 1,000 requests/月 |
+| `api_professional` | `maps_api` | `month` | API Professional | 30 | 5,000 requests/月 |
+| `api_business` | `maps_api` | `month` | API Business | 30 | 10,000 requests/月 |
+| `api_scale` | `maps_api` | `month` | API Scale | 30 | 50,000 requests/月 |
 
-`product_id` 是 SKU,不要求等于 `period`。产品线内重复购买校验按 `product_line` 隔离:同产品线存在未过期订阅时拒绝新下单,不同产品线互不影响。Maps 线月度额度在 metadata `monthly_records`(正整数),购买成功后 U7 配额总量从免费档切到所购档位,到期自动回退(见 `@tech-额度与速率档位.md` 与 `app/services/maps_usage_service.py`)。
+`product_id` 是 SKU,不要求等于 `period`。产品线内重复购买校验按 `product_line` 隔离:同产品线存在未过期订阅时拒绝新下单,不同产品线互不影响(含 `maps_online`/`maps_api` 新线)。月度额度在 metadata `monthly_quota`(正整数,语义为月度额度数,单位由产品线定义:`maps`/`maps_online` 为 records,`maps_api` 为 requests),购买成功后对应线配额总量从免费档切到所购档位,到期自动回退(见 `@tech-额度与速率档位.md` 与 `app/services/maps_usage_service.py`)。`maps_online`/`maps_api` 两线 8 档全部 `auto_renew=false`,当前以 PayPal 一次性支付购买(占位期决策,额度消费方待 014 云端落地后接入)。
 
 ## 配置表
 
@@ -26,8 +34,8 @@
 
 | 字段 | 说明 |
 | --- | --- |
-| `product_id` | 商品标识,当前 `free` / `unlimited` / `maps_pro` / `maps_business` |
-| `product_line` | 产品线标识: `extension` / `maps`;历史行缺省回退 `extension` |
+| `product_id` | 商品标识,当前 `free` / `unlimited` / `maps_pro` / `maps_business` 及 `maps_online`、`maps_api` 两线 8 档(见「当前订阅档位」表) |
+| `product_line` | 产品线标识: `extension` / `maps` / `maps_online` / `maps_api`;历史行缺省回退 `extension` |
 | `name` | 商品展示名 |
 | `period` | 订阅周期,当前 `free` / `month` |
 | `duration_days` | 订阅天数,Free=0,Unlimited=30 |
@@ -61,7 +69,7 @@
 | `daily_limit` | 插件每日下载额度;Free=5,Unlimited=-1 |
 | `extension_daily_download_limit` | 插件每日下载额度兼容字段 |
 | `auto_renew` | 是否自动续费商品 |
-| `monthly_records` | Maps 产品线月度 records 额度(正整数);仅 maps 商品配置,其余产品线留空 |
+| `monthly_quota` | 月度额度数(正整数);单位由产品线定义——`maps`/`maps_online` 为 records,`maps_api` 为 requests;仅这两类产品线配置,extension 线留空 |
 | `proxy_user_rate_limit_mb_per_second` | 展示字段,当前实际限速不读它 |
 
 Free 档允许 metadata 为空,服务端补 `daily_limit=5,auto_renew=false`。付费商品直接使用 metadata 中通过类型和范围校验的值,不根据 `product_id` 锁死额度或计费方式。
@@ -73,7 +81,7 @@ Free 档允许 metadata 为空,服务端补 `daily_limit=5,auto_renew=false`。�
 | 字段 | 说明 |
 | --- | --- |
 | `user_id` | 用户 ID,复合主键之一 |
-| `product_line` | 产品线标识,复合主键之一;`extension` / `maps` |
+| `product_line` | 产品线标识,复合主键之一;`extension` / `maps` / `maps_online` / `maps_api` |
 | `product_id` | 当前生效档位 SKU;extension 线历史行缺省按 `unlimited` 回退 |
 | `expires_at` | 订阅到期时间,毫秒时间戳 |
 | `payment_method` | 后续字段:最近一次生效订阅的支付渠道;当前 `paypal` / `telegram_stars` |
@@ -84,7 +92,7 @@ Free 档允许 metadata 为空,服务端补 `daily_limit=5,auto_renew=false`。�
 | `created_at` | 创建时间 |
 | `updated_at` | 更新时间 |
 
-无有效记录或 `expires_at` 已过期时服务层返回该产品线的 Free。存在未过期记录时按行内 `product_id` 读取商品配置映射权益(extension 线历史行缺档位时回退 `unlimited`)。`period` 只存在于 `config_subscription_product` 和接口兼容响应,不存在于 `user_subscriptions`。`/api/client/auth/me` 在旧字段 `subscription`(extension 线)之外新增 `maps_subscription`(maps 线同构状态对象),旧客户端忽略即可。
+无有效记录或 `expires_at` 已过期时服务层返回该产品线的 Free。存在未过期记录时按行内 `product_id` 读取商品配置映射权益(extension 线历史行缺档位时回退 `unlimited`)。`period` 只存在于 `config_subscription_product` 和接口兼容响应,不存在于 `user_subscriptions`。`/api/client/auth/me` 在旧字段 `subscription`(extension 线)之外新增 `maps_subscription`(maps 线)、`maps_online_subscription`(`maps_online` 线)与 `maps_api_subscription`(`maps_api` 线)三个同构状态对象,旧客户端忽略即可。
 
 ### 结构迁移与部署(产品线扩展,必读)
 
@@ -104,11 +112,11 @@ cd backend
 uv run python src/app/init/sql_executor.py   --host "$DB_HOST" --port "${DB_PORT:-3306}" --user "$DB_USER"   --password "$DB_PASSWORD" --database "$DB_NAME"   --sql "ALTER TABLE user_subscriptions DROP PRIMARY KEY, ADD PRIMARY KEY (user_id, product_line)"
 ```
 
-3. 播种 Maps 商品与渠道价(幂等脚本,可重复执行;provider_sku 为测试占位,接入真实 PayPal 渠道前替换为渠道后台注册的 recurring plan ID):
+3. 播种订阅商品与渠道价(幂等 upsert 脚本,表驱动,可重复执行;覆盖 11 个付费 SKU:`unlimited`、`maps_pro`、`maps_business` 与 `maps_online`/`maps_api` 两线 8 档;`maps_online`/`maps_api` 新档 provider_sku 为占位 `{product_id}-paypal`,接入真实 PayPal 渠道前替换为渠道后台注册的商品 ID):
 
 ```bash
 cd backend
-uv run python scripts/seed_maps_subscription_products.py
+uv run python scripts/seed_subscription_products.py
 ```
 
 存量行回退行为:迁移前已存在的 Unlimited 权益行 `product_line` 自动落默认值 `extension`、`product_id` 落 `unlimited`,插件下载权益与状态接口行为完全不变。

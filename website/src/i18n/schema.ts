@@ -181,9 +181,7 @@ export interface HomeProductCardMessage {
   bullets: readonly string[]
   /** 卡片行动文案。 */
   ctaLabel: string
-  /** available = 已上线卡片渲染链接；coming-soon = 占位卡片不渲染链接（点击无效，不 404）。 */
-  status: 'available' | 'coming-soon'
-  /** available 卡片的站内跳转路径；coming-soon 卡片忽略该字段。 */
+  /** 卡片的站内跳转路径。 */
   href: string
 }
 
@@ -227,8 +225,6 @@ export interface HomePageContent {
     description: string
     /** 已上线徽章。 */
     availableLabel: string
-    /** 占位徽章（Coming soon）。 */
-    comingSoonLabel: string
     /** 卡片列表（固定三张：插件 / Online / API）。 */
     items: readonly HomeProductCardMessage[]
   }
@@ -452,41 +448,62 @@ export interface DownloadPageContent {
   }
 }
 
+/** Pricing 页 tab 标识：Online Scraper / Extension / API 三条产品线。 */
+export type PricingTabId = 'online' | 'extension' | 'api'
+
 /** Pricing 页的套餐卡（SSR 静态展示事实；真实扣价以支付配置为准）。 */
 export interface PricingPlanCardMessage {
-  /** 卡片标识：free / pro / business，用于渲染分支与测试锚点。 */
-  id: 'free' | 'pro' | 'business'
+  /** 卡片标识，同 tab 内唯一（如 free / pro / business），用于渲染分支与测试锚点。 */
+  id: string
+  /**
+   * 可购买商品 SKU（与后端 product_id 对齐，如 maps_pro / online_lite），
+   * 购买按钮与 GA4 plan 维度直接使用；免费卡为 null（不可购买，引导下载）。
+   */
+  productId: string | null
   /** 档位名。 */
   name: string
   /** 一句话定位。 */
   tagline: string
   /** 展示价文本（如 $39）。 */
   price: string
-  /** 价格周期说明（per month）。 */
+  /** 价格周期说明（per month / one-time · 30 days）。 */
   periodLabel: string
   /** 月度额度行（如 100,000 records / month）。 */
   quota: string
-  /** 档位功能清单（对齐插件已交付能力）。 */
+  /** 档位功能清单（对齐产品已交付能力）。 */
   features: readonly string[]
   /** 按钮文案。 */
   ctaLabel: string
-  /** free = 当前档（引导去下载页）；buyable = 接购买链路。 */
+  /** free = 引导去下载页；buyable = 接购买链路。 */
   status: 'free' | 'buyable'
+  /** 该产品线的主推档位（卡面加 Most Popular 徽章）。 */
+  featured: boolean
 }
 
-/** Pricing 页的占位产品卡（Online / API，不可购）。 */
-export interface PricingComingSoonCardMessage {
-  /** 卡片标识：online / api，用于渲染分支与测试锚点。 */
-  id: 'online' | 'api'
-  /** 产品名。 */
-  name: string
-  /** 一句话定位。 */
-  tagline: string
-  /** 说明段落。 */
+/** Pricing 单条产品线（一个 tab）的套餐区内容。 */
+export interface PricingTabContent {
+  /** tab 内小标签。 */
+  eyebrow: string
+  /** tab 内区块标题。 */
+  title: string
+  /** tab 内区块说明。 */
   description: string
+  /** 档位卡。 */
+  cards: readonly PricingPlanCardMessage[]
+  /** 额度口径脚注。 */
+  quotaNote: string
+  /** 本产品线购买流程文案（下单摘要/成功口径，供 checkout 弹窗装配）。 */
+  checkout: {
+    /** 商品在支付弹窗中的使用范围提示。 */
+    usageNotice: string
+    /** 支付成功标题。 */
+    successTitle: string
+    /** 支付成功说明。 */
+    successDescription: string
+  }
 }
 
-/** Pricing 页面内容（MapsGrab 三档套餐 + 占位产品卡）。 */
+/** Pricing 页面内容（三条产品线 tab 套餐）。 */
 export interface PricingPageContent {
   /** SEO 元信息。 */
   seo: {
@@ -504,7 +521,7 @@ export interface PricingPageContent {
     /** 首屏说明。 */
     description: string
   }
-  /** 主推档位徽章文案（标在 Pro 卡上）。 */
+  /** 主推档位徽章文案（标在各线 featured 卡上）。 */
   popularLabel: string
   /** 用户状态卡片（登录态 + 当前套餐摘要）。 */
   account: {
@@ -541,52 +558,24 @@ export interface PricingPageContent {
     /** 取消指引弹窗关闭按钮文案。 */
     closeLabel: string
   }
-  /** 套餐卡区。 */
+  /** 三条产品线的 tab 标签文案（tab 栏按钮，键为 PricingTabId）。 */
+  tabLabels: Record<PricingTabId, string>
+  /** 三条产品线套餐区（键为 PricingTabId，与 tabLabels 对齐）。 */
+  tabs: Record<PricingTabId, PricingTabContent>
+  /** 购买链路全局状态文案（跨 tab 共用）。 */
   plans: {
-    /** 小标签。 */
-    eyebrow: string
-    /** 区块标题。 */
-    title: string
-    /** 区块说明。 */
-    description: string
-    /** 档位卡（固定三张：free / pro / business）。 */
-    cards: readonly PricingPlanCardMessage[]
-    /** 额度口径脚注（records 的计算口径）。 */
-    quotaNote: string
     /** 支付配置加载中文案。 */
     loading: string
     /** 支付配置加载失败文案。 */
     loadFailed: string
     /** 商品无可用支付渠道文案。 */
     noChannels: string
-    /** 已有有效套餐时按钮点击的提示。 */
+    /** 当前线已有有效套餐时按钮点击的提示。 */
     alreadyActive: string
-  }
-  /** 购买流程文案（下单/等待/结果，供 checkout 弹窗装配）。 */
-  checkout: {
-    /** 商品在支付弹窗中的使用范围提示。 */
-    usageNotice: string
-    /** 支付成功标题。 */
-    successTitle: string
-    /** 支付成功说明。 */
-    successDescription: string
+    /** 支付弹窗商品标题前缀。 */
+    productTitlePrefix: string
     /** 支付未完成标题。 */
     failedTitle: string
-    /** 商品标题（弹窗摘要行）。 */
-    productTitlePrefix: string
-  }
-  /** Online / API 占位卡区（不可购）。 */
-  comingSoon: {
-    /** 小标签。 */
-    eyebrow: string
-    /** 区块标题。 */
-    title: string
-    /** 区块说明。 */
-    description: string
-    /** 占位徽章（Coming soon）。 */
-    comingSoonLabel: string
-    /** 占位卡列表。 */
-    items: readonly PricingComingSoonCardMessage[]
   }
   /** 页底购买答疑。 */
   faq: {
@@ -1025,6 +1014,73 @@ export interface MergeCsvContent {
   cta: ToolCtaBandMessage
 }
 
+/** 落地页功能卡（Online / API 落地页模板共用）。 */
+export interface LandingFeatureMessage {
+  /** 功能卡标题。 */
+  title: string
+  /** 功能卡说明。 */
+  description: string
+}
+
+/**
+ * Online / API 落地页内容（EN 基线，五页共用模板）。
+ * 页内未落地功能按钮（开始采集 / 获取 Key 类）渲染为 aria-disabled 的
+ * `<button type="button">`，无 JS handler：点击无跳转、无请求、不埋点（014 云端落地时替换）。
+ */
+export interface LandingPageContent {
+  /** SEO 元信息。 */
+  seo: {
+    /** HTML title。 */
+    title: string
+    /** meta description。 */
+    description: string
+  }
+  /** 首屏 hero。 */
+  hero: {
+    /** 小标签。 */
+    eyebrow: string
+    /** H1。 */
+    title: string
+    /** H1 下说明。 */
+    description: string
+    /** 未落地功能主按钮（渲染为无效按钮）。 */
+    primaryCta: string
+    /** 次按钮（指向 Pricing 页的真链接）。 */
+    secondaryCta: string
+    /** hero 配图位占位说明（界面截图）。 */
+    visualLabel: string
+  }
+  /** 能力清单区。 */
+  features: {
+    /** 小标签。 */
+    eyebrow: string
+    /** 区块标题。 */
+    title: string
+    /** 区块说明。 */
+    description: string
+    /** 功能卡列表。 */
+    items: readonly LandingFeatureMessage[]
+  }
+  /** 页面 FAQ。 */
+  faq: {
+    /** 区块标题。 */
+    title: string
+    /** 问答列表。 */
+    items: FAQItemMessage[]
+  }
+  /** 页底 CTA 行动区（按钮为无效按钮）。 */
+  cta: {
+    /** 区块标题。 */
+    title: string
+    /** 区块说明。 */
+    description: string
+    /** 无效按钮文案。 */
+    button: string
+    /** 按钮下的辅助说明。 */
+    note: string
+  }
+}
+
 export interface SiteContent {
   site: {
     name: string
@@ -1037,8 +1093,18 @@ export interface SiteContent {
       home: string
       /** 导航：插件产品页入口。 */
       extension: string
-      /** 导航：Online 占位入口（不指向功能页，点击无效不 404，与首页占位卡同语义）。 */
+      /** 导航：Online 落地页入口（/online-scraper/）。 */
       online: string
+      /** 导航：API 下拉入口标签（桌面端，展开 4 个 API 子项）。 */
+      api: string
+      /** API 下拉子项：Scraper API 落地页。 */
+      apiScraper: string
+      /** API 下拉子项：Reviews API 落地页。 */
+      apiReviews: string
+      /** API 下拉子项：Photos API 落地页。 */
+      apiPhotos: string
+      /** API 下拉子项：Scraper MCP 落地页。 */
+      apiMcp: string
       /** 导航：下载页入口。 */
       download: string
       pricing: string
@@ -1067,6 +1133,16 @@ export interface SiteContent {
     account: AccountContent
     /** Pricing 页面内容（MapsGrab 三档套餐，W5）。 */
     pricing: PricingPageContent
+    /** Online Scraper 落地页（015 U1）。 */
+    onlineScraper: LandingPageContent
+    /** Scraper API 落地页（015 U1）。 */
+    scraperApi: LandingPageContent
+    /** Reviews API 落地页（015 U1）。 */
+    reviewsApi: LandingPageContent
+    /** Photos API 落地页（015 U1）。 */
+    photosApi: LandingPageContent
+    /** Scraper MCP 落地页（015 U1）。 */
+    scraperMcp: LandingPageContent
     /** Bing Maps 插件登录桥接页内容（noindex，不在语言站内层枚举）。 */
     extensionLoginBing: ExtensionLoginBingPageContent
     /** 免费工具矩阵内容（W4，每工具一键段）。 */

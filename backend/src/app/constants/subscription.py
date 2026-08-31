@@ -37,6 +37,23 @@ MAPS_PRODUCT_LINE = "maps"
 MAPS_PRO_PRODUCT_ID = "maps_pro"
 MAPS_BUSINESS_PRODUCT_ID = "maps_business"
 
+# MapsGrab 新增订阅产品线（006 扩展）：online = 网页采集套餐（records/月），
+# api = API 调用套餐（requests/月）。均为一次性支付月度套餐。
+MAPS_ONLINE_PRODUCT_LINE = "maps_online"
+MAPS_API_PRODUCT_LINE = "maps_api"
+
+# maps_online 产品线付费商品（records/月额度档位）。
+ONLINE_LITE_PRODUCT_ID = "online_lite"
+ONLINE_BASIC_PRODUCT_ID = "online_basic"
+ONLINE_GROWTH_PRODUCT_ID = "online_growth"
+ONLINE_PRO_PRODUCT_ID = "online_pro"
+
+# maps_api 产品线付费商品（requests/月额度档位）。
+API_BASIC_PRODUCT_ID = "api_basic"
+API_PROFESSIONAL_PRODUCT_ID = "api_professional"
+API_BUSINESS_PRODUCT_ID = "api_business"
+API_SCALE_PRODUCT_ID = "api_scale"
+
 
 class SubscriptionProductMetadata(BaseModel):
     """订阅商品 metadata 配置。"""
@@ -44,8 +61,9 @@ class SubscriptionProductMetadata(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     auto_renew: bool = Field(default=False, description="是否自动续费")
-    # 产品线月度权益额度；仅 maps 产品线使用（单位 = 记录数/月），其余产品线留空。
-    monthly_records: int | None = Field(default=None, description="月度记录数额度")
+    # 产品线月度权益额度；单位由产品线定义：maps/maps_online = records/月，
+    # maps_api = requests/月；无额度概念的产品线留空。
+    monthly_quota: int | None = Field(default=None, description="月度权益额度数")
 
     @classmethod
     def from_metadata(
@@ -100,9 +118,9 @@ class SubscriptionProductMetadata(BaseModel):
             raise ValueError(f"must be boolean, value={value!r}")
         return value
 
-    @field_validator("monthly_records", mode="before")
+    @field_validator("monthly_quota", mode="before")
     @classmethod
-    def _validate_monthly_records(cls, value: object) -> int | None:
+    def _validate_monthly_quota(cls, value: object) -> int | None:
         """月度额度必须是正整数或缺省；0/负数一律按配置错误拒绝。"""
         if value is None:
             return None

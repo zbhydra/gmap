@@ -92,7 +92,7 @@ class MapsUsageService:
     """按「user_id 或 device_id 归属 + 业务时区自然月窗口」管理采集配额。
 
     额度映射（006 扩展）：登录用户持有未过期 Maps 订阅时，月度 total 从
-    免费配额切到所购档位的 ``monthly_records``；到期/退订/配置异常自动回退
+    免费配额切到所购档位的 ``monthly_quota``；到期/退订/配置异常自动回退
     免费配额（读不到付费档 = 少给不超给，防滥用口径优先）。匿名设备恒免费档。
     """
 
@@ -121,7 +121,7 @@ class MapsUsageService:
                 product_id=config.product_id,
                 period=config.period,
             )
-            return metadata.monthly_records
+            return metadata.monthly_quota
         except Exception as exc:
             # 付费档读取失败不放大为整体不可用：回退免费配额（fail-open 到免费，
             # 与 get_total 的免费配置口径一致），由日志暴露配置问题。

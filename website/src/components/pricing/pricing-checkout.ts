@@ -41,8 +41,12 @@ import {
 /** 订阅商品类别。 */
 export const SUBSCRIPTION_PRODUCT_CLASS = 1
 
-/** Maps 产品线标识（与后端 product_line 常量对齐）。 */
+/** Extension（MapsGrab 插件）产品线标识（与后端 product_line 常量对齐）。 */
 export const MAPS_PRODUCT_LINE = 'maps'
+/** Online Scraper 产品线标识。 */
+export const MAPS_ONLINE_PRODUCT_LINE = 'maps_online'
+/** API 产品线标识。 */
+export const MAPS_API_PRODUCT_LINE = 'maps_api'
 
 /** 订阅 checkout configs 响应。 */
 export interface SubscriptionCheckoutConfigsResponse {
@@ -66,7 +70,7 @@ export interface SubscriptionCheckoutPlan {
   product_class: number
   /** 商品标识（如 maps_pro）。 */
   product_id: string
-  /** 产品线标识（maps / extension）。 */
+  /** 产品线标识（maps / maps_online / maps_api）。 */
   product_line: string
   /** 后端配置商品名。 */
   product_name: string
@@ -78,8 +82,11 @@ export interface SubscriptionCheckoutPlan {
   period: string
   /** 是否自动续费。 */
   auto_renew: boolean
-  /** 产品线月度权益额度；仅 maps 产品线为正整数，其余为 null。 */
-  monthly_records: number | null
+  /**
+   * 产品线月度权益额度；单位随产品线：maps / maps_online 为 records/月，
+   * maps_api 为 requests/月；后端缺省为 null。
+   */
+  monthly_quota: number | null
   /** 当前商品可用支付渠道。 */
   payment_channels: CreditCheckoutPaymentChannel[]
 }
@@ -160,17 +167,18 @@ export function getDefaultPricingPaymentChannel(
   return paypal ?? channels[0]
 }
 
-/** 选取 Maps 产品线的可购买商品，按 product_id 索引。 */
-export function pickMapsPlans(
-  plans: SubscriptionCheckoutPlan[]
+/** 选取指定产品线的可购买商品，按 product_id 索引。 */
+export function pickPlansByLine(
+  plans: SubscriptionCheckoutPlan[],
+  productLine: string
 ): Map<string, SubscriptionCheckoutPlan> {
-  const mapsPlans = new Map<string, SubscriptionCheckoutPlan>()
+  const linePlans = new Map<string, SubscriptionCheckoutPlan>()
   for (const plan of plans) {
-    if (plan.product_line === MAPS_PRODUCT_LINE) {
-      mapsPlans.set(plan.product_id, plan)
+    if (plan.product_line === productLine) {
+      linePlans.set(plan.product_id, plan)
     }
   }
-  return mapsPlans
+  return linePlans
 }
 
 /** 格式化展示价；后端金额为 6 位精度。 */
@@ -261,9 +269,9 @@ function isSubscriptionCheckoutPlan(
     Number.isFinite(value.display_amount) &&
     typeof value.period === 'string' &&
     typeof value.auto_renew === 'boolean' &&
-    (value.monthly_records === null ||
-      (typeof value.monthly_records === 'number' &&
-        Number.isFinite(value.monthly_records))) &&
+    (value.monthly_quota === null ||
+      (typeof value.monthly_quota === 'number' &&
+        Number.isFinite(value.monthly_quota))) &&
     Array.isArray(value.payment_channels)
   )
 }

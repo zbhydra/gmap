@@ -120,7 +120,7 @@ def _serialize_checkout_plans(
                 "display_currency": plan.product.display_currency,
                 "display_amount": plan.product.display_amount,
                 "auto_renew": metadata.auto_renew,
-                "monthly_records": metadata.monthly_records,
+                "monthly_quota": metadata.monthly_quota,
                 "payment_channels": payment_channels,
             }
         )

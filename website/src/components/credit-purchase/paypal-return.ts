@@ -14,6 +14,7 @@ import {
   isRecoverableOrderStatusError,
   type OrderStatusResponse
 } from './credit-checkout'
+import { SUBSCRIPTION_PRODUCT_CLASS } from '../pricing/pricing-checkout'
 import type { AccountContent } from '../../i18n/schema'
 
 /** PayPal 回跳页文案（success.astro 经 JSON script 注入）。 */
@@ -40,14 +41,14 @@ type PayPalSuccessViewState = 'waiting' | 'confirmed' | 'failed'
 /** 确认态展示语义：按订单产品线区分（maps=订阅口径，其余=Credits 口径）。 */
 type PayPalConfirmedCopyKey = 'confirmedSubscriptionTitle' | 'confirmedCreditsTitle'
 
-/** 按订单产品线选取确认态文案键；缺省（旧后端/旧缓存）保持 Credits 口径。 */
+/** 按订单商品类别选取确认态文案键：订阅类走订阅口径，其余（Credits 充值）走积分口径。 */
 function confirmedCopyKeys(
-  status: Pick<OrderStatusResponse, 'product_line'> | undefined
+  status: Pick<OrderStatusResponse, 'product_class'> | undefined
 ): {
   titleKey: PayPalConfirmedCopyKey
   messageKey: 'confirmedSubscriptionMessage' | 'confirmedCreditsMessage'
 } {
-  if (status?.product_line === 'maps') {
+  if (status?.product_class === SUBSCRIPTION_PRODUCT_CLASS) {
     return { titleKey: 'confirmedSubscriptionTitle', messageKey: 'confirmedSubscriptionMessage' }
   }
   return { titleKey: 'confirmedCreditsTitle', messageKey: 'confirmedCreditsMessage' }

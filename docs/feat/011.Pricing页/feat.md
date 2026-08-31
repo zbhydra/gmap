@@ -1,203 +1,149 @@
 # 011 · Pricing 页
 
-> 产品需求文档。只描述 Pricing 页卖什么、用户如何购买、权益边界、异常流程、UI 元素、埋点与验收。技术实现见 `@tech-pricing与自动续费.md`、`@tech-实现与配置.md` 与 `@tech-好评赠送.md`。
-
-> 实现状态:Pricing 已提供 PayPal 与 Telegram Stars 自助取消指引;站内直接调用支付渠道取消自动续费仍为后续方案。
+> 产品需求文档。描述 MapsGrab 官网 `/pricing` 页(现役 website/ 站点)卖什么、用户如何购买、权益边界、异常流程、UI 元素、埋点与验收。技术实现见 `@tech-实现与配置.md` 与 `@tech-pricing与自动续费.md`。
+>
+> 历史说明:本域文档原描述 TG 主站(已退役)的 Pricing 单页形态(账号→Credits→Unlimited)。2026-08-31 起以现役 MapsGrab 站三产品线 tab 页为唯一真相;TG 站时代的 Credits 积分包售卖与好评赠送页面流程已随旧站下线,对应技术文档(`@tech-好评赠送.md`)仅作历史参考,后端好评赠送合同见 `@../006.订阅系统/tech-好评赠送订阅.md`。
 
 ## 功能目标
 
-Pricing 页出售两类套餐:
+Pricing 页按三条产品线分 tab 出售订阅套餐:
 
-1. Credits 一次性积分包:用于 website 下载,买完立即到账。
-2. Unlimited 月度订阅:插件专属权益,有效期内 extension 每日下载不限次数。
+1. Online tab(`maps_online` 线):云端 Online Scraper 月度 records 套餐,4 个付费档 + Free 卡。
+2. Extension tab(`maps` 线):浏览器插件月度 records 套餐,2 个付费档 + Free 卡。
+3. API tab(`maps_api` 线):Scraper API 月度 requests 套餐,4 个付费档 + Free 卡。
 
-使用范围固定拆开:Credits 只用于 website 下载;Unlimited 只用于 desktop browser extension 下载。Unlimited 不赠送 Credits,也不改变 website 下载扣费;Credits 不扩展或替代 Unlimited 订阅权益。
+购买边界:全部商品均为 PayPal 支付;Online 与 API 各档为 30 天一次性支付(不自动续费),Extension 两档为按月订阅(auto_renew=true,可经渠道侧取消)。配额与权益语义归 `@../006.订阅系统/feat.md`,本页只负责展示与购买。
+
+## 套餐定义(卡面展示事实,真实扣价以下单时支付配置为准)
+
+| Tab | 档位 | SKU | 价格 | 额度 | 支付形态 |
+| --- | --- | --- | --- | --- | --- |
+| Online | Free | —(不可购买) | $0 | 1,000 records/月 | 默认档 |
+| Online | Lite | `online_lite` | $19 | 20,000 records/月 | 一次性 · 30 天 |
+| Online | Basic | `online_basic` | $49 | 80,000 records/月 | 一次性 · 30 天(本 tab Most Popular) |
+| Online | Growth | `online_growth` | $99 | 250,000 records/月 | 一次性 · 30 天 |
+| Online | Professional | `online_pro` | $149 | 500,000 records/月 | 一次性 · 30 天 |
+| Extension | Free | —(不可购买) | $0 | 1,000 records/月 | 默认档 |
+| Extension | Pro | `maps_pro` | $39 | 100,000 records/月 | 按月订阅(本 tab Most Popular) |
+| Extension | Business | `maps_business` | $99 | 500,000 records/月 | 按月订阅 |
+| API | Free | —(不可购买) | $0 | 20 requests/月 | 默认档 |
+| API | Basic | `api_basic` | $15 | 1,000 requests/月 | 一次性 · 30 天 |
+| API | Professional | `api_professional` | $65 | 5,000 requests/月 | 一次性 · 30 天(本 tab Most Popular) |
+| API | Business | `api_business` | $115 | 10,000 requests/月 | 一次性 · 30 天 |
+| API | Scale | `api_scale` | $365 | 50,000 requests/月 | 一次性 · 30 天 |
+
+Free 档口径(online/api 各 tab 卡面展示)当前仅为页面展示,不落库、暂不生效(见 006 域)。
 
 ## 功能范围
 
 ### 包含
 
-- 展示 Credits 套餐和 Unlimited 订阅套餐。
-- Credits 积分包在 Pricing 页可购买,一次性付款。
-- Unlimited 是插件专属月度订阅。
-- Free 订阅档进入配置,当前 extension 每日 5 次。
-- 商品权益和计费方式通过 metadata 表达,前端只按商品 ID 选择套餐,不重复限制配置值。
-- 订阅生效、过期降级、订阅状态展示。
-- 已有有效 Unlimited 时订阅按钮灰化,点击提示不可重复购买;不保证拦截用户分别确认的并发或跨渠道付款。
-- 有效且自动续费的订阅在账号状态区展示“取消”按钮,点击后说明 PayPal 与 Telegram Stars 自助取消路径。
-- Pricing 顶部展示账号、Credits、插件今日剩余次数、当前订阅和到期时间。
-- 游客点击购买先登录,登录成功后继续购买。
-- 购买成功后刷新账户状态。
-- 未领取过好评赠送的登录账号,在订阅购买确认中可进入一次性 7 天赠送流程。
-- 未领取过好评赠送的登录账号从插件进入 Pricing 时,在账号区与 Unlimited 卡片之间看到可直接操作的好评赠送入口。
+- 三产品线 tab 切换;tab 是页面唯一状态源,账号区摘要与按钮灰化均随当前 tab 刷新。
+- 各 tab 静态渲染档位卡(SSR),付费卡购买按钮加载支付配置后启用。
+- 账号区:登录/注册弹窗、账号胶囊(邮箱、头像、当前 tab 产品线的套餐名与到期时间)、退出登录。
+- 未登录点击购买先登录,登录成功后继续购买。
+- 同产品线已有未过期订阅时购买按钮软灰化,点击提示须等当前档到期;不同产品线互不影响,可同时持有。
+- 有效且自动续费的订阅(仅 Extension 两档可能满足)在账号区展示"How to cancel"入口,弹窗展示 PayPal 自助取消三步路径;不调用取消接口、不修改订阅状态。
+- 统一订单 checkout 弹窗完成选渠道、创建订单、跳转 PayPal 与支付结果处理。
+- PayPal 回跳页(success/cancel)按订单 `product_class` 分发订阅/Credits 文案。
+- 插件升级入口(`utm_source=extension`)只做归因标记(购买按钮 GA4 source),不切换页面布局。
+- 价格、渠道、额度数字全部来自后端配置;卡面文案为营销展示事实。
 
 ### 不包含
 
-- 不做退款、撤销、转赠、代充、发票、金融级对账。
-- 不做年付、多席位、优惠码、税费计算、地区差异定价。
-- 不做 website Unlimited 下载。
-- 不把 extension 下载改成消耗 Credits。
-- 不做复杂订阅管理中心。
-- 不做站内直接调用支付渠道取消自动续费、取消后的立即降级、退款、到期前恢复自动续费。
-- 不做复杂本地支付渠道协议管理;只保存取消续费必需的渠道引用。
-- 不复用 extension Vue 组件到 website;extension 只跳转官网 Pricing。
-- 不修改 extension,不检测真实评价,不保存或恢复好评倒计时。
-- 不为好评赠送新增曝光、倒计时、领取结果埋点、补偿或对账;仅记录用户点击“去好评”。
-
-## 套餐定义
-
-| 套餐 | 类型 | 到账/权益 | 支付方式 |
-| --- | --- | --- | --- |
-| 50 Credits | 一次性积分包 | website Credits +50 | 后端配置 |
-| 200 Credits | 一次性积分包 | website Credits +200 | 后端配置 |
-| 1000 Credits | 一次性积分包 | website Credits +1000 | 后端配置 |
-| Unlimited | 月度订阅 | extension 下载不限次数 | 后端配置 |
-
-价格、渠道价格、支付渠道都来自后端配置。页面不使用写死价格创建订单。
-
-Credits 为一次性购买的 website 下载余额,仅用于当前账号的 website 下载流程;到账后不自动续费、不过期、不退款、不可转赠、不可兑换现金。
-
-Unlimited 为 extension 下载订阅权益,仅用于支持的桌面浏览器插件下载流程;不包含 website 下载、不赠送 Credits、不消耗 Credits。
-
-Free 档是订阅配置里的正式档位:价格 0、extension 每日 5 次、website 下载不包含。
+- 不做 Credits 积分包售卖与展示(website 下载计费归 `@../003.积分系统/feat.md`;TG 站时代的积分包卡片已随旧站下线)。
+- 不做好评赠送入口与倒计时流程(后端合同保留在 checkout-configs 响应中但页面不消费;合同见 `@../006.订阅系统/tech-好评赠送订阅.md`)。
+- 不做站内直接取消自动续费;用户按指引到 PayPal 侧取消。
+- 不做退款、优惠码、年付、多席位、地区差异定价。
+- 不做 Telegram Stars 渠道(当前页面上线渠道仅 PayPal)。
+- 不承载插件端购买 UI;插件只跳转本页。
 
 ## 用户流程
 
-### 购买 Credits
+### 浏览与选择
 
-1. 用户点击 Credits 卡片。
-2. 未登录用户先登录。
-3. 用户选择可用支付渠道并确认。
-4. 后端创建 `RECHARGE` 订单。
-5. 支付成功后订单履约发放 Credits。
-6. Pricing 刷新 Credits 余额。
-7. Credits 到账后仅作为当前账号的 website 下载余额使用。
+1. 页面默认展示 Online tab;点击 tab 切换产品线面板。
+2. 每个面板展示:线说明、档位卡(名称/标语/价格/额度/功能列表/CTA)、额度口径注记(records 或 requests 的计量与每月 1 日重置、不滚存说明)。
+3. Free 卡 CTA 为引导动作(Online/API「Start free」、Extension「Install the extension」),不进入购买。
 
-### 购买 Unlimited
+### 购买付费档
 
-1. 用户点击 Unlimited 卡片。
-2. 未登录用户先登录。
-3. 已有未过期 Unlimited 时,订阅按钮灰化;点击后提示存在有效订阅,不进入支付。
-4. 无有效 Unlimited 时,用户选择可用支付渠道并确认。
-5. 后端创建 `SUBSCRIPTION` 订单。
-6. 支付成功后订单履约读取快照 `duration_days`,续期 `user_subscriptions.expires_at`。
-7. Pricing 刷新当前订阅和到期时间。
+1. 用户点击付费卡购买按钮;按钮未加载配置或该商品无可用渠道时置灰并提示。
+2. 该产品线已有未过期订阅时,按钮软灰化;点击提示已有有效订阅,不进入支付。
+3. 未登录时先打开登录弹窗,成功后继续。
+4. 上报 `upgrade_cta_click`(plan 维度 = SKU),打开统一 checkout 弹窗确认价格与渠道后跳 PayPal。
+5. 支付成功回跳/轮询确认后,页面刷新账号区套餐摘要并刷新各卡按钮态。
+6. 价格在下单时被后台调整时,弹窗提示价格更新并重载支付配置。
 
-### 领取好评赠送订阅
+### 取消自动续费(仅 Extension 订阅)
 
-1. Pricing 加载订阅购买配置中的活动开关与领取次数;未登录时领取次数按 0 展示,登录成功后重新加载配置取得账号真实次数。
-2. 活动开关启用、插件来源、已登录且领取次数为 `0` 时,账号区下方显示紧凑的好评赠送入口;入口以“好评赠送 7 天 Unlimited”为标题,并说明前往 Chrome 应用商店好评、返回页面后自动验证领取,不展示预计领取时长。活动关闭、未登录、已领取、配置加载失败或普通 Pricing 入口不显示。
-3. 用户可以点击该入口直接打开 Chrome Web Store 评价页并进入检测界面,也可以从 Unlimited 购买确认中的“去好评”进入同一流程。
-4. 用户从购买入口进入时,活动开启且账号未领取则订阅确认弹窗在原安装提示下增加文本“如果您能给插件一个好评，我会给你赠送 7 天的插件订阅”和“去好评”按钮;活动关闭或已领取时不显示这一行和按钮。
-5. 用户点击“去好评”后,新标签页打开 Chrome Web Store 评价页;原弹窗切换为检测界面,不再显示“继续购买”。
-6. 检测界面提示用户检测期间不要关闭或刷新窗口;已经评论时不要着急,等待检测。界面从 30 秒倒计时,到时自动请求领取。
-7. 领取成功时显示已赠送 7 天,刷新账号订阅状态并隐藏页面入口。
-8. 已领取结果显示该账号已领取过,刷新账号状态后结束。
-9. 领取失败时显示错误和“重试领取”;重试只重新请求领取,不重新倒计时或打开评价页。
-10. 用户关闭弹窗或刷新页面时直接终止当前流程,不保存、不恢复倒计时。
+1. 当前 tab 为 Extension 且账号在该线有有效、自动续费的订阅时,账号区显示"How to cancel"。
+2. 点击打开信息弹窗,展示 PayPal 三步路径(Settings → Payments → Automatic Payments → 选择 MapsGrab → Cancel)。
+3. 关闭弹窗不视为取消成功,不修改订阅状态与到期时间。
 
-### 通过支付渠道取消 Unlimited 自动续费
+### PayPal 回跳
 
-1. 用户已登录,存在未过期且 `auto_renew=true` 的 Unlimited。
-2. Pricing 在顶部账号状态区的“当前订阅 / 到期时间”一行展示“取消”按钮。
-3. 用户点击后打开信息弹窗,同时展示以下两条路径:
-   - Telegram Stars:`Telegram → Settings → Telegram Stars → My subscriptions`。
-   - PayPal:`PayPal → Settings → Payments → Automatic payments → TG Downloader → Cancel`。
-4. 用户关闭弹窗并在原支付渠道中完成取消。
-5. Pricing 不把打开或关闭指引视为取消成功,不修改当前订阅状态与到期时间。
-
-按钮不放在 Unlimited 套餐卡片里。套餐卡片只负责购买入口;取消续费属于当前账号订阅管理动作,放在账号状态区能避免用户把“取消续费”和“购买/切换套餐”混在一起。
-
-### 站内直接取消自动续费（暂不实现）
-
-后续若实现站内取消,再由服务端调用支付渠道并刷新取消状态。当前信息弹窗不调用取消接口、不承诺渠道已取消,也不替代用户在 PayPal 或 Telegram Stars 中的操作。
-
-### 插件升级跳转
-
-1. extension 额度不足时展示升级引导。
-2. 用户点击后打开官网 Pricing。
-3. 插件来源页面加载时向正式版与预发布版两个固定扩展 ID 补发 Website 登录态;单个目标失败不影响页面。
-4. 插件来源页面仍展示账号区;已登录时展示账号、Credits 余额、当前订阅、到期时间和可用的取消入口。
-5. 插件来源只展示与插件权益相关的 Unlimited 订阅,隐藏仅用于 website 下载的 Credits 积分包;普通入口按“账号 → Credits → Unlimited 订阅”排列。
-6. 插件不承载套餐购买 UI。
-7. 符合好评赠送资格时,账号区下方增加一行活动入口;点击直接进入好评检测流程,不先进入付费确认。
+- 支付成功落地 `paypal/success`,按订单 `product_class` 分发文案(订阅类展示订阅生效口径,Credits 类展示到账口径);取消落地 `paypal/cancel` 展示未完成口径。
 
 ## 异常流程
 
-- Pricing 配置加载失败:展示重试,不能购买。
-- 账户状态加载失败:套餐仍可展示;账户状态栏可重试。
-- 商品或渠道被后台下架:创建订单前重新校验,前端刷新配置。
-- 支付失败/取消:不发 Credits,不生效订阅,允许重试。
-- 已有有效 Unlimited 时再次购买订阅:前端灰化按钮并提示不可重复购买;后端下单校验拒绝创建订阅订单。
-- 用户在两个未完成的 checkout 中分别确认付款:两笔成功付款都正常履约;不增加并发锁或跨渠道协议状态机,极少数重复订阅由支持处理。
-- 支付渠道自助取消指引打开失败:用户刷新页面后重试;打开指引不会修改订阅状态。
-- 站内直接取消自动续费暂不实现:用户按弹窗路径到 PayPal 或 Telegram Stars 取消。
-- 后续实现取消自动续费失败:展示可重试错误;缺少渠道订阅引用时提示联系支持或到支付渠道取消。
-- 后续实现重复取消自动续费:按成功展示已取消状态。
-- 后续实现时,用户已在支付渠道侧取消:再次点击站内取消后按成功刷新为已取消续费状态。
-- 支付渠道侧已取消但未通知本站:Pricing 可以继续显示自动续费和取消按钮,不主动查询渠道实时状态。
-- webhook 重复到达:不重复发 Credits,不重复延长同一订单。
-- 履约失败:展示“支付已确认,开通异常,请联系支持”,保留订单号。
-- 好评领取服务器繁忙或写入失败:检测界面展示错误和“重试领取”,不自动重试。
-- 好评赠送活动关闭:页面活动入口和购买确认中的好评区域均隐藏;已经打开的旧页面请求领取时按普通请求失败展示。
-- 好评领取已完成:显示已领取完成态,不进入支付、不重复增加订阅。
-- Chrome Web Store 新标签页被浏览器拦截或打开失败:保持检测界面可关闭,不增加额外跨标签页恢复机制。
+- 支付配置加载失败:展示重试提示,付费卡按钮不可用。
+- 商品或渠道被后台下架:下单前重新校验;商品存在但无渠道时在卡内提示无可用支付方式。
+- 支付失败/取消:不生效订阅,允许重试。
+- 同线重复购买:前端软灰化 + 提示;后端下单校验同样拒绝,两道口径一致。
+- 用户在两个未完成的 checkout 分别确认付款:不做并发锁;两笔均成功按正常订单履约,极少数重复订阅由支持处理。
+- 账号摘要加载失败:展示错误与登录入口重试;不影响档位卡展示。
+- checkout 中鉴权失效:清空本地登录态,重新打开登录弹窗。
+- webhook 重复到达:不重复履约(订单系统口径)。
+- 履约失败:按统一 checkout 弹窗的失败口径展示,保留订单号。
 
 ## 非功能性需求
 
-- 不新增依赖注入。
-- 文案必须 i18n。
-- 商品价格、权益、商品语义、渠道价都来自后端配置。
-- 订阅配置修改必须直接使用 `backend/src/app/init/sql_executor.py` 执行 SQL,不得新增迁移脚本。
+- 不新增依赖注入;文案全部 i18n(en-US 基线)。
+- 商品价格、权益、渠道价都来自后端配置;页面不写死扣价。
+- 订阅配置修改必须直接使用 `backend/src/app/init/sql_executor.py` 执行 SQL 或幂等播种脚本,不得新增迁移脚本。
 - 支付密钥不出现在前端、日志、启动参数。
 - 不做金融级系统;允许局部失败,用户可重试。
-- 好评倒计时只存在当前弹窗内存中,不写 localStorage、sessionStorage 或后端状态。
+
+## 用户操作逻辑与 UI 元素
+
+| 元素 | 形式 | 可点击 | 行为 |
+| --- | --- | --- | --- |
+| 产品线 tab | 三个 tab 按钮(role=tablist) | 是 | 切换面板;账号区与按钮态随当前线刷新 |
+| 档位卡 | 每线一组静态卡(SSR),含 Most Popular 徽标 | 卡内按钮可点 | 见购买流程;Free 卡按钮为引导链接 |
+| 账号胶囊(未登录) | 登录按钮 | 是 | 打开登录/注册弹窗 |
+| 账号胶囊(已登录) | 头像 + 邮箱 + 当前线套餐名/到期 | 是 | 展开账号菜单(退出登录) |
+| How to cancel | 账号区按钮,条件显示 | 是 | 打开 PayPal 取消指引弹窗 |
+| 取消指引弹窗 | 原生 dialog,PayPal 三步路径 | 关闭可点 | 关闭不产生任何状态变更 |
+| 额度口径注记 | 面板底部文本 | 否 | 说明计量单位与每月重置口径 |
+| FAQ | 折叠问答列表 | 是 | 展开查看计费基础问题 |
+| checkout 弹窗 | 统一 OrderCheckout 弹窗 | 是 | 选渠道、确认、跳 PayPal、展示结果 |
 
 ## 数据埋点
 
 | 事件 | 触发时机 | 关键字段 |
 | --- | --- | --- |
-| `pricing_page_view` | Pricing 页渲染 | `locale`、`login_state` |
-| `web_pricing_open_from_extension` | 以 `utm_source=extension&source=quota_upgrade_button` 打开 Pricing；刷新重复记录 | `utm_source`、`source` |
-| `web_extension_store_review_click` | 点击“去好评”并前往 Chrome Web Store 评价页 | 无 |
-| `pricing_account_summary_loaded` | 账户状态加载成功 | `login_state`、`has_active_subscription`、`subscription_period`、`expires_at` |
-| `pricing_configs_loaded` | 配置加载成功 | `auto_renew_count` |
-| `pricing_plan_click` | 点击套餐按钮 | `product_class`、`product_id`、`auto_renew` |
-| `pricing_payment_method_select` | 切换支付方式 | `product_id`、`payment_method` |
-| `pricing_checkout_created` | 创建订单成功 | `order_no`、`product_id`、`payment_method` |
-| `pricing_checkout_paid` | 订单支付并履约成功 | `order_no`、`product_id` |
-| `pricing_checkout_failed` | 支付/履约失败 | `order_no`、`error_code`、`reason` |
-| `pricing_subscription_cancel_click` | 后续实现站内直接取消自动续费 | `payment_method` |
-| `pricing_subscription_cancel_success` | 后续实现取消自动续费成功 | `payment_method`、`expires_at` |
-| `pricing_subscription_cancel_failed` | 后续实现取消自动续费失败 | `payment_method`、`error_code`、`reason` |
+| `upgrade_cta_click` | 点击付费档购买按钮(打开 checkout 前) | `source`(pricing / extension)、`location=plan_card`、`plan`(=SKU) |
+| 其他 data-cta 点击 | 页面各引导入口,经全站 GA4 cta_click 通道 | `data-cta` 归因属性 |
 
-好评赠送只新增“去好评”点击事件;不新增曝光、倒计时完成、领取成功或失败事件。永久领取次数只用于资格判断,不作为分析事件。
+`plan` 维度取值为商品 SKU;当前可购买付费 SKU 共 10 个:`online_lite` / `online_basic` / `online_growth` / `online_pro`、`maps_pro` / `maps_business`、`api_basic` / `api_professional` / `api_business` / `api_scale`。Free 卡不可购买、不计入。
 
 ## 验收标准
 
-- 普通 Pricing 入口展示 Credits 套餐与 Unlimited 订阅套餐;插件来源入口隐藏 Credits 积分包,只展示 Unlimited 订阅套餐。
-- 以 `utm_source=extension` 或兼容的插件来源参数打开 Pricing 时补发 Website 登录态;普通 Pricing 不补发,发送失败不影响页面加载和购买。
-- Free 档展示为 5 次/天,不是购买卡片。
-- 已登录用户能看到 Credits、插件今日次数、当前订阅和到期时间。
-- Credits 支付成功后到账并刷新余额。
-- Unlimited 支付成功后订阅生效并刷新到期时间。
-- 未登录、Free、过期或非自动续费状态不展示“取消”按钮。
-- 有效且自动续费的 Unlimited 在账号状态区展示“取消”按钮;点击后弹窗同时展示 Telegram Stars 的 4 步路径与 PayPal 的 6 步路径。
-- 关闭取消指引后,页面不修改订阅状态和到期时间。
-- 后续实现取消自动续费时,取消成功后仍展示原到期时间和 Unlimited 权益。
-- 后续实现取消自动续费时,已取消自动续费的 Unlimited 到期前不能再次购买,到期后可重新购买。
-- 商品支付方式由配置 `auto_renew` 决定;修改该字段即可切换是否自动续费。
-- 已有有效 Unlimited 时订阅按钮灰化,点击后提示不可重复购买,不会创建订阅订单。
-- website 下载仍只消耗 Credits。
-- extension 免费用户每日 5 次,Unlimited 有效用户每日不限。
-- webhook 重复到达不重复履约。
-- 未领取账号的订阅确认弹窗展示指定好评赠送文案和“去好评”按钮;已领取账号不展示。
-- 活动开关关闭时,插件来源页面和订阅购买确认弹窗均不展示好评赠送入口,正常订阅购买仍可继续。
-- 插件来源的已登录未领取账号在账号区下方看到紧凑活动入口;未登录、已领取、资格加载失败和普通 Pricing 入口均隐藏。
-- 点击页面活动入口直接打开 Chrome Web Store 评价页并显示 30 秒检测界面;不显示购买确认或“继续购买”。
-- “去好评”打开 Chrome Web Store 评价页,原弹窗进入 30 秒检测界面且不再显示购买入口。
-- 每次点击“去好评”都尽力双写 `web_extension_store_review_click` 到 SLS 与后端 `mark_logs`;上报失败不阻断商店跳转和倒计时。
-- 检测界面明确提示不要关闭或刷新窗口;已经评论时等待检测。
-- 倒计时结束后自动领取;成功刷新到期时间并结束购买,失败可直接重试接口。
-- 关闭弹窗或刷新页面后不恢复倒计时。
-- 所有现有 Pricing 语言均提供好评赠送、倒计时、领取结果和重试文案。
+- 页面渲染 Online / Extension / API 三个 tab,默认 Online;各 tab 档位卡数量与「套餐定义」表一致(5/3/5 张,含 Free 卡)。
+- 卡面价格与额度与后端配置一致;Online/API 卡面如实标注 one-time · 30 days,Extension 两档为按月口径。
+- Free 卡不产生购买请求;CTA 为引导动作。
+- 未登录点击购买先登录;登录成功后重新加载配置与账号摘要。
+- 同产品线有效订阅时按钮软灰化,点击提示;跨产品线购买不受影响。
+- Online/API 档走 PayPal 一次性支付;Extension 档可经 PayPal 订阅支付。
+- 仅当前 tab 产品线的有效自动续费订阅显示取消指引;弹窗只展示路径,不改状态。
+- PayPal 回跳页按订单 product_class 正确分发文案。
+- 支付成功后账号区套餐摘要与按钮态刷新。
+- `upgrade_cta_click` 的 `plan` 字段等于所点卡片 SKU。
+
+## 关联文档
+
+- 订阅商品配置与状态:`@../006.订阅系统/tech-订阅商品与状态.md`
+- 订单与支付履约:`@../004.订单系统/feat.md`
+- 实现与配置:`@tech-实现与配置.md`
+- 自动续费与取消指引(Extension 线,含旧站历史口径):`@tech-pricing与自动续费.md`

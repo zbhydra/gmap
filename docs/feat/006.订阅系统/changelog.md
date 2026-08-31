@@ -1,5 +1,18 @@
 # 006 · 订阅系统 - 变更记录
 
+## 2026-08-31 订阅扩展 maps_online / maps_api 产品线(8 档,PayPal 一次性支付)
+
+**Why**:MapsGrab 商业化对标竞品分产品订阅,Online Scraper 与 API 两条产品线需要可购买的档位。占位期用户决策(auto_renew=false,PayPal 一次性支付):使真实 PayPal 凭据下立即可购买,无需先落渠道订阅协议;后续接自动续费时改商品配置并替换真实 provider_sku 即可。两线配额暂无消费方,014 云端落地后直接复用月度额度模型。
+
+**变更**:
+
+- 新增产品线 `maps_online`(Online Lite $19 / Basic $49 / Growth $99 / Pro $149,20,000/80,000/250,000/500,000 records/月)与 `maps_api`(API Basic $15 / Professional $65 / Business $115 / Scale $365,1,000/5,000/10,000/50,000 requests/月);全部 `period=month`、`duration_days=30`、`auto_renew=false`。
+- 商品 metadata `monthly_records` 全量改名 `monthly_quota`(语义 = 月度额度数,单位由产品线定义:maps/maps_online 为 records,maps_api 为 requests);checkout-configs 响应键同步改名。
+- `/api/client/auth/me` 新增 `maps_online_subscription`、`maps_api_subscription`(与 `maps_subscription` 同构)。
+- 播种脚本重构为表驱动 `scripts/seed_subscription_products.py`(幂等 upsert 11 个付费 SKU;新 8 档 provider_sku 占位 `{product_id}-paypal`);删除旧脚本 `seed_maps_subscription_products.py`。
+
+技术口径见 `@tech-订阅商品与状态.md`。
+
 ## 2026-08-14 增加订单自动续费人工运维脚本
 
 **Why**:支持人员需要按订单号核对并停止渠道后续扣款,但客户端取消接口和本地订阅实例取消状态仍未实施。

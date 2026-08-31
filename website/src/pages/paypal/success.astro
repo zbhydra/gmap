@@ -3,7 +3,7 @@
  * PayPal 支付回跳成功页（noindex）。
  *
  * SSR 渲染产品线中立的等待态文案；确认态由 paypal-return 轮询订单状态后
- * 按订单 product_line 切换 Credits / 套餐文案（载荷经 JSON script 注入）。
+ * 按订单 product_class 切换订阅 / Credits 文案（载荷经 JSON script 注入）。
  */
 import Layout from '../../layouts/Layout.astro'
 import { getContent } from '../../i18n/content'

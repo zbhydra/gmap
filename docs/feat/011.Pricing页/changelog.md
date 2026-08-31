@@ -1,5 +1,21 @@
 # 011 · Pricing 页 - 变更记录
 
+## 2026-08-31 Pricing 页重写为三产品线 tab 版(文档同步)
+
+**Why**:TG 主站退役、MapsGrab 站接管 website/ 后,Pricing 页实态已是 Online / Extension / API 三 tab 形态;旧文档仍描述已不存在的单页(账号→Credits→Unlimited)与好评赠送流程,与源码及 ROADMAP C5 口径割裂。本文档单元不改代码,只把 feat/tech 重建到现役实现口径。
+
+**变更**:
+
+- `feat.md` 以现役 `/pricing` 页为唯一真相重写:三 tab(online×5 卡 / extension×3 卡 / api×5 卡,均含 Free 引导卡),10 个可购买付费 SKU(online 4 + maps 2 + api 4,卡面如实区分 one-time·30 days 与按月订阅),账号区按当前 tab 展示线状态,PayPal 回跳按订单 product_class 分发文案,取消指引仅 PayPal 三步路径且只对有效自动续费订阅(Extension 两档)展示。
+- 移除旧站的 Credits 积分包售卖与好评赠送页面流程章节,并标注归属:后端好评赠送合同保留于 006 域(`checkout-configs` 响应字段页面不消费),`tech-好评赠送.md` 降为历史参考。
+- `tech-实现与配置.md`:前端结构对齐现役文件(删除 `PricingSubscriptionConfirmModal.astro` 死引用,补 `pricing-auth-controller.ts`、统一 OrderCheckout 弹窗、`pages/paypal/success|cancel.astro`);后端接口表移除页面不调用的 review-reward/cancel-auto-renew 与 Credits 接口;商品约定表补全 10 个新 SKU 与播种脚本;埋点口径改为 `upgrade_cta_click`(plan 维度 = SKU,10 个付费 SKU)。
+
+**边界确认**:
+
+- 现役页面唯一支付渠道为 PayPal;不做好评赠送入口、不做站内取消自动续费。
+- Free 档口径(online 1,000 records/月、api 20 requests/月)仅卡面展示,不落库、暂不生效。
+- `credit-purchase/` 组件目录保留为历史基建,页面不消费。
+
 ## 2026-08-21 插件来源 Pricing 补发登录态
 
 **Why**:用户可能先在 Website 登录和支付,再从插件重新打开 Pricing;此时需要用已有 Website token 恢复插件登录态。

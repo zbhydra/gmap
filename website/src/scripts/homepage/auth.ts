@@ -26,8 +26,12 @@ export interface HomepageUserInfo {
   created_at?: number | null
   /** 当前订阅权益摘要；未登录或后端缺省时为空。 */
   subscription?: HomepageUserSubscription | null
-  /** MapsGrab 产品线订阅摘要（006 产品线扩展）；后端缺省时为空。 */
+  /** MapsGrab 插件产品线订阅摘要；后端缺省时为空。 */
   maps_subscription?: HomepageUserSubscription | null
+  /** Online Scraper 产品线订阅摘要；后端缺省时为空。 */
+  maps_online_subscription?: HomepageUserSubscription | null
+  /** API 产品线订阅摘要；后端缺省时为空。 */
+  maps_api_subscription?: HomepageUserSubscription | null
 }
 
 /** 官网订阅状态接口保留 period 兼容字段，仅表达当前有效计费口径。 */

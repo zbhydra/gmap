@@ -1,7 +1,7 @@
 # 011 · Pricing 实现与配置
 
-> 技术说明。数据库配置必须直接使用 `backend/src/app/init/sql_executor.py` 执行 SQL,不得新增迁移脚本。
-> 实现状态:前端已提供 PayPal 与 Telegram Stars 自助取消指引;站内调用支付渠道取消自动续费仍为后续参考。
+> 技术说明,以现役 MapsGrab 站(website/)三产品线 tab 版 Pricing 页为口径。数据库配置必须直接使用 `backend/src/app/init/sql_executor.py` 执行 SQL 或幂等播种脚本,不得新增迁移脚本。
+> 实现状态:前端已提供 PayPal 自助取消指引(仅自动续费的 Extension 订阅展示);站内调用支付渠道取消自动续费仍为后续参考。
 
 ## 前端结构
 
@@ -9,16 +9,15 @@ Pricing 页面在 `website` 中拆分:
 
 - `website/src/pages/pricing.astro`:英文默认路由。
 - `website/src/pages/[lang]/pricing.astro`:多语言路由。
-- `website/src/components/pages/PricingPage.astro`:读取 locale 文案并装配页面。
-- `website/src/components/pricing/PricingPageShell.astro`:页面 DOM 壳。
-- `website/src/components/pricing/pricing-page-controller.ts`:登录态、商品加载、下单与取消指引入口状态。
-- `website/src/components/pricing/pricing-checkout.ts`:订阅 checkout client 和订单协议。
-- `website/src/components/pricing/PricingCancellationGuideModal.astro`:PayPal 与 Telegram Stars 自助取消路径的信息弹窗。
-- `website/src/components/pricing/PricingSubscriptionConfirmModal.astro`:订阅安装确认、好评倒计时与领取结果专用弹窗。
-- 后续实现站内直接取消自动续费时,继续复用 Pricing 账号状态区;API client 放在 `pricing-checkout.ts` 或订阅专用 helper 中,不要新建第二套支付弹窗。
-- `website/src/components/pricing/PricingAuthModal.astro`:Pricing 登录弹窗。
-
-Credits 购买复用 `website/src/components/credit-purchase/`。
+- `website/src/components/pages/PricingPage.astro`:读取文案(`src/i18n/pricing.ts`)并装配页面。
+- `website/src/components/pricing/PricingPageShell.astro`:页面 DOM 壳(SSR 静态渲染三 tab 与全部档位卡)。
+- `website/src/components/pricing/pricing-page-controller.ts`:登录态恢复、tab 切换(唯一状态源)、支付配置加载、购买按钮态、checkout 打开与账号摘要渲染。
+- `website/src/components/pricing/pricing-checkout.ts`:订阅 checkout-configs client、产品线常量与支付配置解析。
+- `website/src/components/pricing/PricingAuthModal.astro` + `pricing-auth-controller.ts`:登录/注册弹窗。
+- `website/src/components/pricing/PricingCancellationGuideModal.astro`:PayPal 自助取消三步路径的信息弹窗。
+- 支付弹窗复用全站统一组件 `website/src/components/order-checkout/`(OrderCheckoutModal 等),Pricing 不自建第二套支付弹窗。
+- PayPal 回跳页:`website/src/pages/paypal/success.astro` / `cancel.astro`,按订单 `product_class` 分发文案。
+- `website/src/components/credit-purchase/`:旧站 Credits 购买组件,现役 Pricing 页不消费,保留为共享基建历史代码。
 
 ## 后端接口
 
@@ -26,27 +25,16 @@ Pricing 依赖以下客户端接口:
 
 | 接口 | 用途 |
 | --- | --- |
-| `GET /api/client/auth/me` | 返回用户、Credits 余额、订阅状态/过期时间 |
-| `GET /api/client/credit/checkout-configs` | Credits 一次性购买套餐 |
-| `GET /api/client/subscription/checkout-configs` | Free/Unlimited 等订阅商品配置与好评赠送永久领取次数 |
-| `POST /api/client/subscription/review-reward/claim` | 计划接口:登录账号领取一次 7 天好评赠送订阅 |
-| `POST /api/client/subscription/cancel-auto-renew` | 后续接口:取消当前用户 Unlimited 自动续费;当前暂不实现 |
-| `POST /api/client/order/create` | Credits 和订阅统一创建订单 |
+| `GET /api/client/auth/me` | 返回用户与各产品线订阅摘要(`maps_online_subscription` / `maps_subscription` / `maps_api_subscription`) |
+| `GET /api/client/subscription/checkout-configs` | 全部启用订阅商品与 PayPal 渠道价(响应含好评赠送合同字段,页面不消费) |
+| `POST /api/client/order/create` | 统一创建订阅订单 |
 | `GET /api/client/order/status/{order_no}` | 支付后轮询订单状态 |
 
-`/api/client/subscription/status` 继续保留给插件兼容,不作为 website 下载额度来源。
+`/api/client/subscription/status` 继续保留给插件兼容,Pricing 不使用。`POST /api/client/subscription/review-reward/claim` 与 `cancel-auto-renew` 为 006 域合同/后续接口,现役页面不调用。
 
-好评赠送专用弹窗、倒计时和领取结果见 `@tech-好评赠送.md`;不扩展全站通用确认框。
+页面灰化与拦截口径:当前 tab 产品线在 auth/me 中有未过期订阅时,该线付费卡按钮加软灰态(`aria-disabled` + 样式类,不用原生 `disabled` 以保留点击提示),点击提示须等当前档到期;与后端下单校验同口径。取消指引按钮只在当前线订阅 `status=active`、`expires_at` 未过期且 `auto_renew=true` 时显示(现役商品中仅 Extension 两档可能满足);点击打开 PayPal 三步路径弹窗,不请求取消接口、不修改订阅状态。
 
-Pricing 账户摘要中的 `subscription.expires_at` 用于判断订阅按钮状态。已有有效 Unlimited 时按钮软灰化,点击后提示不可重复购买;按钮不使用原生 `disabled`,否则无法响应点击提示。
-
-取消指引入口同时读取 `subscription.expires_at` 与 `subscription.auto_renew`:仅未过期且自动续费的订阅在顶部账号状态区显示“取消”按钮。点击后打开原生 `dialog`,同时展示 Telegram Stars 的 4 步路径与 PayPal 的 6 步路径;不请求取消接口,不修改订阅状态。当前不读取 `subscription.cancel_available/cancel_at_period_end`。后续实现站内直接取消时,入口仍放在账号订阅行,不放在 Unlimited 套餐卡片里。
-
-`utm_source=extension` 切换插件来源 CTA,不隐藏账号摘要;页面隐藏 Credits 积分包且不请求 Credits checkout 配置,只加载与插件权益相关的 Unlimited。插件来源页面初始化时还会通过用户系统的统一发送函数补发 Website 登录态,分别通知正式版和预发布版两个固定扩展 ID;普通入口保持“账号 → Credits → Unlimited”且不触发补发。
-
-网页检测到 `utm_source=extension&source=quota_upgrade_button` 时,异步上报 `web_pricing_open_from_extension`:同时写 SLS 与后端 `mark_logs`,`mark_msg` 保存这两个来源参数。该曝光不去重,每次页面加载和刷新都新增一条;打点失败不阻断账号与商品加载。其他插件来源不写这个类型。
-
-订阅确认弹窗点击“去好评”时,通过同一 `recordHomepageMark()` 双写 `web_extension_store_review_click`,`mark_msg` 为空。每次真实点击都发起一次,上报不等待结果;失败只记录前端错误,不阻断 Chrome Web Store 新标签页和 30 秒倒计时。
+`utm_source=extension` 只做归因标记:给全部购买按钮加 `data-ga-source=extension` 供 GA4 通道上报,不切换布局、不隐藏任何卡片。
 
 ## 订阅商品配置
 
@@ -56,6 +44,18 @@ Pricing 账户摘要中的 `subscription.expires_at` 用于判断订阅按钮状
 | --- | --- | --- |
 | `free` | `free` | Free 可配置订阅档,当前 daily limit = 5 |
 | `unlimited` | `month` | Unlimited 月度订阅,续费方式由 metadata 配置 |
+| `maps_pro` / `maps_business` | `month` | Maps 插件线月度套餐(自动续费) |
+| `online_lite` / `online_basic` / `online_growth` / `online_pro` | `month` | `maps_online` 线月度套餐,`auto_renew=false`,PayPal 一次性支付 |
+| `api_basic` / `api_professional` / `api_business` / `api_scale` | `month` | `maps_api` 线月度套餐,`auto_renew=false`,PayPal 一次性支付 |
+
+`maps_online`/`maps_api` 两线的月度额度在 metadata `monthly_quota`(单位由产品线定义:records / requests),完整档位表与字段口径见 `@../006.订阅系统/tech-订阅商品与状态.md`。全部付费 SKU(11 个)由幂等播种脚本一次性写入,替代逐条手写 SQL:
+
+```bash
+cd backend
+uv run python scripts/seed_subscription_products.py
+```
+
+下方 Free / Unlimited 示例保留为单条手工配置方式参考。
 
 metadata:
 
@@ -139,6 +139,6 @@ uv run python src/app/init/sql_executor.py \
 支付成功 webhook 只更新订单支付状态并触发统一订单履约。订单系统按 `product_class` 分发:
 
 - `RECHARGE`:发放 Credits。
-- `SUBSCRIPTION`:读取订单快照 `duration_days`,续期 `user_subscriptions.expires_at`。
+- `SUBSCRIPTION`:读取订单快照 `product_line` 与 `duration_days`,upsert 对应产品线行的 `expires_at`。
 
-订阅下单前会拒绝已有未过期 Unlimited 的用户再次创建普通订阅订单,减少重复购买。该检查不增加并发锁或跨渠道协议协调;用户分别确认的两笔付款都成功时由履约层按订单快照续期,极少数重复订阅由支持处理。`user_subscriptions` 只表示 Unlimited 到期时间。
+订阅下单前会拒绝同一产品线已有未过期订阅的用户再次创建普通订阅订单,减少重复购买。该检查不增加并发锁或跨渠道协议协调;用户分别确认的两笔付款都成功时由履约层按订单快照续期,极少数重复订阅由支持处理。`user_subscriptions` 按 `(user_id, product_line)` 一行保存各产品线的当前订阅。

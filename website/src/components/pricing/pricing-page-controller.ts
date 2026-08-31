@@ -1,9 +1,10 @@
 /**
- * Pricing 页面控制器（MapsGrab 三档套餐版，W5）。
+ * Pricing 页面控制器（三产品线 tab 版）。
  *
- * 负责恢复登录态、渲染账户胶囊（Maps 产品线套餐摘要）、加载支付配置并把
- * Pro/Business 购买流程交给公共 OrderCheckoutModal。插件来源（utm_source=
- * extension，W7 接线）只做归因标记，不切换布局。
+ * 负责恢复登录态、产品线 tab 切换、渲染账户胶囊（当前 tab 产品线的订阅摘要）、
+ * 加载支付配置并把付费档购买流程交给公共 OrderCheckoutModal。当前 tab 是唯一
+ * 状态源：灰化/重复购买拦截、checkout source、GA4 plan 维度均由当前 tab 派生。
+ * 插件来源（utm_source=extension）只做归因标记，不切换布局。
  */
 
 import {
@@ -11,7 +12,8 @@ import {
   getCurrentUser,
   getStoredAccessToken,
   logoutCurrentUser,
-  type HomepageUserInfo
+  type HomepageUserInfo,
+  type HomepageUserSubscription
 } from '../../scripts/homepage/auth'
 import { ensureDeviceId } from '../../scripts/homepage/device'
 import type { RequestContext } from '../../scripts/homepage/api'
@@ -25,11 +27,14 @@ import {
   type OrderCheckoutSuccessPayload
 } from '../order-checkout/order-checkout-types'
 import {
+  MAPS_API_PRODUCT_LINE,
+  MAPS_ONLINE_PRODUCT_LINE,
+  MAPS_PRODUCT_LINE,
   formatPricingDisplayPrice,
   getDefaultPricingPaymentChannel,
   isPricingAuthFailure,
   listSubscriptionCheckoutConfigs,
-  pickMapsPlans,
+  pickPlansByLine,
   type SubscriptionCheckoutPlan
 } from './pricing-checkout'
 import { PRICING_AUTH_SUCCESS_EVENT, type PricingAuthSuccessPayload } from './pricing-auth-controller'
@@ -37,17 +42,43 @@ import { PRICING_AUTH_SUCCESS_EVENT, type PricingAuthSuccessPayload } from './pr
 /** 插件升级入口的 utm_source 值（W7 插件「订阅跳转按钮」落本页时携带）。 */
 const EXTENSION_UTM_SOURCE = 'extension'
 
-/** 可购买档位卡的商品 ID 集合（与后端 maps 商品配置对齐）。 */
-const BUYABLE_PLAN_IDS = ['pro', 'business'] as const
-type BuyablePlanId = (typeof BUYABLE_PLAN_IDS)[number]
+/** Pricing 页产品线（与 i18n tab 键、后端 product_line 三方对齐）。 */
+type PricingLineId = 'online' | 'extension' | 'api'
 
-/** 后端 maps 商品 ID → 档位卡 ID。 */
-const PLAN_PRODUCT_IDS: Record<BuyablePlanId, string> = {
-  pro: 'maps_pro',
-  business: 'maps_business'
+const PRICING_LINE_IDS: readonly PricingLineId[] = ['online', 'extension', 'api']
+
+/** 默认展示的产品线 tab（与 SSR 首个可见面板一致）。 */
+const DEFAULT_PRICING_LINE: PricingLineId = 'online'
+
+/** 产品线 → 后端契约常量（product_line / checkout source / auth/me 订阅字段）。 */
+interface PricingLineConfig {
+  /** 后端 product_line 常量。 */
+  productLine: string
+  /** 打开 checkout 弹窗与识别成功/价格变更事件用的业务来源。 */
+  checkoutSource: string
+  /** auth/me 中本线订阅摘要字段。 */
+  subscriptionKey: 'maps_online_subscription' | 'maps_subscription' | 'maps_api_subscription'
 }
 
-/** 页面文案。 */
+const PRICING_LINE_CONFIG: Record<PricingLineId, PricingLineConfig> = {
+  online: {
+    productLine: MAPS_ONLINE_PRODUCT_LINE,
+    checkoutSource: 'pricing_maps_online',
+    subscriptionKey: 'maps_online_subscription'
+  },
+  extension: {
+    productLine: MAPS_PRODUCT_LINE,
+    checkoutSource: 'pricing_maps',
+    subscriptionKey: 'maps_subscription'
+  },
+  api: {
+    productLine: MAPS_API_PRODUCT_LINE,
+    checkoutSource: 'pricing_maps_api',
+    subscriptionKey: 'maps_api_subscription'
+  }
+}
+
+/** 页面文案（PricingPageContent 的 controller 消费子集）。 */
 interface PricingCopy {
   account: {
     planLabel: string
@@ -55,23 +86,29 @@ interface PricingCopy {
     freePlan: string
     loadFailed: string
   }
+  tabs: Record<
+    PricingLineId,
+    {
+      checkout: {
+        usageNotice: string
+        successTitle: string
+        successDescription: string
+      }
+    }
+  >
   plans: {
     loading: string
     loadFailed: string
     noChannels: string
     alreadyActive: string
-  }
-  checkout: {
-    usageNotice: string
-    successTitle: string
-    successDescription: string
-    failedTitle: string
     productTitlePrefix: string
   }
 }
 
 /** 单个可购买档位卡的 DOM 集合。 */
 interface BuyableCardElements {
+  /** 卡所属产品线 tab。 */
+  line: PricingLineId
   /** 购买按钮。 */
   buy: HTMLButtonElement
   /** 卡内错误提示行。 */
@@ -82,6 +119,10 @@ interface BuyableCardElements {
 interface PricingElements {
   /** 页面根节点。 */
   root: HTMLElement
+  /** 产品线 tab 按钮（keyed by line）。 */
+  tabButtons: Map<PricingLineId, HTMLButtonElement>
+  /** 产品线面板（keyed by line）。 */
+  panels: Map<PricingLineId, HTMLElement>
   /** 账号加载状态。 */
   accountLoading: HTMLElement
   /** 未登录账号区。 */
@@ -114,7 +155,7 @@ interface PricingElements {
   cancellationGuideDialog: HTMLDialogElement
   /** 支付配置加载状态行。 */
   plansStatus: HTMLElement
-  /** 可购买档位卡（product_id → DOM）。 */
+  /** 可购买档位卡（SKU → DOM）。 */
   buyableCards: Map<string, BuyableCardElements>
 }
 
@@ -126,10 +167,12 @@ interface PricingState {
   token: string | null
   /** auth/me 用户。 */
   user: HomepageUserInfo | null
-  /** maps 产品线商品配置（product_id → plan）。 */
+  /** 全部产品线商品配置（SKU → plan）。 */
   plans: Map<string, SubscriptionCheckoutPlan>
   /** 最近一次配置请求版本；旧响应不得覆盖新登录态。 */
   loadVersion: number
+  /** 当前产品线 tab（唯一状态源，其余视图状态由它派生）。 */
+  currentLine: PricingLineId
   /** 是否为插件升级入口（W7 归因口径）。 */
   isExtensionSource: boolean
 }
@@ -144,6 +187,7 @@ async function initPricingPage(root: HTMLElement): Promise<void> {
     user: null,
     plans: new Map(),
     loadVersion: 0,
+    currentLine: DEFAULT_PRICING_LINE,
     isExtensionSource: new URLSearchParams(window.location.search).get('utm_source') === EXTENSION_UTM_SOURCE
   }
   applyExtensionAttribution(elements, state)
@@ -157,6 +201,12 @@ function bindEvents(elements: PricingElements, copy: PricingCopy, state: Pricing
   for (const button of elements.loginButtons) {
     button.addEventListener('click', () => {
       window.pricingAuthController?.open()
+    })
+  }
+
+  for (const [line, button] of elements.tabButtons) {
+    button.addEventListener('click', () => {
+      switchLine(elements, state, line)
     })
   }
 
@@ -198,9 +248,9 @@ function bindEvents(elements: PricingElements, copy: PricingCopy, state: Pricing
     }
   })
 
-  for (const [productId, card] of elements.buyableCards) {
+  for (const [sku, card] of elements.buyableCards) {
     card.buy.addEventListener('click', () => {
-      void openPlanCheckout(elements, copy, state, productId).catch(error => {
+      void openPlanCheckout(elements, copy, state, card.line, sku).catch(error => {
         console.error(error)
         setMessage(card.error, error instanceof Error ? error.message : copy.plans.loadFailed)
       })
@@ -230,6 +280,19 @@ function bindEvents(elements: PricingElements, copy: PricingCopy, state: Pricing
   window.addEventListener(ORDER_CHECKOUT_PRICE_UPDATED_EVENT, event => {
     void handleOrderCheckoutPriceUpdated(elements, copy, state, (event as CustomEvent<OrderCheckoutPriceUpdatedPayload>).detail)
   })
+}
+
+/** 切换产品线 tab：面板可见性与账户胶囊摘要都随当前线刷新。 */
+function switchLine(elements: PricingElements, state: PricingState, line: PricingLineId): void {
+  state.currentLine = line
+  for (const [tabLine, button] of elements.tabButtons) {
+    button.setAttribute('aria-selected', tabLine === line ? 'true' : 'false')
+  }
+  for (const [tabLine, panel] of elements.panels) {
+    panel.hidden = tabLine !== line
+  }
+  renderAccount(elements, getPricingCopy(elements.root), state)
+  renderPlanButtons(elements, getPricingCopy(elements.root), state)
 }
 
 /** 插件来源入口：购买按钮归因到 extension 渠道（W6 起 data-cta 经 GA4 cta_click 通道上报）。 */
@@ -275,7 +338,7 @@ async function restoreUser(
   }
 }
 
-/** 加载 maps 产品线支付配置并渲染购买按钮（导出供 module-scripts 回归测试）。 */
+/** 加载全部产品线支付配置并渲染购买按钮（导出供 module-scripts 回归测试）。 */
 export async function loadPlans(
   elements: PricingElements,
   copy: PricingCopy,
@@ -289,7 +352,13 @@ export async function loadPlans(
     if (requestVersion !== state.loadVersion) {
       return
     }
-    state.plans = pickMapsPlans(data.plans)
+    // 各线商品按 SKU 索引合并；SKU 全局唯一，卡查找不依赖当前 tab。
+    state.plans = new Map()
+    for (const line of PRICING_LINE_IDS) {
+      for (const [sku, plan] of pickPlansByLine(data.plans, PRICING_LINE_CONFIG[line].productLine)) {
+        state.plans.set(sku, plan)
+      }
+    }
     setMessage(elements.plansStatus, '')
   } catch (error) {
     console.error(error)
@@ -302,7 +371,15 @@ export async function loadPlans(
   renderPlanButtons(elements, copy, state)
 }
 
-/** 渲染账户胶囊：登录态切换 + Maps 产品线套餐摘要。 */
+/** 读取指定产品线在 auth/me 中的订阅摘要。 */
+function getLineSubscription(
+  state: PricingState,
+  line: PricingLineId
+): HomepageUserSubscription | null {
+  return state.user?.[PRICING_LINE_CONFIG[line].subscriptionKey] ?? null
+}
+
+/** 渲染账户胶囊：登录态切换 + 当前 tab 产品线的套餐摘要。 */
 function renderAccount(elements: PricingElements, copy: PricingCopy, state: PricingState): void {
   renderCancellationGuide(elements, state)
   const user = state.user
@@ -328,20 +405,20 @@ function renderAccount(elements: PricingElements, copy: PricingCopy, state: Pric
   elements.accountEmail.textContent = user.email
   elements.accountEmail.title = user.email
 
-  const mapsSubscription = user.maps_subscription ?? null
-  const isUnavailable = mapsSubscription?.status === 'unavailable'
-  const hasActivePlan = !isUnavailable && mapsSubscription?.expires_at != null
+  const subscription = getLineSubscription(state, state.currentLine)
+  const isUnavailable = subscription?.status === 'unavailable'
+  const hasActivePlan = !isUnavailable && subscription?.expires_at != null
   elements.userPlan.textContent = hasActivePlan
-    ? mapsSubscription?.display_name || copy.account.freePlan
+    ? subscription?.display_name || copy.account.freePlan
     : copy.account.freePlan
   elements.userExpires.textContent = hasActivePlan
-    ? formatTimestamp(mapsSubscription?.expires_at ?? null)
+    ? formatTimestamp(subscription?.expires_at ?? null)
     : copy.account.noExpiry
 }
 
-/** 只有仍在自动续费的有效 Maps 订阅展示渠道取消路径。 */
+/** 只有仍在自动续费的有效订阅（当前 tab 产品线）展示渠道取消路径。 */
 function canShowCancellationGuide(state: PricingState): boolean {
-  const subscription = state.user?.maps_subscription ?? null
+  const subscription = getLineSubscription(state, state.currentLine)
   if (subscription?.status !== 'active' || subscription.expires_at == null) {
     return false
   }
@@ -353,20 +430,19 @@ function renderCancellationGuide(elements: PricingElements, state: PricingState)
   setHidden(elements.cancellationGuideButton, !canShowCancellationGuide(state))
 }
 
-/** 按当前配置与登录态刷新可购买卡按钮。 */
+/** 按当前配置与登录态刷新可购买卡按钮（灰化按卡所属产品线的订阅状态）。 */
 function renderPlanButtons(
   elements: PricingElements,
   copy: PricingCopy,
   state: PricingState
 ): void {
-  const activePlan = hasActiveMapsSubscription(state)
-  for (const [productId, card] of elements.buyableCards) {
-    const plan = state.plans.get(productId)
+  for (const [sku, card] of elements.buyableCards) {
+    const plan = state.plans.get(sku)
     const hasChannel = Boolean(getDefaultPricingPaymentChannel(plan?.payment_channels ?? []))
     card.buy.disabled = !plan || !hasChannel
     // 配置整体缺失由全局状态行说明；单卡仅在商品存在但无渠道时提示。
     setMessage(card.error, plan && !hasChannel ? copy.plans.noChannels : '')
-    if (activePlan) {
+    if (hasActiveLineSubscription(state, card.line)) {
       card.buy.setAttribute('aria-disabled', 'true')
       card.buy.classList.add('is-soft-disabled')
     } else {
@@ -376,18 +452,19 @@ function renderPlanButtons(
   }
 }
 
-/** 打开档位对应的公共支付弹窗。 */
+/** 打开档位对应的公共支付弹窗（重复购买拦截按卡所属产品线）。 */
 async function openPlanCheckout(
   elements: PricingElements,
   copy: PricingCopy,
   state: PricingState,
-  productId: string
+  line: PricingLineId,
+  sku: string
 ): Promise<void> {
-  const card = elements.buyableCards.get(productId)
+  const card = elements.buyableCards.get(sku)
   if (!card) {
     return
   }
-  if (hasActiveMapsSubscription(state)) {
+  if (hasActiveLineSubscription(state, line)) {
     setMessage(card.error, copy.plans.alreadyActive)
     return
   }
@@ -396,7 +473,7 @@ async function openPlanCheckout(
     return
   }
 
-  const plan = state.plans.get(productId)
+  const plan = state.plans.get(sku)
   const channel = getDefaultPricingPaymentChannel(plan?.payment_channels ?? [])
   if (!plan || !channel) {
     setMessage(card.error, copy.plans.noChannels)
@@ -407,29 +484,30 @@ async function openPlanCheckout(
   reportGA4Event('upgrade_cta_click', {
     source: state.isExtensionSource ? EXTENSION_UTM_SOURCE : 'pricing',
     location: 'plan_card',
-    plan: productId
+    plan: sku
   })
 
+  const tabCheckout = copy.tabs[line].checkout
   await window.orderCheckoutController?.open({
-    source: 'pricing_maps',
+    source: PRICING_LINE_CONFIG[line].checkoutSource,
     product: {
       productClass: plan.product_class,
       productId: plan.product_id,
-      title: `${copy.checkout.productTitlePrefix} ${plan.product_name}`,
+      title: `${copy.plans.productTitlePrefix} ${plan.product_name}`,
       priceText: formatPricingDisplayPrice(plan),
-      usageNotice: copy.checkout.usageNotice,
-      successTitle: copy.checkout.successTitle,
-      successDescription: copy.checkout.successDescription,
+      usageNotice: tabCheckout.usageNotice,
+      successTitle: tabCheckout.successTitle,
+      successDescription: tabCheckout.successDescription,
       successPrimaryText: plan.product_name,
-      successSecondaryText: copy.checkout.successDescription,
+      successSecondaryText: tabCheckout.successDescription,
       paymentChannels: plan.payment_channels
     }
   })
 }
 
-/** 当前账号是否有未过期的 Maps 产品线订阅（同线重复购买拦截口径与后端一致）。 */
-function hasActiveMapsSubscription(state: PricingState): boolean {
-  const subscription = state.user?.maps_subscription ?? null
+/** 当前账号在指定产品线是否有未过期订阅（同线重复购买拦截口径与后端一致）。 */
+function hasActiveLineSubscription(state: PricingState, line: PricingLineId): boolean {
+  const subscription = getLineSubscription(state, line)
   if (subscription?.status !== 'active' || subscription.expires_at == null) {
     return false
   }
@@ -457,7 +535,7 @@ async function handleOrderCheckoutSuccess(
   state: PricingState,
   payload: OrderCheckoutSuccessPayload
 ): Promise<void> {
-  if (payload.source !== 'pricing_maps') {
+  if (!isPricingCheckoutSource(payload.source)) {
     return
   }
   try {
@@ -477,10 +555,15 @@ async function handleOrderCheckoutPriceUpdated(
   state: PricingState,
   payload: OrderCheckoutPriceUpdatedPayload
 ): Promise<void> {
-  if (payload.source !== 'pricing_maps') {
+  if (!isPricingCheckoutSource(payload.source)) {
     return
   }
   await loadPlans(elements, copy, state)
+}
+
+/** 判断 checkout 事件来源是否为本页任一产品线。 */
+function isPricingCheckoutSource(source: string): boolean {
+  return PRICING_LINE_IDS.some(line => PRICING_LINE_CONFIG[line].checkoutSource === source)
 }
 
 /** Pricing 页退出登录后同步刷新账号与按钮态。 */
@@ -580,19 +663,47 @@ function getPricingCopy(root: HTMLElement): PricingCopy {
   return JSON.parse(element.textContent) as PricingCopy
 }
 
+/** 判断元素所属产品线 tab（向上找面板容器）。 */
+function resolveCardLine(buy: HTMLButtonElement): PricingLineId | null {
+  const panel = buy.closest<HTMLElement>('[data-pricing-panel]')
+  const line = panel?.dataset.pricingPanel
+  if (line && (PRICING_LINE_IDS as readonly string[]).includes(line)) {
+    return line as PricingLineId
+  }
+  return null
+}
+
 /** 查询页面 DOM。 */
 function getPricingElements(root: HTMLElement): PricingElements {
+  const tabButtons = new Map<PricingLineId, HTMLButtonElement>()
+  const panels = new Map<PricingLineId, HTMLElement>()
   const buyableCards = new Map<string, BuyableCardElements>()
-  for (const productId of BUYABLE_PLAN_IDS) {
-    const buy = root.querySelector<HTMLButtonElement>(`[data-pricing-buy="${productId}"]`)
-    const error = root.querySelector<HTMLElement>(`[data-plan-error="${productId}"]`)
-    if (buy && error) {
-      buyableCards.set(PLAN_PRODUCT_IDS[productId], { buy, error })
+
+  for (const line of PRICING_LINE_IDS) {
+    const tab = root.querySelector<HTMLButtonElement>(`[data-pricing-tab="${line}"]`)
+    const panel = root.querySelector<HTMLElement>(`[data-pricing-panel="${line}"]`)
+    if (tab && panel) {
+      tabButtons.set(line, tab)
+      panels.set(line, panel)
+    }
+  }
+
+  for (const buy of root.querySelectorAll<HTMLButtonElement>('[data-pricing-buy]')) {
+    const sku = buy.dataset.pricingBuy
+    const line = sku ? resolveCardLine(buy) : null
+    if (!sku || !line) {
+      continue
+    }
+    const error = root.querySelector<HTMLElement>(`[data-plan-error="${sku}"]`)
+    if (error) {
+      buyableCards.set(sku, { line, buy, error })
     }
   }
 
   return {
     root,
+    tabButtons,
+    panels,
     accountLoading: query<HTMLElement>(root, '[data-pricing-account-loading]'),
     accountSignedOut: query<HTMLElement>(root, '[data-pricing-account-signed-out]'),
     accountSignedIn: query<HTMLElement>(root, '[data-pricing-account-signed-in]'),
