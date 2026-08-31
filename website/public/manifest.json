@@ -1,11 +1,11 @@
 {
-  "name": "Telegram Media Downloader",
-  "short_name": "TG Downloader",
-  "description": "Easily download images and videos from Telegram Web. Supports restricted channels and private groups without any permission verification.",
+  "name": "MapsGrab",
+  "short_name": "MapsGrab",
+  "description": "Maps data toolkit: browser extension and web tools for publicly available maps business information.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#3390ec",
+  "theme_color": "#1a73e8",
   "orientation": "portrait-primary",
   "icons": [
     {

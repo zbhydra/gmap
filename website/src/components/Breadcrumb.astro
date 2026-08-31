@@ -38,9 +38,9 @@ const { items } = Astro.props;
 
 <style>
   .breadcrumb {
-    padding: var(--spacing-sm) 0;
-    background: var(--color-gray-50);
-    border-bottom: 1px solid var(--color-gray-200);
+    padding: var(--space-2) 0;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
   }
 
   .breadcrumb-list {
@@ -48,7 +48,7 @@ const { items } = Astro.props;
     flex-wrap: wrap;
     align-items: center;
     list-style: none;
-    gap: var(--spacing-sm);
+    gap: var(--space-2);
     margin: 0;
     padding: 0;
   }
@@ -57,33 +57,33 @@ const { items } = Astro.props;
     display: flex;
     align-items: center;
     font-size: 13px;
-    color: var(--color-gray-600);
+    color: var(--text-2);
   }
 
   .breadcrumb-item:not(:last-child)::after {
     content: '/';
-    margin-left: var(--spacing-sm);
-    color: var(--color-gray-400);
+    margin-left: var(--space-2);
+    color: var(--text-3);
   }
 
   .breadcrumb-item a {
-    color: var(--color-primary);
+    color: var(--primary);
     transition: color var(--transition-normal);
   }
 
   .breadcrumb-item a:hover {
-    color: var(--color-primary-dark);
+    color: var(--primary-hover);
     text-decoration: underline;
   }
 
   .breadcrumb-item:last-child {
-    color: var(--color-gray-500);
+    color: var(--text-3);
     font-weight: 500;
   }
 
   @media (max-width: 640px) {
     .breadcrumb {
-      padding: var(--spacing-xs) 0;
+      padding: var(--space-1) 0;
     }
 
     .breadcrumb-list {

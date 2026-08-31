@@ -1,0 +1,201 @@
+---
+/**
+ * 图文分区的占位媒体槽（站级共用）：真实截图 / 录屏素材未产出时渲染带浏览器窗口
+ * 或文件卡外框的占位画面；素材产出后给 `src` 传路径即切换为真实图片——占位与回填
+ * 是同一组件的两个态，回填时只加 src 不动布局（015 D5 图文改造，对齐竞品图文密度）。
+ *
+ * 外框、骨架与徽章全部消费 design.md 语义 token；label 是用户可见文案，走 i18n 字典。
+ */
+interface Props {
+  /** 占位说明 / 图片 alt（i18n 文案，描述该位置应放的素材内容）。 */
+  label: string
+  /** 外框形态：browser = 浏览器窗口（页面 / 插件面板截图位），file = 文件卡（zip / 导出文件位）。 */
+  variant?: 'browser' | 'file'
+  /** CSS aspect-ratio 值（如 '16 / 10'），img 态与占位态共用，保证回填不引起布局跳动。 */
+  ratio?: string
+  /** 素材回填入口：提供后渲染 <img>（懒加载），占位框退役。 */
+  src?: string
+  class?: string
+}
+
+const { label, variant = 'browser', ratio = '16 / 10', src, class: className } = Astro.props
+---
+
+<figure
+  class:list={['media-slot', `media-slot--${variant}`, className]}
+  data-media-slot={src ? 'image' : variant}
+  style={`aspect-ratio: ${ratio};`}
+  role="img"
+  aria-label={label}
+>
+  {
+    src ? (
+      <img src={src} alt={label} loading="lazy" />
+    ) : (
+      <>
+        {variant === 'browser' && (
+          <div class="slot-chrome" aria-hidden="true">
+            <span class="slot-dot" />
+            <span class="slot-dot" />
+            <span class="slot-dot" />
+            <span class="slot-address" />
+          </div>
+        )}
+        <div class="slot-canvas" aria-hidden="true">
+          {variant === 'file' && (
+            <svg class="slot-file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />
+              <path d="M14 3v5h5" />
+            </svg>
+          )}
+          <div class="slot-skeleton">
+            <span class="slot-line slot-line--wide" />
+            <span class="slot-line" />
+            <span class="slot-line slot-line--short" />
+          </div>
+          <span class="slot-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3.5" y="5" width="17" height="14" rx="2.5" />
+              <circle cx="9" cy="10" r="1.5" fill="currentColor" stroke="none" />
+              <path d="m5.5 17 4.5-4.5 3 3 2.5-2.5 3 3" />
+            </svg>
+            {label}
+          </span>
+        </div>
+      </>
+    )
+  }
+</figure>
+
+<style>
+  .media-slot {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .media-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* 浏览器窗口 chrome：三个窗控点 + 地址栏（design.md token，不引入截图外的视觉语义） */
+  .slot-chrome {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 36px;
+    padding: 0 var(--space-4);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .slot-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: var(--rounded-full);
+    background: var(--border-strong);
+  }
+
+  .slot-address {
+    flex: 1;
+    max-width: 46%;
+    height: 12px;
+    margin-left: var(--space-2);
+    border-radius: var(--rounded-full);
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  /* 空态画布：虚线 border-strong 内框（design.md §7 空态），骨架 shimmer 见 §6 骨架屏 */
+  .slot-canvas {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    margin: var(--space-4);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--rounded-sm);
+    background: var(--bg);
+    padding: var(--space-6);
+  }
+
+  .slot-file-icon {
+    width: 32px;
+    height: 32px;
+    color: var(--border-strong);
+  }
+
+  .slot-skeleton {
+    position: absolute;
+    top: var(--space-5, 20px);
+    left: var(--space-5, 20px);
+    right: var(--space-5, 20px);
+    display: grid;
+    gap: var(--space-2);
+    opacity: 0.55;
+  }
+
+  .slot-line {
+    height: 8px;
+    border-radius: var(--rounded-full);
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    animation: slot-shimmer 1.5s linear infinite;
+  }
+
+  .slot-line--wide {
+    width: 72%;
+  }
+
+  .slot-line--short {
+    width: 40%;
+  }
+
+  @keyframes slot-shimmer {
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slot-line {
+      animation: none;
+    }
+  }
+
+  /* 素材待补徽章：chip 生态（-soft 底 + 同色文字），说明该位素材内容 */
+  .slot-badge {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    max-width: 100%;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  .slot-badge svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    color: var(--text-3);
+  }
+</style>

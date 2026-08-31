@@ -1,227 +1,218 @@
 /**
- * Legal page copy for TG Downloader website.
+ * 法务页文案（Terms / Privacy，en-US 基线）。
  *
- * Legal text is kept in one module so every locale route can render the same
- * reviewed fallback until each translation is explicitly approved.
+ * 法务文本集中在本模块，保证各 locale 路由渲染同一份审校口径。
+ * W3 正式版：事实口径与 extension/public/privacy.html（插件版隐私政策，2026-08-30）一致并扩写——
+ * 公开商家数据采集、本地 storage、自有后端四类用途（远程配置/账号配额/enrich/使用记录）、
+ * 可选 Drive/HubSpot 用户授权、无广告无第三方追踪；GA4 为营销站唯一第三方分析豁免。
  */
 import type { Locale } from '../i18n/ui'
 import { DEVELOPER_EMAIL } from '../lib/contact'
 
-/** Legal page route identifiers. */
+/** 法务页路由标识。 */
 export type LegalPageKind = 'terms' | 'privacy'
 
-/** One section in a legal document. */
+/** 法务文档中的一个区块。 */
 export interface LegalSection {
-  /** Visible H2 heading. */
+  /** 可见 H2 标题。 */
   title: string
-  /** Body paragraphs under this heading. */
+  /** 区块下的正文段落。 */
   paragraphs: string[]
-  /** Optional bullet list for obligations, examples, or user rights. */
+  /** 可选的要点清单（义务、示例或用户权利）。 */
   items?: string[]
 }
 
-/** Copy needed to render one legal page. */
+/** 渲染一个法务页所需的文案。 */
 export interface LegalPageContent {
-  /** Footer and small-label text. */
+  /** 页脚与小标签文案。 */
   navLabel: string
-  /** HTML title. */
+  /** HTML title。 */
   seoTitle: string
-  /** Meta description. */
+  /** meta description。 */
   seoDescription: string
-  /** Page H1. */
+  /** 页面 H1。 */
   title: string
-  /** Short summary below the H1. */
+  /** H1 下方的简短摘要。 */
   intro: string
-  /** Label shown before updatedAt. */
+  /** updatedAt 前显示的标签。 */
   updatedLabel: string
-  /** Human-readable last-updated date. */
+  /** 可读的最后更新日期。 */
   updatedAt: string
-  /** Document sections. */
+  /** 最后更新日期的 ISO 形态（time datetime 与 JSON-LD dateModified 共用）。 */
+  updatedAtISO: string
+  /** 文档区块。 */
   sections: LegalSection[]
 }
 
-/** Terms and privacy copy for one locale. */
+/** 单一 locale 的 Terms 与 Privacy 文案。 */
 interface LegalContent {
-  /** Terms of Service page copy. */
+  /** 服务条款页文案。 */
   terms: LegalPageContent
-  /** Privacy Policy page copy. */
+  /** 隐私政策页文案。 */
   privacy: LegalPageContent
 }
 
-const termsLastUpdated = 'July 5, 2026'
-const privacyLastUpdated = 'August 7, 2026'
-const serviceName = 'TG Downloader'
+const termsLastUpdatedISO = '2026-08-31'
+const privacyLastUpdatedISO = '2026-08-31'
+const serviceName = 'MapsGrab'
+const supportEmail = DEVELOPER_EMAIL
 
+/** en-US 正式法务文案（当前唯一 locale）。 */
 const englishLegalContent: LegalContent = {
   terms: {
     navLabel: 'Terms',
     seoTitle: `Terms of Service | ${serviceName}`,
     seoDescription:
-      'Read the TG Downloader Terms of Service, including acceptable use, account access, downloads, subscriptions, disclaimers, and contact details.',
+      'The MapsGrab Terms of Service: acceptable use, user responsibility for collected data, purchases, disclaimers, and how to contact us.',
     title: 'Terms of Service',
-    intro:
-      'These terms explain how you may use TG Downloader, including the website, browser extension, download tools, account features, and subscription-related workflows.',
+    intro: `These Terms govern your use of ${serviceName}: the browser extension, this website, and the free web tools. Please read them before using the service.`,
     updatedLabel: 'Last updated',
-    updatedAt: termsLastUpdated,
+    updatedAt: 'August 31, 2026',
+    updatedAtISO: termsLastUpdatedISO,
     sections: [
       {
-        title: 'Acceptance',
+        title: 'Acceptance of terms',
         paragraphs: [
-          `By accessing or using ${serviceName}, you agree to these Terms. If you do not agree, do not use the service.`,
-          'These Terms apply to the website, extension, download workflows, account features, support communications, and any related services we operate.'
+          `By accessing or using ${serviceName}, you agree to these Terms. If you do not agree with them, do not install the extension or use the website and tools.`
         ]
       },
       {
         title: 'What the service does',
         paragraphs: [
-          `${serviceName} helps users save media that is already accessible to them in supported browsers and supported platforms. The service does not grant membership to private channels, recover content you cannot access, or provide rights to redistribute third-party content.`,
-          'Some features may run locally in your browser extension, while website parsing, account, quota, and subscription features may communicate with our backend services.'
+          `${serviceName} helps you collect information that is publicly displayed on Google Maps pages you visit — business details, reviews, photos, and related contact information — and export it. The service consists of a browser extension for Microsoft Edge and Firefox, this website, and free web tools that run in your browser.`
         ]
       },
       {
-        title: 'Acceptable use',
+        title: 'Publicly available data',
         paragraphs: [
-          'You are responsible for how you use downloaded or saved content. Use the service only for content you own, have permission to keep, or are otherwise legally allowed to use.'
+          'The service is designed to work only with information that is publicly shown on the pages you browse. It does not access private accounts, gated content, or data that requires special access beyond what any visitor can see.'
+        ]
+      },
+      {
+        title: 'Your responsibility',
+        paragraphs: [
+          'You decide what to collect and how to use it, and you are responsible for that use. When you use collected information, comply with the laws that apply to you and to your purpose.',
+          'In particular, you agree not to:'
         ],
         items: [
-          'Do not use the service to infringe copyright, privacy rights, publicity rights, or other rights of another person.',
-          'Do not use the service to bypass membership, authentication, payment, technical access controls, or platform restrictions you are not allowed to bypass.',
-          'Do not upload, distribute, sell, or repost content unless you have the necessary rights.',
-          'Do not use the service for malware, phishing, spam, surveillance, scraping unrelated to the visible user-facing feature, or illegal activity.'
+          'Use the service for any unlawful activity or in violation of third-party rights.',
+          'Re-identify individuals or build profiles of private persons from collected business data.',
+          'Use collected contact details for spam or unsolicited bulk messaging.',
+          'Resell raw collected data as a competing data product without a separate agreement with us.',
+          'Interfere with, overload, or attempt to disrupt the service or the platforms it works with.'
         ]
       },
       {
-        title: 'Accounts and access',
+        title: 'Accounts and quotas',
         paragraphs: [
-          'Some website features may require signing in with Google or email. You must provide accurate information and keep your account access secure.',
-          'We may limit, suspend, or terminate access if we believe the service is being abused, used illegally, or used in a way that creates risk for users, platforms, or our systems.'
+          'The extension works without an account within a free monthly quota. Some features — higher limits, purchases, cloud integrations — require an account. You are responsible for keeping your account credentials secure and for activity that happens under your account.'
         ]
       },
       {
-        title: 'Paid features, Credits, and subscriptions',
+        title: 'Purchases and subscriptions',
         paragraphs: [
-          'Paid or upgraded features, if available, may include quotas, limits, billing periods, or manual activation steps shown on the pricing page or in direct support messages.',
-          'Credits and subscriptions are separate products with separate usage scopes. Credits may be used only for website download features, while paid subscriptions apply only to supported desktop browser extension download features. A subscription does not include website download Credits, and Credits do not extend or replace subscription benefits.',
-          'Credits are one-time purchases for website download features. Purchased Credits are added to the purchasing account after payment is confirmed, do not auto-renew, do not expire, and are not refundable, transferable, or redeemable for cash.',
-          'Subscription payments are final and non-refundable. You may turn off auto-renewal at any time through the original payment provider or by contacting support before the next renewal. Once auto-renewal is turned off, no future renewal charge will be made, and your paid subscription remains available until the end of the current billing period.'
+          'Paid plans are described on the Pricing page. Prices, quotas, and billing periods are shown before you buy, and purchases are handled through the payment providers offered at checkout. Subscription plans renew automatically until canceled, and you can cancel at any time; cancellation stops future renewals.'
         ]
       },
       {
-        title: 'Third-party platforms',
+        title: 'The service is provided as is',
         paragraphs: [
-          `${serviceName} is not affiliated with Telegram, TikTok, Instagram, Threads, X, Vimeo, Google, or any other supported third-party platform unless explicitly stated.`,
-          'Your use of third-party platforms remains subject to their own terms, policies, copyright rules, account rules, and technical limitations.'
+          `The service is provided "as is" and "as available". Platforms change frequently, and collection features can stop working partially or entirely at any time. ${serviceName} makes no warranties, express or implied, about uninterrupted availability, completeness of collected data, or fitness for a particular purpose.`,
+          'We may change, suspend, or discontinue any part of the service, and we may update these Terms. When the changes are material, we will announce them on this website. Continued use after changes take effect means you accept the updated Terms.'
         ]
       },
       {
-        title: 'No legal advice',
+        title: 'Limitation of liability',
         paragraphs: [
-          'The service and these Terms do not provide legal advice. Whether you may save, copy, or share specific content depends on permission, platform rules, copyright law, privacy law, and local law.'
-        ]
-      },
-      {
-        title: 'Disclaimers',
-        paragraphs: [
-          'The service is provided on an "as is" and "as available" basis. We do not promise that every link, file, platform, browser version, private channel, or restricted media item will work.',
-          'We may change, pause, remove, or limit features when needed for reliability, security, compliance, abuse prevention, or platform changes.'
-        ]
-      },
-      {
-        title: 'Changes to these Terms',
-        paragraphs: [
-          'We may update these Terms as the product, law, or platform policies change. The updated date above shows when this page last changed.',
-          'Continuing to use the service after changes means you accept the updated Terms.'
+          `To the maximum extent permitted by law, ${serviceName} and its operators are not liable for indirect, incidental, special, or consequential damages — including lost profits or data — arising from your use of or inability to use the service.`
         ]
       },
       {
         title: 'Contact',
         paragraphs: [
-          `Questions about these Terms can be sent to ${DEVELOPER_EMAIL}.`
+          `Questions about these Terms can be sent to ${supportEmail}.`
         ]
       }
     ]
   },
   privacy: {
-    navLabel: 'Privacy Policy',
+    navLabel: 'Privacy',
     seoTitle: `Privacy Policy | ${serviceName}`,
     seoDescription:
-      'Read the TG Downloader Privacy Policy, including what data is collected, how Google sign-in data is used, analytics, storage, sharing, retention, and contact details.',
+      'The MapsGrab Privacy Policy: what data the extension and website process, where it is stored, what our backend is used for, and the boundaries we follow.',
     title: 'Privacy Policy',
-    intro:
-      'This policy explains what information TG Downloader collects, why we use it, how it is stored or shared, and what choices you have.',
+    intro: `This policy explains what data ${serviceName} handles, where it is stored, and what reaches our servers. The short version: the extension works on publicly displayed data and keeps results in your browser, our backend only powers configuration, quotas, optional enrichment, and minimal usage logs, and we run no ads and no third-party trackers in the extension.`,
     updatedLabel: 'Last updated',
-    updatedAt: privacyLastUpdated,
+    updatedAt: 'August 31, 2026',
+    updatedAtISO: privacyLastUpdatedISO,
     sections: [
       {
-        title: 'Information we process',
-        paragraphs: [
-          'Depending on how you use the service, we may process account information, authentication information, submitted links, download request metadata, quota usage, subscription status, support messages, device identifiers, browser storage values, logs, and analytics events.',
-          'When you use the browser extension, media detection and download workflows are designed to run from the browser context needed for the user-facing feature. The extension should not ask for your Telegram password or Telegram API credentials.'
+        title: 'Data the extension processes',
+        paragraphs: ['The extension handles the following categories of data:'],
+        items: [
+          'Public business data — information displayed on the Google Maps pages you visit (name, address, phone, website, rating, reviews, photos, etc.) while you use the extraction features.',
+          'Your settings — preferences you configure (export format, field selection, automation switches, interface language).',
+          'Technical and interaction data — minimal usage events (feature usage counters, error messages) used to keep the extension working against Google page changes.',
+          'Account identifiers we issue — an anonymous device identifier and, if you sign in, your account email and plan or quota status.'
         ]
       },
       {
-        title: 'Google sign-in data',
+        title: 'Where data is stored',
         paragraphs: [
-          'If you sign in with Google, we use the basic identity information Google provides, such as your email address and profile identity, to create or access your TG Downloader account.',
-          'The use and transfer of information received from Google APIs will adhere to the Chrome Web Store User Data Policy, including the Limited Use requirements.'
+          'Settings, extraction results, and batch task state are stored locally in your browser (extension local storage and IndexedDB). They never leave your device unless you trigger an export or one of the optional integrations described below.',
+          'Google Drive and HubSpot OAuth tokens, if you connect them, are also stored only in your browser.'
         ]
       },
       {
-        title: 'How we use information',
+        title: 'What our backend processes',
         paragraphs: [
-          'We use information to operate the service, authenticate users, enforce quotas, provide downloads and playback workflows, prevent abuse, improve reliability, answer support requests, maintain security, and comply with legal obligations.'
+          'The extension and this website contact our own servers for four purposes:'
         ],
         items: [
-          'We do not sell personal information.',
-          'We do not use user data for personalized advertising.',
-          'We do not ask for Telegram passwords or Telegram API credentials.',
-          'We use data only for disclosed service, security, analytics, support, and compliance purposes.'
+          'Remote configuration — page-structure presets that keep extraction working when Google changes its pages.',
+          'Account and quota services — sign-in, plan status, and monthly usage accounting.',
+          'Email and social media enrichment — looking up publicly listed contact details on collected business websites when the feature is used.',
+          'Usage logging — minimal records of feature usage and errors used to maintain and improve the service.'
         ]
       },
       {
-        title: 'Analytics',
+        title: 'Optional Google Drive and HubSpot integrations',
         paragraphs: [
-          'The website may use analytics tools, including Google Analytics and Microsoft Clarity, to understand page usage, navigation, interactions, session replays, conversion, and product reliability. Analytics data is not used to sell user data or build personalized advertising profiles for TG Downloader.'
+          'Only if you explicitly connect them in settings, exported data is uploaded to your own Google Drive or synced to your own HubSpot account. These integrations use your authorization, act on your behalf, and can be revoked at any time from the extension settings or from your Google / HubSpot account.'
         ]
       },
       {
-        title: 'Storage and security',
+        title: 'Website analytics',
         paragraphs: [
-          'Account tokens, device identifiers, quota state, and UI state may be stored in browser storage or on our backend systems when needed to keep the product working.',
-          'We use reasonable technical and organizational safeguards, including HTTPS for supported network communications. No system can be guaranteed to be completely secure.'
+          'This website uses Google Analytics 4 (GA4) to measure aggregate page usage. GA4 is the only third-party analytics we use, and it runs on this website only — the extension itself contains no analytics.'
         ]
       },
       {
-        title: 'Sharing',
-        paragraphs: [
-          'We share information only when needed to operate or improve the service, provide infrastructure, process authentication, run analytics, respond to support, prevent abuse, comply with law, or complete a business transfer such as a merger or asset sale.',
-          'Third-party services may process data under their own terms and privacy policies.'
+        title: 'What we never do',
+        paragraphs: ['These boundaries hold across the extension and the website:'],
+        items: [
+          'No ads.',
+          'No third-party trackers in the extension.',
+          'No selling or renting of personal data.',
+          'No collection of your browsing history beyond the Google Maps pages you extract from.'
         ]
       },
       {
-        title: 'Retention',
+        title: 'Data removal',
         paragraphs: [
-          'We keep information only as long as reasonably needed for the purposes described in this policy, including account operation, security, abuse prevention, legal obligations, accounting, and dispute resolution.',
-          'Local browser data may remain on your device until you clear it, uninstall the extension, sign out, or reset browser storage.'
-        ]
-      },
-      {
-        title: 'Your choices',
-        paragraphs: [
-          'You can stop using the service, sign out, uninstall the extension, clear browser storage, or contact us about account or data requests.',
-          `For privacy questions or account data requests, contact ${DEVELOPER_EMAIL}. We may need to verify your email address before acting on a request.`
-        ]
-      },
-      {
-        title: 'Children',
-        paragraphs: [
-          'The service is not intended for children under the age required by applicable law to use online services without parental consent. Do not use the service if you are not old enough to agree to this policy.'
+          `Removing the extension deletes all locally stored data. If you want your backend account data deleted, contact us at ${supportEmail} and we will remove it.`
         ]
       },
       {
         title: 'Changes to this policy',
         paragraphs: [
-          'We may update this policy as the product, law, or platform policies change. The updated date above shows when this page last changed.'
+          'We update this policy when the service changes. The date above reflects the latest revision, and material changes will be announced on this website.'
+        ]
+      },
+      {
+        title: 'Contact',
+        paragraphs: [
+          `Questions or requests about privacy can be sent to ${supportEmail}.`
         ]
       }
     ]
@@ -232,12 +223,12 @@ const legalContentByLocale: Partial<Record<Locale, LegalContent>> = {
   'en-US': englishLegalContent
 }
 
-/** Returns reviewed legal copy for the requested locale, falling back to English. */
+/** 返回指定 locale 的法务文案，缺失时回退英文。 */
 export function getLegalContent(locale: Locale): LegalContent {
   return legalContentByLocale[locale] ?? englishLegalContent
 }
 
-/** Returns one reviewed legal page for the requested locale, falling back to English. */
+/** 返回指定 locale 的单个法务页，缺失时回退英文。 */
 export function getLegalPageContent(locale: Locale, pageKind: LegalPageKind): LegalPageContent {
   return getLegalContent(locale)[pageKind]
 }

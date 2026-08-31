@@ -5,10 +5,9 @@
  * 新 CTA 只需在元素上加 `data-ga-event="xxx"`，不需要额外 JS。
  */
 
-type GA4EventParamValue = string | number | boolean | undefined
+import { collectUtmParams } from './homepage/ga4'
 
-// 本文件仅通过动态 import 引用重型埋点模块；显式导出确保全局类型扩展仍处于模块作用域。
-export {}
+type GA4EventParamValue = string | number | boolean | undefined
 
 type GtagFn = (command: 'event', name: string, params?: Record<string, GA4EventParamValue>) => void
 
@@ -20,8 +19,30 @@ declare global {
 
 const GA_EVENT_ATTR = 'data-ga-event'
 const GA_PARAM_PREFIX = 'data-ga-'
+const CTA_ATTR = 'data-cta'
 const CHROME_WEB_STORE_HOST = 'chromewebstore.google.com'
 const MARK_RECORD_PATH = '/api/client/mark/record'
+
+/** 事件元素的自归因地址：链接元素取其 href，其余（表单按钮等）取当前页面地址。 */
+function resolveAttributionHref(element: HTMLElement): string {
+  if (element instanceof HTMLAnchorElement && element.href) {
+    return element.href
+  }
+  return window.location.href
+}
+
+/**
+ * 合并 utm 归因参数（015 feat 埋点表：CTA 点击/工具使用带 utm）。
+ * 优先级：显式 params > 被点链接 utm > 当前页面 utm。
+ */
+function withUtmAttribution(
+  params: Record<string, GA4EventParamValue>,
+  element: HTMLElement
+): Record<string, GA4EventParamValue> {
+  const pageUtm = collectUtmParams(window.location.href)
+  const linkUtm = collectUtmParams(resolveAttributionHref(element))
+  return { ...pageUtm, ...linkUtm, ...params }
+}
 
 function collectParams(element: HTMLElement): Record<string, GA4EventParamValue> {
   const params: Record<string, GA4EventParamValue> = {}
@@ -114,7 +135,28 @@ function dispatchGAEvent(target: HTMLElement): void {
   }
 
   try {
-    gtag('event', eventName, collectParams(target))
+    gtag('event', eventName, withUtmAttribution(collectParams(target), target))
+  } catch {
+    // 防止埋点异常影响主流程。
+  }
+}
+
+/**
+ * data-cta 统一漏斗事件（015 feat 埋点表 cta_click）：带 cta_id（data-cta 值）与 utm 归因。
+ * 与 data-ga-event 业务事件并存；同元素双属性时两条事件都会上报（漏斗聚合 + 业务明细各取所需）。
+ */
+function dispatchCtaClick(target: HTMLElement): void {
+  const gtag = window.gtag
+  if (typeof gtag !== 'function') {
+    return
+  }
+
+  try {
+    gtag(
+      'event',
+      'cta_click',
+      withUtmAttribution({ cta_id: target.getAttribute(CTA_ATTR) ?? '' }, target)
+    )
   } catch {
     // 防止埋点异常影响主流程。
   }
@@ -139,6 +181,22 @@ document.addEventListener(
       )
     })
     dispatchGAEvent(target)
+  },
+  { capture: true }
+)
+
+document.addEventListener(
+  'click',
+  event => {
+    const origin = event.target
+    if (!(origin instanceof Element)) {
+      return
+    }
+    const target = origin.closest<HTMLElement>(`[${CTA_ATTR}]`)
+    if (!target) {
+      return
+    }
+    dispatchCtaClick(target)
   },
   { capture: true }
 )

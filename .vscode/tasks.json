@@ -36,21 +36,6 @@
       }
     },
     {
-      "label": "dev: MapsGrab 站 (7630)",
-      "type": "shell",
-      "command": "lsof -ti tcp:7630 | xargs kill -9 2>/dev/null; pnpm dev",
-      "options": {
-        "cwd": "${workspaceFolder}/website-mapsgrab"
-      },
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      }
-    },
-    {
       "label": "dev: 管理后台 (7610)",
       "type": "shell",
       "command": "lsof -ti tcp:7610 | xargs kill -9 2>/dev/null; pnpm dev",

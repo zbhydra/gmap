@@ -26,6 +26,8 @@ export interface HomepageUserInfo {
   created_at?: number | null
   /** 当前订阅权益摘要；未登录或后端缺省时为空。 */
   subscription?: HomepageUserSubscription | null
+  /** MapsGrab 产品线订阅摘要（006 产品线扩展）；后端缺省时为空。 */
+  maps_subscription?: HomepageUserSubscription | null
 }
 
 /** 官网订阅状态接口保留 period 兼容字段，仅表达当前有效计费口径。 */
@@ -168,22 +170,16 @@ const GOOGLE_REDIRECT_EMAIL_VERIFY_PARAM = 'google_email_verification'
 const GOOGLE_AUTH_LOG_PREFIX = '[GoogleAuth]'
 const GOOGLE_BUTTON_DEFAULT_LABEL = 'Continue with Google'
 const GOOGLE_BUTTON_LOADING_LABEL = 'Connecting...'
-/** 官网通知插件同步 website 登录态的固定消息类型。 */
-export const WEB_AUTH_CHANGED_MESSAGE_TYPE = 'TG_DOWNLOAD_WEB_AUTH_CHANGED'
-/** 官网插件登录页请求插件关闭当前登录页并返回 Telegram Web 的消息类型。 */
-export const EXTENSION_LOGIN_RETURN_MESSAGE_TYPE = 'TG_DOWNLOAD_EXTENSION_LOGIN_RETURN'
-/** 插件确认已用 website token 换取并保存 extension token 的固定消息类型。 */
-export const EXTENSION_TOKEN_EXCHANGED_MESSAGE_TYPE = 'TG_DOWNLOAD_EXTENSION_TOKEN_EXCHANGED'
-/** Chrome Web Store 正式扩展 ID。 */
-export const EXTENSION_STORE_ID = 'lflkobgaibapekhjnfhkaeagdnojjnla'
-/** 独立安装的预发布扩展 ID。 */
-export const EXTENSION_PRE_RELEASE_ID = 'cknimihpjagocmakbkplpjdcgjlbnkec'
-/** Website 登录态同步与 v2 返回消息的两个固定扩展目标。 */
-export const EXTENSION_TARGET_IDS = [EXTENSION_STORE_ID, EXTENSION_PRE_RELEASE_ID] as const
+/** 网页通知插件同步 website 登录态的固定消息类型（旧扩展经 postMessage 兼容通道读取）。 */
+const WEB_AUTH_CHANGED_MESSAGE_TYPE = 'MAPSGRAB_WEB_AUTH_CHANGED'
 /** v2 网页 → 扩展：website 登录态变更，消息体携带 web_access_token。 */
-export const TG_DOWNLOAD_EXTENSION_AUTH_CHANGED_V2 = 'TG_DOWNLOAD_EXTENSION_AUTH_CHANGED_V2'
-/** v2 网页 → 扩展：登录页请求聚焦已打开的 Telegram Web tab。 */
-export const TG_DOWNLOAD_EXTENSION_RETURN_V2 = 'TG_DOWNLOAD_EXTENSION_RETURN_V2'
+const EXTENSION_AUTH_CHANGED_MESSAGE_V2 = 'MAPSGRAB_EXTENSION_AUTH_CHANGED_V2'
+/**
+ * 登录态广播目标扩展 ID 列表（externally_connectable 桥）。
+ *
+ * MapsGrab 扩展上架后回填（W7 插件联动）；为空时 v2 广播自然 no-op，仅保留 postMessage 兼容通道。
+ */
+const EXTENSION_TARGET_IDS: readonly string[] = []
 /** Bing Maps 插件固定扩展 ID（extension-bing manifest key 推导；私钥丢失则 ID 漂移）。 */
 export const BING_MAPS_EXTENSION_ID = 'pgcpggcfmfdmobpheojngndpcmnkibmm'
 /** Bing 插件登录桥目标列表（上架后追加商店 ID）。 */
@@ -192,9 +188,8 @@ export const BING_EXTENSION_TARGET_IDS = [BING_MAPS_EXTENSION_ID] as const
 export const BING_MAPS_EXTENSION_AUTH_CHANGED = 'BING_MAPS_EXTENSION_AUTH_CHANGED'
 /** 网页 → Bing 插件：登录页请求关闭当前登录 tab。 */
 export const BING_MAPS_EXTENSION_LOGIN_RETURN = 'BING_MAPS_EXTENSION_LOGIN_RETURN'
-/** 网站默认 Google OAuth Client ID；公开 ID，不包含 secret，可被环境变量覆盖。 */
-export const DEFAULT_PUBLIC_GOOGLE_CLIENT_ID =
-  '423442422649-t90svp0aphcikpd3b2l44k9jpp40ojec.apps.googleusercontent.com'
+/** 网站默认 Google OAuth Client ID 占位；正式 client 建好后配置到环境变量 PUBLIC_GOOGLE_CLIENT_ID。 */
+export const DEFAULT_PUBLIC_GOOGLE_CLIENT_ID = ''
 const GOOGLE_BUTTON_ICON_SVG =
   '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="12 10 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">' +
   '<path d="M31.6 20.2273C31.6 19.5182 31.5364 18.8364 31.4182 18.1818H22V22.05H27.3818C27.15 23.3 26.4455 24.3591 25.3864 25.0682V27.5773H28.6182C30.5091 25.8364 31.6 23.2727 31.6 20.2273V20.2273Z" fill="#4285F4"/>' +
@@ -260,7 +255,7 @@ export function notifyWebAuthChanged(): void {
   for (const extensionId of EXTENSION_TARGET_IDS) {
     runtime.sendMessage(
       extensionId,
-      { type: TG_DOWNLOAD_EXTENSION_AUTH_CHANGED_V2, web_access_token: token },
+      { type: EXTENSION_AUTH_CHANGED_MESSAGE_V2, web_access_token: token },
       () => {
         if (runtime.lastError) {
           logGoogleAuthStage('warn', 'extension_auth_sync_failed', {
@@ -274,10 +269,8 @@ export function notifyWebAuthChanged(): void {
 }
 
 /**
- * 向 Bing Maps 插件同步 website 登录态。
- *
- * 目标扩展未安装或未声明本域 externally_connectable 时不抛异常，Chrome 只设置
- * `chrome.runtime.lastError` 并在 callback 内暴露，此处记录为 warn 后静默。
+ * 向 Bing Maps 插件同步 website 登录态（/extension-login-bing 桥接页专用；
+ * 插件侧 WebsiteAuthBridge 经 onMessageExternal 接收并校验 sender.origin）。
  */
 export function notifyBingMapsAuthChanged(): void {
   const token = getStoredAccessToken()
@@ -304,15 +297,6 @@ export function notifyBingMapsAuthChanged(): void {
       }
     )
   }
-}
-
-/**
- * 请求插件完成登录页收尾。
- *
- * 只在 /extension-login 成功态使用；普通官网登录只同步 token，不应该切走用户当前页面。
- */
-export function requestExtensionLoginReturn(): void {
-  window.postMessage({ type: EXTENSION_LOGIN_RETURN_MESSAGE_TYPE }, window.location.origin)
 }
 
 /**

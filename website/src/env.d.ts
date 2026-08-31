@@ -2,8 +2,10 @@
 /// <reference types="astro/client" />
 
 interface ImportMetaEnv {
-  /** 共享下载工作区使用的后端 API 基础地址。 */
+  /** 网站消费的后端 API 基础地址。 */
   readonly PUBLIC_API_BASE_URL?: string
+  /** GA4 measurement ID（G- 开头）；为空时 Layout 不注入 gtag（全站唯一豁免的第三方脚本）。 */
+  readonly PUBLIC_GA4_MEASUREMENT_ID?: string
   /** Google Identity Services OAuth client ID，用于共享登录按钮。 */
   readonly PUBLIC_GOOGLE_CLIENT_ID?: string
   /** 网站共享 Cookie Domain，不含前导点；为空时只写当前 host Cookie。 */
@@ -12,7 +14,7 @@ interface ImportMetaEnv {
   readonly PUBLIC_ALI_SLS_PROJECT?: string
   /** 阿里云 SLS 公网 host，例如 ap-southeast-1.log.aliyuncs.com。 */
   readonly PUBLIC_ALI_SLS_HOST?: string
-  /** 阿里云 SLS WebTracking endpoint，例如 https://tg-download.ap-southeast-1.log.aliyuncs.com。 */
+  /** 阿里云 SLS WebTracking endpoint，例如 https://<project>.<region>.log.aliyuncs.com。 */
   readonly PUBLIC_ALI_SLS_ENDPOINT?: string
   /** 阿里云 SLS logstore 名称。 */
   readonly PUBLIC_ALI_SLS_LOGSTORE?: string

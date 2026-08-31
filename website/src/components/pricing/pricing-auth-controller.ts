@@ -188,7 +188,9 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
     }
     const clientId = getGoogleClientId()
     if (!clientId) {
-      logGoogleAuthStage('error', 'pricing_redirect_button_client_id_missing')
+      // PUBLIC_GOOGLE_CLIENT_ID 为占位空值是预期配置状态（购买链路接入时回填），warn 级即可，
+      // error 级会被 Lighthouse best-practices 计为 console error。
+      logGoogleAuthStage('warn', 'pricing_redirect_button_client_id_missing')
       setMessage(elements.authError, copy.googleClientMissing)
       return
     }

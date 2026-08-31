@@ -13,8 +13,7 @@
     "types": ["astro/client"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "mediabunny": ["./node_modules/mediabunny/dist/modules/src/index.d.ts"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [

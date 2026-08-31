@@ -19,7 +19,7 @@
 其间的裸值就是合同取值本体，放行。宽高/定位属布局自由尺寸，不在合同管辖内，不检查。
 
 enforced 端（extension / extension-bing）已迁移 Material You，违规即失败；
-pending 端（website / website-mapsgrab / admin）尚未迁移，只汇总数量，迁移时再转 enforced。
+pending 端（website / admin）尚未迁移，只汇总数量，迁移时再转 enforced。
 """
 
 from __future__ import annotations
@@ -37,7 +37,6 @@ ENFORCED = [("extension", "extension/src"), ("extension-bing", "extension-bing/s
 # pending：整端尚未迁移，只报告数量；迁移完成后移入 ENFORCED
 PENDING = [
     ("website", "website/src"),
-    ("website-mapsgrab", "website-mapsgrab/src"),
     ("admin", "admin/src"),
 ]
 EXCLUDED_DIRS = {"node_modules", "dist", ".astro", "coverage", "test-results"}

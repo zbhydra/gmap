@@ -1,13 +1,5 @@
 ---
-import Layout from '../layouts/Layout.astro'
-import { getContent } from '../i18n/content'
-
-const t = getContent('en-US')
+import HomePage from '../components/pages/HomePage.astro'
 ---
 
-<Layout locale="en-US">
-  <section class="home-placeholder">
-    <h1>{t.layout.nav.home}</h1>
-    <p>GMap</p>
-  </section>
-</Layout>
+<HomePage locale="en-US" />

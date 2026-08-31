@@ -8,8 +8,8 @@
 
 两条产品线共享一套 backend(AWS 类业务服务器 + 执行节点)与商业化基建:
 
-1. **Telegram 下载**(现役):主站 telegramdownloadmedia.com + 插件,已上线运营。
-2. **MapsGrab**(新线,全称 "MapsGrab — Google Maps Scraper & Extractor"):对标 `gmapsextractor.com`——Maps 插件 + 云端 Online Scraper + API + 营销站,订阅分档计费。对标站壁垒在内容矩阵与抓取稳定性,不在代码形态。命名依据见 `research/google-maps-品牌命名调研.md`。
+1. **Telegram 下载**(存量):已发布插件仍在 Chrome 商店运营;**主站 telegramdownloadmedia.com 已退役删除(2026-08-31)**,生产 TG 站点不再由本仓维护(后端 deploy env 的 TG 域名仍指向现役 API 基建)。
+2. **MapsGrab**(新线,全称 "MapsGrab — Google Maps Scraper & Extractor"):对标 `gmapsextractor.com`——Maps 插件 + 云端 Online Scraper + API + 营销站,订阅分档计费。对标站壁垒在内容矩阵与抓取稳定性,不在代码形态。命名依据见 `research/google-maps-品牌命名调研.md`。营销站即本仓 `website/`(原 website-mapsgrab/,2026-08-31 起 replaces 退役的 TG 主站;域名未上线,占位 mapsgrab.com)。
 
 ## 2 · 功能全景
 
@@ -83,7 +83,7 @@
 | **阶段 1 · 插件全量** | **A1–A13 全部 13 项**,验收 = 功能面对齐竞品 v2.5.1(已拍板的架构差异除外:不强制登录、自研服务端、不上 Chrome 商店)。顺序:A1 地基(骨架+远程配置+搜索闭环)→ A2/A3/A5/A8 采集导出主链 → A6 批量面板 → A9/A12 打磨 → A11 账号配额(扩 007/003)→ A4 服务端自研+接入 → A10 集成 → A7(已调研完毕)→ A13 上架 | 无,可立即启动 | 7–9 周 |
 | **阶段 2 · 云端服务** | B4 + B1/B2 部署与 credits 对接。**与阶段 1 并行**:技术栈零交集(Go/gosom vs TS/MV3);唯一耦合点 = 003 计量对接,C2 计费骨架决策已前置。**C2 已拍板(2026-08-30 hydra):套餐参考竞品分产品订阅**(插件 Free/$39 Pro/$99 Business 月付;Online/API 档位随云端产品化解禁);006 需一轮扩展(产品线维度 + 月度 records 额度映射,当前为 TG 单产品每日次数形态) | Gate 通过;C2 骨架决策 | 2–3 周 |
 | **阶段 3 · 营销站 + 商业化** | D5 + C2/C5 定价决策与接入;Edge/Firefox 商店页。**Online 入口留空点击无效**(2026-08-30 hydra 裁决,云端产品化暂缓) | 阶段 1 | 1–2 周 |
-| **阶段 3 ✅ 营销站已交付(2026-08-31)** | website-mapsgrab/ 17 页(首页/产品页/下载页/Pricing 三档/7 工具/法务/About/Contact),006 产品线扩展 + PayPal 购买链路 + 额度映射,GA4/SEO/Lighthouse ≥95,插件订阅跳转接线。执行:W1–W7 全部 done + 整体汇合审查通过(1 跨单元 finding:工具页内链闭环已修)。验证:e2e 166 passed、module-scripts 47/47、backend 535 passed。剩余:域名/GA4 ID/渠道 SKU 后配,商店上架(real smoke) | 阶段 1 ✅;W5 含 013 回归验证 | 计划 1–2 周,实际约 2 天 |
+| **阶段 3 ✅ 营销站已交付(2026-08-31)** | 营销站 17 页(首页/产品页/下载页/Pricing 三档/7 工具/法务/About/Contact),006 产品线扩展 + PayPal 购买链路 + 额度映射,GA4/SEO/Lighthouse ≥95,插件订阅跳转接线。执行:W1–W7 全部 done + 整体汇合审查通过(1 跨单元 finding:工具页内链闭环已修)。验证:e2e 166 passed、module-scripts 47/47、backend 535 passed。剩余:域名/GA4 ID/渠道 SKU 后配,商店上架(real smoke)。2026-08-31 起站点目录定名 `website/`(replaces 退役 TG 主站),见 §5 变更记录 | 阶段 1 ✅;W5 含 013 回归验证 | 计划 1–2 周,实际约 2 天 |
 | **阶段 4 · 内容与增长** | D1–D3 铺底后持续运营(D4 联盟暂不做) | 阶段 3 | 铺底 2 周+ |
 
 成本与部署细节见 `@research/google-maps-scraping-方案调研.md`(服务器 €90–130/月 + 代理 $100–500/月,代理是大头)。
@@ -108,3 +108,4 @@
 - 2026-08-29 三项更新:①阶段 1 改为 A1–A13 全量交付(验收 = 功能面对齐竞品 v2.5.1,已拍板架构差异除外),估时 7–9 周,实施顺序见 `feat/013.Maps插件/feat.md`;②A7 升级为 🔍 完成(源码级:列表模式 = A1 通道 + UI/滚动变体,URL 标记 `data=!4m2!10m1!1e1`,仅剩实现期登录态验证点);③待决:插件工程落点(monorepo 子项目 vs 独立仓库)阻塞阶段 1 第 1 步,其余全部可开工。
 - 2026-08-30 新线命名拍板:**MapsGrab**(全称 "MapsGrab — Google Maps Scraper & Extractor");否决 GMap Extractor(与竞品 G Maps Extractor 混淆且 gmapextractor.com 被其 301 截流),exporter 词义分流排除,SEO 双词覆盖 scraper+extractor。词频与域名数据见 `research/google-maps-品牌命名调研.md`;§1 项目目标同步更名。
 - 2026-08-30 UI token 选型拍板:全项目采用 **Material You**(06 亮 / 06D 暗,曾短暂选型 Aurora Glass 后弃用);旧 Geist 规范整体替换为 Material You token 合同(`design.md` 亮色 / `design.dark.md` 暗色,暗色主题为本次新增),状态实底色引入 `*-fg` 深字配对合同;12 皮肤全组件探索稿在 `scratch/design-explore/`(不入 git)。
+- 2026-08-31 **TG 主站退役,website-mapsgrab/ 更名 website/**:删除 `website/`(TG 站,telegramdownloadmedia.com 生产站点不再由本仓维护),`website-mapsgrab/` 改名 `website/` 并接管主站端口 7620(mapsgrab 7630 端口撤销)。Bing 插件登录桥接页 `/extension-login-bing`(页面 + i18n + `BING_*` auth 常量)随迁新站;TG 专用桥接页 `/extension-login`、`/extension-login-v2` 与两插件 `EXTENSION_LOGIN_PATH` 死常量一并删除,Maps 插件官网登录桥按原 TODO(maps) 决策时再设计统一登录页。同步:tasks.json(删 7630 任务)、ui_token_lint、spec-website.md 重写、design.md、015 plan、AGENTS 仓库地图不变(website/ 描述仍成立)。

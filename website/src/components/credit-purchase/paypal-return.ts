@@ -11,8 +11,13 @@ import {
   classifyCreditPurchaseOrderStatus,
   getCreditOrderStatus,
   isCreditPurchaseAuthFailure,
-  isRecoverableOrderStatusError
+  isRecoverableOrderStatusError,
+  type OrderStatusResponse
 } from './credit-checkout'
+import type { AccountContent } from '../../i18n/schema'
+
+/** PayPal 回跳页文案（success.astro 经 JSON script 注入）。 */
+type PayPalReturnCopy = AccountContent['paypalReturn']
 
 /** PayPal 返回页结果类型。 */
 export type PayPalReturnStatus = 'success' | 'cancel'
@@ -32,31 +37,20 @@ export const PAYPAL_SUCCESS_POLL_INTERVAL_MS = 3000
 /** success 回跳页等待状态。 */
 type PayPalSuccessViewState = 'waiting' | 'confirmed' | 'failed'
 
-/** success 页状态文案。 */
-interface PayPalSuccessViewCopy {
-  /** 标题文案。 */
-  title: string
-  /** 描述文案。 */
-  message: string
-}
+/** 确认态展示语义：按订单产品线区分（maps=订阅口径，其余=Credits 口径）。 */
+type PayPalConfirmedCopyKey = 'confirmedSubscriptionTitle' | 'confirmedCreditsTitle'
 
-/** success 页可更新状态文案集合。 */
-const PAYPAL_SUCCESS_VIEW_COPY: Record<PayPalSuccessViewState, PayPalSuccessViewCopy> = {
-  waiting: {
-    title: 'Payment submitted',
-    message:
-      'You can return to the original tab. We are checking PayPal confirmation every 3 seconds, and your Credits will appear automatically after the order is confirmed.'
-  },
-  confirmed: {
-    title: 'Credits added',
-    message:
-      'Your PayPal payment is confirmed and the Credits have been added. You can close this tab and continue in the original window.'
-  },
-  failed: {
-    title: 'Payment needs attention',
-    message:
-      'We could not confirm this order automatically. Return to the original window or try refreshing your payment status there.'
+/** 按订单产品线选取确认态文案键；缺省（旧后端/旧缓存）保持 Credits 口径。 */
+function confirmedCopyKeys(
+  status: Pick<OrderStatusResponse, 'product_line'> | undefined
+): {
+  titleKey: PayPalConfirmedCopyKey
+  messageKey: 'confirmedSubscriptionMessage' | 'confirmedCreditsMessage'
+} {
+  if (status?.product_line === 'maps') {
+    return { titleKey: 'confirmedSubscriptionTitle', messageKey: 'confirmedSubscriptionMessage' }
   }
+  return { titleKey: 'confirmedCreditsTitle', messageKey: 'confirmedCreditsMessage' }
 }
 
 let successPollTimer: number | null = null
@@ -142,7 +136,7 @@ async function pollSuccessOrderStatus(orderNo: string): Promise<void> {
     const outcome = classifyCreditPurchaseOrderStatus(status)
     if (outcome === 'paid') {
       stopSuccessPolling()
-      setSuccessViewState('confirmed')
+      setSuccessViewState('confirmed', status)
       notifyOpener({ status: 'success', orderNo })
       return
     }
@@ -171,17 +165,40 @@ async function pollSuccessOrderStatus(orderNo: string): Promise<void> {
   }
 }
 
-/** 更新 PayPal success 回跳页标题和说明。 */
-function setSuccessViewState(state: PayPalSuccessViewState): void {
-  const copy = PAYPAL_SUCCESS_VIEW_COPY[state]
-  const title = document.querySelector<HTMLElement>('[data-paypal-return-title]')
-  const message = document.querySelector<HTMLElement>('[data-paypal-return-message]')
-  if (title) {
-    title.textContent = copy.title
+/** 更新 PayPal success 回跳页标题和说明（文案走 i18n 注入载荷）。 */
+function setSuccessViewState(state: PayPalSuccessViewState, orderStatus?: OrderStatusResponse): void {
+  const copy = getPayPalReturnCopy()
+  let title: string
+  let message: string
+  if (state === 'waiting') {
+    title = copy.waitingTitle
+    message = copy.waitingMessage
+  } else if (state === 'confirmed') {
+    const keys = confirmedCopyKeys(orderStatus)
+    title = copy[keys.titleKey]
+    message = copy[keys.messageKey]
+  } else {
+    title = copy.failedTitle
+    message = copy.failedMessage
   }
-  if (message) {
-    message.textContent = copy.message
+
+  const titleElement = document.querySelector<HTMLElement>('[data-paypal-return-title]')
+  const messageElement = document.querySelector<HTMLElement>('[data-paypal-return-message]')
+  if (titleElement) {
+    titleElement.textContent = title
   }
+  if (messageElement) {
+    messageElement.textContent = message
+  }
+}
+
+/** 读取 success.astro 注入的 i18n 文案载荷。 */
+function getPayPalReturnCopy(): PayPalReturnCopy {
+  const element = document.querySelector<HTMLScriptElement>('[data-paypal-return-copy]')
+  if (!element?.textContent) {
+    throw new Error('[paypal-return] Missing paypal return copy payload: [data-paypal-return-copy].')
+  }
+  return JSON.parse(element.textContent) as PayPalReturnCopy
 }
 
 /** 通知原购买弹窗 PayPal 已跳回网站。 */

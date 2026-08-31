@@ -13,7 +13,7 @@ Cloudflare 位置：
 表达式：
 
 ```text
-(http.host in {"telegramdownloadmedia.com" "www.telegramdownloadmedia.com" "test-tg-web.telegramdownloadmedia.com"} and (
+(http.host in {"mapsgrab.com" "www.mapsgrab.com"} and (
   http.request.uri.path eq "/assets/icons/logo.svg" or
   http.request.uri.path eq "/assets/icons/credits.svg"
 ))
@@ -27,15 +27,15 @@ Cache eligibility: Bypass cache
 
 规则顺序：放在所有静态资源缓存规则之前。
 
-注意：`http.request.uri.path` 不包含 query string，所以 `/assets/icons/logo.svg?v=20260706` 也会命中本规则。Nginx 同样按不含 query 的 URI 反代到后端。
+注意：`http.request.uri.path` 不包含 query string，所以 `/assets/icons/logo.svg`（版本号 query 由前端代码维护） 也会命中本规则。Nginx 同样按不含 query 的 URI 反代到后端。
 
 部署后清理缓存：
 
 ```bash
-curl -I "https://telegramdownloadmedia.com/assets/icons/logo.svg"
-curl -I "https://telegramdownloadmedia.com/assets/icons/logo.svg?v=20260706"
-curl -I "https://telegramdownloadmedia.com/assets/icons/credits.svg"
-curl -I "https://test-tg-web.telegramdownloadmedia.com/assets/icons/logo.svg?v=20260706"
+curl -I "https://mapsgrab.com/assets/icons/logo.svg"
+curl -I "https://mapsgrab.com/assets/icons/logo.svg"
+curl -I "https://mapsgrab.com/assets/icons/credits.svg"
+curl -I "https://mapsgrab.com/assets/icons/logo.svg"
 ```
 
 预期响应头：

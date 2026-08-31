@@ -18,11 +18,9 @@ const LEGACY_FLAT_SITEMAP_FILENAME = 'sitemap-0.xml'
 const SITEMAP_STYLESHEET_PATH = '/sitemap.xsl'
 const STATUS_CODE_PAGES = new Set(['404', '500'])
 const SEARCH_BOT_BLOCKED_ROUTE_PATHS = new Set([
-  '/extension-login/',
-  '/extension-login-v2/',
-  '/extension-login-bing/',
   '/paypal/cancel/',
-  '/paypal/success/'
+  '/paypal/success/',
+  '/extension-login-bing/'
 ])
 const WEBSITE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)))
 const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
@@ -36,7 +34,7 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>XML Sitemap Index | TG Downloader</title>
+        <title>XML Sitemap Index | MapsGrab</title>
         <style>
           body {
             margin: 0;
@@ -111,7 +109,7 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
       <body>
         <main>
           <h1>XML Sitemap</h1>
-          <p class="brand">TG Downloader</p>
+          <p class="brand">MapsGrab</p>
           <xsl:choose>
             <xsl:when test="sitemap:sitemapindex">
               <p class="summary">
@@ -174,21 +172,9 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
  * Sitemap locale mapping. Keep this aligned with src/i18n/ui.ts:
  * locale -> localePaths pathPrefix + hreflangMap sitemapSlug.
  */
+// 与 src/i18n/ui.ts 的 locales 收敛口径一致：EN 首批，后续语言按需追加。
 export const LANGUAGE_SITEMAP_LOCALES = [
-  { locale: 'en-US', pathPrefix: '', sitemapSlug: 'en' },
-  { locale: 'zh-CN', pathPrefix: 'zh-cn', sitemapSlug: 'zh-cn' },
-  { locale: 'zh-TW', pathPrefix: 'zh-tw', sitemapSlug: 'zh-tw' },
-  { locale: 'ja-JP', pathPrefix: 'ja', sitemapSlug: 'ja' },
-  { locale: 'ko-KR', pathPrefix: 'ko', sitemapSlug: 'ko' },
-  { locale: 'es-ES', pathPrefix: 'es', sitemapSlug: 'es' },
-  { locale: 'pt-BR', pathPrefix: 'pt', sitemapSlug: 'pt-br' },
-  { locale: 'de-DE', pathPrefix: 'de', sitemapSlug: 'de' },
-  { locale: 'fr-FR', pathPrefix: 'fr', sitemapSlug: 'fr' },
-  { locale: 'ru-RU', pathPrefix: 'ru', sitemapSlug: 'ru' },
-  { locale: 'it-IT', pathPrefix: 'it', sitemapSlug: 'it' },
-  { locale: 'vi-VN', pathPrefix: 'vi', sitemapSlug: 'vi' },
-  { locale: 'th-TH', pathPrefix: 'th', sitemapSlug: 'th' },
-  { locale: 'id-ID', pathPrefix: 'id', sitemapSlug: 'id' }
+  { locale: 'en-US', pathPrefix: '', sitemapSlug: 'en' }
 ]
 
 const DEFAULT_LANGUAGE = LANGUAGE_SITEMAP_LOCALES.find((language) => language.locale === 'en-US')
@@ -293,14 +279,22 @@ function getRouteSourceFiles(routePath) {
   const normalized = normalizeRoutePath(routePath)
 
   if (normalized === '/') {
-    return ['src/pages/index.astro', 'src/pages/[lang]/index.astro']
+    return ['src/pages/index.astro', 'src/pages/[lang]/index.astro', 'src/components/pages/HomePage.astro']
   }
 
-  if (normalized === '/changelog/') {
+  if (normalized === '/extension/') {
     return [
-      'src/pages/changelog.astro',
-      'src/pages/[lang]/changelog.astro',
-      'src/i18n/content.ts'
+      'src/pages/extension.astro',
+      'src/pages/[lang]/extension.astro',
+      'src/components/pages/ExtensionPage.astro'
+    ]
+  }
+
+  if (normalized === '/download/') {
+    return [
+      'src/pages/download.astro',
+      'src/pages/[lang]/download.astro',
+      'src/components/pages/DownloadPage.astro'
     ]
   }
 
@@ -340,6 +334,27 @@ function getRouteSourceFiles(routePath) {
     return [
       `src/pages/${pageName}.astro`,
       'src/components/credit-purchase/paypal-return.ts'
+    ]
+  }
+
+  // W4 工具矩阵（D1 七个公开工具）：路由前缀固定 /tools/<slug>/，页面文件
+  // 位于 src/pages/tools/<slug>.astro。
+  const TOOL_ROUTE_PAGE_FILES = {
+    '/tools/place-id-finder/': ['src/scripts/tools/placeIdFinder.ts', 'src/scripts/tools/lib/placeUrl.ts'],
+    '/tools/review-link-generator/': ['src/scripts/tools/reviewLinkGenerator.ts', 'src/scripts/tools/lib/placeUrl.ts'],
+    '/tools/email-checker/': ['src/scripts/tools/emailChecker.ts', 'src/scripts/tools/lib/emailCheck.ts'],
+    '/tools/lat-long-to-dms/': ['src/scripts/tools/latLongToDms.ts', 'src/scripts/tools/lib/coordinates.ts'],
+    '/tools/dms-to-dd/': ['src/scripts/tools/dmsToDd.ts', 'src/scripts/tools/lib/coordinates.ts'],
+    '/tools/bulk-keywords-generator/': ['src/scripts/tools/bulkKeywords.ts', 'src/scripts/tools/lib/keywords.ts'],
+    '/tools/merge-csv-files-online/': ['src/scripts/tools/mergeCsv.ts', 'src/scripts/tools/lib/csv.ts']
+  }
+  const toolSourceFiles = TOOL_ROUTE_PAGE_FILES[normalized]
+  if (toolSourceFiles) {
+    const pageFile = `src/pages/tools/${normalized.replace('/tools/', '').slice(0, -1)}.astro`
+    return [
+      pageFile,
+      'src/components/tools/ToolShell.astro',
+      ...toolSourceFiles
     ]
   }
 

@@ -1,6 +1,0 @@
-User-agent: *
-Disallow: /paypal/cancel/
-Disallow: /paypal/success/
-
-# Sitemap reference（域名占位：正式域名确定后同步 astro.config 的 SITE_PLACEHOLDER）
-Sitemap: https://mapsgrab.com/sitemap.xml

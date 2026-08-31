@@ -21,8 +21,8 @@
 - D2 竞品对比页(对标 9 篇 + 我方自选竞品)
 - D3 教程/Guides 博客(how-to 类长文)
 - D4 Affiliates 联盟计划(注册、追踪链接、结算口径)
-- D5 营销站(首页、插件产品页、下载页、Pricing 占位、法务页、多语言)
-- D5 附:**Online Scraper 入口留空、点击无效**(hydra 2026-08-30 裁决,云端产品化暂缓;导航/卡片保留入口形态但不接功能页)
+- D5 营销站(首页、插件产品页、下载页、Pricing、法务页、Online/API 落地页 ×5、工具矩阵、多语言)
+- D5 附:**占位入口接真落地页**(hydra 2026-08-31 裁决,替代 2026-08-30「入口留空点击无效」基线):导航 Online 与新增 API 下拉、首页 Online/API 产品卡均接真落地页(页面全部可打开),页内未落地功能按钮点击无效;云端功能本体仍归 014。页面清单与交互口径见 `@plans/002.营销站Online与API落地页.md`
 - D5 附:**套餐与法务均参考竞品**(hydra 2026-08-30):Pricing 展示对齐竞品插件档位(Free 1,000 records/月;Pro $39 100,000;Business $99 500,000);法务页(隐私政策/条款)以竞品口径为基准改写为 MapsGrab 事实
 - D6 SEO 基建(复用 009 域:sitemap / llms.txt / GSC / GA4)
 
@@ -67,6 +67,13 @@ H1(= 目标搜索词)、TL;DR 结论框、分步教程(步骤编号 + 截图)、
 
 首页(hero + 产品三形态卡 + 社证 + FAQ + CTA)、插件产品页(功能表 + 安装引导 + 版本说明)、下载/安装引导页(Edge/Firefox 分支)、Pricing(011 域)、关于/联系/隐私/条款法务页;全站导航 + 语言切换(010 域)。
 
+### Online/API 落地页(2026-08-31 增补)
+
+- 页面 ×5:Online Scraper(`/online-scraper/`)、Scraper API(`/google-maps-scraper-api/`)、Reviews API(`/google-maps-reviews-scraper-api/`)、Photos API(`/google-maps-photos-api/`)、Scraper MCP(`/google-maps-scraper-mcp/`)。Online 为独立落地页(竞品为 Pricing tab 形态,本站 Pricing 为插件三档,不做 tab 重构)。
+- 导航:Online 占位改真链接;新增 API 桌面下拉(4 子项,交互复用语言切换下拉模式);移动端导航平铺(Online + API 4 子项)。
+- 页内未落地功能按钮(Online 的开始采集类、API 页的获取 Key 类):可聚焦、点击无跳转、无请求、无报错;不埋点。
+- 页面内容以竞品对应页公开口径改写为 MapsGrab 事实(同法务页模式),素材见 `@references/D2-文章矩阵与产品矩阵.md`。
+
 ### 对比页模板(统一)
 
 结论摘要框(谁适合谁)、功能对比表(采集字段/评论/照片/Email/价格/额度)、定价并排、CTA。数据来源:各竞品官网公开 pricing,每篇标注核实日期。
@@ -96,6 +103,7 @@ H1(= 目标搜索词)、TL;DR 结论框、分步教程(步骤编号 + 截图)、
 1. 工具页:功能可用、Lighthouse 达标、进 sitemap、CTA 归因正确。
 2. 对比页:9 篇对齐竞品清单,数据带核实日期。
 3. Guides:首批 ≥5 篇教程文收录。
+4. 营销站导航与竞品形态对齐:Online/API 入口可点、对应落地页可打开;页内未落地功能按钮点击无效(无跳转、无请求、无报错)。
 
 ## 功能索引
 

@@ -1,103 +1,69 @@
-# Telegram Media Downloader Official Website
+# MapsGrab Marketing Website
 
-Official website for Telegram Media Downloader browser extension.
+MapsGrab 营销站（原 website-mapsgrab/，2026-08-31 起 replaces 退役的 TG 主站成为唯一 `website/`；
+TG 线主站已删除，生产 TG 站点不再由本仓维护）。品牌与产品文案当前为占位（EN 首批），
+正式内容按 W2-W5 计划填充；域名后配（见 `astro.config.mjs` 的 `SITE_PLACEHOLDER`）。
 
-## Tech Stack
+## 技术栈
 
-- **Astro** - Modern static site generator
-- **Vue 3** - For interactive components
-- **TypeScript** - Type-safe development
+- **Astro 5**（SSG 静态站）+ 原生 TS + 命令式 DOM（非 SPA）；Vue 集成保留
+- TypeScript `strict`，`astro check` 做类型门禁
+- 测试：`node --test tests/module-scripts.test.js` + Playwright e2e
 
-## Development
+## 本地开发
 
 ```bash
-# Install dependencies
+# 安装依赖
 pnpm install
 
-# Start development server
+# 启动开发服务器（端口 7620，全仓专属）
 pnpm dev
 
-# Build for production
+# 构建生产产物（astro check + astro build）
 pnpm build
 
-# Preview production build
-pnpm preview
+# e2e（四浏览器 project；E2E_WEB_PORT 可覆盖端口）
+pnpm test:e2e
+pnpm test:e2e:identity   # 浏览器身份门禁
 ```
 
-## Project Structure
+## 目录结构
 
 ```
 website/
-├── public/              # Static assets
-│   ├── favicon.svg
-│   └── robots.txt
-├── src/
-│   ├── i18n/            # Internationalization
-│   │   ├── ui.ts        # Locale configurations
-│   │   └── content.ts   # Content translations
-│   ├── layouts/         # Layout components
-│   │   └── Layout.astro # Main layout with SEO
-│   ├── pages/           # Page routes
-│   │   ├── index.astro      # English home page
-│   │   ├── [lang]/          # Localized pages
-│   │   ├── solutions.astro  # No Limits page
-│   │   └── *-downloader.astro # Platform downloader pages
-│   └── styles/         # Global styles
-├── astro.config.mjs    # Astro configuration
-├── tsconfig.json       # TypeScript configuration
-└── package.json        # Dependencies
+├── public/            # 静态资源（favicon/manifest/robots/payment-icons）
+├── deploy/            # Nginx conf + 部署脚本（域名/服务器占位）
+├── cloudflare/        # Cloudflare 配置记录（cache rules / 退役重定向 CSV）
+├── e2e/               # Playwright 冒烟 + 浏览器身份门禁
+├── scripts/           # Playwright 浏览器身份工具
+├── tests/             # 模块脚本单测（node --test）
+└── src/
+    ├── components/    # auth / pricing / credit-purchase / order-checkout（W5 购买链路基座）
+    ├── i18n/          # 纯 TS 字典（当前仅 en-US；多语言架构保留）
+    ├── layouts/       # Layout.astro（design token 合同 + GA4 槽位）
+    ├── pages/         # 文件路由（[lang]/ 多语言路由架构保留）
+    ├── scripts/       # homepage（api/auth/mark/device/ga4/sls）+ site
+    └── sitemap/       # 语言 sitemap 集成
 ```
 
-## Supported Languages
+## 待回填占位清单
 
-- 简体中文 (zh-CN) - Default
-- English (en-US)
-- 日本語 (ja-JP)
-- 한국어 (ko-KR)
-- 繁體中文 (zh-TW)
-
-## SEO Features
-
-- Pre-rendered static HTML
-- Sitemap generation
-- Robots.txt configuration
-- Open Graph meta tags
-- Twitter Card support
-- Structured data (JSON-LD)
-- hreflang tags for multilingual SEO
-- Cloudflare Bulk Redirects 301 for retired `/features/`, `/guide/`, and `/faq/` pages
-
-## Deployment
-
-The site generates static files in `dist/` directory that can be deployed to:
-
-- Netlify
-- Vercel
-- GitHub Pages
-- Cloudflare Pages
-- Any static hosting service
-
-## Configuration
-
-Production builds read public runtime values from `website/.env.production`:
-
-- `PUBLIC_API_BASE_URL` - backend API base URL.
-- `PUBLIC_SHARED_COOKIE_DOMAIN` - shared `client_uuid` Cookie domain. Production
-  and test deploys set this to `telegramdownloadmedia.com` from `deploy/deploy.sh`
-  so the root site and test subdomain keep sharing the same device cookie scope.
-- `PUBLIC_GOOGLE_CLIENT_ID` - Google Identity Services OAuth client ID for website login.
-
-Google OAuth login returns to the backend OAuth callback under
-`PUBLIC_API_BASE_URL`. Add the backend OAuth callback URI to Google Console:
-
-- `https://tg-download-api.telegramdownloadmedia.com/api/client/auth/google/oauth/callback`
-- `http://localhost:7600/api/client/auth/google/oauth/callback`
-
-Update `astro.config.mjs` to change:
-
-- `site` - Your domain URL
-- `base` - Base path if deploying to subdirectory
-
-## License
-
-MIT
+- 正式域名：`astro.config.mjs`、`public/robots.txt`、`public/llms.txt`、`deploy/`、`cloudflare/`
+- GA4 measurement ID：env `PUBLIC_GA4_MEASUREMENT_ID`（`.env.production` 或部署环境注入，G- 开头）。
+  为空时全站**零注入** gtag（构建期守卫）；配置后 Layout 注入 gtag，事件通道自动生效：
+  `tool_view`（工具页进入）/ `tool_use`（功能使用，data-ga-event 委派）/ `cta_click`（data-cta
+  统一漏斗事件，带 cta_id 与 utm）。全站唯一豁免的第三方运行时脚本。
+- Google Search Console：无真实资产。部署正式域名后在 GSC 添加 Domain 资源，优先 DNS 记录验证；
+  若走 HTML 文件验证，把 `google<hash>.html` 放入 `public/` 重新构建部署即可，无需改代码。
+- 扩展商店链接：`src/components/pages/DownloadPage.astro` 的 `STORE_URL_PLACEHOLDER`
+  （Edge Add-ons / Firefox AMO，上架后回填；同步 Pricing/Company 页入口）
+- 直装 release zip 资产：`src/components/pages/DownloadPage.astro` 的 `RELEASE_ZIP_URL_PLACEHOLDER`
+  （发版挂资产后回填；替换后删除 href="#" 占位）
+- Google OAuth client：`PUBLIC_GOOGLE_CLIENT_ID` env（购买链路接入时）
+- MapsGrab 套餐与支付渠道：`src/i18n/pricing.ts`（W5 接 006）
+- 样式 token 化收尾：Layout 全局样式与 W2/W3 重写页面（home/extension/download/legal/company）
+  已全量消费语义 token；`:root` 末尾的旧 `--color-*`/`--spacing-*` 别名段仅剩
+  W4/W5 待重写组件（Breadcrumb、auth/pricing/checkout 弹窗、paypal 页、SiteConfirmModal）
+  在消费——工具页与购买链路重写时继续裁剪直至整段删除（design.md §4：无玻璃无
+  backdrop-filter；§8：禁止硬编码色值；SiteConfirmModal 内部仍有旧样式残留，归 W5）
+- favicon：`public/favicon.svg` 当前为 MapsGrab 占位 pin 图（与 Layout logo 同形），正式品牌图标定稿后替换

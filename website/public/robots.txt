@@ -1,11 +1,6 @@
 User-agent: *
-Disallow: /extension-login/
 Disallow: /paypal/cancel/
 Disallow: /paypal/success/
 
-# AI-readable site indexes
-Allow: /llms.txt
-Allow: /llms-full.txt
-
-# Sitemap reference
-Sitemap: https://telegramdownloadmedia.com/sitemap.xml
+# Sitemap reference（域名占位：正式域名确定后同步 astro.config 的 SITE_PLACEHOLDER）
+Sitemap: https://mapsgrab.com/sitemap.xml

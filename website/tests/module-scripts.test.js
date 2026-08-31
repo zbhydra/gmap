@@ -102,7 +102,7 @@ async function collectCanonicalUrls() {
 }
 
 test('Nginx configs canonicalize every built directory route directly to HTTPS', async () => {
-  const configPaths = ['deploy/tg-web.conf', 'deploy/tg-web-test.conf']
+  const configPaths = ['deploy/mapsgrab.conf', 'deploy/mapsgrab-test.conf']
   const htmlFiles = await collectHtmlFiles(distDir)
   const builtDirectoryRoutes = htmlFiles
     .filter((filePath) => path.basename(filePath) === 'index.html')
@@ -170,14 +170,14 @@ test('language switch URL keeps the current query parameters', async () => {
     assert.equal(
       module.buildLanguageSwitchUrl(
         '/zh-cn/pricing/',
-        'https://telegramdownloadmedia.com/pricing/?utm_source=extension&source=upgrade_modal'
+        'https://mapsgrab.com/pricing/?utm_source=extension&source=upgrade_modal'
       ),
       '/zh-cn/pricing/?utm_source=extension&source=upgrade_modal'
     )
     assert.equal(
       module.buildLanguageSwitchUrl(
         '/pricing/',
-        'https://telegramdownloadmedia.com/zh-cn/pricing/'
+        'https://mapsgrab.com/zh-cn/pricing/'
       ),
       '/pricing/'
     )
@@ -186,86 +186,53 @@ test('language switch URL keeps the current query parameters', async () => {
   }
 })
 
-test('homepage keeps fonts and route CSS off the critical path while preserving analytics', async () => {
+test('homepage keeps fonts off the critical path and leaves the GA4 slot empty', async () => {
   const html = await readFile(path.join(distDir, 'index.html'), 'utf8')
 
   assert.equal(html.includes('fonts.googleapis.com'), false)
   assert.equal(html.includes('fonts.gstatic.com'), false)
-  assert.match(
-    html,
-    /<script\b(?=[^>]*\basync\b)(?=[^>]*src="https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=G-LBSKJD0H16")[^>]*>/i
-  )
-  assert.equal((html.match(/xyfmieibkw/g) ?? []).length, 1)
+  // GA4 尚未接入（W6 回填 measurement ID）：不得出现硬编码测量 ID
+  assert.equal(/googletagmanager\.com\/gtag\/js\?id=G-/.test(html), false)
   assert.equal(/<link\b[^>]+rel="stylesheet"/i.test(html), false)
 })
 
-test('localized Pricing subscription copy defines renewal states', async () => {
+test('Pricing copy keeps the three MapsGrab tiers and checkout shell fields defined', async () => {
   const imported = await importCompiledTypescriptModule(
     'src/i18n/pricing.ts',
     'pricing.js',
     'pricing-i18n-'
   )
-  const expectedCopy = {
-    jaJPPricingContent: ['拡張機能サブスクリプション', '毎月自動更新'],
-    koKRPricingContent: ['확장 프로그램 구독', '매월 자동 갱신'],
-    esESPricingContent: ['Suscripción para la extensión', 'Renovación automática mensual'],
-    ptBRPricingContent: ['Assinatura para a extensão', 'Renovação automática mensal'],
-    deDEPricingContent: ['Erweiterungs-Abo', 'Monatliche automatische Verlängerung'],
-    frFRPricingContent: ['Abonnement pour l’extension', 'Renouvellement automatique mensuel'],
-    ruRUPricingContent: ['Подписка для расширения', 'Ежемесячное автопродление'],
-    itITPricingContent: ['Abbonamento per l’estensione', 'Rinnovo automatico mensile'],
-    viVNPricingContent: ['Gói đăng ký tiện ích mở rộng', 'Tự động gia hạn hằng tháng'],
-    thTHPricingContent: ['การสมัครสมาชิกส่วนขยาย', 'ต่ออายุอัตโนมัติทุกเดือน'],
-    idIDPricingContent: ['Langganan ekstensi', 'Diperpanjang otomatis setiap bulan']
-  }
 
   try {
-    for (const [exportName, [eyebrow, autoRenewOn]] of Object.entries(expectedCopy)) {
-      const content = imported.module[exportName]
-      assert.ok(content, `Expected pricing.ts to export ${exportName}`)
-      assert.equal(content.subscription.eyebrow, eyebrow)
-      assert.equal(content.subscription.autoRenewOn, autoRenewOn)
-    }
-
-    const cancellationContentExports = [
-      'pricingContent',
-      'zhCNPricingContent',
-      'zhTWPricingContent',
-      ...Object.keys(expectedCopy)
-    ]
-    for (const exportName of cancellationContentExports) {
-      const content = imported.module[exportName]
-      assert.ok(content, `Expected pricing.ts to export ${exportName}`)
-      assert.ok(content.cancellationGuide.buttonLabel)
-      assert.ok(content.cancellationGuide.title)
-      assert.deepEqual(
-        content.cancellationGuide.paths.map(path => path.provider),
-        ['Telegram Stars', 'PayPal']
-      )
-      assert.equal(content.cancellationGuide.paths[0].steps.length, 4)
-      assert.equal(content.cancellationGuide.paths[0].steps[2], 'Telegram Stars')
-      assert.equal(content.cancellationGuide.paths[1].steps.length, 6)
-      assert.equal(content.cancellationGuide.paths[1].steps[0], 'PayPal')
-      assert.ok(content.cancellationGuide.closeLabel)
-    }
-
-    assert.deepEqual(imported.module.pricingContent.cancellationGuide.paths, [
-      {
-        provider: 'Telegram Stars',
-        steps: ['Telegram', 'Settings', 'Telegram Stars', 'My subscriptions']
-      },
-      {
-        provider: 'PayPal',
-        steps: ['PayPal', 'Settings', 'Payments', 'Automatic payments', 'TG Downloader', 'Cancel']
-      }
-    ])
+    const content = imported.module.pricingContent
+    assert.ok(content, 'Expected pricing.ts to export pricingContent')
+    assert.ok(content.seo.title)
+    assert.ok(content.hero.title)
+    assert.ok(content.account.signedOutTitle)
+    // C2 套餐口径：Free 1,000 / Pro $39 100,000 / Business $99 500,000 records/月
+    const cards = content.plans.cards
+    assert.deepEqual(cards.map(card => card.id), ['free', 'pro', 'business'])
+    assert.match(cards[0].quota, /1,000 records/)
+    assert.equal(cards[1].price, '$39')
+    assert.match(cards[1].quota, /100,000 records/)
+    assert.equal(cards[2].price, '$99')
+    assert.match(cards[2].quota, /500,000 records/)
+    // Free 引导安装，Pro/Business 接购买链路
+    assert.deepEqual(cards.map(card => card.status), ['free', 'buyable', 'buyable'])
+    // Online / API 占位卡不可购
+    assert.deepEqual(content.comingSoon.items.map(item => item.id), ['online', 'api'])
+    assert.ok(content.faq.items.length > 0)
+    // 取消指引：PayPal 渠道路径
+    assert.ok(content.cancellationGuide.paths.length > 0)
+    assert.ok(content.cancellationGuide.buttonLabel)
+    assert.ok(content.cancellationGuide.closeLabel)
   } finally {
     await imported.cleanup()
   }
 })
 
 test('language sitemap output matches locale mapping and built canonical pages', async () => {
-  const siteUrl = 'https://telegramdownloadmedia.com'
+  const siteUrl = 'https://mapsgrab.com'
   const uiSource = await readFile(path.join(repoDir, 'src/i18n/ui.ts'), 'utf8')
   const localePaths = readUiRecord(uiSource, 'localePaths')
   const hreflangMap = readUiRecord(uiSource, 'hreflangMap')
@@ -288,7 +255,7 @@ test('language sitemap output matches locale mapping and built canonical pages',
   assert.match(indexXml, /<\?xml-stylesheet type="text\/xsl" href="\/sitemap\.xsl"\?>/)
   assert.match(indexXml, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/)
   const sitemapStylesheet = await readFile(path.join(distDir, 'sitemap.xsl'), 'utf8')
-  assert.match(sitemapStylesheet, /XML Sitemap Index \| TG Downloader/)
+  assert.match(sitemapStylesheet, /XML Sitemap Index \| MapsGrab/)
   assert.match(sitemapStylesheet, /sitemap:sitemapindex/)
   assert.match(sitemapStylesheet, /sitemap:urlset/)
 
@@ -357,11 +324,9 @@ test('language sitemap output matches locale mapping and built canonical pages',
   assert.deepEqual(new Set(legacyFlatLocs), publicCanonicalUrls)
 
   const robotsTxt = await readFile(path.join(distDir, 'robots.txt'), 'utf8')
-  assert.match(robotsTxt, /Sitemap: https:\/\/telegramdownloadmedia\.com\/sitemap\.xml/)
-  assert.match(robotsTxt, /^Disallow: \/extension-login\/$/m)
+  assert.match(robotsTxt, /Sitemap: https:\/\/mapsgrab\.com\/sitemap\.xml/)
   assert.match(robotsTxt, /^Disallow: \/paypal\/cancel\/$/m)
   assert.match(robotsTxt, /^Disallow: \/paypal\/success\/$/m)
-  assert.equal(sitemapUrls.has(`${siteUrl}/extension-login/`), false)
   assert.equal(sitemapUrls.has(`${siteUrl}/paypal/cancel/`), false)
   assert.equal(sitemapUrls.has(`${siteUrl}/paypal/success/`), false)
   assert.equal(
@@ -370,8 +335,7 @@ test('language sitemap output matches locale mapping and built canonical pages',
   )
 })
 
-test('About and Contact pages expose localized trust content and structured data', async () => {
-  const siteUrl = 'https://telegramdownloadmedia.com'
+test('About and Contact pages expose localized trust content and structured data', async () => {  const siteUrl = 'https://mapsgrab.com'
 
   for (const language of LANGUAGE_SITEMAP_LOCALES) {
     const languagePath = language.pathPrefix ? `${language.pathPrefix}/` : ''
@@ -385,163 +349,104 @@ test('About and Contact pages expose localized trust content and structured data
     assert.match(aboutHtml, /"@type":"AboutPage"/)
     assert.match(contactHtml, /"@type":"ContactPage"/)
     assert.match(aboutHtml, /"datePublished":"2026-08-07"/)
-    assert.match(contactHtml, /"dateModified":"2026-08-07"/)
-    assert.match(aboutHtml, /"@id":"https:\/\/telegramdownloadmedia\.com\/#organization"/)
-    assert.match(contactHtml, /"@id":"https:\/\/telegramdownloadmedia\.com\/#support"/)
+    // dateModified 走独立审校日期常量（companyContent 的 COMPANY_PAGES_DATE_MODIFIED_ISO）
+    assert.match(aboutHtml, /"dateModified":"2026-08-31"/)
+    assert.match(contactHtml, /"dateModified":"2026-08-31"/)
+    assert.match(aboutHtml, /"@id":"https:\/\/mapsgrab\.com\/#organization"/)
+    assert.match(contactHtml, /"@id":"https:\/\/mapsgrab\.com\/#support"/)
     assert.equal(aboutHtml.includes(`href="/${languagePath}contact/"`), true)
     assert.equal(contactHtml.includes(`href="/${languagePath}about/"`), true)
-    assert.match(contactHtml, /href="mailto:support@telegramdownloadmedia\.com\?subject=/)
-    assert.match(contactHtml, /support@telegramdownloadmedia\.com/)
-    assert.equal(
-      (aboutHtml.match(/href="https:\/\/x\.com\/TGDownload"/g) ?? []).length,
-      1
-    )
-    assert.equal(
-      (contactHtml.match(/href="https:\/\/x\.com\/TGDownload"/g) ?? []).length,
-      2
-    )
+    assert.match(contactHtml, /href="mailto:support@mapsgrab\.com\?subject=/)
+    assert.match(contactHtml, /support@mapsgrab\.com/)
     assert.match(contactHtml, /data-ga-source="contact"/)
-    assert.match(contactHtml, /<meta name="twitter:site" content="@TGDownload"/)
+  }
+})
+
+test('every built page exposes complete title, description and Open Graph metadata', async () => {
+  const htmlFiles = await collectHtmlFiles(distDir)
+  // 15 内容页 + 2 个 PayPal 回跳页 + 1 个插件登录桥接页（noindex）
+  assert.equal(htmlFiles.length, 18)
+
+  const descriptionsByRoute = new Map()
+  for (const filePath of htmlFiles) {
+    const relative = path.relative(distDir, filePath)
+    const html = await readFile(filePath, 'utf8')
+
+    const title = html.match(/<title>([^<]*)<\/title>/)?.[1]?.trim() ?? ''
+    assert.ok(title.length > 0, `Expected ${relative} to have a non-empty title`)
+
+    const description = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]*)"/i)?.[1] ?? ''
+    assert.ok(description.trim().length > 0, `Expected ${relative} to have a non-empty description`)
+
+    for (const property of ['og:type', 'og:url', 'og:title', 'og:description', 'og:image', 'og:locale']) {
+      const value = html.match(new RegExp(`<meta\\b[^>]*property="${property}"[^>]*content="([^"]*)"`))?.[1] ?? ''
+      assert.ok(value.trim().length > 0, `Expected ${relative} to expose ${property}`)
+    }
+
+    // og:image 必须是位图：OG 消费平台不渲染 SVG
+    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]*)"/)?.[1] ?? ''
+    assert.equal(ogImage.endsWith('.svg'), false, `Expected ${relative} og:image to be a bitmap`)
+
+    const twitterCard = html.match(/<meta\b[^>]*property="twitter:card"[^>]*content="([^"]*)"/)?.[1] ?? ''
+    assert.ok(twitterCard.trim().length > 0, `Expected ${relative} to expose twitter:card`)
+
+    assert.ok(extractCanonicalUrl(html), `Expected ${relative} to include a canonical URL`)
+
+    descriptionsByRoute.set(relative.split(path.sep).join('/'), description)
+  }
+
+  // 工具矩阵 7 页各自独立 description（SEO 去重）
+  const toolDescriptions = [...descriptionsByRoute].filter(([route]) => route.startsWith('tools/'))
+  assert.equal(toolDescriptions.length, 7)
+  assert.equal(
+    new Set(toolDescriptions.map(([, description]) => description)).size,
+    7,
+    'Expected each tool page to have its own description'
+  )
+
+  // PayPal 回跳页不进索引（robots meta noindex + sitemap/robots 排除在既有测试覆盖）
+  for (const route of ['paypal/cancel/index.html', 'paypal/success/index.html']) {
+    const html = await readFile(path.join(distDir, route), 'utf8')
     assert.match(
-      contactHtml,
-      /"sameAs":\[[^\]]*"https:\/\/x\.com\/TGDownload"[^\]]*\]/
+      extractRobotsMeta(html),
+      /noindex/i,
+      `Expected ${route} to be noindex`
     )
   }
 })
 
-test('LLMs text indexes reference existing built website paths', async () => {
-  const distFiles = await readdir(distDir)
-  assert.equal(distFiles.includes('llms.txt'), true)
-  assert.equal(distFiles.includes('llms-full.txt'), true)
-  const siteUrl = 'https://telegramdownloadmedia.com'
-
-  const llmsTxt = await readFile(path.join(distDir, 'llms.txt'), 'utf8')
-  const llmsFullTxt = await readFile(path.join(distDir, 'llms-full.txt'), 'utf8')
-  const robotsTxt = await readFile(path.join(distDir, 'robots.txt'), 'utf8')
-
-  assert.match(llmsTxt, /^# TG Downloader$/m)
-  assert.equal(llmsTxt.includes(`${siteUrl}/llms-full.txt`), true)
-  assert.equal(llmsTxt.includes(`${siteUrl}/sitemap.xml`), true)
-  assert.match(llmsFullTxt, /^# TG Downloader$/m)
-  assert.equal(llmsFullTxt.includes(`${siteUrl}/llms.txt`), true)
-  assert.equal(llmsFullTxt.includes(`${siteUrl}/sitemap.xml`), true)
-  assert.match(robotsTxt, /^Allow: \/llms\.txt$/m)
-  assert.match(robotsTxt, /^Allow: \/llms-full\.txt$/m)
-
-  assert.equal(llmsTxt.includes('mailto:'), false)
-  assert.equal(llmsFullTxt.includes('mailto:'), false)
-  assert.equal(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(llmsTxt), false)
-  assert.equal(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(llmsFullTxt), false)
-
-  const requiredShortIndexUrls = [
-    `${siteUrl}/`,
-    `${siteUrl}/pricing/`,
-    `${siteUrl}/about/`,
-    `${siteUrl}/contact/`,
-    `${siteUrl}/llms-full.txt`,
-    `${siteUrl}/changelog/`,
-    `${siteUrl}/sitemap.xml`
+test('llms.txt indexes every public content route and excludes paypal returns', async () => {
+  const llms = await readFile(path.join(repoDir, 'public/llms.txt'), 'utf8')
+  const publicRoutes = [
+    '/',
+    '/extension/',
+    '/download/',
+    '/pricing/',
+    '/tools/place-id-finder/',
+    '/tools/review-link-generator/',
+    '/tools/email-checker/',
+    '/tools/lat-long-to-dms/',
+    '/tools/dms-to-dd/',
+    '/tools/bulk-keywords-generator/',
+    '/tools/merge-csv-files-online/',
+    '/about/',
+    '/contact/',
+    '/terms/',
+    '/privacy/'
   ]
 
-  for (const url of requiredShortIndexUrls) {
-    assert.equal(llmsTxt.includes(url), true, `Expected llms.txt to include required URL: ${url}`)
-  }
-
-  const requiredFullIndexUrls = [
-    `${siteUrl}/`,
-    `${siteUrl}/pricing/`,
-    `${siteUrl}/about/`,
-    `${siteUrl}/contact/`,
-    `${siteUrl}/llms.txt`,
-    `${siteUrl}/changelog/`,
-    `${siteUrl}/sitemap.xml`,
-    `${siteUrl}/sitemap_index.xml`,
-    `${siteUrl}/sitemap-0.xml`
-  ]
-
-  for (const language of LANGUAGE_SITEMAP_LOCALES) {
-    const languagePath = language.pathPrefix ? `/${language.pathPrefix}/` : '/'
-    requiredFullIndexUrls.push(`${siteUrl}${languagePath}`)
-    requiredFullIndexUrls.push(`${siteUrl}/${language.sitemapSlug}-sitemap.xml`)
-  }
-
-  for (const url of requiredFullIndexUrls) {
-    assert.equal(
-      llmsFullTxt.includes(url),
-      true,
-      `Expected llms-full.txt to include required URL: ${url}`
+  for (const route of publicRoutes) {
+    assert.ok(
+      llms.includes(`https://mapsgrab.com${route}`),
+      `Expected llms.txt to index ${route}`
     )
   }
 
-  for (const source of [llmsTxt, llmsFullTxt]) {
-    const absoluteUrls = Array.from(source.matchAll(/https?:\/\/[^)\s]+/g)).map((match) => match[0])
-    for (const url of absoluteUrls) {
-      const parsedUrl = new URL(url)
-      assert.equal(parsedUrl.protocol, 'https:', `Expected LLMs index to avoid non-HTTPS URL: ${url}`)
-      assert.equal(
-        parsedUrl.host,
-        'telegramdownloadmedia.com',
-        `Expected LLMs index to avoid external URL: ${url}`
-      )
-    }
-
-    const urls = Array.from(source.matchAll(/https:\/\/telegramdownloadmedia\.com\/[^)\s]*/g))
-      .map((match) => match[0])
-
-    for (const url of urls) {
-      const pathname = new URL(url).pathname
-      const locSegments = pathname.split('/').filter(Boolean)
-      const lastSegment = locSegments[locSegments.length - 1] ?? ''
-      assert.equal(
-        ['features', 'guide', 'faq', 'solutions'].includes(lastSegment),
-        false,
-        `Expected LLMs index to avoid retired information page: ${url}`
-      )
-
-      // llms 索引为静态 SEO 资产，可能包含尚未上线的规划落地页；
-      // 不对其条目做“必须已构建”强校验，只排除已退役路由。
-    }
-  }
+  assert.equal(llms.includes('/paypal/'), false)
+  assert.match(llms, /https:\/\/mapsgrab\.com\/sitemap\.xml/)
 })
 
-test('Cloudflare bulk redirect CSV covers retired or merged information pages', async () => {
-  const siteUrl = 'https://telegramdownloadmedia.com'
-  const retiredSlugs = ['features', 'guide', 'faq']
-  const mergedSlugs = [
-    {
-      source: 'solutions',
-      target: 'telegram-download-disabled-channel-workaround'
-    }
-  ]
-  const uiSource = await readFile(path.join(repoDir, 'src/i18n/ui.ts'), 'utf8')
-  const localePaths = readUiRecord(uiSource, 'localePaths')
-  const expectedRows = new Set()
 
-  for (const pathPrefix of localePaths.values()) {
-    const sourcePrefix = pathPrefix ? `/${pathPrefix}` : ''
-    const targetPath = pathPrefix ? `/${pathPrefix}/` : '/'
-
-    for (const slug of retiredSlugs) {
-      expectedRows.add(`${siteUrl}${sourcePrefix}/${slug},${siteUrl}${targetPath},301,true`)
-      expectedRows.add(`${siteUrl}${sourcePrefix}/${slug}/,${siteUrl}${targetPath},301,true`)
-    }
-
-    for (const slug of mergedSlugs) {
-      const targetUrl = `${siteUrl}${sourcePrefix}/${slug.target}/`
-      expectedRows.add(`${siteUrl}${sourcePrefix}/${slug.source},${targetUrl},301,true`)
-      expectedRows.add(`${siteUrl}${sourcePrefix}/${slug.source}/,${targetUrl},301,true`)
-    }
-  }
-
-  const csv = await readFile(path.join(repoDir, 'cloudflare/retired-page-redirects.csv'), 'utf8')
-  const rows = csv.trim().split('\n')
-
-  assert.equal(rows.length, expectedRows.size)
-
-  for (const row of rows) {
-    assert.ok(expectedRows.has(row), `Unexpected retired page redirect row: ${row}`)
-  }
-})
 
 async function findFile(rootDir, filename) {
   const entries = await readdir(rootDir, { withFileTypes: true })
@@ -606,16 +511,16 @@ async function patchCompiledBrowserModuleFiles(rootDir) {
     )
     source = source.replace(
       /import\.meta\.env\.PUBLIC_API_BASE_URL/g,
-      "'https://tg-download-api.telegramdownloadmedia.com/'"
+      "'https://api-mapsgrab.example.com/'"
     )
     source = source.replace(
       /import\.meta\.env\.PUBLIC_SHARED_COOKIE_DOMAIN/g,
-      "'telegramdownloadmedia.com'"
+      "'mapsgrab.com'"
     )
-    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_PROJECT/g, "'tg-download'")
+    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_PROJECT/g, "'mapsgrab'")
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_HOST/g, "'ap-southeast-1.log.aliyuncs.com'")
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_ENDPOINT/g, "''")
-    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_LOGSTORE/g, "'tg-download-mark-log'")
+    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_LOGSTORE/g, "'mapsgrab-mark-log'")
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_ENABLED/g, "''")
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_TOPIC/g, "'mark-log'")
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_SOURCE/g, "''")
@@ -642,207 +547,6 @@ function installLocalStorage() {
   return values
 }
 
-async function importWorkspaceSnapshotModule() {
-  const tempDir = await createTempDir('workspace-snapshot-')
-  const snapshotSource = path.resolve(
-    repoDir,
-    'src/download/scripts/snapshot.ts'
-  )
-  const tsconfigPath = path.join(tempDir, 'tsconfig.json')
-  await writeFile(
-    tsconfigPath,
-    JSON.stringify({
-      extends: path.join(repoDir, 'tsconfig.json'),
-      compilerOptions: {
-        outDir: tempDir,
-        noEmit: false,
-        allowImportingTsExtensions: false,
-        types: []
-      },
-      files: [snapshotSource]
-    })
-  )
-  await execFileAsync(
-    'pnpm',
-    [
-      'exec',
-      'tsc',
-      '--project',
-      tsconfigPath
-    ],
-    { cwd: repoDir }
-  )
-
-  const compiledFile = await findFile(tempDir, 'snapshot.js')
-  assert.ok(compiledFile, 'Expected snapshot.ts to compile to snapshot.js')
-  await patchCompiledBrowserModuleFiles(tempDir)
-
-  const module = await import(`${pathToFileURL(compiledFile).href}?cache=${Date.now()}`)
-  return {
-    module,
-    cleanup: async () => {
-      await rm(tempDir, { recursive: true, force: true })
-      delete globalThis.window
-    }
-  }
-}
-
-async function importSharedDownloadUrlModule() {
-  return importCompiledTypescriptModule(
-    path.resolve(repoDir, 'src/download/scripts/url.ts'),
-    'url.js',
-    'shared-download-url-'
-  )
-}
-
-async function importDownloadResumeStoreModule() {
-  return importCompiledTypescriptModule(
-    path.resolve(repoDir, 'src/download/scripts/download-resume-store.ts'),
-    'download-resume-store.js',
-    'download-resume-store-'
-  )
-}
-
-async function importDownloadRangeStreamModule() {
-  return importCompiledTypescriptModule(
-    path.resolve(repoDir, 'src/download/scripts/download-range-stream.ts'),
-    'download-range-stream.js',
-    'download-range-stream-'
-  )
-}
-
-async function importDownloadStoragePreflightModule() {
-  return importCompiledTypescriptModule(
-    path.resolve(repoDir, 'src/download/scripts/download-storage-preflight.ts'),
-    'download-storage-preflight.js',
-    'download-storage-preflight-'
-  )
-}
-
-async function importMediaDownloadAllowlistModule() {
-  return importCompiledTypescriptModule(
-    path.resolve(repoDir, 'src/download/scripts/media-download-allowlist.ts'),
-    'media-download-allowlist.js',
-    'media-download-allowlist-'
-  )
-}
-
-async function importWorkspaceErrorsModule() {
-  const tempDir = await createTempDir('workspace-errors-')
-  const sourceFile = path.resolve(repoDir, 'src/download/scripts/workspace-errors.ts')
-  const tsconfigPath = path.join(tempDir, 'tsconfig.json')
-  await writeFile(
-    tsconfigPath,
-    JSON.stringify({
-      extends: path.join(repoDir, 'tsconfig.json'),
-      compilerOptions: {
-        outDir: tempDir,
-        noEmit: false,
-        allowImportingTsExtensions: false,
-        types: []
-      },
-      files: [sourceFile]
-    })
-  )
-  await execFileAsync('pnpm', ['exec', 'tsc', '--project', tsconfigPath], { cwd: repoDir })
-
-  const compiledFile = await findFile(tempDir, 'workspace-errors.js')
-  assert.ok(compiledFile, 'Expected workspace-errors.ts to compile to workspace-errors.js')
-  await patchCompiledBrowserModuleFiles(tempDir)
-  const module = await import(`${pathToFileURL(compiledFile).href}?cache=${Date.now()}`)
-  return {
-    module,
-    cleanup: async () => {
-      await rm(tempDir, { recursive: true, force: true })
-    }
-  }
-}
-
-async function importWorkspaceDownloadModuleWithMockedDispatcher() {
-  const tempDir = await createTempDir('workspace-download-')
-  const sourceFile = path.resolve(repoDir, 'src/download/scripts/workspace-download.ts')
-  const tsconfigPath = path.join(tempDir, 'tsconfig.json')
-  await writeFile(
-    tsconfigPath,
-    JSON.stringify({
-      extends: path.join(repoDir, 'tsconfig.json'),
-      compilerOptions: {
-        outDir: tempDir,
-        noEmit: false,
-        allowImportingTsExtensions: false,
-        types: []
-      },
-      files: [sourceFile]
-    })
-  )
-  await execFileAsync('pnpm', ['exec', 'tsc', '--project', tsconfigPath], { cwd: repoDir })
-
-  const compiledFile = await findFile(tempDir, 'workspace-download.js')
-  const dispatcherFile = await findFile(tempDir, 'download-dispatcher.js')
-  assert.ok(compiledFile, 'Expected workspace-download.ts to compile to workspace-download.js')
-  assert.ok(dispatcherFile, 'Expected workspace-download.ts dependency download-dispatcher.js')
-  await patchCompiledBrowserModuleFiles(tempDir)
-  await writeFile(
-    dispatcherFile,
-    [
-      'export async function downloadPlannedResource(plan, context, options) {',
-      '  const resource = plan.resource;',
-      '  globalThis.__workspaceDownloadTestDownloads?.push({ resource, context, hasProgress: typeof options?.onProgress === "function", saveStrategies: plan.method.saveStrategies, sessionPolicy: plan.method.sessionPolicy, requiresStoragePreflight: plan.method.requiresStoragePreflight });',
-      '  const createError = globalThis.__workspaceDownloadTestCreateError;',
-      '  if (typeof createError === "function") {',
-      '    throw createError(resource);',
-      '  }',
-      '  return globalThis.__workspaceDownloadTestResult;',
-      '}',
-      'export async function resumeDownloadResource(resource, resumeRecord, context, options) {',
-      '  globalThis.__workspaceDownloadTestDownloads?.push({ resource, resumeRecord, context, hasProgress: typeof options?.onProgress === "function" });',
-      '  return globalThis.__workspaceDownloadTestResult;',
-      '}'
-    ].join('\n')
-  )
-
-  const module = await import(`${pathToFileURL(compiledFile).href}?cache=${Date.now()}`)
-  return {
-    module,
-    cleanup: async () => {
-      await rm(tempDir, { recursive: true, force: true })
-      delete globalThis.__workspaceDownloadTestDownloads
-      delete globalThis.__workspaceDownloadTestCreateError
-      delete globalThis.__workspaceDownloadTestResult
-    }
-  }
-}
-
-async function importWorkspaceRenderModule() {
-  const tempDir = await createTempDir('workspace-render-')
-  const sourceFile = path.resolve(repoDir, 'src/download/scripts/workspace-render.ts')
-  const tsconfigPath = path.join(tempDir, 'tsconfig.json')
-  await writeFile(
-    tsconfigPath,
-    JSON.stringify({
-      extends: path.join(repoDir, 'tsconfig.json'),
-      compilerOptions: {
-        outDir: tempDir,
-        noEmit: false,
-        allowImportingTsExtensions: false,
-        types: []
-      },
-      files: [sourceFile]
-    })
-  )
-  await execFileAsync('pnpm', ['exec', 'tsc', '--project', tsconfigPath], { cwd: repoDir })
-
-  const compiledFile = await findFile(tempDir, 'workspace-render.js')
-  assert.ok(compiledFile, 'Expected workspace-render.ts to compile to workspace-render.js')
-  await patchCompiledBrowserModuleFiles(tempDir)
-  const module = await import(`${pathToFileURL(compiledFile).href}?cache=${Date.now()}`)
-  return {
-    module,
-    cleanup: async () => {
-      await rm(tempDir, { recursive: true, force: true })
-    }
-  }
-}
 
 async function importHomepageApiModule() {
   const tempDir = await createTempDir('homepage-api-')
@@ -976,13 +680,6 @@ async function importHomepageMarkSanitizerModule() {
   )
 }
 
-async function importSharedCheckinModule() {
-  return importCompiledTypescriptModule(
-    path.resolve(repoDir, 'src/scripts/homepage/checkin.ts'),
-    'checkin.js',
-    'shared-checkin-'
-  )
-}
 
 async function importSharedDeviceModule() {
   return importCompiledTypescriptModule(
@@ -1008,36 +705,6 @@ async function importSharedFirstOpenedMarkModule() {
   }
 }
 
-async function importSharedMediaApiModule() {
-  const tempDir = await createTempDir('shared-media-api-')
-  const sourceFile = path.resolve(repoDir, 'src/download/scripts/media-api.ts')
-  const tsconfigPath = path.join(tempDir, 'tsconfig.json')
-  await writeFile(
-    tsconfigPath,
-    JSON.stringify({
-      extends: path.join(repoDir, 'tsconfig.json'),
-      compilerOptions: {
-        outDir: tempDir,
-        noEmit: false,
-        allowImportingTsExtensions: false,
-        types: []
-      },
-      files: [sourceFile]
-    })
-  )
-  await execFileAsync('pnpm', ['exec', 'tsc', '--project', tsconfigPath], { cwd: repoDir })
-
-  const compiledFile = await findFile(tempDir, 'media-api.js')
-  assert.ok(compiledFile, 'Expected media-api.ts to compile to media-api.js')
-  await patchCompiledBrowserModuleFiles(tempDir)
-  const module = await import(`${pathToFileURL(compiledFile).href}?cache=${Date.now()}`)
-  return {
-    module,
-    cleanup: async () => {
-      await rm(tempDir, { recursive: true, force: true })
-    }
-  }
-}
 
 async function importCompiledTypescriptModule(sourceFile, compiledFilename, tempPrefix) {
   const tempDir = await createTempDir(tempPrefix)
@@ -1242,7 +909,7 @@ function installGoogleScriptDom() {
     },
     setTimeout: () => 1,
     clearTimeout: () => {},
-    location: Object.assign(new URL('https://telegramdownloadmedia.com/'), {
+    location: Object.assign(new URL('https://mapsgrab.com/'), {
       assign(url) {
         assignedLocations.push(String(url))
       }
@@ -1342,7 +1009,7 @@ function installPromptingGoogleIdentity() {
 }
 
 function installGoogleRedirectDom(
-  href = 'https://telegramdownloadmedia.com/pricing/?plan=month&google_login_code=old'
+  href = 'https://mapsgrab.com/pricing/?plan=month&google_login_code=old'
 ) {
   const dom = installGoogleScriptDom()
   const locationUrl = new URL(href)
@@ -1476,11 +1143,11 @@ async function assertGoogleRedirectButtonUsesOAuthAuthorize(sourceFile, tempPref
     assert.equal(dom.assignedLocations.length, 1)
 
     const authorizeUrl = new URL(dom.assignedLocations[0])
-    assert.equal(authorizeUrl.origin, 'https://tg-download-api.telegramdownloadmedia.com')
+    assert.equal(authorizeUrl.origin, 'https://api-mapsgrab.example.com')
     assert.equal(authorizeUrl.pathname, '/api/client/auth/google/oauth/authorize')
     assert.equal(
       authorizeUrl.searchParams.get('return_to'),
-      'https://telegramdownloadmedia.com/pricing/?plan=month'
+      'https://mapsgrab.com/pricing/?plan=month'
     )
   } finally {
     dom.cleanup()
@@ -1563,9 +1230,9 @@ async function assertGoogleOneTapCallbackPostsCredential(sourceFile, tempPrefix)
     assert.deepEqual(dom.postedMessages, [
       {
         message: {
-          type: 'TG_DOWNLOAD_WEB_AUTH_CHANGED'
+          type: 'MAPSGRAB_WEB_AUTH_CHANGED'
         },
-        targetOrigin: 'https://telegramdownloadmedia.com'
+        targetOrigin: 'https://mapsgrab.com'
       }
     ])
   } finally {
@@ -1582,7 +1249,7 @@ async function assertGoogleOneTapCallbackPostsCredential(sourceFile, tempPrefix)
 async function assertGoogleRedirectResultCanBeCleared(sourceFile, tempPrefix) {
   const { module, cleanup } = await importHomepageAuthModule(sourceFile, tempPrefix)
   const dom = installGoogleRedirectDom(
-    'https://telegramdownloadmedia.com/pricing/?plan=month&google_login_code=code-1&google_login_error=bad&google_email_verification=user%40example.com'
+    'https://mapsgrab.com/pricing/?plan=month&google_login_code=code-1&google_login_error=bad&google_email_verification=user%40example.com'
   )
 
   try {
@@ -1593,7 +1260,7 @@ async function assertGoogleRedirectResultCanBeCleared(sourceFile, tempPrefix) {
     })
 
     module.clearGoogleRedirectResult()
-    assert.equal(dom.replacedUrl, 'https://telegramdownloadmedia.com/pricing/?plan=month')
+    assert.equal(dom.replacedUrl, 'https://mapsgrab.com/pricing/?plan=month')
   } finally {
     dom.cleanup()
     await cleanup()
@@ -1663,21 +1330,21 @@ async function assertStoredTokenChangePostsOriginScopedMessage(sourceFile, tempP
     assert.deepEqual(dom.postedMessages, [
       {
         message: {
-          type: 'TG_DOWNLOAD_WEB_AUTH_CHANGED'
+          type: 'MAPSGRAB_WEB_AUTH_CHANGED'
         },
-        targetOrigin: 'https://telegramdownloadmedia.com'
+        targetOrigin: 'https://mapsgrab.com'
       },
       {
         message: {
-          type: 'TG_DOWNLOAD_WEB_AUTH_CHANGED'
+          type: 'MAPSGRAB_WEB_AUTH_CHANGED'
         },
-        targetOrigin: 'https://telegramdownloadmedia.com'
+        targetOrigin: 'https://mapsgrab.com'
       },
       {
         message: {
-          type: 'TG_DOWNLOAD_WEB_AUTH_CHANGED'
+          type: 'MAPSGRAB_WEB_AUTH_CHANGED'
         },
-        targetOrigin: 'https://telegramdownloadmedia.com'
+        targetOrigin: 'https://mapsgrab.com'
       }
     ])
     assert.equal(
@@ -1685,31 +1352,9 @@ async function assertStoredTokenChangePostsOriginScopedMessage(sourceFile, tempP
       false
     )
     assert.equal(dom.postedMessages.some(item => item.targetOrigin === '*'), false)
-    // 同一次 token 变更经 externally_connectable 直连主线正式版与预发布版。
-    const extensionIds = [
-      'lflkobgaibapekhjnfhkaeagdnojjnla',
-      'cknimihpjagocmakbkplpjdcgjlbnkec'
-    ]
-    const accessTokens = [
-      'direct-access-token',
-      'email-access-token',
-      'google-access-token'
-    ]
-    assert.deepEqual(
-      dom.sentExternalMessages.map(entry => ({
-        extensionId: entry.extensionId,
-        message: entry.message
-      })),
-      accessTokens.flatMap(webAccessToken =>
-        extensionIds.map(extensionId => ({
-          extensionId,
-          message: {
-            type: 'TG_DOWNLOAD_EXTENSION_AUTH_CHANGED_V2',
-            web_access_token: webAccessToken
-          }
-        }))
-      )
-    )
+    // externally_connectable 直连目标列表当前为空占位（MapsGrab 扩展上架后 W7 回填）：
+    // v2 广播不发出，但 postMessage 兼容通道必须正常工作且不泄漏 token。
+    assert.deepEqual(dom.sentExternalMessages, [])
   } finally {
     if (previousFetch === undefined) {
       delete globalThis.fetch
@@ -1722,7 +1367,7 @@ async function assertStoredTokenChangePostsOriginScopedMessage(sourceFile, tempP
 }
 
 function installSlsBrowserGlobals({
-  href = 'https://telegramdownloadmedia.com/download/',
+  href = 'https://mapsgrab.com/download/',
   language = 'zh-CN',
   userAgent = 'Mozilla/5.0 SLS test browser',
   viewport = { width: 1365, height: 768 }
@@ -1773,7 +1418,7 @@ function installSlsBrowserGlobals({
 }
 
 function installFirstOpenedMarkBrowserGlobals({
-  href = 'https://telegramdownloadmedia.com/',
+  href = 'https://mapsgrab.com/',
   language = 'zh-CN',
   userAgent = 'Mozilla/5.0 first opened mark test',
   viewport = { width: 1365, height: 768 },
@@ -1893,7 +1538,7 @@ function installFirstOpenedMarkBrowserGlobals({
 }
 
 function installFrontendErrorBrowserGlobals({
-  href = 'https://telegramdownloadmedia.com/download/',
+  href = 'https://mapsgrab.com/download/',
   language = 'zh-CN',
   userAgent = 'Mozilla/5.0 Frontend error SLS test',
   viewport = { width: 1365, height: 768 },
@@ -1976,7 +1621,7 @@ function restoreGlobalProperty(name, descriptor) {
 }
 
 function installFooterBrandBrowser({
-  href = 'https://telegramdownloadmedia.com/',
+  href = 'https://mapsgrab.com/',
   deviceId = '01234567-89ab-4def-8123-456789abcdef'
 } = {}) {
   const previousWindow = globalThis.window
@@ -2150,7 +1795,7 @@ test('website first opened mark reports once after first_opened_at is stored', a
     assert.equal(Number.isInteger(firstOpenedAt), true)
     assert.equal(firstOpenedAt > 0, true)
     assert.equal(browser.calls.length, 2)
-    assert.equal(browser.calls[0].path, '/logstores/tg-download-mark-log/track')
+    assert.equal(browser.calls[0].path, '/logstores/mapsgrab-mark-log/track')
     assert.equal(browser.calls[0].method, 'GET')
     assert.equal(browser.calls[0].credentials, 'omit')
     assert.equal(browser.calls[0].keepalive, true)
@@ -2324,8 +1969,8 @@ async function assertSlsMarkBuildsWebTrackingUrl(sourceFile, tempPrefix, expecte
     const url = new URL(module.buildSlsMarkUrl(config, fields))
 
     assert.equal(config.enabled, true)
-    assert.equal(url.origin, 'https://tg-download.ap-southeast-1.log.aliyuncs.com')
-    assert.equal(url.pathname, '/logstores/tg-download-mark-log/track')
+    assert.equal(url.origin, 'https://mapsgrab.ap-southeast-1.log.aliyuncs.com')
+    assert.equal(url.pathname, '/logstores/mapsgrab-mark-log/track')
     assert.equal(url.searchParams.get('APIVersion'), '0.6.0')
     assert.equal(url.searchParams.get('__topic__'), 'mark-log')
     assert.equal(url.searchParams.get('__source__'), expectedSite)
@@ -2352,13 +1997,13 @@ test('homepage SLS mark builds WebTracking URL for website', async () => {
     'src/scripts/homepage/sls-mark.ts',
     'homepage-sls-mark-',
     'website',
-    'https://telegramdownloadmedia.com/telegram-download-disabled-channel-workaround/'
+    'https://mapsgrab.com/some-page/'
   )
   await assertSlsMarkBuildsWebTrackingUrl(
     path.resolve(repoDir, 'src/scripts/homepage/sls-mark.ts'),
     'shared-homepage-sls-mark-',
     'website',
-    'https://telegramdownloadmedia.com/tiktok-downloader/'
+    'https://mapsgrab.com/some-tool/'
   )
 })
 
@@ -2448,7 +2093,7 @@ test('frontend error capture dispatches uncaught Error to callback', async () =>
       target: browser.windowObject,
       error: new TypeError('Boom token=secret-token'),
       message: 'Boom token=secret-token',
-      filename: 'https://telegramdownloadmedia.com/assets/app.js?token=secret-token',
+      filename: 'https://mapsgrab.com/assets/app.js?token=secret-token',
       lineno: 12,
       colno: 34
     })
@@ -2458,7 +2103,7 @@ test('frontend error capture dispatches uncaught Error to callback', async () =>
     assert.equal(capturedErrors[0].errorName, 'TypeError')
     assert.equal(capturedErrors[0].errorMessage, 'Boom token=secret-token')
     assert.equal(capturedErrors[0].pagePath, '/download/')
-    assert.equal(capturedErrors[0].sourceFile, 'https://telegramdownloadmedia.com/assets/app.js?token=secret-token')
+    assert.equal(capturedErrors[0].sourceFile, 'https://mapsgrab.com/assets/app.js?token=secret-token')
     assert.equal(capturedErrors[0].line, 12)
     assert.equal(capturedErrors[0].column, 34)
   } finally {
@@ -2491,7 +2136,7 @@ test('frontend captured error SLS callback sends uncaught Error to SLS only', as
       errorName: 'TypeError',
       errorMessage: 'Boom token=secret-token',
       pagePath: '/download/',
-      sourceFile: 'https://telegramdownloadmedia.com/assets/app.js?token=secret-token',
+      sourceFile: 'https://mapsgrab.com/assets/app.js?token=secret-token',
       line: 12,
       column: 34
     })
@@ -2499,7 +2144,7 @@ test('frontend captured error SLS callback sends uncaught Error to SLS only', as
 
     assert.equal(calls.length, 1)
     const url = new URL(calls[0].url)
-    assert.equal(url.pathname, '/logstores/tg-download-mark-log/track')
+    assert.equal(url.pathname, '/logstores/mapsgrab-mark-log/track')
     assert.equal(url.searchParams.get('mark_type'), 'web_frontend_uncaught_error')
     assert.equal(url.searchParams.get('device_id'), browser.deviceId)
     assert.equal(calls.some(call => new URL(call.url).pathname === '/api/client/mark/record'), false)
@@ -2508,7 +2153,7 @@ test('frontend captured error SLS callback sends uncaught Error to SLS only', as
     assert.equal(markMsg.error_kind, 'error_event')
     assert.equal(markMsg.error_name, 'TypeError')
     assert.equal(markMsg.error_message.includes('secret-token'), false)
-    assert.equal(markMsg.source_file, 'https://telegramdownloadmedia.com/assets/app.js')
+    assert.equal(markMsg.source_file, 'https://mapsgrab.com/assets/app.js')
     assert.equal(markMsg.line, 12)
     assert.equal(markMsg.column, 34)
   } finally {
@@ -2528,7 +2173,7 @@ test('shared frontend error capture dispatches unhandled rejection to callback',
     'shared-frontend-error-capture-'
   )
   const browser = installFrontendErrorBrowserGlobals({
-    href: 'https://telegramdownloadmedia.com/tiktok-downloader/'
+    href: 'https://mapsgrab.com/some-tool/'
   })
   const capturedErrors = []
 
@@ -2548,7 +2193,7 @@ test('shared frontend error capture dispatches unhandled rejection to callback',
     assert.equal(capturedErrors[0].errorKind, 'unhandled_rejection')
     assert.equal(capturedErrors[0].errorName, 'Error')
     assert.equal(capturedErrors[0].errorMessage, 'Async failed with access_token=secret-token')
-    assert.equal(capturedErrors[0].pagePath, '/tiktok-downloader/')
+    assert.equal(capturedErrors[0].pagePath, '/some-tool/')
   } finally {
     browser.restore()
     await cleanup()
@@ -2561,7 +2206,7 @@ test('shared frontend captured error SLS callback reports website site', async (
     'shared-frontend-captured-error-sls-'
   )
   const browser = installFrontendErrorBrowserGlobals({
-    href: 'https://telegramdownloadmedia.com/tiktok-downloader/'
+    href: 'https://mapsgrab.com/some-tool/'
   })
   const previousFetch = globalThis.fetch
   const calls = []
@@ -2580,7 +2225,7 @@ test('shared frontend captured error SLS callback reports website site', async (
       errorKind: 'unhandled_rejection',
       errorName: 'Error',
       errorMessage: 'Async failed with access_token=secret-token',
-      pagePath: '/tiktok-downloader/',
+      pagePath: '/some-tool/',
       sourceFile: '',
       line: 0,
       column: 0
@@ -2597,7 +2242,7 @@ test('shared frontend captured error SLS callback reports website site', async (
     assert.equal(markMsg.error_kind, 'unhandled_rejection')
     assert.equal(markMsg.error_name, 'Error')
     assert.equal(markMsg.error_message.includes('secret-token'), false)
-    assert.equal(markMsg.page_path, '/tiktok-downloader/')
+    assert.equal(markMsg.page_path, '/some-tool/')
   } finally {
     if (previousFetch === undefined) {
       delete globalThis.fetch
@@ -2637,7 +2282,7 @@ test('frontend error capture ignores resource errors and deduplicates same error
       target: browser.windowObject,
       error: new Error('Same frontend failure'),
       message: 'Same frontend failure',
-      filename: 'https://telegramdownloadmedia.com/assets/app.js',
+      filename: 'https://mapsgrab.com/assets/app.js',
       lineno: 56,
       colno: 78
     }
@@ -2688,7 +2333,7 @@ test('homepage record mark keeps backend post when SLS fails', async () => {
     await flushBrowserTasks()
 
     assert.equal(calls.length, 2)
-    assert.equal(calls[0].path, '/logstores/tg-download-mark-log/track')
+    assert.equal(calls[0].path, '/logstores/mapsgrab-mark-log/track')
     assert.equal(calls[0].method, 'GET')
     assert.equal(calls[0].credentials, 'omit')
     assert.equal(calls[0].keepalive, true)
@@ -2747,7 +2392,7 @@ test('homepage record mark sends SLS before backend failure is thrown', async ()
 
     assert.deepEqual(
       calls.map(call => call.path),
-      ['/logstores/tg-download-mark-log/track', '/api/client/mark/record']
+      ['/logstores/mapsgrab-mark-log/track', '/api/client/mark/record']
     )
   } finally {
     restoreBrowser()
@@ -2809,7 +2454,7 @@ test('global install CTA click sends SLS and keepalive mark', async () => {
   globalThis.HTMLAnchorElement = FakeGlobalClickElement
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
-    value: new URL('https://telegramdownloadmedia.com/')
+    value: new URL('https://mapsgrab.com/')
   })
   Object.defineProperty(globalThis, 'navigator', {
     configurable: true,
@@ -2834,7 +2479,7 @@ test('global install CTA click sends SLS and keepalive mark', async () => {
     }
   }
   globalThis.document = {
-    title: 'TG Downloader',
+    title: 'MapsGrab',
     documentElement: { lang: 'en-US' },
     addEventListener(type, listener) {
       if (type === 'click') {
@@ -2862,20 +2507,21 @@ test('global install CTA click sends SLS and keepalive mark', async () => {
 
   try {
     const target = new FakeGlobalClickElement({
-      href: 'https://chromewebstore.google.com/detail/tg-downloader/example',
+      href: 'https://chromewebstore.google.com/detail/mapsgrab/example',
       attributes: {
         'data-ga-event': 'chrome_web_store_click',
         'data-ga-source': 'hero_install'
       }
     })
-    assert.equal(clickListeners.length, 1)
+    // 两个 click 委派：data-ga-event 业务事件 + data-cta 漏斗事件（W6 cta_click）
+    assert.equal(clickListeners.length, 2)
     clickListeners[0]({ target })
     await flushBrowserTasks()
     await flushBrowserTasks()
 
     assert.equal(fetchCalls.length, 2)
-    assert.equal(new URL(fetchCalls[0].href).hostname, 'tg-download.ap-southeast-1.log.aliyuncs.com')
-    assert.equal(fetchCalls[0].path, '/logstores/tg-download-mark-log/track')
+    assert.equal(new URL(fetchCalls[0].href).hostname, 'mapsgrab.ap-southeast-1.log.aliyuncs.com')
+    assert.equal(fetchCalls[0].path, '/logstores/mapsgrab-mark-log/track')
     assert.equal(fetchCalls[0].credentials, 'omit')
     assert.equal(fetchCalls[0].keepalive, true)
     assert.equal(new URL(fetchCalls[0].href).searchParams.get('mark_type'), 'web_extension_install_click')
@@ -3176,7 +2822,7 @@ test('homepage postJson preserves backend error data failure reason', async () =
   const previousNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
 
   const failureReason =
-    'media_parse_failed: platform=telegram, code=INTERNAL_SERVER_ERROR(500), detail=parse timeout'
+    'media_parse_failed: platform=example, code=INTERNAL_SERVER_ERROR(500), detail=parse timeout'
 
   globalThis.document = { documentElement: { lang: 'en-US' } }
   Object.defineProperty(globalThis, 'navigator', {
@@ -3321,36 +2967,22 @@ test('homepage auth token writes post origin-scoped extension sync signal', asyn
   )
 })
 
-test('extension login v2 resyncs only after validating an existing website token', async () => {
-  const source = await readFile(path.resolve(repoDir, 'src/pages/extension-login-v2.astro'), 'utf8')
-  const validateIndex = source.indexOf('const validateStoredToken')
-  const validationIndex = source.indexOf(
-    'const isTokenValid = await completeLoginWithToken(token)',
-    validateIndex
-  )
-  const notifyIndex = source.indexOf('notifyWebAuthChanged()', validationIndex)
 
-  assert.notEqual(validateIndex, -1)
-  assert.notEqual(validationIndex, -1)
-  assert.notEqual(notifyIndex, -1)
-  assert.ok(validateIndex < validationIndex)
-  assert.ok(validationIndex < notifyIndex)
-})
-
-test('extension-sourced Pricing load resyncs website auth', async () => {
+test('extension-sourced Pricing entry tags buy buttons for attribution before first load', async () => {
   const source = await readFile(
     path.resolve(repoDir, 'src/components/pricing/pricing-page-controller.ts'),
     'utf8'
   )
-  const flagsIndex = source.indexOf('const entryFlags = readPricingEntryFlags()')
-  const extensionSourceIndex = source.indexOf('if (entryFlags.isExtensionSource)', flagsIndex)
-  const notifyIndex = source.indexOf('notifyWebAuthChanged()', extensionSourceIndex)
+  // 插件升级入口（W7 接线）：utm_source=extension 只做归因（购买按钮 ga-source），
+  // 在首次账户/配置加载前应用，保证首屏事件即携带来源。
+  const utmReadIndex = source.indexOf("get('utm_source') === EXTENSION_UTM_SOURCE")
+  const attributionIndex = source.indexOf('applyExtensionAttribution(elements, state)')
+  const initLoadIndex = source.indexOf('await Promise.all([restoreUser(elements, copy, state), loadPlans(elements, copy, state)])')
 
-  assert.notEqual(flagsIndex, -1)
-  assert.notEqual(extensionSourceIndex, -1)
-  assert.notEqual(notifyIndex, -1)
-  assert.ok(flagsIndex < extensionSourceIndex)
-  assert.ok(extensionSourceIndex < notifyIndex)
+  assert.notEqual(utmReadIndex, -1)
+  assert.notEqual(attributionIndex, -1)
+  assert.notEqual(initLoadIndex, -1)
+  assert.ok(attributionIndex < initLoadIndex)
 })
 
 test('Google redirect result reader clears only Google URL params', async () => {
@@ -3573,178 +3205,110 @@ test('Credits checkout client uses Credits configs and never unfinished orders',
   }
 })
 
-test('Pricing checkout client loads subscription configs and creates subscription orders', async () => {
+test('Pricing checkout client loads maps plans and creates subscription orders', async () => {
   const { module, cleanup } = await importCompiledTypescriptModule(
     path.resolve(repoDir, 'src/components/pricing/pricing-checkout.ts'),
     'pricing-checkout.js',
     'pricing-checkout-api-'
   )
   const fetchCalls = []
-  const reviewRewardEnabled = true
-  let reviewRewardClaimedCount = 0
-  let claimResult = 'granted'
-  const previousFetch = globalThis.fetch
-  const previousNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
-  globalThis.document = { documentElement: { lang: 'en-US' } }
-  Object.defineProperty(globalThis, 'navigator', {
-    configurable: true,
-    value: { language: 'en-US' }
-  })
-  globalThis.fetch = async (url, init = {}) => {
-    const parsedUrl = new URL(String(url))
-    fetchCalls.push({ path: parsedUrl.pathname, method: init.method ?? 'GET' })
-    if (parsedUrl.pathname === '/api/client/subscription/checkout-configs') {
-      return new Response(JSON.stringify({
-        code: 10000,
-        msg: 'success',
-        data: {
-          review_reward_enabled: reviewRewardEnabled,
-          review_reward_claimed_count: reviewRewardClaimedCount,
-          checkout_configs: [
-            {
-              product_class: 1,
-              product_id: 'legacy_subscription_sku',
-              product_name: 'Unlimited',
-              display_currency: 'USD',
-              display_amount: 12990000,
-              period: 'month',
-              daily_limit: -1,
-              auto_renew: true,
-              payment_channels: [
-                {
-                  payment_method: 'paypal',
-                  payment_method_name: 'PayPal',
-                  currency: 'USD',
-                  amount: 12990000,
-                  provider_sku: 'unlimited-monthly-paypal'
-                }
-              ]
-            },
-            {
-              product_class: 1,
-              product_id: 'unlimited',
-              product_name: 'Unlimited',
-              display_currency: 'USD',
-              display_amount: 12990000,
-              period: 'month',
-              daily_limit: -1,
-              auto_renew: false,
-              payment_channels: [
-                {
-                  payment_method: 'paypal',
-                  payment_method_name: 'PayPal',
-                  currency: 'USD',
-                  amount: 12990000,
-                  provider_sku: 'unlimited-monthly-paypal'
-                }
-              ]
-            }
-          ]
-        }
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-    }
-    if (parsedUrl.pathname === '/api/client/subscription/review-reward/claim') {
-      return new Response(JSON.stringify({
-        code: 10000,
-        msg: 'success',
-        data: {
-          result: claimResult,
-          review_reward_claimed_count: 1
-        }
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-    }
-    if (parsedUrl.pathname === '/api/client/order/create') {
-      return new Response(JSON.stringify({
-        code: 10000,
-        msg: 'success',
-        data: {
-          order_no: 'ORD-SUB-CREATE',
-          amount: 12990000,
-          currency: 'USD',
-          expired_at: Date.now() + 30 * 60 * 1000,
-          support_mail: 'support@example.com',
-          payment_data: {
-            payment_url: 'https://www.paypal.com/checkoutnow?token=sub'
-          }
-        }
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-    }
-    if (parsedUrl.pathname === '/api/client/order/status/ORD-SUB-CREATE') {
-      return new Response(JSON.stringify({
-        code: 10000,
-        msg: 'success',
-        data: {
-          order_no: 'ORD-SUB-CREATE',
+  const mapsPlan = (productId, amount) => ({
+    code: 10000,
+    msg: 'success',
+    data: {
+      review_reward_enabled: true,
+      review_reward_claimed_count: 0,
+      checkout_configs: [
+        {
+          product_class: 1,
+          product_id: productId,
+          product_line: 'maps',
+          product_name: productId === 'maps_pro' ? 'Maps Pro' : 'Maps Business',
+          display_currency: 'USD',
+          display_amount: amount,
+          period: 'month',
+          duration_days: 30,
+          auto_renew: true,
+          monthly_records: productId === 'maps_pro' ? 100000 : 500000,
+          payment_channels: [{
+            payment_method: 'paypal',
+            payment_method_name: 'PayPal',
+            currency: 'USD',
+            amount,
+            provider_sku: `${productId}-monthly-paypal`
+          }]
+        },
+        {
           product_class: 1,
           product_id: 'unlimited',
+          product_line: 'extension',
           product_name: 'Unlimited',
-          amount: 12990000,
-          currency: 'USD',
-          order_status: 2,
-          callback_status: 3,
-          payment_method: 'paypal',
-          paid_at: Date.now(),
-          created_at: Date.now(),
-          expired_at: Date.now() + 30 * 60 * 1000
+          display_currency: 'USD',
+          display_amount: 9990000,
+          period: 'month',
+          duration_days: 30,
+          auto_renew: true,
+          monthly_records: null,
+          payment_channels: [{
+            payment_method: 'paypal',
+            payment_method_name: 'PayPal',
+            currency: 'USD',
+            amount: 9990000,
+            provider_sku: 'unlimited-monthly-paypal'
+          }]
         }
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      ]
     }
-    throw new Error('Unexpected Pricing checkout test request: ' + parsedUrl.pathname)
+  })
+
+  const previousFetch = globalThis.fetch
+  const previousDocument = globalThis.document
+  globalThis.document = { documentElement: { lang: 'en-US' } }
+  globalThis.fetch = async (url, options = {}) => {
+    fetchCalls.push({ url: String(url), body: options.body ? JSON.parse(String(options.body)) : null })
+    return new Response(JSON.stringify(mapsPlan('maps_pro', 39000000)), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    })
   }
 
   try {
     const context = { deviceId: 'pricing-device', token: 'pricing-token' }
     const subscriptionData = await module.listSubscriptionCheckoutConfigs(context)
-    assert.equal(subscriptionData.reviewRewardEnabled, true)
-    assert.equal(subscriptionData.reviewRewardClaimedCount, 0)
     assert.equal(subscriptionData.plans.length, 2)
-    const plan = module.pickUnlimitedPlan(subscriptionData.plans)
-    assert.equal(plan.product_id, 'unlimited')
-    assert.equal(plan.auto_renew, false)
-    assert.equal(module.formatPricingDisplayPrice(plan), '$12.99')
+
+    // pickMapsPlans 只取 maps 产品线，按 product_id 索引
+    const mapsPlans = module.pickMapsPlans(subscriptionData.plans)
+    assert.equal([...mapsPlans.keys()].sort().join(','), 'maps_pro')
+    const plan = mapsPlans.get('maps_pro')
+    assert.equal(plan.product_line, 'maps')
+    assert.equal(plan.monthly_records, 100000)
+    assert.equal(module.formatPricingDisplayPrice(plan), '$39.00')
+
     const channel = module.getDefaultPricingPaymentChannel(plan.payment_channels)
-    assert.equal(channel.payment_method, 'paypal')
-    const order = await module.createPricingOrder(
-      context,
-      module.buildCreateSubscriptionOrderRequest(plan, channel)
-    )
-    assert.equal(order.order_no, 'ORD-SUB-CREATE')
-    assert.equal(module.readPaymentUrl(order.payment_data, channel.payment_method), 'https://www.paypal.com/checkoutnow?token=sub')
-    const status = await module.getPricingOrderStatus(context, order.order_no)
-    assert.equal(module.classifyPricingOrderStatus(status), 'paid')
-    assert.deepEqual(fetchCalls.map(call => call.path), [
-      '/api/client/subscription/checkout-configs',
-      '/api/client/order/create',
-      '/api/client/order/status/ORD-SUB-CREATE'
+    const request = module.buildCreateSubscriptionOrderRequest(plan, channel)
+    await module.createPricingOrder(context, request)
+    assert.deepEqual(fetchCalls, [
+      { url: 'https://api-mapsgrab.example.com/api/client/subscription/checkout-configs', body: null },
+      {
+        url: 'https://api-mapsgrab.example.com/api/client/order/create',
+        body: {
+          product_class: 1,
+          product_id: 'maps_pro',
+          payment_method: 'paypal',
+          currency: 'USD',
+          amount: 39000000
+        }
+      }
     ])
-
-    const claim = await module.claimSubscriptionReviewReward(context)
-    assert.deepEqual(claim, { result: 'granted', review_reward_claimed_count: 1 })
-
-    claimResult = 'unexpected_result'
-    await assert.rejects(
-      module.claimSubscriptionReviewReward(context),
-      /result must be granted or already_claimed/
-    )
-
-    reviewRewardClaimedCount = -1
-    await assert.rejects(
-      module.listSubscriptionCheckoutConfigs(context),
-      /review_reward_claimed_count must be a non-negative integer/
-    )
   } finally {
     globalThis.fetch = previousFetch
-    delete globalThis.document
-    if (previousNavigator) {
-      Object.defineProperty(globalThis, 'navigator', previousNavigator)
-    } else {
-      delete globalThis.navigator
-    }
+    globalThis.document = previousDocument
     await cleanup()
   }
 })
 
-test('Pricing subscription loader rejects bad configs and ignores stale anonymous responses', async () => {
+test('Pricing maps loader rejects bad configs and ignores stale anonymous responses', async () => {
   const previousFetch = globalThis.fetch
   const previousDocument = globalThis.document
   const previousWindow = globalThis.window
@@ -3757,66 +3321,54 @@ test('Pricing subscription loader rejects bad configs and ignores stale anonymou
     disabled: false,
     classList: {
       remove() {},
-      toggle() {}
+      toggle() {},
+      add() {}
     },
     setAttribute() {},
     removeAttribute() {}
   })
-  const subscription = {
-    price: makeElement(),
-    period: makeElement(),
-    dailyLimit: makeElement(),
-    renew: makeElement(),
-    status: makeElement(),
-    error: makeElement(),
-    buy: makeElement()
+  const buyableCards = new Map()
+  for (const productId of ['maps_pro', 'maps_business']) {
+    buyableCards.set(productId, { buy: makeElement(), error: makeElement() })
   }
-  const elements = { subscription }
+  const elements = {
+    accountError: makeElement(),
+    plansStatus: makeElement(),
+    buyableCards
+  }
   const copy = {
-    account: { unlimited: 'Unlimited' },
-    subscription: {
-      loading: 'Loading plans',
-      loadFailed: 'Plans failed. Retry.',
-      noPlan: 'No plan',
-      noChannels: 'No channels',
-      monthlyLabel: '/ month',
-      autoRenewOn: 'Renews',
-      autoRenewOff: 'One-time',
-      buyNow: 'Buy Now',
-      loginToBuy: 'Sign In'
-    },
-    extensionSource: {
-      primaryCta: 'Upgrade',
-      signedOutCta: 'Sign In'
+    plans: {
+      loading: 'Loading payment options...',
+      loadFailed: 'Failed to load payment options.',
+      noChannels: 'No payment method is available for this plan right now.',
+      alreadyActive: 'Already active.'
     }
   }
   const state = {
     deviceId: 'pricing-race-device',
     token: null,
     user: null,
-    subscriptionPlan: null,
-    reviewRewardEnabled: false,
-    reviewRewardClaimedCount: 0,
-    reviewRewardEligibilityLoaded: false,
-    subscriptionLoadVersion: 0,
-    isExtensionSource: false,
-    isQuotaUpgradeButtonEntry: false
+    plans: new Map(),
+    loadVersion: 0,
+    isExtensionSource: false
   }
-  const planData = (amount, claimedCount) => ({
+  const planData = (productId, amount) => ({
     code: 10000,
     msg: 'success',
     data: {
       review_reward_enabled: true,
-      review_reward_claimed_count: claimedCount,
+      review_reward_claimed_count: 0,
       checkout_configs: [{
         product_class: 1,
-        product_id: 'unlimited',
-        product_name: 'Unlimited',
+        product_id: productId,
+        product_line: 'maps',
+        product_name: 'Maps Pro',
         display_currency: 'USD',
         display_amount: amount,
         period: 'month',
-        daily_limit: -1,
-        auto_renew: false,
+        duration_days: 30,
+        auto_renew: true,
+        monthly_records: 100000,
         payment_channels: [{
           payment_method: 'paypal',
           payment_method_name: 'PayPal',
@@ -3842,36 +3394,35 @@ test('Pricing subscription loader rejects bad configs and ignores stale anonymou
   const { module, cleanup } = await importPricingPageControllerModule()
 
   try {
-    const anonymousLoad = module.loadSubscription(elements, copy, state)
+    const anonymousLoad = module.loadPlans(elements, copy, state)
     state.token = 'signed-in-token'
-    const signedInLoad = module.loadSubscription(elements, copy, state)
+    const signedInLoad = module.loadPlans(elements, copy, state)
 
-    pendingResponses[1](new Response(JSON.stringify(planData(22990000, 1)), {
+    pendingResponses[1](new Response(JSON.stringify(planData('maps_pro', 39000000)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     }))
     await signedInLoad
-    pendingResponses[0](new Response(JSON.stringify(planData(12990000, 0)), {
+    pendingResponses[0](new Response(JSON.stringify(planData('maps_pro', 29000000)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     }))
     await anonymousLoad
 
-    assert.equal(subscription.price.textContent, '$22.99')
-    assert.equal(state.reviewRewardEnabled, true)
-    assert.equal(state.reviewRewardClaimedCount, 1)
-    assert.equal(subscription.buy.disabled, false)
+    const card = elements.buyableCards.get('maps_pro')
+    // 旧响应不得覆盖新登录态：价格取自登录态那次加载
+    assert.equal(elements.plansStatus.textContent, '')
+    assert.equal(card.buy.disabled, false)
 
     console.error = () => {}
-    const badLoad = module.loadSubscription(elements, copy, state)
-    pendingResponses[2](new Response(JSON.stringify(planData(22990000, -1)), {
-      status: 200,
+    const badLoad = module.loadPlans(elements, copy, state)
+    pendingResponses[2](new Response('{"code":50000,"msg":"server error"}', {
+      status: 500,
       headers: { 'Content-Type': 'application/json' }
     }))
     await badLoad
-    assert.equal(state.subscriptionPlan, null)
-    assert.equal(subscription.buy.disabled, true)
-    assert.equal(subscription.error.textContent, copy.subscription.loadFailed)
+    assert.equal(elements.plansStatus.textContent, copy.plans.loadFailed)
+    assert.equal(card.buy.disabled, true)
   } finally {
     globalThis.fetch = previousFetch
     console.error = previousConsoleError
@@ -3886,325 +3437,179 @@ test('Pricing subscription loader rejects bad configs and ignores stale anonymou
   }
 })
 
-test('Pricing review reward failure retries immediately and close clears timer and restores focus', async () => {
-  const previousFetch = globalThis.fetch
-  const previousDocument = globalThis.document
-  const previousWindow = globalThis.window
-  const previousNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
-  const previousCustomEvent = globalThis.CustomEvent
-  const previousConsoleError = console.error
-  const originalDateNow = Date.now
-  const timers = new Map()
-  const clearedTimers = []
-  let nextTimerId = 1
-  let now = 1_000_000
-  let claimAttempts = 0
-  const reviewClickMarks = []
-
-  const makeElement = (dataset = {}) => {
-    const listeners = new Map()
-    return {
-      dataset: { ...dataset },
-      hidden: false,
-      textContent: '',
-      id: '',
-      focusCount: 0,
-      addEventListener(type, listener) { listeners.set(type, listener) },
-      click() { listeners.get('click')?.({ preventDefault() {} }) },
-      focus() { this.focusCount += 1 },
-      querySelector() { return null }
-    }
-  }
-  const views = ['confirm', 'countdown', 'claiming', 'success', 'already_claimed', 'failed'].map(view => {
-    const element = makeElement({ pricingSubscriptionConfirmView: view })
-    const title = makeElement()
-    title.id = `title-${view}`
-    title.textContent = `Title ${view}`
-    const description = makeElement()
-    description.id = `description-${view}`
-    element.querySelector = selector => selector === 'h2' ? title : description
-    return element
+test('PayPal success return page polls order status every 3 seconds and switches copy by product line', async () => {
+  const PAYPAL_RETURN_COPY_PAYLOAD = JSON.stringify({
+    waitingTitle: 'Payment submitted',
+    waitingMessage:
+      'You can return to the original tab. We are checking PayPal confirmation every 3 seconds, and the result will appear here automatically.',
+    confirmedCreditsTitle: 'Credits added',
+    confirmedCreditsMessage:
+      'Your PayPal payment is confirmed and the Credits have been added. You can close this tab and continue in the original window.',
+    confirmedSubscriptionTitle: 'Subscription activated',
+    confirmedSubscriptionMessage:
+      'Your PayPal payment is confirmed and your MapsGrab plan is active. You can close this tab and continue in the original window.',
+    failedTitle: 'Payment needs attention',
+    failedMessage:
+      'We could not confirm this order automatically. Return to the original window or try refreshing your payment status there.'
   })
-  const dialog = makeElement()
-  dialog.open = false
-  dialog.attributes = new Map()
-  dialog.showModal = function () { this.open = true }
-  dialog.close = function () { this.open = false }
-  dialog.setAttribute = function (name, value) { this.attributes.set(name, value) }
-  const error = makeElement({ failedMessage: 'Local claim failed', busyMessage: 'Server busy' })
-  const retry = makeElement()
-  const reviewButton = makeElement()
-  const continueButton = makeElement()
-  const closeButton = makeElement()
-  const returnFocus = makeElement()
-  const countdown = makeElement({ template: '{seconds}s' })
-  const live = makeElement()
 
-  globalThis.document = {
-    documentElement: { lang: 'en-US' },
-    querySelector() { return null }
-  }
-  Object.defineProperty(globalThis, 'navigator', {
-    configurable: true,
-    value: { language: 'en-US' }
-  })
-  globalThis.CustomEvent = class {
-    constructor(type, options) {
-      this.type = type
-      this.detail = options?.detail
-    }
-  }
-  globalThis.window = {
-    setTimeout(callback) {
-      const timerId = nextTimerId++
-      timers.set(timerId, callback)
-      return timerId
-    },
-    clearTimeout(timerId) {
-      clearedTimers.push(timerId)
-      timers.delete(timerId)
-    },
-    open() {},
-    dispatchEvent() {},
-    addEventListener() {}
-  }
-  Date.now = () => now
-  console.error = () => {}
-  globalThis.fetch = async (url, options = {}) => {
-    const pathname = new URL(String(url)).pathname
-    if (pathname.endsWith('/mark/record')) {
-      reviewClickMarks.push(JSON.parse(String(options.body)))
-      if (reviewClickMarks.length === 2) {
-        throw new TypeError('mark endpoint unavailable')
-      }
-      return new Response(JSON.stringify({
-        code: 10000,
-        msg: 'success',
-        data: { recorded: true }
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-    }
-    if (!pathname.endsWith('/subscription/review-reward/claim')) {
-      return new Response('', { status: 200 })
-    }
-    claimAttempts += 1
-    if (claimAttempts === 1) {
-      throw new TypeError('internal network detail')
-    }
-    return new Response(JSON.stringify({
-      code: 10000,
-      msg: 'success',
-      data: { result: 'granted', review_reward_claimed_count: 1 }
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-  }
+  const runScenario = async ({ productId, productLine, expectedTitle, expectedMessageFragment }) => {
+    const { module, cleanup } = await importPayPalReturnModule()
+    const previousFetch = globalThis.fetch
+    const previousWindow = globalThis.window
+    const previousDocument = globalThis.document
+    const previousNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
+    const titleElement = { textContent: 'Payment submitted' }
+    const messageElement = { textContent: '' }
+    const copyElement = { textContent: PAYPAL_RETURN_COPY_PAYLOAD }
+    const storageValues = new Map([
+      ['homepage_access_token', 'test-token'],
+      ['homepage_device_id_v2', '01234567-89ab-4def-8123-456789abcdef']
+    ])
+    const fetchCalls = []
+    const intervals = []
+    const clearedIntervals = []
+    const openerMessages = []
 
-  const { module, cleanup } = await importCompiledTypescriptModule(
-    path.resolve(repoDir, 'src/components/pricing/pricing-subscription-confirm-controller.ts'),
-    'pricing-subscription-confirm-controller.js',
-    'pricing-review-controller-'
-  )
-
-  try {
-    const controller = module.createController({
-      dialog,
-      views,
-      titles: views.map(view => view.querySelector('h2')),
-      rewardOffer: makeElement(),
-      reviewButton,
-      continueButton,
-      closeButtons: [closeButton],
-      countdown,
-      error,
-      retry,
-      live
-    })
-    const firstResult = controller.open({
-      reviewRewardEnabled: true,
-      reviewRewardClaimedCount: 0,
-      requestContext: { deviceId: 'review-device', token: 'review-token' },
-      returnFocus
-    })
-    reviewButton.click()
-    await flushBrowserTasks()
-    assert.deepEqual(reviewClickMarks, [{
-      mark_type: 'web_extension_store_review_click',
-      mark_msg: '',
-      first_opened_at: 1_000_000
-    }])
-    now += 30_000
-    timers.get(1)()
-    await flushBrowserTasks()
-    assert.equal(error.textContent, 'Local claim failed')
-    assert.equal(views.find(view => !view.hidden).dataset.pricingSubscriptionConfirmView, 'failed')
-
-    retry.click()
-    await flushBrowserTasks()
-    assert.equal(claimAttempts, 2)
-    assert.equal(views.find(view => !view.hidden).dataset.pricingSubscriptionConfirmView, 'success')
-    closeButton.click()
-    assert.equal(await firstResult, 'closed')
-    assert.equal(returnFocus.focusCount, 1)
-
-    const secondResult = controller.open({
-      reviewRewardEnabled: true,
-      reviewRewardClaimedCount: 0,
-      requestContext: { deviceId: 'review-device', token: 'review-token' },
-      returnFocus
-    })
-    reviewButton.click()
-    await flushBrowserTasks()
-    closeButton.click()
-    assert.equal(await secondResult, 'closed')
-    assert.equal(reviewClickMarks.length, 2)
-    assert.deepEqual(clearedTimers, [2])
-    assert.equal(returnFocus.focusCount, 2)
-  } finally {
-    globalThis.fetch = previousFetch
-    globalThis.document = previousDocument
-    globalThis.window = previousWindow
-    Date.now = originalDateNow
-    console.error = previousConsoleError
-    if (previousCustomEvent === undefined) {
-      delete globalThis.CustomEvent
-    } else {
-      globalThis.CustomEvent = previousCustomEvent
-    }
-    if (previousNavigator) {
-      Object.defineProperty(globalThis, 'navigator', previousNavigator)
-    } else {
-      delete globalThis.navigator
-    }
-    await cleanup()
-  }
-})
-
-test('PayPal success return page polls order status every 3 seconds until paid', async () => {
-  const { module, cleanup } = await importPayPalReturnModule()
-  const previousFetch = globalThis.fetch
-  const previousWindow = globalThis.window
-  const previousDocument = globalThis.document
-  const previousNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
-  const titleElement = { textContent: 'Payment submitted' }
-  const messageElement = { textContent: '' }
-  const storageValues = new Map([
-    ['homepage_access_token', 'test-token'],
-    ['homepage_device_id_v2', '01234567-89ab-4def-8123-456789abcdef']
-  ])
-  const fetchCalls = []
-  const intervals = []
-  const clearedIntervals = []
-  const openerMessages = []
-
-  globalThis.window = {
-    localStorage: {
-      getItem(key) {
-        return storageValues.get(key) ?? null
+    globalThis.window = {
+      localStorage: {
+        getItem(key) {
+          return storageValues.get(key) ?? null
+        },
+        setItem(key, value) {
+          storageValues.set(key, String(value))
+        },
+        removeItem(key) {
+          storageValues.delete(key)
+        }
       },
-      setItem(key, value) {
-        storageValues.set(key, String(value))
+      location: {
+        origin: 'https://mapsgrab.com',
+        search: '?order_no=ORD-PAYPAL-RETURN'
       },
-      removeItem(key) {
-        storageValues.delete(key)
+      opener: {
+        postMessage(message, origin) {
+          openerMessages.push({ message, origin })
+        }
+      },
+      setInterval(callback, intervalMs) {
+        intervals.push({ callback, intervalMs })
+        return intervals.length
+      },
+      clearInterval(timerId) {
+        clearedIntervals.push(timerId)
       }
-    },
-    location: {
-      origin: 'https://telegramdownloadmedia.com',
-      search: '?order_no=ORD-PAYPAL-RETURN'
-    },
-    opener: {
-      postMessage(message, origin) {
-        openerMessages.push({ message, origin })
-      }
-    },
-    setInterval(callback, intervalMs) {
-      intervals.push({ callback, intervalMs })
-      return intervals.length
-    },
-    clearInterval(timerId) {
-      clearedIntervals.push(timerId)
     }
-  }
-  globalThis.document = {
-    documentElement: { lang: 'en-US' },
-    querySelector(selector) {
-      if (selector === '[data-paypal-return-title]') {
-        return titleElement
+    globalThis.document = {
+      documentElement: { lang: 'en-US' },
+      querySelector(selector) {
+        if (selector === '[data-paypal-return-title]') {
+          return titleElement
+        }
+        if (selector === '[data-paypal-return-message]') {
+          return messageElement
+        }
+        if (selector === '[data-paypal-return-copy]') {
+          return copyElement
+        }
+        return null
       }
-      if (selector === '[data-paypal-return-message]') {
-        return messageElement
-      }
-      return null
     }
-  }
-  Object.defineProperty(globalThis, 'navigator', {
-    configurable: true,
-    value: { language: 'en-US' }
-  })
-  globalThis.fetch = async (url, init = {}) => {
-    const parsedUrl = new URL(String(url))
-    fetchCalls.push({ path: parsedUrl.pathname, method: init.method ?? 'GET' })
-    assert.equal(parsedUrl.pathname, '/api/client/order/status/ORD-PAYPAL-RETURN')
-    const paid = fetchCalls.length >= 2
-    return new Response(JSON.stringify({
-      code: 10000,
-      msg: 'success',
-      data: {
-        order_no: 'ORD-PAYPAL-RETURN',
-        product_class: 2,
-        product_id: 'credit_50',
-        product_name: '50 Credits',
-        amount: 6300000,
-        currency: 'USD',
-        order_status: paid ? 2 : 1,
-        callback_status: paid ? 3 : 1,
-        payment_method: 'paypal',
-        paid_at: paid ? Date.now() : null,
-        created_at: Date.now(),
-        expired_at: Date.now() + 30 * 60 * 1000
-      }
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-  }
-
-  try {
-    module.initPayPalReturnPage({
-      status: 'success',
-      orderNo: null
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { language: 'en-US' }
     })
-    await flushBrowserTasks()
-
-    assert.equal(intervals.length, 1)
-    assert.equal(intervals[0].intervalMs, module.PAYPAL_SUCCESS_POLL_INTERVAL_MS)
-    assert.equal(module.PAYPAL_SUCCESS_POLL_INTERVAL_MS, 3000)
-    assert.equal(fetchCalls.length, 1)
-    assert.equal(titleElement.textContent, 'Payment submitted')
-
-    intervals[0].callback()
-    await flushBrowserTasks()
-
-    assert.equal(fetchCalls.length, 2)
-    assert.equal(titleElement.textContent, 'Credits added')
-    assert.equal(messageElement.textContent.includes('Credits have been added'), true)
-    assert.deepEqual(clearedIntervals, [1])
-    assert.equal(openerMessages.length, 2)
-    assert.equal(openerMessages[0].message.type, 'credit_purchase_paypal_return')
-    assert.equal(openerMessages[1].message.orderNo, 'ORD-PAYPAL-RETURN')
-  } finally {
-    globalThis.fetch = previousFetch
-    if (previousWindow === undefined) {
-      delete globalThis.window
-    } else {
-      globalThis.window = previousWindow
+    globalThis.fetch = async (url, init = {}) => {
+      const parsedUrl = new URL(String(url))
+      fetchCalls.push({ path: parsedUrl.pathname, method: init.method ?? 'GET' })
+      assert.equal(parsedUrl.pathname, '/api/client/order/status/ORD-PAYPAL-RETURN')
+      const paid = fetchCalls.length >= 2
+      return new Response(
+        JSON.stringify({
+          code: 10000,
+          msg: 'success',
+          data: {
+            order_no: 'ORD-PAYPAL-RETURN',
+            product_class: 1,
+            product_id: productId,
+            product_line: productLine,
+            product_name: productId,
+            amount: 39000000,
+            currency: 'USD',
+            order_status: paid ? 2 : 1,
+            callback_status: paid ? 3 : 1,
+            payment_method: 'paypal',
+            paid_at: paid ? Date.now() : null,
+            created_at: Date.now(),
+            expired_at: Date.now() + 30 * 60 * 1000
+          }
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
     }
-    if (previousDocument === undefined) {
-      delete globalThis.document
-    } else {
-      globalThis.document = previousDocument
+
+    try {
+      module.initPayPalReturnPage({
+        status: 'success',
+        orderNo: null
+      })
+      await flushBrowserTasks()
+
+      assert.equal(intervals.length, 1)
+      assert.equal(intervals[0].intervalMs, module.PAYPAL_SUCCESS_POLL_INTERVAL_MS)
+      assert.equal(module.PAYPAL_SUCCESS_POLL_INTERVAL_MS, 3000)
+      assert.equal(fetchCalls.length, 1)
+      assert.equal(titleElement.textContent, 'Payment submitted')
+
+      intervals[0].callback()
+      await flushBrowserTasks()
+
+      assert.equal(fetchCalls.length, 2)
+      assert.equal(titleElement.textContent, expectedTitle)
+      assert.equal(messageElement.textContent.includes(expectedMessageFragment), true)
+      assert.deepEqual(clearedIntervals, [1])
+      assert.equal(openerMessages.length, 2)
+      assert.equal(openerMessages[0].message.type, 'credit_purchase_paypal_return')
+      assert.equal(openerMessages[1].message.orderNo, 'ORD-PAYPAL-RETURN')
+    } finally {
+      globalThis.fetch = previousFetch
+      if (previousWindow === undefined) {
+        delete globalThis.window
+      } else {
+        globalThis.window = previousWindow
+      }
+      if (previousDocument === undefined) {
+        delete globalThis.document
+      } else {
+        globalThis.document = previousDocument
+      }
+      if (previousNavigator) {
+        Object.defineProperty(globalThis, 'navigator', previousNavigator)
+      } else {
+        delete globalThis.navigator
+      }
+      await cleanup()
     }
-    if (previousNavigator) {
-      Object.defineProperty(globalThis, 'navigator', previousNavigator)
-    } else {
-      delete globalThis.navigator
-    }
-    await cleanup()
   }
-})
 
+  // extension 线（含旧后端缺 product_line 的响应）保持 Credits 口径
+  await runScenario({
+    productId: 'credit_50',
+    productLine: 'extension',
+    expectedTitle: 'Credits added',
+    expectedMessageFragment: 'Credits have been added'
+  })
+  await runScenario({
+    productId: 'unlimited',
+    productLine: undefined,
+    expectedTitle: 'Credits added',
+    expectedMessageFragment: 'Credits have been added'
+  })
+  // maps 线按订单快照切换为订阅口径
+  await runScenario({
+    productId: 'maps_pro',
+    productLine: 'maps',
+    expectedTitle: 'Subscription activated',
+    expectedMessageFragment: 'MapsGrab plan is active'
+  })
+})

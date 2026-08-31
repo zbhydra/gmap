@@ -51,8 +51,6 @@ export const API = {
 export const WEBSITE = {
   /** 官网基础 URL */
   BASE_URL: __WEBSITE_BASE_URL__,
-  /** 新版插件统一登录页路径；旧 /extension-login 保留给已发布旧扩展。 */
-  EXTENSION_LOGIN_PATH: '/extension-login-v2',
   /** Pricing 页路径 */
   PRICING_PATH: '/pricing/'
 } as const

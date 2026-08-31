@@ -77,8 +77,6 @@ export const WEBSITE = {
   PRODUCTION_BASE_URL: 'https://telegramdownloadmedia.com',
   /** 官网 www 生产 URL，用于外部消息来源白名单。 */
   WWW_BASE_URL: 'https://www.telegramdownloadmedia.com',
-  /** 新版插件统一登录页路径；旧 /extension-login 保留给已发布旧扩展。 */
-  EXTENSION_LOGIN_PATH: '/extension-login-v2',
   /** Pricing 页路径 */
   PRICING_PATH: '/pricing/'
 } as const

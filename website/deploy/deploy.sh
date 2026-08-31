@@ -11,28 +11,29 @@ ARCHIVE_NAME="dist.tar.gz"
 ARCHIVE_PATH="$SCRIPT_DIR/$ARCHIVE_NAME"
 RELEASE_NAME="v$(date +%Y%m%d_%H%M%S)"
 
-# 环境配置
-PROD_SERVER_HOST="149.71.241.52"
-PROD_SERVER_PORT="2222"
+# 环境配置（占位：MapsGrab 正式服务器/域名确定后回填；
+# 同步 astro.config 的 SITE_PLACEHOLDER、public/robots.txt 与 deploy/*-test.conf）
+PROD_SERVER_HOST="mapsgrab-prod.example.com"
+PROD_SERVER_PORT="22"
 PROD_SERVER_USER="root"
-PROD_SERVER_DEPLOY_ROOT="/data/tg-web"
-PROD_NGINX_CONF="$SCRIPT_DIR/tg-web.conf"
-PROD_NGINX_REMOTE_CONF_PATH="/usr/local/nginx/vhost/tg-web.conf"
+PROD_SERVER_DEPLOY_ROOT="/data/mapsgrab-web"
+PROD_NGINX_CONF="$SCRIPT_DIR/mapsgrab.conf"
+PROD_NGINX_REMOTE_CONF_PATH="/usr/local/nginx/vhost/mapsgrab.conf"
 
-# 测试环境先使用硬编码占位值，你后续直接改这里即可
-TEST_SERVER_HOST="51.81.87.195"
+# 测试环境先使用硬编码占位值，正式测试服务器确定后改这里即可
+TEST_SERVER_HOST="mapsgrab-test.example.com"
 TEST_SERVER_PORT="22"
 TEST_SERVER_USER="root"
-TEST_SERVER_DEPLOY_ROOT="/data/tg-web-test"
-TEST_NGINX_CONF="$SCRIPT_DIR/tg-web-test.conf"
-TEST_NGINX_REMOTE_CONF_PATH="/usr/local/nginx/vhost/test-tg-web.conf"
+TEST_SERVER_DEPLOY_ROOT="/data/mapsgrab-web-test"
+TEST_NGINX_CONF="$SCRIPT_DIR/mapsgrab-test.conf"
+TEST_NGINX_REMOTE_CONF_PATH="/usr/local/nginx/vhost/mapsgrab-test.conf"
 
-PROD_DOMAIN="telegramdownloadmedia.com"
-TEST_DOMAIN="test-tg-web.telegramdownloadmedia.com"
-PROD_PUBLIC_API_BASE_URL="https://tg-download-api.telegramdownloadmedia.com"
-TEST_PUBLIC_API_BASE_URL="https://test-api.telegramdownloadmedia.com"
-PROD_PUBLIC_SHARED_COOKIE_DOMAIN="telegramdownloadmedia.com"
-TEST_PUBLIC_SHARED_COOKIE_DOMAIN="telegramdownloadmedia.com"
+PROD_DOMAIN="mapsgrab.com"
+TEST_DOMAIN="test-mapsgrab-web.example.com"
+PROD_PUBLIC_API_BASE_URL="https://api-mapsgrab.example.com"
+TEST_PUBLIC_API_BASE_URL="https://test-api-mapsgrab.example.com"
+PROD_PUBLIC_SHARED_COOKIE_DOMAIN="mapsgrab.com"
+TEST_PUBLIC_SHARED_COOKIE_DOMAIN="mapsgrab.com"
 
 DEPLOY_ENV=""
 SERVER_HOST=""
@@ -48,8 +49,8 @@ TEMP_ARCHIVE_PATH=""
 BUILD_PUBLIC_API_BASE_URL=""
 BUILD_PUBLIC_SHARED_COOKIE_DOMAIN=""
 
-# 颜色输出
-INDEXNOW_KEY="68505a1b86444029c45dd3ad751f1251"
+# IndexNow key 占位：与正式域名在 IndexNow 的注册绑定，域名确定后重新生成回填
+INDEXNOW_KEY=
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -213,7 +214,7 @@ log_info "Nginx 配置: $NGINX_CONF_PATH -> $NGINX_REMOTE_CONF_PATH"
 log_info "前端 API 地址: $BUILD_PUBLIC_API_BASE_URL"
 log_info "共享 Cookie Domain: $BUILD_PUBLIC_SHARED_COOKIE_DOMAIN"
 if [ "$DEPLOY_ENV" = "test" ]; then
-    log_warn "测试环境当前使用脚本内硬编码占位配置，请按需修改 deploy.sh 与 tg-web-test.conf"
+    log_warn "测试环境当前使用脚本内硬编码占位配置，请按需修改 deploy.sh 与 mapsgrab-test.conf"
 fi
 echo ""
 

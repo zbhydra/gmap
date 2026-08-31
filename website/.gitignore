@@ -34,3 +34,6 @@ pnpm-debug.log*
 
 # Temporary
 *.tmp
+dist-e2e/
+tests/logs/
+tmp/

@@ -108,7 +108,7 @@ Material You 是 GMap Extractor 四端（website / extension / admin / 营销物
 
 - 本文 = 亮色主题全量合同；暗色主题同名 token 换值，见 `design.dark.md`；交互与组件规则只在本文维护，暗色文件只写差异。
 - **实现层只允许消费语义 token（CSS 自定义属性），禁止硬编码色值、圆角、投影。** 变量名 = 本文 YAML 键；插件两端（extension / extension-bing）运行在宿主页面或多入口环境，统一加 `gme-` 中缀（`--gme-surface`）防宿主 CSS 变量渗透，取值集中定义在 `extension*/src/styles/tokens.css`（页面入口引入）与 `sites/*/content/panel/panel.css`（Shadow DOM 自含）。
-- 执行门：`scripts/ui_token_lint.py`，样式改动后运行；enforced 端（extension / extension-bing）违规即失败，website / website-mapsgrab / admin 尚未迁移，列为 pending 只报数量，迁移完成后移入 enforced。
+- 执行门：`scripts/ui_token_lint.py`，样式改动后运行；enforced 端（extension / extension-bing）违规即失败，website / admin 尚未迁移，列为 pending 只报数量，迁移完成后移入 enforced。
 - token 全集的参考实现（全组件换肤验证）在探索稿 `scratch/design-explore/gmap-ui-styles.html`（不入 git）；该文件与本合同冲突时，以本文件为准并回改探索稿。
 
 ## 1 · 颜色

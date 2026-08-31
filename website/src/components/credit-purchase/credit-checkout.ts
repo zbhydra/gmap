@@ -159,6 +159,8 @@ export interface OrderStatusResponse {
   product_class: number
   /** 商品标识。 */
   product_id: string
+  /** 产品线标识（006 扩展）；旧后端/旧缓存缺省按 extension 处理。 */
+  product_line?: string
   /** 商品名称。 */
   product_name: string
   /** 渠道金额，6 位精度。 */

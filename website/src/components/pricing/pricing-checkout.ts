@@ -1,8 +1,8 @@
 /**
- * Pricing 订阅与 Credits 商品接口客户端。
+ * Pricing 订阅商品接口客户端（MapsGrab 三档购买链路）。
  *
- * 订阅和 Credits 共用后端订单创建/状态接口；订单状态常量、支付 URL
- * 白名单、价格更新和网关错误分类复用 Credits checkout，避免页面出现两套支付协议。
+ * 订单创建/状态接口与支付协议复用 credit-checkout 的订单基座，避免页面出现
+ * 第二套支付协议；本模块只负责订阅配置读取、验参和展示价格式化。
  */
 
 import {
@@ -33,7 +33,6 @@ import {
   type CallbackStatus,
   type CreateCreditOrderResponse,
   type CreditCheckoutPaymentChannel,
-  type CreditCheckoutPlan,
   type CreditOrderStatusOutcome,
   type OrderStatus,
   type OrderStatusResponse
@@ -42,43 +41,33 @@ import {
 /** 订阅商品类别。 */
 export const SUBSCRIPTION_PRODUCT_CLASS = 1
 
+/** Maps 产品线标识（与后端 product_line 常量对齐）。 */
+export const MAPS_PRODUCT_LINE = 'maps'
+
 /** 订阅 checkout configs 响应。 */
 export interface SubscriptionCheckoutConfigsResponse {
   /** 可购买订阅商品列表。 */
   checkout_configs: SubscriptionCheckoutPlan[]
-  /** 是否开放好评赠送活动。 */
+  /** 是否开放好评赠送活动（后端契约保留字段，MapsGrab 页面不消费）。 */
   review_reward_enabled: boolean
   /** 当前账号永久累计领取好评赠送的次数；匿名请求为 0。 */
   review_reward_claimed_count: number
 }
 
-/** 好评赠送领取结果。 */
-export type ReviewRewardClaimResult = 'granted' | 'already_claimed'
-
-/** 好评赠送领取响应。 */
-export interface ReviewRewardClaimResponse {
-  /** 本次领取结果。 */
-  result: ReviewRewardClaimResult
-  /** 当前账号永久累计领取次数。 */
-  review_reward_claimed_count: number
-}
-
 /** 订阅配置与当前账号的好评赠送资格。 */
 export interface SubscriptionCheckoutData {
-  /** 可购买订阅商品列表。 */
+  /** 全部产品线的可购买商品（按 product_line 过滤后使用）。 */
   plans: SubscriptionCheckoutPlan[]
-  /** 是否开放好评赠送活动。 */
-  reviewRewardEnabled: boolean
-  /** 当前账号永久累计领取次数。 */
-  reviewRewardClaimedCount: number
 }
 
 /** 单个订阅商品配置。 */
 export interface SubscriptionCheckoutPlan {
   /** 商品类别，订阅为 1。 */
   product_class: number
-  /** 商品标识。 */
+  /** 商品标识（如 maps_pro）。 */
   product_id: string
+  /** 产品线标识（maps / extension）。 */
+  product_line: string
   /** 后端配置商品名。 */
   product_name: string
   /** 前端展示币种，当前为 USD。 */
@@ -87,10 +76,10 @@ export interface SubscriptionCheckoutPlan {
   display_amount: number
   /** 订阅周期，例如 month。 */
   period: string
-  /** 每日下载额度；小于 0 表示无限。 */
-  daily_limit: number
   /** 是否自动续费。 */
   auto_renew: boolean
+  /** 产品线月度权益额度；仅 maps 产品线为正整数，其余为 null。 */
+  monthly_records: number | null
   /** 当前商品可用支付渠道。 */
   payment_channels: CreditCheckoutPaymentChannel[]
 }
@@ -128,60 +117,9 @@ export async function listSubscriptionCheckoutConfigs(
       '[pricing-checkout] GET /api/client/subscription/checkout-configs returned invalid data: checkout_configs must be an array.'
     )
   }
-  const invalidPlanIndex = response.checkout_configs.findIndex(value => !isSubscriptionCheckoutPlan(value))
-  if (invalidPlanIndex !== -1) {
-    throw new Error(
-      `[pricing-checkout] GET /api/client/subscription/checkout-configs returned invalid data: checkout_configs[${invalidPlanIndex}] is not a valid subscription plan.`
-    )
-  }
   const plans = response.checkout_configs.filter(isSubscriptionCheckoutPlan)
-  if (typeof response.review_reward_enabled !== 'boolean') {
-    throw new Error(
-      '[pricing-checkout] GET /api/client/subscription/checkout-configs returned invalid data: review_reward_enabled must be a boolean.'
-    )
-  }
-  if (!isNonNegativeInteger(response.review_reward_claimed_count)) {
-    throw new Error(
-      '[pricing-checkout] GET /api/client/subscription/checkout-configs returned invalid data: review_reward_claimed_count must be a non-negative integer.'
-    )
-  }
 
-  return {
-    plans,
-    reviewRewardEnabled: response.review_reward_enabled,
-    reviewRewardClaimedCount: response.review_reward_claimed_count
-  }
-}
-
-/** 领取好评赠送订阅。 */
-export async function claimSubscriptionReviewReward(
-  context: RequestContext
-): Promise<ReviewRewardClaimResponse> {
-  const response = await postJson<JsonValue>(
-    '/api/client/subscription/review-reward/claim',
-    context,
-    {}
-  )
-
-  if (!isJsonObject(response)) {
-    throw new Error(
-      '[pricing-checkout] POST /api/client/subscription/review-reward/claim returned invalid data: expected an object.'
-    )
-  }
-  if (response.result !== 'granted' && response.result !== 'already_claimed') {
-    throw new Error(
-      '[pricing-checkout] POST /api/client/subscription/review-reward/claim returned invalid data: result must be granted or already_claimed.'
-    )
-  }
-  if (!isNonNegativeInteger(response.review_reward_claimed_count)) {
-    throw new Error(
-      '[pricing-checkout] POST /api/client/subscription/review-reward/claim returned invalid data: review_reward_claimed_count must be a non-negative integer.'
-    )
-  }
-  return {
-    result: response.result,
-    review_reward_claimed_count: response.review_reward_claimed_count
-  }
+  return { plans }
 }
 
 /** 创建订阅订单。 */
@@ -210,21 +148,7 @@ export function buildCreateSubscriptionOrderRequest(
   }
 }
 
-/** 根据 Credits plan 和渠道构造 create order 请求。 */
-export function buildCreateCreditsOrderRequest(
-  plan: CreditCheckoutPlan,
-  channel: CreditCheckoutPaymentChannel
-): CreatePricingOrderRequest {
-  return {
-    product_class: plan.product_class,
-    product_id: plan.product_id,
-    payment_method: channel.payment_method,
-    currency: channel.currency,
-    amount: channel.amount
-  }
-}
-
-/** 选取默认支付渠道，优先 PayPal，其次 Telegram Stars。 */
+/** 选取默认支付渠道，优先 PayPal。 */
 export function getDefaultPricingPaymentChannel(
   channels: CreditCheckoutPaymentChannel[]
 ): CreditCheckoutPaymentChannel | null {
@@ -232,26 +156,26 @@ export function getDefaultPricingPaymentChannel(
     return null
   }
 
-  for (const paymentMethod of ['paypal', 'telegram_stars', 'tg_star']) {
-    const channel = channels.find(item => item.payment_method === paymentMethod)
-    if (channel) {
-      return channel
-    }
-  }
-
-  return channels[0]
+  const paypal = channels.find(item => item.payment_method === 'paypal')
+  return paypal ?? channels[0]
 }
 
-/** 按商品标识选择 Unlimited plan，权益和计费方式均由后端配置决定。 */
-export function pickUnlimitedPlan(
+/** 选取 Maps 产品线的可购买商品，按 product_id 索引。 */
+export function pickMapsPlans(
   plans: SubscriptionCheckoutPlan[]
-): SubscriptionCheckoutPlan | null {
-  return plans.find(plan => isUnlimitedPlan(plan)) ?? null
+): Map<string, SubscriptionCheckoutPlan> {
+  const mapsPlans = new Map<string, SubscriptionCheckoutPlan>()
+  for (const plan of plans) {
+    if (plan.product_line === MAPS_PRODUCT_LINE) {
+      mapsPlans.set(plan.product_id, plan)
+    }
+  }
+  return mapsPlans
 }
 
 /** 格式化展示价；后端金额为 6 位精度。 */
 export function formatPricingDisplayPrice(
-  plan: Pick<SubscriptionCheckoutPlan | CreditCheckoutPlan, 'display_amount' | 'display_currency'>
+  plan: Pick<SubscriptionCheckoutPlan, 'display_amount' | 'display_currency'>
 ): string {
   const amount = plan.display_amount / 1_000_000
   if (plan.display_currency === 'USD') {
@@ -297,7 +221,6 @@ export {
   readPaymentUrl,
   type CallbackStatus,
   type CreditCheckoutPaymentChannel,
-  type CreditCheckoutPlan,
   type CreditOrderStatusOutcome,
   type OrderStatus,
   type OrderStatusResponse
@@ -330,14 +253,17 @@ function isSubscriptionCheckoutPlan(
     value.product_class === SUBSCRIPTION_PRODUCT_CLASS &&
     typeof value.product_id === 'string' &&
     value.product_id.length > 0 &&
+    typeof value.product_line === 'string' &&
+    value.product_line.length > 0 &&
     typeof value.product_name === 'string' &&
     typeof value.display_currency === 'string' &&
     typeof value.display_amount === 'number' &&
     Number.isFinite(value.display_amount) &&
     typeof value.period === 'string' &&
-    typeof value.daily_limit === 'number' &&
-    Number.isFinite(value.daily_limit) &&
     typeof value.auto_renew === 'boolean' &&
+    (value.monthly_records === null ||
+      (typeof value.monthly_records === 'number' &&
+        Number.isFinite(value.monthly_records))) &&
     Array.isArray(value.payment_channels)
   )
 }
@@ -345,17 +271,4 @@ function isSubscriptionCheckoutPlan(
 /** 判断 JSON 值是否为可按字段读取的对象。 */
 function isJsonObject(value: JsonValue): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-/** 领取次数合同只接受非负整数，拒绝缺字段、负数和小数。 */
-function isNonNegativeInteger(value: JsonValue | undefined): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 0
-}
-
-/** 前端只负责选择要展示的商品，不重复约束后端返回的运营配置。 */
-function isUnlimitedPlan(plan: SubscriptionCheckoutPlan): boolean {
-  return (
-    plan.product_class === SUBSCRIPTION_PRODUCT_CLASS &&
-    plan.product_id === 'unlimited'
-  )
 }
