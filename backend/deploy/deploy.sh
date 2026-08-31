@@ -73,7 +73,6 @@ SMTP_CONFIG_B64=$(printf '%s' "$SMTP_CONFIG" | base64 | tr -d '\n')
 : "${REDIS_PORT:?ERROR: REDIS_PORT 未定义}"
 REDIS_PASSWORD="${REDIS_PASSWORD:-}"
 REDIS_PASSWORD_B64=$(printf '%s' "$REDIS_PASSWORD" | base64 | tr -d '\n')
-REDIS_PASSWORD_B64=$(printf '%s' "$REDIS_PASSWORD" | base64 | tr -d '\n')
 
 #===============================================================================
 # 以下内容无需修改

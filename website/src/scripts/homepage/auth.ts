@@ -194,7 +194,7 @@ export const BING_MAPS_EXTENSION_AUTH_CHANGED = 'BING_MAPS_EXTENSION_AUTH_CHANGE
 export const BING_MAPS_EXTENSION_LOGIN_RETURN = 'BING_MAPS_EXTENSION_LOGIN_RETURN'
 /** 网站默认 Google OAuth Client ID；公开 ID，不包含 secret，可被环境变量覆盖。 */
 export const DEFAULT_PUBLIC_GOOGLE_CLIENT_ID =
-  '691520581257-16u51bd6kdal9ms3jafamlu7n4jgr2rc.apps.googleusercontent.com'
+  '423442422649-t90svp0aphcikpd3b2l44k9jpp40ojec.apps.googleusercontent.com'
 const GOOGLE_BUTTON_ICON_SVG =
   '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="12 10 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">' +
   '<path d="M31.6 20.2273C31.6 19.5182 31.5364 18.8364 31.4182 18.1818H22V22.05H27.3818C27.15 23.3 26.4455 24.3591 25.3864 25.0682V27.5773H28.6182C30.5091 25.8364 31.6 23.2727 31.6 20.2273V20.2273Z" fill="#4285F4"/>' +

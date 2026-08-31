@@ -11,7 +11,7 @@
 | `google_client_id` | 空 | Google OAuth client id;ID token 的期望 `aud`;前端 PUBLIC 配置同名 |
 | `google_client_secret` | 空 | Google OAuth client secret;**仅后端**,code flow 换 id_token 必填;留空时 One Tap 与旧 callback 不阻断,但新 OAuth authorize 直接回跳错误(不创建 state、不跳 Google) |
 
-前端公开配置(PUBLIC):`PUBLIC_GOOGLE_CLIENT_ID`,值 `691520581257-16u51bd6kdal9ms3jafamlu7n4jgr2rc.apps.googleusercontent.com`。后端部署配置:`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`。
+前端公开配置(PUBLIC):`PUBLIC_GOOGLE_CLIENT_ID`,值 `423442422649-t90svp0aphcikpd3b2l44k9jpp40ojec.apps.googleusercontent.com`。后端部署配置:`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`。
 
 **`GOOGLE_CLIENT_SECRET` 不得进入任何 `PUBLIC_*` 前端配置**;后端日志不记录完整 id_token。
 
