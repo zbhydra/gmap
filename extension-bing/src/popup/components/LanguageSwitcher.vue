@@ -25,7 +25,6 @@ import { I18nService } from '@/locales'
 import { LANGUAGES, type Language } from '@/core/services/languageService'
 import { SettingsManager } from '@/core/storage/settings'
 import { logger } from '@/core/utils/logger'
-import { COMMON_COLORS } from '@/core/constants/style'
 
 // 当前语言
 const currentLanguage = ref<Language>(I18nService.getCurrentLanguage() as Language)
@@ -99,6 +98,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* 色值一律消费 --gme-* 语义 token（src/styles/tokens.css）；菜单规格见 design.md §7。 */
 .language-switcher {
   position: relative;
   display: flex;
@@ -111,33 +111,39 @@ onUnmounted(() => {
   gap: 4px;
   padding: 4px 8px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--gme-rounded-full);
   background: transparent;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.1);
 }
 
 .language-btn:hover {
-  background: v-bind('COMMON_COLORS.GRAY_200');
+  background: var(--gme-surface-2);
+}
+
+.language-btn:focus-visible {
+  outline: 2px solid var(--gme-ring);
+  outline-offset: 1px;
 }
 
 .current-language {
   font-size: 12px;
-  color: v-bind('COMMON_COLORS.GRAY_600');
+  color: var(--gme-text-2);
 }
 
-/* 下拉菜单 */
+/* 下拉菜单：surface + border + shadow-pop，内边距 6px，项为胶囊（design.md §7） */
 .language-dropdown {
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
   min-width: 120px;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  padding: 6px;
+  background: var(--gme-surface);
+  border: 1px solid var(--gme-border);
+  border-radius: var(--gme-rounded-md);
+  box-shadow: var(--gme-shadow-pop);
   z-index: 1000;
-  overflow: hidden;
-  animation: dropdownFadeIn 0.2s ease;
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1);
 }
 
 @keyframes dropdownFadeIn {
@@ -151,26 +157,38 @@ onUnmounted(() => {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .language-dropdown {
+    animation: none;
+  }
+}
+
 .language-option {
   display: block;
   width: 100%;
   padding: 8px 12px;
   border: none;
+  border-radius: var(--gme-rounded-full);
   background: transparent;
   font-size: 13px;
-  color: v-bind('COMMON_COLORS.GRAY_800');
+  color: var(--gme-text);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.1);
   text-align: left;
 }
 
 .language-option:hover {
-  background: v-bind('COMMON_COLORS.GRAY_100');
+  background: var(--gme-surface-2);
+}
+
+.language-option:focus-visible {
+  outline: 2px solid var(--gme-ring);
+  outline-offset: -2px;
 }
 
 .language-option.active {
-  background: v-bind('COMMON_COLORS.GRAY_100');
-  color: v-bind('COMMON_COLORS.PRIMARY');
+  background: var(--gme-primary-soft);
+  color: var(--gme-primary);
   font-weight: 500;
 }
 </style>

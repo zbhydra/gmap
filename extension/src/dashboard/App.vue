@@ -489,87 +489,14 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* design.md / design.dark.md 语义 token（变量名与 YAML 键一致，前缀 --gme-）；
-   禁止在 token 之外硬编码色值/字体/圆角/阴影。 */
+/* 语义 token 由 src/styles/tokens.css 统一提供（--gme-*），此处只做消费。 */
 .dashboard-page {
-  --gme-bg: #ffffff;
-  --gme-bg-image: linear-gradient(
-    180deg,
-    #e9f1fd 0%,
-    rgba(233, 241, 253, 0.55) 300px,
-    rgba(233, 241, 253, 0) 560px
-  );
-  --gme-surface: #ffffff;
-  --gme-surface-2: #f0f4f9;
-  --gme-border: #dde3ea;
-  --gme-border-strong: #b9c2cd;
-  --gme-text: #1f1f1f;
-  --gme-text-2: #5f6368;
-  --gme-text-3: #80868b;
-  --gme-primary: #1a73e8;
-  --gme-primary-hover: #1765cc;
-  --gme-primary-fg: #ffffff;
-  --gme-primary-soft: #e8f0fe;
-  --gme-accent: #188038;
-  --gme-accent-fg: #ffffff;
-  --gme-accent-soft: #e6f4ea;
-  --gme-ok: #188038;
-  --gme-ok-fg: #ffffff;
-  --gme-ok-soft: #e6f4ea;
-  --gme-warn: #b26a00;
-  --gme-warn-fg: #ffffff;
-  --gme-warn-soft: #fef7e0;
-  --gme-bad: #d93025;
-  --gme-bad-fg: #ffffff;
-  --gme-bad-soft: #fce8e6;
-  --gme-ring: #1a73e8;
-  --gme-shadow-card: 0 1px 2px rgba(60, 64, 67, 0.1), 0 3px 8px rgba(60, 64, 67, 0.06);
-  --gme-font-body: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --gme-font-mono: 'Azeret Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-
   min-height: 100vh;
   box-sizing: border-box;
   background-color: var(--gme-bg);
   background-image: var(--gme-bg-image);
   color: var(--gme-text);
   font-family: var(--gme-font-body);
-}
-
-@media (prefers-color-scheme: dark) {
-  .dashboard-page {
-    --gme-bg: #15171c;
-    --gme-bg-image: linear-gradient(
-      180deg,
-      rgba(26, 115, 232, 0.16) 0%,
-      rgba(26, 115, 232, 0.06) 300px,
-      rgba(26, 115, 232, 0) 560px
-    );
-    --gme-surface: #1d2026;
-    --gme-surface-2: #262a31;
-    --gme-border: #31353d;
-    --gme-border-strong: #4c515b;
-    --gme-text: #e8eaed;
-    --gme-text-2: #9aa0a6;
-    --gme-text-3: #7c828c;
-    --gme-primary: #8ab4f8;
-    --gme-primary-hover: #aecbfa;
-    --gme-primary-fg: #0d2b45;
-    --gme-primary-soft: rgba(138, 180, 248, 0.15);
-    --gme-accent: #81c995;
-    --gme-accent-fg: #0c2b1c;
-    --gme-accent-soft: rgba(129, 201, 149, 0.14);
-    --gme-ok: #81c995;
-    --gme-ok-fg: #0d2b1c;
-    --gme-ok-soft: rgba(129, 201, 149, 0.14);
-    --gme-warn: #fdd663;
-    --gme-warn-fg: #2d2000;
-    --gme-warn-soft: rgba(253, 214, 99, 0.13);
-    --gme-bad: #f28b82;
-    --gme-bad-fg: #2c1210;
-    --gme-bad-soft: rgba(242, 139, 130, 0.13);
-    --gme-ring: #8ab4f8;
-    --gme-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
-  }
 }
 
 * {
@@ -621,7 +548,7 @@ onUnmounted(() => {
   padding: 24px;
   background: var(--gme-surface);
   border: 1px solid var(--gme-border);
-  border-radius: 16px;
+  border-radius: var(--gme-rounded-md);
   box-shadow: var(--gme-shadow-card);
   display: flex;
   flex-direction: column;
@@ -672,7 +599,7 @@ onUnmounted(() => {
   color: var(--gme-text);
   background: var(--gme-surface);
   border: 1px solid var(--gme-border-strong);
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   cursor: pointer;
 }
 
@@ -702,7 +629,7 @@ onUnmounted(() => {
   color: var(--gme-text);
   background: var(--gme-surface);
   border: 1px solid var(--gme-border-strong);
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
 }
 
 .dashboard-number-input {
@@ -712,14 +639,14 @@ onUnmounted(() => {
 
 .dashboard-textarea {
   min-height: 86px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   font-family: var(--gme-font-body);
   font-size: 14px;
   line-height: 1.6;
   color: var(--gme-text);
   background: var(--gme-surface);
   border: 1px solid var(--gme-border-strong);
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
   resize: vertical;
 }
 
@@ -739,23 +666,23 @@ onUnmounted(() => {
 /* danger 提示条（design.md alert：-soft 底 + 状态色 35% 混入边） */
 .dashboard-alert {
   margin: 0;
-  padding: 10px 14px;
+  padding: 8px 12px;
   font-size: 13px;
   line-height: 18px;
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
 }
 
 .dashboard-alert-danger {
   color: var(--gme-text);
   background: var(--gme-bad-soft);
-  border: 1px solid rgba(217, 48, 37, 0.35);
+  border: 1px solid color-mix(in srgb, var(--gme-bad) 35%, transparent);
 }
 
 /* ok 提示条（复制成功；状态色 35% 混入做边框，与 danger 同规则） */
 .dashboard-alert-ok {
   color: var(--gme-text);
   background: var(--gme-ok-soft);
-  border: 1px solid rgba(24, 128, 56, 0.35);
+  border: 1px solid color-mix(in srgb, var(--gme-ok) 35%, transparent);
 }
 
 /* 主操作（单视图唯一 primary 实底钮） */
@@ -773,7 +700,7 @@ onUnmounted(() => {
   color: var(--gme-primary-fg);
   background: var(--gme-primary);
   border: none;
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   cursor: pointer;
 }
 
@@ -794,7 +721,7 @@ onUnmounted(() => {
 /* 数据表格（design.md：卡面容器 + mono 表头 + 行分隔 + hover surface-2） */
 .dashboard-table-wrap {
   border: 1px solid var(--gme-border);
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
   overflow-x: auto;
 }
 
@@ -805,7 +732,7 @@ onUnmounted(() => {
 }
 
 .dashboard-table th {
-  padding: 10px 12px;
+  padding: 8px 12px;
   text-align: left;
   font-family: var(--gme-font-mono);
   font-size: 10.5px;
@@ -864,18 +791,18 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   height: 24px;
-  padding: 0 10px;
+  padding: 0 8px;
   font-family: var(--gme-font-mono);
   font-size: 11.5px;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   white-space: nowrap;
 }
 
 .dashboard-status-dot {
   width: 6px;
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   background: currentColor;
 }
 
@@ -927,7 +854,7 @@ onUnmounted(() => {
   color: var(--gme-text);
   background: var(--gme-surface);
   border: 1px solid var(--gme-border-strong);
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -961,6 +888,6 @@ onUnmounted(() => {
   text-align: center;
   background: var(--gme-surface);
   border: 1px dashed var(--gme-border-strong);
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
 }
 </style>

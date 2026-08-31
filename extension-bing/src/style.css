@@ -1,23 +1,13 @@
-/* Popup shell and login component CSS variables */
+/*
+ * Popup 壳层尺寸变量（弹窗最小宽高）。
+ *
+ * 色彩/圆角/投影/字体等语义 token 已统一收敛到 src/styles/tokens.css
+ * （--gme-*，design.md / design.dark.md 合同），本文件不再承载任何色值。
+ */
+
 :root {
   --popup-min-width: 600px;
   --popup-min-height: 400px;
-  --login-primary: #3390ec;
-  --login-primary-dark: #2b7ac4;
-  --login-primary-darkest: #2468a8;
-  --login-gray-50: #f8fafc;
-  --login-gray-100: #f1f5f9;
-  --login-gray-200: #e2e8f0;
-  --login-gray-300: #cbd5e1;
-  --login-gray-400: #94a3b8;
-  --login-gray-500: #64748b;
-  --login-gray-600: #475569;
-  --login-gray-800: #1e293b;
-  --login-gray-900: #0f172a;
-  --login-error: #ef4444;
-  --login-error-bg: #fef2f2;
-  --login-success: #22c55e;
-  --login-success-bg: #f0fdf4;
 }
 
 html,

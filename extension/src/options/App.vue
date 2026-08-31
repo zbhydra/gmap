@@ -420,65 +420,14 @@ function onStuckMaxRetryChange(event: Event): void {
 </script>
 
 <style scoped>
-/* design.md / design.dark.md 语义 token（变量名与 YAML 键一致，前缀 --gme-）；
-   禁止在 token 之外硬编码色值/字体/圆角/阴影。 */
+/* 语义 token 由 src/styles/tokens.css 统一提供（--gme-*），此处只做消费。 */
 .options-page {
-  --gme-bg: #ffffff;
-  --gme-bg-image: linear-gradient(
-    180deg,
-    #e9f1fd 0%,
-    rgba(233, 241, 253, 0.55) 300px,
-    rgba(233, 241, 253, 0) 560px
-  );
-  --gme-surface: #ffffff;
-  --gme-surface-2: #f0f4f9;
-  --gme-border: #dde3ea;
-  --gme-border-strong: #b9c2cd;
-  --gme-text: #1f1f1f;
-  --gme-text-2: #5f6368;
-  --gme-text-3: #80868b;
-  --gme-primary: #1a73e8;
-  --gme-primary-hover: #1765cc;
-  --gme-primary-fg: #ffffff;
-  --gme-primary-soft: #e8f0fe;
-  --gme-ring: #1a73e8;
-  --gme-bad: #d93025;
-  --gme-shadow-card: 0 1px 2px rgba(60, 64, 67, 0.1), 0 3px 8px rgba(60, 64, 67, 0.06);
-  --gme-font-body: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --gme-font-mono: 'Azeret Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-
   min-height: 100vh;
   box-sizing: border-box;
   background-color: var(--gme-bg);
   background-image: var(--gme-bg-image);
   color: var(--gme-text);
   font-family: var(--gme-font-body);
-}
-
-@media (prefers-color-scheme: dark) {
-  .options-page {
-    --gme-bg: #15171c;
-    --gme-bg-image: linear-gradient(
-      180deg,
-      rgba(26, 115, 232, 0.16) 0%,
-      rgba(26, 115, 232, 0.06) 300px,
-      rgba(26, 115, 232, 0) 560px
-    );
-    --gme-surface: #1d2026;
-    --gme-surface-2: #262a31;
-    --gme-border: #31353d;
-    --gme-border-strong: #4c515b;
-    --gme-text: #e8eaed;
-    --gme-text-2: #9aa0a6;
-    --gme-text-3: #7c828c;
-    --gme-primary: #8ab4f8;
-    --gme-primary-hover: #aecbfa;
-    --gme-primary-fg: #0d2b45;
-    --gme-primary-soft: rgba(138, 180, 248, 0.15);
-    --gme-ring: #8ab4f8;
-    --gme-bad: #f28b82;
-    --gme-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
-  }
 }
 
 * {
@@ -530,7 +479,7 @@ function onStuckMaxRetryChange(event: Event): void {
   padding: 24px;
   background: var(--gme-surface);
   border: 1px solid var(--gme-border);
-  border-radius: 16px;
+  border-radius: var(--gme-rounded-md);
   box-shadow: var(--gme-shadow-card);
   display: flex;
   flex-direction: column;
@@ -659,7 +608,7 @@ function onStuckMaxRetryChange(event: Event): void {
   color: var(--gme-text);
   background: var(--gme-surface);
   border: 1px solid var(--gme-border-strong);
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   cursor: pointer;
 }
 
@@ -690,7 +639,7 @@ function onStuckMaxRetryChange(event: Event): void {
   margin: 0;
   padding: 12px;
   border: 1px solid var(--gme-border);
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -734,12 +683,12 @@ function onStuckMaxRetryChange(event: Event): void {
 
 /* Pro 列标注：mono chip（-soft 底 + 同色文字，design.md 徽章规则） */
 .options-pro-badge {
-  padding: 2px 8px;
+  padding: 4px 8px;
   font-family: var(--gme-font-mono);
   font-size: 10.5px;
   font-weight: 600;
   line-height: 1;
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   background: var(--gme-primary-soft);
   color: var(--gme-primary);
 }
@@ -777,7 +726,7 @@ function onStuckMaxRetryChange(event: Event): void {
 .options-switch-track {
   width: 40px;
   height: 22px;
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   background: var(--gme-surface-2);
   border: 1px solid var(--gme-border-strong);
   transition: background 150ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
@@ -790,7 +739,7 @@ function onStuckMaxRetryChange(event: Event): void {
   left: 3px;
   width: 16px;
   height: 16px;
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   background: var(--gme-surface);
   border: 1px solid var(--gme-border-strong);
   transition: transform 150ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
@@ -823,7 +772,7 @@ function onStuckMaxRetryChange(event: Event): void {
   color: var(--gme-text);
   background: var(--gme-surface);
   border: 1px solid var(--gme-border-strong);
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
 }
 
 .options-number-input:focus-visible {

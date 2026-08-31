@@ -2,15 +2,22 @@
  * Popup 全局 Toast 渲染回归测试。
  *
  * App 必须挂载唯一的 Toast renderer，使拦截器和组件共享的 toastService 能向用户展示错误。
+ * 对比度断言不读运行时样式，而是静态解析 Toast.vue 消费的 --gme-* 语义 token，
+ * 并从 tokens.css 解析亮 / 暗两组取值分别校验 WCAG AA（双主题合同，design.dark.md）。
  */
 
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from '../../src/popup/App.vue'
 import toastComponentSource from '../../src/core/components/Toast.vue?raw'
 import { toastService } from '../../src/core/composables/useToast'
+
+// vitest 下 .css?raw 会得到空串，token 取值表用 fs 直读源文件（vitest 根即包根）
+const tokensSource = readFileSync(path.resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8')
 
 const mocks = vi.hoisted(() => ({
   authInitialize: vi.fn(),
@@ -37,6 +44,47 @@ vi.mock('../../src/core/utils/logger', () => ({
     error: vi.fn()
   }
 }))
+
+/**
+ * 从 tokens.css 源码解析指定主题的 token 取值表。
+ *
+ * 亮色取顶层 :root 块；暗色取 @media (prefers-color-scheme: dark) 内的 :root 块。
+ */
+function parseTokenMap(theme: 'light' | 'dark'): Map<string, string> {
+  const map = new Map<string, string>()
+  const lines = tokensSource.split('\n')
+  let inDarkMedia = false
+  let inRoot = false
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim()
+    if (line.startsWith('@media') && line.includes('prefers-color-scheme: dark')) {
+      inDarkMedia = true
+      continue
+    }
+    if (line === ':root {') {
+      inRoot = true
+      continue
+    }
+    if (inRoot && line === '}') {
+      inRoot = false
+      inDarkMedia = false
+      continue
+    }
+    if (!inRoot || (theme === 'dark') !== inDarkMedia) {
+      continue
+    }
+    const match = /^(--[\w-]+):\s*(.+);$/.exec(line)
+    if (match) {
+      map.set(match[1], match[2])
+    }
+  }
+
+  if (map.size === 0) {
+    throw new Error(`[Popup Toast Test] 无法从 tokens.css 解析 ${theme} 主题 token`)
+  }
+  return map
+}
 
 /**
  * 将浏览器计算后的 CSS 颜色转换为 RGB 通道。
@@ -84,16 +132,29 @@ function contrastRatio(foreground: string, background: string): number {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
+/** 把 `var(--x)` 形式的取值解析为 token 具体值（单层引用足够）。 */
+function resolveToken(value: string, tokens: Map<string, string>): string {
+  const match = /^var\((--[\w-]+)\)$/.exec(value.trim())
+  if (!match) {
+    return value
+  }
+  const resolved = tokens.get(match[1])
+  if (!resolved) {
+    throw new Error(`[Popup Toast Test] token 未定义: ${match[1]}`)
+  }
+  return resolved
+}
+
 /**
- * 从 Toast 组件的最终样式规则中读取文字色和背景色。
+ * 从 Toast 组件样式中读取文字色与背景色（组件只允许消费 --gme-* token）。
  */
-function readToastColors(className: string): { foreground: string; background: string } {
-  const styleBlock = new RegExp(`\\.${className}\\s*\\{([^}]*)\\}`).exec(toastComponentSource)?.[1]
-  const foreground = styleBlock?.match(/(?:^|\n)\s*color:\s*(#[\da-f]{6})\s*;/i)?.[1]
-  const background = styleBlock?.match(/(?:^|\n)\s*background:\s*(#[\da-f]{6})\s*;/i)?.[1]
+function readToastColors(): { foreground: string; background: string } {
+  const styleBlock = /\.toast-container\s*\{([^}]*)\}/.exec(toastComponentSource)?.[1]
+  const foreground = styleBlock?.match(/(?:^|\n)\s*color:\s*(var\(--[\w-]+\))\s*;/)?.[1]
+  const background = styleBlock?.match(/(?:^|\n)\s*background:\s*(var\(--[\w-]+\))\s*;/)?.[1]
 
   if (!foreground || !background) {
-    throw new Error(`[Popup Toast Test] 无法读取 ${className} 的文字色或背景色`)
+    throw new Error('[Popup Toast Test] Toast 文字/背景未消费语义 token（var(--gme-*)）')
   }
 
   return { foreground, background }
@@ -150,7 +211,7 @@ describe('Popup global Toast', () => {
   it.each([
     ['success', 'status', '下载已开始'],
     ['error', 'alert', '下载失败']
-  ] as const)('keeps %s toast text at WCAG AA contrast', async (type, role, message) => {
+  ] as const)('keeps %s toast text at WCAG AA contrast in both themes', async (type, role, message) => {
     wrapper = await mountPopup()
 
     toastService.show(message, type, 0)
@@ -160,7 +221,14 @@ describe('Popup global Toast', () => {
     expect(toast).not.toBeNull()
     expect(toast?.classList.contains(`toast-${type}`)).toBe(true)
 
-    const colors = readToastColors(`toast-${type}`)
-    expect(contrastRatio(colors.foreground, colors.background)).toBeGreaterThanOrEqual(4.5)
+    const colors = readToastColors()
+    for (const theme of ['light', 'dark'] as const) {
+      const tokens = parseTokenMap(theme)
+      const ratio = contrastRatio(
+        resolveToken(colors.foreground, tokens),
+        resolveToken(colors.background, tokens)
+      )
+      expect(ratio).toBeGreaterThanOrEqual(4.5)
+    }
   })
 })

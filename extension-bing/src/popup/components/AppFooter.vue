@@ -27,7 +27,6 @@ import { useI18n } from 'vue-i18n'
 import { Icon, IconName, IconSize } from '@/core/components/icons'
 import { useToast } from '@/core/composables/useToast'
 import { I18N_KEYS } from '@/core/constants/i18n'
-import { COMMON_COLORS } from '@/core/constants/style'
 import { logger } from '@/core/utils/logger'
 
 const { t } = useI18n()
@@ -52,16 +51,17 @@ async function copySupportEmail(): Promise<void> {
 </script>
 
 <style scoped>
+/* 色值一律消费 --gme-* 语义 token（src/styles/tokens.css），亮暗随系统。 */
 .support-footer {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 32px;
-  padding: 5px 16px;
+  padding: 4px 16px;
   box-sizing: border-box;
-  border-top: 1px solid v-bind('COMMON_COLORS.GRAY_200');
-  background: v-bind('COMMON_COLORS.GRAY_50');
+  border-top: 1px solid var(--gme-border);
+  background: var(--gme-surface-2);
 }
 
 .support-content {
@@ -86,7 +86,7 @@ async function copySupportEmail(): Promise<void> {
 .support-text {
   max-width: 100%;
   margin: 0;
-  color: v-bind('COMMON_COLORS.GRAY_600');
+  color: var(--gme-text-2);
   font-size: 12px;
   line-height: 16px;
   letter-spacing: 0;
@@ -95,19 +95,18 @@ async function copySupportEmail(): Promise<void> {
 }
 
 .support-link {
-  border-radius: 2px;
-  color: v-bind('COMMON_COLORS.PRIMARY_DARKEST');
+  color: var(--gme-link);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .support-link:hover {
-  color: v-bind('COMMON_COLORS.GRAY_900');
+  color: var(--gme-primary-hover);
 }
 
 .support-link:focus-visible {
-  outline: 2px solid #ffffff;
-  box-shadow: 0 0 0 4px v-bind('COMMON_COLORS.PRIMARY');
+  outline: 2px solid var(--gme-ring);
+  outline-offset: 2px;
 }
 
 .support-action-button {
@@ -117,11 +116,11 @@ async function copySupportEmail(): Promise<void> {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 0 7px;
-  border: 1px solid v-bind('COMMON_COLORS.GRAY_300');
-  border-radius: 4px;
-  background: #ffffff;
-  color: v-bind('COMMON_COLORS.GRAY_800');
+  padding: 0 8px;
+  border: 1px solid var(--gme-border-strong);
+  border-radius: var(--gme-rounded-full);
+  background: var(--gme-surface);
+  color: var(--gme-text);
   font: inherit;
   font-size: 12px;
   line-height: 16px;
@@ -135,13 +134,11 @@ async function copySupportEmail(): Promise<void> {
 }
 
 .support-action-button:hover {
-  border-color: v-bind('COMMON_COLORS.GRAY_400');
-  background: v-bind('COMMON_COLORS.GRAY_100');
-  color: v-bind('COMMON_COLORS.GRAY_900');
+  background: var(--gme-surface-2);
 }
 
 .support-action-button:active {
-  background: v-bind('COMMON_COLORS.GRAY_200');
+  background: var(--gme-surface-2);
 }
 
 .support-action-button:disabled {
@@ -150,8 +147,8 @@ async function copySupportEmail(): Promise<void> {
 }
 
 .support-action-button:focus-visible {
-  outline: 2px solid #ffffff;
-  box-shadow: 0 0 0 4px v-bind('COMMON_COLORS.PRIMARY');
+  outline: 2px solid var(--gme-ring);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

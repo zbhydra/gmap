@@ -9,8 +9,10 @@
         :aria-live="type === 'error' ? 'assertive' : 'polite'"
         aria-atomic="true"
       >
-        <Icon v-if="type === 'error'" :name="IconName.X_MARK" :size="IconSize.SM" />
-        <Icon v-if="type === 'success'" :name="IconName.CHECK" :size="IconSize.SM" />
+        <span class="toast-icon" aria-hidden="true">
+          <Icon v-if="type === 'error'" :name="IconName.X_MARK" :size="IconSize.XS" />
+          <Icon v-if="type === 'success'" :name="IconName.CHECK" :size="IconSize.XS" />
+        </span>
         <span>{{ message }}</span>
       </div>
     </Transition>
@@ -34,6 +36,11 @@ withDefaults(defineProps<Props>(), {
 })
 </script>
 
+<!--
+  design.md §7 Toast：卡面 + border + shadow-pop，左侧 20px 状态色实心圆图标
+  （图标色用对应 -fg，暗色下翻转为深字），文字 13px/600。色值全部消费
+  --gme-* 语义 token，亮暗随 prefers-color-scheme。
+-->
 <style scoped>
 .toast-container {
   position: fixed;
@@ -42,40 +49,49 @@ withDefaults(defineProps<Props>(), {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  border-radius: 10px;
-  font-size: 14px;
-  line-height: 20px;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--gme-rounded-md);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--gme-text);
+  background: var(--gme-surface);
+  border: 1px solid var(--gme-border);
+  box-shadow: var(--gme-shadow-pop);
   box-sizing: border-box;
   max-width: calc(100vw - 24px);
   overflow-wrap: anywhere;
   z-index: 10000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   pointer-events: none;
 }
 
-.toast-success {
-  background: #ecfdec;
-  color: #107d32;
-  border: 1px solid #b9f5bc;
+.toast-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--gme-rounded-full);
+  background: var(--gme-ok);
+  color: var(--gme-ok-fg);
 }
 
-.toast-error {
-  background: #ffeeef;
-  color: #d8001b;
-  border: 1px solid #ffd7d6;
+.toast-error .toast-icon {
+  background: var(--gme-bad);
+  color: var(--gme-bad-fg);
 }
 
 .toast-fade-enter-active,
 .toast-fade-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1);
 }
 
 .toast-fade-enter-from,
 .toast-fade-leave-to {
   opacity: 0;
-  transform: translateX(-50%) translateY(-20px);
+  transform: translateX(-50%) translateY(-8px);
 }
 
 @media (prefers-reduced-motion: reduce) {

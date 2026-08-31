@@ -40,7 +40,6 @@ import { useAuthStore } from '@/core/stores/authStore'
 import { markApi, MARK_TYPE, type MarkType } from '@/core/api/mark'
 import { logger } from '@/core/utils/logger'
 import { I18N_KEYS } from '@/core/constants/i18n'
-import { COMMON_COLORS } from '@/core/constants/style'
 import { I18nService } from '@/locales'
 import { BackgroundChannel } from './rpc/background.rpc'
 import type { MapsUsageSnapshot } from '@/sites/maps/usage/types'
@@ -127,13 +126,15 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* 色值一律消费 --gme-* 语义 token（src/styles/tokens.css），亮暗随系统。 */
 .app-container {
   width: 100%;
   min-height: var(--popup-min-height);
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--gme-surface);
+  color: var(--gme-text);
+  font-family: var(--gme-font-body);
 }
 
 .app-main {
@@ -144,35 +145,36 @@ onMounted(async () => {
   padding: 16px;
 }
 
+/* 主操作：primary 实底 pill（design.md 按钮规则，高 40 + -fg 字色） */
 .dashboard-button {
   width: 100%;
   height: 40px;
   font-family: inherit;
   font-size: 14px;
   font-weight: 500;
-  color: v-bind('COMMON_COLORS.GRAY_50');
-  background: v-bind('COMMON_COLORS.PRIMARY');
+  color: var(--gme-primary-fg);
+  background: var(--gme-primary);
   border: none;
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   cursor: pointer;
 }
 
 .dashboard-button:hover {
-  background: v-bind('COMMON_COLORS.PRIMARY_DARK');
+  background: var(--gme-primary-hover);
 }
 
 .dashboard-button:focus-visible {
-  outline: 2px solid v-bind('COMMON_COLORS.PRIMARY');
-  outline-offset: 1px;
+  outline: 2px solid var(--gme-ring);
+  outline-offset: 2px;
 }
 
-/* 账号用量区（U7）：消费全局色 token，亮暗主题随系统 */
+/* 账号用量区（U7） */
 .usage-section {
-  padding: 10px 16px 12px;
-  border-top: 1px solid v-bind('COMMON_COLORS.GRAY_200');
+  padding: 8px 16px 12px;
+  border-top: 1px solid var(--gme-border);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .usage-row {
@@ -185,7 +187,7 @@ onMounted(async () => {
 .usage-identity {
   font-size: 12px;
   font-weight: 600;
-  color: v-bind('COMMON_COLORS.GRAY_900');
+  color: var(--gme-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -193,26 +195,26 @@ onMounted(async () => {
 
 .usage-counter {
   font-size: 12px;
-  color: v-bind('COMMON_COLORS.GRAY_500');
+  color: var(--gme-text-2);
   flex-shrink: 0;
 }
 
 .usage-bar {
   height: 4px;
-  border-radius: 999px;
-  background: v-bind('COMMON_COLORS.GRAY_200');
+  border-radius: var(--gme-rounded-full);
+  background: var(--gme-surface-2);
   overflow: hidden;
 }
 
 .usage-bar-fill {
   height: 100%;
-  border-radius: 999px;
-  background: v-bind('COMMON_COLORS.PRIMARY');
+  border-radius: var(--gme-rounded-full);
+  background: var(--gme-primary);
 }
 
 .usage-resets {
   margin: 0;
   font-size: 11px;
-  color: v-bind('COMMON_COLORS.GRAY_500');
+  color: var(--gme-text-2);
 }
 </style>

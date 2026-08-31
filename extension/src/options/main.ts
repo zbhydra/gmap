@@ -7,6 +7,7 @@
  */
 
 import { createApp } from 'vue'
+import '@/styles/tokens.css'
 import { createI18nInstance } from '@/core/bootstrap'
 import { I18nService } from '@/locales'
 import { logger } from '@/core/utils/logger'

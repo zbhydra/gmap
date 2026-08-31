@@ -12,7 +12,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { I18N_KEYS } from '@/core/constants/i18n'
-import { COMMON_COLORS } from '@/core/constants/style'
 import LanguageSwitcher from './LanguageSwitcher.vue'
 
 // I18n
@@ -22,11 +21,11 @@ const { t } = useI18n()
 <style scoped>
 .app-header {
   padding: 4px;
-  border-bottom: 1px solid v-bind('COMMON_COLORS.GRAY_200');
+  border-bottom: 1px solid var(--gme-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: v-bind('COMMON_COLORS.GRAY_50');
+  background: var(--gme-surface-2);
   gap: 12px;
 }
 
@@ -34,7 +33,7 @@ const { t } = useI18n()
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: v-bind('COMMON_COLORS.GRAY_900');
+  color: var(--gme-text);
   flex-shrink: 0;
 }
 

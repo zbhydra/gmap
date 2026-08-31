@@ -23,6 +23,9 @@
   --gme-ring: #1a73e8;
   --gme-link: #1a73e8;
   --gme-shadow-pop: 0 4px 10px rgba(60, 64, 67, 0.14), 0 14px 36px rgba(60, 64, 67, 0.14);
+  --gme-rounded-sm: 10px;
+  --gme-rounded-md: 16px;
+  --gme-rounded-full: 999px;
   --gme-font-body: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --gme-font-mono: 'Azeret Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
@@ -67,7 +70,7 @@
   background: var(--gme-surface);
   color: var(--gme-text);
   border: 1px solid var(--gme-border);
-  border-radius: 16px;
+  border-radius: var(--gme-rounded-md);
   box-shadow: var(--gme-shadow-pop);
   font-family: var(--gme-font-body);
 }
@@ -103,7 +106,7 @@
   background: transparent;
   color: var(--gme-text-2);
   border: 1px solid var(--gme-border-strong);
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   cursor: pointer;
   font-size: 12px;
   line-height: 1;
@@ -133,7 +136,7 @@
   line-height: 1.5;
   color: var(--gme-warn);
   background: var(--gme-warn-soft);
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
   overflow-wrap: anywhere;
 }
 
@@ -156,7 +159,7 @@
   line-height: 1.5;
   color: var(--gme-warn);
   background: var(--gme-warn-soft);
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
   overflow-wrap: anywhere;
 }
 
@@ -171,7 +174,7 @@
   line-height: 1.6;
   color: var(--gme-text-2);
   background: var(--gme-surface-2);
-  border-radius: 10px;
+  border-radius: var(--gme-rounded-sm);
   overflow-wrap: anywhere;
 }
 
@@ -209,7 +212,7 @@
   font-family: var(--gme-font-body);
   font-size: 14px;
   font-weight: 500;
-  border-radius: 999px;
+  border-radius: var(--gme-rounded-full);
   cursor: pointer;
   border: none;
   font-variant-numeric: tabular-nums;

@@ -1,0 +1,110 @@
+/*
+ * 全项目 UI token 合同（docs/references/specs/design.md / design.dark.md）的
+ * extension 端实现。popup / options / dashboard 三入口在各自 main.ts 引入本文件；
+ * 变量名 = design.md YAML 键加 --gme- 前缀（与 sites/maps content 面板 panel.css
+ * 保持同一套命名，避免与宿主页面 CSS 变量互相渗透）。
+ *
+ * 本文件是唯一的裸值出处：其余样式一律消费 var()，违者被
+ * scripts/ui_token_lint.py 拦截。暗色仅换值，规则与亮色同（design.md §0）。
+ */
+
+:root {
+  /* —— 页面与卡面 —— */
+  --gme-bg: #ffffff;
+  --gme-bg-image: linear-gradient(
+    180deg,
+    #e9f1fd 0%,
+    rgba(233, 241, 253, 0.55) 300px,
+    rgba(233, 241, 253, 0) 560px
+  );
+  --gme-surface: #ffffff;
+  --gme-surface-2: #f0f4f9;
+  --gme-border: #dde3ea;
+  --gme-border-strong: #b9c2cd;
+
+  /* —— 文字层级 —— */
+  --gme-text: #1f1f1f;
+  --gme-text-2: #5f6368;
+  --gme-text-3: #80868b;
+
+  /* —— 主色 / 强调 / 状态（实底时文字必须用对应 -fg，亮暗共用合同） —— */
+  --gme-primary: #1a73e8;
+  --gme-primary-hover: #1765cc;
+  --gme-primary-fg: #ffffff;
+  --gme-primary-soft: #e8f0fe;
+  --gme-accent: #188038;
+  --gme-accent-fg: #ffffff;
+  --gme-accent-soft: #e6f4ea;
+  --gme-ok: #188038;
+  --gme-ok-fg: #ffffff;
+  --gme-ok-soft: #e6f4ea;
+  --gme-warn: #b26a00;
+  --gme-warn-fg: #ffffff;
+  --gme-warn-soft: #fef7e0;
+  --gme-bad: #d93025;
+  --gme-bad-fg: #ffffff;
+  --gme-bad-soft: #fce8e6;
+
+  /* —— 链接 / 焦点 / 浮层 —— */
+  --gme-link: #1a73e8;
+  --gme-ring: #1a73e8;
+  --gme-overlay: rgba(32, 33, 36, 0.5);
+  --gme-head-bg: rgba(255, 255, 255, 0.9);
+
+  /* —— 投影三档 —— */
+  --gme-shadow-card: 0 1px 2px rgba(60, 64, 67, 0.1), 0 3px 8px rgba(60, 64, 67, 0.06);
+  --gme-shadow-pop: 0 4px 10px rgba(60, 64, 67, 0.14), 0 14px 36px rgba(60, 64, 67, 0.14);
+  --gme-shadow-modal: 0 24px 60px rgba(60, 64, 67, 0.28);
+
+  /* —— 圆角刻度 —— */
+  --gme-rounded-sm: 10px;
+  --gme-rounded-md: 16px;
+  --gme-rounded-lg: 24px;
+  --gme-rounded-full: 999px;
+
+  /* —— 字体 —— */
+  --gme-font-body: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --gme-font-mono: 'Azeret Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --gme-bg: #15171c;
+    --gme-bg-image: linear-gradient(
+      180deg,
+      rgba(26, 115, 232, 0.16) 0%,
+      rgba(26, 115, 232, 0.06) 300px,
+      rgba(26, 115, 232, 0) 560px
+    );
+    --gme-surface: #1d2026;
+    --gme-surface-2: #262a31;
+    --gme-border: #31353d;
+    --gme-border-strong: #4c515b;
+    --gme-text: #e8eaed;
+    --gme-text-2: #9aa0a6;
+    --gme-text-3: #7c828c;
+    --gme-primary: #8ab4f8;
+    --gme-primary-hover: #aecbfa;
+    --gme-primary-fg: #0d2b45;
+    --gme-primary-soft: rgba(138, 180, 248, 0.15);
+    --gme-accent: #81c995;
+    --gme-accent-fg: #0c2b1c;
+    --gme-accent-soft: rgba(129, 201, 149, 0.14);
+    --gme-ok: #81c995;
+    --gme-ok-fg: #0d2b1c;
+    --gme-ok-soft: rgba(129, 201, 149, 0.14);
+    --gme-warn: #fdd663;
+    --gme-warn-fg: #2d2000;
+    --gme-warn-soft: rgba(253, 214, 99, 0.13);
+    --gme-bad: #f28b82;
+    --gme-bad-fg: #2c1210;
+    --gme-bad-soft: rgba(242, 139, 130, 0.13);
+    --gme-link: #8ab4f8;
+    --gme-ring: #8ab4f8;
+    --gme-overlay: rgba(0, 0, 0, 0.6);
+    --gme-head-bg: rgba(21, 23, 28, 0.86);
+    --gme-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --gme-shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --gme-shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.65);
+  }
+}

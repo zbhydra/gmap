@@ -340,26 +340,27 @@ function onOpenPricingPage(): void {
 </script>
 
 <style scoped>
-/* —— Material You 语义 token（design.md 亮色 / design.dark.md 暗色；直插宿主页就地声明） —— */
+/* —— Material You 语义 token（design.md 亮色 / design.dark.md 暗色；Shadow DOM 内自含，
+     gme- 前缀防宿主页面 CSS 变量渗透，与 src/styles/tokens.css 同一套取值） —— */
 .bing-panel-root {
-  --surface: #ffffff;
-  --surface-2: #f0f4f9;
-  --border: #dde3ea;
-  --border-strong: #b9c2cd;
-  --text: #1f1f1f;
-  --text-2: #5f6368;
-  --primary: #1a73e8;
-  --primary-hover: #1765cc;
-  --primary-fg: #ffffff;
-  --primary-soft: #e8f0fe;
-  --warn: #b26a00;
-  --warn-fg: #ffffff;
-  --warn-soft: #fef7e0;
-  --link: #1a73e8;
-  --ring: #1a73e8;
-  --shadow-pop: 0 4px 10px rgba(60, 64, 67, 0.14), 0 14px 36px rgba(60, 64, 67, 0.14);
-  --radius-md: 16px;
-  --radius-full: 999px;
+  --gme-surface: #ffffff;
+  --gme-surface-2: #f0f4f9;
+  --gme-border: #dde3ea;
+  --gme-border-strong: #b9c2cd;
+  --gme-text: #1f1f1f;
+  --gme-text-2: #5f6368;
+  --gme-primary: #1a73e8;
+  --gme-primary-hover: #1765cc;
+  --gme-primary-fg: #ffffff;
+  --gme-primary-soft: #e8f0fe;
+  --gme-warn: #b26a00;
+  --gme-warn-fg: #ffffff;
+  --gme-warn-soft: #fef7e0;
+  --gme-link: #1a73e8;
+  --gme-ring: #1a73e8;
+  --gme-shadow-pop: 0 4px 10px rgba(60, 64, 67, 0.14), 0 14px 36px rgba(60, 64, 67, 0.14);
+  --gme-rounded-md: 16px;
+  --gme-rounded-full: 999px;
 
   position: fixed;
   z-index: 2147483647;
@@ -368,11 +369,11 @@ function onOpenPricingPage(): void {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-pop);
-  color: var(--text);
+  background: var(--gme-surface);
+  border: 1px solid var(--gme-border);
+  border-radius: var(--gme-rounded-md);
+  box-shadow: var(--gme-shadow-pop);
+  color: var(--gme-text);
   font-family: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
   line-height: 1.6;
@@ -381,22 +382,22 @@ function onOpenPricingPage(): void {
 
 @media (prefers-color-scheme: dark) {
   .bing-panel-root {
-    --surface: #1d2026;
-    --surface-2: #262a31;
-    --border: #31353d;
-    --border-strong: #4c515b;
-    --text: #e8eaed;
-    --text-2: #9aa0a6;
-    --primary: #8ab4f8;
-    --primary-hover: #aecbfa;
-    --primary-fg: #0d2b45;
-    --primary-soft: rgba(138, 180, 248, 0.15);
-    --warn: #fdd663;
-    --warn-fg: #2d2000;
-    --warn-soft: rgba(253, 214, 99, 0.13);
-    --link: #8ab4f8;
-    --ring: #8ab4f8;
-    --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --gme-surface: #1d2026;
+    --gme-surface-2: #262a31;
+    --gme-border: #31353d;
+    --gme-border-strong: #4c515b;
+    --gme-text: #e8eaed;
+    --gme-text-2: #9aa0a6;
+    --gme-primary: #8ab4f8;
+    --gme-primary-hover: #aecbfa;
+    --gme-primary-fg: #0d2b45;
+    --gme-primary-soft: rgba(138, 180, 248, 0.15);
+    --gme-warn: #fdd663;
+    --gme-warn-fg: #2d2000;
+    --gme-warn-soft: rgba(253, 214, 99, 0.13);
+    --gme-link: #8ab4f8;
+    --gme-ring: #8ab4f8;
+    --gme-shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -428,7 +429,7 @@ function onOpenPricingPage(): void {
   height: 40px;
   padding: 0 20px;
   border: none;
-  border-radius: var(--radius-full);
+  border-radius: var(--gme-rounded-full);
   font: inherit;
   font-size: 14px;
   font-weight: 500;
@@ -445,36 +446,36 @@ function onOpenPricingPage(): void {
 }
 
 .button:focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 2px solid var(--gme-ring);
   outline-offset: 2px;
 }
 
 .button-primary {
-  background: var(--primary);
-  color: var(--primary-fg);
+  background: var(--gme-primary);
+  color: var(--gme-primary-fg);
 }
 
 .button-primary:hover:not(:disabled) {
-  background: var(--primary-hover);
+  background: var(--gme-primary-hover);
 }
 
 .button-outline {
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  color: var(--text);
+  background: var(--gme-surface);
+  border: 1px solid var(--gme-border-strong);
+  color: var(--gme-text);
 }
 
 .button-outline:hover:not(:disabled) {
-  background: var(--surface-2);
+  background: var(--gme-surface-2);
 }
 
 .button-ghost {
   background: transparent;
-  color: var(--text);
+  color: var(--gme-text);
 }
 
 .button-ghost:hover {
-  background: var(--surface-2);
+  background: var(--gme-surface-2);
 }
 
 /* —— 链接 —— */
@@ -483,18 +484,18 @@ function onOpenPricingPage(): void {
   border: none;
   padding: 0;
   font: inherit;
-  color: var(--link);
+  color: var(--gme-link);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 }
 
 .text-link:hover {
-  color: var(--primary-hover);
+  color: var(--gme-primary-hover);
 }
 
 .text-link:focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 2px solid var(--gme-ring);
   outline-offset: 2px;
 }
 
@@ -504,18 +505,18 @@ function onOpenPricingPage(): void {
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  color: var(--text-2);
+  color: var(--gme-text-2);
 }
 
 .howto-row {
-  color: var(--text-2);
+  color: var(--gme-text-2);
 }
 
 /* —— 采集中 —— */
 .collecting-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .progress-text {
@@ -527,8 +528,8 @@ function onOpenPricingPage(): void {
   flex-shrink: 0;
   width: 22px;
   height: 22px;
-  border: 2.5px solid color-mix(in srgb, var(--primary) 22%, transparent);
-  border-top-color: var(--primary);
+  border: 2.5px solid color-mix(in srgb, var(--gme-primary) 22%, transparent);
+  border-top-color: var(--gme-primary);
   border-radius: 50%;
   animation: bing-panel-spin 1s linear infinite;
 }
@@ -546,7 +547,7 @@ function onOpenPricingPage(): void {
 }
 
 .area-hint {
-  color: var(--text-2);
+  color: var(--gme-text-2);
 }
 
 /* —— 完成 —— */
@@ -555,7 +556,7 @@ function onOpenPricingPage(): void {
 }
 
 .done-count {
-  color: var(--text-2);
+  color: var(--gme-text-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -563,11 +564,11 @@ function onOpenPricingPage(): void {
 .limit-alert {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--warn-soft);
-  border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
-  border-radius: var(--radius-md);
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--gme-warn-soft);
+  border: 1px solid color-mix(in srgb, var(--gme-warn) 35%, transparent);
+  border-radius: var(--gme-rounded-md);
 }
 
 .alert-icon {
@@ -575,12 +576,12 @@ function onOpenPricingPage(): void {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--warn);
+  background: var(--gme-warn);
 }
 
 .alert-text {
   flex: 1;
-  color: var(--text);
+  color: var(--gme-text);
 }
 
 .alert-action {
@@ -620,12 +621,12 @@ function onOpenPricingPage(): void {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   padding: 6px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-pop);
+  background: var(--gme-surface);
+  border: 1px solid var(--gme-border);
+  border-radius: var(--gme-rounded-md);
+  box-shadow: var(--gme-shadow-pop);
 }
 
 .dropdown-item {
@@ -634,9 +635,9 @@ function onOpenPricingPage(): void {
   height: 34px;
   padding: 0 14px;
   border: none;
-  border-radius: var(--radius-full);
+  border-radius: var(--gme-rounded-full);
   background: transparent;
-  color: var(--text);
+  color: var(--gme-text);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -644,11 +645,11 @@ function onOpenPricingPage(): void {
 }
 
 .dropdown-item:hover {
-  background: var(--surface-2);
+  background: var(--gme-surface-2);
 }
 
 .dropdown-item:focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 2px solid var(--gme-ring);
   outline-offset: -2px;
 }
 
@@ -663,10 +664,10 @@ function onOpenPricingPage(): void {
 .vip-note {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--primary-soft);
-  border-radius: var(--radius-md);
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--gme-primary-soft);
+  border-radius: var(--gme-rounded-md);
 }
 
 .vip-icon {
@@ -674,23 +675,23 @@ function onOpenPricingPage(): void {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--primary);
+  background: var(--gme-primary);
 }
 
 .vip-text {
   flex: 1;
-  color: var(--text);
+  color: var(--gme-text);
 }
 
 .account-row {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 8px;
 }
 
 .account-label {
   flex-shrink: 0;
-  color: var(--text-2);
+  color: var(--gme-text-2);
 }
 
 .account-value {
@@ -710,20 +711,20 @@ function onOpenPricingPage(): void {
 
 .pricing-table th,
 .pricing-table td {
-  padding: 7px 6px;
-  border-bottom: 1px solid var(--border);
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--gme-border);
   text-align: center;
   vertical-align: top;
 }
 
 .pricing-table th {
-  color: var(--text-2);
+  color: var(--gme-text-2);
   font-weight: 500;
 }
 
 .pricing-table tbody td:first-child {
   text-align: left;
-  color: var(--text);
+  color: var(--gme-text);
 }
 
 .pricing-table .feature-col {
@@ -735,27 +736,27 @@ function onOpenPricingPage(): void {
 }
 
 .cell-included {
-  color: var(--primary);
+  color: var(--gme-primary);
   font-weight: 500;
 }
 
 .cell-pro-only {
-  color: var(--text-2);
+  color: var(--gme-text-2);
 }
 
 .pricing-footnote {
-  color: var(--text-2);
+  color: var(--gme-text-2);
   font-size: 12px;
 }
 
 /* 标题区账号/订阅态徽标（点击进 Pricing 视图） */
 .plan-badge {
   margin-left: auto;
-  padding: 2px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-full);
-  background: var(--surface-2);
-  color: var(--text-2);
+  padding: 4px 8px;
+  border: 1px solid var(--gme-border-strong);
+  border-radius: var(--gme-rounded-full);
+  background: var(--gme-surface-2);
+  color: var(--gme-text-2);
   font: inherit;
   font-size: 11px;
   font-weight: 600;
@@ -764,13 +765,13 @@ function onOpenPricingPage(): void {
 }
 
 .plan-badge.pro {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-fg);
+  background: var(--gme-primary);
+  border-color: var(--gme-primary);
+  color: var(--gme-primary-fg);
 }
 
 .plan-badge:focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 2px solid var(--gme-ring);
   outline-offset: 2px;
 }
 </style>

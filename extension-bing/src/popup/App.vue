@@ -41,12 +41,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* 色值一律消费 --gme-* 语义 token（src/styles/tokens.css），亮暗随系统。 */
 .app-container {
   width: 100%;
   min-height: var(--popup-min-height);
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--gme-surface);
+  color: var(--gme-text);
+  font-family: var(--gme-font-body);
 }
 </style>
