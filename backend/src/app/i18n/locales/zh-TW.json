@@ -65,7 +65,9 @@
         "GOOGLE_DATA_CONFIG_INCOMPLETE": "Google 資料採集配置不完整",
         "GOOGLE_DATA_OAUTH_STATE_INVALID": "Google 授權已過期，請重新授權",
         "GOOGLE_DATA_OAUTH_TOKEN_FAILED": "Google 授權失敗，請重試",
-        "GOOGLE_DATA_COLLECT_FAILED": "Google 資料採集失敗，請重試"
+        "GOOGLE_DATA_COLLECT_FAILED": "Google 資料採集失敗，請重試",
+        "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot 同步失敗，請重新連線 HubSpot 後重試",
+        "MAPS_USAGE_UNAVAILABLE": "Maps 配額服務暫不可用，請稍後重試"
     },
     "telegram": {
         "purchase_success_text": "購買成功，Credits 已入帳。\n\n訂單號: {order_no}",

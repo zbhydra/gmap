@@ -1,18 +1,26 @@
 {
   "extensionName": {
-    "message": "TG Video Downloader | Download Private Media",
+    "message": "MapsGrab",
     "description": "Nome da extensão Chrome Web Store"
   },
   "extensionDescription": {
-    "message": "Salve vídeos, arquivos e imagens do Telegram — até canais privados e mensagens sem download. Suporta lotes e arquivos grandes.",
+    "message": "Extraia dados de empresas dos resultados de pesquisa do Google Maps.",
     "description": "Descrição da extensão Chrome Web Store - máx 132 caracteres"
   },
   "actionTitle": {
-    "message": "Abrir TG Downloader",
+    "message": "Abrir MapsGrab",
     "description": "Título da ação do navegador"
   },
   "popupDescription": {
-    "message": "TG Downloader · Private Channel Saver",
+    "message": "MapsGrab",
     "description": "Descrição da página pop-up"
+  },
+  "optionsTitle": {
+    "message": "MapsGrab Settings",
+    "description": "Options page title"
+  },
+  "dashboardTitle": {
+    "message": "MapsGrab Bulk Tasks",
+    "description": "Dashboard page title"
   }
 }

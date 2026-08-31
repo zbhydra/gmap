@@ -1,18 +1,26 @@
 {
   "extensionName": {
-    "message": "TG Video Downloader | Download Private Media",
+    "message": "MapsGrab",
     "description": "Chrome 線上應用程式商店擴充功能名稱"
   },
   "extensionDescription": {
-    "message": "儲存 Telegram 影片、檔案與圖片 — 包含私人頻道與禁止下載的訊息。支援批次與大檔案。",
+    "message": "從 Google Maps 搜尋結果擷取商家資料。",
     "description": "Chrome 線上應用程式商店擴充功能描述 - 最多132字元"
   },
   "actionTitle": {
-    "message": "開啟 Telegram 媒體下載助手",
+    "message": "開啟 MapsGrab",
     "description": "瀏覽器動作標題"
   },
   "popupDescription": {
-    "message": "歡迎使用 Telegram 媒體下載助手",
+    "message": "MapsGrab",
     "description": "Popup 頁面描述"
+  },
+  "optionsTitle": {
+    "message": "MapsGrab Settings",
+    "description": "Options page title"
+  },
+  "dashboardTitle": {
+    "message": "MapsGrab Bulk Tasks",
+    "description": "Dashboard page title"
   }
 }

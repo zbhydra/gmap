@@ -63,6 +63,72 @@ export class BackgroundChannel {
     >('recordMark', params, options)
   }
 
+  /** 调用 getMapsUsage 能力。 */
+  getMapsUsage(
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'getMapsUsage'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'getMapsUsage'>>(
+      'getMapsUsage',
+      undefined,
+      options
+    )
+  }
+
+  /** 调用 getBulkState 能力。 */
+  getBulkState(
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'getBulkState'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'getBulkState'>>(
+      'getBulkState',
+      undefined,
+      options
+    )
+  }
+
+  /** 调用 createBulkTask 能力。 */
+  createBulkTask(
+    params: RpcMethodParams<BackgroundHandler, 'createBulkTask'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'createBulkTask'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'createBulkTask'>,
+      RpcMethodParams<BackgroundHandler, 'createBulkTask'>
+    >('createBulkTask', params, options)
+  }
+
+  /** 调用 startBulkTask 能力。 */
+  startBulkTask(
+    params: RpcMethodParams<BackgroundHandler, 'startBulkTask'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'startBulkTask'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'startBulkTask'>,
+      RpcMethodParams<BackgroundHandler, 'startBulkTask'>
+    >('startBulkTask', params, options)
+  }
+
+  /** 调用 stopBulkTask 能力。 */
+  stopBulkTask(
+    params: RpcMethodParams<BackgroundHandler, 'stopBulkTask'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'stopBulkTask'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'stopBulkTask'>,
+      RpcMethodParams<BackgroundHandler, 'stopBulkTask'>
+    >('stopBulkTask', params, options)
+  }
+
+  /** 调用 deleteBulkTask 能力。 */
+  deleteBulkTask(
+    params: RpcMethodParams<BackgroundHandler, 'deleteBulkTask'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'deleteBulkTask'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'deleteBulkTask'>,
+      RpcMethodParams<BackgroundHandler, 'deleteBulkTask'>
+    >('deleteBulkTask', params, options)
+  }
+
   /** 销毁 RPC transport。 */
   destroy(): void {
     this.transport.destroy()

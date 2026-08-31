@@ -47,6 +47,7 @@ const PERMISSION_PATTERNS = {
   clipboardWrite: 'document\\.writeText\\(|navigator\\.clipboard\\.',
   declarativeContent: 'chrome\\.declarativeContent\\.',
   history: 'chrome\\.history\\.',
+  identity: 'chrome\\.identity\\.',
   idle: 'chrome\\.idle\\.',
   management: 'chrome\\.management\\.',
   notifications: 'chrome\\.notifications\\.',

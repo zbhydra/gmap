@@ -55,6 +55,7 @@ monorepo，各子项目独立用 **pnpm** 管理（无根 workspace）。
 | ------------------ | ----------------------------- | ----------------------- | --------------------------------- |
 | `backend/`         | 后端 API                      | Python + FastAPI        | spec-python / spec-mysql / spec-redis |
 | `extension/`       | Maps Extractor 插件端(TG 业务已移除) | Chrome MV3 + Vue 3      | spec-extension                    |
+| `extension-bing/`  | Bing Maps Scraper 插件端(016 域,底座与 extension/ 同构) | Chrome MV3 + Vue 3      | spec-extension                    |
 | `website/`         | 主站                          | Astro                   | spec-website                      |
 | `admin/`           | 管理后台                      | 独立 Vue + Naive UI SPA | —                                 |
 | `docs/`            | 需求 / 技术 / 计划文档          | —                       | spec-docs                         |

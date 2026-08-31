@@ -8,9 +8,20 @@
   },
   "include": [
     "src/vite-env.d.ts",
-    "tests/unit/background-website-auth.spec.ts",
-    "tests/unit/auth-website-token-exchange.spec.ts",
-    "tests/unit/auth-store.spec.ts"
+    "tests/unit/auth-session-failure.spec.ts",
+    "tests/unit/auth-store.spec.ts",
+    "tests/unit/install-mark-reporter.spec.ts",
+    "tests/unit/maps-export.spec.ts",
+    "tests/unit/maps-list-mode.spec.ts",
+    "tests/unit/maps-operations.spec.ts",
+    "tests/unit/maps-parser.spec.ts",
+    "tests/unit/maps-remote-config.spec.ts",
+    "tests/unit/maps-user-settings.spec.ts",
+    "tests/e2e/global-setup.ts",
+    "tests/e2e/announcement-flow.spec.ts",
+    "tests/e2e/list-flow.spec.ts",
+    "tests/e2e/options-flow.spec.ts",
+    "tests/e2e/panel-flow.spec.ts"
   ],
   "exclude": []
 }

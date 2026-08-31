@@ -200,6 +200,9 @@ export interface ExtensionLoginV2PageContent {
   retryButtonLabel: string
 }
 
+/** Bing Maps 插件登录页文案（键结构与 v2 页对齐，返回目标为 Bing Maps 插件）。 */
+export interface ExtensionLoginBingPageContent extends ExtensionLoginV2PageContent {}
+
 /** 首页 Solutions 方案卡（标题 + 描述 + "use when" 条件列表） */
 /** Pricing 页面内容。 */
 export interface PricingPageContent {
@@ -432,5 +435,7 @@ export interface SiteContent {
     pricing: PricingPageContent
     /** 扩展登录页 v2（externally_connectable 协议）文案 */
     extensionLoginV2: ExtensionLoginV2PageContent
+    /** Bing Maps 插件登录页（externally_connectable 协议）文案 */
+    extensionLoginBing: ExtensionLoginBingPageContent
   }
 }

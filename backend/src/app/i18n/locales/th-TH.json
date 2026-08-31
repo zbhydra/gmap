@@ -73,7 +73,9 @@
         "GOOGLE_DATA_CONFIG_INCOMPLETE": "Google data collection is not configured",
         "GOOGLE_DATA_OAUTH_STATE_INVALID": "Google authorization has expired, please try again",
         "GOOGLE_DATA_OAUTH_TOKEN_FAILED": "Google authorization failed, please retry",
-        "GOOGLE_DATA_COLLECT_FAILED": "Google data collection failed, please retry"
+        "GOOGLE_DATA_COLLECT_FAILED": "Google data collection failed, please retry",
+        "MAPS_HUBSPOT_SYNC_FAILED": "การซิงก์ HubSpot ล้มเหลว โปรดเชื่อมต่อ HubSpot อีกครั้งแล้วลองใหม่",
+        "MAPS_USAGE_UNAVAILABLE": "บริการโควตา Maps ไม่พร้อมใช้งานชั่วคราว กรุณาลองอีกครั้งภายหลัง"
     },
     "telegram": {
         "purchase_success_text": "ซื้อสำเร็จ เพิ่ม Credits แล้ว\n\nหมายเลขคำสั่งซื้อ: {order_no}",

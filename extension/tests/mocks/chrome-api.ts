@@ -143,6 +143,12 @@ const tabs = {
 const storageData: Record<string, any> = {}
 
 const storage = {
+  onChanged: {
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    hasListener: vi.fn()
+  },
+
   local: {
     get: vi.fn((keys: any, callback?: any) => {
       let result: any = {}
@@ -249,6 +255,42 @@ const downloads = {
 }
 
 // ============================================================================
+// chrome.identity API（013 A10，U9 集成授权）
+// ============================================================================
+
+const identity = {
+  getAuthToken: vi.fn((details: any, callback?: any) => {
+    const result = 'mock-drive-access-token'
+    if (callback) {
+      callback(result)
+      return
+    }
+    return Promise.resolve(result)
+  }),
+
+  launchWebAuthFlow: vi.fn((options: any, callback?: any) => {
+    const result = 'https://test-extension-id.chromiumapp.org/?code=mock-auth-code'
+    if (callback) {
+      callback(result)
+      return
+    }
+    return Promise.resolve(result)
+  }),
+
+  removeCachedAuthToken: vi.fn((details: any, callback?: any) => {
+    if (callback) {
+      callback()
+      return
+    }
+    return Promise.resolve()
+  }),
+
+  getRedirectURL: vi.fn((path?: string) => {
+    return `https://test-extension-id.chromiumapp.org/${path ?? ''}`
+  })
+}
+
+// ============================================================================
 // 导出 Chrome API
 // ============================================================================
 
@@ -257,7 +299,8 @@ export const chrome = {
   runtime,
   tabs,
   storage,
-  downloads
+  downloads,
+  identity
 }
 
 // 添加类型导出

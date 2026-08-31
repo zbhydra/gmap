@@ -6,9 +6,9 @@
 
 ## 当前状态
 
-- 竞品逆向调研 13 项完成,逐功能细节见 `references/A1~A13`;源材料:`@references/竞品逆向/`(11 篇逆向文档 + 黄金样本,自 scratch 迁入)。
-- 插件底座已就绪:`extension/` 已改造为 Maps 插件工程(2026-08-29,保留 RPC/构建/HTTP/打点/远端配置/i18n/测试底座,见 extension/README.md)。
-- 采集引擎未开始。进度大盘见根 `@../../ROADMAP.md`。
+- **插件全量开发已完成(2026-08-30,执行计划 `plans/001.插件全量实施.md` U1–U11 全部 done)**:A1–A13 全部 13 项功能落地,三渠道构建产物(chrome/edge/firefox)。验证:extension unit 313 passed、e2e 17 passed(全自动零外网)、backend maps 范围 pytest 全绿。
+- 竞品逆向调研 13 项完成,逐功能细节见 `references/A1~A13` 与 `references/竞品逆向/`(11 篇逆向文档 + 黄金样本,入 git)。
+- 遗留待办:真实 Google 登录态冒烟(real smoke:usage 真实链路/U9 真实 OAuth 凭证/U10 真实采集校准);占位凭证(Google OAuth client_id、gecko id)待 hydra 定稿。进度大盘见根 `@../../ROADMAP.md`。
 
 ## 已拍板差异(对齐竞品时的例外)
 
@@ -61,7 +61,7 @@ place 详情页 → 面板出现 **Reviews & Photos** 标签页 → Start Extrac
 
 ### Email / 社媒补全(采集中的可选增强)
 
-设置中勾选 Extract email address / Extract social medias(Pro 字段)→ 采集时逐条由服务端补全 → 写入 Email / Social Medias 列;未勾选也逐条上报计数。补全失败不阻断主采集。`@references/A4-Email与社媒补全.md`
+设置中勾选 Extract email address / Extract social medias(Pro 字段)→ 采集时逐条由服务端补全 → 写入 Email / Social Medias 列;未勾选也逐条上报计数。补全失败不阻断主采集。**计量口径(U7 裁决,2026-08-30)**:记录数配额在采集完成边沿按会话计量(U7),enrich 端点不重复扣减。`@references/A4-Email与社媒补全.md`
 
 ### 批量任务流程
 
@@ -69,7 +69,7 @@ dashboard 新建任务(关键词 ≤500 或评论 URL ≤500,任务名必填)→
 
 ### 列表模式流程
 
-打开列表形态页(保存列表/搜索侧栏列表)→ 每项出现 Extract 按钮 → 点击进入采集并打开该项详情 → 逐项采集,列表滚动加载 → 到底完成。`@references/A7-保存列表抓取.md`
+打开列表形态页(保存列表/搜索侧栏列表)→ 面板 Start 后**自动逐项**打开详情采集(2026-08-30 U10 裁决:弃竞品的每项 Extract 按钮,自动方案概念更少且 e2e 全自动友好)→ 列表滚动加载 → 到底完成。`@references/A7-保存列表抓取.md`
 
 ## 界面与操作逻辑
 
@@ -105,7 +105,7 @@ Reviews & Photos 标签页含:Start Extracting Reviews 按钮、Start Extracting
 ## 非功能性需求
 
 - **拟人化节奏**:滚动动画随机 1.5–3.5 秒;轮询间隔在设定档位上随机抖动;所有节奏参数可被远程配置调整。
-- **抗改版**:选择器/解析 schema/节奏全部走远程配置(包内默认 + 远端稀疏覆盖 + 1 小时缓存);失败可见。
+- **抗改版**:远程配置六组(dom/reviewsDom/parseSchema/exportConfig/scrape/operations,包内默认 + 远端稀疏覆盖 + 1 小时缓存);失败可见。用户设置(间隔等个人偏好)与远程配置分层:用户显式偏好优先,落地于 `extension/src/sites/maps/settings/userSettings.ts` 模块头契约。
 - **SW 生命周期**:批量任务状态落盘,chrome.alarms 兜底恢复;SW 不持有必须存活的业务状态。
 - **兼容**:Chrome / Edge(Chromium)全量;Firefox MV3 事件页做调度平台分支。
 - **隐私红线**:上报字段按 009 域脱敏口径审查;不发送 Cookie/令牌/完整下载直链。
@@ -123,6 +123,7 @@ Reviews & Photos 标签页含:Start Extracting Reviews 按钮、Start Extracting
 | sync_to_google_drive | Drive 同步 | |
 | btn_click | 关键按钮点击 | |
 | install | 安装 | GA4 + 后端双报 |
+| enrich_complete | Email/社媒补全完成 | 成功/失败均报,含 count/written/partial/ok |
 
 ## 验收标准(域级)
 

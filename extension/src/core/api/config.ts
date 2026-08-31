@@ -41,6 +41,28 @@ export const API = {
     /** 获取 Telegram 统一远端稀疏覆盖 */
     TELEGRAM_CONFIG: '/api/client/tg/config',
 
+    // ========== Maps Config ==========
+    /** 获取 Maps 远程配置（dom/parseSchema/scrape 三组稀疏覆盖） */
+    MAPS_CONFIG: '/api/client/maps/config',
+
+    // ========== Maps 集成 ==========
+    /** HubSpot 商家同步代理（插件传用户 access token，服务端转发 HubSpot API） */
+    MAPS_HUBSPOT_SYNC: '/api/client/maps/hubspot/sync',
+
+    // ========== Maps 配额（013 A11，U7） ==========
+    /** 查询当月配额用量（used/total/period/exhausted） */
+    MAPS_USAGE: '/api/client/maps/usage',
+    /** 采集完成上报扣减（request_id 幂等） */
+    MAPS_USAGE_REPORT: '/api/client/maps/usage/report',
+
+    // ========== Maps 补全（013 A4，U8） ==========
+    /** 官网 Email/社媒补全（服务端自研，结果与入参位置对齐） */
+    MAPS_ENRICH: '/api/client/maps/enrich',
+
+    // ========== 打点 ==========
+    /** 后端 mark 通道（install 事件双报使用） */
+    MARK_RECORD: '/api/client/mark/record',
+
     // ========== 订阅兼容状态 ==========
     /** 获取订阅状态 */
     SUBSCRIPTION_STATUS: '/api/client/subscription/status'
@@ -117,5 +139,11 @@ export const STORAGE_KEYS = {
   /** 设备 ID */
   DEVICE_ID: 'counter_device_id',
   /** 生产构建 DEBUG 日志开关 */
-  DEBUG_LOGGING: 'debug_logging'
+  DEBUG_LOGGING: 'debug_logging',
+  /** Maps 远程配置缓存（时间戳 + 稀疏覆盖载荷） */
+  MAPS_REMOTE_CONFIG: 'maps_remote_config',
+  /** Maps 用户设置（个人偏好：间隔/导出格式/字段勾选/自动化开关，013 A9） */
+  MAPS_USER_SETTINGS: 'maps_user_settings',
+  /** Maps 集成授权（Drive / HubSpot 的 OAuth token 与状态，013 A10） */
+  MAPS_INTEGRATION_AUTH: 'maps_integration_auth'
 } as const

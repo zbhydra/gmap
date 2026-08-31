@@ -2,11 +2,14 @@
  * ExtensionMarkReporter - 统一处理跨插件上下文的 SLS 行为事件。
  *
  * Popup 与 Content 只广播业务事件，background 负责实际 WebTracking 请求。
- * 当前暂无业务事件；事件定义于 core/events/types 的 ExtensionEvents，
- * 落地时在此订阅并逐个接入 markApi。
+ * 事件定义于 core/events/types 的 ExtensionEvents，此处逐个订阅并接入 markApi；
+ * 单路失败只记录错误，不影响另一路与扩展业务（局部可失败）。
  */
 
-import type { ExtensionEvents } from '@/core/events/types'
+import { logger } from '@/core/utils/logger'
+import { markApi } from '@/core/api/mark'
+import { MARK_TYPE, type MarkType } from '@/core/api/mark/types'
+import type { MarkEventPayload, ExtensionEvents } from '@/core/events/types'
 import { ChromeEventSubscriber } from '@/core/rpc/ChromeEventBus'
 
 /** 统一的插件行为打点订阅器。 */
@@ -22,8 +25,35 @@ export class ExtensionMarkReporter {
     if (this.unsubscribes.length > 0) {
       return
     }
-    // 业务事件落地时在此追加订阅，例如：
-    // this.unsubscribes.push(this.eventSubscriber.on('<event>', () => { ... }))
+    this.unsubscribes.push(
+      this.eventSubscriber.on('mapsSearchMark', payload => {
+        void this.record(MARK_TYPE.SEARCH, payload)
+      }),
+      this.eventSubscriber.on('mapsExportResultsMark', payload => {
+        void this.record(MARK_TYPE.EXPORT_RESULTS, payload)
+      }),
+      this.eventSubscriber.on('mapsScrapeReviewsContentMark', payload => {
+        void this.record(MARK_TYPE.SCRAPE_REVIEWS_CONTENT, payload)
+      }),
+      this.eventSubscriber.on('mapsEnrichCompleteMark', payload => {
+        void this.record(MARK_TYPE.ENRICH_COMPLETE, payload)
+      }),
+      this.eventSubscriber.on('contentOpenMark', payload => {
+        void this.record(MARK_TYPE.CONTENT_OPEN, payload)
+      })
+    )
+  }
+
+  /** 写 SLS 打点：失败仅记录（打点通道允许局部失败）。 */
+  private async record(markType: MarkType, payload: MarkEventPayload): Promise<void> {
+    try {
+      const result = await markApi.record(markType, payload.markMsg, { pageUrl: payload.pageUrl })
+      logger.info(
+        `[ExtensionMarkReporter] ${markType} 打点完成: recorded=${String(result.recorded)}`
+      )
+    } catch (error) {
+      logger.error(`[ExtensionMarkReporter] ${markType} 打点失败:`, error)
+    }
   }
 
   /** 释放事件订阅器。 */

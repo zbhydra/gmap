@@ -49,6 +49,7 @@ httpClient.useError(defaultErrorHandler)
 // API 函数
 export { authApi } from './auth/api'
 export { subscriptionApi } from './subscription/api'
+export { integrationApi } from './integration/api'
 
 // 导出 subscription 类型
 export type { SubscriptionPeriod, SubscriptionStatus } from './subscription/types'

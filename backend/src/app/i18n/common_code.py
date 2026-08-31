@@ -102,3 +102,7 @@ class CommonCode(IntEnum):
     GOOGLE_DATA_OAUTH_STATE_INVALID = 31002  # Google 数据授权 state 无效或已过期
     GOOGLE_DATA_OAUTH_TOKEN_FAILED = 31003  # Google 数据 OAuth token 交换失败
     GOOGLE_DATA_COLLECT_FAILED = 31004  # Google 数据采集失败
+
+    # ========== Maps Extractor 插件 (31100-31199) ==========
+    MAPS_HUBSPOT_SYNC_FAILED = 31101  # Maps 插件 HubSpot 同步转发失败
+    MAPS_USAGE_UNAVAILABLE = 31102  # Maps 配额服务暂不可用（Redis 故障，可重试）

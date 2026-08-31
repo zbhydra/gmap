@@ -4,6 +4,10 @@
 import { logger } from '@/core/utils/logger'
 import { BackgroundMessageRouter } from './services/BackgroundMessageRouter'
 import { ExtensionMarkReporter } from './services/ExtensionMarkReporter'
+import { MapsIntegrationSyncService } from './services/MapsIntegrationSyncService'
+import { mapsUsageService } from '@/sites/maps/usage/usageService'
+import { reportInstallMark } from './services/InstallMarkReporter'
+import { bulkScheduler } from './batch/controller'
 import { storageManager } from '@/core/storage'
 import { STORAGE_KEYS } from '@/core/api/config'
 import { initializeRuntimeLogger } from './runtimeConfig'
@@ -41,12 +45,29 @@ messageRouter.setupListener()
 const extensionMarkReporter = new ExtensionMarkReporter()
 extensionMarkReporter.setup()
 
+// Maps 集成同步（013 A10）：消费采集完成边沿的 auto_save 事件，Drive 直传 +
+// HubSpot 代理同步（单路失败不阻断）。
+const mapsIntegrationSyncService = new MapsIntegrationSyncService()
+mapsIntegrationSyncService.setup()
+
+// Maps 月度配额（013 A11，U7）：消费采集完成边沿的 usage 上报事件（幂等扣减，
+// 失败不阻断采集），并向 RPC 门控与批量前置校验提供 usage 快照。
+mapsUsageService.setup()
+
+// 批量任务调度器（013 A6）：监听工作页回报 / alarm / 标签关闭并做恢复扫描。
+// 监听必须在 SW 顶层同步注册——消息与 alarm 本身会唤醒 SW，晚注册会丢事件。
+bulkScheduler.setup()
+
 // 监听扩展安装事件
-chrome.runtime.onInstalled.addListener(() => {
-  logger.info('Extension installed')
+chrome.runtime.onInstalled.addListener(details => {
+  logger.info(`Extension installed: reason=${details.reason}`)
   // 安装时也确保 device_id 已初始化
-  initDeviceId().catch(error => {
-    logger.error('[Background] Failed to initialize device_id on install:', error)
+  const ensureDeviceId = async () => {
+    await initDeviceId()
+  }
+  // install 埋点双报（分析通道 + 后端 mark 通道），失败不阻断
+  reportInstallMark(details.reason, ensureDeviceId).catch(error => {
+    logger.error('[Background] install 埋点双报失败:', error)
   })
 })
 
@@ -61,4 +82,7 @@ chrome.runtime.onSuspend.addListener(() => {
   // 清理路由器资源
   messageRouter.destroy()
   extensionMarkReporter.destroy()
+  mapsIntegrationSyncService.destroy()
+  mapsUsageService.destroy()
+  bulkScheduler.destroy()
 })

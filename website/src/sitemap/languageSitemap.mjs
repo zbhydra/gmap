@@ -20,6 +20,7 @@ const STATUS_CODE_PAGES = new Set(['404', '500'])
 const SEARCH_BOT_BLOCKED_ROUTE_PATHS = new Set([
   '/extension-login/',
   '/extension-login-v2/',
+  '/extension-login-bing/',
   '/paypal/cancel/',
   '/paypal/success/'
 ])

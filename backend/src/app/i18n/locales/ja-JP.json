@@ -65,7 +65,9 @@
         "GOOGLE_DATA_CONFIG_INCOMPLETE": "Google data collection is not configured",
         "GOOGLE_DATA_OAUTH_STATE_INVALID": "Google authorization has expired, please try again",
         "GOOGLE_DATA_OAUTH_TOKEN_FAILED": "Google authorization failed, please retry",
-        "GOOGLE_DATA_COLLECT_FAILED": "Google data collection failed, please retry"
+        "GOOGLE_DATA_COLLECT_FAILED": "Google data collection failed, please retry",
+        "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot 同期に失敗しました。HubSpot を再接続してからもう一度お試しください",
+        "MAPS_USAGE_UNAVAILABLE": "Maps quota サービスは一時的に利用できません。後でもう一度お試しください"
     },
     "telegram": {
         "purchase_success_text": "購入が完了しました。Credits が反映されました。\n\n注文番号: {order_no}",

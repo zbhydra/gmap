@@ -1,18 +1,26 @@
 {
   "extensionName": {
-    "message": "TG Video Downloader | Download Private Media",
+    "message": "MapsGrab",
     "description": "Nama ekstensi Chrome Web Store"
   },
   "extensionDescription": {
-    "message": "Simpan video, berkas, dan gambar Telegram — bahkan channel privat dan pesan tanpa unduh. Dukungan batch dan berkas besar.",
+    "message": "Ekstrak data bisnis dari hasil penelusuran Google Maps.",
     "description": "Deskripsi ekstensi Chrome Web Store - maks 132 karakter"
   },
   "actionTitle": {
-    "message": "Buka TG Downloader",
+    "message": "Buka MapsGrab",
     "description": "Browser action title"
   },
   "popupDescription": {
-    "message": "TG Downloader · Private Channel Saver",
+    "message": "MapsGrab",
     "description": "Popup page description"
+  },
+  "optionsTitle": {
+    "message": "MapsGrab Settings",
+    "description": "Options page title"
+  },
+  "dashboardTitle": {
+    "message": "MapsGrab Bulk Tasks",
+    "description": "Dashboard page title"
   }
 }

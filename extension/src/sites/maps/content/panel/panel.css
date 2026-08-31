@@ -1,0 +1,252 @@
+/*
+ * Maps 采集面板样式（Shadow DOM 内，全量消费 design.md / design.dark.md 的
+ * 语义 token，亮暗双主题响应 prefers-color-scheme；禁止硬编码色值/字体）。
+ *
+ * token 名与 design.md YAML 键一致（前缀 --）；暗色仅换值，交互规则同亮色。
+ */
+
+:host {
+  /* 亮色 token（design.md） */
+  --gme-surface: #ffffff;
+  --gme-surface-2: #f0f4f9;
+  --gme-border: #dde3ea;
+  --gme-border-strong: #b9c2cd;
+  --gme-text: #1f1f1f;
+  --gme-text-2: #5f6368;
+  --gme-text-3: #80868b;
+  --gme-primary: #1a73e8;
+  --gme-primary-hover: #1765cc;
+  --gme-primary-fg: #ffffff;
+  --gme-primary-soft: #e8f0fe;
+  --gme-warn: #b26a00;
+  --gme-warn-soft: #fef7e0;
+  --gme-ring: #1a73e8;
+  --gme-link: #1a73e8;
+  --gme-shadow-pop: 0 4px 10px rgba(60, 64, 67, 0.14), 0 14px 36px rgba(60, 64, 67, 0.14);
+  --gme-font-body: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --gme-font-mono: 'Azeret Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  all: initial;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    /* 暗色 token（design.dark.md）：实底控件翻转为浅底深字 */
+    --gme-surface: #1d2026;
+    --gme-surface-2: #262a31;
+    --gme-border: #31353d;
+    --gme-border-strong: #4c515b;
+    --gme-text: #e8eaed;
+    --gme-text-2: #9aa0a6;
+    --gme-text-3: #7c828c;
+    --gme-primary: #8ab4f8;
+    --gme-primary-hover: #aecbfa;
+    --gme-primary-fg: #0d2b45;
+    --gme-primary-soft: rgba(138, 180, 248, 0.15);
+    --gme-warn: #fdd663;
+    --gme-warn-soft: rgba(253, 214, 99, 0.13);
+    --gme-ring: #8ab4f8;
+    --gme-link: #8ab4f8;
+    --gme-shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.panel {
+  position: fixed;
+  top: 80px;
+  z-index: 2147483646;
+  width: 236px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--gme-surface);
+  color: var(--gme-text);
+  border: 1px solid var(--gme-border);
+  border-radius: 16px;
+  box-shadow: var(--gme-shadow-pop);
+  font-family: var(--gme-font-body);
+}
+
+.panel-side-left {
+  left: 20px;
+}
+
+.panel-side-right {
+  right: 20px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gme-text);
+}
+
+.panel-toggle {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--gme-text-2);
+  border: 1px solid var(--gme-border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.panel-toggle:hover {
+  background: var(--gme-surface-2);
+}
+
+.panel-toggle:focus-visible {
+  outline: 2px solid var(--gme-ring);
+  outline-offset: 1px;
+}
+
+.panel-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--gme-text-2);
+}
+
+.panel-error {
+  display: none;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gme-warn);
+  background: var(--gme-warn-soft);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
+.panel-error.visible {
+  display: block;
+}
+
+.panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 运营区（A12）：新版本提示 + 公告（模式无关，header 与内容区之间） */
+.panel-version-notice {
+  display: none;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gme-warn);
+  background: var(--gme-warn-soft);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
+.panel-version-notice.visible {
+  display: block;
+}
+
+.panel-announcement {
+  display: none;
+  padding: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gme-text-2);
+  background: var(--gme-surface-2);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
+/* 服务端下发的公告 HTML 片段内部元素的对齐样式（token 消费，不写死色值） */
+.panel-announcement p {
+  margin: 0;
+}
+
+.panel-announcement a {
+  color: var(--gme-link);
+}
+
+.panel-announcement.visible {
+  display: block;
+}
+
+/* place 模式：Reviews & Photos 区块 */
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--gme-text-3);
+}
+
+.panel-button {
+  height: 33px;
+  padding: 0 14px;
+  font-family: var(--gme-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 999px;
+  cursor: pointer;
+  border: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-button:focus-visible {
+  outline: 2px solid var(--gme-ring);
+  outline-offset: 1px;
+}
+
+.panel-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+/* primary：实底 + 对应 -fg 字色（暗色为深字，双主题合同） */
+.panel-button-primary {
+  background: var(--gme-primary);
+  color: var(--gme-primary-fg);
+}
+
+.panel-button-primary:hover {
+  background: var(--gme-primary-hover);
+}
+
+/* outline：surface 底 + border-strong 边 */
+.panel-button-outline {
+  background: var(--gme-surface);
+  color: var(--gme-text);
+  border: 1px solid var(--gme-border-strong);
+}
+
+.panel-button-outline:hover {
+  background: var(--gme-surface-2);
+}
+
+.panel-footer {
+  font-size: 12px;
+  color: var(--gme-text-3);
+}

@@ -1,18 +1,26 @@
 {
   "extensionName": {
-    "message": "TG Video Downloader | Download Private Media",
+    "message": "MapsGrab",
     "description": "Chrome ウェブストア拡張機能名"
   },
   "extensionDescription": {
-    "message": "Telegramの動画・ファイル・画像を保存。プライベートチャンネルや保存不可のメッセージにも対応。一括＆大容量ファイルに対応。",
+    "message": "Google マップの検索結果からビジネスデータを抽出します。",
     "description": "Chrome ウェブストア拡張機能説明 - 132文字まで"
   },
   "actionTitle": {
-    "message": "TG Downloader を開く",
+    "message": "MapsGrab を開く",
     "description": "ブラウザアクションのタイトル"
   },
   "popupDescription": {
-    "message": "TG Downloader · Private Channel Saver",
+    "message": "MapsGrab",
     "description": "ポップアップページの説明"
+  },
+  "optionsTitle": {
+    "message": "MapsGrab Settings",
+    "description": "Options page title"
+  },
+  "dashboardTitle": {
+    "message": "MapsGrab Bulk Tasks",
+    "description": "Dashboard page title"
   }
 }

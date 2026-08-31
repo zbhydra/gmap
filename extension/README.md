@@ -10,6 +10,7 @@ Google Maps Extractor 浏览器插件(013 域)。由原 Telegram 下载插件工
 | 能力 | 位置 |
 | --- | --- |
 | MV3 构建(vite-plugin-web-extension,内联 manifest)+ zip | `vite.config.ts` / `scripts/zip-dist.js` |
+| 上架渠道构建(chrome/edge/firefox 三渠道独立 zip) | `scripts/build-store.mjs`(`pnpm build:store`) |
 | 跨上下文 RPC(chrome/event 双传输 + 代码生成) | `src/core/rpc/`、`scripts/rpc-generate.mjs` |
 | backend HTTP 客户端(拦截器 / 错误信封) | `src/core/api/client/` |
 | 认证 / 订阅 API(通用账号能力,A11 复用) | `src/core/api/auth/`、`src/core/api/subscription/` |

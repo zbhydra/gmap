@@ -184,6 +184,14 @@ export const EXTENSION_TARGET_IDS = [EXTENSION_STORE_ID, EXTENSION_PRE_RELEASE_I
 export const TG_DOWNLOAD_EXTENSION_AUTH_CHANGED_V2 = 'TG_DOWNLOAD_EXTENSION_AUTH_CHANGED_V2'
 /** v2 网页 → 扩展：登录页请求聚焦已打开的 Telegram Web tab。 */
 export const TG_DOWNLOAD_EXTENSION_RETURN_V2 = 'TG_DOWNLOAD_EXTENSION_RETURN_V2'
+/** Bing Maps 插件固定扩展 ID（extension-bing manifest key 推导；私钥丢失则 ID 漂移）。 */
+export const BING_MAPS_EXTENSION_ID = 'pgcpggcfmfdmobpheojngndpcmnkibmm'
+/** Bing 插件登录桥目标列表（上架后追加商店 ID）。 */
+export const BING_EXTENSION_TARGET_IDS = [BING_MAPS_EXTENSION_ID] as const
+/** 网页 → Bing 插件：website 登录态变更，消息体携带 web_access_token。 */
+export const BING_MAPS_EXTENSION_AUTH_CHANGED = 'BING_MAPS_EXTENSION_AUTH_CHANGED'
+/** 网页 → Bing 插件：登录页请求关闭当前登录 tab。 */
+export const BING_MAPS_EXTENSION_LOGIN_RETURN = 'BING_MAPS_EXTENSION_LOGIN_RETURN'
 /** 网站默认 Google OAuth Client ID；公开 ID，不包含 secret，可被环境变量覆盖。 */
 export const DEFAULT_PUBLIC_GOOGLE_CLIENT_ID =
   '691520581257-16u51bd6kdal9ms3jafamlu7n4jgr2rc.apps.googleusercontent.com'
@@ -256,6 +264,39 @@ export function notifyWebAuthChanged(): void {
       () => {
         if (runtime.lastError) {
           logGoogleAuthStage('warn', 'extension_auth_sync_failed', {
+            extensionId,
+            message: runtime.lastError.message ?? 'unknown'
+          })
+        }
+      }
+    )
+  }
+}
+
+/**
+ * 向 Bing Maps 插件同步 website 登录态。
+ *
+ * 目标扩展未安装或未声明本域 externally_connectable 时不抛异常，Chrome 只设置
+ * `chrome.runtime.lastError` 并在 callback 内暴露，此处记录为 warn 后静默。
+ */
+export function notifyBingMapsAuthChanged(): void {
+  const token = getStoredAccessToken()
+  if (!token) {
+    logGoogleAuthStage('info', 'bing_extension_auth_sync_skipped', { reason: 'no_token' })
+    return
+  }
+  const runtime = window.chrome?.runtime
+  if (!runtime?.sendMessage) {
+    logGoogleAuthStage('info', 'bing_extension_auth_sync_skipped', { reason: 'runtime_unavailable' })
+    return
+  }
+  for (const extensionId of BING_EXTENSION_TARGET_IDS) {
+    runtime.sendMessage(
+      extensionId,
+      { type: BING_MAPS_EXTENSION_AUTH_CHANGED, web_access_token: token },
+      () => {
+        if (runtime.lastError) {
+          logGoogleAuthStage('warn', 'bing_extension_auth_sync_failed', {
             extensionId,
             message: runtime.lastError.message ?? 'unknown'
           })

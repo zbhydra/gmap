@@ -1,0 +1,13 @@
+# e2e 构建变体产物(scripts/build-e2e.mjs 输出,SW 流量指向本地 mock)
+dist-e2e/
+
+# 上架渠道产物(scripts/build-store.mjs 输出)
+dist/
+dist-edge/
+dist-firefox/
+dist.zip
+dist-edge.zip
+dist-firefox.zip
+
+# Playwright 本地运行输出
+tests/logs/

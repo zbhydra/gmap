@@ -37,3 +37,7 @@ blob-report/
 
 # 根级临时与调研产物(AGENTS 约定 scratch/ 不入 git)
 scratch/
+
+# 构建压缩产物
+dist.zip
+*.store.zip

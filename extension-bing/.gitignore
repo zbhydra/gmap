@@ -1,0 +1,6 @@
+# e2e 构建变体产物(scripts/build-e2e.mjs 输出,SW 流量指向本地 mock)
+dist-e2e/
+
+# Playwright 本地运行输出
+tests/logs/
+keys/

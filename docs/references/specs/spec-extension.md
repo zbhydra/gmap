@@ -10,7 +10,6 @@
 - Manifest V3；**manifest 写在 `vite.config.ts` 里**（非独立 manifest.json），改权限 / host / CSP 都改 `vite.config.ts`。
 - 构建链：`vue-tsc → vite build → zip-dist`（`pnpm build`）；`pnpm check` = type-check + lint + format:check + check:permissions 全套。
 - `prebuild` / `pretype-check` 自动跑 `rpc-generate:check`，register 改了不重新生成会 **fail build**。
-- Tailwind 是僵尸依赖（装了 0 用），新代码继续 scoped CSS，不要用 Tailwind。
 
 ## 2. 代码风格
 

@@ -1,0 +1,18 @@
+{
+  "extensionName": {
+    "message": "Bing Maps Scraper",
+    "description": "Extension name for Chrome Web Store"
+  },
+  "extensionDescription": {
+    "message": "Extract business data from Bing Maps search results.",
+    "description": "Extension description for Chrome Web Store - 132 chars max"
+  },
+  "actionTitle": {
+    "message": "Open Bing Maps Scraper",
+    "description": "Browser action title"
+  },
+  "popupDescription": {
+    "message": "Bing Maps Scraper",
+    "description": "Popup page description"
+  }
+}
