@@ -23,7 +23,7 @@
 
       <template v-else-if="profile">
         <div class="user-info-sections">
-          <NDescriptions bordered size="small" :column="2" label-placement="left">
+          <NDescriptions bordered size="small" :column="isMobile ? 1 : 2" label-placement="left">
             <NDescriptionsItem :label="t('userInfo.userId')">
               {{ profile.user.user_id }}
             </NDescriptionsItem>
@@ -69,7 +69,7 @@
             </NDescriptionsItem>
           </NDescriptions>
 
-          <NDescriptions bordered size="small" :column="3" label-placement="left">
+          <NDescriptions bordered size="small" :column="isMobile ? 1 : 3" label-placement="left">
             <NDescriptionsItem :label="t('userInfo.creditsBalance')">
               {{ profile.credits.balance }}
             </NDescriptionsItem>
@@ -133,11 +133,13 @@ import {
 } from "@/api/users";
 import type { AdminOrder, CallbackStatus, OrderStatus } from "@/api/orders";
 import { formatAdminTimeMs } from "@/utils/time";
+import { useIsMobile } from "@/composables/useResponsive";
 
 type TagType = "default" | "success" | "warning" | "error" | "info";
 
 const { t } = useI18n();
 const message = useMessage();
+const isMobile = useIsMobile();
 
 const visible = ref(false);
 const currentUserId = ref<number | null>(null);

@@ -9,7 +9,7 @@ admin 是独立 SPA,不是 website 的一部分,独立仓库目录、独立构�
 
 技术栈:Vue 3、Naive UI、Vue Router、Pinia、Axios、vue-i18n、Vite、TypeScript。包管理用 pnpm。
 
-目录约定:`admin/src/` 下分 `api/`(请求封装与各模块 API)、`router/`(路由与守卫)、`stores/`(Pinia)、`i18n/`(语言资源)、`views/`(页面)、`layouts/`(布局)。
+目录约定:`admin/src/` 下分 `api/`(请求封装与各模块 API)、`router/`(路由与守卫)、`stores/`(Pinia)、`i18n/`(语言资源)、`views/`(页面)、`layouts/`(布局)、`composables/`(响应式等组合式函数)、`styles/`(全局样式)。
 
 ## 2. 前端路由
 
@@ -118,7 +118,29 @@ API Key 存在 `admins` 表对应管理员记录中,只保存 hash、前缀和�
 - 实时推送类接口(SSE):`proxy_buffering off` + 响应头 `X-Accel-Buffering: no`,`proxy_read_timeout` 按批量验证最坏耗时放宽(20 客户端 × 串行间隔 1s + 验证耗时)。
 - 验证码依赖 TrueType 字体,部署脚本安装 DejaVu 字体并执行字体自检,禁止退回 PIL 默认小字体。
 
-## 9. 改动范围锚点
+## 9. 响应式与移动端适配
+
+断点体系统一两档,JS 与 CSS 共用同一数值:
+
+- **960px(主断点)**:移动 / 桌面布局切换。JS 侧由 `useIsMobile()`(模块级 matchMedia 单例)提供;CSS 侧各组件 media query 同值。
+- **560px(小屏)**:单列降级,仅 CSS media query 使用,无 JS 消费方。
+
+布局形态:
+
+- 桌面(> 960):可折叠侧边栏(220 / 折叠 64)+ 顶栏,行为不变。
+- 移动(≤ 960):侧边栏隐藏,顶栏左侧汉堡按钮 + 应用标题;点击打开左侧 NDrawer(280px)承载同一份菜单,路由跳转后自动收起。
+
+页面适配约定:
+
+- 数据表格走**横向滚动**而非卡片化:Orders 1750、用户弹窗订单表 1320、Dashboard 动态列按 120 + 90 + N × 140 计算 scroll-x;固定列(订单操作列右固定、Dashboard 日期列左固定)保留。
+- 筛选表单移动端 label 置顶(桌面左置 + 固定 label 宽),栅格 960 降两列、560 单列。
+- 弹层宽度:抽屉移动端全宽(桌面 720);弹窗 / 登录卡一律 `min(设计宽, calc(100vw - 32px))`。
+- 多列描述列表(UserInfoDialog)移动端降为单列。
+- 视口高度用 `100dvh`(保留 `vh` fallback),避免移动端地址栏伸缩抖动。
+
+全局样式:`styles/global.css` 是 admin 唯一的非 scoped 样式入口(main.ts 引入),只放需要覆盖 Naive UI teleport 弹层的规则;当前承载 daterange / datetimerange 双日历面板的窄屏兜底(`max-width: calc(100vw - 16px)` + 横向滚动,宽屏无影响)。
+
+## 10. 改动范围锚点
 
 后端实现锚点(具体菜单接口实现见对应 `tech-*.md`):
 
@@ -134,6 +156,8 @@ API Key 存在 `admins` 表对应管理员记录中,只保存 hash、前缀和�
 - 请求封装:`@admin/src/api/request.ts`。
 - 令牌存储:`@admin/src/stores/auth.ts`。
 - 路由与守卫:`@admin/src/router/index.ts`。
-- 布局:`@admin/src/layouts/AdminLayout.vue`。
+- 布局(含移动端抽屉导航):`@admin/src/layouts/AdminLayout.vue`。
+- 响应式断点:`@admin/src/composables/useResponsive.ts`。
+- 全局样式:`@admin/src/styles/global.css`。
 - 系统设置页:`@admin/src/views/SystemSettingsView.vue`。
 - i18n:`@admin/src/i18n/`。

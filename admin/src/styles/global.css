@@ -1,0 +1,17 @@
+/**
+ * 全局样式：admin 唯一的非 scoped 样式入口。
+ *
+ * 只放需要跨组件 / 覆盖 Naive UI teleport 弹层的规则；
+ * 组件私有样式一律写在各自 <style scoped> 中。
+ */
+
+/*
+ * 日期范围面板兜底：daterange / datetimerange 是双日历并排（约 640px 宽），
+ * 窄屏会溢出视口。宽屏下 max-width 大于面板实际宽度，无任何影响；
+ * 窄屏约束宽度并横向滚动，零断点概念。
+ */
+.n-date-panel--daterange,
+.n-date-panel--datetimerange {
+  max-width: calc(100vw - 16px);
+  overflow-x: auto;
+}

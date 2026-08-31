@@ -357,7 +357,7 @@ onMounted(() => {
   max-width: 720px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 560px) {
   .api-key-box {
     align-items: stretch;
     flex-direction: column;

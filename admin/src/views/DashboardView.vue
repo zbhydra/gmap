@@ -21,6 +21,7 @@
         :data="rows"
         :loading="loading"
         :pagination="false"
+        :scroll-x="tableScrollX"
         :bordered="false"
         striped
       />
@@ -85,6 +86,11 @@ const rows = computed(() =>
 const markTypes = computed(() =>
   getAdminVisibleMarkTypes(dashboardData.value?.mark_types ?? []),
 );
+/**
+ * 表格横向滚动宽度 = 固定列（日期 120 + 注册数 90）+ 动态列（每个 mark_type 140）。
+ * 未设 scroll-x 时窄视口会挤压溢出而非横向滚动。
+ */
+const tableScrollX = computed(() => 120 + 90 + markTypes.value.length * 140);
 
 function formatChangePercent(changePercent: number | null | undefined): string {
   if (changePercent === null || changePercent === undefined) {

@@ -18,7 +18,8 @@
     "orders": "订单管理",
     "logout": "退出登录",
     "logoutConfirm": "确定要退出登录吗？",
-    "systemSettings": "系统设置"
+    "systemSettings": "系统设置",
+    "openMenu": "打开菜单"
   },
   "dashboard": {
     "totalUsers": "总用户数",

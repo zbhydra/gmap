@@ -11,7 +11,12 @@
 <template>
   <div class="login-wrapper">
     <NCard class="login-card" :title="t('login.title')">
-      <NForm ref="formRef" :model="form" :rules="rules" label-placement="left">
+      <NForm
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        :label-placement="isMobile ? 'top' : 'left'"
+      >
         <NFormItem :label="t('login.username')" path="username">
           <NInput
             v-model:value="form.username"
@@ -82,12 +87,14 @@ import {
 } from "naive-ui";
 import { getCaptcha, login, type LoginParams } from "@/api/auth";
 import { useAuthStore } from "@/stores/auth";
+import { useIsMobile } from "@/composables/useResponsive";
 
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const message = useMessage();
 const auth = useAuthStore();
+const isMobile = useIsMobile();
 
 const formRef = ref<FormInst | null>(null);
 const loading = ref(false);
@@ -159,11 +166,13 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   background: #f0f2f5;
 }
 
+/* 小屏收窄到视口内，避免 375px 以下贴边溢出 */
 .login-card {
-  width: 400px;
+  width: min(400px, calc(100vw - 32px));
 }
 
 .captcha-row {

@@ -10,8 +10,8 @@
   <div class="orders-view">
     <NCard class="orders-panel">
       <NForm
-        label-placement="left"
-        :label-width="124"
+        :label-placement="isMobile ? 'top' : 'left'"
+        :label-width="isMobile ? undefined : 124"
         :show-feedback="false"
         class="orders-filter"
       >
@@ -133,7 +133,11 @@
       />
     </NCard>
 
-    <NDrawer v-model:show="detailVisible" :width="720" placement="right">
+    <NDrawer
+      v-model:show="detailVisible"
+      :width="isMobile ? '100%' : 720"
+      placement="right"
+    >
       <NDrawerContent :title="t('orders.detailTitle')" closable>
         <NSpin :show="detailLoading">
           <NDescriptions v-if="detail" :column="1" bordered size="small">
@@ -284,6 +288,7 @@ import {
 } from "@/api/orders";
 import UserInfoDialog from "@/components/UserInfoDialog.vue";
 import { ADMIN_DATETIME_FORMAT, formatAdminTimeMs } from "@/utils/time";
+import { useIsMobile } from "@/composables/useResponsive";
 
 type TagType = "default" | "success" | "warning" | "error" | "info";
 type DateRangeValue = [number, number] | null;
@@ -322,6 +327,7 @@ interface UserInfoDialogExpose {
 
 const { t } = useI18n();
 const message = useMessage();
+const isMobile = useIsMobile();
 
 const loading = ref(false);
 const detailLoading = ref(false);

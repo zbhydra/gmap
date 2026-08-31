@@ -1,5 +1,24 @@
 # 008 · 管理后台 · 变更记录
 
+## 2026-08-31 admin 移动端友好化重构
+
+**为什么**:admin 布局此前只面向桌面(侧边栏无断点逻辑常驻挤压内容、订单详情抽屉固定 720px、Dashboard 表格无 scroll-x、断点值 960/640/560 散落混用),移动端基本不可用。
+
+**变更**:
+
+- 断点体系统一两档:960(移动/桌面主断点,对齐 design.md「单列阈值 960px」)+ 560(小屏单列);原 SystemSettingsView 的 640 收敛为 560。
+- 新增 `admin/src/composables/useResponsive.ts`(模块级 matchMedia 单例 `useIsMobile()`)与 `admin/src/styles/global.css`(admin 唯一非 scoped 样式入口,main.ts 引入)。
+- `AdminLayout.vue`:移动端(≤960)隐藏侧边栏,顶栏左侧汉堡 + 应用标题,NDrawer(280px)承载同一份菜单并随路由跳转自动收起;桌面保持可折叠 sider 不变;`100vh` → `100dvh`,内容区/顶栏移动端留白收窄。
+- `OrdersView.vue`:筛选表单移动端 label 置顶(桌面左置不变);详情抽屉移动端全宽(桌面 720 不变)。
+- `DashboardView.vue`:表格补动态 scroll-x(120 + 90 + N × 140),消除窄屏挤压。
+- `UserInfoDialog.vue`:两处描述列表移动端降为单列(桌面 2/3 列不变)。
+- `LoginView.vue`:登录卡 `min(400px, calc(100vw - 32px))`、`100dvh`、移动端 label 置顶。
+- `global.css`:daterange/datetimerange 双日历面板窄屏约束宽度并横向滚动(宽屏无影响)。
+- i18n 中英新增 `layout.openMenu`。
+- `tech-后台架构与认证.md` 新增「响应式与移动端适配」章节,目录约定与前端锚点同步补 composables/、styles/。
+
+**验收**:pnpm build 通过;Playwright e2e 36 通过(2 条失败为既有失败:`/tg-clients` 路由已删除但守卫测试残留,与本次无关,stash 后复测同样失败);375×812 视口全页面截图走查(抽屉导航、表格横滚 + 固定操作列、详情抽屉全屏、用户弹窗单列、日期面板兜底),1280 桌面无回归。
+
 ## 2026-08-31 移除系统设置 Google 数据采集 tab,清理外部 API 死文档
 
 **为什么**:GSC/GA4 运行时采集后端主体已随后端清理移除,管理后台设置页的「google 数据采集」tab 与零散死代码一并退役;运营观测改用 Search Console 与 GA4 官方控制台。

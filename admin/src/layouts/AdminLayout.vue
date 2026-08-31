@@ -1,17 +1,21 @@
 <!--
-  管理后台布局：侧边栏 + 顶栏
+  管理后台布局：桌面侧边栏 / 移动抽屉导航 + 顶栏
 
   结构：
-  NLayout
-  ├── NLayoutSider（可折叠侧边栏）
+  NLayout（桌面 has-sider，移动单列）
+  ├── NLayoutSider（仅桌面，可折叠侧边栏）
   │   └── NMenu（Dashboard / 订单管理 / 系统设置）
   └── NLayout
-      ├── NLayoutHeader（顶栏：标题 + 登出按钮）
+      ├── NLayoutHeader（顶栏：移动端汉堡 + 标题 / 登出按钮）
       └── NLayoutContent（RouterView）
+
+  移动端（视口 ≤ 960px，见 useResponsive.ts）：
+  NDrawer（左侧抽屉，承载与侧边栏同一份菜单，跳转后自动关闭）
 -->
 <template>
-  <NLayout has-sider class="admin-layout">
+  <NLayout :has-sider="!isMobile" class="admin-layout">
     <NLayoutSider
+      v-if="!isMobile"
       bordered
       collapse-mode="width"
       :collapsed-width="64"
@@ -37,6 +41,21 @@
 
     <NLayout>
       <NLayoutHeader bordered class="admin-header">
+        <div v-if="isMobile" class="header-left">
+          <NButton
+            quaternary
+            circle
+            :aria-label="t('layout.openMenu')"
+            @click="navDrawerVisible = true"
+          >
+            <template #icon>
+              <NIcon>
+                <MenuOutlined />
+              </NIcon>
+            </template>
+          </NButton>
+          <span class="header-title">{{ t("app.title") }}</span>
+        </div>
         <div class="header-right">
           <NButton text @click="handleLogout">
             {{ t("layout.logout") }}
@@ -49,6 +68,16 @@
       </NLayoutContent>
     </NLayout>
   </NLayout>
+
+  <NDrawer v-model:show="navDrawerVisible" placement="left" :width="280">
+    <NDrawerContent :title="t('app.title')" closable>
+      <NMenu
+        :options="menuOptions"
+        :value="currentRoute"
+        @update:value="handleMenuClick"
+      />
+    </NDrawerContent>
+  </NDrawer>
 </template>
 
 <script setup lang="ts">
@@ -62,6 +91,8 @@ import {
   NLayoutContent,
   NMenu,
   NButton,
+  NDrawer,
+  NDrawerContent,
   NIcon,
   useDialog,
   type MenuOption,
@@ -70,8 +101,10 @@ import {
   DashboardOutlined,
   SettingOutlined,
   ProfileOutlined,
+  MenuOutlined,
 } from "@vicons/antd";
 import { useAuthStore } from "@/stores/auth";
+import { useIsMobile } from "@/composables/useResponsive";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -79,7 +112,9 @@ const route = useRoute();
 const dialog = useDialog();
 const auth = useAuthStore();
 
+const isMobile = useIsMobile();
 const collapsed = ref(false);
+const navDrawerVisible = ref(false);
 
 /** 当前路由名用于菜单高亮 */
 const currentRoute = computed(() => route.name as string);
@@ -108,8 +143,9 @@ const menuOptions = computed<MenuOption[]>(() => [
   },
 ]);
 
-/** 菜单点击跳转 */
+/** 菜单点击跳转，并收起移动端抽屉（桌面无抽屉，置 false 无副作用） */
 function handleMenuClick(key: string) {
+  navDrawerVisible.value = false;
   const routeMap: Record<string, string> = {
     Dashboard: "/",
     Orders: "/orders",
@@ -137,6 +173,7 @@ function handleLogout() {
 <style scoped>
 .admin-layout {
   height: 100vh;
+  height: 100dvh;
 }
 
 .sider-header {
@@ -167,6 +204,21 @@ function handleLogout() {
   padding: 0 24px;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.header-title {
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -176,5 +228,17 @@ function handleLogout() {
 .admin-content {
   padding: 24px;
   overflow-y: auto;
+}
+
+/* 移动端：header 左侧出现汉堡 + 标题改为两端分布，内容区收窄留白 */
+@media (max-width: 960px) {
+  .admin-header {
+    justify-content: space-between;
+    padding: 0 12px;
+  }
+
+  .admin-content {
+    padding: 16px;
+  }
 }
 </style>

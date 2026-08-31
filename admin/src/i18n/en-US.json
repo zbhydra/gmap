@@ -18,7 +18,8 @@
     "orders": "Orders",
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to logout?",
-    "systemSettings": "System Settings"
+    "systemSettings": "System Settings",
+    "openMenu": "Open menu"
   },
   "dashboard": {
     "totalUsers": "Total Users",
