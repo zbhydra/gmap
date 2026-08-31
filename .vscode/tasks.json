@@ -1,0 +1,111 @@
+{
+  // 本地 dev 服务一键启动。重复运行同一任务会先杀掉旧进程再启动：
+  // 端口型服务按端口杀（端口必须与各项目配置一致，改端口需同步改这里）；
+  // 插件 dev 不监听端口，按绝对路径杀（间接区分 extension 与 extension-bing）。
+  // 热重载由各命令自身提供（vite / astro dev）；后端是否 --reload 由 backend/config.yaml 的 app.debug 决定。
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev: 后端 (7600)",
+      "type": "shell",
+      "command": "lsof -ti tcp:7600 | xargs kill -9 2>/dev/null; uv run server",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "dev: 主站 (7620)",
+      "type": "shell",
+      "command": "lsof -ti tcp:7620 | xargs kill -9 2>/dev/null; pnpm dev",
+      "options": {
+        "cwd": "${workspaceFolder}/website"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "dev: MapsGrab 站 (7630)",
+      "type": "shell",
+      "command": "lsof -ti tcp:7630 | xargs kill -9 2>/dev/null; pnpm dev",
+      "options": {
+        "cwd": "${workspaceFolder}/website-mapsgrab"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "dev: 管理后台 (7610)",
+      "type": "shell",
+      "command": "lsof -ti tcp:7610 | xargs kill -9 2>/dev/null; pnpm dev",
+      "options": {
+        "cwd": "${workspaceFolder}/admin"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "dev: Maps Extractor 插件",
+      "type": "shell",
+      "command": "pkill -9 -f \"${workspaceFolder}/extension/scripts/dev-edge-current.mjs\" 2>/dev/null; PATH=\"${workspaceFolder}/extension/node_modules/.bin:$PATH\" node \"${workspaceFolder}/extension/scripts/dev-edge-current.mjs\"",
+      "options": {
+        "cwd": "${workspaceFolder}/extension"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "dev: Bing Maps 插件",
+      "type": "shell",
+      "command": "pkill -9 -f \"${workspaceFolder}/extension-bing/scripts/dev-edge-current.mjs\" 2>/dev/null; PATH=\"${workspaceFolder}/extension-bing/node_modules/.bin:$PATH\" node \"${workspaceFolder}/extension-bing/scripts/dev-edge-current.mjs\"",
+      "options": {
+        "cwd": "${workspaceFolder}/extension-bing"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "dev: 全部",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "dev: 后端 (7600)",
+        "dev: 主站 (7620)",
+        "dev: 管理后台 (7610)",
+        "dev: Maps Extractor 插件",
+        "dev: Bing Maps 插件",
+        "dev: MapsGrab 站 (7630)"
+      ]
+    }
+  ]
+}
