@@ -1,0 +1,510 @@
+---
+/**
+ * 工具页统一壳（W4 工具矩阵模板）。
+ *
+ * 模板口径（015 feat「界面与操作逻辑」）：H1 = 工具名、功能输入区（slot）、
+ * 结果区（slot 内）、How-to SEO 正文、FAQ、页底 CTA（安装/套餐，带 utm 与
+ * data-cta 归因）。工具逻辑全部前端执行，无后端依赖。
+ *
+ * 埋点：进入 = 页面加载时上报 tool_view（各工具 script 调 reportGA4Event）；
+ * 功能使用 = 主操作按钮上的 data-ga-event="tool_use" + data-ga-tool-id（全局
+ * 点击委派自动上报，参数 tool_id 与 tool_view 对齐）。
+ */
+import Layout from '../../layouts/Layout.astro'
+import { localePaths } from '../../i18n/ui'
+import type {
+  FAQItemMessage,
+  ToolCtaBandMessage,
+  ToolCommonMessage,
+  ToolHeroMessage,
+  ToolHowToSectionMessage,
+  ToolSeoMessage
+} from '../../i18n/schema'
+
+interface Props {
+  /** 工具 ID（埋点/锚点用，如 place-id-finder）。 */
+  toolId: string
+  locale?: import('../../i18n/content').Locale
+  seo: ToolSeoMessage
+  hero: ToolHeroMessage
+  howTo: readonly ToolHowToSectionMessage[]
+  faq: { title: string; items: readonly FAQItemMessage[] }
+  cta: ToolCtaBandMessage
+  /** 客户端脚本文案载荷（common + 本工具内容），JSON 序列化后注入根节点。 */
+  copyJson: string
+  /** 壳通用区文案（eyebrow / 正文区标题，与客户端载荷同源）。 */
+  commonCopy: ToolCommonMessage
+}
+
+const { toolId, locale = 'en-US', seo, hero, howTo, faq, cta, copyJson, commonCopy } = Astro.props as Props
+const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+// CTA 漏斗（015 feat「免费工具漏斗」）：站内链接带 utm 归因，事件侧用 data-cta。
+const installHref = `${localePrefix}/download/?utm_source=website&utm_medium=tool-${toolId}&utm_campaign=install`
+const pricingHref = `${localePrefix}/pricing/?utm_source=website&utm_medium=tool-${toolId}&utm_campaign=pricing`
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.items.map(item => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: { '@type': 'Answer', text: item.answer }
+  }))
+}
+const howToSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: hero.title,
+  step: howTo.map(section => ({
+    '@type': 'HowToStep',
+    name: section.heading,
+    text: section.body
+  }))
+}
+---
+
+<Layout locale={locale} title={seo.title} description={seo.description} structuredData={[faqSchema, howToSchema]} includeSoftwareApplicationSchema={false}>
+  <div class="tool-page" data-tool-page={toolId}>
+    <script is:inline type="application/json" data-tool-copy set:html={copyJson} />
+    <section class="tool-hero" aria-labelledby="tool-title">
+      <div class="container">
+        <p class="eyebrow">{commonCopy.eyebrowLabel}</p>
+        <h1 id="tool-title">{hero.title}</h1>
+        <p class="tool-hero-description">{hero.description}</p>
+      </div>
+    </section>
+
+    <section class="tool-workspace" aria-label={hero.title}>
+      <div class="container">
+        <div class="tool-panel">
+          <slot />
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-how-to" aria-labelledby="tool-how-to-title">
+      <div class="container tool-prose">
+        <h2 id="tool-how-to-title">{commonCopy.aboutHeading}</h2>
+        {howTo.map(section => (
+          <section class="tool-prose-section">
+            <h3>{section.heading}</h3>
+            <p>{section.body}</p>
+          </section>
+        ))}
+      </div>
+    </section>
+
+    <section class="tool-related" aria-labelledby="tool-related-title">
+      <div class="container tool-prose">
+        <h2 id="tool-related-title">{commonCopy.relatedHeading}</h2>
+        <ul class="tool-related-list">
+          {commonCopy.relatedTools.filter(tool => tool.id !== toolId).map(tool => (
+            <li>
+              <a
+                class="tool-related-link"
+                href={`${localePrefix}${tool.path}`}
+                data-cta={`tool-related-${tool.id}`}
+                data-ga-event="internal_workflow_click"
+                data-ga-source="tool_related"
+                data-ga-target={`tool_${tool.id.replaceAll('-', '_')}`}
+              >
+                {tool.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <section class="tool-faq" aria-labelledby="tool-faq-title">
+      <div class="container tool-prose">
+        <h2 id="tool-faq-title">{faq.title}</h2>
+        <div class="tool-faq-list">
+          {faq.items.map(item => (
+            <details class="tool-faq-item">
+              <summary>{item.question}</summary>
+              <p>{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-cta" aria-labelledby="tool-cta-title">
+      <div class="container tool-cta-inner">
+        <h2 id="tool-cta-title">{cta.title}</h2>
+        <p>{cta.description}</p>
+        <div class="tool-cta-actions">
+          <a class="btn-primary" href={installHref} data-cta={`tool-${toolId}-install`}>{cta.installButton}</a>
+          <a class="btn-secondary" href={pricingHref} data-cta={`tool-${toolId}-pricing`}>{cta.pricingButton}</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .tool-page {
+    display: grid;
+    gap: var(--space-16);
+  }
+
+  /* ---------- hero ---------- */
+  .tool-hero {
+    display: grid;
+    gap: var(--space-2);
+    text-align: center;
+  }
+
+  .tool-hero .eyebrow {
+    color: var(--text-3);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .tool-hero h1 {
+    font-size: clamp(30px, 4.6vw, 42px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+
+  .tool-hero-description {
+    max-width: 640px;
+    justify-self: center;
+    color: var(--text-2);
+    font-size: 16px;
+    line-height: 1.65;
+    text-wrap: balance;
+  }
+
+  /* ---------- 工作区（表单 + 结果） ---------- */
+  .tool-panel {
+    display: grid;
+    gap: var(--space-4);
+    width: min(760px, 100%);
+    margin: 0 auto;
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* ---------- SEO 正文 ---------- */
+  .tool-prose {
+    display: grid;
+    gap: var(--space-4);
+    max-width: 760px;
+  }
+
+  .tool-prose h2 {
+    font-size: clamp(22px, 3vw, 28px);
+    letter-spacing: -0.01em;
+  }
+
+  .tool-prose-section {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .tool-prose-section h3 {
+    font-size: 17px;
+  }
+
+  .tool-prose-section p {
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  /* ---------- FAQ ---------- */
+  .tool-faq-list {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .tool-faq-item {
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--surface);
+  }
+
+  .tool-faq-item summary {
+    padding: var(--space-4) var(--space-6);
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    list-style: none;
+  }
+
+  .tool-faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tool-faq-item p {
+    padding: 0 var(--space-6) var(--space-4);
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ---------- 相关工具互链 ---------- */
+  .tool-related {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .tool-related h2 {
+    font-size: clamp(22px, 3vw, 28px);
+    letter-spacing: -0.01em;
+  }
+
+  .tool-related-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tool-related-link {
+    color: var(--link);
+    font-size: 14.5px;
+    font-weight: 600;
+  }
+
+  .tool-related-link:hover {
+    text-decoration: underline;
+  }
+
+  .tool-related-link:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  /* ---------- CTA ---------- */
+  .tool-cta {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    padding: var(--space-10) 0;
+  }
+
+  .tool-cta-inner {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    text-align: center;
+  }
+
+  .tool-cta h2 {
+    font-size: clamp(22px, 3vw, 30px);
+    letter-spacing: -0.01em;
+  }
+
+  .tool-cta p {
+    max-width: 560px;
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .tool-cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+
+  @media (max-width: 600px) {
+    .tool-panel {
+      padding: var(--space-4);
+    }
+  }
+</style>
+
+<style is:global>
+  /* 工具表单/结果类名作用于各工具页 slot 内容（父页面模板），
+     scoped 样式不命中；tool- 前缀作为命名空间，仅工具页消费。 */
+  .tool-field {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .tool-field > label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .tool-field .tool-hint {
+    color: var(--text-3);
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  .tool-input,
+  .tool-textarea {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--rounded-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .tool-textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  .tool-input:focus-visible,
+  .tool-textarea:focus-visible,
+  .tool-button:focus-visible,
+  .tool-file-label:focus-within {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  .tool-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .tool-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 var(--space-6);
+    border-radius: var(--rounded-full);
+    background: var(--primary);
+    color: var(--primary-fg);
+    font-size: 14px;
+    font-weight: 700;
+    transition: background var(--transition-fast);
+  }
+
+  .tool-button:hover {
+    background: var(--primary-hover);
+  }
+
+  .tool-secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 40px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--rounded-full);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  .tool-secondary-button:hover {
+    background: var(--surface-2);
+  }
+
+  .tool-error {
+    padding: var(--space-3);
+    border: 1px solid var(--bad);
+    border-radius: var(--rounded-sm);
+    background: var(--bad-soft);
+    color: var(--bad);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.55;
+  }
+
+  .tool-error:empty {
+    display: none;
+  }
+
+  .tool-success {
+    color: var(--ok);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* ---------- 结果区 ---------- */
+  .tool-result {
+    display: grid;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+  }
+
+  .tool-result h2 {
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .tool-result-row {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .tool-result-row > label {
+    color: var(--text-3);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .tool-output {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .tool-output-value {
+    flex: 1 1 240px;
+    min-width: 0;
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    user-select: text;
+  }
+
+  .tool-result-preview {
+    max-height: 260px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    padding: var(--space-3);
+    white-space: pre;
+  }
+
+  .tool-summary {
+    color: var(--text-2);
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+</style>

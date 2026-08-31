@@ -1,0 +1,95 @@
+---
+/**
+ * Place Id Finder 工具页（W4）。
+ *
+ * 表单 + 纯前端解析（lib/placeUrl 移植 013 解析规则）+ SEO 正文 + CTA 漏斗。
+ */
+import ToolShell from '../../components/tools/ToolShell.astro'
+import { getContent } from '../../i18n/content'
+
+const t = getContent('en-US')
+const tool = t.pages.tools.placeIdFinder
+const copyJson = JSON.stringify({ common: t.pages.tools.common, content: tool })
+---
+
+<ToolShell
+  toolId="place-id-finder"
+  seo={tool.seo}
+  hero={tool.hero}
+  howTo={tool.howTo}
+  faq={tool.faq}
+  cta={tool.cta}
+  copyJson={copyJson}
+  commonCopy={t.pages.tools.common}
+>
+  <form class="tool-field" data-tool-form>
+    <label for="place-url">{tool.form.urlLabel}</label>
+    <input
+      class="tool-input"
+      id="place-url"
+      name="place-url"
+      type="text"
+      placeholder={tool.form.urlPlaceholder}
+      autocomplete="off"
+      spellcheck="false"
+      data-tool-input
+    />
+    <p class="tool-error" data-tool-error hidden></p>
+    <div class="tool-actions">
+      <button class="tool-button" type="submit" data-ga-event="tool_use" data-ga-tool-id="place-id-finder">
+        {tool.form.submit}
+      </button>
+    </div>
+  </form>
+
+  <section class="tool-result" data-tool-result hidden aria-label={t.pages.tools.common.resultHeading}>
+    <h2>{t.pages.tools.common.resultHeading}</h2>
+    <div class="tool-result-row">
+      <label for="result-place-id">{tool.result.placeId}</label>
+      <div class="tool-output">
+        <output class="tool-output-value" id="result-place-id" data-place-id></output>
+        <button
+          class="tool-secondary-button"
+          type="button"
+          data-copy-target="result-place-id"
+          data-ga-event="tool_copy"
+          data-ga-tool-id="place-id-finder"
+        >
+          {t.pages.tools.common.copy}
+        </button>
+      </div>
+    </div>
+    <div class="tool-result-row">
+      <label for="result-cid">{tool.result.cid}</label>
+      <div class="tool-output">
+        <output class="tool-output-value" id="result-cid" data-cid></output>
+        <button
+          class="tool-secondary-button"
+          type="button"
+          data-copy-target="result-cid"
+          data-ga-event="tool_copy"
+          data-ga-tool-id="place-id-finder"
+        >
+          {t.pages.tools.common.copy}
+        </button>
+      </div>
+    </div>
+    <div class="tool-result-row">
+      <label for="result-fid">{tool.result.fid}</label>
+      <div class="tool-output">
+        <output class="tool-output-value" id="result-fid" data-fid></output>
+        <button
+          class="tool-secondary-button"
+          type="button"
+          data-copy-target="result-fid"
+          data-ga-event="tool_copy"
+          data-ga-tool-id="place-id-finder"
+        >
+          {t.pages.tools.common.copy}
+        </button>
+      </div>
+    </div>
+  </section>
+</ToolShell>
+
+<script src="../../scripts/tools/placeIdFinder.ts"></script>

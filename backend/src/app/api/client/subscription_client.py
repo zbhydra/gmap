@@ -10,10 +10,7 @@ from app.api.user_dependencies import (
 )
 from app.constants.counter import CounterId
 from app.constants.order import ProductClass
-from app.constants.subscription import (
-    UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
-    SubscriptionProductMetadata,
-)
+from app.constants.subscription import SubscriptionProductMetadata
 from app.schemas.subscription_schema import (
     SubscriptionCheckoutConfigListResponse,
     SubscriptionReviewRewardClaimResponse,
@@ -88,13 +85,12 @@ def _serialize_checkout_plans(
         checkout_plans: 支付配置服务返回的订阅方案快照。
 
     Returns:
-        list[dict]: 包含启用商品；无可用渠道的方案保留空 payment_channels。
+        list[dict]: 包含全部产品线的启用商品（含 product_line 与 Maps 月度
+        额度）；无可用渠道的方案保留空 payment_channels 后由调用方过滤。
     """
 
     response_plans: list[dict[str, object]] = []
     for plan in checkout_plans:
-        if plan.product.product_id != UNLIMITED_SUBSCRIPTION_PRODUCT_ID:
-            continue
         metadata = SubscriptionProductMetadata.from_metadata(
             plan.product.metadata,
             product_id=plan.product.product_id,
@@ -117,12 +113,14 @@ def _serialize_checkout_plans(
             {
                 "product_class": ProductClass.SUBSCRIPTION.value,
                 "product_id": plan.product.product_id,
+                "product_line": plan.product.product_line,
                 "product_name": plan.product.name,
                 "period": plan.product.period,
                 "duration_days": plan.product.duration_days,
                 "display_currency": plan.product.display_currency,
                 "display_amount": plan.product.display_amount,
                 "auto_renew": metadata.auto_renew,
+                "monthly_records": metadata.monthly_records,
                 "payment_channels": payment_channels,
             }
         )

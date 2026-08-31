@@ -1,0 +1,89 @@
+---
+/**
+ * PayPal 支付回跳成功页（noindex）。
+ *
+ * SSR 渲染产品线中立的等待态文案；确认态由 paypal-return 轮询订单状态后
+ * 按订单 product_line 切换 Credits / 套餐文案（载荷经 JSON script 注入）。
+ */
+import Layout from '../../layouts/Layout.astro'
+import { getContent } from '../../i18n/content'
+
+const t = getContent('en-US')
+const copy = t.pages.account.paypalReturn
+const copyJson = JSON.stringify(copy)
+---
+
+<Layout
+  locale="en-US"
+  title={`${copy.waitingTitle} | MapsGrab`}
+  description={copy.waitingMessage}
+  includeSoftwareApplicationSchema={false}
+  robots="noindex, nofollow, noarchive"
+>
+  <main class="paypal-return-page" data-paypal-return-page data-paypal-return-status="success">
+    <section class="paypal-return-card">
+      <p class="paypal-return-eyebrow">PayPal</p>
+      <h1 data-paypal-return-title>{copy.waitingTitle}</h1>
+      <p data-paypal-return-message>{copy.waitingMessage}</p>
+    </section>
+  </main>
+  <script is:inline type="application/json" data-paypal-return-copy set:html={copyJson} />
+</Layout>
+
+<script>
+  import { initPayPalReturnPage } from '../../components/credit-purchase/paypal-return'
+
+  const root = document.querySelector<HTMLElement>('[data-paypal-return-page]')
+  if (root) {
+    initPayPalReturnPage({
+      status: 'success',
+      orderNo: root.dataset.paypalOrderNo || null
+    })
+  }
+</script>
+
+<style>
+  .paypal-return-page {
+    display: grid;
+    min-height: 68vh;
+    place-items: center;
+    padding: 120px 24px 72px;
+    background:
+      radial-gradient(circle at 18% 16%, rgba(37, 99, 235, 0.12), transparent 32%),
+      radial-gradient(circle at 82% 12%, rgba(245, 158, 11, 0.12), transparent 30%);
+  }
+
+  .paypal-return-card {
+    width: min(620px, 100%);
+    padding: 34px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12);
+    text-align: center;
+  }
+
+  .paypal-return-eyebrow {
+    margin: 0 0 12px;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .paypal-return-card h1 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(34px, 5vw, 54px);
+    letter-spacing: -0.05em;
+  }
+
+  .paypal-return-card p:last-child {
+    margin: 16px 0 0;
+    color: var(--text-2);
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+</style>

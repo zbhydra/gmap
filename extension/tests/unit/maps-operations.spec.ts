@@ -59,7 +59,8 @@ describe('面板运营区渲染（renderOperations）', () => {
       onExport: () => undefined,
       onReset: () => undefined,
       onStartReviews: () => undefined,
-      onStartPhotos: () => undefined
+      onStartPhotos: () => undefined,
+      onOpenPricing: () => undefined
     })
     document.body.innerHTML = '<div role="main"></div>'
     await panel.mount('body', 'div[role=main]')
@@ -96,7 +97,8 @@ describe('面板运营区渲染（renderOperations）', () => {
       onExport: () => undefined,
       onReset: () => undefined,
       onStartReviews: () => undefined,
-      onStartPhotos: () => undefined
+      onStartPhotos: () => undefined,
+      onOpenPricing: () => undefined
     })
     document.body.innerHTML = '<div role="main"></div>'
     await panel.mount('body', 'div[role=main]')
@@ -120,7 +122,8 @@ describe('面板运营区渲染（renderOperations）', () => {
       onExport: () => undefined,
       onReset: () => undefined,
       onStartReviews: () => undefined,
-      onStartPhotos: () => undefined
+      onStartPhotos: () => undefined,
+      onOpenPricing: () => undefined
     })
     document.body.innerHTML = '<div role="main"></div>'
     await panel.mount('body', 'div[role=main]')

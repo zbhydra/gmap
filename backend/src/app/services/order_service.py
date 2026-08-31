@@ -149,6 +149,7 @@ class OrderService(BaseService[OrderModel]):
         payment_methods: Sequence[str] | None = None,
         payment_channel_order_nos: Sequence[str] | None = None,
         payment_channel_order_no_like: str | None = None,
+        payment_transaction_id_like: str | None = None,
         created_before_ms: int | None = None,
         created_after_ms: int | None = None,
         updated_before_ms: int | None = None,
@@ -173,6 +174,7 @@ class OrderService(BaseService[OrderModel]):
             payment_methods: 支付渠道数组。
             payment_channel_order_nos: 支付渠道订单号数组。
             payment_channel_order_no_like: 支付渠道订单号包含搜索。
+            payment_transaction_id_like: 支付渠道交易流水 ID 包含搜索。
             created_before_ms: 创建时间小于等于该毫秒时间戳。
             created_after_ms: 创建时间大于等于该毫秒时间戳。
             updated_before_ms: 更新时间小于等于该毫秒时间戳。
@@ -205,6 +207,7 @@ class OrderService(BaseService[OrderModel]):
             payment_methods=payment_methods,
             payment_channel_order_nos=payment_channel_order_nos,
             payment_channel_order_no_like=payment_channel_order_no_like,
+            payment_transaction_id_like=payment_transaction_id_like,
             created_before_ms=created_before_ms,
             created_after_ms=created_after_ms,
             updated_before_ms=updated_before_ms,
@@ -233,6 +236,7 @@ class OrderService(BaseService[OrderModel]):
         payment_methods: Sequence[str] | None = None,
         payment_channel_order_nos: Sequence[str] | None = None,
         payment_channel_order_no_like: str | None = None,
+        payment_transaction_id_like: str | None = None,
         created_before_ms: int | None = None,
         created_after_ms: int | None = None,
         updated_before_ms: int | None = None,
@@ -254,6 +258,7 @@ class OrderService(BaseService[OrderModel]):
             payment_methods=payment_methods,
             payment_channel_order_nos=payment_channel_order_nos,
             payment_channel_order_no_like=payment_channel_order_no_like,
+            payment_transaction_id_like=payment_transaction_id_like,
             created_before_ms=created_before_ms,
             created_after_ms=created_after_ms,
             updated_before_ms=updated_before_ms,
@@ -649,6 +654,7 @@ class OrderService(BaseService[OrderModel]):
             extra_metadata=callback.extra_metadata,
             paid_amount=paid_amount,
             paid_currency=paid_currency,
+            transaction_id=callback.transaction_id,
         )
         result = PaymentCallbackResult(
             order_no=cast(str, raw_result["order_no"]),
@@ -866,6 +872,7 @@ class OrderService(BaseService[OrderModel]):
         extra_metadata: str | None,
         paid_amount: int,
         paid_currency: str,
+        transaction_id: str | None = None,
     ) -> dict[str, object]:
         """统一处理支付渠道确认成功后的订单落库与业务回调。
 
@@ -877,6 +884,7 @@ class OrderService(BaseService[OrderModel]):
             extra_metadata: 支付渠道原始扩展信息 JSON。
             paid_amount: 支付渠道确认的实付金额，统一 6 位精度整数。
             paid_currency: 支付渠道确认的币种。
+            transaction_id: 支付渠道实际交易流水 ID；渠道未提供时为空。
 
         Returns:
             处理结果，包含订单号、是否幂等命中、是否触发业务回调。
@@ -915,6 +923,8 @@ class OrderService(BaseService[OrderModel]):
         }
         if channel_uid:
             update_data["payment_channel_uid"] = channel_uid
+        if transaction_id:
+            update_data["payment_transaction_id"] = transaction_id
         if extra_metadata:
             update_data["extra_metadata"] = self._merge_order_extra_metadata(
                 order.extra_metadata,
@@ -1006,6 +1016,7 @@ class OrderService(BaseService[OrderModel]):
         payment_methods: Sequence[str] | None,
         payment_channel_order_nos: Sequence[str] | None,
         payment_channel_order_no_like: str | None,
+        payment_transaction_id_like: str | None,
         created_before_ms: int | None,
         created_after_ms: int | None,
         updated_before_ms: int | None,
@@ -1054,6 +1065,13 @@ class OrderService(BaseService[OrderModel]):
             stmt = stmt.where(
                 OrderModel.payment_channel_order_no.contains(
                     payment_channel_order_no_like,
+                    autoescape=True,
+                )
+            )
+        if payment_transaction_id_like:
+            stmt = stmt.where(
+                OrderModel.payment_transaction_id.contains(
+                    payment_transaction_id_like,
                     autoescape=True,
                 )
             )
@@ -1323,6 +1341,27 @@ class OrderService(BaseService[OrderModel]):
         raise ValueError(
             f"No fulfillment handler for product_class: {order.product_class}"
         )
+
+    def get_order_product_line(self, order: OrderModel) -> str:
+        """读取订单产品线标识（供状态接口按产品线区分展示语义）。
+
+        历史订单快照缺 ``product_line`` 时回退 extension（插件下载线），
+        与履约续期的回退口径一致；非订阅类订单同样按 extension 兜底，
+        消费方只关心「maps 线走订阅文案」这一分支。
+        """
+        try:
+            metadata = json.loads(order.extra_metadata or "{}")
+        except json.JSONDecodeError:
+            return "extension"
+        if not isinstance(metadata, dict):
+            return "extension"
+        snapshot = metadata.get("product_snapshot")
+        if not isinstance(snapshot, dict):
+            return "extension"
+        product_line = snapshot.get("product_line")
+        if isinstance(product_line, str) and product_line.strip():
+            return product_line
+        return "extension"
 
     def _recharge_order_credits_amount(self, order: OrderModel) -> int:
         """从订单商品快照中读取到账 Credits 数量。"""

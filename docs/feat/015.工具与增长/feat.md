@@ -17,11 +17,13 @@
 
 ### 包含
 
-- D1 免费工具矩阵(约 7 个静态工具页,逐个立项)
+- D1 免费工具矩阵(**全做**,hydra 2026-08-30:7 个公开工具 + License Generator 后置——Place Id Finder / Review Link Generator / Email Checker / 坐标转换 ×2 / Bulk Keywords Generator / Merge CSV)
 - D2 竞品对比页(对标 9 篇 + 我方自选竞品)
 - D3 教程/Guides 博客(how-to 类长文)
 - D4 Affiliates 联盟计划(注册、追踪链接、结算口径)
-- D5 营销站(首页、产品页、下载页、多语言)
+- D5 营销站(首页、插件产品页、下载页、Pricing 占位、法务页、多语言)
+- D5 附:**Online Scraper 入口留空、点击无效**(hydra 2026-08-30 裁决,云端产品化暂缓;导航/卡片保留入口形态但不接功能页)
+- D5 附:**套餐与法务均参考竞品**(hydra 2026-08-30):Pricing 展示对齐竞品插件档位(Free 1,000 records/月;Pro $39 100,000;Business $99 500,000);法务页(隐私政策/条款)以竞品口径为基准改写为 MapsGrab 事实
 - D6 SEO 基建(复用 009 域:sitemap / llms.txt / GSC / GA4)
 
 ### 不包含

@@ -58,6 +58,25 @@ class AdminUserProfileData(BaseModel):
     subscription: AdminUserSubscriptionInfo = Field(..., description="订阅信息")
 
 
+class AdminUserCreditRecordData(BaseModel):
+    """用户积分流水记录行。"""
+
+    id: int = Field(..., description="积分流水 ID")
+    change_amount: int = Field(..., description="Credits 变化量")
+    reason: str = Field(..., description="变更原因")
+    metadata_json: str | None = Field(None, description="扩展 JSON 快照")
+    created_at: int = Field(..., description="创建时间（毫秒时间戳）")
+
+
+class AdminUserCreditsPageData(BaseModel):
+    """用户积分流水分页响应。"""
+
+    rows: list[AdminUserCreditRecordData] = Field(..., description="积分流水行")
+    total: int = Field(..., description="总数")
+    page: int = Field(..., description="页码")
+    page_size: int = Field(..., description="每页数量")
+
+
 class AdminUserOrderRecordData(BaseModel):
     """用户订单记录行。"""
 
@@ -75,6 +94,7 @@ class AdminUserOrderRecordData(BaseModel):
     payment_method: str = Field(..., description="支付方式")
     payment_data: object | None = Field(None, description="支付入口数据")
     payment_channel_order_no: str = Field(..., description="支付渠道订单号")
+    payment_transaction_id: str = Field(..., description="支付渠道交易流水 ID")
     payment_channel_uid: str = Field(..., description="支付渠道用户 ID")
     paid_amount: int | None = Field(None, description="渠道实付金额，6 位精度整数")
     paid_currency: str = Field(..., description="渠道实付币种")

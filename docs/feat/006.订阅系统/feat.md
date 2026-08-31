@@ -15,7 +15,7 @@
 
 ## 系统定性
 
-订阅系统重新激活为**插件专属权益域**。它只定义 extension 下载权益,不定义 website 下载权益。
+订阅系统是**分产品线的订阅权益域**(2026-08-31 产品线扩展,C2 裁决落地)。当前两条产品线:`extension`(插件下载 Unlimited)与 `maps`(MapsGrab 月度 records 套餐,Free 1,000 / Pro $39 100,000 / Business $99 500,000 records/月);权益与重复购买校验按产品线隔离,同一账号可同时持有不同产品线的订阅。产品线仍只定义 extension 下载权益与 maps 采集额度,不定义 website 下载权益。
 
 - Free 是正式订阅档位,当前 extension 每日 5 次。
 - Unlimited Download 是月度订阅,是否自动续费由商品配置决定,有效期内 extension 每日下载不限次数。
@@ -66,12 +66,15 @@
 
 ## 订阅档位
 
-| 档位 | 价格 | 购买方式 | extension 权益 | website 权益 |
+| 档位 | 产品线 | 价格 | 购买方式 | 权益 |
 | --- | --- | --- | --- | --- |
-| Free | `$0` | 默认档位,不可购买 | 5 次/天 | 无;website 下载走 Credits |
-| Unlimited Download | `$9.99 / month` | PayPal / Telegram Stars;是否自动续费由商品配置决定 | 不限次数 | 无;website 下载走 Credits |
+| Free | `extension` | `$0` | 默认档位,不可购买 | 插件下载 5 次/天 |
+| Unlimited Download | `extension` | `$9.99 / month` | PayPal / Telegram Stars;是否自动续费由商品配置决定 | 插件下载不限次数 |
+| Maps Free | `maps` | `$0` | 默认档位,不可购买 | 1,000 records/月 |
+| Maps Pro | `maps` | `$39 / month` | PayPal;自动续费 | 100,000 records/月 |
+| Maps Business | `maps` | `$99 / month` | PayPal;自动续费 | 500,000 records/月 |
 
-Telegram Stars 初始价格为 `800 Stars / month`。
+Telegram Stars 初始价格为 `800 Stars / month`。Maps 线月度额度即 U7 计量的月度 records 总量:购买成功后该账号(登录态)配额总量切到所购档位,到期自动回退免费档;匿名设备恒免费档(见 `@tech-额度与速率档位.md`)。
 
 ## 业务流程
 
@@ -85,7 +88,7 @@ Telegram Stars 初始价格为 `800 Stars / month`。
 ### 购买 Unlimited
 
 1. 用户在 website pricing 页选择 Unlimited Download。
-2. 如用户已有未过期 Unlimited,pricing 页订阅按钮灰化;点击后提示存在有效订阅,不可重复购买。
+2. 如用户在该产品线上已有未过期订阅,pricing 页订阅按钮灰化;点击后提示存在有效订阅,不可重复购买(重复购买校验按产品线隔离,不影响另一产品线的购买)。
 3. 无有效 Unlimited 时,pricing 页按商品配置创建一次性支付或自动续费订阅,支付渠道为 PayPal 或 Telegram Stars。
 4. 支付渠道付款成功后,系统按商品的 `duration_days` 发放订阅权益。
 5. 用户刷新 extension 订阅状态后,extension 下载额度变为不限。
@@ -129,6 +132,7 @@ Telegram Stars 初始价格为 `800 Stars / month`。
 2. 匿名用户按 Free 档处理,并用 device_id 统计当日已用次数。
 3. 状态返回当前权益、当日已用、剩余次数、重置日期。
 4. website 下载不读取订阅状态决定扣费。
+5. 订阅状态按产品线读取:`/api/client/auth/me` 的 `subscription` 字段为 extension 线,新增 `maps_subscription` 字段为 maps 线(同构状态对象);`/api/client/subscription/status` 保持 extension 线口径,旧插件不受影响。
 
 ### extension 升级入口
 

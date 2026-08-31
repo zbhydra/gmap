@@ -17,6 +17,8 @@ import type {
   BackgroundGetMapsUsageResponse,
   BackgroundGetRuntimeConfigResponse,
   BackgroundGetStateResponse,
+  BackgroundOpenPricingPageRequest,
+  BackgroundOpenPricingPageResponse,
   BackgroundPingResponse,
   BackgroundRecordMarkRequest,
   BackgroundRecordMarkResponse
@@ -70,6 +72,16 @@ export const Handler = {
     return declarationOnly('background.enrichMapsBusinesses')
   },
 
+  /**
+   * 打开订阅落地页（013 U7 遗留接线，W7）：content script 无 chrome.tabs
+   * 能力，由 background 代开新标签（chrome.tabs.create）。
+   */
+  openPricingPage(
+    _params: BackgroundOpenPricingPageRequest
+  ): Promise<BackgroundOpenPricingPageResponse> {
+    return declarationOnly('background.openPricingPage')
+  },
+
   /** 读取批量任务队列状态（013 A6，dashboard 页渲染入口）。 */
   getBulkState(): Promise<BackgroundGetBulkStateResponse> {
     return declarationOnly('background.getBulkState')
@@ -115,6 +127,8 @@ export const METHOD_TARGETS = {
   getMapsUsage: ['content', 'popup'],
   /** enrichMapsBusinesses 仅允许 content 调用（采集行在 content 侧）。 */
   enrichMapsBusinesses: ['content'],
+  /** openPricingPage 仅允许 content 调用（面板订阅引导按钮）。 */
+  openPricingPage: ['content'],
   /** 批量状态/命令允许扩展页调用（dashboard 页按 sender 推导为 popup 通道）。 */
   getBulkState: ['popup'],
   createBulkTask: ['popup'],
@@ -139,6 +153,8 @@ export const METHOD_TRANSPORTS = {
   getMapsUsage: ['chrome'],
   /** enrichMapsBusinesses 使用 Chrome message。 */
   enrichMapsBusinesses: ['chrome'],
+  /** openPricingPage 使用 Chrome message。 */
+  openPricingPage: ['chrome'],
   /** 批量方法使用 Chrome message。 */
   getBulkState: ['chrome'],
   createBulkTask: ['chrome'],
@@ -163,6 +179,8 @@ export const METHOD_REQUEST_LIMITS = {
   getMapsUsage: 1024,
   /** enrichMapsBusinesses：50 商家（domain/website/name/address 原文）最坏形态上界。 */
   enrichMapsBusinesses: 131072,
+  /** openPricingPage：单个完整 URL（浏览器对 URL 长度有 ~2MB 上限，此处取宽松 8KB）。 */
+  openPricingPage: 8192,
   /** 批量状态无入参。 */
   getBulkState: 1024,
   /** 创建任务：500 条目（关键词/URL 原文）最坏形态上界。 */
@@ -189,6 +207,8 @@ export const METHOD_RESPONSE_LIMITS = {
   getMapsUsage: 4096,
   /** enrichMapsBusinesses：50 商家的 emails/medias 结果（每条上界宽松余量）。 */
   enrichMapsBusinesses: 262144,
+  /** openPricingPage 返回是否已创建标签页。 */
+  openPricingPage: 1024,
   /** 批量状态响应：150 任务 × 500 条目的理论上界放宽到 8MB。 */
   getBulkState: 8_388_608,
   /** 批量命令响应携带命令后的全量状态，上限对齐 getBulkState。 */

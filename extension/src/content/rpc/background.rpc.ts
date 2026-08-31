@@ -56,6 +56,17 @@ export class BackgroundChannel {
     >('enrichMapsBusinesses', params, options)
   }
 
+  /** 调用 openPricingPage 能力。 */
+  openPricingPage(
+    params: RpcMethodParams<BackgroundHandler, 'openPricingPage'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'openPricingPage'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'openPricingPage'>,
+      RpcMethodParams<BackgroundHandler, 'openPricingPage'>
+    >('openPricingPage', params, options)
+  }
+
   /** 销毁 RPC transport。 */
   destroy(): void {
     this.transport.destroy()

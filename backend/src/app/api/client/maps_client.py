@@ -77,10 +77,13 @@ MAPS_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
 # 公告为空 = 不展示；运营时在此改值即可，插件免发版生效（公告 HTML 由插件
 # innerHTML 注入面板，来源为本仓库 backend 可信通道）。minPluginVersion 为
 # 空串表示不提示新版本；插件在其大于本地版本时展示升级提示。
+# pricingUrl（006 扩展 / W7 联动登记）：插件「额度用尽/升级」按钮的落地页
+# 常量；域名占位与 astro.config site 占位同源，生产域名确定后同步替换。
 MAPS_OPERATIONS_CONFIG: dict[str, str] = {
     "announcementHtml": "",
     "announcementVersion": "",
     "minPluginVersion": "",
+    "pricingUrl": "https://mapsgrab.com/pricing/",
 }
 
 
@@ -137,7 +140,8 @@ async def get_maps_usage(
     插件侧自行降级放行（采集可用性优先）。
     """
     snapshot = await maps_usage_service.get_usage(
-        maps_usage_identity(current_user.user_id, current_user.device_id)
+        maps_usage_identity(current_user.user_id, current_user.device_id),
+        user_id=current_user.user_id,
     )
     return ResponseUtils.ok(usage_payload(snapshot))
 
@@ -156,7 +160,8 @@ async def report_maps_usage(
     """
     result = await maps_usage_service.consume(
         maps_usage_identity(current_user.user_id, current_user.device_id),
-        request.records,
-        request.request_id,
+        user_id=current_user.user_id,
+        records=request.records,
+        request_id=request.request_id,
     )
     return ResponseUtils.ok({**usage_payload(result), "deducted": result.deducted})

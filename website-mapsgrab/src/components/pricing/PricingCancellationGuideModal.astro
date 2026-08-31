@@ -1,0 +1,230 @@
+---
+/**
+ * Pricing 订阅取消指引弹窗。
+ *
+ * 弹窗按支付渠道说明取消路径，不代表站内已经取消订阅。
+ * 使用原生 dialog 获得模态焦点管理、Escape 关闭和无障碍语义。
+ */
+
+interface PricingCancellationGuideCopy {
+  /** 弹窗标题。 */
+  title: string
+  /** 各支付渠道内的取消路径。 */
+  paths: readonly {
+    /** 支付渠道名称。 */
+    provider: string
+    /** 渠道后台内依次进入的页面或执行的操作。 */
+    steps: readonly string[]
+  }[]
+  /** 关闭按钮文案。 */
+  closeLabel: string
+}
+
+const { copy } = Astro.props as {
+  /** 当前语言的取消指引文案。 */
+  copy: PricingCancellationGuideCopy
+}
+---
+
+<dialog
+  class="pricing-cancellation-guide"
+  data-pricing-cancellation-guide
+  aria-labelledby="pricing-cancellation-guide-title"
+>
+  <form method="dialog" class="pricing-cancellation-guide-panel">
+    <button
+      type="submit"
+      class="pricing-cancellation-guide-close"
+      value="close"
+      aria-label={copy.closeLabel}
+    >
+      <span aria-hidden="true">×</span>
+    </button>
+
+    <h2 id="pricing-cancellation-guide-title">{copy.title}</h2>
+    <div class="pricing-cancellation-guide-paths">
+      {copy.paths.map(path => (
+        <section class="pricing-cancellation-guide-provider" aria-label={path.provider}>
+          <h3>{path.provider}</h3>
+          <ol class="pricing-cancellation-guide-path">
+            {path.steps.map(step => <li>{step}</li>)}
+          </ol>
+        </section>
+      ))}
+    </div>
+
+    <div class="pricing-cancellation-guide-actions">
+      <button
+        type="submit"
+        class="pricing-cancellation-guide-dismiss"
+        value="close"
+        autofocus
+      >
+        {copy.closeLabel}
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<style>
+  .pricing-cancellation-guide {
+    width: min(520px, calc(100% - 32px));
+    max-width: none;
+    margin: auto;
+    padding: 0;
+    overflow: visible;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--text);
+    box-shadow:
+      0 8px 16px -4px rgba(15, 23, 42, 0.08),
+      0 24px 32px -8px rgba(15, 23, 42, 0.16);
+  }
+
+  .pricing-cancellation-guide::backdrop {
+    background: rgba(15, 23, 42, 0.46);
+    backdrop-filter: blur(4px);
+  }
+
+  .pricing-cancellation-guide-panel {
+    position: relative;
+    display: grid;
+    gap: 20px;
+    padding: 24px;
+  }
+
+  .pricing-cancellation-guide h2 {
+    margin: 0;
+    padding-right: 40px;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: 0;
+  }
+
+  .pricing-cancellation-guide-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color var(--transition-fast), background var(--transition-fast);
+  }
+
+  .pricing-cancellation-guide-close:hover {
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--text);
+  }
+
+  .pricing-cancellation-guide-paths {
+    display: grid;
+    gap: 18px;
+  }
+
+  .pricing-cancellation-guide-provider {
+    display: grid;
+    gap: 8px;
+  }
+
+  .pricing-cancellation-guide-provider + .pricing-cancellation-guide-provider {
+    padding-top: 18px;
+    border-top: 1px solid rgba(15, 23, 42, 0.1);
+  }
+
+  .pricing-cancellation-guide-provider h3 {
+    margin: 0;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.4;
+    letter-spacing: 0;
+  }
+
+  .pricing-cancellation-guide-path {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--text-2);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .pricing-cancellation-guide-path li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .pricing-cancellation-guide-path li:not(:first-child)::before {
+    content: '→';
+    flex: 0 0 auto;
+    color: var(--text-3);
+    font-weight: 600;
+  }
+
+  .pricing-cancellation-guide-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
+  }
+
+  .pricing-cancellation-guide-dismiss {
+    min-width: 96px;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--text);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+  }
+
+  .pricing-cancellation-guide-dismiss:hover {
+    background: var(--text);
+  }
+
+  .pricing-cancellation-guide-close:focus-visible,
+  .pricing-cancellation-guide-dismiss:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 560px) {
+    .pricing-cancellation-guide {
+      width: calc(100% - 24px);
+    }
+
+    .pricing-cancellation-guide-panel {
+      padding: 20px;
+    }
+
+    .pricing-cancellation-guide-actions {
+      display: grid;
+      justify-content: stretch;
+    }
+
+    .pricing-cancellation-guide-dismiss {
+      width: 100%;
+    }
+  }
+</style>

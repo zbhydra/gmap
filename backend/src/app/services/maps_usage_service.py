@@ -32,10 +32,15 @@ from app.constants.maps_usage import (
     format_period,
     usage_key_ttl_seconds,
 )
+from app.constants.subscription import (
+    MAPS_PRODUCT_LINE,
+    SubscriptionProductMetadata,
+)
 from app.core.redis import redis_client
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.services.config_public_service import config_public_service
+from app.services.subscription_service import subscription_service
 from app.utils.logger import logger
 from app.utils.redis_key import build_redis_key
 
@@ -84,9 +89,50 @@ class MapsUsageConsumeResult(NamedTuple):
 
 
 class MapsUsageService:
-    """按「user_id 或 device_id 归属 + 业务时区自然月窗口」管理采集配额。"""
+    """按「user_id 或 device_id 归属 + 业务时区自然月窗口」管理采集配额。
 
-    async def get_total(self) -> int:
+    额度映射（006 扩展）：登录用户持有未过期 Maps 订阅时，月度 total 从
+    免费配额切到所购档位的 ``monthly_records``；到期/退订/配置异常自动回退
+    免费配额（读不到付费档 = 少给不超给，防滥用口径优先）。匿名设备恒免费档。
+    """
+
+    async def get_total(self, user_id: int) -> int:
+        """读取归属用户当月配额总量：付费档 > 免费配置 > 兜底默认值。"""
+
+        if user_id > 0:
+            plan_quota = await self._get_plan_quota(user_id)
+            if plan_quota is not None:
+                return plan_quota
+        return await self._get_free_quota()
+
+    async def _get_plan_quota(self, user_id: int) -> int | None:
+        """读取用户 Maps 订阅档位的月度额度；无有效订阅/配置异常返回 None。"""
+
+        try:
+            subscription, config = (
+                await subscription_service.get_user_subscription_config(
+                    user_id, MAPS_PRODUCT_LINE
+                )
+            )
+            if subscription.expires_at is None:
+                return None
+            metadata = SubscriptionProductMetadata.from_metadata(
+                config.metadata,
+                product_id=config.product_id,
+                period=config.period,
+            )
+            return metadata.monthly_records
+        except Exception as exc:
+            # 付费档读取失败不放大为整体不可用：回退免费配额（fail-open 到免费，
+            # 与 get_total 的免费配置口径一致），由日志暴露配置问题。
+            logger.error(
+                "maps_usage_service._get_plan_quota: Maps 订阅额度读取失败，"
+                f"回退免费配额: user_id={user_id}, error={exc}",
+                exc_info=True,
+            )
+            return None
+
+    async def _get_free_quota(self) -> int:
         """读取免费月度配额总量；config_public 缺失或非法时回退默认值。"""
 
         try:
@@ -94,7 +140,7 @@ class MapsUsageService:
         except Exception:
             # 配置读取失败不改变配额语义：按默认值放行（fail-open 到默认）。
             logger.error(
-                "maps_usage_service.get_total: config_public 读取失败，"
+                "maps_usage_service._get_free_quota: config_public 读取失败，"
                 f"回退默认配额 {DEFAULT_FREE_QUOTA}: c_key={MAPS_QUOTA_CONFIG_KEY}",
                 exc_info=True,
             )
@@ -107,7 +153,7 @@ class MapsUsageService:
         ):
             if raw_value is not None:
                 logger.error(
-                    "maps_usage_service.get_total: 配置非法，回退默认配额"
+                    "maps_usage_service._get_free_quota: 配置非法，回退默认配额"
                     f" {DEFAULT_FREE_QUOTA}: c_key={MAPS_QUOTA_CONFIG_KEY},"
                     f" raw_value={raw_value!r}"
                 )
@@ -115,10 +161,10 @@ class MapsUsageService:
 
         return raw_value
 
-    async def get_usage(self, identity: str) -> MapsUsageSnapshot:
+    async def get_usage(self, identity: str, *, user_id: int) -> MapsUsageSnapshot:
         """读取归属者当月用量快照；未命中按零处理。"""
 
-        total = await self.get_total()
+        total = await self.get_total(user_id)
         # build_usage_key 返回业务子键，全局前缀统一在此处包裹（spec-redis §2）
         usage_subkey, ym = build_usage_key(identity)
         usage_key = build_redis_key(usage_subkey)
@@ -132,7 +178,7 @@ class MapsUsageService:
         return MapsUsageSnapshot(ym=ym, used=used, total=total, exhausted=used >= total)
 
     async def consume(
-        self, identity: str, records: int, request_id: str
+        self, identity: str, *, user_id: int, records: int, request_id: str
     ) -> MapsUsageConsumeResult:
         """按幂等键原子扣减当月用量，返回扣减后的最新快照。
 
@@ -140,7 +186,7 @@ class MapsUsageService:
         used 原样返回），供插件上报重试与批量恢复场景防重放。
         """
 
-        total = await self.get_total()
+        total = await self.get_total(user_id)
         usage_subkey, ym = build_usage_key(identity)
         usage_key = build_redis_key(usage_subkey)
         dedup_key = build_redis_key(build_dedup_key(request_id))

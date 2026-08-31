@@ -1,0 +1,743 @@
+---
+/**
+ * Pricing 页面 DOM 壳（MapsGrab 三档套餐版，W5）。
+ *
+ * 首屏展示账户状态与 MapsGrab 插件三档套餐卡（Free / Pro / Business，SSR），
+ * Pro/Business 购买按钮由 pricing-page-controller.ts 接支付配置后启用；
+ * Online / API 为占位卡，不可购（点击无效，不 404）。支付流程交给公共
+ * OrderCheckoutModal，避免本页维护第二套支付弹窗和订单轮询。
+ */
+import OrderCheckoutModal from '../order-checkout/OrderCheckoutModal.astro'
+import PricingAuthModal from './PricingAuthModal.astro'
+import PricingCancellationGuideModal from './PricingCancellationGuideModal.astro'
+import type { AccountContent, PricingPageContent } from '../../i18n/schema'
+
+interface Props {
+  copy: PricingPageContent
+  accountCopy: AccountContent
+  /** Free 档安装引导指向的下载页路径。 */
+  downloadPath: string
+}
+
+const { copy, accountCopy, downloadPath } = Astro.props as Props
+---
+
+<section
+  class="pricing-page"
+  data-pricing-page
+>
+  <script is:inline type="application/json" data-pricing-copy set:html={JSON.stringify(copy)} />
+
+  <div class="container pricing-container">
+    <header class="pricing-hero">
+      <p class="pricing-hero-eyebrow">{copy.hero.eyebrow}</p>
+      <h1 class="pricing-hero-title" data-pricing-hero-title>{copy.hero.title}</h1>
+      <p class="pricing-hero-description" data-pricing-hero-description>{copy.hero.description}</p>
+    </header>
+
+    <aside class="pricing-account" data-pricing-account>
+      <p class="pricing-inline-status" data-pricing-account-loading>
+        {copy.account.loading}
+      </p>
+      <div class="pricing-account-signed-out" data-pricing-account-signed-out hidden>
+        <p class="pricing-account-title">{copy.account.signedOutTitle}</p>
+        <p class="pricing-account-hint">{copy.account.signedOutDescription}</p>
+        <button type="button" class="plan-button plan-button-secondary" data-pricing-login>
+          {copy.account.signInCta}
+        </button>
+      </div>
+      <div class="pricing-account-signed-in" data-pricing-account-signed-in hidden>
+        <div class="pricing-account-menu-wrap">
+          <button
+            type="button"
+            class="pricing-avatar"
+            data-pricing-account-button
+            aria-label={accountCopy.checkin.accountButtonLabel}
+            aria-expanded="false"
+          >
+            <img class="pricing-avatar-image" data-pricing-user-avatar alt="" hidden />
+            <span class="pricing-avatar-initial" data-pricing-user-initial aria-hidden="true"></span>
+          </button>
+          <div
+            class="pricing-account-menu"
+            data-pricing-account-menu
+            role="menu"
+            aria-label={accountCopy.checkin.accountMenuLabel}
+            hidden
+          >
+            <div class="pricing-account-email" data-pricing-account-email role="presentation"></div>
+            <button type="button" class="pricing-account-logout" data-pricing-account-logout role="menuitem">
+              {accountCopy.auth.logout}
+            </button>
+          </div>
+        </div>
+        <p class="pricing-account-plan-line">
+          <span>{copy.account.planLabel}</span>
+          <span aria-hidden="true">·</span>
+          <span data-pricing-user-plan>{copy.account.freePlan}</span>
+          <span aria-hidden="true">·</span>
+          <span data-pricing-user-expires></span>
+          <button
+            type="button"
+            class="pricing-cancellation-guide-button"
+            data-pricing-cancellation-guide-button
+            hidden
+          >
+            {copy.cancellationGuide.buttonLabel}
+          </button>
+        </p>
+      </div>
+      <p class="pricing-inline-error" data-pricing-account-error hidden></p>
+    </aside>
+
+    <section class="pricing-plans" aria-labelledby="pricing-plans-title">
+      <header class="section-header">
+        <p class="eyebrow">{copy.plans.eyebrow}</p>
+        <h2 id="pricing-plans-title">{copy.plans.title}</h2>
+        <p class="section-description">{copy.plans.description}</p>
+      </header>
+
+      <div class="plans-grid">
+        {
+          copy.plans.cards.map(card => (
+            <article
+              class:list={['plan-card', { 'plan-card-featured': card.id === 'pro' }]}
+              data-plan-card={card.id}
+            >
+              {card.id === 'pro' && <p class="plan-badge">{copy.popularLabel}</p>}
+              <h3 class="plan-name">{card.name}</h3>
+              <p class="plan-tagline">{card.tagline}</p>
+              <p class="plan-price-row">
+                <span class="plan-price">{card.price}</span>
+                <span class="plan-period">{card.periodLabel}</span>
+              </p>
+              <p class="plan-quota">{card.quota}</p>
+              {card.status === 'free' ? (
+                <a class="plan-button plan-button-secondary" href={downloadPath} data-cta="pricing-free-install">
+                  {card.ctaLabel}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  class="plan-button plan-button-primary"
+                  data-pricing-buy={card.id}
+                  data-ga-event="upgrade_cta_click"
+                  data-ga-source="pricing"
+                  data-ga-location="plan_card"
+                  data-ga-plan={card.id}
+                  disabled
+                >
+                  {card.ctaLabel}
+                </button>
+              )}
+              <p class="pricing-inline-error" data-plan-error={card.id} hidden></p>
+              <ul class="plan-features">
+                {card.features.map(feature => (
+                  <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M4.5 12.5 9.8 17.8 19.5 6.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))
+        }
+      </div>
+
+      <p class="pricing-inline-status" data-pricing-plans-status>{copy.plans.loading}</p>
+      <p class="plan-quota-note">{copy.plans.quotaNote}</p>
+    </section>
+
+    <section class="pricing-coming-soon" aria-labelledby="pricing-coming-soon-title">
+      <header class="section-header">
+        <p class="eyebrow">{copy.comingSoon.eyebrow}</p>
+        <h2 id="pricing-coming-soon-title">{copy.comingSoon.title}</h2>
+        <p class="section-description">{copy.comingSoon.description}</p>
+      </header>
+      <div class="plans-grid plans-grid-coming-soon">
+        {
+          copy.comingSoon.items.map(item => (
+            <article class="plan-card plan-card-placeholder" data-coming-soon-card={item.id} aria-disabled="true">
+              <p class="plan-badge plan-badge-placeholder">{copy.comingSoon.comingSoonLabel}</p>
+              <h3 class="plan-name">{item.name}</h3>
+              <p class="plan-tagline">{item.tagline}</p>
+              <p class="plan-placeholder-description">{item.description}</p>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="pricing-faq" data-pricing-faq aria-labelledby="pricing-faq-title">
+      <header class="section-header">
+        <p class="eyebrow">FAQ</p>
+        <h2 id="pricing-faq-title">{copy.faq.title}</h2>
+        {copy.faq.description && <p class="section-description">{copy.faq.description}</p>}
+      </header>
+      <div class="pricing-faq-list">
+        {copy.faq.items.map(item => (
+          <details class="pricing-faq-item" data-pricing-faq-item>
+            <summary class="pricing-faq-question">
+              <span>{item.question}</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M6 9.5 12 15.5 18 9.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </summary>
+            <p class="pricing-faq-answer">{item.answer}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <PricingAuthModal copy={accountCopy} />
+  <OrderCheckoutModal copy={accountCopy} />
+  <PricingCancellationGuideModal copy={copy.cancellationGuide} />
+</section>
+
+<script>
+  import './pricing-page-controller'
+</script>
+
+<style>
+  .pricing-page {
+    padding: clamp(28px, 4vw, 48px) 0 var(--space-8);
+  }
+
+  .pricing-container {
+    display: grid;
+    gap: var(--space-10);
+  }
+
+  .pricing-container,
+  .pricing-plans,
+  .plans-grid,
+  .plan-card {
+    min-width: 0;
+  }
+
+  /* ---------- Hero ---------- */
+  .pricing-hero {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    text-align: center;
+  }
+
+  .pricing-hero-eyebrow {
+    color: var(--text-3);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .pricing-hero-title {
+    max-width: 720px;
+    font-size: clamp(32px, 5vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  .pricing-hero-description {
+    max-width: 620px;
+    color: var(--text-2);
+    font-size: 16px;
+    line-height: 1.65;
+    text-wrap: balance;
+  }
+
+  .section-header {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    text-align: center;
+  }
+
+  .section-header .eyebrow {
+    color: var(--text-3);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .section-header h2 {
+    font-size: clamp(24px, 3.4vw, 32px);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  .section-description {
+    max-width: 620px;
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  /* ---------- 账户胶囊 ---------- */
+  .pricing-account {
+    display: grid;
+    justify-self: center;
+    gap: var(--space-2);
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+    padding: var(--space-3) var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .pricing-account-loading,
+  .pricing-account-title,
+  .pricing-account-hint {
+    text-align: center;
+  }
+
+  .pricing-account-title {
+    font-weight: 800;
+  }
+
+  .pricing-account-hint {
+    color: var(--text-2);
+    font-size: 13px;
+  }
+
+  .pricing-account .plan-button {
+    min-height: 36px;
+    border-radius: var(--rounded-full);
+  }
+
+  .pricing-account-signed-out,
+  .pricing-account-signed-in {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .pricing-account-plan-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .pricing-account-plan-line [data-pricing-user-plan] {
+    color: var(--text);
+  }
+
+  .pricing-avatar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    overflow: hidden;
+    border-radius: var(--rounded-full);
+    background: var(--surface-2);
+    color: var(--primary-fg);
+    font-weight: 800;
+    font-size: 16px;
+  }
+
+  .pricing-avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .pricing-avatar-initial {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background: var(--primary);
+  }
+
+  .pricing-account-menu-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+
+  .pricing-account-menu {
+    position: absolute;
+    top: calc(100% + var(--space-1));
+    left: 0;
+    z-index: 30;
+    width: min(280px, calc(100vw - 36px));
+    padding: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-pop);
+  }
+
+  .pricing-account-email {
+    width: 100%;
+    min-width: 0;
+    padding: var(--space-2) 14px var(--space-3);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    user-select: text;
+  }
+
+  .pricing-account-logout {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 44px;
+    margin-top: var(--space-1);
+    padding: 0 14px;
+    border-radius: var(--rounded-sm);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+    text-align: left;
+  }
+
+  .pricing-account-logout:hover {
+    background: var(--surface-2);
+  }
+
+  .pricing-avatar:focus-visible,
+  .pricing-account-logout:focus-visible,
+  .pricing-cancellation-guide-button:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  .pricing-cancellation-guide-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--surface);
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  .pricing-cancellation-guide-button:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  /* ---------- 套餐卡 ---------- */
+  .pricing-plans {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+    align-items: stretch;
+  }
+
+  .plans-grid-coming-soon {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-card {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-6) var(--space-6) var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .plan-card-featured {
+    border: 2px solid var(--primary);
+    box-shadow: var(--shadow-pop);
+  }
+
+  .plan-card-placeholder {
+    align-content: start;
+    background: var(--surface-2);
+    box-shadow: none;
+  }
+
+  .plan-badge {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 14px;
+    border-radius: var(--rounded-full);
+    background: var(--primary);
+    color: var(--primary-fg);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 18px;
+    white-space: nowrap;
+  }
+
+  .plan-badge-placeholder {
+    position: static;
+    transform: none;
+    justify-self: start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-3);
+  }
+
+  .plan-name {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+
+  .plan-tagline {
+    color: var(--text-2);
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .plan-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+
+  .plan-price {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .plan-period {
+    color: var(--text-3);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .plan-quota {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .plan-card-placeholder .plan-placeholder-description {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .plan-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 var(--space-4);
+    border-radius: var(--rounded-full);
+    font-size: 14px;
+    font-weight: 700;
+    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .plan-button-primary {
+    color: var(--primary-fg);
+    background: var(--primary);
+  }
+
+  .plan-button-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+
+  .plan-button-primary:disabled {
+    cursor: not-allowed;
+    color: var(--text-3);
+    background: var(--surface-2);
+  }
+
+  .plan-button-secondary {
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+  }
+
+  .plan-button-secondary:hover {
+    background: var(--surface-2);
+  }
+
+  .plan-button:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  .plan-features {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-4) 0 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+  }
+
+  .plan-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .plan-features svg {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    stroke: var(--primary);
+    stroke-width: 2.4;
+    flex: 0 0 auto;
+  }
+
+  .plan-quota-note {
+    max-width: 620px;
+    justify-self: center;
+    color: var(--text-3);
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  /* ---------- 状态与错误 ---------- */
+  .pricing-inline-status {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .pricing-inline-status[data-pricing-plans-status]:empty {
+    display: none;
+  }
+
+  .pricing-inline-error {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--bad);
+    border-radius: var(--rounded-sm);
+    background: var(--bad-soft);
+    color: var(--bad);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  /* ---------- FAQ ---------- */
+  .pricing-faq {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-8);
+    max-width: 720px;
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  .pricing-faq-list {
+    display: grid;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  .pricing-faq-item {
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--surface);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .pricing-faq-item[open] {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-card);
+  }
+
+  .pricing-faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    cursor: pointer;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+    list-style: none;
+  }
+
+  .pricing-faq-question::-webkit-details-marker {
+    display: none;
+  }
+
+  .pricing-faq-question svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    stroke: var(--text-3);
+    stroke-width: 2;
+    transition: transform var(--transition-fast);
+  }
+
+  .pricing-faq-item[open] .pricing-faq-question svg {
+    transform: rotate(180deg);
+    stroke: var(--primary);
+  }
+
+  .pricing-faq-answer {
+    padding: 0 var(--space-6) var(--space-4);
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 960px) {
+    .plans-grid,
+    .plans-grid-coming-soon {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pricing-account {
+      justify-self: stretch;
+    }
+  }
+</style>

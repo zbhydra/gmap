@@ -16,6 +16,7 @@ import type { ExtensionEvents } from '@/core/events/types'
 import { i18nReady } from '@/locales'
 import { getMapsConfig, loadMapsConfig } from '../config/loader'
 import { isNewVersionAvailable } from '../config/operations'
+import { openMapsPricingPage } from '../config/pricing'
 import {
   MapsUserSettingsManager,
   getMapsUserSettingsSnapshot,
@@ -121,6 +122,11 @@ async function mountMapsExtractionUi(): Promise<void> {
       },
       onStartPhotos: () => {
         void guardStartThen(() => startPhotosExtraction(panel))
+      },
+      // 订阅引导（U7 遗留接线，W7）：content 无 tabs 能力，经 background
+      // chrome.tabs.create 代开（URL 组装与失败吞并在 pricing 模块内）
+      onOpenPricing: () => {
+        void openMapsPricingPage()
       }
     })
     // 批量模式参数（URL 携带 gme_bulk）：自动开始 + 完成强制导出 + 回报调度器

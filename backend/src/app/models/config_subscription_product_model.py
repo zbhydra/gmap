@@ -24,6 +24,12 @@ class ConfigSubscriptionProductModel(BaseDBModel):
     product_id: Mapped[str] = mapped_column(
         String(64), nullable=False, comment="商品标识，业务唯一"
     )
+    product_line: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="extension",
+        comment="产品线标识：extension=插件下载 Unlimited，maps=MapsGrab 套餐",
+    )
     name: Mapped[str] = mapped_column(String(128), nullable=False, comment="商品名称")
     period: Mapped[str] = mapped_column(String(20), nullable=False, comment="订阅周期")
     duration_days: Mapped[int] = mapped_column(

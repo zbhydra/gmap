@@ -1,0 +1,1118 @@
+---
+import { getContent, type Locale } from '../i18n/content';
+import { localeNames, localePaths, hreflangMap } from '../i18n/ui';
+import { getCompanyContent } from '../company/companyContent';
+import { getLegalContent } from '../legal/legalContent';
+import { DEVELOPER_EMAIL } from '../lib/contact';
+import SiteConfirmModal from '../components/site/SiteConfirmModal.astro';
+
+type JsonLdPrimitive = string | number | boolean | null;
+type JsonLdValue = JsonLdPrimitive | JsonLdObject | JsonLdValue[];
+interface JsonLdObject {
+  [key: string]: JsonLdValue;
+}
+type JsonLd = JsonLdObject;
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  description?: string;
+  ogType?: string;
+  ogImage?: string;
+  includeSoftwareApplicationSchema?: boolean;
+  structuredData?: JsonLd[];
+  robots?: string;
+  includeAlternateLanguageLinks?: boolean;
+  includeLanguageSwitcher?: boolean;
+}
+
+// Base path for assets（根路径部署）
+const BASE = '/';
+
+// GA4 measurement ID 构建占位：读 PUBLIC_GA4_MEASUREMENT_ID（.env.production 或部署环境注入，
+// hydra 后配）。为空零注入（全站唯一豁免的第三方运行时脚本），非空才渲染 gtag。
+const GA4_MEASUREMENT_ID = import.meta.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
+
+const {
+  locale,
+  title = 'MapsGrab',
+  description = 'MapsGrab is a maps data toolkit: grab publicly available business information from Google Maps — business data, reviews, photos, emails — with a browser extension and free web tools.',
+  ogType = 'website',
+  // OG/Twitter 卡片不渲染 SVG，默认分享图用品牌 pin 图位图（public/og-image.png，512×512）。
+  ogImage = `${BASE}og-image.png`,
+  includeSoftwareApplicationSchema = true,
+  structuredData = [],
+  robots = 'index, follow',
+  includeAlternateLanguageLinks = true,
+  includeLanguageSwitcher = true,
+} = Astro.props;
+
+const t = getContent(locale);
+const companyContent = getCompanyContent(locale);
+const legalContent = getLegalContent(locale);
+const currentPath = Astro.url.pathname;
+const normalizePathname = (pathname: string) => {
+  if (pathname === '' || pathname === '/') {
+    return '/';
+  }
+
+  return pathname.endsWith('/') ? pathname : `${pathname}/`;
+};
+const canonicalURL = new URL(normalizePathname(currentPath), Astro.site);
+
+// Extract the page path without language prefix
+// e.g., "/zh-tw/pricing/" → "/pricing/"
+// e.g., "/pricing/" → "/pricing/"
+const currentLocalePathPrefix = localePaths[locale] ? `/${localePaths[locale]}` : '';
+const pagePathWithoutLocale = currentLocalePathPrefix
+  ? currentPath.replace(currentLocalePathPrefix, '') || '/'
+  : currentPath;
+const normalizedPagePathWithoutLocale = normalizePathname(pagePathWithoutLocale);
+
+// Build alternate language links with correct page paths
+const alternateLinks = Object.entries(localePaths).map(([key, path]) => {
+  // For each language, construct the full URL with language prefix + current page path
+  const langPrefix = path === '' ? '' : `/${path}`;
+  const url = `${langPrefix}${normalizedPagePathWithoutLocale}`;
+  const fullUrl = new URL(url, Astro.site);
+  return { locale: key as Locale, url: fullUrl.href };
+});
+
+const localePath = localePaths[locale] || '';
+const currentLocalePath = localePath === '' ? '/' : `/${localePath}/`;
+const termsPath = `${currentLocalePath}terms/`;
+const privacyPath = `${currentLocalePath}privacy/`;
+const aboutPath = `${currentLocalePath}about/`;
+const contactPath = `${currentLocalePath}contact/`;
+const pricingPath = `${currentLocalePath}pricing/`;
+const extensionPath = `${currentLocalePath}extension/`;
+const downloadPath = `${currentLocalePath}download/`;
+// 导航 Install CTA 指向下载页：商店上架前商店链接只在下载页维护占位（W2），上架后回填各渠道常量。
+const installHref = downloadPath;
+const languageOptionLinks = Object.entries(localePaths).map(([key, path]) => {
+  const langPrefix = path === '' ? '' : `/${path}`;
+  const targetPath = `${langPrefix}${normalizedPagePathWithoutLocale}`;
+  return {
+    locale: key as Locale,
+    path: targetPath === '' ? '/' : targetPath
+  };
+});
+const normalizedCurrentPath = normalizePathname(currentPath);
+const isHomeActive = normalizedCurrentPath === currentLocalePath;
+const isPricingActive = normalizedCurrentPath === pricingPath;
+const isExtensionActive = normalizedCurrentPath === extensionPath;
+const isDownloadActive = normalizedCurrentPath === downloadPath;
+const schemaName = 'MapsGrab';
+const siteHomeUrl = new URL('/', Astro.site).href;
+const organizationId = new URL('/#organization', Astro.site).href;
+const supportContactId = new URL('/#support', Astro.site).href;
+const softwareApplicationSchema: JsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: schemaName,
+  description: t.site.description,
+  applicationCategory: 'BrowserExtension',
+  operatingSystem: 'Microsoft Edge, Mozilla Firefox, and Chromium-based browsers',
+  browserRequirements: 'Requires JavaScript. Requires HTML5.',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD'
+  },
+  author: {
+    '@id': organizationId
+  },
+  // 产品能力口径与插件产品页功能清单一致（013 A5 36 列 / A2 / A3 / A4 / A6 / A8）。
+  featureList: [
+    'Google Maps search extraction with automatic scrolling (36-column schema)',
+    'Business data: name, address, phone, website, rating, hours, coordinates, Place ID',
+    'Customer reviews extraction with ratings, photos, and owner replies',
+    'Business photo URL collection',
+    'Email and social media enrichment per business',
+    'Batch keyword and review-URL tasks',
+    'CSV and JSON export with field selection and deduplication'
+  ]
+};
+const organizationSchema: JsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': organizationId,
+  name: schemaName,
+  url: siteHomeUrl,
+  logo: new URL('/favicon.svg', Astro.site).href,
+  email: DEVELOPER_EMAIL,
+  contactPoint: {
+    '@type': 'ContactPoint',
+    '@id': supportContactId,
+    contactType: 'customer support',
+    email: DEVELOPER_EMAIL,
+    url: new URL('/contact/', Astro.site).href,
+    availableLanguage: Object.keys(localePaths)
+  },
+};
+const structuredDataItems = [
+  ...(includeSoftwareApplicationSchema ? [softwareApplicationSchema] : []),
+  ...structuredData,
+  organizationSchema
+];
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    {GA4_MEASUREMENT_ID && (
+      <>
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`}></script>
+        <script is:inline define:vars={{ GA_ID: GA4_MEASUREMENT_ID }}>
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = function gtag(){window.dataLayer.push(arguments);}
+          window.gtag('js', new Date());
+          window.gtag('config', GA_ID);
+        </script>
+      </>
+    )}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- theme-color 取品牌主色（--primary 亮色值）；meta 不支持 CSS 变量，此处为唯一字面量色值 -->
+    <meta name="theme-color" content="#1a73e8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="canonical" href={canonicalURL} />
+    <!-- SEO Meta Tags -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <!-- keywords 留空：现代搜索引擎忽略该标签，由引擎自行从正文提取关键词（与 Cloudflare 等站点做法一致） -->
+    <meta name="keywords" content="" />
+    <meta name="author" content="MapsGrab" />
+    <meta name="robots" content={robots} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site)} />
+    <!-- OG locale 规范格式为 language_TERRITORY（en_US），与 BCP-47 的 locale（en-US）互转 -->
+    <meta property="og:locale" content={locale.replace('-', '_')} />
+
+    <!-- Twitter：summary 卡适配 512×512 方形分享图 -->
+    <meta property="twitter:card" content="summary" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={new URL(ogImage, Astro.site)} />
+
+    <!-- Alternate Language Links -->
+    {includeAlternateLanguageLinks && alternateLinks.map(link => (
+      <link rel="alternate" hreflang={hreflangMap[link.locale]} href={link.url} />
+    ))}
+    {includeAlternateLanguageLinks && (
+      <link rel="alternate" hreflang="x-default" href={alternateLinks.find(l => l.locale === 'en-US')?.url || canonicalURL} />
+    )}
+
+    <!-- Structured Data -->
+    {structuredDataItems.map(item => (
+      <script type="application/ld+json" is:inline set:html={JSON.stringify(item)} />
+    ))}
+    <style is:inline is:global>
+      /* 语义 token 合同：design.md（亮色）/ design.dark.md（暗色）。实现层只消费语义 token，
+         禁止硬编码色值、圆角、投影；新增 token 必须亮暗双主题同步并回填规范文档。 */
+      :root {
+        /* 颜色 */
+        --bg: #ffffff;
+        --bg-image: linear-gradient(180deg, #e9f1fd 0%, rgba(233, 241, 253, 0.55) 300px, rgba(233, 241, 253, 0) 560px);
+        --surface: #ffffff;
+        --surface-2: #f0f4f9;
+        --border: #dde3ea;
+        --border-strong: #b9c2cd;
+        --text: #1f1f1f;
+        --text-2: #5f6368;
+        --text-3: #80868b;
+        --primary: #1a73e8;
+        --primary-hover: #1765cc;
+        --primary-fg: #ffffff;
+        --primary-soft: #e8f0fe;
+        --accent: #188038;
+        --accent-fg: #ffffff;
+        --accent-soft: #e6f4ea;
+        --ok: #188038;
+        --ok-fg: #ffffff;
+        --ok-soft: #e6f4ea;
+        --warn: #b26a00;
+        --warn-fg: #ffffff;
+        --warn-soft: #fef7e0;
+        --bad: #d93025;
+        --bad-fg: #ffffff;
+        --bad-soft: #fce8e6;
+        --link: #1a73e8;
+        --ring: #1a73e8;
+        --overlay: rgba(32, 33, 36, 0.5);
+        --head-bg: rgba(255, 255, 255, 0.9);
+
+        /* 字体 */
+        --font-display: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        --font-body: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        --font-mono: 'Azeret Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+        /* 间距（4px 基准 scale：4/8/12/16/24/32/40/64/96） */
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-6: 24px;
+        --space-8: 32px;
+        --space-10: 40px;
+        --space-16: 64px;
+        --space-24: 96px;
+
+        /* 圆角 */
+        --rounded-sm: 10px;
+        --rounded-md: 16px;
+        --rounded-lg: 24px;
+        --rounded-full: 999px;
+
+        /* 投影 */
+        --shadow-card: 0 1px 2px rgba(60, 64, 67, 0.1), 0 3px 8px rgba(60, 64, 67, 0.06);
+        --shadow-pop: 0 4px 10px rgba(60, 64, 67, 0.14), 0 14px 36px rgba(60, 64, 67, 0.14);
+        --shadow-modal: 0 24px 60px rgba(60, 64, 67, 0.28);
+
+        /* 动效 */
+        --transition-fast: 150ms;
+        --transition-normal: 200ms;
+        --transition-slow: 300ms;
+        --ease-emphasized: cubic-bezier(0.175, 0.885, 0.32, 1.1);
+
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        min-height: 100vh;
+        font-family: var(--font-body);
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--text);
+        background-color: var(--bg);
+        /* 全站唯一允许的渐变：顶部蓝调渐变带（design.md §1 bg-image） */
+        background-image: var(--bg-image);
+        background-repeat: no-repeat;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+        transition: color var(--transition-normal), border-color var(--transition-normal), transform var(--transition-normal);
+      }
+
+      button {
+        font-family: inherit;
+        border: none;
+        background: none;
+        cursor: pointer;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      img,
+      svg {
+        display: block;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-display);
+        color: var(--text);
+      }
+
+      .container,
+      .nav,
+      .footer-content {
+        width: min(1200px, calc(100vw - 32px));
+        margin: 0 auto;
+      }
+
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: var(--space-4) 0 0;
+      }
+
+      /* design.md §4：无玻璃无 backdrop-filter，吸顶导航 = surface 实底 + 柔和投影 */
+      .nav {
+        height: 72px;
+        padding: 0 var(--space-4);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid var(--border);
+        border-radius: var(--rounded-lg);
+        background: var(--head-bg);
+        box-shadow: var(--shadow-card);
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .logo span {
+        font-family: var(--font-display);
+        font-size: 18px;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+      }
+
+      .nav-links a {
+        padding: 10px 14px;
+        border-radius: var(--rounded-full);
+        color: var(--text-2);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .nav-links a:hover,
+      .nav-links a.active {
+        color: var(--text);
+        background: var(--surface-2);
+      }
+
+      /* Online 占位项：非链接不可跳转，视觉降级为不可用态（design.md 禁用 = surface-2 底 + text-3 字） */
+      .nav-links .nav-link-placeholder {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: var(--rounded-full);
+        background: var(--surface-2);
+        color: var(--text-3);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: default;
+      }
+
+      .mobile-nav .nav-link-placeholder {
+        display: block;
+        padding: var(--space-3) 14px;
+        border-radius: var(--rounded-md);
+        background: var(--surface-2);
+        color: var(--text-3);
+        font-weight: 600;
+        cursor: default;
+      }
+
+      .nav-links a:focus-visible,
+      .lang-btn:focus-visible,
+      .lang-option:focus-visible,
+      .mobile-menu-btn:focus-visible,
+      .mobile-nav a:focus-visible,
+      .footer-link-group a:focus-visible,
+      .footer-meta a:focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 3px;
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+
+      .nav-install-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        height: 44px;
+        padding: 0 var(--space-4) 0 var(--space-3);
+        border-radius: var(--rounded-full);
+        border: 1px solid var(--border);
+        color: var(--text);
+        background: var(--surface);
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0;
+        white-space: nowrap;
+        transition: transform var(--transition-normal), background-color var(--transition-normal);
+      }
+
+      .nav-install-link:hover {
+        background: var(--surface-2);
+        transform: translateY(-1px);
+      }
+
+      .nav-install-icon {
+        width: 24px;
+        height: 24px;
+        flex: 0 0 24px;
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        min-height: 48px;
+        padding: 0 18px;
+        border-radius: var(--rounded-full);
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      /* 全局按钮原语：primary 实底 / outline 两种语义（design.md §7 按钮），
+         供 SiteConfirmModal 等 W5 基座组件与页面共用 */
+      .btn-primary {
+        color: var(--primary-fg);
+        background: var(--primary);
+      }
+
+      .btn-primary:hover {
+        background: var(--primary-hover);
+      }
+
+      .btn-primary:focus-visible,
+      .btn-secondary:focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 3px;
+      }
+
+      .btn-primary-icon {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+      }
+
+      .btn-secondary {
+        color: var(--text);
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+      }
+
+      .btn-secondary:hover {
+        background: var(--surface-2);
+      }
+
+      .lang-switcher {
+        position: relative;
+      }
+
+      .lang-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-height: 44px;
+        padding: 0 14px;
+        border-radius: var(--rounded-full);
+        border: 1px solid var(--border);
+        color: var(--text-2);
+        background: var(--surface);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .nav-actions .lang-btn {
+        height: 44px;
+        min-height: 44px;
+      }
+
+      .lang-dropdown {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        min-width: 160px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--rounded-md);
+        box-shadow: var(--shadow-pop);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-8px);
+        transition: all var(--transition-normal);
+        overflow: hidden;
+      }
+
+      .lang-dropdown.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .lang-dropdown .lang-option {
+        display: block;
+        width: 100%;
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 13px;
+        color: var(--text-2);
+      }
+
+      .lang-dropdown .lang-option:hover,
+      .lang-dropdown .lang-option.current {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+
+      .mobile-menu-btn {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--rounded-full);
+        background: var(--surface-2);
+      }
+
+      .hamburger {
+        display: block;
+        width: 18px;
+        height: 2px;
+        margin: 0 auto;
+        background: var(--text);
+        border-radius: 1px;
+        transition: all var(--transition-normal);
+      }
+
+      .mobile-nav {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: var(--space-4);
+        right: var(--space-4);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--rounded-lg);
+        box-shadow: var(--shadow-pop);
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height var(--transition-normal) ease-out;
+      }
+
+      .mobile-nav.open {
+        max-height: 420px;
+      }
+
+      .mobile-nav-inner {
+        display: flex;
+        flex-direction: column;
+        padding: var(--space-4);
+        gap: var(--space-1);
+      }
+
+      .mobile-nav a {
+        padding: var(--space-3) 14px;
+        border-radius: var(--rounded-md);
+        font-weight: 600;
+        color: var(--text-2);
+      }
+
+      .mobile-nav a:hover,
+      .mobile-nav a.active {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+
+      .header.menu-open .mobile-menu-btn .hamburger:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+      }
+
+      .header.menu-open .mobile-menu-btn .hamburger:nth-child(2) {
+        opacity: 0;
+      }
+
+      .header.menu-open .mobile-menu-btn .hamburger:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+      }
+
+      .main {
+        padding-top: var(--space-1);
+      }
+
+      .site-toast[hidden] {
+        display: none;
+      }
+
+      .site-toast {
+        position: fixed;
+        top: 84px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 150;
+        width: min(420px, calc(100vw - 32px));
+        padding: 14px var(--space-4);
+        border: 1px solid var(--border);
+        border-radius: var(--rounded-sm);
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: var(--shadow-pop);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.5;
+      }
+
+      /* Toast 状态：颜色 + 文字色通道，只用语义 token（design.md §7 Toast） */
+      .site-toast[data-toast-type='error'] {
+        border-color: var(--bad);
+        color: var(--bad);
+      }
+
+      .site-toast[data-toast-type='success'] {
+        border-color: var(--ok);
+        color: var(--ok);
+      }
+
+      .site-toast[data-toast-type='info'] {
+        border-color: var(--primary);
+        color: var(--link);
+      }
+
+      .footer {
+        margin-top: var(--space-16);
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      .footer-content {
+        padding-top: var(--space-10);
+        padding-bottom: var(--space-6);
+      }
+
+      .footer-link-groups {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-16);
+        padding-bottom: var(--space-8);
+        text-align: left;
+      }
+
+      .footer-link-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
+        min-width: 0;
+      }
+
+      .footer-link-title {
+        margin-bottom: 2px;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 20px;
+      }
+
+      .footer-meta {
+        display: flex;
+        align-items: center;
+        min-height: 56px;
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--border);
+      }
+
+      .footer-brand-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+
+      .footer-brand-icon {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        flex: 0 0 32px;
+      }
+
+      .footer-brand-icon svg,
+      .footer-brand-icon img {
+        position: absolute;
+        inset: 0;
+        width: 32px;
+        height: 32px;
+        flex: 0 0 32px;
+        border-radius: var(--rounded-sm);
+      }
+
+      .footer-link-group a,
+      .footer-meta p {
+        color: var(--text-2);
+        font-size: 13px;
+      }
+
+      .footer-link-group a {
+        max-width: 100%;
+        line-height: 20px;
+        overflow-wrap: anywhere;
+      }
+
+      .footer-link-group a:hover {
+        color: var(--link);
+      }
+
+      @media (max-width: 960px) {
+        .nav-links,
+        .lang-switcher,
+        .nav-actions > .nav-install-link {
+          display: none;
+        }
+
+        .mobile-menu-btn {
+          display: flex;
+        }
+
+        .footer-link-groups {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: var(--space-8) var(--space-10);
+        }
+
+        .footer-link-group:first-child {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .footer {
+          margin-top: var(--space-16);
+        }
+
+        .footer-content {
+          padding-top: var(--space-8);
+          padding-bottom: var(--space-4);
+        }
+
+        .footer-link-groups {
+          grid-template-columns: minmax(0, 1fr);
+          gap: var(--space-8);
+          padding-bottom: var(--space-8);
+        }
+
+        .footer-link-group:first-child {
+          grid-column: auto;
+        }
+      }
+    </style>
+
+  </head>
+  <body>
+    <div
+      class="site-toast"
+      role="alert"
+      aria-live="assertive"
+      data-site-toast
+      hidden
+    ></div>
+
+    <header class="header">
+      <nav class="nav">
+        <a href={currentLocalePath} class="logo">
+          <!-- 品牌 pin 图：fill 消费 --primary 语义 token（亮暗主题自动跟随） -->
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="40" height="40" rx="8" fill="var(--primary)"/>
+            <path d="M20 8C15.2 8 11.4 11.8 11.4 16.6C11.4 23 20 32 20 32C20 32 28.6 23 28.6 16.6C28.6 11.8 24.8 8 20 8Z" fill="var(--surface)"/>
+            <circle cx="20" cy="16.4" r="3.2" fill="var(--primary)"/>
+          </svg>
+          <span>{t.layout.nav.brand}</span>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <div class="nav-links">
+          <a href={currentLocalePath} class={isHomeActive ? 'active' : ''}>
+            {t.layout.nav.home}
+          </a>
+          <a href={extensionPath} class={isExtensionActive ? 'active' : ''} data-cta="nav-extension">
+            {t.layout.nav.extension}
+          </a>
+          {/* Online 占位入口：span 占位（非链接，无跳转目标，点击无效不 404），与首页占位卡同语义 */}
+          <span class="nav-link-placeholder" aria-disabled="true">
+            {t.layout.nav.online}
+          </span>
+          <a href={downloadPath} class={isDownloadActive ? 'active' : ''} data-cta="nav-download">
+            {t.layout.nav.download}
+          </a>
+          <a
+            href={pricingPath}
+            class={isPricingActive ? 'active' : ''}
+            data-ga-event="internal_workflow_click"
+            data-ga-source="nav"
+            data-ga-target="pricing"
+          >
+            {t.layout.nav.pricing}
+          </a>
+        </div>
+
+        <div class="nav-actions">
+          <a
+            href={installHref}
+            class="nav-install-link"
+            aria-label={t.common.installCta}
+            data-ga-event="internal_workflow_click"
+            data-ga-source="nav"
+            data-ga-target="download"
+            data-cta="nav-install"
+          >
+            <img
+              src="/googe-ext-logo-192px.svg"
+              width="192"
+              height="192"
+              alt=""
+              class="nav-install-icon"
+              fetchpriority={isHomeActive ? 'high' : undefined}
+            />
+            <span>{t.common.installCta}</span>
+          </a>
+
+          {includeLanguageSwitcher && (
+            <div class="lang-switcher">
+              <button class="lang-btn" aria-label="Language switcher">
+                {localeNames[locale]}
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="lang-dropdown">
+                {languageOptionLinks.map(link => (
+                  <button
+                    data-locale={link.locale}
+                    data-path={link.path}
+                    data-ga-event="language_switch"
+                    data-ga-locale={link.locale}
+                    data-ga-from={locale}
+                    class={`lang-option ${link.locale === locale ? 'current' : ''}`}
+                  >
+                    {localeNames[link.locale]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <!-- Mobile Menu Button -->
+          <button class="mobile-menu-btn" aria-label="Toggle menu" aria-expanded="false">
+            <span class="hamburger"></span>
+            <span class="hamburger"></span>
+            <span class="hamburger"></span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Mobile Navigation Menu -->
+      <div class="mobile-nav">
+        <div class="mobile-nav-inner">
+          <a href={currentLocalePath} class={isHomeActive ? 'active' : ''}>
+            {t.layout.nav.home}
+          </a>
+          <a href={extensionPath} class={isExtensionActive ? 'active' : ''} data-cta="nav-extension">
+            {t.layout.nav.extension}
+          </a>
+          {/* Online 占位入口：span 占位（非链接，无跳转目标，点击无效不 404） */}
+          <span class="nav-link-placeholder" aria-disabled="true">
+            {t.layout.nav.online}
+          </span>
+          <a href={downloadPath} class={isDownloadActive ? 'active' : ''} data-cta="nav-download">
+            {t.layout.nav.download}
+          </a>
+          <a
+            href={pricingPath}
+            class={isPricingActive ? 'active' : ''}
+            data-ga-event="internal_workflow_click"
+            data-ga-source="mobile_nav"
+            data-ga-target="pricing"
+          >
+            {t.layout.nav.pricing}
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <nav
+          class="footer-link-groups"
+          aria-label={`${companyContent.footerGroupLabel} / ${t.layout.footer.product} / ${t.layout.footer.resources}`}
+        >
+          <div class="footer-link-group">
+            <p class="footer-link-title">{t.layout.footer.product}</p>
+            <a href={extensionPath} data-cta="footer-extension">{t.layout.nav.extension}</a>
+            <a href={downloadPath} data-cta="footer-download">{t.layout.nav.download}</a>
+            <a href={pricingPath} data-cta="footer-pricing">{t.layout.nav.pricing}</a>
+          </div>
+          <div class="footer-link-group">
+            <p class="footer-link-title">{companyContent.footerGroupLabel}</p>
+            <a
+              href={aboutPath}
+              data-ga-event="internal_workflow_click"
+              data-ga-source="footer"
+              data-ga-target="about"
+            >
+              {companyContent.about.navLabel}
+            </a>
+            <a
+              href={contactPath}
+              data-ga-event="internal_workflow_click"
+              data-ga-source="footer"
+              data-ga-target="contact"
+            >
+              {companyContent.contact.navLabel}
+            </a>
+          </div>
+          <div class="footer-link-group" data-footer-resources>
+            <p class="footer-link-title">{t.layout.footer.resources}</p>
+            <a
+              href={termsPath}
+              data-ga-event="internal_workflow_click"
+              data-ga-source="footer"
+              data-ga-target="terms"
+            >
+              {legalContent.terms.navLabel}
+            </a>
+            <a
+              href={privacyPath}
+              data-ga-event="internal_workflow_click"
+              data-ga-source="footer"
+              data-ga-target="privacy"
+            >
+              {legalContent.privacy.navLabel}
+            </a>
+            {
+              t.layout.footer.tools.map(tool => (
+                <a
+                  href={`${currentLocalePathPrefix}${tool.path}`}
+                  data-cta={`footer-tool-${tool.id}`}
+                  data-ga-event="internal_workflow_click"
+                  data-ga-source="footer"
+                  data-ga-target={`tool_${tool.id.replaceAll('-', '_')}`}
+                >
+                  {tool.label}
+                </a>
+              ))
+            }
+          </div>
+        </nav>
+        <div class="footer-meta">
+          <div class="footer-brand-row">
+            <span class="footer-brand-icon" data-footer-brand-icon>
+              <svg aria-hidden="true" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="8" fill="var(--primary)"></rect>
+                <path d="M20 8C15.2 8 11.4 11.8 11.4 16.6C11.4 23 20 32 20 32C20 32 28.6 23 28.6 16.6C28.6 11.8 24.8 8 20 8Z" fill="var(--surface)"></path>
+                <circle cx="20" cy="16.4" r="3.2" fill="var(--primary)"></circle>
+              </svg>
+            </span>
+            <p>{t.layout.footer.rights}</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <SiteConfirmModal />
+
+    <script>
+      import { installFrontendErrorCapture } from '../scripts/homepage/frontend-error-capture'
+      import '../scripts/globalClickEvents'
+
+      installFrontendErrorCapture(capturedError => {
+        void import('../scripts/homepage/sls-mark')
+          .then(({ reportFrontendCapturedErrorToSls }) => {
+            reportFrontendCapturedErrorToSls(capturedError)
+          })
+          .catch(error => {
+            console.error(
+              new Error('[layout] Failed to load the frontend error reporter.', { cause: error })
+            )
+          })
+      })
+
+      let visitRuntimeScheduled = false
+      const initializeVisitRuntime = (): void => {
+        if (visitRuntimeScheduled) {
+          return
+        }
+        visitRuntimeScheduled = true
+        window.setTimeout(() => {
+          void Promise.all([
+            import('../scripts/homepage/first-opened-mark'),
+            import('../scripts/homepage/device')
+          ])
+            .then(([markModule, deviceModule]) => {
+              markModule.initializeWebsiteFirstOpenedMark()
+              return deviceModule.initializeFooterBrandIcon()
+            })
+            .catch(error => {
+              console.error(
+                new Error('[layout] Failed to initialize deferred visit telemetry.', { cause: error })
+              )
+            })
+        }, 3000)
+      }
+
+      window.addEventListener('pointerdown', initializeVisitRuntime, { once: true, passive: true })
+      window.addEventListener('keydown', initializeVisitRuntime, { once: true })
+      window.addEventListener('scroll', initializeVisitRuntime, { once: true, passive: true })
+    </script>
+
+    <script>
+      import { initializeLanguageSwitcher } from '../scripts/site/language-switcher'
+
+      initializeLanguageSwitcher()
+
+      // Mobile menu toggle
+      const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+      const mobileNav = document.querySelector('.mobile-nav');
+      const header = document.querySelector('.header');
+
+      mobileMenuBtn?.addEventListener('click', () => {
+        const isOpen = mobileNav?.classList.toggle('open');
+        mobileMenuBtn?.setAttribute('aria-expanded', String(isOpen));
+        header?.classList.toggle('menu-open', isOpen);
+      });
+
+      // Close mobile menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (mobileNav?.classList.contains('open')) {
+          const target = e.target as HTMLElement;
+          if (!target.closest('.mobile-nav') && !target.closest('.mobile-menu-btn')) {
+            mobileNav.classList.remove('open');
+            mobileMenuBtn?.setAttribute('aria-expanded', 'false');
+            header?.classList.remove('menu-open');
+          }
+        }
+      });
+
+      // Close mobile menu when clicking on a link
+      const mobileNavLinks = document.querySelectorAll('.mobile-nav a');
+      mobileNavLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          mobileNav?.classList.remove('open');
+          mobileMenuBtn?.setAttribute('aria-expanded', 'false');
+          header?.classList.remove('menu-open');
+        });
+      });
+    </script>
+  </body>
+</html>

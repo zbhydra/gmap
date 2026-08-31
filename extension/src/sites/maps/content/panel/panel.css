@@ -246,6 +246,12 @@
   background: var(--gme-surface-2);
 }
 
+/* 订阅引导按钮（W7）：search/list 模式在 actions 容器内随 gap 排布；place
+   模式直接挂在内容区（双区块之后），补一条与区块的间距 */
+.panel-section ~ .panel-upgrade-button {
+  margin-top: 8px;
+}
+
 .panel-footer {
   font-size: 12px;
   color: var(--gme-text-3);

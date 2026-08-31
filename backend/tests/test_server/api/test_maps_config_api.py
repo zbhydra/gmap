@@ -33,3 +33,5 @@ async def test_maps_config_returns_config_groups(async_client):
     assert operations["announcementHtml"] == ""
     assert operations["announcementVersion"] == ""
     assert operations["minPluginVersion"] == ""
+    # W7 插件联动登记：升级入口落地页常量随配置下发
+    assert operations["pricingUrl"] == "https://mapsgrab.com/pricing/"

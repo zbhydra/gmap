@@ -1,0 +1,76 @@
+---
+/**
+ * Review Link Generator 工具页（W4）。
+ *
+ * Maps 链接 → 本地 Place ID → search.google.com/local/reviews 评论直链。
+ */
+import ToolShell from '../../components/tools/ToolShell.astro'
+import { getContent } from '../../i18n/content'
+
+const t = getContent('en-US')
+const tool = t.pages.tools.reviewLinkGenerator
+const copyJson = JSON.stringify({ common: t.pages.tools.common, content: tool })
+---
+
+<ToolShell
+  toolId="review-link-generator"
+  seo={tool.seo}
+  hero={tool.hero}
+  howTo={tool.howTo}
+  faq={tool.faq}
+  cta={tool.cta}
+  copyJson={copyJson}
+  commonCopy={t.pages.tools.common}
+>
+  <form class="tool-field" data-tool-form>
+    <label for="place-url">{tool.form.urlLabel}</label>
+    <input
+      class="tool-input"
+      id="place-url"
+      name="place-url"
+      type="text"
+      placeholder={tool.form.urlPlaceholder}
+      autocomplete="off"
+      spellcheck="false"
+      data-tool-input
+    />
+    <p class="tool-error" data-tool-error hidden></p>
+    <div class="tool-actions">
+      <button class="tool-button" type="submit" data-ga-event="tool_use" data-ga-tool-id="review-link-generator">
+        {tool.form.submit}
+      </button>
+    </div>
+  </form>
+
+  <section class="tool-result" data-tool-result hidden aria-label={t.pages.tools.common.resultHeading}>
+    <h2>{t.pages.tools.common.resultHeading}</h2>
+    <div class="tool-result-row">
+      <label for="review-link">{tool.result.linkLabel}</label>
+      <div class="tool-output">
+        <output class="tool-output-value" id="review-link" data-review-link></output>
+        <button
+          class="tool-secondary-button"
+          type="button"
+          data-copy-review-link
+          data-ga-event="tool_copy"
+          data-ga-tool-id="review-link-generator"
+        >
+          {t.pages.tools.common.copy}
+        </button>
+        <a
+          class="tool-secondary-button"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-review-open
+          data-ga-event="tool_open_link"
+          data-ga-tool-id="review-link-generator"
+        >
+          {tool.result.open}
+        </a>
+      </div>
+    </div>
+  </section>
+</ToolShell>
+
+<script src="../../scripts/tools/reviewLinkGenerator.ts"></script>

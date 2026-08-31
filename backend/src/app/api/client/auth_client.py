@@ -82,6 +82,7 @@ from app.constants.auth import (
     TokenType,
     UserLoginStatus,
 )
+from app.constants.subscription import MAPS_PRODUCT_LINE
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.i18n.dependencies import SupportedLanguage
@@ -587,6 +588,12 @@ async def get_me(ctx: UserContext = Depends(get_current_user)):
     data = (await user_service.build_client_user_info(user)).model_dump()
     data["subscription"] = await subscription_status_service.build_status_data(
         user_id=ctx.user_id,
+    )
+    # 产品线扩展（006）：MapsGrab 网站按 maps 线展示当前套餐；旧字段
+    # subscription 保持插件下载线语义，旧客户端不受影响。
+    data["maps_subscription"] = await subscription_status_service.build_status_data(
+        user_id=ctx.user_id,
+        product_line=MAPS_PRODUCT_LINE,
     )
     return ResponseUtils.ok(data)
 

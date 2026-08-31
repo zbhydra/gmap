@@ -1,0 +1,132 @@
+---
+/**
+ * Convert DMS to DD 工具页（W4，度分秒 → 十进制度）。
+ */
+import ToolShell from '../../components/tools/ToolShell.astro'
+import { getContent } from '../../i18n/content'
+
+const t = getContent('en-US')
+const tool = t.pages.tools.dmsToDd
+const copyJson = JSON.stringify({ common: t.pages.tools.common, content: tool })
+---
+
+<ToolShell
+  toolId="dms-to-dd"
+  seo={tool.seo}
+  hero={tool.hero}
+  howTo={tool.howTo}
+  faq={tool.faq}
+  cta={tool.cta}
+  copyJson={copyJson}
+  commonCopy={t.pages.tools.common}
+>
+  <form data-tool-form novalidate>
+    <fieldset class="tool-fieldset">
+      <legend>{tool.form.latitudeHeading}</legend>
+      <div class="tool-field-row">
+        <div class="tool-field">
+          <label for="lat-degrees">{tool.form.degreesLabel}</label>
+          <input class="tool-input" id="lat-degrees" type="number" min="0" max="90" step="1" placeholder="37" data-lat-degrees />
+        </div>
+        <div class="tool-field">
+          <label for="lat-minutes">{tool.form.minutesLabel}</label>
+          <input class="tool-input" id="lat-minutes" type="number" min="0" max="59.99" step="any" placeholder="46" data-lat-minutes />
+        </div>
+        <div class="tool-field">
+          <label for="lat-seconds">{tool.form.secondsLabel}</label>
+          <input class="tool-input" id="lat-seconds" type="number" min="0" max="59.99" step="any" placeholder="29.74" data-lat-seconds />
+        </div>
+        <div class="tool-field">
+          <label for="lat-hemisphere">N / S</label>
+          <select class="tool-input" id="lat-hemisphere" data-lat-hemisphere>
+            <option value="N" selected>N</option>
+            <option value="S">S</option>
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="tool-fieldset">
+      <legend>{tool.form.longitudeHeading}</legend>
+      <div class="tool-field-row">
+        <div class="tool-field">
+          <label for="lng-degrees">{tool.form.degreesLabel}</label>
+          <input class="tool-input" id="lng-degrees" type="number" min="0" max="180" step="1" placeholder="122" data-lng-degrees />
+        </div>
+        <div class="tool-field">
+          <label for="lng-minutes">{tool.form.minutesLabel}</label>
+          <input class="tool-input" id="lng-minutes" type="number" min="0" max="59.99" step="any" placeholder="25" data-lng-minutes />
+        </div>
+        <div class="tool-field">
+          <label for="lng-seconds">{tool.form.secondsLabel}</label>
+          <input class="tool-input" id="lng-seconds" type="number" min="0" max="59.99" step="any" placeholder="9.90" data-lng-seconds />
+        </div>
+        <div class="tool-field">
+          <label for="lng-hemisphere">E / W</label>
+          <select class="tool-input" id="lng-hemisphere" data-lng-hemisphere>
+            <option value="E">E</option>
+            <option value="W" selected>W</option>
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <p class="tool-error" data-tool-error hidden></p>
+    <div class="tool-actions">
+      <button class="tool-button" type="submit" data-ga-event="tool_use" data-ga-tool-id="dms-to-dd">
+        {tool.form.submit}
+      </button>
+    </div>
+  </form>
+
+  <section class="tool-result" data-tool-result hidden aria-label={t.pages.tools.common.resultHeading}>
+    <h2>{t.pages.tools.common.resultHeading}</h2>
+    <div class="tool-result-row">
+      <label for="dd-value">{tool.result.dd}</label>
+      <div class="tool-output">
+        <output class="tool-output-value" id="dd-value" data-dd-value></output>
+        <button
+          class="tool-secondary-button"
+          type="button"
+          data-copy-dd
+          data-ga-event="tool_copy"
+          data-ga-tool-id="dms-to-dd"
+        >
+          {t.pages.tools.common.copy}
+        </button>
+      </div>
+    </div>
+  </section>
+</ToolShell>
+
+<style>
+  /* 本页私有：度/分/秒 + 半球的四列输入排布。 */
+  .tool-fieldset {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+  }
+
+  .tool-fieldset legend {
+    padding: 0 var(--space-2);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .tool-field-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  @media (max-width: 600px) {
+    .tool-field-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
+
+<script src="../../scripts/tools/dmsToDd.ts"></script>

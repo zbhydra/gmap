@@ -51,6 +51,8 @@ class SubscriptionProductConfig:
 
     product_id: str
     name: str
+    # 产品线标识（006 扩展）：下单与状态链路按产品线隔离权益。
+    product_line: str
     period: str
     duration_days: int
     display_currency: str
@@ -159,6 +161,7 @@ class PaymentConfigService:
             SubscriptionProductConfig(
                 product_id=self._normalize_code(row.product_id),
                 name=row.name,
+                product_line=self._normalize_product_line(row.product_line),
                 period=row.period,
                 duration_days=row.duration_days,
                 display_currency=normalize_currency(row.display_currency),
@@ -294,6 +297,7 @@ class PaymentConfigService:
             self._normalize_code(row.product_id): SubscriptionProductConfig(
                 product_id=self._normalize_code(row.product_id),
                 name=row.name,
+                product_line=self._normalize_product_line(row.product_line),
                 period=row.period,
                 duration_days=row.duration_days,
                 display_currency=normalize_currency(row.display_currency),
@@ -359,6 +363,12 @@ class PaymentConfigService:
         """规范化配置标识。"""
 
         return value.strip()
+
+    def _normalize_product_line(self, value: str | None) -> str:
+        """规范化产品线标识；历史行缺省回退 extension（插件下载线行为不变）。"""
+
+        normalized = (value or "").strip()
+        return normalized or "extension"
 
     def _load_json_object(self, raw: str | None, *, context: str) -> dict[str, Any]:
         """读取 JSON 对象配置，空值视为 {}。"""

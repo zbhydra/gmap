@@ -121,6 +121,7 @@
   "dashboard.copyFailed": "Copy failed",
   "dashboard.defaultTaskName": "Task {index}",
   "mapsPanel.quotaExhausted": "Monthly quota exhausted. Upgrade your plan to keep extracting.",
+  "mapsPanel.upgradePlan": "View Plans",
   "dashboard.errorQuotaExceeded": "Monthly quota is not enough for this task. Upgrade your plan or reduce the list.",
   "popup.usage.title": "Usage",
   "popup.usage.guest": "Guest",

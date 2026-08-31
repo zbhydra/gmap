@@ -1,0 +1,78 @@
+---
+/**
+ * Email Checker 工具页（W4，纯格式校验——SMTP 探测明确不做，SEO 正文说明）。
+ */
+import ToolShell from '../../components/tools/ToolShell.astro'
+import { getContent } from '../../i18n/content'
+
+const t = getContent('en-US')
+const tool = t.pages.tools.emailChecker
+const copyJson = JSON.stringify({ content: tool })
+---
+
+<ToolShell
+  toolId="email-checker"
+  seo={tool.seo}
+  hero={tool.hero}
+  howTo={tool.howTo}
+  faq={tool.faq}
+  cta={tool.cta}
+  copyJson={copyJson}
+  commonCopy={t.pages.tools.common}
+>
+  <form class="tool-field" data-tool-form>
+    <label for="email-input">{tool.form.emailLabel}</label>
+    <input
+      class="tool-input"
+      id="email-input"
+      name="email"
+      type="text"
+      inputmode="email"
+      placeholder={tool.form.emailPlaceholder}
+      autocomplete="off"
+      spellcheck="false"
+      data-tool-input
+    />
+    <!-- type=text：校验交给本工具的纯前端规则（浏览器原生 email 校验会拦截提交，
+         用户看不到逐条问题说明）。 -->
+    <div class="tool-actions">
+      <button class="tool-button" type="submit" data-ga-event="tool_use" data-ga-tool-id="email-checker">
+        {tool.form.submit}
+      </button>
+    </div>
+  </form>
+
+  <section class="tool-result" data-tool-result hidden aria-label={t.pages.tools.common.resultHeading}>
+    <h2 data-result-heading></h2>
+    <ul class="tool-issue-list" data-issue-list></ul>
+  </section>
+</ToolShell>
+
+<style>
+  /* 本页私有：校验问题清单（结果区通用样式来自 ToolShell global 命名空间）。 */
+  .tool-issue-list:empty {
+    display: none;
+  }
+
+  .tool-issue-list {
+    margin: 0;
+    padding-left: var(--space-6);
+    color: var(--bad);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .tool-issue-list li + li {
+    margin-top: var(--space-1);
+  }
+
+  .tool-result h2[data-outcome='valid'] {
+    color: var(--ok);
+  }
+
+  .tool-result h2[data-outcome='invalid'] {
+    color: var(--bad);
+  }
+</style>
+
+<script src="../../scripts/tools/emailChecker.ts"></script>

@@ -28,6 +28,7 @@ def serialize_admin_order(order: OrderModel, user_email: str) -> dict[str, objec
         "payment_method": order.payment_method or "",
         "payment_data": decode_admin_json_value(order.payment_data),
         "payment_channel_order_no": order.payment_channel_order_no or "",
+        "payment_transaction_id": order.payment_transaction_id or "",
         "payment_channel_uid": order.payment_channel_uid or "",
         "paid_amount": order.paid_amount,
         "paid_currency": order.paid_currency or "",

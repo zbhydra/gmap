@@ -163,6 +163,7 @@ async def get_order_status(
             "order_no": order.order_no,
             "product_class": order.product_class,
             "product_id": order.product_id,
+            "product_line": order_service.get_order_product_line(order),
             "product_name": order.product_name,
             "amount": order.amount,
             "currency": order.currency,

@@ -3,8 +3,8 @@
  *
  * 场景：本地 mock 切到「额度用尽」态（服务端权威 exhausted=true）→ 打开
  * Maps 搜索结果页 → 面板挂载后预检拉到耗尽快照 → Start 禁用并显示
- * 「额度用尽 + 订阅引导」提示（仅文案，无跳转按钮：C2 订阅套餐形态未决策
- * 且 Maps 档位无购买入口）。
+ * 「额度用尽 + 订阅引导」提示；mock operations 常驻下发本地 pricingUrl
+ * （W7），提示旁出现订阅引导按钮（点击跳转行为见 quota-upgrade-button.spec）。
  *
  * mock 为全局单例（workers=1 串行），spec 末尾 finally 重置额度态，避免
  * 污染后续 spec；既有 spec（panel-flow 等）在默认未耗尽态下不回归。
@@ -103,8 +103,11 @@ test.describe('配额门控（U7）', () => {
       // 面板挂载即预检：耗尽态下 Start 禁用 + 提示行出现（en-US 基线文案）
       await expect(startButton).toBeDisabled({ timeout: 15_000 })
       await expect(page.getByText('Monthly quota exhausted. Upgrade your plan to keep extracting.')).toBeVisible()
-      // 仅文案引导：面板内不出现订阅跳转按钮（购买入口归 C2 决策后的链路）
-      await expect(panelHost.getByRole('link')).toHaveCount(0)
+      // mock 已下发 pricingUrl（W7）：提示旁出现订阅引导按钮（跳转断言见
+      // quota-upgrade-button.spec，本 spec 只锚定门控态下按钮出现）
+      await expect(
+        panelHost.getByRole('button', { name: 'View Plans' })
+      ).toBeVisible()
 
       // Reset 控制端点后重新加载页面：门控解除，Start 恢复可用（不回归采集）
       await setMockUsage({ reset: true })

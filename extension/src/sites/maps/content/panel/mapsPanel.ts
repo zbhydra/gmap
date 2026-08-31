@@ -16,10 +16,11 @@
  * innerHTML 注入，竞品同构，来源为本仓库 backend 可信通道）+ 新版本提示
  * （operations.minPluginVersion > 本地版本时出现）。
  *
- * 配额门控（A11，U7）：setQuotaExhausted(true) 后待命态 Start 与 place 两
- * Start 按钮禁用，hint/错误行显示「额度用尽 + 订阅引导」（仅文案：C2 订阅
- * 套餐形态未决策且 Maps 档位无购买入口，跳转按钮待购买链路建立后补）；
- * 采集中/完成态不拦（暂停恢复与导出不受影响）。
+ * 配额门控（A11，U7；W7 接线订阅跳转）：setQuotaExhausted(true) 后待命态
+ * Start 与 place 两 Start 按钮禁用，hint/错误行显示「额度用尽 + 订阅引导」；
+ * 远程已下发 operations.pricingUrl 时提示旁出现「查看方案」按钮（经 background
+ * 新标签打开落地页；未配置则保持纯文案降级）；采集中/完成态不拦（暂停恢复
+ * 与导出不受影响）。
  *
  * 样式消费 design.md / design.dark.md token（panel.css 内 CSS 变量，
  * 亮暗响应 prefers-color-scheme）；文案全部走 i18n（I18nService）。
@@ -30,6 +31,7 @@ import panelStyles from './panel.css?inline'
 import { I18nService } from '@/locales/index'
 import { I18N_KEYS } from '@/core/constants/i18n'
 import { getMapsConfig } from '../../config/loader'
+import { buildMapsPricingUrl } from '../../config/pricing'
 import { detectMapsListMode } from '../listMode'
 import type { MapsScraperStatus } from '../scraper/searchScraper'
 import { searchExportExtLabel, type SearchExportFormat } from '../export/engine'
@@ -71,6 +73,8 @@ export interface MapsPanelCallbacks {
   onStartReviews: () => void
   /** 发起照片采集（place 模式，打开照片工作页）。 */
   onStartPhotos: () => void
+  /** 打开订阅落地页（额度用尽引导，W7；bootstrap 经 background 代开新标签）。 */
+  onOpenPricing: () => void
 }
 
 /** 面板渲染输入（search 模式）。 */
@@ -130,6 +134,9 @@ export class MapsPanel {
    * 显示「额度用尽 + 订阅引导」。采集中/完成态不受影响（暂停恢复、导出不拦）。
    */
   private quotaExhausted = false
+
+  /** 订阅引导按钮（W7）：门控生效且远程已配置 pricingUrl 时可见。 */
+  private upgradeButton: HTMLButtonElement | null = null
 
   /** place 模式 UI 引用。 */
   private placeSections: Record<
@@ -253,6 +260,7 @@ export class MapsPanel {
     } else {
       this.searchHint.style.display = 'none'
     }
+    this.syncUpgradeButton(quotaBlocked)
 
     const primaryByStatus: Record<MapsScraperStatus, { text: string; action: () => void }> = {
       idle: { text: I18nService.t(I18N_KEYS.MAPS_PANEL.START), action: this.callbacks.onStart },
@@ -321,9 +329,9 @@ export class MapsPanel {
 
   /**
    * 设置配额门控状态并重放当前模式渲染（mount 前调用只缓存，挂载后回显）。
-   * true：待命态 Start 禁用 + 「额度用尽」提示与订阅引导文案；place 模式
-   * 两个 Start 按钮同步禁用。仅文案引导（C2 订阅套餐形态未决策且 Maps 档位
-   * 无购买入口），不提供跳转按钮。
+   * true：待命态 Start 禁用 + 「额度用尽」提示与订阅引导；place 模式
+   * 两个 Start 按钮同步禁用。远程已配置 pricingUrl 时提示旁出现跳转按钮
+   * （W7 接线），未配置保持纯文案（优雅降级）。
    */
   setQuotaExhausted(exhausted: boolean): void {
     if (this.quotaExhausted === exhausted) {
@@ -379,6 +387,8 @@ export class MapsPanel {
         section.error.classList.remove('visible')
       }
     }
+    // 任一区块被门控（待命即禁用）即出现订阅引导（按钮可见性见 syncUpgradeButton）
+    this.syncUpgradeButton(this.quotaExhausted && (!state.reviews.working || !state.photos.working))
   }
 
   /** 切换单个 place 区块的采集状态（保留另一区块状态）。 */
@@ -411,6 +421,19 @@ export class MapsPanel {
     this.panelElement.classList.toggle('panel-side-right', this.side === 'right')
   }
 
+  /**
+   * 同步订阅引导按钮可见性（W7）：单一事实源 = buildMapsPricingUrl（可见性
+   * 判定与点击打开同源，保证「按钮可见 ⇔ 点击有效」）；返回空串（未配置或
+   * 脏 URL）时保持 display:none，降级为纯文案（与 U7 旧行为一致）。
+   */
+  private syncUpgradeButton(visible: boolean): void {
+    if (!this.upgradeButton) {
+      return
+    }
+    const show = visible && buildMapsPricingUrl(getMapsConfig().operations.pricingUrl).length > 0
+    this.upgradeButton.style.display = show ? 'block' : 'none'
+  }
+
   /** 卸载面板。 */
   destroy(): void {
     if (this.modePollTimer !== null) {
@@ -423,6 +446,7 @@ export class MapsPanel {
     this.contentElement = null
     this.announcementElement = null
     this.versionNoticeElement = null
+    this.upgradeButton = null
     this.placeSections = { reviews: null, photos: null }
   }
 
@@ -466,6 +490,7 @@ export class MapsPanel {
     this.searchError = null
     this.searchPrimary = null
     this.searchSecondary = null
+    this.upgradeButton = null
     this.placeSections = { reviews: null, photos: null }
 
     if (this.mode === 'place') {
@@ -507,15 +532,20 @@ export class MapsPanel {
     secondary.style.display = 'none'
     this.searchSecondary = secondary
 
+    // 订阅引导按钮（W7）：门控生效且远程配置 pricingUrl 时可见（默认隐藏）
+    const upgrade = this.buildUpgradeButton()
+    this.upgradeButton = upgrade
+
     actions.appendChild(primary)
     actions.appendChild(secondary)
+    actions.appendChild(upgrade)
 
     content.appendChild(hint)
     content.appendChild(error)
     content.appendChild(actions)
   }
 
-  /** 构建 place 模式内容结构：Reviews 与 Photos 两个独立区块。 */
+  /** 构建 place 模式内容结构：Reviews 与 Photos 两个独立区块 + 共享订阅引导。 */
   private buildPlaceStructure(content: HTMLElement): void {
     content.appendChild(
       this.buildPlaceSection('reviews', I18nService.t(I18N_KEYS.MAPS_PANEL.REVIEWS_SECTION))
@@ -523,6 +553,21 @@ export class MapsPanel {
     content.appendChild(
       this.buildPlaceSection('photos', I18nService.t(I18N_KEYS.MAPS_PANEL.PHOTOS_SECTION))
     )
+    // 订阅引导按钮（W7）：place 双区块共享一个，门控生效且已配置时可见
+    const upgrade = this.buildUpgradeButton()
+    this.upgradeButton = upgrade
+    content.appendChild(upgrade)
+  }
+
+  /** 创建订阅引导按钮：点击动作由 bootstrap 接线（background 代开新标签）。 */
+  private buildUpgradeButton(): HTMLButtonElement {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'panel-button panel-button-outline panel-upgrade-button'
+    button.textContent = I18nService.t(I18N_KEYS.MAPS_PANEL.UPGRADE_PLAN)
+    button.onclick = this.callbacks.onOpenPricing
+    button.style.display = 'none'
+    return button
   }
 
   /** 构建单个 place 区块（标签 + 错误行 + Start 按钮，状态由按钮承载）。 */

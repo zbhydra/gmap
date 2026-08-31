@@ -17,6 +17,7 @@ class ConfigSubscriptionProductRow:
 
     product_id: str
     name: str
+    product_line: str
     period: str
     duration_days: int
     display_currency: str
@@ -73,6 +74,7 @@ class ConfigSubscriptionProductService:
             ConfigSubscriptionProductRow(
                 product_id=row.product_id,
                 name=row.name,
+                product_line=row.product_line,
                 period=row.period,
                 duration_days=row.duration_days,
                 display_currency=row.display_currency,

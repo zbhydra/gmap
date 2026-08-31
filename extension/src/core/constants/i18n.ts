@@ -124,8 +124,10 @@ export const I18N_KEYS = {
     LIST_SECTION: 'mapsPanel.listSection',
     /** 列表模式待命说明 */
     LIST_IDLE_HINT: 'mapsPanel.listIdleHint',
-    /** 配额耗尽提示（A11/U7：月度额度用尽 + 订阅引导，仅文案：购买入口归 C2 决策后的链路） */
-    QUOTA_EXHAUSTED: 'mapsPanel.quotaExhausted'
+    /** 配额耗尽提示（A11/U7：月度额度用尽 + 订阅引导） */
+    QUOTA_EXHAUSTED: 'mapsPanel.quotaExhausted',
+    /** 订阅引导按钮（W7：额度用尽时打开远程下发的 pricingUrl 落地页；未配置不渲染） */
+    UPGRADE_PLAN: 'mapsPanel.upgradePlan'
   },
 
   /** popup 用量展示（013 A11，U7 账号区） */

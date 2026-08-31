@@ -35,6 +35,7 @@ class _OrderQuery(TypedDict, total=False):
     order_no_like: str
     user_ids: list[int]
     payment_channel_order_no_like: str
+    payment_transaction_id_like: str
     order_statuses: list[OrderStatus]
     callback_statuses: list[CallbackStatus]
     product_ids: list[str]
@@ -58,6 +59,11 @@ async def list_admin_orders(
         default=None,
         max_length=256,
         description="支付渠道订单号包含",
+    ),
+    payment_transaction_id: str | None = Query(
+        default=None,
+        max_length=256,
+        description="支付渠道交易流水 ID 包含",
     ),
     order_status: int | None = Query(default=None, description="订单状态"),
     callback_status: int | None = Query(default=None, description="履约回调状态"),
@@ -85,6 +91,7 @@ async def list_admin_orders(
         user_id=user_id,
         user_email=user_email,
         payment_channel_order_no=payment_channel_order_no,
+        payment_transaction_id=payment_transaction_id,
         order_status=order_status,
         callback_status=callback_status,
         product_id=product_id,
@@ -159,6 +166,7 @@ async def _build_order_query(
     user_id: int | None,
     user_email: str | None,
     payment_channel_order_no: str | None,
+    payment_transaction_id: str | None,
     order_status: int | None,
     callback_status: int | None,
     product_id: str | None,
@@ -196,6 +204,9 @@ async def _build_order_query(
     normalized_channel_order_no = _normalize_text(payment_channel_order_no)
     if normalized_channel_order_no:
         query["payment_channel_order_no_like"] = normalized_channel_order_no
+    normalized_transaction_id = _normalize_text(payment_transaction_id)
+    if normalized_transaction_id:
+        query["payment_transaction_id_like"] = normalized_transaction_id
     if order_status is not None:
         query["order_statuses"] = [_parse_order_status(order_status)]
     if callback_status is not None:

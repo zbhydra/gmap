@@ -79,6 +79,18 @@ export interface BackgroundEnrichMapsBusinessesRequest {
 /** background 代理 Email/社媒补全响应（服务端载荷透传）。 */
 export type BackgroundEnrichMapsBusinessesResponse = MapsEnrichResponse
 
+/** background 打开订阅落地页请求（013 U7 遗留接线，W7；content 无 tabs 能力）。 */
+export interface BackgroundOpenPricingPageRequest {
+  /** 完整落地页 URL（含归因参数，content 侧由远程 pricingUrl 组装）。 */
+  url: string
+}
+
+/** background 打开订阅落地页响应。 */
+export interface BackgroundOpenPricingPageResponse {
+  /** 是否已成功创建标签页（创建失败返回 false，不抛 RPC 错误）。 */
+  opened: boolean
+}
+
 /** background 读取批量任务状态的响应（013 A6，U5）。 */
 export type BackgroundGetBulkStateResponse = BulkState
 

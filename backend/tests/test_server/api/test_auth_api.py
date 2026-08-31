@@ -414,12 +414,13 @@ class TestAuthGetMeAPI:
         )
         token = unwrap_ok(login_response)["access_token"]
 
-        async def fail_get_user_subscription_config(user_id: int):
+        async def fail_get_user_subscription_config(user_id: int, product_line: str):
             raise AppCommonException(
                 CommonCode.PAYMENT_GATEWAY_ERROR,
                 ext_msg=(
                     "test_get_me_subscription_config_failure_degrades: "
-                    f"broken subscription config, user_id={user_id}"
+                    f"broken subscription config, user_id={user_id}, "
+                    f"product_line={product_line}"
                 ),
             )
 

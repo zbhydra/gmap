@@ -98,8 +98,9 @@ function createMockServer(port) {
 
     // 远程配置：下发加速 e2e 的稀疏覆盖（间隔 1s、动画 200~400ms、上限 100 行；
     // 评论/照片翻页间隔 50ms、上限 15 条/12 张——验收远程覆盖与截断链路）。
-    // operations 组常驻下发公告与「远端版本 > 本地」的新版本提示，供公告区
-    // spec 断言（面板公告 innerHTML 注入 + 升级提示，A12 链路）。
+    // operations 组常驻下发公告、「远端版本 > 本地」的新版本提示与本地订阅
+    // 落地页 pricingUrl（W7），供公告区/门控按钮 spec 断言（零外网：落地页
+    // 指向本服务 /pricing/）。
     if (url.pathname === '/api/client/maps/config' && req.method === 'GET') {
       received.configRequests += 1
       sendJson(res, 200, {
@@ -120,10 +121,18 @@ function createMockServer(port) {
             announcementHtml:
               '<p class="gme-e2e-announcement">Welcome to MapsGrab! Spring sale is live.</p>',
             announcementVersion: 'e2e-1',
-            minPluginVersion: '99.0.0'
+            minPluginVersion: '99.0.0',
+            pricingUrl: `http://127.0.0.1:${port}/pricing/`
           }
         }
       })
+      return
+    }
+
+    // 订阅落地页（W7 门控按钮 spec 的跳转目标；简单静态页，零外网）
+    if (url.pathname === '/pricing/' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS })
+      res.end('<!doctype html><html><body><h1>MapsGrab Pricing (e2e mock)</h1></body></html>')
       return
     }
 

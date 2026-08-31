@@ -1,0 +1,514 @@
+---
+/**
+ * 首页渲染器（W2 五要素：hero / 三产品卡 / 社证占位 / FAQ / CTA）。
+ *
+ * 路由 locale → i18n 字典 → 语义化区块 → Layout 外壳；
+ * FAQ 输出 FAQPage 结构化数据，CTA 统一带 data-cta 归因属性（事件经 W6 GA4 通道上报）。
+ */
+import Layout from '../../layouts/Layout.astro'
+import { getContent, type Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+
+interface Props {
+  /** 当前 locale 路由。 */
+  locale?: Locale
+}
+
+const { locale = 'en-US' } = Astro.props as Props
+const t = getContent(locale)
+const page = t.pages.home
+// locale 前缀（en-US 为空）；后续语言走 [lang]/ 路由时链接自动带上前缀。
+const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const extensionPath = `${localePrefix}/extension/`
+const downloadPath = `${localePrefix}/download/`
+
+// CTA 归因：站内链接带 utm（canonical 只取 pathname，不受 query 影响），事件侧用 data-cta（cta_click 事件经 W6 GA4 通道上报）。
+const installUtm = (medium: string) =>
+  `?utm_source=website&utm_medium=${medium}&utm_campaign=install`
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: page.faq.items.map(item => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer
+    }
+  }))
+}
+---
+
+<Layout
+  locale={locale}
+  title={page.seo.title}
+  description={page.seo.description}
+  structuredData={[faqSchema]}
+>
+  <div class="home" data-home-page>
+    <!-- ① hero -->
+    <section class="hero" aria-labelledby="home-hero-title">
+      <div class="container hero-inner">
+        <p class="eyebrow">{page.hero.eyebrow}</p>
+        <h1 id="home-hero-title">{page.hero.title}</h1>
+        <p class="hero-description">{page.hero.description}</p>
+        <div class="hero-actions">
+          <a
+            class="btn-primary"
+            href={`${downloadPath}${installUtm('home-hero')}`}
+            data-cta="home-hero-install"
+          >{page.hero.primaryCta}</a>
+          <a class="btn-secondary" href={extensionPath} data-cta="home-hero-product">
+            {page.hero.secondaryCta}
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ② 三产品形态卡（Online / API 为占位卡，点击无效） -->
+    <section class="products" aria-labelledby="home-products-title">
+      <div class="container">
+        <header class="section-header">
+          <p class="eyebrow">{page.products.eyebrow}</p>
+          <h2 id="home-products-title">{page.products.title}</h2>
+          <p class="section-description">{page.products.description}</p>
+        </header>
+        <div class="product-grid">
+          {page.products.items.map(item => (
+            item.status === 'available' ? (
+              <article class="product-card" data-product-card={item.id}>
+                <p class="product-badge is-available">{page.products.availableLabel}</p>
+                <h3>{item.name}</h3>
+                <p class="product-tagline">{item.tagline}</p>
+                <p class="product-description">{item.description}</p>
+                <ul class="product-bullets">
+                  {item.bullets.map(bullet => <li>{bullet}</li>)}
+                </ul>
+                <a class="product-link" href={item.href} data-cta={`home-product-${item.id}`}>
+                  {item.ctaLabel}
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M3 7h8M7.5 3.5 11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
+              </article>
+            ) : (
+              <!-- 占位卡：无链接无交互（点击无效，不 404）；aria-disabled 标注不可用状态 -->
+              <article class="product-card is-coming-soon" data-product-card={item.id} aria-disabled="true">
+                <p class="product-badge">{page.products.comingSoonLabel}</p>
+                <h3>{item.name}</h3>
+                <p class="product-tagline">{item.tagline}</p>
+                <p class="product-description">{item.description}</p>
+                <p class="product-soon-note">{item.ctaLabel}</p>
+              </article>
+            )
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 社证占位区（早期用户场景，非虚构具名评价） -->
+    <section class="testimonials" aria-labelledby="home-testimonials-title">
+      <div class="container">
+        <header class="section-header">
+          <p class="eyebrow">{page.testimonials.eyebrow}</p>
+          <h2 id="home-testimonials-title">{page.testimonials.title}</h2>
+        </header>
+        <div class="testimonial-grid">
+          {page.testimonials.items.map(item => (
+            <figure class="testimonial-card">
+              <blockquote>{item.quote}</blockquote>
+              <figcaption>{item.role}</figcaption>
+            </figure>
+          ))}
+        </div>
+        <p class="testimonial-note">{page.testimonials.note}</p>
+      </div>
+    </section>
+
+    <!-- ④ FAQ -->
+    <section class="faq" aria-labelledby="home-faq-title">
+      <div class="container faq-inner">
+        <header class="section-header">
+          <p class="eyebrow">FAQ</p>
+          <h2 id="home-faq-title">{page.faq.title}</h2>
+          {page.faq.description && <p class="section-description">{page.faq.description}</p>}
+        </header>
+        <div class="faq-list">
+          {page.faq.items.map((item, index) => (
+            <details class="faq-item" data-faq-item={index}>
+              <summary>{item.question}</summary>
+              <p>{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑤ CTA -->
+    <section class="cta-band" aria-labelledby="home-cta-title">
+      <div class="container cta-inner">
+        <h2 id="home-cta-title">{page.cta.title}</h2>
+        <p>{page.cta.description}</p>
+        <a
+          class="btn-primary"
+          href={`${downloadPath}${installUtm('home-cta')}`}
+          data-cta="home-band-install"
+        >{page.cta.button}</a>
+        {page.cta.note && <p class="cta-note">{page.cta.note}</p>}
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .home {
+    padding-top: var(--space-10);
+  }
+
+  .eyebrow {
+    color: var(--primary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .section-header h2,
+  .hero h1 {
+    margin-top: var(--space-2);
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--text);
+  }
+
+  .hero h1 {
+    max-width: 760px;
+    font-size: clamp(36px, 4.8vw, 58px);
+    line-height: 1.05;
+  }
+
+  .section-header h2 {
+    font-size: 32px;
+    line-height: 40px;
+    letter-spacing: -0.02em;
+  }
+
+  .section-description {
+    max-width: 640px;
+    margin-top: var(--space-3);
+    color: var(--text-2);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* 按钮样式走 Layout 全局原语 .btn-primary / .btn-secondary（design.md §7） */
+
+  .btn-primary:focus-visible,
+  .btn-secondary:focus-visible,
+  .product-link:focus-visible,
+  .faq-item summary:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  /* ① hero */
+  .hero-inner {
+    padding: var(--space-10) 0 var(--space-16);
+  }
+
+  .hero-description {
+    max-width: 680px;
+    margin-top: var(--space-4);
+    color: var(--text-2);
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+
+  /* ② 产品卡 */
+  .products {
+    padding: var(--space-16) 0;
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6);
+    margin-top: var(--space-8);
+  }
+
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .product-card.is-coming-soon {
+    box-shadow: none;
+    background: var(--surface-2);
+  }
+
+  .product-badge {
+    align-self: flex-start;
+    padding: 2px 10px;
+    border-radius: var(--rounded-full);
+    background: var(--primary-soft);
+    color: var(--primary-hover);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 20px;
+  }
+
+  .product-card.is-coming-soon .product-badge {
+    background: var(--surface);
+    color: var(--text-2);
+    border: 1px solid var(--border);
+  }
+
+  .product-card h3 {
+    margin-top: var(--space-4);
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 28px;
+    color: var(--text);
+  }
+
+  .product-tagline {
+    margin-top: var(--space-1);
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  .product-description {
+    margin-top: var(--space-3);
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .product-bullets {
+    display: grid;
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .product-bullets li {
+    position: relative;
+    padding-left: var(--space-4);
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .product-bullets li::before {
+    position: absolute;
+    top: 9px;
+    left: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: var(--rounded-full);
+    background: var(--primary);
+    content: '';
+  }
+
+  .product-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: auto;
+    padding-top: var(--space-6);
+    color: var(--link);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .product-link:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .product-soon-note {
+    margin-top: auto;
+    padding-top: var(--space-6);
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* ③ 社证占位 */
+  .testimonials {
+    padding: var(--space-16) 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6);
+    margin-top: var(--space-8);
+  }
+
+  .testimonial-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--bg);
+  }
+
+  .testimonial-card blockquote {
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .testimonial-card figcaption {
+    margin-top: auto;
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .testimonial-note {
+    max-width: 640px;
+    margin-top: var(--space-6);
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* ④ FAQ：原生 details/summary，零 JS */
+  .faq {
+    padding: var(--space-16) 0;
+  }
+
+  .faq-inner {
+    max-width: 800px;
+  }
+
+  .faq-list {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+
+  .faq-item {
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--surface);
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .faq-item[open] {
+    background: var(--surface-2);
+  }
+
+  .faq-item summary {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.6;
+    cursor: pointer;
+  }
+
+  .faq-item p {
+    margin-top: var(--space-2);
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ⑤ CTA 行动区 */
+  .cta-band {
+    padding: var(--space-16) 0 var(--space-24);
+  }
+
+  .cta-inner {
+    padding: var(--space-16) var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    text-align: center;
+  }
+
+  .cta-inner h2 {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 40px;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .cta-inner > p {
+    max-width: 560px;
+    margin: var(--space-3) auto 0;
+    color: var(--text-2);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .cta-inner .btn-primary {
+    margin-top: var(--space-6);
+  }
+
+  .cta-note {
+    margin-top: var(--space-3);
+    color: var(--text-2);
+    font-size: 13px;
+  }
+
+  @media (max-width: 960px) {
+    .product-grid,
+    .testimonial-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero-inner {
+      padding: var(--space-6) 0 var(--space-10);
+    }
+
+    .products,
+    .testimonials,
+    .faq {
+      padding: var(--space-10) 0;
+    }
+
+    .cta-band {
+      padding: var(--space-10) 0 var(--space-16);
+    }
+
+    .cta-inner {
+      padding: var(--space-10) var(--space-4);
+    }
+  }
+</style>

@@ -121,6 +121,7 @@
   "dashboard.copyFailed": "Copy failed",
   "dashboard.defaultTaskName": "Task {index}",
   "mapsPanel.quotaExhausted": "本月額度已用盡，升級訂閱後可繼續採集。",
+  "mapsPanel.upgradePlan": "查看方案",
   "dashboard.errorQuotaExceeded": "本月剩餘額度不足以完成該任務，請升級方案或縮減條目列表。",
   "popup.usage.title": "用量",
   "popup.usage.guest": "訪客",

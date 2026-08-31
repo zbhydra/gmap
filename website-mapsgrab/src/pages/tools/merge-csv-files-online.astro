@@ -1,0 +1,100 @@
+---
+/**
+ * Merge CSV Files Online 工具页（W4，多文件上传纯前端合并，表头并集）。
+ */
+import ToolShell from '../../components/tools/ToolShell.astro'
+import { getContent } from '../../i18n/content'
+
+const t = getContent('en-US')
+const tool = t.pages.tools.mergeCsv
+const copyJson = JSON.stringify({ common: t.pages.tools.common, content: tool })
+---
+
+<ToolShell
+  toolId="merge-csv"
+  seo={tool.seo}
+  hero={tool.hero}
+  howTo={tool.howTo}
+  faq={tool.faq}
+  cta={tool.cta}
+  copyJson={copyJson}
+  commonCopy={t.pages.tools.common}
+>
+  <form class="tool-field" data-tool-form>
+    <label for="csv-files">{tool.form.filesLabel}</label>
+    <!-- accept 限定 .csv；multiple 允许一次选择全部待合并文件。 -->
+    <input
+      class="tool-file-input"
+      id="csv-files"
+      type="file"
+      accept=".csv,text/csv"
+      multiple
+      data-tool-files
+    />
+    <p class="tool-hint">{tool.form.filesHint}</p>
+    <ul class="tool-file-summaries" data-file-summaries></ul>
+    <p class="tool-error" data-tool-error hidden></p>
+    <div class="tool-actions">
+      <button class="tool-button" type="submit" data-ga-event="tool_use" data-ga-tool-id="merge-csv">
+        {tool.form.submit}
+      </button>
+    </div>
+  </form>
+
+  <section class="tool-result" data-tool-result hidden aria-label={t.pages.tools.common.resultHeading}>
+    <h2>{t.pages.tools.common.resultHeading}</h2>
+    <p class="tool-summary" data-result-summary></p>
+    <textarea class="tool-textarea" data-merged-preview readonly spellcheck="false" aria-label="Merged CSV preview"></textarea>
+    <div class="tool-actions">
+      <button
+        class="tool-secondary-button"
+        type="button"
+        data-download-merged
+        data-ga-event="tool_download"
+        data-ga-tool-id="merge-csv"
+      >
+        {t.pages.tools.common.downloadCsv}
+      </button>
+    </div>
+  </section>
+</ToolShell>
+
+<style>
+  /* 本页私有：文件选择与摘要。 */
+  .tool-file-input::file-selector-button {
+    min-height: 40px;
+    margin-right: var(--space-3);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--rounded-full);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .tool-file-input::file-selector-button:hover {
+    background: var(--surface-2);
+  }
+
+  .tool-file-input:focus-visible::file-selector-button {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  .tool-file-summaries:empty {
+    display: none;
+  }
+
+  .tool-file-summaries {
+    margin: 0;
+    padding-left: var(--space-6);
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+</style>
+
+<script src="../../scripts/tools/mergeCsv.ts"></script>

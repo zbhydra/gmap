@@ -1,6 +1,9 @@
 """客户端订阅状态响应组装服务。"""
 
-from app.constants.subscription import SubscriptionProductMetadata
+from app.constants.subscription import (
+    EXTENSION_PRODUCT_LINE,
+    SubscriptionProductMetadata,
+)
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.models.subscription_model import UserSubscriptionModel
@@ -18,21 +21,26 @@ class SubscriptionStatusService:
         self,
         *,
         user_id: int,
+        product_line: str = EXTENSION_PRODUCT_LINE,
     ) -> dict[str, object]:
-        """构建订阅状态 data，供 /status 与 /auth/me 复用同一契约。"""
+        """构建指定产品线的订阅状态 data，供 /status 与 /auth/me 复用同一契约。
+
+        product_line 缺省为 extension（插件下载线），保持既有接口响应不变；
+        MapsGrab 网站读取 maps 线展示当前套餐。
+        """
 
         try:
             (
                 subscription,
                 config,
                 metadata,
-            ) = await self._load_subscription_metadata(user_id)
+            ) = await self._load_subscription_metadata(user_id, product_line)
         except AppCommonException as exc:
             if exc.code != CommonCode.PAYMENT_GATEWAY_ERROR:
                 raise
             logger.error(
                 "subscription_status_config_unavailable: "
-                f"user_id={user_id}, "
+                f"user_id={user_id}, product_line={product_line}, "
                 f"code={exc.code}, ext_msg={exc.ext_msg}",
                 exc_info=True,
             )
@@ -49,6 +57,7 @@ class SubscriptionStatusService:
     async def _load_subscription_metadata(
         self,
         user_id: int,
+        product_line: str,
     ) -> tuple[
         UserSubscriptionModel,
         SubscriptionProductConfig,
@@ -57,7 +66,7 @@ class SubscriptionStatusService:
         """读取用户订阅记录、商品配置和 metadata。"""
 
         subscription, config = await subscription_service.get_user_subscription_config(
-            user_id
+            user_id, product_line
         )
         metadata = SubscriptionProductMetadata.from_metadata(
             config.metadata,

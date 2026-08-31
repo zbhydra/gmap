@@ -58,6 +58,9 @@ export class BackgroundMessageRouter {
       // Email/社媒补全代理（U8）：透传商家数组给后端 enrich 端点，配额
       // 已由采集侧计量（服务端不重复扣减），身份由 httpClient 拦截器注入
       enrichMapsBusinesses: params => enrichMapsBusinesses(parseEnrichBusinesses(params)),
+      // 订阅落地页代开（U7 遗留接线，W7）：content 无 tabs 能力，校验后
+      // chrome.tabs.create 新标签打开；失败返回 opened=false 不抛 RPC 错误
+      openPricingPage: params => this.openPricingPage(parseOpenPricingPageUrl(params)),
       getBulkState: () => bulkScheduler.getState(),
       createBulkTask: params => bulkScheduler.createTask(parseCreateBulkTaskRequest(params)),
       startBulkTask: params => bulkScheduler.startTask(parseBulkTaskIdRequest(params)),
@@ -95,6 +98,21 @@ export class BackgroundMessageRouter {
     } catch (error) {
       logger.error('[BackgroundMessageRouter] 记录 SLS 打点失败:', error)
       return { recorded: false }
+    }
+  }
+
+  /**
+   * 打开订阅落地页（013 U7 遗留接线，W7）：chrome.tabs.create 新标签打开
+   * content 组装好的 URL（含归因参数）。URL 已在 RPC 边界做 http(s) 校验；
+   * 创建失败仅记录并返回 opened=false（局部可失败，不抛 RPC 错误）。
+   */
+  private async openPricingPage(url: string): Promise<{ opened: boolean }> {
+    try {
+      await chrome.tabs.create({ url })
+      return { opened: true }
+    } catch (error) {
+      logger.error('[BackgroundMessageRouter] 打开订阅落地页失败:', error)
+      return { opened: false }
     }
   }
 
@@ -186,6 +204,28 @@ function requireEnrichString(source: JsonObject, field: string): string {
     throw new Error(`[BackgroundMessageRouter] enrichMapsBusinesses 商家项 ${field} 必须是字符串`)
   }
   return value
+}
+
+/**
+ * 解析订阅落地页打开请求：校验 url 是合法 http(s) 绝对地址（tabs.create
+ * 只接受浏览器可导航协议，拒绝其余 scheme 的脏载荷）。
+ */
+function parseOpenPricingPageUrl(params: JsonValue | undefined): string {
+  if (!isJsonObject(params) || typeof params.url !== 'string') {
+    throw new Error('[BackgroundMessageRouter] openPricingPage 请求缺少合法 url')
+  }
+
+  let parsed: URL
+  try {
+    parsed = new URL(params.url)
+  } catch {
+    throw new Error('[BackgroundMessageRouter] openPricingPage url 不是合法绝对地址')
+  }
+
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new Error('[BackgroundMessageRouter] openPricingPage 仅允许 http(s) URL')
+  }
+  return parsed.toString()
 }
 
 /**

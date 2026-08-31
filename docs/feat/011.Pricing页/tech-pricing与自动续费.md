@@ -76,7 +76,7 @@ POST /api/client/order/create
 | `payment_method` | 启用支付渠道 |
 | `currency` / `amount` | checkout 配置返回的渠道价 |
 
-`subscription_service.check_product` 先读取用户当前订阅状态。若 `user_subscriptions.expires_at` 仍未过期,返回 `INVALID_REQUEST` 和 `reason=active_subscription_exists`,不创建订单。无有效订阅时继续读取当前订阅配置并验价,通过后创建订单。订单快照写入:
+`subscription_service.check_product` 先读取用户当前订阅状态。若同一产品线(006 产品线扩展:下单商品的 `product_line`)上 `user_subscriptions.expires_at` 仍未过期,返回 `INVALID_REQUEST` 和 `reason=active_subscription_exists`,不创建订单;不同产品线互不影响(插件 Unlimited 与 Maps 套餐可并存)。无有效订阅时继续读取当前订阅配置并验价,通过后创建订单。订单快照写入:
 
 | 字段 | 说明 |
 | --- | --- |

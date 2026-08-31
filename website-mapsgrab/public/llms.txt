@@ -1,0 +1,37 @@
+# MapsGrab
+
+> MapsGrab is a maps data toolkit: a browser extension that grabs publicly available Google Maps business data (business details, reviews, photos, emails) into CSV/JSON, plus seven free web tools that run entirely in the browser.
+
+## Product
+
+- [MapsGrab Home](https://mapsgrab.com/): Product overview with extension, Online, and API entries, FAQ, and install CTAs.
+- [Extension](https://mapsgrab.com/extension/): Google Maps extractor product page — 36-column extraction schema, reviews, photos, email enrichment, batch tasks, CSV/JSON export, and release notes.
+- [Download](https://mapsgrab.com/download/): Install guide with browser store channels and direct zip download.
+- [Pricing](https://mapsgrab.com/pricing/): Free (1,000 records/month), Pro ($39, 100,000 records/month), and Business ($99, 500,000 records/month) plans; Online and API are coming soon.
+
+## Free Tools
+
+- [Place ID Finder](https://mapsgrab.com/tools/place-id-finder/): Paste a Google Maps place URL to extract its Place ID, CID, and FID in the browser.
+- [Review Link Generator](https://mapsgrab.com/tools/review-link-generator/): Build a direct Google reviews URL (search.google.com/local/reviews) from a Maps place URL.
+- [Email Checker](https://mapsgrab.com/tools/email-checker/): Validate email address format with common typo detection. Format checks only, no SMTP verification.
+- [Lat Long to DMS](https://mapsgrab.com/tools/lat-long-to-dms/): Convert decimal degrees to degrees-minutes-seconds with hemisphere letters.
+- [DMS to Decimal](https://mapsgrab.com/tools/dms-to-dd/): Convert degrees-minutes-seconds back to signed decimal degrees.
+- [Bulk Keywords Generator](https://mapsgrab.com/tools/bulk-keywords-generator/): Generate keyword × location combinations in bulk, with keyword-first or location-first ordering.
+- [Merge CSV Files Online](https://mapsgrab.com/tools/merge-csv-files-online/): Union two or more CSV files with merged headers, entirely in the browser.
+
+## Company
+
+- [About](https://mapsgrab.com/about/): What MapsGrab is and the data boundaries it keeps (public business data only, local processing).
+- [Contact](https://mapsgrab.com/contact/): Support contact (support@mapsgrab.com).
+
+## Legal
+
+- [Terms of Service](https://mapsgrab.com/terms/): Service terms and user responsibilities.
+- [Privacy Policy](https://mapsgrab.com/privacy/): What is collected, backend processing purposes, optional integrations, and what is never done (no ads, no third-party tracking; GA4 site analytics is the only third-party script).
+
+## Key Facts
+
+- Platform type: Marketing website (static) plus browser extension for data extraction.
+- Default language: English (multi-language architecture in place).
+- Tool privacy: All seven tools run client-side; inputs never leave the browser.
+- Sitemap: [XML sitemap index](https://mapsgrab.com/sitemap.xml).

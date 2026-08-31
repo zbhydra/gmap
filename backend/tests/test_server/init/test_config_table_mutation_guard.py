@@ -26,6 +26,10 @@ _CONFIG_MODEL_NAMES = (
 
 _CONFIG_MODEL_PATTERN = "|".join(_CONFIG_MODEL_NAMES)
 
+# 显式豁免：配置播种属运维显式动作（等价于用 sql_executor 执行配置 SQL），
+# 不属于"测试/辅助脚本意外污染配置"的护栏对象。新增播种脚本时在此登记。
+_SEED_SCRIPT_ALLOWLIST = (Path("scripts") / "seed_maps_subscription_products.py",)
+
 _RAW_CONFIG_SQL_WRITE_RE = re.compile(
     r"\b("
     r"INSERT\s+INTO|"
@@ -67,18 +71,18 @@ def test_tests_and_scripts_do_not_mutate_config_tables() -> None:
     violations: list[str] = []
     for root in _SCAN_ROOTS:
         for path in _python_files(root):
+            try:
+                relative = path.relative_to(_BACKEND_ROOT)
+            except ValueError:
+                relative = path
+            if relative in _SEED_SCRIPT_ALLOWLIST:
+                continue
             text = path.read_text(encoding="utf-8")
             if _RAW_CONFIG_SQL_WRITE_RE.search(text):
-                violations.append(
-                    f"{path.relative_to(_BACKEND_ROOT)}: raw SQL writes config_*"
-                )
+                violations.append(f"{relative}: raw SQL writes config_*")
             if _ORM_CONFIG_WRITE_RE.search(text):
-                violations.append(
-                    f"{path.relative_to(_BACKEND_ROOT)}: ORM writes config model"
-                )
+                violations.append(f"{relative}: ORM writes config model")
             if _FULL_METADATA_SCHEMA_WRITE_RE.search(text):
-                violations.append(
-                    f"{path.relative_to(_BACKEND_ROOT)}: full metadata writes config schema"
-                )
+                violations.append(f"{relative}: full metadata writes config schema")
 
     assert violations == []

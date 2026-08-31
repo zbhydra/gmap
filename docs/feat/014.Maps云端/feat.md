@@ -9,6 +9,7 @@
 - 抓取引擎选型与部署/成本/安全调研完成:`@../../research/google-maps-scraping-方案调研.md`(gosom/google-maps-scraper SaaS Edition;POC 是云端路线 Gate)。
 - 竞品 Online 已登录实测、API 官方文档全量抓取(B1/B2 ✅)、MCP 已盘(B3);云端内部引擎不可见也不需要——自研走 gosom。
 - 未开始开发;Gate(B5)未执行。进度见根 `@../../ROADMAP.md`。
+- **hydra 裁决(2026-08-30)**:Online Scraper 产品化暂缓——营销站的 Online 入口**留空、点击无效**(015 D5 占位);Gate POC 与 gosom 部署待启动后按本文推进。
 
 ## 已拍板差异
 

@@ -78,6 +78,9 @@ class OrderModel(BaseDBModel):
     payment_channel_order_no: Mapped[str | None] = mapped_column(
         String(256), comment="支付渠道订单号"
     )
+    payment_transaction_id: Mapped[str | None] = mapped_column(
+        String(256), comment="支付渠道交易流水 ID"
+    )
     payment_channel_uid: Mapped[str | None] = mapped_column(
         String(64), comment="支付渠道 UID"
     )
