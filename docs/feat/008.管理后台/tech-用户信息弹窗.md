@@ -9,31 +9,31 @@
 - 后台内展示的非空 `user_id` 都可作为入口打开同一个用户信息弹窗。
 - 用户基础信息:ID、邮箱、注册来源、注册方式、注册 IP(归属地)、最后登录 IP(归属地)、最后一次操作 IP(归属地)、注册时间、最后登录时间、登录次数、账号状态。
 - 权益信息:当前 Credits 余额、是否有有效订阅、订阅过期时间。
-- 下方 tabs:「最近下载」和「订单列表」。
-  - 最近下载数据源为 `user_download_records`,远程分页,无筛选。
+- 下方 tabs:「积分记录」和「订单列表」。
+  - 积分记录数据源为 `user_credit_logs`,按流水 ID 倒序远程分页,无筛选。
   - 订单列表数据源为 `orders`,远程分页,不筛选状态,成功/失败/待支付/取消/过期等所有订单都展示。
 - 管理后台所有展示时间统一格式为 `YYYY-MM-DD HH:mm:ss`,按固定 UTC+8 展示,不使用浏览器 locale 默认格式。
 
 ### 不包含
 
 - 用户编辑、封禁、删除、改邮箱、代充、人工改订阅。
-- 积分流水、风控记录、extension 下载历史。
-- 最近下载筛选、导出、下载详情日志联动。
+- 风控记录。
+- 积分记录筛选、导出。
 - 打开弹窗时用 IP 实时 GeoIP 查询。IP 归属地只读 `users` 表已有国家 / 地区字段。
 
 ## 已裁决方案
 
-采用「聚合 profile 接口 + 独立 downloads 分页接口 + 前端复用弹窗组件」:
+采用「聚合 profile 接口 + 各 tab 独立分页接口 + 前端复用弹窗组件」:
 
 - `GET /api/admin/users/{user_id}/profile` 读取用户基础信息、Credits 余额、订阅摘要。
-- `GET /api/admin/users/{user_id}/downloads` 分页读取 `user_download_records`。
+- `GET /api/admin/users/{user_id}/credits` 按流水 ID 倒序分页读取 `user_credit_logs`。
 - `GET /api/admin/users/{user_id}/orders` 分页读取该用户全部订单。
-- 前端新增 `UserInfoDialog.vue`,各页面在展示用户 ID 的位置调用弹窗 `open(userId)`。
+- 前端 `UserInfoDialog.vue`,各页面在展示用户 ID 的位置调用弹窗 `open(userId)`。
 
 未采用方案:
 
-- 把最近下载和订单列表塞进 profile 接口:分页会让 profile 响应和 tab 状态耦合,后续 tabs 扩展更难维护。
-- 在订单详情接口内附带用户信息:只能服务订单页,无法覆盖数据分析和 TG 当前使用明细。
+- 把积分记录和订单列表塞进 profile 接口:分页会让 profile 响应和 tab 状态耦合,后续 tabs 扩展更难维护。
+- 在订单详情接口内附带用户信息:只能服务订单页,无法覆盖其他用户 ID 入口。
 - 打开弹窗实时查 GeoIP:增加依赖和不稳定外部行为,且与需求确认的「ip(归属地)」现有字段展示不一致。
 
 ## 数据口径
@@ -74,23 +74,19 @@
 - `expires_at` 返回原始过期时间;从未订阅时为 `null`;已过期时 `has_subscription=false` 但仍显示历史过期时间。
 - 不读取订阅商品配置,避免配置异常影响用户详情排查。
 
-### 最近下载
+### 积分记录
 
-来源 `user_download_records`:
+来源 `user_credit_logs`:
 
 | 字段 | 说明 |
 | --- | --- |
-| `id` | 下载记录 ID |
-| `resource_key` | website 下载资源指纹 |
-| `platform` | 平台 |
-| `canonical_link` | 规范化链接 |
-| `source_id` | 资源 ID |
-| `filename` | 文件名,可为空 |
-| `size_bytes` | 文件大小,可为空 |
-| `credits_cost` | 本次实际扣除 Credits,免扣重复为 0 |
-| `created_at` | 下载记录创建时间 |
+| `id` | 流水 ID |
+| `change_amount` | Credits 变化量,正数为获得,负数为消耗 |
+| `reason` | 变动原因;已知原因显示本地化名称,未知原因显示原值 |
+| `metadata_json` | 业务扩展 JSON 快照,可为空 |
+| `created_at` | 流水创建时间 |
 
-排序:按 `created_at desc, id desc`。分页参数 `page` 默认 1,`page_size` 默认 20,最大 100。
+排序只按 `id desc`;流水 ID 的递增顺序即写入顺序。分页参数 `page` 默认 1,`page_size` 默认 20,最大 100。
 
 ### 订单列表
 
@@ -107,7 +103,7 @@
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/api/admin/users/{user_id}/profile` | 用户基础信息 + Credits + 订阅摘要 |
-| GET | `/api/admin/users/{user_id}/downloads` | 用户最近下载分页 |
+| GET | `/api/admin/users/{user_id}/credits` | 用户积分记录分页,按流水 ID 倒序 |
 | GET | `/api/admin/users/{user_id}/orders` | 用户订单分页,全状态 |
 
 ### Profile 响应
@@ -143,20 +139,16 @@
 }
 ```
 
-### Downloads 响应
+### Credits 响应
 
 ```jsonc
 {
   "rows": [
     {
-      "id": 10,
-      "resource_key": "0123456789abcdef0123456789abcdef",
-      "platform": "x",
-      "canonical_link": "https://x.com/...",
-      "source_id": "123",
-      "filename": "video.mp4",
-      "size_bytes": 1048576,
-      "credits_cost": 1,
+      "id": 12,
+      "change_amount": -2,
+      "reason": "download_charge",
+      "metadata_json": null,
       "created_at": 1780000000000
     }
   ],
@@ -188,6 +180,7 @@
       "payment_method": "paypal",
       "payment_data": {},
       "payment_channel_order_no": "P-xxx",
+      "payment_transaction_id": "PAYID-xxx",
       "payment_channel_uid": "",
       "paid_amount": 9900000,
       "paid_currency": "USD",
@@ -226,10 +219,9 @@ backend/src/app/main.py
 - API 层校验 `user_id >= 1`、`page >= 1`、`1 <= page_size <= 100`。
 - service 为类 + 模块级实例 `admin_user_profile_service = AdminUserProfileService()`,不使用 `@singleton`,不新增依赖注入。
 - profile 聚合允许读取多个业务域,但只读不写。
-- downloads 查询用 `WHERE user_id = ? ORDER BY created_at DESC, id DESC OFFSET ? LIMIT ?`;count 与列表复用同一用户条件。
+- credits 查询用 `WHERE user_id = ? ORDER BY id DESC OFFSET ? LIMIT ?`;count 与列表复用同一用户条件。
 - orders 查询复用订单 service,仅传 `user_ids=[user_id]`,不传任何状态过滤。
-- 不新增索引。`user_download_records` 已有 `idx_user_download_resource(user_id, resource_key)`,其最左前缀可服务按用户过滤;本接口是 admin 低频分页排查,单个用户下载量可接受排序开销。
-- 不新增数据表和 model 字段,不执行 schema 同步。
+- 不新增索引。`user_credit_logs` 保持无索引;本接口是 admin 低频分页排查,单个用户流水量可接受排序开销。
 
 ## 前端实现
 
@@ -245,19 +237,17 @@ admin/src/utils/time.ts
 
 ```text
 admin/src/views/OrdersView.vue
-admin/src/views/AnalyticsView.vue
-admin/src/views/TgClientView.vue
 admin/src/i18n/zh-CN.json
 admin/src/i18n/en-US.json
 ```
 
 组件规则:
 
-- `UserInfoDialog.vue` 内部持有 profile loading、downloads/orders loading、两个 tab 的分页状态。
-- 暴露 `open(userId: number): void`;每次打开重置两个分页为 1,加载 profile + 当前 tab 第一页数据。
+- `UserInfoDialog.vue` 内部持有 profile loading、credits/orders loading、各 tab 的分页状态。
+- 暴露 `open(userId: number): void`;每次打开重置分页为 1,加载 profile + 当前 tab 第一页数据。
 - modal 使用 `NModal preset="card"` 或同等 Naive UI 组件,宽度 `min(960px, calc(100vw - 32px))`。
-- 上半部分为基础信息和权益信息;下半部分为 `NTabs`:「最近下载」「订单列表」。
-- 下载表格远程分页,列为平台、链接、source ID、文件名、文件大小、扣除 Credits、时间。
+- 上半部分为基础信息和权益信息;下半部分为 `NTabs`:「积分记录」「订单列表」。
+- 积分记录表格远程分页,列为时间、积分变动、变动原因、详情。
 - 订单表格远程分页,列为订单号、商品、金额、订单状态、履约状态、支付方式、创建时间。
 - 所有用户可见文案走 `userInfo.*` i18n。
 - 所有时间展示调用 `admin/src/utils/time.ts`,固定输出 `YYYY-MM-DD HH:mm:ss` UTC+8。
@@ -268,15 +258,13 @@ admin/src/i18n/en-US.json
 | 页面 | 位置 |
 | --- | --- |
 | 订单管理 | 订单列表用户列、订单详情抽屉用户项 |
-| 数据分析 | 下载排名 tab 的用户 ID 列 |
-| TG 客户端 | 当前使用明细里的用户 ID 列 |
 
 ## 异常与空态
 
 - profile 加载失败:弹窗显示错误状态并 toast,不让页面崩溃。
-- downloads/orders 加载失败:保留 profile,当前 tab 显示错误 toast 和空表或上次数据。
-- 用户无下载记录:下载 tab 显示空态。
-- `size_bytes=null`、时间为空、链接为空:显示 `-`。
+- credits/orders 加载失败:保留 profile,当前 tab 显示错误 toast 和空表或上次数据。
+- 用户无积分记录:积分记录 tab 显示空态。
+- `metadata_json` 为空、时间为空:显示 `-`。
 - `user_id=null` 的位置不渲染入口,显示 `-`。
 
 ## 验证
@@ -301,6 +289,6 @@ pnpm test:e2e -- orders.spec.ts
 
 人工:
 
-- 订单管理、数据分析下载排名、TG 客户端当前使用明细的用户 ID 都能打开同一个弹窗。
-- 弹窗展示 IP(归属地)、Credits、订阅状态;下载 tab 和订单 tab 可分页。
-- 字段缺失、无下载记录、用户不存在不导致页面崩溃。
+- 订单管理的用户 ID 能打开同一个弹窗。
+- 弹窗展示 IP(归属地)、Credits、订阅状态;积分记录 tab 和订单 tab 可分页。
+- 字段缺失、无积分记录、用户不存在不导致页面崩溃。

@@ -1,20 +1,25 @@
 """管理后台通用用户信息弹窗聚合服务。
 
-本服务只读聚合用户基础资料、Credits、订阅和订单记录。它服务 admin
+本服务只读聚合用户基础资料、Credits、订阅、积分记录和订单记录。它服务 admin
 排查界面，允许跨业务域读取，但不写入任何业务数据。
 """
 
 from __future__ import annotations
 
+from sqlalchemy import desc, func, select
 
 from app.api.admin.admin_order_response import serialize_admin_order
+from app.core.database import get_async_session
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
+from app.models.user_credit_log_model import UserCreditLogModel
 from app.models.user_model import UserModel
 from app.schemas.admin_user_schema import (
     AdminUserAccountStatus,
     AdminUserBasicInfo,
+    AdminUserCreditRecordData,
     AdminUserCreditsInfo,
+    AdminUserCreditsPageData,
     AdminUserOrderRecordData,
     AdminUserOrdersPageData,
     AdminUserProfileData,
@@ -73,6 +78,48 @@ class AdminUserProfileService:
                     serialize_admin_order(order, user_email)
                 )
                 for order in orders
+            ],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
+
+    async def get_credits(
+        self,
+        *,
+        user_id: int,
+        page: int,
+        page_size: int,
+    ) -> AdminUserCreditsPageData:
+        """按流水 ID 倒序分页读取用户积分记录。"""
+        await self._get_user(user_id, action="admin_user_credits")
+        offset = (page - 1) * page_size
+        model = UserCreditLogModel
+
+        async with get_async_session() as db:
+            total_result = await db.execute(
+                select(func.count()).select_from(model).where(model.user_id == user_id)
+            )
+            rows_result = await db.execute(
+                select(model)
+                .where(model.user_id == user_id)
+                .order_by(desc(model.id))
+                .offset(offset)
+                .limit(page_size)
+            )
+            total = int(total_result.scalar_one())
+            records = list(rows_result.scalars().all())
+
+        return AdminUserCreditsPageData(
+            rows=[
+                AdminUserCreditRecordData(
+                    id=record.id,
+                    change_amount=record.change_amount,
+                    reason=record.reason,
+                    metadata_json=record.metadata_json,
+                    created_at=record.created_at,
+                )
+                for record in records
             ],
             total=total,
             page=page,

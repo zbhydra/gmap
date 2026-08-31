@@ -116,6 +116,56 @@ async def test_admin_user_profile_not_found_returns_user_error(
     assert body["data"] == {"user_id": 999999999}
 
 
+@pytest.mark.asyncio
+async def test_admin_user_credits_are_paginated_by_id_desc(
+    async_client,
+    admin_user_api_auth,
+    make_test_email,
+) -> None:
+    """积分记录按流水 ID 倒序分页。"""
+    user_id, _email = await _create_user("admin-user-credits", make_test_email)
+    first = await user_credit_service.add_balance(
+        user_id=user_id,
+        amount=10,
+        reason="registration_bonus",
+    )
+    second = await user_credit_service.cut_balance(
+        user_id=user_id,
+        amount=2,
+        reason="download_charge",
+        metadata_json='{"platform":"web"}',
+    )
+    third = await user_credit_service.add_balance(
+        user_id=user_id,
+        amount=5,
+        reason="checkin_reward",
+    )
+
+    page_one_response = await async_client.get(
+        f"/api/admin/users/{user_id}/credits",
+        params={"page": 1, "page_size": 2},
+    )
+    page_two_response = await async_client.get(
+        f"/api/admin/users/{user_id}/credits",
+        params={"page": 2, "page_size": 2},
+    )
+    page_one = page_one_response.json()
+    page_two = page_two_response.json()
+
+    assert page_one_response.status_code == 200
+    assert page_one["code"] == 10000
+    assert page_one["data"]["total"] == 3
+    assert [row["id"] for row in page_one["data"]["rows"]] == [
+        third.credit_log_id,
+        second.credit_log_id,
+    ]
+    assert page_one["data"]["rows"][1]["change_amount"] == -2
+    assert page_one["data"]["rows"][1]["metadata_json"] == '{"platform":"web"}'
+    assert page_two_response.status_code == 200
+    assert page_two["code"] == 10000
+    assert [row["id"] for row in page_two["data"]["rows"]] == [first.credit_log_id]
+
+
 async def _create_order(
     *,
     user_id: int,
