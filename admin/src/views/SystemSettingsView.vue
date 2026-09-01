@@ -4,6 +4,7 @@
   功能：
   1. 刷新当前业务进程内配置读取缓存，并展示刷新时间和服务列表。
   2. 查询、生成和重新生成当前管理员外部 API Key；完整 key 仅在弹窗中一次性展示。
+  3. 维护 gosom 引擎多条 API 配置（地址 / Key / 权重，动态增删行，整表保存）。
 -->
 <template>
   <div class="system-settings-view">
@@ -120,30 +121,65 @@
           :tab="t('systemSettings.tabGosomApi')"
         >
           <section>
+            <NText class="gosom-hint" depth="3">
+              {{ t("systemSettings.gosomWeightHint") }}
+            </NText>
             <NSpin :show="gosomLoading">
-              <div class="gosom-form">
-                <div class="gosom-field">
-                  <NText class="gosom-label">
-                    {{ t("systemSettings.gosomBaseUrl") }}
-                  </NText>
+              <div class="gosom-rows">
+                <div
+                  v-if="gosomRows.length > 0"
+                  class="gosom-row gosom-row-head"
+                >
+                  <NText>{{ t("systemSettings.gosomBaseUrl") }}</NText>
+                  <NText>{{ t("systemSettings.gosomApiKey") }}</NText>
+                  <NText>{{ t("systemSettings.gosomWeight") }}</NText>
+                  <span class="gosom-row-op" />
+                </div>
+                <div
+                  v-for="(row, index) in gosomRows"
+                  :key="index"
+                  class="gosom-row"
+                >
                   <NInput
-                    v-model:value="gosomConfig.base_url"
+                    v-model:value="row.base_url"
                     :placeholder="t('systemSettings.gosomBaseUrlPlaceholder')"
                     :disabled="gosomLoading"
                   />
-                </div>
-                <div class="gosom-field">
-                  <NText class="gosom-label">
-                    {{ t("systemSettings.gosomApiKey") }}
-                  </NText>
                   <NInput
-                    v-model:value="gosomConfig.api_key"
+                    v-model:value="row.api_key"
                     :placeholder="t('systemSettings.gosomApiKeyPlaceholder')"
                     :disabled="gosomLoading"
                   />
+                  <NInputNumber
+                    v-model:value="row.weight"
+                    class="gosom-weight-input"
+                    :min="1"
+                    :max="10000"
+                    :precision="0"
+                    :placeholder="t('systemSettings.gosomWeightPlaceholder')"
+                    :disabled="gosomLoading"
+                  />
+                  <NButton
+                    class="gosom-row-op"
+                    quaternary
+                    type="error"
+                    size="small"
+                    :disabled="gosomLoading"
+                    @click="removeGosomRow(index)"
+                  >
+                    {{ t("systemSettings.gosomRemoveRow") }}
+                  </NButton>
                 </div>
               </div>
             </NSpin>
+            <NButton
+              class="gosom-add"
+              dashed
+              :disabled="gosomLoading"
+              @click="addGosomRow"
+            >
+              {{ t("systemSettings.gosomAddRow") }}
+            </NButton>
             <div class="tab-actions">
               <NButton
                 type="primary"
@@ -192,6 +228,7 @@ import {
   NDescriptions,
   NDescriptionsItem,
   NInput,
+  NInputNumber,
   NList,
   NListItem,
   NModal,
@@ -212,9 +249,16 @@ import {
   saveGosomApiConfig,
   type AdminApiKeyMeta,
   type ConfigCacheRefreshResult,
-  type GosomApiConfig,
+  type GosomApiItem,
 } from "@/api/system-settings";
 import { formatAdminTimeMs } from "@/utils/time";
+
+/** gosom 配置编辑行；weight 在数字输入框被清空时为 null，保存前统一拦截。 */
+interface GosomApiRow {
+  base_url: string;
+  api_key: string;
+  weight: number | null;
+}
 
 const { t } = useI18n();
 const dialog = useDialog();
@@ -230,7 +274,7 @@ const cacheRefreshResult = ref<ConfigCacheRefreshResult | null>(null);
 const apiKeyMeta = ref<AdminApiKeyMeta | null>(null);
 const generatedApiKey = ref("");
 const showGeneratedApiKeyModal = ref(false);
-const gosomConfig = ref<GosomApiConfig>({ base_url: "", api_key: "" });
+const gosomRows = ref<GosomApiRow[]>([]);
 
 /** 只有已知 API Key 状态时才允许生成，避免加载失败时绕过重新生成确认。 */
 const canGenerateApiKey = computed(
@@ -361,11 +405,12 @@ async function handleCopyGeneratedApiKey() {
   }
 }
 
-/** 加载 gosom 引擎 API 配置。 */
+/** 加载 gosom 引擎 API 配置为可编辑行。 */
 async function loadGosomConfig() {
   gosomLoading.value = true;
   try {
-    gosomConfig.value = await getGosomApiConfig();
+    const data = await getGosomApiConfig();
+    gosomRows.value = data.items.map((item) => ({ ...item }));
   } catch (error) {
     console.error("SystemSettingsView.loadGosomConfig() 加载失败:", error);
     message.error(
@@ -379,18 +424,33 @@ async function loadGosomConfig() {
   }
 }
 
-/** 保存 gosom 引擎 API 配置；两端均为必填，空白视为未填。 */
+/** 新增一行空 gosom API 配置。 */
+function addGosomRow() {
+  gosomRows.value.push({ base_url: "", api_key: "", weight: 1 });
+}
+
+/** 删除指定行的 gosom API 配置。 */
+function removeGosomRow(index: number) {
+  gosomRows.value.splice(index, 1);
+}
+
+/** 保存 gosom 引擎 API 配置；任一行地址 / Key / 权重缺失时前端拦截不发请求。 */
 async function handleSaveGosomConfig() {
-  const base_url = gosomConfig.value.base_url.trim();
-  const api_key = gosomConfig.value.api_key.trim();
-  if (!base_url || !api_key) {
-    message.warning(t("systemSettings.gosomRequired"));
-    return;
+  const items: GosomApiItem[] = [];
+  for (const row of gosomRows.value) {
+    const base_url = row.base_url.trim();
+    const api_key = row.api_key.trim();
+    if (!base_url || !api_key || row.weight === null) {
+      message.warning(t("systemSettings.gosomRequired"));
+      return;
+    }
+    items.push({ base_url, api_key, weight: row.weight });
   }
 
   gosomSaving.value = true;
   try {
-    gosomConfig.value = await saveGosomApiConfig({ base_url, api_key });
+    const data = await saveGosomApiConfig({ items });
+    gosomRows.value = data.items.map((item) => ({ ...item }));
     message.success(t("systemSettings.gosomSaveSuccess"));
   } catch (error) {
     console.error("SystemSettingsView.handleSaveGosomConfig() 保存失败:", error);
@@ -431,20 +491,34 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
-.gosom-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.gosom-hint {
+  display: block;
+  margin-bottom: 12px;
 }
 
-.gosom-field {
+.gosom-rows {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
-.gosom-label {
-  font-size: 14px;
+.gosom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) 140px auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.gosom-weight-input {
+  width: 100%;
+}
+
+.gosom-row-op {
+  justify-self: end;
+}
+
+.gosom-add {
+  margin-top: 12px;
 }
 
 .api-key-box {
@@ -475,6 +549,18 @@ onMounted(() => {
 
   .tab-actions {
     justify-content: stretch;
+  }
+
+  .gosom-row {
+    grid-template-columns: 100%;
+  }
+
+  .gosom-row-head {
+    display: none;
+  }
+
+  .gosom-row-op {
+    justify-self: start;
   }
 }
 </style>

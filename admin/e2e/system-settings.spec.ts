@@ -7,7 +7,7 @@
  * - 生成成功后完整 API Key 只在一次性弹窗展示，关闭即消失。
  * - 完整 API Key 不写入 localStorage。
  * - 刷新配置缓存命中正确 POST，并展示刷新结果。
- * - Gosom API 配置回显、必填拦截与保存归一化。
+ * - Gosom API 配置回显、必填拦截、动态增删行与保存归一化。
  */
 import { expect, test, type Page } from "@playwright/test";
 import { registerE2eBrowserIdentity } from "../scripts/playwright-browser-identity.mjs";
@@ -52,12 +52,20 @@ interface ConfigCacheRefreshMockData {
   refreshed_at: number;
 }
 
-/** gosom 引擎 API 配置 mock。 */
-interface GosomApiConfigMockData {
+/** gosom 引擎单条 API 配置 mock。 */
+interface GosomApiItemMockData {
   /** gosom 引擎 API 根地址。 */
   base_url: string;
   /** gosom 引擎 API Key。 */
   api_key: string;
+  /** 选择权重。 */
+  weight: number;
+}
+
+/** gosom 引擎 API 配置 mock。 */
+interface GosomApiConfigMockData {
+  /** 全部 API 配置行。 */
+  items: GosomApiItemMockData[];
 }
 
 /** 本文件 route.fulfill 可返回的数据联合。 */
@@ -128,8 +136,10 @@ async function mockSystemSettingsApi(page: Page) {
   let generateCallCount = 0;
   let refreshCacheCallCount = 0;
   let gosomConfig: GosomApiConfigMockData = {
-    base_url: "https://gosom.example.com",
-    api_key: "gosom_key_old",
+    items: [
+      { base_url: "https://gosom.example.com", api_key: "gosom_key_old", weight: 1 },
+      { base_url: "https://backup.example.com", api_key: "gosom_key_backup", weight: 3 },
+    ],
   };
   let gosomSaveCallCount = 0;
   let gosomLastPayload: GosomApiConfigMockData | null = null;
@@ -145,10 +155,12 @@ async function mockSystemSettingsApi(page: Page) {
     gosomLastPayload = JSON.parse(
       route.request().postData() ?? "{}",
     ) as GosomApiConfigMockData;
-    // 镜像后端契约：保存前剥掉 base_url 末尾斜杠，并在响应中回显归一化结果。
+    // 镜像后端契约：保存前剥掉每行 base_url 末尾斜杠，并在响应中回显归一化结果。
     gosomConfig = {
-      base_url: gosomLastPayload.base_url.replace(/\/+$/, ""),
-      api_key: gosomLastPayload.api_key,
+      items: gosomLastPayload.items.map((item) => ({
+        ...item,
+        base_url: item.base_url.replace(/\/+$/, ""),
+      })),
     };
     await route.fulfill(successResponse(gosomConfig));
   });
@@ -266,37 +278,57 @@ test("刷新配置缓存命中 POST 并展示成功结果", async ({ page }) => 
   expect(api.refreshCacheCallCount()).toBe(1);
 });
 
-test("Gosom API 配置回显、必填拦截与保存归一化", async ({ page }) => {
+test("Gosom API 配置回显、必填拦截、动态增删行与保存归一化", async ({ page }) => {
   await loginAsAdmin(page);
   const api = await mockSystemSettingsApi(page);
 
   await page.goto("/system-settings");
   await openSettingsTab(page, "gosom-api");
 
-  const baseUrlInput = page.getByPlaceholder("如 https://gosom.example.com");
-  const apiKeyInput = page.getByPlaceholder("gosom 引擎 API Key");
-  await expect(baseUrlInput).toHaveValue("https://gosom.example.com");
-  await expect(apiKeyInput).toHaveValue("gosom_key_old");
+  const baseUrlInputs = page.getByPlaceholder("如 https://gosom.example.com");
+  const apiKeyInputs = page.getByPlaceholder("gosom 引擎 API Key");
+  const weightInputs = page.getByPlaceholder("1-10000");
+  await expect(baseUrlInputs.nth(0)).toHaveValue("https://gosom.example.com");
+  await expect(baseUrlInputs.nth(1)).toHaveValue("https://backup.example.com");
+  await expect(apiKeyInputs.nth(1)).toHaveValue("gosom_key_backup");
+  await expect(weightInputs.nth(1)).toHaveValue("3");
 
-  // 任一字段为空白时前端直接拦截，不发保存请求。
-  await apiKeyInput.fill("");
+  // 任一行字段为空白时前端直接拦截，不发保存请求。
+  await apiKeyInputs.nth(0).fill("");
   await page.getByRole("button", { name: "保存" }).click();
   await expect(
-    page.locator(".n-message__content", { hasText: "API 地址和 API Key 不能为空" }),
+    page.locator(".n-message__content", {
+      hasText: "每行的 API 地址、API Key 和权重均不能为空",
+    }),
   ).toBeVisible();
   expect(api.gosomSaveCallCount()).toBe(0);
+  await apiKeyInputs.nth(0).fill("gosom_key_old");
+
+  // 动态增删行：新增第三行并填写，删除原第二行。
+  await page.getByRole("button", { name: "添加 API" }).click();
+  await expect(baseUrlInputs).toHaveCount(3);
+  await baseUrlInputs.nth(2).fill("https://new.example.com");
+  await apiKeyInputs.nth(2).fill("gosom_key_new");
+  await weightInputs.nth(2).fill("10");
+  await page.getByRole("button", { name: "删除" }).nth(1).click();
+  await expect(baseUrlInputs).toHaveCount(2);
 
   // 保存命中 POST；请求体原样携带输入值，输入框回填后端归一化(剥末尾斜杠)结果。
-  await baseUrlInput.fill("https://gosom.internal:8080/");
-  await apiKeyInput.fill("gosom_key_new");
+  await baseUrlInputs.nth(0).fill("https://gosom.internal:8080/");
   await page.getByRole("button", { name: "保存" }).click();
   await expect(
     page.locator(".n-message__content", { hasText: "Gosom API 配置已保存" }),
   ).toBeVisible();
   expect(api.gosomSaveCallCount()).toBe(1);
   expect(api.gosomLastPayload()).toEqual({
-    base_url: "https://gosom.internal:8080/",
-    api_key: "gosom_key_new",
+    items: [
+      {
+        base_url: "https://gosom.internal:8080/",
+        api_key: "gosom_key_old",
+        weight: 1,
+      },
+      { base_url: "https://new.example.com", api_key: "gosom_key_new", weight: 10 },
+    ],
   });
-  await expect(baseUrlInput).toHaveValue("https://gosom.internal:8080");
+  await expect(baseUrlInputs.nth(0)).toHaveValue("https://gosom.internal:8080");
 });

@@ -8,7 +8,7 @@
 
 - 刷新配置读取缓存。
 - 生成 / 轮换当前管理员的外部 API Key。
-- 维护 gosom 抓取引擎的 API 地址与 Key(存 `system_data`)。
+- 维护 gosom 抓取引擎的多条 API 配置(地址 / Key / 权重,存 `system_data`,调用方按权重随机选用)。
 
 除这些明确入口外,它不是通用配置编辑器。
 
@@ -138,7 +138,7 @@ API Key 生成格式:
 
 ## Gosom API 配置
 
-系统设置页维护 gosom 抓取引擎(014 云端线 / ROADMAP B4)的 API 地址与 Key,后续抓取调用方从 `system_data` 读取。Key 按运维决策(2026-09-01 hydra)明文存储,不加密、不掩码回显。
+系统设置页维护 gosom 抓取引擎(014 云端线 / ROADMAP B4)的多条 API 配置,每条一行「地址 / Key / 权重」,后续抓取调用方按权重加权随机取一条使用。Key 按运维决策(2026-09-01 hydra)明文存储,不加密、不掩码回显。
 
 ### 数据模型
 
@@ -147,42 +147,50 @@ API Key 生成格式:
 | 字段 | 值 |
 | --- | --- |
 | `data_key` | `gosom_api` |
-| `data_value` | JSON 对象 `{"base_url": string, "api_key": string}` |
+| `data_value` | JSON 数组 `[{"base_url": string, "api_key": string, "weight": int}]` |
 
 存储规则:
 
 - 键名常量 `GOSOM_API_DATA_KEY` 收敛在 `app/constants/gosom.py`,消费方禁止散落硬编码。
-- `base_url` 保存前剥掉首尾空白与末尾斜杠,消费方直接拼路径不会出现双斜杠。
-- 读写统一走 `system_data_service.get/set`,保存后自动清空该 service 的 30 分钟读取缓存,本进程立即拿到新值。
-- 不做多组配置、密钥轮换历史与调用审计。
-- 保存动作本身已即时清空当前进程缓存,无需再点「刷新配置缓存」;多进程部署时其他进程受 30 分钟 TTL 约束,与该入口同边界。
+- 读写与选取统一走 `gosom_api_service`(`get_items` / `save_items` / `pick`),底层仍是 `system_data_service.get/set`;保存后自动清空 30 分钟读取缓存,本进程立即拿到新值,无需再点「刷新配置缓存」,多进程部署时其他进程受 30 分钟 TTL 约束,与该入口同边界。
+- `base_url` 归一化(剥首尾空白 + 末尾斜杠)由 pydantic schema 完成,消费方直接拼路径不会出现双斜杠。
+- 整表覆盖保存:`items` 为空数组即清空全部配置;行数上限 100,权重取值 1-10000。
+- 2026-09-01 前的旧格式(单对象 `{"base_url", "api_key"}`)在 `get_items` 读取时迁移为权重 1 的单行,下次保存即写回数组格式,无需数据迁移脚本。
+- 不做密钥轮换历史与调用审计。
+
+### 选取规则
+
+抓取调用方统一通过 `gosom_api_service.pick()` 取 API:按各行 `weight` 加权随机选择一条(`random.choices`);未配置时返回 `None`,由调用方自行处理。
 
 ### 接口
 
 | 方法 | 路径 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
-| GET | `/api/admin/system-settings/gosom-api` | `get_admin_user` | 查询配置;未配置时两个字段为空字符串 |
-| POST | `/api/admin/system-settings/gosom-api` | `get_admin_user` | 保存配置 |
+| GET | `/api/admin/system-settings/gosom-api` | `get_admin_user` | 查询配置列表;未配置时 `items` 为空数组 |
+| POST | `/api/admin/system-settings/gosom-api` | `get_admin_user` | 整表覆盖保存配置 |
 
 请求与响应 `data` 同构:
 
 | 字段 | 类型 | 必传 | 说明 |
 | --- | --- | --- | --- |
-| `base_url` | string | 是 | http(s):// 开头,≤500 字符 |
-| `api_key` | string | 是 | ≤500 字符 |
+| `items` | array | 是 | 全部配置行;可为空数组(清空配置),≤100 行 |
+| `items[].base_url` | string | 是 | http(s):// 开头,≤500 字符,末尾斜杠保存前剥掉 |
+| `items[].api_key` | string | 是 | ≤500 字符 |
+| `items[].weight` | int | 是 | 1-10000,加权随机选取的权重 |
 
 校验由 pydantic schema 完成,失败走全局 `VALIDATION_ERROR`,不新增错误码。
 
 ### 前端
 
-- "Gosom API" tab:「API 地址」「API Key」两个必填输入框 + 保存按钮;进入页面即加载回显。
-- 任一字段空白时前端直接拦截提示,不发请求。
-- 保存成功以后端返回值(归一化后)回填输入框。
+- "Gosom API" tab:配置行列表(地址 / Key / 权重三列 + 行删除按钮)+「添加 API」按钮 + 保存按钮;进入页面即加载回显,tab 顶部说明权重语义。
+- 增删改都在前端行状态上完成,点保存才整表提交;任一行地址 / Key / 权重缺失时前端直接拦截提示,不发请求。
+- 保存成功以后端返回值(归一化后)回填全部行。
 
 ### 验收
 
-- 未配置时打开 tab 显示空输入框;保存后 `system_data` 出现 `gosom_api` 行,重新打开回显一致且末尾斜杠被剥掉。
-- 只填其一无法保存;后端校验失败展示统一错误提示,不清理登录态。
+- 未配置时打开 tab 只有「添加 API」入口;添加两行保存后 `system_data` 的 `gosom_api` 为两行数组,重新打开回显一致且末尾斜杠被剥掉。
+- 存在未填完整的行时无法保存;删除全部行后保存即清空配置,重新打开 `items` 为空。
+- 旧单对象格式存量数据读取时自动按权重 1 的单行回显。
 
 ## 实现锚点
 
@@ -190,4 +198,4 @@ API Key 生成格式:
 | --- | --- | --- |
 | 系统设置 | `@backend/src/app/api/admin/admin_system_settings.py` | `@backend/src/app/services/admin_system_settings_service.py` |
 | API Key | 同上 | `@backend/src/app/services/admin_api_key_service.py` |
-| Gosom API 配置 | 同上 | 复用 `@backend/src/app/services/system_data_service.py`;键名常量在 `@backend/src/app/constants/gosom.py` |
+| Gosom API 配置 | 同上 | `@backend/src/app/services/gosom_api_service.py`(读写 + 加权随机选取);键名常量在 `@backend/src/app/constants/gosom.py` |

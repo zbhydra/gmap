@@ -42,12 +42,20 @@ export interface ConfigCacheRefreshResult {
   refreshed_at: number;
 }
 
-/** gosom 引擎 API 配置；未配置时两个字段为空字符串。 */
-export interface GosomApiConfig {
+/** gosom 引擎单条 API 配置；weight 参与按权重随机选择。 */
+export interface GosomApiItem {
   /** gosom 引擎 API 根地址，http(s):// 开头，无末尾斜杠。 */
   base_url: string;
   /** gosom 引擎 API Key，明文保存。 */
   api_key: string;
+  /** 选择权重，1-10000；多条配置按权重加权随机选用。 */
+  weight: number;
+}
+
+/** gosom 引擎 API 配置；整表覆盖保存，items 为空即清空配置。 */
+export interface GosomApiConfig {
+  /** 全部 API 配置行。 */
+  items: GosomApiItem[];
 }
 
 /** 查询当前管理员 API Key 元信息。 */

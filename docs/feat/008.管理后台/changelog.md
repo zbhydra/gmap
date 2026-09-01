@@ -1,5 +1,19 @@
 # 008 · 管理后台 · 变更记录
 
+## 2026-09-01 Gosom API 配置升级为多条加权随机
+
+**为什么**:单条 API 无法表达多套上游(备用 / 分流),需要「地址 / Key / 权重」三列多行配置,调用方按权重随机选用。
+
+**变更**:
+
+- `system_data` 的 `gosom_api` 由单对象改为 JSON 数组 `[{"base_url", "api_key", "weight"}]`,整表覆盖保存,空数组即清空;旧单对象格式读取时自动迁移为权重 1 的单行,无需迁移脚本。
+- 新增 `gosom_api_service`(`get_items` / `save_items` / `pick`):收敛配置读写与按权重加权随机选取(`random.choices`),后续抓取调用方统一走 `pick()`;`base_url` 归一化(剥首尾空白 + 末尾斜杠)下沉到 pydantic schema。
+- `GET/POST /api/admin/system-settings/gosom-api` 请求/响应改为 `{"items": [...]}`;weight 校验 1-10000,行数上限 100。
+- admin「Gosom API」tab 改为动态行(地址 / Key / 权重三列 + 行删除 + 添加 API),增删改在前端行状态完成后整表提交;e2e 用例同步为多行增删 + 归一化断言。
+- `tech-系统设置.md` 章节与 `feat.md` 范围 / 验收同步。
+
+**验收**:backend `black` / `ruff` / `mypy` 通过,本地 7601 冒烟启动路由可达(无 token 401),service 逻辑桩冒烟(旧格式迁移 / 归一化 / 3:1 加权分布 / 空数组清空)通过;admin `pnpm build` 通过;`system-settings.spec.ts` e2e 6 条全绿。
+
 ## 2026-09-01 系统设置新增 Gosom API 配置
 
 **为什么**:云端抓取引擎 gosom(014 / ROADMAP B4)接入前,后台需要一处入口维护其 API 地址与 Key;按 hydra 决策(2026-09-01)明文存 `system_data`,不做加密与掩码。

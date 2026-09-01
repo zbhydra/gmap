@@ -6,11 +6,10 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from app.api.admin_dependencies import AdminContext, get_admin_user
-from app.constants.gosom import GOSOM_API_DATA_KEY
 from app.schemas.admin_schema import GosomApiConfigRequest
 from app.services.admin_api_key_service import admin_api_key_service
 from app.services.admin_system_settings_service import admin_system_settings_service
-from app.services.system_data_service import system_data_service
+from app.services.gosom_api_service import gosom_api_service
 from app.utils.response import ResponseUtils
 
 router = APIRouter(prefix="/system-settings", tags=["admin-system-settings"])
@@ -47,15 +46,9 @@ async def refresh_config_cache(
 async def get_gosom_api_config(
     _admin: AdminContext = Depends(get_admin_user),
 ) -> JSONResponse:
-    """查询 gosom 引擎 API 配置；未配置时两个字段返回空字符串。"""
-    value = await system_data_service.get(GOSOM_API_DATA_KEY)
-    config = value if isinstance(value, dict) else {}
-    return ResponseUtils.ok(
-        {
-            "base_url": str(config.get("base_url") or ""),
-            "api_key": str(config.get("api_key") or ""),
-        }
-    )
+    """查询 gosom 引擎 API 配置列表；未配置时 items 为空数组。"""
+    items = await gosom_api_service.get_items()
+    return ResponseUtils.ok({"items": [item.model_dump() for item in items]})
 
 
 @router.post("/gosom-api")
@@ -63,12 +56,6 @@ async def save_gosom_api_config(
     req: GosomApiConfigRequest,
     _admin: AdminContext = Depends(get_admin_user),
 ) -> JSONResponse:
-    """保存 gosom 引擎 API 配置到 system_data；key 按运维决策明文存储，不加密。"""
-    # schema 已剥首尾空白，这里只剥末尾斜杠，保证消费方拼路径不出现双斜杠。
-    base_url = req.base_url.rstrip("/")
-    api_key = req.api_key
-    await system_data_service.set(
-        GOSOM_API_DATA_KEY,
-        {"base_url": base_url, "api_key": api_key},
-    )
-    return ResponseUtils.ok({"base_url": base_url, "api_key": api_key})
+    """整表保存 gosom 引擎 API 配置到 system_data；key 按运维决策明文存储，不加密。"""
+    items = await gosom_api_service.save_items(req.items)
+    return ResponseUtils.ok({"items": [item.model_dump() for item in items]})
