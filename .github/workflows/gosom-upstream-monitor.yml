@@ -1,0 +1,337 @@
+# =============================================================================
+# gosom 上游巡检（每日定时）
+#
+# 目的：每天检查上游 gosom/google-maps-scraper（GOSOM，线上抓取引擎本体）与
+#       gosom/scrapemate（SCRAPEMATE，引擎依赖的爬虫框架库）main 的新提交是否
+#       影响本项目线上抓取引擎（解析 schema、Maps 页面解析逻辑、Playwright/
+#       浏览器层、SaaS serve/worker、安全修复），按
+#       docs/research/gosom-upstream-monitor.md 的 SOP 推进基线、产出报告、
+#       有影响时告警并给出「是否建议更新线上镜像」结论。
+#
+# 流程：
+#   checkout 本仓库（不持久化凭证）
+#     → bash: ls-remote 上游 HEAD + 从巡检文档提取基线 sha
+#     → actions/cache: 以 HEAD 为 key 恢复 .upstream/（7 天未用才驱逐，
+#     │               每日运行等于长期缓存；HEAD 变更时 restore 命中旧缓存走增量）
+#     → bash: 增量 fetch 两个上游 main 全历史到 .upstream/
+#     → bash: 组装巡检 prompt（注入基线/HEAD/是否有变化/影响判定规则摘要）
+#     → codex exec: 沙箱内禁网 + 可写工作区，按 SOP 分析 diff、更新巡检文档
+#     → bash: 变更白名单校验（只放行巡检文档，越界即失败）→ commit + push main
+#     → bash: 解析报告尾部机器标记 → 有影响时飞书通知 + 开 Issue
+#     → 任一步失败：job 失败（基线自然不推进，符合 SOP「检查失败不得推进基线」）+ 飞书告警
+#
+# 设计要点：
+#   - 确定性步骤（网络、git）全在 bash；codex 只做判断，离线分析，不碰网络
+#   - 基线状态在巡检文档内，无额外状态管理；漏跑一天不影响覆盖
+#     （检查区间永远是 基线 → 最新 HEAD）
+#   - checkout 用 persist-credentials: false，codex 运行期拿不到任何 git
+#     凭证，机械保证 SOP「不提交不 push」；push 在独立步骤用一次性
+#     GITHUB_TOKEN 远端 URL 完成
+#   - 模型名不在此指定语义，config 中取值由 sub2api 渠道侧映射
+#
+# 与参考实现（extension-tg-download telegram-dom-monitor）的同构差异：
+#   - 上游为 gosom 两仓库 main 分支（非 master）
+#   - gmap 的 .gitignore 未忽略 .upstream/（不能改 .gitignore），白名单
+#     校验显式排除该巡检自建目录，其余同构
+#
+# 依赖 Secrets（Settings → Secrets and variables → Actions）：
+#   - SUB2API_BASE_URL：sub2api 地址（裸域名，如 https://sub2api.example.com，
+#     不带 /v1 等后缀；codex config 的 base_url 形态）
+#   - SUB2API_KEY：sub2api 生成的 API key（写入 auth.json 的 OPENAI_API_KEY
+#     字段，requires_openai_auth 认证的实际载体）
+#   - FEISHU_WEBHOOK：飞书群自定义机器人 webhook（安全设置关键词需含「GOSOM巡检」）
+#
+# Codex 接入方式：不用 codex-action 的 openai-api-key/responses-api-endpoint
+# （其内置本地 HTTP 代理只支持 SSE，而 sub2api 走 WebSocket v2 + OpenAI
+# 登录态认证，两者不兼容——参考实现首跑断流 5 次的根因），改为写一份与本地
+# ~/.codex/config.toml 一致的配置 + auth.json，codex exec 直连 sub2api。
+# =============================================================================
+---
+name: GOSOM 上游巡检
+
+on:
+  schedule:
+    # UTC 3:23 = 北京 11:23；避开整点，降低 GitHub schedule 高峰延迟
+    - cron: '23 3 * * *'
+  # 手动触发：调试 / 补跑
+  workflow_dispatch:
+
+# 防止 schedule 与手动触发重叠执行；排队而非取消（取消会浪费已消耗的 token）
+concurrency:
+  group: gosom-upstream-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write # 写回巡检基线 commit
+  issues: write   # 有影响项时开 Issue
+
+env:
+  # 巡检 SOP 文档（也是唯一允许 codex 修改的文件）
+  MONITOR_DOC: docs/research/gosom-upstream-monitor.md
+  UPSTREAM_GOSOM: https://github.com/gosom/google-maps-scraper.git
+  UPSTREAM_SCRAPEMATE: https://github.com/gosom/scrapemate.git
+
+jobs:
+  patrol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      # 不持久化凭证：codex 步骤运行时仓库远端无 token，无法 push
+      - name: Checkout 本仓库
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      # ── 确定性步骤：上游 HEAD 与文档基线 ─────────────────────────────
+      - name: 读取上游 HEAD 与文档基线
+        id: heads
+        run: |
+          set -euo pipefail
+          GOSOM_HEAD=$(git ls-remote "$UPSTREAM_GOSOM" refs/heads/main | cut -f1)
+          SCRAPEMATE_HEAD=$(git ls-remote "$UPSTREAM_SCRAPEMATE" refs/heads/main | cut -f1)
+          # 基线 sha 从巡检文档「上游与当前基线」表格提取：GOSOM/SCRAPEMATE 行第一个 40 位 hex
+          GOSOM_BASE=$(grep -E '^\| GOSOM \|' "$MONITOR_DOC" | grep -oE '[0-9a-f]{40}' | head -1)
+          SCRAPEMATE_BASE=$(grep -E '^\| SCRAPEMATE \|' "$MONITOR_DOC" | grep -oE '[0-9a-f]{40}' | head -1)
+          if [ -z "$GOSOM_HEAD" ] || [ -z "$SCRAPEMATE_HEAD" ] || [ -z "$GOSOM_BASE" ] || [ -z "$SCRAPEMATE_BASE" ]; then
+            echo "::error::上游 HEAD 或基线提取失败 GOSOM_HEAD=$GOSOM_HEAD SCRAPEMATE_HEAD=$SCRAPEMATE_HEAD GOSOM_BASE=$GOSOM_BASE SCRAPEMATE_BASE=$SCRAPEMATE_BASE"
+            exit 1
+          fi
+          CHANGED=false
+          if [ "$GOSOM_HEAD" != "$GOSOM_BASE" ] || [ "$SCRAPEMATE_HEAD" != "$SCRAPEMATE_BASE" ]; then
+            CHANGED=true
+          fi
+          {
+            echo "gosom_head=$GOSOM_HEAD"
+            echo "scrapemate_head=$SCRAPEMATE_HEAD"
+            echo "gosom_base=$GOSOM_BASE"
+            echo "scrapemate_base=$SCRAPEMATE_BASE"
+            echo "changed=$CHANGED"
+          } >> "$GITHUB_OUTPUT"
+
+      # ── 上游仓库缓存：HEAD 为 key，restore-keys 命中旧缓存后增量 fetch ──
+      - name: 缓存 GOSOM 上游仓库
+        uses: actions/cache@v4
+        with:
+          path: .upstream/google-maps-scraper
+          key: upstream-gosom-${{ steps.heads.outputs.gosom_head }}
+          restore-keys: upstream-gosom-
+      - name: 缓存 SCRAPEMATE 上游仓库
+        uses: actions/cache@v4
+        with:
+          path: .upstream/scrapemate
+          key: upstream-scrapemate-${{ steps.heads.outputs.scrapemate_head }}
+          restore-keys: upstream-scrapemate-
+
+      - name: 增量更新上游仓库到最新 HEAD
+        run: |
+          set -euo pipefail
+          fetch_upstream() {
+            local url="$1" dir="$2" head="$3"
+            if [ ! -d "$dir/.git" ]; then
+              echo "冷启动：完整 clone $url（main 单分支全历史）"
+              git clone --single-branch --branch main "$url" "$dir"
+            else
+              echo "增量：fetch $url main"
+              git -C "$dir" fetch origin main
+            fi
+            # 工作树对齐最新 HEAD；codex 离线读这棵树 + 完整 git 历史
+            git -C "$dir" checkout -q -B main "$head"
+          }
+          fetch_upstream "$UPSTREAM_GOSOM" .upstream/google-maps-scraper "${{ steps.heads.outputs.gosom_head }}"
+          fetch_upstream "$UPSTREAM_SCRAPEMATE" .upstream/scrapemate "${{ steps.heads.outputs.scrapemate_head }}"
+
+      - name: 组装巡检 prompt
+        env:
+          GOSOM_HEAD: ${{ steps.heads.outputs.gosom_head }}
+          SCRAPEMATE_HEAD: ${{ steps.heads.outputs.scrapemate_head }}
+          GOSOM_BASE: ${{ steps.heads.outputs.gosom_base }}
+          SCRAPEMATE_BASE: ${{ steps.heads.outputs.scrapemate_base }}
+          CHANGED: ${{ steps.heads.outputs.changed }}
+        run: |
+          cat >/tmp/patrol-prompt.md <<EOF
+          你是 gosom 上游巡检 agent，在 GitHub Actions 中运行本仓库的每日上游巡检。
+
+          ## 任务
+
+          严格按 docs/research/gosom-upstream-monitor.md 的「每次巡检步骤」执行巡检。该文件既是 SOP 也是巡检记录，先完整读它，重点是：目的与边界、上游与当前基线、线上部署镜像、本项目消费入口、影响判定规则、上游重点文件、待确认项、变更记录。同时读 AGENTS.md 与项目公共规范；本次是只读巡检任务，不涉及本项目代码改动，交付标准中的构建要求不适用。
+
+          ## 本次输入
+
+          - 本仓库 HEAD：$GITHUB_SHA
+          - GOSOM 上游 gosom/google-maps-scraper main：基线 $GOSOM_BASE → 最新 $GOSOM_HEAD
+          - SCRAPEMATE 上游 gosom/scrapemate main：基线 $SCRAPEMATE_BASE → 最新 $SCRAPEMATE_HEAD
+          - 上游仓库已就位：.upstream/google-maps-scraper 与 .upstream/scrapemate（main 全历史，可自由 git log / git diff / 读文件；若基线不是新 HEAD 的祖先，按 SOP 步骤 4 以 force-push 处理，比较两棵完整树）
+          - 上游是否有变化：$CHANGED（false 表示两个 HEAD 均等于基线：只更新「最近巡检」并复核「待确认项」，不推进基线、不追加变更记录）
+
+          ## 影响判定规则摘要（全文以巡检文档「影响判定规则」为准）
+
+          算影响（GOSOM）：解析 schema（gmaps/entry.go 的 Entry / CsvHeaders / CsvRow 与 JSON 输出列集）；Maps 页面与内部 RPC 解析逻辑（gmaps/）；Playwright 与浏览器层（runner/webrunner、runner/installplaywright、go.mod 中 playwright-go 版本、浏览器复用与资源保护）；SaaS serve/worker（main.go、web、api、saas 的 REST 合同与鉴权、rqueue、runner/databaserunner、runner/runner.go）；安全修复（CVE、cryptoext、凭证处理）；镜像构建（Dockerfile、Dockerfile.saas）。
+          算影响（SCRAPEMATE）：browser.go、adapters/、go.mod 中 playwright-go 版本；框架核心语义（scrapemate.go、scrapemateapp、job、request_hooks、response、result、services、proxy、context）；安全修复。
+          不算影响：README、docs、examples、testdata、*_test.go、CI 与 lint 配置、admin 纯展示样式、纯版本号 bump 提交。
+          判定以行为合同变化为准并给证据（上游提交 + 路径），无法判断按有影响处理；SCRAPEMATE 结论必须注明 GOSOM 侧 go.mod 是否已跟进。
+
+          ## 硬约束（违反任一条即巡检失败）
+
+          1. 只允许修改 docs/research/gosom-upstream-monitor.md 这一个文件，改动其他任何文件都会被 CI 拒绝。
+          2. 不执行 git commit / git push，写回由外部流程完成。
+          3. 无网络可用，上游代码已在本地 .upstream/，不要尝试访问网络。
+
+          ## 产出
+
+          1. 更新巡检文档：上游有变化且检查完整成功时推进对应基线，并更新「最近巡检」「变更记录」「待确认项」；检查不完整则不得推进基线。巡检结论、证据与规则表述与文档现有写法保持一致。
+          2. 最终报告作为 final message 输出，分 GOSOM / SCRAPEMATE 两节，每节包含：旧提交 → 新提交、是否有变化、影响项列表（影响面 / 证据路径 / 上游提交 / 建议动作，无则写「无」）、是否建议更新线上镜像（ghcr.io/gosom/google-maps-scraper-saas:latest）、巡检文档是否更新。
+          3. 报告最后两行固定输出机器可读标记（CI 靠它决定是否告警，缺失或格式不符会被当作有影响处理）：
+          GOSOM_IMPACT=yes 或 no
+          SCRAPEMATE_IMPACT=yes 或 no
+          （存在影响项或待确认项或无法判断时，必须为 yes。）
+          EOF
+
+      # ── judgment 步骤：codex 按 SOP 巡检（沙箱内禁网、可写工作区）─────
+      - name: 安装 Codex CLI
+        run: npm install -g @openai/codex
+
+      # 与本地 ~/.codex/config.toml 保持一致的直连配置；差异仅有两处：
+      # - network_access/windows_wsl_setup_acknowledged 删除：前者恢复沙箱默认
+      #   禁网（SOP 要求巡检命令离线分析，模型 API 调用不受沙箱限制），
+      #   后者是 Windows 专用键，CI 为 linux
+      # - base_url 从 Secret 注入，避免自建服务域名进仓库
+      # auth.json 无需单独的 Secret：sub2api 模式下它只是 key 的载体
+      #（OPENAI_API_KEY 字段 = SUB2API_KEY），现场生成即可，无 token 轮换问题
+      - name: 写入 Codex 配置（sub2api 直连）
+        env:
+          SUB2API_BASE_URL: ${{ secrets.SUB2API_BASE_URL }}
+          SUB2API_KEY: ${{ secrets.SUB2API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUB2API_BASE_URL" ] || [ -z "$SUB2API_KEY" ]; then
+            echo "::error::缺少 SUB2API_BASE_URL（裸域名）或 SUB2API_KEY Secret"
+            exit 1
+          fi
+          mkdir -p "$HOME/.codex"
+          cat >"$HOME/.codex/config.toml" <<EOF
+          model_provider = "OpenAI"
+          model = "gpt-5.6-terra"
+          review_model = "gpt-5.6-terra"
+          model_reasoning_effort = "xhigh"
+          disable_response_storage = true
+
+          [model_providers.OpenAI]
+          name = "OpenAI"
+          base_url = "$SUB2API_BASE_URL"
+          wire_api = "responses"
+          supports_websockets = true
+          requires_openai_auth = true
+
+          [features]
+          responses_websockets_v2 = true
+          goals = true
+          EOF
+          printf '{"OPENAI_API_KEY": "%s"}' "$SUB2API_KEY" >"$HOME/.codex/auth.json"
+          chmod 600 "$HOME/.codex/auth.json"
+
+      # sandbox danger-full-access：GitHub runner 不允许 bwrap 配置 loopback
+      #（Operation not permitted），workspace-write 沙箱起不来、codex 连读文件
+      # 都无法执行。隔离边界交给 runner 本身（一次性 VM）+ 以下兜底：
+      # - checkout 未持久化凭证，本步骤 env 无任何 Secret，无 push 能力
+      # - 写回前的白名单校验拒绝巡检文档以外的一切改动
+      - name: Codex 巡检
+        id: codex
+        run: |
+          set -euo pipefail
+          codex exec \
+            --sandbox danger-full-access \
+            --output-last-message /tmp/patrol-report.txt \
+            --cd "$GITHUB_WORKSPACE" \
+            "$(cat /tmp/patrol-prompt.md)"
+
+      # ── 写回：白名单校验 + commit + push main ─────────────────────────
+      - name: 校验变更白名单并写回基线
+        id: writeback
+        run: |
+          set -euo pipefail
+          # 白名单外不得出现任何变更。gmap 的 .gitignore 未忽略 .upstream/
+          #（参考实现靠 .gitignore，本仓库不允许改 .gitignore），此处显式
+          # 排除巡检自建的上游缓存目录；它不属于本仓库内容
+          DIRTY=$(git status --porcelain -- . ':(exclude)'"$MONITOR_DOC" ':(exclude).upstream' || true)
+          if [ -n "$DIRTY" ]; then
+            echo "::error::巡检越界修改了白名单外文件，拒绝写回"
+            echo "$DIRTY"
+            exit 1
+          fi
+          git add "$MONITOR_DOC"
+          if git diff --cached --quiet; then
+            echo "文档无变化，不产生 commit"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            if [ "${{ steps.heads.outputs.changed }}" = true ]; then
+              git commit -m "docs(research): GOSOM 上游巡检基线推进 GOSOM:${{ steps.heads.outputs.gosom_head }} SCRAPEMATE:${{ steps.heads.outputs.scrapemate_head }}"
+            else
+              git commit -m "docs(research): GOSOM 上游巡检无上游变化"
+            fi
+            # 一次性 token 远端：仅此步骤具备 push 能力
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ── 报告与告警 ────────────────────────────────────────────────────
+      - name: 报告写入 Run Summary
+        if: always() && steps.codex.outcome == 'success'
+        run: |
+          {
+            echo "# GOSOM 上游巡检报告"
+            echo
+            cat /tmp/patrol-report.txt
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 有影响时飞书通知并开 Issue
+        if: steps.writeback.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+          GOSOM_HEAD: ${{ steps.heads.outputs.gosom_head }}
+          SCRAPEMATE_HEAD: ${{ steps.heads.outputs.scrapemate_head }}
+          GOSOM_BASE: ${{ steps.heads.outputs.gosom_base }}
+          SCRAPEMATE_BASE: ${{ steps.heads.outputs.scrapemate_base }}
+        run: |
+          set -euo pipefail
+          REPORT=$(cat /tmp/patrol-report.txt)
+          # 解析报告尾部机器标记；缺失/格式异常一律按有影响处理（宁误报不漏报）
+          GOSOM_FLAG=$(printf '%s\n' "$REPORT" | grep -E '^GOSOM_IMPACT=(yes|no)$' | tail -1 | cut -d= -f2 || true)
+          SCRAPEMATE_FLAG=$(printf '%s\n' "$REPORT" | grep -E '^SCRAPEMATE_IMPACT=(yes|no)$' | tail -1 | cut -d= -f2 || true)
+          [ "$GOSOM_FLAG" = yes ] || [ "$GOSOM_FLAG" = no ] || GOSOM_FLAG=yes
+          [ "$SCRAPEMATE_FLAG" = yes ] || [ "$SCRAPEMATE_FLAG" = no ] || SCRAPEMATE_FLAG=yes
+          echo "GOSOM_IMPACT=$GOSOM_FLAG SCRAPEMATE_IMPACT=$SCRAPEMATE_FLAG"
+          if [ "$GOSOM_FLAG" != yes ] && [ "$SCRAPEMATE_FLAG" != yes ]; then
+            echo "无影响项，不告警（每日心跳见 Actions run 历史与巡检文档）"
+            exit 0
+          fi
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          ISSUE_URL=$(gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "【GOSOM巡检】上游影响待确认（$(date -u +%F)）" \
+            --body "$(printf '%s\n\n---\n\nRun: %s' "$REPORT" "$RUN_URL")")
+          echo "Issue：$ISSUE_URL"
+          # 飞书 text 消息；「GOSOM巡检」前缀对应机器人的关键词安全设置
+          GOSOM_MARK='✅ 无影响'; [ "$GOSOM_FLAG" = yes ] && GOSOM_MARK='⚠️ 有影响'
+          SCRAPEMATE_MARK='✅ 无影响'; [ "$SCRAPEMATE_FLAG" = yes ] && SCRAPEMATE_MARK='⚠️ 有影响'
+          FEISHU_TEXT=$(printf '【GOSOM巡检】发现上游影响项，待人工确认。\nGOSOM：%s → %s %s\nSCRAPEMATE：%s → %s %s\n详情：%s' \
+            "${GOSOM_BASE:0:7}" "${GOSOM_HEAD:0:7}" "$GOSOM_MARK" \
+            "${SCRAPEMATE_BASE:0:7}" "${SCRAPEMATE_HEAD:0:7}" "$SCRAPEMATE_MARK" "$ISSUE_URL")
+          curl -sf -X POST "$FEISHU_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg text "$FEISHU_TEXT" '{msg_type:"text",content:{text:$text}}')"
+
+      # 巡检失败也要有人知道（sub2api 故障 / codex 越界 / push 被拒等）
+      - name: 失败告警（飞书）
+        if: failure()
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+        run: |
+          set -euo pipefail
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          FEISHU_TEXT=$(printf '【GOSOM巡检】巡检任务失败，基线未推进。\nRun：%s' "$RUN_URL")
+          curl -sf -X POST "$FEISHU_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg text "$FEISHU_TEXT" '{msg_type:"text",content:{text:$text}}')"
