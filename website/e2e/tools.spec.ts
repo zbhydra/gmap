@@ -73,7 +73,7 @@ test.describe('Tool Matrix', () => {
       await expect(ctaBand.locator('a[data-cta$="-install"]')).toBeVisible()
       await expect(ctaBand.locator('a[data-cta$="-pricing"]')).toBeVisible()
       const installHref = await ctaBand.locator('a[data-cta$="-install"]').getAttribute('href')
-      expect(installHref).toContain('/download/')
+      expect(installHref).toContain('/extension/')
       expect(installHref).toContain('utm_medium=tool-')
     }
   })
@@ -228,40 +228,50 @@ test.describe('Pricing Page', () => {
   test('renders hero, three MapsGrab tier cards and quota facts', async ({ page }) => {
     const response = await page.goto('/pricing/')
     expect(response?.status()).toBe(200)
-    await expect(page.locator('h1')).toContainText('Plans that scale')
+    await expect(page.locator('h1')).toContainText('One data engine, three ways to buy it')
 
-    // 三档卡：Free / Pro / Business（C2 口径）
-    await expect(page.locator('[data-plan-card="free"]')).toBeVisible()
-    await expect(page.locator('[data-plan-card="pro"]')).toBeVisible()
-    await expect(page.locator('[data-plan-card="business"]')).toBeVisible()
-    await expect(page.locator('[data-plan-card="free"] .plan-quota')).toContainText('1,000 records / month')
-    await expect(page.locator('[data-plan-card="pro"] .plan-price')).toHaveText('$39')
-    await expect(page.locator('[data-plan-card="pro"] .plan-quota')).toContainText('100,000 records / month')
-    await expect(page.locator('[data-plan-card="business"] .plan-price')).toHaveText('$99')
-    await expect(page.locator('[data-plan-card="business"] .plan-quota')).toContainText('500,000 records / month')
+    // 默认 Online tab：五档卡（Free/Lite/Basic/Growth/Professional），主推 Basic
+    const onlinePanel = page.locator('[data-pricing-panel="online"]')
+    await expect(onlinePanel).toBeVisible()
+    // data-plan-card = productId ?? id（Free 卡无 productId 落 id）
+    for (const cardId of ['free', 'online_lite', 'online_basic', 'online_growth', 'online_pro']) {
+      await expect(onlinePanel.locator(`[data-plan-card="${cardId}"]`)).toBeVisible()
+    }
+    await expect(onlinePanel.locator('[data-plan-card="online_basic"] .plan-badge')).toContainText('Most Popular')
+
+    // Extension tab：MapsGrab 三档 Free / Pro / Business（C2 口径）
+    await page.locator('[data-pricing-tab="extension"]').click()
+    const extensionPanel = page.locator('[data-pricing-panel="extension"]')
+    await expect(extensionPanel).toBeVisible()
+    await expect(extensionPanel.locator('[data-plan-card="free"] .plan-quota')).toContainText('1,000 records / month')
+    await expect(extensionPanel.locator('[data-plan-card="maps_pro"] .plan-price')).toHaveText('$39')
+    await expect(extensionPanel.locator('[data-plan-card="maps_pro"] .plan-quota')).toContainText('100,000 records / month')
+    await expect(extensionPanel.locator('[data-plan-card="maps_business"] .plan-price')).toHaveText('$99')
+    await expect(extensionPanel.locator('[data-plan-card="maps_business"] .plan-quota')).toContainText('500,000 records / month')
     // 主推徽章在 Pro 卡
-    await expect(page.locator('[data-plan-card="pro"] .plan-badge')).toContainText('Most Popular')
+    await expect(extensionPanel.locator('[data-plan-card="maps_pro"] .plan-badge')).toContainText('Most Popular')
   })
 
-  test('free tier links to download while buyable buttons need payment config', async ({ page }) => {
+  test('free tier links to the extension page while buyable buttons need payment config', async ({ page }) => {
     await page.goto('/pricing/')
-    // Free 卡：安装引导链接（带 data-cta 归因）
-    const freeCta = page.locator('[data-plan-card="free"] a[data-cta="pricing-free-install"]')
-    await expect(freeCta).toHaveAttribute('href', /\/download\//)
-    // Pro/Business 购买按钮：mock 环境无支付配置 → 禁用态
-    await expect(page.locator('[data-pricing-buy="pro"]')).toBeDisabled()
-    await expect(page.locator('[data-pricing-buy="business"]')).toBeDisabled()
+    // Extension tab Free 卡：安装引导链接（带 data-cta 归因；tab 未激活时隐藏，href 仍可断言）
+    const freeCta = page.locator('a[data-cta="pricing-free-extension"]')
+    await expect(freeCta).toHaveAttribute('href', '/extension/')
+    // 可购买按钮：mock 环境无支付配置 → 禁用态
+    await expect(page.locator('[data-pricing-buy="maps_pro"]')).toBeDisabled()
+    await expect(page.locator('[data-pricing-buy="maps_business"]')).toBeDisabled()
   })
 
-  test('online and api cards are non-purchasable placeholders', async ({ page }) => {
+  test('online and api plans render configured cards with disabled buy buttons', async ({ page }) => {
     await page.goto('/pricing/')
-    for (const cardId of ['online', 'api']) {
-      const card = page.locator(`[data-coming-soon-card="${cardId}"]`)
-      await expect(card).toBeVisible()
-      await expect(card).toHaveAttribute('aria-disabled', 'true')
-      // 占位卡不渲染链接（点击无效，不 404）
-      await expect(card.locator('a')).toHaveCount(0)
-      await expect(card).toContainText(/Coming soon/i)
+    // mock 环境无支付配置：online / api tab 的可购买按钮均为禁用态（三线占位先行，不误购）
+    for (const tabId of ['online', 'api']) {
+      const buyButtons = page.locator(`[data-pricing-panel="${tabId}"] [data-pricing-buy]`)
+      const count = await buyButtons.count()
+      expect(count, `${tabId} tab should render buyable plan buttons`).toBeGreaterThan(0)
+      for (let i = 0; i < count; i++) {
+        await expect(buyButtons.nth(i)).toBeDisabled()
+      }
     }
   })
 
@@ -274,6 +284,11 @@ test.describe('Pricing Page', () => {
     const offersSchema = schema.map(text => JSON.parse(text) as { offers?: { name: string; price: string }[] }).find(
       item => Array.isArray(item.offers)
     )
-    expect(offersSchema?.offers?.map(offer => offer.price)).toEqual(['0', '39', '99'])
+    // Offer 列表按线展开：online 五档 + extension 三档 + api 五档
+    expect(offersSchema?.offers?.map(offer => offer.price)).toEqual([
+      '0', '19', '49', '99', '149',
+      '0', '39', '99',
+      '0', '15', '65', '115', '365'
+    ])
   })
 })

@@ -382,8 +382,8 @@ test('About and Contact pages expose localized trust content and structured data
 
 test('every built page exposes complete title, description and Open Graph metadata', async () => {
   const htmlFiles = await collectHtmlFiles(distDir)
-  // 20 内容页（含 Online Scraper / API / MCP / Bing 桥接）+ 2 个 PayPal 回跳页 + 1 个插件登录桥接页（noindex）
-  assert.equal(htmlFiles.length, 23)
+  // 19 内容页（含 Online Scraper / API / MCP / Bing 桥接）+ 2 个 PayPal 回跳页 + 1 个插件登录桥接页（noindex）
+  assert.equal(htmlFiles.length, 22)
 
   const descriptionsByRoute = new Map()
   for (const filePath of htmlFiles) {
@@ -438,7 +438,6 @@ test('llms.txt indexes every public content route and excludes paypal returns', 
   const publicRoutes = [
     '/',
     '/extension/',
-    '/download/',
     '/pricing/',
     '/tools/place-id-finder/',
     '/tools/review-link-generator/',
@@ -1385,7 +1384,7 @@ async function assertStoredTokenChangePostsOriginScopedMessage(sourceFile, tempP
 }
 
 function installSlsBrowserGlobals({
-  href = 'https://mapsgrab.com/download/',
+  href = 'https://mapsgrab.com/extension/',
   language = 'zh-CN',
   userAgent = 'Mozilla/5.0 SLS test browser',
   viewport = { width: 1365, height: 768 }
@@ -1556,7 +1555,7 @@ function installFirstOpenedMarkBrowserGlobals({
 }
 
 function installFrontendErrorBrowserGlobals({
-  href = 'https://mapsgrab.com/download/',
+  href = 'https://mapsgrab.com/extension/',
   language = 'zh-CN',
   userAgent = 'Mozilla/5.0 Frontend error SLS test',
   viewport = { width: 1365, height: 768 },
@@ -2120,7 +2119,7 @@ test('frontend error capture dispatches uncaught Error to callback', async () =>
     assert.equal(capturedErrors[0].errorKind, 'error_event')
     assert.equal(capturedErrors[0].errorName, 'TypeError')
     assert.equal(capturedErrors[0].errorMessage, 'Boom token=secret-token')
-    assert.equal(capturedErrors[0].pagePath, '/download/')
+    assert.equal(capturedErrors[0].pagePath, '/extension/')
     assert.equal(capturedErrors[0].sourceFile, 'https://mapsgrab.com/assets/app.js?token=secret-token')
     assert.equal(capturedErrors[0].line, 12)
     assert.equal(capturedErrors[0].column, 34)
@@ -2153,7 +2152,7 @@ test('frontend captured error SLS callback sends uncaught Error to SLS only', as
       errorKind: 'error_event',
       errorName: 'TypeError',
       errorMessage: 'Boom token=secret-token',
-      pagePath: '/download/',
+      pagePath: '/extension/',
       sourceFile: 'https://mapsgrab.com/assets/app.js?token=secret-token',
       line: 12,
       column: 34

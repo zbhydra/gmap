@@ -86,15 +86,14 @@ const aboutPath = `${currentLocalePath}about/`;
 const contactPath = `${currentLocalePath}contact/`;
 const pricingPath = `${currentLocalePath}pricing/`;
 const extensionPath = `${currentLocalePath}extension/`;
-const downloadPath = `${currentLocalePath}download/`;
 // Online / API 落地页（015 U1）：导航真链接，root + [lang] 双路由。
 const onlinePath = `${currentLocalePath}online-scraper/`;
 const apiScraperPath = `${currentLocalePath}google-maps-scraper-api/`;
 const apiReviewsPath = `${currentLocalePath}google-maps-reviews-scraper-api/`;
 const apiPhotosPath = `${currentLocalePath}google-maps-photos-api/`;
 const apiMcpPath = `${currentLocalePath}google-maps-scraper-mcp/`;
-// 导航 Install CTA 指向下载页：商店上架前商店链接只在下载页维护占位（W2），上架后回填各渠道常量。
-const installHref = downloadPath;
+// 导航 Install CTA 指向插件页（营销 + 安装教程一体），商店上架后商店链接在插件页教程区维护。
+const installHref = extensionPath;
 const languageOptionLinks = Object.entries(localePaths).map(([key, path]) => {
   const langPrefix = path === '' ? '' : `/${path}`;
   const targetPath = `${langPrefix}${normalizedPagePathWithoutLocale}`;
@@ -107,7 +106,6 @@ const normalizedCurrentPath = normalizePathname(currentPath);
 const isHomeActive = normalizedCurrentPath === currentLocalePath;
 const isPricingActive = normalizedCurrentPath === pricingPath;
 const isExtensionActive = normalizedCurrentPath === extensionPath;
-const isDownloadActive = normalizedCurrentPath === downloadPath;
 const isOnlineActive = normalizedCurrentPath === onlinePath;
 const schemaName = 'MapsGrab';
 const siteHomeUrl = new URL('/', Astro.site).href;
@@ -860,9 +858,6 @@ const structuredDataItems = [
               <a class="lang-option" href={apiMcpPath} data-cta="nav-api-mcp">{t.layout.nav.apiMcp}</a>
             </div>
           </div>
-          <a href={downloadPath} class={isDownloadActive ? 'active' : ''} data-cta="nav-download">
-            {t.layout.nav.download}
-          </a>
           <a
             href={pricingPath}
             class={isPricingActive ? 'active' : ''}
@@ -881,7 +876,7 @@ const structuredDataItems = [
             aria-label={t.common.installCta}
             data-ga-event="internal_workflow_click"
             data-ga-source="nav"
-            data-ga-target="download"
+            data-ga-target="extension"
             data-cta="nav-install"
           >
             <img
@@ -946,9 +941,6 @@ const structuredDataItems = [
           <a href={apiReviewsPath} data-cta="nav-api-reviews">{t.layout.nav.apiReviews}</a>
           <a href={apiPhotosPath} data-cta="nav-api-photos">{t.layout.nav.apiPhotos}</a>
           <a href={apiMcpPath} data-cta="nav-api-mcp">{t.layout.nav.apiMcp}</a>
-          <a href={downloadPath} class={isDownloadActive ? 'active' : ''} data-cta="nav-download">
-            {t.layout.nav.download}
-          </a>
           <a
             href={pricingPath}
             class={isPricingActive ? 'active' : ''}
@@ -975,7 +967,6 @@ const structuredDataItems = [
           <div class="footer-link-group">
             <p class="footer-link-title">{t.layout.footer.product}</p>
             <a href={extensionPath} data-cta="footer-extension">{t.layout.nav.extension}</a>
-            <a href={downloadPath} data-cta="footer-download">{t.layout.nav.download}</a>
             <a href={pricingPath} data-cta="footer-pricing">{t.layout.nav.pricing}</a>
           </div>
           <div class="footer-link-group">

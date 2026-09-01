@@ -1,8 +1,10 @@
 ---
 /**
- * 首页渲染器（W2 五要素：hero / 三产品卡 / 社证占位 / FAQ / CTA）。
+ * 首页渲染器（营销 hero + 在线导出操作卡 / 三产品卡 / 社证占位 / FAQ / CTA）。
  *
  * 路由 locale → i18n 字典 → 语义化区块 → Layout 外壳；
+ * hero 内嵌 Online Scraper 操作卡（对标竞品首页形态）：输入区可编辑、主按钮为
+ * aria-disabled 占位（Online 功能未落地，点击无效），关键词计数由页脚脚本驱动；
  * FAQ 输出 FAQPage 结构化数据，CTA 统一带 data-cta 归因属性（事件经 W6 GA4 通道上报）。
  */
 import Layout from '../../layouts/Layout.astro'
@@ -20,11 +22,13 @@ const page = t.pages.home
 // locale 前缀（en-US 为空）；后续语言走 [lang]/ 路由时链接自动带上前缀。
 const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
 const extensionPath = `${localePrefix}/extension/`
-const downloadPath = `${localePrefix}/download/`
 
 // CTA 归因：站内链接带 utm（canonical 只取 pathname，不受 query 影响），事件侧用 data-cta（cta_click 事件经 W6 GA4 通道上报）。
 const installUtm = (medium: string) =>
   `?utm_source=website&utm_medium=${medium}&utm_campaign=install`
+
+// 操作卡关键词输入行数上限（UI 占位口径，014 云端契约落地时以服务端限制为准）。
+const MAX_KEYWORD_LINES = 100
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -47,21 +51,60 @@ const faqSchema = {
   structuredData={[faqSchema]}
 >
   <div class="home" data-home-page>
-    <!-- ① hero -->
+    <!-- ① hero：营销文案 + 在线导出操作卡（Online 未落地，主按钮为占位无效） -->
     <section class="hero" aria-labelledby="home-hero-title">
       <div class="container hero-inner">
         <p class="eyebrow">{page.hero.eyebrow}</p>
         <h1 id="home-hero-title">{page.hero.title}</h1>
         <p class="hero-description">{page.hero.description}</p>
-        <div class="hero-actions">
-          <a
-            class="btn-primary"
-            href={`${downloadPath}${installUtm('home-hero')}`}
-            data-cta="home-hero-install"
-          >{page.hero.primaryCta}</a>
-          <a class="btn-secondary" href={extensionPath} data-cta="home-hero-product">
-            {page.hero.secondaryCta}
-          </a>
+        <ul class="hero-highlights">
+          {page.hero.highlights.map(item => (
+            <li>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M2.5 7.5 5.5 10.5 11.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              {item}
+            </li>
+          ))}
+        </ul>
+        <div
+          class="scraper-card"
+          data-scraper-card
+          data-max-keywords={MAX_KEYWORD_LINES}
+        >
+          <div class="scraper-card-head">
+            <label class="scraper-label" for="home-scraper-keywords">
+              {page.hero.scraperCard.label}
+            </label>
+            <span class="scraper-hint">{page.hero.scraperCard.hint}</span>
+          </div>
+          <textarea
+            id="home-scraper-keywords"
+            class="scraper-textarea"
+            rows="4"
+            spellcheck="false"
+            aria-label={page.hero.scraperCard.textareaLabel}
+            data-scraper-keywords
+          >{page.hero.scraperCard.sampleKeywords.join('\n')}</textarea>
+          <div class="scraper-card-foot">
+            <button type="button" class="btn-primary" aria-disabled="true" data-pending-cta>
+              {page.hero.scraperCard.submitLabel}
+            </button>
+            <span class="scraper-count" data-scraper-count aria-live="polite">
+              {page.hero.scraperCard.sampleKeywords.length} / {MAX_KEYWORD_LINES}
+            </span>
+          </div>
+          <p class="scraper-note">{page.hero.scraperCard.note}</p>
+          <div class="scraper-links">
+            <a
+              href={`${extensionPath}${installUtm('home-hero')}`}
+              data-cta="home-hero-install"
+            >{page.hero.primaryCta}</a>
+            <span class="scraper-links-divider" aria-hidden="true">·</span>
+            <a class="scraper-links-product" href={extensionPath} data-cta="home-hero-product">
+              {page.hero.secondaryCta}
+            </a>
+          </div>
         </div>
       </div>
     </section>
@@ -141,7 +184,7 @@ const faqSchema = {
         <p>{page.cta.description}</p>
         <a
           class="btn-primary"
-          href={`${downloadPath}${installUtm('home-cta')}`}
+          href={`${extensionPath}${installUtm('home-cta')}`}
           data-cta="home-band-install"
         >{page.cta.button}</a>
         {page.cta.note && <p class="cta-note">{page.cta.note}</p>}
@@ -149,6 +192,23 @@ const faqSchema = {
     </section>
   </div>
 </Layout>
+
+<script>
+  // 操作卡关键词计数：按非空行统计；上限来自 data-max-keywords（SSR 侧单一来源），
+  // 纯本地 UI 状态，不发起任何请求（Online 采集功能未落地）。
+  const card = document.querySelector('[data-scraper-card]')
+  const textarea = card?.querySelector<HTMLTextAreaElement>('[data-scraper-keywords]')
+  const count = card?.querySelector<HTMLElement>('[data-scraper-count]')
+  if (card instanceof HTMLElement && textarea && count) {
+    const max = Number(card.dataset.maxKeywords)
+    const update = (): void => {
+      const lines = textarea.value.split('\n').filter(line => line.trim().length > 0).length
+      count.textContent = `${lines} / ${max}`
+    }
+    textarea.addEventListener('input', update)
+    update()
+  }
+</script>
 
 <style>
   .home {
@@ -176,6 +236,7 @@ const faqSchema = {
 
   .hero h1 {
     max-width: 760px;
+    margin-inline: auto;
     font-size: clamp(36px, 4.8vw, 58px);
     line-height: 1.05;
   }
@@ -204,24 +265,147 @@ const faqSchema = {
     outline-offset: 3px;
   }
 
-  /* ① hero */
+  /* ① hero：营销文案居中 + 在线导出操作卡 */
   .hero-inner {
     padding: var(--space-10) 0 var(--space-16);
+    text-align: center;
   }
 
   .hero-description {
     max-width: 680px;
     margin-top: var(--space-4);
+    margin-inline: auto;
     color: var(--text-2);
     font-size: 18px;
     line-height: 1.6;
   }
 
-  .hero-actions {
+  .hero-highlights {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-3);
-    margin-top: var(--space-8);
+    justify-content: center;
+    gap: var(--space-2) var(--space-6);
+    margin: var(--space-6) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hero-highlights li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .hero-highlights svg {
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  /* 在线导出操作卡：输入区可用，主按钮为占位无效（Online 未落地） */
+  .scraper-card {
+    max-width: 760px;
+    margin: var(--space-8) auto 0;
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    text-align: left;
+  }
+
+  .scraper-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .scraper-label {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .scraper-hint {
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+  }
+
+  .scraper-textarea {
+    width: 100%;
+    min-height: 132px;
+    margin-top: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+
+  .scraper-textarea:focus {
+    outline: 2px solid var(--ring);
+    outline-offset: 1px;
+  }
+
+  .scraper-card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  /* 未落地功能按钮：可聚焦但视觉降级（design.md 禁用语义 = 降透明度），无 handler 点击无效 */
+  .scraper-card button[aria-disabled='true'] {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .scraper-count {
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+  }
+
+  .scraper-note {
+    margin-top: var(--space-4);
+    color: var(--text-3);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .scraper-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .scraper-links a {
+    color: var(--link);
+  }
+
+  .scraper-links a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .scraper-links-divider {
+    color: var(--text-3);
   }
 
   /* ② 产品卡 */

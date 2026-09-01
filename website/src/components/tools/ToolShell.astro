@@ -39,7 +39,7 @@ interface Props {
 const { toolId, locale = 'en-US', seo, hero, howTo, faq, cta, copyJson, commonCopy } = Astro.props as Props
 const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
 // CTA 漏斗（015 feat「免费工具漏斗」）：站内链接带 utm 归因，事件侧用 data-cta。
-const installHref = `${localePrefix}/download/?utm_source=website&utm_medium=tool-${toolId}&utm_campaign=install`
+const installHref = `${localePrefix}/extension/?utm_source=website&utm_medium=tool-${toolId}&utm_campaign=install`
 const pricingHref = `${localePrefix}/pricing/?utm_source=website&utm_medium=tool-${toolId}&utm_campaign=pricing`
 
 const faqSchema = {

@@ -179,7 +179,7 @@ test.describe('GA4 configured state (mock gtag)', () => {
     await installMockGtag(page)
     await page.goto('/tools/place-id-finder/')
     await page.locator('.tool-cta a[data-cta="tool-place-id-finder-install"]').click()
-    await expect(page).toHaveURL(/\/download\//)
+    await expect(page).toHaveURL(/\/extension\//)
     const calls = await readGa4Calls(page)
     const ctaClick = calls.find(call => call[1] === 'cta_click')
     expect(ctaClick, 'expected cta_click to be dispatched').toBeTruthy()

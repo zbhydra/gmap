@@ -202,7 +202,7 @@ export interface HomePageContent {
     /** meta description。 */
     description: string
   }
-  /** 首屏 hero。 */
+  /** 首屏 hero（营销文案 + 在线导出操作卡，对标竞品首页形态）。 */
   hero: {
     /** 小标签。 */
     eyebrow: string
@@ -210,6 +210,23 @@ export interface HomePageContent {
     title: string
     /** H1 下说明。 */
     description: string
+    /** 卖点行（操作卡上方的短卖点，逐条带对勾图标）。 */
+    highlights: readonly string[]
+    /** 在线导出操作卡（Online 功能未落地：主按钮为 aria-disabled 占位，点击无效）。 */
+    scraperCard: {
+      /** 卡片标签（输入区标题）。 */
+      label: string
+      /** 输入格式提示（一行一条的规则说明）。 */
+      hint: string
+      /** 关键词输入框的无障碍名称。 */
+      textareaLabel: string
+      /** 预填示例关键词（逐行一条，仅作输入示范）。 */
+      sampleKeywords: readonly string[]
+      /** 主按钮文案（占位无效）。 */
+      submitLabel: string
+      /** 卡片脚注（说明 Online 排期并引导插件）。 */
+      note: string
+    }
     /** 主 CTA（安装，指向下载页）。 */
     primaryCta: string
     /** 次 CTA（产品介绍页）。 */
@@ -283,7 +300,7 @@ export interface ExtensionReleaseMessage {
   changes: readonly string[]
 }
 
-/** 安装引导的一个步骤（产品页三步引导与下载页渠道步骤共用）。 */
+/** 安装教程渠道步骤（Chromium 系 / Firefox 直装共用）。 */
 export interface InstallStepMessage {
   /** 步骤标题。 */
   title: string
@@ -310,10 +327,10 @@ export interface ExtensionPageContent {
     title: string
     /** H1 下说明。 */
     description: string
-    /** 主 CTA（安装，指向下载页）。 */
-    primaryCta: string
-    /** 次 CTA（查看定价）。 */
-    secondaryCta: string
+    /** Edge 安装按钮（跳转 Edge Add-ons 商店，上架前 href 占位不可用）。 */
+    edgeCta: string
+    /** Chrome 安装按钮（滚动到页内安装教程锚点）。 */
+    chromeCta: string
     /** hero 配图位占位说明（插件面板运行截图）。 */
     visualLabel: string
   }
@@ -367,7 +384,7 @@ export interface ExtensionPageContent {
     /** 发版记录列表。 */
     releases: readonly ExtensionReleaseMessage[]
   }
-  /** 安装引导区。 */
+  /** 安装教程区（页内锚点：直装 zip + 分浏览器渠道步骤 + 帮助）。 */
   install: {
     /** 小标签。 */
     eyebrow: string
@@ -375,16 +392,36 @@ export interface ExtensionPageContent {
     title: string
     /** 区块说明。 */
     description: string
-    /** 通用三步引导。 */
-    steps: readonly InstallStepMessage[]
-    /** 指向下载页的按钮文案。 */
-    downloadCta: string
+    /** 直装 zip 资产说明（release 资产占位）。 */
+    zip: {
+      /** 小节标题。 */
+      title: string
+      /** 小节说明。 */
+      description: string
+      /** 下载按钮文案（指向 release 资产占位）。 */
+      button: string
+      /** 按钮下的占位说明。 */
+      note: string
+      /** zip 文件配图位占位说明。 */
+      visualLabel: string
+    }
+    /** 浏览器渠道列表（Edge / Firefox）。 */
+    channels: readonly DownloadChannelMessage[]
+    /** 帮助区。 */
+    help: {
+      /** 区块标题。 */
+      title: string
+      /** 区块说明。 */
+      description: string
+      /** 联系支持按钮文案。 */
+      contactCta: string
+    }
   }
   /** 页底 CTA 行动区。 */
   cta: CtaBandMessage
 }
 
-/** 下载页的一个商店/直装渠道。 */
+/** 插件产品页安装教程的一个商店/直装渠道。 */
 export interface DownloadChannelMessage {
   /** 渠道标识：edge / firefox，用于渲染分支与测试锚点。 */
   id: 'edge' | 'firefox'
@@ -400,52 +437,6 @@ export interface DownloadChannelMessage {
   manualTitle: string
   /** 直装步骤。 */
   steps: readonly InstallStepMessage[]
-}
-
-/** 下载页内容。 */
-export interface DownloadPageContent {
-  /** SEO 元信息。 */
-  seo: {
-    /** HTML title。 */
-    title: string
-    /** meta description。 */
-    description: string
-  }
-  /** 首屏 hero。 */
-  hero: {
-    /** 小标签。 */
-    eyebrow: string
-    /** H1。 */
-    title: string
-    /** H1 下说明。 */
-    description: string
-    /** hero 配图位占位说明（浏览器工具栏 + 插件面板截图）。 */
-    visualLabel: string
-  }
-  /** 直装 zip 资产说明（release 资产占位）。 */
-  zip: {
-    /** 小节标题。 */
-    title: string
-    /** 小节说明。 */
-    description: string
-    /** 下载按钮文案（指向 release 资产占位）。 */
-    button: string
-    /** 按钮下的占位说明。 */
-    note: string
-    /** zip 文件配图位占位说明。 */
-    visualLabel: string
-  }
-  /** 浏览器渠道列表（Edge / Firefox）。 */
-  channels: readonly DownloadChannelMessage[]
-  /** 帮助区。 */
-  help: {
-    /** 区块标题。 */
-    title: string
-    /** 区块说明。 */
-    description: string
-    /** 联系支持按钮文案。 */
-    contactCta: string
-  }
 }
 
 /** Pricing 页 tab 标识：Online Scraper / Extension / API 三条产品线。 */
@@ -1105,8 +1096,6 @@ export interface SiteContent {
       apiPhotos: string
       /** API 下拉子项：Scraper MCP 落地页。 */
       apiMcp: string
-      /** 导航：下载页入口。 */
-      download: string
       pricing: string
     }
     footer: {
@@ -1125,10 +1114,8 @@ export interface SiteContent {
   pages: {
     /** 首页内容（W2）。 */
     home: HomePageContent
-    /** 插件产品页内容（W2）。 */
+    /** 插件产品页内容（W2，营销 + 安装教程一体）。 */
     extension: ExtensionPageContent
-    /** 下载页内容（W2）。 */
-    download: DownloadPageContent
     /** Pricing 页共用的账户区文案（登录弹窗、支付弹窗、账户菜单）。 */
     account: AccountContent
     /** Pricing 页面内容（MapsGrab 三档套餐，W5）。 */

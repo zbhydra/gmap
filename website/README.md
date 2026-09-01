@@ -55,13 +55,13 @@ website/
   统一漏斗事件，带 cta_id 与 utm）。全站唯一豁免的第三方运行时脚本。
 - Google Search Console：无真实资产。部署正式域名后在 GSC 添加 Domain 资源，优先 DNS 记录验证；
   若走 HTML 文件验证，把 `google<hash>.html` 放入 `public/` 重新构建部署即可，无需改代码。
-- 扩展商店链接：`src/components/pages/DownloadPage.astro` 的 `STORE_URL_PLACEHOLDER`
-  （Edge Add-ons / Firefox AMO，上架后回填；同步 Pricing/Company 页入口）
-- 直装 release zip 资产：`src/components/pages/DownloadPage.astro` 的 `RELEASE_ZIP_URL_PLACEHOLDER`
+- 扩展商店链接：`src/components/pages/ExtensionPage.astro` 的 `EDGE_STORE_URL_PLACEHOLDER` /
+  `FIREFOX_STORE_URL_PLACEHOLDER`（Edge Add-ons / Firefox AMO，上架后按渠道回填）
+- 直装 release zip 资产：`src/components/pages/ExtensionPage.astro` 的 `RELEASE_ZIP_URL_PLACEHOLDER`
   （发版挂资产后回填；替换后删除 href="#" 占位）
 - Google OAuth client：`PUBLIC_GOOGLE_CLIENT_ID` env（购买链路接入时）
 - MapsGrab 套餐与支付渠道：`src/i18n/pricing.ts`（W5 接 006）
-- 样式 token 化收尾：Layout 全局样式与 W2/W3 重写页面（home/extension/download/legal/company）
+- 样式 token 化收尾：Layout 全局样式与 W2/W3 重写页面（home/extension/legal/company）
   已全量消费语义 token；`:root` 末尾的旧 `--color-*`/`--spacing-*` 别名段仅剩
   W4/W5 待重写组件（Breadcrumb、auth/pricing/checkout 弹窗、paypal 页、SiteConfirmModal）
   在消费——工具页与购买链路重写时继续裁剪直至整段删除（design.md §4：无玻璃无

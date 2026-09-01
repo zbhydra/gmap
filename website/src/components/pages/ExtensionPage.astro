@@ -1,15 +1,19 @@
 ---
 /**
- * 插件产品页渲染器（W2：功能清单 + 版本说明段 + 安装引导）。
+ * 插件产品页渲染器（W2：营销 + 安装教程一体页，对齐竞品「产品介绍在上、安装教程在下」结构）。
  *
  * 功能口径对齐 013 A5 36 列与 A1/A2/A3/A4/A6/A8 能力；
- * 版本说明段承接 changelog 职能；CTA 带 data-cta 归因属性（事件经 W6 GA4 通道上报）。
+ * 版本说明段承接 changelog 职能；hero 的 Edge 按钮跳 Edge Add-ons 商店、
+ * Chrome 按钮滚动到页内安装教程（Chrome 不上商店，走 zip 直装）。
+ * CTA 带 data-cta 归因属性（事件经 W6 GA4 通道上报）。
  * 图文分区（015 D5 图文改造）：hero/showcase/demo 配图走 MediaSlot 占位，
  * 素材产出后仅回填 src，不动结构。
  */
 import Layout from '../../layouts/Layout.astro'
 import { getContent, type Locale } from '../../i18n/content'
 import { localePaths } from '../../i18n/ui'
+import { getCompanyContent } from '../../company/companyContent'
+import { DEVELOPER_EMAIL } from '../../lib/contact'
 import type { ExtensionFeatureIcon } from '../../i18n/schema'
 import MediaSlot from '../site/MediaSlot.astro'
 
@@ -23,11 +27,15 @@ const t = getContent(locale)
 const page = t.pages.extension
 // locale 前缀（en-US 为空）；后续语言走 [lang]/ 路由时链接自动带上前缀。
 const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
-const downloadPath = `${localePrefix}/download/`
-const pricingPath = `${localePrefix}/pricing/`
-// CTA 归因：站内链接带 utm；事件侧用 data-cta（cta_click 事件经 W6 GA4 通道上报）。
-const installHref = `${downloadPath}?utm_source=website&utm_medium=extension-hero&utm_campaign=install`
-// 示例数据资产占位：demo CSV 挂到公开 release 资产后回填（同下载页占位口径，点击不 404）。
+const contactPath = `${localePrefix}/contact/`
+const contactLabel = getCompanyContent(locale).contact.navLabel
+// 安装教程区页内锚点：hero 的 Chrome 按钮与页底 CTA 滚动到这里（平滑滚动走 Layout 全局）。
+const INSTALL_ANCHOR = '#install'
+// 商店与 release 资产链接占位：上架/发版后按渠道回填（点击不 404）。
+const EDGE_STORE_URL_PLACEHOLDER = '#'
+const FIREFOX_STORE_URL_PLACEHOLDER = '#'
+const RELEASE_ZIP_URL_PLACEHOLDER = '#'
+// 示例数据资产占位：demo CSV 挂到公开 release 资产后回填（点击不 404）。
 const DEMO_DATA_URL_PLACEHOLDER = '#'
 const sectionId = (title: string) =>
   `feature-${title.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`
@@ -62,14 +70,15 @@ const featureIcons: Record<ExtensionFeatureIcon, string> = {
           <h1 id="ext-hero-title">{page.hero.title}</h1>
           <p class="hero-description">{page.hero.description}</p>
           <div class="hero-actions">
-            <a class="btn-primary" href={installHref} data-cta="extension-hero-install">
-              {page.hero.primaryCta}
-            </a>
             <a
-              class="btn-secondary"
-              href={`${pricingPath}?utm_source=website&utm_medium=extension-hero&utm_campaign=pricing`}
-              data-cta="extension-hero-pricing"
-            >{page.hero.secondaryCta}</a>
+              class="btn-primary"
+              href={EDGE_STORE_URL_PLACEHOLDER}
+              data-cta="extension-hero-edge-install"
+              aria-disabled="true"
+            >{page.hero.edgeCta}</a>
+            <a class="btn-secondary" href={INSTALL_ANCHOR} data-cta="extension-hero-chrome-install">
+              {page.hero.chromeCta}
+            </a>
           </div>
         </div>
         <MediaSlot variant="browser" ratio="4 / 3" label={page.hero.visualLabel} class="hero-visual" />
@@ -171,36 +180,81 @@ const featureIcons: Record<ExtensionFeatureIcon, string> = {
       </div>
     </section>
 
-    <!-- 安装引导 -->
-    <section class="install" aria-labelledby="ext-install-title">
-      <div class="container install-inner">
+    <!-- 安装教程（hero 的 Chrome 按钮与页底 CTA 滚动到 #install） -->
+    <section class="install" id="install" aria-labelledby="ext-install-title">
+      <div class="container">
         <header class="section-header">
           <p class="eyebrow">{page.install.eyebrow}</p>
           <h2 id="ext-install-title">{page.install.title}</h2>
           <p class="section-description">{page.install.description}</p>
         </header>
-        <ol class="install-steps">
-          {page.install.steps.map((step, index) => (
-            <li class="install-step">
-              <p class="step-number" aria-hidden="true">{index + 1}</p>
-              <div class="install-step-body">
-                <h3>{step.title}</h3>
-                {step.details.map(detail => <p>{detail}</p>)}
-                <MediaSlot
-                  variant="browser"
-                  ratio="16 / 9"
-                  label={step.mediaLabel}
-                  class="install-step-visual"
-                />
-              </div>
-            </li>
-          ))}
-        </ol>
-        <a
-          class="btn-primary"
-          href={`${downloadPath}?utm_source=website&utm_medium=extension-install&utm_campaign=install`}
-          data-cta="extension-install-download"
-        >{page.install.downloadCta}</a>
+
+        <!-- 直装 zip（release 资产占位） -->
+        <div class="zip-card">
+          <div class="zip-copy">
+            <h3>{page.install.zip.title}</h3>
+            <p>{page.install.zip.description}</p>
+            <a
+              class="btn-primary"
+              href={RELEASE_ZIP_URL_PLACEHOLDER}
+              data-cta="extension-install-zip"
+              aria-describedby="ext-zip-note"
+            >{page.install.zip.button}</a>
+            <p class="zip-note" id="ext-zip-note">{page.install.zip.note}</p>
+          </div>
+          <MediaSlot
+            variant="file"
+            ratio="4 / 3"
+            label={page.install.zip.visualLabel}
+            class="zip-visual"
+          />
+        </div>
+
+        <!-- 浏览器渠道：商店占位 + 分浏览器直装步骤 -->
+        {page.install.channels.map(channel => (
+          <div
+            class="channel-card"
+            aria-labelledby={`ext-${channel.id}-title`}
+            data-channel={channel.id}
+          >
+            <h3 id={`ext-${channel.id}-title`}>{channel.name}</h3>
+            <p class="channel-store">{channel.storeName}</p>
+            <p class="channel-status">{channel.storeStatus}</p>
+            <a
+              class="btn-secondary"
+              href={channel.id === 'edge' ? EDGE_STORE_URL_PLACEHOLDER : FIREFOX_STORE_URL_PLACEHOLDER}
+              data-cta={`extension-store-${channel.id}`}
+              aria-disabled="true"
+            >{channel.storeCta}</a>
+            <h4>{channel.manualTitle}</h4>
+            <ol class="channel-steps">
+              {channel.steps.map(step => (
+                <li>
+                  <p class="step-title">{step.title}</p>
+                  {step.details.map(detail => <p>{detail}</p>)}
+                  <MediaSlot
+                    variant="browser"
+                    ratio="16 / 9"
+                    label={step.mediaLabel}
+                    class="step-visual"
+                  />
+                </li>
+              ))}
+            </ol>
+          </div>
+        ))}
+
+        <!-- 帮助 -->
+        <div class="help-card">
+          <h3>{page.install.help.title}</h3>
+          <p>{page.install.help.description}</p>
+          <a
+            class="btn-secondary"
+            href={`mailto:${DEVELOPER_EMAIL}?subject=MapsGrab%20installation%20help`}
+            data-cta="extension-install-help"
+          >{page.install.help.contactCta}</a>
+          <a class="help-contact-link" href={contactPath} data-cta="extension-help-contact-page">{contactLabel}</a>
+        </div>
       </div>
     </section>
 
@@ -209,7 +263,7 @@ const featureIcons: Record<ExtensionFeatureIcon, string> = {
       <div class="container cta-inner">
         <h2 id="ext-cta-title">{page.cta.title}</h2>
         <p>{page.cta.description}</p>
-        <a class="btn-primary" href={installHref} data-cta="extension-band-install">
+        <a class="btn-primary" href={INSTALL_ANCHOR} data-cta="extension-band-install">
           {page.cta.button}
         </a>
         {page.cta.note && <p class="cta-note">{page.cta.note}</p>}
@@ -265,7 +319,8 @@ const featureIcons: Record<ExtensionFeatureIcon, string> = {
   /* 按钮样式走 Layout 全局原语 .btn-primary / .btn-secondary（design.md §7） */
 
   .btn-primary:focus-visible,
-  .btn-secondary:focus-visible {
+  .btn-secondary:focus-visible,
+  .help-contact-link:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 3px;
   }
@@ -480,71 +535,187 @@ const featureIcons: Record<ExtensionFeatureIcon, string> = {
     margin-top: var(--space-8);
   }
 
-  /* 安装引导 */
+  /* 安装教程（zip 直装 + 渠道步骤 + 帮助；#install 锚点跳转避开吸顶导航） */
   .install {
     padding: var(--space-16) 0;
+    scroll-margin-top: 110px;
   }
 
-  .install-steps {
+  .zip-card {
     display: grid;
-    gap: var(--space-6);
-    margin: var(--space-8) 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .install-step {
-    display: flex;
-    gap: var(--space-4);
-    padding: var(--space-6);
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: center;
+    margin-top: var(--space-8);
+    padding: var(--space-8);
     border: 1px solid var(--border);
     border-radius: var(--rounded-md);
     background: var(--surface);
     box-shadow: var(--shadow-card);
   }
 
-  .step-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
-    border-radius: var(--rounded-full);
-    background: var(--primary-soft);
-    color: var(--primary);
-    font-family: var(--font-mono);
-    font-size: 14px;
-    font-weight: 600;
+  .zip-copy > p {
+    max-width: 640px;
+    margin-top: var(--space-2);
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.6;
   }
 
-  .install-step h3 {
+  .zip-card h3 {
     font-family: var(--font-display);
-    font-size: 16px;
+    font-size: 24px;
     font-weight: 600;
-    line-height: 24px;
+    line-height: 32px;
     color: var(--text);
   }
 
-  .install-step p {
+  .zip-card .btn-primary {
+    margin-top: var(--space-6);
+  }
+
+  .zip-note {
+    margin-top: var(--space-3);
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .channel-card {
+    margin-top: var(--space-6);
+    padding: var(--space-8);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .channel-card h3 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 32px;
+    color: var(--text);
+  }
+
+  .channel-store {
+    margin-top: var(--space-1);
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .channel-status {
+    max-width: 640px;
+    margin-top: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--warn);
+    border-radius: var(--rounded-sm);
+    background: var(--warn-soft);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .channel-card .btn-secondary {
+    margin-top: var(--space-4);
+  }
+
+  .channel-card h4 {
+    margin-top: var(--space-8);
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 28px;
+    color: var(--text);
+  }
+
+  .channel-steps {
+    display: grid;
+    gap: var(--space-4);
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: ext-step;
+  }
+
+  .channel-steps li {
+    counter-increment: ext-step;
+    padding: var(--space-4) var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--bg);
+  }
+
+  .step-title::before {
+    content: counter(ext-step) '. ';
+    color: var(--primary);
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+
+  .step-title {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  .channel-steps li p:not(.step-title) {
     margin-top: var(--space-1);
     color: var(--text-2);
     font-size: 14px;
     line-height: 1.6;
   }
 
-  .install-step-body {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .install-step-visual {
-    max-width: 560px;
+  .step-visual {
+    max-width: 520px;
     margin-top: var(--space-4);
   }
 
-  .install-inner .btn-primary {
-    margin-top: var(--space-8);
+  .help-card {
+    margin-top: var(--space-6);
+    padding: var(--space-8);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--surface-2);
+    text-align: center;
+  }
+
+  .help-card h3 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 32px;
+    color: var(--text);
+  }
+
+  .help-card > p {
+    max-width: 640px;
+    margin: var(--space-2) auto 0;
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .help-card .btn-secondary {
+    margin-top: var(--space-6);
+  }
+
+  .help-contact-link {
+    display: block;
+    margin-top: var(--space-3);
+    color: var(--primary-hover);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .help-contact-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
   }
 
   /* CTA */
@@ -601,6 +772,16 @@ const featureIcons: Record<ExtensionFeatureIcon, string> = {
 
     .showcase-grid {
       grid-template-columns: minmax(0, 1fr);
+    }
+
+    .zip-card {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-6);
+      padding: var(--space-6) var(--space-4);
+    }
+
+    .channel-card {
+      padding: var(--space-6) var(--space-4);
     }
 
     .showcase,

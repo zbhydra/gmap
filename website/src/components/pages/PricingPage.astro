@@ -19,12 +19,11 @@ const { locale = 'en-US' } = Astro.props as Props
 const t = getContent(locale)
 const pricing = t.pages.pricing
 const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
-const downloadPath = `${localePrefix}/download/`
 
 // 各 tab Free 卡的引导落地页（不可购买，只做产品入口）
 const freeCtaPaths: Record<PricingTabId, string> = {
   online: `${localePrefix}/online-scraper/`,
-  extension: downloadPath,
+  extension: `${localePrefix}/extension/`,
   api: `${localePrefix}/google-maps-scraper-api/`
 }
 

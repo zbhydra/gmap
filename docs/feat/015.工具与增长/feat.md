@@ -21,10 +21,12 @@
 - D2 竞品对比页(对标 9 篇 + 我方自选竞品)
 - D3 教程/Guides 博客(how-to 类长文)
 - D4 Affiliates 联盟计划(注册、追踪链接、结算口径)
-- D5 营销站(首页、插件产品页、下载页、Pricing、法务页、Online/API 落地页 ×5、工具矩阵、多语言)
+- D5 营销站(首页、插件产品页〔营销 + 安装教程一体〕、Pricing、法务页、Online/API 落地页 ×5、工具矩阵、多语言)
 - D5 附:**占位入口接真落地页**(hydra 2026-08-31 裁决,替代 2026-08-30「入口留空点击无效」基线):导航 Online 与新增 API 下拉、首页 Online/API 产品卡均接真落地页(页面全部可打开),页内未落地功能按钮点击无效;云端功能本体仍归 014。页面清单与交互口径见 `@plans/002.营销站Online与API落地页.md`
 - D5 附:**套餐与法务均参考竞品**(hydra 2026-08-30):Pricing 展示对齐竞品插件档位(Free 1,000 records/月;Pro $39 100,000;Business $99 500,000);法务页(隐私政策/条款)以竞品口径为基准改写为 MapsGrab 事实
 - D5 附:**页面图文密度对齐竞品**(hydra 2026-08-31):产品页/下载页按竞品 gmapsextractor.com 的图文结构补分区(hero 截图位、采集→导出成果双图、示例数据下载、demo 视频、逐步安装配图);真实截图/录屏素材未产出时用统一占位组件呈现(标注素材内容),素材产出后仅回填;视觉一律用自有 design token。社证数字条不做(无真实数据,不允许虚报)
+- D5 附:**下载页并入插件产品页**(hydra 2026-09-01,对齐竞品「产品介绍在上、安装教程在下」的单页形态):`/download/` 撤销,安装内容(直装 zip 卡、Edge/Firefox 渠道步骤、安装帮助)整体并入 `/extension/` 页内教程区(锚点 `#install`);hero 双按钮分流——「Install for Edge」跳 Edge Add-ons 商店(上架前 href 占位),「Install for Chrome」滚动到页内教程(产品基线不上 Chrome Web Store,Chrome 走 zip 直装);导航/footer 撤销 Download 入口,首页/工具页/Pricing 的安装 CTA 全部改指 `/extension/`;页底 CTA 改滚动到教程区
+- D5 附:**首页 hero 改造为「营销 + 在线导出操作」**(hydra 2026-09-01):对标竞品首页形态——hero 居中,新增卖点行(免信用卡 / 每月 1,000 条免费额度 / CSV & JSON 导出,额度口径同 Pricing FAQ)与在线导出操作卡(关键词多行输入,一行一条,预填 3 条示例,行数计数上限 100,输入可用但纯本地)。「Start scraping free」主按钮为占位无效(Online 功能未落地,点击无跳转无请求,014 B1 落地后接真交互);卡内脚注说明 Online 排期并引导安装插件,原 hero 双按钮降为卡内文字链接,归因属性不变
 - D6 SEO 基建(复用 009 域:sitemap / llms.txt / GSC / GA4)
 
 ### 不包含

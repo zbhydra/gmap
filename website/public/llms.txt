@@ -5,8 +5,7 @@
 ## Product
 
 - [MapsGrab Home](https://mapsgrab.com/): Product overview with extension, Online, and API entries, FAQ, and install CTAs.
-- [Extension](https://mapsgrab.com/extension/): Google Maps extractor product page — 36-column extraction schema, reviews, photos, email enrichment, batch tasks, CSV/JSON export, and release notes.
-- [Download](https://mapsgrab.com/download/): Install guide with browser store channels and direct zip download.
+- [Extension](https://mapsgrab.com/extension/): Google Maps extractor product page — 36-column extraction schema, reviews, photos, email enrichment, batch tasks, CSV/JSON export, release notes, and step-by-step install guide with store channels and direct zip download.
 - [Pricing](https://mapsgrab.com/pricing/): Free (1,000 records/month), Pro ($39, 100,000 records/month), and Business ($99, 500,000 records/month) plans; Online and API are coming soon.
 - [Online Scraper](https://mapsgrab.com/online-scraper/): Cloud-based Google Maps extraction — queue keyword and review-URL tasks, get the same 36-column schema as the extension, and download CSV or JSON.
 - [Scraper API](https://mapsgrab.com/google-maps-scraper-api/): HTTP API returning Google Maps business data as clean JSON (names, phones, ratings, hours, coordinates, Place IDs, email and social enrichment).

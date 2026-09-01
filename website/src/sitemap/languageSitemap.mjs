@@ -290,14 +290,6 @@ function getRouteSourceFiles(routePath) {
     ]
   }
 
-  if (normalized === '/download/') {
-    return [
-      'src/pages/download.astro',
-      'src/pages/[lang]/download.astro',
-      'src/components/pages/DownloadPage.astro'
-    ]
-  }
-
   if (normalized === '/terms/' || normalized === '/privacy/') {
     const pageName = normalized.split('/').filter(Boolean)[0]
     return [

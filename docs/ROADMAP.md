@@ -96,6 +96,7 @@
 
 ## 5 · 变更记录
 
+- 2026-09-01 **营销站下载页撤销,并入插件产品页**(hydra 拍板,对齐竞品 gmapsextractor.com 单页形态):`/extension/` = 营销(功能清单/changelog/演示)+ 安装教程一体页,hero 双按钮 Edge→商店(上架前占位)、Chrome→页内教程滚动(基线不上 CWS);`/download/` 页面与导航/footer 入口全链删除,全站安装 CTA 改指 `/extension/`。需求落 `015.工具与增长/feat.md` D5 附。验证:build 22 页、e2e 181 passed/0 failed、module-scripts 47/47。
 - 2026-08-31 **C2/C5 落地**:订阅分产品线扩展完成——新增 `maps_online` / `maps_api` 两线 8 档(Online $19–$149、API $15–$365),全部 PayPal 一次性支付(auto_renew=false,占位期用户决策,后续接自动续费时改配置并替换真实 provider_sku),额度消费待 014 云端落地复用;Pricing 页改 Online / Extension / API 三 tab,10 个付费 SKU 可购买,PayPal 回跳文案按订单 product_class 分发。细节见 `feat/006.订阅系统/` 与 `feat/011.Pricing页/`。
 - 2026-08-29 建立大盘:功能全景 A13/B5/C6/D6 项,来源为 11 篇竞品逆向(`scratch/G-MAPS-EXTRACTOR-v2.5.1/research/`)、官网 pricing/tools/api 抓取与 `research/google-maps-scraping-方案调研.md`。调研状态:插件侧 13 项已完成,云端/工具/内容侧多为 🔍浅 或 ⬜。
 - 2026-08-29 调研细节落位:建立 `feat/013.Maps插件/`(feat + references A1–A13 逐功能竞品调研,含已拍板决策)与 `feat/014.Maps云端/`、`feat/015.工具与增长/`(feat + B1/B2/D1 竞品口径初版);B4/B5 细节指向 research 方案调研;D2–D4、B3 仍 ⬜。A 组 13 项全部具备立项条件。

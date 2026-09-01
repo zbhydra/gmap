@@ -2,7 +2,7 @@
  * 网站 e2e（W2/W3 交付版）。
  *
  * mock 跑：PUBLIC_API_BASE_URL 指向假地址，本 spec 只断言 SSG 页面渲染、
- * 首页五要素、产品页/下载页结构、法务页可达与 data-cta 归因属性。
+ * 首页五要素、产品页（营销 + 安装教程一体）结构、法务页可达与 data-cta 归因属性。
  * 购买链路 / 登录态相关交互在 W5 接入时按真实场景补充。
  */
 import { expect, test } from '@playwright/test'
@@ -13,21 +13,22 @@ import { registerE2eBrowserIdentity } from '../scripts/playwright-browser-identi
 registerE2eBrowserIdentity(test)
 
 test.describe('Website Shell', () => {
-  test('primary nav exposes home, extension, online, API, download and pricing entries', async ({ page, isMobile }) => {
+  test('primary nav exposes home, extension, online, API and pricing entries', async ({ page, isMobile }) => {
     await page.goto('/')
-    // 960px 断点以下桌面导航隐藏，改断言移动端菜单
+    // 960px 断点以下桌面导航隐藏，改断言移动端菜单；收起态 visibility 隐藏，先展开
     const scope = isMobile ? page.locator('.mobile-nav') : page.locator('.nav-links')
+    if (isMobile) {
+      await page.locator('.mobile-menu-btn').click()
+    }
     await expect(scope.locator('a').filter({ hasText: 'Home' })).toBeVisible()
     await expect(scope.locator('a').filter({ hasText: 'Extension' })).toBeVisible()
     // Online 真链接（015 U1）：指向落地页
     const onlineEntry = scope.locator('a[data-cta="nav-online"]')
     await expect(onlineEntry).toBeVisible()
     await expect(onlineEntry).toHaveAttribute('href', '/online-scraper/')
-    await expect(scope.locator('a').filter({ hasText: 'Download' })).toBeVisible()
     await expect(scope.locator('a').filter({ hasText: 'Pricing' })).toBeVisible()
     if (isMobile) {
-      // 移动端：API 四子项平铺
-      await page.locator('.mobile-menu-btn').click()
+      // 移动端：API 四子项平铺（菜单已展开）
       await expect(scope.locator('a[data-cta="nav-api-scraper"]')).toBeVisible()
       await expect(scope.locator('a[data-cta="nav-api-reviews"]')).toBeVisible()
       await expect(scope.locator('a[data-cta="nav-api-photos"]')).toBeVisible()
@@ -62,21 +63,20 @@ test.describe('Website Shell', () => {
     await expect(page).toHaveURL(/\/online-scraper\//)
   })
 
-  test('nav install CTA leads to the download page with attribution attributes', async ({ page, isMobile }) => {
+  test('nav install CTA leads to the extension page with attribution attributes', async ({ page, isMobile }) => {
     test.skip(isMobile, '安装按钮在移动端断点隐藏，桌面验证即可')
     await page.goto('/')
     const installLink = page.locator('.nav-install-link')
-    await expect(installLink).toHaveAttribute('href', /\/download\//)
+    await expect(installLink).toHaveAttribute('href', '/extension/')
     await expect(installLink).toHaveAttribute('data-cta', 'nav-install')
     await installLink.click()
-    await expect(page).toHaveURL(/\/download\//)
+    await expect(page).toHaveURL(/\/extension\//)
   })
 
   test('footer exposes product, company and legal links', async ({ page }) => {
     await page.goto('/')
     const footer = page.locator('.footer-link-groups')
     await expect(footer.locator('a[href="/extension/"]')).toBeVisible()
-    await expect(footer.locator('a[href="/download/"]')).toBeVisible()
     await expect(footer.locator('a[href="/about/"]')).toBeVisible()
     await expect(footer.locator('a[href="/contact/"]')).toBeVisible()
     await expect(footer.locator('a[href="/terms/"]')).toBeVisible()
@@ -116,11 +116,11 @@ test.describe('Home Page', () => {
     await expect(page.locator('a[data-cta="home-band-install"]')).toBeVisible()
   })
 
-  test('hero CTA links to the download page with utm attribution', async ({ page }) => {
+  test('hero CTA links to the extension page with utm attribution', async ({ page }) => {
     await page.goto('/')
     const heroInstall = page.locator('a[data-cta="home-hero-install"]')
     const href = await heroInstall.getAttribute('href')
-    expect(href).toContain('/download/')
+    expect(href).toContain('/extension/')
     expect(href).toContain('utm_source=website')
     expect(href).toContain('utm_medium=home-hero')
   })
@@ -162,7 +162,7 @@ test.describe('Home Page', () => {
 })
 
 test.describe('Extension Product Page', () => {
-  test('renders hero, feature groups, version notes and install guide', async ({ page }) => {
+  test('renders hero, feature groups, version notes and install tutorial', async ({ page }) => {
     const response = await page.goto('/extension/')
     expect(response?.status()).toBe(200)
     await expect(page.locator('h1')).toContainText('Google Maps extractor')
@@ -173,21 +173,41 @@ test.describe('Extension Product Page', () => {
     }
     // 版本说明段（承接 changelog 职能）
     await expect(page.locator('[data-release="0.1.0 (pre-release)"]')).toBeVisible()
-    // 安装引导
-    await expect(page.locator('.install-steps .install-step')).toHaveCount(3)
+    // 安装教程区（营销 + 教程一体，#install 页内锚点）
+    const installSection = page.locator('section#install')
+    await expect(installSection).toBeVisible()
+    // 直装 zip 资产占位（release 资产未挂，点击不 404）
+    const zipLink = installSection.locator('a[data-cta="extension-install-zip"]')
+    await expect(zipLink).toBeVisible()
+    await expect(zipLink).toHaveAttribute('href', '#')
+    // Edge 与 Firefox 渠道各自带商店占位与安装步骤
+    for (const channelId of ['edge', 'firefox']) {
+      const channel = installSection.locator(`[data-channel="${channelId}"]`)
+      await expect(channel).toBeVisible()
+      await expect(channel.locator('a[data-cta="extension-store-' + channelId + '"]')).toHaveAttribute('href', '#')
+      await expect(channel.locator('.channel-steps li').first()).toBeVisible()
+    }
+    await expect(page.locator('[data-channel="edge"] .channel-steps li')).toHaveCount(4)
+    await expect(page.locator('[data-channel="firefox"] .channel-steps li')).toHaveCount(3)
   })
 
-  test('carries data-cta attribution on install CTAs', async ({ page }) => {
+  test('hero install buttons split Edge store jump from in-page tutorial scroll', async ({ page }) => {
     await page.goto('/extension/')
-    await expect(page.locator('a[data-cta="extension-hero-install"]')).toBeVisible()
-    await expect(page.locator('a[data-cta="extension-install-download"]')).toBeVisible()
-    await expect(page.locator('a[data-cta="extension-band-install"]')).toBeVisible()
+    // Edge 按钮跳转商店（上架前 href 占位），Chrome 按钮滚动到页内教程锚点
+    const edgeCta = page.locator('a[data-cta="extension-hero-edge-install"]')
+    await expect(edgeCta).toBeVisible()
+    await expect(edgeCta).toHaveAttribute('href', '#')
+    const chromeCta = page.locator('a[data-cta="extension-hero-chrome-install"]')
+    await expect(chromeCta).toBeVisible()
+    await expect(chromeCta).toHaveAttribute('href', '#install')
+    // 页底 CTA 同样滚动到教程区
+    await expect(page.locator('a[data-cta="extension-band-install"]')).toHaveAttribute('href', '#install')
   })
 
   test('renders media-rich sections with placeholder slots (015 D5 图文改造)', async ({ page }) => {
     await page.goto('/extension/')
-    // hero 右侧配图位 + showcase 双图位 + demo 视频位 + 安装三步配图位 = 7 个占位槽
-    await expect(page.locator('[data-media-slot]')).toHaveCount(7)
+    // hero 右侧配图位 + showcase 双图位 + demo 视频位 + zip 文件位 + edge 四步 + firefox 三步 = 12 个占位槽
+    await expect(page.locator('[data-media-slot]')).toHaveCount(12)
     // showcase：插件面板位 + 导出文件位 + 示例数据下载占位（点击不 404）
     await expect(page.locator('.showcase [data-media-slot="browser"]')).toBeVisible()
     await expect(page.locator('.showcase [data-media-slot="file"]')).toBeVisible()
@@ -196,42 +216,12 @@ test.describe('Extension Product Page', () => {
     await expect(demoData).toHaveAttribute('href', '#')
     // demo 视频占位区在版本说明段之前
     await expect(page.locator('.demo [data-media-slot]')).toBeVisible()
-    // 每个安装步骤都带配图位
-    await expect(page.locator('.install-step [data-media-slot]')).toHaveCount(3)
-    // 占位槽是无障碍可见的（role=img + aria-label）
-    await expect(page.locator('.hero [data-media-slot]')).toHaveAttribute('aria-label', /screenshot coming soon/i)
-  })
-})
-
-test.describe('Download Page', () => {
-  test('renders zip section and both browser channels with install steps', async ({ page }) => {
-    const response = await page.goto('/download/')
-    expect(response?.status()).toBe(200)
-    await expect(page.locator('h1')).toContainText('Install MapsGrab')
-    // 直装 zip 资产占位（release 资产未挂）
-    const zipLink = page.locator('a[data-cta="download-zip"]')
-    await expect(zipLink).toBeVisible()
-    await expect(zipLink).toHaveAttribute('href', '#')
-    // Edge 与 Firefox 渠道各自带商店占位与安装步骤
-    for (const channelId of ['edge', 'firefox']) {
-      const channel = page.locator(`[data-channel="${channelId}"]`)
-      await expect(channel).toBeVisible()
-      const storeLink = channel.locator('a[data-cta="download-store-' + channelId + '"]')
-      await expect(storeLink).toHaveAttribute('href', '#')
-      await expect(channel.locator('.channel-steps li').first()).toBeVisible()
-    }
-    await expect(page.locator('[data-channel="edge"] .channel-steps li')).toHaveCount(4)
-    await expect(page.locator('[data-channel="firefox"] .channel-steps li')).toHaveCount(3)
-  })
-
-  test('renders media-rich hero, zip and per-step slots (015 D5 图文改造)', async ({ page }) => {
-    await page.goto('/download/')
-    // hero 宽幅位 + zip 文件位 + edge 四步 + firefox 三步 = 9 个占位槽
-    await expect(page.locator('[data-media-slot]')).toHaveCount(9)
-    await expect(page.locator('.hero [data-media-slot="browser"]')).toBeVisible()
+    // 教程区：zip 文件位 + 每个安装步骤配图位
     await expect(page.locator('.zip-card [data-media-slot="file"]')).toBeVisible()
     await expect(page.locator('[data-channel="edge"] [data-media-slot]')).toHaveCount(4)
     await expect(page.locator('[data-channel="firefox"] [data-media-slot]')).toHaveCount(3)
+    // 占位槽是无障碍可见的（role=img + aria-label）
+    await expect(page.locator('.hero [data-media-slot]')).toHaveAttribute('aria-label', /screenshot coming soon/i)
   })
 })
 
@@ -242,8 +232,8 @@ test.describe('Secondary Pages', () => {
     await expect(page.locator('h1')).toContainText(heading)
   }
 
-  test('pricing page renders the MapsGrab three-tier plans page', async ({ page }) => {
-    await expectPageRenders(page, '/pricing/', 'Plans that scale with your maps workflow')
+  test('pricing page renders the three product-line plans page', async ({ page }) => {
+    await expectPageRenders(page, '/pricing/', 'One data engine, three ways to buy it')
   })
 
   test('about and contact pages render the W3 content', async ({ page }) => {

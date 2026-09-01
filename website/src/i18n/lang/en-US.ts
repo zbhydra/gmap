@@ -27,7 +27,6 @@ export const enUS: SiteContent = {
       apiReviews: 'Reviews API',
       apiPhotos: 'Photos API',
       apiMcp: 'Scraper MCP',
-      download: 'Download',
       pricing: 'Pricing'
     },
     footer: {
@@ -60,6 +59,24 @@ export const enUS: SiteContent = {
         title: 'Grab Google Maps business data in one click',
         description:
           'MapsGrab collects publicly available business information as you browse Google Maps — names, phones, reviews, photos, emails and more — and exports everything to clean CSV or JSON files.',
+        highlights: [
+          'No credit card required',
+          '1,000 free records / month',
+          'CSV & JSON export'
+        ],
+        scraperCard: {
+          label: 'Enter your keywords',
+          hint: 'One keyword or Google Maps URL per line',
+          textareaLabel: 'Keywords, one per line',
+          sampleKeywords: [
+            'coffee shop in Portland',
+            'restaurant in Austin',
+            'hotel near Central Park, NY'
+          ],
+          submitLabel: 'Start scraping free',
+          note:
+            'The hosted Online Scraper is rolling out — until then, the browser extension grabs the same data while you browse.'
+        },
         primaryCta: 'Install MapsGrab',
         secondaryCta: 'See what it grabs'
       },
@@ -194,8 +211,8 @@ export const enUS: SiteContent = {
         title: 'The Google Maps extractor for Edge and Firefox',
         description:
           'Open any Google Maps search or business page and grab what is publicly shown there: business data, reviews, photos, contact details. Everything exports to CSV or JSON, right from your browser.',
-        primaryCta: 'Install MapsGrab',
-        secondaryCta: 'View pricing',
+        edgeCta: 'Install for Edge',
+        chromeCta: 'Install for Chrome',
         visualLabel:
           'The MapsGrab panel running on a Google Maps search — screenshot coming soon'
       },
@@ -304,7 +321,7 @@ export const enUS: SiteContent = {
         eyebrow: 'Release notes',
         title: 'Version notes',
         description:
-          'MapsGrab ships through Edge Add-ons and Firefox Add-ons, with pre-release builds published on the Download page. This section tracks what changed in each release.',
+          'MapsGrab ships through Edge Add-ons and Firefox Add-ons, with pre-release builds attached to the public release. This section tracks what changed in each release.',
         releases: [
           {
             version: '0.1.0 (pre-release)',
@@ -323,39 +340,93 @@ export const enUS: SiteContent = {
       },
       install: {
         eyebrow: 'Install',
-        title: 'Get the extension in three steps',
+        title: 'Install MapsGrab',
         description:
-          'Store listings for Edge Add-ons and Firefox Add-ons are in progress. Until they are live, install directly from the release zip.',
-        steps: [
+          'Edge installs straight from Edge Add-ons. Chrome and other Chromium browsers install from the release zip below — the identical package submitted to the stores. Firefox follows the temporary add-on steps.',
+        zip: {
+          title: 'Direct install (release zip)',
+          description:
+            'The release zip is the identical package submitted to both stores. Load it manually while store listings are in review.',
+          button: 'Download release zip',
+          note: 'Release asset link is being prepared — it will attach to the public release of version 0.1.0.',
+          visualLabel: 'The MapsGrab release zip file — screenshot coming soon'
+        },
+        channels: [
           {
-            title: 'Download',
-            details: [
-              'Grab the Edge or Firefox build from the Download page.',
-              'The zip is the same package that ships to the stores.'
-            ],
-            mediaLabel:
-              'The Download page with the release zip card — screenshot coming soon'
+            id: 'edge',
+            name: 'Microsoft Edge',
+            storeName: 'Edge Add-ons',
+            storeStatus: 'Listing in review — the store link goes live here as soon as Edge Add-ons approves it.',
+            storeCta: 'Open Edge Add-ons',
+            manualTitle: 'Direct install for Edge and Chromium browsers',
+            steps: [
+              {
+                title: 'Download and unzip',
+                details: ['Download the release zip above and unzip it to a folder you keep.'],
+                mediaLabel:
+                  'The release zip in the browser downloads bar — screenshot coming soon'
+              },
+              {
+                title: 'Open the extensions page',
+                details: ['In Edge, Chromium, or Brave, open the extensions management page.'],
+                mediaLabel:
+                  'The Edge extensions management page — screenshot coming soon'
+              },
+              {
+                title: 'Enable Developer mode',
+                details: ['Toggle Developer mode in the extensions page sidebar.'],
+                mediaLabel:
+                  'Developer mode toggled on in the extensions page sidebar — screenshot coming soon'
+              },
+              {
+                title: 'Load the unpacked folder',
+                details: [
+                  'Click "Load unpacked" and select the unzipped folder.',
+                  'The MapsGrab panel appears on Google Maps search pages.'
+                ],
+                mediaLabel:
+                  'Load unpacked with the MapsGrab card added — screenshot coming soon'
+              }
+            ]
           },
           {
-            title: 'Load it in your browser',
-            details: [
-              'Edge / Chromium: enable Developer mode on the extensions page and load the unzipped folder.',
-              'Firefox: load the add-on temporarily from the debugging page.'
-            ],
-            mediaLabel:
-              'Developer mode on and the MapsGrab card loaded on the extensions page — screenshot coming soon'
-          },
-          {
-            title: 'Open Google Maps and grab',
-            details: [
-              'Search on Google Maps — the MapsGrab panel appears on the page.',
-              'Start extracting, then export when the run finishes.'
-            ],
-            mediaLabel:
-              'The MapsGrab panel collecting results on a Google Maps search — screenshot coming soon'
+            id: 'firefox',
+            name: 'Mozilla Firefox',
+            storeName: 'Firefox Add-ons (AMO)',
+            storeStatus: 'Listing in review — the store link goes live here as soon as Firefox Add-ons approves it.',
+            storeCta: 'Open Firefox Add-ons',
+            manualTitle: 'Direct install for Firefox',
+            steps: [
+              {
+                title: 'Download and unzip',
+                details: ['Download the release zip above and unzip it to a folder you keep.'],
+                mediaLabel:
+                  'The release zip in the browser downloads bar — screenshot coming soon'
+              },
+              {
+                title: 'Open the debugging page',
+                details: ['Navigate to about:debugging, then choose "This Firefox".'],
+                mediaLabel:
+                  'The about:debugging page with "This Firefox" selected — screenshot coming soon'
+              },
+              {
+                title: 'Load the add-on',
+                details: [
+                  'Click "Load Temporary Add-on…" and pick manifest.json inside the unzipped folder.',
+                  'A temporary add-on reloads when Firefox restarts — the AMO listing above makes it permanent once live.'
+                ],
+                mediaLabel:
+                  'Load Temporary Add-on picking manifest.json — screenshot coming soon'
+              }
+            ]
           }
         ],
-        downloadCta: 'Go to the Download page'
+        help: {
+          title: 'Installation trouble?',
+          description:
+            'If a step does not work in your browser version, send us the browser name and what you saw — we will get you unblocked.',
+          contactCta: 'Contact support'
+        }
       },
       cta: {
         title: 'Grab your first list today',
@@ -363,105 +434,6 @@ export const enUS: SiteContent = {
           'Install the extension, search Google Maps, and export a clean spreadsheet in minutes — no account required.',
         button: 'Install MapsGrab',
         note: 'Free monthly quota included. No credit card.'
-      }
-    },
-    download: {
-      seo: {
-        title: 'Download MapsGrab — Install on Edge and Firefox',
-        description:
-          'Install MapsGrab from Edge Add-ons or Firefox Add-ons, or load the release zip directly in Chromium and Firefox browsers. Step-by-step guide included.'
-      },
-      hero: {
-        eyebrow: 'Download',
-        title: 'Install MapsGrab',
-        description:
-          'Pick your browser below. Store listings are being finalized — until then, the direct-install zip carries the exact same package.',
-        visualLabel:
-          'MapsGrab pinned in the browser toolbar on a Google Maps search — screenshot coming soon'
-      },
-      zip: {
-        title: 'Direct install (release zip)',
-        description:
-          'The release zip is the identical package submitted to both stores. Load it manually while store listings are in review.',
-        button: 'Download release zip',
-        note: 'Release asset link is being prepared — it will attach to the public release of version 0.1.0.',
-        visualLabel: 'The MapsGrab release zip file — screenshot coming soon'
-      },
-      channels: [
-        {
-          id: 'edge',
-          name: 'Microsoft Edge',
-          storeName: 'Edge Add-ons',
-          storeStatus: 'Listing in review — the store link goes live here as soon as Edge Add-ons approves it.',
-          storeCta: 'Open Edge Add-ons',
-          manualTitle: 'Direct install for Edge and Chromium browsers',
-          steps: [
-            {
-              title: 'Download and unzip',
-              details: ['Download the release zip above and unzip it to a folder you keep.'],
-              mediaLabel:
-                'The release zip in the browser downloads bar — screenshot coming soon'
-            },
-            {
-              title: 'Open the extensions page',
-              details: ['In Edge, Chromium, or Brave, open the extensions management page.'],
-              mediaLabel:
-                'The Edge extensions management page — screenshot coming soon'
-            },
-            {
-              title: 'Enable Developer mode',
-              details: ['Toggle Developer mode in the extensions page sidebar.'],
-              mediaLabel:
-                'Developer mode toggled on in the extensions page sidebar — screenshot coming soon'
-            },
-            {
-              title: 'Load the unpacked folder',
-              details: [
-                'Click "Load unpacked" and select the unzipped folder.',
-                'The MapsGrab panel appears on Google Maps search pages.'
-              ],
-              mediaLabel:
-                'Load unpacked with the MapsGrab card added — screenshot coming soon'
-            }
-          ]
-        },
-        {
-          id: 'firefox',
-          name: 'Mozilla Firefox',
-          storeName: 'Firefox Add-ons (AMO)',
-          storeStatus: 'Listing in review — the store link goes live here as soon as Firefox Add-ons approves it.',
-          storeCta: 'Open Firefox Add-ons',
-          manualTitle: 'Direct install for Firefox',
-          steps: [
-            {
-              title: 'Download and unzip',
-              details: ['Download the release zip above and unzip it to a folder you keep.'],
-              mediaLabel:
-                'The release zip in the browser downloads bar — screenshot coming soon'
-            },
-            {
-              title: 'Open the debugging page',
-              details: ['Navigate to about:debugging, then choose "This Firefox".'],
-              mediaLabel:
-                'The about:debugging page with "This Firefox" selected — screenshot coming soon'
-            },
-            {
-              title: 'Load the add-on',
-              details: [
-                'Click "Load Temporary Add-on…" and pick manifest.json inside the unzipped folder.',
-                'A temporary add-on reloads when Firefox restarts — the AMO listing above makes it permanent once live.'
-              ],
-              mediaLabel:
-                'Load Temporary Add-on picking manifest.json — screenshot coming soon'
-            }
-          ]
-        }
-      ],
-      help: {
-        title: 'Installation trouble?',
-        description:
-          'If a step does not work in your browser version, send us the browser name and what you saw — we will get you unblocked.',
-        contactCta: 'Contact support'
       }
     },
     account: {
