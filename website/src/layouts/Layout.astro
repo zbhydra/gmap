@@ -597,12 +597,17 @@ const structuredDataItems = [
         box-shadow: var(--shadow-pop);
         max-height: 0;
         overflow: hidden;
-        transition: max-height var(--transition-normal) ease-out;
+        /* max-height:0 时 border/shadow 仍会绘制成一条线，必须用 visibility 一并隐藏 */
+        visibility: hidden;
+        /* 收起时等动画走完再隐藏；展开时在 .open 里立即恢复 */
+        transition: max-height var(--transition-normal) ease-out, visibility 0s linear var(--transition-normal);
       }
 
       /* 展开高度覆盖 Home/Extension/Online/API×4/Download/Pricing 平铺项（015 U1） */
       .mobile-nav.open {
         max-height: 640px;
+        visibility: visible;
+        transition: max-height var(--transition-normal) ease-out, visibility 0s;
       }
 
       .mobile-nav-inner {
