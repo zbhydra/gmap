@@ -42,6 +42,14 @@ export interface ConfigCacheRefreshResult {
   refreshed_at: number;
 }
 
+/** gosom 引擎 API 配置；未配置时两个字段为空字符串。 */
+export interface GosomApiConfig {
+  /** gosom 引擎 API 根地址，http(s):// 开头，无末尾斜杠。 */
+  base_url: string;
+  /** gosom 引擎 API Key，明文保存。 */
+  api_key: string;
+}
+
 /** 查询当前管理员 API Key 元信息。 */
 export function getAdminApiKeyMeta() {
   return request.get<never, AdminApiKeyMeta>("/system-settings/api-key");
@@ -57,4 +65,14 @@ export function refreshConfigCache() {
   return request.post<never, ConfigCacheRefreshResult>(
     "/system-settings/config-cache/refresh",
   );
+}
+
+/** 查询 gosom 引擎 API 配置。 */
+export function getGosomApiConfig() {
+  return request.get<never, GosomApiConfig>("/system-settings/gosom-api");
+}
+
+/** 保存 gosom 引擎 API 配置。 */
+export function saveGosomApiConfig(config: GosomApiConfig) {
+  return request.post<never, GosomApiConfig>("/system-settings/gosom-api", config);
 }

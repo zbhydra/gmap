@@ -115,6 +115,48 @@
           </section>
         </NTabPane>
 
+        <NTabPane
+          name="gosom-api"
+          :tab="t('systemSettings.tabGosomApi')"
+        >
+          <section>
+            <NSpin :show="gosomLoading">
+              <div class="gosom-form">
+                <div class="gosom-field">
+                  <NText class="gosom-label">
+                    {{ t("systemSettings.gosomBaseUrl") }}
+                  </NText>
+                  <NInput
+                    v-model:value="gosomConfig.base_url"
+                    :placeholder="t('systemSettings.gosomBaseUrlPlaceholder')"
+                    :disabled="gosomLoading"
+                  />
+                </div>
+                <div class="gosom-field">
+                  <NText class="gosom-label">
+                    {{ t("systemSettings.gosomApiKey") }}
+                  </NText>
+                  <NInput
+                    v-model:value="gosomConfig.api_key"
+                    :placeholder="t('systemSettings.gosomApiKeyPlaceholder')"
+                    :disabled="gosomLoading"
+                  />
+                </div>
+              </div>
+            </NSpin>
+            <div class="tab-actions">
+              <NButton
+                type="primary"
+                :loading="gosomSaving"
+                :disabled="gosomLoading"
+                @click="handleSaveGosomConfig"
+              >
+                {{ t("systemSettings.gosomSave") }}
+              </NButton>
+            </div>
+          </section>
+        </NTabPane>
+
       </NTabs>
     </NCard>
 
@@ -149,6 +191,7 @@ import {
   NCard,
   NDescriptions,
   NDescriptionsItem,
+  NInput,
   NList,
   NListItem,
   NModal,
@@ -164,9 +207,12 @@ import {
 import {
   generateAdminApiKey,
   getAdminApiKeyMeta,
+  getGosomApiConfig,
   refreshConfigCache,
+  saveGosomApiConfig,
   type AdminApiKeyMeta,
   type ConfigCacheRefreshResult,
+  type GosomApiConfig,
 } from "@/api/system-settings";
 import { formatAdminTimeMs } from "@/utils/time";
 
@@ -177,11 +223,14 @@ const message = useMessage();
 const refreshingCache = ref(false);
 const apiKeyLoading = ref(false);
 const generatingApiKey = ref(false);
+const gosomLoading = ref(false);
+const gosomSaving = ref(false);
 const activeTab = ref("config-cache");
 const cacheRefreshResult = ref<ConfigCacheRefreshResult | null>(null);
 const apiKeyMeta = ref<AdminApiKeyMeta | null>(null);
 const generatedApiKey = ref("");
 const showGeneratedApiKeyModal = ref(false);
+const gosomConfig = ref<GosomApiConfig>({ base_url: "", api_key: "" });
 
 /** 只有已知 API Key 状态时才允许生成，避免加载失败时绕过重新生成确认。 */
 const canGenerateApiKey = computed(
@@ -312,8 +361,53 @@ async function handleCopyGeneratedApiKey() {
   }
 }
 
+/** 加载 gosom 引擎 API 配置。 */
+async function loadGosomConfig() {
+  gosomLoading.value = true;
+  try {
+    gosomConfig.value = await getGosomApiConfig();
+  } catch (error) {
+    console.error("SystemSettingsView.loadGosomConfig() 加载失败:", error);
+    message.error(
+      getErrorMessage(
+        error instanceof Error ? error : null,
+        t("systemSettings.gosomLoadFailed"),
+      ),
+    );
+  } finally {
+    gosomLoading.value = false;
+  }
+}
+
+/** 保存 gosom 引擎 API 配置；两端均为必填，空白视为未填。 */
+async function handleSaveGosomConfig() {
+  const base_url = gosomConfig.value.base_url.trim();
+  const api_key = gosomConfig.value.api_key.trim();
+  if (!base_url || !api_key) {
+    message.warning(t("systemSettings.gosomRequired"));
+    return;
+  }
+
+  gosomSaving.value = true;
+  try {
+    gosomConfig.value = await saveGosomApiConfig({ base_url, api_key });
+    message.success(t("systemSettings.gosomSaveSuccess"));
+  } catch (error) {
+    console.error("SystemSettingsView.handleSaveGosomConfig() 保存失败:", error);
+    message.error(
+      getErrorMessage(
+        error instanceof Error ? error : null,
+        t("systemSettings.gosomSaveFailed"),
+      ),
+    );
+  } finally {
+    gosomSaving.value = false;
+  }
+}
+
 onMounted(() => {
   void loadApiKeyMeta();
+  void loadGosomConfig();
 });
 
 </script>
@@ -335,6 +429,22 @@ onMounted(() => {
 
 .unknown-alert {
   margin-bottom: 16px;
+}
+
+.gosom-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gosom-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gosom-label {
+  font-size: 14px;
 }
 
 .api-key-box {

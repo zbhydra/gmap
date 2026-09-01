@@ -8,8 +8,9 @@
 
 - 刷新配置读取缓存。
 - 生成 / 轮换当前管理员的外部 API Key。
+- 维护 gosom 抓取引擎的 API 地址与 Key(存 `system_data`)。
 
-除这两个明确入口外,它不是通用配置编辑器。
+除这些明确入口外,它不是通用配置编辑器。
 
 > 历史能力「Google 数据采集」「Telegram DOM 覆盖」「Telegram Config」已分别随 GSC/GA4 采集退役(2026-08-31)与下载功能下线(2026-08 前后)整体移除,接口、前端 tab 与文档章节不再保留;详见各域 changelog。
 
@@ -55,7 +56,7 @@
 前端:
 
 - `admin/src/api/system-settings.ts` 封装 `refreshConfigCache()`。
-- `admin/src/views/SystemSettingsView.vue`,页面顶部包含"配置表缓存"、"API Key"两个 tab。
+- `admin/src/views/SystemSettingsView.vue`,页面顶部包含"配置表缓存"、"API Key"、"Gosom API"三个 tab。
 - 侧边栏"系统设置"菜单,路由名 `SystemSettings`,路径 `/system-settings`。
 - 文案写入 `admin/src/i18n/zh-CN.json` 与 `admin/src/i18n/en-US.json`。
 
@@ -135,9 +136,58 @@ API Key 生成格式:
 - 管理员停用后,其 API Key 不能继续访问外部 API。
 - 数据库和日志中不出现 API Key 明文。
 
+## Gosom API 配置
+
+系统设置页维护 gosom 抓取引擎(014 云端线 / ROADMAP B4)的 API 地址与 Key,后续抓取调用方从 `system_data` 读取。Key 按运维决策(2026-09-01 hydra)明文存储,不加密、不掩码回显。
+
+### 数据模型
+
+`system_data` 单行:
+
+| 字段 | 值 |
+| --- | --- |
+| `data_key` | `gosom_api` |
+| `data_value` | JSON 对象 `{"base_url": string, "api_key": string}` |
+
+存储规则:
+
+- 键名常量 `GOSOM_API_DATA_KEY` 收敛在 `app/constants/gosom.py`,消费方禁止散落硬编码。
+- `base_url` 保存前剥掉首尾空白与末尾斜杠,消费方直接拼路径不会出现双斜杠。
+- 读写统一走 `system_data_service.get/set`,保存后自动清空该 service 的 30 分钟读取缓存,本进程立即拿到新值。
+- 不做多组配置、密钥轮换历史与调用审计。
+- 保存动作本身已即时清空当前进程缓存,无需再点「刷新配置缓存」;多进程部署时其他进程受 30 分钟 TTL 约束,与该入口同边界。
+
+### 接口
+
+| 方法 | 路径 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| GET | `/api/admin/system-settings/gosom-api` | `get_admin_user` | 查询配置;未配置时两个字段为空字符串 |
+| POST | `/api/admin/system-settings/gosom-api` | `get_admin_user` | 保存配置 |
+
+请求与响应 `data` 同构:
+
+| 字段 | 类型 | 必传 | 说明 |
+| --- | --- | --- | --- |
+| `base_url` | string | 是 | http(s):// 开头,≤500 字符 |
+| `api_key` | string | 是 | ≤500 字符 |
+
+校验由 pydantic schema 完成,失败走全局 `VALIDATION_ERROR`,不新增错误码。
+
+### 前端
+
+- "Gosom API" tab:「API 地址」「API Key」两个必填输入框 + 保存按钮;进入页面即加载回显。
+- 任一字段空白时前端直接拦截提示,不发请求。
+- 保存成功以后端返回值(归一化后)回填输入框。
+
+### 验收
+
+- 未配置时打开 tab 显示空输入框;保存后 `system_data` 出现 `gosom_api` 行,重新打开回显一致且末尾斜杠被剥掉。
+- 只填其一无法保存;后端校验失败展示统一错误提示,不清理登录态。
+
 ## 实现锚点
 
 | 模块 | 后端 API | 后端 service |
 | --- | --- | --- |
 | 系统设置 | `@backend/src/app/api/admin/admin_system_settings.py` | `@backend/src/app/services/admin_system_settings_service.py` |
 | API Key | 同上 | `@backend/src/app/services/admin_api_key_service.py` |
+| Gosom API 配置 | 同上 | 复用 `@backend/src/app/services/system_data_service.py`;键名常量在 `@backend/src/app/constants/gosom.py` |

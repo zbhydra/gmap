@@ -157,6 +157,16 @@
     "apiKeyGenerateSuccess": "API Key 生成成功",
     "apiKeyGenerateFailed": "API Key 生成失败",
     "apiKeyUnknownTitle": "API Key 状态未知",
-    "apiKeyUnknownDescription": "请先刷新或重试加载 API Key 状态，再执行生成操作。"
+    "apiKeyUnknownDescription": "请先刷新或重试加载 API Key 状态，再执行生成操作。",
+    "tabGosomApi": "Gosom API",
+    "gosomBaseUrl": "API 地址",
+    "gosomApiKey": "API Key",
+    "gosomBaseUrlPlaceholder": "如 https://gosom.example.com",
+    "gosomApiKeyPlaceholder": "gosom 引擎 API Key",
+    "gosomSave": "保存",
+    "gosomRequired": "API 地址和 API Key 不能为空",
+    "gosomLoadFailed": "加载 Gosom API 配置失败",
+    "gosomSaveSuccess": "Gosom API 配置已保存",
+    "gosomSaveFailed": "保存 Gosom API 配置失败"
   }
 }

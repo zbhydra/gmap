@@ -7,6 +7,7 @@
  * - 生成成功后完整 API Key 只在一次性弹窗展示，关闭即消失。
  * - 完整 API Key 不写入 localStorage。
  * - 刷新配置缓存命中正确 POST，并展示刷新结果。
+ * - Gosom API 配置回显、必填拦截与保存归一化。
  */
 import { expect, test, type Page } from "@playwright/test";
 import { registerE2eBrowserIdentity } from "../scripts/playwright-browser-identity.mjs";
@@ -51,12 +52,21 @@ interface ConfigCacheRefreshMockData {
   refreshed_at: number;
 }
 
+/** gosom 引擎 API 配置 mock。 */
+interface GosomApiConfigMockData {
+  /** gosom 引擎 API 根地址。 */
+  base_url: string;
+  /** gosom 引擎 API Key。 */
+  api_key: string;
+}
+
 /** 本文件 route.fulfill 可返回的数据联合。 */
 type MockResponseData =
   | DashboardMockData
   | ApiKeyMetaMockData
   | GeneratedApiKeyMockData
-  | ConfigCacheRefreshMockData;
+  | ConfigCacheRefreshMockData
+  | GosomApiConfigMockData;
 
 /** 后端统一成功响应。 */
 function successResponse(data: MockResponseData) {
@@ -99,9 +109,10 @@ async function loginAsAdmin(page: Page) {
 }
 
 /** 切换系统设置顶部 tab。 */
-async function openSettingsTab(page: Page, tab: "api-key") {
+async function openSettingsTab(page: Page, tab: "api-key" | "gosom-api") {
   const tabText = {
     "api-key": "API Key",
+    "gosom-api": "Gosom API",
   }[tab];
   await page.locator(".n-tabs-nav").getByText(tabText, { exact: true }).click();
 }
@@ -116,6 +127,31 @@ async function mockSystemSettingsApi(page: Page) {
   };
   let generateCallCount = 0;
   let refreshCacheCallCount = 0;
+  let gosomConfig: GosomApiConfigMockData = {
+    base_url: "https://gosom.example.com",
+    api_key: "gosom_key_old",
+  };
+  let gosomSaveCallCount = 0;
+  let gosomLastPayload: GosomApiConfigMockData | null = null;
+
+  await page.route("**/api/admin/system-settings/gosom-api", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill(successResponse(gosomConfig));
+      return;
+    }
+
+    expect(route.request().method()).toBe("POST");
+    gosomSaveCallCount += 1;
+    gosomLastPayload = JSON.parse(
+      route.request().postData() ?? "{}",
+    ) as GosomApiConfigMockData;
+    // 镜像后端契约：保存前剥掉 base_url 末尾斜杠，并在响应中回显归一化结果。
+    gosomConfig = {
+      base_url: gosomLastPayload.base_url.replace(/\/+$/, ""),
+      api_key: gosomLastPayload.api_key,
+    };
+    await route.fulfill(successResponse(gosomConfig));
+  });
 
   await page.route("**/api/admin/system-settings/api-key", async (route) => {
     if (route.request().method() === "GET") {
@@ -163,6 +199,10 @@ async function mockSystemSettingsApi(page: Page) {
     generateCallCount: () => generateCallCount,
     /** 当前刷新缓存接口调用次数。 */
     refreshCacheCallCount: () => refreshCacheCallCount,
+    /** 当前 gosom 保存接口调用次数。 */
+    gosomSaveCallCount: () => gosomSaveCallCount,
+    /** 最近一次 gosom 保存请求体。 */
+    gosomLastPayload: () => gosomLastPayload,
   };
 }
 
@@ -224,4 +264,39 @@ test("刷新配置缓存命中 POST 并展示成功结果", async ({ page }) => 
   await expect(page.getByText("config_public_service")).toBeVisible();
   await expect(page.getByText("payment_config_service")).toBeVisible();
   expect(api.refreshCacheCallCount()).toBe(1);
+});
+
+test("Gosom API 配置回显、必填拦截与保存归一化", async ({ page }) => {
+  await loginAsAdmin(page);
+  const api = await mockSystemSettingsApi(page);
+
+  await page.goto("/system-settings");
+  await openSettingsTab(page, "gosom-api");
+
+  const baseUrlInput = page.getByPlaceholder("如 https://gosom.example.com");
+  const apiKeyInput = page.getByPlaceholder("gosom 引擎 API Key");
+  await expect(baseUrlInput).toHaveValue("https://gosom.example.com");
+  await expect(apiKeyInput).toHaveValue("gosom_key_old");
+
+  // 任一字段为空白时前端直接拦截，不发保存请求。
+  await apiKeyInput.fill("");
+  await page.getByRole("button", { name: "保存" }).click();
+  await expect(
+    page.locator(".n-message__content", { hasText: "API 地址和 API Key 不能为空" }),
+  ).toBeVisible();
+  expect(api.gosomSaveCallCount()).toBe(0);
+
+  // 保存命中 POST；请求体原样携带输入值，输入框回填后端归一化(剥末尾斜杠)结果。
+  await baseUrlInput.fill("https://gosom.internal:8080/");
+  await apiKeyInput.fill("gosom_key_new");
+  await page.getByRole("button", { name: "保存" }).click();
+  await expect(
+    page.locator(".n-message__content", { hasText: "Gosom API 配置已保存" }),
+  ).toBeVisible();
+  expect(api.gosomSaveCallCount()).toBe(1);
+  expect(api.gosomLastPayload()).toEqual({
+    base_url: "https://gosom.internal:8080/",
+    api_key: "gosom_key_new",
+  });
+  await expect(baseUrlInput).toHaveValue("https://gosom.internal:8080");
 });

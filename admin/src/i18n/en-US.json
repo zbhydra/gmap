@@ -157,6 +157,16 @@
     "apiKeyGenerateSuccess": "API Key generated",
     "apiKeyGenerateFailed": "Failed to generate API Key",
     "apiKeyUnknownTitle": "API Key status unknown",
-    "apiKeyUnknownDescription": "Refresh or retry loading the API Key status before generating a key."
+    "apiKeyUnknownDescription": "Refresh or retry loading the API Key status before generating a key.",
+    "tabGosomApi": "Gosom API",
+    "gosomBaseUrl": "Base URL",
+    "gosomApiKey": "API Key",
+    "gosomBaseUrlPlaceholder": "e.g. https://gosom.example.com",
+    "gosomApiKeyPlaceholder": "gosom engine API Key",
+    "gosomSave": "Save",
+    "gosomRequired": "Base URL and API Key are required",
+    "gosomLoadFailed": "Failed to load Gosom API config",
+    "gosomSaveSuccess": "Gosom API config saved",
+    "gosomSaveFailed": "Failed to save Gosom API config"
   }
 }

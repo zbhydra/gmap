@@ -1,5 +1,17 @@
 # 008 · 管理后台 · 变更记录
 
+## 2026-09-01 系统设置新增 Gosom API 配置
+
+**为什么**:云端抓取引擎 gosom(014 / ROADMAP B4)接入前,后台需要一处入口维护其 API 地址与 Key;按 hydra 决策(2026-09-01)明文存 `system_data`,不做加密与掩码。
+
+**变更**:
+
+- 后端新增 `GET/POST /api/admin/system-settings/gosom-api`:经 `system_data_service` 读写 `system_data` 单行 `gosom_api`(JSON `{"base_url", "api_key"}`);`base_url` 保存前剥首尾空白与末尾斜杠;校验走 pydantic schema + 全局 `VALIDATION_ERROR`,无新增错误码;键名常量 `GOSOM_API_DATA_KEY` 收敛在 `app/constants/gosom.py`。
+- admin 系统设置页新增「Gosom API」tab(地址 / Key 两个必填输入框 + 保存按钮,进页即加载回显,空白前端拦截);`api/system-settings.ts` 新增 `GosomApiConfig` 类型与读写封装,中英 i18n 同步。
+- e2e `system-settings.spec.ts` 补 gosom-api 路由 mock 与「回显 / 必填拦截 / 保存归一化」用例;`tech-系统设置.md` 新增章节并收口三 tab,feat.md 范围 / UI / 验收同步。
+
+**验收**:backend `black` / `ruff` / `mypy` 通过并本地启动接口可达;admin `pnpm build` 通过;`system-settings.spec.ts` e2e 全绿;保存后 `system_data` 落 `gosom_api` 行且回显一致。
+
 ## 2026-08-31 admin 移动端友好化重构
 
 **为什么**:admin 布局此前只面向桌面(侧边栏无断点逻辑常驻挤压内容、订单详情抽屉固定 720px、Dashboard 表格无 scroll-x、断点值 960/640/560 散落混用),移动端基本不可用。
