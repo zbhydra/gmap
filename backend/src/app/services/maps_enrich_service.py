@@ -29,7 +29,8 @@ from html import unescape
 from typing import NamedTuple
 from urllib.parse import urljoin, urlsplit
 
-import httpx
+from curl_cffi.requests import AsyncSession
+from curl_cffi.requests.exceptions import RequestException
 from pydantic import BaseModel, Field
 
 from app.constants.maps_enrich import (
@@ -50,13 +51,10 @@ from app.utils.logger import logger
 from app.utils.redis_key import build_redis_key
 from app.utils.ssrf_guard import SSRFBlockedError, assert_safe_http_url
 
-# 浏览器形态请求头：部分站点对非浏览器 UA 返回 403 或挑战页。
+# 请求头只补 impersonate 未覆盖的 Accept-Language；UA / Accept / sec-ch-ua
+# 与 TLS 指纹由 curl_cffi impersonate="chrome" 成套注入——手写 UA 会覆盖成套
+# 头，造成「TLS 指纹与 UA 版本不一致」的新指纹特征，故不设置。
 _REQUEST_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-    ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
 }
 
@@ -313,7 +311,11 @@ class MapsEnrichService:
         return {"key": target.key, "emails": payload.emails, "medias": payload.medias}
 
     async def _fetch_html(self, url: str) -> str | None:
-        """抓取官网 HTML：逐跳 SSRF 校验 + 手动重定向 + 大小截断。
+        """抓取官网 HTML：curl_cffi 浏览器指纹 + 逐跳 SSRF 校验 + 手动重定向 + 大小截断。
+
+        impersonate="chrome" 成套注入 Chrome TLS 指纹（JA3/JA4）与配套请求头
+        （UA/Accept/sec-ch-ua），规避站点对 python TLS 指纹的 403/挑战拦截；
+        重定向关自动跟随，逐跳经 SSRF 校验后手动跟随。
 
         Returns:
             页面文本；scheme 非法 / 内网地址 / 非 2xx / 网络失败返回 None。
@@ -322,62 +324,66 @@ class MapsEnrichService:
         current_url = url
         try:
             async with self._site_semaphore:
-                async with httpx.AsyncClient(
-                    timeout=httpx.Timeout(ENRICH_FETCH_TIMEOUT),
-                    follow_redirects=False,
+                async with AsyncSession(
+                    impersonate="chrome",
+                    timeout=ENRICH_FETCH_TIMEOUT,
+                    allow_redirects=False,
                     headers=_REQUEST_HEADERS,
-                ) as client:
+                ) as session:
                     for _hop in range(ENRICH_MAX_REDIRECTS + 1):
                         # 每跳重验（重定向可能跳向内网）；拒绝即失败不重试。
                         await assert_safe_http_url(current_url)
-                        async with client.stream("GET", current_url) as response:
-                            if response.is_redirect:
-                                location = response.headers.get("location")
-                                if not location:
-                                    logger.error(
-                                        "maps_enrich_service._fetch_html: 重定向缺少 location: "
-                                        f"url={current_url!r}, status={response.status_code}"
-                                    )
-                                    return None
-                                current_url = urljoin(current_url, location)
-                                continue
-                            if response.is_error:
+                        response = await session.get(current_url, stream=True)
+                        if response.is_redirect:
+                            location = response.headers.get("location")
+                            await response.aclose()
+                            if not location:
                                 logger.error(
-                                    "maps_enrich_service._fetch_html: 非 2xx 响应: "
+                                    "maps_enrich_service._fetch_html: 重定向缺少 location: "
                                     f"url={current_url!r}, status={response.status_code}"
                                 )
                                 return None
-                            chunks: list[bytes] = []
-                            total = 0
-                            async for chunk in response.aiter_bytes():
-                                if total + len(chunk) > ENRICH_MAX_HTML_BYTES:
-                                    # 超限截断：保留上限内的部分（单个大 chunk 不得
-                                    # 整体丢弃，footer 内容通常在前部）
-                                    remaining = ENRICH_MAX_HTML_BYTES - total
-                                    if remaining > 0:
-                                        chunks.append(chunk[:remaining])
-                                    break
-                                total += len(chunk)
-                                chunks.append(chunk)
-                            raw = b"".join(chunks)
-                            charset = response.charset_encoding or "utf-8"
-                            try:
-                                return raw.decode(charset, errors="ignore")
-                            except (LookupError, UnicodeDecodeError):
-                                # 站点声明了未知/畸形 charset：回退 UTF-8 宽松解码，
-                                # 不因编码问题中断补全（footer 链接为 ASCII，损失可控）。
-                                logger.warning(
-                                    "maps_enrich_service._fetch_html: charset 解码失败，"
-                                    f"回退 UTF-8: charset={charset!r}, url={current_url!r}"
-                                )
-                                return raw.decode("utf-8", errors="replace")
+                            current_url = urljoin(current_url, location)
+                            continue
+                        if not 200 <= response.status_code < 300:
+                            logger.error(
+                                "maps_enrich_service._fetch_html: 非 2xx 响应: "
+                                f"url={current_url!r}, status={response.status_code}"
+                            )
+                            await response.aclose()
+                            return None
+                        chunks: list[bytes] = []
+                        total = 0
+                        async for chunk in response.aiter_content():
+                            if total + len(chunk) > ENRICH_MAX_HTML_BYTES:
+                                # 超限截断：保留上限内的部分（单个大 chunk 不得
+                                # 整体丢弃，footer 内容通常在前部）
+                                remaining = ENRICH_MAX_HTML_BYTES - total
+                                if remaining > 0:
+                                    chunks.append(chunk[:remaining])
+                                break
+                            total += len(chunk)
+                            chunks.append(chunk)
+                        await response.aclose()
+                        raw = b"".join(chunks)
+                        charset = response.charset_encoding or "utf-8"
+                        try:
+                            return raw.decode(charset, errors="ignore")
+                        except (LookupError, UnicodeDecodeError):
+                            # 站点声明了未知/畸形 charset：回退 UTF-8 宽松解码，
+                            # 不因编码问题中断补全（footer 链接为 ASCII，损失可控）。
+                            logger.warning(
+                                "maps_enrich_service._fetch_html: charset 解码失败，"
+                                f"回退 UTF-8: charset={charset!r}, url={current_url!r}"
+                            )
+                            return raw.decode("utf-8", errors="replace")
         except SSRFBlockedError as exc:
             # 安全拒绝是预期路径（商家脏数据），warning 级别即可。
             logger.warning(
                 f"maps_enrich_service._fetch_html: SSRF 拒绝: url={url!r}, {exc}"
             )
             return None
-        except (httpx.HTTPError, asyncio.TimeoutError) as exc:
+        except (RequestException, asyncio.TimeoutError) as exc:
             logger.error(
                 f"maps_enrich_service._fetch_html: 站点抓取失败: url={current_url!r}, error={exc!r}",
                 exc_info=True,

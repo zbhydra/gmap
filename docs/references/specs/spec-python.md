@@ -45,7 +45,7 @@ async def update(self, id: int, **kwargs) -> bool: ...   # **kwargs 无类型且
 
 - 全链路异步：FastAPI + SQLAlchemy async + `redis.asyncio` + `httpx`。
 - **禁止在 async 函数内调用同步阻塞 IO**：`requests`、`time.sleep`、同步 `open()` 读写大文件、同步 DB 驱动。
-  - HTTP：`httpx.AsyncClient`
+  - HTTP：`httpx.AsyncClient`；对外抓取用户可控站点（反爬敏感，如 maps_enrich 官网挖掘）用 `curl_cffi.requests.AsyncSession(impersonate=...)`——Chrome TLS 指纹与配套请求头成套注入，勿手写 UA 覆盖成套头
   - 睡眠：`await asyncio.sleep(...)`
   - 文件：`aiofiles`（或确无大文件时 `pathlib` 小量同步读取可接受）
 - `pytest` 用 `asyncio_mode=auto`，real 测试加 `@pytest.mark.real` + `@pytest.mark.asyncio`（见 spec-test-server）。
