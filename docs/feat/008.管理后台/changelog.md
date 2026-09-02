@@ -1,5 +1,26 @@
 # 008 · 管理后台 · 变更记录
 
+## 2026-09-02 C6 扩展:用户管理页 + Dashboard 图表 + profile 多线契约
+
+**为什么**:ROADMAP C6 缺口——后台无用户列表 / 搜索入口,查用户要手工查库;Dashboard 只有数据表格没有趋势图;用户信息弹窗的订阅摘要仍是单产品线旧口径,且旧单行读法在用户持有 ≥2 条产品线订阅行时抛 MultipleResultsFound 导致 profile 500(潜伏 bug)。范围经 hydra 裁决:不做 RBAC、订单写操作、订阅 / 额度管理 UI、API key 多条管理,保留「用户管理页(只读)+ Dashboard 图表」。
+
+**变更**:
+
+- 后端新增 `GET /api/admin/users`:分页列表,筛选 = 用户 ID(精确)/ 邮箱(模糊)/ 账号状态(normal/locked/deleted)/ 注册时间范围(毫秒闭开区间,反向范围 `INVALID_REQUEST`);响应含 `total`,排序 `user_id desc`,列表含已注销用户。查询归 `user_service`:`user_lists` 扩 status/created 过滤,新增 `count_users`,二者复用同一套 WHERE(`_apply_user_list_filters`)。
+- profile 契约升级:`subscriptions` 固定四行(extension / maps_extension / maps_online / maps_api,经 `get_subscription_row` 按复合主键逐线读,无付费行 = `has_subscription:false` + `expires_at:null`,过期行保留原始过期时间);新增 `usage` 固定三行(maps 三线,经 000 域 usage 门面读当前业务月快照,`total` 真源 = 所持档位月度额度,当前 free 档 1000/1000/20,配置合同破裂 `PAYMENT_GATEWAY_ERROR` fail-closed);删除旧单数 `subscription` 字段与 `get_by_id` 读法(修复多产品线 500)。`UserAccountStatus` 稳定枚举收敛 `constants/auth.py`,列表过滤与展示共用口径(注销优先于锁定)。
+- admin 新增 `/users` 用户管理页(菜单顺序 Dashboard → 用户管理 → 订单 → 系统设置):筛选区(ID / 邮箱 / 状态 / 注册时间)+ 远程分页表格(默认 20/页,9 列),用户 ID 点击打开通用弹窗,只读。
+- UserInfoDialog 权益区升级:Credits + 四线订阅(绿「订阅中」/ 灰「未订阅」标签、过期时间弱化保留)+ 三线用量(`YYYY-MM` 周期标签、`used/total`、exhausted 红标);产品线 i18n 名 = TG 插件 / Maps 插件 / Maps 云端 / Maps API;删旧单数订阅 UI、类型与 i18n 死键(`common.yes/no`)。
+- Dashboard 新增两图:60 天注册数柱状图 + 各打点类型事件数多系列折线(device_count 不上图),数据与表格同口径零后端改动;`ChartCanvas.vue` 承载组件(`echarts/core` 按需注册 + `ResizeObserver` + dispose,`notMerge` 全量替换),失败 `NEmpty` 占位与表格隔离;echarts 为唯一新依赖。HIDDEN/TRAILING 打点过滤机制保留,仅删除已无枚举的三个死成员 `web_parse_input_click` / `web_download_click` / `download_click`。
+- 文档:`feat.md` 范围 / UI / 验收同步;新增 `tech-用户管理.md` 并在 `tech-管理模块接口.md` 登记;`tech-用户信息弹窗.md`、`tech-Dashboard.md` 契约同步;ROADMAP C6 置 ✅。
+
+**验收**:backend `black` / `ruff` / `mypy` 通过;real 测试新增 `test_admin_users_real.py` 9 条全过(鉴权 / 邮箱分页排序 / ID+状态+时间范围 / 通配符字面量 / 非法筛选 / 多线订阅与用量 / free 档 total / 用户不存在),全量 real 除既有 credit 2 条失败外全绿(与本次无关)。admin `pnpm build` 通过;e2e `users.spec.ts` 4/4、`dashboard.spec.ts` 12/12(`login.spec.ts` 既有失败与本次无关)。
+
+**边界确认**:
+
+- 用户管理页与弹窗维持只读:不做用户编辑 / 封禁 / 删除 / 代充 / 改订阅,不做列表导出与用量流水列表接口。
+- `email` 模糊与 `created_at` 范围查询无专用索引:users 表量级小 + admin 低频,与 `user_credit_logs` 先例同口径,不加索引。
+- 订阅 / 用量额度管理 UI 不做(额度 total 真源是 006 商品配置,消费接线待 014);RBAC、订单写操作维持 feat.md 既有排除。
+
 ## 2026-09-01 Gosom API 配置升级为多条加权随机
 
 **为什么**:单条 API 无法表达多套上游(备用 / 分流),需要「地址 / Key / 权重」三列多行配置,调用方按权重随机选用。

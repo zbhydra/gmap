@@ -1,6 +1,6 @@
 # 008 · 通用用户信息弹窗
 
-> 覆盖管理后台内复用的客户端用户信息只读弹窗。通用 admin 接口约定见 `@tech-管理模块接口.md`;用户账号数据属 `@../007.用户系统`,Credits 属 `@../003.积分系统`,订阅属 `@../006.订阅系统`,订单属本域订单管理。本文只描述 admin 侧聚合读取和前端复用入口。
+> 覆盖管理后台内复用的客户端用户信息只读弹窗。通用 admin 接口约定见 `@tech-管理模块接口.md`;用户账号数据属 `@../007.用户系统`,Credits 属 `@../003.积分系统`,订阅属 `@../006.订阅系统`,用量计量属 `@../000.架构/tech-额度基建.md`,订单属本域订单管理。本文只描述 admin 侧聚合展示和前端复用入口;profile 接口契约定义在 `@tech-用户管理.md`。
 
 ## 范围
 
@@ -8,25 +8,23 @@
 
 - 后台内展示的非空 `user_id` 都可作为入口打开同一个用户信息弹窗。
 - 用户基础信息:ID、邮箱、注册来源、注册方式、注册 IP(归属地)、最后登录 IP(归属地)、最后一次操作 IP(归属地)、注册时间、最后登录时间、登录次数、账号状态。
-- 权益信息:当前 Credits 余额、是否有有效订阅、订阅过期时间。
-- 下方 tabs:「积分记录」和「订单列表」。
-  - 积分记录数据源为 `user_credit_logs`,按流水 ID 倒序远程分页,无筛选。
-  - 订单列表数据源为 `orders`,远程分页,不筛选状态,成功/失败/待支付/取消/过期等所有订单都展示。
+- 权益信息:当前 Credits 余额、四条产品线(extension / maps_extension / maps_online / maps_api)各自的订阅状态与过期时间、三条 Maps 产品线的当月用量快照。
+- 下方「订单列表」区块:数据源为 `orders`,远程分页,不筛选状态,成功/失败/待支付/取消/过期等所有订单都展示。
 - 管理后台所有展示时间统一格式为 `YYYY-MM-DD HH:mm:ss`,按固定 UTC+8 展示,不使用浏览器 locale 默认格式。
 
 ### 不包含
 
 - 用户编辑、封禁、删除、改邮箱、代充、人工改订阅。
 - 风控记录。
-- 积分记录筛选、导出。
+- 积分记录查看 UI(后端 `/credits` 接口已提供,前端暂无消费方)及其筛选、导出。
 - 打开弹窗时用 IP 实时 GeoIP 查询。IP 归属地只读 `users` 表已有国家 / 地区字段。
 
 ## 已裁决方案
 
-采用「聚合 profile 接口 + 各 tab 独立分页接口 + 前端复用弹窗组件」:
+采用「聚合 profile 接口 + 订单独立分页接口 + 前端复用弹窗组件」:
 
-- `GET /api/admin/users/{user_id}/profile` 读取用户基础信息、Credits 余额、订阅摘要。
-- `GET /api/admin/users/{user_id}/credits` 按流水 ID 倒序分页读取 `user_credit_logs`。
+- `GET /api/admin/users/{user_id}/profile` 读取用户基础信息、Credits 余额、四线订阅摘要与三线用量快照(契约与错误码见 `@tech-用户管理.md`)。
+- `GET /api/admin/users/{user_id}/credits` 按流水 ID 倒序分页读取 `user_credit_logs`;前端当前无消费方,接口保留备查。
 - `GET /api/admin/users/{user_id}/orders` 分页读取该用户全部订单。
 - 前端 `UserInfoDialog.vue`,各页面在展示用户 ID 的位置调用弹窗 `open(userId)`。
 
@@ -66,13 +64,13 @@
 
 来源 `user_credit_accounts`,通过 `user_credit_service.get_balance(user_id)` 读取。账户不存在返回 0。
 
-### 订阅
+### 订阅(按产品线)
 
-来源 `user_subscriptions` 原始行:
+来源 `user_subscriptions` 原始行,`subscriptions` 固定四行;逐线读取方式、`has_subscription` 折算公式、无付费行 / 过期行口径与历史 MultipleResultsFound 修复记录见 `@tech-用户管理.md`(契约唯一落点),本文不重复。
 
-- `has_subscription = expires_at is not None and expires_at > now_ms`。
-- `expires_at` 返回原始过期时间;从未订阅时为 `null`;已过期时 `has_subscription=false` 但仍显示历史过期时间。
-- 不读取订阅商品配置,避免配置异常影响用户详情排查。
+### 用量快照
+
+来源 000 域统一用量服务三线门面,`usage` 固定三行;`total` 单一真源与 `PAYMENT_GATEWAY_ERROR` fail-closed 语义见 `@tech-用户管理.md` 与 `@../000.架构/tech-额度基建.md`,本文不重复。
 
 ### 积分记录
 
@@ -82,7 +80,7 @@
 | --- | --- |
 | `id` | 流水 ID |
 | `change_amount` | Credits 变化量,正数为获得,负数为消耗 |
-| `reason` | 变动原因;已知原因显示本地化名称,未知原因显示原值 |
+| `reason` | 变动原因标识,原值返回 |
 | `metadata_json` | 业务扩展 JSON 快照,可为空 |
 | `created_at` | 流水创建时间 |
 
@@ -102,42 +100,13 @@
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/api/admin/users/{user_id}/profile` | 用户基础信息 + Credits + 订阅摘要 |
+| GET | `/api/admin/users/{user_id}/profile` | 用户基础信息 + Credits + 四线订阅摘要 + 三线用量快照 |
 | GET | `/api/admin/users/{user_id}/credits` | 用户积分记录分页,按流水 ID 倒序 |
 | GET | `/api/admin/users/{user_id}/orders` | 用户订单分页,全状态 |
 
 ### Profile 响应
 
-```jsonc
-{
-  "user": {
-    "user_id": 123,
-    "email": "user@example.com",
-    "full_name": "",
-    "avatar_url": "",
-    "register_source": "website",
-    "register_method": "google",
-    "register_ip": "1.2.3.4",
-    "register_country": "US",
-    "last_login_at": 1780000000000,
-    "last_login_ip": "1.2.3.4",
-    "last_login_country": "US",
-    "last_operation_ip": "5.6.7.8",
-    "last_operation_country": "SG",
-    "login_count": 3,
-    "is_del": false,
-    "created_at": 1780000000000,
-    "updated_at": 1780000000000
-  },
-  "credits": {
-    "balance": 88
-  },
-  "subscription": {
-    "has_subscription": true,
-    "expires_at": 1782000000000
-  }
-}
-```
+`user` 块字段不变;权益块(`credits` / `subscriptions` / `usage`)的结构、折算口径与响应示例见 `@tech-用户管理.md`(契约唯一落点),本文不重复。
 
 ### Credits 响应
 
@@ -200,24 +169,10 @@
 
 ## 后端实现
 
-新增:
-
-```text
-backend/src/app/api/admin/admin_users.py
-backend/src/app/services/admin_user_profile_service.py
-backend/src/app/schemas/admin_user_schema.py
-```
-
-修改:
-
-```text
-backend/src/app/main.py
-```
-
-实现规则:
+后端文件与实现规则(含 2026-09-02 profile 多线契约升级涉及的 `user_service` / `subscription_service` / `usage_service` 改动)统一见 `@tech-用户管理.md` 的文件树与实现锚点;本节不重复。弹窗相关的既有约束仍然有效:
 
 - API 层校验 `user_id >= 1`、`page >= 1`、`1 <= page_size <= 100`。
-- service 为类 + 模块级实例 `admin_user_profile_service = AdminUserProfileService()`,不使用 `@singleton`,不新增依赖注入。
+- service 为类 + 模块级实例,不使用 `@singleton`,不新增依赖注入。
 - profile 聚合允许读取多个业务域,但只读不写。
 - credits 查询用 `WHERE user_id = ? ORDER BY id DESC OFFSET ? LIMIT ?`;count 与列表复用同一用户条件。
 - orders 查询复用订单 service,仅传 `user_ids=[user_id]`,不传任何状态过滤。
@@ -225,31 +180,29 @@ backend/src/app/main.py
 
 ## 前端实现
 
-新增:
+新增 / 修改:
 
 ```text
 admin/src/api/users.ts
 admin/src/components/UserInfoDialog.vue
 admin/src/utils/time.ts
-```
-
-修改:
-
-```text
-admin/src/views/OrdersView.vue
+admin/src/views/UsersView.vue        # 2026-09-02 新增接入点
 admin/src/i18n/zh-CN.json
 admin/src/i18n/en-US.json
 ```
 
 组件规则:
 
-- `UserInfoDialog.vue` 内部持有 profile loading、credits/orders loading、各 tab 的分页状态。
-- 暴露 `open(userId: number): void`;每次打开重置分页为 1,加载 profile + 当前 tab 第一页数据。
+- `UserInfoDialog.vue` 内部持有 profile loading 与订单分页状态。
+- 暴露 `open(userId: number): void`;每次打开重置订单分页为 1,加载 profile + 订单第一页数据。
 - modal 使用 `NModal preset="card"` 或同等 Naive UI 组件,宽度 `min(960px, calc(100vw - 32px))`。
-- 上半部分为基础信息和权益信息;下半部分为 `NTabs`:「积分记录」「订单列表」。
-- 积分记录表格远程分页,列为时间、积分变动、变动原因、详情。
+- 上半部分为基础信息和权益信息;下半部分为「订单列表」区块(无 tabs)。
+- 权益信息三块:
+  - Credits 余额(描述列表项,原样数字)。
+  - 订阅权益:固定四行,行 label = 产品线 i18n 名(TG 插件 / Maps 插件 / Maps 云端 / Maps API),值 = 状态标签 + 过期时间;订阅中绿标签,未订阅灰标签;过期行的过期时间弱化(灰)展示;`expires_at` 为 null 显示 `-`。
+  - 当月用量:固定三行,行 label 同上,值 = 周期标签(`ym` 整数转 `YYYY-MM`)+ `used/total`(表格数字对齐);`exhausted=true` 追加红色「已耗尽」标签。
 - 订单表格远程分页,列为订单号、商品、金额、订单状态、履约状态、支付方式、创建时间。
-- 所有用户可见文案走 `userInfo.*` i18n。
+- 所有用户可见文案走 `userInfo.*` i18n;产品线名与订阅 / 用量文案中英同步。
 - 所有时间展示调用 `admin/src/utils/time.ts`,固定输出 `YYYY-MM-DD HH:mm:ss` UTC+8。
 - 用户 ID 入口使用按钮或链接样式,有 hover / focus 可见反馈;点击不影响行内复制、查看详情等其他按钮。
 
@@ -257,26 +210,23 @@ admin/src/i18n/en-US.json
 
 | 页面 | 位置 |
 | --- | --- |
+| 用户管理 | 用户列表用户 ID 列 |
 | 订单管理 | 订单列表用户列、订单详情抽屉用户项 |
 
 ## 异常与空态
 
 - profile 加载失败:弹窗显示错误状态并 toast,不让页面崩溃。
-- credits/orders 加载失败:保留 profile,当前 tab 显示错误 toast 和空表或上次数据。
-- 用户无积分记录:积分记录 tab 显示空态。
-- `metadata_json` 为空、时间为空:显示 `-`。
+- orders 加载失败:保留 profile,订单区显示错误 toast 和空表或上次数据。
+- 时间为空:显示 `-`。
 - `user_id=null` 的位置不渲染入口,显示 `-`。
 
 ## 验证
 
-后端:
+后端(real 测试,含列表 / 多线 profile / 用量断言):
 
 ```bash
 cd backend
-uv run black src/app/api/admin/admin_users.py src/app/services/admin_user_profile_service.py src/app/schemas/admin_user_schema.py tests/test_server/api/test_admin_user_profile_api.py
-uv run ruff check src/app/api/admin/admin_users.py src/app/services/admin_user_profile_service.py src/app/schemas/admin_user_schema.py tests/test_server/api/test_admin_user_profile_api.py
-uv run mypy src/app/api/admin/admin_users.py src/app/services/admin_user_profile_service.py src/app/schemas/admin_user_schema.py
-uv run pytest tests/test_server/api/test_admin_user_profile_api.py
+uv run pytest tests/integration/real/api/admin/test_admin_users_real.py
 ```
 
 前端:
@@ -284,11 +234,11 @@ uv run pytest tests/test_server/api/test_admin_user_profile_api.py
 ```bash
 cd admin
 pnpm build
-pnpm test:e2e -- orders.spec.ts
+pnpm test:e2e -- users.spec.ts
 ```
 
 人工:
 
-- 订单管理的用户 ID 能打开同一个弹窗。
-- 弹窗展示 IP(归属地)、Credits、订阅状态;积分记录 tab 和订单 tab 可分页。
-- 字段缺失、无积分记录、用户不存在不导致页面崩溃。
+- 用户管理页与订单管理的用户 ID 都能打开同一个弹窗。
+- 弹窗展示 IP(归属地)、Credits、四线订阅(绿 / 灰标签与过期时间)、三线用量(周期标签、used/total、耗尽红标);订单列表可分页。
+- 字段缺失、用户不存在不导致页面崩溃。

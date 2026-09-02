@@ -50,7 +50,7 @@
 | C3 | 积分 / 用量计量(服务端计数、免费月度额度) | ♻️ `003.积分系统` / `005.计数器系统` | 逆向 06 | 🔍 | ⬜ |
 | C4 | 订单与支付(Stripe / Paddle) | ♻️ `004.订单系统` | 逆向 06 | ♻️ | ⬜ |
 | C5 | Pricing 页(三产品形态分 tab 展示) | ♻️ `011.Pricing页` | 官网 /pricing | 🔍浅 | ✅ (2026-08-31,Online / Extension / API 三 tab 已实现,10 个付费 SKU 可购买) |
-| C6 | 管理后台扩展 | ♻️ `008.管理后台` | — | ♻️ | ⬜ |
+| C6 | 管理后台扩展 | ♻️ `008.管理后台` | — | ♻️ | ✅ (2026-09-02,用户管理页只读列表 + 用户弹窗多线订阅/用量契约 + Dashboard 图表落地;RBAC / 订单写操作 / 订阅额度管理 UI / API key 多条按裁决不做) |
 
 ### D · 增长与内容(拟建 `015.工具与增长`)
 
@@ -95,6 +95,10 @@
 - 估时假设:单人 + AI 助手;插件全量(阶段 1)约 7–9 周,加云端与增长完整对标约 3–4 个月。
 
 ## 5 · 变更记录
+
+- 2026-09-02 **Bing 插件 e2e 真实界面化(零 mock)+ 登录态 token 直注**(hydra 拍板「不可以使用 mock 界面,必须真实 bing 地图界面采集;登录流程不测,采集流程用脚本签发 token 直注」):删离线 fixture 层与全部 route/登录 mock,真实 bing.com 采集数据为唯一主验收(stealth 反自动化 + dist-real 构建变体 + `e2e_seed_user.py` bing-extension-pro 场景签发真实 token 对经 chrome.storage 三键直注);顺带修复两处原被 mock 掩盖的真实接线裂缝——`/subscription/status` 增可选 `product_line`(插件传 maps_extension,原端点固定 TG 线致 Pro 判定恒 FREE)、background auth watcher 把 getCurrentUser 资料回写当登录切换清态致冷启动登录态被自吞。验证:backend black/ruff/mypy + real 测试绿、插件 check/单测 175/生产 build 绿、真实 e2e 5/5(匿名 8s / Pro 9s)。合同:`feat/016.Bing插件/references/T1-技术设计.md` §6。
+
+- 2026-09-02 **C6 管理后台扩展落地**:新增 admin 用户管理页(`/users` 只读列表:ID/邮箱/状态/注册时间筛选 + 远程分页,用户 ID 开通用弹窗)与 Dashboard 两图(60 天注册柱状 + 打点事件折线,echarts 按需注册);profile 契约升级四产品线订阅摘要 + maps 三线当月用量快照,并修复旧单行订阅读法在多产品线订阅用户上的 500。范围裁决(hydra 2026-09-02):RBAC、订单写操作、订阅/额度管理 UI、API key 多条管理不做。细节见 `feat/008.管理后台/`(changelog 2026-09-02、tech-用户管理)。
 
 - 2026-09-01 **插件登录迁移 v3 浏览器身份(007 plans/006,Maps + Bing 两插件统一)**:插件内发起(popup / 面板 `Sign in`)→ 官网统一确认页 `/extension-login`(复用 Google/邮箱登录 + 账号显式确认)→ PKCE + 一次性 code 回跳换插件独立 token;v2 官网桥(`externally_connectable` + 固定扩展 ID + `/extension-login-bing` 页 + 后端 `/extension-token`)全删。016「popup 不设账号区」拍板随官网推送模式删除而失效(Bing popup + 面板双入口)。验证:四端 check/build/单测全绿(website module 47/47、Maps 单测 326、Bing 单测 175 + e2e 10/10)+ 集成验证 32 项断言 0 失败(v2 端点 404、code 一次性、双插件独立 session、配额归属);浏览器 UI 面待 unpacked 人工终验。合同:`feat/007.用户系统/tech-第三方登录.md` §9。
 
