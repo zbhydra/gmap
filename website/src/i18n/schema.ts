@@ -620,8 +620,8 @@ export interface ToolHowToSectionMessage {
   body: string
 }
 
-/** Bing Maps 插件登录桥接页（/extension-login-bing，noindex）。 */
-export interface ExtensionLoginBingPageContent {
+/** 插件统一登录页（/extension-login，v3 browser identity，Maps 与 Bing 插件共用，noindex）。 */
+export interface ExtensionLoginPageContent {
   /** <title>。 */
   title: string
   /** <meta description>。 */
@@ -634,14 +634,18 @@ export interface ExtensionLoginBingPageContent {
   checkingState: string
   /** 状态 eyebrow：需要登录。 */
   signInRequiredState: string
-  /** 状态 eyebrow：已同步。 */
-  syncedState: string
+  /** 状态 eyebrow：账号确认。 */
+  confirmState: string
   /** 状态 eyebrow：失败。 */
-  verificationFailedState: string
+  errorState: string
   /** 进入页面准备阶段标题。 */
   preparingTitle: string
   /** 进入页面准备阶段正文。 */
   preparingText: string
+  /** 入口参数非法标题（redirect_uri / code_challenge 校验不过，页面终止）。 */
+  invalidParamsTitle: string
+  /** 入口参数非法正文。 */
+  invalidParamsText: string
   /** 检查已存在 website 登录态标题。 */
   checkingSessionTitle: string
   /** 检查已存在 website 登录态正文。 */
@@ -654,24 +658,32 @@ export interface ExtensionLoginBingPageContent {
   signInRequiredTitle: string
   /** 需要登录正文。 */
   signInRequiredText: string
-  /** 需要登录时的按钮文案。 */
+  /** 需要登录时的按钮文案（打开登录弹窗）。 */
   signInButtonLabel: string
-  /** 同步扩展 token 中标题。 */
-  syncingTitle: string
-  /** 同步扩展 token 中正文。 */
-  syncingText: string
-  /** 同步成功标题。 */
-  syncedTitle: string
-  /** 同步成功正文。 */
-  syncedText: string
-  /** 登录成功后返回 Bing Maps 插件的按钮文案。 */
-  returnButtonLabel: string
-  /** 返回进行中的按钮文案。 */
-  returningButtonLabel: string
-  /** 同步失败标题。 */
-  verificationFailedTitle: string
+  /** 账号确认卡标题。 */
+  confirmTitle: string
+  /** 账号确认卡正文。 */
+  confirmText: string
+  /** 确认并继续按钮文案（显式确认后才签发一次性 code）。 */
+  continueButtonLabel: string
+  /** 切换账号按钮文案（清 website 会话回登录弹窗）。 */
+  useAnotherAccountLabel: string
+  /** 签发一次性 code 中标题。 */
+  issuingTitle: string
+  /** 签发一次性 code 中正文。 */
+  issuingText: string
+  /** 签发 / 验证失败标题。 */
+  issueFailedTitle: string
   /** 失败重试按钮文案。 */
   retryButtonLabel: string
+  /** website 会话验证失败错误前缀（拼接不可翻译的后端原始错误）。 */
+  verificationFailedPrefix: string
+  /** 一次性 code 签发失败错误前缀（拼接不可翻译的后端原始错误）。 */
+  issueFailedPrefix: string
+  /** Google 登录失败错误前缀（拼接原始错误）。 */
+  googleSignInFailedPrefix: string
+  /** Google 登录无法完成错误前缀（拼接原始错误）。 */
+  googleCompletionFailedPrefix: string
 }
 
 /** 工具页通用交互文案（结果区/复制/下载 + 壳的通用区标题）。 */
@@ -1130,8 +1142,8 @@ export interface SiteContent {
     photosApi: LandingPageContent
     /** Scraper MCP 落地页（015 U1）。 */
     scraperMcp: LandingPageContent
-    /** Bing Maps 插件登录桥接页内容（noindex，不在语言站内层枚举）。 */
-    extensionLoginBing: ExtensionLoginBingPageContent
+    /** 插件统一登录页内容（v3，noindex，不在语言站内层枚举）。 */
+    extensionLogin: ExtensionLoginPageContent
     /** 免费工具矩阵内容（W4，每工具一键段）。 */
     tools: {
       /** 工具矩阵通用文案（结果区/复制/下载）。 */

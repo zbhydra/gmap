@@ -150,19 +150,6 @@ declare global {
     google?: {
       accounts: GoogleAccounts
     }
-    /** 普通网页可访问的 chrome.* 子集（仅 externally_connectable 消息面）；未安装扩展时为 undefined。 */
-    chrome?: {
-      runtime?: {
-        /** 上一次 chrome.runtime 调用的失败信息；目标扩展未安装或未声明匹配域时由 Chrome 设置。 */
-        lastError?: { message?: string }
-        /** 向指定扩展发送消息；扩展通过 onMessageExternal 接收，可选 responseCallback 接收回执。 */
-        sendMessage<TResponse>(
-          extensionId: string,
-          message: Record<string, string>,
-          responseCallback: (response?: TResponse) => void
-        ): void
-      }
-    }
   }
 }
 
@@ -174,24 +161,6 @@ const GOOGLE_REDIRECT_EMAIL_VERIFY_PARAM = 'google_email_verification'
 const GOOGLE_AUTH_LOG_PREFIX = '[GoogleAuth]'
 const GOOGLE_BUTTON_DEFAULT_LABEL = 'Continue with Google'
 const GOOGLE_BUTTON_LOADING_LABEL = 'Connecting...'
-/** 网页通知插件同步 website 登录态的固定消息类型（旧扩展经 postMessage 兼容通道读取）。 */
-const WEB_AUTH_CHANGED_MESSAGE_TYPE = 'MAPSGRAB_WEB_AUTH_CHANGED'
-/** v2 网页 → 扩展：website 登录态变更，消息体携带 web_access_token。 */
-const EXTENSION_AUTH_CHANGED_MESSAGE_V2 = 'MAPSGRAB_EXTENSION_AUTH_CHANGED_V2'
-/**
- * 登录态广播目标扩展 ID 列表（externally_connectable 桥）。
- *
- * MapsGrab 扩展上架后回填（W7 插件联动）；为空时 v2 广播自然 no-op，仅保留 postMessage 兼容通道。
- */
-const EXTENSION_TARGET_IDS: readonly string[] = []
-/** Bing Maps 插件固定扩展 ID（extension-bing manifest key 推导；私钥丢失则 ID 漂移）。 */
-export const BING_MAPS_EXTENSION_ID = 'pgcpggcfmfdmobpheojngndpcmnkibmm'
-/** Bing 插件登录桥目标列表（上架后追加商店 ID）。 */
-export const BING_EXTENSION_TARGET_IDS = [BING_MAPS_EXTENSION_ID] as const
-/** 网页 → Bing 插件：website 登录态变更，消息体携带 web_access_token。 */
-export const BING_MAPS_EXTENSION_AUTH_CHANGED = 'BING_MAPS_EXTENSION_AUTH_CHANGED'
-/** 网页 → Bing 插件：登录页请求关闭当前登录 tab。 */
-export const BING_MAPS_EXTENSION_LOGIN_RETURN = 'BING_MAPS_EXTENSION_LOGIN_RETURN'
 /** 网站默认 Google OAuth Client ID 占位；正式 client 建好后配置到环境变量 PUBLIC_GOOGLE_CLIENT_ID。 */
 export const DEFAULT_PUBLIC_GOOGLE_CLIENT_ID = ''
 const GOOGLE_BUTTON_ICON_SVG =
@@ -223,7 +192,6 @@ export function getStoredAccessToken(): string | null {
  */
 export function setStoredAccessToken(token: string): void {
   window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token)
-  notifyWebAuthChanged()
 }
 
 /**
@@ -233,74 +201,6 @@ export function setStoredAccessToken(token: string): void {
  */
 export function clearStoredAccessToken(): void {
   window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY)
-}
-
-/**
- * 向已发布旧扩展发送兼容信号，并向两个固定扩展同步 website 登录态。
- *
- * postMessage 消息体刻意不带 token；旧插件侧只从官网 localStorage 读取 `homepage_access_token`。
- * 追加的 v2 external 发送必须显式携带 token：普通网页的 localStorage 对扩展上下文不可见。
- * 目标扩展未安装或未声明本域 externally_connectable 时不抛异常，Chrome 只设置
- * `chrome.runtime.lastError` 并在 callback 内暴露，此处记录为 warn 后静默。
- */
-export function notifyWebAuthChanged(): void {
-  window.postMessage({ type: WEB_AUTH_CHANGED_MESSAGE_TYPE }, window.location.origin)
-
-  const token = getStoredAccessToken()
-  if (!token) {
-    logGoogleAuthStage('info', 'extension_auth_sync_skipped', { reason: 'no_token' })
-    return
-  }
-  const runtime = window.chrome?.runtime
-  if (!runtime?.sendMessage) {
-    logGoogleAuthStage('info', 'extension_auth_sync_skipped', { reason: 'runtime_unavailable' })
-    return
-  }
-  for (const extensionId of EXTENSION_TARGET_IDS) {
-    runtime.sendMessage(
-      extensionId,
-      { type: EXTENSION_AUTH_CHANGED_MESSAGE_V2, web_access_token: token },
-      () => {
-        if (runtime.lastError) {
-          logGoogleAuthStage('warn', 'extension_auth_sync_failed', {
-            extensionId,
-            message: runtime.lastError.message ?? 'unknown'
-          })
-        }
-      }
-    )
-  }
-}
-
-/**
- * 向 Bing Maps 插件同步 website 登录态（/extension-login-bing 桥接页专用；
- * 插件侧 WebsiteAuthBridge 经 onMessageExternal 接收并校验 sender.origin）。
- */
-export function notifyBingMapsAuthChanged(): void {
-  const token = getStoredAccessToken()
-  if (!token) {
-    logGoogleAuthStage('info', 'bing_extension_auth_sync_skipped', { reason: 'no_token' })
-    return
-  }
-  const runtime = window.chrome?.runtime
-  if (!runtime?.sendMessage) {
-    logGoogleAuthStage('info', 'bing_extension_auth_sync_skipped', { reason: 'runtime_unavailable' })
-    return
-  }
-  for (const extensionId of BING_EXTENSION_TARGET_IDS) {
-    runtime.sendMessage(
-      extensionId,
-      { type: BING_MAPS_EXTENSION_AUTH_CHANGED, web_access_token: token },
-      () => {
-        if (runtime.lastError) {
-          logGoogleAuthStage('warn', 'bing_extension_auth_sync_failed', {
-            extensionId,
-            message: runtime.lastError.message ?? 'unknown'
-          })
-        }
-      }
-    )
-  }
 }
 
 /**

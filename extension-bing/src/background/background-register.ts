@@ -1,7 +1,8 @@
 /**
  * Background RPC v2 register。
  *
- * register 声明 background 能力边界，登录同步仅授权官网 content bridge 调用。
+ * register 声明 background 能力边界，登录入口（popup / 面板）经
+ * openExtensionLogin 统一发起 v3 browser identity 登录。
  */
 
 import type {
@@ -9,6 +10,7 @@ import type {
   BackgroundGetGateStateResponse,
   BackgroundGetRuntimeConfigResponse,
   BackgroundGetStateResponse,
+  BackgroundOpenExtensionLoginResponse,
   BackgroundPingResponse,
   BackgroundRecordMarkRequest,
   BackgroundRecordMarkResponse
@@ -47,6 +49,11 @@ export const Handler = {
     return declarationOnly('background.getGateState')
   },
 
+  /** 发起 v3 browser identity 登录（PKCE + launchWebAuthFlow + exchange，006 §3）。 */
+  openExtensionLogin(): Promise<BackgroundOpenExtensionLoginResponse> {
+    return declarationOnly('background.openExtensionLogin')
+  },
+
   /** 由 background 代 content script 记录打点。 */
   recordMark(_params: BackgroundRecordMarkRequest): Promise<BackgroundRecordMarkResponse> {
     return declarationOnly('background.recordMark')
@@ -68,6 +75,8 @@ export const METHOD_TARGETS = {
   getBingConfig: ['content'],
   /** getGateState 允许 content script 调用（面板与采集停止策略读取账号/订阅态）。 */
   getGateState: ['content'],
+  /** openExtensionLogin 允许 popup / content 调用（两处登录入口，同一 background RPC）。 */
+  openExtensionLogin: ['popup', 'content'],
   /** recordMark 允许 popup / content 调用，统一由 background 写 SLS（T1 §4.1）。 */
   recordMark: ['popup', 'content']
 } as const satisfies Record<keyof BackgroundHandler, readonly ('content' | 'popup')[]>
@@ -84,6 +93,8 @@ export const METHOD_TRANSPORTS = {
   getBingConfig: ['chrome'],
   /** getGateState 使用 Chrome message。 */
   getGateState: ['chrome'],
+  /** openExtensionLogin 使用 Chrome message。 */
+  openExtensionLogin: ['chrome'],
   /** recordMark 使用 Chrome message。 */
   recordMark: ['chrome']
 } as const satisfies Record<keyof BackgroundHandler, readonly ['chrome']>
@@ -100,6 +111,8 @@ export const METHOD_REQUEST_LIMITS = {
   getBingConfig: 1024,
   /** getGateState 无业务参数。 */
   getGateState: 1024,
+  /** openExtensionLogin 无业务参数。 */
+  openExtensionLogin: 1024,
   /** recordMark 携带打点类型和附加信息。 */
   recordMark: 4096
 } as const satisfies Record<keyof BackgroundHandler, number>
@@ -116,6 +129,8 @@ export const METHOD_RESPONSE_LIMITS = {
   getBingConfig: 16384,
   /** getGateState 返回账号/订阅判定三元组。 */
   getGateState: 1024,
+  /** openExtensionLogin 返回是否提交完成。 */
+  openExtensionLogin: 1024,
   /** recordMark 返回记录结果。 */
   recordMark: 1024
 } as const satisfies Record<keyof BackgroundHandler, number>

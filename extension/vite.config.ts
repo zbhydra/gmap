@@ -37,7 +37,6 @@ const DEFAULT_PROD_API_BASE_URL = 'https://api.example.com'
 const DEFAULT_DEV_WEBSITE_BASE_URL = 'http://localhost:7620'
 // TODO(maps): Maps 官网域名确定后替换。
 const DEFAULT_PROD_WEBSITE_BASE_URL = 'https://www.example.com'
-const PROD_WWW_WEBSITE_BASE_URL = 'https://www.example.com'
 // TODO(maps): Google OAuth client_id 待 hydra 申请后经 EXTENSION_GOOGLE_OAUTH_CLIENT_ID
 // 注入（013 A10，U9）。占位值无法通过真实授权（Chrome 会报 OAuth2 client 校验失败），
 // 授权流程与单测/e2e 均按占位口径验证。
@@ -47,8 +46,6 @@ const DEFAULT_PROD_ALI_SLS_HOST = 'ap-southeast-1.log.aliyuncs.com'
 const DEFAULT_PROD_ALI_SLS_LOGSTORE = 'gmaps-mark-log'
 const DEFAULT_ALI_SLS_TOPIC = 'mark-log'
 const DEFAULT_ALI_SLS_SOURCE = 'extension'
-const DEFAULT_PROD_WEBSITE_ORIGIN = toOrigin(DEFAULT_PROD_WEBSITE_BASE_URL)
-const PROD_WWW_WEBSITE_ORIGIN = toOrigin(PROD_WWW_WEBSITE_BASE_URL)
 
 interface ExtensionBuildProcessEnv {
   NODE_ENV?: string
@@ -80,14 +77,12 @@ export interface ExtensionBuildEnvConfig {
   releaseChannel: 'store' | 'pre-release'
   /** 插件运行时请求的后端 API base URL。 */
   apiBaseUrl: string
-  /** 插件统一登录桥接使用的官网 base URL。 */
+  /** 插件 v3 登录确认页（官网 /extension-login）与 homepage_url 使用的官网 base URL。 */
   websiteBaseUrl: string
   /** Manifest oauth2.client_id（Chrome identity 授权用，占位待 hydra 申请）。 */
   googleOauthClientId: string
   /** 插件 SLS WebTracking 配置。 */
   aliSlsMark: ExtensionAliSlsMarkConfig
-  /** Manifest externally_connectable.matches（官网外部消息来源白名单）。 */
-  externallyConnectableMatches: readonly string[]
 }
 
 export interface ExtensionAliSlsMarkConfig {
@@ -167,25 +162,6 @@ function resolveAliSlsMarkConfig(
   }
 }
 
-function toOrigin(value: string): string {
-  return new URL(value).origin
-}
-
-function toMatchPattern(origin: string): string {
-  return `${origin}/*`
-}
-
-function uniqueValues(values: readonly string[]): string[] {
-  return [...new Set(values)]
-}
-
-function resolveRuntimeWebsiteAuthOrigins(websiteOrigin: string): string[] {
-  return uniqueValues([
-    websiteOrigin,
-    ...(websiteOrigin === DEFAULT_PROD_WEBSITE_ORIGIN ? [PROD_WWW_WEBSITE_ORIGIN] : [])
-  ])
-}
-
 export function createExtensionBuildEnv(env: ExtensionBuildProcessEnv): ExtensionBuildEnvConfig {
   const isProductionBuild = env.NODE_ENV === 'production'
   const releaseChannel =
@@ -203,9 +179,6 @@ export function createExtensionBuildEnv(env: ExtensionBuildProcessEnv): Extensio
   const aliSlsMark = resolveAliSlsMarkConfig(env, isProductionBuild)
   const googleOauthClientId =
     env.EXTENSION_GOOGLE_OAUTH_CLIENT_ID?.trim() || DEFAULT_GOOGLE_OAUTH_CLIENT_ID
-  const websiteOrigin = toOrigin(websiteBaseUrl)
-  const runtimeWebsiteAuthOrigins = resolveRuntimeWebsiteAuthOrigins(websiteOrigin)
-  const externallyConnectableMatches = runtimeWebsiteAuthOrigins.map(toMatchPattern)
 
   return {
     isProductionBuild,
@@ -213,8 +186,7 @@ export function createExtensionBuildEnv(env: ExtensionBuildProcessEnv): Extensio
     apiBaseUrl,
     websiteBaseUrl,
     googleOauthClientId,
-    aliSlsMark,
-    externallyConnectableMatches
+    aliSlsMark
   }
 }
 
@@ -265,9 +237,8 @@ const buildTarget = resolveBuildTarget(process.env.EXTENSION_BUILD_TARGET)
  * - background 用 scripts（事件页）替代 service_worker——Firefox MV3 不支持
  *   SW（A13/11 号 #5：事件页常驻语义下落盘状态机天然兼容，调度代码零改动）。
  * Chromium 专属差异：oauth2 键（chrome.identity.getAuthToken 专用，Firefox 无此
- * API，Drive 直传在 Firefox 不可用）与 externally_connectable（Firefox 不支持）
- * 均不进入 Firefox manifest；identity 权限保留（HubSpot 的 launchWebAuthFlow
- * 在 Firefox 可用）。
+ * API，Drive 直传在 Firefox 不可用）不进入 Firefox manifest；identity 权限保留
+ * （launchWebAuthFlow 在 Firefox 可用，Drive 授权与 v3 登录共用）。
  */
 interface FirefoxManifestExtras {
   background: { scripts: string[] }
@@ -407,15 +378,6 @@ export default defineConfig({
           : {
               background: {
                 service_worker: 'src/background/index.ts'
-              }
-            }),
-        // TODO(maps): 官网登录桥决策后恢复 externally_connectable 白名单。
-        // Firefox 不支持该键（运行时外部消息能力另有模型），不进入 Firefox manifest。
-        ...(buildTarget === 'firefox'
-          ? {}
-          : {
-              externally_connectable: {
-                matches: []
               }
             })
       })

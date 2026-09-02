@@ -51,7 +51,7 @@
 - 端点集中声明 `core/api/config.ts`，按域分包（auth/quota/subscription/order/...），每域 `api.ts` + `types.ts` + `index.ts`。
 - 后端信封 `{code, data, msg}`，`code === 10000` 成功（`dataExtractor`）。
 - BASE_URL 走 `__DEV__` 开关（dev `localhost:9680` / prod 域名）。
-- 跨域：API/SLS 域后端返回通配 CORS，官网登录桥接由 `externally_connectable.matches` 封闭信道授权（对端是网页，扩展侧用 `onMessageExternal` 接收并校验 `sender.origin`，不进 content script、不授予 host access），三者均**不进 `host_permissions`**；`host_permissions` 只列平台页面与媒体下载实际需要的域。
+- 跨域：API/SLS 域后端返回通配 CORS，官网登录走 v3 浏览器身份流程（`chrome.identity.launchWebAuthFlow` + PKCE + 一次性 code 回跳；不登记扩展 ID、无 `externally_connectable`、无 `onMessageExternal`，不进 content script、不授予 host access，合同见 007 域 `tech-第三方登录.md` §9），均**不进 `host_permissions`**；`host_permissions` 只列平台页面与媒体下载实际需要的域。
 - 鉴权拦截器栈：401 用 refresh_token 单飞刷新。
 
 ## 8. 消息通信（RPC v2，核心）
@@ -90,7 +90,7 @@
 - [ ] 无 `any`，无裸 `console.log`
 - [ ] 未直连 `chrome.runtime.sendMessage`（走 RPC）
 - [ ] storage key 在 `STORAGE_KEYS` 声明
-- [ ] `host_permissions` 只含平台域（API/SLS 走 CORS，官网桥接走 `externally_connectable`）
+- [ ] `host_permissions` 只含平台域（API/SLS 走 CORS，官网登录走 `identity` 权限 + `launchWebAuthFlow`，无 `externally_connectable`）
 - [ ] 环境判断用 `__DEV__`
 - [ ] 新 locale 已接入 `bootstrap.ts`
 - [ ] i18n 键走 `I18N_KEYS`，无硬编码文案

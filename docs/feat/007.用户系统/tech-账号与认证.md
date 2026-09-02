@@ -363,7 +363,7 @@ Website Pro 恢复登录态时，HTTP 401 与 HTTP 200 但业务码非 10000 都
 
 `LoginResponse`:`{ access_token, refresh_token, token_type:"bearer", expires_in, user: UserInfo }`。`UserInfo` 即 §8.4 字段集。邮箱验证码登录、密码注册、Google 登录、exchange 均返回 `LoginResponse` 或 `UserInfo`。
 
-extension website 统一登录不修改通用 `LoginResponse`。website 在登录成功写入 web access token 时，经 **externally_connectable** 消息通道向正式版与预发布版两个固定扩展 ID 发送；插件专用登录页发现已有 token 时，先通过账号信息接口校验，再补发一次；从插件进入 Pricing 时也补发一次（`sender.origin` 白名单校验，详见 `tech-第三方登录.md` §9）。普通来源 Website 页面加载不发送。extension background 用 web access token 调 `/api/client/auth/extension-token` 获取插件 token。旧 `/extension-login` 页与旧 postMessage + content script 桥原样保留，继续服务已发布旧扩展（≤1.3.0，其二进制写死旧登录路径且 bridge 注入官网全域，无法召回升级）。该接口是"已有 website 登录态 → 签发插件 token",不是签到补签;用于网页登录时未安装插件、后续安装或点击插件登录的场景。background 可在请求体带旧插件 access/refresh token,后端解析旧 token 并要求旧 token `user_id == ctx.user_id` 且 type 匹配后,才按当前认证用户 `ctx.user_id` 的 token ZSet best-effort 撤销旧 token;禁止按旧 token 解码出的 user_id 撤销;撤销失败不阻断新 token 签发。
+extension 登录(v3 浏览器身份,2026-09-01 起)不修改通用 `LoginResponse`,也不新增字段。插件 token 由插件 background 凭一次性 code 调 `POST /api/client/auth/extension-login/exchange` 获取(无 Bearer;`user_id` 以 code 载荷为权威,不信任请求身份字段);exchange 可携带旧插件 access/refresh token,后端要求旧 token `user_id` 与 code 内权威 user_id 一致且 type 匹配,才按该 user_id 的 token ZSet best-effort 撤销旧 token;禁止按旧 token 解码出的 user_id 撤销;撤销失败不阻断新 token 签发。协议时序、PKCE 与一次性 code 合同详见 `tech-第三方登录.md` §9(v2 `externally_connectable` 推送桥与 `POST /extension-token` 已删除)。
 
 ## 9. 实现代码索引
 

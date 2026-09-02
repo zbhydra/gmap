@@ -1,5 +1,19 @@
 # 007 · 用户系统 - 变更记录
 
+## 2026-09-01 extension 登录迁移 v3 browser identity(v2 桥删除)
+
+**为什么**: v2 桥(官网页经 `externally_connectable` 向固定扩展 ID 推送 web token)在 TG 线退役后已无实现载体,Maps 插件无任何可用登录入口;v3(插件发起 + PKCE + 一次性 code)在参考仓库已完成三端验收,本仓库移植并同时迁移 Bing 插件(无已发布旧包,不做兼容)。
+
+**变更**:
+
+- backend: 新增 `extension_login_code_service`(60 秒一次性 code,Redis 只存 sha256 摘要,Lua 原子先消费后验 S256 challenge,Redis 失败 fail-closed);新增 `POST /auth/extension-login/code`(Bearer + 用户级限流 10 次/300 秒)与 `POST /auth/extension-login/exchange`(无 Bearer,user_id 以 code 载荷为权威);**删除 `POST /extension-token`**;challenge/verifier 格式在 schema 层校验(422)。
+- website: 新增 `/extension-login` 统一确认页(noindex;入口校验单点归一化;五态状态机;复用 AuthModal;账号确认卡强制显式 Continue;issue 后 fragment 回跳自动关窗);**删除 `/extension-login-bing` 页**;删除 `notifyWebAuthChanged` / `notifyBingMapsAuthChanged` / `BING_*` 等 v2 桥全部常量与函数;sitemap 屏蔽路径替换;i18n `extensionLoginBing` → `extensionLogin`。
+- extension(Maps): background 新增 `openExtensionLogin` RPC(PKCE + `launchWebAuthFlow` + exchange + 快照比对提交,失败统一 `{opened:false}`);popup 账号区 `Sign in` / `Sign out` + `storage.onChanged` 即时刷新;清理 externally_connectable 派生链、TG 域名残留与死文案。
+- extension-bing: manifest permissions 改 `['storage','identity']`,删固定 key / `externally_connectable` / `WebsiteAuthBridge`;`applyWebsiteToken` → `applyExtensionLogin`(快照比对提交,成功后订阅态失效重拉);新增 auth 三键 storage watcher(登出失效内存门控态);popup + 面板 `Sign in` 双入口;e2e harness 改 v3 mock + 动态 SW 发现(删写死 EXTENSION_ID)。
+- **拍板变更**: 016「popup 不设账号区」基于 v2 官网推送模式,随桥删除而失效——v3 由插件发起登录,插件内必须有入口,Bing popup 与面板未登录态各设一个 `Sign in`(同一 background 流程)。
+
+**验证**: backend 8 real 用例 + client real 回归;website check/build/module 47/47;Maps 单测 326 全绿;Bing 单测 175 + e2e 10/10;集成验证(真实 HTTP 全链路)32 项断言 0 失败——v2 端点 404、code 一次性、双插件独立 session、配额 `u:{user_id}` 归属 Redis 键证据。现行合同见 `@tech-第三方登录.md` §9;浏览器 UI 面(真实登录回流/即时刷新/订阅徽标)待 unpacked 人工终验。
+
 ## 2026-08-28 Pro 登录桥与主线 v2 行为对齐
 
 **变更**:

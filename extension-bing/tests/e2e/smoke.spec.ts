@@ -11,12 +11,12 @@
 import { readFileSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
 import {
-  EXTENSION_ID,
   FIXTURE_DEFAULT_INITIAL,
   FIXTURE_PATH,
   FIXTURE_TOTAL,
   MAPS_URL,
   assertContentScriptInjected,
+  extensionIdFromServiceWorker,
   launchExtensionContext,
   setupRoutes,
   waitForExtensionServiceWorker
@@ -30,10 +30,13 @@ test.describe('Bing 插件 e2e 基建冒烟', () => {
     const page = context.pages()[0] ?? (await context.newPage())
 
     try {
-      // 断言链 1:扩展 MV3 service worker 已注册(url 为扩展域下 SW 脚本)
+      // 断言链 1:扩展 MV3 service worker 已注册(url 为扩展域下 SW 脚本;
+      // 固定 key 移除后扩展 ID 从 SW URL 动态反解)
       const serviceWorker = await waitForExtensionServiceWorker(context)
+      const extensionId = extensionIdFromServiceWorker(serviceWorker)
+      expect(extensionId).toMatch(/^[a-p]{32}$/)
       expect(serviceWorker.url()).toMatch(
-        new RegExp(`^chrome-extension://${EXTENSION_ID}/.+\\.js$`)
+        new RegExp(`^chrome-extension://${extensionId}/.+\\.js$`)
       )
 
       const { fulfilled, intercepted } = await setupRoutes(context, fixtureHtml)

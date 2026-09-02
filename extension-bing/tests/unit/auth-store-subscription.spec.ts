@@ -1,8 +1,8 @@
 /**
- * AuthStore 订阅态与官网 token 收编单测（016 §5 / §4.3 最小扩展）。
+ * AuthStore 订阅态与 v3 extension login 提交单测（006 §4.4）。
  *
  * 覆盖：Pro 判定（付费档白名单）、订阅缓存 TTL（5 分钟内不发重复请求）、
- * force/失效强拉、查询失败回退缓存、applyWebsiteToken 有效/无效两路。
+ * force/失效强拉、查询失败回退缓存、applyExtensionLogin 有效/失败/快照冲突三路。
  */
 
 import { createPinia, setActivePinia } from 'pinia'
@@ -17,9 +17,11 @@ const mocks = vi.hoisted(() => ({
   clearLocalAuth: vi.fn(),
   getCurrentUser: vi.fn(),
   logout: vi.fn(),
+  exchangeExtensionLogin: vi.fn(),
   subscriptionStatus: vi.fn(),
   storageGet: vi.fn(),
   storageSet: vi.fn(),
+  storageSetMany: vi.fn(),
   storageRemove: vi.fn()
 }))
 
@@ -29,17 +31,22 @@ vi.mock('../../src/core/api', () => ({
     getAccessToken: mocks.getAccessToken,
     clearLocalAuth: mocks.clearLocalAuth,
     getCurrentUser: mocks.getCurrentUser,
-    logout: mocks.logout
+    logout: mocks.logout,
+    exchangeExtensionLogin: mocks.exchangeExtensionLogin
   },
   subscriptionApi: { getStatus: mocks.subscriptionStatus },
-  STORAGE_KEYS: { ACCESS_TOKEN: 'auth_access_token', USER_INFO: 'auth_user_info' }
+  STORAGE_KEYS: {
+    ACCESS_TOKEN: 'auth_access_token',
+    REFRESH_TOKEN: 'auth_refresh_token',
+    USER_INFO: 'auth_user_info'
+  }
 }))
 
 vi.mock('../../src/core/storage', () => ({
   storageManager: {
     get: mocks.storageGet,
     set: mocks.storageSet,
-    setMany: vi.fn(),
+    setMany: mocks.storageSetMany,
     remove: mocks.storageRemove,
     getAll: vi.fn(),
     onChanged: vi.fn()
@@ -63,6 +70,13 @@ const user: UserInfo = {
   created_at: 100
 }
 
+/** exchange mock 返回的合同完整 token 对。 */
+const tokenResponse = {
+  extension_access_token: 'token-1',
+  extension_refresh_token: 'refresh-1',
+  user
+}
+
 function subscriptionOf(period: SubscriptionStatus['period']): SubscriptionStatus {
   return {
     status: 'active',
@@ -79,8 +93,8 @@ function subscriptionOf(period: SubscriptionStatus['period']): SubscriptionStatu
 async function loggedInStore() {
   const { useAuthStore } = await import('../../src/core/stores/authStore')
   const store = useAuthStore()
-  mocks.getCurrentUser.mockResolvedValue(user)
-  await store.applyWebsiteToken('token-1')
+  mocks.exchangeExtensionLogin.mockResolvedValue(tokenResponse)
+  await store.applyExtensionLogin('code-1', 'verifier-1')
   // 排空登录事件触发的预热拉取，并清空计数——用例从干净缓存开始
   await new Promise(resolve => setTimeout(resolve, 0))
   store.invalidateSubscription()
@@ -92,9 +106,12 @@ describe('AuthStore 订阅态与门控判定', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    mocks.storageGet.mockResolvedValue(null)
     mocks.storageSet.mockResolvedValue(undefined)
+    mocks.storageSetMany.mockResolvedValue(undefined)
     mocks.storageRemove.mockResolvedValue(undefined)
     mocks.clearLocalAuth.mockResolvedValue(undefined)
+    mocks.exchangeExtensionLogin.mockResolvedValue(tokenResponse)
     mocks.subscriptionStatus.mockResolvedValue(subscriptionOf('free'))
   })
 
@@ -173,56 +190,95 @@ describe('AuthStore 订阅态与门控判定', () => {
     expect(mocks.subscriptionStatus).toHaveBeenCalledTimes(1)
   })
 
-  it('applyWebsiteToken 有效：token 落 storage、账号态生效、订阅缓存失效重拉', async () => {
+  it('applyExtensionLogin 有效：三键落 storage、账号态生效、订阅缓存失效重拉', async () => {
     const store = await loggedInStore()
 
-    expect(mocks.storageSet).toHaveBeenCalledWith('auth_access_token', 'token-1')
-    expect(mocks.getCurrentUser).toHaveBeenCalledOnce()
+    expect(mocks.exchangeExtensionLogin).toHaveBeenCalledWith({
+      code: 'code-1',
+      codeVerifier: 'verifier-1',
+      oldAccessToken: null,
+      oldRefreshToken: null
+    })
+    expect(mocks.storageSetMany).toHaveBeenCalledWith({
+      auth_access_token: 'token-1',
+      auth_refresh_token: 'refresh-1',
+      auth_user_info: user
+    })
     expect(store.isAuthenticated).toBe(true)
     expect(store.displayName).toBe('Sub User')
   })
 
-  it('applyWebsiteToken 失败(无既有会话)：回滚本次写入、清净残留并抛出', async () => {
+  it('applyExtensionLogin exchange 失败(无既有会话)：不写任何键、保持未登录', async () => {
     const { useAuthStore } = await import('../../src/core/stores/authStore')
     const store = useAuthStore()
-    mocks.getCurrentUser.mockRejectedValue(
-      Object.assign(new Error('error code:10104'), { status: 401 })
-    )
+    mocks.exchangeExtensionLogin.mockRejectedValue(new Error('error code:10104'))
 
-    await expect(store.applyWebsiteToken('bad-token')).rejects.toThrow()
-    expect(mocks.clearLocalAuth).toHaveBeenCalledOnce()
+    await expect(store.applyExtensionLogin('bad-code', 'verifier-1')).rejects.toThrow()
+    expect(mocks.storageSetMany).not.toHaveBeenCalled()
+    expect(mocks.clearLocalAuth).not.toHaveBeenCalled()
     expect(store.token).toBeNull()
     expect(store.user).toBeNull()
     expect(store.isAuthenticated).toBe(false)
     expect(store.isPro).toBe(false)
   })
 
-  it('applyWebsiteToken 网络失败(有既有会话)：保留旧会话不登出', async () => {
+  it('applyExtensionLogin exchange 失败(有既有会话)：旧会话原样保留', async () => {
     const store = await loggedInStore()
-    mocks.getCurrentUser.mockRejectedValue(new TypeError('fetch failed'))
+    // 有既有会话时快照非空：exchange 请求应携带旧 token 供 best-effort 撤销
+    mocks.storageGet.mockImplementation((key: string) => {
+      if (key === 'auth_access_token') {
+        return Promise.resolve('token-1')
+      }
+      if (key === 'auth_refresh_token') {
+        return Promise.resolve('refresh-1')
+      }
+      return Promise.resolve(user)
+    })
+    mocks.exchangeExtensionLogin.mockRejectedValue(new TypeError('fetch failed'))
 
-    await expect(store.applyWebsiteToken('token-2')).rejects.toThrow()
-    // 回滚本次写入:内存与 storage 恢复旧 token/USER_INFO
+    await expect(store.applyExtensionLogin('code-2', 'verifier-2')).rejects.toThrow()
+    expect(mocks.exchangeExtensionLogin).toHaveBeenCalledWith({
+      code: 'code-2',
+      codeVerifier: 'verifier-2',
+      oldAccessToken: 'token-1',
+      oldRefreshToken: 'refresh-1'
+    })
+    // 旧会话不受一次失败登录影响：无写入、不清持久化
+    expect(mocks.storageSetMany).toHaveBeenCalledTimes(1)
+    expect(mocks.storageSetMany).toHaveBeenCalledWith({
+      auth_access_token: 'token-1',
+      auth_refresh_token: 'refresh-1',
+      auth_user_info: user
+    })
+    expect(mocks.clearLocalAuth).not.toHaveBeenCalled()
     expect(store.token).toBe('token-1')
     expect(store.user).toMatchObject({ user_id: 9 })
     expect(store.isAuthenticated).toBe(true)
-    expect(mocks.storageSet).toHaveBeenCalledWith('auth_access_token', 'token-1')
-    expect(mocks.storageSet).toHaveBeenCalledWith('auth_user_info', expect.objectContaining({ user_id: 9 }))
-    // 既有会话不受影响:不清持久化
-    expect(mocks.clearLocalAuth).not.toHaveBeenCalled()
   })
 
-  it('applyWebsiteToken 401 无效 token(有既有会话)：回滚本次写入且不清旧会话', async () => {
+  it('applyExtensionLogin 快照冲突(提交前 storage 变化)：放弃写入且不动旧会话', async () => {
     const store = await loggedInStore()
-    mocks.getCurrentUser.mockRejectedValue(
-      Object.assign(new Error('error code:10104'), { status: 401 })
-    )
+    // exchange 前快照为登录态；提交前重读已被并发登出清空 → 全等失败
+    let readCount = 0
+    mocks.storageGet.mockImplementation((key: string) => {
+      readCount += 1
+      if (readCount <= 3) {
+        if (key === 'auth_access_token') {
+          return Promise.resolve('token-1')
+        }
+        if (key === 'auth_refresh_token') {
+          return Promise.resolve('refresh-1')
+        }
+        return Promise.resolve(user)
+      }
+      return Promise.resolve(null)
+    })
 
-    await expect(store.applyWebsiteToken('bad-token-2')).rejects.toThrow()
-    expect(store.token).toBe('token-1')
-    expect(store.user).toMatchObject({ user_id: 9 })
-    expect(store.isAuthenticated).toBe(true)
-    expect(mocks.storageSet).toHaveBeenCalledWith('auth_access_token', 'token-1')
+    await expect(store.applyExtensionLogin('code-2', 'verifier-2')).rejects.toThrow(
+      /登录态已变化/
+    )
+    expect(mocks.storageSetMany).toHaveBeenCalledTimes(1)
     expect(mocks.clearLocalAuth).not.toHaveBeenCalled()
+    expect(store.isAuthenticated).toBe(true)
   })
 })

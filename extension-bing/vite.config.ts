@@ -16,14 +16,11 @@ const DEFAULT_PROD_API_BASE_URL = 'https://api.example.com'
 const DEFAULT_DEV_WEBSITE_BASE_URL = 'http://localhost:7620'
 // TODO(maps): Maps 官网域名确定后替换。
 const DEFAULT_PROD_WEBSITE_BASE_URL = 'https://www.example.com'
-const PROD_WWW_WEBSITE_BASE_URL = 'https://www.example.com'
 const DEFAULT_PROD_ALI_SLS_PROJECT = 'bingmaps'
 const DEFAULT_PROD_ALI_SLS_HOST = 'ap-southeast-1.log.aliyuncs.com'
 const DEFAULT_PROD_ALI_SLS_LOGSTORE = 'bingmaps-mark-log'
 const DEFAULT_ALI_SLS_TOPIC = 'mark-log'
 const DEFAULT_ALI_SLS_SOURCE = 'extension'
-const DEFAULT_PROD_WEBSITE_ORIGIN = toOrigin(DEFAULT_PROD_WEBSITE_BASE_URL)
-const PROD_WWW_WEBSITE_ORIGIN = toOrigin(PROD_WWW_WEBSITE_BASE_URL)
 
 interface ExtensionBuildProcessEnv {
   NODE_ENV?: string
@@ -57,10 +54,6 @@ export interface ExtensionBuildEnvConfig {
   websiteBaseUrl: string
   /** 插件 SLS WebTracking 配置。 */
   aliSlsMark: ExtensionAliSlsMarkConfig
-  /** 官网外部消息可接受 origin 完整白名单（manifest 与运行时校验共用的唯一派生源）。 */
-  websiteAuthOrigins: readonly string[]
-  /** Manifest externally_connectable.matches（官网外部消息来源白名单）。 */
-  externallyConnectableMatches: readonly string[]
 }
 
 export interface ExtensionAliSlsMarkConfig {
@@ -140,25 +133,6 @@ function resolveAliSlsMarkConfig(
   }
 }
 
-function toOrigin(value: string): string {
-  return new URL(value).origin
-}
-
-function toMatchPattern(origin: string): string {
-  return `${origin}/*`
-}
-
-function uniqueValues(values: readonly string[]): string[] {
-  return [...new Set(values)]
-}
-
-function resolveRuntimeWebsiteAuthOrigins(websiteOrigin: string): string[] {
-  return uniqueValues([
-    websiteOrigin,
-    ...(websiteOrigin === DEFAULT_PROD_WEBSITE_ORIGIN ? [PROD_WWW_WEBSITE_ORIGIN] : [])
-  ])
-}
-
 export function createExtensionBuildEnv(env: ExtensionBuildProcessEnv): ExtensionBuildEnvConfig {
   const isProductionBuild = env.NODE_ENV === 'production'
   const releaseChannel =
@@ -174,18 +148,13 @@ export function createExtensionBuildEnv(env: ExtensionBuildProcessEnv): Extensio
     isProductionBuild ? DEFAULT_PROD_WEBSITE_BASE_URL : DEFAULT_DEV_WEBSITE_BASE_URL
   )
   const aliSlsMark = resolveAliSlsMarkConfig(env, isProductionBuild)
-  const websiteOrigin = toOrigin(websiteBaseUrl)
-  const runtimeWebsiteAuthOrigins = resolveRuntimeWebsiteAuthOrigins(websiteOrigin)
-  const externallyConnectableMatches = runtimeWebsiteAuthOrigins.map(toMatchPattern)
 
   return {
     isProductionBuild,
     releaseChannel,
     apiBaseUrl,
     websiteBaseUrl,
-    aliSlsMark,
-    websiteAuthOrigins: runtimeWebsiteAuthOrigins,
-    externallyConnectableMatches
+    aliSlsMark
   }
 }
 
@@ -226,9 +195,6 @@ export default defineConfig({
     __API_BASE_URL__: JSON.stringify(extensionBuildEnv.apiBaseUrl),
     __DEV__: JSON.stringify(!extensionBuildEnv.isProductionBuild),
     __WEBSITE_BASE_URL__: JSON.stringify(extensionBuildEnv.websiteBaseUrl),
-    // 官网外部消息 origin 白名单唯一派生源：manifest externally_connectable 与
-    // 运行时 onMessageExternal 的 sender.origin 校验读同一份构建期注入值
-    __WEBSITE_AUTH_ORIGINS__: JSON.stringify(extensionBuildEnv.websiteAuthOrigins),
     __ALI_SLS_MARK_CONFIG__: JSON.stringify(extensionBuildEnv.aliSlsMark)
   },
   resolve: {
@@ -252,10 +218,9 @@ export default defineConfig({
         version: '0.1.0',
         default_locale: 'en',
         description: '__MSG_extensionDescription__',
-        // 固定扩展 ID：pgcpggcfmfdmobpheojngndpcmnkibmm（website 登录桥按此 ID 发消息）。
-        // 私钥在 keys/bing-maps-extension.pem（不入 git），丢失则 ID 漂移、官网桥失效。
-        key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5HoucdD2/QmOt7VSdv9300S7zUGQMJ46VFcNPRVUGfqwZtzPzfJDgsvLIiRF8WUjcsJ4jBKBCv2bILF0Gst8jvPjk2dw6BUxtanJAPkeZlRGvM1PfCt9JymiYkT5lWP8u6tAHbpENhTbAorQm3NBJ4z3gwy7Wun7cMAGni0y0vXdF16/yHSju6dgjrnio4ZWeEdCfcroVR+wiDLQeLw3IOr+oFflN4AS7nlGko7qyJhUHvyTPxQi4rikLGF29kV4Plfxp6ANGi9zRQK5yuF6H1sVhCcplT5SKcGKLye0aH3Jm3thIb03eNMNaZBlm+J+76S7Efso0zWV59V9h9gWDQIDAQAB',
-        permissions: ['storage'],
+        // identity：v3 browser identity 登录（chrome.identity.launchWebAuthFlow +
+        // PKCE，006 §3 协议合同），不登记扩展 ID、无 externally_connectable。
+        permissions: ['storage', 'identity'],
         host_permissions: [],
         content_scripts: [
           {
@@ -288,13 +253,6 @@ export default defineConfig({
         },
         background: {
           service_worker: 'src/background/index.ts'
-        },
-        // 官网登录桥：网页 chrome.runtime.sendMessage 直发本扩展。
-        // 白名单与运行时 origin 校验同源（WEBSITE_AUTH_ORIGINS，来自
-        // EXTENSION_WEBSITE_BASE_URL）；生产域未定（TODO(maps)）前统一
-        // 指向占位官网域 / 本地 dev 域，域名确定后改环境变量即可。
-        externally_connectable: {
-          matches: [...extensionBuildEnv.externallyConnectableMatches]
         }
       })
     })

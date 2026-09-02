@@ -33,9 +33,7 @@ export const I18N_KEYS = {
     /** 支持邮箱复制成功 */
     SUPPORT_EMAIL_COPIED: 'app.supportEmailCopied',
     /** 支持邮箱复制失败 */
-    SUPPORT_EMAIL_COPY_FAILED: 'app.supportEmailCopyFailed',
-    /** 登录能力尚未接入提示 */
-    LOGIN_NOT_AVAILABLE: 'auth.loginNotAvailable'
+    SUPPORT_EMAIL_COPY_FAILED: 'app.supportEmailCopyFailed'
   },
 
   /** 应用错误相关 */
@@ -152,8 +150,6 @@ export const I18N_KEYS = {
     FREE: 'subscription.free',
     /** 按月订阅 */
     MONTHLY: 'subscription.monthly',
-    /** 登录后查看 */
-    LOGIN_TO_VIEW: 'subscription.loginToView',
     /** 续费按钮 */
     RENEW: 'subscription.renew',
     /** 尚未开通提示 */

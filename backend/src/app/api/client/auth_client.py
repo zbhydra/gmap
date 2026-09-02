@@ -6,6 +6,7 @@
 - user_service：创建/查询用户，构建客户端用户信息。
 - google_auth_service：Google ID token 和 OAuth code 协议交互。
 - google_redirect_login_service：Google redirect 登录的一次性 state/code。
+- extension_login_code_service：插件登录 v3 的一次性 code（PKCE S256 绑定）。
 
 整体流程：
 1. Website 常规登录
@@ -13,24 +14,24 @@
    -> 确认或创建用户
    -> _complete_login_flow
    -> 返回 Website 使用的 access_token、refresh_token 和 user。
-2. Website 登录后同步插件
-   插件注入官网域名的 content script 读取 Website access token 并发给 background
-   -> background 以该 token 调 POST /auth/extension-token
-   -> get_current_user 校验 Website token
-   -> 同账号旧插件 token 只做 best-effort 撤销
+2. 插件端发起登录（v3 browser identity）
+   插件生成 PKCE verifier/challenge(S256)，打开官网登录页
+   -> 用户以 Website 身份确认后，官网页带 Bearer 调 POST /auth/extension-login/code
+      签发绑定 challenge 的一次性 code
+   -> code 经回调 URL fragment 回到插件，插件携 verifier 调
+      POST /auth/extension-login/exchange（无 Bearer）
+   -> 原子消费 code 并校验 S256 challenge，按 code 内权威 user_id 走通用签发链；
+      同账号旧插件 token 只做 best-effort 撤销
    -> 返回插件本地保存的 extension_access_token、extension_refresh_token。
-   extension_* 也是项目用户 token，字段名只表示“给插件保存和使用”。
-   如果用户没安装插件，不会有人调用 /extension-token，Website 登录不受影响。
-3. 插件端发起登录
-   插件打开官网登录页
-   -> 若 Website 已登录，直接走第 2 步同步插件 token
-   -> 若未登录，用户先在 Website 完成第 1 步，再走第 2 步。
-4. Google 手动按钮登录
+   extension_* 也是项目用户 token，字段名只表示“给插件保存和使用”，
+   与 Website token 完全独立（同 user_id 下不同 session）。
+   code 明文不落服务端存储：Redis 只存 sha256 摘要，TTL 60 秒，一次性消费。
+3. Google 手动按钮登录
    /google/oauth/authorize 只创建短效 state 并跳 Google
    -> /google/oauth/callback 校验 Google code 后只回传一次性 login code
    -> /google/exchange 消费一次性 code，再走 _complete_login_flow。
    这样项目 token 不出现在 URL 里。
-5. token 生命周期
+4. token 生命周期
    /refresh 使用 refresh token 轮换出新 token 对。
    /logout 只撤销当前 access token，不影响其他设备、Website/插件另一端。
 """
@@ -44,6 +45,10 @@ from app.api.device_dependencies import require_trusted_client_device
 from app.services.email_verification_service import (
     SendResult,
     email_verification_service,
+)
+from app.services.extension_login_code_service import (
+    EXTENSION_LOGIN_CODE_TTL_SECONDS,
+    extension_login_code_service,
 )
 from app.services.google_auth_service import GoogleTokenProfile, google_auth_service
 from app.services.google_redirect_login_service import (
@@ -94,6 +99,9 @@ from app.models import UserModel
 from app.schemas.client_user_schema import (
     CurrentUserInfoResponse,
     EmailVerifyLoginRequest,
+    ExtensionLoginCodeExchangeRequest,
+    ExtensionLoginCodeIssueRequest,
+    ExtensionLoginCodeIssueResponse,
     ExtensionTokenRequest,
     ExtensionTokenResponse,
     GoogleLoginCodeExchangeRequest,
@@ -179,13 +187,14 @@ async def _complete_login_flow(user: UserModel, request: Request) -> LoginRespon
 async def _create_extension_token_response(
     user: UserModel,
     request: Request,
-    ctx: UserContext,
+    *,
+    ip: str | None,
 ) -> ExtensionTokenResponse:
-    """为已通过 Website token 认证的用户签发一组插件可用 token。"""
+    """为已通过一次性 code 消费校验的用户签发一组插件可用 token。"""
 
     token_bundle = await user_auth_service.issue_registered_tokens_for_user(
         user,
-        ip_address=ctx.ip,
+        ip_address=ip,
         user_agent=request.headers.get("user-agent"),
         operation="extension_token",
     )
@@ -271,12 +280,15 @@ def _ensure_user_can_login(user: UserModel) -> None:
 
 
 async def _enforce_extension_token_rate_limit(
-    ctx: UserContext,
+    *,
+    user_id: int,
+    ip: str | None,
+    client_product: ClientProductEnum,
 ) -> None:
     """按用户限制插件 token 签发频率；Redis 故障由 limiter fail-open。"""
 
     user_allowed = await _extension_token_limiter.is_allowed(
-        identifier=f"user:{ctx.user_id}",
+        identifier=f"user:{user_id}",
         limit=_EXTENSION_TOKEN_RATE_LIMIT_MAX,
         window=_EXTENSION_TOKEN_RATE_LIMIT_WINDOW,
     )
@@ -285,14 +297,14 @@ async def _enforce_extension_token_rate_limit(
 
     logger.warning(
         "Extension token issue rate limited: "
-        f"user_id={ctx.user_id}, ip={ctx.ip}, client_product={ctx.client_product.value}"
+        f"user_id={user_id}, ip={ip}, client_product={client_product.value}"
     )
     raise AppCommonException(
         code=CommonCode.RATE_LIMIT_EXCEEDED,
         ext_msg=(
             "extension_token.rate_limit: too many issue attempts: "
-            f"user_id={ctx.user_id}, ip={ctx.ip}, "
-            f"client_product={ctx.client_product.value}, "
+            f"user_id={user_id}, ip={ip}, "
+            f"client_product={client_product.value}, "
             f"limit={_EXTENSION_TOKEN_RATE_LIMIT_MAX}, "
             f"window={_EXTENSION_TOKEN_RATE_LIMIT_WINDOW}"
         ),
@@ -302,10 +314,10 @@ async def _enforce_extension_token_rate_limit(
 async def _best_effort_revoke_old_extension_token(
     *,
     token: str | None,
-    ctx: UserContext,
+    user_id: int,
     expected_token_type: TokenType,
 ) -> None:
-    """按当前用户撤销旧插件 token；任何失败都不影响新 token 签发。"""
+    """按 code 内权威 user_id 撤销旧插件 token；任何失败都不影响新 token 签发。"""
 
     if not token:
         return
@@ -314,34 +326,34 @@ async def _best_effort_revoke_old_extension_token(
     if not jwt_data:
         logger.info(
             "Skipped old extension token revoke: "
-            f"user_id={ctx.user_id}, reason=decode_failed"
+            f"user_id={user_id}, reason=decode_failed"
         )
         return
 
     if jwt_data.type != expected_token_type.value:
         logger.info(
             "Skipped old extension token revoke: "
-            f"user_id={ctx.user_id}, reason=token_type_mismatch"
+            f"user_id={user_id}, reason=token_type_mismatch"
         )
         return
 
-    if jwt_data.user_id != ctx.user_id:
+    if jwt_data.user_id != user_id:
         logger.info(
             "Skipped old extension token revoke: "
-            f"user_id={ctx.user_id}, reason=cross_user"
+            f"user_id={user_id}, reason=cross_user"
         )
         return
 
     try:
         await user_token_service.revoke_token(
             token,
-            ctx.user_id,
+            user_id,
             expected_token_type,
         )
     except Exception:
         logger.error(
             "Old extension token revoke failed: "
-            f"user_id={ctx.user_id}, token_type={expected_token_type.value}",
+            f"user_id={user_id}, token_type={expected_token_type.value}",
             exc_info=True,
         )
         return
@@ -349,18 +361,19 @@ async def _best_effort_revoke_old_extension_token(
 
 async def _best_effort_revoke_old_extension_tokens(
     data: ExtensionTokenRequest,
-    ctx: UserContext,
+    *,
+    user_id: int,
 ) -> None:
     """撤销请求体中同账号旧插件 access/refresh token。"""
 
     await _best_effort_revoke_old_extension_token(
         token=data.old_extension_access_token,
-        ctx=ctx,
+        user_id=user_id,
         expected_token_type=TokenType.USER_ACCESS,
     )
     await _best_effort_revoke_old_extension_token(
         token=data.old_extension_refresh_token,
-        ctx=ctx,
+        user_id=user_id,
         expected_token_type=TokenType.USER_REFRESH,
     )
 
@@ -524,40 +537,85 @@ async def logout(ctx: UserContext = Depends(get_current_user), request: Request 
     return ResponseUtils.ok({})
 
 
-@router.post("/extension-token")
-async def create_extension_token(
-    request: Request,
-    data: ExtensionTokenRequest | None = None,
+@router.post("/extension-login/code")
+async def extension_login_issue_code(
+    data: ExtensionLoginCodeIssueRequest,
     ctx: UserContext = Depends(get_current_user),
 ):
-    """已有 Website 登录态换取插件 token。"""
-
-    await _enforce_extension_token_rate_limit(ctx)
+    """Website 登录态为插件登录流程签发绑定 challenge 的一次性 code。"""
 
     user = await user_service.get_by_id(ctx.user_id)
     if not user:
         logger.error(
-            f"User not found for user_id={ctx.user_id} in /extension-token endpoint"
+            f"User not found for user_id={ctx.user_id} in extension-login code endpoint"
         )
         raise AppCommonException(
             code=CommonCode.USER_NOT_FOUND,
             ext_msg=(
-                "auth_client.create_extension_token: Website token 有效但用户不存在: "
+                "auth_client.extension_login_issue_code: Website token 有效但用户不存在: "
                 f"user_id={ctx.user_id}, ip={ctx.ip}"
             ),
         )
 
     _ensure_user_can_login(user)
 
-    await _best_effort_revoke_old_extension_tokens(
-        data
-        or ExtensionTokenRequest(
-            old_extension_access_token=None,
-            old_extension_refresh_token=None,
-        ),
-        ctx,
+    await _enforce_extension_token_rate_limit(
+        user_id=ctx.user_id,
+        ip=ctx.ip,
+        client_product=ctx.client_product,
     )
-    token_response = await _create_extension_token_response(user, request, ctx)
+
+    code = await extension_login_code_service.create_code(
+        ctx.user_id,
+        data.code_challenge,
+    )
+    return ResponseUtils.ok(
+        ExtensionLoginCodeIssueResponse(
+            code=code,
+            expires_in=EXTENSION_LOGIN_CODE_TTL_SECONDS,
+        ).model_dump()
+    )
+
+
+@router.post("/extension-login/exchange")
+async def extension_login_exchange(
+    data: ExtensionLoginCodeExchangeRequest,
+    request: Request,
+):
+    """插件携 verifier 消费一次性 code 换取插件 token（无 Bearer）。
+
+    user_id 以 code 载荷为权威，不信任请求携带的任何身份字段；
+    challenge 校验在 code 原子消费之后进行，失败即作废该 code。
+    """
+    user_id = await extension_login_code_service.consume_code(
+        data.code,
+        data.code_verifier,
+    )
+
+    user = await user_service.get_by_id(user_id)
+    if not user:
+        raise AppCommonException(
+            code=CommonCode.USER_NOT_FOUND,
+            ext_msg=(
+                "auth_client.extension_login_exchange: 一次性 code 对应的用户不存在: "
+                f"user_id={user_id}"
+            ),
+        )
+
+    _ensure_user_can_login(user)
+
+    ip = get_client_ip(request)
+    await _enforce_extension_token_rate_limit(
+        user_id=user_id,
+        ip=ip,
+        client_product=normalize_client_product(
+            request.headers.get("X-Client-Product")
+        ),
+    )
+
+    await _best_effort_revoke_old_extension_tokens(data, user_id=user_id)
+
+    token_response = await _create_extension_token_response(user, request, ip=ip)
     return ResponseUtils.ok(_serialize_extension_token_response(token_response))
 
 

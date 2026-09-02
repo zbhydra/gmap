@@ -8,6 +8,7 @@
 
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createI18n } from 'vue-i18n'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -21,12 +22,22 @@ const tokensSource = readFileSync(path.resolve(process.cwd(), 'src/styles/tokens
 
 const mocks = vi.hoisted(() => ({
   authInitialize: vi.fn(),
+  authLogout: vi.fn(),
   recordMark: vi.fn()
 }))
 
 vi.mock('../../src/core/stores/authStore', () => ({
   useAuthStore: () => ({
-    initialize: mocks.authInitialize
+    initialize: mocks.authInitialize,
+    logout: mocks.authLogout,
+    clearAuth: vi.fn(),
+    invalidateSubscription: vi.fn(),
+    refreshSubscription: vi.fn().mockResolvedValue(null),
+    isAuthenticated: false,
+    displayName: '',
+    user: null,
+    token: null,
+    loading: false
   })
 }))
 
@@ -167,6 +178,14 @@ async function mountPopup(): Promise<VueWrapper> {
   const mounted = mount(App, {
     attachTo: document.body,
     global: {
+      plugins: [
+        // 账号区文案走 vue-i18n（auth.login/logout）；单测内只挂最小 en-US 消息
+        createI18n({
+          legacy: false,
+          locale: 'en-US',
+          messages: { 'en-US': { auth: { login: 'Sign in', logout: 'Sign out' } } }
+        })
+      ],
       stubs: {
         AppHeader: true,
         AppFooter: true

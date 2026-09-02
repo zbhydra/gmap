@@ -4,7 +4,6 @@
 import { logger } from '@/core/utils/logger'
 import { BackgroundMessageRouter } from './services/BackgroundMessageRouter'
 import { reportInstallMark } from './services/InstallMarkReporter'
-import { WebsiteAuthBridge } from './services/WebsiteAuthBridge'
 import { storageManager } from '@/core/storage'
 import { STORAGE_KEYS } from '@/core/api/config'
 import { initializeRuntimeLogger } from './runtimeConfig'
@@ -38,10 +37,6 @@ logger.info('Background service worker initialized')
 const messageRouter = new BackgroundMessageRouter()
 messageRouter.setupListener()
 
-// 官网登录桥：externally_connectable 白名单域的外部消息接收与登录 tab 收尾
-const websiteAuthBridge = new WebsiteAuthBridge()
-websiteAuthBridge.setup()
-
 // 监听扩展安装事件
 chrome.runtime.onInstalled.addListener(details => {
   logger.info(`Extension installed: reason=${details.reason}`)
@@ -65,5 +60,4 @@ chrome.runtime.onSuspend.addListener(() => {
   logger.info('Service worker suspending')
   // 清理路由器资源
   messageRouter.destroy()
-  websiteAuthBridge.destroy()
 })

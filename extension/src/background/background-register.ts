@@ -17,6 +17,7 @@ import type {
   BackgroundGetMapsUsageResponse,
   BackgroundGetRuntimeConfigResponse,
   BackgroundGetStateResponse,
+  BackgroundOpenExtensionLoginResponse,
   BackgroundOpenPricingPageRequest,
   BackgroundOpenPricingPageResponse,
   BackgroundPingResponse,
@@ -55,6 +56,15 @@ export const Handler = {
   /** 由 background 代 content script 记录打点。 */
   recordMark(_params: BackgroundRecordMarkRequest): Promise<BackgroundRecordMarkResponse> {
     return declarationOnly('background.recordMark')
+  },
+
+  /**
+   * 发起 v3 插件登录（browser identity 全流程 owner）：PKCE → 官网确认页 →
+   * exchange → 三键条件提交。默认 30 秒 RPC 超时内通常完不成登录，调用方
+   * 以 storage 三键变化感知结果，本返回值仅用于复位入口按钮态。
+   */
+  openExtensionLogin(): Promise<BackgroundOpenExtensionLoginResponse> {
+    return declarationOnly('background.openExtensionLogin')
   },
 
   /** 查询 Maps 月度配额用量（013 A11，U7；面板 Start 门控与 popup 账号区）。 */
@@ -123,6 +133,8 @@ export const METHOD_TARGETS = {
   getMapsConfig: ['content'],
   /** recordMark 允许 popup 调用，统一由 background 写 SLS。 */
   recordMark: ['popup'],
+  /** openExtensionLogin 仅允许 popup 调用（账号区 Sign in 入口）。 */
+  openExtensionLogin: ['popup'],
   /** getMapsUsage 允许 content（面板门控）与 popup（账号区）调用。 */
   getMapsUsage: ['content', 'popup'],
   /** enrichMapsBusinesses 仅允许 content 调用（采集行在 content 侧）。 */
@@ -149,6 +161,8 @@ export const METHOD_TRANSPORTS = {
   getMapsConfig: ['chrome'],
   /** recordMark 使用 Chrome message。 */
   recordMark: ['chrome'],
+  /** openExtensionLogin 使用 Chrome message。 */
+  openExtensionLogin: ['chrome'],
   /** getMapsUsage 使用 Chrome message。 */
   getMapsUsage: ['chrome'],
   /** enrichMapsBusinesses 使用 Chrome message。 */
@@ -175,6 +189,8 @@ export const METHOD_REQUEST_LIMITS = {
   getMapsConfig: 1024,
   /** recordMark 携带打点类型和附加信息。 */
   recordMark: 4096,
+  /** openExtensionLogin 无入参。 */
+  openExtensionLogin: 1024,
   /** getMapsUsage 无入参。 */
   getMapsUsage: 1024,
   /** enrichMapsBusinesses：50 商家（domain/website/name/address 原文）最坏形态上界。 */
@@ -203,6 +219,8 @@ export const METHOD_RESPONSE_LIMITS = {
   getMapsConfig: 16384,
   /** recordMark 返回记录结果。 */
   recordMark: 1024,
+  /** openExtensionLogin 返回 {opened} 布尔结果。 */
+  openExtensionLogin: 1024,
   /** getMapsUsage 返回 used/total/period/exhausted 快照（快照不可得时为 null）。 */
   getMapsUsage: 4096,
   /** enrichMapsBusinesses：50 商家的 emails/medias 结果（每条上界宽松余量）。 */

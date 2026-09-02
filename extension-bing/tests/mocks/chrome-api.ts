@@ -221,6 +221,12 @@ const storage = {
     clear: vi.fn()
   },
 
+  onChanged: {
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    hasListener: vi.fn()
+  },
+
   session: {
     get: vi.fn(),
     set: vi.fn(),

@@ -1,11 +1,12 @@
 <!--
   Bing Maps 采集面板（三态：待命 / 采集中 / 完成）。
 
-  逐元素规格 = feat.md「界面与操作逻辑·面板(三态)」+ 登录同步子流程
+  逐元素规格 = feat.md「界面与操作逻辑·面板(三态)」+ v3 登录（006 §4.4）
   「面板显示账号与订阅态」：
-  - 待命：标题区（含账号/订阅态徽标，登录后显示，点击进 Pricing 视图）、
-    Start Extraction 主按钮（未检测到列表禁用）、提示行
-    （"Please search business first" + For Example 示例链接）、How to use 链接；
+  - 待命：标题区（含账号/订阅态徽标；未登录同位显示 Sign in，已登录显示
+    FREE/PRO 徽标，点击进 Pricing 视图）、Start Extraction 主按钮（未检测到
+    列表禁用）、提示行（"Please search business first" + For Example 示例
+    链接）、How to use 链接；
   - 采集中：加载指示、进度文案（免费 "Exporting N..." / Pro "Have found N
     businesses and still going..."，按门控态切换）、区域提示、Stop（ghost）；
   - 完成：完成/手动停止文案、免费达限警告条 + Upgrade to Pro Now（跳 Pricing
@@ -105,6 +106,10 @@
         >
           {{ isPro ? t(K.PRO_BADGE) : t(K.FREE_BADGE) }}
         </button>
+        <!-- 未登录：徽标同位显示 Sign in（v3 插件发起登录，006 §4.4） -->
+        <button v-else class="plan-badge" type="button" :disabled="signingIn" @click="onSignIn">
+          {{ t(I18N_KEYS.AUTH.LOGIN) }}
+        </button>
       </header>
       <button
         class="button button-primary"
@@ -183,6 +188,7 @@ import { useI18n } from 'vue-i18n'
 import { I18N_KEYS } from '@/core/constants/i18n'
 import { logger } from '@/core/utils/logger'
 import { buildPricingUrl, openExternalPage } from '@/core/utils/navigation'
+import { BackgroundChannel } from '@/content/rpc/background.rpc'
 import { getBingConfig } from '@/sites/bing/config/loader'
 import type { BingCollector } from '../collector'
 import { getGateState, refreshGateState, subscribeGateState, type BingGateState } from '../gate'
@@ -237,6 +243,31 @@ const doneCountText = computed(() => t(K.DONE_COUNT, { count: foundCount.value }
 // —— Pricing 视图与导出下拉 ——
 const showPricing = ref(false)
 const menuOpen = ref(false)
+
+// —— 登录入口（未登录徽标位 Sign in，006 §4.4） ——
+const signingIn = ref(false)
+
+/**
+ * 发起 v3 browser identity 登录（popup 同款 RPC，同一失败口径）：
+ * {opened:false} 或 RPC 默认 30 秒超时都静默复位按钮态；登录最终结果
+ * 以 storage 三键变化为准，此处主动收敛一次门控快照让徽标随结果切换。
+ */
+async function onSignIn(): Promise<void> {
+  if (signingIn.value) {
+    return
+  }
+  signingIn.value = true
+  const channel = new BackgroundChannel()
+  try {
+    await channel.openExtensionLogin()
+  } catch (error) {
+    logger.warn('[BingPanel] 登录未在 RPC 时限内确认完成:', error)
+  } finally {
+    channel.destroy()
+    signingIn.value = false
+    void refreshGateState()
+  }
+}
 
 // 打开 Pricing 时重取门控态（登录/订阅在面板打开后变化的兜底刷新）
 watch(showPricing, opened => {
@@ -768,6 +799,11 @@ function onOpenPricingPage(): void {
   background: var(--gme-primary);
   border-color: var(--gme-primary);
   color: var(--gme-primary-fg);
+}
+
+.plan-badge:disabled {
+  opacity: 0.42;
+  cursor: default;
 }
 
 .plan-badge:focus-visible {

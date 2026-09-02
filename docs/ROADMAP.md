@@ -27,7 +27,7 @@
 | A8 | 导出 CSV / JSON / XLSX + 字段勾选 + 命名规则 | 逆向 07 | 🔍 | ✅ (2026-08-30) |
 | A9 | 设置项(采集间隔 / 格式 / 重试) | 逆向 09 | 🔍 | ✅ (2026-08-30) |
 | A10 | Google Drive / HubSpot 集成 | 逆向 06/07 | 🔍 | ✅ (2026-08-30) |
-| A11 | 插件侧账号登录 + 配额展示(对应 007/003) | 逆向 06 | 🔍 | ✅ (2026-08-30) |
+| A11 | 插件侧账号登录 + 配额展示(对应 007/003;登录 2026-09-01 迁 v3 浏览器身份) | 逆向 06 | 🔍 | ✅ (2026-08-30) |
 | A12 | 远端公告 / 版本提示 / GA4 埋点 | 逆向 06/09 | 🔍 | ✅ (2026-08-30) |
 | A13 | 插件工程骨架(MV3 + Vue3 + RPC,复用 extension/) | 本仓库 extension/ | ♻️ | ✅ (2026-08-30) |
 
@@ -46,7 +46,7 @@
 | # | 功能 | 归属域 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- | --- |
 | C1 | 用户体系(含竞品 license key 辅轨的取舍) | ♻️ `007.用户系统` | 逆向 06 | 🔍 | ⬜ |
-| C2 | 订阅套餐(分产品订阅:extension / maps / maps_online / maps_api 四线) | ♻️ `006.订阅系统` | 官网 pricing 三 tab | 🔍 | ✅ (2026-08-31,maps_online/maps_api 8 档 PayPal 一次性支付占位落地,额度消费待 014) |
+| C2 | 订阅套餐(分产品订阅:extension / maps_extension / maps_online / maps_api 四线) | ♻️ `006.订阅系统` | 官网 pricing 三 tab | 🔍 | ✅ (2026-08-31,maps_online/maps_api 8 档 PayPal 一次性支付占位落地,额度消费待 014) |
 | C3 | 积分 / 用量计量(服务端计数、免费月度额度) | ♻️ `003.积分系统` / `005.计数器系统` | 逆向 06 | 🔍 | ⬜ |
 | C4 | 订单与支付(Stripe / Paddle) | ♻️ `004.订单系统` | 逆向 06 | ♻️ | ⬜ |
 | C5 | Pricing 页(三产品形态分 tab 展示) | ♻️ `011.Pricing页` | 官网 /pricing | 🔍浅 | ✅ (2026-08-31,Online / Extension / API 三 tab 已实现,10 个付费 SKU 可购买) |
@@ -70,7 +70,7 @@
 | E1 | Bing Maps 列表采集(data-entity 解析 + 滚动/翻页) | 竞品 v2.4.9 逆向+动态验证 | ♻️ | ✅ |
 | E2 | 18 列导出 CSV/XLSX(免费 20 条 + Pro 门控,自有订阅体系) | 同上(实测导出样本) | ♻️ | ✅ |
 | E3 | 面板 UI(Vue 直插,非 iframe)+ Pricing 信息页 | 同上 §9.1 | ♻️ | ✅ |
-| E4 | 官网登录桥接收(website 页 + 插件端 onMessageExternal/authStore 收编均已落地) | 本站自有模式 | ♻️ | ✅ |
+| E4 | 插件登录(v3 浏览器身份,popup + 面板双入口;2026-09-01 替代 v2 官网桥) | 本站自有模式 | ♻️ | ✅ |
 | E5 | 远程配置热修通道(本地默认+稀疏覆盖,机制复用;后端端点未上线,回退路径已验) | 竞品 bingMapsVersions | ♻️ | ✅ |
 | E6 | Email/社媒挖掘(与 013 A4 同源自研服务,云端执行归 014;输入平台无关) | 竞品 mqfyia/frkaizm 实测 | ♻️ | ⬜ 二期 |
 | E7 | 打点(search/export/install 等,自有 SLS 通道) | 竞品 sdfvaohi 日志 | ♻️ | ✅ |
@@ -95,6 +95,8 @@
 - 估时假设:单人 + AI 助手;插件全量(阶段 1)约 7–9 周,加云端与增长完整对标约 3–4 个月。
 
 ## 5 · 变更记录
+
+- 2026-09-01 **插件登录迁移 v3 浏览器身份(007 plans/006,Maps + Bing 两插件统一)**:插件内发起(popup / 面板 `Sign in`)→ 官网统一确认页 `/extension-login`(复用 Google/邮箱登录 + 账号显式确认)→ PKCE + 一次性 code 回跳换插件独立 token;v2 官网桥(`externally_connectable` + 固定扩展 ID + `/extension-login-bing` 页 + 后端 `/extension-token`)全删。016「popup 不设账号区」拍板随官网推送模式删除而失效(Bing popup + 面板双入口)。验证:四端 check/build/单测全绿(website module 47/47、Maps 单测 326、Bing 单测 175 + e2e 10/10)+ 集成验证 32 项断言 0 失败(v2 端点 404、code 一次性、双插件独立 session、配额归属);浏览器 UI 面待 unpacked 人工终验。合同:`feat/007.用户系统/tech-第三方登录.md` §9。
 
 - 2026-09-01 **营销站下载页撤销,并入插件产品页**(hydra 拍板,对齐竞品 gmapsextractor.com 单页形态):`/extension/` = 营销(功能清单/changelog/演示)+ 安装教程一体页,hero 双按钮 Edge→商店(上架前占位)、Chrome→页内教程滚动(基线不上 CWS);`/download/` 页面与导航/footer 入口全链删除,全站安装 CTA 改指 `/extension/`。需求落 `015.工具与增长/feat.md` D5 附。验证:build 22 页、e2e 181 passed/0 failed、module-scripts 47/47。
 - 2026-08-31 **C2/C5 落地**:订阅分产品线扩展完成——新增 `maps_online` / `maps_api` 两线 8 档(Online $19–$149、API $15–$365),全部 PayPal 一次性支付(auto_renew=false,占位期用户决策,后续接自动续费时改配置并替换真实 provider_sku),额度消费待 014 云端落地复用;Pricing 页改 Online / Extension / API 三 tab,10 个付费 SKU 可购买,PayPal 回跳文案按订单 product_class 分发。细节见 `feat/006.订阅系统/` 与 `feat/011.Pricing页/`。

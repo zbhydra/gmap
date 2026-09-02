@@ -826,8 +826,6 @@ function installGoogleScriptDom() {
   const scripts = []
   const storageValues = new Map()
   const assignedLocations = []
-  const postedMessages = []
-  const sentExternalMessages = []
 
   class FakeScriptElement {
     constructor() {
@@ -934,21 +932,6 @@ function installGoogleScriptDom() {
     history: {
       state: null,
       replaceState() {}
-    },
-    postMessage(message, targetOrigin) {
-      postedMessages.push({
-        message,
-        targetOrigin
-      })
-    },
-    chrome: {
-      runtime: {
-        lastError: undefined,
-        sendMessage(extensionId, message, callback) {
-          sentExternalMessages.push({ extensionId, message })
-          callback()
-        }
-      }
     }
   }
   globalThis.document = {
@@ -977,8 +960,6 @@ function installGoogleScriptDom() {
     scripts,
     storageValues,
     assignedLocations,
-    postedMessages,
-    sentExternalMessages,
     cleanup: () => {
       delete globalThis.document
       delete globalThis.window
@@ -1244,14 +1225,6 @@ async function assertGoogleOneTapCallbackPostsCredential(sourceFile, tempPrefix)
     ])
     assert.equal(receivedLoginResponse?.access_token, 'one-tap-access-token')
     assert.equal(dom.storageValues.get('homepage_access_token'), 'one-tap-access-token')
-    assert.deepEqual(dom.postedMessages, [
-      {
-        message: {
-          type: 'MAPSGRAB_WEB_AUTH_CHANGED'
-        },
-        targetOrigin: 'https://mapsgrab.com'
-      }
-    ])
   } finally {
     if (previousFetch === undefined) {
       delete globalThis.fetch
@@ -1284,7 +1257,7 @@ async function assertGoogleRedirectResultCanBeCleared(sourceFile, tempPrefix) {
   }
 }
 
-async function assertStoredTokenChangePostsOriginScopedMessage(sourceFile, tempPrefix) {
+async function assertStoredTokenWritesPersistAccessToken(sourceFile, tempPrefix) {
   const { module, cleanup } = await importHomepageAuthModule(sourceFile, tempPrefix)
   const dom = installGoogleScriptDom()
   const previousFetch = globalThis.fetch
@@ -1344,34 +1317,7 @@ async function assertStoredTokenChangePostsOriginScopedMessage(sourceFile, tempP
         }
       }
     ])
-    assert.deepEqual(dom.postedMessages, [
-      {
-        message: {
-          type: 'MAPSGRAB_WEB_AUTH_CHANGED'
-        },
-        targetOrigin: 'https://mapsgrab.com'
-      },
-      {
-        message: {
-          type: 'MAPSGRAB_WEB_AUTH_CHANGED'
-        },
-        targetOrigin: 'https://mapsgrab.com'
-      },
-      {
-        message: {
-          type: 'MAPSGRAB_WEB_AUTH_CHANGED'
-        },
-        targetOrigin: 'https://mapsgrab.com'
-      }
-    ])
-    assert.equal(
-      dom.postedMessages.some(item => JSON.stringify(item.message).includes('access-token')),
-      false
-    )
-    assert.equal(dom.postedMessages.some(item => item.targetOrigin === '*'), false)
-    // externally_connectable 直连目标列表当前为空占位（MapsGrab 扩展上架后 W7 回填）：
-    // v2 广播不发出，但 postMessage 兼容通道必须正常工作且不泄漏 token。
-    assert.deepEqual(dom.sentExternalMessages, [])
+    assert.equal(dom.storageValues.get('homepage_access_token'), 'google-access-token')
   } finally {
     if (previousFetch === undefined) {
       delete globalThis.fetch
@@ -2973,12 +2919,12 @@ test('Google One Tap callback posts credential to backend login', async () => {
   )
 })
 
-test('homepage auth token writes post origin-scoped extension sync signal', async () => {
-  await assertStoredTokenChangePostsOriginScopedMessage(
+test('homepage auth token writes persist access token to storage', async () => {
+  await assertStoredTokenWritesPersistAccessToken(
     'src/scripts/homepage/auth.ts',
     'homepage-auth-token-change-'
   )
-  await assertStoredTokenChangePostsOriginScopedMessage(
+  await assertStoredTokenWritesPersistAccessToken(
     path.resolve(repoDir, 'src/scripts/homepage/auth.ts'),
     'shared-homepage-auth-token-change-'
   )

@@ -26,6 +26,7 @@ import { getRuntimeConfig } from '../runtimeConfig'
 import { fetchMapsRemoteConfig } from '@/sites/maps/config/remoteFetch'
 import { mapsUsageService } from '@/sites/maps/usage/usageService'
 import { enrichMapsBusinesses } from '@/sites/maps/enrich/enrichApi'
+import { openExtensionLogin } from '../services/extensionLogin'
 import { bulkScheduler } from '../batch/controller'
 import type { BulkCreateTaskParams } from '../batch/types'
 
@@ -55,6 +56,9 @@ export class BackgroundMessageRouter {
       // UI 门控入口（面板挂载/Start 门控/popup 账号区）总现拉：对齐竞品
       // 「每次 boot 现拉 quota、只进内存」语义，避免缓存陈旧误放行。
       getMapsUsage: () => mapsUsageService.getSnapshot(true),
+      // v3 插件登录（popup 账号区入口）：登录 owner 在 background，失败
+      // 统一收敛为 opened=false，不抛 RPC 错误（完整登录常态超默认 30s 超时）
+      openExtensionLogin: () => openExtensionLogin(),
       // Email/社媒补全代理（U8）：透传商家数组给后端 enrich 端点，配额
       // 已由采集侧计量（服务端不重复扣减），身份由 httpClient 拦截器注入
       enrichMapsBusinesses: params => enrichMapsBusinesses(parseEnrichBusinesses(params)),

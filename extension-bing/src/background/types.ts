@@ -51,3 +51,9 @@ export interface BackgroundRecordMarkResponse {
   /** 是否已成功记录打点。 */
   recorded: boolean
 }
+
+/** background 发起 v3 browser identity 登录的响应（006 §3）。 */
+export interface BackgroundOpenExtensionLoginResponse {
+  /** 登录是否走到提交完成；false = 任一步失败，登录态保持原状可重试。 */
+  opened: boolean
+}

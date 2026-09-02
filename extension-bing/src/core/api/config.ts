@@ -20,8 +20,8 @@ export const API = {
   /** API 端点（完整路径） */
   ENDPOINTS: {
     // ========== 认证 ==========
-    /** 使用官网 access token 换取插件 token */
-    AUTH_EXTENSION_TOKEN: '/api/client/auth/extension-token',
+    /** v3 browser identity 登录：一次性 code 换插件 token 对（无 Bearer，006 §3） */
+    AUTH_EXTENSION_LOGIN_EXCHANGE: '/api/client/auth/extension-login/exchange',
     /** 刷新访问令牌 */
     AUTH_REFRESH: '/api/client/auth/refresh',
     /** 获取当前用户信息 */
@@ -54,19 +54,6 @@ export const WEBSITE = {
   /** Pricing 页路径 */
   PRICING_PATH: '/pricing/'
 } as const
-
-/**
- * 官网外部消息可接受 origin（externally_connectable 来源白名单）。
- *
- * 唯一派生源在构建期：vite 把完整白名单经 `__WEBSITE_AUTH_ORIGINS__` 注入，
- * manifest matches 与运行时 `onMessageExternal` 的 sender.origin 校验读同一
- * 份值（真实域名确定后改 EXTENSION_WEBSITE_BASE_URL 一处即全端生效）。
- * 此处兜底仅覆盖无 define 注入的环境（单测），退化为 base URL 单一 origin。
- */
-export const WEBSITE_AUTH_ORIGINS: readonly string[] =
-  typeof __WEBSITE_AUTH_ORIGINS__ !== 'undefined'
-    ? __WEBSITE_AUTH_ORIGINS__
-    : [new URL(WEBSITE.BASE_URL).origin]
 
 /** 兼容旧代码的导出别名 */
 export const API_CONFIG = {

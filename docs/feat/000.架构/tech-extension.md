@@ -10,7 +10,7 @@
 - **Vue 3.5 + Pinia 3 + vue-i18n 11 + Tailwind 4 + Vite 7**（`extension/package.json`）。
 - 构建：`vite-plugin-web-extension`。
 - 本地调试：`pnpm dev` 使用 `vite build --watch --mode development` 构建 `dist`，并通过当前 Microsoft Edge 的 CDP `DevToolsActivePort` 执行 `Extensions.loadUnpacked` 重新加载本地 unpacked extension；不创建新 profile，不接管浏览器启动。
-- **Chrome Manifest V3**（`manifest_version: 3`）：平台发布状态以 `extension/src/platforms/registry.ts` 的 `PLATFORM_REGISTRY[*].releaseStatus` 为准，权限与入口的最终组装以 `extension/vite.config.ts` 的 `webExtension({ manifest })` 配置为准。标签页 URL 只通过已限定的平台 host_permissions 读取，不申请 `activeTab` 或 `tabs`。API 与 SLS 走标准 CORS，官网登录桥接由 `externally_connectable.matches` 封闭信道授权（对端是网页，经 `onMessageExternal` 接收并校验 `sender.origin`，不注入 content script、不产生权限警告、不授予 host access），三者均不重复进入 host_permissions。
+- **Chrome Manifest V3**（`manifest_version: 3`）：平台发布状态以 `extension/src/platforms/registry.ts` 的 `PLATFORM_REGISTRY[*].releaseStatus` 为准，权限与入口的最终组装以 `extension/vite.config.ts` 的 `webExtension({ manifest })` 配置为准。标签页 URL 只通过已限定的平台 host_permissions 读取，不申请 `activeTab` 或 `tabs`。API 与 SLS 走标准 CORS，官网登录走 v3 浏览器身份流程（`chrome.identity.launchWebAuthFlow` + PKCE + 一次性 code 回跳；不登记扩展 ID、无 `externally_connectable`、不注入官网 content script，合同见 `../007.用户系统/tech-第三方登录.md` §9），三者均不重复进入 host_permissions。
 - e2e：Playwright。
 - 入口页：`popup`（`src/popup.html`）。旧 `options_page` 已删除,购买与订阅管理统一跳官网 Pricing。
 
@@ -47,7 +47,7 @@ extension/src/
 
 **上下文划分**：
 - `background/`（Service Worker）、`content/`（Content Script）、`injected/`（MAIN world 注入页上下文）各有独立入口与 `*-register.ts`。
-- 旧 `options/` 设置页已删除；`popup/`（弹窗 UI）承载资源列表、登录状态、额度/升级入口，底部固定显示可点击、可复制的支持邮箱，复制结果通过全局 Toast 反馈。Popup 最小尺寸为 600×400px；空态资源区填满 header 与 footer 之间的剩余空间，footer 位于 400px 底边，有资源时列表按内容自然增高。未登录按钮经真实 background RPC 恒新开官网统一登录页（`/extension-login-v2/`），官网 v2 登录页经 `externally_connectable` 消息通道（background `onMessageExternal`）把官网登录态换成插件登录态；Popup 内没有邮箱验证码登录弹窗。
+- 旧 `options/` 设置页已删除；`popup/`（弹窗 UI）承载资源列表、登录状态、额度/升级入口，底部固定显示可点击、可复制的支持邮箱，复制结果通过全局 Toast 反馈。Popup 最小尺寸为 600×400px；空态资源区填满 header 与 footer 之间的剩余空间，footer 位于 400px 底边，有资源时列表按内容自然增高。未登录按钮经真实 background RPC 发起 v3 浏览器身份登录（background `launchWebAuthFlow` 打开官网统一确认页 `/extension-login`，用户确认后一次性 code 回跳换取插件独立 token，2026-09-01 替代原 v2 `externally_connectable` 官网推送桥）；Popup 内没有邮箱验证码登录弹窗。
 - `core/` 是**跨上下文共享核心**——API 客户端、RPC 框架、Pinia store、协议、存储和 `core/content/download/` 的共享单项下载编排。需要页面媒体 API、分片读取或 mux 的来源由各站点 injected provider 负责；可直接保存的 Vimeo Progressive/Thumbnail 由 content 分流到 background 的 Chrome 下载管理器。Telegram 特有解析留在 `sites/telegram/`。
 - Instagram 的生产路径固定为 `PageContext -> routeMediaStore Map -> parser/resolver -> buttons/Popup -> downloadOne/downloadMany -> fixed EventRpc`。DOM 只证明实体和挂载位置，主媒体不来自 thumbnail、poster、CSS 背景或 blob/data URL。
 
@@ -86,8 +86,8 @@ extension/src/
 
 - `vite.config.ts`：打包时注入 `__API_BASE_URL__` / `__WEBSITE_BASE_URL__`，运行时代码不直接读 `import.meta.env`。默认 dev 为 `http://localhost:7600` + `http://localhost:7620`，默认 prod 为 `https://tg-download-api.telegramdownloadmedia.com` + `https://telegramdownloadmedia.com`；可用 `EXTENSION_API_BASE_URL` / `EXTENSION_WEBSITE_BASE_URL` 覆盖。
 - `core/api/config.ts`：消费打包注入的 API / Website base URL；所有端点完整路径常量集中在此。
-- 生产 manifest 写入 Chrome Web Store public key,正式包 ID 固定为 `lflkobgaibapekhjnfhkaeagdnojjnla`;开发/预发布 manifest 写入独立 public key,ID 固定为 `cknimihpjagocmakbkplpjdcgjlbnkec`。`pnpm build` 生成商店包,`pnpm build:dev` 生成 localhost 开发包,`pnpm build:pre-release` 生成连接生产服务的预发布包。两个身份可同时安装,且重新构建、移动目录或重新添加都不改变 ID。public key 可提交,私钥不进入仓库。
-- manifest `host_permissions` / 站点 `content_scripts.matches` / `externally_connectable.matches` / `web_accessible_resources` 按 dev/prod 与 `src/platforms/registry.ts` 生成，`vite.config.ts` 只消费该注册表：host_permissions 只含平台域，API 域依赖后端通配 CORS，官网登录桥接域经 `externally_connectable.matches` 授权（与官网 origin 白名单同源生成，dev/prod 一致）；prod 包不包含 `localhost:7600` / `localhost:7620`，dev 包不默认请求线上官网；平台关闭时会在编译期移除对应平台页面、CDN 权限与暴露样式资源。站点 content / injected 使用平台独立 entry，关闭平台不会静态加载该平台业务模块。官网登录桥接始终保留，登录页 URL 不传扩展 ID。
+- manifest 不再写入固定 public key(TG 时代的固定扩展 ID 体系已废,登录 v3 亦无需登记扩展 ID);`pnpm build` 生成商店包,`pnpm build:dev` 生成 localhost 开发包,`pnpm build:pre-release` 生成连接生产服务的预发布包。public key 可提交,私钥不进入仓库。
+- manifest `host_permissions` / 站点 `content_scripts.matches` / `web_accessible_resources` 按 dev/prod 与 `src/platforms/registry.ts` 生成，`vite.config.ts` 只消费该注册表：host_permissions 只含平台域，API 域依赖后端通配 CORS；prod 包不包含 `localhost:7600` / `localhost:7620`，dev 包不默认请求线上官网；平台关闭时会在编译期移除对应平台页面、CDN 权限与暴露样式资源。站点 content / injected 使用平台独立 entry，关闭平台不会静态加载该平台业务模块。官网登录为 v3 浏览器身份流程（不登记扩展 ID、无 `externally_connectable`、无 manifest 固定 key），登录 URL 不传扩展 ID。
 - `core/api/client/HttpClient.ts` + `interceptors.ts`：自封装 HttpClient，拦截器链注入 `deviceId / token / Accept-Language / headers`，5xx 重试、401 刷新 token。
 - 与 website 走**同一套后端 `/api/client/*` 契约**。
 

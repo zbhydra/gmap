@@ -20,7 +20,7 @@ const STATUS_CODE_PAGES = new Set(['404', '500'])
 const SEARCH_BOT_BLOCKED_ROUTE_PATHS = new Set([
   '/paypal/cancel/',
   '/paypal/success/',
-  '/extension-login-bing/'
+  '/extension-login/'
 ])
 const WEBSITE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)))
 const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>

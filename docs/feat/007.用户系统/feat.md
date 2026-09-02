@@ -22,7 +22,7 @@
 为客户端(website、extension)用户提供:
 
 1. **账号身份**:一个邮箱归一个用户;无论从 Google 还是邮箱验证码进入,只要邮箱相同就是同一个账号。
-2. **登录入口**:website 以 Google 为主路径、邮箱验证码为次级;extension 不内嵌登录表单,统一打开 website 独立登录页,由 website 完成 Google / 邮箱登录后同步插件登录态。
+2. **登录入口**:website 以 Google 为主路径、邮箱验证码为次级;extension 不内嵌登录表单,由插件内登录入口(popup `Sign in`;Bing 面板未登录态另有同款入口)发起浏览器身份流程,打开官网独立确认页,用户在确认页完成 Google / 邮箱登录并显式确认账号后,插件凭一次性 code 取得自己独立的登录态(网页登录态与插件登录态相互独立,官网侧不向插件推送)。
 3. **会话与认证**:登录成功签发客户端 access/refresh token,后续请求带 Bearer,服务端验签 + Redis 校验有效性。
 4. **账号信息查询**:已登录用户可查自己的基本资料、Credits 余额与当前订阅摘要。
 5. **重要入口设备保护**:website 通过 Credits 图标资源请求建立设备 UUID 的短期可信关系;邮箱验证码入口和媒体 pre-v2 控制面只接受已验证设备,IP 只用于日志排障。
@@ -43,7 +43,7 @@
 - **登出**:撤销当前 access token。
 - **认证弹窗(website)**:首屏 Google 主按钮 + `Continue with email` 次级入口 + 条款;点邮箱入口展开邮箱子界面;发码后展开验证码子界面。14 语言 i18n。
 - **extension 匿名身份**:未登录用户带 `X-Device-Id`(UUID v4,首次安装生成并持久化)参与请求;登录后请求带 Bearer。device_id 与登录用户的关系在计数器系统定义(`@../005.计数器系统/feat.md`)。
-- **extension website 统一登录**:插件点击登录后打开或聚焦 website 独立登录页;website 已登录时直接同步插件登录态,未登录时复用 Google / 邮箱登录;用户直接在官网任意登录入口登录成功时,也同步插件登录态。
+- **extension website 统一登录**:插件内点击登录后由插件发起浏览器身份流程,打开官网独立确认页 `/extension-login`;未登录时复用 Google / 邮箱登录,已登录时展示账号确认卡;用户显式确认后官网签发一次性 code 回跳插件,插件用 code 换取自己独立的插件 token。两个插件(Maps / Bing)共用同一确认页与同一流程,登录态互不影响;用户在官网任意入口单独登录时不向插件同步。
 
 ### 不包含
 
@@ -56,13 +56,13 @@
 - **密码登录入口**:历史上有密码注册接口,website/extension 当前都不暴露密码登录 UI,主路径是邮箱验证码与 Google。
 - **GitHub 登录、绑定多个第三方账号、独立 OAuth account 表**:不接入。
 - **保存 Google access token / refresh token**:不保存。
-- **URL 传递 token、跨任意域名接收 token、共享 Cookie 登录**:不做;插件只接受官网经 `externally_connectable` 发给两个固定扩展 ID 的网页登录态。
+- **URL 传递 token、跨任意域名接收 token、共享 Cookie 登录**:不做;官网与插件之间只交接短效一次性 code(URL fragment 回跳,60 秒有效、只能消费一次),网页 token 与插件 token 均不进 URL、不经任何消息通道。
 - **Telegram 登录**:规划中,未实现。
 
 ## 现状说明
 
 - **website 登录以 Google 为主**:首屏只展示 Google 主按钮和 `Continue with email` 次级入口,邮箱验证码表单默认隐藏。
-- **extension 使用官网统一登录**:Popup 只提供登录入口,点击后由 background 打开 website 独立登录页;插件内不再维护邮箱验证码表单。官网继续提供 Google 主路径与邮箱验证码次级路径,登录成功、打开插件专用登录页或从插件进入 Pricing 时通过两个固定扩展 ID 通知 extension background 同步插件 token,详见 `@tech-第三方登录.md`。
+- **extension 使用官网统一登录(v3 浏览器身份流程)**:插件 popup 提供登录入口(Bing 面板未登录态另有入口),点击后由插件 background 发起浏览器身份流程打开官网确认页 `/extension-login`;插件内不维护邮箱验证码表单。确认页复用官网 Google 主路径与邮箱验证码次级路径,用户显式确认账号后签发一次性 code,插件凭 code 换取独立插件 token;官网与插件之间无消息通道、不登记扩展 ID,详见 `@tech-第三方登录.md`。
 - **website 不存 refresh token、不自动刷新**:website 只存 access token,401 直接清登录态重新弹窗;extension 存 refresh token 并有 401 自动刷新拦截器(两套客户端策略不同,见 `@tech-账号与认证.md`)。
 - **注册赠送**:邮箱验证码、Google 无密码注册、密码注册路径默认赠送 10 Credits(走积分系统);命中 IP 注册权益风控的新账号不赠送。注册赠送不写 `user_subscriptions`。
 - **账号注销**:无公开入口;被标记为已注销的账号登录被拒(按"用户不存在")。
@@ -109,18 +109,16 @@
 3. 后端校验 id_token:权威邮箱走完整登录(查/建用户、签发 token);非权威邮箱改发邮箱验证码,返回需要二次确认的中间态(不签发项目 token)。
 4. One Tap 失败、被拦截或超时不阻断用户继续点击手动 Google 按钮。
 
-### extension website 统一登录
+### extension website 统一登录(v3 浏览器身份流程)
 
-1. 用户在 extension Popup 点击登录。
-2. extension background 打开 website 独立登录页,URL 不携带扩展 ID 或来源参数。
-3. website 登录页读取当前网页登录态:
-   - 本地有 access token:校验成功后显示已登录状态,并向两个固定扩展 ID 补发一次插件登录态。
-   - 本地 token 过期或无效:清理本地网页登录态,展示 Google / 邮箱登录入口。
-   - 未登录:展示现有 Google / 邮箱登录入口;登录成功保存网页登录态时立即向两个固定扩展 ID 发送。
-4. 用户在任意官网入口通过 Google 或邮箱登录成功时,`setStoredAccessToken()` 写入 token 并立即发送;从插件打开带来源标记的 Pricing 时也补发一次。普通来源页面加载和其他标签页的 storage event 不触发同步。
-5. extension background 收到官网 external message 后签发插件 access/refresh token;如果插件已有旧 token,background 一并带给后端尝试撤销当前 web 用户名下的旧 token。
-6. 插件专用页的返回按钮通知 extension 关闭当前登录页并聚焦 Telegram;普通页面同步不会切走用户当前页面。
-7. 如果用户没有安装、禁用插件或消息桥失败,website 登录仍正常完成;页面不等待 ACK、不做自动重试,用户刷新官网页面、再次登录或从插件重新打开登录页即可重试。
+1. 用户在插件内登录入口(Maps popup;Bing popup 或面板)点击登录,插件 background 生成一次性密钥对并发起浏览器身份流程,弹出官网确认页 `/extension-login` 窗口;登录 URL 不携带扩展 ID 或来源参数。
+2. 确认页先校验回跳地址与密钥参数:非法时只展示参数错误文案,不进入登录。
+3. 未登录:展示官网认证弹窗(Google 主按钮 + `Continue with email`),登录成功后进入账号确认卡;已登录:校验网页登录态有效后直接进入账号确认卡。
+4. 账号确认卡展示头像/姓名/邮箱;用户必须显式点 Continue 才继续,已有会话也不自动签发。点 `Use another account` 清理网页登录态回到认证弹窗,可换账号重新登录确认。
+5. 用户点 Continue 后,确认页凭网页登录态为本次登录签发短效一次性 code(60 秒有效、只能消费一次),并把窗口重定向回插件回调地址,浏览器自动关窗;确认页与回调 URL 均不含任何 token。
+6. 插件 background 从回调地址取出一次性 code,连同此前生成的密钥凭据向官网后端换取插件独立的 access/refresh token(与网页登录态是同一账号下的两套独立会话);写入插件存储前做快照比对,期间登录态被变更(如在 popup 登出)则放弃写入。
+7. 写入成功后插件 UI 即时变为已登录(popup 显示账号与登出入口;Maps 用量、Bing 订阅态随登录态刷新),无需重开插件界面。
+8. 用户直接关闭登录窗口、网络失败或参数非法:插件保持原状(未登录则仍未登录),可再次点击登录重试;两插件先后经同一确认页登录互不干扰(各自独立会话)。
 
 ### Token 刷新(extension)
 
@@ -135,7 +133,7 @@
 2. 后端撤销当前 access token(从 Redis 删除),返回成功。
 3. refresh token 与其他设备的 token 不受影响(多设备登录保留)。
 4. website 登出只清 website 本地 access token,不清 extension storage;extension 登出只清插件 storage,不清 website localStorage。
-5. website 后续登录另一个账号并触发同步时,extension 账号会被覆盖成当前网页登录账号。
+5. website 与 extension 登录态完全独立:website 登出或换号不影响插件登录态;插件换账号需在插件内重新走统一登录流程并在确认页确认新账号。
 
 ### 账号信息查询
 
@@ -154,8 +152,8 @@
 - Website 设备可信校验只保护明确列出的重要入口;Google 登录、下单、支付创建、mark-log、媒体执行节点接口不纳入本阶段。
 - 公开可见命名使用真实业务资源语义:DOM 挂载点为 footer Credits 图标、Cookie 为通用客户端 UUID、资源路径为 Credits SVG;验证语义只出现在后端内部 service、Redis key 和技术文档中。
 - Google client secret 只在后端配置,不进入任何前端 PUBLIC 配置;后端日志不记录完整 id_token;一次性票据(code/state)只存 sha256 哈希,不存明文。
-- website 与 extension 同步登录态时,website 通过 `externally_connectable` 向正式版与预发布版两个固定扩展 ID 发消息;扩展只接受 manifest 声明且通过运行时 origin 校验的官网来源,无需注入官网 content script 或申请官网 host 权限。
-- 插件 access/refresh token 只由 extension background 调插件 token 签发接口获得并写入插件 storage,不进入 website JS、URL、浏览器历史或埋点日志;旧插件 token 撤销只作用于当前网页登录用户,失败不阻断新登录。
+- website 与 extension 之间无消息通道:不登记扩展 ID、不使用 `externally_connectable`、不注入官网 content script、不申请官网 host 权限;登录交接只经浏览器身份流程的一次性 code 回跳(临时回调域名,code 只在 URL fragment 短暂出现,60 秒过期且只能消费一次)。
+- 插件 access/refresh token 只由插件 background 凭一次性 code 调换取接口获得并写入插件 storage,不进入 website JS、URL、浏览器历史或埋点日志;旧插件 token 撤销只作用于同一账号名下,失败不阻断新登录。
 
 ## 验收标准
 
@@ -175,12 +173,12 @@
 - 账号信息查询:返回 user_id/email/full_name/avatar_url/created_at/credits_balance/当前订阅摘要;注销账号登录被拒。
 - 认证弹窗(website):首屏以 Google 为主,邮箱验证码只显示次级文字入口;14 语言类型检查通过。
 - Google client secret 不出现在任何前端 PUBLIC 配置;前端配置不含 secret。
-- extension website 统一登录:插件点击登录能打开无扩展 ID 参数的 website 独立登录页;website token 有效时无需再次 Google/邮箱登录,校验成功后向两个固定扩展 ID 补发一次;website 本地 token 过期时清理后回到登录 UI;任意官网页面、任意登录方式成功写入 token 时都向两个固定 ID 同步;从插件打开带来源标记的 Pricing 时补发一次,普通来源页面不触发插件 token 重签;未安装插件或消息桥失败时 website 登录成功且无报错。
-- token 同步边界:插件 token 不出现在 website JS、URL、浏览器历史、日志字段;website token 只通过官网 `externally_connectable` 信道发给源码内两个固定扩展 ID;background 忽略非官网来源;签发新插件 token 时可带旧插件 token 让后端尽量撤销当前网页登录用户名下的旧 token,跨账号旧 token 按 TTL 自然过期。
+- extension website 统一登录:插件内点击登录弹出官网确认页窗口;未登录时完成 Google/邮箱登录后进入账号确认卡,已登录直接进入账号确认卡;必须显式确认才签发,确认后窗口自动关闭且插件即时变为已登录。回跳地址或密钥参数非法时确认页只显示参数错误文案;关闭窗口或流程失败时插件保持原状、可重试;同一一次性 code 只能消费一次,过期或已消费的 code 换取必失败。
+- 登录态边界:插件 token 不出现在 website JS、URL、浏览器历史、日志字段;一次性 code 只在回跳 URL fragment 短暂存在,短效且只能消费一次;网页登录态与插件登录态完全独立(同一账号两套会话),官网侧登录/登出不影响插件;插件重新登录时可携旧插件 token 让后端尽量撤销同账号旧 token,撤销失败不阻断新登录。
 
 ## 用户操作逻辑与 UI 元素
 
-> website 常规认证 UI 集中在下载工作区的认证弹窗,并额外提供 extension 专用 `/extension-login` 页面。extension Popup 不渲染登录表单,只负责打开官网统一登录页和展示打开失败 Toast。文案需 i18n。
+> website 常规认证 UI 集中在下载工作区的认证弹窗,并额外提供 extension 专用 `/extension-login` 确认页。extension 不渲染登录表单,只在插件内提供登录入口(popup `Sign in`;Bing 面板未登录态另有同款按钮),点击发起浏览器身份流程;发起失败静默复位按钮,登录结果以插件登录态变化为准。文案需 i18n。
 
 ### website 认证弹窗(下载工作区内)
 
@@ -225,17 +223,17 @@
 | 登录按钮 | 主按钮 | 是 | 提交验证码登录 |
 | 状态文本 | 行内文本 | 否 | 展示发码状态 |
 
-### extension website 统一登录页
+### extension website 统一登录确认页
 
 | 元素 | 形式 | 可点击 | 行为 |
 | --- | --- | --- | --- |
-| 插件登录入口 | Popup 标题栏登录按钮 | 是 | 通过 background 新开 website 独立登录页 |
-| website 独立登录页 | website 英文页面 `/extension-login-v2`,复用现有认证弹窗视觉与文案 | 否 | 承接插件登录;已登录时展示成功态,未登录时展示 Google / 邮箱登录 |
-| 成功状态 | 页面内状态文本 | 否 | 提示网页登录成功;用户可点击返回 Telegram |
-| 失败状态 | 页面内错误文本 | 否 | 只展示网页登录或 token 校验失败;插件不可用或同步失败不反向通知页面 |
-| Popup 错误 Toast | 顶部临时提示 | 否 | background 无法打开官网登录页时显示错误;用户可再次点击登录 |
+| 插件登录入口 | 插件 popup 账号区 `Sign in` 按钮(Bing 面板未登录态另有同款按钮) | 是 | 经插件 background 发起浏览器身份流程,弹出官网确认页窗口;发起后按钮进入 loading,失败静默复位 |
+| 确认页校验态 | 页面内标题 + 说明文本(校验中/参数错误) | 否 | 校验回跳地址与密钥参数;非法时只展示参数错误文案,不进入登录 |
+| 确认页未登录态 | 复用官网认证弹窗(Google 主按钮 + `Continue with email`) | 是 | 完成网页登录后进入账号确认卡 |
+| 确认页账号确认卡 | 头像/首字母 + 姓名 + 邮箱 + `Continue` / `Use another account` 按钮 | 是 | `Continue` 显式确认并签发一次性 code,窗口自动关闭回跳插件;`Use another account` 清网页登录态回到认证弹窗换号 |
+| 确认页签发中/错误态 | 页面内状态文本 / 错误文本 | 否 | 签发中展示进行中文案;签发或校验失败展示错误,用户可重试或关闭窗口从插件重试 |
 
-> extension 的旧 Google 登录按钮(隐藏 HTML + content script 方案)不再作为目标方案;统一改为打开 website 独立登录页。
+> 确认页对搜索引擎屏蔽索引(noindex);签发成功由浏览器自动关窗,不依赖用户手动操作。extension 的旧 Google 登录按钮(隐藏 HTML + content script 方案)与 v2 官网推送方案均已废弃,统一为上述浏览器身份流程。
 
 ## 关联文档
 

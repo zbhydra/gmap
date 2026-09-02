@@ -1,14 +1,16 @@
 /**
  * 认证状态管理 Store
  *
- * 管理用户登录状态、用户信息和认证操作，以及 U4 官网登录桥（016 §5）的
- * 账号/订阅态落点：官网 web token 校验收编（applyWebsiteToken）与订阅态
- * 缓存查询（refreshSubscription，时间戳 + 间隔阈值的 013 拍板机制形态）。
+ * 管理用户登录状态、用户信息、认证操作，以及 v3 browser identity 登录
+ * （006 §3）的提交落点：exchange + 合同校验 + 快照比对条件提交
+ * （applyExtensionLogin）与订阅态缓存查询（refreshSubscription，时间戳 +
+ * 间隔阈值的 013 拍板机制形态）。
  */
 
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { authApi, subscriptionApi, STORAGE_KEYS } from '../api'
+import type { ExtensionLoginTokenResponse } from '../api/auth/api'
 import type { SubscriptionStatus } from '../api/subscription/types'
 import type { UserInfo } from '../types'
 import { logger } from '../utils/logger'
@@ -21,9 +23,41 @@ import { storageManager } from '../storage'
  * 机制沿用 013/订阅域拍板的「storage 存时间戳 + 间隔阈值」形态（内存版），
  * 时长未照搬远程配置的 1 小时：订阅态是计费权益判定，1 小时滞后会让
  * 「官网订阅完成 → 回插件」主路径最长一小时权益不生效；登录事件
- * （applyWebsiteToken）会强制失效重拉，5 分钟只覆盖存量会话的漂移窗口。
+ * （applyExtensionLogin）会强制失效重拉，5 分钟只覆盖存量会话的漂移窗口。
  */
 const SUBSCRIPTION_CACHE_TTL_MS = 5 * 60 * 1000
+
+/**
+ * 登录提交的快照条件：exchange 发起时的三键持久化值。
+ * 提交前重读比对全等才写，防止长登录流程中途的登出/换号被覆盖。
+ */
+interface AuthStorageSnapshot {
+  accessToken: string | null
+  refreshToken: string | null
+  userInfo: UserInfo | null
+}
+
+/** 读一次 auth 三键持久化快照（storage 为跨上下文真相，不读内存态）。 */
+function readAuthStorageSnapshot(): Promise<AuthStorageSnapshot> {
+  return Promise.all([
+    storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN),
+    storageManager.get<string>(STORAGE_KEYS.REFRESH_TOKEN),
+    storageManager.get<UserInfo>(STORAGE_KEYS.USER_INFO)
+  ]).then(([accessToken, refreshToken, userInfo]) => ({
+    accessToken: accessToken ?? null,
+    refreshToken: refreshToken ?? null,
+    userInfo: userInfo ?? null
+  }))
+}
+
+/** 三键全等判定（access + refresh + user 逐一比对）。 */
+function authSnapshotsEqual(left: AuthStorageSnapshot, right: AuthStorageSnapshot): boolean {
+  return (
+    left.accessToken === right.accessToken &&
+    left.refreshToken === right.refreshToken &&
+    JSON.stringify(left.userInfo) === JSON.stringify(right.userInfo)
+  )
+}
 
 export const useAuthStore = defineStore('auth', () => {
   // ============================================================================
@@ -151,47 +185,48 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * 官网登录桥 token 收编（016 §5 BING_MAPS_EXTENSION_AUTH_CHANGED）。
+   * v3 browser identity 登录提交（006 §3 / §4.4）。
    *
-   * 校验口径 = 官网 getCurrentUser：token 先落自有 chrome.storage（HTTP 拦截器
-   * 从 storage 注入），调既有 authApi.getCurrentUser（GET /api/client/auth/me）
-   * 验活；有效则 USER_INFO 已由 authApi 持久化并失效订阅缓存重拉。
+   * 语义：exchange 发起前读三键快照 → HTTP exchange（无 Bearer，响应合同
+   * 由 authApi 校验）→ 提交前重读快照全等才原子写三键 + 同步内存态。
+   * 不全等（登录窗口期间用户已在其他入口登出/换号）→ 抛错放弃写入，
+   * 不写半截态；原登录态全程不动。
    *
-   * 失败回滚 = 仅撤销本次写入：进入前快照旧 token/USER_INFO（内存优先、
-   * storage 兜底），校验失败恢复快照——既有会话不受一条坏消息影响，瞬时
-   * 网络失败不登出用户；无既有会话时回滚 = 清净本次写入的残留。
+   * 成功后触发 invalidateSubscription() + refreshSubscription()：
+   * 登录态切换 = 订阅判定前提变化，FREE/PRO 门控立即按新账号重拉。
    *
-   * @param webAccessToken 官网同步来的 access token（非空由调用方保证）
+   * @param code 官网确认页签发的一次性 code
+   * @param codeVerifier 本次登录发起时生成的 PKCE verifier
    */
-  async function applyWebsiteToken(webAccessToken: string): Promise<void> {
-    const previousToken = token.value ?? (await authApi.getAccessToken())
-    const previousUser = user.value ?? (await authApi.getStoredUserInfo())
+  async function applyExtensionLogin(code: string, codeVerifier: string): Promise<void> {
+    const snapshot = await readAuthStorageSnapshot()
 
-    token.value = webAccessToken
-    await storageManager.set(STORAGE_KEYS.ACCESS_TOKEN, webAccessToken)
+    const tokenResponse: ExtensionLoginTokenResponse = await authApi.exchangeExtensionLogin({
+      code,
+      codeVerifier,
+      oldAccessToken: snapshot.accessToken,
+      oldRefreshToken: snapshot.refreshToken
+    })
 
-    try {
-      user.value = await authApi.getCurrentUser()
-      logger.info('[AuthStore] Website token validated for user:', user.value.user_id)
-      // 登录态切换 = 订阅判定前提变化：强制失效，立刻按新账号重拉
-      invalidateSubscription()
-      void refreshSubscription().catch(() => undefined)
-    } catch (err) {
-      logger.warn('[AuthStore] Website token validation failed, rolling back this write')
-      if (previousToken) {
-        token.value = previousToken
-        user.value = previousUser
-        // 401 拦截器可能已清 storage：按快照恢复既有会话
-        await storageManager.set(STORAGE_KEYS.ACCESS_TOKEN, previousToken).catch(() => undefined)
-        if (previousUser) {
-          await storageManager.set(STORAGE_KEYS.USER_INFO, previousUser).catch(() => undefined)
-        }
-      } else {
-        await authApi.clearLocalAuth().catch(() => undefined)
-        clearAuth()
-      }
-      throw err
+    const current = await readAuthStorageSnapshot()
+    if (!authSnapshotsEqual(current, snapshot)) {
+      throw new Error('[AuthStore] extension login 期间登录态已变化，放弃写入（请重新登录）')
     }
+
+    const userInfo = tokenResponse.user
+    // spread 为对象字面量类型（带隐式 index signature）适配 setMany 的 StorageValue 约束
+    await storageManager.setMany({
+      [STORAGE_KEYS.ACCESS_TOKEN]: tokenResponse.extension_access_token,
+      [STORAGE_KEYS.REFRESH_TOKEN]: tokenResponse.extension_refresh_token,
+      [STORAGE_KEYS.USER_INFO]: { ...userInfo }
+    })
+    token.value = tokenResponse.extension_access_token
+    user.value = userInfo
+    logger.info('[AuthStore] Extension login committed for user:', userInfo.user_id)
+
+    // 登录态切换 = 订阅判定前提变化：强制失效，立刻按新账号重拉
+    invalidateSubscription()
+    void refreshSubscription().catch(() => undefined)
   }
 
   /**
@@ -276,7 +311,7 @@ export const useAuthStore = defineStore('auth', () => {
     initialize,
     logout,
     clearAuth,
-    applyWebsiteToken,
+    applyExtensionLogin,
     refreshSubscription,
     invalidateSubscription,
     $dispose

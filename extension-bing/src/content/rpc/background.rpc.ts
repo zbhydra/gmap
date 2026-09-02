@@ -45,6 +45,17 @@ export class BackgroundChannel {
     )
   }
 
+  /** 调用 openExtensionLogin 能力。 */
+  openExtensionLogin(
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'openExtensionLogin'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'openExtensionLogin'>>(
+      'openExtensionLogin',
+      undefined,
+      options
+    )
+  }
+
   /** 调用 recordMark 能力。 */
   recordMark(
     params: RpcMethodParams<BackgroundHandler, 'recordMark'>,

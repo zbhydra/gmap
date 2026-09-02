@@ -20,8 +20,8 @@ export const API = {
   /** API 端点（完整路径） */
   ENDPOINTS: {
     // ========== 认证 ==========
-    /** 使用官网 access token 换取插件 token */
-    AUTH_EXTENSION_TOKEN: '/api/client/auth/extension-token',
+    /** v3 插件登录：一次性 code 换插件 token 对（无 Bearer，PKCE S256 绑定） */
+    AUTH_EXTENSION_LOGIN_EXCHANGE: '/api/client/auth/extension-login/exchange',
     /** 刷新访问令牌 */
     AUTH_REFRESH: '/api/client/auth/refresh',
     /** 获取当前用户信息 */
@@ -71,23 +71,11 @@ export const API = {
 
 /** 官网配置 */
 export const WEBSITE = {
-  /** 官网基础 URL */
+  /** 官网基础 URL（v3 登录确认页 /extension-login 的宿主） */
   BASE_URL: __WEBSITE_BASE_URL__,
-  /** 官网裸域生产 URL，用于外部消息来源白名单。 */
-  PRODUCTION_BASE_URL: 'https://telegramdownloadmedia.com',
-  /** 官网 www 生产 URL，用于外部消息来源白名单。 */
-  WWW_BASE_URL: 'https://www.telegramdownloadmedia.com',
   /** Pricing 页路径 */
   PRICING_PATH: '/pricing/'
 } as const
-
-const WEBSITE_BASE_ORIGIN = new URL(WEBSITE.BASE_URL).origin
-
-/** 官网外部消息可接受的 origin（externally_connectable 来源白名单）。 */
-export const WEBSITE_AUTH_ORIGINS = [
-  WEBSITE_BASE_ORIGIN,
-  ...(WEBSITE_BASE_ORIGIN === WEBSITE.PRODUCTION_BASE_URL ? [WEBSITE.WWW_BASE_URL] : [])
-] as const
 
 /** 兼容旧代码的导出别名 */
 export const API_CONFIG = {

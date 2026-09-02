@@ -1,15 +1,16 @@
 /**
- * e2e 登录桥 + 免费/Pro 门控（016 U4，feat.md 验收标准 3/4）。
+ * e2e v3 登录全链路 + 免费/Pro 门控（006 §4.4，feat.md 验收基准 10/11）。
  *
- * - 登录同步全链路：官网模拟页（route 拦截注入 chrome.runtime.sendMessage
- *   BING_MAPS_EXTENSION_AUTH_CHANGED）→ 插件 onMessageExternal 收 token →
- *   后端 auth/me mock 校验 → 面板账号/订阅态展示；
+ * - 登录全链路（插件发起）：面板未登录徽标位 Sign in → background
+ *   openExtensionLogin RPC → launchWebAuthFlow（v3 mock：同步返回带
+ *   #code= 一次性 code 的 chromiumapp.org 回调）→ mock exchange 换
+ *   token 对 → storage 三键写入 → 面板徽标翻 FREE/PRO；
  * - Pro 无上限：订阅 month mock → 采集收满 fixture 全量 30 条（不受 20 截断）
  *   → 导出无免费末行 → Pricing 显示 VIP 祝贺；
- * - 匿名免费：无 token → 20 条截断照旧。
+ * - 匿名免费：不发起登录 → Sign in 徽标位、20 条截断照旧、零账号/订阅请求。
  *
- * 后端 mock 形态 = spec-website §7 信封 {code:10000, data}；官网/后端域为
- * 生产构建占位常量（vite.config.ts，生产域名未定待决项）。
+ * 后端 mock 形态 = spec-website §7 信封 {code:10000, data}；后端域为生产
+ * 构建占位常量（vite.config.ts，生产域名未定待决项）。
  */
 
 import { readFileSync } from 'node:fs'
@@ -19,9 +20,10 @@ import {
   FIXTURE_PATH,
   FIXTURE_TOTAL,
   MAPS_URL,
-  WEBSITE_LOGIN_BRIDGE_URL,
+  extensionIdFromServiceWorker,
+  installAuthFlowMock,
   launchExtensionContext,
-  setupLoginBridgeRoutes,
+  setupExtensionLoginRoutes,
   waitForExtensionServiceWorker,
   type MockSubscription
 } from './harness'
@@ -29,7 +31,10 @@ import {
 /** 免费档导出末行提示（竞品逐字抄录）。 */
 const FREE_LIMIT_NOTE = 'Free accounts can export up to 20 data entries.'
 
-/** 登录桥 mock 账号（AUTH_ME 信封 data）。 */
+/** 本组用例共用的一次性登录 code（mock exchange 只消费这一枚）。 */
+const LOGIN_CODE = 'e2e-one-time-login-code'
+
+/** exchange mock 返回的登录账号（AUTH_ME 信封 data 同构）。 */
 const MOCK_USER = {
   user_id: 42,
   email: 'e2e-user@example.com',
@@ -49,19 +54,6 @@ function subscriptionOf(period: MockSubscription['period']): MockSubscription {
     remaining: -1,
     reset_date: '2026-08-30'
   }
-}
-
-/** 登录桥回执形态（官网页 sendMessage 回调结果,含 lastError 诊断）。 */
-type BridgeAck = { response: { ok: boolean } | null; error: string | null }
-
-/** 登录桥回执等待:poll 断言非 null 后取值,类型层收窄 null 位。 */
-async function waitForBridgeAck(page: Page): Promise<BridgeAck> {
-  await expect
-    .poll(async () => (await page.evaluate(() => window.__bridgeResult)) ?? null, {
-      timeout: 15_000
-    })
-    .not.toBeNull()
-  return (await page.evaluate(() => window.__bridgeResult)) as BridgeAck
 }
 
 /** 面板根（自建 fixed 容器内的直插面板）。 */
@@ -86,11 +78,11 @@ async function readDownload(page: Page, trigger: () => Promise<void>): Promise<D
   return downloadPromise
 }
 
-/** 零外网白名单：本组用例放行集只能是 fixture 导航、官网桥页与占位 API mock。 */
+/** 零外网白名单：本组用例放行集只能是 fixture 导航与占位 API mock。 */
 function expectFulfilledWithinAllowlist(urls: readonly string[]): void {
   const allowedPrefixes = [
     'https://www.bing.com/maps',
-    WEBSITE_LOGIN_BRIDGE_URL,
+    `${API_ORIGIN}/api/client/auth/extension-login/exchange`,
     `${API_ORIGIN}/api/client/auth/me`,
     `${API_ORIGIN}/api/client/subscription/status`
   ]
@@ -102,43 +94,50 @@ function expectFulfilledWithinAllowlist(urls: readonly string[]): void {
   }
 }
 
-test.describe('Bing 登录桥 + 免费/Pro 门控', () => {
+test.describe('Bing v3 登录 + 免费/Pro 门控', () => {
   test.beforeEach(async () => {
     // Pro 无上限完成依赖 12 轮失败自动收敛(2s 翻页等待 × 12),放宽超时
     test.setTimeout(240_000)
   })
 
-  test('登录同步全链路:官网桥页发 token → 插件校验收编 → 面板账号态生效(免费档)', async () => {
+  test('v3 登录全链路:面板 Sign in → mock auth flow 交付 code → exchange → 登录态生效(免费档)', async () => {
     const fixtureHtml = readFileSync(FIXTURE_PATH, 'utf-8')
     const context = await launchExtensionContext()
     const page = context.pages()[0] ?? (await context.newPage())
 
     try {
-      await waitForExtensionServiceWorker(context)
-      const { fulfilled } = await setupLoginBridgeRoutes(context, fixtureHtml, {
-        token: 'e2e-website-token',
-        user: MOCK_USER,
-        subscription: subscriptionOf('free')
-      })
+      const serviceWorker = await waitForExtensionServiceWorker(context)
+      // manifest 固定 key 已移除:扩展 ID 从 service worker 动态反解且合法
+      expect(extensionIdFromServiceWorker(serviceWorker)).toMatch(/^[a-p]{32}$/)
+      const { fulfilled, consumedCodes } = await setupExtensionLoginRoutes(
+        context,
+        fixtureHtml,
+        {
+          user: MOCK_USER,
+          subscription: subscriptionOf('free'),
+          loginCode: LOGIN_CODE
+        }
+      )
+      await installAuthFlowMock(serviceWorker, LOGIN_CODE)
 
-      // 官网登录桥模拟页:sendMessage 发 AUTH_CHANGED,回执 ok = 插件收到并校验通过
-      await page.goto(WEBSITE_LOGIN_BRIDGE_URL)
-      const ack = await waitForBridgeAck(page)
-      expect(ack.error).toBeNull()
-      expect(ack.response).toEqual({ ok: true })
-
-      // 账号态生效:面板标题区出现免费档徽标(登录但非 Pro),点击进 Pricing
       await page.goto(MAPS_URL)
       const panelRoot = panel(page)
       await expect(panelRoot).toBeVisible({ timeout: 15_000 })
-      const freeBadge = panelRoot.getByRole('button', { name: 'FREE', exact: true })
-      await expect(freeBadge).toBeVisible({ timeout: 15_000 })
+      // 未登录:徽标位显示 Sign in(无 FREE/PRO)
+      await expect(panelRoot.getByRole('button', { name: 'FREE', exact: true })).toHaveCount(0)
+      await expect(panelRoot.getByRole('button', { name: 'PRO', exact: true })).toHaveCount(0)
 
+      await signInFromPanel(page)
+
+      // 登录完成:面板徽标翻成免费档,点击进 Pricing
+      const freeBadge = panelRoot.getByRole('button', { name: 'FREE', exact: true })
+      await expect(freeBadge).toBeVisible({ timeout: 30_000 })
+      // 一次性 code:恰好被 exchange 消费一次
+      expect(consumedCodes).toEqual([LOGIN_CODE])
       await freeBadge.click()
       await expect(panelRoot.getByRole('heading', { name: 'Upgrade to Pro' })).toBeVisible()
       await expect(panelRoot.getByText('Signed in as E2E User')).toBeVisible()
       await expect(panelRoot.getByText(/Unlimited exports are active/)).toHaveCount(0)
-      await panelRoot.getByRole('button', { name: 'Go Back' }).click()
 
       expectFulfilledWithinAllowlist(fulfilled)
     } finally {
@@ -146,30 +145,29 @@ test.describe('Bing 登录桥 + 免费/Pro 门控', () => {
     }
   })
 
-  test('Pro 态:订阅判定生效 → 采集无 20 条上限(fixture 30 条全收) → 导出无免费末行 → Pricing 显示 VIP', async () => {
+  test('Pro 态:登录后订阅判定生效 → 采集无 20 条上限(fixture 30 条全收) → 导出无免费末行 → Pricing 显示 VIP', async () => {
     const fixtureHtml = readFileSync(FIXTURE_PATH, 'utf-8')
     const context = await launchExtensionContext()
     const page = context.pages()[0] ?? (await context.newPage())
 
     try {
-      await waitForExtensionServiceWorker(context)
-      const { fulfilled } = await setupLoginBridgeRoutes(context, fixtureHtml, {
-        token: 'e2e-website-token',
+      const serviceWorker = await waitForExtensionServiceWorker(context)
+      const { fulfilled } = await setupExtensionLoginRoutes(context, fixtureHtml, {
         user: MOCK_USER,
-        subscription: subscriptionOf('month')
+        subscription: subscriptionOf('month'),
+        loginCode: LOGIN_CODE
       })
-
-      await page.goto(WEBSITE_LOGIN_BRIDGE_URL)
-      const ack = await waitForBridgeAck(page)
-      expect(ack.response).toEqual({ ok: true })
+      await installAuthFlowMock(serviceWorker, LOGIN_CODE)
 
       await page.goto(MAPS_URL)
       const panelRoot = panel(page)
       await expect(panelRoot).toBeVisible({ timeout: 15_000 })
+
+      await signInFromPanel(page)
+
       // Pro 徽标 = 门控判定已生效(订阅 month mock)
-      await expect(
-        panelRoot.getByRole('button', { name: 'PRO', exact: true })
-      ).toBeVisible({ timeout: 15_000 })
+      const proBadge = panelRoot.getByRole('button', { name: 'PRO', exact: true })
+      await expect(proBadge).toBeVisible({ timeout: 30_000 })
 
       await startButton(page).click()
       // Pro 进度文案变体(feat.md 采集中态)
@@ -201,7 +199,7 @@ test.describe('Bing 登录桥 + 免费/Pro 门控', () => {
       // Pricing:回待命态(徽标在标题区,feat.md 三态表完成态无徽标)后点击 PRO
       await panelRoot.getByRole('button', { name: 'Go Back' }).click()
       await expect(startButton(page)).toBeVisible()
-      await panelRoot.getByRole('button', { name: 'PRO', exact: true }).click()
+      await proBadge.click()
       await expect(panelRoot.getByRole('heading', { name: 'Upgrade to Pro' })).toBeVisible()
       await expect(panelRoot.getByText(/Unlimited exports are active/)).toBeVisible()
       await expect(panelRoot.getByText('Signed in as E2E User')).toBeVisible()
@@ -213,24 +211,24 @@ test.describe('Bing 登录桥 + 免费/Pro 门控', () => {
     }
   })
 
-  test('匿名(无 token):20 条截断照旧 + Pricing 免费账号态', async () => {
+  test('匿名(不发起登录):Sign in 徽标位 + 20 条截断照旧 + 零账号/订阅请求', async () => {
     const fixtureHtml = readFileSync(FIXTURE_PATH, 'utf-8')
     const context = await launchExtensionContext()
     const page = context.pages()[0] ?? (await context.newPage())
 
     try {
       await waitForExtensionServiceWorker(context)
-      const { fulfilled } = await setupLoginBridgeRoutes(context, fixtureHtml, {
-        token: null,
+      const { fulfilled } = await setupExtensionLoginRoutes(context, fixtureHtml, {
         user: MOCK_USER,
-        subscription: subscriptionOf('free')
+        subscription: subscriptionOf('free'),
+        loginCode: LOGIN_CODE
       })
 
-      // 直接进入采集页(不触发登录桥),门控应按匿名免费计权
       await page.goto(`${MAPS_URL}&fixtureInitial=3`)
       const panelRoot = panel(page)
       await expect(panelRoot).toBeVisible({ timeout: 15_000 })
-      // 未登录:标题区无账号徽标
+      // 未登录:徽标位为 Sign in,无 FREE/PRO
+      await expect(panelRoot.getByRole('button', { name: 'Sign in' })).toBeVisible()
       await expect(panelRoot.getByRole('button', { name: 'FREE', exact: true })).toHaveCount(0)
       await expect(panelRoot.getByRole('button', { name: 'PRO', exact: true })).toHaveCount(0)
       await expect(startButton(page)).toBeEnabled({ timeout: 15_000 })
@@ -250,7 +248,7 @@ test.describe('Bing 登录桥 + 免费/Pro 门控', () => {
       await expect(panelRoot.getByText('Not signed in (free account)')).toBeVisible()
       await expect(panelRoot.getByRole('button', { name: 'Upgrade Now' })).toBeVisible()
 
-      // 匿名会话不得产生任何后端账号/订阅请求(auth/me / subscription/status 零调用)
+      // 匿名会话不得产生任何后端账号/订阅请求(exchange/auth-me/subscription 零调用)
       expectFulfilledWithinAllowlist(fulfilled)
       for (const url of fulfilled) {
         expect(url.startsWith(`${API_ORIGIN}/api/client/`), `匿名会话出现后端请求: ${url}`).toBe(
@@ -262,3 +260,13 @@ test.describe('Bing 登录桥 + 免费/Pro 门控', () => {
     }
   })
 })
+
+/**
+ * 插件发起 v3 登录:点击面板 Sign in(launchWebAuthFlow 已被 installAuthFlowMock
+ * 替换为同步回调,无 auth 窗口事件可等);提交完成由后续徽标断言轮询收敛。
+ */
+async function signInFromPanel(page: Page): Promise<void> {
+  const signInButton = panel(page).getByRole('button', { name: 'Sign in' })
+  await expect(signInButton).toBeVisible()
+  await signInButton.click()
+}

@@ -1,5 +1,13 @@
 # 016 · Bing 插件 changelog
 
+## 2026-09-01 登录迁移 v3 浏览器身份(v2 官网桥删除)
+
+- 登录由 v2 官网推送桥(website `/extension-login-bing` → `externally_connectable` 定向消息)整体迁移为 v3 插件发起流程:popup + 面板未登录 `Sign in` 双入口 → 官网统一确认页 `/extension-login` → 一次性 code 回跳换插件独立 token;协议合同见 `../007.用户系统/tech-第三方登录.md` §9(007 plans/006 实施)。
+- manifest permissions 改 `['storage','identity']`,删固定 key 与 `externally_connectable`;删除 `WebsiteAuthBridge` 与 `applyWebsiteToken`,新增 `applyExtensionLogin`(快照比对提交 + 成功后订阅态失效重拉)与 auth 三键 storage watcher(登出失效内存门控态)。
+- 拍板变更:「popup 不设账号区」(2026-08-30)随 v2 官网推送模式删除而失效——v3 插件发起模式需插件内入口,popup 与面板各设一个 `Sign in`(同一 background 流程)。
+- e2e harness 改 v3 mock(SW 内替换 `launchWebAuthFlow`,豁免记录见 `spec-test-client.md` §3.2)+ 动态 SW 发现(删写死 EXTENSION_ID)。
+- 验证: check/build 绿、单测 175、e2e 10/10;与 Maps/后端/官网集成验证 32 项断言 0 失败(v2 端点 404、code 一次性、双插件独立 session、配额归属证据)。浏览器 UI 面(真实登录回流/即时刷新/订阅徽标)待 unpacked 人工终验。
+
 ## 2026-08-30
 
 - 建域:竞品 "Maps Scraper & Map data extractor" v2.4.9 复刻立项。调研完成(静态逆向 + 动态验证,`docs/research/bing-maps-scraper-竞品调研.md`);工程底座 `extension-bing/` 就绪(清理 + 固定 ID + website 登录桥);商业化口径拍板(免费 20 条/竞品数值,后端走自有订阅体系);一期范围 B1–B7 拍板,计划见 `plans/001.一期实施.md`。

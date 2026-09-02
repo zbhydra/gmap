@@ -1,25 +1,30 @@
 ---
 /**
- * Bing Maps 插件登录页（externally_connectable 协议）。
+ * 插件统一登录页（v3 browser identity；Maps 与 Bing 插件共用，noindex）。
  *
- * 登录流程与 /extension-login-bing 相同（邮箱/Google），成功后把 website token
- * 定向同步给 extension-bing（BING_EXTENSION_TARGET_IDS）；页面检测到已有有效
- * Website token 时主动补发一次。返回按钮发 BING_MAPS_EXTENSION_LOGIN_RETURN，
- * 由插件 background 按 sender.tab.id 关闭登录页，window.close() 仅作兜底。
+ * 流程：插件 background 经 chrome.identity.launchWebAuthFlow 打开本页
+ * （query 携带 redirect_uri=<chromiumapp.org 回调> + code_challenge=<PKCE S256>）→
+ * 入口参数校验（只归一化这一次，非法即终止）→ 已登录渲染账号确认卡 / 未登录打开
+ * AuthModal（Google redirect 主路径 + 邮箱验证码）→ 用户显式点 Continue 后
+ * POST /api/client/auth/extension-login/code 换一次性 code →
+ * location.replace(redirect_uri#code=...) 交回插件，浏览器自动关窗。
+ * 页面不持有、不转发任何插件 token；一次性 code 只走 URL fragment。
  */
 import AuthModal from '../components/auth/AuthModal.astro'
 import Layout from '../layouts/Layout.astro'
 import { content } from '../i18n/content'
 
-const pageCopy = content['en-US'].pages.extensionLoginBing
+const pageCopy = content['en-US'].pages.extensionLogin
 const accountCopy = content['en-US'].pages.account
 const statusCopy = {
   checkingState: pageCopy.checkingState,
   signInRequiredState: pageCopy.signInRequiredState,
-  syncedState: pageCopy.syncedState,
-  verificationFailedState: pageCopy.verificationFailedState,
+  confirmState: pageCopy.confirmState,
+  errorState: pageCopy.errorState,
   preparingTitle: pageCopy.preparingTitle,
   preparingText: pageCopy.preparingText,
+  invalidParamsTitle: pageCopy.invalidParamsTitle,
+  invalidParamsText: pageCopy.invalidParamsText,
   checkingSessionTitle: pageCopy.checkingSessionTitle,
   checkingSessionText: pageCopy.checkingSessionText,
   finishingGoogleTitle: pageCopy.finishingGoogleTitle,
@@ -27,18 +32,23 @@ const statusCopy = {
   signInRequiredTitle: pageCopy.signInRequiredTitle,
   signInRequiredText: pageCopy.signInRequiredText,
   signInButtonLabel: pageCopy.signInButtonLabel,
-  syncingTitle: pageCopy.syncingTitle,
-  syncingText: pageCopy.syncingText,
-  syncedTitle: pageCopy.syncedTitle,
-  syncedText: pageCopy.syncedText,
-  returnButtonLabel: pageCopy.returnButtonLabel,
-  returningButtonLabel: pageCopy.returningButtonLabel,
-  verificationFailedTitle: pageCopy.verificationFailedTitle,
-  retryButtonLabel: pageCopy.retryButtonLabel
+  confirmTitle: pageCopy.confirmTitle,
+  confirmText: pageCopy.confirmText,
+  continueButtonLabel: pageCopy.continueButtonLabel,
+  useAnotherAccountLabel: pageCopy.useAnotherAccountLabel,
+  issuingTitle: pageCopy.issuingTitle,
+  issuingText: pageCopy.issuingText,
+  issueFailedTitle: pageCopy.issueFailedTitle,
+  retryButtonLabel: pageCopy.retryButtonLabel,
+  verificationFailedPrefix: pageCopy.verificationFailedPrefix,
+  issueFailedPrefix: pageCopy.issueFailedPrefix,
+  googleSignInFailedPrefix: pageCopy.googleSignInFailedPrefix,
+  googleCompletionFailedPrefix: pageCopy.googleCompletionFailedPrefix
 }
 const authCopy = {
   sendingCode: accountCopy.auth.sendingCode,
   sendCodeSuccess: accountCopy.auth.sendCodeSuccess,
+  sendAgain: accountCopy.auth.sendAgain,
   continueWithGoogle: accountCopy.auth.continueWithGoogle,
   googleLoading: accountCopy.auth.googleLoading,
   enterEmailFirst: accountCopy.auth.enterEmailFirst,
@@ -70,7 +80,6 @@ const authCopy = {
         <p class="extension-login-state" data-extension-login-state>{statusCopy.checkingState}</p>
         <h2 data-extension-login-status-title>{statusCopy.preparingTitle}</h2>
         <p data-extension-login-status-text>{statusCopy.preparingText}</p>
-        <p class="extension-login-email" data-extension-login-email hidden></p>
         <div class="extension-login-actions">
           <button
             type="button"
@@ -80,8 +89,31 @@ const authCopy = {
           >
             {statusCopy.retryButtonLabel}
           </button>
-          <button type="button" class="extension-login-primary" data-extension-login-return hidden>
-            {statusCopy.returnButtonLabel}
+        </div>
+      </div>
+
+      <div class="extension-login-confirm" data-extension-login-confirm hidden>
+        <div class="extension-login-account">
+          <img
+            class="extension-login-avatar"
+            data-extension-login-avatar-image
+            alt=""
+            hidden
+          />
+          <span class="extension-login-avatar extension-login-avatar-fallback" data-extension-login-avatar-fallback hidden></span>
+          <span class="extension-login-account-name" data-extension-login-account-name></span>
+          <span class="extension-login-account-email" data-extension-login-account-email></span>
+        </div>
+        <div class="extension-login-actions">
+          <button
+            type="button"
+            class="extension-login-secondary"
+            data-extension-login-use-another-account
+          >
+            {statusCopy.useAnotherAccountLabel}
+          </button>
+          <button type="button" class="extension-login-primary" data-extension-login-continue>
+            {statusCopy.continueButtonLabel}
           </button>
         </div>
       </div>
@@ -93,15 +125,13 @@ const authCopy = {
       data-extension-login-auth-copy
       set:html={JSON.stringify({ status: statusCopy, auth: authCopy })}
     />
-    <AuthModal copy={accountCopy} idPrefix="extension-login-bing" />
+    <AuthModal copy={accountCopy} idPrefix="extension-login" />
   </main>
 </Layout>
 
 <script>
   import {
     DEFAULT_PUBLIC_GOOGLE_CLIENT_ID,
-    BING_EXTENSION_TARGET_IDS,
-    BING_MAPS_EXTENSION_LOGIN_RETURN,
     cancelGoogleRedirectPrompt,
     clearGoogleRedirectResult,
     clearStoredAccessToken,
@@ -113,22 +143,30 @@ const authCopy = {
     loginWithEmailCode,
     readGoogleRedirectResult,
     renderGoogleRedirectButton,
-    notifyBingMapsAuthChanged,
     requestGoogleRedirectPrompt,
     sendEmailCode,
     type GoogleLoginResponse,
     type GoogleRedirectPromptOptions,
     type HomepageUserInfo
   } from '../scripts/homepage/auth'
-  import { isHomepageAuthFailure, type RequestContext } from '../scripts/homepage/api'
+  import { isHomepageAuthFailure, postJson, type RequestContext } from '../scripts/homepage/api'
   import { ensureDeviceId } from '../scripts/homepage/device'
   import { createSendCodeCooldown } from '../scripts/homepage/sendCodeCooldown'
   import { showSiteToast } from '../scripts/site/toast'
 
-  interface ExtensionLoginBingElements {
+  /** chromiumapp.org 回调 host：32 位小写 a-p，chrome.identity.getRedirectURL 的固定形状。 */
+  const REDIRECT_URI_HOST_PATTERN = /^[a-p]{32}\.chromiumapp\.org$/
+  /** PKCE S256 code_challenge：32 字节 SHA256 摘要的 Base64URL 编码，固定 43 字符。 */
+  const CODE_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]{43}$/
+  /** 插件回调地址固定 pathname（getRedirectURL('extension-login')）。 */
+  const REDIRECT_URI_PATHNAME = '/extension-login'
+  /** v3 issue 端点：website 会话换插件一次性登录 code。 */
+  const EXTENSION_LOGIN_CODE_ENDPOINT = '/api/client/auth/extension-login/code'
+
+  interface ExtensionLoginElements {
     /** 页面根节点。 */
     root: HTMLElement
-    /** 已登录、同步中、错误状态区。 */
+    /** 状态区（检查中 / 需要登录 / 错误）。 */
     statusPanel: HTMLElement
     /** 状态 eyebrow。 */
     state: HTMLElement
@@ -136,12 +174,22 @@ const authCopy = {
     statusTitle: HTMLElement
     /** 状态正文。 */
     statusText: HTMLElement
-    /** 已登录邮箱。 */
-    statusEmail: HTMLElement
-    /** 重试或打开登录弹窗按钮。 */
+    /** 重试 / 打开登录弹窗按钮。 */
     retryButton: HTMLButtonElement
-    /** 登录成功后返回 Bing Maps 插件 的按钮。 */
-    returnButton: HTMLButtonElement
+    /** 账号确认卡。 */
+    confirmPanel: HTMLElement
+    /** 确认卡头像（远程图片）。 */
+    avatarImage: HTMLImageElement
+    /** 确认卡头像（首字母兜底）。 */
+    avatarFallback: HTMLElement
+    /** 确认卡姓名。 */
+    accountName: HTMLElement
+    /** 确认卡邮箱。 */
+    accountEmail: HTMLElement
+    /** Continue 按钮（显式确认后签发一次性 code）。 */
+    continueButton: HTMLButtonElement
+    /** Use another account 按钮。 */
+    useAnotherAccountButton: HTMLButtonElement
     /** 公共登录弹窗。 */
     authModal: HTMLElement
     /** 公共登录弹窗关闭按钮列表。 */
@@ -172,19 +220,23 @@ const authCopy = {
     loginSubmit: HTMLButtonElement
   }
 
-  interface ExtensionLoginBingStatusCopy {
+  interface ExtensionLoginStatusCopy {
     /** 状态 eyebrow：检查中。 */
     checkingState: string
     /** 状态 eyebrow：需要登录。 */
     signInRequiredState: string
-    /** 状态 eyebrow：已同步。 */
-    syncedState: string
+    /** 状态 eyebrow：账号确认。 */
+    confirmState: string
     /** 状态 eyebrow：失败。 */
-    verificationFailedState: string
+    errorState: string
     /** 进入页面准备阶段标题。 */
     preparingTitle: string
     /** 进入页面准备阶段正文。 */
     preparingText: string
+    /** 入口参数非法标题。 */
+    invalidParamsTitle: string
+    /** 入口参数非法正文。 */
+    invalidParamsText: string
     /** 检查已存在 website 登录态标题。 */
     checkingSessionTitle: string
     /** 检查已存在 website 登录态正文。 */
@@ -199,29 +251,39 @@ const authCopy = {
     signInRequiredText: string
     /** 需要登录时的按钮文案。 */
     signInButtonLabel: string
-    /** 同步扩展 token 中标题。 */
-    syncingTitle: string
-    /** 同步扩展 token 中正文。 */
-    syncingText: string
-    /** 同步成功标题。 */
-    syncedTitle: string
-    /** 同步成功正文。 */
-    syncedText: string
-    /** 返回 Bing Maps 插件 按钮文案。 */
-    returnButtonLabel: string
-    /** 返回中按钮文案。 */
-    returningButtonLabel: string
-    /** 失败状态标题。 */
-    verificationFailedTitle: string
-    /** 重试按钮文案。 */
+    /** 账号确认卡标题。 */
+    confirmTitle: string
+    /** 账号确认卡正文。 */
+    confirmText: string
+    /** 确认并继续按钮文案。 */
+    continueButtonLabel: string
+    /** 切换账号按钮文案。 */
+    useAnotherAccountLabel: string
+    /** 签发一次性 code 中标题。 */
+    issuingTitle: string
+    /** 签发一次性 code 中正文。 */
+    issuingText: string
+    /** 签发失败标题。 */
+    issueFailedTitle: string
+    /** 失败重试按钮文案。 */
     retryButtonLabel: string
+    /** website 会话验证失败错误前缀（拼接不可翻译的后端原始错误）。 */
+    verificationFailedPrefix: string
+    /** 一次性 code 签发失败错误前缀（拼接不可翻译的后端原始错误）。 */
+    issueFailedPrefix: string
+    /** Google 登录失败错误前缀（拼接原始错误）。 */
+    googleSignInFailedPrefix: string
+    /** Google 登录无法完成错误前缀（拼接原始错误）。 */
+    googleCompletionFailedPrefix: string
   }
 
-  interface ExtensionLoginBingAuthCopy {
+  interface ExtensionLoginAuthCopy {
     /** 发送验证码中。 */
     sendingCode: string
     /** 验证码发送成功。 */
     sendCodeSuccess: string
+    /** 验证码重发按钮兜底文案。 */
+    sendAgain: string
     /** Google 按钮文案。 */
     continueWithGoogle: string
     /** Google 跳转中文案。 */
@@ -240,6 +302,69 @@ const authCopy = {
     signInFailed: string
   }
 
+  interface ExtensionLoginCopyPayload {
+    /** 页面状态文案。 */
+    status: ExtensionLoginStatusCopy
+    /** 登录弹窗文案。 */
+    auth: ExtensionLoginAuthCopy
+  }
+
+  /** 入口归一化结果：redirect_uri 与 code_challenge 只在这里校验一次。 */
+  interface ExtensionLoginParams {
+    /** 插件 launchWebAuthFlow 回调地址（chromiumapp.org）。 */
+    redirectUri: string
+    /** PKCE S256 code_challenge。 */
+    codeChallenge: string
+  }
+
+  /** v3 issue 端点响应合同。 */
+  interface ExtensionLoginCodeResponse {
+    /** 一次性登录 code（60 秒有效）。 */
+    code: string
+    /** code 有效期（秒）。 */
+    expires_in: number
+  }
+
+  /**
+   * 解析并归一化入口参数（外部输入只在这里校验一次）。
+   *
+   * redirect_uri 是插件 launchWebAuthFlow 的 chromiumapp.org 回调地址，
+   * 协议 / userinfo / 端口 / host / path / query / hash 逐项锁定防止 open redirect；
+   * code_challenge 锁定 PKCE S256 的 Base64URL 形状。非法返回 null，页面渲染参数错误并终止。
+   */
+  function parseExtensionLoginParams(): ExtensionLoginParams | null {
+    const params = new URLSearchParams(window.location.search)
+    const redirectUris = params.getAll('redirect_uri')
+    if (redirectUris.length !== 1) {
+      return null
+    }
+    const codeChallenge = params.get('code_challenge')?.trim() ?? ''
+    if (!CODE_CHALLENGE_PATTERN.test(codeChallenge)) {
+      return null
+    }
+
+    let redirectUrl: URL
+    try {
+      redirectUrl = new URL(redirectUris[0])
+    } catch {
+      return null
+    }
+    if (
+      redirectUrl.protocol !== 'https:' ||
+      redirectUrl.username !== '' ||
+      redirectUrl.password !== '' ||
+      redirectUrl.port !== '' ||
+      !REDIRECT_URI_HOST_PATTERN.test(redirectUrl.hostname) ||
+      redirectUrl.pathname !== REDIRECT_URI_PATHNAME ||
+      redirectUrl.search !== '' ||
+      redirectUrl.hash !== ''
+    ) {
+      return null
+    }
+
+    return { redirectUri: redirectUrl.toString(), codeChallenge }
+  }
+
   const root = document.querySelector<HTMLElement>('[data-extension-login]')
 
   if (root) {
@@ -249,21 +374,29 @@ const authCopy = {
   function queryElement<T extends HTMLElement>(rootElement: HTMLElement, selector: string): T {
     const element = rootElement.querySelector<T>(selector)
     if (!element) {
-      throw new Error(`[extension-login-bing] Missing page element: ${selector}`)
+      throw new Error(`[extension-login] Missing page element: ${selector}`)
     }
     return element
   }
 
-  function getElements(rootElement: HTMLElement): ExtensionLoginBingElements {
+  function getElements(rootElement: HTMLElement): ExtensionLoginElements {
     return {
       root: rootElement,
       statusPanel: queryElement(rootElement, '[data-extension-login-status]'),
       state: queryElement(rootElement, '[data-extension-login-state]'),
       statusTitle: queryElement(rootElement, '[data-extension-login-status-title]'),
       statusText: queryElement(rootElement, '[data-extension-login-status-text]'),
-      statusEmail: queryElement(rootElement, '[data-extension-login-email]'),
       retryButton: queryElement(rootElement, '[data-extension-login-retry]'),
-      returnButton: queryElement(rootElement, '[data-extension-login-return]'),
+      confirmPanel: queryElement(rootElement, '[data-extension-login-confirm]'),
+      avatarImage: queryElement(rootElement, '[data-extension-login-avatar-image]'),
+      avatarFallback: queryElement(rootElement, '[data-extension-login-avatar-fallback]'),
+      accountName: queryElement(rootElement, '[data-extension-login-account-name]'),
+      accountEmail: queryElement(rootElement, '[data-extension-login-account-email]'),
+      continueButton: queryElement(rootElement, '[data-extension-login-continue]'),
+      useAnotherAccountButton: queryElement(
+        rootElement,
+        '[data-extension-login-use-another-account]'
+      ),
       authModal: queryElement(rootElement, '[data-download-auth-modal]'),
       authCloseButtons: Array.from(
         rootElement.querySelectorAll<HTMLButtonElement>('[data-download-auth-close]')
@@ -283,19 +416,12 @@ const authCopy = {
     }
   }
 
-  interface ExtensionLoginBingCopyPayload {
-    /** 页面状态文案。 */
-    status: ExtensionLoginBingStatusCopy
-    /** 登录弹窗文案。 */
-    auth: ExtensionLoginBingAuthCopy
-  }
-
-  function getCopy(rootElement: HTMLElement): ExtensionLoginBingCopyPayload {
+  function getCopy(rootElement: HTMLElement): ExtensionLoginCopyPayload {
     const element = rootElement.querySelector<HTMLScriptElement>('[data-extension-login-auth-copy]')
     if (!element?.textContent) {
-      throw new Error('[extension-login-bing] Missing copy payload.')
+      throw new Error('[extension-login] Missing copy payload.')
     }
-    return JSON.parse(element.textContent) as ExtensionLoginBingCopyPayload
+    return JSON.parse(element.textContent) as ExtensionLoginCopyPayload
   }
 
   function getGoogleClientId(): string {
@@ -316,89 +442,92 @@ const authCopy = {
     element.hidden = message.length === 0
   }
 
-  function setStatusActions(
-    elements: ExtensionLoginBingElements,
-    options: {
-      retry: boolean
-      retryLabel?: string
-      returnExtension: boolean
-    }
-  ): void {
-    elements.retryButton.hidden = !options.retry
-    if (options.retryLabel) {
-      elements.retryButton.textContent = options.retryLabel
-    }
-    elements.returnButton.hidden = !options.returnExtension
-  }
-
+  /** pending 态：只显示状态区，藏起确认卡与操作按钮。 */
   function renderChecking(
-    elements: ExtensionLoginBingElements,
-    copy: ExtensionLoginBingStatusCopy,
+    elements: ExtensionLoginElements,
+    eyebrow: string,
     title: string,
     text: string
   ): void {
     elements.statusPanel.dataset.status = 'pending'
-    elements.state.textContent = copy.checkingState
+    elements.state.textContent = eyebrow
     elements.statusTitle.textContent = title
     elements.statusText.textContent = text
-    elements.statusEmail.hidden = true
-    setStatusActions(elements, { retry: false, returnExtension: false })
+    elements.retryButton.hidden = true
+    setHidden(elements.confirmPanel, true)
+  }
+
+  function renderInvalidParams(
+    elements: ExtensionLoginElements,
+    copy: ExtensionLoginStatusCopy
+  ): void {
+    elements.statusPanel.dataset.status = 'error'
+    elements.state.textContent = copy.errorState
+    elements.statusTitle.textContent = copy.invalidParamsTitle
+    elements.statusText.textContent = copy.invalidParamsText
+    elements.retryButton.hidden = true
+    setHidden(elements.confirmPanel, true)
   }
 
   function renderLoginRequired(
-    elements: ExtensionLoginBingElements,
-    copy: ExtensionLoginBingStatusCopy
+    elements: ExtensionLoginElements,
+    copy: ExtensionLoginStatusCopy
   ): void {
     elements.statusPanel.dataset.status = 'pending'
     elements.state.textContent = copy.signInRequiredState
     elements.statusTitle.textContent = copy.signInRequiredTitle
     elements.statusText.textContent = copy.signInRequiredText
-    elements.statusEmail.hidden = true
-    setStatusActions(elements, {
-      retry: true,
-      retryLabel: copy.signInButtonLabel,
-      returnExtension: false
-    })
+    elements.retryButton.textContent = copy.signInButtonLabel
+    elements.retryButton.hidden = false
+    setHidden(elements.confirmPanel, true)
   }
 
-  function renderSynced(
-    elements: ExtensionLoginBingElements,
-    copy: ExtensionLoginBingStatusCopy,
+  /** 账号确认卡：头像/首字母 + 姓名 + 邮箱；必须显式 Continue，不自动签发。 */
+  function renderConfirmAccount(
+    elements: ExtensionLoginElements,
+    copy: ExtensionLoginStatusCopy,
     user: HomepageUserInfo
   ): void {
-    elements.statusPanel.dataset.status = 'success'
-    elements.state.textContent = copy.syncedState
-    elements.statusTitle.textContent = copy.syncedTitle
-    elements.statusText.textContent = copy.syncedText
-    elements.statusEmail.textContent = user.email
-    elements.statusEmail.hidden = false
-    elements.returnButton.disabled = false
-    elements.returnButton.textContent = copy.returnButtonLabel
-    setStatusActions(elements, {
-      retry: false,
-      returnExtension: true
-    })
+    elements.statusPanel.dataset.status = 'pending'
+    elements.state.textContent = copy.confirmState
+    elements.statusTitle.textContent = copy.confirmTitle
+    elements.statusText.textContent = copy.confirmText
+    elements.retryButton.hidden = true
+
+    const displayName = user.full_name?.trim() || user.email
+    const initial = displayName.charAt(0).toUpperCase()
+    if (user.avatar_url) {
+      elements.avatarImage.src = user.avatar_url
+      elements.avatarImage.alt = displayName
+      setHidden(elements.avatarImage, false)
+      setHidden(elements.avatarFallback, true)
+    } else {
+      elements.avatarImage.removeAttribute('src')
+      elements.avatarFallback.textContent = initial
+      setHidden(elements.avatarImage, true)
+      setHidden(elements.avatarFallback, false)
+    }
+    elements.accountName.textContent = displayName
+    elements.accountEmail.textContent = user.email
+    elements.continueButton.disabled = false
+    setHidden(elements.confirmPanel, false)
   }
 
   function renderVerificationError(
-    elements: ExtensionLoginBingElements,
-    copy: ExtensionLoginBingStatusCopy,
+    elements: ExtensionLoginElements,
+    copy: ExtensionLoginStatusCopy,
     message: string
   ): void {
     elements.statusPanel.dataset.status = 'error'
-    elements.state.textContent = copy.verificationFailedState
-    elements.statusTitle.textContent = copy.verificationFailedTitle
+    elements.state.textContent = copy.errorState
+    elements.statusTitle.textContent = copy.issueFailedTitle
     elements.statusText.textContent = message
-    elements.statusEmail.hidden = true
-    setStatusActions(elements, {
-      retry: true,
-      retryLabel: copy.retryButtonLabel,
-      returnExtension: false
-    })
+    elements.retryButton.hidden = false
+    setHidden(elements.confirmPanel, true)
     showSiteToast(message, { type: 'error' })
   }
 
-  function resetAuthModalToGoogleFirst(elements: ExtensionLoginBingElements): void {
+  function resetAuthModalToGoogleFirst(elements: ExtensionLoginElements): void {
     setMessage(elements.authError, '')
     setHidden(elements.authForm, true)
     setHidden(elements.emailEntry, false)
@@ -408,13 +537,13 @@ const authCopy = {
     elements.sendCodeStatus.textContent = ''
   }
 
-  function openEmailAuthForm(elements: ExtensionLoginBingElements): void {
+  function openEmailAuthForm(elements: ExtensionLoginElements): void {
     setHidden(elements.authForm, false)
     setHidden(elements.emailEntry, true)
     elements.loginEmail.focus()
   }
 
-  function openCodeArea(elements: ExtensionLoginBingElements): void {
+  function openCodeArea(elements: ExtensionLoginElements): void {
     setHidden(elements.authForm, false)
     setHidden(elements.emailEntry, true)
     setHidden(elements.emailCodeArea, false)
@@ -427,15 +556,20 @@ const authCopy = {
     const copy = getCopy(rootElement)
     const sendCodeCooldown = createSendCodeCooldown(
       elements.sendCodeButton,
-      elements.sendCodeButton.textContent?.trim() || 'Send again'
+      elements.sendCodeButton.textContent?.trim() || copy.auth.sendAgain
     )
     let deviceId = ''
     let token = getStoredAccessToken()
     let googleRedirectButtonRendered = false
-    let returnRequested = false
+    let loginParams: ExtensionLoginParams | null = null
+
+    const buildRequestContext = (nextToken: string | null = token): RequestContext => ({
+      deviceId,
+      token: nextToken
+    })
 
     const closeAuthModal = (): void => {
-      cancelGoogleRedirectPrompt('Extension login bing auth modal closed.')
+      cancelGoogleRedirectPrompt('Extension login auth modal closed.')
       setHidden(elements.authModal, true)
     }
 
@@ -446,14 +580,14 @@ const authCopy = {
 
       const clientId = getGoogleClientId()
       if (!clientId) {
-        logGoogleAuthStage('error', 'extension_login_bing_google_client_id_missing')
+        logGoogleAuthStage('error', 'extension_login_google_client_id_missing')
         setMessage(elements.authError, copy.auth.googleClientMissing)
         return
       }
 
       try {
         renderGoogleRedirectButton(elements.googleLoginButton, clientId, {
-          source: 'extension_login_bing_google_button',
+          source: 'extension_login_google_button',
           label: copy.auth.continueWithGoogle,
           loadingLabel: copy.auth.googleLoading
         })
@@ -467,15 +601,15 @@ const authCopy = {
       }
     }
 
-    const buildRequestContext = (nextToken: string | null = token): RequestContext => ({
-      deviceId,
-      token: nextToken
-    })
-
     const completeLoginWithToken = async (nextToken: string): Promise<boolean> => {
       token = nextToken
       closeAuthModal()
-      renderChecking(elements, copy.status, copy.status.syncingTitle, copy.status.syncingText)
+      renderChecking(
+        elements,
+        copy.status.checkingState,
+        copy.status.checkingSessionTitle,
+        copy.status.checkingSessionText
+      )
 
       let user: HomepageUserInfo
       try {
@@ -492,35 +626,73 @@ const authCopy = {
           elements,
           copy.status,
           formatError(
-            'Website token verification failed',
+            copy.status.verificationFailedPrefix,
             error instanceof Error ? error : String(error)
           )
         )
         return false
       }
 
-      renderSynced(elements, copy.status, user)
+      renderConfirmAccount(elements, copy.status, user)
       return true
     }
 
-    const requestReturnToExtension = (): void => {
-      if (returnRequested) {
+    const validateStoredToken = async (): Promise<void> => {
+      token = getStoredAccessToken()
+      if (!token) {
+        openAuthModal()
         return
       }
-      returnRequested = true
-      elements.returnButton.disabled = true
-      elements.returnButton.textContent = copy.status.returningButtonLabel
-      // RETURN 无业务回执。登录 tab 由 background 用 sender.tab.id 权威关闭；
-      // 页面侧 window.close() 仅作兜底——OAuth 回跳后的 tab 可能不满足 script-closable 条件。
-      const runtime = window.chrome?.runtime
-      if (runtime?.sendMessage) {
-        for (const extensionId of BING_EXTENSION_TARGET_IDS) {
-          runtime.sendMessage(extensionId, { type: BING_MAPS_EXTENSION_LOGIN_RETURN }, () => {})
-        }
+
+      renderChecking(
+        elements,
+        copy.status.checkingState,
+        copy.status.checkingSessionTitle,
+        copy.status.checkingSessionText
+      )
+      await completeLoginWithToken(token)
+    }
+
+    /** 显式确认：website 会话换一次性 code，成功后带 fragment 跳回插件回调地址。 */
+    const handleContinue = async (): Promise<void> => {
+      if (!loginParams) {
+        return
       }
-      window.setTimeout(() => {
-        window.close()
-      }, 120)
+      elements.continueButton.disabled = true
+      renderChecking(
+        elements,
+        copy.status.checkingState,
+        copy.status.issuingTitle,
+        copy.status.issuingText
+      )
+
+      try {
+        const response = await postJson<ExtensionLoginCodeResponse>(
+          EXTENSION_LOGIN_CODE_ENDPOINT,
+          buildRequestContext(),
+          { code_challenge: loginParams.codeChallenge }
+        )
+        window.location.replace(`${loginParams.redirectUri}#code=${encodeURIComponent(response.code)}`)
+        return
+      } catch (error) {
+        console.error(error)
+        renderVerificationError(
+          elements,
+          copy.status,
+          formatError(
+            copy.status.issueFailedPrefix,
+            error instanceof Error ? error : String(error)
+          )
+        )
+      } finally {
+        elements.continueButton.disabled = false
+      }
+    }
+
+    const handleUseAnotherAccount = (): void => {
+      clearStoredAccessToken()
+      token = null
+      openAuthModal()
     }
 
     const runGoogleLogin = async (options: GoogleRedirectPromptOptions = {}): Promise<void> => {
@@ -547,19 +719,18 @@ const authCopy = {
     }
 
     const openAuthModal = (): void => {
-      returnRequested = false
       renderLoginRequired(elements, copy.status)
       resetAuthModalToGoogleFirst(elements)
       setHidden(elements.authModal, false)
       ensureGoogleRedirectButtonRendered()
-      void runGoogleLogin({ silentFailure: true, source: 'extension_login_bing_auto_prompt' })
+      void runGoogleLogin({ silentFailure: true, source: 'extension_login_auto_prompt' })
     }
 
     const handleGoogleCredentialLogin = async (
       response: GoogleLoginResponse,
       credentialSource: string
     ): Promise<void> => {
-      logGoogleAuthStage('info', 'extension_login_bing_google_one_tap_backend_response', {
+      logGoogleAuthStage('info', 'extension_login_google_one_tap_backend_response', {
         credentialSource,
         requiresEmailVerification: isEmailVerificationRequiredResponse(response)
       })
@@ -576,26 +747,6 @@ const authCopy = {
       }
 
       await completeLoginWithToken(response.access_token)
-    }
-
-    const validateStoredToken = async (): Promise<void> => {
-      token = getStoredAccessToken()
-      if (!token) {
-        openAuthModal()
-        return
-      }
-
-      renderChecking(
-        elements,
-        copy.status,
-        copy.status.checkingSessionTitle,
-        copy.status.checkingSessionText
-      )
-
-      const isTokenValid = await completeLoginWithToken(token)
-      if (isTokenValid) {
-        notifyBingMapsAuthChanged()
-      }
     }
 
     const handleGoogleRedirect = async (): Promise<boolean> => {
@@ -620,14 +771,14 @@ const authCopy = {
         openAuthModal()
         setMessage(
           elements.authError,
-          formatError('Google sign-in failed', result.error || 'missing google_login_code')
+          formatError(copy.status.googleSignInFailedPrefix, result.error || 'missing google_login_code')
         )
         return true
       }
 
       renderChecking(
         elements,
-        copy.status,
+        copy.status.checkingState,
         copy.status.finishingGoogleTitle,
         copy.status.finishingGoogleText
       )
@@ -645,7 +796,7 @@ const authCopy = {
         setMessage(
           elements.authError,
           formatError(
-            'Google sign-in could not complete',
+            copy.status.googleCompletionFailedPrefix,
             error instanceof Error ? error : String(error)
           )
         )
@@ -720,7 +871,10 @@ const authCopy = {
       }
       void validateStoredToken()
     })
-    elements.returnButton.addEventListener('click', requestReturnToExtension)
+    elements.continueButton.addEventListener('click', () => {
+      void handleContinue()
+    })
+    elements.useAnotherAccountButton.addEventListener('click', handleUseAnotherAccount)
     elements.authCloseButtons.forEach(button => {
       button.addEventListener('click', () => {
         closeAuthModal()
@@ -728,7 +882,7 @@ const authCopy = {
       })
     })
     elements.emailEntryButton.addEventListener('click', () => {
-      cancelGoogleRedirectPrompt('Email code login selected in extension login v2 page.')
+      cancelGoogleRedirectPrompt('Email code login selected in extension login page.')
       openEmailAuthForm(elements)
     })
     elements.emailContinueButton.addEventListener('click', () => {
@@ -742,7 +896,19 @@ const authCopy = {
       void handleEmailLogin()
     })
 
-    renderChecking(elements, copy.status, copy.status.preparingTitle, copy.status.preparingText)
+    // 入口参数非法时尽早终止：不开 AuthModal、不做 Google redirect 收尾、不请求设备 ID。
+    loginParams = parseExtensionLoginParams()
+    if (!loginParams) {
+      renderInvalidParams(elements, copy.status)
+      return
+    }
+
+    renderChecking(
+      elements,
+      copy.status.checkingState,
+      copy.status.preparingTitle,
+      copy.status.preparingText
+    )
     deviceId = await ensureDeviceId()
 
     const handledRedirect = await handleGoogleRedirect()
@@ -807,7 +973,7 @@ const authCopy = {
     font-size: clamp(24px, 4vw, 32px);
   }
 
-  .extension-login-status > p:not(.extension-login-state):not(.extension-login-email) {
+  .extension-login-status > p:not(.extension-login-state) {
     margin: 0;
     color: var(--color-gray-600);
     font-size: 15px;
@@ -819,29 +985,65 @@ const authCopy = {
     gap: 16px;
   }
 
-  .extension-login-status[data-status='success'] .extension-login-state {
-    border-color: rgba(22, 163, 74, 0.2);
-    color: #166534;
-    background: rgba(22, 163, 74, 0.08);
-  }
-
   .extension-login-status[data-status='error'] .extension-login-state {
     border-color: rgba(220, 38, 38, 0.2);
     color: #991b1b;
     background: rgba(220, 38, 38, 0.08);
   }
 
-  .extension-login-email {
-    width: max-content;
-    max-width: 100%;
-    margin: 0;
-    padding: 9px 11px;
+  .extension-login-confirm {
+    display: grid;
+    gap: 18px;
+  }
+
+  .extension-login-confirm[hidden] {
+    display: none;
+  }
+
+  .extension-login-account {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    padding: 16px 18px;
     border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 8px;
-    color: var(--color-gray-900);
     background: var(--color-gray-50);
-    font-size: 14px;
+  }
+
+  .extension-login-avatar {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    object-fit: cover;
+  }
+
+  .extension-login-avatar[hidden] {
+    display: none;
+  }
+
+  .extension-login-avatar-fallback {
+    border: 1px solid rgba(37, 99, 235, 0.16);
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--color-primary);
+    font-size: 20px;
     font-weight: 800;
+  }
+
+  .extension-login-account-name {
+    color: var(--color-gray-900);
+    font-size: 16px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+
+  .extension-login-account-email {
+    color: var(--color-gray-600);
+    font-size: 14px;
     overflow-wrap: anywhere;
   }
 

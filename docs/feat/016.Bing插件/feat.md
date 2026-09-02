@@ -6,18 +6,19 @@
 
 竞品调研(静态逆向 + Playwright 动态验证,含协议抓包/黄金样本/导出实测):`@../../research/bing-maps-scraper-竞品调研.md`。
 
-## 当前状态(2026-08-30,一期 M1–M5 完成)
+## 当前状态(2026-08-30,一期 M1–M5 完成;2026-09-01 登录迁移 v3)
 
 - 竞品调研完成(静态逆向 + 动态验证):`@../../research/bing-maps-scraper-竞品调研.md`。
-- 工程底座就绪:`extension-bing/`(gmap/tg 残留清理;固定扩展 ID;key/官网桥白名单入 manifest)。
-- website 侧就绪:`/extension-login-bing` 桥接页 + BING_* 消息常量。
-- 一期功能全部落地并通过 worker/reviewer 循环:sites/bing(适配器/解析/采集状态机/导出)、Vue 直插面板三态、登录桥接收(onMessageExternal + authStore)、免费 20/Pro 门控、Pricing 视图、远程配置热修通道、5 事件打点。
-- 验证基线:check 全绿、单测 182、e2e 10 passed + 1 条件化 skip(真实 Bing smoke,本机被 cn.bing.com 地域重定向,按设计降级);执行循环记录见 `@plans/001.一期实施.md` 验收记录。
+- 工程底座就绪:`extension-bing/`(gmap/tg 残留清理;2026-09-01 起 manifest 为 `storage` + `identity` 权限,固定 key 与官网桥白名单已随登录 v3 删除)。
+- website 侧:统一确认页 `/extension-login`(两插件共用);`/extension-login-bing` 桥接页与 `BING_*` 消息常量已随登录 v3 删除。
+- 登录已迁移 v3 浏览器身份流程(2026-09-01,插件内 popup + 面板双入口,合同见 `@../007.用户系统/tech-第三方登录.md` §9):验证单测 175 + e2e 10/10 全绿。
+- 一期功能全部落地并通过 worker/reviewer 循环:sites/bing(适配器/解析/采集状态机/导出)、Vue 直插面板三态、v3 登录(authStore + 订阅联动)、免费 20/Pro 门控、Pricing 视图、远程配置热修通道、5 事件打点。
+- 验证基线(2026-08-30 一期):check 全绿、单测 182、e2e 10 passed + 1 条件化 skip(真实 Bing smoke,本机被 cn.bing.com 地域重定向,按设计降级);执行循环记录见 `@plans/001.一期实施.md` 验收记录。
 
 ## 已拍板差异(对齐竞品时的例外)
 
 1. **UI 不用 iframe**:面板用自有 Vue 直插实现(scoped CSS,个别组件按需 Shadow DOM);不用竞品的 iframe 沙箱方案。动因与权衡见调研报告 §9.1。
-2. **登录/token**:官网登录桥(website `/extension-login-bing` → externally_connectable 定向消息 → 插件),账号与 token 走自有 007 域体系;不用竞品的 Google OAuth 匿名码绑定方案,匿名身份由自有 device_id 承担。
+2. **登录/token**:v3 浏览器身份登录——插件内发起(popup + 面板双入口),经官网统一确认页 `/extension-login`(复用 Google/邮箱登录 + 账号确认)签发一次性 code 回跳,插件换取独立 token(007 域 v3 合同,2026-09-01 替代原 v2 官网桥方案);不用竞品的 Google OAuth 匿名码绑定方案,匿名身份由自有 device_id 承担。
 3. **商业化数值复刻竞品**(免费 20 条/次、Email/社媒列 Pro 锁定占位,hydra 2026-08-30 拍板),但配额计量与订阅状态走自有后端(003/006/007 域);不用竞品的 ig/im 标志与云端价格表。
 4. **增长件一期不做**:评分引导、卸载问卷、动态推广位、工具矩阵、安装开官网;打点走自有 SLS 通道。
 5. **远程配置**:包内完整默认值 + 服务端稀疏覆盖热修(沿用 013 拍板机制);非竞品的适配器整组下发。远程是紧急修复通道,常态用本地默认。
@@ -31,7 +32,7 @@
 - B1 Bing Maps 列表采集:列表检测 → data-entity 解析 → 滚动加载/翻页 → 去重
 - B2 18 列导出:CSV/XLSX;免费 20 条截断 + 导出末行提示
 - B3 面板 UI:直插浮层,待命/采集中/完成三态
-- B4 登录桥接收:官网 token 同步、登录页收尾;未登录匿名可用
+- B4 登录(v3 插件发起):popup + 面板双入口发起登录、订阅联动;未登录匿名可用
 - B5 免费/Pro 门控:Pricing 信息页(面板内)、订阅跳转官网
 - B6 远程配置热修通道:包内默认值 + 稀疏覆盖机制就绪(通道常态不启用,仅紧急改版修复用;后端端点接入视后端排期)
 - B7 打点:popup_open / content_open / search / export_results / install
@@ -60,9 +61,9 @@
 
 异常:列表检测超时 → 提示检查搜索/移动地图;单条解析失败 → 跳过并继续(不静默吞错,累计计数可见);翻页连续失败达到上限 → 自动完成已采集部分;配置拉取失败 → 回退包内默认(用户无感)。
 
-### 登录同步子流程
+### 登录子流程(v3 插件发起)
 
-官网登录页或 Popup 触发登录 → 成功后 token 定向同步至插件 → 插件校验并存,面板显示账号与订阅态;登录页「返回插件」→ 插件关闭登录 tab。未登录时匿名身份(设备标识)可用,权益按免费计。
+popup 或面板 `Sign in` 发起 → 插件 background 弹出官网统一确认页 `/extension-login` → 复用 Google / 邮箱登录并显式确认账号 → 一次性 code 回跳插件 → 插件换取独立 token 并存,面板显示账号与订阅态(FREE/PRO 门控按登录态即时生效)。流程合同与安全边界见 `@../007.用户系统/tech-第三方登录.md` §9。未登录时匿名身份(设备标识)可用,权益按免费计。
 
 ## 界面与操作逻辑
 
@@ -70,7 +71,7 @@
 
 | 状态 | 元素 | 行为 |
 | --- | --- | --- |
-| 待命 | 标题区、Start Extraction 主按钮(未检测到列表时禁用)、提示行("Please search business first" + For Example 示例链接,点击跳竞品同款演示搜索词)、How to use 链接(点击新标签打开官网支持/FAQ 页;官网 FAQ 就绪前暂跳现有联系页) | 检测到列表后 Start 可用,点击进入采集中 |
+| 待命 | 标题区、Start Extraction 主按钮(未检测到列表时禁用)、提示行("Please search business first" + For Example 示例链接,点击跳竞品同款演示搜索词)、How to use 链接(点击新标签打开官网支持/FAQ 页;官网 FAQ 就绪前暂跳现有联系页)、账号位(未登录:`Sign in` 按钮,点击发起 v3 登录;已登录:FREE/PRO 徽标) | 检测到列表后 Start 可用,点击进入采集中;未登录 `Sign in` 可发起登录(发起后 loading,失败静默复位) |
 | 采集中 | 加载指示、进度文本(Pro:"Have found N businesses and still going...";免费:"Exporting N...")、区域提示("Please wait a moment"/"Please move the map...")、Stop 按钮(ghost) | Stop → 手动停止进完成态 |
 | 完成 | "Search complete." 或 "Manually stopped.";免费达限显示警告条(说明 + "Upgrade to Pro Now" 按钮跳 Pricing 页);Export Leads List 下拉(Download data to csv / xlsx 两项);Go Back 按钮 | 导出 / 返回待命 |
 
@@ -82,13 +83,13 @@ Free vs Pro 对比表(一次性导出条数 ≤20 vs 无限;CSV/XLSX、官网 UR
 
 ### Popup
 
-标题栏(产品名 + 语言切换)、支持入口(联系邮箱)。账号与订阅态由面板承载,Popup 不设账号区(拍板:避免与面板双处维护)。打开即上报 popup_open。
+标题栏(产品名 + 语言切换)、支持入口(联系邮箱)、账号区(未登录 `Sign in` 按钮 → 发起 v3 登录;已登录 displayName + `Sign out`)。~~Popup 不设账号区~~(2026-08-30 拍板:避免与面板双处维护)——**该拍板已随登录 v3 变更(2026-09-01)**:v3 由插件发起登录,插件内必须有入口,popup 与面板未登录态各设一个 `Sign in`(两入口走同一 background 流程);账号与订阅态展示仍由面板承载。打开即上报 popup_open。
 
 ## 非功能性需求
 
 - **节奏参数**(初值按竞品实测,均可被远程覆盖):列表检测轮询 1.5 秒;采集轮间 500 毫秒;触发翻页后等待 2 秒;连续 12 次失败自动完成;二期增强并发 3、任务间隔 1.5 秒。
 - **抗改版**:适配器探测器 + 候选选择器多级回退;选择器/节奏走远程稀疏覆盖(1 小时缓存),失败回退包内默认。
-- **权限**:仅 storage;content script 仅注入 Bing Maps 搜索页(document_end);零 host 权限。
+- **权限**:仅 `storage` + `identity`(浏览器身份登录);content script 仅注入 Bing Maps 搜索页(document_end);零 host 权限。
 - **兼容**:Chrome / Edge(Chromium)。
 - **隐私**:打点不携带商家内容明文;token 仅存扩展自有存储;禁止访问宿主页面 Web Storage。
 
@@ -107,13 +108,13 @@ Free vs Pro 对比表(一次性导出条数 ≤20 vs 无限;CSV/XLSX、官网 UR
 1. data-entity 黄金样本解析单测全绿(18 列字段命中,含评分/营业时间)。
 2. 真实 Bing Maps 搜索 → 滚动加载 → 翻页 → 导出 CSV/XLSX 全链路通过;导出列名与竞品实测样本一致。
 3. 免费达 20 条自动停止 + 尾行提示 + Upgrade 引导;Pro(自有订阅态)无上限——两条路径均可演示。
-4. 官网登录 → token 同步 → 插件账号态展示全链路通过;未登录匿名可完整采集。
+4. 插件内发起登录(popup / 面板任一入口)→ 官网确认 → 一次性 code 回跳 → 插件账号态展示全链路通过;未登录匿名可完整采集。
 5. 配置通道就绪可验:包内默认值全量生效、覆盖机制单测覆盖;端点接入后改值刷新页面即生效、断网回退本地不发版。
 6. `pnpm check` / 单测 / 构建全绿。
 
 ## 实施顺序
 
-1. ✅ 工程底座(清理 + 固定 ID + website 登录桥,2026-08-30)
+1. ✅ 工程底座(清理 + 固定 ID + website 登录桥,2026-08-30;固定 ID 与 v2 官网桥已随 2026-09-01 登录 v3 删除)
 2. M2 `sites/bing` 配置契约 + data-entity 解析(黄金样本作单测 fixture)
 3. M3 采集循环 + 面板 UI + 导出
 4. M4 登录接收 + 免费/Pro 门控 + Pricing 页
@@ -123,7 +124,7 @@ Free vs Pro 对比表(一次性导出条数 ≤20 vs 无限;CSV/XLSX、官网 UR
 
 ## 待决
 
-- 官网生产域名未定:插件登录桥白名单与订阅跳转统一走构建期官网 base URL 配置(机制已就绪,dev 指向本地 dev 域、生产指向占位域名),域名确定后改一个环境变量即全端生效(M4/上架前必须关闭)。
+- 官网生产域名未定:插件登录确认页跳转与订阅跳转统一走构建期官网 base URL 配置(机制已就绪,dev 指向本地 dev 域、生产指向占位域名),域名确定后改一个环境变量即全端生效(M4/上架前必须关闭)。登录 v3 后扩展 ID 白名单已不存在(不登记扩展 ID、无 `externally_connectable`),本待决仅剩官网 base URL 本身。
 - Pro 判定的插件侧缓存时长:已定(M4,2026-08-30)——插件内存缓存 5 分钟 + 登录事件即时失效重拉。取值理由:订阅态是计费权益判定,不照搬远程配置的 1 小时口径(否则购买后最长 1 小时权益不生效);登录事件失效覆盖「官网订阅完成 → 回插件」主路径,5 分钟仅兜存量会话漂移;机制沿用 013 拍板的「时间戳 + 间隔阈值」形态。
 - 面板视觉细节(尺寸/间距/动效)按 design.md 在 M3 实施期细化。
 - 官网 Bing 插件产品页与订阅入口(015 域范围,一期可先复用现有订阅页)。

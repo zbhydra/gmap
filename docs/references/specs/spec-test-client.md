@@ -73,6 +73,12 @@
 - 真实 Telegram 下载只允许固定 `/api/client/quota/check`，避免持久 profile 的线上每日额度污染；必须断言配额调用次数，Telegram DOM、媒体请求和 Chrome 下载不得 mock。
 - Instagram 重新启用后的真实验收固定 Home/Story/Post/Carousel/Reel/Profile 样本；Home 必须滚动覆盖真实视频 current/all，并覆盖图片轮播切换前后按钮绝对序号、可见 media ID 和当前项下载；Story 必须在自动播放状态下载当前张、点击原生下一项并下载新当前张；详情 Carousel 必须覆盖虚拟化 DOM 跨窗口切换后的 current/all 按钮、绝对序号和当前项下载。只允许固定 `/api/client/quota/check`；页面 DOM、结构化数据、媒体请求与 Chrome 下载不得 mock，落盘文件必须逐字节匹配点击后的 CDN 响应。
 - **chrome.* 是真实浏览器实现**，不 mock；`chrome.storage` 直接在 page 里操作。
+- **豁免（v3 登录 e2e，2026-09-01 起）**：extension-bing e2e harness（`tests/e2e/harness.ts` 的
+  `installAuthFlowMock`）在 service worker 内把 `chrome.identity.launchWebAuthFlow` 替换为返回带
+  `#code=` 回调 URL 的同步实现——真实流程需弹出官网登录窗口完成人工登录，无人值守 e2e 无法覆盖；
+  豁免仅限该一个 API 与 v3 登录链路（issue/exchange 走 mock HTTP 端点），其余 `chrome.*` 仍真实。
+  随 v3 移除 manifest 固定 key，扩展 ID 不可预知：service worker 定位、事件 origin 过滤一律从
+  `context.serviceWorkers()` 动态提取，禁止写死 `EXTENSION_ID` 常量。
 - Vimeo 重新启用后使用真实公网固定样本；只允许屏蔽 SLS 埋点请求，站点页面、配置、媒体和下载不得 mock。Cloudflare challenge 只能记为环境 skip，不能记为通过。
 - 登录态：所有 Telegram setup、real、ad-assets、manual 和 verify 入口固定使用同一个绝对
   profile：`extension/tests/logs/test-user-data-telegram/`，不提供 profile 参数或环境变量。
@@ -121,7 +127,7 @@
 | 像素完美截图作主要验收 | 维护成本高，业务信号弱 |
 | `fixed timeout` 等待 UI | flaky，用 locator auto-wait |
 | 用 `any` / `unknown` 写测试辅助类型 | 项目禁 any |
-| extension e2e 用 `page.route` mock chrome API | chrome.* 用真实浏览器实现，单测才 mock |
+| extension e2e 用 `page.route` mock chrome API | chrome.* 用真实浏览器实现，单测才 mock；唯一豁免见 §3.2 v3 登录 `launchWebAuthFlow` |
 | 用 component mount 代替 controlled extension e2e | 无法证明 background、content、injected、Manifest 与真实 Chrome API 启动链 |
 | 真实 Canary route 站点页面、DOM、结构化数据或媒体 | 会把外部兼容性验收降级为 fixture 验收 |
 | 默认测试或并发进程读取固定登录 profile | 增加 Telegram session 风险与 Chromium profile 锁冲突 |

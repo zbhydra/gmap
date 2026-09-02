@@ -24,6 +24,7 @@ import { markApi } from '@/core/api/mark'
 import { MARK_TYPE, type MarkType } from '@/core/api/mark/types'
 import { fetchBingRemoteConfig } from '@/sites/bing/config/remoteFetch'
 import { getBackgroundAuthStore, ensureAuthStoreHydrated } from './backgroundStores'
+import { handleOpenExtensionLogin } from './openExtensionLogin'
 import type { BackgroundGetGateStateResponse } from '../types'
 import { getRuntimeConfig } from '../runtimeConfig'
 
@@ -47,6 +48,7 @@ export class BackgroundMessageRouter {
       getRuntimeConfig: () => getRuntimeConfig(),
       getBingConfig: () => fetchBingRemoteConfig(),
       getGateState: () => this.getGateState(),
+      openExtensionLogin: (params, context) => handleOpenExtensionLogin(params, context),
       recordMark: (params, context) => {
         const request = parseRecordMarkRequest(params)
         return this.recordMark(request.mark_type, request.mark_msg, context)

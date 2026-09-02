@@ -66,7 +66,7 @@ class LoginResponse(BaseModel):
 
 
 class ExtensionTokenRequest(BaseModel):
-    """已有 Website 登录态换取插件 token 的请求。"""
+    """插件登录换票请求的旧 token 字段基类。"""
 
     old_extension_access_token: str | None = Field(
         None,
@@ -75,6 +75,38 @@ class ExtensionTokenRequest(BaseModel):
     old_extension_refresh_token: str | None = Field(
         None,
         description="可选的旧插件刷新令牌，仅用于同账号 best-effort 撤销",
+    )
+
+
+class ExtensionLoginCodeIssueRequest(BaseModel):
+    """插件登录 v3 一次性 code 签发请求（Website Bearer 身份）。"""
+
+    code_challenge: str = Field(
+        ...,
+        min_length=43,
+        max_length=43,
+        pattern=r"^[A-Za-z0-9_-]{43}$",
+        description="PKCE S256 challenge：BASE64URL(SHA256(verifier))，固定 43 字符",
+    )
+
+
+class ExtensionLoginCodeIssueResponse(BaseModel):
+    """插件登录 v3 一次性 code 签发响应。"""
+
+    code: str = Field(..., description="一次性 code，经回调 URL fragment 传回插件")
+    expires_in: int = Field(..., description="code 有效期（秒）")
+
+
+class ExtensionLoginCodeExchangeRequest(ExtensionTokenRequest):
+    """插件登录 v3 一次性 code 换插件 token 请求（无 Bearer）。"""
+
+    code: str = Field(..., min_length=1, max_length=256, description="一次性登录 code")
+    code_verifier: str = Field(
+        ...,
+        min_length=43,
+        max_length=128,
+        pattern=r"^[A-Za-z0-9._~-]{43,128}$",
+        description="PKCE verifier，须与 code 绑定的 challenge 对应（RFC 7636 字符集）",
     )
 
 

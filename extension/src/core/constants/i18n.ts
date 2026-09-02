@@ -32,8 +32,6 @@ export const I18N_KEYS = {
     SUPPORT_EMAIL_COPIED: 'app.supportEmailCopied',
     /** 支持邮箱复制失败 */
     SUPPORT_EMAIL_COPY_FAILED: 'app.supportEmailCopyFailed',
-    /** 登录能力尚未接入提示 */
-    LOGIN_NOT_AVAILABLE: 'auth.loginNotAvailable',
     /** 打开批量任务 dashboard 按钮 */
     OPEN_DASHBOARD: 'app.openDashboard'
   },

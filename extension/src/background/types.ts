@@ -43,9 +43,9 @@ export interface BackgroundUpdateBadgeResponse {
   updated: boolean
 }
 
-/** background 打开官网插件登录页响应。 */
+/** background 发起 v3 插件登录的响应（任何一步失败统一 false，不抛 RPC 错误）。 */
 export interface BackgroundOpenExtensionLoginResponse {
-  /** 是否已打开登录窗口。 */
+  /** 登录是否完成且 token 对已条件提交（结果感知以 storage 三键为准）。 */
   opened: boolean
 }
 
