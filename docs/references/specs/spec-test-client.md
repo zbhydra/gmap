@@ -73,10 +73,15 @@
 - 真实 Telegram 下载只允许固定 `/api/client/quota/check`，避免持久 profile 的线上每日额度污染；必须断言配额调用次数，Telegram DOM、媒体请求和 Chrome 下载不得 mock。
 - Instagram 重新启用后的真实验收固定 Home/Story/Post/Carousel/Reel/Profile 样本；Home 必须滚动覆盖真实视频 current/all，并覆盖图片轮播切换前后按钮绝对序号、可见 media ID 和当前项下载；Story 必须在自动播放状态下载当前张、点击原生下一项并下载新当前张；详情 Carousel 必须覆盖虚拟化 DOM 跨窗口切换后的 current/all 按钮、绝对序号和当前项下载。只允许固定 `/api/client/quota/check`；页面 DOM、结构化数据、媒体请求与 Chrome 下载不得 mock，落盘文件必须逐字节匹配点击后的 CDN 响应。
 - **chrome.* 是真实浏览器实现**，不 mock；`chrome.storage` 直接在 page 里操作。
-- **豁免（v3 登录 e2e，2026-09-01 起）**：extension-bing e2e harness（`tests/e2e/harness.ts` 的
-  `installAuthFlowMock`）在 service worker 内把 `chrome.identity.launchWebAuthFlow` 替换为返回带
-  `#code=` 回调 URL 的同步实现——真实流程需弹出官网登录窗口完成人工登录，无人值守 e2e 无法覆盖；
-  豁免仅限该一个 API 与 v3 登录链路（issue/exchange 走 mock HTTP 端点），其余 `chrome.*` 仍真实。
+- **extension-bing（016）e2e 为真实界面单层（2026-09-02 起）**：禁止 route mock 站点页面与
+  本地 fixture 页，直接打开真实 `www.bing.com/maps` 采集真实数据；Playwright 必须做反自动化
+  身份处理（去 `--enable-automation` + `--disable-blink-features=AutomationControlled` +
+  身份兜底 init script，website browser-identity 同款）；环境波动（人机验证/落地域偏离/DOM
+  改版）条件化 skip 并记 skip-reason，插件自身行为失败照常 fail。登录流程不做 e2e：登录态由
+  `backend/scripts/e2e_seed_user.py`（`bing-extension-pro` 场景）签发真实 token 对，spec 经扩展
+  service worker 直写 `chrome.storage.local` auth 三键；本地 backend 不可达时登录态用例 skip。
+  构建变体 `dist-real`（API 指向本地 backend、SLS 构建期禁用）随 `pnpm test:e2e` 前置产出。
+  合同见 `docs/feat/016.Bing插件/references/T1-技术设计.md` §6。
   随 v3 移除 manifest 固定 key，扩展 ID 不可预知：service worker 定位、事件 origin 过滤一律从
   `context.serviceWorkers()` 动态提取，禁止写死 `EXTENSION_ID` 常量。
 - Vimeo 重新启用后使用真实公网固定样本；只允许屏蔽 SLS 埋点请求，站点页面、配置、媒体和下载不得 mock。Cloudflare challenge 只能记为环境 skip，不能记为通过。
@@ -106,11 +111,11 @@
 
 ## 4. 数据、登录态与清理
 
-| | website smoke | extension 真实跑 |
-|---|---|---|
-| 账号 | 后端 `e2e_seed_user.py` seed，**不清理** | Telegram profile 与 Instagram storage state 保留登录态，不创建账号 |
-| token | `globalSetup` 注入 env（`E2E_ACCESS_TOKEN` / `E2E_DEVICE_ID`），spec 写 localStorage | Telegram profile / Instagram storage state |
-| 隔离 | project + env 切 base URL | Instagram 使用逐用例 profile；`testRunId`（`e2e-{ts}-{6}`）隔离下载目录 |
+| | website smoke | extension 真实跑 | extension-bing 真实 e2e |
+|---|---|---|---|
+| 账号 | 后端 `e2e_seed_user.py` seed，**不清理** | Telegram profile 与 Instagram storage state 保留登录态，不创建账号 | `e2e_seed_user.py` `bing-extension-pro` 场景 seed（幂等，**不清理**） |
+| token | `globalSetup` 注入 env（`E2E_ACCESS_TOKEN` / `E2E_DEVICE_ID`），spec 写 localStorage | Telegram profile / Instagram storage state | `globalSetup` 注入 env（`E2E_BING_AUTH`），spec 经扩展 SW 写 `chrome.storage.local` auth 三键 |
+| 隔离 | project + env 切 base URL | Instagram 使用逐用例 profile；`testRunId`（`e2e-{ts}-{6}`）隔离下载目录 | 每用例独立临时 persistent profile（unpacked 扩展 ID 按 profile 派生） |
 
 两端都不做严格 DB 清理，依赖 fixture / seed / profile 隔离。
 
@@ -127,7 +132,8 @@
 | 像素完美截图作主要验收 | 维护成本高，业务信号弱 |
 | `fixed timeout` 等待 UI | flaky，用 locator auto-wait |
 | 用 `any` / `unknown` 写测试辅助类型 | 项目禁 any |
-| extension e2e 用 `page.route` mock chrome API | chrome.* 用真实浏览器实现，单测才 mock；唯一豁免见 §3.2 v3 登录 `launchWebAuthFlow` |
+| extension e2e 用 `page.route` mock chrome API | chrome.* 用真实浏览器实现，单测才 mock |
+| extension-bing e2e route mock 站点页面或使用本地 fixture 页 | 会把真实界面验收降级为 fixture 验收（2026-09-02 hydra 拍板，真实界面为唯一主验收） |
 | 用 component mount 代替 controlled extension e2e | 无法证明 background、content、injected、Manifest 与真实 Chrome API 启动链 |
 | 真实 Canary route 站点页面、DOM、结构化数据或媒体 | 会把外部兼容性验收降级为 fixture 验收 |
 | 默认测试或并发进程读取固定登录 profile | 增加 Telegram session 风险与 Chromium profile 锁冲突 |

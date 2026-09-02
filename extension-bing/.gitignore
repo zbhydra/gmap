@@ -4,3 +4,4 @@ dist-e2e/
 # Playwright 本地运行输出
 tests/logs/
 keys/
+dist-real/

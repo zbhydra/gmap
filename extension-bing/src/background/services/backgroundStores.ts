@@ -6,9 +6,10 @@
  * 一 store 定义，跨上下文以 chrome.storage（authApi 持久化）为准。
  *
  * 登录/登出都发生在 storage（popup Sign out、openExtensionLogin 提交、
- * 401 清理）：background 监听 auth 三键 onChanged，变化即失效内存态并
- * 重置 hydrate 标记，下次门控查询按 storage 权威重新恢复，杜绝 SW 生命周期
- * 内的陈旧 authenticated/isPro。
+ * 401 清理）：background 监听 token 对（access/refresh）onChanged，变化即
+ * 失效内存态并重置 hydrate 标记，下次门控查询按 storage 权威重新恢复，
+ * 杜绝 SW 生命周期内的陈旧 authenticated/isPro。USER_INFO 单独变化是同
+ * 会话资料回写（getCurrentUser 持久化），不清态——见 watcher 实现处注释。
  */
 
 import { createPinia, setActivePinia, type Pinia } from 'pinia'
@@ -47,17 +48,21 @@ export async function ensureAuthStoreHydrated(): Promise<void> {
   await store.initialize()
 }
 
-/** 安装 auth 三键 storage 监听：任何变化都清 background 内存态并重置 hydrate。 */
+/**
+ * 安装 auth storage 监听：token 对（access/refresh）变化 = 外部登录/登出，
+ * 清 background 内存态并重置 hydrate 标记，下次门控查询按 storage 权威恢复。
+ *
+ * USER_INFO 不监听：它会在同会话内被 authStore.initialize 的
+ * getCurrentUser 回写刷新（auth/me 最新资料持久化），登录态（token 对）
+ * 并未变化；若也清态，hydrate 刚恢复的登录态会被自己的资料回写吞掉
+ * ——冷启动首查返回匿名、面板回落 Sign in，直到下一轮刷新才自愈。
+ */
 function installAuthStorageWatcher(): void {
   if (authStorageWatcherInstalled) {
     return
   }
   authStorageWatcherInstalled = true
-  for (const key of [
-    STORAGE_KEYS.ACCESS_TOKEN,
-    STORAGE_KEYS.REFRESH_TOKEN,
-    STORAGE_KEYS.USER_INFO
-  ]) {
+  for (const key of [STORAGE_KEYS.ACCESS_TOKEN, STORAGE_KEYS.REFRESH_TOKEN]) {
     storageManager.onChanged(key, () => {
       authHydrated = false
       getBackgroundAuthStore().clearAuth()

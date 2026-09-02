@@ -51,3 +51,26 @@ async def test_real_subscription_status_returns_free_plan_for_anonymous(
     assert body["data"]["status"] == "active"
     assert "daily_limit" not in body["data"]
     assert "extension_download" not in body["data"]
+
+
+async def test_real_subscription_status_supports_product_line_query(
+    real_async_client,
+    real_subscription_status_schema_ready,
+) -> None:
+    """合法 product_line 按线返回游客免费状态；白名单外的值拒绝。"""
+
+    by_line = await real_async_client.get(
+        "/api/client/subscription/status",
+        params={"product_line": "maps_extension"},
+        headers={"X-Device-Id": f"e2e-subscription-status-{uuid4().hex}"},
+    )
+    assert by_line.status_code == 200
+    assert by_line.json()["data"]["period"] == "free"
+
+    unknown = await real_async_client.get(
+        "/api/client/subscription/status",
+        params={"product_line": "not_a_product_line"},
+        headers={"X-Device-Id": f"e2e-subscription-status-{uuid4().hex}"},
+    )
+    assert unknown.status_code == 400
+    assert unknown.json()["code"] == CommonCode.INVALID_REQUEST

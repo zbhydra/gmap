@@ -1,19 +1,14 @@
 /**
  * 订阅相关类型定义
+ *
+ * 契约对齐后端 `subscription_status_service.build_status_data` 的真实响应
+ * （/subscription/status 与 /auth/me 的 maps_extension_subscription 同构）；
+ * 旧 TG 底座携带的每日额度字段（daily_limit/used/remaining 等）后端已不再
+ * 返回，插件门控只消费 period。
  */
 
 /** 订阅周期（包含免费版） */
 export type SubscriptionPeriod = 'free' | 'month' | 'unavailable'
-
-/** 单类每日额度状态。 */
-export interface DailyQuotaStatus {
-  /** 今日已用次数。 */
-  use: number
-  /** 剩余额度，-1 表示无限制。 */
-  remaining: number
-  /** 每日额度上限，-1 表示无限制。 */
-  limit: number
-}
 
 /** 订阅状态 */
 export interface SubscriptionStatus {
@@ -23,20 +18,8 @@ export interface SubscriptionStatus {
   period: SubscriptionPeriod
   /** 展示名称。 */
   display_name: string
-  /** 过期时间戳，null 表示无过期时间。 */
+  /** 过期毫秒时间戳，null 表示无过期时间。 */
   expires_at: number | null
-  /** 每日下载限制，旧版兼容字段，-1 表示无限制。 */
-  daily_limit: number
-  /** 今日已用次数，旧版兼容字段。 */
-  used: number
-  /** 剩余配额，旧版兼容字段，-1 表示无限制。 */
-  remaining: number
-  /** 插件下载额度，新版结构化字段。 */
-  extension_download?: DailyQuotaStatus
-  /** 是否自动续费，兼容官网订阅状态。 */
+  /** 是否自动续费。 */
   auto_renew?: boolean
-  /** 是否一次性购买，兼容官网订阅状态。 */
-  one_time?: boolean
-  /** 重置日期（YYYY-MM-DD）。 */
-  reset_date: string
 }

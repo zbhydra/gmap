@@ -1,215 +1,192 @@
 /**
- * e2e 共享 harness（U1 交付，016 U3/U5 + 006 v3 登录用例复用）。
+ * e2e 共享 harness(真实界面层,016 T1 §6)。
  *
- * - MV3 扩展的 content script 只在 persistent context 注入(非 persistent 属
- *   隐身语义,扩展默认关闭),故用 launchPersistentContext + --load-extension
- *   自管上下文;headful 为扩展要求的运行形态;
- * - 注入机制:context.route 拦截 https://www.bing.com/maps** 返回 fixture,
- *   URL 保持 bing.com 使 content script 正常注入、manifest 匹配不破坏,请求
- *   不出网;其余 http(s) 一律 abort(全程零外网);
- * - 浏览器进程级断 DNS(--host-resolver-rules):route 注册与扩展 SW 遥测首次
- *   上报之间存在毫秒级竞态,窗口内漏网请求必须确定性失败而非真实出网;
- * - v3 登录 mock(006 §4.4):chrome.identity.launchWebAuthFlow 替换为同步
- *   回调 mock——返回带 #code=<一次性code> 的 chromiumapp.org 回调 URL(真实
- *   auth flow 窗口在 Playwright persistent context 中不可观测,route 无法
- *   承演官网确认页);mock exchange 端点按一次性 code 消费并回合同完整
- *   token 对。manifest 移除固定 key 后扩展 ID 不可预知,一律从
- *   context.serviceWorkers() 动态反解。
+ * - MV3 扩展 content script 只在 persistent context 注入,launchPersistentContext
+ *   + --load-extension 自管上下文,headful 为扩展要求的运行形态;
+ * - 真实界面铁律(2026-09-02 hydra 拍板,替代离线 fixture 层):打开真实
+ *   www.bing.com/maps 采集真实数据,零 route mock、零本地 fixture 页;
+ * - 反自动化身份:去掉 Playwright 默认 --enable-automation、追加
+ *   --disable-blink-features=AutomationControlled,并注入身份兜底 init
+ *   script(website scripts/playwright-browser-identity.mjs 同款)——只消除
+ *   已知自曝字段,不承诺绕过第三方 bot 检测;
+ * - 产物 = dist-real(build:real 变体:API 指向本地真实 backend、SLS 构建期
+ *   禁用)。登录流程不做 e2e;登录态用例的 token 由 globalSetup 经后端
+ *   e2e_seed_user.py(bing-extension-pro 场景)签发,本 harness 提供经扩展
+ *   service worker 直写 chrome.storage 三键的注入;
+ * - 环境降级分界:人机验证/网络不可达/落地域偏离/DOM 改版迹象 → skipSmoke
+ *   条件跳过并记录原因;插件自身行为(门控/计数/导出)失败照常 fail。
  */
 
 import { resolve } from 'node:path'
 import {
   chromium,
-  expect,
+  test,
   type BrowserContext,
-  type CDPSession,
+  type Download,
+  type Locator,
   type Page,
   type Worker
 } from '@playwright/test'
 
-/** 生产构建产物目录(由 test:e2e 的构建前置 pnpm build 产出)。 */
-export const PATH_TO_EXTENSION = resolve(process.cwd(), 'dist')
+/** 真实 e2e 构建产物目录(由 test:e2e 的构建前置 pnpm build:real 产出)。 */
+export const PATH_TO_EXTENSION = resolve(process.cwd(), 'dist-real')
 
-/** fixture 页路径(globalSetup 已从黄金样本重合成)。 */
-export const FIXTURE_PATH = resolve(process.cwd(), 'tests/e2e/fixtures/bing-maps-fixture.html')
-
-/** fixture 页合成规模(与 generate-fixture.mjs 契约一致)。 */
-export const FIXTURE_TOTAL = 30
-export const FIXTURE_DEFAULT_INITIAL = 25
-
-/** 演示搜索词 URL(与真实 Bing 搜索形态同构;请求本身被 route 拦截不出网)。 */
+/** 演示搜索词 URL(真实出网;结果量远超免费 20 条上限)。 */
 export const MAPS_URL = 'https://www.bing.com/maps?q=auto+repair+near+new+york+city'
 
-/** fixture 页内嵌的「加载更多」控制接口(由 generate-fixture.mjs 注入)。 */
-declare global {
-  interface Window {
-    bingFixture: {
-      total: number
-      renderedCount: () => number
-      loadMore: (count?: number) => void
-      loadAll: () => void
-      enableScrollPaging: () => void
-      disableScrollPaging: () => void
-    }
+/** 免费档单次行数上限(contract scrape.freeRowLimit)。 */
+export const FREE_ROW_LIMIT = 20
+
+/** 免费档导出末行提示(竞品逐字抄录)。 */
+export const FREE_LIMIT_NOTE = 'Free accounts can export up to 20 data entries.'
+
+/** 18 列表头基线(golden-samples/export.csv,与 parser BING_EXPORT_COLUMNS 同源)。 */
+export const EXPECTED_HEADERS = [
+  'ID',
+  'Name',
+  'Address',
+  'Featured image',
+  'Bing Maps URL',
+  'Latitude',
+  'Longitude',
+  'Rating',
+  'Rating Info',
+  'Category',
+  'Open Hours',
+  'Website',
+  'Phone',
+  'Emails',
+  'Social Medias',
+  'Facebook',
+  'Instagram',
+  'Twitter'
+]
+
+/** 面板根(自建 fixed 容器内的直插面板)。 */
+const PANEL_ROOT_SELECTOR = '#bing-maps-scraper-panel-host .bing-panel-root'
+
+/**
+ * 文档开始前执行的身份兜底脚本(website playwright-browser-identity.mjs 同款):
+ * webdriver 置否 + Client Hints brands 去 Headless 标记。headful 下 brands
+ * 本无 Headless 标记,此处为防御性兜底;脚本对扩展 content script 无影响
+ * (隔离 world 不执行页面 init script)。
+ */
+const IDENTITY_INIT_SCRIPT = `
+(() => {
+  try {
+    Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false, configurable: true })
+  } catch (error) {}
+  const uaData = navigator.userAgentData
+  if (uaData && Array.isArray(uaData.brands) && uaData.brands.some((brand) => brand.brand.toLowerCase().includes('headless'))) {
+    const brands = uaData.brands.map((brand) =>
+      brand.brand.toLowerCase().includes('headless') ? { ...brand, brand: 'Google Chrome' } : brand
+    )
+    try {
+      Object.defineProperty(Navigator.prototype, 'userAgentData', {
+        get: () => ({ ...uaData, brands }),
+        configurable: true
+      })
+    } catch (error) {}
+  }
+})()
+`
+
+/**
+ * globalSetup seed 输出经 env 传递的登录态(e2e_seed_user.py
+ * bing-extension-pro 场景;token 与 /auth/extension-login/exchange 同构)。
+ */
+export interface BingE2eAuth {
+  access_token: string
+  refresh_token: string
+  user: {
+    user_id: number
+    email: string | null
+    full_name: string | null
+    avatar_url: string | null
+    created_at: number
   }
 }
 
-// ============================================================================
-// v3 登录 + 门控用例共享装配(006 §4.4)
-// ============================================================================
-
-/** 后端占位 API 域(与 vite.config.ts 生产构建 define 同源)。 */
-export const API_ORIGIN = 'https://api.example.com'
-
-/** AUTH_ME mock 信封 data(spec-website §7:code 10000 成功)。 */
-export interface MockAuthUser {
-  user_id: number
-  email: string
-  full_name: string
-  avatar_url: string | null
-  created_at: number
+/** 面板根 locator(各 spec 共用同选择器)。 */
+export function panel(page: Page): Locator {
+  return page.locator(PANEL_ROOT_SELECTOR)
 }
 
-/** SUBSCRIPTION_STATUS mock 信封 data(006 域 SubscriptionStatus 形状)。 */
-export interface MockSubscription {
-  status: 'active' | 'unavailable'
-  period: 'free' | 'month' | 'unavailable'
-  display_name: string
-  expires_at: number | null
-  daily_limit: number
-  used: number
-  remaining: number
-  reset_date: string
+/** Start Extraction 按钮。 */
+export function startButton(page: Page): Locator {
+  return panel(page).getByRole('button', { name: 'Start Extraction' })
 }
 
-/** CORS 头:扩展 SW 发起的跨域 fetch 需要标准 CORS 应答(preflight 含 OPTIONS)。 */
-const CORS_HEADERS = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-headers': '*',
-  'access-control-allow-methods': 'GET,POST,OPTIONS'
-}
-
-export interface ExtensionLoginRouteOptions {
-  /** exchange mock 返回的登录账号。 */
-  user: MockAuthUser
-  /** SUBSCRIPTION_STATUS mock 订阅态。 */
-  subscription: MockSubscription
-  /** mock auth flow 将交付的一次性 code(exchange 只消费这一枚)。 */
-  loginCode: string
-}
-
-export interface ExtensionLoginRouteResult {
-  /** 被 route fulfill/DNS 放行的 URL(白名单真相)。 */
-  fulfilled: string[]
-  /** exchange 端点已消费的一次性 code。 */
-  consumedCodes: string[]
+/** 去掉 BOM 并按行拆分(导出数据不含引号内换行,行拆分安全)。 */
+export function csvLines(content: string): string[] {
+  return content
+    .replace(/^\uFEFF/, '')
+    .split('\n')
+    .filter(line => line.length > 0)
 }
 
 /**
- * v3 登录/门控用例统一网络拦截:在 harness 零外网拦截(先挂 abort 兜底)之上,
- * 追加白名单(后挂优先):
- * 1. bing.com/maps → fixture(采集页面);
- * 2. API extension-login/exchange → mock exchange(一次性消费 loginCode,
- *    回合同完整 token 对);
- * 3. API auth/me、subscription/status → mock 信封(登录后 initialize/订阅
- *    联动消费)。
- * launchWebAuthFlow 由 installAuthFlowMock 替换,官网确认页与 issue 端点
- * 不在本层拦截范围。
+ * 引号感知的单行 CSV 字段解析(RFC4180 简版):引号包裹字段可含逗号,
+ * 引号内 `"` 双写转义;列级断言必须用它,`split(',')` 会被地址字段内的
+ * 逗号错位(真实 Bing 地址常含逗号)。
  */
-export async function setupExtensionLoginRoutes(
-  context: BrowserContext,
-  fixtureHtml: string,
-  options: ExtensionLoginRouteOptions
-): Promise<ExtensionLoginRouteResult> {
-  const fulfilled: string[] = []
-  const consumedCodes: string[] = []
-  // 先挂 abort 兜底(拦截不打标记,与 setupRoutes 的 fulfilled 语义一致:
-  // 只记录被 route fulfill/DNS 放行的真实成功请求)
-  await context.route(/^https?:\/\//, route => route.abort())
-  await context.route('https://www.bing.com/maps**', route => {
-    fulfilled.push(route.request().url())
-    return route.fulfill({ contentType: 'text/html; charset=utf-8', body: fixtureHtml })
-  })
-  await context.route(`${API_ORIGIN}/api/client/auth/extension-login/exchange**`, route => {
-    fulfilled.push(route.request().url())
-    if (route.request().method() === 'OPTIONS') {
-      return route.fulfill({ status: 204, headers: CORS_HEADERS })
+export function parseCsvLine(line: string): string[] {
+  const fields: string[] = []
+  let current = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i]
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          current += '"'
+          i += 1
+        } else {
+          inQuotes = false
+        }
+      } else {
+        current += char
+      }
+    } else if (char === '"') {
+      inQuotes = true
+    } else if (char === ',') {
+      fields.push(current)
+      current = ''
+    } else {
+      current += char
     }
-    const body = route.request().postDataJSON() as { code?: string }
-    if (body.code !== options.loginCode || consumedCodes.includes(options.loginCode)) {
-      return route.fulfill({
-        status: 200,
-        headers: CORS_HEADERS,
-        contentType: 'application/json',
-        body: JSON.stringify({ code: 10104, data: {}, msg: 'AUTH_INVALID_CREDENTIALS' })
-      })
-    }
-    consumedCodes.push(options.loginCode)
-    return route.fulfill({
-      status: 200,
-      headers: CORS_HEADERS,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        code: 10000,
-        data: {
-          extension_access_token: 'e2e-extension-access-token',
-          extension_refresh_token: 'e2e-extension-refresh-token',
-          token_type: 'bearer',
-          expires_in: 604800,
-          user: options.user
-        },
-        msg: 'success'
-      })
-    })
-  })
-  await context.route(`${API_ORIGIN}/api/client/auth/me**`, route => {
-    fulfilled.push(route.request().url())
-    if (route.request().method() === 'OPTIONS') {
-      return route.fulfill({ status: 204, headers: CORS_HEADERS })
-    }
-    return route.fulfill({
-      status: 200,
-      headers: CORS_HEADERS,
-      contentType: 'application/json',
-      body: JSON.stringify({ code: 10000, data: options.user, msg: 'success' })
-    })
-  })
-  await context.route(`${API_ORIGIN}/api/client/subscription/status**`, route => {
-    fulfilled.push(route.request().url())
-    if (route.request().method() === 'OPTIONS') {
-      return route.fulfill({ status: 204, headers: CORS_HEADERS })
-    }
-    return route.fulfill({
-      status: 200,
-      headers: CORS_HEADERS,
-      contentType: 'application/json',
-      body: JSON.stringify({ code: 10000, data: options.subscription, msg: 'success' })
-    })
-  })
-  return { fulfilled, consumedCodes }
+  }
+  fields.push(current)
+  return fields
+}
+
+/** 等待下载完成并返回下载对象。 */
+export async function readDownload(page: Page, trigger: () => Promise<void>): Promise<Download> {
+  const downloadPromise = page.waitForEvent('download')
+  await trigger()
+  return downloadPromise
 }
 
 /**
- * 启动加载扩展的 headful persistent context(每用例独立临时 profile)。
- *
- * @param options.resolverRules 覆盖进程级 --host-resolver-rules 的规则列表;
- *   缺省 = `MAP * ~NOTFOUND`(离线层全程零外网铁律,说明见文件头)。仅真实
- *   Bing smoke 层(U5)传入遥测域定点断网规则以放行真实 bing.com——见
- *   real-bing-smoke.spec.ts。
+ * 启动加载扩展的 headful persistent context(每用例独立临时 profile),
+ * 附带反自动化身份处理(见文件头);真实出网,无任何 route 拦截。
  */
-export async function launchExtensionContext(
-  options: { resolverRules?: string[] } = {}
-): Promise<BrowserContext> {
-  const resolverRules = options.resolverRules ?? ['MAP * ~NOTFOUND']
-  return chromium.launchPersistentContext('', {
+export async function launchRealBingContext(): Promise<BrowserContext> {
+  const context = await chromium.launchPersistentContext('', {
     channel: 'chromium',
     headless: false,
+    locale: 'en-US',
+    // --enable-automation 会置 navigator.webdriver=true 并显示自动化提示条,
+    // 去掉后 Playwright 其余能力(CDP)不受影响
+    ignoreDefaultArgs: ['--enable-automation'],
     args: [
       `--disable-extensions-except=${PATH_TO_EXTENSION}`,
       `--load-extension=${PATH_TO_EXTENSION}`,
-      `--host-resolver-rules=${resolverRules.join(',')}`
+      '--disable-blink-features=AutomationControlled'
     ]
   })
+  await context.addInitScript(IDENTITY_INIT_SCRIPT)
+  return context
 }
 
 /** 等待扩展 MV3 service worker 注册完成并返回。 */
@@ -225,92 +202,78 @@ export async function waitForExtensionServiceWorker(context: BrowserContext): Pr
 }
 
 /**
- * 从扩展 service worker URL 反解扩展 ID。manifest 固定 key 移除后扩展 ID
- * 不再可预知(unpacked 安装按 profile 派生),全部断言改为动态提取。
+ * 从扩展 service worker URL 反解扩展 ID。manifest 无固定 key,unpacked
+ * 安装的扩展 ID 按 profile 派生不可预知,一律动态提取。
  */
 export function extensionIdFromServiceWorker(worker: Worker): string {
   return new URL(worker.url()).host
 }
 
 /**
- * v3 登录 mock(006 §4.4):把扩展 SW 内的 chrome.identity.launchWebAuthFlow
- * 替换为同步回调——直接返回带 #code=<一次性code> 的 chromiumapp.org 回调
- * URL。真实 auth flow 窗口在 Playwright persistent context 中不可观测
- * (page 事件不触发、context.route 不适用),无法经窗口承演官网确认页;
- * 回调 URL 形态(chromiumapp.org + fragment 交付 code)、一次性 code 消费
- * 与生产合同一致。SW 闲置自毁会丢失替换,须在点击登录前即时安装。
+ * 登录态直注:经扩展 service worker 把 seed 签发的 token 对与用户信息写入
+ * chrome.storage.local 三键(键名与 core/api/config.ts STORAGE_KEYS 同源,
+ * 与 applyExtensionLogin 的持久化落点一致)。登录流程本身不做 e2e
+ * (2026-09-02 hydra 拍板);content script 在后续导航中读到即登录态。
  */
-export async function installAuthFlowMock(serviceWorker: Worker, code: string): Promise<void> {
-  await serviceWorker.evaluate(mockCode => {
-    chrome.identity.launchWebAuthFlow = ((_options, callback) => {
-      const redirectUri = chrome.identity.getRedirectURL('extension-login')
-      callback(`${redirectUri}#code=${mockCode}`)
-    }) as typeof chrome.identity.launchWebAuthFlow
-  }, code)
-}
-
-/**
- * 统一网络拦截:maps 走 fixture,其余 http(s) 一律 abort(零外网)。
- * 返回 route 层分流记录:fulfilled 为被放行的 URL(白名单真相),
- * intercepted 为被 abort 的 URL(含生产产物的 SW 遥测尝试)。
- */
-export async function setupRoutes(
-  context: BrowserContext,
-  fixtureHtml: string
-): Promise<{ fulfilled: string[]; intercepted: string[] }> {
-  const fulfilled: string[] = []
-  const intercepted: string[] = []
-  // Playwright 后注册的 route 优先匹配:须先挂 abort 兜底、再挂 fixture 路由
-  await context.route(/^https?:\/\//, route => {
-    intercepted.push(route.request().url())
-    return route.abort()
-  })
-  await context.route('https://www.bing.com/maps**', route => {
-    fulfilled.push(route.request().url())
-    return route.fulfill({ contentType: 'text/html; charset=utf-8', body: fixtureHtml })
-  })
-  return { fulfilled, intercepted }
-}
-
-/**
- * 断言 content script 注入生效:在页面 CDP 会话上监听扩展隔离 world 的创建,
- * 并在其中执行 chrome.runtime.id,命中扩展 ID 即证明注入生效。
- * 过滤依据是 origin(chrome-extension://<id>,动态反解);不能只看
- * auxData.type==='isolated',Playwright 自身的 utility world 同为 isolated
- * 且会在 Runtime.enable 时回放,其旧文档 context 在导航后被销毁,误评会报
- * Cannot find context。
- */
-export async function assertContentScriptInjected(cdp: CDPSession, page: Page): Promise<void> {
-  const serviceWorker = page
-    .context()
-    .serviceWorkers()
-    .find(worker => worker.url().startsWith('chrome-extension://'))
-  if (!serviceWorker) {
-    throw new Error('[e2e] 反解扩展 ID 失败:context 内无扩展 service worker')
-  }
-  const extensionId = extensionIdFromServiceWorker(serviceWorker)
-
-  const extensionWorldIds: number[] = []
-  cdp.on('Runtime.executionContextCreated', event => {
-    if (event.context.origin.startsWith(`chrome-extension://${extensionId}`)) {
-      extensionWorldIds.push(event.context.id)
-    }
-  })
-  // enable 必须先于 goto,否则会错过随文档创建的隔离 world
-  await cdp.send('Runtime.enable')
-
-  await page.goto(MAPS_URL)
-
-  await expect.poll(() => extensionWorldIds.length, { timeout: 15_000 }).toBeGreaterThan(0)
-
-  const runtimeIds: string[] = []
-  for (const contextId of extensionWorldIds) {
-    const evaluation = await cdp.send('Runtime.evaluate', {
-      expression: 'self.chrome && chrome.runtime ? chrome.runtime.id : ""',
-      contextId,
-      returnByValue: true
+export async function injectExtensionAuth(serviceWorker: Worker, auth: BingE2eAuth): Promise<void> {
+  // set 的 Promise 作为 evaluate 返回值:Playwright 会等它 resolve,保证
+  // 注入函数返回时三键已落盘,后续导航的 content script 必然读到登录态
+  await serviceWorker.evaluate(seed => {
+    return chrome.storage.local.set({
+      auth_access_token: seed.access_token,
+      auth_refresh_token: seed.refresh_token,
+      auth_user_info: seed.user
     })
-    runtimeIds.push(String(evaluation.result.value))
+  }, auth)
+}
+
+/** 条件化跳过:原因落到测试输出与报告标注(skip-reason),不阻塞整体退出码。 */
+export function skipSmoke(reason: string): void {
+  console.warn(`[real-bing] SKIP: ${reason}`)
+  test.info().annotations.push({ type: 'skip-reason', description: reason })
+  test.skip(true, reason)
+}
+
+/**
+ * 人机验证/挑战页启发式探测:命中返回特征描述,未命中返回 null。
+ * Bing 挑战页无稳定单一标记,按标题/正文文案 + 挑战表单特征多路匹配。
+ */
+export async function detectChallenge(page: Page): Promise<string | null> {
+  try {
+    return await page.evaluate(() => {
+      const title = document.title.toLowerCase()
+      const bodyText = (document.body?.innerText ?? '').slice(0, 4000).toLowerCase()
+      if (
+        /verify (that you are|you are) human|human verification|are you human|unusual traffic/.test(
+          `${title} ${bodyText}`
+        )
+      ) {
+        return `页面文案命中人机验证特征(标题: ${document.title})`
+      }
+      if (
+        document.querySelector(
+          '#challengeForm, form[action*="challenge"], iframe[src*="challenge"], input[name="bpaccuracy"]'
+        )
+      ) {
+        return '页面存在挑战表单/iframe 元素'
+      }
+      return null
+    })
+  } catch {
+    // 页面已跳转/销毁等评测环境异常:按未命中处理,由后续超时路径兜底
+    return null
   }
-  expect(runtimeIds).toContain(extensionId)
+}
+
+/**
+ * 落地域偏离描述(manifest 仅匹配 https://www.bing.com/maps*):真实环境常按
+ * 地域 302 到 cn.bing.com 等子域,content script 不注入——记录实际落地域供归因。
+ */
+export async function describeLandingHost(page: Page): Promise<string> {
+  try {
+    const host = new URL(page.url()).host
+    return host && host !== 'www.bing.com' ? `;实际落地域 ${host}` : ''
+  } catch {
+    return ''
+  }
 }

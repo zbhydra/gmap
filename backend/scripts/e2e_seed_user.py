@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 """
-Website 真实回归专用的用户种子脚本。
+website 真实回归 / Bing 插件真实 e2e 的用户种子脚本。
 
 用途
 ----
-website 端真实回归需要可重复准备不同业务状态。本脚本按显式场景负责：
+按显式场景准备 e2e 账号业务状态：
 
 - ``pricing-review-reward``：幂等创建独立 Pricing 账号，删除其订阅记录与
   ``SUBSCRIPTION_REVIEW_REWARD_CLAIMED`` lifetime Counter，并从真实 MySQL 回读
   确认账号无有效订阅且永久领取次数为零。
-- ``seed``：按所选场景准备业务状态，用后端同源 ``JwtUnit`` 签发 access token，
-  并把该 token 写入 Redis（``store_token``），
-  最后把 ``{token, user_id, email, device_id, scenario}`` 以单行 JSON 打到 stdout 供
-  Playwright globalSetup 读取。
+- ``bing-extension-pro``：幂等创建 Bing 插件（016 域）e2e 账号，重置并造
+  maps_extension 产品线 Pro 订阅（30 天，回读验证 period=month），再用
+  ``user_auth_service.issue_registered_tokens_for_user`` 签发与
+  ``/auth/extension-login/exchange`` 完全同构的 access+refresh token 对并注册
+  Redis 白名单。插件 e2e 不测登录流程（2026-09-02 hydra 拍板），登录态经本
+  脚本签发 token 后由 Playwright 直接注入 ``chrome.storage.local`` 三键。
+- ``seed``：按所选场景准备业务状态并签 token，把结果单行 JSON 打到 stdout
+  供 Playwright globalSetup 读取。
 - ``cleanup``：按场景固定 email 软删用户、删订阅、撤销该用户全部 token、
   删除 Credits 流水与账户，让回归账号不残留脏数据。
 
@@ -53,6 +57,11 @@ if str(SRC_DIR) not in sys.path:
 from app.constants.auth import TokenType  # noqa: E402
 from app.constants.client_product import ClientProductEnum  # noqa: E402
 from app.constants.counter import CounterId  # noqa: E402
+from app.constants.subscription import (  # noqa: E402
+    MAPS_EXTENSION_PRO_PRODUCT_ID,
+    MAPS_EXTENSION_PRODUCT_LINE,
+    SubscriptionPeriodEnum,
+)
 from app.core.database import (  # noqa: E402
     check_db_connection,
     close_engine,
@@ -66,6 +75,7 @@ from app.models.user_credit_account_model import UserCreditAccountModel  # noqa:
 from app.models.user_credit_log_model import UserCreditLogModel  # noqa: E402
 from app.services.counter_service import counter_service  # noqa: E402
 from app.services.subscription_service import subscription_service  # noqa: E402
+from app.services.user_auth_service import user_auth_service  # noqa: E402
 from app.services.user_service import user_service  # noqa: E402
 from app.services.user_token_service import user_token_service  # noqa: E402
 from app.utils.jwt import JwtData, JwtUnit  # noqa: E402
@@ -75,6 +85,7 @@ class SeedScenario(str, Enum):
     """可由真实 smoke 显式选择的用户业务状态。"""
 
     PRICING_REVIEW_REWARD = "pricing-review-reward"
+    BING_EXTENSION_PRO = "bing-extension-pro"
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +104,11 @@ SEED_SCENARIO_CONFIGS: dict[SeedScenario, SeedScenarioConfig] = {
         email="e2e-pricing-review-reward-smoke@telegramdownloadmedia.test",
         password="E2ePricingReviewRewardSmoke!2026",
         full_name="E2E Pricing Review Reward Smoke",
+    ),
+    SeedScenario.BING_EXTENSION_PRO: SeedScenarioConfig(
+        email="e2e-bing-extension-pro@mapsgrab.test",
+        password="E2eBingExtensionProSmoke!2026",
+        full_name="E2E Bing Extension Pro",
     ),
 }
 # 注入前端 localStorage 的 device_id；需同时满足前端当前 UUID 校验与后端请求校验。
@@ -127,6 +143,9 @@ async def _seed(scenario: SeedScenario) -> dict[str, object]:
     config = SEED_SCENARIO_CONFIGS[scenario]
     user_id = await _ensure_user_id(config)
 
+    if scenario == SeedScenario.BING_EXTENSION_PRO:
+        return await _seed_bing_extension_pro(config, user_id)
+
     if scenario == SeedScenario.PRICING_REVIEW_REWARD:
         await _seed_pricing_review_reward_state(user_id)
 
@@ -151,6 +170,74 @@ async def _seed(scenario: SeedScenario) -> dict[str, object]:
         "device_id": E2E_DEVICE_ID,
         "scenario": scenario.value,
     }
+
+
+async def _seed_bing_extension_pro(
+    config: SeedScenarioConfig,
+    user_id: int,
+) -> dict[str, object]:
+    """造 maps_extension Pro 订阅并签发与插件 exchange 同构的 token 对。"""
+
+    await _delete_maps_extension_subscription(user_id)
+    await subscription_service.extend_subscription_days(
+        user_id=user_id,
+        duration_days=30,
+        product_line=MAPS_EXTENSION_PRODUCT_LINE,
+        product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
+    )
+
+    # 回读验证：商品配置缺失（未跑 seed_subscription_products.py）会让
+    # subscription_status 返回 unavailable、插件 PRO 判定失效，必须在此快速失败。
+    _, product_config = await subscription_service.get_user_subscription_config(
+        user_id, MAPS_EXTENSION_PRODUCT_LINE
+    )
+    if product_config.period != SubscriptionPeriodEnum.MONTH.value:
+        raise RuntimeError(
+            "e2e_seed_user bing-extension-pro verification failed: "
+            f"user_id={user_id}, product_id={product_config.product_id}, "
+            f"period={product_config.period} (expect month)"
+        )
+
+    user = await user_service.get_user_by_email(config.email)
+    if user is None:
+        raise RuntimeError(
+            f"e2e_seed_user bing-extension-pro: user missing after ensure: {config.email}"
+        )
+
+    # 与 /auth/extension-login/exchange 同一条签发链（access+refresh 均注册
+    # Redis 白名单），插件端 auth/me 与 subscription/status 走真实校验。
+    bundle = await user_auth_service.issue_registered_tokens_for_user(
+        user,
+        operation="e2e_seed_bing_extension_pro",
+    )
+    user_info = await user_service.build_client_user_info(user)
+
+    return {
+        "token": bundle.access_token,
+        "refresh_token": bundle.refresh_token,
+        "expires_in": bundle.expires_in,
+        "user_id": user_id,
+        "email": config.email,
+        "user": user_info.model_dump(),
+        "scenario": SeedScenario.BING_EXTENSION_PRO.value,
+    }
+
+
+async def _delete_maps_extension_subscription(user_id: int) -> None:
+    """删除 e2e 账号的 maps_extension 订阅行。
+
+    extend 是按天累加的 upsert，先删行保证重复 seed 状态确定；订阅表为
+    (user_id, product_line) 复合主键，不能走 BaseService 按单主键删除。
+    """
+
+    async with get_async_session() as db:
+        await db.execute(
+            delete(UserSubscriptionModel).where(
+                UserSubscriptionModel.user_id == user_id,  # type: ignore[arg-type]
+                UserSubscriptionModel.product_line == MAPS_EXTENSION_PRODUCT_LINE,
+            )
+        )
+        await db.commit()
 
 
 async def _seed_pricing_review_reward_state(user_id: int) -> None:
@@ -230,6 +317,8 @@ async def _cleanup(scenario: SeedScenario) -> dict[str, object]:
     await subscription_service.delete(user_id)
     if scenario == SeedScenario.PRICING_REVIEW_REWARD:
         await _delete_review_reward_counter(user_id)
+    if scenario == SeedScenario.BING_EXTENSION_PRO:
+        await _delete_maps_extension_subscription(user_id)
     await _reset_credit_data(user_id)
     await user_service.update(user_id, is_del=True)
 

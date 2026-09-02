@@ -1,6 +1,6 @@
 """订阅管理 API - 客户端接口。"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.user_dependencies import (
     UserContext,
@@ -9,7 +9,11 @@ from app.api.user_dependencies import (
     get_current_user_optional,
 )
 from app.constants.order import ProductClass
-from app.constants.subscription import SubscriptionProductMetadata
+from app.constants.subscription import (
+    EXTENSION_PRODUCT_LINE,
+    SUBSCRIPTION_PRODUCT_LINES,
+    SubscriptionProductMetadata,
+)
 from app.schemas.subscription_schema import (
     SubscriptionCheckoutConfigListResponse,
     SubscriptionReviewRewardClaimResponse,
@@ -120,15 +124,32 @@ def _serialize_checkout_plans(
 @router.get("/status", response_model=SubscriptionStatusResponse)
 async def get_subscription_status(
     current_user: UserContext = Depends(get_current_user_optional),
+    product_line: str | None = Query(
+        default=None,
+        description="订阅产品线；缺省为 extension（历史单产品线，旧调用方行为不变）",
+    ),
 ):
     """获取当前用户订阅状态
 
     支持已登录和未登录用户：
     - 已登录：返回当前订阅配置
     - 未登录：返回游客免费订阅（user_id=0）
+
+    product_line 用于多产品线客户端按线查询（MapsGrab 插件传
+    maps_extension）；值必须在 SUBSCRIPTION_PRODUCT_LINES 白名单内。
     """
+
+    if product_line is not None and product_line not in SUBSCRIPTION_PRODUCT_LINES:
+        raise AppCommonException(
+            CommonCode.INVALID_REQUEST,
+            ext_msg=(
+                "get_subscription_status: unknown product_line: "
+                f"product_line={product_line}"
+            ),
+        )
 
     data = await subscription_status_service.build_status_data(
         user_id=current_user.user_id,
+        product_line=product_line or EXTENSION_PRODUCT_LINE,
     )
     return ResponseUtils.ok(data)

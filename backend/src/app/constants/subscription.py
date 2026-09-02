@@ -54,6 +54,15 @@ API_PROFESSIONAL_PRODUCT_ID = "api_professional"
 API_BUSINESS_PRODUCT_ID = "api_business"
 API_SCALE_PRODUCT_ID = "api_scale"
 
+# 全部订阅产品线：客户端按线查询订阅状态（如 /subscription/status?product_line=）
+# 的合法值域，缺省为 extension（历史单产品线，旧调用方行为不变）。
+SUBSCRIPTION_PRODUCT_LINES = (
+    EXTENSION_PRODUCT_LINE,
+    MAPS_EXTENSION_PRODUCT_LINE,
+    MAPS_ONLINE_PRODUCT_LINE,
+    MAPS_API_PRODUCT_LINE,
+)
+
 
 class SubscriptionProductMetadata(BaseModel):
     """订阅商品 metadata 配置。"""

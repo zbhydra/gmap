@@ -82,11 +82,7 @@ function subscriptionOf(period: SubscriptionStatus['period']): SubscriptionStatu
     status: 'active',
     period,
     display_name: period === 'month' ? 'Unlimited' : 'Free',
-    expires_at: null,
-    daily_limit: -1,
-    used: 0,
-    remaining: -1,
-    reset_date: '2026-08-30'
+    expires_at: null
   }
 }
 

@@ -1,13 +1,13 @@
 /**
  * 构建产物 manifest 核验(006 §4.4 v3 browser identity 口径;离线可跑)。
  *
- * 读 dist/manifest.json(freshness 由 test:e2e 的构建前置 pnpm build 保证,
- * globalSetup 已断言产物存在),断言:
+ * 读 dist-real/manifest.json(freshness 由 test:e2e 的构建前置 pnpm
+ * build:real 保证,globalSetup 已断言产物存在),断言:
  *
  * - permissions = storage + identity(v3 登录 chrome.identity.launchWebAuthFlow)、
  *   零 host_permissions;
  * - 无 externally_connectable、无固定 key(v2 官网推送桥已整体删除,不登记
- *   扩展 ID,扩展 ID 不再可预知);
+ *   扩展 ID,扩展 ID 不再可知);
  * - content_scripts 仅注入 Bing Maps 搜索页(document_end)。
  */
 
