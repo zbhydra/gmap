@@ -254,7 +254,7 @@ export default [
     name: 'ignore-patterns',
     ignores: [
       'dist/**',
-      'dist-e2e/**',
+      'dist-real/**',
       'dist-ssr/**',
       'node_modules/**',
       'tests/**',

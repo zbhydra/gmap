@@ -1,7 +1,6 @@
-# e2e 构建变体产物(scripts/build-e2e.mjs 输出,SW 流量指向本地 mock)
-dist-e2e/
+# 真实 e2e 构建变体产物(scripts/build-real.mjs 输出,API 指向本地 backend)
+dist-real/
 
 # Playwright 本地运行输出
 tests/logs/
 keys/
-dist-real/
