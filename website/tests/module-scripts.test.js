@@ -3179,8 +3179,6 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
     code: 10000,
     msg: 'success',
     data: {
-      review_reward_enabled: true,
-      review_reward_claimed_count: 0,
       checkout_configs: [
         {
           product_class: 1,
@@ -3319,8 +3317,6 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
     code: 10000,
     msg: 'success',
     data: {
-      review_reward_enabled: true,
-      review_reward_claimed_count: 0,
       checkout_configs: [{
         product_class: 1,
         product_id: productId,

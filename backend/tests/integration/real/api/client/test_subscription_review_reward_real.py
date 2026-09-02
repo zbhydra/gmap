@@ -1,16 +1,15 @@
-"""好评赠送订阅 API real 测试。
+"""好评赠送订阅 API real 测试（活动已下线，接口屏蔽态）。
 
 真实资源依赖：
 - MySQL: users / counter_user_lifetime / user_subscriptions / 订阅支付配置表
-- Redis: 用户 access token 白名单与账号级领取锁
+- Redis: 用户 access token 白名单
 
 覆盖矩阵：
 Endpoint | Happy | Permission | Missing | Type | Min/Max | Overflow | XSS | SQLi | Unicode | Side Effect
 GET /api/client/subscription/checkout-configs | Y | optional-auth | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A
-POST /api/client/subscription/review-reward/claim | Y | Y | no-body | no-body | no-body | no-body | no-body | no-body | no-body | Y
+POST /api/client/subscription/review-reward/claim | 屏蔽态 | Y | no-body | no-body | no-body | no-body | no-body | no-body | no-body | Y(无写入)
 """
 
-import asyncio
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 
@@ -28,13 +27,8 @@ from app.services.counter_service import counter_service
 from app.services.user_service import UserService
 from app.services.user_token_service import user_token_service
 from app.utils.jwt import JwtData, JwtUnit
-from app.utils.redis_lock import RedisLock
-from app.utils.time import timestamp_now
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
-
-_DAY_MS = 24 * 60 * 60 * 1000
-_REVIEW_REWARD_DAYS = 7
 
 
 @dataclass(slots=True)
@@ -102,17 +96,18 @@ async def _create_user_and_headers(
     return user, {"Authorization": f"Bearer {token}"}
 
 
-async def _subscription_expires_at(user_id: int) -> int | None:
-    """读取真实订阅到期时间。"""
+async def _subscription_exists(user_id: int) -> bool:
+    """判断真实订阅记录是否已写入。"""
 
     async with get_async_session() as db:
-        return await db.scalar(
+        expires_at = await db.scalar(
             select(  # type: ignore[call-overload]
                 UserSubscriptionModel.expires_at
             ).where(
                 UserSubscriptionModel.user_id == user_id  # type: ignore[arg-type]
             )
         )
+        return expires_at is not None
 
 
 @pytest.fixture
@@ -160,251 +155,54 @@ def make_review_reward_email(
     return make_test_email
 
 
-async def test_real_review_reward_checkout_configs_return_anonymous_and_account_counts(
+async def test_real_review_reward_checkout_configs_report_disabled(
     real_async_client,
     make_review_reward_email: Callable[[str], str],
     real_review_reward_cleanup_state: _CleanupState,
 ) -> None:
-    """公开配置匿名返回零，登录账号返回永久 Counter。"""
+    """活动下线后匿名与登录响应均固定 enabled=false、次数 0。"""
 
     anonymous_response = await real_async_client.get(
         "/api/client/subscription/checkout-configs"
     )
-    invalid_token_response = await real_async_client.get(
-        "/api/client/subscription/checkout-configs",
-        headers={"Authorization": "Bearer invalid-review-reward-token"},
-    )
-    email = make_review_reward_email("review-config")
-    user, headers = await _create_user_and_headers(
+
+    email = make_review_reward_email("review-disabled")
+    _user, headers = await _create_user_and_headers(
         email,
         real_review_reward_cleanup_state,
-    )
-    await counter_service.add(
-        user.user_id,
-        CounterId.SUBSCRIPTION_REVIEW_REWARD_CLAIMED,
-        2,
     )
     account_response = await real_async_client.get(
         "/api/client/subscription/checkout-configs",
         headers=headers,
     )
 
-    assert anonymous_response.status_code == 200
-    assert anonymous_response.json()["code"] == CommonCode.SUCCESS
-    assert anonymous_response.json()["data"]["review_reward_enabled"] is True
-    assert anonymous_response.json()["data"]["review_reward_claimed_count"] == 0
-    assert invalid_token_response.status_code == 200
-    assert invalid_token_response.json()["code"] == CommonCode.SUCCESS
-    assert invalid_token_response.json()["data"]["review_reward_enabled"] is True
-    assert invalid_token_response.json()["data"]["review_reward_claimed_count"] == 0
-    assert account_response.status_code == 200
-    assert account_response.json()["code"] == CommonCode.SUCCESS
-    assert account_response.json()["data"]["review_reward_enabled"] is True
-    assert account_response.json()["data"]["review_reward_claimed_count"] == 2
+    for response in (anonymous_response, account_response):
+        assert response.status_code == 200
+        assert response.json()["code"] == CommonCode.SUCCESS
+        assert response.json()["data"]["review_reward_enabled"] is False
+        assert response.json()["data"]["review_reward_claimed_count"] == 0
 
 
-async def test_real_review_reward_checkout_configs_treat_revoked_token_as_anonymous(
+async def test_real_review_reward_claim_rejected_without_side_effect(
     real_async_client,
     make_review_reward_email: Callable[[str], str],
     real_review_reward_cleanup_state: _CleanupState,
 ) -> None:
-    """Redis 已撤销的有效 JWT 不得再暴露账号永久 Counter。"""
+    """登录账号调用 claim 直接返回 INVALID_REQUEST，Counter 与订阅不写入。"""
 
-    email = make_review_reward_email("review-config-revoked")
+    email = make_review_reward_email("review-blocked")
     user, headers = await _create_user_and_headers(
         email,
         real_review_reward_cleanup_state,
     )
-    await counter_service.add(
-        user.user_id,
-        CounterId.SUBSCRIPTION_REVIEW_REWARD_CLAIMED,
-        2,
-    )
-    token = headers["Authorization"].removeprefix("Bearer ")
-    revoked = await user_token_service.revoke_token(
-        token,
-        user.user_id,
-        TokenType.USER_ACCESS,
-    )
 
-    response = await real_async_client.get(
-        "/api/client/subscription/checkout-configs",
-        headers=headers,
-    )
-
-    assert revoked is True
-    assert response.status_code == 200
-    assert response.json()["code"] == CommonCode.SUCCESS
-    assert response.json()["data"]["review_reward_claimed_count"] == 0
-
-
-async def test_real_review_reward_first_claim_creates_seven_day_subscription(
-    real_async_client,
-    make_review_reward_email: Callable[[str], str],
-    real_review_reward_cleanup_state: _CleanupState,
-) -> None:
-    """无订阅账号首次领取只写一次 Counter，并从当前时间增加七天。"""
-
-    email = make_review_reward_email("review-first")
-    user, headers = await _create_user_and_headers(
-        email,
-        real_review_reward_cleanup_state,
-    )
-    before_ms = timestamp_now()
     response = await real_async_client.post(
         "/api/client/subscription/review-reward/claim",
         headers=headers,
     )
-    after_ms = timestamp_now()
 
-    assert response.status_code == 200
-    assert response.json()["code"] == CommonCode.SUCCESS
-    assert response.json()["data"] == {
-        "result": "granted",
-        "review_reward_claimed_count": 1,
-    }
-    assert (
-        await counter_service.get(
-            user.user_id,
-            CounterId.SUBSCRIPTION_REVIEW_REWARD_CLAIMED,
-        )
-        == 1
-    )
-    expires_at = await _subscription_expires_at(user.user_id)
-    assert expires_at is not None
-    assert before_ms + _REVIEW_REWARD_DAYS * _DAY_MS <= expires_at
-    assert expires_at <= after_ms + _REVIEW_REWARD_DAYS * _DAY_MS
-
-
-async def test_real_review_reward_claim_extends_active_subscription_once(
-    real_async_client,
-    make_review_reward_email: Callable[[str], str],
-    real_review_reward_cleanup_state: _CleanupState,
-) -> None:
-    """有效订阅从原到期时间精确加七天，重复领取不再修改。"""
-
-    email = make_review_reward_email("review-active")
-    user, headers = await _create_user_and_headers(
-        email,
-        real_review_reward_cleanup_state,
-    )
-    original_expires_at = timestamp_now() + 3 * _DAY_MS
-    async with get_async_session() as db:
-        db.add(
-            UserSubscriptionModel(  # type: ignore[call-arg]
-                user_id=user.user_id,
-                expires_at=original_expires_at,
-            )
-        )
-        await db.commit()
-
-    first_response = await real_async_client.post(
-        "/api/client/subscription/review-reward/claim",
-        headers=headers,
-    )
-    second_response = await real_async_client.post(
-        "/api/client/subscription/review-reward/claim",
-        headers=headers,
-    )
-
-    expected_expires_at = original_expires_at + _REVIEW_REWARD_DAYS * _DAY_MS
-    assert first_response.status_code == 200
-    assert first_response.json()["code"] == CommonCode.SUCCESS
-    assert first_response.json()["data"]["result"] == "granted"
-    assert second_response.status_code == 200
-    assert second_response.json()["code"] == CommonCode.SUCCESS
-    assert second_response.json()["data"] == {
-        "result": "already_claimed",
-        "review_reward_claimed_count": 1,
-    }
-    assert await _subscription_expires_at(user.user_id) == expected_expires_at
-    assert (
-        await counter_service.get(
-            user.user_id,
-            CounterId.SUBSCRIPTION_REVIEW_REWARD_CLAIMED,
-        )
-        == 1
-    )
-
-
-async def test_real_review_reward_concurrent_claims_only_extend_once(
-    real_async_client,
-    make_review_reward_email: Callable[[str], str],
-    real_review_reward_cleanup_state: _CleanupState,
-) -> None:
-    """同账号并发领取最多一个 granted，最终只增加七天。"""
-
-    email = make_review_reward_email("review-concurrent")
-    user, headers = await _create_user_and_headers(
-        email,
-        real_review_reward_cleanup_state,
-    )
-    before_ms = timestamp_now()
-    responses = await asyncio.gather(
-        *(
-            real_async_client.post(
-                "/api/client/subscription/review-reward/claim",
-                headers=headers,
-            )
-            for _ in range(2)
-        )
-    )
-    after_ms = timestamp_now()
-
-    bodies = [response.json() for response in responses]
-    assert all(response.status_code == 200 for response in responses)
-    assert all(
-        body["code"]
-        in {CommonCode.SUCCESS, CommonCode.SUBSCRIPTION_REVIEW_REWARD_BUSY.value}
-        for body in bodies
-    )
-    assert (
-        sum(
-            body["code"] == CommonCode.SUCCESS
-            and body["data"].get("result") == "granted"
-            for body in bodies
-        )
-        == 1
-    )
-    assert (
-        await counter_service.get(
-            user.user_id,
-            CounterId.SUBSCRIPTION_REVIEW_REWARD_CLAIMED,
-        )
-        == 1
-    )
-    expires_at = await _subscription_expires_at(user.user_id)
-    assert expires_at is not None
-    assert before_ms + _REVIEW_REWARD_DAYS * _DAY_MS <= expires_at
-    assert expires_at <= after_ms + _REVIEW_REWARD_DAYS * _DAY_MS
-
-
-async def test_real_review_reward_preoccupied_lock_has_no_database_side_effect(
-    real_async_client,
-    make_review_reward_email: Callable[[str], str],
-    real_review_reward_cleanup_state: _CleanupState,
-) -> None:
-    """预占账号锁时返回繁忙，Counter 与订阅均不写入。"""
-
-    email = make_review_reward_email("review-busy")
-    user, headers = await _create_user_and_headers(
-        email,
-        real_review_reward_cleanup_state,
-    )
-    lock = RedisLock()
-    lock_key = f"subscription_review_reward:{user.user_id}"
-    lock_value = await lock.acquire(lock_key, ttl=5)
-    assert lock_value is not None
-    try:
-        response = await real_async_client.post(
-            "/api/client/subscription/review-reward/claim",
-            headers=headers,
-        )
-    finally:
-        await lock.release(lock_key, lock_value)
-
-    assert response.status_code == 200
-    assert response.json()["code"] == CommonCode.SUBSCRIPTION_REVIEW_REWARD_BUSY
+    assert response.status_code == 400
+    assert response.json()["code"] == CommonCode.INVALID_REQUEST
     assert (
         await counter_service.get(
             user.user_id,
@@ -412,18 +210,4 @@ async def test_real_review_reward_preoccupied_lock_has_no_database_side_effect(
         )
         == 0
     )
-    assert await _subscription_expires_at(user.user_id) is None
-
-
-async def test_real_review_reward_claim_requires_login(
-    real_async_client,
-    real_review_reward_schema_ready,
-) -> None:
-    """无登录态不能调用领取接口。"""
-
-    response = await real_async_client.post(
-        "/api/client/subscription/review-reward/claim"
-    )
-
-    # HTTPBearer 在进入业务 handler 前直接拒绝，响应不经过业务错误信封。
-    assert response.status_code == 401
+    assert not await _subscription_exists(user.user_id)

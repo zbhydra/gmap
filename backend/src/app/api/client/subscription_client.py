@@ -8,7 +8,6 @@ from app.api.user_dependencies import (
     get_current_user_if_authenticated,
     get_current_user_optional,
 )
-from app.constants.counter import CounterId
 from app.constants.order import ProductClass
 from app.constants.subscription import SubscriptionProductMetadata
 from app.schemas.subscription_schema import (
@@ -21,10 +20,8 @@ from app.services.payment_config_service import (
     payment_config_service,
 )
 from app.services.payment_service import payment_service
-from app.services.counter_service import counter_service
-from app.services.subscription_review_reward_service import (
-    subscription_review_reward_service,
-)
+from app.exceptions.common_exception import AppCommonException
+from app.i18n.common_code import CommonCode
 from app.services.subscription_status_service import subscription_status_service
 from app.utils.response import ResponseUtils
 
@@ -40,14 +37,10 @@ async def list_subscription_checkout_configs(
 ):
     """获取客户端订阅方案配置列表。"""
     checkout_plans = await payment_config_service.list_subscription_checkout_configs()
-    review_reward_enabled = await subscription_review_reward_service.is_enabled()
 
+    # 好评赠送活动已下线（2026-09-02）：claim 接口直接拒绝，配置字段固定关闭态。
+    review_reward_enabled = False
     claimed_count = 0
-    if review_reward_enabled and current_user is not None:
-        claimed_count = await counter_service.get(
-            current_user.user_id,
-            CounterId.SUBSCRIPTION_REVIEW_REWARD_CLAIMED,
-        )
 
     return ResponseUtils.ok(
         {
@@ -67,13 +60,9 @@ async def claim_subscription_review_reward(
 ):
     """为严格登录账号领取一次 7 天好评赠送订阅。"""
 
-    result = await subscription_review_reward_service.claim(current_user.user_id)
-    return ResponseUtils.ok(
-        {
-            "result": result.result,
-            "review_reward_claimed_count": result.review_reward_claimed_count,
-        }
-    )
+    # 好评赠送活动已下线（2026-09-02）：入口与前端已删除，此处直接拒绝；
+    # service 领取逻辑保留，活动重启时移除本段恢复。
+    raise AppCommonException(CommonCode.INVALID_REQUEST)
 
 
 def _serialize_checkout_plans(

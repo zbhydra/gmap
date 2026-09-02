@@ -52,13 +52,9 @@ export const MAPS_API_PRODUCT_LINE = 'maps_api'
 export interface SubscriptionCheckoutConfigsResponse {
   /** 可购买订阅商品列表。 */
   checkout_configs: SubscriptionCheckoutPlan[]
-  /** 是否开放好评赠送活动（后端契约保留字段，MapsGrab 页面不消费）。 */
-  review_reward_enabled: boolean
-  /** 当前账号永久累计领取好评赠送的次数；匿名请求为 0。 */
-  review_reward_claimed_count: number
 }
 
-/** 订阅配置与当前账号的好评赠送资格。 */
+/** 订阅配置请求结果。 */
 export interface SubscriptionCheckoutData {
   /** 全部产品线的可购买商品（按 product_line 过滤后使用）。 */
   plans: SubscriptionCheckoutPlan[]

@@ -1,5 +1,17 @@
 # 006 · 订阅系统 - 变更记录
 
+## 2026-09-02 好评赠送活动下线(前端删除、后端接口屏蔽)
+
+**Why**:活动停止运营。前端入口与流程删除,后端保留代码以便未来重启。
+
+**变更**:
+
+- website `pricing-checkout.ts` 删除 `review_reward_enabled` / `review_reward_claimed_count` 契约字段(TG 时代 UI 已随旧站下线,MapsGrab 页面本就不消费);模块测试夹具同步删除。
+- `POST /api/client/subscription/review-reward/claim` 在路由层直接抛 `INVALID_REQUEST`(HTTP 400),不再读取活动开关,不写 Counter 或订阅;`subscription_review_reward_service` 全部代码保留。
+- `checkout-configs` 的 `review_reward_enabled` 固定 `false`、`review_reward_claimed_count` 固定 `0`(字段保留以维持响应结构稳定)。
+- real 测试重写为屏蔽态断言:配置响应固定关闭态、claim 拒绝且无副作用(原 6 个领取流程用例随行为下线删除)。
+
+**验证**:real 测试 `2 passed`;black / ruff / mypy 通过;本地 7600 端口启动 smoke,checkout-configs 返回关闭态、claim 匿名 401(登录态 400 由 real 测试覆盖);website `node --test` 47 passed、`pnpm build` 22 页通过。
 ## 2026-08-31 订阅扩展 maps_online / maps_api 产品线(8 档,PayPal 一次性支付)
 
 **Why**:MapsGrab 商业化对标竞品分产品订阅,Online Scraper 与 API 两条产品线需要可购买的档位。占位期用户决策(auto_renew=false,PayPal 一次性支付):使真实 PayPal 凭据下立即可购买,无需先落渠道订阅协议;后续接自动续费时改商品配置并替换真实 provider_sku 即可。两线配额暂无消费方,014 云端落地后直接复用月度额度模型。
