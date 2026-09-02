@@ -6,6 +6,8 @@
  */
 
 import type {
+  BackgroundEnrichBusinessesRequest,
+  BackgroundEnrichBusinessesResponse,
   BackgroundGetBingConfigResponse,
   BackgroundGetGateStateResponse,
   BackgroundGetRuntimeConfigResponse,
@@ -57,6 +59,16 @@ export const Handler = {
   /** 由 background 代 content script 记录打点。 */
   recordMark(_params: BackgroundRecordMarkRequest): Promise<BackgroundRecordMarkResponse> {
     return declarationOnly('background.recordMark')
+  },
+
+  /**
+   * 代理 Email/社媒补全（016 E6 二期）：content 经 background 调后端
+   * enrich 端点（013 A4 自研能力，gmap/bing 两线共享；零 CORS 面）。
+   */
+  enrichBusinesses(
+    _params: BackgroundEnrichBusinessesRequest
+  ): Promise<BackgroundEnrichBusinessesResponse> {
+    return declarationOnly('background.enrichBusinesses')
   }
 }
 
@@ -78,7 +90,9 @@ export const METHOD_TARGETS = {
   /** openExtensionLogin 允许 popup / content 调用（两处登录入口，同一 background RPC）。 */
   openExtensionLogin: ['popup', 'content'],
   /** recordMark 允许 popup / content 调用，统一由 background 写 SLS（T1 §4.1）。 */
-  recordMark: ['popup', 'content']
+  recordMark: ['popup', 'content'],
+  /** enrichBusinesses 仅允许 content 调用（采集行在 content 侧，E6 二期）。 */
+  enrichBusinesses: ['content']
 } as const satisfies Record<keyof BackgroundHandler, readonly ('content' | 'popup')[]>
 
 /** background 方法允许传输。 */
@@ -96,7 +110,9 @@ export const METHOD_TRANSPORTS = {
   /** openExtensionLogin 使用 Chrome message。 */
   openExtensionLogin: ['chrome'],
   /** recordMark 使用 Chrome message。 */
-  recordMark: ['chrome']
+  recordMark: ['chrome'],
+  /** enrichBusinesses 使用 Chrome message。 */
+  enrichBusinesses: ['chrome']
 } as const satisfies Record<keyof BackgroundHandler, readonly ['chrome']>
 
 /** background 方法请求体限制，单位字节。 */
@@ -114,7 +130,9 @@ export const METHOD_REQUEST_LIMITS = {
   /** openExtensionLogin 无业务参数。 */
   openExtensionLogin: 1024,
   /** recordMark 携带打点类型和附加信息。 */
-  recordMark: 4096
+  recordMark: 4096,
+  /** enrichBusinesses：50 商家（website/name/address 原文）最坏形态上界。 */
+  enrichBusinesses: 131072
 } as const satisfies Record<keyof BackgroundHandler, number>
 
 /** background 方法响应体限制，单位字节。 */
@@ -132,7 +150,9 @@ export const METHOD_RESPONSE_LIMITS = {
   /** openExtensionLogin 返回是否提交完成。 */
   openExtensionLogin: 1024,
   /** recordMark 返回记录结果。 */
-  recordMark: 1024
+  recordMark: 1024,
+  /** enrichBusinesses：50 商家的 emails/medias 结果（每条上界宽松余量）。 */
+  enrichBusinesses: 262144
 } as const satisfies Record<keyof BackgroundHandler, number>
 
 /** register 占位函数，避免声明被业务代码误调用。 */

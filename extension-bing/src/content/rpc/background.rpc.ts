@@ -67,6 +67,17 @@ export class BackgroundChannel {
     >('recordMark', params, options)
   }
 
+  /** 调用 enrichBusinesses 能力。 */
+  enrichBusinesses(
+    params: RpcMethodParams<BackgroundHandler, 'enrichBusinesses'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'enrichBusinesses'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'enrichBusinesses'>,
+      RpcMethodParams<BackgroundHandler, 'enrichBusinesses'>
+    >('enrichBusinesses', params, options)
+  }
+
   /** 销毁 RPC transport。 */
   destroy(): void {
     this.transport.destroy()

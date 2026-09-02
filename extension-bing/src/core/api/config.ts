@@ -37,6 +37,10 @@ export const API = {
     /** 获取 Bing 远程配置（adapters/parse/scrape/export/panel 五组稀疏覆盖） */
     BING_CONFIG: '/api/client/bing/config',
 
+    // ========== Email/社媒补全 ==========
+    /** 官网 Email/社媒补全（013 A4 自研服务端能力，gmap/bing 两线共享） */
+    MAPS_ENRICH: '/api/client/maps/enrich',
+
     // ========== 打点 ==========
     /** 后端 mark 通道（install 事件双报使用） */
     MARK_RECORD: '/api/client/mark/record',

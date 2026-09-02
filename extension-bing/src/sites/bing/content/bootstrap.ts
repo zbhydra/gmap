@@ -18,9 +18,10 @@ import { logger } from '@/core/utils/logger'
 import { MARK_TYPE } from '@/core/api/mark/types'
 import { loadBingConfig } from '@/sites/bing/config/loader'
 import { recordContentMark } from './marks'
-import { BingCollector } from './collector'
-import { createBingStopPolicy, refreshGateState } from './gate'
+import { BingCollector, type BingPanelPhase } from './collector'
+import { createBingStopPolicy, refreshGateState, getGateState } from './gate'
 import { mountPanel } from './panel/mount'
+import { enrichRows } from '../enrich/enrichClient'
 
 /** 已完成的 boot 装配，防重复初始化（SPA 软导航重复触发入口时）。 */
 let bootPromise: Promise<void> | null = null
@@ -44,9 +45,41 @@ async function doBoot(): Promise<void> {
   }
 
   const collector = new BingCollector(createBingStopPolicy())
+  watchCompleteEdge(collector)
   await mountPanel(collector)
 
   // 门控态拉取放在面板挂载后异步执行：面板先以匿名快照渲染，
   // 快照到达后经订阅即时切换（Pro 徽标 / Pricing 态）
   void refreshGateState()
+}
+
+/**
+ * 采集完成边沿收尾（016 E6 二期：Pro 会话 Email/社媒补全）。
+ *
+ * 订阅 collector 状态，collecting → completed 边沿触发一次补全：先刷新
+ * 门控快照再判 isPro（免费/匿名跳过，行保持 ###PRO### 占位）。Go Back 回
+ * 待命后新一轮采集再次完成会再次触发。补全失败已在 enrichRows 内收敛为
+ * 空结果 + 打点，此处无需感知（局部可失败）。
+ */
+function watchCompleteEdge(collector: BingCollector): void {
+  let lastPhase: BingPanelPhase = 'idle'
+  collector.subscribe(state => {
+    if (state.phase === 'completed' && lastPhase !== 'completed') {
+      void finalizeCompletedSession(collector)
+    }
+    lastPhase = state.phase
+  })
+}
+
+/** 单次完成会话的收尾执行（fire-and-forget，异常只记日志）。 */
+async function finalizeCompletedSession(collector: BingCollector): Promise<void> {
+  try {
+    await refreshGateState()
+    if (!getGateState().isPro) {
+      return
+    }
+    await enrichRows(collector.getRows())
+  } catch (error) {
+    logger.error('[BingBoot] 完成边沿补全收尾异常:', error)
+  }
 }

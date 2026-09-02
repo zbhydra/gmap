@@ -7,6 +7,7 @@
 import type { MarkType } from '@/core/api/mark/types'
 import type { RuntimeConfig } from '@/core/runtimeConfig'
 import type { BingRemoteConfigOverride } from '@/sites/bing/config/contract'
+import type { EnrichBusinessInput, EnrichResponse } from '@/sites/bing/enrich/types'
 
 /** background ping 响应。 */
 export interface BackgroundPingResponse {
@@ -57,3 +58,12 @@ export interface BackgroundOpenExtensionLoginResponse {
   /** 登录是否走到提交完成；false = 任一步失败，登录态保持原状可重试。 */
   opened: boolean
 }
+
+/** background 代理 Email/社媒补全请求（016 E6 二期；Bing 行无独立 domain）。 */
+export interface BackgroundEnrichBusinessesRequest {
+  /** 单批商家数组（调用方已按 website 主机名去重，≤50 条）。 */
+  businesses: EnrichBusinessInput[]
+}
+
+/** background 代理 Email/社媒补全响应（服务端载荷透传）。 */
+export type BackgroundEnrichBusinessesResponse = EnrichResponse

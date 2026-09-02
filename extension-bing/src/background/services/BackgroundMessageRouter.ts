@@ -23,6 +23,7 @@ import {
 import { markApi } from '@/core/api/mark'
 import { MARK_TYPE, type MarkType } from '@/core/api/mark/types'
 import { fetchBingRemoteConfig } from '@/sites/bing/config/remoteFetch'
+import { enrichBusinesses } from '@/sites/bing/enrich/enrichApi'
 import { getBackgroundAuthStore, ensureAuthStoreHydrated } from './backgroundStores'
 import { handleOpenExtensionLogin } from './openExtensionLogin'
 import type { BackgroundGetGateStateResponse } from '../types'
@@ -52,7 +53,8 @@ export class BackgroundMessageRouter {
       recordMark: (params, context) => {
         const request = parseRecordMarkRequest(params)
         return this.recordMark(request.mark_type, request.mark_msg, context)
-      }
+      },
+      enrichBusinesses: params => enrichBusinesses(parseEnrichBusinesses(params))
     }
   }
 
@@ -161,4 +163,38 @@ function isMarkType(value: JsonValue | undefined): value is MarkType {
  */
 function isJsonObject(value: JsonValue | undefined): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/**
+ * 解析补全请求：逐字段校验商家数组形状（上限 50 的切片在调用方 enrichClient）。
+ */
+function parseEnrichBusinesses(params: JsonValue | undefined): Array<{
+  domain: string
+  website: string
+  name: string
+  address: string
+}> {
+  if (!isJsonObject(params) || !Array.isArray(params.businesses)) {
+    throw new Error('[BackgroundMessageRouter] enrichBusinesses 请求缺少 businesses 数组')
+  }
+  return params.businesses.map(business => {
+    if (!isJsonObject(business)) {
+      throw new Error('[BackgroundMessageRouter] enrichBusinesses 商家项必须是对象')
+    }
+    return {
+      domain: requireEnrichString(business, 'domain'),
+      website: requireEnrichString(business, 'website'),
+      name: requireEnrichString(business, 'name'),
+      address: requireEnrichString(business, 'address')
+    }
+  })
+}
+
+/** 读取对象中的字符串字段，缺失或非串抛错（RPC 边界契约校验）。 */
+function requireEnrichString(source: JsonObject, field: string): string {
+  const value = source[field]
+  if (typeof value !== 'string') {
+    throw new Error(`[BackgroundMessageRouter] enrichBusinesses 商家项 ${field} 必须是字符串`)
+  }
+  return value
 }

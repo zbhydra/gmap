@@ -1,5 +1,22 @@
 # 016 · Bing 插件 changelog
 
+## 2026-09-02 E6 Email/社媒挖掘接入(二期落地)
+
+- **插件端接入自研补全服务**(后端 `POST /api/client/maps/enrich` 为 013 A4 U8 已交付能力,gmap/bing 两线共享):新增 `src/sites/bing/enrich/`(types/enrichApi/enrichClient,与 gmap 线同构)——Pro 会话采集完成边沿(collecting→completed 订阅)先把 5 个云端挖掘列(Emails/Social Medias/Facebook/Instagram/Twitter)清出 `###PRO###` 占位(权益已解锁,无数据留空),再按 website 主机名去重分批(≤50)经新 background RPC `enrichBusinesses` 调服务端写回;免费/匿名会话不触发,行保持占位(营销锁定钩子)。单批失败收敛空结果继续剩余批次(局部可失败),新增 `enrich_complete` 打点(成功/失败均报)。
+- 门控取快照:完成边沿先 `refreshGateState()` 再判 `isPro`,登录/订阅切换最迟下一轮生效口径与采集停止策略同源。
+- **真实 e2e 双向断言**:Pro 用例(Stop 前挂 `context.waitForEvent('response')` 等 `/maps/enrich` 请求——清占位先于任何批次请求,信号即证占位已清)导出后断言 5 列脱离 `###PRO###`;免费用例反向断言 5 列保持占位。harness 新增 `parseCsvLine`(RFC4180 简版)——真实 Bing 地址字段带引号含逗号,`split(',')` 列级断言会错位。
+- 验证:单测新增 `bing-enrich.spec.ts`(websiteKey/目标去重/分批/写回/失败收敛/打点,8 用例),全量 183 passed;type-check/tests/eslint(改动文件)/prettier/权限检查过;`pnpm build` 绿;真实 e2e 5/5 passed(本地真实 backend + 真实 bing.com,Pro 补全断言实跑通过)。
+
+## 2026-09-02 e2e 真实界面化(零 mock)+ 登录态 token 直注
+
+- **e2e 重构为单层真实界面主验收**(hydra 拍板「不可以使用 mock 界面,必须真实 bing 地图界面采集」):删除离线 fixture 层(fixture 页 + 生成器 + smoke/collect-export/login-gating 三个 mock spec + harness 全部 route/登录 mock)与独立的 real-bing-smoke;新 `real-bing.spec.ts`(匿名免费全链路:真实采集 → 20 截断 → 完成态 → CSV 导出)与 `real-bing-signed-in.spec.ts`(Pro 登录态)。方案合同见 `references/T1-技术设计.md` §6(重写)。
+- **反自动化身份(stealth)**:launch 去 `--enable-automation` + `--disable-blink-features=AutomationControlled` + 身份兜底 init script(website browser-identity 同款);harness 固定 locale en-US。
+- **登录流程不做 e2e**(hydra 拍板):登录态改「脚本签发 token 直注」——`backend/scripts/e2e_seed_user.py` 新增 `bing-extension-pro` 场景(幂等建号 + maps_extension Pro 订阅 30 天 + `issue_registered_tokens_for_user` 签发与插件 exchange 同构的 token 对注册 Redis 白名单);globalSetup 探测本地 backend(127.0.0.1:7600)后 seed,spec 经扩展 SW 直写 chrome.storage auth 三键;backend 不可达条件 skip。
+- **构建变体 dist-real**(`scripts/build-real.mjs`,`pnpm build:real`):API 指向本地真实 backend、SLS 构建期禁用(不污染生产日志库);`test:e2e` 改用该变体,生产 `pnpm build` 不变。
+- **真实接线裂缝修复(原被 mock 掩盖)**:①后端 `/subscription/status` 新增可选 `product_line` query(白名单 `SUBSCRIPTION_PRODUCT_LINES`,缺省 extension 兼容旧调用),插件 `subscriptionApi.getStatus()` 显式传 `maps_extension`——原端点固定返回 TG 下载线状态,插件 Pro 判定在真实后端下永远 FREE;②插件 `SubscriptionStatus` 类型对齐真实契约(删 daily_limit/used/remaining/reset_date/extension_download/one_time 旧 TG 兼容字段,后端已不再返回)。
+- **冷启动登录态被自吞 bug 修复**(`backgroundStores.ts`):原 auth 三键 onChanged watcher 把 `getCurrentUser` 的 USER_INFO 资料回写也当登录态切换清态——SW 冷启动恢复登录态时,hydrate 刚完成的认证态被自己的资料回写吞掉,首次 getGateState 返回匿名(面板 Sign in / 免费档误截断),下一轮刷新才自愈。改为仅 token 对(access/refresh)变化清态重 hydrate,USER_INFO 单独变化(同会话资料更新)不清。真实 e2e 登录态用例即由该 bug 阻塞而定位。
+- 验证:backend black/ruff/mypy 绿 + subscription status real 测试 2 passed + seed 脚本实跑成功;插件 check 全绿、单测 175、生产 build 绿;真实 e2e 5/5 passed(本机真实 bing.com,匿名 8s / Pro 9s)。
+
 ## 2026-09-01 登录迁移 v3 浏览器身份(v2 官网桥删除)
 
 - 登录由 v2 官网推送桥(website `/extension-login-bing` → `externally_connectable` 定向消息)整体迁移为 v3 插件发起流程:popup + 面板未登录 `Sign in` 双入口 → 官网统一确认页 `/extension-login` → 一次性 code 回跳换插件独立 token;协议合同见 `../007.用户系统/tech-第三方登录.md` §9(007 plans/006 实施)。

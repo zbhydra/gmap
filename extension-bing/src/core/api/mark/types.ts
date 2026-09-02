@@ -19,7 +19,9 @@ export const MARK_TYPE = {
   /** Maps 采集结果导出（013 A1） */
   EXPORT_RESULTS: 'export_results',
   /** Maps 评论内容采集开始（013 A2，content 广播 + background 统一写 SLS） */
-  SCRAPE_REVIEWS_CONTENT: 'scrape_reviews_content'
+  SCRAPE_REVIEWS_CONTENT: 'scrape_reviews_content',
+  /** Email/社媒补全完成（016 E6 二期，成功/失败均报） */
+  ENRICH_COMPLETE: 'enrich_complete'
 } as const
 
 export type MarkType = (typeof MARK_TYPE)[keyof typeof MARK_TYPE]
