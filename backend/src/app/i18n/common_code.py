@@ -102,4 +102,4 @@ class CommonCode(IntEnum):
 
     # ========== Maps Extractor 插件 (31100-31199) ==========
     MAPS_HUBSPOT_SYNC_FAILED = 31101  # Maps 插件 HubSpot 同步转发失败
-    MAPS_USAGE_UNAVAILABLE = 31102  # Maps 配额服务暂不可用（Redis 故障，可重试）
+    EXTENSION_USAGE_UNAVAILABLE = 31102  # Maps 配额服务暂不可用（Redis 故障，可重试）

@@ -26,6 +26,7 @@ from app.constants.payment import (
     TELEGRAM_STARS_CURRENCY,
     TELEGRAM_STARS_PAYMENT_METHOD,
 )
+from app.constants.subscription import SubscriptionPeriodEnum
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.services.config_payment_channel_service import (
@@ -109,7 +110,11 @@ class SubscriptionCheckoutPlanConfig:
 class PaymentConfigSnapshot:
     """支付配置内存快照。"""
 
-    products: dict[str, SubscriptionProductConfig]
+    # 主键 (product_line, product_id)：每条产品线一套档位，free 各线一行。
+    products: dict[tuple[str, str], SubscriptionProductConfig]
+    # product_id 辅助索引：下单请求只携带 product_id（HTTP 契约），按它反查商品。
+    # 付费 SKU 合同要求全线唯一（见 seed 脚本），free 同名多行合法。
+    products_by_id: dict[str, list[SubscriptionProductConfig]]
     channels: dict[str, PaymentChannelConfig]
     prices: dict[tuple[str, str], SubscriptionProductPriceConfig]
     loaded_at: int
@@ -203,11 +208,15 @@ class PaymentConfigService:
                 and price.channel_code != normalized_channel_code
             ):
                 continue
-            product = snapshot.products.get(price.product_id)
             channel = snapshot.channels.get(price.channel_code)
-            if product is None or channel is None:
+            if channel is None:
                 continue
-            channel_groups.setdefault(product.product_id, []).append(
+            matched_products = snapshot.products_by_id.get(price.product_id, [])
+            # product_id 必须唯一归属一个商品才能挂渠道价：孤儿价格行直接跳过；
+            # 付费 SKU 跨线重名属于 seed 合同破坏，列表链路跳过、下单链路报错。
+            if len(matched_products) != 1:
+                continue
+            channel_groups.setdefault(price.product_id, []).append(
                 SubscriptionCheckoutPaymentChannelConfig(
                     channel=channel,
                     price=price,
@@ -239,19 +248,20 @@ class PaymentConfigService:
     ) -> SubscriptionCheckoutChannelConfig:
         """获取指定商品和渠道的下单配置。
 
-        Args:
-            product_id: 订阅商品标识。
-            channel_code: 支付渠道标识。
+        下单请求只携带 product_id（HTTP 契约不变），商品按 product_id 辅助索引
+        反查：付费 SKU 合同要求全线唯一，free 各线同名是合法状态（不可下单）。
 
         Raises:
-            AppCommonException: 商品、渠道或价格不可用时返回 PAYMENT_PRICE_UPDATED。
+            AppCommonException: 商品、渠道或价格不可用时返回 PAYMENT_PRICE_UPDATED；
+                付费 SKU 的 product_id 跨线重名（seed 合同破坏）返回
+                PAYMENT_GATEWAY_ERROR。
         """
 
         normalized_product_id = self._normalize_code(product_id)
         normalized_channel_code = self._normalize_code(channel_code)
         snapshot = await self.get_snapshot()
 
-        product = snapshot.products.get(normalized_product_id)
+        product = self._resolve_checkout_product(snapshot, normalized_product_id)
         channel = snapshot.channels.get(normalized_channel_code)
         price = snapshot.prices.get((normalized_product_id, normalized_channel_code))
         if product is None or channel is None or price is None:
@@ -291,8 +301,10 @@ class PaymentConfigService:
             force_refresh=force_refresh,
         )
 
-        products = {
-            self._normalize_code(row.product_id): SubscriptionProductConfig(
+        products: dict[tuple[str, str], SubscriptionProductConfig] = {}
+        products_by_id: dict[str, list[SubscriptionProductConfig]] = {}
+        for row in product_rows:
+            product = SubscriptionProductConfig(
                 product_id=self._normalize_code(row.product_id),
                 name=row.name,
                 product_line=self._normalize_product_line(row.product_line),
@@ -309,8 +321,8 @@ class PaymentConfigService:
                     ),
                 ),
             )
-            for row in product_rows
-        }
+            products[(product.product_line, product.product_id)] = product
+            products_by_id.setdefault(product.product_id, []).append(product)
         for product in products.values():
             self._assert_product_display_amount_valid(product)
         channels = {
@@ -329,33 +341,71 @@ class PaymentConfigService:
         }
 
         prices: dict[tuple[str, str], SubscriptionProductPriceConfig] = {}
-        for row in price_rows:
-            product_id = self._normalize_code(row.product_id)
-            channel_code = self._normalize_code(row.channel_code)
-            if product_id not in products or channel_code not in channels:
+        for price_row in price_rows:
+            product_id = self._normalize_code(price_row.product_id)
+            channel_code = self._normalize_code(price_row.channel_code)
+            if product_id not in products_by_id or channel_code not in channels:
                 continue
 
-            currency = normalize_currency(row.currency)
+            currency = normalize_currency(price_row.currency)
             self._assert_config_amount_valid(
                 product_id=product_id,
                 channel_code=channel_code,
                 currency=currency,
-                amount=row.amount,
+                amount=price_row.amount,
             )
             prices[(product_id, channel_code)] = SubscriptionProductPriceConfig(
                 product_id=product_id,
                 channel_code=channel_code,
                 currency=currency,
-                amount=row.amount,
-                provider_sku=row.provider_sku,
+                amount=price_row.amount,
+                provider_sku=price_row.provider_sku,
             )
 
         return PaymentConfigSnapshot(
             products=products,
+            products_by_id=products_by_id,
             channels=channels,
             prices=prices,
             loaded_at=timestamp_now(),
         )
+
+    def _resolve_checkout_product(
+        self,
+        snapshot: PaymentConfigSnapshot,
+        product_id: str,
+    ) -> SubscriptionProductConfig | None:
+        """下单链路按 product_id 反查唯一商品。
+
+        Returns:
+            唯一命中的商品；free 各线同名时返回排序后的第一条；未命中返回 None。
+
+        Raises:
+            AppCommonException: 付费 SKU 的 product_id 跨线重名时抛
+                PAYMENT_GATEWAY_ERROR（seed 合同破坏，无法确定下单目标）。
+        """
+
+        matches = snapshot.products_by_id.get(product_id, [])
+        if len(matches) <= 1:
+            return matches[0] if matches else None
+        if any(
+            product.period != SubscriptionPeriodEnum.FREE.value for product in matches
+        ):
+            raise AppCommonException(
+                CommonCode.PAYMENT_GATEWAY_ERROR,
+                ext_msg=(
+                    "payment_config: product_id maps to multiple payable products, "
+                    "paid product_id must be unique across product lines: "
+                    f"product_id={product_id}, "
+                    f"lines={[product.product_line for product in matches]}"
+                ),
+                data={
+                    "product_id": product_id,
+                },
+            )
+        # free 各线同名是合法状态：free 不可下单（且无渠道价），返回任一条
+        # 让下单链路的「不可用」或 subscription_service 的 free 拒单统一拒绝。
+        return matches[0]
 
     def _normalize_code(self, value: str) -> str:
         """规范化配置标识。"""

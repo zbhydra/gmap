@@ -1,5 +1,18 @@
 # 000 · 架构 · 变更记录
 
+## 2026-09-01 统一额度基建：usage 服务三线门面 + user_usage_logs
+
+**为什么**：013 U7 的 Maps 月度配额是「Redis 单轨 + config_public 兜底」的线内方案；006 产品线扩展后 maps_extension / maps_online / maps_api 三线共用同一额度语义，且 014 云端需要付费额度可审计、可退回（预扣-结算），Redis 计数与兜底链都不再成立。
+
+**实际产出**：
+- 新表 `user_usage_logs`（只插入不可变流水，used = 按月 SUM(delta)，唯一键 `(product_line, user_id, request_id)` 幂等 + 覆盖索引聚合）；`usage_service` 以 `_BaseUsageService` + 三薄门面（extension/online/api）提供 `get_usage/consume/refund`，登录走 MySQL、匿名走 Redis 月度计数（Lua 原子幂等原样迁移，key 换 `usage:{line}:{ym}:{identity}`）。
+- total 单一真源切到 `get_user_subscription_config` 的 `monthly_quota`（付费档或本线 free 档），行缺失/额度空抛 `PAYMENT_GATEWAY_ERROR`；删除 `maps_quota` config_public 兜底链与 `DEFAULT_FREE_QUOTA`（表数据行未动）。Online/Api 门面能力就绪、无路由。
+- 删除 `constants/maps_usage.py` 与 `services/maps_usage_service.py`；`/maps/usage` 两路由改调 `extension_usage_service`，HTTP 契约零变更。spec-mysql §4 登记第二个原子数据结构例外。
+
+**已验证**：schema sync 建表 + DDL 核对；新增/改造 real 测试 15 passed（consume/refund 幂等、SUM 聚合、跨月 target_ym、三线 free 档 total、quota 缺失抛错、匿名 Redis 回归、登录 MySQL 路由契约）；全量 real 84 passed（2 个 credit_purchase 存量失败与本任务无关）；black/ruff/限定 mypy 通过；business 启动冒烟 + 两路由双身份 HTTP 实测通过。
+
+技术规格见 `@tech-额度基建.md`。
+
 ## 2026-08-29 website-shared 并入 website、extension-pro 闭环合同删除、e2e 身份脚本自持
 
 **为什么**：hydra 三项决策——extension-pro 闭环合同删除；website-shared 消亡、代码统一进 website；website/admin e2e 浏览器身份按原契约重建。

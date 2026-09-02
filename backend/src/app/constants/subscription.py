@@ -29,13 +29,13 @@ UNLIMITED_SUBSCRIPTION_PRODUCT_ID = "unlimited"
 # 产品线标识（006 扩展，C2 裁决的分产品订阅）：订阅按产品线隔离权益，
 # 同一账号可同时持有不同产品线的有效订阅，互不冲突也互不续期。
 # extension = 插件下载 Unlimited（历史单产品线的兜底默认值，旧数据行为不变）；
-# maps = MapsGrab 插件月度 records 套餐（maps_pro / maps_business）。
+# maps_extension = MapsGrab 插件采集订阅（maps_extension_pro / maps_extension_business）。
 EXTENSION_PRODUCT_LINE = "extension"
-MAPS_PRODUCT_LINE = "maps"
+MAPS_EXTENSION_PRODUCT_LINE = "maps_extension"
 
-# Maps 产品线付费商品（C2 套餐口径：Pro $39 100,000 / Business $99 500,000 records/月）。
-MAPS_PRO_PRODUCT_ID = "maps_pro"
-MAPS_BUSINESS_PRODUCT_ID = "maps_business"
+# maps_extension 产品线付费商品（C2 套餐口径：Pro $39 100,000 / Business $99 500,000 records/月）。
+MAPS_EXTENSION_PRO_PRODUCT_ID = "maps_extension_pro"
+MAPS_EXTENSION_BUSINESS_PRODUCT_ID = "maps_extension_business"
 
 # MapsGrab 新增订阅产品线（006 扩展）：online = 网页采集套餐（records/月），
 # api = API 调用套餐（requests/月）。均为一次性支付月度套餐。
@@ -61,7 +61,7 @@ class SubscriptionProductMetadata(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     auto_renew: bool = Field(default=False, description="是否自动续费")
-    # 产品线月度权益额度；单位由产品线定义：maps/maps_online = records/月，
+    # 产品线月度权益额度；单位由产品线定义：maps_extension/maps_online = records/月，
     # maps_api = requests/月；无额度概念的产品线留空。
     monthly_quota: int | None = Field(default=None, description="月度权益额度数")
 

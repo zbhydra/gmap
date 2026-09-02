@@ -76,7 +76,7 @@
         "CHECKIN_CONFIG_INVALID": "Check-in configuration is invalid",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "The server is busy. Please try again later.",
         "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot sync failed, please reconnect HubSpot and retry",
-        "MAPS_USAGE_UNAVAILABLE": "Maps quota service is temporarily unavailable. Please try again later"
+        "EXTENSION_USAGE_UNAVAILABLE": "Maps quota service is temporarily unavailable. Please try again later"
     },
     "telegram": {
         "purchase_success_text": "Purchase successful. Credits have been added.\n\nOrder No: {order_no}",

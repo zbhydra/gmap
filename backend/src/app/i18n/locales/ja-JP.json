@@ -63,7 +63,7 @@
         "CHECKIN_CONFIG_INVALID": "Check-in configuration is invalid",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "サーバーが混み合っています。しばらくしてからもう一度お試しください。",
         "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot 同期に失敗しました。HubSpot を再接続してからもう一度お試しください",
-        "MAPS_USAGE_UNAVAILABLE": "Maps quota サービスは一時的に利用できません。後でもう一度お試しください"
+        "EXTENSION_USAGE_UNAVAILABLE": "Maps quota サービスは一時的に利用できません。後でもう一度お試しください"
     },
     "telegram": {
         "purchase_success_text": "購入が完了しました。Credits が反映されました。\n\n注文番号: {order_no}",

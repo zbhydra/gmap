@@ -71,7 +71,7 @@
         "CHECKIN_CONFIG_INVALID": "Check-in configuration is invalid",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "O servidor está ocupado. Tente novamente mais tarde.",
         "MAPS_HUBSPOT_SYNC_FAILED": "Falha na sincronização com o HubSpot. Reconecte o HubSpot e tente novamente",
-        "MAPS_USAGE_UNAVAILABLE": "O serviço de cota do Maps está temporariamente indisponível. Tente novamente mais tarde"
+        "EXTENSION_USAGE_UNAVAILABLE": "O serviço de cota do Maps está temporariamente indisponível. Tente novamente mais tarde"
     },
     "telegram": {
         "purchase_success_text": "Compra concluída. Os Credits foram adicionados.\n\nNº do pedido: {order_no}",

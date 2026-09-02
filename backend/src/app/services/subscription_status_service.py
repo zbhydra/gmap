@@ -26,7 +26,7 @@ class SubscriptionStatusService:
         """构建指定产品线的订阅状态 data，供 /status 与 /auth/me 复用同一契约。
 
         product_line 缺省为 extension（插件下载线），保持既有接口响应不变；
-        MapsGrab 网站读取 maps 线展示当前套餐。
+        MapsGrab 网站读取 maps_extension 线展示当前套餐。
         """
 
         try:

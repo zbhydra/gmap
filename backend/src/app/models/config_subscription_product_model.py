@@ -12,9 +12,13 @@ class ConfigSubscriptionProductModel(BaseDBModel):
 
     __tablename__ = "config_subscription_product"
     __table_args__ = (
+        # 每条产品线一套商品档位：唯一性按 (product_line, product_id) 收敛，
+        # 付费 SKU 的 product_id 仍须全线唯一（seed 脚本合同），free 是唯一
+        # 允许各线同名的档位（不下单，仅作配置读取）。
         UniqueConstraint(
+            "product_line",
             "product_id",
-            name="uk_config_subscription_product_product_id",
+            name="uk_config_subscription_product_line_product_id",
         ),
     )
 
@@ -28,7 +32,7 @@ class ConfigSubscriptionProductModel(BaseDBModel):
         String(32),
         nullable=False,
         default="extension",
-        comment="产品线标识：extension=插件下载 Unlimited，maps=MapsGrab 套餐",
+        comment="产品线标识：extension=插件下载 Unlimited，maps_extension=MapsGrab 插件采集订阅",
     )
     name: Mapped[str] = mapped_column(String(128), nullable=False, comment="商品名称")
     period: Mapped[str] = mapped_column(String(20), nullable=False, comment="订阅周期")

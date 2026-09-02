@@ -70,7 +70,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         product_line = checkout_config.product.product_line
 
         # 重复购买校验按产品线隔离：同产品线存在未过期订阅时拒绝新下单，
-        # 不同产品线互不影响（如插件 Unlimited 与 Maps 套餐可并存）。
+        # 不同产品线互不影响（如插件 Unlimited 与 maps_extension 套餐可并存）。
         if param.user_id > 0:
             subscription = await self.get_user_subscription(param.user_id, product_line)
             if subscription.expires_at is not None:
@@ -121,7 +121,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         """校验客户端提交的订阅价格与当前订阅配置一致。
 
         可购买范围由「启用商品 + 渠道价」配置决定：Free 档（period=free）不是
-        商品，永久拒绝下单；其余启用商品（含 Maps 产品线多档位）按配置放行，
+        商品，永久拒绝下单；其余启用商品（含 maps_extension 产品线多档位）按配置放行，
         不在代码里锁死商品白名单。
         """
 
@@ -224,7 +224,8 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 expires_at=None,
             )
             return subscription, await self._get_subscription_product_config(
-                FREE_SUBSCRIPTION_PRODUCT_ID
+                product_line,
+                FREE_SUBSCRIPTION_PRODUCT_ID,
             )
 
         subscription = await self.get_user_subscription(user_id, product_line)
@@ -239,16 +240,29 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         else:
             # 其余产品线档位必填；缺失让配置查找失败，按 unavailable 暴露。
             product_id = subscription.product_id or ""
-        return subscription, await self._get_subscription_product_config(product_id)
+        return subscription, await self._get_subscription_product_config(
+            product_line,
+            product_id,
+        )
 
     async def _get_subscription_product_config(
         self,
+        product_line: str,
         product_id: str,
     ) -> SubscriptionProductConfig:
-        """按订阅商品 ID 读取启用配置，不加载支付渠道价格。"""
+        """按 (product_line, product_id) 精确读取启用配置，不加载支付渠道价格。
+
+        每条产品线各有自己的 free 行：free 查找按线命中本线配置，不会误读
+        其他线（如 maps 线不会误读 extension 线 free 的 daily_limit）。
+        """
+
         products = await payment_config_service.list_subscription_products()
         product = next(
-            (item for item in products if item.product_id == product_id),
+            (
+                item
+                for item in products
+                if item.product_line == product_line and item.product_id == product_id
+            ),
             None,
         )
         if product is None:
@@ -256,7 +270,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 CommonCode.PAYMENT_GATEWAY_ERROR,
                 ext_msg=(
                     "subscription: enabled subscription product missing, "
-                    f"product_id={product_id}"
+                    f"product_line={product_line}, product_id={product_id}"
                 ),
             )
         return product

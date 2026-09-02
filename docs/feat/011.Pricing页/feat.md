@@ -9,7 +9,7 @@
 Pricing 页按三条产品线分 tab 出售订阅套餐:
 
 1. Online tab(`maps_online` 线):云端 Online Scraper 月度 records 套餐,4 个付费档 + Free 卡。
-2. Extension tab(`maps` 线):浏览器插件月度 records 套餐,2 个付费档 + Free 卡。
+2. Extension tab(`maps_extension` 线):浏览器插件月度 records 套餐,2 个付费档 + Free 卡。
 3. API tab(`maps_api` 线):Scraper API 月度 requests 套餐,4 个付费档 + Free 卡。
 
 购买边界:全部商品均为 PayPal 支付;Online 与 API 各档为 30 天一次性支付(不自动续费),Extension 两档为按月订阅(auto_renew=true,可经渠道侧取消)。配额与权益语义归 `@../006.订阅系统/feat.md`,本页只负责展示与购买。
@@ -24,15 +24,15 @@ Pricing 页按三条产品线分 tab 出售订阅套餐:
 | Online | Growth | `online_growth` | $99 | 250,000 records/月 | 一次性 · 30 天 |
 | Online | Professional | `online_pro` | $149 | 500,000 records/月 | 一次性 · 30 天 |
 | Extension | Free | —(不可购买) | $0 | 1,000 records/月 | 默认档 |
-| Extension | Pro | `maps_pro` | $39 | 100,000 records/月 | 按月订阅(本 tab Most Popular) |
-| Extension | Business | `maps_business` | $99 | 500,000 records/月 | 按月订阅 |
+| Extension | Pro | `maps_extension_pro` | $39 | 100,000 records/月 | 按月订阅(本 tab Most Popular) |
+| Extension | Business | `maps_extension_business` | $99 | 500,000 records/月 | 按月订阅 |
 | API | Free | —(不可购买) | $0 | 20 requests/月 | 默认档 |
 | API | Basic | `api_basic` | $15 | 1,000 requests/月 | 一次性 · 30 天 |
 | API | Professional | `api_professional` | $65 | 5,000 requests/月 | 一次性 · 30 天(本 tab Most Popular) |
 | API | Business | `api_business` | $115 | 10,000 requests/月 | 一次性 · 30 天 |
 | API | Scale | `api_scale` | $365 | 50,000 requests/月 | 一次性 · 30 天 |
 
-Free 档口径(online/api 各 tab 卡面展示)当前仅为页面展示,不落库、暂不生效(见 006 域)。
+Free 档口径(online/api 各 tab 卡面展示)已随各线 free 档位落库,暂无消费方、待云端额度基建接线后生效(见 006 域)。
 
 ## 功能范围
 
@@ -126,7 +126,7 @@ Free 档口径(online/api 各 tab 卡面展示)当前仅为页面展示,不落�
 | `upgrade_cta_click` | 点击付费档购买按钮(打开 checkout 前) | `source`(pricing / extension)、`location=plan_card`、`plan`(=SKU) |
 | 其他 data-cta 点击 | 页面各引导入口,经全站 GA4 cta_click 通道 | `data-cta` 归因属性 |
 
-`plan` 维度取值为商品 SKU;当前可购买付费 SKU 共 10 个:`online_lite` / `online_basic` / `online_growth` / `online_pro`、`maps_pro` / `maps_business`、`api_basic` / `api_professional` / `api_business` / `api_scale`。Free 卡不可购买、不计入。
+`plan` 维度取值为商品 SKU;当前可购买付费 SKU 共 10 个:`online_lite` / `online_basic` / `online_growth` / `online_pro`、`maps_extension_pro` / `maps_extension_business`、`api_basic` / `api_professional` / `api_business` / `api_scale`。Free 卡不可购买、不计入。
 
 ## 验收标准
 

@@ -1346,7 +1346,7 @@ class OrderService(BaseService[OrderModel]):
 
         历史订单快照缺 ``product_line`` 时回退 extension（插件下载线），
         与履约续期的回退口径一致；非订阅类订单同样按 extension 兜底，
-        消费方只关心「maps 线走订阅文案」这一分支。
+        消费方只关心「maps_extension 线走订阅文案」这一分支。
         """
         try:
             metadata = json.loads(order.extra_metadata or "{}")

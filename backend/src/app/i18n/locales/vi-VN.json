@@ -71,7 +71,7 @@
         "CHECKIN_CONFIG_INVALID": "Check-in configuration is invalid",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "Máy chủ đang bận. Vui lòng thử lại sau.",
         "MAPS_HUBSPOT_SYNC_FAILED": "Đồng bộ HubSpot thất bại. Vui lòng kết nối lại HubSpot và thử lại",
-        "MAPS_USAGE_UNAVAILABLE": "Dịch vụ hạn mức Maps tạm thời không khả dụng. Vui lòng thử lại sau"
+        "EXTENSION_USAGE_UNAVAILABLE": "Dịch vụ hạn mức Maps tạm thời không khả dụng. Vui lòng thử lại sau"
     },
     "telegram": {
         "purchase_success_text": "Mua thành công. Credits đã được cộng.\n\nMã đơn hàng: {order_no}",

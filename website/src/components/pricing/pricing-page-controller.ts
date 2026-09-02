@@ -28,8 +28,8 @@ import {
 } from '../order-checkout/order-checkout-types'
 import {
   MAPS_API_PRODUCT_LINE,
+  MAPS_EXTENSION_PRODUCT_LINE,
   MAPS_ONLINE_PRODUCT_LINE,
-  MAPS_PRODUCT_LINE,
   formatPricingDisplayPrice,
   getDefaultPricingPaymentChannel,
   isPricingAuthFailure,
@@ -57,7 +57,7 @@ interface PricingLineConfig {
   /** 打开 checkout 弹窗与识别成功/价格变更事件用的业务来源。 */
   checkoutSource: string
   /** auth/me 中本线订阅摘要字段。 */
-  subscriptionKey: 'maps_online_subscription' | 'maps_subscription' | 'maps_api_subscription'
+  subscriptionKey: 'maps_online_subscription' | 'maps_extension_subscription' | 'maps_api_subscription'
 }
 
 const PRICING_LINE_CONFIG: Record<PricingLineId, PricingLineConfig> = {
@@ -67,9 +67,9 @@ const PRICING_LINE_CONFIG: Record<PricingLineId, PricingLineConfig> = {
     subscriptionKey: 'maps_online_subscription'
   },
   extension: {
-    productLine: MAPS_PRODUCT_LINE,
-    checkoutSource: 'pricing_maps',
-    subscriptionKey: 'maps_subscription'
+    productLine: MAPS_EXTENSION_PRODUCT_LINE,
+    checkoutSource: 'pricing_maps_extension',
+    subscriptionKey: 'maps_extension_subscription'
   },
   api: {
     productLine: MAPS_API_PRODUCT_LINE,

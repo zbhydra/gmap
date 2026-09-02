@@ -71,7 +71,7 @@
         "CHECKIN_CONFIG_INVALID": "Check-in configuration is invalid",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "Der Server ist ausgelastet. Bitte versuchen Sie es später erneut.",
         "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot-Synchronisierung fehlgeschlagen. Bitte HubSpot neu verbinden und erneut versuchen",
-        "MAPS_USAGE_UNAVAILABLE": "Maps-Kontingentdienst vorübergehend nicht verfügbar. Bitte später erneut versuchen"
+        "EXTENSION_USAGE_UNAVAILABLE": "Maps-Kontingentdienst vorübergehend nicht verfügbar. Bitte später erneut versuchen"
     },
     "telegram": {
         "purchase_success_text": "Kauf erfolgreich. Die Credits wurden gutgeschrieben.\n\nBestellnummer: {order_no}",

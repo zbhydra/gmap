@@ -190,7 +190,7 @@ export const pricingContent: PricingPageContent = {
         },
         {
           id: 'pro',
-          productId: 'maps_pro',
+          productId: 'maps_extension_pro',
           name: 'Pro',
           tagline: 'For freelancers and growing lead pipelines',
           price: '$39',
@@ -209,7 +209,7 @@ export const pricingContent: PricingPageContent = {
         },
         {
           id: 'business',
-          productId: 'maps_business',
+          productId: 'maps_extension_business',
           name: 'Business',
           tagline: 'For agencies and data-heavy teams',
           price: '$99',

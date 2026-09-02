@@ -7,9 +7,11 @@
 集成通道（013 A10，U9）：HubSpot 同步代理端点——插件传用户 access token 与
 商家数组，服务端转发 HubSpot API（竞品云函数代理同构），无表结构变更。
 
-配额通道（013 A11，U7）：月度记录数配额——登录按 user_id、匿名按 device_id
-归属（get_current_user_optional），月度窗口按业务时区自然月重置；Redis 月度
-计数零新表，模型决策见 maps_usage_service 模块注释。
+配额通道（013 A11，U7；额度基建 2026-09-01 MySQL 化）：月度记录数配额——
+登录按 user_id 走 MySQL 用量流水（user_usage_logs）、匿名按 device_id 走
+Redis 月度计数（get_current_user_optional 分派），月度窗口按业务时区自然
+月重置；统一 usage 服务（三产品线门面）见 usage_service 与
+docs/feat/000.架构/tech-额度基建.md。
 
 补全通道（013 A4，U8）：Email/社媒补全——服务端自研（基线 #4），fetch 商家
 官网 + 正则抽取（竞品 findV3 出参形状同构）。鉴权与 maps/usage 同款
@@ -25,9 +27,9 @@ from app.schemas.maps_hubspot_schema import MapsHubspotSyncRequest
 from app.schemas.maps_usage_schema import MapsUsageReportRequest
 from app.services.maps_enrich_service import maps_enrich_service
 from app.services.maps_hubspot_service import maps_hubspot_service
-from app.services.maps_usage_service import (
-    maps_usage_identity,
-    maps_usage_service,
+from app.services.usage_service import (
+    extension_usage_service,
+    usage_identity,
     usage_payload,
 )
 from app.utils.response import ResponseUtils
@@ -136,11 +138,11 @@ async def get_maps_usage(
     """查询当月配额用量（竞品云函数 quota 形状：used/total/period/exhausted）。
 
     登录按 user_id、匿名按 device_id 归属；插件面板 Start 前门控与 popup
-    账号区消费本端点。Redis 故障按 fail-closed 抛 MAPS_USAGE_UNAVAILABLE，
+    账号区消费本端点。存储故障按 fail-closed 抛 EXTENSION_USAGE_UNAVAILABLE，
     插件侧自行降级放行（采集可用性优先）。
     """
-    snapshot = await maps_usage_service.get_usage(
-        maps_usage_identity(current_user.user_id, current_user.device_id),
+    snapshot = await extension_usage_service.get_usage(
+        usage_identity(current_user.user_id, current_user.device_id),
         user_id=current_user.user_id,
     )
     return ResponseUtils.ok(usage_payload(snapshot))
@@ -158,8 +160,8 @@ async def report_maps_usage(
     （计量丢失 = 免费多给额度，防滥用计量口径可接受），同会话重复上报经
     幂等键只扣一次。
     """
-    result = await maps_usage_service.consume(
-        maps_usage_identity(current_user.user_id, current_user.device_id),
+    result = await extension_usage_service.consume(
+        usage_identity(current_user.user_id, current_user.device_id),
         user_id=current_user.user_id,
         records=request.records,
         request_id=request.request_id,

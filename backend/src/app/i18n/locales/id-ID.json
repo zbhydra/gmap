@@ -71,7 +71,7 @@
         "CHECKIN_CONFIG_INVALID": "Check-in configuration is invalid",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "Server sedang sibuk. Silakan coba lagi nanti.",
         "MAPS_HUBSPOT_SYNC_FAILED": "Sinkronisasi HubSpot gagal. Silakan hubungkan kembali HubSpot dan coba lagi",
-        "MAPS_USAGE_UNAVAILABLE": "Layanan kuota Maps sementara tidak tersedia. Silakan coba lagi nanti"
+        "EXTENSION_USAGE_UNAVAILABLE": "Layanan kuota Maps sementara tidak tersedia. Silakan coba lagi nanti"
     },
     "telegram": {
         "purchase_success_text": "Pembelian berhasil. Credits telah ditambahkan.\n\nNo. pesanan: {order_no}",

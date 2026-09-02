@@ -69,7 +69,12 @@ async with get_async_session() as db:
 
 关联 model 的 service **必须**提供这四个基础方法，且只提供基础方法（模块边界见 spec-python §9）。
 
-**原子数据结构例外**：一个 service 同时路由多张同构表、且公开任意 CRUD 会破坏数据结构合同的基础设施，不强制提供四标准方法。当前唯一例外是 MySQL 用户 Counter：它按固定周期路由 daily/monthly/lifetime 三表，只提供 `add/get/get_list`，禁止任意 `update/del/reset`。新增例外必须先更新本规范并写明为何标准 CRUD 会破坏合同，不能只在业务代码中自行绕过。
+**原子数据结构例外**：一个 service 同时路由多张同构表、且公开任意 CRUD 会破坏数据结构合同的基础设施，不强制提供四标准方法。当前已登记两个例外：
+
+- **MySQL 用户 Counter**：按固定周期路由 daily/monthly/lifetime 三表，只提供 `add/get/get_list`，禁止任意 `update/del/reset`。
+- **用户用量流水**（`usage_service` → `user_usage_logs`）：used = 按月 `SUM(delta)` 的只插入不可变流水，幂等由唯一键 `(product_line, user_id, request_id)` 承担；只提供 `get_usage/consume/refund`（插入 + 聚合读），禁止任意 `update/del`——一条 UPDATE 即可篡改历史用量、一条 DELETE 即可凭空恢复额度。
+
+新增例外必须先更新本规范并写明为何标准 CRUD 会破坏合同，不能只在业务代码中自行绕过。
 
 ### `xxxx_lists` —— 全能查询
 

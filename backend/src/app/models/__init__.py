@@ -24,6 +24,7 @@ from .user_credit_account_model import UserCreditAccountModel
 from .user_credit_log_model import UserCreditLogModel
 from .user_ip_register_model import UserIpRegisterModel
 from .user_model import UserModel
+from .user_usage_log_model import UserUsageLogModel
 
 __all__ = [
     "UserModel",
@@ -46,4 +47,5 @@ __all__ = [
     "CounterUserDailyModel",
     "CounterUserMonthlyModel",
     "CounterUserLifetimeModel",
+    "UserUsageLogModel",
 ]

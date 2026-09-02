@@ -42,7 +42,7 @@ import {
 export const SUBSCRIPTION_PRODUCT_CLASS = 1
 
 /** Extension（MapsGrab 插件）产品线标识（与后端 product_line 常量对齐）。 */
-export const MAPS_PRODUCT_LINE = 'maps'
+export const MAPS_EXTENSION_PRODUCT_LINE = 'maps_extension'
 /** Online Scraper 产品线标识。 */
 export const MAPS_ONLINE_PRODUCT_LINE = 'maps_online'
 /** API 产品线标识。 */
@@ -64,9 +64,9 @@ export interface SubscriptionCheckoutData {
 export interface SubscriptionCheckoutPlan {
   /** 商品类别，订阅为 1。 */
   product_class: number
-  /** 商品标识（如 maps_pro）。 */
+  /** 商品标识（如 maps_extension_pro）。 */
   product_id: string
-  /** 产品线标识（maps / maps_online / maps_api）。 */
+  /** 产品线标识（maps_extension / maps_online / maps_api）。 */
   product_line: string
   /** 后端配置商品名。 */
   product_name: string
@@ -79,7 +79,7 @@ export interface SubscriptionCheckoutPlan {
   /** 是否自动续费。 */
   auto_renew: boolean
   /**
-   * 产品线月度权益额度；单位随产品线：maps / maps_online 为 records/月，
+   * 产品线月度权益额度；单位随产品线：maps_extension / maps_online 为 records/月，
    * maps_api 为 requests/月；后端缺省为 null。
    */
   monthly_quota: number | null

@@ -244,12 +244,12 @@ test.describe('Pricing Page', () => {
     const extensionPanel = page.locator('[data-pricing-panel="extension"]')
     await expect(extensionPanel).toBeVisible()
     await expect(extensionPanel.locator('[data-plan-card="free"] .plan-quota')).toContainText('1,000 records / month')
-    await expect(extensionPanel.locator('[data-plan-card="maps_pro"] .plan-price')).toHaveText('$39')
-    await expect(extensionPanel.locator('[data-plan-card="maps_pro"] .plan-quota')).toContainText('100,000 records / month')
-    await expect(extensionPanel.locator('[data-plan-card="maps_business"] .plan-price')).toHaveText('$99')
-    await expect(extensionPanel.locator('[data-plan-card="maps_business"] .plan-quota')).toContainText('500,000 records / month')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] .plan-price')).toHaveText('$39')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] .plan-quota')).toContainText('100,000 records / month')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_business"] .plan-price')).toHaveText('$99')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_business"] .plan-quota')).toContainText('500,000 records / month')
     // 主推徽章在 Pro 卡
-    await expect(extensionPanel.locator('[data-plan-card="maps_pro"] .plan-badge')).toContainText('Most Popular')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] .plan-badge')).toContainText('Most Popular')
   })
 
   test('free tier links to the extension page while buyable buttons need payment config', async ({ page }) => {
@@ -258,8 +258,8 @@ test.describe('Pricing Page', () => {
     const freeCta = page.locator('a[data-cta="pricing-free-extension"]')
     await expect(freeCta).toHaveAttribute('href', '/extension/')
     // 可购买按钮：mock 环境无支付配置 → 禁用态
-    await expect(page.locator('[data-pricing-buy="maps_pro"]')).toBeDisabled()
-    await expect(page.locator('[data-pricing-buy="maps_business"]')).toBeDisabled()
+    await expect(page.locator('[data-pricing-buy="maps_extension_pro"]')).toBeDisabled()
+    await expect(page.locator('[data-pricing-buy="maps_extension_business"]')).toBeDisabled()
   })
 
   test('online and api plans render configured cards with disabled buy buttons', async ({ page }) => {

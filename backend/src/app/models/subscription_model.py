@@ -20,10 +20,10 @@ class UserSubscriptionModel(BaseDBModel):
         String(32),
         primary_key=True,
         default="extension",
-        comment="产品线标识：extension=插件下载 Unlimited，maps=MapsGrab 套餐",
+        comment="产品线标识：extension=插件下载 Unlimited，maps_extension=MapsGrab 插件采集订阅",
     )
-    # 购买商品 SKU 快照：同产品线存在多档位（如 maps_pro / maps_business）时
-    # 唯一能说明当前权益档位的字段；续期履约时同步刷新。
+    # 购买商品 SKU 快照：同产品线存在多档位（如 maps_extension_pro /
+    # maps_extension_business）时唯一能说明当前权益档位的字段；续期履约时同步刷新。
     product_id: Mapped[str] = mapped_column(
         String(64),
         default="unlimited",

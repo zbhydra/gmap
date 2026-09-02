@@ -1,5 +1,31 @@
 # 006 · 订阅系统 - 变更记录
 
+## 2026-09-02 FREE 档统一（复合唯一键 + 每产品线 free 行 + 下单按 product_id 反查）
+
+**Why**: 分产品订阅后 Free 仍是全局一行（`product_line` 为空串），maps 线查 free 档会误读 extension 线 free 的 `daily_limit` 配置；且 `config_subscription_product` 的单列唯一键 `uk(product_id)` 锁死商品标识全局唯一，每条产品线无法各自配置 free 档。前序 U1 已把产品线 `maps` 改名 `maps_extension`（常量、存量行与 seed 同步），本批在其上完成 free 档统一。
+
+**变更**:
+
+- 唯一键 `uk(product_id)` → `uk(product_line, product_id)`（兄弟表 `config_subscription_product_price` 已是复合键先例）；单列键随之删除（复合键最左前缀之外不再保留全局唯一语义）。
+- 支付配置快照（payment_config_service）主 dict 键改为 `(product_line, product_id)`，同时构建 `product_id` 辅助索引供下单反查；下单链路 `get_subscription_checkout_config` 按 product_id 反查：唯一命中放行，未命中返回 `PAYMENT_PRICE_UPDATED`，付费 SKU 跨线重名（seed 合同破坏）返回 `PAYMENT_GATEWAY_ERROR`；free 各线同名是合法状态，返回任一条由订阅层 free 拒单保护统一拒绝。checkout 方案列表对无法唯一归属商品的孤儿价格行跳过。
+- `subscription_service._get_subscription_product_config` 改为按 `(product_line, product_id)` 精确读取（仍走只读商品表的轻量路径）；`get_user_subscription_config` 三分支（user_id=0 / 无权益行 / 已过期）均程序构造内存订阅对象（不入 `user_subscriptions` 表）并返回本线 free 配置，修复 maps 线误读 extension 线 free 配置的裂缝。
+- seed 脚本（`scripts/seed_subscription_products.py`）重写为 dataclass 表驱动并纳入四条产品线 free 行：extension 线原样保留存量 metadata（`daily_limit=5` 等，含 `one_time` 历史残留），maps_extension / maps_online 线 `monthly_quota=1000`、maps_api 线 `monthly_quota=20`；free 行 `period='free'`、`display_amount=0`、无渠道价、sort_order=10（各线内低于全部付费档）。文件头写明 SKU 唯一性合同：付费 SKU 的 product_id 必须全线唯一（下单只携带 product_id），free 是唯一允许各线同名的档位。
+- HTTP 契约与 website 下单请求不变（仍只传 product_id）。
+
+**实际产出**（本地 dev 库，经 `sql_executor.py` / `sync_database_schema --yes` 执行）:
+
+- U1 存量迁移：三条 UPDATE 把订阅商品、用户订阅等存量行的产品线标识 `maps` 改名 `maps_extension`，seed upsert 命中既有行未新建。
+- 本批存量迁移：`UPDATE config_subscription_product SET product_line='extension' WHERE product_id='free' AND product_line=''`（rowcount=1），保证 (extension, free) upsert 命中旧行（id=90）不新建。
+- 结构同步：`CREATE UNIQUE INDEX uk_config_subscription_product_line_product_id` + `DROP INDEX uk_config_subscription_product_product_id`。
+- seed 播种后 15 行 = 4 条 free + 11 条付费；付费行数与播种前一致，幂等重跑行数不变；手工 INSERT 重复 `(maps_api, free)` 被复合唯一键拒绝（Duplicate entry 'maps_api-free'）。
+
+**已验证**:
+
+- 新增 real 测试 `tests/integration/real/services/test_subscription_service_real.py` 7 passed：三分支按线返回本线 free（maps 线 monthly_quota=1000/20、extension 线 daily_limit=5，互不串线）且 `user_subscriptions` 无新增行；付费档 check_product 反查唯一命中通过；未命中 product_id 与 free 下单均按 `PAYMENT_PRICE_UPDATED` 拒绝。
+- 付费 SKU 跨线重名分支需破坏 config 表合同才能构造，由进程内验证覆盖（构造快照调 `_resolve_checkout_product`，断言 `PAYMENT_GATEWAY_ERROR`）。
+- 回归：health smoke、subscription status / review_reward 屏蔽态 / 订单自动续费相关 real 测试全绿；`collect-only` 与 `-m real` 收集数一致（79=79）。
+- `black` / `ruff` / 限定范围 `mypy` 通过；`sync_database_schema --yes` 通过；本地 7600 启动 smoke：health 正常、checkout-configs 返回 11 个付费方案（free 无渠道价不出现在可购列表）、匿名 status 返回 free。
+
 ## 2026-09-02 好评赠送活动下线(前端删除、后端接口屏蔽)
 
 **Why**:活动停止运营。前端入口与流程删除,后端保留代码以便未来重启。
@@ -12,6 +38,7 @@
 - real 测试重写为屏蔽态断言:配置响应固定关闭态、claim 拒绝且无副作用(原 6 个领取流程用例随行为下线删除)。
 
 **验证**:real 测试 `2 passed`;black / ruff / mypy 通过;本地 7600 端口启动 smoke,checkout-configs 返回关闭态、claim 匿名 401(登录态 400 由 real 测试覆盖);website `node --test` 47 passed、`pnpm build` 22 页通过。
+
 ## 2026-08-31 订阅扩展 maps_online / maps_api 产品线(8 档,PayPal 一次性支付)
 
 **Why**:MapsGrab 商业化对标竞品分产品订阅,Online Scraper 与 API 两条产品线需要可购买的档位。占位期用户决策(auto_renew=false,PayPal 一次性支付):使真实 PayPal 凭据下立即可购买,无需先落渠道订阅协议;后续接自动续费时改商品配置并替换真实 provider_sku 即可。两线配额暂无消费方,014 云端落地后直接复用月度额度模型。
@@ -19,8 +46,8 @@
 **变更**:
 
 - 新增产品线 `maps_online`(Online Lite $19 / Basic $49 / Growth $99 / Pro $149,20,000/80,000/250,000/500,000 records/月)与 `maps_api`(API Basic $15 / Professional $65 / Business $115 / Scale $365,1,000/5,000/10,000/50,000 requests/月);全部 `period=month`、`duration_days=30`、`auto_renew=false`。
-- 商品 metadata `monthly_records` 全量改名 `monthly_quota`(语义 = 月度额度数,单位由产品线定义:maps/maps_online 为 records,maps_api 为 requests);checkout-configs 响应键同步改名。
-- `/api/client/auth/me` 新增 `maps_online_subscription`、`maps_api_subscription`(与 `maps_subscription` 同构)。
+- 商品 metadata `monthly_records` 全量改名 `monthly_quota`(语义 = 月度额度数,单位由产品线定义:maps_extension/maps_online 为 records,maps_api 为 requests);checkout-configs 响应键同步改名。
+- `/api/client/auth/me` 新增 `maps_online_subscription`、`maps_api_subscription`(与 `maps_extension_subscription` 同构)。
 - 播种脚本重构为表驱动 `scripts/seed_subscription_products.py`(幂等 upsert 11 个付费 SKU;新 8 档 provider_sku 占位 `{product_id}-paypal`);删除旧脚本 `seed_maps_subscription_products.py`。
 
 技术口径见 `@tech-订阅商品与状态.md`。

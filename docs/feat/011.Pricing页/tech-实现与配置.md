@@ -25,7 +25,7 @@ Pricing 依赖以下客户端接口:
 
 | 接口 | 用途 |
 | --- | --- |
-| `GET /api/client/auth/me` | 返回用户与各产品线订阅摘要(`maps_online_subscription` / `maps_subscription` / `maps_api_subscription`) |
+| `GET /api/client/auth/me` | 返回用户与各产品线订阅摘要(`maps_online_subscription` / `maps_extension_subscription` / `maps_api_subscription`) |
 | `GET /api/client/subscription/checkout-configs` | 全部启用订阅商品与 PayPal 渠道价(响应含好评赠送合同字段,页面不消费) |
 | `POST /api/client/order/create` | 统一创建订阅订单 |
 | `GET /api/client/order/status/{order_no}` | 支付后轮询订单状态 |
@@ -44,7 +44,7 @@ Pricing 依赖以下客户端接口:
 | --- | --- | --- |
 | `free` | `free` | Free 可配置订阅档,当前 daily limit = 5 |
 | `unlimited` | `month` | Unlimited 月度订阅,续费方式由 metadata 配置 |
-| `maps_pro` / `maps_business` | `month` | Maps 插件线月度套餐(自动续费) |
+| `maps_extension_pro` / `maps_extension_business` | `month` | Maps 插件线月度套餐(自动续费) |
 | `online_lite` / `online_basic` / `online_growth` / `online_pro` | `month` | `maps_online` 线月度套餐,`auto_renew=false`,PayPal 一次性支付 |
 | `api_basic` / `api_professional` / `api_business` / `api_scale` | `month` | `maps_api` 线月度套餐,`auto_renew=false`,PayPal 一次性支付 |
 

@@ -447,7 +447,7 @@ export interface PricingPlanCardMessage {
   /** 卡片标识，同 tab 内唯一（如 free / pro / business），用于渲染分支与测试锚点。 */
   id: string
   /**
-   * 可购买商品 SKU（与后端 product_id 对齐，如 maps_pro / online_lite），
+   * 可购买商品 SKU（与后端 product_id 对齐，如 maps_extension_pro / online_lite），
    * 购买按钮与 GA4 plan 维度直接使用；免费卡为 null（不可购买，引导下载）。
    */
   productId: string | null

@@ -242,7 +242,7 @@ Telegram Bot API 根地址固定为 `https://api.telegram.org`;webhook 公网地
 
 | 表 | 归属 | 唯一索引 | 职责 |
 | --- | --- | --- | --- |
-| `config_subscription_product` | 订阅域 | `uk_config_subscription_product_product_id(product_id)` | 订阅商品定义 |
+| `config_subscription_product` | 订阅域 | `uk_config_subscription_product_line_product_id(product_line, product_id)` | 订阅商品定义 |
 | `config_subscription_product_price` | 订阅域 | `uk_config_subscription_product_price_product_channel(product_id, channel_code)` | 订阅商品 × 渠道定价 |
 | `config_credit_product` | 积分域 | `uk_config_credit_product_product_id(product_id)` | 积分包商品定义 |
 | `config_credit_product_price` | 积分域 | `uk_config_credit_product_price_product_channel(product_id, channel_code)` | 积分包 × 渠道定价 |

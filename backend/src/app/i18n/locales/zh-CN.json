@@ -76,7 +76,7 @@
         "CHECKIN_CONFIG_INVALID": "签到配置异常",
         "SUBSCRIPTION_REVIEW_REWARD_BUSY": "服务器繁忙，请稍后重试",
         "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot 同步失败，请重新连接 HubSpot 后重试",
-        "MAPS_USAGE_UNAVAILABLE": "Maps 配额服务暂不可用，请稍后重试"
+        "EXTENSION_USAGE_UNAVAILABLE": "Maps 配额服务暂不可用，请稍后重试"
     },
     "telegram": {
         "purchase_success_text": "购买成功，Credits 已到账。\n\n订单号: {order_no}",

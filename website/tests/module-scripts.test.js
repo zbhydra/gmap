@@ -222,7 +222,7 @@ test('Pricing copy keeps the three product-line tabs and checkout shell fields d
     assert.match(extensionCards[2].quota, /500,000 records/)
     // Free 引导安装，Pro/Business 接购买链路
     assert.deepEqual(extensionCards.map(card => card.status), ['free', 'buyable', 'buyable'])
-    assert.deepEqual(extensionCards.map(card => card.productId), [null, 'maps_pro', 'maps_business'])
+    assert.deepEqual(extensionCards.map(card => card.productId), [null, 'maps_extension_pro', 'maps_extension_business'])
     // Online 线五档 SKU 与一次性口径
     assert.deepEqual(
       content.tabs.online.cards.map(card => card.productId),
@@ -3183,14 +3183,14 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
         {
           product_class: 1,
           product_id: productId,
-          product_line: 'maps',
-          product_name: productId === 'maps_pro' ? 'Maps Pro' : 'Maps Business',
+          product_line: 'maps_extension',
+          product_name: productId === 'maps_extension_pro' ? 'Maps Pro' : 'Maps Business',
           display_currency: 'USD',
           display_amount: amount,
           period: 'month',
           duration_days: 30,
           auto_renew: true,
-          monthly_quota: productId === 'maps_pro' ? 100000 : 500000,
+          monthly_quota: productId === 'maps_extension_pro' ? 100000 : 500000,
           payment_channels: [{
             payment_method: 'paypal',
             payment_method_name: 'PayPal',
@@ -3227,7 +3227,7 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
   globalThis.document = { documentElement: { lang: 'en-US' } }
   globalThis.fetch = async (url, options = {}) => {
     fetchCalls.push({ url: String(url), body: options.body ? JSON.parse(String(options.body)) : null })
-    return new Response(JSON.stringify(mapsPlan('maps_pro', 39000000)), {
+    return new Response(JSON.stringify(mapsPlan('maps_extension_pro', 39000000)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     })
@@ -3238,11 +3238,11 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
     const subscriptionData = await module.listSubscriptionCheckoutConfigs(context)
     assert.equal(subscriptionData.plans.length, 2)
 
-    // pickPlansByLine 只取 maps 产品线，按 product_id 索引
-    const mapsPlans = module.pickPlansByLine(subscriptionData.plans, 'maps')
-    assert.equal([...mapsPlans.keys()].sort().join(','), 'maps_pro')
-    const plan = mapsPlans.get('maps_pro')
-    assert.equal(plan.product_line, 'maps')
+    // pickPlansByLine 只取 maps_extension 产品线，按 product_id 索引
+    const mapsPlans = module.pickPlansByLine(subscriptionData.plans, 'maps_extension')
+    assert.equal([...mapsPlans.keys()].sort().join(','), 'maps_extension_pro')
+    const plan = mapsPlans.get('maps_extension_pro')
+    assert.equal(plan.product_line, 'maps_extension')
     assert.equal(plan.monthly_quota, 100000)
     assert.equal(module.formatPricingDisplayPrice(plan), '$39.00')
 
@@ -3255,7 +3255,7 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
         url: 'https://api-mapsgrab.example.com/api/client/order/create',
         body: {
           product_class: 1,
-          product_id: 'maps_pro',
+          product_id: 'maps_extension_pro',
           payment_method: 'paypal',
           currency: 'USD',
           amount: 39000000
@@ -3289,7 +3289,7 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
     removeAttribute() {}
   })
   const buyableCards = new Map()
-  for (const productId of ['maps_pro', 'maps_business']) {
+  for (const productId of ['maps_extension_pro', 'maps_extension_business']) {
     buyableCards.set(productId, { line: 'extension', buy: makeElement(), error: makeElement() })
   }
   const elements = {
@@ -3320,7 +3320,7 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
       checkout_configs: [{
         product_class: 1,
         product_id: productId,
-        product_line: 'maps',
+        product_line: 'maps_extension',
         product_name: 'Maps Pro',
         display_currency: 'USD',
         display_amount: amount,
@@ -3357,18 +3357,18 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
     state.token = 'signed-in-token'
     const signedInLoad = module.loadPlans(elements, copy, state)
 
-    pendingResponses[1](new Response(JSON.stringify(planData('maps_pro', 39000000)), {
+    pendingResponses[1](new Response(JSON.stringify(planData('maps_extension_pro', 39000000)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     }))
     await signedInLoad
-    pendingResponses[0](new Response(JSON.stringify(planData('maps_pro', 29000000)), {
+    pendingResponses[0](new Response(JSON.stringify(planData('maps_extension_pro', 29000000)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     }))
     await anonymousLoad
 
-    const card = elements.buyableCards.get('maps_pro')
+    const card = elements.buyableCards.get('maps_extension_pro')
     // 旧响应不得覆盖新登录态：价格取自登录态那次加载
     assert.equal(elements.plansStatus.textContent, '')
     assert.equal(card.buy.disabled, false)
@@ -3563,9 +3563,9 @@ test('PayPal success return page polls order status every 3 seconds and switches
     expectedTitle: 'Credits added',
     expectedMessageFragment: 'Credits have been added'
   })
-  // 订阅类订单（maps / maps_online 各线）按 product_class 切换为订阅口径
+  // 订阅类订单（maps_extension / maps_online 各线）按 product_class 切换为订阅口径
   await runScenario({
-    productId: 'maps_pro',
+    productId: 'maps_extension_pro',
     productClass: 1,
     expectedTitle: 'Subscription activated',
     expectedMessageFragment: 'MapsGrab plan is active'

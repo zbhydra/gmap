@@ -27,7 +27,7 @@ export interface HomepageUserInfo {
   /** 当前订阅权益摘要；未登录或后端缺省时为空。 */
   subscription?: HomepageUserSubscription | null
   /** MapsGrab 插件产品线订阅摘要；后端缺省时为空。 */
-  maps_subscription?: HomepageUserSubscription | null
+  maps_extension_subscription?: HomepageUserSubscription | null
   /** Online Scraper 产品线订阅摘要；后端缺省时为空。 */
   maps_online_subscription?: HomepageUserSubscription | null
   /** API 产品线订阅摘要；后端缺省时为空。 */
