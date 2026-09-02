@@ -4,6 +4,7 @@
  * 路由：
  *   /login       → LoginView（无需鉴权）
  *   /            → AdminLayout > DashboardView（需鉴权）
+ *   /users       → AdminLayout > UsersView（需鉴权）
  *   /orders      → AdminLayout > OrdersView（需鉴权）
  *   /system-settings → AdminLayout > SystemSettingsView（需鉴权）
  *
@@ -28,6 +29,11 @@ const routes: RouteRecordRaw[] = [
         path: "",
         name: "Dashboard",
         component: () => import("@/views/DashboardView.vue"),
+      },
+      {
+        path: "users",
+        name: "Users",
+        component: () => import("@/views/UsersView.vue"),
       },
       {
         path: "orders",

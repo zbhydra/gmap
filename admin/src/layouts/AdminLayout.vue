@@ -4,7 +4,7 @@
   结构：
   NLayout（桌面 has-sider，移动单列）
   ├── NLayoutSider（仅桌面，可折叠侧边栏）
-  │   └── NMenu（Dashboard / 订单管理 / 系统设置）
+  │   └── NMenu（Dashboard / 用户管理 / 订单管理 / 系统设置）
   └── NLayout
       ├── NLayoutHeader（顶栏：移动端汉堡 + 标题 / 登出按钮）
       └── NLayoutContent（RouterView）
@@ -101,6 +101,7 @@ import {
   DashboardOutlined,
   SettingOutlined,
   ProfileOutlined,
+  TeamOutlined,
   MenuOutlined,
 } from "@vicons/antd";
 import { useAuthStore } from "@/stores/auth";
@@ -132,6 +133,11 @@ const menuOptions = computed<MenuOption[]>(() => [
     icon: renderIcon(DashboardOutlined),
   },
   {
+    label: t("layout.users"),
+    key: "Users",
+    icon: renderIcon(TeamOutlined),
+  },
+  {
     label: t("layout.orders"),
     key: "Orders",
     icon: renderIcon(ProfileOutlined),
@@ -148,6 +154,7 @@ function handleMenuClick(key: string) {
   navDrawerVisible.value = false;
   const routeMap: Record<string, string> = {
     Dashboard: "/",
+    Users: "/users",
     Orders: "/orders",
     SystemSettings: "/system-settings",
   };

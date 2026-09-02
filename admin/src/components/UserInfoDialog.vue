@@ -73,20 +73,69 @@
             <NDescriptionsItem :label="t('userInfo.creditsBalance')">
               {{ profile.credits.balance }}
             </NDescriptionsItem>
-            <NDescriptionsItem :label="t('userInfo.hasSubscription')">
-              <NTag
-                :type="profile.subscription.has_subscription ? 'success' : 'default'"
-                size="small"
-              >
-                {{
-                  profile.subscription.has_subscription
-                    ? t("common.yes")
-                    : t("common.no")
-                }}
-              </NTag>
+          </NDescriptions>
+
+          <div class="user-info-block-title">
+            {{ t("userInfo.subscriptionsTitle") }}
+          </div>
+          <NDescriptions
+            bordered
+            size="small"
+            :column="1"
+            label-placement="left"
+            class="user-info-lines"
+          >
+            <NDescriptionsItem
+              v-for="line in profile.subscriptions"
+              :key="line.product_line"
+              :label="productLineLabel(line.product_line)"
+            >
+              <div class="user-info-line-value">
+                <NTag
+                  :type="line.has_subscription ? 'success' : 'default'"
+                  size="small"
+                >
+                  {{
+                    line.has_subscription
+                      ? t("userInfo.subscriptionActive")
+                      : t("userInfo.subscriptionInactive")
+                  }}
+                </NTag>
+                <!-- 过期行保留原始过期时间供排障，从未订阅（Free 不落库）显示占位符 -->
+                <span
+                  v-if="line.expires_at !== null"
+                  :class="{ 'user-info-muted': !line.has_subscription }"
+                >
+                  {{ formatAdminTimeMs(line.expires_at) }}
+                </span>
+                <span v-else class="user-info-muted">-</span>
+              </div>
             </NDescriptionsItem>
-            <NDescriptionsItem :label="t('userInfo.subscriptionExpiresAt')">
-              {{ formatAdminTimeMs(profile.subscription.expires_at) }}
+          </NDescriptions>
+
+          <div class="user-info-block-title">
+            {{ t("userInfo.usageTitle") }}
+          </div>
+          <NDescriptions
+            bordered
+            size="small"
+            :column="1"
+            label-placement="left"
+            class="user-info-lines"
+          >
+            <NDescriptionsItem
+              v-for="line in profile.usage"
+              :key="line.product_line"
+              :label="productLineLabel(line.product_line)"
+            >
+              <div class="user-info-line-value">
+                <span class="user-info-usage-text">
+                  {{ formatUsageYm(line.ym) }} · {{ line.used }}/{{ line.total }}
+                </span>
+                <NTag v-if="line.exhausted" type="error" size="small">
+                  {{ t("userInfo.usageExhausted") }}
+                </NTag>
+              </div>
             </NDescriptionsItem>
           </NDescriptions>
         </div>
@@ -130,6 +179,7 @@ import {
   getAdminUserProfile,
   type AdminUserAccountStatus,
   type AdminUserProfileData,
+  type AdminUserProductLine,
 } from "@/api/users";
 import type { AdminOrder, CallbackStatus, OrderStatus } from "@/api/orders";
 import { formatAdminTimeMs } from "@/utils/time";
@@ -336,6 +386,24 @@ function accountStatusTagType(status: AdminUserAccountStatus): TagType {
   return types[status];
 }
 
+/** 产品线展示名 i18n 键，键值与后端 subscription 常量一一对应。 */
+const productLineLabelKeys: Record<AdminUserProductLine, string> = {
+  extension: "userInfo.productLineExtension",
+  maps_extension: "userInfo.productLineMapsExtension",
+  maps_online: "userInfo.productLineMapsOnline",
+  maps_api: "userInfo.productLineMapsApi",
+};
+
+/** 产品线展示名。 */
+function productLineLabel(productLine: AdminUserProductLine): string {
+  return t(productLineLabelKeys[productLine]);
+}
+
+/** 用量周期标签：后端 ym 整数（YYYYMM）转 YYYY-MM。 */
+function formatUsageYm(ym: number): string {
+  return `${Math.floor(ym / 100)}-${String(ym % 100).padStart(2, "0")}`;
+}
+
 function renderText(value: string | null) {
   if (!value) {
     return "-";
@@ -417,6 +485,28 @@ function callbackStatusTagType(value: CallbackStatus): TagType {
   flex-direction: column;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.user-info-block-title {
+  color: #4d4d4d;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.user-info-lines :deep(.n-descriptions-table-header) {
+  width: 140px;
+}
+
+.user-info-line-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.user-info-usage-text {
+  font-variant-numeric: tabular-nums;
 }
 
 .user-info-product {

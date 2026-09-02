@@ -15,6 +15,7 @@
   },
   "layout": {
     "dashboard": "Dashboard",
+    "users": "Users",
     "orders": "Orders",
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to logout?",
@@ -92,6 +93,19 @@
     "callbackFailed": "Failed",
     "callbackMaxRetry": "Max Retry"
   },
+  "users": {
+    "search": "Search",
+    "reset": "Reset",
+    "userId": "User ID",
+    "userIdPlaceholder": "User ID",
+    "userEmail": "Email",
+    "userEmailPlaceholder": "Email contains",
+    "status": "Account Status",
+    "statusAll": "All",
+    "registerCountry": "Register Country",
+    "createdRange": "Registered At",
+    "loadFailed": "Failed to load users"
+  },
   "userInfo": {
     "title": "User Info",
     "userId": "User ID",
@@ -110,8 +124,15 @@
     "updatedAt": "Updated At",
     "lastLoginAt": "Last Login At",
     "creditsBalance": "Credits",
-    "hasSubscription": "Active Subscription",
-    "subscriptionExpiresAt": "Subscription Expires At",
+    "subscriptionsTitle": "Subscriptions",
+    "usageTitle": "Monthly Usage",
+    "productLineExtension": "TG Extension",
+    "productLineMapsExtension": "Maps Extension",
+    "productLineMapsOnline": "Maps Online",
+    "productLineMapsApi": "Maps API",
+    "subscriptionActive": "Active",
+    "subscriptionInactive": "Inactive",
+    "usageExhausted": "Exhausted",
     "tabOrders": "Orders",
     "profileLoadFailed": "Failed to load user info",
     "ordersLoadFailed": "Failed to load orders",
@@ -131,9 +152,7 @@
     "success": "Success",
     "error": "Error",
     "loading": "Loading...",
-    "noData": "No data",
-    "yes": "Yes",
-    "no": "No"
+    "noData": "No data"
   },
   "systemSettings": {
     "tabConfigCache": "Config Table Cache",
