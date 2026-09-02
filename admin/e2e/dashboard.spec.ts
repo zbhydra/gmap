@@ -4,6 +4,7 @@
  * 覆盖：
  * - 统计卡片渲染（总用户数、今日新增、24H 活跃、7D 活跃）
  * - 数据表格渲染（日期行、mark_type 动态列）
+ * - 图表渲染（60 天注册柱状图 + 打点事件折线图、加载失败错误占位）
  * - 空数据处理
  */
 import { expect, test, type Page } from "@playwright/test";
@@ -100,12 +101,9 @@ test.describe("Dashboard 数据表格", () => {
             "web_first_opened",
             "web_pricing_open_from_extension",
             "web_extension_store_review_click",
-            "web_parse_input_click",
             "tg_video",
-            "web_download_click",
             "tg_audio",
             "popup_open",
-            "download_click",
             "web_page_open",
           ],
           rows: [
@@ -119,7 +117,6 @@ test.describe("Dashboard 数据表格", () => {
                 web_pricing_open_from_extension: { event_count: 6, device_count: 5 },
                 web_extension_store_review_click: { event_count: 4, device_count: 3 },
                 content_open: { event_count: 9, device_count: 8 },
-                download_click: { event_count: 7, device_count: 6 },
                 popup_open: { event_count: 5, device_count: 4 },
               },
             },
@@ -133,7 +130,6 @@ test.describe("Dashboard 数据表格", () => {
                 web_pricing_open_from_extension: { event_count: 8, device_count: 7 },
                 web_extension_store_review_click: { event_count: 2, device_count: 2 },
                 content_open: { event_count: 18, device_count: 16 },
-                download_click: { event_count: 14, device_count: 12 },
                 popup_open: { event_count: 10, device_count: 8 },
               },
             },
@@ -167,17 +163,9 @@ test.describe("Dashboard 数据表格", () => {
       page.getByRole("columnheader", { name: "content_open" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("columnheader", { name: "download_click" }),
-    ).toBeVisible();
-    await expect(
       page.getByRole("columnheader", { name: "popup_open" }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("columnheader", { name: "web_parse_input_click" }),
-    ).toHaveCount(0);
-    await expect(
-      page.getByRole("columnheader", { name: "web_download_click" }),
-    ).toHaveCount(0);
+    // web_page_open 仍属隐藏列；死成员（web_parse_input_click 等）已无枚举与上报方，不再进入 mock
     await expect(
       page.getByRole("columnheader", { name: "web_page_open" }),
     ).toHaveCount(0);
@@ -199,9 +187,6 @@ test.describe("Dashboard 数据表格", () => {
       headerNames.indexOf("content_open"),
     );
     expect(headerNames.indexOf("content_open")).toBeLessThan(
-      headerNames.indexOf("download_click"),
-    );
-    expect(headerNames.indexOf("download_click")).toBeLessThan(
       headerNames.indexOf("popup_open"),
     );
 
@@ -250,6 +235,105 @@ test.describe("Dashboard 数据表格", () => {
     await expect(page.getByRole("cell", { name: "day-01" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "day-60" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "day-61" })).toHaveCount(0);
+  });
+});
+
+test.describe("Dashboard 图表", () => {
+  test("渲染 60 天注册柱状图与打点事件折线图", async ({ page }) => {
+    await loginAsAdmin(page);
+
+    await page.route("**/api/admin/dashboard", async (route) => {
+      await route.fulfill(
+        successResponse({
+          summary: dashboardSummary(),
+          mark_types: ["tg_video", "tg_audio"],
+          rows: [
+            {
+              date_label: "2026-06-01",
+              registered_count: 5,
+              metrics: {
+                tg_video: { event_count: 100, device_count: 80 },
+                tg_audio: { event_count: 30, device_count: 20 },
+              },
+            },
+            {
+              date_label: "2026-05-31",
+              registered_count: 8,
+              metrics: {
+                tg_video: { event_count: 200, device_count: 150 },
+                tg_audio: { event_count: 60, device_count: 40 },
+              },
+            },
+            {
+              date_label: "2026-05-30",
+              registered_count: 3,
+              metrics: {
+                tg_video: { event_count: 150, device_count: 90 },
+                tg_audio: { event_count: 45, device_count: 25 },
+              },
+            },
+          ],
+        }),
+      );
+    });
+
+    await page.goto("/");
+
+    // 两个图表卡片标题
+    await expect(page.getByText("60 天注册趋势")).toBeVisible();
+    await expect(page.getByText("60 天打点事件趋势")).toBeVisible();
+
+    // 两个图表各渲染一个 canvas，且有实际绘制内容（非全透明位图）
+    const canvases = page.locator(".dashboard-view canvas");
+    await expect(canvases).toHaveCount(2);
+    await expect
+      .poll(async () =>
+        canvases.evaluateAll((nodes) =>
+          nodes.map((node) => {
+            if (!(node instanceof HTMLCanvasElement)) {
+              return false;
+            }
+            const context = node.getContext("2d");
+            if (!context) {
+              return false;
+            }
+            const { data } = context.getImageData(
+              0,
+              0,
+              node.width,
+              node.height,
+            );
+            for (let index = 3; index < data.length; index += 4) {
+              if (data[index] !== 0) {
+                return true;
+              }
+            }
+            return false;
+          }),
+        ),
+      )
+      .toEqual([true, true]);
+  });
+
+  test("加载失败时图表区显示错误占位且表格不受影响", async ({ page }) => {
+    await loginAsAdmin(page);
+
+    await page.route("**/api/admin/dashboard", async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ code: 50000, msg: "mock internal error" }),
+      });
+    });
+
+    await page.goto("/");
+
+    // 两个图表卡片都显示错误占位，不再渲染 canvas
+    await expect(page.getByText("图表加载失败")).toHaveCount(2);
+    await expect(page.locator(".dashboard-view canvas")).toHaveCount(0);
+
+    // 下方表格卡片仍正常渲染（空数据），不被图表错误拖垮
+    await expect(page.getByRole("columnheader", { name: "日期" })).toBeVisible();
   });
 });
 

@@ -35,7 +35,10 @@
     "registered": "Registered",
     "markType": "Mark Type",
     "eventCount": "Events",
-    "deviceCount": "Devices"
+    "deviceCount": "Devices",
+    "chartRegistrations": "Registrations (Last 60 Days)",
+    "chartMarkEvents": "Mark Events (Last 60 Days)",
+    "chartLoadFailed": "Failed to load charts"
   },
   "orders": {
     "title": "Orders",

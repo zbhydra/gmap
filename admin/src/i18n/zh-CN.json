@@ -35,7 +35,10 @@
     "registered": "注册数",
     "markType": "标记类型",
     "eventCount": "事件数",
-    "deviceCount": "设备数"
+    "deviceCount": "设备数",
+    "chartRegistrations": "60 天注册趋势",
+    "chartMarkEvents": "60 天打点事件趋势",
+    "chartLoadFailed": "图表加载失败"
   },
   "orders": {
     "title": "订单管理",
