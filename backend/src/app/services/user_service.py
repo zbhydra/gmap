@@ -1,10 +1,12 @@
 """User 数据库操作类（Service）"""
 
 from collections.abc import Sequence
+from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.exc import IntegrityError
 
+from app.constants.auth import UserAccountStatus
 from app.constants.client_product import ClientProductEnum
 from app.core.database import get_async_session
 from app.exceptions.common_exception import AppCommonException
@@ -254,16 +256,80 @@ class UserService(BaseService[UserModel]):
         *,
         user_ids: Sequence[int] | None = None,
         email_like: str | None = None,
+        status: UserAccountStatus | None = None,
+        created_from_ms: int | None = None,
+        created_to_ms: int | None = None,
         offset: int = 0,
         limit: int = 100,
     ) -> list[UserModel]:
-        """按用户 ID 或当前邮箱包含搜索用户。"""
+        """按通用条件查询用户列表（含已注销用户，按 user_id 倒序）。
+
+        Args:
+            user_ids: 用户 ID 数组。
+            email_like: 当前邮箱包含搜索（内部做 normalize）。
+            status: 账号状态过滤，None = 全部。
+            created_from_ms: 注册时间大于等于该毫秒时间戳。
+            created_to_ms: 注册时间小于该毫秒时间戳（与 from 组成闭开区间）。
+            offset: 分页偏移。
+            limit: 返回数量上限。
+
+        Returns:
+            符合条件的用户列表。
+        """
         if offset < 0:
             raise ValueError(f"user_lists invalid offset: offset={offset}")
         if limit <= 0:
             raise ValueError(f"user_lists invalid limit: limit={limit}")
 
-        stmt = select(UserModel)
+        stmt = self._apply_user_list_filters(
+            select(UserModel),
+            user_ids=user_ids,
+            email_like=email_like,
+            status=status,
+            created_from_ms=created_from_ms,
+            created_to_ms=created_to_ms,
+        )
+
+        async with get_async_session() as db:
+            result = await db.execute(
+                stmt.order_by(UserModel.user_id.desc()).offset(offset).limit(limit)
+            )
+            return list(result.scalars().all())
+
+    async def count_users(
+        self,
+        *,
+        user_ids: Sequence[int] | None = None,
+        email_like: str | None = None,
+        status: UserAccountStatus | None = None,
+        created_from_ms: int | None = None,
+        created_to_ms: int | None = None,
+    ) -> int:
+        """按用户列表同一组条件统计用户数量。"""
+        stmt = self._apply_user_list_filters(
+            select(func.count()).select_from(UserModel),
+            user_ids=user_ids,
+            email_like=email_like,
+            status=status,
+            created_from_ms=created_from_ms,
+            created_to_ms=created_to_ms,
+        )
+
+        async with get_async_session() as db:
+            result = await db.execute(stmt)
+            return int(result.scalar_one())
+
+    def _apply_user_list_filters(
+        self,
+        stmt: Select[Any],
+        *,
+        user_ids: Sequence[int] | None,
+        email_like: str | None,
+        status: UserAccountStatus | None,
+        created_from_ms: int | None,
+        created_to_ms: int | None,
+    ) -> Select[Any]:
+        """给用户列表和 count_users 复用同一套过滤条件。"""
         if user_ids is not None:
             stmt = stmt.where(UserModel.user_id.in_(user_ids))
         if email_like:
@@ -271,12 +337,31 @@ class UserService(BaseService[UserModel]):
             stmt = stmt.where(
                 UserModel.email.contains(normalized_email_like, autoescape=True)
             )
-
-        async with get_async_session() as db:
-            result = await db.execute(
-                stmt.order_by(UserModel.user_id.desc()).offset(offset).limit(limit)
-            )
-            return list(result.scalars().all())
+        if status is not None:
+            # 口径与 UserModel.account_status() 一致：注销优先于锁定；
+            # locked 在 SQL 层精确复刻 is_locked()（locked_until 非空且大于当前时间）。
+            now_ms = timestamp_now()
+            if status == "deleted":
+                stmt = stmt.where(UserModel.is_del.is_(True))
+            elif status == "locked":
+                stmt = stmt.where(
+                    UserModel.is_del.is_(False),
+                    UserModel.locked_until.is_not(None),
+                    UserModel.locked_until > now_ms,
+                )
+            else:
+                stmt = stmt.where(
+                    UserModel.is_del.is_(False),
+                    or_(
+                        UserModel.locked_until.is_(None),
+                        UserModel.locked_until <= now_ms,
+                    ),
+                )
+        if created_from_ms is not None:
+            stmt = stmt.where(UserModel.created_at >= created_from_ms)
+        if created_to_ms is not None:
+            stmt = stmt.where(UserModel.created_at < created_to_ms)
+        return stmt
 
     async def update_login_info(
         self,

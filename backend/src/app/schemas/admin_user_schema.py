@@ -1,15 +1,13 @@
-"""管理后台用户信息弹窗响应 Schema。
+"""管理后台用户信息弹窗与用户列表响应 Schema。
 
 这些 schema 只服务 admin 只读排查界面，不包含密码、token、验证码等敏感字段。
 """
 
 from __future__ import annotations
 
-from typing import Literal
-
 from pydantic import BaseModel, Field
 
-AdminUserAccountStatus = Literal["normal", "locked", "deleted"]
+from app.constants.auth import UserAccountStatus
 
 
 class AdminUserBasicInfo(BaseModel):
@@ -32,7 +30,7 @@ class AdminUserBasicInfo(BaseModel):
     login_count: int = Field(..., description="登录次数")
     locked_until: int | None = Field(None, description="锁定截止时间（毫秒时间戳）")
     is_del: bool = Field(..., description="是否已注销")
-    account_status: AdminUserAccountStatus = Field(..., description="账号状态")
+    account_status: UserAccountStatus = Field(..., description="账号状态")
     created_at: int = Field(..., description="注册时间（毫秒时间戳）")
     updated_at: int = Field(..., description="更新时间（毫秒时间戳）")
 
@@ -43,11 +41,29 @@ class AdminUserCreditsInfo(BaseModel):
     balance: int = Field(..., description="当前 Credits 余额")
 
 
-class AdminUserSubscriptionInfo(BaseModel):
-    """用户订阅信息。"""
+class AdminUserSubscriptionLineInfo(BaseModel):
+    """单产品线订阅摘要。
 
-    has_subscription: bool = Field(..., description="是否有有效订阅")
-    expires_at: int | None = Field(None, description="订阅原始过期时间（毫秒时间戳）")
+    user_subscriptions 按产品线一行、只保存付费权益（Free 不落库）：
+    无付费行 = has_subscription False + expires_at null；过期行保留原始
+    过期时间，只把 has_subscription 压成 False。
+    """
+
+    product_line: str = Field(..., description="产品线标识")
+    has_subscription: bool = Field(..., description="该线是否持有有效付费订阅")
+    expires_at: int | None = Field(
+        None, description="订阅原始过期时间（毫秒时间戳），无付费行为 null"
+    )
+
+
+class AdminUserUsageLineInfo(BaseModel):
+    """单产品线当月用量快照（当前业务月）。"""
+
+    product_line: str = Field(..., description="产品线标识")
+    ym: int = Field(..., description="业务月，格式 YYYYMM")
+    used: int = Field(..., description="当月已用量")
+    total: int = Field(..., description="当月配额总量（所持档位，含 free 档）")
+    exhausted: bool = Field(..., description="当月配额是否已耗尽")
 
 
 class AdminUserProfileData(BaseModel):
@@ -55,7 +71,36 @@ class AdminUserProfileData(BaseModel):
 
     user: AdminUserBasicInfo = Field(..., description="用户基础信息")
     credits: AdminUserCreditsInfo = Field(..., description="Credits 信息")
-    subscription: AdminUserSubscriptionInfo = Field(..., description="订阅信息")
+    subscriptions: list[AdminUserSubscriptionLineInfo] = Field(
+        ...,
+        description="订阅摘要，固定四行：extension / maps_extension / maps_online / maps_api",
+    )
+    usage: list[AdminUserUsageLineInfo] = Field(
+        ..., description="当月用量快照，固定三行：maps 三线"
+    )
+
+
+class AdminUserListItem(BaseModel):
+    """用户列表行（用户管理页筛选表格）。"""
+
+    user_id: int = Field(..., description="用户 ID")
+    email: str | None = Field(None, description="当前邮箱")
+    register_source: str | None = Field(None, description="注册来源")
+    register_method: str | None = Field(None, description="首次注册方式")
+    register_country: str | None = Field(None, description="注册时国家/地区")
+    account_status: UserAccountStatus = Field(..., description="账号状态")
+    login_count: int = Field(..., description="登录次数")
+    last_login_at: int | None = Field(None, description="最后登录时间（毫秒时间戳）")
+    created_at: int = Field(..., description="注册时间（毫秒时间戳）")
+
+
+class AdminUsersPageData(BaseModel):
+    """用户列表分页响应，含已注销用户（状态列区分）。"""
+
+    rows: list[AdminUserListItem] = Field(..., description="用户行，按 user_id 倒序")
+    total: int = Field(..., description="符合筛选条件的总数")
+    page: int = Field(..., description="页码")
+    page_size: int = Field(..., description="每页数量")
 
 
 class AdminUserCreditRecordData(BaseModel):

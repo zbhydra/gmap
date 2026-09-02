@@ -174,7 +174,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
         user_subscriptions 按产品线一行，只保存有效或曾有效的付费权益；Free 不落库。
         """
-        subscription = await self._get_subscription_row(user_id, product_line)
+        subscription = await self.get_subscription_row(user_id, product_line)
         if (
             subscription
             and subscription.expires_at is not None
@@ -188,12 +188,16 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             expires_at=None,
         )
 
-    async def _get_subscription_row(
+    async def get_subscription_row(
         self,
         user_id: int,
         product_line: str,
     ) -> UserSubscriptionModel | None:
-        """按复合主键 (user_id, product_line) 读取订阅行。"""
+        """按复合主键 (user_id, product_line) 读取原始订阅行，不过滤有效性。
+
+        过期折算、Free 兜底等口径由调用方自行决定（admin profile 透出原始
+        过期时间，get_user_subscription 折算为无权益占位）。
+        """
 
         async with get_async_session() as db:
             # filter_by 传参形式：本模型的 .pyi 存根把列声明成普通类型，

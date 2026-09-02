@@ -3,6 +3,7 @@ Authentication and authorization related constants
 """
 
 import enum
+from typing import Literal
 
 
 class TokenType(str, enum.Enum):
@@ -23,6 +24,10 @@ class UserLoginStatus(str, enum.Enum):
     OK = "ok"
     LOCKED = "locked"
     DELETED = "deleted"
+
+
+# 账号状态稳定枚举（admin 用户列表与 profile 弹窗共用的对外口径）。
+UserAccountStatus = Literal["normal", "locked", "deleted"]
 
 
 # Token expiry (in seconds)

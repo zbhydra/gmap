@@ -4,7 +4,7 @@ User 数据模型
 
 from typing import Optional
 
-from app.constants.auth import UserLoginStatus
+from app.constants.auth import UserAccountStatus, UserLoginStatus
 from app.schemas.client_user_schema import UserInfo
 from sqlalchemy import BigInteger, Boolean, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -96,6 +96,14 @@ class UserModel(BaseDBModel):
         if not self.locked_until:
             return False
         return self.locked_until > timestamp_now()
+
+    def account_status(self) -> UserAccountStatus:
+        """压成账号状态稳定枚举；注销优先于锁定（已注销账号锁定态不再对外表达）。"""
+        if self.is_del:
+            return "deleted"
+        if self.is_locked():
+            return "locked"
+        return "normal"
 
     def to_user_info(self) -> UserInfo:
         """转换为用户信息"""

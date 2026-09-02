@@ -1,7 +1,7 @@
-"""管理后台通用用户信息弹窗聚合服务。
+"""管理后台通用用户信息弹窗与用户列表聚合服务。
 
-本服务只读聚合用户基础资料、Credits、订阅、积分记录和订单记录。它服务 admin
-排查界面，允许跨业务域读取，但不写入任何业务数据。
+本服务只读聚合用户基础资料、Credits、订阅、用量、积分记录和订单记录。
+它服务 admin 排查界面，允许跨业务域读取，但不写入任何业务数据。
 """
 
 from __future__ import annotations
@@ -9,48 +9,156 @@ from __future__ import annotations
 from sqlalchemy import desc, func, select
 
 from app.api.admin.admin_order_response import serialize_admin_order
+from app.constants.auth import UserAccountStatus
+from app.constants.subscription import (
+    EXTENSION_PRODUCT_LINE,
+    MAPS_API_PRODUCT_LINE,
+    MAPS_EXTENSION_PRODUCT_LINE,
+    MAPS_ONLINE_PRODUCT_LINE,
+)
 from app.core.database import get_async_session
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.models.user_credit_log_model import UserCreditLogModel
 from app.models.user_model import UserModel
 from app.schemas.admin_user_schema import (
-    AdminUserAccountStatus,
     AdminUserBasicInfo,
     AdminUserCreditRecordData,
     AdminUserCreditsInfo,
     AdminUserCreditsPageData,
+    AdminUserListItem,
     AdminUserOrderRecordData,
     AdminUserOrdersPageData,
     AdminUserProfileData,
-    AdminUserSubscriptionInfo,
+    AdminUserSubscriptionLineInfo,
+    AdminUserUsageLineInfo,
+    AdminUsersPageData,
 )
 from app.services.order_service import order_service
 from app.services.subscription_service import subscription_service
+from app.services.usage_service import (
+    api_usage_service,
+    extension_usage_service,
+    online_usage_service,
+    usage_identity,
+)
 from app.services.user_credit_service import user_credit_service
 from app.services.user_service import user_service
 from app.utils.time import timestamp_now
 
+# profile 订阅摘要固定四行，顺序 = extension 历史线在前、maps 三线在后。
+_PROFILE_SUBSCRIPTION_LINES = (
+    EXTENSION_PRODUCT_LINE,
+    MAPS_EXTENSION_PRODUCT_LINE,
+    MAPS_ONLINE_PRODUCT_LINE,
+    MAPS_API_PRODUCT_LINE,
+)
+
+# profile 用量快照固定三行（maps 三线门面）。
+_PROFILE_USAGE_SERVICES = (
+    extension_usage_service,
+    online_usage_service,
+    api_usage_service,
+)
+
 
 class AdminUserProfileService:
-    """Admin 用户信息弹窗聚合服务。"""
+    """Admin 用户信息弹窗与用户列表聚合服务。"""
+
+    async def get_users(
+        self,
+        *,
+        user_id: int | None,
+        email: str | None,
+        status: UserAccountStatus | None,
+        created_from_ms: int | None,
+        created_to_ms: int | None,
+        page: int,
+        page_size: int,
+    ) -> AdminUsersPageData:
+        """分页查询用户列表（含已注销用户，状态列区分）。"""
+        user_ids = [user_id] if user_id is not None else None
+        offset = (page - 1) * page_size
+        users = await user_service.user_lists(
+            user_ids=user_ids,
+            email_like=email,
+            status=status,
+            created_from_ms=created_from_ms,
+            created_to_ms=created_to_ms,
+            offset=offset,
+            limit=page_size,
+        )
+        total = await user_service.count_users(
+            user_ids=user_ids,
+            email_like=email,
+            status=status,
+            created_from_ms=created_from_ms,
+            created_to_ms=created_to_ms,
+        )
+
+        return AdminUsersPageData(
+            rows=[
+                AdminUserListItem(
+                    user_id=user.user_id,
+                    email=user.email,
+                    register_source=user.register_source,
+                    register_method=user.register_method,
+                    register_country=user.register_country,
+                    account_status=user.account_status(),
+                    login_count=user.login_count,
+                    last_login_at=user.last_login_at,
+                    created_at=user.created_at,
+                )
+                for user in users
+            ],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
 
     async def get_profile(self, user_id: int) -> AdminUserProfileData:
-        """读取用户基础信息、Credits 余额和订阅摘要。"""
+        """读取用户基础信息、Credits 余额、按线订阅摘要和 maps 三线用量快照。
+
+        subscriptions 固定四行：无付费行（Free 不落库）与已过期行都压成
+        has_subscription=False，过期行保留原始过期时间供排障。
+        usage 固定三行：total 来自所持档位配置（含 free 档），配置合同
+        破裂由 usage 门面抛 PAYMENT_GATEWAY_ERROR（fail-closed），不兜底。
+        """
         user = await self._get_user(user_id, action="admin_user_profile")
         balance = await user_credit_service.get_balance(user_id)
-        subscription = await subscription_service.get_by_id(user_id)
-        expires_at = subscription.expires_at if subscription else None
+        now_ms = timestamp_now()
+
+        subscriptions = []
+        for product_line in _PROFILE_SUBSCRIPTION_LINES:
+            row = await subscription_service.get_subscription_row(user_id, product_line)
+            expires_at = row.expires_at if row else None
+            subscriptions.append(
+                AdminUserSubscriptionLineInfo(
+                    product_line=product_line,
+                    has_subscription=(expires_at is not None and expires_at > now_ms),
+                    expires_at=expires_at,
+                )
+            )
+
+        identity = usage_identity(user_id, None)
+        usage = []
+        for facade in _PROFILE_USAGE_SERVICES:
+            snapshot = await facade.get_usage(identity, user_id=user_id)
+            usage.append(
+                AdminUserUsageLineInfo(
+                    product_line=facade.product_line,
+                    ym=snapshot.ym,
+                    used=snapshot.used,
+                    total=snapshot.total,
+                    exhausted=snapshot.exhausted,
+                )
+            )
 
         return AdminUserProfileData(
             user=self._build_user_info(user),
             credits=AdminUserCreditsInfo(balance=balance),
-            subscription=AdminUserSubscriptionInfo(
-                has_subscription=(
-                    expires_at is not None and expires_at > timestamp_now()
-                ),
-                expires_at=expires_at,
-            ),
+            subscriptions=subscriptions,
+            usage=usage,
         )
 
     async def get_orders(
@@ -157,18 +265,10 @@ class AdminUserProfileService:
             login_count=user.login_count,
             locked_until=user.locked_until,
             is_del=user.is_del,
-            account_status=self._account_status(user),
+            account_status=user.account_status(),
             created_at=user.created_at,
             updated_at=user.updated_at,
         )
-
-    def _account_status(self, user: UserModel) -> AdminUserAccountStatus:
-        """把用户状态压成前端稳定枚举。"""
-        if user.is_del:
-            return "deleted"
-        if user.is_locked():
-            return "locked"
-        return "normal"
 
 
 admin_user_profile_service = AdminUserProfileService()
