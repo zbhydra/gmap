@@ -179,31 +179,42 @@ async def test_real_password_registration_entry_grants_credits(
 
 
 async def test_real_registration_bonus_failure_does_not_rollback_user(
-    monkeypatch,
     make_credit_real_email: Callable[[str], str],
 ) -> None:
-    """真实 MySQL 中 Credits 发放失败不回滚用户创建。"""
+    """真实 MySQL 中 Credits 发放溢出不回滚用户创建。"""
 
     email = make_credit_real_email("real-credit-fail")
-
-    async def fail_registration_bonus(user_id: int) -> None:
-        raise RuntimeError(f"forced credit failure for user_id={user_id}")
-
-    monkeypatch.setattr(
-        "app.services.user_service.user_credit_service.add_balance",
-        fail_registration_bonus,
-    )
-
     user_service = UserService()
-    user = await user_service.create_user_without_password_with_registration_bonus(
-        email=email,
-        full_name="Real Credit Failure User",
-    )
-    persisted = await user_service.get_user_by_email(email)
+    user = await user_service.create_user_without_password(email=email)
 
-    assert user.user_id > 0
+    async with get_async_session() as db:
+        db.add(
+            UserCreditAccountModel(  # type: ignore[call-arg]
+                user_id=user.user_id,
+                balance=2_147_483_647,
+            )
+        )
+        await db.commit()
+
+    await user_service._add_registration_credits(user.user_id)
+
+    persisted = await user_service.get_user_by_email(email)
+    async with get_async_session() as db:
+        balance_result = await db.execute(
+            select(UserCreditAccountModel.balance).where(
+                UserCreditAccountModel.user_id == user.user_id
+            )
+        )
+        log_count_result = await db.execute(
+            select(func.count())
+            .select_from(UserCreditLogModel)
+            .where(UserCreditLogModel.user_id == user.user_id)
+        )
+
     assert persisted is not None
     assert persisted.user_id == user.user_id
+    assert balance_result.scalar_one() == 2_147_483_647
+    assert log_count_result.scalar_one() == 0
 
 
 async def test_real_get_balance_returns_zero_when_account_missing(
