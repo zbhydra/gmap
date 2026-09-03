@@ -11,12 +11,17 @@ from app.constants.auth import (
     EMAIL_VERIFY_RATE_LIMIT_WINDOW,
 )
 from app.core.redis import redis_client
-from app.core.singleton import singleton
 from app.i18n.dependencies import DEFAULT_LANGUAGE, SupportedLanguage
 from app.utils.email_sender import email_sender
 from app.utils.logger import logger
 from app.utils.redis_key import build_redis_key
+from app.utils.redis_lock import RedisLock
 from app.utils.redis_rate_limiter import RedisRateLimiter
+
+
+_EMAIL_VERIFY_LOCK_TTL_SECONDS = 5
+_EMAIL_VERIFY_LOCK_TIMEOUT_SECONDS = 1
+_email_verify_lock = RedisLock()
 
 
 class SendResult(str, Enum):
@@ -27,7 +32,6 @@ class SendResult(str, Enum):
     SEND_FAILED = "send_failed"
 
 
-@singleton
 class EmailVerificationService:
     """邮箱验证码服务."""
 
@@ -120,6 +124,36 @@ class EmailVerificationService:
         Returns:
             是否验证成功
         """
+        lock_key = f"email_verify:{email}"
+        try:
+            lock_value = await _email_verify_lock.acquire(
+                lock_key,
+                ttl=_EMAIL_VERIFY_LOCK_TTL_SECONDS,
+                timeout=_EMAIL_VERIFY_LOCK_TIMEOUT_SECONDS,
+            )
+        except Exception:
+            # 锁底座故障时继续原验证流程，避免 Redis 局部故障阻断登录。
+            logger.error(
+                "email_verify_code: Redis lock acquire failed, continuing unlocked: "
+                f"email={email}, lock_key={lock_key}",
+                exc_info=True,
+            )
+            return await self._verify_code_unlocked(email, user_input)
+
+        if lock_value is None:
+            logger.warning(
+                "email_verify_code: Redis lock acquire timed out: "
+                f"email={email}, lock_key={lock_key}"
+            )
+            return False
+
+        try:
+            return await self._verify_code_unlocked(email, user_input)
+        finally:
+            await _email_verify_lock.release(lock_key, lock_value)
+
+    async def _verify_code_unlocked(self, email: str, user_input: str) -> bool:
+        """执行验证码读取、计数和消费；调用方负责同邮箱串行化。"""
         redis_key = self._build_key(email)
         attempts_key = self._build_attempts_key(email)
 

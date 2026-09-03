@@ -179,13 +179,14 @@ Token 不直接可信,服务端在 Redis 维护"未撤销 token 哈希集合"做
 | --- | --- |
 | `email_verify:{email}` | 验证码本身;`SET ... EX 600` |
 | `email_verify_attempts:{email}` | 验证尝试计数;`INCR` 后首次 `EXPIRE 600` |
+| `lock:email_verify:{email}` | 串行化同邮箱的验证码读取、计数与消费 |
 
 发送频率用 `RedisRateLimiter`(滑动窗口 ZSet),key = `email_verify:{email}`,limit=1,window=60。Redis 故障 fail-open(放行)。
 
 ### 5.3 行为
 
 - `send_verify_code(email)`:先频率限制(超限返回 RATE_LIMITED)→ 生成码 → `redis.set EX=600` → 发邮件;**发邮件失败时删码并重置频率限制**(让用户立即重试)→ 返回 SUCCESS / RATE_LIMITED / SEND_FAILED。
-- `verify_code(email, code)`:`INCR attempts`(首次设 600 秒 TTL)→ `attempts > 5` 删码+计数返回 `False` → `secrets.compare_digest` 比对 → 命中删码+计数返回 `True`。**计数在码缺失/过期时也会 +1**。
+- `verify_code(email, code)`:先按邮箱获取 Redis 短锁，在锁内执行 `INCR attempts`(首次设 600 秒 TTL)→ `attempts > 5` 删码+计数返回 `False` → `secrets.compare_digest` 比对 → 命中删码+计数返回 `True`。**计数在码缺失/过期时也会 +1**；抢锁超时按验证失败返回，锁基础设施异常则记录原始堆栈并 fail-open 继续原验证流程。
 
 ### 5.4 邮件文案
 
