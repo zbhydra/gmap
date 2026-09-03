@@ -56,7 +56,8 @@ export function parsePhotosRpcResponse(
     let payload: JsonValue
     try {
       payload = JSON.parse(payloadNode) as JsonValue
-    } catch {
+    } catch (error) {
+      console.error('[PhotosParser] 照片 RPC 候选 JSON 解析失败，继续尝试下一项:', error)
       continue
     }
     if (!Array.isArray(payload)) {

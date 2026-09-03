@@ -189,6 +189,7 @@ function unwrapDataEntity(raw: string, attrName: string): Record<string, unknown
       value = JSON.parse(value)
     }
   } catch (error) {
+    console.error('[BingParser] data-entity JSON 解析失败:', error)
     const reason = error instanceof Error ? error.message : String(error)
     throw new BingParseError(
       `[BingParser] ${attrName} JSON 解析失败(最多 ${MAX_JSON_LAYERS} 层): ${describeRaw(raw)}（原始错误: ${reason}）`

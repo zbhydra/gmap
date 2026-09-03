@@ -11,6 +11,7 @@ import { createApp } from 'vue'
 import '@/styles/tokens.css'
 import { createI18nInstance } from '@/core/bootstrap'
 import { I18nService } from '@/locales'
+import { I18N_KEYS } from '@/core/constants/i18n'
 import { logger } from '@/core/utils/logger'
 import App from './App.vue'
 
@@ -18,6 +19,8 @@ async function init() {
   const app = createApp(App)
 
   const i18n = await createI18nInstance()
+  document.documentElement.lang = I18nService.getCurrentLanguage()
+  document.title = I18nService.t(I18N_KEYS.DASHBOARD.TITLE)
   I18nService.registerVueI18nInstance(i18n)
 
   app.use(i18n)

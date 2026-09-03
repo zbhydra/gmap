@@ -63,8 +63,8 @@ async function parseRefreshResponse(response: Response): Promise<RefreshAccessTo
 
   try {
     body = (await response.json()) as JsonValue
-  } catch (err) {
-    logger.warn('[HttpClient] Failed to parse auth refresh response:', err)
+  } catch {
+    logger.error('[HttpClient] INVALID_JSON_AUTH_REFRESH_RESPONSE')
     if (response.status === 200) {
       return 'auth_failed'
     }
@@ -107,7 +107,7 @@ async function refreshAccessToken(): Promise<RefreshAccessTokenResult> {
 
     return parseRefreshResponse(response)
   } catch (err) {
-    logger.warn('[HttpClient] Auth refresh request failed:', err)
+    logger.error('[HttpClient] Auth refresh request failed:', err)
     return 'transient_failed'
   }
 }
@@ -200,11 +200,11 @@ export const responseLogger: ResponseInterceptor = (response, context) => {
 /**
  * 数据提取拦截器
  * 提取后端响应中的 data 字段
- * 后端返回格式: {code: 10000, data: {...}, msg: "success"}
- * 后端错误格式: {code: 10106, data: {}, msg: "EMAIL_VERIFY_CODE_INVALID"}
+ * 后端返回格式: {code: 10000, data: {...}, msg: ""}
+ * 后端错误格式: {code: 10106, data: {}, msg: "Invalid or expired verification code"}
  */
 export const dataExtractor: ResponseInterceptor = (response, context) => {
-  const responseBody = response.data as { code: number; data: unknown; msg: string }
+  const responseBody = response.data as { code: number; data: JsonValue; msg: string }
 
   // 检查是否是后端响应格式
   if (responseBody && typeof responseBody === 'object' && 'code' in responseBody) {
@@ -217,7 +217,8 @@ export const dataExtractor: ResponseInterceptor = (response, context) => {
         responseBody.msg || `error code:${responseBody.code}`,
         response.status,
         responseBody.code,
-        responseBody
+        undefined,
+        responseBody.data
       )
 
       // 全局错误提示 - 除非请求明确禁用了错误提示
@@ -291,7 +292,7 @@ export const authRefreshInterceptor: ErrorInterceptor = async (error, context) =
     }
     context._shouldRetry = true
   } catch (err) {
-    logger.warn('[HttpClient] Token refresh failed:', err)
+    logger.error('[HttpClient] Token refresh failed:', err)
     error.preserveAuthState = true
     context._preserveAuthOnUnauthorized = true
   } finally {
@@ -303,8 +304,6 @@ export const authRefreshInterceptor: ErrorInterceptor = async (error, context) =
  * 默认错误处理拦截器
  */
 export const defaultErrorHandler: ErrorInterceptor = async (error, context) => {
-  logger.error(`[HttpClient] Request failed: ${context.method} ${context.url}`, error)
-
   // 401 错误：清除认证状态
   if (
     error.status === 401 &&

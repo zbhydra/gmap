@@ -7,7 +7,7 @@
 
 import * as XLSX from 'xlsx'
 import { BING_EXPORT_COLUMNS, type BingExportRow } from '../parser'
-import { FREE_LIMIT_NOTE } from './csvText'
+import { getFreeLimitNote } from './csvText'
 
 /** 工作表名（竞品 json_to_sheet 默认 Sheet1，调研 §8）。 */
 const SHEET_NAME = 'Sheet1'
@@ -26,7 +26,7 @@ export function buildBingXlsx(
     BING_EXPORT_COLUMNS.map(column => cellText(row[column.key]))
   )
   if (includeFreeNote) {
-    rowsAoa.push([FREE_LIMIT_NOTE])
+    rowsAoa.push([getFreeLimitNote()])
   }
   const sheet = XLSX.utils.aoa_to_sheet<string>([
     BING_EXPORT_COLUMNS.map(column => column.header),

@@ -323,7 +323,8 @@ function parseRequestText(channel: RpcChannel, requestText: string): RpcRequest<
   try {
     const message = JSON.parse(requestText) as JsonValue
     return parseRequest(channel, message)
-  } catch {
+  } catch (error) {
+    console.error(`[rpc:${channel}] Event 请求文本解析失败:`, error)
     return null
   }
 }

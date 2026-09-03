@@ -297,8 +297,7 @@ export class MapsPanel {
       this.searchError.textContent = ''
       return
     }
-    const prefix = I18nService.t(I18N_KEYS.MAPS_PANEL.PARSE_ERROR)
-    this.searchError.textContent = `${prefix}: ${message}`
+    this.searchError.textContent = I18nService.t(I18N_KEYS.MAPS_PANEL.PARSE_ERROR)
     this.searchError.classList.add('visible')
   }
 

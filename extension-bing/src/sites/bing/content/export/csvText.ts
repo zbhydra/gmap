@@ -8,11 +8,13 @@
 
 import { BING_EXPORT_COLUMNS, type BingColumnKey, type BingExportRow } from '../parser'
 import type { BingExportConfig } from '@/sites/bing/config/contract'
+import { I18N_KEYS } from '@/core/constants/i18n'
+import { I18nService } from '@/locales'
 
-/**
- * 免费档导出末行提示（竞品导出实测逐字抄录，调研 §3/§5；非 UI 文案，不走 i18n）。
- */
-export const FREE_LIMIT_NOTE = 'Free accounts can export up to 20 data entries.'
+/** 当前界面语言的免费档导出末行提示。 */
+export function getFreeLimitNote(): string {
+  return I18nService.t(I18N_KEYS.BING_PANEL.FREE_LIMIT_NOTE)
+}
 
 /** 单元格值：解析行的列值（坐标为 number，缺失为 null）。 */
 export type BingCsvCell = string | number | null
@@ -49,7 +51,7 @@ export function buildBingCsv(
     ...rows.map(row => serializeRowCells(row, delimiter))
   ]
   if (includeFreeNote) {
-    lines.push(escapeCsvCell(FREE_LIMIT_NOTE, delimiter))
+    lines.push(escapeCsvCell(getFreeLimitNote(), delimiter))
   }
   const body = lines.join(config.csvNewline)
   return config.csvBomEnabled ? `\uFEFF${body}` : body

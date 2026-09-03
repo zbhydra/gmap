@@ -147,7 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
           user.value = currentUser
           logger.info('[AuthStore] Token validated, user updated')
         } catch (err) {
-          logger.warn('[AuthStore] Token validation failed:', err)
+          logger.error('[AuthStore] Token validation failed:', err)
           if (err instanceof Error && isAuthSessionFailure(err)) {
             await authApi.clearLocalAuth()
             clearAuth()
@@ -226,7 +226,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     // 登录态切换 = 订阅判定前提变化：强制失效，立刻按新账号重拉
     invalidateSubscription()
-    void refreshSubscription().catch(() => undefined)
+    void refreshSubscription().catch(error => {
+      logger.error('[AuthStore] 登录后刷新订阅状态失败:', error)
+    })
   }
 
   /**
@@ -259,7 +261,7 @@ export const useAuthStore = defineStore('auth', () => {
         return status
       })
       .catch(err => {
-        logger.warn('[AuthStore] 订阅状态查询失败，回退缓存:', err)
+        logger.error('[AuthStore] 订阅状态查询失败，回退缓存:', err)
         return subscription.value
       })
       .finally(() => {

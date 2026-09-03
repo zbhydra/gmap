@@ -306,16 +306,11 @@ function buildHubspotAuthorizeUrl(): string {
 
 /** 从回调 URL 解析授权码；用户拒绝（error 参数）或缺失 code 时返回 null。 */
 function parseHubspotAuthCode(redirectUrl: string): HubspotAuthCodeRedirect | null {
-  try {
-    const url = new URL(redirectUrl)
-    const code = url.searchParams.get('code')
-    if (code !== null && code.length > 0) {
-      return { code }
-    }
-    return null
-  } catch {
+  if (!URL.canParse(redirectUrl)) {
     return null
   }
+  const code = new URL(redirectUrl).searchParams.get('code')
+  return code !== null && code.length > 0 ? { code } : null
 }
 
 /** HubSpot token 端点响应形状（需要的字段）。 */

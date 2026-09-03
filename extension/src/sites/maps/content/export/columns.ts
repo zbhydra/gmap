@@ -13,11 +13,16 @@
 
 import type { MapsPlaceRow } from '../parser'
 import { deriveCidFromFid } from '../parser'
+import { I18N_KEYS } from '@/core/constants/i18n'
+
+const K = I18N_KEYS.OPTIONS.COLUMNS
 
 /** 导出列定义。 */
 export interface SearchExportColumn {
   /** 列名（CSV 表头原文；驼峰化 JSON 键由 camelizeColumnHeader 派生）。 */
   readonly header: string
+  /** 设置页显示名的 i18n key；导出 header 继续作为稳定数据合同。 */
+  readonly labelKey: string
   /** 是否 Pro 专属列（免费导出时剔除）。 */
   readonly pro: boolean
   /** JSON 导出时是否按数值还原类型（竞品「值类型保持」口径）。 */
@@ -28,32 +33,76 @@ export interface SearchExportColumn {
 
 /** 36 列全部定义（顺序 = 导出列序，禁止调整）。 */
 export const SEARCH_EXPORT_COLUMNS: readonly SearchExportColumn[] = [
-  { header: 'Name', pro: false, numeric: false, value: row => row.name },
-  { header: 'Description', pro: false, numeric: false, value: row => row.description },
-  { header: 'Fulladdress', pro: false, numeric: false, value: row => row.fullAddress },
-  { header: 'Street', pro: false, numeric: false, value: row => row.street },
-  { header: 'Municipality', pro: false, numeric: false, value: row => row.municipality },
+  { header: 'Name', labelKey: K.NAME, pro: false, numeric: false, value: row => row.name },
+  {
+    header: 'Description',
+    labelKey: K.DESCRIPTION,
+    pro: false,
+    numeric: false,
+    value: row => row.description
+  },
+  {
+    header: 'Fulladdress',
+    labelKey: K.FULL_ADDRESS,
+    pro: false,
+    numeric: false,
+    value: row => row.fullAddress
+  },
+  { header: 'Street', labelKey: K.STREET, pro: false, numeric: false, value: row => row.street },
+  {
+    header: 'Municipality',
+    labelKey: K.MUNICIPALITY,
+    pro: false,
+    numeric: false,
+    value: row => row.municipality
+  },
   {
     header: 'Categories',
+    labelKey: K.CATEGORIES,
     pro: false,
     numeric: false,
     value: row => row.categories.join(', ')
   },
-  { header: 'About', pro: true, numeric: false, value: row => row.about },
+  { header: 'About', labelKey: K.ABOUT, pro: true, numeric: false, value: row => row.about },
   // 后置：数据源未实现，列位与 Pro 门控已锁（当前恒空）
-  { header: 'Plus Code', pro: true, numeric: false, value: () => '' },
-  { header: 'Time Zone', pro: false, numeric: false, value: row => row.timeZone },
-  { header: 'Price', pro: true, numeric: false, value: row => row.price },
-  { header: 'Note', pro: true, numeric: false, value: row => row.note },
-  { header: 'Amenities', pro: false, numeric: false, value: row => row.amenities },
-  { header: 'Hotel Class', pro: true, numeric: false, value: row => row.hotelClass },
-  { header: 'Phone', pro: false, numeric: false, value: row => row.phone },
-  { header: 'Phones', pro: false, numeric: false, value: row => row.phones },
-  { header: 'Claimed', pro: false, numeric: false, value: row => row.claimed },
-  { header: 'Owner', pro: true, numeric: false, value: row => row.owner },
-  { header: 'Owner Id', pro: true, numeric: false, value: row => row.ownerId },
+  { header: 'Plus Code', labelKey: K.PLUS_CODE, pro: true, numeric: false, value: () => '' },
+  {
+    header: 'Time Zone',
+    labelKey: K.TIME_ZONE,
+    pro: false,
+    numeric: false,
+    value: row => row.timeZone
+  },
+  { header: 'Price', labelKey: K.PRICE, pro: true, numeric: false, value: row => row.price },
+  { header: 'Note', labelKey: K.NOTE, pro: true, numeric: false, value: row => row.note },
+  {
+    header: 'Amenities',
+    labelKey: K.AMENITIES,
+    pro: false,
+    numeric: false,
+    value: row => row.amenities
+  },
+  {
+    header: 'Hotel Class',
+    labelKey: K.HOTEL_CLASS,
+    pro: true,
+    numeric: false,
+    value: row => row.hotelClass
+  },
+  { header: 'Phone', labelKey: K.PHONE, pro: false, numeric: false, value: row => row.phone },
+  { header: 'Phones', labelKey: K.PHONES, pro: false, numeric: false, value: row => row.phones },
+  { header: 'Claimed', labelKey: K.CLAIMED, pro: false, numeric: false, value: row => row.claimed },
+  { header: 'Owner', labelKey: K.OWNER, pro: true, numeric: false, value: row => row.owner },
+  {
+    header: 'Owner Id',
+    labelKey: K.OWNER_ID,
+    pro: true,
+    numeric: false,
+    value: row => row.ownerId
+  },
   {
     header: 'Owner Link',
+    labelKey: K.OWNER_LINK,
     pro: true,
     numeric: false,
     // 衍生 contrib 链接（逆向 04）；ownerId 缺失置空
@@ -61,14 +110,39 @@ export const SEARCH_EXPORT_COLUMNS: readonly SearchExportColumn[] = [
       row.ownerId.length > 0 ? `https://www.google.com/maps/contrib/${row.ownerId}` : ''
   },
   // 数据源归 U8 enrich（服务端官网代抓，逗号分隔）；未补全/无官网为空
-  { header: 'Email', pro: true, numeric: false, value: row => row.email },
+  { header: 'Email', labelKey: K.EMAIL, pro: true, numeric: false, value: row => row.email },
   // 数据源归 U8 enrich（`平台: url` 多行）；未补全/无官网为空
-  { header: 'Social Medias', pro: true, numeric: false, value: row => row.socialMedias },
-  { header: 'Review Count', pro: false, numeric: true, value: row => row.reviewCount },
-  { header: 'Average Rating', pro: false, numeric: true, value: row => row.rating },
-  { header: 'Review URL', pro: false, numeric: false, value: row => row.reviewUrl },
+  {
+    header: 'Social Medias',
+    labelKey: K.SOCIAL_MEDIAS,
+    pro: true,
+    numeric: false,
+    value: row => row.socialMedias
+  },
+  {
+    header: 'Review Count',
+    labelKey: K.REVIEW_COUNT,
+    pro: false,
+    numeric: true,
+    value: row => row.reviewCount
+  },
+  {
+    header: 'Average Rating',
+    labelKey: K.AVERAGE_RATING,
+    pro: false,
+    numeric: true,
+    value: row => row.rating
+  },
+  {
+    header: 'Review URL',
+    labelKey: K.REVIEW_URL,
+    pro: false,
+    numeric: false,
+    value: row => row.reviewUrl
+  },
   {
     header: 'Google Maps URL',
+    labelKey: K.GOOGLE_MAPS_URL,
     pro: false,
     numeric: false,
     // 衍生稳定短链；cid 缺失时从 fid 重衍生，仍缺失置空
@@ -79,27 +153,59 @@ export const SEARCH_EXPORT_COLUMNS: readonly SearchExportColumn[] = [
   },
   {
     header: 'Google Knowledge URL',
+    labelKey: K.GOOGLE_KNOWLEDGE_URL,
     pro: true,
     numeric: false,
     // 衍生 `search?kgmid=`；kgmid 缺失置空
     value: row => (row.kgmid.length > 0 ? `https://www.google.com/search?kgmid=${row.kgmid}` : '')
   },
-  { header: 'Latitude', pro: false, numeric: true, value: row => row.latitude },
-  { header: 'Longitude', pro: false, numeric: true, value: row => row.longitude },
-  { header: 'Website', pro: false, numeric: false, value: row => row.website },
-  { header: 'Domain', pro: false, numeric: false, value: row => row.domain },
-  { header: 'Opening Hours', pro: false, numeric: false, value: row => row.openingHours },
-  { header: 'Featured Image', pro: false, numeric: false, value: row => row.featuredImage },
+  {
+    header: 'Latitude',
+    labelKey: K.LATITUDE,
+    pro: false,
+    numeric: true,
+    value: row => row.latitude
+  },
+  {
+    header: 'Longitude',
+    labelKey: K.LONGITUDE,
+    pro: false,
+    numeric: true,
+    value: row => row.longitude
+  },
+  { header: 'Website', labelKey: K.WEBSITE, pro: false, numeric: false, value: row => row.website },
+  { header: 'Domain', labelKey: K.DOMAIN, pro: false, numeric: false, value: row => row.domain },
+  {
+    header: 'Opening Hours',
+    labelKey: K.OPENING_HOURS,
+    pro: false,
+    numeric: false,
+    value: row => row.openingHours
+  },
+  {
+    header: 'Featured Image',
+    labelKey: K.FEATURED_IMAGE,
+    pro: false,
+    numeric: false,
+    value: row => row.featuredImage
+  },
   {
     header: 'Cid',
+    labelKey: K.CID,
     pro: false,
     numeric: false,
     // 超出 Number.MAX_SAFE_INTEGER，所有格式均保持字符串
     value: row => (row.cid.length > 0 ? row.cid : deriveCidFromFid(row.fid))
   },
-  { header: 'Fid', pro: false, numeric: false, value: row => row.fid },
-  { header: 'Place Id', pro: false, numeric: false, value: row => row.placeId },
-  { header: 'Kgmid', pro: true, numeric: false, value: row => row.kgmid }
+  { header: 'Fid', labelKey: K.FID, pro: false, numeric: false, value: row => row.fid },
+  {
+    header: 'Place Id',
+    labelKey: K.PLACE_ID,
+    pro: false,
+    numeric: false,
+    value: row => row.placeId
+  },
+  { header: 'Kgmid', labelKey: K.KGMID, pro: true, numeric: false, value: row => row.kgmid }
 ]
 
 /** 列名驼峰化（逆向 07：首词小写 + 去空格，`"Business Leads"→"businessLeads"`）。 */

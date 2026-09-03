@@ -20,7 +20,8 @@ export const integrationApi = {
     payload: IntegrationHubspotSyncPayload
   ): Promise<IntegrationHubspotSyncResult> => {
     return httpClient.post<IntegrationHubspotSyncResult>(API_ENDPOINTS.MAPS_HUBSPOT_SYNC, payload, {
-      skipErrorToast: true
+      skipErrorToast: true,
+      skipRequestLog: true
     })
   }
 }

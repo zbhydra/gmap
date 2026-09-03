@@ -62,7 +62,8 @@ export function deriveCidFromLrd(lrd: string): string {
   }
   try {
     return BigInt(`0x${hexLiteral[1] as string}`).toString(10)
-  } catch {
+  } catch (error) {
+    console.error('[PlaceId] 十六进制 CID 转十进制失败:', error)
     return ''
   }
 }

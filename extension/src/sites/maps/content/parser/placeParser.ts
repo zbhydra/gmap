@@ -119,7 +119,8 @@ export function deriveCidFromFid(fid: string): string {
 
   try {
     return BigInt(`0x${hexLiteral[1]}`).toString(10)
-  } catch {
+  } catch (error) {
+    console.error('[PlaceParser] 十六进制 CID 转十进制失败:', error)
     return ''
   }
 }

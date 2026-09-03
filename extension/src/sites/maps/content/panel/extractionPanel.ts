@@ -132,7 +132,7 @@ export class ExtractionPanel {
       this.errorElement.textContent = ''
       return
     }
-    this.errorElement.textContent = message
+    this.errorElement.textContent = I18nService.t(I18N_KEYS.MAPS_PANEL.PARSE_ERROR)
     this.errorElement.classList.add('visible')
   }
 

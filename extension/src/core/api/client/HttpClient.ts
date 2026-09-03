@@ -15,6 +15,7 @@ import type {
 } from './types'
 import { ApiError } from './types'
 import { API_CONFIG } from '../config'
+import type { JsonValue } from '../../rpc/types'
 
 export class HttpClient {
   private requestInterceptors: RequestInterceptor[] = []
@@ -75,18 +76,12 @@ export class HttpClient {
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
     try {
-      const response = await fetch(url, {
+      return await fetch(url, {
         ...options,
         signal: options.signal || controller.signal
       })
+    } finally {
       clearTimeout(timeoutId)
-      return response
-    } catch (error) {
-      clearTimeout(timeoutId)
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new ApiError('Request timeout', undefined, 'TIMEOUT', error)
-      }
-      throw error
     }
   }
 
@@ -134,31 +129,34 @@ export class HttpClient {
 
         // 处理错误响应
         if (!response.ok) {
-          let errorData: unknown
+          let errorData: JsonValue
           try {
-            errorData = await response.json()
+            errorData = (await response.json()) as JsonValue
           } catch {
-            errorData = { message: 'Unknown error' }
+            errorData = {
+              code: 'INVALID_ERROR_RESPONSE',
+              data: null,
+              message: 'Invalid JSON error response'
+            }
           }
 
-          // 解析后端错误格式: {code: number, data: unknown, msg: string}
-          const backendError = errorData as { code?: number; msg?: string; message?: string }
+          // 解析后端错误格式: {code: string | number, data: JsonValue, msg: string}
+          const backendError = errorData as {
+            code?: string | number
+            msg?: string
+            message?: string
+            data?: JsonValue
+          }
           const errorCode = backendError.code
           const errorMessage = backendError.msg || backendError.message || `HTTP ${response.status}`
 
-          const apiError = new ApiError(errorMessage, response.status, errorCode, errorData)
-
-          // 执行错误拦截器
-          for (const interceptor of this.errorInterceptors) {
-            await interceptor(apiError, context)
-          }
-
-          // 检查是否需要重试
-          if (context._shouldRetry && attempt < maxAttempts - 1) {
-            context._shouldRetry = false
-            await this.delay(API_CONFIG.RETRY_DELAY)
-            continue
-          }
+          const apiError = new ApiError(
+            errorMessage,
+            response.status,
+            errorCode,
+            undefined,
+            backendError.data
+          )
 
           throw apiError
         }
@@ -172,6 +170,7 @@ export class HttpClient {
           try {
             data = await response.json()
           } catch {
+            console.error('[HttpClient] INVALID_JSON_SUCCESS_RESPONSE')
             data = null
           }
         }
@@ -184,31 +183,31 @@ export class HttpClient {
         }
 
         // 执行响应拦截器
-        try {
-          for (const interceptor of this.responseInterceptors) {
-            const result = await interceptor(httpResponse as HttpResponse<unknown>, context)
-            httpResponse = result as HttpResponse<T>
-          }
-        } catch (interceptorError) {
-          // 响应拦截器抛出的错误（如 dataExtractor 检测到业务错误）
-          if (interceptorError instanceof ApiError) {
-            // 执行错误拦截器
-            for (const interceptor of this.errorInterceptors) {
-              await interceptor(interceptorError, context)
-            }
-            throw interceptorError
-          }
-          throw interceptorError
+        for (const interceptor of this.responseInterceptors) {
+          const result = await interceptor(httpResponse as HttpResponse<unknown>, context)
+          httpResponse = result as HttpResponse<T>
         }
 
         return httpResponse.data
       } catch (error) {
+        const requestLabel = `[HttpClient] 请求失败: ${context.method} ${context.url.split('?')[0]}`
+        if (error instanceof ApiError) {
+          const details = `${requestLabel} status=${error.status ?? '-'} code=${error.backendCode ?? '-'} message=${error.message}`
+          if (error.originalError) {
+            console.error(details, error.originalError)
+          } else {
+            console.error(details)
+          }
+        } else {
+          console.error(requestLabel, error)
+        }
         lastError = error as Error
 
         // 如果是 ApiError，检查是否需要重试
         if (lastError instanceof ApiError) {
-          // ApiError 已经在某个地方执行过拦截器了（HTTP 错误处理或响应拦截器）
-          // 只需要检查重试标记
+          for (const interceptor of this.errorInterceptors) {
+            await interceptor(lastError, context)
+          }
           if (context._shouldRetry && attempt < maxAttempts - 1) {
             context._shouldRetry = false
             await this.delay(API_CONFIG.RETRY_DELAY)
@@ -219,10 +218,11 @@ export class HttpClient {
         }
 
         // 网络错误或其他错误，包装为 ApiError
+        const timedOut = lastError.name === 'AbortError'
         const networkError = new ApiError(
-          lastError.message || 'Network error',
+          timedOut ? 'Request timeout' : lastError.message || 'Network error',
           undefined,
-          'NETWORK_ERROR',
+          timedOut ? 'TIMEOUT' : 'NETWORK_ERROR',
           lastError
         )
         lastError = networkError

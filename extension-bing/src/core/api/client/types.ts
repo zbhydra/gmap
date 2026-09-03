@@ -3,6 +3,8 @@
  */
 
 import { I18nService } from '../../../locales'
+import { I18N_KEYS } from '../../constants/i18n'
+import type { JsonValue } from '../../rpc/types'
 
 /** HTTP 请求方法 */
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -70,7 +72,8 @@ export class ApiError extends Error {
     message: string,
     public status?: number,
     public backendCode?: string | number,
-    public originalError?: unknown
+    public originalError?: Error,
+    public data?: JsonValue
   ) {
     super(message)
     this.name = 'ApiError'
@@ -83,11 +86,11 @@ export class ApiError extends Error {
       const translated = I18nService.t(`apiError.${this.backendCode}`)
       // 如果翻译结果等于 key（说明没找到翻译），则使用 message
       if (translated === `apiError.${this.backendCode}`) {
-        return this.message || `error code:${this.backendCode}`
+        return I18nService.t(I18N_KEYS.API_ERROR.FALLBACK)
       }
       return translated
     }
-    return this.message
+    return I18nService.t(I18N_KEYS.API_ERROR.FALLBACK)
   }
 }
 

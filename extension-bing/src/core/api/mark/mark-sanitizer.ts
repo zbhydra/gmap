@@ -33,16 +33,15 @@ function redactSensitiveField(
 }
 
 function sanitizeUrlText(value: string): string {
-  try {
-    const parsed = new URL(value)
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return '[redacted-url]'
-    }
-
-    return `${parsed.protocol}//${parsed.host}${parsed.pathname.slice(0, MARK_URL_PATH_MAX_LENGTH)}`
-  } catch {
+  if (!URL.canParse(value)) {
     return '[redacted-url]'
   }
+  const parsed = new URL(value)
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return '[redacted-url]'
+  }
+
+  return `${parsed.protocol}//${parsed.host}${parsed.pathname.slice(0, MARK_URL_PATH_MAX_LENGTH)}`
 }
 
 /** 脱敏普通 mark 文本。 */

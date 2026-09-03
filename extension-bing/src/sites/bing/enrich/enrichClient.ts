@@ -44,12 +44,11 @@ export interface EnrichRunSummary {
  * 写回匹配的统一键；非法/空 website 返回空串。
  */
 export function websiteKey(website: string): string {
-  try {
-    const url = new URL(website.includes('://') ? website : `https://${website}`)
-    return url.hostname.toLowerCase().replace(/\.$/, '')
-  } catch {
+  const source = website.includes('://') ? website : `https://${website}`
+  if (!URL.canParse(source)) {
     return ''
   }
+  return new URL(source).hostname.toLowerCase().replace(/\.$/, '')
 }
 
 /** 社媒结果 → Social Medias 聚合列文本：`平台: url` 多行（canonical 平台序）。 */

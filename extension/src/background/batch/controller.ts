@@ -261,7 +261,7 @@ export class BulkSchedulerController {
         await chrome.tabs.remove(tabId)
       } catch (error) {
         // 页可能已被用户关掉：忽略（失败不静默）
-        logger.warn(`[BulkScheduler] 关闭工作页失败: tabId=${tabId}`, error)
+        logger.error(`[BulkScheduler] 关闭工作页失败: tabId=${tabId}`, error)
       }
     }
 

@@ -222,7 +222,8 @@ function parseOpenPricingPageUrl(params: JsonValue | undefined): string {
   let parsed: URL
   try {
     parsed = new URL(params.url)
-  } catch {
+  } catch (error) {
+    logger.error('[BackgroundMessageRouter] openPricingPage url 解析失败:', error)
     throw new Error('[BackgroundMessageRouter] openPricingPage url 不是合法绝对地址')
   }
 

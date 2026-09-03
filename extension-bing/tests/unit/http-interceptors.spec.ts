@@ -16,6 +16,7 @@ import {
   tokenInjector
 } from '../../src/core/api/client/interceptors'
 import { ApiError, type HttpResponse, type RequestContext } from '../../src/core/api/client/types'
+import { I18N_KEYS } from '../../src/core/constants/i18n'
 import type { JsonValue } from '../../src/core/rpc/types'
 
 const mocks = vi.hoisted(() => ({
@@ -167,18 +168,29 @@ describe('HTTP request and response interceptors', () => {
       expect.objectContaining({
         name: 'ApiError',
         message: 'raw failure',
-        backendCode: 10106
+        backendCode: 10106,
+        data: {}
       })
     )
     expect(mocks.toastError).toHaveBeenCalledWith('translated failure')
   })
 
-  it('uses a stable error-code fallback and supports suppressing the toast', () => {
+  it('uses the localized fallback when an error code has no translation', () => {
+    mocks.translate.mockImplementation((key: string) =>
+      key === I18N_KEYS.API_ERROR.FALLBACK ? 'localized fallback' : key
+    )
     const response = createResponse({ code: 50123, data: {}, msg: '' }, 200)
+
+    expect(() => dataExtractor(response, createContext())).toThrow('error code:50123')
+    expect(mocks.toastError).toHaveBeenCalledWith('localized fallback')
+  })
+
+  it('does not show a toast when skipErrorToast is enabled', () => {
+    const response = createResponse({ code: 50123, data: { reason: 'hidden' }, msg: '' }, 200)
 
     expect(() =>
       dataExtractor(response, createContext({ skipErrorToast: true }))
-    ).toThrow('error code:50123')
+    ).toThrow(expect.objectContaining({ data: { reason: 'hidden' } }))
     expect(mocks.toastError).not.toHaveBeenCalled()
   })
 })
@@ -340,6 +352,24 @@ describe('HTTP retry and authentication interceptors', () => {
     expect(context._shouldRetry).toBeUndefined()
   })
 
+  it('logs a fixed classification for a sensitive invalid refresh response', async () => {
+    mocks.storage.set(STORAGE_KEYS.REFRESH_TOKEN, 'refresh-old')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('Bearer access-secret-token response-secret', { status: 401 }))
+    )
+    const error = new ApiError('unauthorized', 401)
+
+    await authRefreshInterceptor(error, createContext())
+
+    expect(mocks.loggerError).toHaveBeenCalledOnce()
+    expect(mocks.loggerError).toHaveBeenCalledWith('[HttpClient] INVALID_JSON_AUTH_REFRESH_RESPONSE')
+    const logCall = mocks.loggerError.mock.calls[0]
+    expect(logCall).toHaveLength(1)
+    expect(logCall?.[0]).not.toContain('access-secret-token')
+    expect(logCall?.[0]).not.toContain('response-secret')
+  })
+
   it('clears stored auth after a 200 refresh response without a complete token pair', async () => {
     mocks.storage.set(STORAGE_KEYS.ACCESS_TOKEN, 'access-old')
     mocks.storage.set(STORAGE_KEYS.REFRESH_TOKEN, 'refresh-old')
@@ -372,7 +402,7 @@ describe('HTTP retry and authentication interceptors', () => {
 
     expect(error.preserveAuthState).toBe(true)
     expect(context._preserveAuthOnUnauthorized).toBe(true)
-    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+    expect(mocks.loggerError).toHaveBeenCalledWith(
       '[HttpClient] Auth refresh request failed:',
       expect.any(TypeError)
     )
@@ -397,7 +427,7 @@ describe('HTTP retry and authentication interceptors', () => {
 
     expect(error.preserveAuthState).toBe(true)
     expect(context._preserveAuthOnUnauthorized).toBe(true)
-    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+    expect(mocks.loggerError).toHaveBeenCalledWith(
       '[HttpClient] Token refresh failed:',
       expect.any(Error)
     )
@@ -426,7 +456,6 @@ describe('HTTP retry and authentication interceptors', () => {
     await defaultErrorHandler(error, context)
 
     expect(mocks.remove).not.toHaveBeenCalled()
-    expect(mocks.loggerError).toHaveBeenCalledOnce()
   })
 
   it('keeps auth storage when the error explicitly preserves authentication', async () => {

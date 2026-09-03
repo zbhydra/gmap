@@ -19,7 +19,8 @@ function buildInstallMarkMsg(reason: string): string {
   let version = ''
   try {
     version = chrome.runtime.getManifest().version
-  } catch {
+  } catch (error) {
+    logger.error('[InstallMarkReporter] 读取扩展版本失败，按空版本继续:', error)
     version = ''
   }
 

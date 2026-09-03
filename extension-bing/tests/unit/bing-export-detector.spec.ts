@@ -10,7 +10,11 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_BING_CONFIG } from '@/sites/bing/config/contract'
 import { detectAdapter, resolveElement, resolveItems } from '@/sites/bing/content/detector'
 import { BING_EXPORT_COLUMNS, type BingExportRow } from '@/sites/bing/content/parser'
-import { FREE_LIMIT_NOTE, buildBingCsv } from '@/sites/bing/content/export/csvText'
+import { buildBingCsv } from '@/sites/bing/content/export/csvText'
+
+vi.mock('@/locales', () => ({
+  I18nService: { t: () => '免费账户最多可导出 20 条数据。' }
+}))
 
 /** 构造最小合法导出行（字段值可覆盖）。 */
 function makeRow(overrides: Partial<BingExportRow> = {}): BingExportRow {
@@ -67,11 +71,11 @@ describe('bing csv 组装', () => {
     const freeCsv = buildBingCsv([makeRow()], DEFAULT_BING_CONFIG.export, true)
     const freeLines = freeCsv.replace(/^\uFEFF/, '').split('\n')
     expect(freeLines).toHaveLength(3) // header + 1 行 + 提示行
-    expect(freeLines[2]).toBe(FREE_LIMIT_NOTE)
+    expect(freeLines[2]).toBe('免费账户最多可导出 20 条数据。')
 
     const proCsv = buildBingCsv([makeRow()], DEFAULT_BING_CONFIG.export, false)
     expect(proCsv.replace(/^\uFEFF/, '').split('\n')).toHaveLength(2)
-    expect(proCsv).not.toContain(FREE_LIMIT_NOTE)
+    expect(proCsv).not.toContain('免费账户最多可导出 20 条数据。')
   })
 
   it('数值列字符串化，缺失坐标写空串', () => {

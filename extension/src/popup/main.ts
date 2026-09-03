@@ -14,6 +14,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { createI18nInstance } from '@/core/bootstrap'
 import { I18nService } from '../locales'
+import { I18N_KEYS } from '@/core/constants/i18n'
 import { logger } from '@/core/utils/logger'
 import App from './App.vue'
 import { BackgroundChannel } from './rpc/background.rpc'
@@ -39,6 +40,8 @@ async function init() {
 
   // 创建 I18n 实例
   const i18n = await createI18nInstance()
+  document.documentElement.lang = I18nService.getCurrentLanguage()
+  document.title = I18nService.t(I18N_KEYS.APP.TITLE)
 
   // 注册 Vue I18n 实例到 I18nService，实现语言切换自动同步
   I18nService.registerVueI18nInstance(i18n)

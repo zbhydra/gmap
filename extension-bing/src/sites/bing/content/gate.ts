@@ -77,7 +77,7 @@ async function doRefresh(): Promise<void> {
       listener(gateState)
     }
   } catch (error) {
-    logger.warn('[BingGate] 门控态刷新失败，保留当前快照:', error)
+    logger.error('[BingGate] 门控态刷新失败，保留当前快照:', error)
   } finally {
     channel.destroy()
   }

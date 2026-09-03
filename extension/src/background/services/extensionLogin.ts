@@ -69,13 +69,12 @@ function launchWebAuthFlow(url: string): Promise<string> {
 
 /** 从回调 URL fragment 解析一次性 code；缺失返回 null（用户取消 / 非法回调）。 */
 function parseCallbackCode(redirectUrl: string): string | null {
-  try {
-    const hash = new URL(redirectUrl).hash
-    const code = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash).get('code')
-    return code !== null && code.length > 0 ? code : null
-  } catch {
+  if (!URL.canParse(redirectUrl)) {
     return null
   }
+  const hash = new URL(redirectUrl).hash
+  const code = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash).get('code')
+  return code !== null && code.length > 0 ? code : null
 }
 
 /**

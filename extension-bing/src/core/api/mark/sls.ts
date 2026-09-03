@@ -48,11 +48,10 @@ function getRuntimePagePath(pageUrl: string | undefined): string {
     return ''
   }
 
-  try {
-    return truncateText(new URL(source).pathname, MAX_TEXT_FIELD_LENGTH)
-  } catch {
-    return truncateText(source, MAX_TEXT_FIELD_LENGTH)
-  }
+  return truncateText(
+    URL.canParse(source) ? new URL(source).pathname : source,
+    MAX_TEXT_FIELD_LENGTH
+  )
 }
 
 function getCurrentUserAgent(): string {

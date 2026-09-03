@@ -261,7 +261,7 @@ async function onSignIn(): Promise<void> {
   try {
     await channel.openExtensionLogin()
   } catch (error) {
-    logger.warn('[BingPanel] 登录未在 RPC 时限内确认完成:', error)
+    logger.error('[BingPanel] 登录未在 RPC 时限内确认完成:', error)
   } finally {
     channel.destroy()
     signingIn.value = false

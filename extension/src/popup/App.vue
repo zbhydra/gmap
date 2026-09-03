@@ -144,7 +144,7 @@ async function signIn(): Promise<void> {
   try {
     await channel.openExtensionLogin()
   } catch (error) {
-    logger.info('[Popup] 登录 RPC 未在窗口期内完成（结果以 storage 为准）:', error)
+    logger.error('[Popup] 登录 RPC 未在窗口期内完成（结果以 storage 为准）:', error)
   } finally {
     channel.destroy()
     loginInFlight.value = false

@@ -39,7 +39,7 @@
   "bingPanel.searchComplete": "Search complete.",
   "bingPanel.manuallyStopped": "Manually stopped.",
   "bingPanel.doneCount": "{count} businesses found.",
-  "bingPanel.freeLimitNote": "Free accounts can export up to 20 data entries.",
+  "bingPanel.freeLimitNote": "무료 계정은 최대 20개의 데이터 항목을 내보낼 수 있습니다.",
   "bingPanel.upgradeToPro": "Upgrade to Pro Now",
   "bingPanel.exportLeadsList": "Export Leads List",
   "bingPanel.downloadCsv": "Download data to csv",
@@ -64,5 +64,6 @@
   "bingPanel.pricingIncluded": "Included",
   "bingPanel.pricingProOnly": "Pro only",
   "bingPanel.pricingEmailComingSoon": "Email & social media extraction is coming soon for Pro.",
-  "bingPanel.pricingUpgrade": "Upgrade Now"
+  "bingPanel.pricingUpgrade": "Upgrade Now",
+  "apiError.fallback": "요청에 실패했습니다. 다시 시도해 주세요."
 }

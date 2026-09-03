@@ -64,5 +64,6 @@
   "bingPanel.pricingIncluded": "Included",
   "bingPanel.pricingProOnly": "Pro only",
   "bingPanel.pricingEmailComingSoon": "Email & social media extraction is coming soon for Pro.",
-  "bingPanel.pricingUpgrade": "Upgrade Now"
+  "bingPanel.pricingUpgrade": "Upgrade Now",
+  "apiError.fallback": "Request failed. Please try again."
 }

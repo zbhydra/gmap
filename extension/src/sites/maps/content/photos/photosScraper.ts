@@ -277,7 +277,8 @@ export function extractSnlM0e(): string | null {
       ) {
         return (parsed as Record<string, string>).SNlM0e
       }
-    } catch {
+    } catch (error) {
+      console.error('[PhotosScraper] 页面 script 候选 JSON 解析失败，继续尝试下一块:', error)
       // 该 script 块不是纯 JSON 对象，继续找下一块
     }
   }

@@ -52,7 +52,8 @@ function notifyIfComplete(xhr: XMLHttpRequest, url: string): void {
   try {
     // responseText 仅在响应为文本且已就绪时可读，二进制/未就绪读取会抛错
     text = xhr.responseText
-  } catch {
+  } catch (error) {
+    console.error('[MapsInjected] XHR responseText 读取失败:', error)
     return
   }
 

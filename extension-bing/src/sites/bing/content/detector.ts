@@ -38,7 +38,8 @@ export function detectAdapter(
   const probe = (selector: string): boolean => {
     try {
       return doc.querySelector(selector) !== null
-    } catch {
+    } catch (error) {
+      console.error(`[BingDetector] 非法探测选择器: ${selector}`, error)
       // 远程下发的非法选择器按未命中处理，不中断探测
       return false
     }
@@ -75,7 +76,8 @@ export function resolveElement(root: ParentNode, candidates: string[] | undefine
       if (hit) {
         return hit
       }
-    } catch {
+    } catch (error) {
+      console.error(`[BingDetector] 非法单元素选择器: ${selector}`, error)
       // 非法选择器按未命中处理
     }
   }
@@ -107,7 +109,8 @@ function queryFirstNonEmpty(root: ParentNode, candidates: string[] | undefined):
       if (matches.length > 0) {
         return matches
       }
-    } catch {
+    } catch (error) {
+      console.error(`[BingDetector] 非法列表选择器: ${selector}`, error)
       // 非法选择器按空匹配处理
     }
   }

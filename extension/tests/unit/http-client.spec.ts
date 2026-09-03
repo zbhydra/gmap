@@ -19,6 +19,7 @@ describe('HttpClient', () => {
   beforeEach(() => {
     fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
+    vi.mocked(console.error).mockClear()
   })
 
   afterEach(() => {
@@ -104,7 +105,7 @@ describe('HttpClient', () => {
     expect(fetchMock.mock.calls[0]?.[1]).not.toHaveProperty('body')
   })
 
-  it('returns text directly and maps invalid non-text bodies to null', async () => {
+  it('returns text directly and safely maps a sensitive invalid login response to null', async () => {
     const client = new HttpClient('https://api.example.test')
     fetchMock
       .mockResolvedValueOnce(
@@ -114,18 +115,27 @@ describe('HttpClient', () => {
         })
       )
       .mockResolvedValueOnce(
-        new Response('not-json', {
+        new Response('Bearer access-secret-token response-secret', {
           status: 200,
           headers: { 'Content-Type': 'application/octet-stream' }
         })
       )
 
     await expect(client.get('/plain')).resolves.toBe('plain response')
-    await expect(client.get('/invalid')).resolves.toBeNull()
+    await expect(
+      client.post('/auth/extension-login/exchange', { code: 'login-body-secret' })
+    ).resolves.toBeNull()
+    expect(console.error).toHaveBeenCalledOnce()
+    expect(console.error).toHaveBeenCalledWith('[HttpClient] INVALID_JSON_SUCCESS_RESPONSE')
+    const logCall = vi.mocked(console.error).mock.calls[0]
+    expect(logCall).toHaveLength(1)
+    expect(logCall?.[0]).not.toContain('access-secret-token')
+    expect(logCall?.[0]).not.toContain('response-secret')
+    expect(logCall?.[0]).not.toContain('login-body-secret')
   })
 
   it.each([
-    [{ code: 50001, msg: 'backend msg' }, 'backend msg', 50001],
+    [{ code: 50001, msg: 'backend msg', data: { reason: 'quota' } }, 'backend msg', 50001],
     [{ message: 'backend message' }, 'backend message', undefined],
     [{}, 'HTTP 400', undefined]
   ])('maps an HTTP error envelope to ApiError', async (body, message, backendCode) => {
@@ -140,24 +150,45 @@ describe('HttpClient', () => {
       name: 'ApiError',
       message,
       status: 400,
-      backendCode
+      backendCode,
+      data: backendCode === 50001 ? { reason: 'quota' } : undefined
     })
     expect(intercepted).toHaveBeenCalledOnce()
   })
 
-  it('uses a stable fallback when an HTTP error body is not JSON', async () => {
+  it('maps a non-JSON error safely and logs once without response body, token or request body', async () => {
     const client = new HttpClient('https://api.example.test')
     fetchMock.mockResolvedValue(
-      new Response('broken', {
+      new Response('upstream echoed Bearer access-secret-token and response-secret', {
         status: 502,
         headers: { 'Content-Type': 'application/json' }
       })
     )
 
-    await expect(client.get('/failure', { skipRetry: true })).rejects.toMatchObject({
-      message: 'Unknown error',
-      status: 502
+    await expect(
+      client.post(
+        '/failure?access_token=query-secret',
+        { token: 'body-secret' },
+        { headers: { Authorization: 'Bearer access-secret-token' }, skipRetry: true }
+      )
+    ).rejects.toMatchObject({
+      message: 'Invalid JSON error response',
+      status: 502,
+      backendCode: 'INVALID_ERROR_RESPONSE',
+      data: null
     })
+
+    expect(console.error).toHaveBeenCalledOnce()
+    const logCall = vi.mocked(console.error).mock.calls[0]
+    expect(logCall).toHaveLength(1)
+    expect(logCall?.[0]).toContain(
+      'POST https://api.example.test/failure status=502 code=INVALID_ERROR_RESPONSE message=Invalid JSON error response'
+    )
+    expect(logCall?.[0]).not.toContain('query-secret')
+    expect(logCall?.[0]).not.toContain('body-secret')
+    expect(logCall?.[0]).not.toContain('Bearer')
+    expect(logCall?.[0]).not.toContain('access-secret-token')
+    expect(logCall?.[0]).not.toContain('response-secret')
   })
 
   it('retries only while an error interceptor requests another attempt', async () => {
@@ -221,6 +252,8 @@ describe('HttpClient', () => {
     })
     expect(intercepted).toHaveBeenCalledOnce()
     expect(intercepted.mock.calls[0]?.[0]).toMatchObject({ backendCode: 'NETWORK_ERROR' })
+    expect(console.error).toHaveBeenCalledOnce()
+    expect(vi.mocked(console.error).mock.calls[0]?.[1]).toBeInstanceOf(TypeError)
   })
 
   it('turns an aborted fetch into a timeout ApiError', async () => {

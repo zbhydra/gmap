@@ -46,6 +46,12 @@ export const I18N_KEYS = {
     DISMISS: 'app.error.dismiss'
   },
 
+  /** API 错误提示。 */
+  API_ERROR: {
+    /** 后端错误码无翻译或网络错误时的用户可见兜底。 */
+    FALLBACK: 'apiError.fallback'
+  },
+
   /** 认证相关 */
   AUTH: {
     /** 登录按钮 */

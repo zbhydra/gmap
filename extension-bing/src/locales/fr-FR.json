@@ -39,7 +39,7 @@
   "bingPanel.searchComplete": "Search complete.",
   "bingPanel.manuallyStopped": "Manually stopped.",
   "bingPanel.doneCount": "{count} businesses found.",
-  "bingPanel.freeLimitNote": "Free accounts can export up to 20 data entries.",
+  "bingPanel.freeLimitNote": "Les comptes gratuits peuvent exporter jusqu’à 20 entrées de données.",
   "bingPanel.upgradeToPro": "Upgrade to Pro Now",
   "bingPanel.exportLeadsList": "Export Leads List",
   "bingPanel.downloadCsv": "Download data to csv",
@@ -64,5 +64,6 @@
   "bingPanel.pricingIncluded": "Included",
   "bingPanel.pricingProOnly": "Pro only",
   "bingPanel.pricingEmailComingSoon": "Email & social media extraction is coming soon for Pro.",
-  "bingPanel.pricingUpgrade": "Upgrade Now"
+  "bingPanel.pricingUpgrade": "Upgrade Now",
+  "apiError.fallback": "La requête a échoué. Veuillez réessayer."
 }

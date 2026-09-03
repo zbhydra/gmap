@@ -46,6 +46,24 @@ export const I18N_KEYS = {
     DISMISS: 'app.error.dismiss'
   },
 
+  /** API 错误提示。 */
+  API_ERROR: {
+    /** 后端错误码无翻译或网络错误时的用户可见兜底。 */
+    FALLBACK: 'apiError.fallback'
+  },
+
+  /** 批量工作页启动中转页。 */
+  BULK_LAUNCH: {
+    /** 页面标题。 */
+    TITLE: 'bulkLaunch.title',
+    /** 缺少 url 参数。 */
+    MISSING_URL: 'bulkLaunch.missingUrl',
+    /** url 参数不可解析。 */
+    INVALID_URL: 'bulkLaunch.invalidUrl',
+    /** 目标不在允许列表。 */
+    TARGET_NOT_ALLOWED: 'bulkLaunch.targetNotAllowed'
+  },
+
   /** 认证相关 */
   AUTH: {
     /** 登录按钮 */
@@ -213,7 +231,46 @@ export const I18N_KEYS = {
     /** 字段分组标题：评分与评论 */
     GROUP_REVIEWS: 'options.fieldGroup.reviews',
     /** 字段分组标题：关联与标识 */
-    GROUP_IDENTIFIERS: 'options.fieldGroup.identifiers'
+    GROUP_IDENTIFIERS: 'options.fieldGroup.identifiers',
+    /** 导出字段显示名。 */
+    COLUMNS: {
+      NAME: 'options.column.name',
+      DESCRIPTION: 'options.column.description',
+      FULL_ADDRESS: 'options.column.fullAddress',
+      STREET: 'options.column.street',
+      MUNICIPALITY: 'options.column.municipality',
+      CATEGORIES: 'options.column.categories',
+      ABOUT: 'options.column.about',
+      PLUS_CODE: 'options.column.plusCode',
+      TIME_ZONE: 'options.column.timeZone',
+      PRICE: 'options.column.price',
+      NOTE: 'options.column.note',
+      AMENITIES: 'options.column.amenities',
+      HOTEL_CLASS: 'options.column.hotelClass',
+      PHONE: 'options.column.phone',
+      PHONES: 'options.column.phones',
+      CLAIMED: 'options.column.claimed',
+      OWNER: 'options.column.owner',
+      OWNER_ID: 'options.column.ownerId',
+      OWNER_LINK: 'options.column.ownerLink',
+      EMAIL: 'options.column.email',
+      SOCIAL_MEDIAS: 'options.column.socialMedias',
+      REVIEW_COUNT: 'options.column.reviewCount',
+      AVERAGE_RATING: 'options.column.averageRating',
+      REVIEW_URL: 'options.column.reviewUrl',
+      GOOGLE_MAPS_URL: 'options.column.googleMapsUrl',
+      GOOGLE_KNOWLEDGE_URL: 'options.column.googleKnowledgeUrl',
+      LATITUDE: 'options.column.latitude',
+      LONGITUDE: 'options.column.longitude',
+      WEBSITE: 'options.column.website',
+      DOMAIN: 'options.column.domain',
+      OPENING_HOURS: 'options.column.openingHours',
+      FEATURED_IMAGE: 'options.column.featuredImage',
+      CID: 'options.column.cid',
+      FID: 'options.column.fid',
+      PLACE_ID: 'options.column.placeId',
+      KGMID: 'options.column.kgmid'
+    }
   },
 
   /** 批量任务 dashboard 页（013 A6，U5） */

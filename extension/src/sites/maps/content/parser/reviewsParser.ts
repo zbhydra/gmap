@@ -84,6 +84,7 @@ export function parseReviewsRpcResponse(
   try {
     root = JSON.parse(line) as JsonValue
   } catch (error) {
+    console.error('[ReviewsParser] 评论 RPC JSON 解析失败:', error)
     throw new Error(
       `[ReviewsParser] 响应第 ${schema.reviewsLineIndex + 1} 行 JSON 解析失败: ${describeError(error)}`
     )

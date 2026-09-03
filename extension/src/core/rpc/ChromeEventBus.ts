@@ -51,8 +51,8 @@ export class ChromeEventEmitter<TEvents extends EventDefinition> {
     }
 
     // 发送到 runtime（Popup/Options 等）
-    chrome.runtime.sendMessage(message).catch(() => {
-      // 忽略错误（可能没有监听者）
+    chrome.runtime.sendMessage(message).catch(error => {
+      console.error('[ChromeEventEmitter] runtime 没有可接收事件的监听者:', error)
     })
   }
 
@@ -74,8 +74,8 @@ export class ChromeEventEmitter<TEvents extends EventDefinition> {
       data
     }
 
-    chrome.tabs.sendMessage(tabId, message).catch(() => {
-      // 忽略错误（可能没有 content script）
+    chrome.tabs.sendMessage(tabId, message).catch(error => {
+      console.error(`[ChromeEventEmitter] tabId=${tabId} 没有可接收事件的 content script:`, error)
     })
   }
 

@@ -11,36 +11,42 @@
  * 目标（防中转页被篡改为任意跳转）。
  */
 
+import { I18N_KEYS } from '@/core/constants/i18n'
+import { I18nService, i18nReady } from '@/locales'
+
 const ALLOWED_TARGETS: readonly { origin: string; pathPrefix: string }[] = [
   { origin: 'https://www.google.com', pathPrefix: '/maps/search/' },
   { origin: 'https://search.google.com', pathPrefix: '/local/reviews' }
 ]
 
 /** 解析并校验 ?url= 参数，合法则替换导航到目标工作页。 */
-function launch(): void {
+async function launch(): Promise<void> {
+  await i18nReady
+  document.documentElement.lang = I18nService.getCurrentLanguage()
+  document.title = I18nService.t(I18N_KEYS.BULK_LAUNCH.TITLE)
   const target = new URLSearchParams(location.search).get('url')
   if (target === null) {
-    document.body.textContent = '[MapsGrab] bulk launch: missing url param'
+    document.body.textContent = I18nService.t(I18N_KEYS.BULK_LAUNCH.MISSING_URL)
     return
   }
 
-  let parsed: URL
-  try {
-    parsed = new URL(target)
-  } catch {
-    document.body.textContent = '[MapsGrab] bulk launch: invalid url'
+  if (!URL.canParse(target)) {
+    document.body.textContent = I18nService.t(I18N_KEYS.BULK_LAUNCH.INVALID_URL)
     return
   }
+  const parsed = new URL(target)
 
   const allowed = ALLOWED_TARGETS.some(
     entry => parsed.origin === entry.origin && parsed.pathname.startsWith(entry.pathPrefix)
   )
   if (!allowed) {
-    document.body.textContent = '[MapsGrab] bulk launch: target not allowed'
+    document.body.textContent = I18nService.t(I18N_KEYS.BULK_LAUNCH.TARGET_NOT_ALLOWED)
     return
   }
 
   location.replace(parsed.href)
 }
 
-launch()
+launch().catch(error => {
+  console.error('[BulkLaunch] 初始化失败:', error)
+})

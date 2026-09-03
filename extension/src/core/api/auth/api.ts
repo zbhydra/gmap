@@ -100,7 +100,7 @@ export const authApi = {
       try {
         await httpClient.post<void>(API.ENDPOINTS.AUTH_LOGOUT)
       } catch (err) {
-        logger.warn('[AuthApi] Logout request failed:', err)
+        logger.error('[AuthApi] Logout request failed:', err)
       }
     }
 
@@ -156,6 +156,8 @@ export const authApi = {
       params,
       {
         requireAuth: false,
+        skipRetry: true,
+        skipRequestLog: true,
         skipErrorToast: true
       }
     )

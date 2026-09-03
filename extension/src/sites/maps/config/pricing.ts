@@ -28,13 +28,13 @@ export function buildMapsPricingUrl(pricingUrl: string): string {
   if (pricingUrl.trim().length === 0) {
     return ''
   }
-  try {
-    const url = new URL(pricingUrl.trim())
-    url.searchParams.set(PRICING_UTM_SOURCE_KEY, PRICING_UTM_SOURCE)
-    return url.toString()
-  } catch {
+  const source = pricingUrl.trim()
+  if (!URL.canParse(source)) {
     return ''
   }
+  const url = new URL(source)
+  url.searchParams.set(PRICING_UTM_SOURCE_KEY, PRICING_UTM_SOURCE)
+  return url.toString()
 }
 
 /**

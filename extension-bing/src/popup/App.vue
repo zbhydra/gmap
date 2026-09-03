@@ -84,7 +84,7 @@ async function onSignIn(): Promise<void> {
   try {
     await channel.openExtensionLogin()
   } catch (error) {
-    logger.warn('[Popup] 登录未在 RPC 时限内确认完成:', error)
+    logger.error('[Popup] 登录未在 RPC 时限内确认完成:', error)
   } finally {
     channel.destroy()
     signingIn.value = false
@@ -96,7 +96,7 @@ async function onSignOut(): Promise<void> {
   try {
     await authStore.logout()
   } catch (error) {
-    logger.warn('[Popup] 登出请求失败（本地态已清除）:', error)
+    logger.error('[Popup] 登出请求失败（本地态已清除）:', error)
   }
 }
 
@@ -139,7 +139,7 @@ function watchAuthStorage(): void {
   ].map(key =>
     storageManager.onChanged(key, () => {
       syncAuthFromStorage().catch(error => {
-        logger.warn('[Popup] 登录态 storage 同步失败:', error)
+        logger.error('[Popup] 登录态 storage 同步失败:', error)
       })
     })
   )

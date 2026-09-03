@@ -144,15 +144,16 @@ export class ChromeRpcTransport implements RpcTransport {
         )
       }, timeout)
 
-      task
-        .then(response => {
+      task.then(
+        response => {
           clearTimeout(timer)
           resolve(response)
-        })
-        .catch(error => {
+        },
+        error => {
           clearTimeout(timer)
           reject(error)
-        })
+        }
+      )
     })
   }
 

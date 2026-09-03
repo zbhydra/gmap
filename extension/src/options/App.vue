@@ -110,7 +110,7 @@
                   :checked="settings.exportFieldHeaders.includes(column.header)"
                   @change="toggleColumn(column.header, ($event.target as HTMLInputElement).checked)"
                 />
-                <span class="options-checkbox-label">{{ column.header }}</span>
+                <span class="options-checkbox-label">{{ t(column.labelKey) }}</span>
                 <span v-if="column.pro" class="options-pro-badge">
                   {{ t(I18N_KEYS.OPTIONS.PRO_BADGE) }}
                 </span>

@@ -79,7 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
           user.value = currentUser
           logger.info('[AuthStore] Token validated, user updated')
         } catch (err) {
-          logger.warn('[AuthStore] Token validation failed:', err)
+          logger.error('[AuthStore] Token validation failed:', err)
           if (err instanceof Error && isAuthSessionFailure(err)) {
             await authApi.clearLocalAuth()
             clearAuth()
