@@ -10,6 +10,8 @@ import jwt
 
 from app.constants.auth import TokenType
 from app.core.config import settings
+from app.exceptions.common_exception import AppCommonException
+from app.i18n.common_code import CommonCode
 from app.utils.logger import logger
 
 
@@ -141,19 +143,73 @@ class JwtUnit:
                 该正常分支不应打印 ERROR。
         """
         try:
-            payload = jwt.decode(  # type: ignore[attr-defined]
-                token,
-                settings.auth.jwt_secret_key,
-                algorithms=[settings.auth.jwt_algorithm],
-            )
-            jwt_data = JwtData(**payload) if payload else None
-            if not jwt_data:
-                return None
-            # admin token 中 user_id 存的是 admin_id，不检查 user_id < 1
-            if jwt_data.type != TokenType.ADMIN_ACCESS and jwt_data.user_id < 1:
-                return None
-            return jwt_data
+            return JwtUnit._decode_token(token)
         except Exception as e:
             if report_failure:
                 logger.error(f"Failed to decode token: {e}", exc_info=True)
             return None
+
+    @staticmethod
+    def require_token(
+        token: str,
+        expected_type: TokenType,
+        operation: str,
+    ) -> JwtData:
+        """解码认证 token，并按失败原因抛出统一业务异常。"""
+        try:
+            jwt_data = JwtUnit._decode_token(token)
+        except jwt.ExpiredSignatureError as exc:
+            expired_code = (
+                CommonCode.AUTH_REFRESH_TOKEN_EXPIRED
+                if expected_type
+                in {
+                    TokenType.USER_REFRESH,
+                    TokenType.USER_REFRESH_OLD,
+                    TokenType.ADMIN_REFRESH,
+                    TokenType.ADMIN_REFRESH_OLD,
+                }
+                else CommonCode.AUTH_TOKEN_EXPIRED
+            )
+            raise AppCommonException(
+                expired_code,
+                ext_msg=(
+                    f"{operation}: token expired: expected_type={expected_type.value}"
+                ),
+                status_code=401,
+            ) from exc
+        except (jwt.InvalidTokenError, TypeError, ValueError) as exc:
+            raise AppCommonException(
+                CommonCode.AUTH_INVALID_TOKEN,
+                ext_msg=(
+                    f"{operation}: token signature or payload invalid: "
+                    f"expected_type={expected_type.value}"
+                ),
+                status_code=401,
+            ) from exc
+
+        if jwt_data.type != expected_type:
+            raise AppCommonException(
+                CommonCode.AUTH_TOKEN_TYPE_ERROR,
+                ext_msg=(
+                    f"{operation}: token type mismatch: expected={expected_type.value}, "
+                    f"actual={jwt_data.type}"
+                ),
+                status_code=401,
+            )
+        return jwt_data
+
+    @staticmethod
+    def _decode_token(token: str) -> JwtData:
+        """执行 JWT 解码与载荷结构校验，让调用方决定错误处理语义。"""
+        payload = jwt.decode(  # type: ignore[attr-defined]
+            token,
+            settings.auth.jwt_secret_key,
+            algorithms=[settings.auth.jwt_algorithm],
+        )
+        if not payload:
+            raise jwt.InvalidTokenError("JWT payload is empty")
+        jwt_data = JwtData(**payload)
+        # admin token 中 user_id 存的是 admin_id，不检查 user_id < 1
+        if jwt_data.type != TokenType.ADMIN_ACCESS and jwt_data.user_id < 1:
+            raise jwt.InvalidTokenError("JWT user_id is invalid")
+        return jwt_data

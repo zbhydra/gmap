@@ -7,7 +7,8 @@ from app.utils.logger import logger
 
 from app.constants.auth import TokenType
 from app.constants.client_product import ClientProductEnum, normalize_client_product
-from app.exceptions.common_exception import UserAuthFailedException
+from app.exceptions.common_exception import AppCommonException
+from app.i18n.common_code import CommonCode
 from app.i18n.dependencies import DEFAULT_LANGUAGE, SupportedLanguage
 from app.services.user_token_service import user_token_service
 from app.utils.common import get_client_ip
@@ -19,7 +20,7 @@ from starlette.requests import Request
 from app.utils.common import get_locale
 
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 @dataclass
@@ -106,7 +107,7 @@ def _create_anonymous_user_context(
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Security(security),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(security),
     x_device_id: Optional[str] = Header(None, alias="X-Device-Id"),
     x_client_product: Optional[str] = Header(None, alias="X-Client-Product"),
     request: Request = None,  # type: ignore[assignment]
@@ -120,29 +121,51 @@ async def get_current_user(
     3. 验证 Token 是否被撤销或已过期（通过 Redis）
     4. 从 Accept-Language header 获取语言设置
     """
-    token = credentials.credentials
-
     # 获取语言设置
     locale = get_locale(request) if request else None
     language = locale.language if locale else DEFAULT_LANGUAGE
 
     ip = get_client_ip(request) if request else None
     client_product = normalize_client_product(x_client_product)
+    if credentials is None:
+        raise AppCommonException(
+            CommonCode.AUTH_MISSING_CREDENTIALS,
+            ext_msg=(
+                "user_dependencies.get_current_user: access token missing: "
+                f"path={request.url.path if request else 'no request'}, "
+                f"client_product={client_product.value}"
+            ),
+            status_code=401,
+        )
+
+    token = credentials.credentials
     device_id: str | None = (
         validate_request_device_id(x_device_id) if x_device_id else None
     )
-    ctx = _create_user_context(
+    jwt_data = JwtUnit.require_token(
         token,
+        TokenType.USER_ACCESS,
+        "user_dependencies.get_current_user",
+    )
+    ctx = UserContext(
+        user_id=jwt_data.user_id,
+        token=token,
         device_id=device_id,
         language=language,
         ip=ip,
         client_product=client_product,
     )
-    if ctx is None:
-        raise UserAuthFailedException("Invalid token")
 
     if not await ctx.check_strict():
-        raise UserAuthFailedException("Token revoked or expired")
+        raise AppCommonException(
+            CommonCode.AUTH_TOKEN_REVOKED,
+            ext_msg=(
+                "user_dependencies.get_current_user: access token absent from whitelist: "
+                f"user_id={ctx.user_id}, "
+                f"path={request.url.path if request else 'no request'}"
+            ),
+            status_code=401,
+        )
 
     return ctx
 
@@ -161,13 +184,13 @@ async def get_current_user_optional(
     支持已登录和未登录用户：
     - 有有效 token: 返回 UserContext（已登录，user_id > 0）
     - 无 token 或 token 无效，但有 device_id: 返回 UserContext（游客，user_id = 0）
-    - 既无有效 token 也无 device_id: 抛出 UserAuthFailedException
+    - 既无有效 token 也无 device_id: 抛出 AppCommonException
 
     Returns:
         - UserContext: 总是返回 UserContext（已登录或游客）
 
     Raises:
-        UserAuthFailedException: 既没有有效 token 也没有 device_id
+        AppCommonException: 既没有有效 token 也没有 device_id
 
     注意：此函数不检查 Redis 中的 token 撤销状态，仅验证 token 签名、有效期和类型。
     签名、有效期或类型无效时按未登录处理，不让过期登录态阻断匿名接口。
@@ -201,7 +224,16 @@ async def get_current_user_optional(
             "get_current_user_optional: no valid token or device_id: "
             f"path={request.url.path if request else 'no request'}"
         )
-        raise UserAuthFailedException("Either a valid token or device_id is required")
+        raise AppCommonException(
+            CommonCode.AUTH_MISSING_CREDENTIALS,
+            ext_msg=(
+                "user_dependencies.get_current_user_optional: valid access token and "
+                "device_id both unavailable: "
+                f"path={request.url.path if request else 'no request'}, "
+                f"client_product={client_product.value}"
+            ),
+            status_code=401,
+        )
 
     return _create_anonymous_user_context(
         device_id=device_id,

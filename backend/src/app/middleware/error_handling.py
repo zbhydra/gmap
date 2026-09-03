@@ -1,4 +1,4 @@
-"""全局错误处理中间件：统一捕获 AppCommonException 与未处理异常，翻译错误码并转换为标准响应。"""
+"""全局错误处理：统一转换业务异常、请求校验异常与未处理异常。"""
 
 from collections.abc import Callable
 
@@ -6,11 +6,32 @@ from app.i18n.common_code import CommonCode
 from app.utils.common import get_locale
 from app.utils.response import ResponseUtils
 from fastapi import Request, Response
+from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.exceptions.common_exception import AppCommonException, UserAuthFailedException
+from app.exceptions.common_exception import AppCommonException
 from app.utils.logger import logger
+
+
+async def handle_request_validation_error(request: Request, exc: Exception) -> Response:
+    """将 FastAPI 请求校验错误转换为项目统一响应。"""
+    if not isinstance(exc, RequestValidationError):
+        raise exc
+    validation_errors = [
+        {"loc": error.get("loc"), "type": error.get("type")} for error in exc.errors()
+    ]
+    logger.error(
+        "Request validation failed: method=%s path=%s errors=%s",
+        request.method,
+        request.url.path,
+        validation_errors,
+    )
+    return ResponseUtils.error(
+        CommonCode.VALIDATION_ERROR,
+        get_locale(request),
+        status_code=422,
+    )
 
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
@@ -28,15 +49,15 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
         except AppCommonException as e:
             # 业务异常 - 翻译后返回（透传 data 字段）
             logger.error(f"{e.code} - {e.ext_msg}", exc_info=True)
-            return ResponseUtils.error(e.code, locale, data=e.data)
+            return ResponseUtils.error(
+                e.code,
+                locale,
+                data=e.data,
+                status_code=e.status_code,
+            )
         except ValidationError as e:
             logger.error(e, exc_info=True)
             return ResponseUtils.error(CommonCode.VALIDATION_ERROR, locale)
-        except UserAuthFailedException as e:
-            logger.error(e, exc_info=True)
-            return Response(
-                status_code=401,
-            )
         except Exception as e:
             logger.error(
                 f"Unhandled error in request {request.method} {request.url.path}: {e}",

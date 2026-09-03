@@ -11,7 +11,8 @@ from fastapi import Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.constants.auth import TokenType
-from app.exceptions.common_exception import UserAuthFailedException
+from app.exceptions.common_exception import AppCommonException
+from app.i18n.common_code import CommonCode
 from app.utils.jwt import JwtUnit
 
 security = HTTPBearer(auto_error=False)
@@ -40,22 +41,43 @@ async def get_admin_user(
     2. 校验 token type == ADMIN_ACCESS
     """
     if credentials is None:
-        raise UserAuthFailedException("Missing admin access token")
+        raise AppCommonException(
+            CommonCode.AUTH_MISSING_CREDENTIALS,
+            ext_msg=(
+                "admin_dependencies.get_admin_user: admin access token missing: "
+                "authorization=missing"
+            ),
+            status_code=401,
+        )
 
     token = credentials.credentials
-    jwt_data = JwtUnit.decode_token(token)
-
-    if not jwt_data:
-        raise UserAuthFailedException("Invalid admin access token")
-
-    if jwt_data.type != TokenType.ADMIN_ACCESS:
-        raise UserAuthFailedException("Invalid admin token type")
+    jwt_data = JwtUnit.require_token(
+        token,
+        TokenType.ADMIN_ACCESS,
+        "admin_dependencies.get_admin_user",
+    )
 
     from app.services.admin_service import admin_service
 
     admin = await admin_service.get_by_id(jwt_data.user_id)
-    if not admin or not admin.is_active:
-        raise UserAuthFailedException("Admin not found or inactive")
+    if not admin:
+        raise AppCommonException(
+            CommonCode.ADMIN_SESSION_INVALID,
+            ext_msg=(
+                "admin_dependencies.get_admin_user: token admin not found: "
+                f"admin_id={jwt_data.user_id}"
+            ),
+            status_code=401,
+        )
+    if not admin.is_active:
+        raise AppCommonException(
+            CommonCode.ADMIN_INACTIVE,
+            ext_msg=(
+                "admin_dependencies.get_admin_user: token admin inactive: "
+                f"admin_id={jwt_data.user_id}"
+            ),
+            status_code=401,
+        )
 
     return AdminContext(
         admin_id=admin.admin_id,

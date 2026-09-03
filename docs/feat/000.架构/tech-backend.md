@@ -33,7 +33,7 @@ backend/
 │   │   │   ├── request_logging.py   #   请求日志（request_id、慢请求 1s）
 │   │   │   └── cross_origin.py      #   CORS
 │   │   ├── exceptions/
-│   │   │   └── common_exception.py  #   AppCommonException / UserAuthFailedException
+│   │   │   └── common_exception.py  #   AppCommonException
 │   │   ├── crons/                   # cron 框架（见 §6）
 │   │   ├── init/                    # DB 初始化与结构同步（sync_database_schema.py 等，见 @tech-数据库.md）
 │   │   ├── i18n/                    # 国际化（见 §7）
@@ -65,13 +65,12 @@ HTTP 方法约束：**只能用 GET 和 POST**（根 `@../../../AGENTS.md` §3 �
 ## 3. 异常与错误中间件
 
 异常基类：`backend/src/app/exceptions/common_exception.py`
-- `AppCommonException(code: CommonCode, ext_msg: str = "", *, data: dict | None = None)`：业务异常，`code` 是 `i18n.common_code.CommonCode` 枚举，`ext_msg` 必须可定位（哪里的错误、错误的是什么、什么请求/接口/返回），`data` 携带 `wait_seconds` 等结构化附加。
-- `UserAuthFailedException`：认证失败，中间件直接回 401。
+- `AppCommonException(code: CommonCode, ext_msg: str = "", *, data: dict | None = None, status_code: int | None = None)`：唯一业务异常，`code` 是 `i18n.common_code.CommonCode` 枚举，`ext_msg` 必须可定位（哪里的错误、错误的是什么、什么请求/接口/返回），`data` 携带 `wait_seconds` 等结构化附加；业务码与 HTTP 状态不同时由 `status_code` 显式指定。
 
 错误中间件：`middleware/error_handling.py` 的 `ErrorHandlingMiddleware`（洋葱模型最内层）。处理顺序：
-1. `AppCommonException` → `logger.error` + `ResponseUtils.error(code, locale, data)`（**i18n 翻译**）。
-2. `pydantic.ValidationError` → 翻译为 `VALIDATION_ERROR`。
-3. `UserAuthFailedException` → 401。
+1. `AppCommonException` → `logger.error` + `ResponseUtils.error(code, locale, data, status_code)`（**i18n 翻译**）；认证失败同样走该路径并返回 401。
+2. FastAPI `RequestValidationError` → 应用级异常处理器返回 `VALIDATION_ERROR` 统一信封与 HTTP 422。
+3. `pydantic.ValidationError` → 中间件翻译为 `VALIDATION_ERROR`。
 4. 其他未捕获 `Exception` → 记录带 `exc_info` 的 error + 回 500。
 
 约束（`@../../references/specs/spec-python.md` §6.3）：**不要乱加 try/except**。只有满足「释放资源 / 储存运行结果 / 即使出错也要继续往下」之一才加，否则让中间件统一处理。抛 `AppCommonException` 必须带详细 `ext_msg`。

@@ -22,7 +22,7 @@ FastAPI 请求处理流程
       │  ┌──────────────────────────────────────────┼────────┼──────────┐
       │  │  Pydantic 验证请求参数                   │        │          │
       │  │  ├─ 解析请求体                           │        │          │
-      │  │  └─ 失败 → raise ValidationError         │        │          │
+      │  │  └─ 失败 → raise RequestValidationError  │        │          │
       │  │                                           │        │          │
       │  │  路由处理函数                             │        │          │
       │  │  ├─ 执行业务逻辑                          │        │          │
@@ -31,8 +31,8 @@ FastAPI 请求处理流程
       │                                              │        │
       │  ↓ 异常处理流程                              │        │
       │                                              │        │
-      │  @app.exception_handler(ValidationError) ←───┘        │
-      │  ├─ 捕获 ValidationError                              │
+      │  @app.exception_handler(RequestValidationError) ←─────┘        │
+      │  ├─ 捕获 RequestValidationError                       │
       │  ├─ 自定义错误响应                                    │
       │  └─ return JSONResponse (status=422) ─────────┐       │
       │                                                │       │
@@ -49,7 +49,7 @@ FastAPI 请求处理流程
 ================================================================================
 
 1. @app.exception_handler() 先触发
-   - 处理路由处理阶段抛出的特定异常（如 ValidationError）
+   - 处理路由处理阶段抛出的特定异常（如 RequestValidationError）
    - 返回自定义错误响应
 
 2. Middleware 的 except 块后触发
@@ -87,6 +87,8 @@ from app.middleware import (
     RequestLoggingMiddleware,
 )
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from app.middleware.error_handling import handle_request_validation_error
 
 # 路由模块会级联拉起全部 service / provider 依赖图，统一在模块顶部一次性加载。
 from app.api.admin.admin_auth import router as admin_auth_router
@@ -174,6 +176,14 @@ def _add_middlewares(app_instance: FastAPI) -> None:
     app_instance.add_middleware(RequestLoggingMiddleware)
 
 
+def _add_exception_handlers(app_instance: FastAPI) -> None:
+    """注册需要覆盖 FastAPI 默认响应的全局异常处理器。"""
+    app_instance.add_exception_handler(
+        RequestValidationError,
+        handle_request_validation_error,
+    )
+
+
 def _include_api_info(app_instance: FastAPI) -> None:
     """挂载业务 API 根路径说明。"""
 
@@ -247,6 +257,7 @@ def create_app() -> FastAPI:
         openapi_url=openapi_url,
     )
     _add_middlewares(app_instance)
+    _add_exception_handlers(app_instance)
     _include_business_routes(app_instance)
     _include_api_info(app_instance)
 

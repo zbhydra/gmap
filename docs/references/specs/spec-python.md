@@ -71,13 +71,14 @@ async def update(self, id: int, **kwargs) -> bool: ...   # **kwargs 无类型且
 
 ```python
 class AppCommonException(Exception):
-    def __init__(self, code: CommonCode, ext_msg: str = "", *, data: dict | None = None): ...
+    def __init__(self, code: CommonCode, ext_msg: str = "", *, data: dict | None = None, status_code: int | None = None): ...
 ```
 
-- 业务错误**一律** `raise AppCommonException(code, ext_msg, *, data=...)`。
+- 业务错误**一律** `raise AppCommonException(code, ext_msg, *, data=..., status_code=...)`。
   - `code`：`CommonCode` 枚举（`backend/src/app/i18n/common_code.py`，`IntEnum`）。
   - `ext_msg`：**三要素**——① 哪里（`函数名/操作:` 前缀）② 错的是什么 ③ 请求上下文（关键 id / 入参 / 上游返回）。拒绝泛化。
   - `data`：keyword-only，携带 `wait_seconds`、`active_request_count` 等结构化附加数据。
+  - `status_code`：keyword-only，仅在业务码与 HTTP 状态不同时指定（如认证业务码返回 HTTP 401）。
 - **禁止** `raise Exception(...)` / `raise ValueError(...)` 表达业务错误（参数防御性校验除外）。
 
 ```python

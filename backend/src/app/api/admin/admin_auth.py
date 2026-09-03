@@ -11,7 +11,7 @@ import time
 from fastapi import APIRouter
 
 from app.constants.auth import TokenType
-from app.exceptions.common_exception import AppCommonException, UserAuthFailedException
+from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.schemas.admin_schema import (
     AdminCaptchaResponse,
@@ -108,20 +108,45 @@ async def login(req: AdminLoginRequest) -> dict:
 async def refresh_token(req: AdminRefreshRequest) -> dict:
     """使用 refresh token 续签管理员 token pair。"""
 
-    jwt_data = JwtUnit.decode_token(req.refresh_token)
-    if not jwt_data or jwt_data.type != TokenType.ADMIN_REFRESH:
-        raise UserAuthFailedException("Invalid admin refresh token")
+    jwt_data = JwtUnit.require_token(
+        req.refresh_token,
+        TokenType.ADMIN_REFRESH,
+        "admin_auth.refresh_token",
+    )
 
     ok = await admin_token_service.verify_refresh_token_with_grace_period(
         req.refresh_token,
         jwt_data.user_id,
     )
     if not ok:
-        raise UserAuthFailedException("Admin refresh token revoked or expired")
+        raise AppCommonException(
+            CommonCode.ADMIN_SESSION_INVALID,
+            ext_msg=(
+                "admin_auth.refresh_token: admin refresh token revoked or expired: "
+                f"admin_id={jwt_data.user_id}"
+            ),
+            status_code=401,
+        )
 
     admin = await admin_service.get_by_id(jwt_data.user_id)
-    if not admin or not admin.is_active:
-        raise UserAuthFailedException("Admin not found or inactive")
+    if not admin:
+        raise AppCommonException(
+            CommonCode.ADMIN_SESSION_INVALID,
+            ext_msg=(
+                "admin_auth.refresh_token: refresh token admin not found: "
+                f"admin_id={jwt_data.user_id}"
+            ),
+            status_code=401,
+        )
+    if not admin.is_active:
+        raise AppCommonException(
+            CommonCode.ADMIN_INACTIVE,
+            ext_msg=(
+                "admin_auth.refresh_token: refresh token admin inactive: "
+                f"admin_id={jwt_data.user_id}"
+            ),
+            status_code=401,
+        )
 
     access_token, refresh_token, access_expire, refresh_expire = (
         admin_service.create_token_pair(admin)
