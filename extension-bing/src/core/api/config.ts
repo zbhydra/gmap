@@ -108,6 +108,8 @@ export const STORAGE_KEYS = {
   DEVICE_ID: 'counter_device_id',
   /** 生产构建 DEBUG 日志开关 */
   DEBUG_LOGGING: 'debug_logging',
+  /** 扩展通用设置 */
+  SETTINGS: 'settings',
   /** Bing 远程配置缓存（时间戳 + 稀疏覆盖载荷） */
   BING_REMOTE_CONFIG: 'bing_remote_config'
 } as const

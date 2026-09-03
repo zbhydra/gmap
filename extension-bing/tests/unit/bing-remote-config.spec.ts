@@ -2,12 +2,16 @@
  * Bing 远程配置通道单测（验收行为直接覆盖）：
  * - 远程稀疏覆盖包内默认值（缺键保留、未知键进入、adapters 整体替换）；
  * - 拉取失败（后端 /api/client/bing/config 未上线的预期场景）静默回退包内
- *   默认值且不写缓存；
- * - 1 小时时间戳缓存：命中不发请求，过期重新拉取；
+ *   默认值；
+ * - background 侧 1 小时时间戳缓存：命中不发 HTTP，过期重新拉取；
  * - 每 document 记忆化：同一 document 至多一次 RPC。
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const httpMocks = vi.hoisted(() => ({ get: vi.fn() }))
+
+vi.mock('../../src/core/api', () => ({ httpClient: httpMocks }))
 
 import { DEFAULT_BING_CONFIG } from '../../src/sites/bing/config/contract'
 import {
@@ -16,6 +20,7 @@ import {
   resetBingConfigForTests
 } from '../../src/sites/bing/config/loader'
 import { STORAGE_KEYS } from '../../src/core/api/config'
+import { fetchBingRemoteConfig } from '../../src/sites/bing/config/remoteFetch'
 
 type StorageData = Record<string, unknown>
 
@@ -79,6 +84,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-08-30T12:00:00Z'))
   resetStorage()
+  httpMocks.get.mockReset()
   resetBingConfigForTests()
 })
 
@@ -131,13 +137,11 @@ describe('Bing 远程配置通道', () => {
     // 默认值本体不被覆盖污染
     expect(DEFAULT_BING_CONFIG.adapters).toHaveLength(2)
     expect(DEFAULT_BING_CONFIG.parse.dataEntityAttr).toBe('data-entity')
-    // 成功拉取后写时间戳缓存
-    expect(storageData[STORAGE_KEYS.BING_REMOTE_CONFIG]).toMatchObject({
-      fetchedAt: Date.now()
-    })
+    expect(chrome.storage.local.get).not.toHaveBeenCalled()
+    expect(chrome.storage.local.set).not.toHaveBeenCalled()
   })
 
-  it('拉取失败（后端端点未上线）静默回退包内默认值，且不写缓存', async () => {
+  it('拉取失败（后端端点未上线）静默回退包内默认值', async () => {
     stubRpcGetBingConfig({}, 'reject')
 
     await loadBingConfig()
@@ -148,28 +152,29 @@ describe('Bing 远程配置通道', () => {
     expect(config.scrape.freeRowLimit).toBe(DEFAULT_BING_CONFIG.scrape.freeRowLimit)
     expect(config.adapters).toEqual(DEFAULT_BING_CONFIG.adapters)
     expect(config.adapters).not.toBe(DEFAULT_BING_CONFIG.adapters)
-    expect(storageData[STORAGE_KEYS.BING_REMOTE_CONFIG]).toBeUndefined()
   })
 
-  it('1 小时内命中缓存不再发请求，过期后重新拉取', async () => {
-    stubRpcGetBingConfig({ scrape: { loopIntervalMs: 600 } })
-    await loadBingConfig()
-    expect(rpcCallCount()).toBe(1)
+  it('background 在 1 小时内命中缓存不发 HTTP，过期后重新拉取', async () => {
+    httpMocks.get.mockResolvedValueOnce({ scrape: { loopIntervalMs: 600 } })
+    await fetchBingRemoteConfig()
+    expect(httpMocks.get).toHaveBeenCalledTimes(1)
 
-    // 模拟新 document：仅重置记忆化，storage 缓存仍在
-    resetBingConfigForTests()
     vi.setSystemTime(new Date('2026-08-30T12:30:00Z'))
-    await loadBingConfig()
-    expect(rpcCallCount()).toBe(1)
-    expect(getBingConfig().scrape.loopIntervalMs).toBe(600)
+    expect(await fetchBingRemoteConfig()).toEqual({ scrape: { loopIntervalMs: 600 } })
+    expect(httpMocks.get).toHaveBeenCalledTimes(1)
 
-    // 超过 1 小时后重新拉取，应用新载荷（stub 换新 mock，计数为新 mock 的调用数）
-    resetBingConfigForTests()
     vi.setSystemTime(new Date('2026-08-30T13:00:01Z'))
-    stubRpcGetBingConfig({ scrape: { loopIntervalMs: 700 } })
-    await loadBingConfig()
-    expect(rpcCallCount()).toBe(1)
-    expect(getBingConfig().scrape.loopIntervalMs).toBe(700)
+    httpMocks.get.mockResolvedValueOnce({ scrape: { loopIntervalMs: 700 } })
+    expect(await fetchBingRemoteConfig()).toEqual({ scrape: { loopIntervalMs: 700 } })
+    expect(httpMocks.get).toHaveBeenCalledTimes(2)
+  })
+
+  it('background 忽略数组形状的损坏缓存并重新拉取', async () => {
+    storageData[STORAGE_KEYS.BING_REMOTE_CONFIG] = { fetchedAt: Date.now(), override: [] }
+    httpMocks.get.mockResolvedValueOnce({ scrape: { loopIntervalMs: 650 } })
+
+    expect(await fetchBingRemoteConfig()).toEqual({ scrape: { loopIntervalMs: 650 } })
+    expect(httpMocks.get).toHaveBeenCalledTimes(1)
   })
 
   it('配置克隆与远程覆盖后，选择器嵌套数组不与默认值/载荷共享引用', async () => {

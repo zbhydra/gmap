@@ -3,6 +3,7 @@ import { LanguageService } from '../services/languageService'
 import type { SupportedLanguage } from '../constants/i18n'
 import { SUPPORTED_LANGUAGES } from '../constants/i18n'
 import { logger } from '../utils/logger'
+import { STORAGE_KEYS } from '../api/config'
 
 // 内部类型定义
 interface AppSettings {
@@ -45,7 +46,7 @@ export class SettingsManager {
   }
 
   static async getSettings(): Promise<AppSettings> {
-    let settings = await storageManager.get<AppSettings>('settings')
+    let settings = await storageManager.get<AppSettings>(STORAGE_KEYS.SETTINGS)
     if (!settings) {
       settings = { ...DEFAULT_SETTINGS }
     }
@@ -57,12 +58,12 @@ export class SettingsManager {
     const currentSettings = (await this.getSettings()) || DEFAULT_SETTINGS
     const newSettings = { ...currentSettings, ...updates }
     logger.info('newSettings', newSettings)
-    await storageManager.set('settings', newSettings)
+    await storageManager.set(STORAGE_KEYS.SETTINGS, newSettings)
     return newSettings
   }
 
   static async resetSettings(): Promise<AppSettings> {
-    await storageManager.set('settings', DEFAULT_SETTINGS)
+    await storageManager.set(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS)
     return { ...DEFAULT_SETTINGS }
   }
 
@@ -88,11 +89,14 @@ export class SettingsManager {
       this.unsubscribe()
     }
 
-    this.unsubscribe = storageManager.onChanged<AppSettings>('settings', async newSettings => {
-      if (newSettings) {
-        await this.notifyCallbacks(newSettings)
+    this.unsubscribe = storageManager.onChanged<AppSettings>(
+      STORAGE_KEYS.SETTINGS,
+      async newSettings => {
+        if (newSettings) {
+          await this.notifyCallbacks(newSettings)
+        }
       }
-    })
+    )
   }
 
   static destroy(): void {

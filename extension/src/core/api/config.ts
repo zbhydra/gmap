@@ -126,6 +126,8 @@ export const STORAGE_KEYS = {
   DEVICE_ID: 'counter_device_id',
   /** 生产构建 DEBUG 日志开关 */
   DEBUG_LOGGING: 'debug_logging',
+  /** 扩展通用设置 */
+  SETTINGS: 'settings',
   /** Maps 远程配置缓存（时间戳 + 稀疏覆盖载荷） */
   MAPS_REMOTE_CONFIG: 'maps_remote_config',
   /** Maps 用户设置（个人偏好：间隔/导出格式/字段勾选/自动化开关，013 A9） */

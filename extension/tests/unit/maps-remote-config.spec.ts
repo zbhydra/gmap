@@ -1,12 +1,16 @@
 /**
  * Maps 远程配置通道单测（验收行为直接覆盖）：
  * - 远程稀疏覆盖包内默认值（缺键保留、未知键进入）；
- * - 拉取失败静默回退包内默认值且不写缓存；
- * - 1 小时时间戳缓存：命中不发请求，过期重新拉取；
+ * - 拉取失败静默回退包内默认值；
+ * - background 侧 1 小时时间戳缓存：命中不发 HTTP，过期重新拉取；
  * - 每 document 记忆化：同一 document 至多一次 RPC。
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const httpMocks = vi.hoisted(() => ({ get: vi.fn() }))
+
+vi.mock('../../src/core/api', () => ({ httpClient: httpMocks }))
 
 import { DEFAULT_MAPS_CONFIG } from '../../src/sites/maps/config/contract'
 import {
@@ -15,6 +19,7 @@ import {
   resetMapsConfigForTests
 } from '../../src/sites/maps/config/loader'
 import { STORAGE_KEYS } from '../../src/core/api/config'
+import { fetchMapsRemoteConfig } from '../../src/sites/maps/config/remoteFetch'
 
 type StorageData = Record<string, unknown>
 
@@ -78,6 +83,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-08-30T12:00:00Z'))
   resetStorage()
+  httpMocks.get.mockReset()
   resetMapsConfigForTests()
 })
 
@@ -104,10 +110,8 @@ describe('Maps 远程配置通道', () => {
     expect(config.parseSchema.fields.name).toEqual(DEFAULT_MAPS_CONFIG.parseSchema.fields.name)
     // 默认值本体不被覆盖污染
     expect(DEFAULT_MAPS_CONFIG.dom.searchInput).toBe('div[role=search] input[name=q]')
-    // 成功拉取后写时间戳缓存
-    expect(storageData[STORAGE_KEYS.MAPS_REMOTE_CONFIG]).toMatchObject({
-      fetchedAt: Date.now()
-    })
+    expect(chrome.storage.local.get).not.toHaveBeenCalled()
+    expect(chrome.storage.local.set).not.toHaveBeenCalled()
   })
 
   it('parseSchema 两张下标表按键稀疏覆盖：未下发字段保留包内路径（真实 e2e 回归）', async () => {
@@ -137,7 +141,7 @@ describe('Maps 远程配置通道', () => {
     expect(DEFAULT_MAPS_CONFIG.parseSchema.fields.name).toEqual([11])
   })
 
-  it('拉取失败静默回退包内默认值，且不写缓存', async () => {
+  it('拉取失败静默回退包内默认值', async () => {
     stubRpcGetMapsConfig({}, 'reject')
 
     await loadMapsConfig()
@@ -148,28 +152,29 @@ describe('Maps 远程配置通道', () => {
     expect(config.scrape.scrollIntervalOptionsSec).toEqual(
       DEFAULT_MAPS_CONFIG.scrape.scrollIntervalOptionsSec
     )
-    expect(storageData[STORAGE_KEYS.MAPS_REMOTE_CONFIG]).toBeUndefined()
   })
 
-  it('1 小时内命中缓存不再发请求，过期后重新拉取', async () => {
-    stubRpcGetMapsConfig({ scrape: { scrollIntervalSec: 6 } })
-    await loadMapsConfig()
-    expect(rpcCallCount()).toBe(1)
+  it('background 在 1 小时内命中缓存不发 HTTP，过期后重新拉取', async () => {
+    httpMocks.get.mockResolvedValueOnce({ scrape: { scrollIntervalSec: 6 } })
+    await fetchMapsRemoteConfig()
+    expect(httpMocks.get).toHaveBeenCalledTimes(1)
 
-    // 模拟新 document：仅重置记忆化，storage 缓存仍在
-    resetMapsConfigForTests()
     vi.setSystemTime(new Date('2026-08-30T12:30:00Z'))
-    await loadMapsConfig()
-    expect(rpcCallCount()).toBe(1)
-    expect(getMapsConfig().scrape.scrollIntervalSec).toBe(6)
+    expect(await fetchMapsRemoteConfig()).toEqual({ scrape: { scrollIntervalSec: 6 } })
+    expect(httpMocks.get).toHaveBeenCalledTimes(1)
 
-    // 超过 1 小时后重新拉取，应用新载荷（stub 换新 mock，计数为新 mock 的调用数）
-    resetMapsConfigForTests()
     vi.setSystemTime(new Date('2026-08-30T13:00:01Z'))
-    stubRpcGetMapsConfig({ scrape: { scrollIntervalSec: 9 } })
-    await loadMapsConfig()
-    expect(rpcCallCount()).toBe(1)
-    expect(getMapsConfig().scrape.scrollIntervalSec).toBe(9)
+    httpMocks.get.mockResolvedValueOnce({ scrape: { scrollIntervalSec: 9 } })
+    expect(await fetchMapsRemoteConfig()).toEqual({ scrape: { scrollIntervalSec: 9 } })
+    expect(httpMocks.get).toHaveBeenCalledTimes(2)
+  })
+
+  it('background 忽略数组形状的损坏缓存并重新拉取', async () => {
+    storageData[STORAGE_KEYS.MAPS_REMOTE_CONFIG] = { fetchedAt: Date.now(), override: [] }
+    httpMocks.get.mockResolvedValueOnce({ scrape: { scrollIntervalSec: 7 } })
+
+    expect(await fetchMapsRemoteConfig()).toEqual({ scrape: { scrollIntervalSec: 7 } })
+    expect(httpMocks.get).toHaveBeenCalledTimes(1)
   })
 
   it('每 document 记忆化：同一 document 并发与后续调用只发一次 RPC', async () => {

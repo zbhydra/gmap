@@ -4,19 +4,16 @@
  * 实现 013 域拍板的五要素机制：
  * 1. 编译期完整默认值（contract.ts 的 DEFAULT_MAPS_CONFIG，此处拷贝为模块级单例）；
  * 2. 每 document 一次拉取：`loadPromise ??= doLoad()` 记忆化，SPA 路由切换不重拉；
- * 3. 经 background RPC `getMapsConfig` 透传 HTTP 拉取，失败静默回退；
+ * 3. 经 background RPC `getMapsConfig` 读取带 TTL 缓存的远程覆盖，失败静默回退；
  * 4. 分组覆盖到模块级单例（组内键浅合并；parseSchema 的两张下标表按键
  *    稀疏合并），远程缺键保留包内值、多余键原样进入；
  * 5. try/catch 静默回退：拉取/解析失败仅 logger.error，绝不中断页面业务。
  *
- * 拉取时机按时间控制：storage 记录上次成功拉取的时间戳与覆盖载荷，1 小时内
- * 不重复发 HTTP（直接应用上次结果）；无缓存或缓存过期才走网络。
+ * 持久缓存与网络访问统一由 background 管理；content 仅保留当前 document 内存态。
  * 消费者每次运行时现读 `getMapsConfig()` 活对象——远程改配置刷新页面即生效。
  */
 
 import { logger } from '@/core/utils/logger'
-import { storageManager } from '@/core/storage'
-import { STORAGE_KEYS } from '@/core/api/config'
 import { BackgroundChannel } from '@/content/rpc/background.rpc'
 import {
   DEFAULT_MAPS_CONFIG,
@@ -24,17 +21,6 @@ import {
   type MapsRemoteConfig,
   type MapsRemoteConfigOverride
 } from './contract'
-
-/** 远程配置缓存有效期：1 小时内不重复拉取。 */
-const CACHE_TTL_MS = 60 * 60 * 1000
-
-/** storage 缓存条目。 */
-interface MapsRemoteConfigCache {
-  /** 上次拉取成功的毫秒时间戳。 */
-  fetchedAt: number
-  /** 上次成功应用的稀疏覆盖载荷。 */
-  override: MapsRemoteConfigOverride
-}
 
 /** 模块级配置单例：组间、与 DEFAULT_MAPS_CONFIG 之间均不共享引用。 */
 let mapsConfig: MapsRemoteConfig = cloneDefaultConfig()
@@ -50,8 +36,8 @@ export function getMapsConfig(): MapsRemoteConfig {
 }
 
 /**
- * 加载远程配置：1 小时内命中缓存直接应用；否则经 background 拉取并更新缓存；
- * 失败静默回退包内默认值。每 document 至多触发一次网络请求。
+ * 经 background 加载远程配置，失败静默回退包内默认值。
+ * 每 document 至多触发一次 RPC。
  */
 export function loadMapsConfig(): Promise<void> {
   loadPromise ??= doLoad()
@@ -64,21 +50,12 @@ export function resetMapsConfigForTests(): void {
   loadPromise = null
 }
 
-/** 执行一次加载：缓存命中走缓存，否则走网络，失败回退默认值。 */
+/** 执行一次加载，失败回退默认值。 */
 async function doLoad(): Promise<void> {
-  const cached = await readCache()
-
-  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
-    applyOverride(cached.override)
-    logger.info('[MapsRemoteConfig] 命中 1 小时内缓存，跳过远程拉取')
-    return
-  }
-
   try {
     const override = await fetchOverride()
     applyOverride(override)
-    await writeCache({ fetchedAt: Date.now(), override })
-    logger.info('[MapsRemoteConfig] 远程配置拉取并覆盖成功')
+    logger.info('[MapsRemoteConfig] background 配置读取并覆盖成功')
   } catch (error) {
     // 失败不静默到不可见：记录错误后保持包内默认值，功能不中断。
     logger.error('[MapsRemoteConfig] 远程配置拉取失败，回退包内默认值:', error)
@@ -123,31 +100,6 @@ function applyParseSchemaOverride(sparse: MapsParseSchemaOverride | undefined): 
   }
   if (reviewsFields !== undefined) {
     Object.assign(mapsConfig.parseSchema.reviewsFields, reviewsFields)
-  }
-}
-
-/** 读取 storage 缓存；缺失或形状非法返回 null（视为无缓存）。 */
-async function readCache(): Promise<MapsRemoteConfigCache | null> {
-  const cached = await storageManager.get<MapsRemoteConfigCache>(STORAGE_KEYS.MAPS_REMOTE_CONFIG)
-
-  if (
-    cached &&
-    typeof cached.fetchedAt === 'number' &&
-    cached.override !== null &&
-    typeof cached.override === 'object'
-  ) {
-    return cached
-  }
-
-  return null
-}
-
-/** 写入 storage 缓存；写失败不影响本次已生效的覆盖结果。 */
-async function writeCache(cache: MapsRemoteConfigCache): Promise<void> {
-  try {
-    await storageManager.set(STORAGE_KEYS.MAPS_REMOTE_CONFIG, cache)
-  } catch (error) {
-    logger.error('[MapsRemoteConfig] 写入远程配置缓存失败:', error)
   }
 }
 
