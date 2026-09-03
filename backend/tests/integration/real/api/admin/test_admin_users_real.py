@@ -196,6 +196,7 @@ async def test_real_admin_users_requires_admin(real_async_client) -> None:
     response = await real_async_client.get("/api/admin/users")
 
     assert response.status_code == 401
+    assert response.json()["code"] == CommonCode.AUTH_MISSING_CREDENTIALS
 
 
 async def test_real_admin_user_profile_requires_admin(real_async_client) -> None:
@@ -203,6 +204,7 @@ async def test_real_admin_user_profile_requires_admin(real_async_client) -> None
     response = await real_async_client.get("/api/admin/users/1/profile")
 
     assert response.status_code == 401
+    assert response.json()["code"] == CommonCode.AUTH_MISSING_CREDENTIALS
 
 
 async def test_real_admin_users_filter_by_email_paginate_and_order(
@@ -235,15 +237,16 @@ async def test_real_admin_users_filter_by_email_paginate_and_order(
         headers=headers,
         params={"email": email_keyword, "page": 2, "page_size": 1},
     )
-    body_one = page_one.json()
-    body_two = page_two.json()
 
     assert page_one.status_code == 200
+    body_one = page_one.json()
     assert body_one["code"] == CommonCode.SUCCESS
     assert body_one["data"]["total"] == 2
     assert [row["user_id"] for row in body_one["data"]["rows"]] == [second.user_id]
     assert body_one["data"]["rows"][0]["email"] == second.email
     assert page_two.status_code == 200
+    body_two = page_two.json()
+    assert body_two["code"] == CommonCode.SUCCESS
     assert [row["user_id"] for row in body_two["data"]["rows"]] == [first.user_id]
     assert body_two["data"]["total"] == 2
     assert body_two["data"]["page"] == 2
@@ -318,7 +321,17 @@ async def test_real_admin_users_filter_by_user_id_status_and_created_range(
         },
     )
 
-    assert by_user_id.status_code == 200
+    for response in (
+        by_user_id,
+        by_normal,
+        by_locked,
+        by_deleted,
+        in_range,
+        range_exclusive_end,
+    ):
+        assert response.status_code == 200
+        assert response.json()["code"] == CommonCode.SUCCESS
+
     assert [row["user_id"] for row in by_user_id.json()["data"]["rows"]] == [
         normal_user.user_id
     ]
@@ -363,8 +376,8 @@ async def test_real_admin_users_email_filter_treats_wildcards_literally(
             headers=headers,
             params={"email": payload, "page": 1, "page_size": 10},
         )
-        body = response.json()
         assert response.status_code == 200, payload
+        body = response.json()
         assert body["code"] == CommonCode.SUCCESS, payload
         assert body["data"]["rows"] == [], payload
 
@@ -396,9 +409,13 @@ async def test_real_admin_users_reject_invalid_filters(
     )
 
     assert invalid_status.status_code == 422
+    assert invalid_status.json()["code"] == CommonCode.VALIDATION_ERROR
     assert invalid_page.status_code == 422
+    assert invalid_page.json()["code"] == CommonCode.VALIDATION_ERROR
     assert invalid_page_size.status_code == 422
+    assert invalid_page_size.json()["code"] == CommonCode.VALIDATION_ERROR
     assert negative_created.status_code == 422
+    assert negative_created.json()["code"] == CommonCode.VALIDATION_ERROR
     assert reversed_range.status_code == 400
     assert reversed_range.json()["code"] == CommonCode.INVALID_REQUEST.value
 
@@ -439,10 +456,10 @@ async def test_real_admin_user_profile_multi_line_subscriptions_and_usage(
     response = await real_async_client.get(
         f"/api/admin/users/{user.user_id}/profile", headers=headers
     )
+    assert response.status_code == 200
     body = response.json()
     data = body["data"]
 
-    assert response.status_code == 200
     assert body["code"] == CommonCode.SUCCESS
     # 旧单数 subscription 字段已删净，新旧不并存。
     assert "subscription" not in data
@@ -502,9 +519,11 @@ async def test_real_admin_user_profile_usage_reads_free_tier_totals(
     response = await real_async_client.get(
         f"/api/admin/users/{user.user_id}/profile", headers=headers
     )
-    data = response.json()["data"]
-
     assert response.status_code == 200
+    body = response.json()
+    data = body["data"]
+
+    assert body["code"] == CommonCode.SUCCESS
     usage = data["usage"]
     assert [line["product_line"] for line in usage] == [
         "maps_extension",

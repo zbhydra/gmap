@@ -186,6 +186,7 @@ async def test_real_admin_orders_requires_admin(real_async_client) -> None:
     response = await real_async_client.get("/api/admin/orders")
 
     assert response.status_code == 401
+    assert response.json()["code"] == CommonCode.AUTH_MISSING_CREDENTIALS
 
 
 async def test_real_admin_orders_list_and_detail_are_read_only(
@@ -271,5 +272,6 @@ async def test_real_admin_orders_reject_invalid_filters(
     )
 
     assert invalid_type_response.status_code == 422
+    assert invalid_type_response.json()["code"] == CommonCode.VALIDATION_ERROR
     assert invalid_range_response.status_code == 400
     assert invalid_range_response.json()["code"] == CommonCode.INVALID_REQUEST.value

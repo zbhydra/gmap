@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from uuid import uuid4
 
 import pytest
+from httpx import Response
 from sqlalchemy import delete, select
 
 from app.constants.auth import TokenType
@@ -50,9 +51,11 @@ def _device_header() -> dict[str, str]:
     return {"X-Device-Id": f"maps-usage-{uuid4().hex}"}
 
 
-def _usage_payload(body: dict) -> dict:
-    """剥响应信封，返回 data 载荷。"""
+def _usage_payload(response: Response) -> dict:
+    """校验成功响应并返回 data 载荷。"""
 
+    assert response.status_code == 200
+    body = response.json()
     assert body["code"] == CommonCode.SUCCESS, body
     return body["data"]
 
@@ -106,9 +109,8 @@ async def test_real_usage_returns_fresh_quota_for_anonymous(
     response = await real_async_client.get(
         "/api/client/maps/usage", headers=_device_header()
     )
-    body = _usage_payload(response.json())
+    body = _usage_payload(response)
 
-    assert response.status_code == 200
     assert body["used"] == 0
     assert body["total"] >= 1
     assert body["exhausted"] is False
@@ -122,7 +124,8 @@ async def test_real_usage_requires_device_id(
     """无 device_id 且无 token 的请求被拒（get_current_user_optional 契约）。"""
     response = await real_async_client.get("/api/client/maps/usage")
 
-    assert response.status_code in (401, 422)
+    assert response.status_code == 401
+    assert response.json()["code"] == CommonCode.AUTH_MISSING_CREDENTIALS
 
 
 async def test_real_usage_report_deducts_and_is_idempotent(
@@ -133,25 +136,21 @@ async def test_real_usage_report_deducts_and_is_idempotent(
     request_id = uuid4().hex
 
     first = _usage_payload(
-        (
-            await real_async_client.post(
-                "/api/client/maps/usage/report",
-                json={"records": 20, "request_id": request_id},
-                headers=headers,
-            )
-        ).json()
+        await real_async_client.post(
+            "/api/client/maps/usage/report",
+            json={"records": 20, "request_id": request_id},
+            headers=headers,
+        )
     )
     replay = _usage_payload(
-        (
-            await real_async_client.post(
-                "/api/client/maps/usage/report",
-                json={"records": 20, "request_id": request_id},
-                headers=headers,
-            )
-        ).json()
+        await real_async_client.post(
+            "/api/client/maps/usage/report",
+            json={"records": 20, "request_id": request_id},
+            headers=headers,
+        )
     )
     after = _usage_payload(
-        (await real_async_client.get("/api/client/maps/usage", headers=headers)).json()
+        await real_async_client.get("/api/client/maps/usage", headers=headers)
     )
 
     assert first["deducted"] is True
@@ -176,13 +175,11 @@ async def test_real_usage_report_writes_prefixed_redis_keys(
     request_id = uuid4().hex
 
     _usage_payload(
-        (
-            await real_async_client.post(
-                "/api/client/maps/usage/report",
-                json={"records": 3, "request_id": request_id},
-                headers={"X-Device-Id": device_id},
-            )
-        ).json()
+        await real_async_client.post(
+            "/api/client/maps/usage/report",
+            json={"records": 3, "request_id": request_id},
+            headers={"X-Device-Id": device_id},
+        )
     )
 
     usage_subkey, _ = build_usage_key(MAPS_EXTENSION_PRODUCT_LINE, f"d:{device_id}")
@@ -203,19 +200,18 @@ async def test_real_usage_report_accumulates_across_requests(
     """不同 request_id 的上报独立累计。"""
     headers = _device_header()
 
-    await real_async_client.post(
+    first_response = await real_async_client.post(
         "/api/client/maps/usage/report",
         json={"records": 5, "request_id": uuid4().hex},
         headers=headers,
     )
+    _usage_payload(first_response)
     second = _usage_payload(
-        (
-            await real_async_client.post(
-                "/api/client/maps/usage/report",
-                json={"records": 7, "request_id": uuid4().hex},
-                headers=headers,
-            )
-        ).json()
+        await real_async_client.post(
+            "/api/client/maps/usage/report",
+            json={"records": 7, "request_id": uuid4().hex},
+            headers=headers,
+        )
     )
 
     assert second["used"] == 12
@@ -233,8 +229,9 @@ async def test_real_usage_report_rejects_invalid_records(
     )
 
     assert response.status_code == 422
+    assert response.json()["code"] == CommonCode.VALIDATION_ERROR
     after = _usage_payload(
-        (await real_async_client.get("/api/client/maps/usage", headers=headers)).json()
+        await real_async_client.get("/api/client/maps/usage", headers=headers)
     )
     assert after["used"] == 0
 
@@ -245,17 +242,15 @@ async def test_real_usage_exhausted_when_used_reaches_total(
     """used >= total 时 exhausted=true（用超过默认配额的单笔上报触顶）。"""
     headers = _device_header()
     total = _usage_payload(
-        (await real_async_client.get("/api/client/maps/usage", headers=headers)).json()
+        await real_async_client.get("/api/client/maps/usage", headers=headers)
     )["total"]
 
     reached = _usage_payload(
-        (
-            await real_async_client.post(
-                "/api/client/maps/usage/report",
-                json={"records": total, "request_id": uuid4().hex},
-                headers=headers,
-            )
-        ).json()
+        await real_async_client.post(
+            "/api/client/maps/usage/report",
+            json={"records": total, "request_id": uuid4().hex},
+            headers=headers,
+        )
     )
 
     assert reached["used"] == total
@@ -275,28 +270,24 @@ async def test_real_logged_in_usage_reads_free_quota_and_deducts_via_mysql(
     request_id = uuid4().hex
 
     initial = _usage_payload(
-        (await real_async_client.get("/api/client/maps/usage", headers=headers)).json()
+        await real_async_client.get("/api/client/maps/usage", headers=headers)
     )
     first = _usage_payload(
-        (
-            await real_async_client.post(
-                "/api/client/maps/usage/report",
-                json={"records": 15, "request_id": request_id},
-                headers=headers,
-            )
-        ).json()
+        await real_async_client.post(
+            "/api/client/maps/usage/report",
+            json={"records": 15, "request_id": request_id},
+            headers=headers,
+        )
     )
     replay = _usage_payload(
-        (
-            await real_async_client.post(
-                "/api/client/maps/usage/report",
-                json={"records": 15, "request_id": request_id},
-                headers=headers,
-            )
-        ).json()
+        await real_async_client.post(
+            "/api/client/maps/usage/report",
+            json={"records": 15, "request_id": request_id},
+            headers=headers,
+        )
     )
     after = _usage_payload(
-        (await real_async_client.get("/api/client/maps/usage", headers=headers)).json()
+        await real_async_client.get("/api/client/maps/usage", headers=headers)
     )
 
     assert initial["used"] == 0

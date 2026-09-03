@@ -197,7 +197,7 @@ async def test_real_checkin_entry_and_claim_use_current_database_schema(
     assert claim_body["data"]["today_claimed"] is True
 
     assert second_claim_response.status_code == 200
-    assert second_claim_response.json()["code"] != CommonCode.SUCCESS
+    assert second_claim_response.json()["code"] == CommonCode.CHECKIN_ALREADY_CLAIMED
 
     async with get_async_session() as db:
         campaign_count = await db.scalar(

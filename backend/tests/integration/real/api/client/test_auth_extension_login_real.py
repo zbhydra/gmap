@@ -167,6 +167,7 @@ async def _exchange_login_code(
         json=payload,
         headers={"X-Forwarded-For": f"198.51.100.{int(uuid.uuid4().hex[:2], 16)}"},
     )
+    assert response.status_code == 200
     body: dict[str, Any] = response.json()
     assert isinstance(body, dict)
     return response.status_code, body
@@ -392,11 +393,13 @@ async def test_real_extension_login_exchange_revokes_old_extension_tokens(
         await _issue_login_code(real_async_client, web_access_token, first_challenge),
         "code",
     )
-    _, first_body = await _exchange_login_code(
+    first_status, first_body = await _exchange_login_code(
         real_async_client,
         first_code,
         first_verifier,
     )
+    assert first_status == 200
+    assert first_body["code"] == CommonCode.SUCCESS
     old_access_token = _token_string(first_body["data"], "extension_access_token")
     old_refresh_token = _token_string(first_body["data"], "extension_refresh_token")
 
@@ -448,6 +451,7 @@ async def test_real_extension_login_issue_rejects_invalid_web_access_token(
     )
 
     assert response.status_code == 401
+    assert response.json()["code"] == CommonCode.AUTH_INVALID_TOKEN
 
 
 async def test_real_extension_login_issue_rejects_malformed_code_challenge(
@@ -465,8 +469,9 @@ async def test_real_extension_login_issue_rejects_malformed_code_challenge(
         headers={"Authorization": f"Bearer {web_access_token}"},
     )
 
-    # pydantic 校验失败走 FastAPI 默认 422，不进入业务处理
+    # Pydantic 校验失败走统一错误信封，不进入业务处理。
     assert response.status_code == 422
+    assert response.json()["code"] == CommonCode.VALIDATION_ERROR
 
 
 async def test_real_extension_login_exchange_rejects_malformed_code_verifier(
@@ -491,8 +496,9 @@ async def test_real_extension_login_exchange_rejects_malformed_code_verifier(
         json={"code": login_code, "code_verifier": "invalid verifier with spaces!"},
     )
 
-    # pydantic 校验失败走 FastAPI 默认 422，且发生在 code 消费之前
+    # Pydantic 校验失败走统一错误信封，且发生在 code 消费之前。
     assert response.status_code == 422
+    assert response.json()["code"] == CommonCode.VALIDATION_ERROR
 
     # 校验失败发生在消费之前，code 仍有效，正确 verifier 可完成 exchange
     status_code, exchange_body = await _exchange_login_code(
@@ -527,7 +533,7 @@ async def test_real_extension_login_issue_rate_limit_is_ten_per_user_per_five_mi
         json={"code_challenge": code_challenge},
         headers={"Authorization": f"Bearer {web_access_token}"},
     )
-    body = response.json()
 
     assert response.status_code == 200
+    body = response.json()
     assert body["code"] == CommonCode.RATE_LIMIT_EXCEEDED.value

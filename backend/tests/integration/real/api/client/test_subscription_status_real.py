@@ -65,6 +65,7 @@ async def test_real_subscription_status_supports_product_line_query(
         headers={"X-Device-Id": f"e2e-subscription-status-{uuid4().hex}"},
     )
     assert by_line.status_code == 200
+    assert by_line.json()["code"] == CommonCode.SUCCESS
     assert by_line.json()["data"]["period"] == "free"
 
     unknown = await real_async_client.get(

@@ -13,8 +13,10 @@ from dataclasses import dataclass, field
 import json
 
 import pytest
+from pydantic import ValidationError
 from sqlalchemy import delete, func, select, text
 
+from app.api.client.mark_client import RecordMarkRequest
 from app.constants.mark import MAX_MARK_MSG_LENGTH, MarkType
 from app.core.database import get_async_session, get_engine
 from app.models.mark_log_model import MarkLogModel
@@ -123,6 +125,12 @@ async def _assert_validation_rejected_without_write(
 ) -> None:
     """断言 API 校验拒绝请求，且真实数据库没有产生打点记录。"""
 
+    with pytest.raises(ValidationError) as exc_info:
+        RecordMarkRequest.model_validate(payload)
+    error = exc_info.value.errors()[0]
+    assert list(error["loc"]) == expected_location
+    assert error["type"] == expected_type
+
     assert await _mark_log_count(device_id) == 0
     response = await real_async_client.post(
         "/api/client/mark/record",
@@ -130,10 +138,9 @@ async def _assert_validation_rejected_without_write(
         headers={"X-Device-Id": device_id},
     )
 
-    body = response.json()
     assert response.status_code == 422
-    assert body["detail"][0]["loc"] == expected_location
-    assert body["detail"][0]["type"] == expected_type
+    body = response.json()
+    assert body["code"] == CommonCode.VALIDATION_ERROR
     assert await _mark_log_count(device_id) == 0
 
 
@@ -161,8 +168,8 @@ async def test_real_record_mark_persists_complete_max_length_message(
         },
     )
 
-    body = response.json()
     assert response.status_code == 200
+    body = response.json()
     assert body["code"] == CommonCode.SUCCESS
     assert body["data"] == {"recorded": True}
 
@@ -198,7 +205,7 @@ async def test_real_record_mark_rejects_overflow_without_database_write(
             "mark_type": MarkType.WEB_EXTENSION_INSTALL_CLICK.value,
             "mark_msg": mark_msg,
         },
-        expected_location=["body", "mark_msg"],
+        expected_location=["mark_msg"],
         expected_type="string_too_long",
     )
 
@@ -216,8 +223,8 @@ async def test_real_record_mark_persists_empty_min_length_message(
         headers={"X-Device-Id": device_id},
     )
 
-    body = response.json()
     assert response.status_code == 200
+    body = response.json()
     assert body["code"] == CommonCode.SUCCESS
     assert body["data"] == {"recorded": True}
 
@@ -248,8 +255,8 @@ async def test_real_record_mark_persists_extension_store_review_click(
         headers={"X-Device-Id": device_id},
     )
 
-    body = response.json()
     assert response.status_code == 200
+    body = response.json()
     assert body["code"] == CommonCode.SUCCESS
     assert body["data"] == {"recorded": True}
 
@@ -292,8 +299,8 @@ async def test_real_record_mark_persists_literal_special_characters(
         headers={"X-Device-Id": device_id},
     )
 
-    body = response.json()
     assert response.status_code == 200
+    body = response.json()
     assert body["code"] == CommonCode.SUCCESS
 
     async with get_async_session() as db:
@@ -315,7 +322,7 @@ async def test_real_record_mark_rejects_missing_mark_type_without_database_write
         real_async_client,
         device_id=device_id,
         payload={"mark_msg": test_run_id},
-        expected_location=["body", "mark_type"],
+        expected_location=["mark_type"],
         expected_type="missing",
     )
 
@@ -334,6 +341,6 @@ async def test_real_record_mark_rejects_wrong_message_type_without_database_writ
             "mark_type": MarkType.WEB_CREDIT_PURCHASE_MODAL_OPEN.value,
             "mark_msg": ["not", "a", "string"],
         },
-        expected_location=["body", "mark_msg"],
+        expected_location=["mark_msg"],
         expected_type="string_type",
     )
