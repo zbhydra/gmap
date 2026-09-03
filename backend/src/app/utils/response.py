@@ -36,7 +36,7 @@ class ResponseUtils:
         """
         返回成功响应
         """
-        return ResponseUtils.json(10000, data or {}, "success")
+        return ResponseUtils.json(CommonCode.SUCCESS.value, data or {}, "")
 
     @staticmethod
     def error(

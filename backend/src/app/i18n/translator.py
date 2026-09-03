@@ -47,16 +47,16 @@ class Translator:
         # 规范化语言代码
         lang = LANGUAGE_MAPPING.get(language, DEFAULT_LANGUAGE)
 
-        # 获取翻译
-        translations = self._translations.get(lang, {})
-        keys = key.split(".")
-        for k in keys:
-            translations = translations.get(k, {})
-        if isinstance(translations, str):
-            if kwargs:
-                return translations.format(**kwargs)
-            return translations
-        return key
+        try:
+            translation = self._translations[lang]
+            for part in key.split("."):
+                translation = translation[part]
+        except (KeyError, TypeError):
+            raise KeyError(f"Missing translation: language={lang}, key={key}") from None
+
+        if not isinstance(translation, str):
+            raise KeyError(f"Invalid translation: language={lang}, key={key}")
+        return translation.format(**kwargs) if kwargs else translation
 
     def get_supported_languages(self) -> list[str]:
         """获取支持的语言列表"""

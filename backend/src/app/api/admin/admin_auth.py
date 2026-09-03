@@ -9,6 +9,7 @@ Admin 认证 API
 import time
 
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from app.constants.auth import TokenType
 from app.exceptions.common_exception import AppCommonException
@@ -24,6 +25,7 @@ from app.services.admin_service import admin_service
 from app.services.admin_token_service import admin_token_service
 from app.services.captcha_service import captcha_service
 from app.utils.jwt import JwtUnit
+from app.utils.response import ResponseUtils
 
 router = APIRouter(prefix="/auth", tags=["admin-auth"])
 
@@ -35,20 +37,18 @@ def _remaining_seconds(expires_at: int) -> int:
 
 
 @router.post("/captcha")
-async def get_captcha() -> dict:
+async def get_captcha() -> JSONResponse:
     """获取图片验证码"""
     captcha_id, image_base64 = await captcha_service.generate_captcha()
-    return {
-        "code": 10000,
-        "data": AdminCaptchaResponse(
+    return ResponseUtils.ok(
+        AdminCaptchaResponse(
             captcha_id=captcha_id, image_base64=image_base64
-        ).model_dump(),
-        "msg": "success",
-    }
+        ).model_dump()
+    )
 
 
 @router.post("/login")
-async def login(req: AdminLoginRequest) -> dict:
+async def login(req: AdminLoginRequest) -> JSONResponse:
     """
     管理员登录
 
@@ -92,20 +92,18 @@ async def login(req: AdminLoginRequest) -> dict:
         refresh_expire,
     )
 
-    return {
-        "code": 10000,
-        "data": AdminLoginResponse(
+    return ResponseUtils.ok(
+        AdminLoginResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             expires_in=_remaining_seconds(access_expire),
             refresh_expires_in=_remaining_seconds(refresh_expire),
-        ).model_dump(),
-        "msg": "success",
-    }
+        ).model_dump()
+    )
 
 
 @router.post("/refresh")
-async def refresh_token(req: AdminRefreshRequest) -> dict:
+async def refresh_token(req: AdminRefreshRequest) -> JSONResponse:
     """使用 refresh token 续签管理员 token pair。"""
 
     jwt_data = JwtUnit.require_token(
@@ -157,13 +155,11 @@ async def refresh_token(req: AdminRefreshRequest) -> dict:
         admin.admin_id,
         refresh_expire,
     )
-    return {
-        "code": 10000,
-        "data": AdminRefreshResponse(
+    return ResponseUtils.ok(
+        AdminRefreshResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             expires_in=_remaining_seconds(access_expire),
             refresh_expires_in=_remaining_seconds(refresh_expire),
-        ).model_dump(),
-        "msg": "success",
-    }
+        ).model_dump()
+    )

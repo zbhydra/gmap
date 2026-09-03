@@ -419,7 +419,7 @@ describe('background 同步服务（单路失败不阻断）', () => {
       },
       {
         match: url => url.endsWith('/api/client/maps/hubspot/sync'),
-        respond: () => jsonResponse({ code: 10000, msg: 'success', data: { synced: 1 } })
+        respond: () => jsonResponse({ code: 10000, msg: '', data: { synced: 1 } })
       },
       {
         match: url => url.includes('/logstores/') && url.endsWith('/track'),

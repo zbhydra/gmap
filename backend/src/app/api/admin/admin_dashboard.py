@@ -8,16 +8,20 @@ from dataclasses import asdict
 import time
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 
 from app.api.admin_dependencies import AdminContext, get_admin_user
 from app.services.dashboard_service import dashboard_service
 from app.utils.logger import logger
+from app.utils.response import ResponseUtils
 
 router = APIRouter(prefix="/dashboard", tags=["admin-dashboard"])
 
 
 @router.get("")
-async def get_dashboard(_admin: AdminContext = Depends(get_admin_user)) -> dict:
+async def get_dashboard(
+    _admin: AdminContext = Depends(get_admin_user),
+) -> JSONResponse:
     """
     获取 Dashboard 统计数据
 
@@ -27,7 +31,7 @@ async def get_dashboard(_admin: AdminContext = Depends(get_admin_user)) -> dict:
     started_at = time.perf_counter()
     data = await dashboard_service.get_dashboard_data(days=60)
     response_started_at = time.perf_counter()
-    response = {"code": 10000, "data": asdict(data), "msg": "success"}
+    response = ResponseUtils.ok(asdict(data))
     logger.warning(
         "admin_dashboard_api_timing: "
         f"response_build_ms={(time.perf_counter() - response_started_at) * 1000:.2f} "

@@ -34,7 +34,7 @@ function stubFetch(options: { rejectSls?: boolean } = {}): FetchCallLog[] {
         ok: true,
         status: 200,
         headers: new Headers({ 'Content-Type': 'application/json' }),
-        json: async () => ({ code: 10000, data: { recorded: true }, msg: 'success' })
+        json: async () => ({ code: 10000, data: { recorded: true }, msg: '' })
       }
     })
   )
