@@ -53,18 +53,11 @@ MAPS_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
         "detailPath": "[i][1]",
         "formatADirectNavEnabled": True,
         "formatBSpaXhrEnabled": True,
-        "fields": {
-            "name": [11],
-            "phone": [178, 0, 0],
-            "lat": [9, 2],
-            "lng": [9, 3],
-            "categories": [13],
-            "placeId": [78],
-            "rating": [4, 7],
-            "reviewsCount": [4, 8],
-            "website": [7, 0],
-            "fullAddress": [39],
-        },
+        # 字段下标表（fields）唯一事实源 = 插件契约 DEFAULT_MAPS_CONFIG（36 列
+        # 全集）。此处不再整表下发：2026-09-02 真实 e2e 实测，本表曾是 A1 时代
+        # 的 10 字段旧快照，插件浅合并把其余字段路径清空导致整批解析崩溃
+        # （旧 mock 层下发全量表掩盖了该缺陷）。热修单个字段时按键下发即可
+        # （插件已改为按键稀疏合并）。
     },
     "scrape": {
         "scrollIntervalSec": 8,

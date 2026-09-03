@@ -5,7 +5,8 @@
  * 1. 编译期完整默认值（contract.ts 的 DEFAULT_MAPS_CONFIG，此处拷贝为模块级单例）；
  * 2. 每 document 一次拉取：`loadPromise ??= doLoad()` 记忆化，SPA 路由切换不重拉；
  * 3. 经 background RPC `getMapsConfig` 透传 HTTP 拉取，失败静默回退；
- * 4. Object.assign 分组浅覆盖到模块级单例，远程缺键保留包内值、多余键原样进入；
+ * 4. 分组覆盖到模块级单例（组内键浅合并；parseSchema 的两张下标表按键
+ *    稀疏合并），远程缺键保留包内值、多余键原样进入；
  * 5. try/catch 静默回退：拉取/解析失败仅 logger.error，绝不中断页面业务。
  *
  * 拉取时机按时间控制：storage 记录上次成功拉取的时间戳与覆盖载荷，1 小时内
@@ -19,6 +20,7 @@ import { STORAGE_KEYS } from '@/core/api/config'
 import { BackgroundChannel } from '@/content/rpc/background.rpc'
 import {
   DEFAULT_MAPS_CONFIG,
+  type MapsParseSchemaOverride,
   type MapsRemoteConfig,
   type MapsRemoteConfigOverride
 } from './contract'
@@ -97,10 +99,31 @@ async function fetchOverride(): Promise<MapsRemoteConfigOverride> {
 function applyOverride(override: MapsRemoteConfigOverride): void {
   Object.assign(mapsConfig.dom, override.dom)
   Object.assign(mapsConfig.reviewsDom, override.reviewsDom)
-  Object.assign(mapsConfig.parseSchema, override.parseSchema)
+  applyParseSchemaOverride(override.parseSchema)
   Object.assign(mapsConfig.exportConfig, override.exportConfig)
   Object.assign(mapsConfig.scrape, override.scrape)
   Object.assign(mapsConfig.operations, override.operations)
+}
+
+/**
+ * parseSchema 组覆盖：标量键浅合并；fields / reviewsFields 两张下标表必须
+ * **按键稀疏合并**——Object.assign 整表替换会把服务端未下发字段的路径清成
+ * undefined，抽取层 getValueAt 迭代 undefined 直接抛错、整批解析失败
+ * （2026-09-02 真实 e2e 实测回归：服务端只下发 10 字段旧快照时全部采集
+ * 崩溃为 0 条，mock 层下发全量表掩盖了该缺陷）。
+ */
+function applyParseSchemaOverride(sparse: MapsParseSchemaOverride | undefined): void {
+  if (sparse === undefined) {
+    return
+  }
+  const { fields, reviewsFields, ...groupKeys } = sparse
+  Object.assign(mapsConfig.parseSchema, groupKeys)
+  if (fields !== undefined) {
+    Object.assign(mapsConfig.parseSchema.fields, fields)
+  }
+  if (reviewsFields !== undefined) {
+    Object.assign(mapsConfig.parseSchema.reviewsFields, reviewsFields)
+  }
 }
 
 /** 读取 storage 缓存；缺失或形状非法返回 null（视为无缓存）。 */

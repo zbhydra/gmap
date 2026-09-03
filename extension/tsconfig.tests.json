@@ -18,10 +18,8 @@
     "tests/unit/maps-remote-config.spec.ts",
     "tests/unit/maps-user-settings.spec.ts",
     "tests/e2e/global-setup.ts",
-    "tests/e2e/announcement-flow.spec.ts",
-    "tests/e2e/list-flow.spec.ts",
-    "tests/e2e/options-flow.spec.ts",
-    "tests/e2e/panel-flow.spec.ts"
+    "tests/e2e/real-maps.spec.ts",
+    "tests/e2e/real-maps-signed-in.spec.ts"
   ],
   "exclude": []
 }

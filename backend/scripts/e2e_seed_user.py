@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-website 真实回归 / Bing 插件真实 e2e 的用户种子脚本。
+website 真实回归 / Maps 双插件真实 e2e 的用户种子脚本。
 
 用途
 ----
@@ -15,6 +15,9 @@ website 真实回归 / Bing 插件真实 e2e 的用户种子脚本。
   ``/auth/extension-login/exchange`` 完全同构的 access+refresh token 对并注册
   Redis 白名单。插件 e2e 不测登录流程（2026-09-02 hydra 拍板），登录态经本
   脚本签发 token 后由 Playwright 直接注入 ``chrome.storage.local`` 三键。
+- ``maps-extension-pro``：Maps Extractor 插件（013 域）e2e 账号，种子逻辑与
+  ``bing-extension-pro`` 同构（同 maps_extension 产品线 Pro 订阅 + exchange
+  同构 token 对），独立固定账号避免双插件 e2e 互改状态。
 - ``seed``：按所选场景准备业务状态并签 token，把结果单行 JSON 打到 stdout
   供 Playwright globalSetup 读取。
 - ``cleanup``：按场景固定 email 软删用户、删订阅、撤销该用户全部 token、
@@ -86,6 +89,7 @@ class SeedScenario(str, Enum):
 
     PRICING_REVIEW_REWARD = "pricing-review-reward"
     BING_EXTENSION_PRO = "bing-extension-pro"
+    MAPS_EXTENSION_PRO = "maps-extension-pro"
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +113,11 @@ SEED_SCENARIO_CONFIGS: dict[SeedScenario, SeedScenarioConfig] = {
         email="e2e-bing-extension-pro@mapsgrab.test",
         password="E2eBingExtensionProSmoke!2026",
         full_name="E2E Bing Extension Pro",
+    ),
+    SeedScenario.MAPS_EXTENSION_PRO: SeedScenarioConfig(
+        email="e2e-maps-extension-pro@mapsgrab.test",
+        password="E2eMapsExtensionProSmoke!2026",
+        full_name="E2E Maps Extension Pro",
     ),
 }
 # 注入前端 localStorage 的 device_id；需同时满足前端当前 UUID 校验与后端请求校验。
@@ -143,8 +152,8 @@ async def _seed(scenario: SeedScenario) -> dict[str, object]:
     config = SEED_SCENARIO_CONFIGS[scenario]
     user_id = await _ensure_user_id(config)
 
-    if scenario == SeedScenario.BING_EXTENSION_PRO:
-        return await _seed_bing_extension_pro(config, user_id)
+    if scenario in (SeedScenario.BING_EXTENSION_PRO, SeedScenario.MAPS_EXTENSION_PRO):
+        return await _seed_extension_pro(config, user_id, scenario)
 
     if scenario == SeedScenario.PRICING_REVIEW_REWARD:
         await _seed_pricing_review_reward_state(user_id)
@@ -172,11 +181,16 @@ async def _seed(scenario: SeedScenario) -> dict[str, object]:
     }
 
 
-async def _seed_bing_extension_pro(
+async def _seed_extension_pro(
     config: SeedScenarioConfig,
     user_id: int,
+    scenario: SeedScenario,
 ) -> dict[str, object]:
-    """造 maps_extension Pro 订阅并签发与插件 exchange 同构的 token 对。"""
+    """造 maps_extension Pro 订阅并签发与插件 exchange 同构的 token 对。
+
+    Bing 插件（016）与 Maps Extractor 插件（013）共用 maps_extension 产品线，
+    种子逻辑同构；仅账号身份与 operation 打标随场景区分。
+    """
 
     await _delete_maps_extension_subscription(user_id)
     await subscription_service.extend_subscription_days(
@@ -193,7 +207,7 @@ async def _seed_bing_extension_pro(
     )
     if product_config.period != SubscriptionPeriodEnum.MONTH.value:
         raise RuntimeError(
-            "e2e_seed_user bing-extension-pro verification failed: "
+            f"e2e_seed_user {scenario.value} verification failed: "
             f"user_id={user_id}, product_id={product_config.product_id}, "
             f"period={product_config.period} (expect month)"
         )
@@ -201,14 +215,14 @@ async def _seed_bing_extension_pro(
     user = await user_service.get_user_by_email(config.email)
     if user is None:
         raise RuntimeError(
-            f"e2e_seed_user bing-extension-pro: user missing after ensure: {config.email}"
+            f"e2e_seed_user {scenario.value}: user missing after ensure: {config.email}"
         )
 
     # 与 /auth/extension-login/exchange 同一条签发链（access+refresh 均注册
     # Redis 白名单），插件端 auth/me 与 subscription/status 走真实校验。
     bundle = await user_auth_service.issue_registered_tokens_for_user(
         user,
-        operation="e2e_seed_bing_extension_pro",
+        operation=f"e2e_seed_{scenario.value}",
     )
     user_info = await user_service.build_client_user_info(user)
 
@@ -219,7 +233,7 @@ async def _seed_bing_extension_pro(
         "user_id": user_id,
         "email": config.email,
         "user": user_info.model_dump(),
-        "scenario": SeedScenario.BING_EXTENSION_PRO.value,
+        "scenario": scenario.value,
     }
 
 
@@ -317,7 +331,7 @@ async def _cleanup(scenario: SeedScenario) -> dict[str, object]:
     await subscription_service.delete(user_id)
     if scenario == SeedScenario.PRICING_REVIEW_REWARD:
         await _delete_review_reward_counter(user_id)
-    if scenario == SeedScenario.BING_EXTENSION_PRO:
+    if scenario in (SeedScenario.BING_EXTENSION_PRO, SeedScenario.MAPS_EXTENSION_PRO):
         await _delete_maps_extension_subscription(user_id)
     await _reset_credit_data(user_id)
     await user_service.update(user_id, is_del=True)

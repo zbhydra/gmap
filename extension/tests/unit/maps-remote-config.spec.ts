@@ -110,6 +110,33 @@ describe('Maps 远程配置通道', () => {
     })
   })
 
+  it('parseSchema 两张下标表按键稀疏覆盖：未下发字段保留包内路径（真实 e2e 回归）', async () => {
+    // 2026-09-02 真实 e2e 实测回归：服务端只下发部分字段时，整表替换会把
+    // 其余字段路径清成 undefined，抽取层 getValueAt 迭代 undefined 抛错、
+    // 整批解析 0 条（旧 mock 层下发全量表掩盖了该缺陷）
+    const expectedKgmid = [...DEFAULT_MAPS_CONFIG.parseSchema.fields.kgmid]
+    const expectedComment = [...DEFAULT_MAPS_CONFIG.parseSchema.reviewsFields.comment]
+    stubRpcGetMapsConfig({
+      parseSchema: {
+        fields: { name: [12] },
+        reviewsFields: { rate: [2] }
+      }
+    })
+
+    await loadMapsConfig()
+
+    const config = getMapsConfig()
+    // 下发键生效
+    expect(config.parseSchema.fields.name).toEqual([12])
+    expect(config.parseSchema.reviewsFields.rate).toEqual([2])
+    // 未下发键保留包内默认（回归点：此前被整表替换清成 undefined）
+    expect(config.parseSchema.fields.kgmid).toEqual(expectedKgmid)
+    expect(config.parseSchema.reviewsFields.comment).toEqual(expectedComment)
+    // 组内标量键与默认值本体不受影响
+    expect(config.parseSchema.listLocator).toBe(DEFAULT_MAPS_CONFIG.parseSchema.listLocator)
+    expect(DEFAULT_MAPS_CONFIG.parseSchema.fields.name).toEqual([11])
+  })
+
   it('拉取失败静默回退包内默认值，且不写缓存', async () => {
     stubRpcGetMapsConfig({}, 'reject')
 

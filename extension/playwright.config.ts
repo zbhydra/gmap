@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 /** 默认忽略目录，避免 unit/构建产物进入 Playwright E2E。 */
-const testIgnore = ['**/node_modules/**', '**/dist/**', '**/unit/**', '**/mock/**']
+const testIgnore = ['**/node_modules/**', '**/dist/**', '**/unit/**', '**/mocks/**']
 
 export default defineConfig({
   testDir: './tests',

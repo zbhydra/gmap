@@ -136,12 +136,15 @@ function locateDetailArrays(
   const offsetFromEnd = parseListLocator(schema.listLocator)
   const listNode = data[data.length - offsetFromEnd]
 
-  if (Array.isArray(listNode) && isV2List(listNode)) {
-    // detailPath（如 `[i][1]`）相对列表根：i 为列表项索引占位，逐项编译取详情
-    return listNode.map((_item, index) => {
-      const detail = getValueAt(listNode, compileSchemaPath(schema.detailPath, index))
-      return Array.isArray(detail) ? detail : []
-    })
+  if (Array.isArray(listNode)) {
+    const v2Items = filterV2Items(listNode)
+    if (v2Items !== null) {
+      // detailPath（如 `[i][1]`）相对列表根：i 为列表项索引占位，逐项编译取详情
+      return v2Items.map((_item, index) => {
+        const detail = getValueAt(v2Items, compileSchemaPath(schema.detailPath, index))
+        return Array.isArray(detail) ? detail : []
+      })
+    }
   }
 
   const v1Rows = locateV1Rows(data, schema)
@@ -155,18 +158,17 @@ function locateDetailArrays(
   )
 }
 
-/** V2 形态判定：列表每项形如 `[key, detail]`（第 2 个元素是详情数组）。 */
-function isV2List(listNode: readonly JsonValue[]): boolean {
-  return (
-    listNode.length > 0 &&
-    listNode.every(item => {
-      if (!Array.isArray(item) || item.length < 2) {
-        return false
-      }
-      const detail = item[1]
-      return Array.isArray(detail)
-    })
+/**
+ * V2 形态项过滤：合法项形如 `[key, detail]`（第 2 个元素是详情数组）。
+ * 真实批次偶发在末位混入非商家异形项（2026-09-02 真实 e2e 实测 21 项批次，
+ * 异形项使 `every` 全有或全无判定整批判死、采集归零）——只剔除异形项，
+ * 保留合法项继续解析（容错轴：局部可失败）；全异形才视为未命中。
+ */
+function filterV2Items(listNode: readonly JsonValue[]): JsonValue[][] | null {
+  const items = listNode.filter(
+    (item): item is JsonValue[] => Array.isArray(item) && item.length >= 2 && Array.isArray(item[1])
   )
+  return items.length > 0 ? items : null
 }
 
 /** V1 形态定位：根数组 `[0][1]` 行数组，每行固定下标取详情；不命中返回 null。 */

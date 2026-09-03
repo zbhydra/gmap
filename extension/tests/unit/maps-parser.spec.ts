@@ -474,3 +474,42 @@ describe('V1 旧形态与 schema 行为', () => {
     expect(parseListLocator('len-8')).toBe(8)
   })
 })
+
+describe('V2 列表异形项容错（真实 e2e 回归）', () => {
+  /** 构造仅含商家名下标的最小详情数组（其余下标留空,字段按缺失容错为空）。 */
+  const detail = (name: string): JsonValue[] => {
+    const node: JsonValue[] = new Array(120).fill(null)
+    node[11] = name
+    return node
+  }
+
+  it('批次混入异形项（第 2 元素非数组）时仅剔除该项，合法项照常解析', () => {
+    // 2026-09-02 真实 e2e 实测:偶发 21 项批次(如末位混入推广/哨兵异形项)
+    // 曾使 every 全有或全无判定整批判死、采集归零
+    const validItems = Array.from(
+      { length: 20 },
+      (_, index) => ['key' + index, detail('shop ' + index)] as JsonValue
+    )
+    const malformedItems = [['promo', null] as JsonValue, 'sentinel' as JsonValue]
+    const root: JsonValue[] = new Array(72).fill(null)
+    root[0] = ['synthetic']
+    root[64] = [...validItems, ...malformedItems]
+    const raw = ")]}'\n" + JSON.stringify(root)
+
+    const result = parseSearchRpcResponse(raw, defaultSchema())
+
+    expect(result.format).toBe('A')
+    expect(result.rows).toHaveLength(20)
+    expect(result.rows[0]?.name).toBe('shop 0')
+    expect(result.rows.map(row => row.name)).not.toContain('')
+  })
+
+  it('全部为异形项时仍抛列表定位错误（协议漂移可见不降级）', () => {
+    const root: JsonValue[] = new Array(72).fill(null)
+    root[0] = ['synthetic']
+    root[64] = [['promo', null] as JsonValue]
+    const raw = ")]}'\n" + JSON.stringify(root)
+
+    expect(() => parseSearchRpcResponse(raw, defaultSchema())).toThrow(/商家列表定位失败/)
+  })
+})

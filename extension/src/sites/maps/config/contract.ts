@@ -360,14 +360,34 @@ export interface MapsRemoteConfig {
   operations: MapsOperationsConfig
 }
 
+/** 剔除字符串索引签名，仅保留显式声明键（索引键经 [key: string]: unknown 通道进入）。 */
+type WithoutIndexSignature<T> = {
+  [K in keyof T as string extends K ? never : K]: T[K]
+}
+
+/**
+ * parseSchema 组的稀疏覆盖形态：组内标量键照常稀疏；fields / reviewsFields
+ * 两张下标表**按键稀疏**（服务端只下发要改的字段，未下发字段保留包内默认，
+ * 整表替换会清空未下发字段的路径，抽取层取值直接崩溃——2026-09-02 真实
+ * e2e 实测回归，禁止回退）。
+ */
+export type MapsParseSchemaOverride = Partial<WithoutIndexSignature<MapsParseSchemaConfig>> & {
+  /** 字段下标表按键稀疏覆盖。 */
+  fields?: Partial<MapsParseSchemaFieldsConfig>
+  /** 评论字段下标表按键稀疏覆盖。 */
+  reviewsFields?: Partial<ReviewsParseFieldsConfig>
+  /** 允许服务端下发客户端未声明的解析键。 */
+  [key: string]: unknown
+}
+
 /** 服务端下发的稀疏覆盖载荷：每组可缺省，仅含要覆盖的键。 */
 export interface MapsRemoteConfigOverride {
   /** dom 组稀疏覆盖。 */
   dom?: Partial<MapsDomConfig>
   /** 评论/照片页选择器组稀疏覆盖。 */
   reviewsDom?: Partial<MapsReviewsDomConfig>
-  /** parseSchema 组稀疏覆盖。 */
-  parseSchema?: Partial<MapsParseSchemaConfig>
+  /** parseSchema 组稀疏覆盖（两张下标表按键稀疏）。 */
+  parseSchema?: MapsParseSchemaOverride
   /** 导出行为组稀疏覆盖。 */
   exportConfig?: Partial<MapsExportConfig>
   /** scrape 组稀疏覆盖。 */
@@ -376,7 +396,7 @@ export interface MapsRemoteConfigOverride {
   operations?: Partial<MapsOperationsConfig>
 }
 
-/** 编译期完整默认值。覆盖走 Object.assign 分组浅合并，组内引用不可共享。 */
+/** 编译期完整默认值。覆盖走分组浅合并（下标表按键稀疏），组内引用不可共享。 */
 export const DEFAULT_MAPS_CONFIG: MapsRemoteConfig = {
   dom: {
     searchInput: 'div[role=search] input[name=q]',
