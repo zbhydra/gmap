@@ -892,7 +892,7 @@ const structuredDataItems = [
 
           {includeLanguageSwitcher && (
             <div class="lang-switcher">
-              <button class="lang-btn" aria-label="Language switcher">
+              <button class="lang-btn" aria-label={t.common.languageSwitcherLabel}>
                 {localeNames[locale]}
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                   <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -916,7 +916,7 @@ const structuredDataItems = [
           )}
 
           <!-- Mobile Menu Button -->
-          <button class="mobile-menu-btn" aria-label="Toggle menu" aria-expanded="false">
+          <button class="mobile-menu-btn" aria-label={t.common.mobileMenuLabel} aria-expanded="false">
             <span class="hamburger"></span>
             <span class="hamburger"></span>
             <span class="hamburger"></span>
@@ -1036,7 +1036,7 @@ const structuredDataItems = [
       </div>
     </footer>
 
-    <SiteConfirmModal />
+    <SiteConfirmModal locale={locale} />
 
     <script>
       import { installFrontendErrorCapture } from '../scripts/homepage/frontend-error-capture'

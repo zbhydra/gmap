@@ -163,11 +163,21 @@ function sanitizeSlsJsonValue(value: JsonValue): JsonValue {
 
 /** 构造 SLS 专用 mark_msg，避免把用户原始输入 URL 和 token 放进第三方 GET 查询串。 */
 function buildSlsMarkMessage(markMsg: string): string {
+  const sanitizedText = sanitizeMarkText(markMsg)
+  const trimmedText = markMsg.trim()
+  if (!trimmedText.startsWith('{') && !trimmedText.startsWith('[')) {
+    return truncateText(sanitizedText, MAX_MARK_MSG_LENGTH)
+  }
+
   let structured: JsonValue
   try {
     structured = JSON.parse(markMsg)
-  } catch {
-    return truncateText(sanitizeMarkText(markMsg), MAX_MARK_MSG_LENGTH)
+  } catch (error) {
+    console.error('[sls-mark] Failed to parse structured mark_msg.', {
+      markMsg: '[redacted]',
+      errorName: error instanceof Error ? error.name : 'NonError'
+    })
+    return truncateText(sanitizedText, MAX_MARK_MSG_LENGTH)
   }
 
   const sanitized = JSON.stringify(sanitizeSlsJsonValue(structured))

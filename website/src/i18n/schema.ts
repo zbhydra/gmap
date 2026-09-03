@@ -42,6 +42,14 @@ export interface AccountContent {
   }
   /** PayPal 回跳页文案（success 页确认态按产品线区分展示语义）。 */
   paypalReturn: {
+    /** 支付渠道标签。 */
+    providerLabel: string
+    /** 用户取消支付后的页面标题。 */
+    canceledTitle: string
+    /** 用户取消支付后的说明。 */
+    canceledMessage: string
+    /** 用户取消支付页的 meta / Open Graph description。 */
+    canceledMetaDescription: string
     /** 等待态标题（产品线中立）。 */
     waitingTitle: string
     /** 等待态说明（产品线中立，不预支 Credits/套餐结果）。 */
@@ -1003,6 +1011,8 @@ export interface MergeCsvContent {
     fileSummary: string
     /** 合并结果统计模板，{files}/{rows}/{columns} 为文件数/数据行数/列数。 */
     resultSummary: string
+    /** 合并结果预览框无障碍文案。 */
+    previewLabel: string
   }
   /** SEO 正文小节。 */
   howTo: readonly ToolHowToSectionMessage[]
@@ -1122,6 +1132,18 @@ export interface SiteContent {
   }
   common: {
     installCta: string
+    /** FAQ 区块短标签。 */
+    faqLabel: string
+    /** 面包屑导航无障碍文案。 */
+    breadcrumbLabel: string
+    /** 语言切换按钮无障碍文案。 */
+    languageSwitcherLabel: string
+    /** 移动导航按钮无障碍文案。 */
+    mobileMenuLabel: string
+    /** 通用取消动作。 */
+    cancel: string
+    /** 通用继续动作。 */
+    continue: string
   }
   pages: {
     /** 首页内容（W2）。 */

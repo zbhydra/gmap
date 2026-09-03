@@ -5,6 +5,14 @@
  * 页面脚本通过 site/confirm.ts 写入标题、正文和按钮文案，组件只负责提供稳定 DOM
  * 与全站一致的视觉样式。
  */
+import { getContent, type Locale } from '../../i18n/content'
+
+interface Props {
+  locale?: Locale
+}
+
+const { locale = 'en-US' } = Astro.props as Props
+const copy = getContent(locale).common
 ---
 
 <div class="site-confirm-modal" data-site-confirm-modal hidden>
@@ -12,7 +20,7 @@
     type="button"
     class="site-confirm-backdrop"
     data-site-confirm-cancel
-    aria-label="Cancel"
+    aria-label={copy.cancel}
   ></button>
 
   <div
@@ -26,7 +34,7 @@
       type="button"
       class="site-confirm-close"
       data-site-confirm-cancel
-      aria-label="Cancel"
+      aria-label={copy.cancel}
     >
       <span aria-hidden="true">×</span>
     </button>
@@ -57,10 +65,10 @@
 
     <div class="site-confirm-actions">
       <button type="button" class="btn-secondary site-confirm-action" data-site-confirm-cancel>
-        Cancel
+        {copy.cancel}
       </button>
       <button type="button" class="btn-primary site-confirm-action" data-site-confirm-submit>
-        Continue
+        {copy.continue}
       </button>
     </div>
   </div>

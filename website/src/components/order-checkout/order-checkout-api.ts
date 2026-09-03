@@ -243,6 +243,7 @@ export function readPaymentUrl(paymentData: JsonValue, paymentMethod: string): s
       (parsed.protocol === 'https:' && telegramHostAllowed) || parsed.protocol === 'tg:'
     return telegramAllowed ? trimmed : null
   } catch {
+    console.error(new Error('[order-checkout-api] Rejected an invalid payment URL; value redacted.'))
     return null
   }
 }

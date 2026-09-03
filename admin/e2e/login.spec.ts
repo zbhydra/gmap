@@ -137,6 +137,7 @@ test.describe("登录页渲染", () => {
     // 验证码图片
     const captchaImg = page.locator(".captcha-img img");
     await expect(captchaImg).toBeVisible();
+    await expect(captchaImg).toHaveAttribute("alt", "验证码图片");
     await expect(page.locator(".captcha-img")).toHaveCSS("height", "40px");
 
     // 登录按钮

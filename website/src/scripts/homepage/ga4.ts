@@ -35,7 +35,8 @@ export function reportGA4Event(
 
   try {
     gtag('event', name, params)
-  } catch {
+  } catch (error) {
+    console.error('[ga4] Event dispatch failed.', { eventName: name }, error)
     // 防止埋点异常影响主流程。
   }
 }
@@ -58,6 +59,7 @@ export function collectUtmParams(url: string): Record<string, string> {
       }
     }
   } catch {
+    console.error(new Error('[ga4] Failed to parse an attribution URL; value redacted.'))
     // 非法 URL 时静默返回空归因，埋点不阻塞主流程。
   }
   return params

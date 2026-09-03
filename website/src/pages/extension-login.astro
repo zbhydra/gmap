@@ -347,6 +347,7 @@ const authCopy = {
     try {
       redirectUrl = new URL(redirectUris[0])
     } catch {
+      console.error(new Error('[extension-login] Rejected an invalid redirect URL; value redacted.'))
       return null
     }
     if (
@@ -708,8 +709,12 @@ const authCopy = {
           onCredentialLogin: handleGoogleCredentialLogin
         })
       } catch (error) {
+        console.error(
+          '[extension-login] Google Identity prompt failed.',
+          { source: options.source ?? 'extension_login_prompt' },
+          error
+        )
         if (!options.silentFailure) {
-          console.error(error)
           setMessage(
             elements.authError,
             error instanceof Error ? error.message : copy.auth.googleSignInFailed

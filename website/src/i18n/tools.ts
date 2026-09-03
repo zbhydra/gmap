@@ -478,7 +478,8 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       errorNoFiles: 'Select at least two CSV files to merge.',
       errorEmptyFile: 'One of the files is empty or has no header row: {name}',
       fileSummary: '{name} — {rows} data rows',
-      resultSummary: 'Merged {files} files into {rows} rows × {columns} columns.'
+      resultSummary: 'Merged {files} files into {rows} rows × {columns} columns.',
+      previewLabel: 'Merged CSV preview'
     },
     howTo: [
       {

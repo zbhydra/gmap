@@ -431,6 +431,29 @@ test('every built page exposes complete title, description and Open Graph metada
       `Expected ${route} to be noindex`
     )
   }
+
+  const cancelHtml = await readFile(path.join(distDir, 'paypal/cancel/index.html'), 'utf8')
+  assert.match(cancelHtml, /<title>Payment canceled \| MapsGrab<\/title>/)
+  assert.match(
+    cancelHtml,
+    /<meta name="description" content="Your PayPal payment was canceled\."\s*\/?>/
+  )
+  assert.match(
+    cancelHtml,
+    /<meta property="og:description" content="Your PayPal payment was canceled\."\s*\/?>/
+  )
+  assert.match(cancelHtml, /This order was not paid\./)
+
+  const homeHtml = await readFile(path.join(distDir, 'index.html'), 'utf8')
+  assert.match(homeHtml, /aria-label="Language switcher"/)
+  assert.match(homeHtml, /aria-label="Toggle menu"/)
+  assert.match(homeHtml, /aria-label="Cancel"/)
+
+  const mergeCsvHtml = await readFile(
+    path.join(distDir, 'tools/merge-csv-files-online/index.html'),
+    'utf8'
+  )
+  assert.match(mergeCsvHtml, /aria-label="Merged CSV preview"/)
 })
 
 test('llms.txt indexes every public content route and excludes paypal returns', async () => {
@@ -2005,6 +2028,42 @@ test('homepage SLS mark_msg strips user URL query and secret fields', async () =
   }
 })
 
+test('homepage SLS plain mark_msg does not report a JSON parse error', async () => {
+  const { module, cleanup } = await importHomepageSlsMarkModule(
+    'src/scripts/homepage/sls-mark.ts',
+    'homepage-sls-mark-plain-'
+  )
+  const restoreBrowser = installSlsBrowserGlobals()
+  const previousConsoleError = console.error
+  const errors = []
+  console.error = (...args) => errors.push(args)
+
+  try {
+    const context = { deviceId: 'device-for-sls-plain', token: null }
+    assert.equal(module.buildSlsMarkFields('empty', context, '').mark_msg, '')
+    assert.equal(module.buildSlsMarkFields('plain', context, 'plain text').mark_msg, 'plain text')
+    assert.equal(errors.length, 0)
+
+    const malformed = module.buildSlsMarkFields(
+      'malformed',
+      context,
+      '{"token":"TOPSECRET"'
+    ).mark_msg
+    assert.equal(errors.length, 1)
+    assert.equal(errors[0].length, 2)
+    assert.deepEqual(errors[0][1], { markMsg: '[redacted]', errorName: 'SyntaxError' })
+    assert.doesNotMatch(malformed, /TOPSECRET/)
+    assert.doesNotMatch(
+      errors[0].map(value => value instanceof Error ? String(value) : JSON.stringify(value)).join(' '),
+      /TOPSECRET/
+    )
+  } finally {
+    console.error = previousConsoleError
+    restoreBrowser()
+    await cleanup()
+  }
+})
+
 test('homepage SLS keeps oversized structured mark_msg as valid JSON', async () => {
   const { module, cleanup } = await importHomepageSlsMarkModule(
     'src/scripts/homepage/sls-mark.ts',
@@ -2895,6 +2954,55 @@ test('Google Identity initializes once per page runtime', async () => {
     path.resolve(repoDir, 'src/scripts/homepage/auth.ts'),
     'shared-homepage-auth-init-once-'
   )
+})
+
+test('Google Identity normalizes primitive initialize and prompt failures', async () => {
+  const { module, cleanup } = await importHomepageAuthModule(
+    'src/scripts/homepage/auth.ts',
+    'homepage-auth-primitive-errors-'
+  )
+  const dom = installGoogleScriptDom()
+
+  try {
+    globalThis.window.google = {
+      accounts: {
+        id: {
+          cancel() {},
+          initialize() {
+            throw 'initialize primitive'
+          },
+          prompt() {}
+        }
+      }
+    }
+    await assert.rejects(
+      module.requestGoogleRedirectPrompt('client-id', GOOGLE_TEST_REQUEST_CONTEXT),
+      error => {
+        assert.equal(error.message, 'Google Identity Services initialize failed.')
+        assert.equal(error.cause, 'initialize primitive')
+        return true
+      }
+    )
+
+    globalThis.window.google.accounts.id = {
+      cancel() {},
+      initialize() {},
+      prompt() {
+        throw 7
+      }
+    }
+    await assert.rejects(
+      module.requestGoogleRedirectPrompt('client-id', GOOGLE_TEST_REQUEST_CONTEXT),
+      error => {
+        assert.equal(error.message, 'Google Identity Services prompt failed.')
+        assert.equal(error.cause, 7)
+        return true
+      }
+    )
+  } finally {
+    dom.cleanup()
+    await cleanup()
+  }
 })
 
 test('Google manual button uses backend OAuth authorize and return_to', async () => {

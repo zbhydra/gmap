@@ -1,22 +1,23 @@
 ---
 import Layout from '../../layouts/Layout.astro'
+import { getContent } from '../../i18n/content'
+
+const t = getContent('en-US')
+const copy = t.pages.account.paypalReturn
 ---
 
 <Layout
   locale="en-US"
-  title="Payment canceled | MapsGrab"
-  description="Your PayPal payment was canceled."
+  title={`${copy.canceledTitle} | ${t.site.name}`}
+  description={copy.canceledMetaDescription}
   includeSoftwareApplicationSchema={false}
   robots="noindex, nofollow, noarchive"
 >
   <main class="paypal-return-page" data-paypal-return-page data-paypal-return-status="cancel">
     <section class="paypal-return-card">
-      <p class="paypal-return-eyebrow">PayPal</p>
-      <h1>Payment canceled</h1>
-      <p>
-        This order was not paid. You can close this tab and choose a payment
-        method again in the original window.
-      </p>
+      <p class="paypal-return-eyebrow">{copy.providerLabel}</p>
+      <h1>{copy.canceledTitle}</h1>
+      <p>{copy.canceledMessage}</p>
     </section>
   </main>
 </Layout>

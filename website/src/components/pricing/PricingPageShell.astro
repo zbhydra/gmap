@@ -15,11 +15,12 @@ import type { AccountContent, PricingPageContent, PricingTabId } from '../../i18
 interface Props {
   copy: PricingPageContent
   accountCopy: AccountContent
+  faqLabel: string
   /** 各 tab Free 卡引导落地页路径（键为 PricingTabId）。 */
   freeCtaPaths: Record<PricingTabId, string>
 }
 
-const { copy, accountCopy, freeCtaPaths } = Astro.props as Props
+const { copy, accountCopy, faqLabel, freeCtaPaths } = Astro.props as Props
 const tabIds: PricingTabId[] = ['online', 'extension', 'api']
 ---
 
@@ -190,7 +191,7 @@ const tabIds: PricingTabId[] = ['online', 'extension', 'api']
 
     <section class="pricing-faq" data-pricing-faq aria-labelledby="pricing-faq-title">
       <header class="section-header">
-        <p class="eyebrow">FAQ</p>
+        <p class="eyebrow">{faqLabel}</p>
         <h2 id="pricing-faq-title">{copy.faq.title}</h2>
         {copy.faq.description && <p class="section-description">{copy.faq.description}</p>}
       </header>

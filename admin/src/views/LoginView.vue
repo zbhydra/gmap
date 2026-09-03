@@ -50,7 +50,7 @@
               <img
                 v-if="captchaImg"
                 :src="captchaImg"
-                alt="captcha"
+                :alt="t('login.captchaAlt')"
               />
               <NSpin v-else size="small" />
             </div>
@@ -120,6 +120,7 @@ async function loadCaptcha() {
     form.value.captcha_id = data.captcha_id;
     captchaImg.value = `data:image/png;base64,${data.image_base64}`;
   } catch (err) {
+    console.error("LoginView.loadCaptcha() 加载失败:", err);
     message.error(`${err}`);
   }
 }
@@ -128,7 +129,8 @@ async function loadCaptcha() {
 async function handleLogin() {
   try {
     await formRef.value?.validate();
-  } catch {
+  } catch (error) {
+    console.error("LoginView.handleLogin() 表单校验失败:", error);
     return;
   }
 
@@ -148,6 +150,7 @@ async function handleLogin() {
     const redirect = (route.query.redirect as string) || "/";
     await router.push(redirect);
   } catch (err) {
+    console.error("LoginView.handleLogin() 登录失败:", err);
     message.error(`${err}`);
     loadCaptcha();
   } finally {

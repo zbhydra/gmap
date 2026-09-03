@@ -14,7 +14,9 @@ const IDENTITY_INIT_SCRIPT = `
 (() => {
   try {
     Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false, configurable: true })
-  } catch (error) {}
+  } catch (error) {
+    console.error(error)
+  }
   const uaData = navigator.userAgentData
   if (uaData && Array.isArray(uaData.brands) && uaData.brands.some((brand) => brand.brand.toLowerCase().includes('headless'))) {
     const brands = uaData.brands.map((brand) =>
@@ -25,7 +27,9 @@ const IDENTITY_INIT_SCRIPT = `
         get: () => ({ ...uaData, brands }),
         configurable: true
       })
-    } catch (error) {}
+    } catch (error) {
+      console.error(error)
+    }
   }
 })()
 `

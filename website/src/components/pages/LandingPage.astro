@@ -8,7 +8,7 @@
  * 不埋点；014 云端落地时替换为真交互。内容走 i18n 字典（LandingPageContent）。
  */
 import Layout from '../../layouts/Layout.astro'
-import type { Locale } from '../../i18n/content'
+import { getContent, type Locale } from '../../i18n/content'
 import { localePaths } from '../../i18n/ui'
 import { getLandingPageContent, type LandingPageId } from '../../i18n/landing'
 import MediaSlot from '../site/MediaSlot.astro'
@@ -21,6 +21,7 @@ interface Props {
 }
 
 const { pageId, locale = 'en-US' } = Astro.props as Props
+const t = getContent(locale)
 const page = getLandingPageContent(pageId, locale)
 // locale 前缀（en-US 为空）；后续语言走 [lang]/ 路由时链接自动带上前缀。
 const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
@@ -93,7 +94,7 @@ const faqSchema = {
     <section class="faq" aria-labelledby="landing-faq-title">
       <div class="container faq-inner">
         <header class="section-header">
-          <p class="eyebrow">FAQ</p>
+          <p class="eyebrow">{t.common.faqLabel}</p>
           <h2 id="landing-faq-title">{page.faq.title}</h2>
         </header>
         <div class="faq-list">

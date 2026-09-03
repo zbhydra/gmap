@@ -69,7 +69,8 @@ function isUuidDeviceId(deviceId: string): boolean {
 function getLocalStorage(): Storage | null {
   try {
     return window.localStorage
-  } catch {
+  } catch (error) {
+    console.error(error)
     return null
   }
 }
@@ -110,7 +111,8 @@ function storeDeviceId(deviceId: string): void {
 
   try {
     storage.setItem(DEVICE_STORAGE_KEY, deviceId)
-  } catch {
+  } catch (error) {
+    console.error(error)
     // 忽略持久化失败，调用方仍可使用当前返回值继续业务流程
   }
 }
@@ -125,7 +127,8 @@ function removeObsoleteDeviceStorageKeys(): void {
   try {
     storage.removeItem(PREVIOUS_DEVICE_STORAGE_KEY)
     storage.removeItem(LEGACY_DEVICE_STORAGE_KEY)
-  } catch {
+  } catch (error) {
+    console.error(error)
     // 清理失败不阻断新 UUID 合同；下次打开仍会重试。
   }
 }
@@ -143,7 +146,8 @@ export function getStoredDeviceId(): string | null {
 
   try {
     return storage.getItem(DEVICE_STORAGE_KEY)
-  } catch {
+  } catch (error) {
+    console.error(error)
     return null
   }
 }
@@ -167,7 +171,8 @@ export function getFirstOpenedAt(): number {
   try {
     const stored = Number(storage.getItem(FIRST_OPENED_AT_STORAGE_KEY))
     return isValidFirstOpenedAt(stored) ? stored : 0
-  } catch {
+  } catch (error) {
+    console.error(error)
     return 0
   }
 }
@@ -202,7 +207,8 @@ export function ensureFirstOpenedAtState(): FirstOpenedAtState {
           persisted: true
         }
       }
-    } catch {
+    } catch (error) {
+      console.error(error)
       // 读取失败时按首次访问继续走上报；写入是否成功由下面的 setItem 决定。
     }
   }
@@ -222,7 +228,8 @@ export function ensureFirstOpenedAtState(): FirstOpenedAtState {
   try {
     storage.setItem(FIRST_OPENED_AT_STORAGE_KEY, String(next))
     runtimeFirstOpenedAtPersisted = true
-  } catch {
+  } catch (error) {
+    console.error(error)
     return {
       firstOpenedAt: next,
       created: true,

@@ -376,7 +376,7 @@ function getUrlSourceFiles(routePath) {
   return getRouteSourceFiles(routePath)
 }
 
-async function getGitLastmod(files, logger) {
+async function getGitLastmod(files) {
   try {
     const { stdout } = await execFileAsync(
       'git',
@@ -388,7 +388,7 @@ async function getGitLastmod(files, logger) {
       return lastmod
     }
   } catch (error) {
-    logger.warn(`languageSitemap: git lastmod lookup failed: ${error.message}`)
+    console.error(new Error('languageSitemap: git lastmod lookup failed.', { cause: error }))
   }
 
   return ''
@@ -417,7 +417,7 @@ async function getMtimeLastmod(url, files, logger) {
 
 async function resolveLastmod(url, routePath, logger) {
   const files = getUrlSourceFiles(routePath)
-  const gitLastmod = await getGitLastmod(files, logger)
+  const gitLastmod = await getGitLastmod(files)
   if (gitLastmod) {
     return gitLastmod
   }

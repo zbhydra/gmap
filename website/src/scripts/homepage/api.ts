@@ -146,6 +146,7 @@ function normalizeTelemetryApiPath(pathOrUrl: string): string {
   try {
     return truncateBackendConnectText(new URL(pathOrUrl, getApiBaseUrl()).pathname)
   } catch {
+    console.error(new Error('[homepage-api] Failed to normalize a telemetry API path; value redacted.'))
     return truncateBackendConnectText(pathOrUrl.split('?')[0]?.split('#')[0] || pathOrUrl)
   }
 }
@@ -421,6 +422,11 @@ export function postJsonKeepalive(
     }),
     body: body ? JSON.stringify(body) : undefined,
     keepalive: true
-  }).catch(() => {})
+  }).catch(error => {
+    console.error(
+      '[homepage-api] Keepalive request failed.',
+      { method: 'POST', path: normalizeTelemetryApiPath(path) },
+      error
+    )
+  })
 }
-

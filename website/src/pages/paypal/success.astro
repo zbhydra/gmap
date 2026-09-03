@@ -22,7 +22,7 @@ const copyJson = JSON.stringify(copy)
 >
   <main class="paypal-return-page" data-paypal-return-page data-paypal-return-status="success">
     <section class="paypal-return-card">
-      <p class="paypal-return-eyebrow">PayPal</p>
+      <p class="paypal-return-eyebrow">{copy.providerLabel}</p>
       <h1 data-paypal-return-title>{copy.waitingTitle}</h1>
       <p data-paypal-return-message>{copy.waitingMessage}</p>
     </section>

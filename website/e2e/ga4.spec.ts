@@ -71,7 +71,8 @@ async function installMockGtag(page: Page): Promise<void> {
             typeof call[2] === 'object' &&
             call[2] !== null
         )
-      } catch {
+      } catch (error) {
+        console.error(error)
         return []
       }
     }
@@ -83,7 +84,8 @@ async function installMockGtag(page: Page): Promise<void> {
       calls.push([command, eventName, params ?? {}])
       try {
         sessionStorage.setItem(key, JSON.stringify(calls))
-      } catch {
+      } catch (error) {
+        console.error(error)
         // 配额异常时仅丢断言数据，不影响页面。
       }
     }
@@ -115,7 +117,8 @@ async function readGa4Calls(page: Page): Promise<Ga4Call[]> {
           typeof call[2] === 'object' &&
           call[2] !== null
       )
-    } catch {
+    } catch (error) {
+      console.error(error)
       return []
     }
   }, GA4_CALLS_STORAGE_KEY)

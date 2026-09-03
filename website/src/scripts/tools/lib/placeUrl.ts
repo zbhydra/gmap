@@ -59,6 +59,7 @@ export function parsePlaceUrl(input: string): PlaceUrlResult {
   try {
     parsed = new URL(url)
   } catch {
+    console.error(new Error('[place-url] Failed to parse a Maps URL; value redacted.'))
     return { ok: false, error: 'invalid-url' }
   }
 
@@ -115,7 +116,8 @@ export function deriveCidFromLrd(lrd: string): string {
   }
   try {
     return BigInt(`0x${hexLiteral[1] as string}`).toString(10)
-  } catch {
+  } catch (error) {
+    console.error(error)
     return ''
   }
 }

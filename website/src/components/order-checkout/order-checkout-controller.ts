@@ -495,6 +495,11 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
         state.error = copy.pollTimeout
       }
     } catch (error) {
+      console.error(
+        '[order-checkout] Order status polling failed.',
+        { orderNo: state.orderNo },
+        error
+      )
       if (!state.open) {
         return
       }
@@ -504,7 +509,6 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
         return
       }
       if (error instanceof Error) {
-        console.error(error)
         stopPolling()
         state.status = 'failed'
         state.error = mapOrderCheckoutError(copy, error)
@@ -586,12 +590,16 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
       openPaymentUrl(paymentUrl)
       startPolling()
     } catch (error) {
+      console.error(
+        '[order-checkout] Order creation failed.',
+        { productId: product.productId, paymentMethod: channel.payment_method },
+        error
+      )
       if (error instanceof Error && isOrderCheckoutAuthFailure(error)) {
         handleAuthFailure(copy.authExpired)
         return
       }
       if (error instanceof Error) {
-        console.error(error)
         if (isPaymentPriceUpdatedError(error)) {
           const payload: OrderCheckoutPriceUpdatedPayload = {
             source: state.options?.source ?? '',

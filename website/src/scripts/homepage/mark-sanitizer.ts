@@ -41,6 +41,7 @@ function sanitizeUrlText(value: string): string {
 
     return `${parsed.protocol}//${parsed.host}${parsed.pathname.slice(0, MARK_URL_PATH_MAX_LENGTH)}`
   } catch {
+    console.error(new Error('[mark-sanitizer] Failed to sanitize a URL; value redacted.'))
     return '[redacted-url]'
   }
 }
@@ -62,6 +63,7 @@ export function sanitizeMarkUrl(value: string): string {
 
     return `${parsed.protocol}//${parsed.host}${parsed.pathname.slice(0, MARK_URL_PATH_MAX_LENGTH)}`
   } catch {
+    console.error(new Error('[mark-sanitizer] Failed to sanitize a mark URL; value redacted.'))
     return sanitizeMarkText(value)
   }
 }

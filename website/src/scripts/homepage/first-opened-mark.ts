@@ -47,7 +47,8 @@ function getLocalStorage(): Storage | null {
 
   try {
     return window.localStorage
-  } catch {
+  } catch (error) {
+    console.error(error)
     return null
   }
 }
@@ -61,7 +62,8 @@ function hasSubmittedFirstOpenedMark(): boolean {
 
   try {
     return storage.getItem(WEB_FIRST_OPENED_MARK_SUBMITTED_AT_STORAGE_KEY) !== null
-  } catch {
+  } catch (error) {
+    console.error(error)
     return false
   }
 }
@@ -76,7 +78,8 @@ function storeSubmittedFirstOpenedMark(firstOpenedAt: number): boolean {
   try {
     storage.setItem(WEB_FIRST_OPENED_MARK_SUBMITTED_AT_STORAGE_KEY, String(firstOpenedAt))
     return true
-  } catch {
+  } catch (error) {
+    console.error(error)
     return false
   }
 }
@@ -85,7 +88,8 @@ function storeSubmittedFirstOpenedMark(firstOpenedAt: number): boolean {
 function readOptionalAccessToken(): string | null {
   try {
     return getStoredAccessToken()
-  } catch {
+  } catch (error) {
+    console.error(error)
     return null
   }
 }

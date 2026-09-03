@@ -74,6 +74,7 @@ function findChromeWebStoreAnchor(element: HTMLElement): HTMLAnchorElement | nul
   try {
     return new URL(anchor.href).hostname === CHROME_WEB_STORE_HOST ? anchor : null
   } catch {
+    console.error(new Error('[global-click-events] Rejected an invalid store URL; value redacted.'))
     return null
   }
 }
@@ -136,7 +137,8 @@ function dispatchGAEvent(target: HTMLElement): void {
 
   try {
     gtag('event', eventName, withUtmAttribution(collectParams(target), target))
-  } catch {
+  } catch (error) {
+    console.error('[global-click-events] GA event dispatch failed.', { eventName }, error)
     // 防止埋点异常影响主流程。
   }
 }
@@ -151,13 +153,15 @@ function dispatchCtaClick(target: HTMLElement): void {
     return
   }
 
+  const ctaId = target.getAttribute(CTA_ATTR) ?? ''
   try {
     gtag(
       'event',
       'cta_click',
-      withUtmAttribution({ cta_id: target.getAttribute(CTA_ATTR) ?? '' }, target)
+      withUtmAttribution({ cta_id: ctaId }, target)
     )
-  } catch {
+  } catch (error) {
+    console.error('[global-click-events] CTA event dispatch failed.', { ctaId }, error)
     // 防止埋点异常影响主流程。
   }
 }

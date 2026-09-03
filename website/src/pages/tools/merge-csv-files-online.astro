@@ -44,7 +44,7 @@ const copyJson = JSON.stringify({ common: t.pages.tools.common, content: tool })
   <section class="tool-result" data-tool-result hidden aria-label={t.pages.tools.common.resultHeading}>
     <h2>{t.pages.tools.common.resultHeading}</h2>
     <p class="tool-summary" data-result-summary></p>
-    <textarea class="tool-textarea" data-merged-preview readonly spellcheck="false" aria-label="Merged CSV preview"></textarea>
+    <textarea class="tool-textarea" data-merged-preview readonly spellcheck="false" aria-label={tool.form.previewLabel}></textarea>
     <div class="tool-actions">
       <button
         class="tool-secondary-button"

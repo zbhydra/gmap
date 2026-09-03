@@ -63,7 +63,8 @@ function stringifyErrorValue(value: FrontendErrorValue, fallback: string): strin
   try {
     const text = String(value)
     return text.length > 0 ? truncateErrorField(text) : fallback
-  } catch {
+  } catch (error) {
+    console.error(error)
     return fallback
   }
 }

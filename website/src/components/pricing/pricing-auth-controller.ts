@@ -221,8 +221,12 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
         onCredentialLogin: handleGoogleCredentialLogin
       })
     } catch (error) {
+      console.error(
+        '[pricing-auth] Google Identity prompt failed.',
+        { source: options.source ?? 'pricing_prompt' },
+        error
+      )
       if (!options.silentFailure) {
-        console.error(error)
         setMessage(elements.authError, error instanceof Error ? error.message : copy.googleSignInFailed)
       }
     }

@@ -45,7 +45,13 @@ export const enUS: SiteContent = {
     }
   },
   common: {
-    installCta: 'Install Now'
+    installCta: 'Install Now',
+    faqLabel: 'FAQ',
+    breadcrumbLabel: 'Breadcrumb',
+    languageSwitcherLabel: 'Language switcher',
+    mobileMenuLabel: 'Toggle menu',
+    cancel: 'Cancel',
+    continue: 'Continue'
   },
   pages: {
     home: {
@@ -470,6 +476,11 @@ export const enUS: SiteContent = {
         signInFailed: 'Failed to sign in.',
       },
       paypalReturn: {
+        providerLabel: 'PayPal',
+        canceledTitle: 'Payment canceled',
+        canceledMessage:
+          'This order was not paid. You can close this tab and choose a payment method again in the original window.',
+        canceledMetaDescription: 'Your PayPal payment was canceled.',
         waitingTitle: 'Payment submitted',
         waitingMessage:
           'You can return to the original tab. We are checking PayPal confirmation every 3 seconds, and the result will appear here automatically.',

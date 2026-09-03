@@ -258,17 +258,9 @@ export async function loginWithGoogleCredential(
     deviceId: context.deviceId
   })
 
-  let response: GoogleLoginResponse
-  try {
-    response = await postJson<GoogleLoginResponse>('/api/client/auth/google-login', context, {
-      credential
-    })
-  } catch (error) {
-    logGoogleAuthStage('error', 'one_tap_backend_login_error', {
-      message: error instanceof Error ? error.message : String(error)
-    })
-    throw error
-  }
+  const response = await postJson<GoogleLoginResponse>('/api/client/auth/google-login', context, {
+    credential
+  })
 
   if (!isEmailVerificationRequiredResponse(response)) {
     setStoredAccessToken(response.access_token)
@@ -294,17 +286,9 @@ export async function exchangeGoogleLoginCode(
     deviceId: context.deviceId
   })
 
-  let response: LoginResponse
-  try {
-    response = await postJson<LoginResponse>('/api/client/auth/google/exchange', context, {
-      code
-    })
-  } catch (error) {
-    logGoogleAuthStage('error', 'redirect_exchange_request_error', {
-      message: error instanceof Error ? error.message : String(error)
-    })
-    throw error
-  }
+  const response = await postJson<LoginResponse>('/api/client/auth/google/exchange', context, {
+    code
+  })
 
   setStoredAccessToken(response.access_token)
   logGoogleAuthStage('info', 'redirect_exchange_success', {
@@ -401,18 +385,9 @@ export async function requestGoogleRedirectPrompt(
     origin: getCurrentOriginForDebug()
   })
 
-  try {
-    logGoogleAuthStage('info', 'gis_script_ensure_start', { requestId, source })
-    await loadGoogleIdentityScript()
-    logGoogleAuthStage('info', 'gis_script_ensure_ready', { requestId, source })
-  } catch (error) {
-    logGoogleAuthStage('error', 'gis_script_ensure_error', {
-      requestId,
-      source,
-      message: error instanceof Error ? error.message : String(error)
-    })
-    throw error
-  }
+  logGoogleAuthStage('info', 'gis_script_ensure_start', { requestId, source })
+  await loadGoogleIdentityScript()
+  logGoogleAuthStage('info', 'gis_script_ensure_ready', { requestId, source })
 
   const googleIdentity = window.google?.accounts.id
   if (!googleIdentity) {
@@ -423,12 +398,9 @@ export async function requestGoogleRedirectPrompt(
   try {
     ensureGoogleIdentityInitialized(googleIdentity, clientId, requestId, source)
   } catch (error) {
-    logGoogleAuthStage('error', 'gis_initialize_error', {
-      requestId,
-      source,
-      message: error instanceof Error ? error.message : String(error)
-    })
-    throw error instanceof Error ? error : new Error('Google Identity Services setup failed.')
+    throw error instanceof Error
+      ? error
+      : new Error('Google Identity Services initialize failed.', { cause: error })
   }
 
   googleCredentialLoginHandler = async (
@@ -445,25 +417,21 @@ export async function requestGoogleRedirectPrompt(
   }
   googleCredentialRequestContext = context
 
+  logGoogleAuthStage('info', 'gis_one_tap_prompt_start', { requestId, source, silentFailure })
   try {
-    logGoogleAuthStage('info', 'gis_one_tap_prompt_start', { requestId, source, silentFailure })
     googleIdentity.prompt(notification => {
       logGooglePromptMoment(notification, requestId, source, silentFailure)
     })
-    logGoogleAuthStage('info', 'gis_one_tap_prompt_called', {
-      requestId,
-      source,
-      silentFailure
-    })
   } catch (error) {
-    logGoogleAuthStage('error', 'gis_one_tap_prompt_error', {
-      requestId,
-      source,
-      silentFailure,
-      message: error instanceof Error ? error.message : String(error)
-    })
-    throw error instanceof Error ? error : new Error('Google sign-in prompt failed.')
+    throw error instanceof Error
+      ? error
+      : new Error('Google Identity Services prompt failed.', { cause: error })
   }
+  logGoogleAuthStage('info', 'gis_one_tap_prompt_called', {
+    requestId,
+    source,
+    silentFailure
+  })
 }
 
 export function cancelGoogleRedirectPrompt(reason: string): void {
@@ -543,10 +511,11 @@ async function handleGoogleCredentialResponse(response: GoogleCredentialResponse
     const loginResponse = await loginWithGoogleCredential(credential, context)
     await handler(loginResponse, credentialSource)
   } catch (error) {
-    logGoogleAuthStage('error', 'one_tap_credential_handler_error', {
-      credentialSource,
-      message: error instanceof Error ? error.message : String(error)
-    })
+    console.error(
+      '[google-auth] Credential handler failed.',
+      { credentialSource },
+      error
+    )
   }
 }
 
