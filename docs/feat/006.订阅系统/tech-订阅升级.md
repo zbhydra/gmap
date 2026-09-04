@@ -1,7 +1,7 @@
 # 006 · 订阅升级
 
 > 状态：待用户批准，禁止实施。
-> 产品口径见 `@feat.md`「升级订阅」；本文是唯一技术落点，004/011 只放引用。
+> 产品口径见 `@feat.md`「升级订阅」；本文是升级技术唯一落点，011 只保留页面交互，plans 只跟踪执行。
 > 前置依赖：支付系统同步（`@plans/004.同步支付系统-计费模型与ClinkBill.md`）必须先落地——
 > 升级建立在同步后的模型上：订阅实例字段、自然月账期、渠道价 `auto_renew_supported`、Clink 渠道。
 
@@ -9,71 +9,105 @@
 
 同一产品线内未过期订阅从中档位换到更高档位（如 Online Lite → Growth、Maps Pro → Business）：
 立即生效新档权益，用户只补差价。四条产品线中，`maps_online` / `maps_api` / `maps_extension`
-有可升级档位；`extension` 线唯一付费档 Unlimited 之上无更高档，无升级场景（未来加档时本方案直接覆盖，无需改造）。
+有可升级档位；`extension` 线唯一付费档 Unlimited 之上无更高档，不进入本期升级范围。
 
 ## 已拍板口径（用户确认前为显式假设）
 
 | # | 决策 | 口径 |
 | --- | --- | --- |
-| 1 | 差额与到期日 | 折旧补差、立即换档、**到期日不变**：`补差 = 目标档月价 − 当前档月价 × 剩余占比`；与 Stripe / ClinkBill 的 immediate proration 同语义 |
-| 2 | 自动续费线收款 | 渠道协议内换价（PayPal `revise` / ClinkBill update），存着的付款方式直接扣折算差额，用户不再走收银台 |
+| 1 | 差额与到期日 | 折旧补差、立即换档、**到期日不变**：`补差 = (目标档月价 − 当前档月价) × 剩余占比`；当前档与目标档都取当前订阅渠道的同币种价格 |
+| 2 | 自动续费线收款 | 渠道协议内换价。ClinkBill 服务端 preview→confirm（`immediate=true`）立即扣折算差额；PayPal `revise` 需买家批准，折算差额进入 outstanding balance 于下个账期随续费扣收。两渠道均由计划变更 Webhook 收敛本地档位，确认接口只做快速同步 |
 | 3 | 降级 | 本期不做；到期自动降级是既有语义。降级（下期生效/退款规则）独立需求另立 |
 | 4 | 渠道范围 | 差额款与协议换价只走 PayPal / ClinkBill；Telegram Stars 不参与升级（`maps_extension` 无 Stars 渠道价；一次性线差额为动态金额无 Stars 价目） |
 
 ## 档位序与可升级判定
 
-- 档位高低按商品配置 `sort_order` 升序判定（同产品线内，配置即档位序，seed 已保证 free 最小）。
-- 可升级 = 同产品线存在未过期订阅行 ∧ 目标档 `sort_order` 严格大于当前行 `product_id` 对应配置的 `sort_order`。
+- `display_order` 只控制方案列表与 Pricing 卡片展示顺序，不参与业务判断。
+- 档位高低只按商品配置 `tier_rank` 判定；同产品线内 seed 保证 free 最低。
+- 可升级 = 同产品线存在未过期订阅行 ∧ 当前档与目标档均为 month ∧ 目标档 `tier_rank` 严格大于当前行 `product_id` 对应配置的 `tier_rank`。
+- 升级固定沿用订阅行 `payment_method`；当前档与目标档在该渠道必须都有启用且币种一致的渠道价。缺少实例渠道或目标渠道价时不可升级，不提供跨渠道换档。
 - 跨产品线不是升级（各线可并存购买，走既有下单链路）。
 - 补差金额 ≤ 0 时不可升级：报价接口返回不可升级原因，前端按钮灰化并提示"当前档位剩余价值不低于目标档，到期后换档"。
+
+## 文件责任
+
+- 后端：`subscription_client.py` / `subscription_schema.py` 承载三个接口；`subscription_service.py` 承载报价、条件履约与渠道计划同步；`paypal.py` / `clink.py` 承载换价、计划查询和计划变更事件解析；两个 callback 路由把计划变更事件交订阅服务，不进入订单履约。
+- 网站：`pricing-page-controller.ts` 承载卡片状态、报价和确认流程；现有 order-checkout 增加“固定渠道”打开模式；新增 PayPal 升级回跳页；用户文案统一放 `src/i18n/pricing.ts`。
+- 测试：后端各保留一条一次性升级、Clink 换价、PayPal 批准和旧快照拒绝路径；网站保留一条覆盖按钮、确认与回跳刷新的 Pricing 路径。
+- 不新增数据库表、迁移脚本、锁、定时任务或独立升级状态机。
+
+## 数据模型消融
+
+- `user_subscriptions` 不保存 `product_price_id`：当前渠道价由行内 `(product_id, payment_method)` 唯一确定，付款时选择的价格行 ID 只留在订单快照。
+- `user_subscriptions` 不保存 `original_order_no`：渠道事件自带 `custom_id` / `merchantReference` 并直接定位 `orders.order_no`，订阅行不复制订单主键。
+- `user_subscriptions` 不保存 `period`：当前周期由行内 `product_id` 对应商品配置确定，购买履约使用订单快照；实例不保存第三份副本。
+- 不保存 `cancelled_at`，也不返回本站推测的取消三态：管理入口只跳转渠道页面，本站没有可靠的渠道取消状态写入路径；权益仍只以 `expires_at` 判定。
 
 ## 差额计算
 
 ```
 剩余占比 = (expires_at − now) / (expires_at − period_start)
-补差     = 目标档月价(display/渠道价按币种) − 当前档月价 × 剩余占比
+补差     = (目标档月价 − 当前档月价) × 剩余占比
 ```
 
-- `period_start` 取订阅行 `start_at`；行缺失 `start_at`（历史行）按 30 天账期折算。
-- 升级特性落地起，一次性线履约也写 `start_at = 本次购买/续期起点`（同步方案中一次性履约 `start_at` 为空，此处收紧）。
+- 即"旧档未用部分折抵 + 新档按剩余时间计费"的净差额：账期初升级补足整月档差，临期升级补差趋近 0，
+  不存在"花接近全价买几天权益"的口径。
+- `period_start` 取订阅行 `start_at`；该字段由前置支付模型同步在一次性或自动续费履约时写入。
 - 金额模型沿用 6 位精度整数与现有 `money` 工具；向下取整到渠道最小单位，差价 ≤ 0 视为不可升级。
-- 订阅线（渠道 revise）最终扣款额由渠道折算得出，可能与站点展示额有微小出入：以渠道为准，本地不二次对账。
+- 一次性线按订阅行 `payment_method` 的当前档/目标档渠道价计算；ClinkBill 自动续费线展示其 preview 返回值，PayPal 自动续费线不展示扣款额。
 
 ## 两条升级路径
 
 ### 路径 A：一次性线（maps_online / maps_api）——差额订单走收银台
 
 1. `GET /api/client/subscription/upgrade-quote?product_line=&target_product_id=`（登录）：
-   返回可升级性、当前/目标档、`currency`、`amount`（补差）、`expires_at`（保持不变）。
+   服务端从当前订阅行读取支付渠道，返回可升级性、当前/目标档、`payment_method`、`currency`、`amount`（补差）、`expires_at`（保持不变）。
    实时计算，不落库、无报价单状态；每次展示与下单各算一次，以下单冻结值为准。
-2. `POST /api/client/subscription/upgrade/checkout`（登录），body：`product_line + target_product_id + payment_method`：
+2. `POST /api/client/subscription/upgrade/checkout`（登录），body：`product_line + target_product_id`：
    - 服务端校验可升级判定与渠道可用性后**服务端定价**创建订单：`product_class=SUBSCRIPTION`，
      `amount` = 服务端算出的补差，`extra_metadata.product_snapshot` 冻结
-     `purpose="upgrade"` + `target_product_id` + `base_expires_at` + 折算输入（`period_start`、当前档、占比），
+     `purpose="upgrade"` + `source_product_id` + `target_product_id` + `base_expires_at` + 折算输入（`period_start`、占比），
      并**跳过现有 `check_product` 的同线有效订阅拦截与客户端价比对**（差额是动态价，不存在配置价目）。
    - 调 Provider `create_payment` 返回支付数据，前端复用 order-checkout 弹窗完成支付与轮询。
-3. 支付成功回调 → 履约分支：快照 `purpose=upgrade` 时**只换档不续期**——
-   upsert 行内 `product_id = target_product_id`、`product_price_id`、`payment_method`，
-   `expires_at` 保持 `base_expires_at` 不变，`auto_renew=false`、渠道引用字段清空。
+3. 支付成功回调 → 履约分支：快照 `purpose=upgrade` 时以
+   `(user_id, product_line, product_id=source_product_id, expires_at=base_expires_at)` 条件更新；命中时只换档，
+   写 `product_id = target_product_id`，`expires_at` 保持不变，`auto_renew=false`。
+   条件未命中说明订阅已过期或已变化，履约失败转人工，不覆盖当前订阅。
    配额即时跟随行内 `product_id` 生效（`usage_service` 读行内档位），当月已用量自然延续。
 
 ### 路径 B：自动续费线（maps_extension）——渠道协议内换价
 
-1. `GET upgrade-quote` 同上（展示补差估算）。
-2. `POST /api/client/subscription/upgrade/confirm`（登录），body：`product_line + target_product_id`：
-   - 前端确认弹窗（展示补差估算与"将立即扣款"）后调用；**不创建订单、不走收银台**。
-   - 服务端按行内 `channel_subscription_id` 调渠道换价：PayPal `POST /v1/billing/subscriptions/{id}/revise`，
-     ClinkBill update（preview → confirm，`immediate=true` 立即折算扣款）。
-   - 渠道调用成功即本地同步换档：行内 `product_id / product_price_id` 更新为新档，
-     `expires_at`、`channel_subscription_id`、`payment_method`、`auto_renew=true` 不变；写 `cancelled_at=null`。
-   - 渠道返回成功但本地换档失败：返回错误让用户重试（confirm 幂等：重复调用按渠道"已是该价"幂等成功）。
-3. 渠道折算扣款的后续 webhook（PayPal `PAYMENT.SALE.COMPLETED`、Clink `invoice.paid`）按既有续费履约兜底，
-   依赖下节「续费履约档位保护」不把档位打回旧档。
+升级固定沿用订阅行内渠道。换价以渠道侧生效为准，本地档位由渠道计划变更事件收敛；确认接口在渠道响应后执行同一同步逻辑作为快速路径。事件不按外部订阅 ID 扫描用户订阅表：PayPal 用 subscription `custom_id`，ClinkBill 用 Subscription `merchantReference` 定位本地首单，再按首单用户与产品线主键读取订阅行并核对 `channel_subscription_id`。PayPal `plan_id`、ClinkBill `productId:priceId` 必须在同渠道唯一命中一个启用价格行后才能换档。不新增索引、pending 表或锁。
+
+**B-Clink（ClinkBill 渠道）**：
+
+1. `GET upgrade-quote` 调 ClinkBill preview，展示渠道返回的补差金额。
+2. 前端确认弹窗（展示补差估算与"将立即扣款"）→ `POST /api/client/subscription/upgrade/confirm`
+   （登录，body：`product_line + target_product_id`）。**不创建订单、不走收银台**。
+3. 服务端按行内 `channel_subscription_id` 调 ClinkBill update：preview → confirm，`immediate=true`
+   立即折算扣款；渠道 confirm 成功后尝试本地同步换档：行内 `product_id` 更新为新档，
+   `expires_at`、`channel_subscription_id`、`payment_method`、`auto_renew=true` 不变。
+4. `subscription.updated.plan_changed` Webhook 执行同一同步逻辑，保证用户关闭页面后仍能收敛；重复 confirm 或重复事件按渠道“已是该价”幂等成功。
+5. 换价后的 `invoice.paid` 仍用首单定位订阅关系。验签后通过 Clink API 核对 `subscriptionId`、`sessionId`、首单引用和币种，订单记录渠道实付金额；不再与首单或新档整月金额比较，因为即时折算发票只包含差额。折算发票的 `periodEnd` 未推进时不得延长到期时间。
+
+**B-PayPal（PayPal 渠道）**：`revise` 需买家批准，不能服务端静默换价：
+
+1. `GET upgrade-quote` 返回可升级性和渠道，`amount=null`；页面不展示 PayPal 预计扣款额。
+2. 前端确认弹窗（说明"将跳转 PayPal 批准换价，折算差额在下一个账期随续费扣收"）→
+   `POST upgrade/confirm`：服务端调 `POST /v1/billing/subscriptions/{id}/revise`，响应携带
+   **approve 链接**，原样返回给前端；本地此时不换档、不产生任何扣款。
+3. revise 的 `return_url` 只携带 `product_line` 与 `target_product_id` 供回跳页展示和轮询，不作为服务端授权或定价依据。买家批准后回到网站，前端轮询本地订阅状态。
+4. `BILLING.SUBSCRIPTION.UPDATED` Webhook 按共用首单引用链定位订阅行、按 `plan_id` 映射目标渠道价并同步档位；重复 confirm 先查询 PayPal 当前 plan，已换价时执行同一同步逻辑并幂等成功。用户关闭回跳页不影响收敛。
+5. 折算差额进入 outstanding balance，按 `auto_bill_outstanding` 于**下个账期随续费扣收**；
+   该笔 sale 的 `PAYMENT.SALE.COMPLETED` webhook 按既有续费履约兜底，依赖下节档位保护不回退档位。
+6. 买家放弃批准：无任何变更，用户可重试或到期换档。
+
+**共用规则**：渠道已生效但确认请求内的本地同步失败时返回错误；渠道 Webhook 重试仍可完成同步。续费事件只推进账期，不承担档位同步。
 
 ### 续费履约档位保护（随本特性一并落地的履约规则修正）
 
 自动续费履约（同步方案中的 `_fulfill_auto_renew` 路径）**只在首购单上覆盖行内 `product_id`**：
-回调解析出的 `provider_subscription.original_order_no` 等于当前回调单号时才写档位与 `product_price_id`；
+回调解析出的 `provider_subscription.original_order_no` 等于当前回调单号时才写档位；
 续费/折算发票回调只推进 `expires_at` 等账期事实，不覆盖档位。否则升级后下一期续费会把档位快照打回首购档。
 
 ## 接口合同
@@ -81,8 +115,8 @@
 | 接口 | 方法 | 说明 |
 | --- | --- | --- |
 | `/api/client/subscription/upgrade-quote` | GET | 展示用实时报价；未登录 401，无可升级返回 `available=false` + `reason` |
-| `/api/client/subscription/upgrade/checkout` | POST | 一次性线差额订单创建 + 支付数据；幂等性同普通下单（不锁，重复支付按履约兜底） |
-| `/api/client/subscription/upgrade/confirm` | POST | 订阅线渠道换价 + 本地换档；幂等成功 |
+| `/api/client/subscription/upgrade/checkout` | POST | 一次性线按当前订阅渠道创建差额订单并返回既有支付数据；不允许客户端指定渠道或金额 |
+| `/api/client/subscription/upgrade/confirm` | POST | 自动续费线协议换价；返回 `status=completed/approval_required` 与可空 `approve_url` |
 
 `upgrade-quote` 响应 data（最小合同）：
 
@@ -90,37 +124,37 @@
 | --- | --- | --- |
 | `available` | bool | 是否可升级 |
 | `reason` | string \| null | 不可升级原因：`no_active_subscription` / `not_higher_tier` / `non_positive_diff` / `channel_unavailable` |
-| `current_product_id` / `target_product_id` | string | 当前与目标档 |
-| `currency` | string | 跟随目标档在指定渠道的渠道价币种 |
-| `amount` | int | 补差金额（6 位精度整数），渠道折算扣款时为估算值 |
-| `expires_at` | int | 升级后到期时间（= 当前到期时间，不变） |
-
-`upgrade-quote` 请求需带 `payment_method`（差额币种与渠道相关）；`upgrade/confirm` 不需要。
+| `current_product_id` | string \| null | 当前档；无有效订阅时为空 |
+| `target_product_id` | string | 目标档 |
+| `payment_method` | string \| null | 当前订阅渠道；不可升级时可为空 |
+| `currency` | string \| null | 当前订阅渠道的币种；不可升级时可为空 |
+| `amount` | int \| null | 一次性线补差或 Clink preview 金额；PayPal 自动续费线为空 |
+| `expires_at` | int \| null | 升级后到期时间；可升级时等于当前到期时间 |
 
 ## 渠道能力矩阵
 
 | 渠道 | 路径 A（差额单） | 路径 B（协议换价） | 依据 |
 | --- | --- | --- | --- |
-| PayPal | 一次性差额单（现有 Orders API） | `revise`：折算立即扣款，`next_billing_time` 不变 | Subscriptions API revise |
-| ClinkBill | 一次性 Hosted Checkout Session（现有） | update preview→confirm，`immediate=true` 折算；事件 `subscription.updated.plan_changed` | docs.clinkbill.com/subscriptions |
+| PayPal | 一次性差额单（现有 Orders API） | `revise` 需买家批准（approve 链接）；批准后换价生效，折算差额进 outstanding balance 下个账期随续费扣收 | Subscriptions API revise |
+| ClinkBill | 一次性 Hosted Checkout Session（现有） | 服务端 update preview→confirm，`immediate=true` 立即折算扣款；`subscription.updated.plan_changed` 收敛本地档位 | docs.clinkbill.com/subscriptions |
 | Telegram Stars | 不参与（无动态价目） | 不支持协议修改（Bot API 无 revise） | — |
 
 ## 异常流程
 
-- 升级差额单支付回调时订阅行已过期：履约失败（快照校验 `base_expires_at` 失效），订单进入异常待人工/退款；
+- 升级差额单支付回调时订阅行已过期或已被其他操作修改：条件更新不命中，订单进入异常待人工/退款；
   前端订单状态展示失败文案。不做"过期按整期新购"折中，避免临期小额补差套利。
-- 并发两笔升级单都支付成功：后履约者为准，先到差额不退，极少数由支持处理（与既有重复付款口径一致）。
-- 订阅线渠道 revise 返回订阅不存在/已取消：本地不改，报错引导用户重试或换档到期重购。
+- 并发两笔升级单都支付成功：第一笔命中快照并换档，后续旧快照不覆盖当前档位，订单转人工处理。
+- 订阅线渠道换价返回订阅不存在/已取消：本地不改，报错引导用户重试或换档到期重购。
+- PayPal 批准流用户放弃批准或超时未批准：本地无任何变更，无扣款；可重新发起 confirm 取新 approve 链接。
 - 配置变更窗口（目标档下架/改价）：下单时以服务端实时配置为准，报价与下单间价格变动按下单值冻结。
-- `upgrade/confirm` 与续费扣款并发：渠道侧协议操作原子，本地换档幂等，无锁。
+- `upgrade/confirm` 与续费扣款并发：渠道侧协议操作原子，本地同步按渠道当前 plan 幂等，无锁。
 
 ## 验收口径
 
 1. 一次性线：Lite 有效订阅升级 Growth，支付补差后行内档位/配额立即为新档，`expires_at` 与升级前一致。
-2. 订阅线：Maps Pro（PayPal/Clink）升级 Business，渠道扣折算差额，本地档位立即更新，
-   下一期续费按新价扣款且续费回调不回退档位（续费履约档位保护）。
+2. 订阅线：Maps Pro 升级 Business——ClinkBill 渠道 confirm 后立即折算扣款，PayPal 渠道经买家批准后换价；关闭回跳页时两渠道 Webhook 仍能同步本地档位。Clink 折算发票不延长账期，下一期完整续费才推进到期时间，且两渠道续费都不回退档位。
 3. 不可升级场景（无订阅/已是最高档/补差≤0/过期行）全部被报价接口拒绝，前端有对应文案。
-4. 升级订单在管理后台订单列表可见且带升级标记，金额为补差金额。
+4. 升级订单在管理后台订单详情可见升级快照（`extra_metadata.product_snapshot.purpose=upgrade`，复用现有 JSON 渲染，无 admin 改动）。
 
 ## 对既有文档的修订点
 

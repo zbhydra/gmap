@@ -9,13 +9,13 @@
 > - 自动续费支付与账单:`@../011.Pricing页/tech-pricing与自动续费.md`
 > - 统一订单与支付履约:`@../004.订单系统/feat.md`
 > - website 下载计费:`@../003.积分系统/feat.md`
-> - extension 每日下载次数计数:`@../005.计数器系统/feat.md`
+> - extension 每日额度链路:`@../000.架构/tech-extension.md`
 
-> 实现状态:站内取消自动续费已保留方案设计,当前暂不实现。当前如需停止后续扣款,用户仍在 PayPal / Telegram Stars 等支付渠道侧取消。好评赠送活动已于 2026-09-02 下线:前端入口删除,`review-reward/claim` 接口直接返回请求无效,service 代码保留待活动重启。
+> 实现状态:支付模型同步与订阅升级待批准实施；本文相关章节描述目标合同。自动续费管理沿用参考项目方案,只打开支付渠道管理入口,不在站内直接取消。好评赠送活动已于 2026-09-02 下线。
 
 ## 系统定性
 
-订阅系统是**分产品线的订阅权益域**(2026-08-31 产品线扩展,C2 裁决落地)。当前四条产品线:`extension`(插件下载 Unlimited)、`maps_extension`(MapsGrab 插件月度 records 套餐,Free 1,000 / Pro $39 100,000 / Business $99 500,000 records/月)、`maps_online`(云端 Online Scraper 月度 records 套餐,4 档)与 `maps_api`(Scraper API 月度 requests 套餐,4 档);权益与重复购买校验按产品线隔离,同一账号可同时持有不同产品线的订阅。产品线仍只定义 extension 下载权益与 maps_extension/新两线采集额度,不定义 website 下载权益。`maps_online`/`maps_api` 两线 8 档全部为 **PayPal 一次性支付(30 天权益,无自动续费)**——占位期用户决策:使真实 PayPal 凭据下立即可购买,后续接自动续费时改商品配置并替换真实 provider_sku;两线配额暂无消费方(014 云端落地后复用)。
+订阅系统是**分产品线的订阅权益域**(2026-08-31 产品线扩展,C2 裁决落地)。当前四条产品线:`extension`(插件下载 Unlimited)、`maps_extension`(MapsGrab 插件月度 records 套餐,Free 1,000 / Pro $39 100,000 / Business $99 500,000 records/月)、`maps_online`(云端 Online Scraper 月度 records 套餐,4 档)与 `maps_api`(Scraper API 月度 requests 套餐,4 档);权益与重复购买校验按产品线隔离,同一账号可同时持有不同产品线的订阅。产品线仍只定义 extension 下载权益与 maps_extension/新两线采集额度,不定义 website 下载权益。`maps_online`/`maps_api` 两线 8 档全部为 **PayPal / ClinkBill 一次性自然月权益,无自动续费**;两线配额暂无消费方(014 云端落地后复用)。
 
 - Free 是正式订阅档位,当前 extension 每日 5 次。
 - Unlimited Download 是月度订阅,是否自动续费由商品配置决定,有效期内 extension 每日下载不限次数。
@@ -42,10 +42,10 @@
 - 用户订阅状态:当前档位、生效/到期时间。
 - 订阅到期降级:有效期结束后自动回到 Free。
 - 订阅状态查询:给 extension 展示和计数器解析额度使用。
-- 与自动续费账单衔接:PayPal / Telegram Stars 首期成功、后续续费成功、到期降级。
+- 与自动续费账单衔接:PayPal / ClinkBill / Telegram Stars 首期成功、后续续费成功、到期降级。
 - 已有未过期订阅时拒绝同产品线普通重复购买(升级到更高档除外,见「升级订阅」);不增加并发锁或渠道协议状态机来保证绝不会重复订阅。
 - 同产品线升级订阅:未过期订阅补差价换到更高档位,立即生效、到期日不变;一次性支付线差额款走收银台,自动续费线由支付渠道在原协议内换价扣款。
-- 站内取消自动续费只保留后续方案,当前不进入实现。
+- 自动续费订阅管理:Pricing 按当前产品线打开 PayPal / ClinkBill 渠道管理页;不在站内直接取消。
 - ~~好评赠送订阅:活动开关启用时,每个登录账号最多领取一次,领取后直接延长 7 天 Unlimited 权益。~~(2026-09-02 活动下线,接口屏蔽、代码保留)
 - 旧插件兼容字段:在可控范围内继续返回标量字段,但值应镜像当前 extension 下载额度。
 
@@ -59,7 +59,7 @@
 - 其他订阅档位、多席位、优惠码。
 - extension 端直接拉起支付;购买入口首版只在 website pricing 页。
 - extension options 订阅套餐页、订阅卡片、插件内订阅支付提示弹窗。
-- 站内取消自动续费入口暂不实现;用户先在支付渠道侧取消。
+- 站内直接取消自动续费;用户从 Pricing 打开支付渠道管理页完成操作。
 - 取消后的退款、按比例退费、立即降级。
 - 到期前恢复自动续费;已取消续费的用户仍等到订阅到期后重新购买。
 - 注册试用订阅的新设计;注册赠送 Credits 属于积分系统。
@@ -71,18 +71,18 @@
 | 档位 | 产品线 | 价格 | 购买方式 | 权益 |
 | --- | --- | --- | --- | --- |
 | Free | `extension` | `$0` | 默认档位,不可购买 | 插件下载 5 次/天 |
-| Unlimited Download | `extension` | `$9.99 / month` | PayPal / Telegram Stars;是否自动续费由商品配置决定 | 插件下载不限次数 |
+| Unlimited Download | `extension` | `$12.99 / month` | PayPal / Telegram Stars;是否自动续费由商品配置决定 | 插件下载不限次数 |
 | Maps Free | `maps_extension` | `$0` | 默认档位,不可购买 | 1,000 records/月 |
-| Maps Pro | `maps_extension` | `$39 / month` | PayPal;自动续费 | 100,000 records/月 |
-| Maps Business | `maps_extension` | `$99 / month` | PayPal;自动续费 | 500,000 records/月 |
-| Online Lite | `maps_online` | `$19 / month` | PayPal 一次性支付,30 天,无自动续费 | 20,000 records/月 |
-| Online Basic | `maps_online` | `$49 / month` | PayPal 一次性支付,30 天,无自动续费 | 80,000 records/月 |
-| Online Growth | `maps_online` | `$99 / month` | PayPal 一次性支付,30 天,无自动续费 | 250,000 records/月 |
-| Online Pro | `maps_online` | `$149 / month` | PayPal 一次性支付,30 天,无自动续费 | 500,000 records/月 |
-| API Basic | `maps_api` | `$15 / month` | PayPal 一次性支付,30 天,无自动续费 | 1,000 requests/月 |
-| API Professional | `maps_api` | `$65 / month` | PayPal 一次性支付,30 天,无自动续费 | 5,000 requests/月 |
-| API Business | `maps_api` | `$115 / month` | PayPal 一次性支付,30 天,无自动续费 | 10,000 requests/月 |
-| API Scale | `maps_api` | `$365 / month` | PayPal 一次性支付,30 天,无自动续费 | 50,000 requests/月 |
+| Maps Pro | `maps_extension` | `$39 / month` | PayPal / ClinkBill;自动续费 | 100,000 records/月 |
+| Maps Business | `maps_extension` | `$99 / month` | PayPal / ClinkBill;自动续费 | 500,000 records/月 |
+| Online Lite | `maps_online` | `$19 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 20,000 records/月 |
+| Online Basic | `maps_online` | `$49 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 80,000 records/月 |
+| Online Growth | `maps_online` | `$99 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 250,000 records/月 |
+| Online Pro | `maps_online` | `$149 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 500,000 records/月 |
+| API Basic | `maps_api` | `$15 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 1,000 requests/月 |
+| API Professional | `maps_api` | `$65 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 5,000 requests/月 |
+| API Business | `maps_api` | `$115 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 10,000 requests/月 |
+| API Scale | `maps_api` | `$365 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 50,000 requests/月 |
 
 Telegram Stars 初始价格为 `800 Stars / month`。maps_extension 线月度额度即 U7 计量的月度 records 总量:购买成功后该账号(登录态)配额总量切到所购档位,到期自动回退免费档;匿名设备恒免费档(见 `@tech-额度与速率档位.md`)。`maps_online`/`maps_api` 两线配额暂无消费方,云端额度消费落地时直接复用同一额度模型(见 `@../014.Maps云端/feat.md`)。online / api 免费口径(online 1,000 records/月、api 20 requests/月)已随各线 free 档位落库,暂无消费方、待云端额度基建接线后生效。
 
@@ -100,7 +100,7 @@ Telegram Stars 初始价格为 `800 Stars / month`。maps_extension 线月度额
 1. 用户在 website pricing 页选择 Unlimited Download。
 2. 如用户在该产品线上已有未过期订阅,pricing 页订阅按钮灰化;点击后提示存在有效订阅,不可重复购买(重复购买校验按产品线隔离,适用于包括 `maps_online`/`maps_api` 在内的全部产品线,互不影响另一产品线的购买)。
 3. 无有效 Unlimited 时,pricing 页按商品配置创建一次性支付或自动续费订阅,支付渠道为 PayPal 或 Telegram Stars。
-4. 支付渠道付款成功后,系统按商品的 `duration_days` 发放订阅权益。
+4. 支付渠道付款成功后,系统按商品周期发放自然月订阅权益。
 5. 用户刷新 extension 订阅状态后,extension 下载额度变为不限。
 
 购买页面、支付确认、轮询和异常见 `@../011.Pricing页/feat.md`。
@@ -126,28 +126,24 @@ Telegram Stars 初始价格为 `800 Stars / month`。maps_extension 线月度额
 
 该流程不验证真实评价。界面与交互见 `@../011.Pricing页/feat.md`,技术合同见 `@tech-好评赠送订阅.md`。
 
-### 取消自动续费（暂不实现）
+### 管理自动续费
 
-以下为后续保留方案,当前不进入实现:
-
-1. 已登录用户在 website Pricing 页查看当前 Unlimited。
-2. 存在未过期 Unlimited 且尚未取消续费时,页面展示取消自动续费按钮。
-3. 用户确认时明确提示:订阅费用不退还,当前周期权益保留到到期时间。
-4. 渠道取消成功后,系统标记该订阅到期停止续费。
-5. 当前周期内 extension 仍保持 Unlimited 权益;到期后自动回到 Free。
-6. 已取消续费的有效订阅仍按有效权益处理,普通购买入口保持不可购买;用户到期后可重新购买。
-7. 用户也可通过原支付渠道或支持入口关闭自动续费;渠道侧关闭后不再产生后续扣款,本站可能收不到通知并继续显示自动续费。用户再次点击站内取消时,渠道返回“已经取消”后本站再更新显示状态。
+1. 已登录用户在 Pricing 查看当前产品线的有效自动续费订阅。
+2. 页面展示“Manage subscription”;点击后由服务端根据当前产品线和订阅实例确定支付渠道。
+3. PayPal 打开 Automatic Payments,ClinkBill 打开 Customer Portal;没有网页管理入口的渠道展示渠道内操作路径。
+4. 页面只负责打开渠道入口,不在站内直接取消、不修改订阅状态或到期时间。
+5. 用户在渠道侧取消后,当前已付周期权益仍保留到原到期时间;渠道未通知本站时,页面状态允许暂时滞后。
 
 ### 升级订阅
 
 1. 适用范围:同一产品线内从当前付费档换到更高档位(maps_extension 的 Pro → Business,maps_online 与 maps_api 各档位向上)。extension 线当前仅一个付费档,无升级场景。
 2. 已登录用户在 pricing 页当前产品线的更高档卡片上看到升级入口与补差金额;当前档卡片标记为当前套餐。
-3. 补差金额按旧档剩余时间折算:补差 = 目标档月价 − 旧档月价 × 剩余时间占比;到期日保持不变。
-4. 一次性支付线(Online / API):确认后按补差金额创建一笔差额订单,走收银台完成支付,支付成功后立即切换到新档权益。
-5. 自动续费线(Maps Pro / Business):确认弹窗明确提示将立即按折算金额扣款后,由支付渠道在原订阅协议内换价并直接扣款,无需再走收银台;成功后立即切换新档。
+3. 补差金额按旧档剩余时间折算:补差 = (目标档月价 − 旧档月价) × 剩余时间占比;两档价格都取当前订阅渠道的同币种价格,到期日保持不变。账期初升级补足整月档差,临期升级补差趋近 0。
+4. 升级沿用当前订阅的支付渠道,不跨渠道换档。一次性支付线(Online / API)确认后按补差金额创建差额订单,支付成功后立即切换到新档权益。
+5. 自动续费线(Maps Pro / Business)按渠道分两种交互:ClinkBill 渠道在确认弹窗明确提示将立即按渠道报价扣款,由渠道在原订阅协议内换价并直接扣款;PayPal 渠道需要用户到 PayPal 侧批准换价,折算差额在下一个账期随续费一起扣收。两种渠道均以服务端收到计划变更事实后切换本地档位,不依赖用户停留在回跳页。
 6. 升级后当月额度上限立即按新档计算,当月已用量延续。
 7. 不可升级情形:同线无有效订阅(走正常购买)、目标不是更高档、补差金额不为正;升级入口灰化并提示原因。
-8. 支付渠道沿用各线现有渠道(Online / API 为 PayPal 与 ClinkBill;Maps Pro / Business 为 PayPal 与 ClinkBill);Telegram Stars 不参与升级。
+8. 支付渠道沿用当前订阅实例的 PayPal 或 ClinkBill;Telegram Stars 不参与升级。
 
 ### 订阅状态查询
 
@@ -168,15 +164,13 @@ Telegram Stars 初始价格为 `800 Stars / month`。maps_extension 线月度额
 
 - 自动续费首期支付失败:不生效 Unlimited,用户仍为 Free。
 - 已有有效 Unlimited 时再次购买:前端订阅按钮灰化并提示不可重复购买;后端下单校验同样拒绝创建订阅订单;更高档位改走升级流程。
-- 升级差额订单支付完成时原订阅已过期:不自动按新档发放整期权益,订单转人工处理,避免临期小额补差套利。
-- 自动续费线渠道换价失败或原订阅协议不存在:本地权益保持不变,用户可重试或到期后按新档重新购买;重复发起换价按渠道"已是该档"幂等成功。
-- 用户在两个未完成的 checkout 中分别确认付款:不做并发锁或跨渠道协议协调;两笔成功付款按正常订单履约,极少数重复订阅由支持处理。
+- 升级差额订单支付完成时原订阅已过期或已被其他操作修改:不覆盖当前订阅,订单转人工处理。
+- 自动续费线渠道换价失败或原订阅协议不存在:本地权益保持不变,用户可重试或到期后按新档重新购买;渠道已完成换价但页面关闭时,服务端仍通过渠道事件同步档位。
+- PayPal 渠道升级用户放弃批准或未完成批准:本地权益与扣款均无变化,可重新发起。
+- 用户在两个未完成的普通购买 checkout 中分别确认付款:不做并发锁或跨渠道协议协调;两笔成功付款按正常订单履约,极少数重复订阅由支持处理。
 - 后续续费失败:当前周期到期前保持权益,到期后降级。
-- 站内取消自动续费暂不实现:用户需要到支付渠道侧取消。
-- 后续实现取消自动续费时:成功后当前周期权益保留,到期后降级,不退款。
-- 后续实现取消自动续费时:重复点击返回当前已取消状态,不重复调用渠道或重复报错。
-- 后续实现取消自动续费时:用户已在支付渠道侧取消,服务端按渠道“已取消”结果幂等更新本地状态。
-- 后续实现取消自动续费时:缺少历史渠道订阅 ID,提示联系支持或前往支付渠道取消;不修改当前权益。
+- 渠道管理入口创建失败:页面展示重试,不修改订阅状态或到期时间。
+- 用户在渠道侧取消但本站未收到通知:本站可继续显示自动续费状态,不主动猜测或改写渠道事实。
 - webhook 重复到达:不重复延长。
 - 订阅状态读取失败:前端展示重试;下载扣减失败仍按计数器系统 fail-open 口径。
 - 支付成功但订阅写入失败:进入自动续费账单补偿/人工排查,用户看到“开通异常,请联系支持”。
@@ -192,7 +186,7 @@ Telegram Stars 初始价格为 `800 Stars / month`。maps_extension 线月度额
 - 文案需 i18n。
 - 不做金融级对账;失败让用户重试,已支付未履约走补偿或人工排查。
 - 好评赠送只使用 5 秒 Redis 短锁,不续租、不增加复杂状态机或跨数据库事务。
-- 所有时间口径以服务器系统时区为准。
+- 所有业务时间口径以 `America/New_York` 为准。
 - 旧插件兼容字段不得突然删除。
 
 ## 验收标准
@@ -204,21 +198,14 @@ Telegram Stars 初始价格为 `800 Stars / month`。maps_extension 线月度额
 - Unlimited 可通过 pricing 页使用 PayPal / Telegram Stars 购买;是否自动续费由商品配置决定。
 - 已有有效 Unlimited 时不能再次购买 Unlimited,点击灰化订阅按钮会提示存在有效订阅。
 - 有效订阅可补差升级到同线更高档:升级后档位与当月额度立即为新档,到期时间与升级前一致。
-- 一次性支付线升级只补差价,走收银台完成;自动续费线升级由渠道在原协议内换价并立即扣款,下一期按新档价格续费。
+- 一次性支付线升级沿用当前订阅渠道并只补差价;ClinkBill 自动续费升级立即按渠道报价扣款,PayPal 升级经用户批准后生效、折算差额下个账期随续费扣收;用户关闭回跳页时服务端仍能同步新档,两种渠道下一期均按新档价格续费。
 - 非更高档、补差金额不为正、同线无有效订阅时,升级入口不可用并有明确提示。
-- 站内取消自动续费暂不作为当前验收项。
-- 后续实现取消自动续费时,有效 Unlimited 用户可在 Pricing 页取消自动续费;取消后仍可用到原 `expires_at`。
-- 后续实现取消自动续费时,已取消自动续费的有效 Unlimited 到期前不能再次购买,到期后可重新购买。
+- 有效自动续费订阅在 Pricing 展示管理入口;PayPal / ClinkBill 分别打开对应渠道管理页。
+- 打开、返回或关闭渠道管理页不会修改本站订阅状态与到期时间。
 - extension options 不再出现订阅套餐购买页;旧订阅卡片和插件内订阅提示弹窗已移除或不再被引用。
 - 订阅状态接口能返回当前档位、到期时间、当日 extension 已用/剩余/上限。
-- 后续实现取消自动续费时,订阅状态接口能返回本站最后确认的自动续费展示状态;该状态允许晚于支付渠道后台状态。
 - 旧标量额度字段镜像当前 extension 下载上限。
 - 续费 webhook 重复到达不重复延长权益。
-- 未领取账号可领取一次 7 天 Unlimited;无有效订阅时从当前时间起算,有效订阅时从原到期时间继续增加。
-- 已领取账号再次请求时不重复加时,并按已领取成功返回。
-- 并发领取由账号级 5 秒 Redis 锁串行化;1 秒内抢不到锁返回服务器繁忙。
-- Counter 与订阅分别提交;Counter 成功而订阅失败时不补偿。
-- `config_public.subscription_review_reward=false` 时页面不展示好评赠送入口,领取接口不产生任何业务写入。
 
 ## 用户操作逻辑与 UI 元素
 
@@ -232,7 +219,6 @@ extension UI 只做状态展示和升级引导,不做套餐选择和购买。
 | 次数计数器 | 文本 | 否 | Free 展示剩余/每日上限;Unlimited 隐藏或展示 Unlimited |
 | 升级按钮 | 按钮 | 是 | 打开 website pricing 页 |
 | 到期提示 | 文本 | 否 | Unlimited 显示到期或续费状态 |
-| 后续取消续费状态 | 文本 | 否 | 后续实现取消自动续费后,已取消续费时展示到期后回到 Free |
 
 旧 options 订阅套餐页不是当前产品界面。`SubscriptionPlans` 这类插件内购买组件、`options_page` 入口和打开 options 的升级路径都应保持删除状态。
 
@@ -249,7 +235,6 @@ extension UI 只做状态展示和升级引导,不做套餐选择和购买。
 | `extension_quota_exhausted` | Free 用户当日次数用尽 | `limit`、`used`、`login_state` |
 | `extension_upgrade_click` | 点击升级入口 | `source`、`current_plan` |
 | `extension_subscription_status_loaded` | 订阅状态加载成功 | `plan`、`limit`、`remaining` |
-| `subscription_auto_renew_cancelled` | 后续实现取消自动续费成功 | `payment_method`、`expires_at` |
 
 ## 关联文档
 
@@ -258,4 +243,4 @@ extension UI 只做状态展示和升级引导,不做套餐选择和购买。
 - 额度与速率档位:`@tech-额度与速率档位.md`
 - 好评赠送订阅:`@tech-好评赠送订阅.md`
 - Pricing 页:`@../011.Pricing页/feat.md`
-- 计数器系统:`@../005.计数器系统/feat.md`
+- extension 每日额度链路:`@../000.架构/tech-extension.md`
