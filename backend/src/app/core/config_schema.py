@@ -189,7 +189,7 @@ class RedisSettings(BaseSettings):
     password: str | None = Field(default=None)
     pool_size: int = Field(default=50, ge=1)
     pool_timeout: int = Field(default=5, ge=1)
-    key_prefix: str = Field(default="gmap")
+    key_prefix: str = Field(default="gmapsexporter")
     socket_timeout: int = Field(default=5, ge=1)
     socket_connect_timeout: int = Field(default=5, ge=1)
     retry_on_timeout: bool = Field(default=True)

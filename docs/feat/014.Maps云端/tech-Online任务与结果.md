@@ -23,7 +23,7 @@ Online 创建入口
 
 MySQL 是任务唯一事实源，worker 直接扫描未完成任务。
 
-`APP_NAME` 是任务所属 business 的唯一标识。所有业务节点的配置模板固定使用 `redis.db: 0` 和 `redis.key_prefix: gmapsexporter`；不同环境使用不同 Redis 实例。
+`APP_NAME` 是任务所属 business 的唯一标识。所有业务节点的配置模板与 `RedisSettings` 默认值固定使用 `redis.db: 0` 和 `redis.key_prefix: gmapsexporter`；不同环境使用不同 Redis 实例。
 
 ## 3. 文件树
 
@@ -42,12 +42,12 @@ backend/src/app/
 backend/config.yaml.example                    # Redis 固定命名空间
 backend/deploy/.env.example                    # Redis 环境隔离说明
 backend/deploy/README.md                       # APP_NAME 与 Redis 部署边界
+backend/src/app/core/config_schema.py          # Redis 默认前缀
 backend/tests/integration/real/
   api/client/test_maps_online_real.py
   services/test_maps_online_task_service_real.py
   services/test_maps_online_worker_service_real.py
 docs/references/specs/spec-mysql.md             # 登记固定分表 service 例外
-docs/references/specs/spec-redis.md             # Redis 固定前缀合同
 ```
 
 对象存储 SDK 属于实施依赖，新增前按仓库规则取得批准。R2 通过官方 S3 兼容接口，AliOSS 使用官方 Python SDK；两者的同步网络与文件操作统一由 `object_storage_service` 放入 `asyncio.to_thread`，业务层不接触 SDK 对象。
