@@ -1,5 +1,10 @@
 # 004 · 订单系统 - 变更记录
 
+## 2026-09-02 渠道现状校准(PayPal 在役,ClinkBill 未实施)
+
+- 现役支付渠道:PayPal(Orders v2 一次性 + Billing v1 订阅,创建/验签回调/履约全链路在役)与 Telegram Stars。MapsGrab 三产品线 10 个付费 SKU(2026-08-31 起在售,见 `@../006.订阅系统/`)全部经 PayPal 一次性支付成交,交易流水落 `payment_transaction_id`(见下条)。
+- `tech-ClinkBill支付.md` 仍为待批准未实施的历史方案;Stripe/Paddle 无代码与调研文档。PayPal 渠道暂无独立 tech 章节,合同细节散见于 provider 代码与 006 域 changelog,待渠道扩展时补齐。
+
 ## 2026-08-31 记录支付交易流水 ID
 
 - 订单新增可空的 `payment_transaction_id`，统一保存 Provider 回调提供的实际交易标识（PayPal capture id / sale id，Telegram Stars 为 `telegram_payment_charge_id`）。

@@ -129,7 +129,7 @@ function successResponse(data: MockResponseData) {
   return {
     status: 200,
     contentType: "application/json",
-    body: JSON.stringify({ code: 10000, data, msg: "success" }),
+    body: JSON.stringify({ code: 10000, data, msg: "" }),
   };
 }
 

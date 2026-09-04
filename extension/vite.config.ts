@@ -392,7 +392,7 @@ export default defineConfig({
     strictPort: true
   },
   build: {
-    // e2e 构建变体经 EXTENSION_BUILD_OUT_DIR 指到 dist-e2e（scripts/build-e2e.mjs），
+    // 真实 e2e 构建变体经 EXTENSION_BUILD_OUT_DIR 指到 dist-real（scripts/build-real.mjs），
     // 插件对 inline override 处理不一致，必须由 config 本身读取环境变量
     outDir: process.env.EXTENSION_BUILD_OUT_DIR ?? 'dist',
     emptyOutDir: true,

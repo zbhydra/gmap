@@ -88,7 +88,7 @@
 2. 取 `Accept-Language` header,取逗号前第一段、去空白。
 3. 在语言映射表里查(支持完整 locale 与短码别名),命中得到 14 语言之一;未命中降级 en-US。
 4. 返回 `LocaleContext(language, raw_accept_language)`。
-5. service 用 `translator.translate(key, language, **params)` 取对应语言文案;找不到 key 时回退返回 key 本身。
+5. service 用 `translator.translate(key, language, **params)` 取对应语言文案;找不到 key 时抛出包含 locale 与 key 的配置错误，禁止向用户返回内部 key。
 
 ### website 多语言页面访问
 
@@ -107,7 +107,7 @@
 
 - 不新增第三方依赖;不新增依赖注入(service 为进程级单例,backend api 层可用 `Depends`)。
 - 只能用 GET 和 POST(本域为基础设施,无独立对外接口;语言切换是纯前端行为)。
-- 文案错误(key 缺失、格式化失败)允许降级展示(key 原文或默认语言),不阻断用户操作。
+- 无法识别的语言允许降级为 en-US;key 缺失或格式化失败属于配置错误，由当前请求失败并保留可定位信息，不降级展示内部 key。
 - 抛错带可定位 msg。
 - 三端语言清单必须保持一致;新增语言必须三端同步落地(清单常量 + 文案文件 + 映射别名)。
 
@@ -120,7 +120,7 @@
 - extension 首次检测:无偏好时按浏览器 Accept-Language 命中第一个支持语言,持久化;不支持的浏览器语言降级 en-US。
 - extension 切换:点击切换器下拉、选语言后即时生效(无刷新),刷新后保持;当前语言项高亮。
 - extension 出站请求:所有 HTTP 请求带 Accept-Language(当前 locale);backend 能正确解析。
-- backend 降级:无 Accept-Language 或无法识别时,返回 en-US 文案;key 找不到时返回 key 本身不抛异常。
+- backend 降级:无 Accept-Language 或无法识别时,返回 en-US 文案;key 找不到时抛出配置错误，不向用户返回内部 key。
 - website 多语言:14 语言每个落地页都能正确渲染对应语言内容;默认语言无前缀,其余带 `localePaths` 前缀;切换语言后查询参数保持不变;locale 不在清单时回退默认语言。
 - 文案 key:无硬编码裸字符串散落(extension 用 `I18N_KEYS` 常量;backend 多层 key 用点连接);新增翻译三端 14 语言文件齐全。
 - Chrome 原生 i18n:`_locales/{lang}/messages.json` 覆盖扩展名称、描述、action 标题等元信息,与界面语言一致。

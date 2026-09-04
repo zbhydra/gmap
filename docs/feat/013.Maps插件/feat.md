@@ -45,7 +45,7 @@
 
 1. 用户在 Maps 搜索(如 `coffee in manhattan`),面板以待命态出现在页面。
 2. 点 **Start Extracting**:面板进入采集中态(实时计数 + Pause);插件按固定节奏(默认 8 秒,可调 5–10 秒)自动滚动结果列表,拦截 Maps 内部响应并解析出商家行,去重后累计。
-3. 列表到底(出现结束提示)或达单次上限(免费 10 条;付费 99,999 条,实际受月配额约束)自动完成。
+3. 列表到底(出现结束提示)或达单次上限(免费 10 条;付费 99,999 条,实际受月配额约束)自动完成。**实态(2026-09-02 核查)**:单次上限为远程配置统一值(默认 10,不按订阅档位区分),分档单次上限未实现——档位差异当前仅体现在月度配额总额。
 4. 完成态提供 **Export Detailed List - N (.格式)** 与 **Reset**;开启自动导出时完成即下载。
 5. 月配额用尽(≥100%)时禁止开始,提示「已用完本期额度」并引导订阅页。
 
@@ -53,11 +53,11 @@
 
 ### 评论子流程
 
-place 详情页 → 面板出现 **Reviews & Photos** 标签页 → Start Extracting Reviews → 自动开评论页翻页抓取 → 达上限(免费 20 / Pro 250 / Business 2,500;批量可自定义默认 300)/ 不足一页 / 无翻页 token 即完成 → 导出 11 列。`@references/A2-评论抓取.md`
+place 详情页 → 面板出现 **Reviews & Photos** 标签页 → Start Extracting Reviews → 自动开评论页翻页抓取 → 达上限(免费 20 / Pro 250 / Business 2,500;批量可自定义默认 300)/ 不足一页 / 无翻页 token 即完成 → 导出 11 列。**实态(2026-09-02 核查)**:单次上限为远程配置统一值(默认 20),分档未实现。`@references/A2-评论抓取.md`
 
 ### 照片子流程
 
-同标签页 Start Extracting Photos → 打开照片画廊页翻页 → 过滤街景 → 达上限(免费 10 / Pro 100 / Business 1,000)/ 无更多即完成 → 导出 URL 列表。`@references/A3-照片抓取.md`
+同标签页 Start Extracting Photos → 打开照片画廊页翻页 → 过滤街景 → 达上限(免费 10 / Pro 100 / Business 1,000)/ 无更多即完成 → 导出 URL 列表。**实态(2026-09-02 核查)**:单次上限为远程配置统一值(默认 10),分档未实现。`@references/A3-照片抓取.md`
 
 ### Email / 社媒补全(采集中的可选增强)
 
@@ -123,6 +123,8 @@ Reviews & Photos 标签页含:Start Extracting Reviews 按钮、Start Extracting
 
 ## 数据埋点
 
+> 统一通道 SLS WebTracking(GA4 Measurement Protocol 已按 2026-08-30 裁决不做,install 为 SLS + 后端 mark 双报)。实态核查 2026-09-02:btn_click 未实现,已从下表移除。
+
 | 事件 | 触发 | 备注 |
 | --- | --- | --- |
 | popup_open | Popup 打开 | 已有 |
@@ -131,8 +133,7 @@ Reviews & Photos 标签页含:Start Extracting Reviews 按钮、Start Extracting
 | export_results | 导出 | 含格式、条数 |
 | scrape_reviews_content | 评论采集 | |
 | sync_to_google_drive | Drive 同步 | |
-| btn_click | 关键按钮点击 | |
-| install | 安装 | GA4 + 后端双报 |
+| install | 安装 | SLS + 后端双报 |
 | enrich_complete | Email/社媒补全完成 | 成功/失败均报,含 count/written/partial/ok |
 
 ## 验收标准(域级)

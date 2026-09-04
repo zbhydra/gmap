@@ -45,10 +45,10 @@
 
 | # | 功能 | 归属域 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- | --- |
-| C1 | 用户体系(含竞品 license key 辅轨的取舍) | ♻️ `007.用户系统` | 逆向 06 | 🔍 | ⬜ |
+| C1 | 用户体系(含竞品 license key 辅轨的取舍;辅轨取舍未决) | ♻️ `007.用户系统` | 逆向 06 | 🔍 | ✅ (2026-09-01,复用 007 全套 + 插件 v3 浏览器身份,Maps/Bing 双插件已接) |
 | C2 | 订阅套餐(分产品订阅:extension / maps_extension / maps_online / maps_api 四线) | ♻️ `006.订阅系统` | 官网 pricing 三 tab | 🔍 | ✅ (2026-08-31,maps_online/maps_api 8 档 PayPal 一次性支付占位落地;额度消费基建 2026-09-01 落 `000.架构/tech-额度基建.md` 三门面,消费接线待 014) |
-| C3 | 积分 / 用量计量(服务端计数、免费月度额度) | ♻️ `003.积分系统` / `005.计数器系统` | 逆向 06 | 🔍 | ⬜ |
-| C4 | 订单与支付(Stripe / Paddle) | ♻️ `004.订单系统` | 逆向 06 | ♻️ | ⬜ |
+| C3 | 积分 / 用量计量(服务端计数、免费月度额度) | ♻️ `003.积分系统` / `005.计数器系统` | 逆向 06 | 🔍 | 🚧 (2026-09-01 统一 usage 三门面 + 月度免费额度落地,maps_extension 线已生效;maps_online/api 消费接线待 014) |
+| C4 | 订单与支付(Stripe / Paddle) | ♻️ `004.订单系统` | 逆向 06 | ♻️ | 🚧 (004 订单系统 + PayPal 一次性支付闭环在售 2026-08-31;Stripe/Paddle 渠道未立项) |
 | C5 | Pricing 页(三产品形态分 tab 展示) | ♻️ `011.Pricing页` | 官网 /pricing | 🔍浅 | ✅ (2026-08-31,Online / Extension / API 三 tab 已实现,10 个付费 SKU 可购买) |
 | C6 | 管理后台扩展 | ♻️ `008.管理后台` | — | ♻️ | ✅ (2026-09-02,用户管理页只读列表 + 用户弹窗多线订阅/用量契约 + Dashboard 图表落地;RBAC / 订单写操作 / 订阅额度管理 UI / API key 多条按裁决不做) |
 
@@ -56,12 +56,12 @@
 
 | # | 功能 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- |
-| D1 | 免费工具矩阵(email-checker、merge-csv、license-generator、Place ID Finder、坐标转换等约 7 个) | 官网 /tools | 🔍浅 | ⬜ |
+| D1 | 免费工具矩阵(email-checker、merge-csv、Place ID Finder、坐标转换、评论链接生成、批量关键词生成等 7 个;License Generator 后置) | 官网 /tools | 🔍浅 | ✅ (2026-08-31,7 工具页全为真交互) |
 | D2 | 竞品对比页(约 10 篇:vs Outscraper / Apify 等) | 官网 /articles | ⬜ | ⬜ |
 | D3 | Guides 博客 | 官网 /guides | ⬜ | ⬜ |
 | D4 | Affiliates 联盟计划(25% 循环佣金) | 官网 /affiliates 营销页 | 🔍(门户内部需注册) | ⏸ 暂不做 |
-| D5 | 营销站(Astro 模板复用,多语言) | ♻️ `010.多语言` 基建 + website/ 模板 | ♻️ | ⬜ |
-| D6 | SEO 基建(sitemap / llms.txt;GSC/GA4 后台采集已退役,改用官方控制台) | ♻️ `009.SEO与增长` | ♻️ | ⬜ |
+| D5 | 营销站(Astro 模板复用,多语言) | ♻️ `010.多语言` 基建 + website/ 模板 | ♻️ | ✅ (2026-08-31 交付 22 页,持续迭代;多语言为 en-US 单语脚手架) |
+| D6 | SEO 基建(sitemap / llms.txt;GSC/GA4 后台采集已退役,改用官方控制台) | ♻️ `009.SEO与增长` | ♻️ | 🚧 (sitemap/robots/llms.txt/GA4 通道/hreflang 已落地;域名 / GA4 ID / GSC 验证待后配) |
 
 ### E · Bing 插件(`016.Bing插件`,2026-08-30 立项)
 
@@ -72,7 +72,7 @@
 | E3 | 面板 UI(Vue 直插,非 iframe)+ Pricing 信息页 | 同上 §9.1 | ♻️ | ✅ |
 | E4 | 插件登录(v3 浏览器身份,popup + 面板双入口;2026-09-01 替代 v2 官网桥) | 本站自有模式 | ♻️ | ✅ |
 | E5 | 远程配置热修通道(本地默认+稀疏覆盖,机制复用;后端端点未上线,回退路径已验) | 竞品 bingMapsVersions | ♻️ | ✅ |
-| E6 | Email/社媒挖掘(与 013 A4 同源自研服务,云端执行归 014;输入平台无关) | 竞品 mqfyia/frkaizm 实测 | ♻️ | ⬜ 二期 |
+| E6 | Email/社媒挖掘(与 013 A4 同源自研服务,云端执行归 014;输入平台无关) | 竞品 mqfyia/frkaizm 实测 | ♻️ | ✅ (2026-09-02 二期落地:免费行占位锁定、Pro 完成边沿自动补全;云端批量产品化仍归 014) |
 | E7 | 打点(search/export/install 等,自有 SLS 通道) | 竞品 sdfvaohi 日志 | ♻️ | ✅ |
 
 ## 3 · 阶段计划
@@ -99,6 +99,9 @@
 - 2026-09-04 **B1 Online 任务与结果设计完成**：父任务 + 20 个 item 分表，MySQL 扫描与本机 `flock` 支持多进程和重启重做；结果按 `online/{Ymd}/{task_no}/{item_id}/{attempt_id}.csv` 写当前 R2 / AliOSS，提供单 item CSV 与整任务 ZIP；提交不预扣，完成后按实际 records 幂等计量。实施计划见 `feat/014.Maps云端/plans/002.Online任务与结果基建.md`。
 
 - 2026-09-04 **B4 Provider 采集基建完成**：HTTP Search/Reviews、gosom submit/get、代理与并发配置、脱敏 fixture/golden 及 real 测试落地；真实 Google/gosom 网络冒烟因缺少可用凭据未执行。
+
+- 2026-09-02 **Bing E6 Email/社媒挖掘二期落地**(状态补记,对应 d786df0):免费行 5 列 `###PRO###` 占位锁定,Pro 会话采集完成边沿自动清占位,按 website 主机名去重分批(≤50)经 `enrichBusinesses` RPC 调共享端点 `/maps/enrich` 写回(服务端本体 = 013 A4,不重复扣配额),免费保持占位;`enrich_complete` 打点;真实 e2e 双向断言(匿名占位保持 / Pro 脱离占位)。E1–E7 至此全 ✅;Email/社媒的云端批量执行产品化仍归 014。
+- 2026-09-02 **功能全盘盘点校准**(5 路代码核查对齐 ROADMAP 与实态):C1 ⬜→✅(复用 007 + 插件 v3 身份,双插件已接;license key 辅轨取舍未决)、C3 ⬜→🚧(usage 三门面已落地,online/api 消费接线待 014)、C4 ⬜→🚧(PayPal 一次性支付闭环在售,Stripe/Paddle 未立项)、D1 ⬜→✅(7 工具页全真交互,License Generator 后置)、D5 ⬜→✅(营销站 22 页交付)、D6 ⬜→🚧(SEO 基建代码完成,域名/GA4 ID/GSC 验证待后配);B4/B5 补注调研实态(RPC fetcher 为主、压测数据入 research §12,正式 Gate 判定未做)。同步:013 埋点表改 SLS 口径、删未实现的 btn_click,三处单次上限补「远程配置统一值」实态;003/004/011 域文档补现状校准;014/015 当前状态段、016 T1/plans 同步。
 
 - 2026-09-02 **Bing 插件 e2e 真实界面化(零 mock)+ 登录态 token 直注**(hydra 拍板「不可以使用 mock 界面,必须真实 bing 地图界面采集;登录流程不测,采集流程用脚本签发 token 直注」):删离线 fixture 层与全部 route/登录 mock,真实 bing.com 采集数据为唯一主验收(stealth 反自动化 + dist-real 构建变体 + `e2e_seed_user.py` bing-extension-pro 场景签发真实 token 对经 chrome.storage 三键直注);顺带修复两处原被 mock 掩盖的真实接线裂缝——`/subscription/status` 增可选 `product_line`(插件传 maps_extension,原端点固定 TG 线致 Pro 判定恒 FREE)、background auth watcher 把 getCurrentUser 资料回写当登录切换清态致冷启动登录态被自吞。验证:backend black/ruff/mypy + real 测试绿、插件 check/单测 175/生产 build 绿、真实 e2e 5/5(匿名 8s / Pro 9s)。合同:`feat/016.Bing插件/references/T1-技术设计.md` §6。
 

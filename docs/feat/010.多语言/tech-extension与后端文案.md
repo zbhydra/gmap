@@ -166,8 +166,8 @@ popup 顶部语言切换器:
 - `_load_translations()`:`locales/` 目录 `glob("*.json")`,每个文件 stem 当 lang,key 存入 `self._translations[lang]`。
 - `translate(key, language=DEFAULT_LANGUAGE, **kwargs) -> str`:
   1. `LANGUAGE_MAPPING.get(language, DEFAULT_LANGUAGE)` 规范化语言。
-  2. 按 `.` 切 key,逐层 `dict.get` 下钻(支持多层,如 `resp_code.AUTH_INVALID_TOKEN`、`email.title`)。
-  3. 命中字符串且有 kwargs → `str.format(**kwargs)` 插值;命中字符串无 kwargs → 原样;未命中(下钻到非 str)→ **回退返回 key 本身**(不抛异常)。
+  2. 按 `.` 切 key,逐层查找字典(支持多层,如 `resp_code.AUTH_INVALID_TOKEN`、`email.title`)。
+  3. 命中字符串且有 kwargs → `str.format(**kwargs)` 插值;命中字符串无 kwargs → 原样;未命中或值非字符串 → 抛出包含 locale 与 key 的配置错误，禁止把内部 key 返回给用户。
 - `get_supported_languages()`:返回已加载的语言 stem 列表(即 `self._translations.keys()`)。
 
 ### 6.5 文案文件结构(`backend/src/app/i18n/locales/*.json`)
@@ -176,8 +176,8 @@ popup 顶部语言切换器:
 - 顶层分两大类:
   - `resp_code`:HTTP 错误码消息(如 `INTERNAL_SERVER_ERROR`、`INVALID_REQUEST`、`AUTH_INVALID_TOKEN`、`AUTH_IP_BLOCKED`、`AUTH_REFRESH_TOKEN_EXPIRED` …),供错误中间件/service 按 `resp_code.{KEY}` 查询。
   - `email`:邮件文案(`title`、`greeting` 等),供邮件发送场景查询。
-- 结构为嵌套 JSON,key 用 `resp_code` / `email` 顶层分组;`translate` 用点连接跨层查询。
-- 新增错误码/邮件文案:14 个 JSON 同步加;漏语言时 translate 在该语言下命中失败会回退返回 key(不崩,但用户看到 key 原文,故必须同步)。
+- 结构为嵌套 JSON,key 用 `resp_code` / `email` 顶层分组;`translate` 用点连接跨层查询。成功响应固定 `code=10000`、`msg=""`，客户端只消费 `data`；`SUCCESS` 不进入 `resp_code`。
+- `resp_code` 必须与除 `SUCCESS` 外的 `CommonCode` 精确一致，由集合测试门禁。新增错误码时 14 个 JSON 必须同步增加，缺失或遗留无效键都会使测试失败。
 
 ## 7. 新增语言步骤(extension + backend)
 

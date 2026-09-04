@@ -137,7 +137,7 @@ GET /api/client/credit/checkout-configs
       }
     ]
   },
-  "msg": "success"
+  "msg": ""
 }
 ```
 

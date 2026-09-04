@@ -42,7 +42,7 @@ curl 'https://tg-download-api.telegramdownloadmedia.com/api/external/system/dash
 ```json
 {
   "code": 10000,
-  "msg": "success",
+  "msg": "",
   "data": {}
 }
 ```

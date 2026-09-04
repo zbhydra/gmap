@@ -3175,7 +3175,7 @@ test('Credits checkout client uses Credits configs and never unfinished orders',
     if (parsedUrl.pathname === '/api/client/credit/checkout-configs') {
       return new Response(JSON.stringify({
         code: 10000,
-        msg: 'success',
+        msg: '',
         data: {
           checkout_configs: [
             {
@@ -3209,7 +3209,7 @@ test('Credits checkout client uses Credits configs and never unfinished orders',
     if (parsedUrl.pathname === '/api/client/order/create') {
       return new Response(JSON.stringify({
         code: 10000,
-        msg: 'success',
+        msg: '',
         data: {
           order_no: 'ORD-CREDIT-CREATE',
           amount: 6300000,
@@ -3225,7 +3225,7 @@ test('Credits checkout client uses Credits configs and never unfinished orders',
     if (parsedUrl.pathname === '/api/client/order/status/ORD-CREDIT-CREATE') {
       return new Response(JSON.stringify({
         code: 10000,
-        msg: 'success',
+        msg: '',
         data: {
           order_no: 'ORD-CREDIT-CREATE',
           product_class: 2,
@@ -3285,7 +3285,7 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
   const fetchCalls = []
   const mapsPlan = (productId, amount) => ({
     code: 10000,
-    msg: 'success',
+    msg: '',
     data: {
       checkout_configs: [
         {
@@ -3423,7 +3423,7 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
   }
   const planData = (productId, amount) => ({
     code: 10000,
-    msg: 'success',
+    msg: '',
     data: {
       checkout_configs: [{
         product_class: 1,
@@ -3594,7 +3594,7 @@ test('PayPal success return page polls order status every 3 seconds and switches
       return new Response(
         JSON.stringify({
           code: 10000,
-          msg: 'success',
+          msg: '',
           data: {
             order_no: 'ORD-PAYPAL-RETURN',
             product_class: productClass,

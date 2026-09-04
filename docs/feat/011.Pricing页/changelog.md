@@ -1,5 +1,9 @@
 # 011 · Pricing 页 - 变更记录
 
+## 2026-09-02 Free 档口径校准(已落库生效)
+
+- 上条「Free 档口径仅卡面展示,不落库、暂不生效」已被 006 域 2026-09-02「FREE 档统一」推翻:free 行已播种落库(monthly_quota:online 1,000 records/月、maps_extension 1,000 records/月、api 20 requests/月),maps_extension 线免费额度经 `/maps/usage` 真实生效(usage total 为唯一真源);online/api 两线尚无消费入口,待 014 云端落地。
+
 ## 2026-08-31 Pricing 页重写为三产品线 tab 版(文档同步)
 
 **Why**:TG 主站退役、MapsGrab 站接管 website/ 后,Pricing 页实态已是 Online / Extension / API 三 tab 形态;旧文档仍描述已不存在的单页(账号→Credits→Unlimited)与好评赠送流程,与源码及 ROADMAP C5 口径割裂。本文档单元不改代码,只把 feat/tech 重建到现役实现口径。
