@@ -1,0 +1,504 @@
+{
+  "portland": {
+    "regular": {
+      "0x8626ba679fac0a75:0xf7490813806a9613": {
+        "title": "Starbucks Coffee Company",
+        "fid": "0x8626ba679fac0a75:0xf7490813806a9613",
+        "lat": 30.3615404,
+        "lng": -91.0129295
+      },
+      "0x8626bb5286d2ca35:0xf4252350d10bbc7e": {
+        "title": "Beignet Baton Rouge",
+        "fid": "0x8626bb5286d2ca35:0xf4252350d10bbc7e",
+        "lat": 30.409145799999997,
+        "lng": -91.02139389999999
+      },
+      "0x8626bb4128f77171:0xb8c46dc50e2dd44c": {
+        "title": "Coffee Bean Cafe",
+        "fid": "0x8626bb4128f77171:0xb8c46dc50e2dd44c",
+        "lat": 30.411960699999998,
+        "lng": -91.0438698
+      },
+      "0x8626a4bb48616973:0x4fc897bd3e1127d4": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626a4bb48616973:0x4fc897bd3e1127d4",
+        "lat": 30.4165864,
+        "lng": -91.07062409999999
+      },
+      "0x8626a4d608546b49:0x6e46d057e595bec1": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626a4d608546b49:0x6e46d057e595bec1",
+        "lat": 30.3860016,
+        "lng": -91.0629756
+      },
+      "0x8626b1f8335e4c87:0x624890b080e2e942": {
+        "title": "Starbucks",
+        "fid": "0x8626b1f8335e4c87:0x624890b080e2e942",
+        "lat": 30.272289999999998,
+        "lng": -90.98465
+      },
+      "0x8626b75596586ac3:0xc6e20183b51ec83d": {
+        "title": "Ohana Sips",
+        "fid": "0x8626b75596586ac3:0xc6e20183b51ec83d",
+        "lat": 30.3215541,
+        "lng": -90.97746769999999
+      },
+      "0x8626b727bdee34ab:0x73d231685895e06": {
+        "title": "Crepe'resso",
+        "fid": "0x8626b727bdee34ab:0x73d231685895e06",
+        "lat": 30.2816576,
+        "lng": -90.9537738
+      },
+      "0x8626a59aa07cacd7:0x4c6cdcf93b792afc": {
+        "title": "Starbucks Coffee",
+        "fid": "0x8626a59aa07cacd7:0x4c6cdcf93b792afc",
+        "lat": 30.369149999999998,
+        "lng": -91.07343999999999
+      },
+      "0x8626b5ba12eb7f8f:0x95ec1a3a41be1665": {
+        "title": "7 Brew Coffee",
+        "fid": "0x8626b5ba12eb7f8f:0x95ec1a3a41be1665",
+        "lat": 30.211257999999997,
+        "lng": -90.936731
+      },
+      "0x8626b5642f4f8097:0x93999792b852f99f": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626b5642f4f8097:0x93999792b852f99f",
+        "lat": 30.210393099999997,
+        "lng": -90.9224218
+      },
+      "0x8626bb1f922fcccf:0xe28fd2c4021e57dd": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626bb1f922fcccf:0xe28fd2c4021e57dd",
+        "lat": 30.385535599999997,
+        "lng": -91.0387763
+      },
+      "0x8626a58a83d1dcb9:0x20f872bb8d73728": {
+        "title": "PJ’s Coffee",
+        "fid": "0x8626a58a83d1dcb9:0x20f872bb8d73728",
+        "lat": 30.3865154,
+        "lng": -91.076151
+      },
+      "0x8626bec26f5960ff:0x313a3fa12ec71c8f": {
+        "title": "Starbucks Coffee Company",
+        "fid": "0x8626bec26f5960ff:0x313a3fa12ec71c8f",
+        "lat": 30.457061999999997,
+        "lng": -90.9569915
+      },
+      "0x8626b5e695f86f57:0xbb721ea8cfe37833": {
+        "title": "Stepping Stones Club",
+        "fid": "0x8626b5e695f86f57:0xbb721ea8cfe37833",
+        "lat": 30.2408358,
+        "lng": -90.9209499
+      },
+      "0x8626b73d92229afb:0x8b503382c13f6186": {
+        "title": "Game On Cafe",
+        "fid": "0x8626b73d92229afb:0x8b503382c13f6186",
+        "lat": 30.2557579,
+        "lng": -90.9309413
+      },
+      "0x8626b95b150cedb9:0xfd83d2c8451888f4": {
+        "title": "Gospel Grounds",
+        "fid": "0x8626b95b150cedb9:0xfd83d2c8451888f4",
+        "lat": 30.416964,
+        "lng": -90.9173138
+      },
+      "0x8626b59a569a648b:0xba4526c5a346f649": {
+        "title": "PJ's Coffee",
+        "fid": "0x8626b59a569a648b:0xba4526c5a346f649",
+        "lat": 30.2114262,
+        "lng": -90.92348539999999
+      },
+      "0x8626a576dd91d9b3:0xd3e024e35c39e21c": {
+        "title": "7 Brew Coffee",
+        "fid": "0x8626a576dd91d9b3:0xd3e024e35c39e21c",
+        "lat": 30.401179199999998,
+        "lng": -91.10528289999999
+      },
+      "0x8626bdcd1f7532bb:0xcec66711508b45bc": {
+        "title": "Boba ParTea",
+        "fid": "0x8626bdcd1f7532bb:0xcec66711508b45bc",
+        "lat": 30.432357,
+        "lng": -91.0068198
+      }
+    },
+    "browser": {
+      "0x8626a548bf73e183:0x1b07b2b37591bd8b": {
+        "title": "bonjour",
+        "fid": "0x8626a548bf73e183:0x1b07b2b37591bd8b",
+        "lat": 30.396098,
+        "lng": -91.108099
+      },
+      "0x8626bbcf0d6fa43d:0xdbc356be46f72c7c": {
+        "title": "STIR Coffee",
+        "fid": "0x8626bbcf0d6fa43d:0xdbc356be46f72c7c",
+        "lat": 30.35543,
+        "lng": -91.0018127
+      },
+      "0x8626c90076780ffd:0x8946beea68e3577": {
+        "title": "Mais La Coffee and Tea",
+        "fid": "0x8626c90076780ffd:0x8946beea68e3577",
+        "lat": 30.2554229,
+        "lng": -90.8695923
+      },
+      "0x8626b5f075c2d4f7:0x4f0709229e656fa2": {
+        "title": "Sips Coffee & Gifts",
+        "fid": "0x8626b5f075c2d4f7:0x4f0709229e656fa2",
+        "lat": 30.236023499999998,
+        "lng": -90.9136608
+      },
+      "0x8626a5aedf9d7681:0x605f0654b668e92c": {
+        "title": "Latte Factory",
+        "fid": "0x8626a5aedf9d7681:0x605f0654b668e92c",
+        "lat": 30.389639,
+        "lng": -91.0879384
+      },
+      "0x8626a5c4bce6f797:0xbf25519b62563280": {
+        "title": "Rêve Coffee Lab BTR",
+        "fid": "0x8626a5c4bce6f797:0xbf25519b62563280",
+        "lat": 30.373961299999998,
+        "lng": -91.08788589999999
+      },
+      "0x8626b7f0424d90dd:0x60f24a86796a9219": {
+        "title": "Amour Cafe' & CO - Coffee & Bookstore",
+        "fid": "0x8626b7f0424d90dd:0x60f24a86796a9219",
+        "lat": 30.3220535,
+        "lng": -90.9376916
+      },
+      "0x8626ba88811375d3:0x4d1a323db9a98f89": {
+        "title": "Rue Beignet",
+        "fid": "0x8626ba88811375d3:0x4d1a323db9a98f89",
+        "lat": 30.352029599999998,
+        "lng": -91.0206609
+      },
+      "0x8626b74bc686a17f:0xe13dbb24af5aa98b": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626b74bc686a17f:0xe13dbb24af5aa98b",
+        "lat": 30.3194746,
+        "lng": -90.9772789
+      },
+      "0x8626b5eb8910149d:0xa010dd96180ad00e": {
+        "title": "Starlite Espresso Cafe",
+        "fid": "0x8626b5eb8910149d:0xa010dd96180ad00e",
+        "lat": 30.2289025,
+        "lng": -90.9202476
+      },
+      "0x8626bb7642156a1d:0x9660640d6fc5be9a": {
+        "title": "Café Verdino",
+        "fid": "0x8626bb7642156a1d:0x9660640d6fc5be9a",
+        "lat": 30.3922727,
+        "lng": -91.01999269999999
+      },
+      "0x8626a50054b2cdcd:0x535664e7080275d7": {
+        "title": "Crave lab",
+        "fid": "0x8626a50054b2cdcd:0x535664e7080275d7",
+        "lat": 30.4193282,
+        "lng": -91.09053639999999
+      },
+      "0x8626b74ea170b511:0x75570d312fd90bfd": {
+        "title": "PJ's Coffee",
+        "fid": "0x8626b74ea170b511:0x75570d312fd90bfd",
+        "lat": 30.2881242,
+        "lng": -90.98047799999999
+      },
+      "0x8626bb0cced1eae7:0xd2a7cfc3424eb9ca": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626bb0cced1eae7:0xd2a7cfc3424eb9ca",
+        "lat": 30.4085854,
+        "lng": -91.0250513
+      },
+      "0x8626b74be5b3936f:0xdae1b665a64c80b3": {
+        "title": "Mary Lee Donuts",
+        "fid": "0x8626b74be5b3936f:0xdae1b665a64c80b3",
+        "lat": 30.3218717,
+        "lng": -90.9780901
+      },
+      "0x8626b7004a452909:0x426c3d945ef50a73": {
+        "title": "Donuts Coffee & Burgers",
+        "fid": "0x8626b7004a452909:0x426c3d945ef50a73",
+        "lat": 30.3246526,
+        "lng": -90.92169799999999
+      },
+      "0x8626b18e6a00fcd7:0xd5551940a1f69f05": {
+        "title": "PJ's Coffee",
+        "fid": "0x8626b18e6a00fcd7:0xd5551940a1f69f05",
+        "lat": 30.326426299999998,
+        "lng": -90.9823983
+      },
+      "0x8626b73a85d89fe1:0x4644c5344f1339b3": {
+        "title": "Starbucks Coffee Company",
+        "fid": "0x8626b73a85d89fe1:0x4644c5344f1339b3",
+        "lat": 30.28378,
+        "lng": -90.9555
+      },
+      "0x8626ba85a62edf13:0x8784793c676a7fb0": {
+        "title": "Starbucks Coffee Company",
+        "fid": "0x8626ba85a62edf13:0x8784793c676a7fb0",
+        "lat": 30.3493884,
+        "lng": -91.027013
+      },
+      "0x8626ba4194e69649:0xaaa193fe2f603310": {
+        "title": "Cafeciteaux Coffee Roasters",
+        "fid": "0x8626ba4194e69649:0xaaa193fe2f603310",
+        "lat": 30.320187999999998,
+        "lng": -90.959682
+      },
+      "0x8626b7dec2fb9e63:0x2523c9f7a07a656f": {
+        "title": "Ascension Roasting Company",
+        "fid": "0x8626b7dec2fb9e63:0x2523c9f7a07a656f",
+        "lat": 30.3201771,
+        "lng": -90.9601093
+      }
+    },
+    "common": 0,
+    "jaccard": 0.0
+  },
+  "miami": {
+    "regular": {
+      "0x89de0d001b927905:0xd4f6385de550cc48": {
+        "title": "Amped Coffee House",
+        "fid": "0x89de0d001b927905:0xd4f6385de550cc48",
+        "lat": 42.725821499999995,
+        "lng": -73.7937055
+      },
+      "0x8626b5642f4f8097:0x93999792b852f99f": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626b5642f4f8097:0x93999792b852f99f",
+        "lat": 30.210393099999997,
+        "lng": -90.9224218
+      },
+      "0x8626b59a569a648b:0xba4526c5a346f649": {
+        "title": "PJ's Coffee",
+        "fid": "0x8626b59a569a648b:0xba4526c5a346f649",
+        "lat": 30.2114262,
+        "lng": -90.92348539999999
+      },
+      "0x8626a576dd91d9b3:0xd3e024e35c39e21c": {
+        "title": "7 Brew Coffee",
+        "fid": "0x8626a576dd91d9b3:0xd3e024e35c39e21c",
+        "lat": 30.401179199999998,
+        "lng": -91.10528289999999
+      },
+      "0x89d6b5b6fc7c1de1:0x8738893dd322857b": {
+        "title": "Albunn Coffee House",
+        "fid": "0x89d6b5b6fc7c1de1:0x8738893dd322857b",
+        "lat": 43.1552285,
+        "lng": -77.595624
+      },
+      "0x8626b5eb8910149d:0xa010dd96180ad00e": {
+        "title": "Starlite Espresso Cafe",
+        "fid": "0x8626b5eb8910149d:0xa010dd96180ad00e",
+        "lat": 30.2289025,
+        "lng": -90.9202476
+      },
+      "0x8626a5a8f99eb08d:0x50aaa39468c1e256": {
+        "title": "A&J’s Coffee Bean Café",
+        "fid": "0x8626a5a8f99eb08d:0x50aaa39468c1e256",
+        "lat": 30.3766209,
+        "lng": -91.1007171
+      },
+      "0x8626b74be5b3936f:0xdae1b665a64c80b3": {
+        "title": "Mary Lee Donuts",
+        "fid": "0x8626b74be5b3936f:0xdae1b665a64c80b3",
+        "lat": 30.3218717,
+        "lng": -90.9780901
+      },
+      "0x8626c12f0b5aa739:0xb33135c9f36a0e0f": {
+        "title": "7 Brew Coffee",
+        "fid": "0x8626c12f0b5aa739:0xb33135c9f36a0e0f",
+        "lat": 30.4765105,
+        "lng": -90.8640683
+      },
+      "0x89d14bb22a0fc8bd:0x7f21184fa8eddbb6": {
+        "title": "Layali Coffee House",
+        "fid": "0x89d14bb22a0fc8bd:0x7f21184fa8eddbb6",
+        "lat": 43.087667599999996,
+        "lng": -77.6119085
+      },
+      "0x8626ba88811375d3:0x4d1a323db9a98f89": {
+        "title": "Rue Beignet",
+        "fid": "0x8626ba88811375d3:0x4d1a323db9a98f89",
+        "lat": 30.352029599999998,
+        "lng": -91.0206609
+      },
+      "0x8626a5a9f999e37b:0x651fa0e6ce60cd1a": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626a5a9f999e37b:0x651fa0e6ce60cd1a",
+        "lat": 30.379748,
+        "lng": -91.09828999999999
+      },
+      "0x8626a1b0058f5887:0xf8e82a214d57b4e5": {
+        "title": "Las Brujas Coffee & Grocery",
+        "fid": "0x8626a1b0058f5887:0xf8e82a214d57b4e5",
+        "lat": 30.444260999999997,
+        "lng": -91.15653809999999
+      },
+      "0x8626b73d92229afb:0x8b503382c13f6186": {
+        "title": "Game On Cafe",
+        "fid": "0x8626b73d92229afb:0x8b503382c13f6186",
+        "lat": 30.2557579,
+        "lng": -90.9309413
+      },
+      "0x8626bb4128f77171:0xb8c46dc50e2dd44c": {
+        "title": "Coffee Bean Cafe",
+        "fid": "0x8626bb4128f77171:0xb8c46dc50e2dd44c",
+        "lat": 30.411960699999998,
+        "lng": -91.0438698
+      },
+      "0x89d6b79ed2f9da2f:0xdb9d54be9d3a2263": {
+        "title": "Little Bits Coffee Roasters",
+        "fid": "0x89d6b79ed2f9da2f:0xdb9d54be9d3a2263",
+        "lat": 43.2109443,
+        "lng": -77.59795869999999
+      },
+      "0x8626a71850727ee5:0x6868a478e830cc7": {
+        "title": "7 Brew Coffee",
+        "fid": "0x8626a71850727ee5:0x6868a478e830cc7",
+        "lat": 30.389804599999998,
+        "lng": -91.16063319999999
+      },
+      "0x8626a7c89a8ed483:0xc93d28c60aeccbc9": {
+        "title": "Le Rêve Coffee",
+        "fid": "0x8626a7c89a8ed483:0xc93d28c60aeccbc9",
+        "lat": 30.4176331,
+        "lng": -91.14523969999999
+      },
+      "0x8626bb1f922fcccf:0xe28fd2c4021e57dd": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626bb1f922fcccf:0xe28fd2c4021e57dd",
+        "lat": 30.385535599999997,
+        "lng": -91.0387763
+      },
+      "0x8626d10aaed7d8cb:0xaf1ae7094b94022f": {
+        "title": "The Front Porch",
+        "fid": "0x8626d10aaed7d8cb:0xaf1ae7094b94022f",
+        "lat": 30.2972233,
+        "lng": -90.6777005
+      }
+    },
+    "browser": {
+      "0x8626bbcf0d6fa43d:0xdbc356be46f72c7c": {
+        "title": "STIR Coffee",
+        "fid": "0x8626bbcf0d6fa43d:0xdbc356be46f72c7c",
+        "lat": 30.35543,
+        "lng": -91.0018127
+      },
+      "0x8626ba4194e69649:0xaaa193fe2f603310": {
+        "title": "Cafeciteaux Coffee Roasters",
+        "fid": "0x8626ba4194e69649:0xaaa193fe2f603310",
+        "lat": 30.320187999999998,
+        "lng": -90.959682
+      },
+      "0x8626b7f0424d90dd:0x60f24a86796a9219": {
+        "title": "Amour Cafe' & CO - Coffee & Bookstore",
+        "fid": "0x8626b7f0424d90dd:0x60f24a86796a9219",
+        "lat": 30.3220535,
+        "lng": -90.9376916
+      },
+      "0x8626bb7642156a1d:0x9660640d6fc5be9a": {
+        "title": "Café Verdino",
+        "fid": "0x8626bb7642156a1d:0x9660640d6fc5be9a",
+        "lat": 30.3922727,
+        "lng": -91.01999269999999
+      },
+      "0x8626c90076780ffd:0x8946beea68e3577": {
+        "title": "Mais La Coffee and Tea",
+        "fid": "0x8626c90076780ffd:0x8946beea68e3577",
+        "lat": 30.2554229,
+        "lng": -90.8695923
+      },
+      "0x8626a5aedf9d7681:0x605f0654b668e92c": {
+        "title": "Latte Factory",
+        "fid": "0x8626a5aedf9d7681:0x605f0654b668e92c",
+        "lat": 30.389639,
+        "lng": -91.0879384
+      },
+      "0x8626b74bc686a17f:0xe13dbb24af5aa98b": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626b74bc686a17f:0xe13dbb24af5aa98b",
+        "lat": 30.3194746,
+        "lng": -90.9772789
+      },
+      "0x8626cacf28b544a1:0x23e0983e102c0aab": {
+        "title": "Coffee House",
+        "fid": "0x8626cacf28b544a1:0x23e0983e102c0aab",
+        "lat": 30.1657346,
+        "lng": -90.8812743
+      },
+      "0x8626b7004a452909:0x426c3d945ef50a73": {
+        "title": "Donuts Coffee & Burgers",
+        "fid": "0x8626b7004a452909:0x426c3d945ef50a73",
+        "lat": 30.3246526,
+        "lng": -90.92169799999999
+      },
+      "0x8626b75596586ac3:0xc6e20183b51ec83d": {
+        "title": "Ohana Sips",
+        "fid": "0x8626b75596586ac3:0xc6e20183b51ec83d",
+        "lat": 30.3215541,
+        "lng": -90.97746769999999
+      },
+      "0x8626b7dec2fb9e63:0x2523c9f7a07a656f": {
+        "title": "Ascension Roasting Company",
+        "fid": "0x8626b7dec2fb9e63:0x2523c9f7a07a656f",
+        "lat": 30.3201771,
+        "lng": -90.9601093
+      },
+      "0x8626b18e6a00fcd7:0xd5551940a1f69f05": {
+        "title": "PJ's Coffee",
+        "fid": "0x8626b18e6a00fcd7:0xd5551940a1f69f05",
+        "lat": 30.326426299999998,
+        "lng": -90.9823983
+      },
+      "0x8626a5c4bce6f797:0xbf25519b62563280": {
+        "title": "Rêve Coffee Lab BTR",
+        "fid": "0x8626a5c4bce6f797:0xbf25519b62563280",
+        "lat": 30.373961299999998,
+        "lng": -91.08788589999999
+      },
+      "0x8626b5ba12eb7f8f:0x95ec1a3a41be1665": {
+        "title": "7 Brew Coffee",
+        "fid": "0x8626b5ba12eb7f8f:0x95ec1a3a41be1665",
+        "lat": 30.211257999999997,
+        "lng": -90.936731
+      },
+      "0x8626b74ea170b511:0x75570d312fd90bfd": {
+        "title": "PJ's Coffee",
+        "fid": "0x8626b74ea170b511:0x75570d312fd90bfd",
+        "lat": 30.2881242,
+        "lng": -90.98047799999999
+      },
+      "0x8626b5f075c2d4f7:0x4f0709229e656fa2": {
+        "title": "Sips Coffee & Gifts",
+        "fid": "0x8626b5f075c2d4f7:0x4f0709229e656fa2",
+        "lat": 30.236023499999998,
+        "lng": -90.9136608
+      },
+      "0x8626a50054b2cdcd:0x535664e7080275d7": {
+        "title": "Crave lab",
+        "fid": "0x8626a50054b2cdcd:0x535664e7080275d7",
+        "lat": 30.4193282,
+        "lng": -91.09053639999999
+      },
+      "0x808fcb0018099fad:0x940ec921cfc7b5ff": {
+        "title": "Qishr Coffee House",
+        "fid": "0x808fcb0018099fad:0x940ec921cfc7b5ff",
+        "lat": 37.3654858,
+        "lng": -121.9158629
+      },
+      "0x8626b727bdee34ab:0x73d231685895e06": {
+        "title": "Crepe'resso",
+        "fid": "0x8626b727bdee34ab:0x73d231685895e06",
+        "lat": 30.2816576,
+        "lng": -90.9537738
+      },
+      "0x8626bb0cced1eae7:0xd2a7cfc3424eb9ca": {
+        "title": "CC's Coffee House",
+        "fid": "0x8626bb0cced1eae7:0xd2a7cfc3424eb9ca",
+        "lat": 30.4085854,
+        "lng": -91.0250513
+      }
+    },
+    "common": 0,
+    "jaccard": 0.0
+  }
+}

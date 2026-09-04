@@ -42,5 +42,12 @@ class GosomApiService:
             return None
         return random.choices(items, weights=[item.weight for item in items])[0]
 
+    async def get_by_base_url(self, base_url: str) -> GosomApiItem | None:
+        """按已规范化 base_url 定向读取当前 gosom API 配置。"""
+        return next(
+            (item for item in await self.get_items() if item.base_url == base_url),
+            None,
+        )
+
 
 gosom_api_service = GosomApiService()

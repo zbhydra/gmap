@@ -1,7 +1,7 @@
 /**
  * 系统设置 API。
  *
- * 提供配置缓存刷新和当前管理员外部 API Key 操作。
+ * 提供配置缓存刷新、管理员外部 API Key 与采集引擎配置操作。
  */
 import request from "./request";
 
@@ -58,6 +58,13 @@ export interface GosomApiConfig {
   items: GosomApiItem[];
 }
 
+/** Gmap 采集引擎配置；代理按列表顺序使用，concurrency 为每进程预算。 */
+export interface GmapEngineConfig {
+  provider: "http" | "gosom";
+  proxies: string[];
+  concurrency: number;
+}
+
 /** 查询当前管理员 API Key 元信息。 */
 export function getAdminApiKeyMeta() {
   return request.get<never, AdminApiKeyMeta>("/system-settings/api-key");
@@ -83,4 +90,14 @@ export function getGosomApiConfig() {
 /** 保存 gosom 引擎 API 配置。 */
 export function saveGosomApiConfig(config: GosomApiConfig) {
   return request.post<never, GosomApiConfig>("/system-settings/gosom-api", config);
+}
+
+/** 查询 Gmap 采集引擎配置。 */
+export function getGmapEngineConfig() {
+  return request.get<never, GmapEngineConfig>("/system-settings/gmap-engine");
+}
+
+/** 保存 Gmap 采集引擎配置，并返回后端归一化结果。 */
+export function saveGmapEngineConfig(config: GmapEngineConfig) {
+  return request.post<never, GmapEngineConfig>("/system-settings/gmap-engine", config);
 }

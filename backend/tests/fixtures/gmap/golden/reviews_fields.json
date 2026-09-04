@@ -1,0 +1,171 @@
+{
+  "den_newest": {
+    "variant": "den_newest",
+    "n": 180,
+    "stars_hist": {
+      "1": 9,
+      "2": 1,
+      "5": 170
+    },
+    "with_text": 155,
+    "with_owner_reply": 177,
+    "with_images": 0,
+    "with_date_iso": 180,
+    "langs": [
+      "en",
+      "es",
+      "fr"
+    ],
+    "origins": [
+      "Google"
+    ],
+    "newest_monotonic": true,
+    "oldest_monotonic": false,
+    "pages": 3,
+    "first3": [
+      {
+        "review_id": "review-5152bbecf5a29ced",
+        "stars": 5,
+        "rel_date": "a week ago",
+        "published_iso": "2026-08-20T21:37:19Z",
+        "author": "reviewer-965618b42b15",
+        "author_reviews_n": 2,
+        "local_guide": 0,
+        "lang": "en",
+        "text": "[redacted review text]",
+        "text_len": 113,
+        "translated": true,
+        "owner_reply": true,
+        "owner_reply_date": "a week ago",
+        "owner_reply_len": 115,
+        "images": 0,
+        "origin": "Google",
+        "guided_n": 0
+      },
+      {
+        "review_id": "review-425d0a172bb59e96",
+        "stars": 5,
+        "rel_date": "a week ago",
+        "published_iso": "2026-08-20T21:35:33Z",
+        "author": "reviewer-f0f9f876ca7a",
+        "author_reviews_n": 9,
+        "local_guide": 0,
+        "lang": "en",
+        "text": "[redacted review text]",
+        "text_len": 455,
+        "translated": true,
+        "owner_reply": true,
+        "owner_reply_date": "a week ago",
+        "owner_reply_len": 205,
+        "images": 0,
+        "origin": "Google",
+        "guided_n": 0
+      },
+      {
+        "review_id": "review-b8146e5e6906e60f",
+        "stars": 5,
+        "rel_date": "2 weeks ago",
+        "published_iso": "2026-08-18T19:16:01Z",
+        "author": "reviewer-0707c8527798",
+        "author_reviews_n": 4,
+        "local_guide": 0,
+        "lang": "en",
+        "text": "[redacted review text]",
+        "text_len": 912,
+        "translated": true,
+        "owner_reply": true,
+        "owner_reply_date": "2 weeks ago",
+        "owner_reply_len": 115,
+        "images": 0,
+        "origin": "Google",
+        "guided_n": 0
+      }
+    ],
+    "dup_ids": 0
+  },
+  "por_newest": {
+    "variant": "por_newest",
+    "n": 180,
+    "stars_hist": {
+      "1": 2,
+      "2": 2,
+      "3": 2,
+      "4": 9,
+      "5": 165
+    },
+    "with_text": 137,
+    "with_owner_reply": 178,
+    "with_images": 47,
+    "with_date_iso": 180,
+    "langs": [
+      "en",
+      "zh-Hant"
+    ],
+    "origins": [
+      "Google"
+    ],
+    "newest_monotonic": true,
+    "oldest_monotonic": false,
+    "pages": 3,
+    "first3": [
+      {
+        "review_id": "review-a21f9092293e27db",
+        "stars": 5,
+        "rel_date": "a day ago",
+        "published_iso": "2026-09-01T22:13:59Z",
+        "author": "reviewer-8e863944496c",
+        "author_reviews_n": 3,
+        "local_guide": 1,
+        "lang": "en",
+        "text": "[redacted review text]",
+        "text_len": 91,
+        "translated": true,
+        "owner_reply": false,
+        "owner_reply_date": null,
+        "owner_reply_len": 0,
+        "images": 0,
+        "origin": "Google",
+        "guided_n": 7
+      },
+      {
+        "review_id": "review-7ef79ecc888e71a6",
+        "stars": 5,
+        "rel_date": "a day ago",
+        "published_iso": "2026-09-01T18:08:37Z",
+        "author": "reviewer-48e377701222",
+        "author_reviews_n": 15,
+        "local_guide": 1,
+        "lang": "en",
+        "text": "[redacted review text]",
+        "text_len": 50,
+        "translated": true,
+        "owner_reply": false,
+        "owner_reply_date": null,
+        "owner_reply_len": 0,
+        "images": 0,
+        "origin": "Google",
+        "guided_n": 0
+      },
+      {
+        "review_id": "review-5577c8ff04a0540b",
+        "stars": 1,
+        "rel_date": "6 days ago",
+        "published_iso": "2026-08-27T20:08:01Z",
+        "author": "reviewer-29b63a2124f9",
+        "author_reviews_n": 0,
+        "local_guide": 0,
+        "lang": null,
+        "text": null,
+        "text_len": 0,
+        "translated": false,
+        "owner_reply": true,
+        "owner_reply_date": "6 days ago",
+        "owner_reply_len": 2,
+        "images": 0,
+        "origin": "Google",
+        "guided_n": 1
+      }
+    ],
+    "dup_ids": 0
+  }
+}

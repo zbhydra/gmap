@@ -5,6 +5,7 @@
   1. 刷新当前业务进程内配置读取缓存，并展示刷新时间和服务列表。
   2. 查询、生成和重新生成当前管理员外部 API Key；完整 key 仅在弹窗中一次性展示。
   3. 维护 gosom 引擎多条 API 配置（地址 / Key / 权重，动态增删行，整表保存）。
+  4. 维护 Gmap HTTP / gosom Provider、代理 URL 列表与每进程并发预算。
 -->
 <template>
   <div class="system-settings-view">
@@ -193,6 +194,67 @@
           </section>
         </NTabPane>
 
+        <NTabPane
+          name="gmap-engine"
+          :tab="t('systemSettings.tabGmapEngine')"
+        >
+          <section>
+            <NSpin :show="gmapEngineLoading">
+              <div class="gmap-engine-form">
+                <div class="gmap-engine-field">
+                  <NText>{{ t("systemSettings.gmapEngineProvider") }}</NText>
+                  <NRadioGroup
+                    v-model:value="gmapEngineProvider"
+                    name="gmap-engine-provider"
+                    :disabled="gmapEngineLoading"
+                  >
+                    <NRadioButton value="http">
+                      {{ t("systemSettings.gmapEngineProviderHttp") }}
+                    </NRadioButton>
+                    <NRadioButton value="gosom">
+                      {{ t("systemSettings.gmapEngineProviderGosom") }}
+                    </NRadioButton>
+                  </NRadioGroup>
+                </div>
+
+                <div class="gmap-engine-field">
+                  <NText>{{ t("systemSettings.gmapEngineProxies") }}</NText>
+                  <NInput
+                    ref="gmapEngineProxiesInput"
+                    v-model:value="gmapEngineProxies"
+                    class="gmap-engine-proxies"
+                    type="textarea"
+                    :placeholder="t('systemSettings.gmapEngineProxiesPlaceholder')"
+                    :disabled="gmapEngineLoading"
+                  />
+                </div>
+
+                <div class="gmap-engine-field">
+                  <NText>{{ t("systemSettings.gmapEngineConcurrency") }}</NText>
+                  <NInputNumber
+                    v-model:value="gmapEngineConcurrency"
+                    class="gmap-engine-concurrency"
+                    :min="1"
+                    :precision="0"
+                    :disabled="gmapEngineLoading"
+                  />
+                </div>
+              </div>
+            </NSpin>
+
+            <div class="tab-actions">
+              <NButton
+                type="primary"
+                :loading="gmapEngineSaving"
+                :disabled="gmapEngineLoading"
+                @click="handleSaveGmapEngineConfig"
+              >
+                {{ t("systemSettings.gmapEngineSave") }}
+              </NButton>
+            </div>
+          </section>
+        </NTabPane>
+
       </NTabs>
     </NCard>
 
@@ -232,6 +294,8 @@ import {
   NList,
   NListItem,
   NModal,
+  NRadioButton,
+  NRadioGroup,
   NSpace,
   NSpin,
   NTabPane,
@@ -240,16 +304,20 @@ import {
   NText,
   useDialog,
   useMessage,
+  type InputInst,
 } from "naive-ui";
 import {
   generateAdminApiKey,
   getAdminApiKeyMeta,
+  getGmapEngineConfig,
   getGosomApiConfig,
   refreshConfigCache,
   saveGosomApiConfig,
+  saveGmapEngineConfig,
   type AdminApiKeyMeta,
   type ConfigCacheRefreshResult,
   type GosomApiItem,
+  type GmapEngineConfig,
 } from "@/api/system-settings";
 import { formatAdminTimeMs } from "@/utils/time";
 
@@ -269,12 +337,18 @@ const apiKeyLoading = ref(false);
 const generatingApiKey = ref(false);
 const gosomLoading = ref(false);
 const gosomSaving = ref(false);
+const gmapEngineLoading = ref(false);
+const gmapEngineSaving = ref(false);
 const activeTab = ref("config-cache");
 const cacheRefreshResult = ref<ConfigCacheRefreshResult | null>(null);
 const apiKeyMeta = ref<AdminApiKeyMeta | null>(null);
 const generatedApiKey = ref("");
 const showGeneratedApiKeyModal = ref(false);
 const gosomRows = ref<GosomApiRow[]>([]);
+const gmapEngineProvider = ref<GmapEngineConfig["provider"]>("http");
+const gmapEngineProxies = ref("");
+const gmapEngineConcurrency = ref<number | null>(1);
+const gmapEngineProxiesInput = ref<InputInst | null>(null);
 
 /** 只有已知 API Key 状态时才允许生成，避免加载失败时绕过重新生成确认。 */
 const canGenerateApiKey = computed(
@@ -465,9 +539,64 @@ async function handleSaveGosomConfig() {
   }
 }
 
+/** 用后端归一化对象覆盖表单，确保重载前后的展示口径一致。 */
+function fillGmapEngineForm(config: GmapEngineConfig) {
+  gmapEngineProvider.value = config.provider;
+  gmapEngineProxies.value = config.proxies.join("\n");
+  gmapEngineConcurrency.value = config.concurrency;
+}
+
+/** 加载 Gmap Provider、代理列表和每进程并发预算。 */
+async function loadGmapEngineConfig() {
+  gmapEngineLoading.value = true;
+  try {
+    fillGmapEngineForm(await getGmapEngineConfig());
+  } catch {
+    // 异常响应可能携带配置回显，禁止把明文代理凭据写入日志。
+    console.error("SystemSettingsView.loadGmapEngineConfig() 加载失败");
+    message.error(t("systemSettings.gmapEngineLoadFailed"));
+  } finally {
+    gmapEngineLoading.value = false;
+  }
+}
+
+/** 保存 Gmap Engine 配置；HTTP 模式的空代理列表在前端定位拦截。 */
+async function handleSaveGmapEngineConfig() {
+  const proxies = gmapEngineProxies.value
+    .split("\n")
+    .map((proxy) => proxy.trim())
+    .filter(Boolean);
+  if (gmapEngineProvider.value === "http" && proxies.length === 0) {
+    message.warning(t("systemSettings.gmapEngineHttpProxyRequired"));
+    gmapEngineProxiesInput.value?.focus();
+    return;
+  }
+  if (gmapEngineConcurrency.value === null || gmapEngineConcurrency.value < 1) {
+    message.warning(t("systemSettings.gmapEngineConcurrencyRequired"));
+    return;
+  }
+
+  gmapEngineSaving.value = true;
+  try {
+    fillGmapEngineForm(await saveGmapEngineConfig({
+      provider: gmapEngineProvider.value,
+      proxies,
+      concurrency: gmapEngineConcurrency.value,
+    }));
+    message.success(t("systemSettings.gmapEngineSaveSuccess"));
+  } catch {
+    // 保存异常可能携带请求体，禁止把明文代理凭据写入日志或通知。
+    console.error("SystemSettingsView.handleSaveGmapEngineConfig() 保存失败");
+    message.error(t("systemSettings.gmapEngineSaveFailed"));
+  } finally {
+    gmapEngineSaving.value = false;
+  }
+}
+
 onMounted(() => {
   void loadApiKeyMeta();
   void loadGosomConfig();
+  void loadGmapEngineConfig();
 });
 
 </script>
@@ -519,6 +648,30 @@ onMounted(() => {
 
 .gosom-add {
   margin-top: 12px;
+}
+
+.gmap-engine-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.gmap-engine-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.gmap-engine-proxies {
+  width: 100%;
+  min-height: 200px;
+}
+
+.gmap-engine-concurrency {
+  width: 160px;
 }
 
 .api-key-box {

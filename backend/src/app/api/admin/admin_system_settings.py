@@ -6,10 +6,11 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from app.api.admin_dependencies import AdminContext, get_admin_user
-from app.schemas.admin_schema import GosomApiConfigRequest
+from app.schemas.admin_schema import GmapEngineConfigRequest, GosomApiConfigRequest
 from app.services.admin_api_key_service import admin_api_key_service
 from app.services.admin_system_settings_service import admin_system_settings_service
 from app.services.gosom_api_service import gosom_api_service
+from app.services.maps_engine_service import maps_engine_service
 from app.utils.response import ResponseUtils
 
 router = APIRouter(prefix="/system-settings", tags=["admin-system-settings"])
@@ -59,3 +60,22 @@ async def save_gosom_api_config(
     """整表保存 gosom 引擎 API 配置到 system_data；key 按运维决策明文存储，不加密。"""
     items = await gosom_api_service.save_items(req.items)
     return ResponseUtils.ok({"items": [item.model_dump() for item in items]})
+
+
+@router.get("/gmap-engine")
+async def get_gmap_engine_config(
+    _admin: AdminContext = Depends(get_admin_user),
+) -> JSONResponse:
+    """查询 gmap 引擎配置；未配置时返回 HTTP、空代理与默认并发预算。"""
+    config = await maps_engine_service.get_config()
+    return ResponseUtils.ok(config.model_dump())
+
+
+@router.post("/gmap-engine")
+async def save_gmap_engine_config(
+    req: GmapEngineConfigRequest,
+    _admin: AdminContext = Depends(get_admin_user),
+) -> JSONResponse:
+    """整对象保存 gmap 采集引擎配置到 system_data；代理凭据按运维决策明文存储，不加密。"""
+    config = await maps_engine_service.save_config(req)
+    return ResponseUtils.ok(config.model_dump())

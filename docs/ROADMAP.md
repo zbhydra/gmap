@@ -38,8 +38,8 @@
 | B1 | Online Scraper(关键词批量任务,云端执行) | 官网 pricing tab=online | 🔍浅(内部未调研,选型见 research 方案调研) | ⬜ |
 | B2 | Scraper API / Reviews API / Photos API | 官方 Postman 文档(v2 三端点契约) | 🔍 | ⬜ |
 | B3 | MCP Server(Claude/Cursor/VSCode/Codex 接入) | 官网落地页 | 🔍 | ⬜ |
-| B4 | 抓取引擎(gosom/google-maps-scraper SaaS Edition + 代理池) | research 方案调研 §4/§6 | 🔍 | ⬜ |
-| B5 | 云端 POC:封锁率 / 资源画像 / Postgres 内网化(Gate) | research 方案调研 §9/§10 | 🔍 | ⬜ |
+| B4 | 抓取引擎(自研 RPC fetcher 为主、gosom 可选 + 代理池；无状态 Provider 合同见 `feat/014.Maps云端/tech-引擎Provider层.md`，执行计划见 `feat/014.Maps云端/plans/001.Provider采集基建.md`) | research 方案调研 §12.30–§13 | 🚧 | ✅ (2026-09-04，真实 Google/gosom 网络冒烟待凭据) |
+| B5 | 云端 POC:HTTP 长周期封锁率 / 代理流量爬坡 + gosom Postgres 内网化(单机部署 + 1,500 词压测已入 research §12,正式 Gate 判定未做) | research 方案调研 §9/§12.34 | 🔍 | ⬜ |
 
 ### C · 商业化(扩展现有域)
 
@@ -79,7 +79,7 @@
 
 | 阶段 | 内容 | 前置 | 估时 |
 | --- | --- | --- | --- |
-| **Gate · 云端 POC** | B5:一台 CX43 + `-c 8` 实跑,封锁率/资源画像/DB 内网化;**只 Gate 云端路线,不阻塞插件** | 无 | 3–5 天 |
+| **Gate · 云端 POC** | B5:HTTP 路线做长周期封锁率/代理流量爬坡;gosom 路线上线前验证 Postgres 内网化;**只 Gate 云端路线,不阻塞插件** | 无 | 3–5 天 |
 | **阶段 1 · 插件全量** | **A1–A13 全部 13 项**,验收 = 功能面对齐竞品 v2.5.1(已拍板的架构差异除外:不强制登录、自研服务端、不上 Chrome 商店)。顺序:A1 地基(骨架+远程配置+搜索闭环)→ A2/A3/A5/A8 采集导出主链 → A6 批量面板 → A9/A12 打磨 → A11 账号配额(扩 007/003)→ A4 服务端自研+接入 → A10 集成 → A7(已调研完毕)→ A13 上架 | 无,可立即启动 | 7–9 周 |
 | **阶段 2 · 云端服务** | B4 + B1/B2 部署与 credits 对接。**与阶段 1 并行**:技术栈零交集(Go/gosom vs TS/MV3);唯一耦合点 = 003 计量对接,C2 计费骨架决策已前置。**C2 已拍板(2026-08-30 hydra):套餐参考竞品分产品订阅**(插件 Free/$39 Pro/$99 Business 月付;Online/API 档位随云端产品化解禁);006 需一轮扩展(产品线维度 + 月度 records 额度映射,当前为 TG 单产品每日次数形态) | Gate 通过;C2 骨架决策 | 2–3 周 |
 | **阶段 3 · 营销站 + 商业化** | D5 + C2/C5 定价决策与接入;Edge/Firefox 商店页。**占位入口接真落地页,页内未落地功能按钮点击无效**(2026-08-31 hydra 裁决,替代 2026-08-30「入口留空点击无效」) | 阶段 1 | 1–2 周 |
@@ -95,6 +95,8 @@
 - 估时假设:单人 + AI 助手;插件全量(阶段 1)约 7–9 周,加云端与增长完整对标约 3–4 个月。
 
 ## 5 · 变更记录
+
+- 2026-09-04 **B4 Provider 采集基建完成**：HTTP Search/Reviews、gosom submit/get、代理与并发配置、脱敏 fixture/golden 及 real 测试落地；真实 Google/gosom 网络冒烟因缺少可用凭据未执行。
 
 - 2026-09-02 **Bing 插件 e2e 真实界面化(零 mock)+ 登录态 token 直注**(hydra 拍板「不可以使用 mock 界面,必须真实 bing 地图界面采集;登录流程不测,采集流程用脚本签发 token 直注」):删离线 fixture 层与全部 route/登录 mock,真实 bing.com 采集数据为唯一主验收(stealth 反自动化 + dist-real 构建变体 + `e2e_seed_user.py` bing-extension-pro 场景签发真实 token 对经 chrome.storage 三键直注);顺带修复两处原被 mock 掩盖的真实接线裂缝——`/subscription/status` 增可选 `product_line`(插件传 maps_extension,原端点固定 TG 线致 Pro 判定恒 FREE)、background auth watcher 把 getCurrentUser 资料回写当登录切换清态致冷启动登录态被自吞。验证:backend black/ruff/mypy + real 测试绿、插件 check/单测 175/生产 build 绿、真实 e2e 5/5(匿名 8s / Pro 9s)。合同:`feat/016.Bing插件/references/T1-技术设计.md` §6。
 

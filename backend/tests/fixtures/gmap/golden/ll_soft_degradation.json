@@ -1,0 +1,88 @@
+{
+  "verdict": {
+    "A_hits_all": true,
+    "B_hits_all": true
+  },
+  "runs": [
+    {
+      "run": "A_nid",
+      "viewport": "portland",
+      "n": 20,
+      "center": [
+        45.522,
+        -122.677
+      ],
+      "hits_viewport": true
+    },
+    {
+      "run": "A_nid",
+      "viewport": "miami",
+      "n": 20,
+      "center": [
+        25.792,
+        -80.201
+      ],
+      "hits_viewport": true
+    },
+    {
+      "run": "A_nid",
+      "viewport": "portland",
+      "n": 20,
+      "center": [
+        45.522,
+        -122.677
+      ],
+      "hits_viewport": true
+    },
+    {
+      "run": "A_nid",
+      "viewport": "miami",
+      "n": 20,
+      "center": [
+        25.792,
+        -80.201
+      ],
+      "hits_viewport": true
+    },
+    {
+      "run": "B_noid",
+      "viewport": "portland",
+      "n": 20,
+      "center": [
+        45.521,
+        -122.678
+      ],
+      "hits_viewport": true
+    },
+    {
+      "run": "B_noid",
+      "viewport": "miami",
+      "n": 20,
+      "center": [
+        25.792,
+        -80.2
+      ],
+      "hits_viewport": true
+    },
+    {
+      "run": "B_noid",
+      "viewport": "portland",
+      "n": 20,
+      "center": [
+        45.521,
+        -122.678
+      ],
+      "hits_viewport": true
+    },
+    {
+      "run": "B_noid",
+      "viewport": "miami",
+      "n": 20,
+      "center": [
+        25.792,
+        -80.2
+      ],
+      "hits_viewport": true
+    }
+  ]
+}

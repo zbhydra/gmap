@@ -195,6 +195,19 @@
     "gosomRequired": "Base URL, API Key and weight are required on every row",
     "gosomLoadFailed": "Failed to load Gosom API config",
     "gosomSaveSuccess": "Gosom API config saved",
-    "gosomSaveFailed": "Failed to save Gosom API config"
+    "gosomSaveFailed": "Failed to save Gosom API config",
+    "tabGmapEngine": "Gmap Engine",
+    "gmapEngineProvider": "Engine",
+    "gmapEngineProviderHttp": "HTTP",
+    "gmapEngineProviderGosom": "Gosom",
+    "gmapEngineProxies": "Proxy URLs",
+    "gmapEngineProxiesPlaceholder": "One complete proxy URL per line",
+    "gmapEngineConcurrency": "Concurrency per process",
+    "gmapEngineSave": "Save",
+    "gmapEngineHttpProxyRequired": "At least one proxy URL is required for the HTTP engine",
+    "gmapEngineConcurrencyRequired": "Concurrency per process must be at least 1",
+    "gmapEngineLoadFailed": "Failed to load Gmap Engine config",
+    "gmapEngineSaveSuccess": "Gmap Engine config saved",
+    "gmapEngineSaveFailed": "Failed to save Gmap Engine config"
   }
 }

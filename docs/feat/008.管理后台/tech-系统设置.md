@@ -9,6 +9,7 @@
 - 刷新配置读取缓存。
 - 生成 / 轮换当前管理员的外部 API Key。
 - 维护 gosom 抓取引擎的多条 API 配置(地址 / Key / 权重,存 `system_data`,调用方按权重随机选用)。
+- 维护 Maps 云端的引擎选择、代理 URL 列表与每进程出站并发预算。
 
 除这些明确入口外,它不是通用配置编辑器。
 
@@ -192,6 +193,43 @@ API Key 生成格式:
 - 存在未填完整的行时无法保存;删除全部行后保存即清空配置,重新打开 `items` 为空。
 - 旧单对象格式存量数据读取时自动按权重 1 的单行回显。
 
+## Gmap 引擎配置
+
+系统设置页提供 "Gmap Engine" tab，维护 HTTP / gosom 引擎选择、HTTP 代理 URL 列表和每个 business 进程的 Google 出站并发预算。代理的选取、重试与脱敏合同以 `@../014.Maps云端/tech-引擎Provider层.md` §5.3 为唯一事实源。
+
+### 数据与接口
+
+`system_data` 以 `gmap_engine` 单行整对象保存：
+
+| 字段 | 类型 | 必传 | 说明 |
+| --- | --- | --- | --- |
+| `provider` | enum | 是 | `http` / `gosom`，新任务使用的引擎 |
+| `proxies` | `string[]` | 是 | 完整代理 URL，0–100 条；HTTP 保存时至少 1 条 |
+| `concurrency` | `int` | 是 | 每个 business 进程的 Google 出站并发预算，至少 1 |
+
+| 方法 | 路径 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| GET | `/api/admin/system-settings/gmap-engine` | `get_admin_user` | 读取配置；未配置时返回默认视图 |
+| POST | `/api/admin/system-settings/gmap-engine` | `get_admin_user` | 校验并整对象覆盖保存 |
+
+保存时将每行首尾空白剔除，忽略空行，按规范化后完整 URL 去重并保留首次出现顺序。URL 只接受 `http`、`https`、`socks5`、`socks5h` scheme，必须有 host 和 port；用户名与密码作为 URL authority 的可选部分。HTTP + 空列表、URL 无效或并发预算小于 1 时返回全局 `VALIDATION_ERROR`，不新增错误码。
+
+代理凭据按运维决策明文存储和回显，但不得进日志或错误文本。旧 `webshare: {endpoint, username, password}` 结构删除，不保留兼容读取或双写。
+
+### 前端
+
+- 引擎用 HTTP / Gosom 分段控件。
+- 代理列表用全宽多行输入，每行一条完整 URL，高度至少 200px；支持一次粘贴一条或多条。
+- 每进程并发预算用整数输入，宽 160px，最小值 1。
+- Gosom 模式下代理列表仍可编辑，允许保存空列表；HTTP 模式下空列表时前端拦截并定位到输入区。
+- 全部文案走 i18n；保存成功以后端返回的归一化对象回填。
+
+### 验收
+
+- HTTP 模式分别保存 1 条和多条代理，重载后顺序与内容一致。
+- 多行粘贴中的空行与重复 URL 被正确归一化；非法 scheme、无 host/port 和 HTTP 空列表无法保存。
+- Gosom 模式可保存空代理列表；系统日志、校验错误与前端通知中均不出现代理凭据。
+
 ## 实现锚点
 
 | 模块 | 后端 API | 后端 service |
@@ -199,3 +237,4 @@ API Key 生成格式:
 | 系统设置 | `@backend/src/app/api/admin/admin_system_settings.py` | `@backend/src/app/services/admin_system_settings_service.py` |
 | API Key | 同上 | `@backend/src/app/services/admin_api_key_service.py` |
 | Gosom API 配置 | 同上 | `@backend/src/app/services/gosom_api_service.py`(读写 + 加权随机选取);键名常量在 `@backend/src/app/constants/gosom.py` |
+| Gmap 引擎配置 | 同上 | `@backend/src/app/services/maps_engine_service.py`;运行合同见 `@../014.Maps云端/tech-引擎Provider层.md` §5.3 与 §7 |

@@ -195,6 +195,19 @@
     "gosomRequired": "每行的 API 地址、API Key 和权重均不能为空",
     "gosomLoadFailed": "加载 Gosom API 配置失败",
     "gosomSaveSuccess": "Gosom API 配置已保存",
-    "gosomSaveFailed": "保存 Gosom API 配置失败"
+    "gosomSaveFailed": "保存 Gosom API 配置失败",
+    "tabGmapEngine": "Gmap 引擎",
+    "gmapEngineProvider": "采集引擎",
+    "gmapEngineProviderHttp": "HTTP",
+    "gmapEngineProviderGosom": "Gosom",
+    "gmapEngineProxies": "代理 URL",
+    "gmapEngineProxiesPlaceholder": "每行一条完整代理 URL",
+    "gmapEngineConcurrency": "每进程并发预算",
+    "gmapEngineSave": "保存",
+    "gmapEngineHttpProxyRequired": "HTTP 引擎至少需要一条代理 URL",
+    "gmapEngineConcurrencyRequired": "每进程并发预算不能小于 1",
+    "gmapEngineLoadFailed": "加载 Gmap 引擎配置失败",
+    "gmapEngineSaveSuccess": "Gmap 引擎配置已保存",
+    "gmapEngineSaveFailed": "保存 Gmap 引擎配置失败"
   }
 }

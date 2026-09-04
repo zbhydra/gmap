@@ -1,0 +1,8 @@
+{
+  "sessions": {
+  },
+  "verdict": {
+    "follows_exit_all": true,
+    "follows_vp_any": false
+  }
+}
