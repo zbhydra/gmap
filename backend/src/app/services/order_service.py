@@ -187,11 +187,6 @@ class OrderService(BaseService[OrderModel]):
         Returns:
             符合条件的订单列表。
         """
-        if offset < 0:
-            raise ValueError(f"order_lists invalid offset: offset={offset}")
-        if limit <= 0:
-            raise ValueError(f"order_lists invalid limit: limit={limit}")
-
         order_clauses = self._order_lists_order_clauses(order_by)
         stmt = self._apply_order_list_filters(
             select(OrderModel),
@@ -993,12 +988,7 @@ class OrderService(BaseService[OrderModel]):
             "id_asc": (OrderModel.id.asc(),),
             "id_desc": (OrderModel.id.desc(),),
         }
-        try:
-            return order_clauses[order_by]
-        except KeyError as exc:
-            raise ValueError(
-                f"order_lists invalid order_by: order_by={order_by}"
-            ) from exc
+        return order_clauses[order_by]
 
     def _apply_order_list_filters(
         self,

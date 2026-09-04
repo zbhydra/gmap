@@ -8,7 +8,6 @@ from pathlib import Path
 import aiosmtplib
 
 from app.core.config import SMTPSettings, settings
-from app.core.singleton import singleton
 from app.i18n.dependencies import DEFAULT_LANGUAGE, SupportedLanguage
 from app.i18n.translator import translator
 from app.utils.logger import logger
@@ -45,7 +44,6 @@ def smtp_account_identifier(account: SMTPSettings) -> str:
     return f"{account.host}:{account.port}/{account.from_email}"
 
 
-@singleton
 class EmailSender:
     """邮件发送工具类."""
 

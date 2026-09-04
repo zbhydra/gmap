@@ -112,9 +112,6 @@ class DashboardService:
     ) -> DashboardData:
         """获取 dashboard 页面需要的完整数据。"""
         total_started_at = time.perf_counter()
-        if days <= 0:
-            raise ValueError("days must be greater than 0")
-
         mark_types = self._get_mark_types()
         now_local = self._now_local()
         today_start = now_local.replace(hour=0, minute=0, second=0, microsecond=0)

@@ -20,6 +20,7 @@ async def test_real_verify_lock_timeout_preserves_code_then_consumes_once(
     email = f"email-lock-{test_run_id}@example.com"
     code = "123456"
     verification_key = build_redis_key(f"email_verify:{email}")
+    attempts_key = build_redis_key(f"email_verify_attempts:{email}")
     lock_key = f"email_verify:{email}"
     lock = RedisLock()
     redis = await redis_client.get_client()
@@ -45,4 +46,4 @@ async def test_real_verify_lock_timeout_preserves_code_then_consumes_once(
     finally:
         if lock_value is not None:
             await lock.release(lock_key, lock_value)
-        await email_verification_service.clear_verify_data(email)
+        await redis.delete(verification_key, attempts_key)

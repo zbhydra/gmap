@@ -87,9 +87,9 @@
 - 主题 `email.subject` 同样走 i18n。
 - 发信协议端口策略硬编码：`start_tls=(port==587)`、`use_tls=(port==465)`（见 `_send_message`）。
 
-## 8. 单例与可测试性
+## 8. 实例与可测试性
 
-- `EmailSender` 标 `@singleton`，全局实例 `email_sender = EmailSender()`。
+- `EmailSender` 是普通类，模块底部暴露唯一实例 `email_sender = EmailSender()`。
 - 构造参数支持注入账号列表与 `send_func`（`EmailSendFunc`）——**仅用于测试**，业务代码直接用全局 `email_sender`（不违反「无依赖注入」禁令，生产路径无 DI）。
 
 ## 9. 与源文档差异（以代码为准）

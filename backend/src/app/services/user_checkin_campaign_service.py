@@ -28,15 +28,6 @@ class UserCheckinCampaignService(BaseService[UserCheckinCampaignModel]):
         limit: int = 100,
     ) -> list[UserCheckinCampaignModel]:
         """按用户和时间戳条件查询签到活动列表。"""
-        if offset < 0:
-            raise ValueError(
-                f"user_checkin_campaign_lists invalid offset: offset={offset}"
-            )
-        if limit <= 0:
-            raise ValueError(
-                f"user_checkin_campaign_lists invalid limit: limit={limit}"
-            )
-
         stmt: Select[tuple[UserCheckinCampaignModel]] = select(UserCheckinCampaignModel)
         if campaign_ids is not None:
             stmt = stmt.where(UserCheckinCampaignModel.id.in_(campaign_ids))

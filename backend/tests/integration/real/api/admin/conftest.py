@@ -3,16 +3,20 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from copy import deepcopy
 from dataclasses import dataclass, field
 import uuid
 
 import pytest
-from sqlalchemy import delete, text
+from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.gmap import GMAP_ENGINE_DATA_KEY
 from app.core.database import get_engine
 from app.models.admin_model import AdminModel
+from app.models.system_data_model import JsonValue, SystemDataModel
 from app.services.admin_service import admin_service
+from app.services.system_data_service import system_data_service
 from app.utils.crypto import hash_password
 
 
@@ -21,8 +25,12 @@ _TEST_ADMIN_PASSWORD = "AdminSystemSettingsRealTest123!"
 
 @dataclass(slots=True)
 class _CleanupState:
-    """记录 real 测试创建的管理员。"""
+    """记录 gmap-engine real 测试需要恢复的数据。"""
 
+    gmap_engine_exists: bool
+    gmap_engine_value: JsonValue | None = None
+    gmap_engine_created_at: int | None = None
+    gmap_engine_updated_at: int | None = None
     admin_usernames: list[str] = field(default_factory=list)
 
 
@@ -50,8 +58,19 @@ async def real_gmap_engine_schema_ready(real_mysql_ready) -> None:
 async def real_admin_system_settings_cleanup(
     real_gmap_engine_schema_ready,
 ) -> AsyncIterator[_CleanupState]:
-    """测试结束后只清理本轮创建的管理员，不写配置表。"""
-    state = _CleanupState()
+    """保存固定配置行，并清理测试管理员后恢复其原始状态。"""
+    async with AsyncSession(get_engine()) as session:
+        row = await session.scalar(
+            select(SystemDataModel).where(
+                SystemDataModel.data_key == GMAP_ENGINE_DATA_KEY
+            )
+        )
+    state = _CleanupState(
+        gmap_engine_exists=row is not None,
+        gmap_engine_value=deepcopy(row.data_value) if row is not None else None,
+        gmap_engine_created_at=row.created_at if row is not None else None,
+        gmap_engine_updated_at=row.updated_at if row is not None else None,
+    )
     try:
         yield state
     finally:
@@ -62,7 +81,24 @@ async def real_admin_system_settings_cleanup(
                         AdminModel.username.in_(state.admin_usernames)
                     )
                 )
+            if state.gmap_engine_exists:
+                await session.execute(
+                    update(SystemDataModel)
+                    .where(SystemDataModel.data_key == GMAP_ENGINE_DATA_KEY)
+                    .values(
+                        data_value=state.gmap_engine_value,
+                        created_at=state.gmap_engine_created_at,
+                        updated_at=state.gmap_engine_updated_at,
+                    )
+                )
+            else:
+                await session.execute(
+                    delete(SystemDataModel).where(
+                        SystemDataModel.data_key == GMAP_ENGINE_DATA_KEY
+                    )
+                )
             await session.commit()
+        system_data_service.clear_cache()
 
 
 @pytest.fixture

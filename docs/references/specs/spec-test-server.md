@@ -1,16 +1,16 @@
 # 后端测试规范
 
 > AI 执行者编写后端测试的**强制规范**。所有新增测试必须遵守。
-> 代码模板参考现有测试：@backend/tests/integration/real/api/client/test_auth_flow_real.py @backend/tests/integration/real/api/client/test_lead_flow_real.py @backend/tests/integration/redis/
+> 代码模板参考现有测试：@backend/tests/integration/real/api/client/test_auth_extension_login_real.py @backend/tests/integration/real/services/test_usage_service_real.py
 
 ## 1. 核心原则
 
 1. **Real 测试优先**：real 测试必须使用本文件声明依赖的真实资源，如 MySQL、Redis、本地文件系统、OSS provider 行为。
 2. **外部出口可替换**：不可控外部服务可以用明确返回值或明确异常的替身覆盖，如 SMTP、LLM、Feishu、外部 HTTP、OSS SDK 网络出口。
-3. **外部出口必须测失败映射**：使用替身时必须覆盖外部服务不可用、成功返回映射、失败后的错误码与副作用。
+3. **先证明运行路径**：新增测试前，必须确认生产入口能够到达目标代码，且现有测试没有覆盖同一行为。
 4. **禁止依赖注入**：不要为了测试而引入依赖注入。
-5. **测试即文档**：函数名必须清晰描述场景，如 `test_real_batch_recycle_rejects_non_existent_leads`。
-6. **一个测试验一个行为**：长流程测试（注册→登录→操作）除外。
+5. **测试即文档**：函数名必须清晰描述被证明的业务行为，如 `test_real_extension_login_issue_exchange_flow_grants_extension_tokens`。
+6. **测试业务，不测试框架**：Pydantic 类型检查、SQLAlchemy 参数化等框架行为不重复测试；同一业务流程的相邻断言不拆成多个测试。
 
 ## 2. 目录与命名
 
@@ -96,13 +96,7 @@ real 测试默认禁止 mock / monkeypatch 本系统内部逻辑。
 - 日志根目录 / 临时文件目录
 - 时间窗口边界
 
-允许替换外部出口时，必须同时满足：
-
-1. 明确写出替身返回值或异常。
-2. 覆盖外部服务不可用场景。
-3. 覆盖外部服务成功返回映射。
-4. 断言失败时 DB/Redis/文件没有错误副作用。
-5. 禁止 mock 本系统 service / DB / Redis / 权限依赖 / 业务函数。
+允许替换外部出口时，替身必须给出明确返回值或异常。仅当项目包含自定义响应映射，或失败会改变本地 DB、Redis、文件状态时，才增加对应的成功或失败用例。禁止 mock 本系统 service、DB、Redis、权限依赖或业务函数。
 
 示例：
 
@@ -123,62 +117,47 @@ class _FailingLlmProvider:
 - 错误码必须用 `CommonCode` 常量，禁止硬编码数字
 - 写入操作必须有**副作用断言**（再查一次确认 DB/Redis 状态变更）
 
-## 7. 每个方法的最低用例要求
+## 7. 测试选择
 
-| 方法类型 | 最低用例数 | 必须包含 |
-|----------|-----------|---------|
-| 简单 CRUD | 2 | 正常 + 不存在/空结果 |
-| 带校验的写入 | 3 | 正常 + 校验失败 + 权限拒绝 |
-| 批量操作 | 4 | 正常 + 超数量限制 + 部分无效 ID + 空列表 |
-| 删除/回收 | 3 | 正常 + 不存在 + 状态不允许 |
-| 列表/搜索 | 3 | 有数据 + 空结果 + 过滤组合 |
-| 导入/导出 | 3 | 正常流程 + 无效文件 + 重复处理 |
+默认只为一项业务能力保留一个最短主流程测试。新增测试必须同时满足：
 
-## 8. 输入边界覆盖矩阵
+1. 存在生产入口到目标代码的真实调用链。
+2. 当前测试层不能证明该行为。
+3. 覆盖的是项目自有逻辑，而不是依赖或框架的既有能力。
 
-每个**写入端点**必须覆盖：正常值、min/max 边界值、越界值、XSS payload、SQL 注入字符、Unicode 控制字符、缺失必填字段、类型错误。
+仅以下情况增加独立测试：
 
-每个 API real 测试文件必须维护本文件覆盖的写入端点矩阵。可以写在文件顶部注释，或集中维护到 `docs/tests/backend-real-coverage.md`。
-真实外部网络用例可以使用环境变量 skip，文件内仍需保留 `real` 标记、覆盖矩阵和可 collect 的权限/副作用/失败映射用例。
+- 已发生且可能复发的缺陷。
+- 金额、权限、数据丢失或并发一致性。
+- 项目实现的非平凡分支、转换或错误映射。
+- 外部服务失败会改变本地持久化状态。
 
-| Endpoint | Happy | Permission | Missing | Type | Min/Max | Overflow | XSS | SQLi | Unicode | Side Effect |
-|----------|-------|------------|---------|------|---------|----------|-----|------|---------|-------------|
+不按方法、端点或字段规定最低用例数。同一行为在 API、service、数据访问层只保留最接近真实入口、证据最完整的一条测试。
 
-字段含义：
+## 8. 不测试的内容
 
-- `Happy`：正常请求。
-- `Permission`：权限拒绝；认证/权限守卫已在集中测试覆盖的端点可标 `centralized`。
-- `Missing`：缺必填字段。
-- `Type`：字段类型错误。
-- `Min/Max`：合法边界值。
-- `Overflow`：越界值、超长、超数量。
-- `XSS`：脚本字符串。
-- `SQLi`：SQL 注入字符按字面处理或业务拒绝。
-- `Unicode`：Unicode 控制字符。
-- `Side Effect`：写入后的 DB/Redis/文件副作用断言。
+- Pydantic 已声明的缺字段、错误类型和普通长度约束；自定义 validator 除外。
+- SQLAlchemy 参数化已经保证的 SQL 注入转义。
+- 没有业务语义的空列表、不存在记录、重复 ID 和普通 CRUD 分支。
+- 旧数据、旧协议、旧版本兼容行为。
+- 已删除的函数、字段、页面或入口是否仍然不存在。
+- 为证明代码被删除、常量未变化或默认配置未变化而新增的测试。
+- 尚无生产入口的实现；先接通并验证运行路径，再决定是否需要测试。
 
-规则：
-
-- 新增或修改写入端点时必须更新矩阵。
-- 缺项必须写明原因。
-- 批量操作必须额外覆盖：空列表、超数量、部分无效 ID、重复 ID。
-- 导入/导出必须额外覆盖：无效文件、重复处理、任务失败恢复。
+修复缺陷时只保留一个能复现该缺陷的回归测试。需要复杂 fixture、状态机、故障矩阵或大量参数化用例时，先确认是否可以缩小业务承诺或直接删除该分支。
 
 ## 9. 收集门禁
 
-新增或调整 real 测试后，必须执行：
+新增或调整 real 测试后，只执行相关测试文件。需要确认 real 标记时执行：
 
 ```bash
-uv run pytest --collect-only tests/integration/real -q
 uv run pytest --collect-only tests/integration/real -q -m real
 ```
 
 要求：
 
-- 两个命令必须成功。
 - 新增测试必须出现在收集列表。
 - `integration/real/**` 下的测试必须能被 `-m real` 收集。
-- 普通 collect 与 `-m real` 的测试数量必须一致。
 - 如存在非 real 测试，必须迁出 `integration/real/**`。
 
 ## 10. 禁止事项
@@ -207,8 +186,8 @@ uv run pytest --collect-only tests/integration/real -q -m real
 - [ ] 断言 `status_code` + `body["code"]`
 - [ ] 写入有副作用断言
 - [ ] 错误码用 `CommonCode`
-- [ ] 外部出口替身覆盖成功返回和不可用场景
+- [ ] 已确认生产入口能够到达目标代码
+- [ ] 未重复测试框架能力或已有业务行为
+- [ ] 外部出口替身只覆盖项目自有映射或本地副作用
 - [ ] 无本系统 service / DB / Redis / 权限依赖 mock
-- [ ] 写入端点覆盖矩阵已更新
-- [ ] `collect-only` 与 `collect-only -m real` 数量一致
 - [ ] 可独立运行

@@ -6,7 +6,6 @@ force_refresh=True 重新加载一次，保证接口成功返回时本进程已�
 
 from dataclasses import dataclass
 
-from app.core.singleton import singleton
 from app.services.config_credit_product_price_service import (
     config_credit_product_price_service,
 )
@@ -35,7 +34,6 @@ class ConfigCacheRefreshResult:
     refreshed_at: int
 
 
-@singleton
 class AdminSystemSettingsService:
     """管理后台系统设置服务。"""
 

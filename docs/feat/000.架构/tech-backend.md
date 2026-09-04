@@ -26,8 +26,7 @@ backend/
 │   │   │   ├── config.py            #   全局 settings 单例
 │   │   │   ├── config_schema.py     #   配置模型 + reload + 候选校验
 │   │   │   ├── database.py          #   异步引擎/会话工厂/Base
-│   │   │   ├── redis.py             #   RedisClient 单例（连接池）
-│   │   │   └── singleton.py
+│   │   │   └── redis.py             #   RedisClient 单例（连接池）
 │   │   ├── middleware/
 │   │   │   ├── error_handling.py    #   错误处理中间件（AppCommonException 翻译）
 │   │   │   ├── request_logging.py   #   请求日志（request_id、慢请求 1s）

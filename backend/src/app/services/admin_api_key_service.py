@@ -11,7 +11,6 @@ import secrets
 from sqlalchemy import select, update
 
 from app.core.database import get_async_session
-from app.core.singleton import singleton
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.models.admin_model import AdminModel
@@ -47,7 +46,6 @@ class GeneratedAdminApiKey:
     api_key_created_at: int
 
 
-@singleton
 class AdminApiKeyService:
     """管理员外部 API Key 生成与校验服务。"""
 

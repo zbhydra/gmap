@@ -276,11 +276,6 @@ class UserService(BaseService[UserModel]):
         Returns:
             符合条件的用户列表。
         """
-        if offset < 0:
-            raise ValueError(f"user_lists invalid offset: offset={offset}")
-        if limit <= 0:
-            raise ValueError(f"user_lists invalid limit: limit={limit}")
-
         stmt = self._apply_user_list_filters(
             select(UserModel),
             user_ids=user_ids,

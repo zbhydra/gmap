@@ -15,7 +15,7 @@ from app.i18n.dependencies import DEFAULT_LANGUAGE, SupportedLanguage
 from app.utils.email_sender import email_sender
 from app.utils.logger import logger
 from app.utils.redis_key import build_redis_key
-from app.utils.redis_lock import RedisLock
+from app.utils.redis_lock import RedisLock, RedisLockError
 from app.utils.redis_rate_limiter import RedisRateLimiter
 
 
@@ -68,44 +68,31 @@ class EmailVerificationService:
         Returns:
             发送结果
         """
-        # 先检查限流（原子操作）
-        try:
-            allowed = await self._rate_limiter.is_allowed(
-                key=f"email_verify:{email}",
-                limit=EMAIL_VERIFY_RATE_LIMIT_MAX,
-                window=EMAIL_VERIFY_RATE_LIMIT_WINDOW,
-            )
-            if not allowed:
-                return SendResult.RATE_LIMITED
-        except Exception as e:
-            # Redis 故障时采用 fail-open 策略，避免阻塞用户
-            logger.warning(f"Rate limit check failed, allowing: {e}")
+        allowed = await self._rate_limiter.is_allowed(
+            key=f"email_verify:{email}",
+            limit=EMAIL_VERIFY_RATE_LIMIT_MAX,
+            window=EMAIL_VERIFY_RATE_LIMIT_WINDOW,
+        )
+        if not allowed:
+            return SendResult.RATE_LIMITED
 
         # 生成验证码
         code = self._generate_code()
 
         # 存储到 Redis
         redis_key = self._build_key(email)
-        try:
-            redis = await redis_client.get_client()
-            await redis.set(redis_key, code, ex=EMAIL_VERIFY_CODE_EXPIRE_SECONDS)
-            logger.info(f"Verification code generated for {email}")
-        except Exception as e:
-            logger.error(f"Failed to store verification code: {e}", exc_info=True)
-            return SendResult.SEND_FAILED
+        redis = await redis_client.get_client()
+        await redis.set(redis_key, code, ex=EMAIL_VERIFY_CODE_EXPIRE_SECONDS)
+        logger.info(f"Verification code generated for {email}")
 
         # 发送邮件
         success = await email_sender.send_verify_code(email, code, language)
 
         # 如果发送失败,删除验证码并清除限流记录
         if not success:
-            try:
-                redis = await redis_client.get_client()
-                await redis.delete(redis_key)
-                # 清除限流记录(CD),允许用户立即重试
-                await self._rate_limiter.reset(f"email_verify:{email}")
-            except Exception as e:
-                logger.warning(f"Failed to cleanup verification code: {e}")
+            await redis.delete(redis_key)
+            # 清除限流记录(CD),允许用户立即重试
+            await self._rate_limiter.reset(f"email_verify:{email}")
             return SendResult.SEND_FAILED
 
         return SendResult.SUCCESS
@@ -125,20 +112,11 @@ class EmailVerificationService:
             是否验证成功
         """
         lock_key = f"email_verify:{email}"
-        try:
-            lock_value = await _email_verify_lock.acquire(
-                lock_key,
-                ttl=_EMAIL_VERIFY_LOCK_TTL_SECONDS,
-                timeout=_EMAIL_VERIFY_LOCK_TIMEOUT_SECONDS,
-            )
-        except Exception:
-            # 锁底座故障时继续原验证流程，避免 Redis 局部故障阻断登录。
-            logger.error(
-                "email_verify_code: Redis lock acquire failed, continuing unlocked: "
-                f"email={email}, lock_key={lock_key}",
-                exc_info=True,
-            )
-            return await self._verify_code_unlocked(email, user_input)
+        lock_value = await _email_verify_lock.acquire(
+            lock_key,
+            ttl=_EMAIL_VERIFY_LOCK_TTL_SECONDS,
+            timeout=_EMAIL_VERIFY_LOCK_TIMEOUT_SECONDS,
+        )
 
         if lock_value is None:
             logger.warning(
@@ -150,66 +128,53 @@ class EmailVerificationService:
         try:
             return await self._verify_code_unlocked(email, user_input)
         finally:
-            await _email_verify_lock.release(lock_key, lock_value)
+            released = await _email_verify_lock.release(lock_key, lock_value)
+            if not released:
+                raise RedisLockError(
+                    "email_verify_code: Redis lock release failed: "
+                    f"email={email}, lock_key={lock_key}"
+                )
 
     async def _verify_code_unlocked(self, email: str, user_input: str) -> bool:
         """执行验证码读取、计数和消费；调用方负责同邮箱串行化。"""
         redis_key = self._build_key(email)
         attempts_key = self._build_attempts_key(email)
 
-        try:
-            redis = await redis_client.get_client()
+        redis = await redis_client.get_client()
 
-            # 检查验证次数
-            attempts = await redis.incr(attempts_key)
-            if attempts == 1:
-                await redis.expire(attempts_key, EMAIL_VERIFY_CODE_EXPIRE_SECONDS)
+        # 检查验证次数
+        attempts = await redis.incr(attempts_key)
+        if attempts == 1:
+            await redis.expire(attempts_key, EMAIL_VERIFY_CODE_EXPIRE_SECONDS)
 
-            if attempts > EMAIL_VERIFY_MAX_ATTEMPTS:
-                # 超过最大次数,删除验证码
-                await redis.delete(redis_key)
-                await redis.delete(attempts_key)
-                logger.warning(f"Verification attempts exceeded for {email}")
-                return False
-
-            # 获取存储的验证码
-            stored_code = await redis.get(redis_key)
-            if not stored_code:
-                logger.warning(
-                    f"Verification code not found or expired for {email}",
-                )
-                return False
-
-            # 确保 stored_code 是字符串类型
-            if isinstance(stored_code, bytes):
-                stored_code = stored_code.decode()
-
-            # 验证成功,删除验证码和计数器
-            if secrets.compare_digest(stored_code, user_input):
-                await redis.delete(redis_key)
-                await redis.delete(attempts_key)
-                logger.info(f"Verification succeeded for {email}")
-                return True
-
-            logger.warning(f"Verification failed for {email}, attempt {attempts}")
+        if attempts > EMAIL_VERIFY_MAX_ATTEMPTS:
+            # 超过最大次数,删除验证码
+            await redis.delete(redis_key)
+            await redis.delete(attempts_key)
+            logger.warning(f"Verification attempts exceeded for {email}")
             return False
 
-        except Exception as e:
-            logger.error(f"Failed to verify code: {e}", exc_info=True)
+        # 获取存储的验证码
+        stored_code = await redis.get(redis_key)
+        if not stored_code:
+            logger.warning(
+                f"Verification code not found or expired for {email}",
+            )
             return False
 
-    async def clear_verify_data(self, email: str) -> None:
-        """清除验证码数据 (用于测试或手动重置).
+        # 确保 stored_code 是字符串类型
+        if isinstance(stored_code, bytes):
+            stored_code = stored_code.decode()
 
-        Args:
-            email: 邮箱地址
-        """
-        try:
-            redis = await redis_client.get_client()
-            await redis.delete(self._build_key(email))
-            await redis.delete(self._build_attempts_key(email))
-        except Exception as e:
-            logger.error(f"Failed to clear verification data: {e}", exc_info=True)
+        # 验证成功,删除验证码和计数器
+        if secrets.compare_digest(stored_code, user_input):
+            await redis.delete(redis_key)
+            await redis.delete(attempts_key)
+            logger.info(f"Verification succeeded for {email}")
+            return True
+
+        logger.warning(f"Verification failed for {email}, attempt {attempts}")
+        return False
 
 
 # 全局服务实例

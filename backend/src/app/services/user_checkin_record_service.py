@@ -29,13 +29,6 @@ class UserCheckinRecordService(BaseService[UserCheckinRecordModel]):
         limit: int = 100,
     ) -> list[UserCheckinRecordModel]:
         """按用户、领取时间范围或活动日查询签到明细列表。"""
-        if offset < 0:
-            raise ValueError(
-                f"user_checkin_record_lists invalid offset: offset={offset}"
-            )
-        if limit <= 0:
-            raise ValueError(f"user_checkin_record_lists invalid limit: limit={limit}")
-
         stmt: Select[tuple[UserCheckinRecordModel]] = select(UserCheckinRecordModel)
         if record_ids is not None:
             stmt = stmt.where(UserCheckinRecordModel.id.in_(record_ids))

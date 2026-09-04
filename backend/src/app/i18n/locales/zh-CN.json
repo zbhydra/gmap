@@ -1,6 +1,6 @@
 {
     "resp_code": {
-        "INTERNAL_SERVER_ERROR": "服务器内部错误",
+        "INTERNAL_SERVER_ERROR": "系统服务异常",
         "INVALID_REQUEST": "无效的请求",
         "EXTERNAL_API_KEY_INVALID": "外部 API Key 无效",
         "NOT_FOUND": "资源不存在",

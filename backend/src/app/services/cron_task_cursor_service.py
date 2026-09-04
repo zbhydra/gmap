@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from sqlalchemy import select, text, update
 
 from app.core.database import get_async_session
-from app.core.singleton import singleton
 from app.models.cron_task_cursor_model import CronTaskCursorModel
 from app.services.base_service import BaseService
 
@@ -26,7 +25,6 @@ class CronTaskCursorSnapshot:
     running_at: int
 
 
-@singleton
 class CronTaskCursorService(BaseService[CronTaskCursorModel]):
     """cron 任务游标表操作服务。"""
 

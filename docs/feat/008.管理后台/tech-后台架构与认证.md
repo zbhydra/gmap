@@ -53,7 +53,7 @@ admin 是独立 SPA,不是 website 的一部分,独立仓库目录、独立构�
 | POST | `/api/admin/auth/login` | 管理员登录 | 否 |
 | POST | `/api/admin/auth/refresh` | 续签令牌对 | Refresh Token |
 
-`POST /api/admin/auth/captcha` 响应:`captcha_id`、`image_base64`(data URI PNG,120×40)。
+`POST /api/admin/auth/captcha` 响应:`captcha_id`、`image_base64`(data URI PNG,120×40)。验证码只存 Redis，生成写入与登录消费任一 Redis 操作失败都直接上抛，由统一错误中间件返回服务异常，不使用进程内状态兜底。
 
 `POST /api/admin/auth/login` 请求:`username`、`password`、`captcha_id`、`captcha_code`;响应:`access_token`、`refresh_token`、`expires_in`、`refresh_expires_in`(剩余秒数)。
 

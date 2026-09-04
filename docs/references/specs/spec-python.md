@@ -126,8 +126,7 @@ raise AppCommonException(
 
 - service **必须是类**（继承 `BaseService[ModelType]` 或独立类），函数不写在类外；通用函数进 `app/utils/`。
 - **模块边界：service 只提供本模块的基础原子方法**，禁把其他模块的场景耦合进来。如 `user_coin_service` 只该有 `get/add/cut`，由 `user_service` 在注册流程里调用 `add`；`signup_add` 这种把注册场景写进 coin service 的写法是坏味道。
-- service 单例默认使用 **Python 模块级实例**：类保持原名，模块底部暴露唯一实例 `xxx_service = XxxService(...)`，调用方只 import 该实例。
-- `@singleton` 装饰器已废弃：新 service 禁止新增使用；改动存量 `@singleton` service 时应顺手迁移为模块级实例。当前 `app/core/singleton.py` 的装饰器会把类名替换成工厂函数，破坏类名静态调用、类型检查与反射语义。
+- service 使用普通类与 **Python 模块级实例**：类保持原名，模块底部暴露唯一实例 `xxx_service = XxxService(...)`，调用方只 import 该实例。
 - session 获取与事务见 spec-mysql（`async with get_async_session() as db` + 显式 commit）。
 - 关联 model 的 service **必须**提供四个标准方法 `xxxx_lists` / `xxxx_info` / `xxxx_update` / `xxxx_del`；已在 spec-mysql §4 登记的原子数据结构例外按其专用合同执行。
 - 禁止在 service 里写子查询（`.subquery()` / `EXISTS` 嵌套）；仅分表跨表查询等少数场景例外并注释。

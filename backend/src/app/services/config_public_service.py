@@ -16,7 +16,6 @@ from sqlalchemy import select
 
 from app.constants.config_cache import CONFIG_CACHE_TTL_MS
 from app.core.database import get_async_session
-from app.core.singleton import singleton
 from app.models.config_public_model import ConfigPublicModel
 from app.utils.time import timestamp_now
 
@@ -33,7 +32,6 @@ class ConfigPublicRow:
     g_value: str
 
 
-@singleton
 class ConfigPublicService:
     """公共配置表读取服务。"""
 

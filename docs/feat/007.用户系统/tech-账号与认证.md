@@ -181,12 +181,12 @@ Token 不直接可信,服务端在 Redis 维护"未撤销 token 哈希集合"做
 | `email_verify_attempts:{email}` | 验证尝试计数;`INCR` 后首次 `EXPIRE 600` |
 | `lock:email_verify:{email}` | 串行化同邮箱的验证码读取、计数与消费 |
 
-发送频率用 `RedisRateLimiter`(滑动窗口 ZSet),key = `email_verify:{email}`,limit=1,window=60。Redis 故障 fail-open(放行)。
+发送频率用 `RedisRateLimiter`(滑动窗口 ZSet),key = `email_verify:{email}`,limit=1,window=60。限流、锁和验证码读写都以 Redis 为唯一状态源；Redis 故障直接上抛，由统一错误中间件返回服务异常，不放行、不走本地或无锁流程。
 
 ### 5.3 行为
 
-- `send_verify_code(email)`:先频率限制(超限返回 RATE_LIMITED)→ 生成码 → `redis.set EX=600` → 发邮件;**发邮件失败时删码并重置频率限制**(让用户立即重试)→ 返回 SUCCESS / RATE_LIMITED / SEND_FAILED。
-- `verify_code(email, code)`:先按邮箱获取 Redis 短锁，在锁内执行 `INCR attempts`(首次设 600 秒 TTL)→ `attempts > 5` 删码+计数返回 `False` → `secrets.compare_digest` 比对 → 命中删码+计数返回 `True`。**计数在码缺失/过期时也会 +1**；抢锁超时按验证失败返回，锁基础设施异常则记录原始堆栈并 fail-open 继续原验证流程。
+- `send_verify_code(email)`:先频率限制(超限返回 RATE_LIMITED)→ 生成码 → `redis.set EX=600` → 发邮件;**发邮件失败时删码并重置频率限制**(让用户立即重试)→ 返回 SUCCESS / RATE_LIMITED / SEND_FAILED。Redis 异常不映射为 SEND_FAILED，直接交统一错误中间件。
+- `verify_code(email, code)`:先按邮箱获取 Redis 短锁，在锁内执行 `INCR attempts`(首次设 600 秒 TTL)→ `attempts > 5` 删码+计数返回 `False` → `secrets.compare_digest` 比对 → 命中删码+计数返回 `True`。**计数在码缺失/过期时也会 +1**；抢锁超时按验证失败返回，Redis 锁获取或释放异常直接上抛。
 
 ### 5.4 邮件文案
 
@@ -389,5 +389,5 @@ extension 登录(v3 浏览器身份,2026-09-01 起)不修改通用 `LoginRespons
 - token 校验走 Redis Sorted Set,校验时仍惰性撤销命中的过期 token;当前 token ZSet 同时依靠 key TTL 最终整体回收,不允许加载全量 member 再逐项处理。
 - 批量撤销用 `DEL` 三个 ZSet 一次完成。
 - 错误信息带 `user_id` / `email` / `ip` 等可定位字段;抛 `AppCommonException` 必须带详细 msg(哪里的错误/错什么/请求哪个接口)。
-- token 注册表事务写入失败采用 fail-closed 并保留原始堆栈;写入成功后的过期 member 清理失败只记录日志。限流、封禁与频率控制继续采用 fail-open。
+- token 注册表事务写入失败采用 fail-closed 并保留原始堆栈;写入成功后的过期 member 清理失败只记录日志。IP 登录、Google OAuth 和插件签发限流及 IP 封禁继续采用 fail-open；邮箱验证码相关 Redis 操作采用 fail-closed。
 - 修改 users 表后执行 `@backend/src/app/init/sync_database_schema.py`。

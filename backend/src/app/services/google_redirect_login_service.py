@@ -16,7 +16,6 @@ from urllib.parse import SplitResult, parse_qsl, urlencode, urlsplit, urlunsplit
 
 from app.core.config import settings
 from app.core.redis import redis_client
-from app.core.singleton import singleton
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.utils.logger import logger
@@ -44,7 +43,6 @@ class GoogleRedirectLoginError(Exception):
         self.reason = reason
 
 
-@singleton
 class GoogleRedirectLoginService:
     """管理 Google redirect 登录的一次性 state 和换票 code。"""
 

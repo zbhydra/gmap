@@ -19,7 +19,6 @@ import jwt
 from jwt.algorithms import RSAAlgorithm
 
 from app.core.config import settings
-from app.core.singleton import singleton
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.services.user_service import normalize_user_email
@@ -45,7 +44,6 @@ class GoogleTokenProfile:
     email_is_authoritative: bool
 
 
-@singleton
 class GoogleAuthService:
     """验证 Google ID token 并缓存 Google 公钥。"""
 

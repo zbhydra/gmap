@@ -3,8 +3,8 @@
 
 用于管理后台登录图片验证码：
 1. 生成 4 位验证码文本和 PNG 图片。
-2. 优先把验证码写入 Redis，保证跨请求进程可验证。
-3. Redis 不可用时退回当前进程内存，避免管理后台完全不可登录。
+2. 把验证码写入 Redis，保证跨请求进程可验证。
+3. Redis 是唯一状态源，故障时由统一错误中间件返回服务异常。
 """
 
 import base64
@@ -12,15 +12,12 @@ import io
 import random
 import secrets
 import string
-import time
 import uuid
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont  # type: ignore[import]
 
 from app.core.redis import redis_client
-from app.core.singleton import singleton
-from app.utils.logger import logger
 from app.utils.redis_key import build_redis_key
 
 CAPTCHA_TTL_SECONDS = 300
@@ -53,12 +50,10 @@ return value
 """
 
 
-@singleton
 class CaptchaService:
     """验证码服务"""
 
     def __init__(self) -> None:
-        self._storage: dict[str, tuple[str, int]] = {}
         self.width = 120
         self.height = 40
         self.font_size = 28
@@ -176,12 +171,7 @@ class CaptchaService:
         image.save(buffer, format="PNG")
         image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-        normalized_text = text.upper()
-        stored_in_redis = await self._store_captcha(captcha_id, normalized_text)
-        if not stored_in_redis:
-            self._storage[captcha_id] = (normalized_text, self._get_timestamp())
-
-        self._cleanup_expired()
+        await self._store_captcha(captcha_id, text.upper())
 
         return captcha_id, image_data
 
@@ -201,77 +191,31 @@ class CaptchaService:
             return False
 
         redis_key = self._build_key(captcha_id)
-        try:
-            redis = await redis_client.get_client()
-            stored_text = await redis.eval(  # type: ignore[misc]
-                _CAPTCHA_GET_DELETE_SCRIPT, 1, redis_key
-            )
-        except Exception as exc:
-            logger.warning(
-                f"admin_captcha_redis_verify_failed: captcha_id={captcha_id}: {exc}"
-            )
-            return self._verify_local_fallback(captcha_id, normalized_text)
+        redis = await redis_client.get_client()
+        stored_text = await redis.eval(  # type: ignore[misc]
+            _CAPTCHA_GET_DELETE_SCRIPT, 1, redis_key
+        )
 
         if not stored_text:
             return False
 
-        self._storage.pop(captcha_id, None)
         stored = (
             stored_text.decode() if isinstance(stored_text, bytes) else str(stored_text)
         )
         return secrets.compare_digest(stored.upper(), normalized_text)
 
-    async def _store_captcha(self, captcha_id: str, text: str) -> bool:
+    async def _store_captcha(self, captcha_id: str, text: str) -> None:
         """把验证码写入 Redis。
 
         Args:
             captcha_id: 验证码 ID。
             text: 标准化后的验证码文本。
 
-        Returns:
-            是否写入成功。
         """
 
         redis_key = self._build_key(captcha_id)
-        try:
-            redis = await redis_client.get_client()
-            await redis.set(redis_key, text, ex=CAPTCHA_TTL_SECONDS)
-            return True
-        except Exception as exc:
-            logger.warning(
-                f"admin_captcha_redis_store_failed: captcha_id={captcha_id}: {exc}"
-            )
-            return False
-
-    def _verify_local_fallback(self, captcha_id: str, normalized_text: str) -> bool:
-        """验证本进程内存里的兜底验证码。"""
-
-        if captcha_id not in self._storage:
-            return False
-
-        stored_text, timestamp = self._storage[captcha_id]
-
-        if self._get_timestamp() - timestamp > CAPTCHA_TTL_SECONDS:
-            del self._storage[captcha_id]
-            return False
-
-        del self._storage[captcha_id]
-        return secrets.compare_digest(stored_text, normalized_text)
-
-    def _get_timestamp(self) -> int:
-        """获取当前时间戳（秒）"""
-        return int(time.time())
-
-    def _cleanup_expired(self):
-        """清理过期的验证码"""
-        current_time = self._get_timestamp()
-        expired_keys = [
-            key
-            for key, (_, timestamp) in self._storage.items()
-            if current_time - timestamp > CAPTCHA_TTL_SECONDS
-        ]
-        for key in expired_keys:
-            del self._storage[key]
+        redis = await redis_client.get_client()
+        await redis.set(redis_key, text, ex=CAPTCHA_TTL_SECONDS)
 
 
 captcha_service = CaptchaService()

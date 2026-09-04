@@ -8,7 +8,7 @@
 5. provider.create_payment 创建支付数据并原样返回给前端。
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.user_dependencies import UserContext, get_current_user
 from app.constants.order import OrderCheckProductParam, OrderStatus
@@ -180,8 +180,8 @@ async def get_order_status(
 @router.get("/list", response_model=OrderListApiResponse)
 async def list_orders(
     status: str = None,
-    offset: int = 0,
-    limit: int = 20,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1),
     current_user: UserContext = Depends(get_current_user),
 ):
     """获取订单列表

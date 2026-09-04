@@ -301,7 +301,7 @@ else:
 
 ## 9. 订单 service 关键方法契约
 
-`backend/src/app/services/order_service.py`,`@singleton class OrderService(BaseService[OrderModel])`,全局实例 `order_service = OrderService()`。
+`backend/src/app/services/order_service.py` 中的 `OrderService` 是普通类，模块底部暴露唯一实例 `order_service = OrderService()`。
 
 ### 9.1 下单参数对象
 

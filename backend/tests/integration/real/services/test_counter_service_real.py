@@ -82,27 +82,6 @@ async def test_real_add_twice_and_get_list_reads_all_cycles(
     assert await counter_service.get(user_id, _DAILY_ID) == 7
 
 
-@pytest.mark.parametrize("invalid_number", [0, -1])
-async def test_real_add_rejects_non_positive_number_before_write(
-    real_counter_cleanup_state: _CleanupState,
-    invalid_number: int,
-) -> None:
-    """零或负增量直接失败，既有值保持不变。"""
-
-    user_id = real_counter_cleanup_state.user_id
-    await counter_service.add(user_id, _DAILY_ID, 17)
-
-    with pytest.raises(
-        ValueError,
-        match=(
-            rf"user_id={user_id}, counter_id={_DAILY_ID}, " rf"number={invalid_number}"
-        ),
-    ):
-        await counter_service.add(user_id, _DAILY_ID, invalid_number)
-
-    assert await counter_service.get(user_id, _DAILY_ID) == 17
-
-
 async def test_real_unknown_id_fails_before_mixed_read(
     real_counter_cleanup_state: _CleanupState,
 ) -> None:

@@ -17,12 +17,6 @@ class CounterService:
     async def add(self, user_id: int, counter_id: int, number: int) -> None:
         """将正增量原子累加到用户当前周期 Counter。"""
 
-        if number <= 0:
-            raise ValueError(
-                "counter_service.add: number must be positive: "
-                f"user_id={user_id}, counter_id={counter_id}, number={number}"
-            )
-
         definition = get_counter_definition(counter_id)
         now_ms = timestamp_now()
         async with get_async_session() as db:
