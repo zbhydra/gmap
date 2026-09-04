@@ -12,6 +12,7 @@ from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.gmap import GMAP_ENGINE_DATA_KEY
+from app.constants.object_storage import OBJECT_STORAGE_DATA_KEY
 from app.core.database import get_engine
 from app.models.admin_model import AdminModel
 from app.models.system_data_model import JsonValue, SystemDataModel
@@ -25,12 +26,9 @@ _TEST_ADMIN_PASSWORD = "AdminSystemSettingsRealTest123!"
 
 @dataclass(slots=True)
 class _CleanupState:
-    """记录 gmap-engine real 测试需要恢复的数据。"""
+    """记录系统设置 real 测试需要恢复的数据。"""
 
-    gmap_engine_exists: bool
-    gmap_engine_value: JsonValue | None = None
-    gmap_engine_created_at: int | None = None
-    gmap_engine_updated_at: int | None = None
+    stored_configs: dict[str, tuple[JsonValue, int, int]]
     admin_usernames: list[str] = field(default_factory=list)
 
 
@@ -45,8 +43,8 @@ async def _table_exists(table_name: str) -> bool:
 
 
 @pytest.fixture
-async def real_gmap_engine_schema_ready(real_mysql_ready) -> None:
-    """检查 gmap 引擎设置 real 测试需要的表。"""
+async def real_system_settings_schema_ready(real_mysql_ready) -> None:
+    """检查系统设置 real 测试需要的表。"""
     missing = [
         table for table in ("admins", "system_data") if not await _table_exists(table)
     ]
@@ -56,20 +54,25 @@ async def real_gmap_engine_schema_ready(real_mysql_ready) -> None:
 
 @pytest.fixture
 async def real_admin_system_settings_cleanup(
-    real_gmap_engine_schema_ready,
+    real_system_settings_schema_ready,
 ) -> AsyncIterator[_CleanupState]:
     """保存固定配置行，并清理测试管理员后恢复其原始状态。"""
+    config_keys = (GMAP_ENGINE_DATA_KEY, OBJECT_STORAGE_DATA_KEY)
     async with AsyncSession(get_engine()) as session:
-        row = await session.scalar(
-            select(SystemDataModel).where(
-                SystemDataModel.data_key == GMAP_ENGINE_DATA_KEY
-            )
+        rows = list(
+            (
+                await session.scalars(
+                    select(SystemDataModel).where(
+                        SystemDataModel.data_key.in_(config_keys)
+                    )
+                )
+            ).all()
         )
     state = _CleanupState(
-        gmap_engine_exists=row is not None,
-        gmap_engine_value=deepcopy(row.data_value) if row is not None else None,
-        gmap_engine_created_at=row.created_at if row is not None else None,
-        gmap_engine_updated_at=row.updated_at if row is not None else None,
+        stored_configs={
+            row.data_key: (deepcopy(row.data_value), row.created_at, row.updated_at)
+            for row in rows
+        },
     )
     try:
         yield state
@@ -81,22 +84,25 @@ async def real_admin_system_settings_cleanup(
                         AdminModel.username.in_(state.admin_usernames)
                     )
                 )
-            if state.gmap_engine_exists:
-                await session.execute(
-                    update(SystemDataModel)
-                    .where(SystemDataModel.data_key == GMAP_ENGINE_DATA_KEY)
-                    .values(
-                        data_value=state.gmap_engine_value,
-                        created_at=state.gmap_engine_created_at,
-                        updated_at=state.gmap_engine_updated_at,
+            for data_key in config_keys:
+                stored = state.stored_configs.get(data_key)
+                if stored is not None:
+                    data_value, created_at, updated_at = stored
+                    await session.execute(
+                        update(SystemDataModel)
+                        .where(SystemDataModel.data_key == data_key)
+                        .values(
+                            data_value=data_value,
+                            created_at=created_at,
+                            updated_at=updated_at,
+                        )
                     )
-                )
-            else:
-                await session.execute(
-                    delete(SystemDataModel).where(
-                        SystemDataModel.data_key == GMAP_ENGINE_DATA_KEY
+                else:
+                    await session.execute(
+                        delete(SystemDataModel).where(
+                            SystemDataModel.data_key == data_key
+                        )
                     )
-                )
             await session.commit()
         system_data_service.clear_cache()
 

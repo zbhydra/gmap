@@ -208,6 +208,22 @@
     "gmapEngineConcurrencyRequired": "Concurrency per process must be at least 1",
     "gmapEngineLoadFailed": "Failed to load Gmap Engine config",
     "gmapEngineSaveSuccess": "Gmap Engine config saved",
-    "gmapEngineSaveFailed": "Failed to save Gmap Engine config"
+    "gmapEngineSaveFailed": "Failed to save Gmap Engine config",
+    "tabObjectStorage": "Object Storage",
+    "objectStorageActive": "Active Storage",
+    "objectStorageR2": "Cloudflare R2",
+    "objectStorageAliOss": "Alibaba Cloud OSS",
+    "objectStorageR2AccountId": "Account ID",
+    "objectStorageBucket": "Bucket",
+    "objectStorageAccessKeyId": "Access Key ID",
+    "objectStorageR2SecretAccessKey": "Secret Access Key",
+    "objectStorageAliOssEndpoint": "Endpoint",
+    "objectStorageAliOssAccessKeySecret": "Access Key Secret",
+    "objectStorageSave": "Save",
+    "objectStorageActiveRequired": "Complete every field for the active object storage",
+    "objectStorageAliOssEndpointInvalid": "Alibaba Cloud OSS Endpoint must be an HTTP(S) URL without a path, credentials, query, or fragment",
+    "objectStorageLoadFailed": "Failed to load object storage config",
+    "objectStorageSaveSuccess": "Object storage config saved",
+    "objectStorageSaveFailed": "Failed to save object storage config"
   }
 }

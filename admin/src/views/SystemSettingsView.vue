@@ -6,6 +6,7 @@
   2. 查询、生成和重新生成当前管理员外部 API Key；完整 key 仅在弹窗中一次性展示。
   3. 维护 gosom 引擎多条 API 配置（地址 / Key / 权重，动态增删行，整表保存）。
   4. 维护 Gmap HTTP / gosom Provider、代理 URL 列表与每进程并发预算。
+  5. 维护 Cloudflare R2 与阿里云 OSS 对象存储配置。
 -->
 <template>
   <div class="system-settings-view">
@@ -255,6 +256,122 @@
           </section>
         </NTabPane>
 
+        <NTabPane
+          name="object-storage"
+          :tab="t('systemSettings.tabObjectStorage')"
+        >
+          <section>
+            <NSpin :show="objectStorageLoading">
+              <div class="object-storage-form">
+                <div class="gmap-engine-field">
+                  <NText>{{ t("systemSettings.objectStorageActive") }}</NText>
+                  <NRadioGroup
+                    v-model:value="objectStorageConfig.active"
+                    name="object-storage-active"
+                    :disabled="objectStorageLoading"
+                  >
+                    <NRadioButton value="R2">
+                      {{ t("systemSettings.objectStorageR2") }}
+                    </NRadioButton>
+                    <NRadioButton value="AliOSS">
+                      {{ t("systemSettings.objectStorageAliOss") }}
+                    </NRadioButton>
+                  </NRadioGroup>
+                </div>
+
+                <div class="object-storage-groups">
+                  <div class="object-storage-group">
+                    <NText strong>{{ t("systemSettings.objectStorageR2") }}</NText>
+                    <div class="object-storage-fields">
+                      <NFormItem :label="t('systemSettings.objectStorageR2AccountId')">
+                        <NInput
+                          v-model:value="objectStorageConfig.R2.account_id"
+                          :placeholder="t('systemSettings.objectStorageR2AccountId')"
+                          :disabled="objectStorageLoading"
+                        />
+                      </NFormItem>
+                      <NFormItem :label="t('systemSettings.objectStorageBucket')">
+                        <NInput
+                          v-model:value="objectStorageConfig.R2.bucket"
+                          :placeholder="t('systemSettings.objectStorageBucket')"
+                          :disabled="objectStorageLoading"
+                        />
+                      </NFormItem>
+                      <NFormItem :label="t('systemSettings.objectStorageAccessKeyId')">
+                        <NInput
+                          v-model:value="objectStorageConfig.R2.access_key_id"
+                          :placeholder="t('systemSettings.objectStorageAccessKeyId')"
+                          :disabled="objectStorageLoading"
+                        />
+                      </NFormItem>
+                      <NFormItem
+                        :label="t('systemSettings.objectStorageR2SecretAccessKey')"
+                      >
+                        <NInput
+                          v-model:value="objectStorageConfig.R2.secret_access_key"
+                          type="password"
+                          show-password-on="click"
+                          :placeholder="t('systemSettings.objectStorageR2SecretAccessKey')"
+                          :disabled="objectStorageLoading"
+                        />
+                      </NFormItem>
+                    </div>
+                  </div>
+
+                  <div class="object-storage-group">
+                    <NText strong>{{ t("systemSettings.objectStorageAliOss") }}</NText>
+                    <div class="object-storage-fields">
+                      <NFormItem :label="t('systemSettings.objectStorageAliOssEndpoint')">
+                        <NInput
+                          v-model:value="objectStorageConfig.AliOSS.endpoint"
+                          :placeholder="t('systemSettings.objectStorageAliOssEndpoint')"
+                          :disabled="objectStorageLoading"
+                        />
+                      </NFormItem>
+                      <NFormItem :label="t('systemSettings.objectStorageBucket')">
+                        <NInput
+                          v-model:value="objectStorageConfig.AliOSS.bucket"
+                          :placeholder="t('systemSettings.objectStorageBucket')"
+                          :disabled="objectStorageLoading"
+                        />
+                      </NFormItem>
+                      <NFormItem :label="t('systemSettings.objectStorageAccessKeyId')">
+                        <NInput
+                          v-model:value="objectStorageConfig.AliOSS.access_key_id"
+                          :placeholder="t('systemSettings.objectStorageAccessKeyId')"
+                          :disabled="objectStorageLoading"
+                        />
+                      </NFormItem>
+                      <NFormItem
+                        :label="t('systemSettings.objectStorageAliOssAccessKeySecret')"
+                      >
+                        <NInput
+                          v-model:value="objectStorageConfig.AliOSS.access_key_secret"
+                          type="password"
+                          show-password-on="click"
+                          :placeholder="t('systemSettings.objectStorageAliOssAccessKeySecret')"
+                          :disabled="objectStorageLoading"
+                        />
+                      </NFormItem>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </NSpin>
+
+            <div class="tab-actions">
+              <NButton
+                type="primary"
+                :loading="objectStorageSaving"
+                :disabled="objectStorageLoading"
+                @click="handleSaveObjectStorageConfig"
+              >
+                {{ t("systemSettings.objectStorageSave") }}
+              </NButton>
+            </div>
+          </section>
+        </NTabPane>
+
       </NTabs>
     </NCard>
 
@@ -289,6 +406,7 @@ import {
   NCard,
   NDescriptions,
   NDescriptionsItem,
+  NFormItem,
   NInput,
   NInputNumber,
   NList,
@@ -311,13 +429,16 @@ import {
   getAdminApiKeyMeta,
   getGmapEngineConfig,
   getGosomApiConfig,
+  getObjectStorageConfig,
   refreshConfigCache,
   saveGosomApiConfig,
   saveGmapEngineConfig,
+  saveObjectStorageConfig,
   type AdminApiKeyMeta,
   type ConfigCacheRefreshResult,
   type GosomApiItem,
   type GmapEngineConfig,
+  type ObjectStorageConfig,
 } from "@/api/system-settings";
 import { formatAdminTimeMs } from "@/utils/time";
 
@@ -339,6 +460,8 @@ const gosomLoading = ref(false);
 const gosomSaving = ref(false);
 const gmapEngineLoading = ref(false);
 const gmapEngineSaving = ref(false);
+const objectStorageLoading = ref(false);
+const objectStorageSaving = ref(false);
 const activeTab = ref("config-cache");
 const cacheRefreshResult = ref<ConfigCacheRefreshResult | null>(null);
 const apiKeyMeta = ref<AdminApiKeyMeta | null>(null);
@@ -349,6 +472,11 @@ const gmapEngineProvider = ref<GmapEngineConfig["provider"]>("http");
 const gmapEngineProxies = ref("");
 const gmapEngineConcurrency = ref<number | null>(1);
 const gmapEngineProxiesInput = ref<InputInst | null>(null);
+const objectStorageConfig = ref<ObjectStorageConfig>({
+  active: "R2",
+  R2: { account_id: "", bucket: "", access_key_id: "", secret_access_key: "" },
+  AliOSS: { endpoint: "", bucket: "", access_key_id: "", access_key_secret: "" },
+});
 
 /** 只有已知 API Key 状态时才允许生成，避免加载失败时绕过重新生成确认。 */
 const canGenerateApiKey = computed(
@@ -593,10 +721,76 @@ async function handleSaveGmapEngineConfig() {
   }
 }
 
+/** 加载完整对象存储配置。 */
+async function loadObjectStorageConfig() {
+  objectStorageLoading.value = true;
+  try {
+    objectStorageConfig.value = await getObjectStorageConfig();
+  } catch {
+    // 异常响应可能携带对象存储密钥，禁止把完整响应写入日志。
+    console.error("SystemSettingsView.loadObjectStorageConfig() 加载失败");
+    message.error(t("systemSettings.objectStorageLoadFailed"));
+  } finally {
+    objectStorageLoading.value = false;
+  }
+}
+
+/** 保存完整双存储配置；仅当前启用的配置必须填写完整。 */
+async function handleSaveObjectStorageConfig() {
+  const activeConfig = objectStorageConfig.value[objectStorageConfig.value.active];
+  if (Object.values(activeConfig).some((value) => !value.trim())) {
+    message.warning(t("systemSettings.objectStorageActiveRequired"));
+    return;
+  }
+  if (
+    objectStorageConfig.value.active === "AliOSS" &&
+    !isValidAliOssEndpoint(objectStorageConfig.value.AliOSS.endpoint)
+  ) {
+    message.warning(t("systemSettings.objectStorageAliOssEndpointInvalid"));
+    return;
+  }
+
+  objectStorageSaving.value = true;
+  try {
+    objectStorageConfig.value = await saveObjectStorageConfig(objectStorageConfig.value);
+    message.success(t("systemSettings.objectStorageSaveSuccess"));
+  } catch {
+    // Axios 错误对象包含请求体，不得把双存储密钥写入日志或通知。
+    console.error("SystemSettingsView.handleSaveObjectStorageConfig() 保存失败");
+    message.error(t("systemSettings.objectStorageSaveFailed"));
+  } finally {
+    objectStorageSaving.value = false;
+  }
+}
+
+/** AliOSS endpoint 只接受不携带路径、凭据、查询和片段的 HTTP(S) 服务地址。 */
+function isValidAliOssEndpoint(value: string) {
+  const rawEndpoint = value.trim();
+  if (!/^https?:\/\/[^/?#\\]+\/?$/i.test(rawEndpoint)) {
+    return false;
+  }
+
+  try {
+    const endpoint = new URL(rawEndpoint);
+    return (
+      ["http:", "https:"].includes(endpoint.protocol) &&
+      Boolean(endpoint.hostname) &&
+      !endpoint.username &&
+      !endpoint.password &&
+      !endpoint.search &&
+      !endpoint.hash &&
+      (endpoint.pathname === "" || endpoint.pathname === "/")
+    );
+  } catch {
+    return false;
+  }
+}
+
 onMounted(() => {
   void loadApiKeyMeta();
   void loadGosomConfig();
   void loadGmapEngineConfig();
+  void loadObjectStorageConfig();
 });
 
 </script>
@@ -674,6 +868,26 @@ onMounted(() => {
   width: 160px;
 }
 
+.object-storage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.object-storage-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.object-storage-group,
+.object-storage-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .api-key-box {
   display: flex;
   align-items: center;
@@ -714,6 +928,10 @@ onMounted(() => {
 
   .gosom-row-op {
     justify-self: start;
+  }
+
+  .object-storage-groups {
+    grid-template-columns: 100%;
   }
 }
 </style>

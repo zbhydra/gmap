@@ -65,6 +65,29 @@ export interface GmapEngineConfig {
   concurrency: number;
 }
 
+/** Cloudflare R2 对象存储配置。 */
+export interface R2StorageConfig {
+  account_id: string;
+  bucket: string;
+  access_key_id: string;
+  secret_access_key: string;
+}
+
+/** 阿里云 OSS 对象存储配置。 */
+export interface AliOssStorageConfig {
+  endpoint: string;
+  bucket: string;
+  access_key_id: string;
+  access_key_secret: string;
+}
+
+/** 对象存储配置；保存时始终完整提交两组配置。 */
+export interface ObjectStorageConfig {
+  active: "R2" | "AliOSS";
+  R2: R2StorageConfig;
+  AliOSS: AliOssStorageConfig;
+}
+
 /** 查询当前管理员 API Key 元信息。 */
 export function getAdminApiKeyMeta() {
   return request.get<never, AdminApiKeyMeta>("/system-settings/api-key");
@@ -100,4 +123,17 @@ export function getGmapEngineConfig() {
 /** 保存 Gmap 采集引擎配置，并返回后端归一化结果。 */
 export function saveGmapEngineConfig(config: GmapEngineConfig) {
   return request.post<never, GmapEngineConfig>("/system-settings/gmap-engine", config);
+}
+
+/** 查询对象存储配置。 */
+export function getObjectStorageConfig() {
+  return request.get<never, ObjectStorageConfig>("/system-settings/object-storage");
+}
+
+/** 完整保存两组对象存储配置，并返回后端归一化结果。 */
+export function saveObjectStorageConfig(config: ObjectStorageConfig) {
+  return request.post<never, ObjectStorageConfig>(
+    "/system-settings/object-storage",
+    config,
+  );
 }

@@ -54,6 +54,7 @@ def get_engine() -> AsyncEngine:
             max_overflow=db_config.max_overflow,  # 超出连接池大小的最大连接数
             pool_recycle=3600,  # 连接回收时间（秒）
             echo=settings.app.debug,  # 调试模式打印 SQL
+            hide_parameters=True,  # SQL 日志与 StatementError 不记录参数值
             future=True,  # 使用 SQLAlchemy 2.0 风格
             pool_pre_ping=True,  # 连接前检查连接是否有效
         )

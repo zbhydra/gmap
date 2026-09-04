@@ -10,6 +10,7 @@
 - 生成 / 轮换当前管理员的外部 API Key。
 - 维护 gosom 抓取引擎的多条 API 配置(地址 / Key / 权重,存 `system_data`,调用方按权重随机选用)。
 - 维护 Maps 云端的引擎选择、代理 URL 列表与每进程出站并发预算。
+- 维护 R2 / AliOSS 对象存储配置与当前启用项。
 
 除这些明确入口外,它不是通用配置编辑器。
 
@@ -57,7 +58,7 @@
 前端:
 
 - `admin/src/api/system-settings.ts` 封装 `refreshConfigCache()`。
-- `admin/src/views/SystemSettingsView.vue`,页面顶部包含"配置表缓存"、"API Key"、"Gosom API"三个 tab。
+- `admin/src/views/SystemSettingsView.vue`,页面顶部包含"配置表缓存"、"API Key"、"Gosom API"、"Gmap Engine"、"对象存储"五个 tab。
 - 侧边栏"系统设置"菜单,路由名 `SystemSettings`,路径 `/system-settings`。
 - 文案写入 `admin/src/i18n/zh-CN.json` 与 `admin/src/i18n/en-US.json`。
 
@@ -230,6 +231,94 @@ API Key 生成格式:
 - 多行粘贴中的空行与重复 URL 被正确归一化；非法 scheme、无 host/port 和 HTTP 空列表无法保存。
 - Gosom 模式可保存空代理列表；系统日志、校验错误与前端通知中均不出现代理凭据。
 
+## 对象存储配置
+
+系统设置页提供“对象存储” tab，供管理员读取、编辑 R2 与 AliOSS 两组配置，并指定当前启用项。本节只定义后台配置读写与对应界面。
+
+### 文件树
+
+```text
+[修改] backend/src/app/api/admin/admin_system_settings.py
+[新增] backend/src/app/constants/object_storage.py
+[修改] backend/src/app/core/database.py
+[修改] backend/src/app/schemas/admin_schema.py
+[新增] backend/src/app/services/object_storage_config_service.py
+[修改] backend/tests/integration/real/api/admin/conftest.py
+[修改] backend/tests/integration/real/api/admin/test_admin_system_settings_real.py
+[修改] admin/src/api/system-settings.ts
+[修改] admin/src/i18n/zh-CN.json
+[修改] admin/src/i18n/en-US.json
+[修改] admin/src/views/SystemSettingsView.vue
+[修改] admin/e2e/system-settings.spec.ts
+```
+
+不删除文件。后端 real 测试覆盖 Admin API 合同与 `system_data` 持久化，Admin E2E 覆盖双配置界面与整对象提交。
+
+### 数据规格
+
+`system_data` 使用唯一单行：
+
+| 字段 | 值 |
+| --- | --- |
+| `data_key` | `object_storage` |
+| `data_value` | 下述固定结构的 JSON 对象 |
+
+```json
+{
+  "active": "R2",
+  "R2": {
+    "account_id": "",
+    "bucket": "",
+    "access_key_id": "",
+    "secret_access_key": ""
+  },
+  "AliOSS": {
+    "endpoint": "",
+    "bucket": "",
+    "access_key_id": "",
+    "access_key_secret": ""
+  }
+}
+```
+
+存储与校验规则：
+
+- `active` 只接受 `R2` 或 `AliOSS`，键名与枚举值大小写固定。
+- 所有字符串保存前剔除首尾空白，单字段最长 500 个字符。
+- 仅 `active` 指向的配置块要求四个字段均非空；未启用配置块允许为空或不完整，但仍执行字符串长度与 endpoint 格式校验。
+- `AliOSS.endpoint` 只接受 `http` 或 `https`，必须包含 host，不得包含用户名、密码、query 或 fragment，path 只能为空或 `/`；保存时删除末尾 `/`。
+- R2 配置不包含 endpoint 或 region。
+- 两组凭据均明文写入 `system_data`，GET 原值回显。请求体、响应体与凭据不得写入日志、后端异常消息、错误响应详情或前端错误通知；共享 SQLAlchemy engine 设置 `hide_parameters=True`，确保 SQL 日志与 `StatementError` 隐藏绑定参数值。
+- 无 `object_storage` 行时返回上述固定结构的空配置，`active` 默认为 `R2`。已有行按 POST Request 合同读取校验，包括 `active` 配置块完整性；存量脏数据不回显，返回不含凭据的通用内部错误。
+- POST 按固定结构整对象覆盖保存，保存成功后返回归一化结果。
+
+### 接口
+
+| 方法 | 路径 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| GET | `/api/admin/system-settings/object-storage` | `get_admin_user` | 读取完整配置；未配置时返回默认空配置 |
+| POST | `/api/admin/system-settings/object-storage` | `get_admin_user` | 校验并整对象覆盖保存，返回归一化结果 |
+
+GET 响应 `data` 与 POST 请求、响应 `data` 均采用“数据规格”的固定结构，不增加包装字段。校验失败走全局 `VALIDATION_ERROR`，不新增错误码；鉴权失败沿用通用 Admin 接口错误合同。
+
+### UI 与交互
+
+- “对象存储”作为系统设置页分段 tab；内容沿用页面现有 `NCard` / `NTabs` 主题色、字号、边框与悬停/按压状态，不新增自定义色值。
+- 当前启用项使用 R2 / AliOSS 分段控件。切换只修改 `active`，不隐藏、禁用或清空任一配置块，也不立即提交。
+- R2 与 AliOSS 两组表单同时展示且均可编辑，已加载或已编辑的值保留到保存完成或页面离开。R2 包含 Account ID、Bucket、Access Key ID、Secret Access Key；AliOSS 包含 Endpoint、Bucket、Access Key ID、Access Key Secret。`secret_access_key` 与 `access_key_secret` 使用 password input，其余字段使用文本输入；GET 返回值完整回填，不做服务端脱敏。
+- 表单宽度占满 tab 内容区，字段纵向排列，字段间距 16px，标签与输入间距 8px；窄屏保持单列且不得横向滚动。
+- 保存按钮位于右下操作区。加载时表单禁用并显示 loading；保存时按钮 loading 且禁止重复提交；保存成功以后端归一化结果回填，失败只显示不含字段值的 i18n 通知并保留当前编辑内容。
+- 前端保存前只校验 `active` 配置块的四字段完整性；`active=AliOSS` 时同时校验 endpoint 的完整规则。校验失败时不发送 POST 并显示不含字段值的 i18n 提示；未启用配置块不做前端校验。后端仍是最终校验边界。
+- tab 切换沿用现有 `NTabs` 动画，不增加额外过渡。
+
+### 验收
+
+- 未配置时打开 tab，R2 为启用项，两组字段为空；保存完整 R2 后重载，所有字段和启用项一致回显。
+- 切换为 AliOSS 并填写完整配置后保存，`system_data.data_key` 为 `object_storage`，`data_value` 保持固定双配置结构，末尾 `/` 从 endpoint 中删除。
+- 当前启用配置任一字段为空，或启用 AliOSS 时 endpoint 非法，前端不发送 POST 并显示提示；未启用配置为空、不完整或格式非法均不阻止前端提交。
+- `active` 非法、字符串超长，以及 AliOSS endpoint 的 scheme、host、认证信息、query、fragment 或 path 不符合规则时，后端拒绝保存。
+- GET 与 POST 均要求管理员鉴权；日志、后端异常消息、错误响应详情与前端错误通知中不出现 access key、secret 或完整请求/响应体。
+
 ## 实现锚点
 
 | 模块 | 后端 API | 后端 service |
@@ -238,3 +327,4 @@ API Key 生成格式:
 | API Key | 同上 | `@backend/src/app/services/admin_api_key_service.py` |
 | Gosom API 配置 | 同上 | `@backend/src/app/services/gosom_api_service.py`(读写 + 加权随机选取);键名常量在 `@backend/src/app/constants/gosom.py` |
 | Gmap 引擎配置 | 同上 | `@backend/src/app/services/maps_engine_service.py`;运行合同见 `@../014.Maps云端/tech-引擎Provider层.md` §5.3 与 §7 |
+| 对象存储配置 | 同上 | `@backend/src/app/services/object_storage_config_service.py`;键名常量在 `@backend/src/app/constants/object_storage.py` |

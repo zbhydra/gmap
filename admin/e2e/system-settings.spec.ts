@@ -8,6 +8,7 @@
  * - 完整 API Key 不写入 localStorage。
  * - 刷新配置缓存命中正确 POST，并展示刷新结果。
  * - Gosom API 配置回显、必填拦截、动态增删行与保存归一化。
+ * - 对象存储双组回显、启用项切换、必填拦截与完整保存。
  */
 import { expect, test, type Page } from "@playwright/test";
 import { registerE2eBrowserIdentity } from "../scripts/playwright-browser-identity.mjs";
@@ -68,13 +69,39 @@ interface GosomApiConfigMockData {
   items: GosomApiItemMockData[];
 }
 
+/** Gmap 引擎配置 mock。 */
+interface GmapEngineConfigMockData {
+  provider: "http" | "gosom";
+  proxies: string[];
+  concurrency: number;
+}
+
+/** 对象存储配置 mock。 */
+interface ObjectStorageConfigMockData {
+  active: "R2" | "AliOSS";
+  R2: {
+    account_id: string;
+    bucket: string;
+    access_key_id: string;
+    secret_access_key: string;
+  };
+  AliOSS: {
+    endpoint: string;
+    bucket: string;
+    access_key_id: string;
+    access_key_secret: string;
+  };
+}
+
 /** 本文件 route.fulfill 可返回的数据联合。 */
 type MockResponseData =
   | DashboardMockData
   | ApiKeyMetaMockData
   | GeneratedApiKeyMockData
   | ConfigCacheRefreshMockData
-  | GosomApiConfigMockData;
+  | GosomApiConfigMockData
+  | GmapEngineConfigMockData
+  | ObjectStorageConfigMockData;
 
 /** 后端统一成功响应。 */
 function successResponse(data: MockResponseData) {
@@ -117,10 +144,14 @@ async function loginAsAdmin(page: Page) {
 }
 
 /** 切换系统设置顶部 tab。 */
-async function openSettingsTab(page: Page, tab: "api-key" | "gosom-api") {
+async function openSettingsTab(
+  page: Page,
+  tab: "api-key" | "gosom-api" | "object-storage",
+) {
   const tabText = {
     "api-key": "API Key",
     "gosom-api": "Gosom API",
+    "object-storage": "对象存储",
   }[tab];
   await page.locator(".n-tabs-nav").getByText(tabText, { exact: true }).click();
 }
@@ -143,6 +174,50 @@ async function mockSystemSettingsApi(page: Page) {
   };
   let gosomSaveCallCount = 0;
   let gosomLastPayload: GosomApiConfigMockData | null = null;
+  let objectStorageConfig: ObjectStorageConfigMockData = {
+    active: "R2",
+    R2: {
+      account_id: "r2-account",
+      bucket: "r2-bucket",
+      access_key_id: "r2-access-key",
+      secret_access_key: "r2-secret-key",
+    },
+    AliOSS: {
+      endpoint: "https://oss-cn-hangzhou.aliyuncs.com",
+      bucket: "ali-bucket",
+      access_key_id: "ali-access-key",
+      access_key_secret: "ali-secret-key",
+    },
+  };
+  let objectStorageSaveCallCount = 0;
+  let objectStorageLastPayload: ObjectStorageConfigMockData | null = null;
+
+  await page.route("**/api/admin/system-settings/gmap-engine", async (route) => {
+    await route.fulfill(
+      successResponse({ provider: "http", proxies: [], concurrency: 1 }),
+    );
+  });
+
+  await page.route("**/api/admin/system-settings/object-storage", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill(successResponse(objectStorageConfig));
+      return;
+    }
+
+    expect(route.request().method()).toBe("POST");
+    objectStorageSaveCallCount += 1;
+    objectStorageLastPayload = JSON.parse(
+      route.request().postData() ?? "{}",
+    ) as ObjectStorageConfigMockData;
+    objectStorageConfig = {
+      ...objectStorageLastPayload,
+      AliOSS: {
+        ...objectStorageLastPayload.AliOSS,
+        endpoint: objectStorageLastPayload.AliOSS.endpoint.trim().replace(/\/+$/, ""),
+      },
+    };
+    await route.fulfill(successResponse(objectStorageConfig));
+  });
 
   await page.route("**/api/admin/system-settings/gosom-api", async (route) => {
     if (route.request().method() === "GET") {
@@ -215,6 +290,10 @@ async function mockSystemSettingsApi(page: Page) {
     gosomSaveCallCount: () => gosomSaveCallCount,
     /** 最近一次 gosom 保存请求体。 */
     gosomLastPayload: () => gosomLastPayload,
+    /** 当前对象存储保存接口调用次数。 */
+    objectStorageSaveCallCount: () => objectStorageSaveCallCount,
+    /** 最近一次对象存储保存请求体。 */
+    objectStorageLastPayload: () => objectStorageLastPayload,
   };
 }
 
@@ -331,4 +410,78 @@ test("Gosom API 配置回显、必填拦截、动态增删行与保存归一化"
     ],
   });
   await expect(baseUrlInputs.nth(0)).toHaveValue("https://gosom.internal:8080");
+});
+
+test("对象存储双组回显，切换启用项后仅校验启用块并完整保存", async ({ page }) => {
+  await loginAsAdmin(page);
+  const api = await mockSystemSettingsApi(page);
+
+  await page.goto("/system-settings");
+  await openSettingsTab(page, "object-storage");
+
+  const accountId = page.getByPlaceholder("账户 ID");
+  const buckets = page.getByPlaceholder("Bucket");
+  const accessKeyIds = page.getByPlaceholder("Access Key ID");
+  const r2Secret = page.getByPlaceholder("Secret Access Key");
+  const aliEndpoint = page.getByPlaceholder("Endpoint");
+  const aliSecret = page.getByPlaceholder("Access Key Secret");
+  await expect(page.getByRole("radio", { name: "Cloudflare R2" })).toBeChecked();
+  await expect(accountId).toHaveValue("r2-account");
+  await expect(buckets.nth(0)).toHaveValue("r2-bucket");
+  await expect(accessKeyIds.nth(0)).toHaveValue("r2-access-key");
+  await expect(r2Secret).toHaveValue("r2-secret-key");
+  await expect(aliEndpoint).toHaveValue("https://oss-cn-hangzhou.aliyuncs.com");
+  await expect(buckets.nth(1)).toHaveValue("ali-bucket");
+  await expect(accessKeyIds.nth(1)).toHaveValue("ali-access-key");
+  await expect(aliSecret).toHaveValue("ali-secret-key");
+
+  await accountId.fill("");
+  await page.getByRole("button", { name: "保存" }).click();
+  await expect(
+    page.locator(".n-message__content", {
+      hasText: "当前启用的对象存储配置不能为空",
+    }),
+  ).toBeVisible();
+  expect(api.objectStorageSaveCallCount()).toBe(0);
+
+  await page.locator(".n-radio-button", { hasText: "阿里云 OSS" }).click();
+  await aliEndpoint.fill("");
+  await page.getByRole("button", { name: "保存" }).click();
+  expect(api.objectStorageSaveCallCount()).toBe(0);
+
+  await aliEndpoint.fill("https://oss-cn-shanghai.aliyuncs.com/bucket?version=1");
+  await page.getByRole("button", { name: "保存" }).click();
+  await expect(
+    page.locator(".n-message__content", {
+      hasText: "阿里云 OSS Endpoint 必须是无路径、凭据、查询和片段的 HTTP(S) 地址",
+    }),
+  ).toBeVisible();
+  expect(api.objectStorageSaveCallCount()).toBe(0);
+
+  await aliEndpoint.fill("https://oss-cn-shanghai.aliyuncs.com/..");
+  await page.getByRole("button", { name: "保存" }).click();
+  expect(api.objectStorageSaveCallCount()).toBe(0);
+
+  await aliEndpoint.fill(" https://oss-cn-shanghai.aliyuncs.com/ ");
+  await page.getByRole("button", { name: "保存" }).click();
+  await expect(
+    page.locator(".n-message__content", { hasText: "对象存储配置已保存" }),
+  ).toBeVisible();
+  expect(api.objectStorageSaveCallCount()).toBe(1);
+  expect(api.objectStorageLastPayload()).toEqual({
+    active: "AliOSS",
+    R2: {
+      account_id: "",
+      bucket: "r2-bucket",
+      access_key_id: "r2-access-key",
+      secret_access_key: "r2-secret-key",
+    },
+    AliOSS: {
+      endpoint: " https://oss-cn-shanghai.aliyuncs.com/ ",
+      bucket: "ali-bucket",
+      access_key_id: "ali-access-key",
+      access_key_secret: "ali-secret-key",
+    },
+  });
+  await expect(aliEndpoint).toHaveValue("https://oss-cn-shanghai.aliyuncs.com");
 });
