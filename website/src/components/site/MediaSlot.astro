@@ -136,9 +136,9 @@ const { label, variant = 'browser', ratio = '16 / 10', src, class: className } =
 
   .slot-skeleton {
     position: absolute;
-    top: var(--space-5, 20px);
-    left: var(--space-5, 20px);
-    right: var(--space-5, 20px);
+    top: var(--space-6);
+    left: var(--space-6);
+    right: var(--space-6);
     display: grid;
     gap: var(--space-2);
     opacity: 0.55;
@@ -147,9 +147,7 @@ const { label, variant = 'browser', ratio = '16 / 10', src, class: className } =
   .slot-line {
     height: 8px;
     border-radius: var(--rounded-full);
-    background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
-    background-size: 200% 100%;
-    animation: slot-shimmer 1.5s linear infinite;
+    background: var(--surface-2);
   }
 
   .slot-line--wide {
@@ -158,18 +156,6 @@ const { label, variant = 'browser', ratio = '16 / 10', src, class: className } =
 
   .slot-line--short {
     width: 40%;
-  }
-
-  @keyframes slot-shimmer {
-    to {
-      background-position: -200% 0;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .slot-line {
-      animation: none;
-    }
   }
 
   /* 素材待补徽章：chip 生态（-soft 底 + 同色文字），说明该位素材内容 */

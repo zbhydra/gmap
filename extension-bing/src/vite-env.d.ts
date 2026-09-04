@@ -15,7 +15,7 @@ declare const __ALI_SLS_MARK_CONFIG__: {
 
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'
-  const component: DefineComponent<{}, {}, any>
+  const component: DefineComponent
   export default component
 }
 

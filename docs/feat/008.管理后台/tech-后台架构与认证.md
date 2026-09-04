@@ -138,7 +138,7 @@ API Key 存在 `admins` 表对应管理员记录中,只保存 hash、前缀和�
 - 多列描述列表(UserInfoDialog)移动端降为单列。
 - 视口高度用 `100dvh`(保留 `vh` fallback),避免移动端地址栏伸缩抖动。
 
-全局样式:`styles/global.css` 是 admin 唯一的非 scoped 样式入口(main.ts 引入),只放需要覆盖 Naive UI teleport 弹层的规则;当前承载 daterange / datetimerange 双日历面板的窄屏兜底(`max-width: calc(100vw - 16px)` + 横向滚动,宽屏无影响)。
+全局样式:`styles/global.css` 是 admin 的 Material You 亮暗语义 token owner 与唯一非 scoped 样式入口(main.ts 引入),同时承载需要覆盖 Naive UI teleport 弹层的规则;组件样式、Naive UI theme overrides 与运行时 Canvas 样式统一消费该 owner。
 
 ## 10. 改动范围锚点
 

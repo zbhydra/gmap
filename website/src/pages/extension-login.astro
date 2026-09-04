@@ -928,34 +928,34 @@ const authCopy = {
     min-height: 72vh;
     display: grid;
     place-items: center;
-    padding: clamp(56px, 8vw, 92px) 24px 72px;
+    padding: clamp(var(--space-16), 8vw, var(--space-24)) 24px var(--space-16);
   }
 
   .extension-login-panel {
     width: 720px;
     display: grid;
     gap: 24px;
-    padding: clamp(24px, 4vw, 34px);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.1);
+    padding: clamp(24px, 4vw, var(--space-8));
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
   }
 
   .extension-login-heading {
     display: grid;
-    gap: 10px;
+    gap: var(--space-2);
   }
 
   .extension-login-eyebrow,
   .extension-login-state {
     width: max-content;
     margin: 0;
-    padding: 5px 9px;
-    border: 1px solid rgba(37, 99, 235, 0.16);
-    border-radius: 999px;
-    color: var(--color-primary);
-    background: rgba(37, 99, 235, 0.06);
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--rounded-full);
+    color: var(--primary);
+    background: var(--primary-soft);
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 0;
@@ -964,7 +964,7 @@ const authCopy = {
   .extension-login-heading h1,
   .extension-login-status h2 {
     margin: 0;
-    color: var(--color-gray-900);
+    color: var(--text);
     font-size: clamp(30px, 5vw, 44px);
     line-height: 1.04;
     letter-spacing: 0;
@@ -980,7 +980,7 @@ const authCopy = {
 
   .extension-login-status > p:not(.extension-login-state) {
     margin: 0;
-    color: var(--color-gray-600);
+    color: var(--text-2);
     font-size: 15px;
     line-height: 1.65;
   }
@@ -991,14 +991,14 @@ const authCopy = {
   }
 
   .extension-login-status[data-status='error'] .extension-login-state {
-    border-color: rgba(220, 38, 38, 0.2);
-    color: #991b1b;
-    background: rgba(220, 38, 38, 0.08);
+    border-color: var(--bad);
+    color: var(--bad);
+    background: var(--bad-soft);
   }
 
   .extension-login-confirm {
     display: grid;
-    gap: 18px;
+    gap: var(--space-4);
   }
 
   .extension-login-confirm[hidden] {
@@ -1010,10 +1010,10 @@ const authCopy = {
     flex-wrap: wrap;
     align-items: center;
     gap: 6px 14px;
-    padding: 16px 18px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 8px;
-    background: var(--color-gray-50);
+    padding: 16px var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-sm);
+    background: var(--surface-2);
   }
 
   .extension-login-avatar {
@@ -1023,7 +1023,7 @@ const authCopy = {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 999px;
+    border-radius: var(--rounded-full);
     object-fit: cover;
   }
 
@@ -1032,22 +1032,22 @@ const authCopy = {
   }
 
   .extension-login-avatar-fallback {
-    border: 1px solid rgba(37, 99, 235, 0.16);
-    background: rgba(37, 99, 235, 0.08);
-    color: var(--color-primary);
+    border: 1px solid var(--border-strong);
+    background: var(--primary-soft);
+    color: var(--primary);
     font-size: 20px;
     font-weight: 800;
   }
 
   .extension-login-account-name {
-    color: var(--color-gray-900);
+    color: var(--text);
     font-size: 16px;
     font-weight: 800;
     overflow-wrap: anywhere;
   }
 
   .extension-login-account-email {
-    color: var(--color-gray-600);
+    color: var(--text-2);
     font-size: 14px;
     overflow-wrap: anywhere;
   }
@@ -1055,7 +1055,7 @@ const authCopy = {
   .extension-login-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--space-2);
   }
 
   .extension-login-primary,
@@ -1065,9 +1065,9 @@ const authCopy = {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: var(--space-2);
     padding: 0 14px;
-    border-radius: 8px;
+    border-radius: var(--rounded-full);
     font-size: 14px;
     font-weight: 800;
     transition:
@@ -1078,25 +1078,25 @@ const authCopy = {
   }
 
   .extension-login-secondary {
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: #ffffff;
-    color: var(--color-gray-900);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-card);
   }
 
   .extension-login-secondary:hover {
-    border-color: rgba(37, 99, 235, 0.28);
-    color: var(--color-primary);
+    border-color: var(--border-strong);
+    color: var(--primary);
   }
 
   .extension-login-primary {
-    border: 1px solid var(--color-primary);
-    color: #ffffff;
-    background: var(--color-primary);
+    border: 1px solid var(--primary);
+    color: var(--primary-fg);
+    background: var(--primary);
   }
 
   .extension-login-primary:hover {
-    background: var(--color-primary-dark);
+    background: var(--primary-hover);
   }
 
   .extension-login-primary:disabled,
@@ -1107,18 +1107,18 @@ const authCopy = {
 
   .extension-login-primary:focus-visible,
   .extension-login-secondary:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 
   @media (max-width: 640px) {
     .extension-login-page {
-      padding: 32px 16px 52px;
+      padding: 32px 16px var(--space-16);
       place-items: start center;
     }
 
     .extension-login-panel {
-      padding: 22px 18px;
+      padding: 22px var(--space-4);
     }
 
     .extension-login-actions {

@@ -26,7 +26,7 @@ class UserTokenService:
     - refresh_token_old:{user_id} → ZSet [md5(old_token)=expires_at, ...] (宽限期)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._redis = redis_client
 
     def _build_key(self, token_type: TokenType, user_id: int) -> str:

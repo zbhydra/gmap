@@ -12,6 +12,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ChromeEventEmitter } from '../../src/core/rpc'
 import type { ExtensionEvents } from '../../src/core/events/types'
 import type { MapsPlaceRow } from '../../src/sites/maps/content/parser'
+import type {
+  MapsEnrichBusinessInput,
+  MapsEnrichResponse
+} from '../../src/sites/maps/enrich/types'
 import { STORAGE_KEYS } from '../../src/core/api/config'
 import {
   DEFAULT_MAPS_USER_SETTINGS,
@@ -29,14 +33,14 @@ const rpcState = vi.hoisted(() => ({
   /** 每次调 enrichMapsBusinesses 收到的批次入参。 */
   calls: [] as Array<Array<{ domain: string; website: string }>>,
   /** 注入的响应器：返回响应载荷或抛错。 */
-  respond: null as null | ((businesses: Array<{ domain: string; website: string }>) => Promise<unknown>)
+  respond: null as null | ((businesses: MapsEnrichBusinessInput[]) => Promise<MapsEnrichResponse>)
 }))
 
 vi.mock('../../src/content/rpc/background.rpc', () => ({
   BackgroundChannel: class {
     async enrichMapsBusinesses(params: {
-      businesses: Array<{ domain: string; website: string }>
-    }): Promise<unknown> {
+      businesses: MapsEnrichBusinessInput[]
+    }): Promise<MapsEnrichResponse> {
       rpcState.calls.push(params.businesses)
       if (rpcState.respond === null) {
         throw new Error('no responder configured')

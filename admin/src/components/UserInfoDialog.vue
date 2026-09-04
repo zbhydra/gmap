@@ -488,7 +488,7 @@ function callbackStatusTagType(value: CallbackStatus): TagType {
 }
 
 .user-info-block-title {
-  color: #4d4d4d;
+  color: var(--text-2);
   font-size: 13px;
   font-weight: 600;
   line-height: 18px;
@@ -512,12 +512,12 @@ function callbackStatusTagType(value: CallbackStatus): TagType {
 .user-info-product {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
 }
 
 .user-info-muted {
-  color: #667085;
+  color: var(--text-3);
   font-size: 12px;
 }
 </style>

@@ -9,6 +9,8 @@
 // 基础类型定义
 // ============================================================================
 
+import type { StorageValue } from '../../src/core/storage'
+
 interface Tab {
   id?: number
   url?: string
@@ -16,12 +18,15 @@ interface Tab {
   currentWindow?: boolean
 }
 
+type StorageData = Record<string, StorageValue | undefined>
+type StorageKeys = string | string[] | Record<string, StorageValue> | null
+
 // ============================================================================
 // chrome.action API
 // ============================================================================
 
 const action = {
-  getBadgeText: vi.fn((details: any, callback?: any) => {
+  getBadgeText: vi.fn((_details: chrome.action.TabDetails, callback?: (result: string) => void) => {
     const result = ''
     if (callback) {
       callback(result)
@@ -30,14 +35,16 @@ const action = {
     return Promise.resolve(result)
   }),
 
-  getBadgeBackgroundColor: vi.fn((details: any, callback?: any) => {
-    const result = [74, 144, 226, 1] // #4A90E2
-    if (callback) {
-      callback(result)
-      return
+  getBadgeBackgroundColor: vi.fn(
+    (_details: chrome.action.TabDetails, callback?: (result: chrome.action.ColorArray) => void) => {
+      const result: chrome.action.ColorArray = [74, 144, 226, 1] // #4A90E2
+      if (callback) {
+        callback(result)
+        return
+      }
+      return Promise.resolve(result)
     }
-    return Promise.resolve(result)
-  }),
+  ),
 
   setBadgeText: vi.fn(),
   setBadgeBackgroundColor: vi.fn(),
@@ -54,19 +61,13 @@ const action = {
 const runtime = {
   id: 'test-extension-id',
 
-  sendMessage: vi.fn((message: any, callback?: any) => {
-    const response = {
-      success: true,
-      msg: '',
-      data: {}
-    }
-
+  sendMessage: vi.fn((_message: unknown, callback?: (response: unknown) => void) => {
     if (callback) {
-      callback(response)
+      callback(undefined)
       return
     }
 
-    return Promise.resolve(response)
+    return Promise.resolve(undefined)
   }),
 
   onMessage: {
@@ -97,22 +98,18 @@ const runtime = {
 // ============================================================================
 
 const tabs = {
-  sendMessage: vi.fn((tabId: number, message: any, callback?: any) => {
-    const response = {
-      success: true,
-      msg: '',
-      data: {}
+  sendMessage: vi.fn(
+    (_tabId: number, _message: unknown, callback?: (response: unknown) => void) => {
+      if (callback) {
+        callback(undefined)
+        return
+      }
+
+      return Promise.resolve(undefined)
     }
+  ),
 
-    if (callback) {
-      callback(response)
-      return
-    }
-
-    return Promise.resolve(response)
-  }),
-
-  query: vi.fn((queryInfo: any) => {
+  query: vi.fn((_queryInfo: chrome.tabs.QueryInfo) => {
     return Promise.resolve([
       {
         id: 1,
@@ -140,7 +137,7 @@ const tabs = {
 // chrome.storage API
 // ============================================================================
 
-const storageData: Record<string, any> = {}
+const storageData: StorageData = {}
 
 const storage = {
   onChanged: {
@@ -150,8 +147,8 @@ const storage = {
   },
 
   local: {
-    get: vi.fn((keys: any, callback?: any) => {
-      let result: any = {}
+    get: vi.fn((keys: StorageKeys, callback?: (items: StorageData) => void) => {
+      let result: StorageData = {}
 
       if (keys === null) {
         result = { ...storageData }
@@ -181,7 +178,7 @@ const storage = {
       return Promise.resolve(result)
     }),
 
-    set: vi.fn((items: any, callback?: any) => {
+    set: vi.fn((items: Record<string, StorageValue>, callback?: () => void) => {
       Object.assign(storageData, items)
 
       if (callback) {
@@ -192,7 +189,7 @@ const storage = {
       return Promise.resolve()
     }),
 
-    remove: vi.fn((keys: string | string[], callback?: any) => {
+    remove: vi.fn((keys: string | string[], callback?: () => void) => {
       const keysArray = Array.isArray(keys) ? keys : [keys]
       for (const key of keysArray) {
         delete storageData[key]
@@ -206,7 +203,7 @@ const storage = {
       return Promise.resolve()
     }),
 
-    clear: vi.fn((callback?: any) => {
+    clear: vi.fn((callback?: () => void) => {
       for (const key in storageData) {
         delete storageData[key]
       }
@@ -259,31 +256,37 @@ const downloads = {
 // ============================================================================
 
 const identity = {
-  getAuthToken: vi.fn((details: any, callback?: any) => {
-    const result = 'mock-drive-access-token'
+  getAuthToken: vi.fn(
+    (_details: chrome.identity.TokenDetails, callback?: (result: chrome.identity.GetAuthTokenResult) => void) => {
+    const result = { token: 'mock-drive-access-token' }
     if (callback) {
       callback(result)
       return
     }
     return Promise.resolve(result)
-  }),
+    }
+  ),
 
-  launchWebAuthFlow: vi.fn((options: any, callback?: any) => {
+  launchWebAuthFlow: vi.fn(
+    (_options: chrome.identity.WebAuthFlowDetails, callback?: (responseUrl?: string) => void) => {
     const result = 'https://test-extension-id.chromiumapp.org/?code=mock-auth-code'
     if (callback) {
       callback(result)
       return
     }
     return Promise.resolve(result)
-  }),
+    }
+  ),
 
-  removeCachedAuthToken: vi.fn((details: any, callback?: any) => {
+  removeCachedAuthToken: vi.fn(
+    (_details: chrome.identity.InvalidTokenDetails, callback?: () => void) => {
     if (callback) {
       callback()
       return
     }
     return Promise.resolve()
-  }),
+    }
+  ),
 
   getRedirectURL: vi.fn((path?: string) => {
     return `https://test-extension-id.chromiumapp.org/${path ?? ''}`

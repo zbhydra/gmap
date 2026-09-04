@@ -2,6 +2,7 @@
 
 import asyncio
 import uuid
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from app.utils.logger import logger
@@ -18,7 +19,7 @@ class RedisLockError(RedisException):
 class RedisLock:
     """Redis 分布式锁实现"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._key_prefix = "lock"
 
     def _build_key(self, key: str) -> str:
@@ -89,7 +90,9 @@ class RedisLock:
             return False
 
     @asynccontextmanager
-    async def lock_context(self, key: str, ttl: int = 30, timeout: int | None = None):
+    async def lock_context(
+        self, key: str, ttl: int = 30, timeout: int | None = None
+    ) -> AsyncIterator[None]:
         """上下文管理器"""
         lock_value = await self.acquire(key, ttl=ttl, timeout=timeout)
         if lock_value is None:

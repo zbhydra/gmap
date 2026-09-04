@@ -27,7 +27,7 @@ return current
 class RedisFixedLimiter:
     """Redis 固定窗口限流器"""
 
-    def __init__(self, key_prefix: str = "fixed_window_limit"):
+    def __init__(self, key_prefix: str = "fixed_window_limit") -> None:
         """
         初始化限流器
 

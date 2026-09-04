@@ -444,7 +444,7 @@ describe('background 同步服务（单路失败不阻断）', () => {
       String(call[0]).endsWith('/api/client/maps/hubspot/sync')
     )
     const [, init] = syncCall as [string, RequestInit]
-    const requestBody = JSON.parse(String(init.body)) as { token: string; businesses: unknown[] }
+    const requestBody = JSON.parse(String(init.body)) as { token: string; businesses: object[] }
     expect(requestBody.token).toBe('seeded-hubspot-token')
     expect(requestBody.businesses).toHaveLength(1)
 

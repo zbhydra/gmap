@@ -39,25 +39,23 @@ const copy = t.pages.account.paypalReturn
     display: grid;
     min-height: 68vh;
     place-items: center;
-    padding: 120px 24px 72px;
-    background:
-      radial-gradient(circle at 18% 16%, rgba(37, 99, 235, 0.1), transparent 32%),
-      radial-gradient(circle at 82% 12%, rgba(248, 113, 113, 0.12), transparent 30%);
+    padding: var(--space-24) 24px var(--space-16);
+    background: var(--bg);
   }
 
   .paypal-return-card {
     width: min(620px, 100%);
-    padding: 34px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 28px;
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12);
+    padding: var(--space-8);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
     text-align: center;
   }
 
   .paypal-return-eyebrow {
     margin: 0 0 12px;
-    color: #b45309;
+    color: var(--warn);
     font-size: 13px;
     font-weight: 900;
     letter-spacing: 0.14em;
@@ -74,7 +72,7 @@ const copy = t.pages.account.paypalReturn
   .paypal-return-card p:last-child {
     margin: 16px 0 0;
     color: var(--text-2);
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.6;
   }

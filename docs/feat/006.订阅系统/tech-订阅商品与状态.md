@@ -126,7 +126,7 @@ uv run python scripts/seed_subscription_products.py
 
 ### 商品表复合唯一键改造(2026-09-02)
 
-`config_subscription_product` 唯一键由 `uk(product_id)` 改为 `uk(product_line, product_id)`(与价格表复合键先例一致)。**`sync_database_schema.py` 只做索引新增,不删旧索引**,按以下顺序执行:
+`config_subscription_product` 唯一键由 `uk(product_id)` 改为 `uk(product_line, product_id)`(与价格表复合键先例一致)。`sync_database_schema.py` 不会删除模型外的额外唯一索引；非唯一普通索引以模型声明为准，未声明时会删除。因此旧单列唯一键仍需人工删除，按以下顺序执行:
 
 1. 先把存量 free 行归位(空 `product_line` 补 `extension`,保证 seed upsert 命中旧行不新建):
 

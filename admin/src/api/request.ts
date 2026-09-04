@@ -41,20 +41,16 @@ interface AdminAuthRetryRequestConfig extends InternalAxiosRequestConfig {
 /**
  * 业务错误：后端返回 code !== 10000
  *
- * 保留错误码和附加数据，供调用方按 code 分支处理。
+ * 保留错误码，供调用方按 code 分支处理。
  * 向后兼容：instanceof Error 仍然为 true。
  */
 export class BusinessError extends Error {
   /** 业务错误码（如 30006） */
   readonly code: number;
-  /** 附加数据（如 { wait_seconds: 60 }） */
-  readonly data: Record<string, unknown>;
-
-  constructor(code: number, message: string, data: Record<string, unknown> = {}) {
+  constructor(code: number, message: string) {
     super(message);
     this.name = "BusinessError";
     this.code = code;
-    this.data = data;
   }
 }
 
@@ -141,7 +137,7 @@ request.interceptors.response.use(
     if (code === 10000) {
       return data;
     }
-    return Promise.reject(new BusinessError(code, msg || `业务错误 code=${code}`, data ?? {}));
+    return Promise.reject(new BusinessError(code, msg || `业务错误 code=${code}`));
   },
   async (error) => {
     const retryConfig = error.config as AdminAuthRetryRequestConfig | undefined;

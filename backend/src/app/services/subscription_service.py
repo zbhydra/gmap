@@ -56,7 +56,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
     primary_key_field = "user_id"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(UserSubscriptionModel)
 
     async def check_product(self, param: OrderCheckProductParam) -> OrderCreateParam:

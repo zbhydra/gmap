@@ -205,8 +205,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(15, 23, 42, 0.46);
-    backdrop-filter: blur(14px);
+    background: var(--overlay);
   }
 
   .order-checkout-payment-dialog {
@@ -216,10 +215,10 @@ const checkoutCopy: OrderCheckoutCopy = {
     width: min(620px, calc(100vw - 48px));
     max-height: min(680px, calc(100vh - 48px));
     overflow: hidden;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 26px;
-    background: rgba(255, 255, 255, 0.97);
-    box-shadow: 0 34px 90px rgba(15, 23, 42, 0.2);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-modal);
   }
 
   .order-checkout-payment-header,
@@ -229,21 +228,21 @@ const checkoutCopy: OrderCheckoutCopy = {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 18px;
+    gap: var(--space-4);
     padding: 0 28px;
-    border-color: rgba(15, 23, 42, 0.08);
-    background: rgba(255, 255, 255, 0.72);
+    border-color: var(--border);
+    background: var(--surface);
   }
 
   .order-checkout-payment-header {
     min-height: 92px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    border-bottom: 1px solid var(--border);
   }
 
   .order-checkout-payment-footer {
     align-items: center;
     min-height: 118px;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    border-top: 1px solid var(--border);
   }
 
   .order-checkout-payment-header h2 {
@@ -267,12 +266,12 @@ const checkoutCopy: OrderCheckoutCopy = {
     place-items: center;
     width: 40px;
     height: 40px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-full);
+    background: var(--surface-2);
     color: var(--text-2);
     cursor: pointer;
-    font-size: 26px;
+    font-size: 24px;
     line-height: 1;
     transition:
       background 160ms ease,
@@ -281,8 +280,8 @@ const checkoutCopy: OrderCheckoutCopy = {
   }
 
   .order-checkout-close:hover {
-    border-color: rgba(37, 99, 235, 0.24);
-    background: rgba(37, 99, 235, 0.08);
+    border-color: var(--border-strong);
+    background: var(--primary-soft);
     color: var(--primary);
   }
 
@@ -307,10 +306,10 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-error,
   .order-checkout-order-error {
     padding: 12px 14px;
-    border: 1px solid rgba(220, 38, 38, 0.16);
-    border-radius: 16px;
-    background: rgba(254, 242, 242, 0.92);
-    color: #b91c1c;
+    border: 1px solid var(--bad);
+    border-radius: var(--rounded-md);
+    background: var(--bad-soft);
+    color: var(--bad);
   }
 
   .order-checkout-order-error {
@@ -320,11 +319,11 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-selected-summary {
     display: grid;
-    gap: 10px;
-    padding: 18px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.82);
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-lg);
+    background: var(--surface);
   }
 
   .order-checkout-selected-label,
@@ -342,7 +341,7 @@ const checkoutCopy: OrderCheckoutCopy = {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 10px 14px;
+    gap: var(--space-2) 14px;
   }
 
   .order-checkout-selected-values p:first-child {
@@ -354,7 +353,7 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-selected-values p:last-child {
     color: var(--text-2);
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
   }
 
@@ -377,10 +376,10 @@ const checkoutCopy: OrderCheckoutCopy = {
     justify-content: flex-start;
     gap: 12px;
     min-height: 64px;
-    padding: 0 18px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.72);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-full);
+    background: var(--surface);
     color: var(--text-2);
     cursor: pointer;
     font-size: 13px;
@@ -394,8 +393,8 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-channel-button.is-selected,
   .order-checkout-channel-button:hover {
-    border-color: rgba(37, 99, 235, 0.34);
-    background: rgba(37, 99, 235, 0.08);
+    border-color: var(--border-strong);
+    background: var(--primary-soft);
     color: var(--primary);
     transform: translateY(-1px);
   }
@@ -422,7 +421,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-agreement {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: var(--space-2);
     min-width: 0;
     color: var(--text-2);
     font-size: 13px;
@@ -433,7 +432,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-agreement input {
     width: 18px;
     height: 18px;
-    margin-top: 1px;
+    margin-top: var(--space-1);
     accent-color: var(--primary);
     flex: 0 0 auto;
   }
@@ -451,7 +450,7 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-payment-actions {
     display: flex;
-    gap: 10px;
+    gap: var(--space-2);
     flex: 0 0 auto;
   }
 
@@ -459,7 +458,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-submit,
   .order-checkout-order-cancel {
     min-height: 52px;
-    border-radius: 16px;
+    border-radius: var(--rounded-full);
     cursor: pointer;
     font-size: 15px;
     font-weight: 900;
@@ -473,15 +472,15 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-back,
   .order-checkout-order-cancel {
-    padding: 0 18px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: rgba(255, 255, 255, 0.78);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border);
+    background: var(--surface);
     color: var(--text);
   }
 
   .order-checkout-back:hover,
   .order-checkout-order-cancel:hover {
-    border-color: rgba(37, 99, 235, 0.24);
+    border-color: var(--border-strong);
     color: var(--primary);
     transform: translateY(-1px);
   }
@@ -490,21 +489,20 @@ const checkoutCopy: OrderCheckoutCopy = {
     min-width: 180px;
     padding: 0 22px;
     border: 0;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: #ffffff;
-    box-shadow: 0 18px 34px rgba(37, 99, 235, 0.24);
+    background: var(--primary);
+    color: var(--primary-fg);
+    box-shadow: var(--shadow-card);
   }
 
   .order-checkout-submit:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 22px 44px rgba(37, 99, 235, 0.3);
+    box-shadow: var(--shadow-card);
   }
 
   .order-checkout-submit:disabled {
     cursor: not-allowed;
     opacity: 0.58;
     transform: none;
-    box-shadow: none;
   }
 
   .order-checkout-order-dialog {
@@ -514,15 +512,15 @@ const checkoutCopy: OrderCheckoutCopy = {
     width: min(700px, calc(100vw - 48px));
     max-height: min(540px, calc(100vh - 48px));
     overflow: hidden;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.97);
-    box-shadow: 0 34px 90px rgba(15, 23, 42, 0.2);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-modal);
   }
 
   .order-checkout-order-header {
     padding: 28px 32px 22px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    border-bottom: 1px solid var(--border);
   }
 
   .order-checkout-order-header h2 {
@@ -553,9 +551,9 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-order-spinner {
     width: 64px;
     height: 64px;
-    border: 6px solid rgba(37, 99, 235, 0.12);
+    border: 6px solid var(--primary-soft);
     border-top-color: var(--primary);
-    border-radius: 999px;
+    border-radius: var(--rounded-full);
     transform-origin: 50% 50%;
     will-change: transform;
     animation: orderCheckoutSpin 800ms linear infinite;
@@ -567,13 +565,11 @@ const checkoutCopy: OrderCheckoutCopy = {
     align-items: center;
     gap: 14px;
     width: min(430px, 100%);
-    padding: 16px 18px;
-    border: 1px solid rgba(22, 163, 74, 0.22);
-    border-radius: 22px;
-    background: linear-gradient(135deg, rgba(240, 253, 244, 0.98), rgba(255, 255, 255, 0.98));
-    box-shadow:
-      0 18px 42px rgba(22, 101, 52, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    padding: 16px var(--space-4);
+    border: 1px solid var(--ok);
+    border-radius: var(--rounded-lg);
+    background: var(--ok-soft);
+    box-shadow: var(--shadow-card);
   }
 
   .order-checkout-success-mark {
@@ -581,10 +577,10 @@ const checkoutCopy: OrderCheckoutCopy = {
     place-items: center;
     width: 44px;
     height: 44px;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color: #ffffff;
-    box-shadow: 0 12px 24px rgba(22, 163, 74, 0.24);
+    border-radius: var(--rounded-full);
+    background: var(--ok);
+    color: var(--ok-fg);
+    box-shadow: var(--shadow-card);
   }
 
   .order-checkout-success-mark svg {
@@ -601,12 +597,12 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-success p {
     margin: 0;
-    color: #166534;
+    color: var(--ok);
     line-height: 1.25;
   }
 
   .order-checkout-success-primary {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
   }
 
@@ -625,7 +621,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-order-footer {
     display: flex;
     justify-content: center;
-    padding: 0 32px 30px;
+    padding: 0 32px var(--space-8);
   }
 
   .order-checkout-order-cancel {
@@ -641,7 +637,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-agreement input:focus-visible,
   .order-checkout-agreement a:focus-visible,
   .order-checkout-order-support a:focus-visible {
-    outline: 2px solid rgba(37, 99, 235, 0.34);
+    outline: 2px solid var(--ring);
     outline-offset: 3px;
   }
 
@@ -673,12 +669,12 @@ const checkoutCopy: OrderCheckoutCopy = {
     .order-checkout-payment-dialog {
       width: calc(100vw - 24px);
       max-height: calc(100vh - 24px);
-      border-radius: 22px;
+      border-radius: var(--rounded-lg);
     }
 
     .order-checkout-payment-header,
     .order-checkout-payment-footer {
-      padding: 0 18px;
+      padding: 0 var(--space-4);
     }
 
     .order-checkout-payment-header h2 {
@@ -692,14 +688,14 @@ const checkoutCopy: OrderCheckoutCopy = {
     }
 
     .order-checkout-payment-middle {
-      padding: 22px 18px;
+      padding: 22px var(--space-4);
     }
 
     .order-checkout-payment-footer {
       align-items: stretch;
       flex-direction: column;
       justify-content: center;
-      padding: 18px;
+      padding: var(--space-4);
     }
 
     .order-checkout-payment-actions {

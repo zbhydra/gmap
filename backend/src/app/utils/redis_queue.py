@@ -1,7 +1,5 @@
 """Redis 消息队列实现 - 基于 Redis Streams"""
 
-from typing import Any
-
 from app.utils.logger import logger
 from app.core.redis import redis_client
 from app.utils.redis_key import build_redis_key
@@ -10,7 +8,7 @@ from app.utils.redis_key import build_redis_key
 class RedisQueue:
     """Redis 消息队列实现 - 基于 Redis Streams"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._key_prefix = "queue"
 
     def _build_key(self, stream_name: str) -> str:
@@ -37,7 +35,9 @@ class RedisQueue:
             )
             return False
 
-    async def add_message(self, stream_name: str, data: dict[str, Any]) -> str | None:
+    async def add_message(
+        self, stream_name: str, data: dict[str, object]
+    ) -> str | None:
         """添加消息到队列"""
         try:
             redis_key = self._build_key(stream_name)
@@ -62,7 +62,7 @@ class RedisQueue:
         consumer_name: str,
         count: int = 1,
         block: int | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[dict[str, object]]:
         """从消费者组读取消息"""
         try:
             redis_key = self._build_key(stream_name)
@@ -89,7 +89,7 @@ class RedisQueue:
                 return []
 
             # 解析结果: [[stream_name, [[message_id, {field: value, ...}], ...]]]
-            messages = []
+            messages: list[dict[str, object]] = []
             for stream_data in result:
                 for message in stream_data[1]:
                     message_id = str(message[0])

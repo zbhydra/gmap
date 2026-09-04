@@ -65,7 +65,7 @@ class OrderService(BaseService[OrderModel]):
 
     primary_key_field = "id"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(OrderModel)
         self._order_expire_minutes = 30  # 订单过期时间（分钟）
 

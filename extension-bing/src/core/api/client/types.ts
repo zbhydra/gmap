@@ -7,7 +7,7 @@ import { I18N_KEYS } from '../../constants/i18n'
 import type { JsonValue } from '../../rpc/types'
 
 /** HTTP 请求方法 */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+export type HttpMethod = 'GET' | 'POST'
 
 /** 请求配置选项 */
 export interface RequestOptions {
@@ -92,6 +92,13 @@ export class ApiError extends Error {
     }
     return I18nService.t(I18N_KEYS.API_ERROR.FALLBACK)
   }
+}
+
+/** 用固定消息重建 JSON 解析异常，避免原始 message/stack 携带响应正文。 */
+export function toSafeJsonParseError(error: unknown): Error {
+  const safeError = new Error('JSON response parsing failed')
+  safeError.name = error instanceof Error ? error.name : typeof error
+  return safeError
 }
 
 /** 拦截器类型定义 */

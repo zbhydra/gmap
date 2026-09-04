@@ -37,7 +37,7 @@
 """
 
 from fastapi import APIRouter, Depends, Header, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.exc import IntegrityError
 
 # Services
@@ -422,7 +422,7 @@ def _google_redirect_error_response(
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(data: RegisterRequest, request: Request):
+async def register(data: RegisterRequest, request: Request) -> JSONResponse:
     """用户注册.
 
     1. 检查邮箱是否已存在
@@ -457,7 +457,7 @@ async def register(data: RegisterRequest, request: Request):
 
 
 @router.post("/login")
-async def login(data: LoginRequest, request: Request):
+async def login(data: LoginRequest, request: Request) -> JSONResponse:
     """用户登录.
 
     1. 检查 IP 是否被封禁
@@ -524,7 +524,9 @@ async def login(data: LoginRequest, request: Request):
 
 
 @router.post("/logout")
-async def logout(ctx: UserContext = Depends(get_current_user), request: Request = None):
+async def logout(
+    ctx: UserContext = Depends(get_current_user), request: Request = None
+) -> JSONResponse:
     """用户登出（只撤销当前 token，不影响其他设备）."""
     if request:
         auth_header = request.headers.get("authorization")
@@ -541,7 +543,7 @@ async def logout(ctx: UserContext = Depends(get_current_user), request: Request 
 async def extension_login_issue_code(
     data: ExtensionLoginCodeIssueRequest,
     ctx: UserContext = Depends(get_current_user),
-):
+) -> JSONResponse:
     """Website 登录态为插件登录流程签发绑定 challenge 的一次性 code。"""
 
     user = await user_service.get_by_id(ctx.user_id)
@@ -581,7 +583,7 @@ async def extension_login_issue_code(
 async def extension_login_exchange(
     data: ExtensionLoginCodeExchangeRequest,
     request: Request,
-):
+) -> JSONResponse:
     """插件携 verifier 消费一次性 code 换取插件 token（无 Bearer）。
 
     user_id 以 code 载荷为权威，不信任请求携带的任何身份字段；
@@ -620,7 +622,7 @@ async def extension_login_exchange(
 
 
 @router.post("/refresh")
-async def refresh_token(data: RefreshTokenRequest):
+async def refresh_token(data: RefreshTokenRequest) -> JSONResponse:
     """刷新访问令牌（带 Refresh Token 轮换）.
 
     流程：
@@ -717,7 +719,7 @@ async def refresh_token(data: RefreshTokenRequest):
 
 
 @router.get("/me", response_model=CurrentUserInfoResponse)
-async def get_me(ctx: UserContext = Depends(get_current_user)):
+async def get_me(ctx: UserContext = Depends(get_current_user)) -> JSONResponse:
     """获取当前用户信息."""
 
     user = await user_service.get_by_id(ctx.user_id)
@@ -760,7 +762,7 @@ async def send_email_verify_code(
     data: SendEmailVerifyRequest,
     request: Request,
     x_device_id: str | None = Header(None, alias="X-Device-Id"),
-):
+) -> JSONResponse:
     """发送邮箱验证码.
 
     1. 检查发送频率限制 (1分钟1次)
@@ -786,7 +788,7 @@ async def email_verify_login(
     data: EmailVerifyLoginRequest,
     request: Request,
     x_device_id: str | None = Header(None, alias="X-Device-Id"),
-):
+) -> JSONResponse:
     """邮箱验证码登录/注册.
 
     1. 验证验证码 (最多5次)
@@ -834,13 +836,14 @@ async def email_verify_login(
             logger.info(f"New user created via email verification: {data.email}")
         except IntegrityError:
             # 并发创建冲突，重新查询用户
+            logger.error(
+                "email_verify_login: 用户并发创建冲突，重新查询: "
+                f"email={data.email}",
+                exc_info=True,
+            )
             user = await user_service.get_user_by_email(data.email)
             if not user:
                 # 理论上不应该发生，但作为保险
-                logger.error(
-                    f"Failed to create user after IntegrityError for {data.email}",
-                    exc_info=True,
-                )
                 raise AppCommonException(
                     code=CommonCode.INTERNAL_SERVER_ERROR,
                     ext_msg=(
@@ -857,7 +860,7 @@ async def email_verify_login(
 
 
 @router.post("/google-login")
-async def google_login(data: GoogleLoginRequest, request: Request):
+async def google_login(data: GoogleLoginRequest, request: Request) -> JSONResponse:
     """Google ID token 登录/注册.
 
     1. 服务端验签并校验 Google ID token
@@ -887,7 +890,9 @@ async def google_login(data: GoogleLoginRequest, request: Request):
 
 
 @router.get("/google/oauth/authorize", include_in_schema=False)
-async def google_oauth_authorize(request: Request, return_to: str | None = None):
+async def google_oauth_authorize(
+    request: Request, return_to: str | None = None
+) -> RedirectResponse:
     """手动 Google 登录按钮入口：校验 return_to 后跳转 Google OAuth。"""
     try:
         ip_address = _require_client_ip(request, "google_oauth_authorize.rate_limit")
@@ -944,7 +949,7 @@ async def google_oauth_callback(
     code: str | None = None,
     state: str | None = None,
     error: str | None = None,
-):
+) -> RedirectResponse:
     """接收 Google OAuth code flow 回调并签发一次性登录 code。"""
     redirect_state: str | None = None
     try:
@@ -1005,7 +1010,7 @@ async def google_oauth_callback(
 async def google_redirect_exchange(
     data: GoogleLoginCodeExchangeRequest,
     request: Request,
-):
+) -> JSONResponse:
     """使用 Google redirect 一次性 code 换取项目 token。"""
     user_id = await google_redirect_login_service.consume_login_code(data.code)
     user = await user_service.get_by_id(user_id)

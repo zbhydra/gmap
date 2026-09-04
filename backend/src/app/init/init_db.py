@@ -14,7 +14,7 @@ from app.core.database import Base, get_engine
 from app.utils.logger import logger
 
 
-async def create_database_if_not_exists():
+async def create_database_if_not_exists() -> bool:
     """创建数据库（如果不存在）"""
     # 构建不指定数据库的连接 URL
     db_config = settings.database
@@ -84,7 +84,7 @@ async def execute_sql_file(sql_file_path: str) -> bool:
         return False
 
 
-def parse_sql_statements(sql_content: str) -> list:
+def parse_sql_statements(sql_content: str) -> list[str]:
     """
     解析 SQL 内容，提取有效的 SQL 语句
     """
@@ -136,7 +136,7 @@ def parse_sql_statements(sql_content: str) -> list:
     return statements
 
 
-async def create_tables():
+async def create_tables() -> bool:
     """使用 SQL 文件创建所有表"""
     # 获取 SQL 文件路径
     current_dir = Path(__file__).parent
@@ -165,7 +165,7 @@ async def create_tables():
             return False
 
 
-async def verify_database():
+async def verify_database() -> bool:
     """验证数据库是否正确设置"""
     try:
         engine = get_engine()
@@ -191,7 +191,7 @@ async def verify_database():
         return False
 
 
-async def init_database():
+async def init_database() -> bool:
     """完整的数据库初始化流程"""
     logger.info("Starting database initialization...")
 
@@ -214,7 +214,7 @@ async def init_database():
     return True
 
 
-async def init_database_from_sql_only():
+async def init_database_from_sql_only() -> bool:
     """仅使用 SQL 文件初始化数据库（不创建数据库本身）"""
     logger.info("Initializing database schema from SQL file only...")
 
@@ -230,12 +230,12 @@ async def init_database_from_sql_only():
         return False
 
 
-def init_database_sync():
+def init_database_sync() -> bool:
     """同步版本的数据库初始化，用于命令行调用"""
     return asyncio.run(init_database())
 
 
-def init_database_from_sql_sync():
+def init_database_from_sql_sync() -> bool:
     """同步版本的仅 SQL 文件初始化，用于命令行调用"""
     return asyncio.run(init_database_from_sql_only())
 

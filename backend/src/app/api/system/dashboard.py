@@ -142,7 +142,7 @@ def _render_dashboard_html(data: DashboardData) -> str:
 @router.get("", response_class=HTMLResponse)
 async def dashboard(
     password: str | None = Query(default=None, description="Dashboard password hash"),
-):
+) -> HTMLResponse:
     """返回系统 dashboard HTML 页面。"""
     if password != DASHBOARD_PASSWORD_HASH:
         return HTMLResponse(

@@ -6,6 +6,16 @@ import uuid
 from app.core.redis import redis_client
 from app.utils.redis_key import build_redis_key
 
+_ALLOW_REQUEST_SCRIPT = """
+redis.call("ZREMRANGEBYSCORE", KEYS[1], 0, ARGV[1] - ARGV[2])
+if redis.call("ZCARD", KEYS[1]) >= tonumber(ARGV[3]) then
+    return 0
+end
+redis.call("ZADD", KEYS[1], ARGV[1], ARGV[4])
+redis.call("EXPIRE", KEYS[1], ARGV[2] + 1)
+return 1
+"""
+
 
 class RedisRateLimiter:
     """Redis 限流实现"""
@@ -24,19 +34,16 @@ class RedisRateLimiter:
         current_time = int(time.time())
         redis = await redis_client.get_client()
 
-        # 使用 Sorted Set 实现滑动窗口
-        await redis.zremrangebyscore(redis_key, 0, current_time - window)
-        count = await redis.zcard(redis_key)
-
-        if count >= limit:
-            return False
-
-        await redis.zadd(
-            redis_key, {f"{current_time}-{uuid.uuid4().hex[:8]}": current_time}
+        result = await redis.eval(  # type: ignore[misc]
+            _ALLOW_REQUEST_SCRIPT,
+            1,
+            redis_key,
+            current_time,
+            window,
+            limit,
+            f"{current_time}-{uuid.uuid4().hex[:8]}",
         )
-        await redis.expire(redis_key, window + 1)
-
-        return True
+        return int(result) == 1
 
     async def reset(self, key: str) -> bool:
         """重置限流计数"""

@@ -29,7 +29,7 @@ Dashboard 在统计卡片与表格之间展示两张图表,数据与表格**完�
 
 - 图表高度桌面 320px、移动端(≤960 单列体系)260px;宽度铺满容器。
 - 加载失败时两图各自显示 `NEmpty` 空态占位,与下方表格隔离(表格继续展示自身加载态,互不影响)。
-- 色板与轴色以 design.md token 的字面量落地(echarts 不消费 CSS 变量):6 色循环取色,轴文字 text-3、轴线 / 分隔线 border。
+- echarts Canvas 不能直接消费 CSS 变量,option 构建时从 `styles/global.css` 读取当前主题 token 的计算值:6 色循环取色,轴文字 text-3、轴线 / 分隔线 border;系统亮暗偏好变化时重新生成 option。
 
 ### ChartCanvas 组件
 

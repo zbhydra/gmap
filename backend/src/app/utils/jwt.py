@@ -3,7 +3,7 @@
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional, Tuple
 import uuid
 
 import jwt
@@ -20,12 +20,12 @@ class JwtData:
     """JWT 数据"""
 
     user_id: int
-    email: str
+    email: str | None
     exp: int = 0  # Unix 秒级时间戳
     type: TokenType = TokenType.USER_ACCESS
     jti: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """转换为字典"""
         return asdict(self)
 

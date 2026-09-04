@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.provider.payment.paypal import PAYPAL_PAYMENT_METHOD
@@ -28,7 +29,7 @@ _SENSITIVE_PAYPAL_HEADERS = {
 
 
 @router.post("/payment")
-async def paypal_payment_callback(request: Request):
+async def paypal_payment_callback(request: Request) -> JSONResponse:
     """处理 PayPal 支付 webhook，唯一支付成功入口。"""
 
     callback_start_time = time.perf_counter()

@@ -25,7 +25,7 @@ class AppCommonException(Exception):
         *,
         data: dict | None = None,
         status_code: int | None = None,
-    ):
+    ) -> None:
         """
         Args:
             code: 错误码枚举

@@ -31,7 +31,7 @@ class Translator:
         self,
         key: str,
         language: str = DEFAULT_LANGUAGE,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> str:
         """
         翻译错误代码

@@ -1,7 +1,7 @@
 """订阅周期常量和商品 metadata 配置。"""
 
 import enum
-from typing import Any
+from collections.abc import Mapping
 
 from pydantic import (
     BaseModel,
@@ -77,7 +77,7 @@ class SubscriptionProductMetadata(BaseModel):
     @classmethod
     def from_metadata(
         cls,
-        metadata: dict[str, Any],
+        metadata: Mapping[str, object],
         *,
         product_id: str,
         period: str | SubscriptionPeriodEnum | None = None,

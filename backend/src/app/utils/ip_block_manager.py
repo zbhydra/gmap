@@ -11,7 +11,7 @@ from app.utils.redis_key import build_redis_key
 class IPBlockManager:
     """IP 封禁管理器"""
 
-    def __init__(self, key_prefix: str = "ip_block"):
+    def __init__(self, key_prefix: str = "ip_block") -> None:
         """
         初始化 IP 封禁管理器
 

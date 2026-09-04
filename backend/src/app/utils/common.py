@@ -7,7 +7,7 @@ from app.i18n.dependencies import DEFAULT_LANGUAGE, LANGUAGE_MAPPING
 from fastapi import Request
 
 
-def get_client_ip_old(req: Request):
+def get_client_ip_old(req: Request) -> str | None:
     """获取用户IP - 已废弃，使用 get_client_ip 代替"""
     client_ip = req.headers.get("CF-Connecting-IP")
 
@@ -20,12 +20,12 @@ def get_client_ip_old(req: Request):
     return client_ip
 
 
-def generate_short_id(input_string, length=10):
+def generate_short_id(input_string: str, length: int = 10) -> str:
     hash_object = hashlib.sha256(input_string.encode())
     return hash_object.hexdigest()[:length]
 
 
-def get_ip_feature_id(req: Request, length=10):
+def get_ip_feature_id(req: Request, length: int = 10) -> str:
     """获取IP特征"""
     client_ip = get_client_ip(req)
     if not client_ip:

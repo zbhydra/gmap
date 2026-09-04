@@ -11,10 +11,9 @@ const enabledSlsConfig = {
 }
 
 function stubDeviceId(deviceId: string): void {
-  // storage.local.get 多重载签名与单实现 mock 无足够重叠,沿用 tests 层 as any 惯例(同 setup.ts)
-  chrome.storage.local.get = vi.fn((key: string) =>
-    Promise.resolve({ [key]: deviceId })
-  ) as any
+  Object.assign(chrome.storage.local, {
+    get: vi.fn((key: string) => Promise.resolve({ [key]: deviceId }))
+  })
 }
 
 function stubRuntimeGlobals(slsConfig: typeof enabledSlsConfig): void {

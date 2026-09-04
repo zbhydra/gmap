@@ -628,13 +628,13 @@ onMounted(() => {
 .gosom-rows {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .gosom-row {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) 140px auto;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
@@ -679,9 +679,9 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border: 1px solid var(--n-border-color);
-  border-radius: 6px;
-  background: var(--n-color);
+  border: 1px solid var(--border);
+  border-radius: var(--rounded-sm);
+  background: var(--surface);
 }
 
 .api-key-box code {

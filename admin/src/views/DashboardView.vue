@@ -67,10 +67,11 @@ import {
   type DashboardSummary,
 } from "@/api/dashboard";
 import ChartCanvas from "@/components/ChartCanvas.vue";
-import { useIsMobile } from "@/composables/useResponsive";
+import { useIsMobile, usePrefersDark } from "@/composables/useResponsive";
 
 const { t } = useI18n();
 const isMobile = useIsMobile();
+const isDark = usePrefersDark();
 
 /** 数据看板固定展示最近 60 天，表格不再分页。 */
 const DASHBOARD_VISIBLE_ROW_COUNT = 60;
@@ -86,22 +87,19 @@ const DASHBOARD_TRAILING_MARK_TYPE_SET = new Set<string>(
   DASHBOARD_TRAILING_MARK_TYPES,
 );
 
-/*
- * 图表视觉常量：echarts 不消费 CSS 变量，design.md 的 token 色值在此以字面量落地。
- * 色板 = primary / accent / warn / bad / text-2 / primary-hover，系列多于色板时循环取色。
- */
-const CHART_COLOR_PALETTE = [
-  "#1a73e8",
-  "#188038",
-  "#b26a00",
-  "#d93025",
-  "#5f6368",
-  "#1765cc",
-];
-/** 轴文字色（design.md text-3）。 */
-const CHART_AXIS_LABEL_COLOR = "#80868b";
-/** 轴线 / 分隔线色（design.md border）。 */
-const CHART_AXIS_LINE_COLOR = "#dde3ea";
+/** ECharts 的 Canvas 色值需先把 CSS token 解析为当前主题的实际颜色。 */
+const chartTheme = computed(() => {
+  void isDark.value;
+  const styles = getComputedStyle(document.documentElement);
+  const token = (name: string) => styles.getPropertyValue(name).trim();
+  return {
+    palette: ["--primary", "--accent", "--warn", "--bad", "--text-2", "--primary-hover"].map(
+      token,
+    ),
+    label: token("--text-3"),
+    line: token("--border"),
+  };
+});
 
 interface SummaryCard {
   /** 统计卡片标题。 */
@@ -142,20 +140,20 @@ const chartHeight = computed(() => (isMobile.value ? "260px" : "320px"));
 
 /** 图表一：60 天注册数柱状。 */
 const registrationChartOption = computed<EChartsCoreOption>(() => ({
-  color: CHART_COLOR_PALETTE,
+  color: chartTheme.value.palette,
   grid: { left: 48, right: 16, top: 32, bottom: 40 },
   tooltip: { trigger: "axis" },
   xAxis: {
     type: "category",
     data: chartRows.value.map((row) => row.date_label),
-    axisLabel: { color: CHART_AXIS_LABEL_COLOR },
-    axisLine: { lineStyle: { color: CHART_AXIS_LINE_COLOR } },
+    axisLabel: { color: chartTheme.value.label },
+    axisLine: { lineStyle: { color: chartTheme.value.line } },
     axisTick: { show: false },
   },
   yAxis: {
     type: "value",
-    axisLabel: { color: CHART_AXIS_LABEL_COLOR },
-    splitLine: { lineStyle: { color: CHART_AXIS_LINE_COLOR } },
+    axisLabel: { color: chartTheme.value.label },
+    splitLine: { lineStyle: { color: chartTheme.value.line } },
   },
   series: [
     {
@@ -168,25 +166,25 @@ const registrationChartOption = computed<EChartsCoreOption>(() => ({
 
 /** 图表二：各 mark_type 事件数多系列折线；系列名与表格列头同口径（mark_type 原值）。 */
 const markEventChartOption = computed<EChartsCoreOption>(() => ({
-  color: CHART_COLOR_PALETTE,
+  color: chartTheme.value.palette,
   grid: { left: 48, right: 16, top: 56, bottom: 40 },
   tooltip: { trigger: "axis" },
   legend: {
     top: 0,
     type: "scroll",
-    textStyle: { color: CHART_AXIS_LABEL_COLOR },
+    textStyle: { color: chartTheme.value.label },
   },
   xAxis: {
     type: "category",
     data: chartRows.value.map((row) => row.date_label),
-    axisLabel: { color: CHART_AXIS_LABEL_COLOR },
-    axisLine: { lineStyle: { color: CHART_AXIS_LINE_COLOR } },
+    axisLabel: { color: chartTheme.value.label },
+    axisLine: { lineStyle: { color: chartTheme.value.line } },
     axisTick: { show: false },
   },
   yAxis: {
     type: "value",
-    axisLabel: { color: CHART_AXIS_LABEL_COLOR },
-    splitLine: { lineStyle: { color: CHART_AXIS_LINE_COLOR } },
+    axisLabel: { color: chartTheme.value.label },
+    splitLine: { lineStyle: { color: chartTheme.value.line } },
   },
   series: markTypes.value.map((markType) => ({
     type: "line",

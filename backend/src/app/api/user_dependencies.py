@@ -34,7 +34,7 @@ class UserContext:
     ip: Optional[str] = None
     client_product: ClientProductEnum = ClientProductEnum.EXTENSION
 
-    async def check_strict(self):
+    async def check_strict(self) -> bool:
         # 严格验证模式
         return await user_token_service.verify_token(
             self.token, self.user_id, token_type=TokenType.USER_ACCESS

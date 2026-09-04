@@ -13,7 +13,7 @@ import type {
   ResponseInterceptor,
   ErrorInterceptor
 } from './types'
-import { ApiError } from './types'
+import { ApiError, toSafeJsonParseError } from './types'
 import { API_CONFIG } from '../config'
 import type { JsonValue } from '../../rpc/types'
 
@@ -132,7 +132,11 @@ export class HttpClient {
           let errorData: JsonValue
           try {
             errorData = (await response.json()) as JsonValue
-          } catch {
+          } catch (error) {
+            console.error(
+              `[HttpClient] JSON 解析失败: method=${context.method} url=${context.url.split('?')[0]} status=${response.status} stage=error-response`,
+              toSafeJsonParseError(error)
+            )
             errorData = {
               code: 'INVALID_ERROR_RESPONSE',
               data: null,
@@ -169,8 +173,11 @@ export class HttpClient {
         } else {
           try {
             data = await response.json()
-          } catch {
-            console.error('[HttpClient] INVALID_JSON_SUCCESS_RESPONSE')
+          } catch (error) {
+            console.error(
+              `[HttpClient] JSON 解析失败: method=${context.method} url=${context.url.split('?')[0]} status=${response.status} stage=success-response`,
+              toSafeJsonParseError(error)
+            )
             data = null
           }
         }
@@ -252,27 +259,6 @@ export class HttpClient {
    */
   post<T = unknown>(endpoint: string, body?: unknown, options?: RequestOptions): Promise<T> {
     return this.request<T>('POST', endpoint, { ...options, body })
-  }
-
-  /**
-   * PUT 请求
-   */
-  put<T = unknown>(endpoint: string, body?: unknown, options?: RequestOptions): Promise<T> {
-    return this.request<T>('PUT', endpoint, { ...options, body })
-  }
-
-  /**
-   * DELETE 请求
-   */
-  delete<T = unknown>(endpoint: string, options?: RequestOptions): Promise<T> {
-    return this.request<T>('DELETE', endpoint, options)
-  }
-
-  /**
-   * PATCH 请求
-   */
-  patch<T = unknown>(endpoint: string, body?: unknown, options?: RequestOptions): Promise<T> {
-    return this.request<T>('PATCH', endpoint, { ...options, body })
   }
 
   /**

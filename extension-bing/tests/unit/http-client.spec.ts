@@ -13,6 +13,23 @@ vi.mock('../../src/core/api/config', () => ({
   }
 }))
 
+function expectLogArgumentsNotToContain(
+  calls: readonly (readonly unknown[])[],
+  secrets: readonly string[]
+): void {
+  const logArguments = calls.flat()
+  for (const argument of logArguments) {
+    const logged =
+      argument instanceof Error
+        ? `${argument.name}\n${argument.message}\n${argument.stack ?? ''}`
+        : JSON.stringify(argument)
+    if (logged === undefined) continue
+    for (const secret of secrets) {
+      expect(logged).not.toContain(secret)
+    }
+  }
+}
+
 describe('HttpClient', () => {
   let fetchMock: ReturnType<typeof vi.fn>
 
@@ -70,39 +87,25 @@ describe('HttpClient', () => {
     )
   })
 
-  it.each([
-    ['POST', 'post'],
-    ['PUT', 'put'],
-    ['PATCH', 'patch']
-  ] as const)('serializes the body for %s', async (method, helper) => {
+  it('serializes the POST body', async () => {
     const client = new HttpClient('https://api.example.test')
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }))
 
-    const result = await client[helper]<{ ok: boolean }>('/items', { value: method }, {
-      headers: { 'X-Test': method }
-    })
+    const result = await client.post<{ ok: boolean }>(
+      '/items',
+      { value: 'POST' },
+      { headers: { 'X-Test': 'POST' } }
+    )
 
     expect(result).toEqual({ ok: true })
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.test/items',
       expect.objectContaining({
-        method,
-        body: JSON.stringify({ value: method }),
-        headers: { 'X-Test': method }
+        method: 'POST',
+        body: JSON.stringify({ value: 'POST' }),
+        headers: { 'X-Test': 'POST' }
       })
     )
-  })
-
-  it('uses the DELETE helper without adding a body', async () => {
-    const client = new HttpClient('https://api.example.test')
-    fetchMock.mockResolvedValue(jsonResponse({ deleted: true }))
-
-    await expect(client.delete('/items/1')).resolves.toEqual({ deleted: true })
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.example.test/items/1',
-      expect.objectContaining({ method: 'DELETE' })
-    )
-    expect(fetchMock.mock.calls[0]?.[1]).not.toHaveProperty('body')
   })
 
   it('returns text directly and safely maps a sensitive invalid login response to null', async () => {
@@ -115,7 +118,7 @@ describe('HttpClient', () => {
         })
       )
       .mockResolvedValueOnce(
-        new Response('Bearer access-secret-token response-secret', {
+        new Response('invalid\nBearer access-secret-token\nresponse-secret', {
           status: 200,
           headers: { 'Content-Type': 'application/octet-stream' }
         })
@@ -126,12 +129,21 @@ describe('HttpClient', () => {
       client.post('/auth/extension-login/exchange', { code: 'login-body-secret' })
     ).resolves.toBeNull()
     expect(console.error).toHaveBeenCalledOnce()
-    expect(console.error).toHaveBeenCalledWith('[HttpClient] INVALID_JSON_SUCCESS_RESPONSE')
+    expect(console.error).toHaveBeenCalledWith(
+      '[HttpClient] JSON 解析失败: method=POST url=https://api.example.test/auth/extension-login/exchange status=200 stage=success-response',
+      expect.objectContaining({
+        name: 'SyntaxError',
+        message: 'JSON response parsing failed',
+        stack: expect.stringContaining('toSafeJsonParseError')
+      })
+    )
     const logCall = vi.mocked(console.error).mock.calls[0]
-    expect(logCall).toHaveLength(1)
-    expect(logCall?.[0]).not.toContain('access-secret-token')
-    expect(logCall?.[0]).not.toContain('response-secret')
-    expect(logCall?.[0]).not.toContain('login-body-secret')
+    expect(logCall).toHaveLength(2)
+    expectLogArgumentsNotToContain(vi.mocked(console.error).mock.calls, [
+      'access-secret-token',
+      'response-secret',
+      'login-body-secret'
+    ])
   })
 
   it.each([
@@ -159,7 +171,7 @@ describe('HttpClient', () => {
   it('maps a non-JSON error safely and logs once without response body, token or request body', async () => {
     const client = new HttpClient('https://api.example.test')
     fetchMock.mockResolvedValue(
-      new Response('upstream echoed Bearer access-secret-token and response-secret', {
+      new Response('invalid\nBearer access-secret-token\nresponse-secret', {
         status: 502,
         headers: { 'Content-Type': 'application/json' }
       })
@@ -178,17 +190,28 @@ describe('HttpClient', () => {
       data: null
     })
 
-    expect(console.error).toHaveBeenCalledOnce()
-    const logCall = vi.mocked(console.error).mock.calls[0]
-    expect(logCall).toHaveLength(1)
-    expect(logCall?.[0]).toContain(
+    expect(console.error).toHaveBeenCalledTimes(2)
+    const parseLogCall = vi.mocked(console.error).mock.calls[0]
+    expect(parseLogCall?.[0]).toBe(
+      '[HttpClient] JSON 解析失败: method=POST url=https://api.example.test/failure status=502 stage=error-response'
+    )
+    expect(parseLogCall?.[1]).toMatchObject({
+      name: 'SyntaxError',
+      message: 'JSON response parsing failed',
+      stack: expect.stringContaining('toSafeJsonParseError')
+    })
+    const requestLogCall = vi.mocked(console.error).mock.calls[1]
+    expect(requestLogCall).toHaveLength(1)
+    expect(requestLogCall?.[0]).toContain(
       'POST https://api.example.test/failure status=502 code=INVALID_ERROR_RESPONSE message=Invalid JSON error response'
     )
-    expect(logCall?.[0]).not.toContain('query-secret')
-    expect(logCall?.[0]).not.toContain('body-secret')
-    expect(logCall?.[0]).not.toContain('Bearer')
-    expect(logCall?.[0]).not.toContain('access-secret-token')
-    expect(logCall?.[0]).not.toContain('response-secret')
+    expectLogArgumentsNotToContain(vi.mocked(console.error).mock.calls, [
+      'query-secret',
+      'body-secret',
+      'Bearer',
+      'access-secret-token',
+      'response-secret'
+    ])
   })
 
   it('retries only while an error interceptor requests another attempt', async () => {

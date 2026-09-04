@@ -223,6 +223,7 @@ const structuredDataItems = [
       /* 语义 token 合同：design.md（亮色）/ design.dark.md（暗色）。实现层只消费语义 token，
          禁止硬编码色值、圆角、投影；新增 token 必须亮暗双主题同步并回填规范文档。 */
       :root {
+        color-scheme: light dark;
         /* 颜色 */
         --bg: #ffffff;
         --bg-image: linear-gradient(180deg, #e9f1fd 0%, rgba(233, 241, 253, 0.55) 300px, rgba(233, 241, 253, 0) 560px);
@@ -287,6 +288,43 @@ const structuredDataItems = [
         --transition-slow: 300ms;
         --ease-emphasized: cubic-bezier(0.175, 0.885, 0.32, 1.1);
 
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #15171c;
+          --bg-image: linear-gradient(180deg, rgba(26, 115, 232, 0.16) 0%, rgba(26, 115, 232, 0.06) 300px, rgba(26, 115, 232, 0) 560px);
+          --surface: #1d2026;
+          --surface-2: #262a31;
+          --border: #31353d;
+          --border-strong: #4c515b;
+          --text: #e8eaed;
+          --text-2: #9aa0a6;
+          --text-3: #7c828c;
+          --primary: #8ab4f8;
+          --primary-hover: #aecbfa;
+          --primary-fg: #0d2b45;
+          --primary-soft: rgba(138, 180, 248, 0.15);
+          --accent: #81c995;
+          --accent-fg: #0c2b1c;
+          --accent-soft: rgba(129, 201, 149, 0.14);
+          --ok: #81c995;
+          --ok-fg: #0d2b1c;
+          --ok-soft: rgba(129, 201, 149, 0.14);
+          --warn: #fdd663;
+          --warn-fg: #2d2000;
+          --warn-soft: rgba(253, 214, 99, 0.13);
+          --bad: #f28b82;
+          --bad-fg: #2c1210;
+          --bad-soft: rgba(242, 139, 130, 0.13);
+          --link: #8ab4f8;
+          --ring: #8ab4f8;
+          --overlay: rgba(0, 0, 0, 0.6);
+          --head-bg: rgba(21, 23, 28, 0.86);
+          --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
+          --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5);
+          --shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.65);
+        }
       }
 
       * {
@@ -380,7 +418,7 @@ const structuredDataItems = [
 
       .logo span {
         font-family: var(--font-display);
-        font-size: 18px;
+        font-size: 16px;
       }
 
       .nav-links {
@@ -390,7 +428,7 @@ const structuredDataItems = [
       }
 
       .nav-links a {
-        padding: 10px 14px;
+        padding: var(--space-2) 14px;
         border-radius: var(--rounded-full);
         color: var(--text-2);
         font-size: 14px;
@@ -406,7 +444,7 @@ const structuredDataItems = [
       /* 导航内 API 下拉：复用 .lang-switcher/.lang-btn/.lang-dropdown 全套样式；
          仅收紧按钮内边距，使下拉触发钮与相邻导航链接视觉等高 */
       .nav-api-switcher .lang-btn {
-        padding: 10px 14px;
+        padding: var(--space-2) 14px;
         min-height: 0;
       }
 
@@ -463,7 +501,7 @@ const structuredDataItems = [
         justify-content: center;
         gap: var(--space-2);
         min-height: 48px;
-        padding: 0 18px;
+        padding: 0 var(--space-4);
         border-radius: var(--rounded-full);
         font-size: 14px;
         font-weight: 600;
@@ -551,7 +589,7 @@ const structuredDataItems = [
       .lang-dropdown .lang-option {
         display: block;
         width: 100%;
-        padding: 10px 14px;
+        padding: var(--space-2) 14px;
         text-align: left;
         font-size: 13px;
         color: var(--text-2);
@@ -567,7 +605,7 @@ const structuredDataItems = [
         display: none;
         flex-direction: column;
         justify-content: center;
-        gap: 5px;
+        gap: var(--space-1);
         width: 40px;
         height: 40px;
         border-radius: var(--rounded-full);
@@ -580,7 +618,7 @@ const structuredDataItems = [
         height: 2px;
         margin: 0 auto;
         background: var(--text);
-        border-radius: 1px;
+        border-radius: var(--rounded-sm);
         transition: all var(--transition-normal);
       }
 
@@ -710,11 +748,11 @@ const structuredDataItems = [
       }
 
       .footer-link-title {
-        margin-bottom: 2px;
+        margin-bottom: var(--space-1);
         color: var(--text);
         font-size: 13px;
         font-weight: 600;
-        line-height: 20px;
+        line-height: 24px;
       }
 
       .footer-meta {
@@ -759,7 +797,7 @@ const structuredDataItems = [
 
       .footer-link-group a {
         max-width: 100%;
-        line-height: 20px;
+        line-height: 24px;
         overflow-wrap: anywhere;
       }
 

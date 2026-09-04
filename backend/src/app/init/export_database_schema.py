@@ -13,7 +13,7 @@ from app.core.database import get_async_session
 from app.utils.time import timestamp_now_datetime
 
 
-async def export_database_schema():
+async def export_database_schema() -> None:
     """导出数据库结构"""
 
     # 获取数据库连接
@@ -43,7 +43,7 @@ async def export_database_schema():
 
                 # 获取表创建语句
                 result = await db.execute(text(f"SHOW CREATE TABLE `{table}`"))
-                create_table_result = result.fetchone()
+                create_table_result = result.one()
                 create_table_sql = create_table_result[1]
 
                 f.write(f"-- 表: {table}\n")

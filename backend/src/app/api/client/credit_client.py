@@ -1,6 +1,7 @@
 """Credits 购买 API - 客户端接口。"""
 
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from app.constants.order import ProductClass
 from app.schemas.credit_schema import CreditCheckoutConfigListResponse
@@ -16,7 +17,7 @@ router = APIRouter(prefix="/credit", tags=["Credits 购买"])
     "/checkout-configs",
     response_model=CreditCheckoutConfigListResponse,
 )
-async def list_credit_checkout_configs():
+async def list_credit_checkout_configs() -> JSONResponse:
     """获取客户端 Credits 积分包配置列表。"""
 
     checkout_plans = await credit_checkout_config_service.list_credit_checkout_configs()

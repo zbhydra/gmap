@@ -17,7 +17,7 @@ _DEFAULT_MMDB_PATH = (
 class GeoIPService:
     """GeoIP 服务（惰性加载）"""
 
-    def __init__(self, mmdb_path: Optional[str] = None):
+    def __init__(self, mmdb_path: Optional[str] = None) -> None:
         self._mmdb_path = mmdb_path or os.environ.get(
             "GEOIP_MMDB_PATH", str(_DEFAULT_MMDB_PATH)
         )

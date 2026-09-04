@@ -18,6 +18,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont  # type: ignore[import]
 
 from app.core.redis import redis_client
+from app.utils.logger import logger
 from app.utils.redis_key import build_redis_key
 
 CAPTCHA_TTL_SECONDS = 300
@@ -85,12 +86,22 @@ class CaptchaService:
             try:
                 return ImageFont.truetype(str(font_path), self.font_size)
             except OSError as exc:
+                logger.error(
+                    "captcha_service._load_font: 字体文件加载失败，尝试备用字体: "
+                    f"font={font_path}, error={exc!r}",
+                    exc_info=True,
+                )
                 load_errors.append(f"{font_path}: {exc}")
 
         for font_name in _CAPTCHA_FONT_NAMES:
             try:
                 return ImageFont.truetype(font_name, self.font_size)
             except OSError as exc:
+                logger.error(
+                    "captcha_service._load_font: 字体名称加载失败，尝试备用字体: "
+                    f"font={font_name}, error={exc!r}",
+                    exc_info=True,
+                )
                 load_errors.append(f"{font_name}: {exc}")
 
         checked = ", ".join(str(path) for path in _CAPTCHA_FONT_PATHS)

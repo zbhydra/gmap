@@ -12,15 +12,17 @@ import { ref } from "vue";
 export const MOBILE_BREAKPOINT_PX = 960;
 
 const isMobile = ref(false);
+const prefersDark = ref(false);
 
-let bound = false;
+let mobileBound = false;
+let colorSchemeBound = false;
 
 /** 模块级单例：所有消费方共享一个 matchMedia 监听器，避免重复绑定。 */
 function bindOnce() {
-  if (bound) {
+  if (mobileBound) {
     return;
   }
-  bound = true;
+  mobileBound = true;
   const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`);
   isMobile.value = mediaQuery.matches;
   mediaQuery.addEventListener("change", (event) => {
@@ -32,4 +34,17 @@ function bindOnce() {
 export function useIsMobile() {
   bindOnce();
   return isMobile;
+}
+
+/** 跟随操作系统亮暗偏好，供 Naive UI 与 Canvas 图表使用同一主题。 */
+export function usePrefersDark() {
+  if (!colorSchemeBound) {
+    colorSchemeBound = true;
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    prefersDark.value = mediaQuery.matches;
+    mediaQuery.addEventListener("change", (event) => {
+      prefersDark.value = event.matches;
+    });
+  }
+  return prefersDark;
 }

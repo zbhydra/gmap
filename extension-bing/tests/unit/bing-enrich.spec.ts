@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { BingExportRow } from '../../src/sites/bing/content/parser'
 import { PRO_ENHANCEMENT_PLACEHOLDER } from '../../src/sites/bing/content/parser'
+import type { EnrichBusinessInput, EnrichResponse } from '../../src/sites/bing/enrich/types'
 import {
   collectEnrichTargets,
   enrichRows,
@@ -25,14 +26,14 @@ const rpcState = vi.hoisted(() => ({
   /** 每次调 enrichBusinesses 收到的批次入参。 */
   calls: [] as Array<Array<{ website: string }>>,
   /** 注入的响应器：返回响应载荷或抛错。 */
-  respond: null as null | ((businesses: Array<{ website: string }>) => Promise<unknown>)
+  respond: null as null | ((businesses: EnrichBusinessInput[]) => Promise<EnrichResponse>)
 }))
 
 vi.mock('../../src/content/rpc/background.rpc', () => ({
   BackgroundChannel: class {
     async enrichBusinesses(params: {
-      businesses: Array<{ website: string }>
-    }): Promise<unknown> {
+      businesses: EnrichBusinessInput[]
+    }): Promise<EnrichResponse> {
       rpcState.calls.push(params.businesses)
       if (rpcState.respond === null) {
         throw new Error('no responder configured')

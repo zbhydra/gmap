@@ -5,7 +5,7 @@
 """
 
 from datetime import date, datetime, time, timedelta
-from typing import Any, Optional
+from typing import Optional
 from zoneinfo import ZoneInfo
 
 # Time-related type definitions
@@ -51,7 +51,7 @@ def timestamp_to_datetime_str(ts: Timestamp, format: str = "%Y-%m-%d %H:%M:%S") 
     return dt.strftime(format)
 
 
-def parse_timestamp_input(ts_input: Any) -> Timestamp:
+def parse_timestamp_input(ts_input: object) -> Timestamp:
     """
     解析各种输入格式为毫秒级时间戳。
 

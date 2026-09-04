@@ -54,7 +54,7 @@ class IndexDiff:
 
     table_name: str
     index_name: str
-    diff_type: str  # 'missing', 'columns_mismatch', 'redundant_non_unique'
+    diff_type: str  # 'missing', 'columns_mismatch', 'extra_non_unique'
     expected_columns: list[str] = field(default_factory=list)
     expected_unique: bool = False
     actual_columns: list[str] | None = None
@@ -178,11 +178,6 @@ class SchemaComparator:
 
         db_indexes = await conn.run_sync(_get_indexes)
 
-        expected_unique_indexes: list[ModelIndexInfo] = []
-        for idx_info in model_indexes.values():
-            if idx_info["unique"]:
-                expected_unique_indexes.append(idx_info)
-
         for idx_name, idx_info in model_indexes.items():
             if idx_name not in db_indexes:
                 result.index_diffs.append(
@@ -224,21 +219,17 @@ class SchemaComparator:
                 str(column) for column in db_index.get("column_names", [])
             ]
             actual_unique = bool(db_index.get("unique", False))
-            if actual_unique:
+            if db_index_name == "PRIMARY" or actual_unique:
                 continue
-            if any(
-                unique_index["columns"] == actual_columns
-                for unique_index in expected_unique_indexes
-            ):
-                result.index_diffs.append(
-                    IndexDiff(
-                        table_name=table_name,
-                        index_name=str(db_index_name),
-                        diff_type="redundant_non_unique",
-                        actual_columns=actual_columns,
-                        actual_unique=actual_unique,
-                    )
+            result.index_diffs.append(
+                IndexDiff(
+                    table_name=table_name,
+                    index_name=str(db_index_name),
+                    diff_type="extra_non_unique",
+                    actual_columns=actual_columns,
+                    actual_unique=actual_unique,
                 )
+            )
 
     def _get_model_columns(self, table_name: str) -> dict[str, ColumnInfo]:
         """获取模型中的列定义"""
@@ -353,7 +344,7 @@ class SchemaComparator:
 class SchemaSync:
     """数据库结构同步器"""
 
-    def __init__(self, engine):
+    def __init__(self, engine) -> None:
         self.engine = engine
 
     async def sync(self, diff: TableDiff, dry_run: bool = False) -> list[str]:
@@ -592,14 +583,13 @@ class SchemaSync:
             sqls.append(drop_sql)
             sqls.append(create_sql)
 
-        elif idx_diff.diff_type == "redundant_non_unique":
-            # unique 索引已经覆盖同列普通索引，按索引规范删除普通重复索引。
+        elif idx_diff.diff_type == "extra_non_unique":
             sqls.append(f"DROP INDEX {idx_diff.index_name} ON {idx_diff.table_name}")
 
         return sqls
 
 
-def print_diff(diff: TableDiff):
+def print_diff(diff: TableDiff) -> None:
     """打印差异报告"""
     click.secho("\n" + "=" * 60, fg="cyan")
     click.secho("数据库结构差异报告", fg="cyan", bold=True)
@@ -677,9 +667,9 @@ def print_diff(diff: TableDiff):
                     f"期望unique: {idx_diff.expected_unique}, 实际unique: {idx_diff.actual_unique}",
                     fg="yellow",
                 )
-            elif idx_diff.diff_type == "redundant_non_unique":
+            elif idx_diff.diff_type == "extra_non_unique":
                 click.secho(
-                    f"     普通索引被同列唯一索引覆盖，列: {idx_diff.actual_columns}",
+                    f"     模型未声明的额外普通索引，列: {idx_diff.actual_columns}",
                     fg="yellow",
                 )
     else:
@@ -688,7 +678,7 @@ def print_diff(diff: TableDiff):
     print()
 
 
-async def main(auto_yes: bool = False):
+async def main(auto_yes: bool = False) -> None:
     """主函数
 
     Args:

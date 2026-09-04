@@ -361,13 +361,13 @@ onMounted(() => {
 }
 
 .users-panel {
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card);
 }
 
 .users-filter {
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e6e6e6;
+  border-bottom: 1px solid var(--border);
 }
 
 .users-filter-grid {
@@ -378,9 +378,9 @@ onMounted(() => {
 }
 
 .users-filter :deep(.n-form-item-label) {
-  color: #4d4d4d;
+  color: var(--text-2);
   font-size: 14px;
-  line-height: 20px;
+  line-height: 1.6;
   white-space: nowrap;
 }
 

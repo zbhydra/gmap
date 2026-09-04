@@ -20,69 +20,7 @@ vi.stubGlobal('__ALI_SLS_MARK_CONFIG__', {
   source: 'extension'
 })
 
-// Mock Chrome API
-global.chrome = chrome as any
-
-// Mock chrome.runtime.sendMessage
-chrome.runtime.sendMessage = vi.fn((_message: any, callback?: any) => {
-  // 默认返回成功响应
-  const response = {
-    success: true,
-    msg: '',
-    data: {}
-  }
-
-  if (callback) {
-    callback(response)
-    return undefined
-  }
-
-  return Promise.resolve(response)
-}) as any
-
-// Mock chrome.tabs.sendMessage
-chrome.tabs.sendMessage = vi.fn((_tabId: number, _message: any, callback?: any) => {
-  const response = {
-    success: true,
-    msg: '',
-    data: {}
-  }
-
-  if (callback) {
-    callback(response)
-    return undefined
-  }
-
-  return Promise.resolve(response)
-}) as any
-
-// Mock chrome.tabs.query
-chrome.tabs.query = vi.fn(() => Promise.resolve([
-  {
-    id: 1,
-    url: 'https://www.google.com/maps',
-    active: true,
-    currentWindow: true
-  }
-])) as any
-
-// Mock chrome.storage.local
-chrome.storage.local.get = vi.fn((_keys: any, callback?: any) => {
-  const result = {}
-  if (callback) {
-    callback(result)
-    return undefined
-  }
-  return Promise.resolve(result)
-}) as any
-
-chrome.storage.local.set = vi.fn((_data: any, callback?: any) => {
-  if (callback) {
-    callback()
-    return undefined
-  }
-  return Promise.resolve()
-}) as any
+Object.defineProperty(globalThis, 'chrome', { value: chrome, writable: true })
 
 // Mock console 方法以减少测试输出
 global.console = {
@@ -94,24 +32,25 @@ global.console = {
 }
 
 // Mock CustomEvent (用于 content script 测试)
-global.CustomEvent = class CustomEvent extends Event {
-  detail: any
+class MockCustomEvent<T = object> extends Event {
+  readonly detail: T | null
 
-  constructor(type: string, options?: { detail?: any }) {
+  constructor(type: string, options?: CustomEventInit<T>) {
     super(type)
-    this.detail = options?.detail
+    this.detail = options?.detail ?? null
   }
-} as any
+}
+Object.defineProperty(globalThis, 'CustomEvent', { value: MockCustomEvent, writable: true })
 
 // Mock document.dispatchEvent
 const originalDispatchEvent = document.dispatchEvent
-document.dispatchEvent = vi.fn((event: Event) => {
+document.dispatchEvent = vi.fn((event: Event): boolean => {
   // 对于 CustomEvent，允许正常触发
   if (event instanceof CustomEvent) {
     return originalDispatchEvent.call(document, event)
   }
   return true
-}) as any
+})
 
 // 设置测试超时
 vi.setConfig({

@@ -195,7 +195,7 @@ onUnmounted(() => {
 
 .account-button {
   flex-shrink: 0;
-  padding: 5px 14px;
+  padding: 4px 12px;
   border: 1px solid var(--gme-border-strong);
   border-radius: var(--gme-rounded-full);
   background: var(--gme-surface);

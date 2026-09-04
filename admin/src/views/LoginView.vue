@@ -42,9 +42,11 @@
               :placeholder="t('login.captchaPlaceholder')"
               @keyup.enter="handleLogin"
             />
-            <div
+            <button
+              type="button"
               class="captcha-img"
               :title="t('login.clickToRefresh')"
+              :aria-label="t('login.clickToRefresh')"
               @click="loadCaptcha"
             >
               <img
@@ -53,7 +55,7 @@
                 :alt="t('login.captchaAlt')"
               />
               <NSpin v-else size="small" />
-            </div>
+            </button>
           </div>
         </NFormItem>
 
@@ -170,7 +172,7 @@ onMounted(() => {
   justify-content: center;
   min-height: 100vh;
   min-height: 100dvh;
-  background: #f0f2f5;
+  background: var(--surface-2);
 }
 
 /* 小屏收窄到视口内，避免 375px 以下贴边溢出 */
@@ -189,12 +191,21 @@ onMounted(() => {
   width: 120px;
   height: 40px;
   cursor: pointer;
+  padding: 0;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--rounded-sm);
   overflow: hidden;
+}
+
+.captcha-img:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .captcha-img img {

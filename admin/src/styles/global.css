@@ -1,9 +1,107 @@
 /**
  * 全局样式：admin 唯一的非 scoped 样式入口。
  *
- * 只放需要跨组件 / 覆盖 Naive UI teleport 弹层的规则；
- * 组件私有样式一律写在各自 <style scoped> 中。
+ * 统一定义 Material You 语义 token，并放置需要跨组件 / 覆盖 Naive UI
+ * teleport 弹层的规则；组件私有样式一律写在各自 <style scoped> 中。
  */
+
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-image: linear-gradient(
+    180deg,
+    #e9f1fd 0%,
+    rgba(233, 241, 253, 0.55) 300px,
+    rgba(233, 241, 253, 0) 560px
+  );
+  --surface: #ffffff;
+  --surface-2: #f0f4f9;
+  --border: #dde3ea;
+  --border-strong: #b9c2cd;
+  --text: #1f1f1f;
+  --text-2: #5f6368;
+  --text-3: #80868b;
+  --primary: #1a73e8;
+  --primary-hover: #1765cc;
+  --primary-fg: #ffffff;
+  --primary-soft: #e8f0fe;
+  --accent: #188038;
+  --accent-fg: #ffffff;
+  --accent-soft: #e6f4ea;
+  --ok: #188038;
+  --ok-fg: #ffffff;
+  --ok-soft: #e6f4ea;
+  --warn: #b26a00;
+  --warn-fg: #ffffff;
+  --warn-soft: #fef7e0;
+  --bad: #d93025;
+  --bad-fg: #ffffff;
+  --bad-soft: #fce8e6;
+  --link: #1a73e8;
+  --ring: #1a73e8;
+  --overlay: rgba(32, 33, 36, 0.5);
+  --head-bg: rgba(255, 255, 255, 0.9);
+  --shadow-card: 0 1px 2px rgba(60, 64, 67, 0.1), 0 3px 8px rgba(60, 64, 67, 0.06);
+  --shadow-pop: 0 4px 10px rgba(60, 64, 67, 0.14), 0 14px 36px rgba(60, 64, 67, 0.14);
+  --shadow-modal: 0 24px 60px rgba(60, 64, 67, 0.28);
+  --rounded-sm: 10px;
+  --rounded-md: 16px;
+  --rounded-lg: 24px;
+  --rounded-full: 999px;
+  --font-display: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'Azeret Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #15171c;
+    --bg-image: linear-gradient(
+      180deg,
+      rgba(26, 115, 232, 0.16) 0%,
+      rgba(26, 115, 232, 0.06) 300px,
+      rgba(26, 115, 232, 0) 560px
+    );
+    --surface: #1d2026;
+    --surface-2: #262a31;
+    --border: #31353d;
+    --border-strong: #4c515b;
+    --text: #e8eaed;
+    --text-2: #9aa0a6;
+    --text-3: #7c828c;
+    --primary: #8ab4f8;
+    --primary-hover: #aecbfa;
+    --primary-fg: #0d2b45;
+    --primary-soft: rgba(138, 180, 248, 0.15);
+    --accent: #81c995;
+    --accent-fg: #0c2b1c;
+    --accent-soft: rgba(129, 201, 149, 0.14);
+    --ok: #81c995;
+    --ok-fg: #0d2b1c;
+    --ok-soft: rgba(129, 201, 149, 0.14);
+    --warn: #fdd663;
+    --warn-fg: #2d2000;
+    --warn-soft: rgba(253, 214, 99, 0.13);
+    --bad: #f28b82;
+    --bad-fg: #2c1210;
+    --bad-soft: rgba(242, 139, 130, 0.13);
+    --link: #8ab4f8;
+    --ring: #8ab4f8;
+    --overlay: rgba(0, 0, 0, 0.6);
+    --head-bg: rgba(21, 23, 28, 0.86);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.65);
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+}
 
 /*
  * 日期范围面板兜底：daterange / datetimerange 是双日历并排（约 640px 宽），

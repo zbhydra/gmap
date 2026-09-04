@@ -68,9 +68,11 @@ backend/src/app/models/
 3. `SchemaComparator.compare()` 产出 `TableDiff`：
    - `missing_tables`：模型有、库无
    - `column_diffs`：`missing` / `type_mismatch` / `nullable_mismatch`
-   - `index_diffs`：`missing` / `columns_mismatch`
-4. `sync(diff, dry_run=False)` 按差异生成并执行 DDL（CREATE TABLE / ADD COLUMN / 修改类型 / 建索引）。
+   - `index_diffs`：`missing` / `columns_mismatch` / `extra_non_unique`
+4. `sync(diff, dry_run=False)` 按差异生成并执行 DDL（建表、同步列定义、同步索引）。模型未声明的非唯一普通索引会被删除；`PRIMARY` 与模型外的额外唯一索引保留。
 5. CLI：`--yes` / `-y` 跳过确认，默认会交互确认。
+
+同步器不处理外键及其支撑索引；引入外键时必须同期设计对应的模型合同与同步规则。
 
 入口约定（根 `@../../../AGENTS.md` §5 要求）：**修改完 models 后，执行 `backend/src/app/init/sync_database_schema.py`** 把结构同步到库。
 

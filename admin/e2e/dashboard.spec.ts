@@ -23,7 +23,7 @@ interface DashboardSummaryMock {
 }
 
 /** 后端统一成功响应 */
-function successResponse(data: unknown) {
+function successResponse(data: Record<string, object>) {
   return {
     status: 200,
     contentType: "application/json",

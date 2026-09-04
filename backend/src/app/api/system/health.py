@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check():
+async def health_check() -> HealthResponse:
     """
     健康检查
 

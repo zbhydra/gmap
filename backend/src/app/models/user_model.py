@@ -19,9 +19,9 @@ class UserModel(BaseDBModel):
     __tablename__ = "users"
 
     user_id: Mapped[int] = mapped_column(
-        BigInteger, primary_key=True, autoincrement=True
+        BigInteger, primary_key=True, autoincrement=True, comment="用户ID"
     )
-    email: Mapped[str] = mapped_column(
+    email: Mapped[str | None] = mapped_column(
         String(64), unique=True, nullable=True, comment="邮箱（登录用）"
     )
     password_hash: Mapped[str] = mapped_column(

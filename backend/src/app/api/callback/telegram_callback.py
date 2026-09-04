@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.provider.payment.tg_star import TELEGRAM_STARS_PAYMENT_METHOD
@@ -25,7 +26,7 @@ _SECRET_HEADER = "x-telegram-bot-api-secret-token"
 @router.post("/payment")
 async def telegram_payment_callback(
     request: Request,
-):
+) -> JSONResponse:
     """处理 Telegram Bot webhook。
 
     当前支持 Telegram Stars 支付的 pre_checkout_query 与 successful_payment。

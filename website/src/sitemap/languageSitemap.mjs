@@ -36,67 +36,97 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>XML Sitemap Index | MapsGrab</title>
         <style>
+          :root {
+            color-scheme: light dark;
+            --bg: #ffffff;
+            --surface: #ffffff;
+            --surface-2: #f0f4f9;
+            --border: #dde3ea;
+            --text: #1f1f1f;
+            --text-2: #5f6368;
+            --link: #1a73e8;
+            --rounded-sm: 10px;
+            --shadow-card: 0 1px 2px rgba(60, 64, 67, 0.1), 0 3px 8px rgba(60, 64, 67, 0.06);
+            --font-display: "Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+            --font-body: "Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+          }
+
+          @media (prefers-color-scheme: dark) {
+            :root {
+              --bg: #15171c;
+              --surface: #1d2026;
+              --surface-2: #262a31;
+              --border: #31353d;
+              --text: #e8eaed;
+              --text-2: #9aa0a6;
+              --link: #8ab4f8;
+              --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
+            }
+          }
+
           body {
             margin: 0;
-            background: #f6f7fb;
-            color: #1e293b;
-            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-body);
           }
 
           main {
             width: min(1040px, calc(100vw - 48px));
-            margin: 72px auto;
+            margin: 64px auto;
           }
 
           h1 {
             margin: 0;
-            color: #0f172a;
-            font-size: 56px;
+            color: var(--text);
+            font-family: var(--font-display);
+            font-size: clamp(32px, 5vw, 56px);
             line-height: 1;
           }
 
           .brand {
-            margin: 22px 0 18px;
-            color: #334155;
+            margin: 22px 0 16px;
+            color: var(--text);
+            font-family: var(--font-display);
             font-size: 32px;
             font-weight: 800;
           }
 
           .summary {
             margin: 0 0 28px;
-            color: #475569;
-            font-size: 18px;
+            color: var(--text-2);
+            font-size: 16px;
           }
 
           table {
             width: 100%;
             border-collapse: collapse;
             overflow: hidden;
-            border-radius: 8px;
-            background: #ffffff;
-            box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+            border-radius: var(--rounded-sm);
+            background: var(--surface);
+            box-shadow: var(--shadow-card);
           }
 
           th,
           td {
-            padding: 14px 18px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
             text-align: left;
             font-size: 15px;
           }
 
           th {
-            color: #0f172a;
-            background: #eef2f8;
+            color: var(--text);
+            background: var(--surface-2);
             font-size: 16px;
           }
 
           tr:nth-child(even) td {
-            background: #f8fafc;
+            background: var(--surface-2);
           }
 
           a {
-            color: #2563eb;
+            color: var(--link);
             font-weight: 700;
             text-decoration: none;
           }

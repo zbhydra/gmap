@@ -54,6 +54,23 @@ vi.mock('../../src/locales', () => ({
   }
 }))
 
+function expectLogArgumentsNotToContain(
+  calls: readonly (readonly unknown[])[],
+  secrets: readonly string[]
+): void {
+  const logArguments = calls.flat()
+  for (const argument of logArguments) {
+    const logged =
+      argument instanceof Error
+        ? `${argument.name}\n${argument.message}\n${argument.stack ?? ''}`
+        : JSON.stringify(argument)
+    if (logged === undefined) continue
+    for (const secret of secrets) {
+      expect(logged).not.toContain(secret)
+    }
+  }
+}
+
 vi.mock('../../src/core/composables/useToast', () => ({
   toastService: {
     error: mocks.toastError
@@ -352,22 +369,33 @@ describe('HTTP retry and authentication interceptors', () => {
     expect(context._shouldRetry).toBeUndefined()
   })
 
-  it('logs a fixed classification for a sensitive invalid refresh response', async () => {
+  it('logs refresh JSON parsing context and safe error details', async () => {
     mocks.storage.set(STORAGE_KEYS.REFRESH_TOKEN, 'refresh-old')
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(new Response('Bearer access-secret-token response-secret', { status: 401 }))
+      vi.fn().mockResolvedValue(
+        new Response('invalid\nBearer access-secret-token\nresponse-secret', { status: 401 })
+      )
     )
     const error = new ApiError('unauthorized', 401)
 
     await authRefreshInterceptor(error, createContext())
 
     expect(mocks.loggerError).toHaveBeenCalledOnce()
-    expect(mocks.loggerError).toHaveBeenCalledWith('[HttpClient] INVALID_JSON_AUTH_REFRESH_RESPONSE')
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      `[HttpClient] JSON 解析失败: method=POST url=${API_CONFIG.BASE_URL}/api/client/auth/refresh status=401 stage=auth-refresh-response`,
+      expect.objectContaining({
+        name: 'SyntaxError',
+        message: 'JSON response parsing failed',
+        stack: expect.stringContaining('toSafeJsonParseError')
+      })
+    )
     const logCall = mocks.loggerError.mock.calls[0]
-    expect(logCall).toHaveLength(1)
-    expect(logCall?.[0]).not.toContain('access-secret-token')
-    expect(logCall?.[0]).not.toContain('response-secret')
+    expect(logCall).toHaveLength(2)
+    expectLogArgumentsNotToContain(mocks.loggerError.mock.calls, [
+      'access-secret-token',
+      'response-secret'
+    ])
   })
 
   it('clears stored auth after a 200 refresh response without a complete token pair', async () => {

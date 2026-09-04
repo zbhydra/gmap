@@ -8,7 +8,7 @@ router = APIRouter(prefix="/callback", tags=["回调管理"])
 
 
 @router.post("/test-the-test-bank-callback")
-async def test_pay_callback(data: TestPayCallBack):
+async def test_pay_callback(data: TestPayCallBack) -> None:
     """
     测试支付回调
 

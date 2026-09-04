@@ -71,14 +71,11 @@ export type DmsValidation = { ok: true } | { ok: false; error: 'values' }
  * 半球与正负号冲突检查在页面层做（负值输入按 values 非法上报）。
  */
 export function validateDmsInput(
-  degrees: unknown,
-  minutes: unknown,
-  seconds: unknown
+  degrees: number,
+  minutes: number,
+  seconds: number
 ): DmsValidation {
   if (
-    typeof degrees !== 'number' ||
-    typeof minutes !== 'number' ||
-    typeof seconds !== 'number' ||
     !Number.isFinite(degrees) ||
     !Number.isFinite(minutes) ||
     !Number.isFinite(seconds)

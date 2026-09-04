@@ -17,14 +17,11 @@
     "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
-    "@astrojs/vue": "^5.0.4",
-    "astro": "^5.5.2",
-    "vue": "^3.5.18"
+    "astro": "^5.5.2"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
     "@playwright/test": "^1.50.0",
-    "@vue/tsconfig": "^0.7.0",
     "typescript": "^5.8.3"
   }
 }

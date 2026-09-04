@@ -6,7 +6,7 @@ TG 线主站已删除，生产 TG 站点不再由本仓维护）。品牌与产�
 
 ## 技术栈
 
-- **Astro 5**（SSG 静态站）+ 原生 TS + 命令式 DOM（非 SPA）；Vue 集成保留
+- **Astro 5**（SSG 静态站）+ 原生 TS + 命令式 DOM（非 SPA，无 Vue 集成）
 - TypeScript `strict`，`astro check` 做类型门禁
 - 测试：`node --test tests/module-scripts.test.js` + Playwright e2e
 
@@ -61,9 +61,6 @@ website/
   （发版挂资产后回填；替换后删除 href="#" 占位）
 - Google OAuth client：`PUBLIC_GOOGLE_CLIENT_ID` env（购买链路接入时）
 - MapsGrab 套餐与支付渠道：`src/i18n/pricing.ts`（W5 接 006）
-- 样式 token 化收尾：Layout 全局样式与 W2/W3 重写页面（home/extension/legal/company）
-  已全量消费语义 token；`:root` 末尾的旧 `--color-*`/`--spacing-*` 别名段仅剩
-  W4/W5 待重写组件（Breadcrumb、auth/pricing/checkout 弹窗、paypal 页、SiteConfirmModal）
-  在消费——工具页与购买链路重写时继续裁剪直至整段删除（design.md §4：无玻璃无
-  backdrop-filter；§8：禁止硬编码色值；SiteConfirmModal 内部仍有旧样式残留，归 W5）
+- 页面样式已全量消费 `Layout.astro` 的 Material You 亮暗语义 token；独立生成的 sitemap XSL
+  镜像所需的同名 token。`python3 ../scripts/ui_token_lint.py` 将两者作为 website enforced 门禁。
 - favicon：`public/favicon.svg` 当前为 MapsGrab 占位 pin 图（与 Layout logo 同形），正式品牌图标定稿后替换

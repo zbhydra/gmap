@@ -9,6 +9,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { RpcRequest, RpcResponse } from '../../src/core/rpc/types'
 import { MapsPanel } from '../../src/sites/maps/content/panel/mapsPanel'
 import { DEFAULT_MAPS_CONFIG } from '../../src/sites/maps/config/contract'
 import {
@@ -177,13 +178,6 @@ describe('面板订阅引导按钮行为', () => {
 })
 
 describe('openMapsPricingPage（打开路径）', () => {
-  /** RpcRequest 线上载荷形状（断言用，只取关心的字段）。 */
-  interface SentRequest {
-    channel?: string
-    method?: string
-    params?: { url?: string }
-  }
-
   it('未配置时不发起 background RPC', async () => {
     const sendSpy = vi.spyOn(chrome.runtime, 'sendMessage')
     await openMapsPricingPage()
@@ -193,15 +187,18 @@ describe('openMapsPricingPage（打开路径）', () => {
 
   it('已配置时经 background 发送 openPricingPage（URL 含归因参数）', async () => {
     setPricingUrl(CONFIGURED_PRICING_URL)
-    const sendSpy = vi.spyOn(chrome.runtime, 'sendMessage').mockResolvedValue({
-      success: true,
-      msg: '',
-      data: { opened: true }
+    const sendSpy = vi.spyOn(chrome.runtime, 'sendMessage').mockImplementation(async message => {
+      const request = message as RpcRequest<{ url: string }>
+      return {
+        id: request.id,
+        success: true,
+        data: { opened: true }
+      } satisfies RpcResponse<{ opened: boolean }>
     })
     try {
       await openMapsPricingPage()
       expect(sendSpy).toHaveBeenCalledTimes(1)
-      const request = sendSpy.mock.calls[0]?.[0] as SentRequest
+      const request = sendSpy.mock.calls[0]?.[0] as RpcRequest<{ url: string }>
       expect(request.method).toBe('openPricingPage')
       expect(request.params?.url).toBe('https://mapsgrab.com/pricing/?utm_source=extension')
     } finally {

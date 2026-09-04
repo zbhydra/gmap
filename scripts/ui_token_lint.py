@@ -5,7 +5,8 @@
     python3 scripts/ui_token_lint.py        # enforced 端存在违规则退出码 1
     python3 scripts/ui_token_lint.py -v     # 追加打印 pending 端（未迁移端）债务明细
 
-检查规则（依据 design.md §0 / §8，只扫描样式面：.css 全文、.vue / .astro 的 <style> 块）：
+检查规则（依据 design.md §0 / §8，扫描 .css 全文、.vue / .astro 的 <style> 块、
+website sitemap 构建器内直接产出的 XSL <style> 块，以及登记的 Canvas 运行时样式 owner）：
   1. 色值    token 定义行之外禁止 #hex、rgb()/rgba()、常用具名色；
              允许 var()、color-mix(... var(...))、transparent、currentColor、inherit
   2. 渐变    linear/radial/conic-gradient 只允许出现在 token 定义（bg-image）内
@@ -18,8 +19,7 @@
 「token 定义行」指自定义属性声明（`--x:` 起、至行内分号收尾，值可跨多行），
 其间的裸值就是合同取值本体，放行。宽高/定位属布局自由尺寸，不在合同管辖内，不检查。
 
-enforced 端（extension / extension-bing）已迁移 Material You，违规即失败；
-pending 端（website / admin）尚未迁移，只汇总数量，迁移时再转 enforced。
+enforced 端（website / admin / extension / extension-bing）已迁移 Material You，违规即失败。
 """
 
 from __future__ import annotations
@@ -33,14 +33,22 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # enforced：已接入 Material You token 合同的端，违规即退出码 1
-ENFORCED = [("extension", "extension/src"), ("extension-bing", "extension-bing/src")]
-# pending：整端尚未迁移，只报告数量；迁移完成后移入 ENFORCED
-PENDING = [
+ENFORCED = [
+    ("extension", "extension/src"),
+    ("extension-bing", "extension-bing/src"),
     ("website", "website/src"),
     ("admin", "admin/src"),
 ]
+# pending：整端尚未迁移，只报告数量；迁移完成后移入 ENFORCED
+PENDING: list[tuple[str, str]] = []
 EXCLUDED_DIRS = {"node_modules", "dist", ".astro", "coverage", "test-results"}
 STYLE_EXTS = {".css", ".vue", ".astro"}
+EXTRA_STYLE_FILES = {
+    "website": ("website/src/sitemap/languageSitemap.mjs",),
+}
+RUNTIME_STYLE_FILES = {
+    "admin": ("admin/src/views/DashboardView.vue",),
+}
 
 SPACING_SCALE = {4, 8, 12, 16, 24, 32, 40, 64, 96}
 # spec 关键值豁免：6 菜单内边距、14 输入框水平 padding（§7），20/22 紧凑面板、28 容器左右留白（§3）
@@ -70,6 +78,24 @@ def style_blocks(text: str, suffix: str) -> list[tuple[int, str]]:
         start = text[: m.start(1)].count("\n") + 1
         blocks.append((start, m.group(1)))
     return blocks
+
+
+def script_blocks(text: str) -> list[tuple[int, str]]:
+    """返回 Vue script 块；仅供登记的 Canvas 运行时样式 owner 扫描色值。"""
+    blocks = []
+    for m in re.finditer(r"<script[^>]*>(.*?)</script>", text, re.S | re.I):
+        start = text[: m.start(1)].count("\n") + 1
+        blocks.append((start, m.group(1)))
+    return blocks
+
+
+def check_runtime_colors(block: str) -> list[str]:
+    """扫描运行时样式对象中的裸色值。"""
+    issues = []
+    for offset, line in enumerate(block.splitlines(), start=1):
+        if HEX_COLOR.search(line) or RGB_COLOR.search(line) or NAMED_COLORS.search(line):
+            issues.append(f"L{offset} 运行时色值: {line.strip()[:110]}")
+    return issues
 
 
 def strip_comment(line: str) -> str:
@@ -166,9 +192,9 @@ def scan_end(label: str, rel_dir: str) -> tuple[list[str], dict[str, int], int]:
     total = 0
     if not base.exists():
         return issues, file_px, total
-    for path in sorted(base.rglob("*")):
-        if path.suffix not in STYLE_EXTS:
-            continue
+    paths = [path for path in base.rglob("*") if path.suffix in STYLE_EXTS]
+    paths.extend(REPO_ROOT / rel for rel in EXTRA_STYLE_FILES.get(label, ()))
+    for path in sorted(paths):
         if any(part in EXCLUDED_DIRS for part in path.relative_to(REPO_ROOT).parts):
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -182,6 +208,12 @@ def scan_end(label: str, rel_dir: str) -> tuple[list[str], dict[str, int], int]:
         if file_total:
             file_px[rel] = file_total
             total += file_total
+    for rel in RUNTIME_STYLE_FILES.get(label, ()):
+        path = REPO_ROOT / rel
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for start, block in script_blocks(text):
+            for issue in check_runtime_colors(block):
+                issues.append(f"{rel}:{issue}")
     return issues, file_px, total
 
 

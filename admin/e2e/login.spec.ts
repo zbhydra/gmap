@@ -19,7 +19,7 @@ const CAPTCHA_IMAGE_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAHgAAAAoCAMAAAACNM4XAAADAFBMVEUAAAABAQECAgIDAwMEBAQFBQUGBgYHBwcICAgJCQkKCgoLCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMUFBQVFRUWFhYXFxcYGBgZGRkaGhobGxscHBwdHR0eHh4fHx8gICAhISEiIiIjIyMkJCQlJSUmJiYnJycoKCgpKSkqKiorKyssLCwtLS0uLi4vLy8wMDAxMTEyMjIzMzM0NDQ1NTU2NjY3Nzc4ODg5OTk6Ojo7Ozs8PDw9PT0+Pj4/Pz9AQEBBQUFCQkJDQ0NERERFRUVGRkZHR0dISEhJSUlKSkpLS0tMTExNTU1OTk5PT09QUFBRUVFSUlJTU1NUVFRVVVVWVlZXV1dYWFhZWVlaWlpbW1tcXFxdXV1eXl5fX19gYGBhYWFiYmJjY2NkZGRlZWVmZmZnZ2doaGhpaWlqampra2tsbGxtbW1ubm5vb29wcHBxcXFycnJzc3N0dHR1dXV2dnZ3d3d4eHh5eXl6enp7e3t8fHx9fX1+fn5/f3+AgICBgYGCgoKDg4OEhISFhYWGhoaHh4eIiIiJiYmKioqLi4uMjIyNjY2Ojo6Pj4+QkJCRkZGSkpKTk5OUlJSVlZWWlpaXl5eYmJiZmZmampqbm5ucnJydnZ2enp6fn5+goKChoaGioqKjo6OkpKSlpaWmpqanp6eoqKipqamqqqqrq6usrKytra2urq6vr6+wsLCxsbGysrKzs7O0tLS1tbW2tra3t7e4uLi5ubm6urq7u7u8vLy9vb2+vr6/v7/AwMDBwcHCwsLDw8PExMTFxcXGxsbHx8fIyMjJycnKysrLy8vMzMzNzc3Ozs7Pz8/Q0NDR0dHS0tLT09PU1NTV1dXW1tbX19fY2NjZ2dna2trb29vc3Nzd3d3e3t7f39/g4ODh4eHi4uLj4+Pk5OTl5eXm5ubn5+fo6Ojp6enq6urr6+vs7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT19fX29vb39/f4+Pj5+fn6+vr7+/v8/Pz9/f3+/v7////isF19AAAAw0lEQVR42u3W3Q6AIAgF4PP+L01bay3xoJKwusCrfswvCTHIRw0FF1xwwYEwzqZO1cXrhvnQBgwGQ3Xr+2TBKhCzoLhgDGGw0OKFzGFRo+pJtsh9mAVLA7Rw/929MBZhyYCNwZ6R5kg4rFIHBrKT1RjDQ2VrHTeJO1rHwipZIgwTdtZM8OoB9G+gxp5GfgMGq8lc8rpRsNsVOz8IjLXZv4TZimbZFbpJLMCSAdMdd76OEQJ3p/PKhZj9uH5vCy644L/DB5tYDtOQeV9WAAAAAElFTkSuQmCC";
 
 /** 后端统一成功响应 */
-function successResponse(data: unknown) {
+function successResponse(data: Record<string, string | number | object>) {
   return {
     status: 200,
     contentType: "application/json",
@@ -116,6 +116,7 @@ test.describe("登录页渲染", () => {
   test("表单所有元素可见：标题、用户名、密码、验证码输入框、验证码图片、登录按钮", async ({
     page,
   }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
     await mockCaptcha(page);
     await page.goto("/login");
 
@@ -144,9 +145,19 @@ test.describe("登录页渲染", () => {
     const submitBtn = page.getByRole("button", { name: "登 录" });
     await expect(submitBtn).toBeVisible();
     await expect(submitBtn).toBeEnabled();
+    const [buttonColor, primaryForeground] = await submitBtn.evaluate((button) => {
+      const rootStyle = getComputedStyle(document.documentElement);
+      const probe = document.createElement("span");
+      probe.style.color = rootStyle.getPropertyValue("--primary-fg");
+      document.body.append(probe);
+      const colors = [getComputedStyle(button).color, getComputedStyle(probe).color];
+      probe.remove();
+      return colors;
+    });
+    expect(buttonColor).toBe(primaryForeground);
   });
 
-  test("点击验证码图片刷新验证码", async ({ page }) => {
+  test("键盘刷新验证码", async ({ page }) => {
     let captchaCallCount = 0;
     await page.route("**/api/admin/auth/captcha", async (route) => {
       captchaCallCount++;
@@ -162,9 +173,13 @@ test.describe("登录页渲染", () => {
     await expect(page.locator(".captcha-img img")).toBeVisible();
     expect(captchaCallCount).toBe(1);
 
-    // 点击验证码图片触发刷新
-    await page.locator(".captcha-img").click();
-    await page.waitForResponse("**/api/admin/auth/captcha");
+    const captchaButton = page.getByRole("button", { name: "点击刷新验证码" });
+    await captchaButton.focus();
+    await expect(captchaButton).toBeFocused();
+    await expect(captchaButton).toHaveCSS("outline-style", "solid");
+    const responsePromise = page.waitForResponse("**/api/admin/auth/captcha");
+    await page.keyboard.press("Enter");
+    await responsePromise;
     expect(captchaCallCount).toBe(2);
   });
 });

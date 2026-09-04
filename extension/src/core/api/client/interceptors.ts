@@ -3,7 +3,7 @@
  */
 
 import type { RequestInterceptor, ResponseInterceptor, ErrorInterceptor } from './types'
-import { ApiError } from './types'
+import { ApiError, toSafeJsonParseError } from './types'
 import { API, API_CONFIG, HTTP_HEADERS, STORAGE_KEYS } from '../config'
 import { storageManager } from '../../storage'
 import { logger } from '../../utils/logger'
@@ -58,13 +58,19 @@ function readRefreshErrorCode(body: JsonValue): string | number | undefined {
   return typeof code === 'string' || typeof code === 'number' ? code : undefined
 }
 
-async function parseRefreshResponse(response: Response): Promise<RefreshAccessTokenResult> {
+async function parseRefreshResponse(
+  response: Response,
+  requestUrl: string
+): Promise<RefreshAccessTokenResult> {
   let body: JsonValue
 
   try {
     body = (await response.json()) as JsonValue
-  } catch {
-    logger.error('[HttpClient] INVALID_JSON_AUTH_REFRESH_RESPONSE')
+  } catch (error) {
+    logger.error(
+      `[HttpClient] JSON 解析失败: method=POST url=${requestUrl.split('?')[0]} status=${response.status} stage=auth-refresh-response`,
+      toSafeJsonParseError(error)
+    )
     if (response.status === 200) {
       return 'auth_failed'
     }
@@ -96,7 +102,8 @@ async function refreshAccessToken(): Promise<RefreshAccessTokenResult> {
   }
 
   try {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API.ENDPOINTS.AUTH_REFRESH}`, {
+    const requestUrl = `${API_CONFIG.BASE_URL}${API.ENDPOINTS.AUTH_REFRESH}`
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Content-Type': HTTP_HEADERS.CONTENT_TYPE,
@@ -105,7 +112,7 @@ async function refreshAccessToken(): Promise<RefreshAccessTokenResult> {
       body: JSON.stringify({ refresh_token: refreshToken })
     })
 
-    return parseRefreshResponse(response)
+    return parseRefreshResponse(response, requestUrl)
   } catch (err) {
     logger.error('[HttpClient] Auth refresh request failed:', err)
     return 'transient_failed'

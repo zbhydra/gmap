@@ -49,7 +49,7 @@ export class BulkSchedulerController {
   private readonly subscriber = new ChromeEventSubscriber<ExtensionEvents>()
 
   /** 步进串行队列：读状态 → reduce → 落盘 → 执行副作用，全程不交错。 */
-  private queue: Promise<unknown> = Promise.resolve()
+  private queue: Promise<void> = Promise.resolve()
 
   /** 已注册的 chrome 监听清理函数。 */
   private unsubscribeAlarms: (() => void) | null = null

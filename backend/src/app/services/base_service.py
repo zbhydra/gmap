@@ -22,7 +22,7 @@ class BaseService(ABC, Generic[ModelType]):
 
     primary_key_field: str = ""  # 子类必须重写此字段
 
-    def __init__(self, model_class: Type[ModelType]):
+    def __init__(self, model_class: Type[ModelType]) -> None:
         self.model_class = model_class
 
     async def get_by_id(self, id: int) -> Optional[ModelType]:
@@ -109,7 +109,7 @@ class ShardedService(BaseService[ModelType], Generic[ModelType]):
     提供分表路由和跨表查询功能
     """
 
-    def __init__(self, model_class: Type[ModelType]):
+    def __init__(self, model_class: Type[ModelType]) -> None:
         super().__init__(model_class)
 
     def _get_model_for_shard(self, shard_key: int) -> Type[ModelType]:

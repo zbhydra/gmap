@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from sqlalchemy import BigInteger, Integer, String, Index, Text
+from sqlalchemy import BigInteger, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseDBModel
@@ -20,12 +20,8 @@ class CallbackLogModel(BaseDBModel):
     )
 
     # 订单关联
-    order_id: Mapped[int] = mapped_column(
-        BigInteger, nullable=False, index=True, comment="订单ID"
-    )
-    order_no: Mapped[str] = mapped_column(
-        String(32), nullable=False, index=True, comment="订单号"
-    )
+    order_id: Mapped[int] = mapped_column(BigInteger, nullable=False, comment="订单ID")
+    order_no: Mapped[str] = mapped_column(String(32), nullable=False, comment="订单号")
 
     # 回调信息
     callback_url: Mapped[Optional[str]] = mapped_column(
@@ -50,9 +46,6 @@ class CallbackLogModel(BaseDBModel):
         nullable=False,
         comment="创建时间（毫秒时间戳）",
     )
-
-    # 索引
-    __table_args__ = (Index("idx_callback_status", "callback_status"),)
 
     def __repr__(self) -> str:
         return (

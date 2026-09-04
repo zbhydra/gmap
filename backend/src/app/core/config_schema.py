@@ -264,7 +264,7 @@ class AdminSettings(BaseSettings):
 class Settings:
     """全局配置管理器"""
 
-    def __init__(self, config_path: str | None = None):
+    def __init__(self, config_path: str | None = None) -> None:
         self.root_path = os.path.abspath(
             os.path.join(
                 os.path.dirname(__file__),
@@ -315,7 +315,7 @@ class Settings:
             raise ValueError(f"{name}: config section must be a mapping")
         return {str(key): value for key, value in section.items()}
 
-    def reload(self):
+    def reload(self) -> None:
         """重新加载配置"""
         self._config_data = self._load_config()
         self._apply_config_data()

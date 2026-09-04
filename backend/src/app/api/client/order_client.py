@@ -9,6 +9,7 @@
 """
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
 
 from app.api.user_dependencies import UserContext, get_current_user
 from app.constants.order import OrderCheckProductParam, OrderStatus
@@ -39,7 +40,7 @@ _SUPPORT_MAIL_CONFIG_KEY = "support_mail"
 async def create_order(
     data: CreateOrderRequest,
     current_user: UserContext = Depends(get_current_user),
-):
+) -> JSONResponse:
     """创建订单
 
     请求体:
@@ -135,7 +136,7 @@ async def create_order(
 async def get_order_status(
     order_no: str,
     current_user: UserContext = Depends(get_current_user),
-):
+) -> JSONResponse:
     """查询订单状态（客户端轮询接口）
 
     响应:
@@ -183,7 +184,7 @@ async def list_orders(
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1),
     current_user: UserContext = Depends(get_current_user),
-):
+) -> JSONResponse:
     """获取订单列表
 
     参数:
@@ -237,7 +238,7 @@ async def list_orders(
 @router.get("/unfinished", response_model=UnfinishedOrderListApiResponse)
 async def list_unfinished_orders(
     current_user: UserContext = Depends(get_current_user),
-):
+) -> JSONResponse:
     """获取当前用户可继续支付的未完成订单。
 
     只返回 30 分钟可见窗口内的 pending 订单；过期订单仍可被支付回调完成，
@@ -288,7 +289,7 @@ async def list_unfinished_orders(
 async def cancel_order(
     data: CancelOrderRequest,
     current_user: UserContext = Depends(get_current_user),
-):
+) -> JSONResponse:
     """取消当前用户的待支付订单。"""
     order_no = data.order_no.strip()
     if not order_no:

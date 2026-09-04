@@ -1,7 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'astro/config'
-import vue from '@astrojs/vue'
 import languageSitemap from './src/sitemap/languageSitemap.mjs'
 
 // 域名后配：MapsGrab 生产域名确定后替换此占位常量（同步 public/robots.txt、deploy/、cloudflare/）。
@@ -20,10 +19,7 @@ export default defineConfig({
   devToolbar: {
     enabled: false
   },
-  integrations: [
-    vue(),
-    languageSitemap()
-  ],
+  integrations: [languageSitemap()],
   build: {
     format: 'directory',
     // SSG 页面由 CDN 压缩传输；内联当前路由 CSS 可消除移动网络上的额外关键往返。

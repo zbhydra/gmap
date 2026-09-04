@@ -1,6 +1,7 @@
 """订阅管理 API - 客户端接口。"""
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
 
 from app.api.user_dependencies import (
     UserContext,
@@ -38,7 +39,7 @@ router = APIRouter(prefix="/subscription", tags=["订阅管理"])
 )
 async def list_subscription_checkout_configs(
     current_user: UserContext | None = Depends(get_current_user_if_authenticated),
-):
+) -> JSONResponse:
     """获取客户端订阅方案配置列表。"""
     checkout_plans = await payment_config_service.list_subscription_checkout_configs()
 
@@ -61,7 +62,7 @@ async def list_subscription_checkout_configs(
 )
 async def claim_subscription_review_reward(
     current_user: UserContext = Depends(get_current_user),
-):
+) -> JSONResponse:
     """为严格登录账号领取一次 7 天好评赠送订阅。"""
 
     # 好评赠送活动已下线（2026-09-02）：入口与前端已删除，此处直接拒绝；
@@ -128,7 +129,7 @@ async def get_subscription_status(
         default=None,
         description="订阅产品线；缺省为 extension（历史单产品线，旧调用方行为不变）",
     ),
-):
+) -> JSONResponse:
     """获取当前用户订阅状态
 
     支持已登录和未登录用户：
