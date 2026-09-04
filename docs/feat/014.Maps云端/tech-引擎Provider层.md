@@ -10,7 +10,7 @@ Provider 层把 Google Maps HTTP RPC 与 gosom SaaS 封装成可被业务层直�
 
 - HTTP Search：常规 pb 深分页、浏览器级 pb 补列、未覆盖 fid 的 L2 补齐，输出统一 29 列条目。
 - HTTP Reviews：`GetLocalBoqProxy` 单页查询、四种排序与 cursor 翻页。
-- gosom：提交单关键词 job、按 `job_id + base_url` 查询状态和结果。
+- gosom：按调用方传入的配置提交单关键词 job，并用 `job_id` 查询状态和结果。
 - HTTP 代理列表、每进程出站并发预算、gosom 多实例配置。
 - 脱敏原始响应、已验证实验脚本与解析 golden。
 
@@ -40,7 +40,7 @@ provider/gmap/：异步调用、解析、合并、标准化
 
 - 不定义统一 Provider ABC。HTTP Search 是一次调用内完成的取数流程，gosom 是提交/查询两步上游 job，强制同构会制造无效状态。
 - 不定义自动路由器。业务层根据自身产品合同和 `gmap_engine.provider` 显式选择入口，API Search 与 Online 不必共用业务方法。
-- Provider 可以读取运维配置，但不读写业务 Model，不创建后台任务，不保存结果。
+- service 读取运维配置并传给 Provider；Provider 不引用 service，不读写业务 Model。
 - 调用方可以同时执行任意数量的 Provider 协程；HTTP 对 Google 的具体请求受每进程共享信号量限制，不建立任务队列。
 
 ## 3. 文件树
@@ -59,7 +59,7 @@ backend/src/app/
       entry.py                           # fid 合并与 29 列序列化
   services/
     maps_engine_service.py               # 修改：代理 URL 列表配置
-    gosom_api_service.py                 # 修改：base_url 唯一与定向读取
+    gosom_api_service.py                 # 修改：base_url 唯一与加权选择
   api/admin/admin_system_settings.py     # 修改：Gmap Engine 配置接口
   constants/gmap.py                     # 修改：配置键与默认值
   schemas/admin_schema.py                # 修改：代理 URL 列表、gosom base_url 唯一
@@ -74,25 +74,24 @@ admin/src/
   i18n/en-US.json / zh-CN.json           # 修改
 ```
 
-不新增 Model、数据库表、Redis key 或对象存储模块，不删除既有文件。
-
 ## 4. 对内接口合同
 
 全部网络入口都是 `async` 方法；返回 DTO，不返回数据库 Model。
 
 | 入口 | 入参 | 返回 | 失败 |
 | --- | --- | --- | --- |
-| `gmap_http_provider.search_places` | `keyword: str`、`max_depth: int`（1–10）、`hl: str`、`gl: str \| None`、`ll: GmapViewport \| None` | `GmapSearchResult` | 代理缺失、主分页失败、地理软降级重试耗尽、解析失败 |
-| `gmap_http_provider.list_reviews` | `fid: str`、`sort_by: int`（1–4）、`cursor: str \| None`、`hl: str` | `GmapReviewPage` | 代理缺失、请求或解析失败 |
-| `gmap_gosom_provider.submit_job` | `keyword: str`、`max_depth: int`、`lang: str` | `GosomJobHandle` | gosom 配置缺失、提交失败 |
-| `gmap_gosom_provider.get_job` | `GosomJobHandle` | `GosomJobSnapshot` | 配置已删除、上游 job 不存在、查询失败 |
+| `gmap_http_provider.initialize` | `GmapEngineConfig` | `None` | HTTP 配置缺失 |
+| `gmap_http_provider.search_places` | `keyword: str`、`max_depth: int`（1–10）、`hl: str`、`gl: str \| None`、`ll: GmapViewport \| None` | `GmapSearchResult` | 主分页失败、地理软降级重试耗尽、解析失败 |
+| `gmap_http_provider.list_reviews` | `fid: str`、`sort_by: int`（1–4）、`cursor: str \| None`、`hl: str` | `GmapReviewPage` | 请求或解析失败 |
+| `gmap_gosom_provider.submit_job` | `config: GosomApiItem`、`keyword: str`、`max_depth: int`、`lang: str` | `GosomJobHandle` | 提交失败 |
+| `gmap_gosom_provider.get_job` | `config: GosomApiItem`、`GosomJobHandle` | `GosomJobSnapshot` | 上游 job 不存在、查询失败 |
 
 DTO 最小字段：
 
 - `GmapViewport`：`lat / lng / zoom`。
 - `GmapSearchResult`：`entries: list[GmapPlaceEntry] / partial: bool / warnings: list[str]`。补列局部失败时 `partial=true`；主分页失败不返回结果。
 - `GmapReviewPage`：`reviews / next_cursor`。
-- `GosomJobHandle`：`job_id / base_url`。`base_url` 随 handle 返回，供未来业务层持久化后定向查询。
+- `GosomJobHandle`：`job_id`。
 - `GosomJobSnapshot`：`status: pending | running | completed | failed / result_count: int / entries: list[GmapPlaceEntry] | None / error: str | None`。`pending/running` 是非终态且 entries 为空；`completed` 是成功终态，entries 可以是空列表；`failed` 是失败终态且 error 非空。
 
 `GmapPlaceEntry` 的 `name / fid / search_keyword` 为非空字符串；其余标量字段不能确认时为 `None`，不能用空字符串伪装已确认的空值：
@@ -154,7 +153,7 @@ Provider 技术错误统一继承 `GmapProviderError`；不在本层映射用户
 ### 5.3 HTTP 客户端与代理
 
 - 复用已安装的 `curl-cffi` `AsyncSession` 和浏览器 impersonation；不新增 HTTP 依赖。
-- `http.py` 只导出模块级唯一实例 `gmap_http_provider`，调用方不得自行实例化。该实例持有进程级 semaphore；首次初始化由同一把进程内 `asyncio.Lock` 串行完成，避免并发首调创建多个并发预算。
+- `http.py` 只导出模块级唯一实例 `gmap_http_provider`，调用方不得自行实例化。service 读取 `gmap_engine` 后调用 `initialize`；该实例持有进程级 semaphore，首次初始化由同一把进程内 `asyncio.Lock` 串行完成。
 - NID、常规 pb、浏览器级 pb、L2 和 Reviews 的每个 Google 请求都先取得同一个进程级 `asyncio.Semaphore`。
 - `gmap_engine.concurrency` 表示**每个 business 进程**的 Google 出站并发数。多实例多进程总上限为 `实例数 × 每实例进程数 × concurrency`；本期不增加集群级分布式并发控制。
 - 每个 Google 请求从代理列表等概率随机选择一条。重试时存在其他代理则排除本次失败代理；只有一条时继续使用同一条。
@@ -178,8 +177,8 @@ GET /api/v1/jobs/{job_id}
 
 - 一次提交只接受一个关键词。本仓不批量包装关键词，不感知 River/Postgres 队列，不管理 worker。
 - 上游 `available/scheduled/retryable` 映射为 `pending`，`running` 保持不变，`completed` 保持不变，`cancelled/discarded` 映射为 `failed`；Provider 对外只暴露这四种状态。
-- `submit_job` 按现有权重选择一条 gosom 配置，返回其规范化 `base_url` 与 `job_id`。
-- `get_job` 必须按 handle 中的 `base_url` 定向找到当前 API key，不重新随机选择实例。
+- service 按现有权重选择 gosom 配置并传给 `submit_job`；Provider 返回 `job_id`。
+- `get_job` 使用调用方传入的同一配置和 handle 查询。
 - 上游完成时会在状态响应中直接返回完整 `results` 数组；Provider 将其映射为同一 `GmapPlaceEntry`，缺失字段保持空值。
 - Provider 不循环轮询、不调用上游删除接口。轮询频率、结果落地和清理由未来任务层决定。
 
@@ -200,9 +199,9 @@ GET /api/v1/jobs/{job_id}
 - HTTP 模式至少一条代理；gosom 模式允许空列表。
 - 旧 `webshare: {endpoint, username, password}` 整体删除，不兼容读取、不双写。
 - 配置明文存储和回显；日志与校验错误不得包含代理凭据。
-- 未配置时返回 `provider=http`、`proxies=[]` 与默认并发预算。进程内首次 HTTP Provider 调用按当时配置创建信号量，之后不热改容量；修改 `concurrency` 后需重启对应 business 进程。
+- 未配置时 service 返回 `provider=http`、`proxies=[]` 与默认并发预算。HTTP Provider 按传入配置创建信号量，之后不热改容量；修改 `concurrency` 后需重启对应 business 进程。
 
-gosom API 配置继续使用独立的 `system_data.gosom_api` 多实例列表。保存时规范化 `base_url` 并禁止重复；`gosom_api_service` 同时提供加权选择和按 `base_url` 定向读取。
+gosom API 配置继续使用独立的 `system_data.gosom_api` 多实例列表。保存时规范化 `base_url` 并禁止重复；`gosom_api_service` 提供加权选择，调用方把选中配置传给 Provider。
 
 后台接口和界面规格以 `@../008.管理后台/tech-系统设置.md` 的“Gmap 引擎配置”为唯一事实源。
 

@@ -96,7 +96,7 @@
 
 ## 5 · 变更记录
 
-- 2026-09-04 **B1 Online 任务与结果设计完成**：父任务 + 20 个 item 分表，MySQL 扫描与本机 `flock` 支持多进程和重启重做；结果按 `online/{Ymd}/{task_no}/{item_id}/{attempt_id}.csv` 写当前 R2 / AliOSS，提供单 item CSV 与整任务 ZIP；提交不预扣，完成后按实际 records 幂等计量。实施计划见 `feat/014.Maps云端/plans/002.Online任务与结果基建.md`。
+- 2026-09-04 **B1 Online 任务与结果设计完成**：父任务 + 20 个 item 分表，提交后按 item 直接异步执行，business 启动时恢复未完成任务；结果按 `online/{Ymd}/{task_no}/{item_id}/{attempt_id}.csv` 写当前 R2 / AliOSS，提供单 item CSV 与整任务 ZIP；提交不预扣，完成后按实际 records 幂等计量。实施计划见 `feat/014.Maps云端/plans/002.Online任务与结果基建.md`。
 
 - 2026-09-04 **B4 Provider 采集基建完成**：HTTP Search/Reviews、gosom submit/get、代理与并发配置、脱敏 fixture/golden 及 real 测试落地；真实 Google/gosom 网络冒烟因缺少可用凭据未执行。
 

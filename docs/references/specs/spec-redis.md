@@ -20,7 +20,7 @@ count = int(raw) if raw else 0      # 显式转 int
 
 ## 2. key 命名
 
-- **一律走 `build_redis_key()`**（`app/utils/redis_key.py`），自动加全局前缀 `settings.redis.key_prefix`；同一套业务的所有节点必须使用同一前缀，环境隔离靠部署层解决而不是改前缀。禁止裸 key、禁止手拼前缀。
+- **一律走 `build_redis_key()`**（`app/utils/redis_key.py`），自动添加 `settings.redis.key_prefix`；该配置在 schema 与模板中固定为 `gmapsexporter`，所有节点使用同一值，不按 `APP_NAME` 改名，环境隔离使用不同 Redis 实例。禁止裸 key、禁止手拼前缀。
 - 工具自带子前缀，最终形态 `{prefix}:{工具前缀}:{业务}:{分桶}`：
   - 锁：`{prefix}:lock:{key}`
   - 限流：`{prefix}:fixed_window_limit:{identifier}:{window_id}`
