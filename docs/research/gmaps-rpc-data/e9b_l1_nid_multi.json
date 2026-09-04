@@ -1,0 +1,517 @@
+{
+ "coffee shop in Portland, OR": {
+  "kw": "coffee shop in Portland, OR",
+  "no_cookie": {
+   "n": 40,
+   "rc": 0
+  },
+  "socs_nid": {
+   "n": 40,
+   "rc": 40
+  },
+  "common_fids": 33,
+  "value_mismatch": [
+   [
+    null,
+    1691
+   ],
+   [
+    null,
+    241
+   ],
+   [
+    null,
+    1135
+   ],
+   [
+    null,
+    174
+   ],
+   [
+    null,
+    158
+   ]
+  ],
+  "raw": {
+   "no_cookie": {
+    "n": 40,
+    "rc_fill": 0,
+    "by_fid": {
+     "0x54950bc11c29c079:0xb99d1f303e39195": null,
+     "0x5495a194f48f66f1:0xd4377d7c6c6f67f": null,
+     "0x5495a0a68312bdc5:0xc1b9a2c72793494f": null,
+     "0x5495a145658b252d:0x17093d8741bcc9c3": null,
+     "0x54950bddb065e817:0x58212d6ff6d16d61": null,
+     "0x54950b5207045ae7:0x33511ad652f6c708": null,
+     "0x54950a04cba5dd6b:0x736ecdb5e217595e": null,
+     "0x54950a0557af84a5:0xb27f6a7a45bcd13a": null,
+     "0x54950b7db64b0247:0x221e77407278bb30": null,
+     "0x5495a0a1d19e1a39:0x2f9d0b555d287da": null,
+     "0x54950ba2ef63d92f:0x24d15040bcf49f56": null,
+     "0x5495a1034399c96f:0xeb1de83b9f10e61f": null,
+     "0x5495a1adc350f3a9:0xadd8ea5dcf4a3306": null,
+     "0x54950a7b65d4b37f:0xe87831d90e1624d4": null,
+     "0x54950b318b0fc2c5:0xa043e40b7853f35f": null,
+     "0x54950a0ae93e6b79:0xc63aec4f3d1b3aad": null,
+     "0x5495a9c41dc65545:0xdb00af124efb4f6d": null,
+     "0x54950a06e4623e6d:0x3e03c6cb13ad931d": null,
+     "0x5495a0f3241b4331:0xad21a7cf6fd21900": null,
+     "0x54950b6a81e3e733:0x622422e3b63abaa6": null,
+     "0x5495a1007fb89983:0x522d1ed121450cfb": null,
+     "0x5495a1bc5cd7c059:0x8602c9623df09ffc": null,
+     "0x5495097f2cdec4c7:0x692d570778a29d51": null,
+     "0x54950b001f9a5e19:0x449f9b640fdf2294": null,
+     "0x5495a1184f233779:0x23af70f5bd3fd5f5": null,
+     "0x5495a091b1d1820d:0x9785b518db6ebf7e": null,
+     "0x54950bb96229e103:0x38da3b0606758047": null,
+     "0x5495a7c4430e0695:0x8dffab6be5295070": null,
+     "0x54950b1de95b50c1:0x81cb7d42ff5e6ae7": null,
+     "0x5495a1824ad4efa7:0xc853a595e9e5f4e1": null,
+     "0x54950bb866d42245:0xa2d795c5b1007ccf": null,
+     "0x5495a0f3f84f8127:0x6bd6f30fec2c5d17": null,
+     "0x54950b41fad7ef09:0x6f914d632baf0799": null,
+     "0x54950bef1e497aa3:0x1efb83d89e54e469": null,
+     "0x549509ca495f4ee7:0xa12cd2c13d208b14": null,
+     "0x5495a1b83882dd1f:0x2e4f0a45a4d379e1": null,
+     "0x54950bfe97cf8b81:0xc4f3cfd5d662ceb9": null,
+     "0x5495a34c62483999:0x45239e39f2ef9ac3": null,
+     "0x54950b932fcf87e9:0xcb6b31ed4bd8fb7": null,
+     "0x54950b5e3a0b7c25:0x49aef1145232a6d6": null
+    }
+   },
+   "socs_nid": {
+    "n": 40,
+    "rc_fill": 40,
+    "by_fid": {
+     "0x54950bc11c29c079:0xb99d1f303e39195": 350,
+     "0x5495a194f48f66f1:0xd4377d7c6c6f67f": 193,
+     "0x5495a1007fb89983:0x522d1ed121450cfb": 392,
+     "0x54950bddb065e817:0x58212d6ff6d16d61": 241,
+     "0x54950b5207045ae7:0x33511ad652f6c708": 418,
+     "0x54950a0557af84a5:0xb27f6a7a45bcd13a": 467,
+     "0x54950b7db64b0247:0x221e77407278bb30": 236,
+     "0x54950a7b65d4b37f:0xe87831d90e1624d4": 1135,
+     "0x5495a145658b252d:0x17093d8741bcc9c3": 200,
+     "0x5495a1adc350f3a9:0xadd8ea5dcf4a3306": 299,
+     "0x5495a1034399c96f:0xeb1de83b9f10e61f": 158,
+     "0x5495a0a68312bdc5:0xc1b9a2c72793494f": 342,
+     "0x5495a0f3241b4331:0xad21a7cf6fd21900": 586,
+     "0x5495a0a1d19e1a39:0x2f9d0b555d287da": 517,
+     "0x54950b6a81e3e733:0x622422e3b63abaa6": 153,
+     "0x5495a9c41dc65545:0xdb00af124efb4f6d": 174,
+     "0x54950b001f9a5e19:0x449f9b640fdf2294": 161,
+     "0x54950a0ae93e6b79:0xc63aec4f3d1b3aad": 1691,
+     "0x54950ba2ef63d92f:0x24d15040bcf49f56": 248,
+     "0x5495a1184f233779:0x23af70f5bd3fd5f5": 405,
+     "0x54950a04cba5dd6b:0x736ecdb5e217595e": 1452,
+     "0x5495a091b1d1820d:0x9785b518db6ebf7e": 978,
+     "0x5495a1bc5cd7c059:0x8602c9623df09ffc": 64,
+     "0x549509ca495f4ee7:0xa12cd2c13d208b14": 399,
+     "0x54950bb96229e103:0x38da3b0606758047": 149,
+     "0x54950b1de95b50c1:0x81cb7d42ff5e6ae7": 636,
+     "0x54950a06e4623e6d:0x3e03c6cb13ad931d": 1904,
+     "0x5495a09e32fabcd3:0x1ac42e464d67e013": 768,
+     "0x5495a7132430431b:0x1ee724c4aeb7666": 621,
+     "0x5495a0edc7f9993d:0x8c35a433247896f4": 571,
+     "0x5495a0f3f84f8127:0x6bd6f30fec2c5d17": 485,
+     "0x54950a0f77518b53:0x98829b9d3699aa98": 262,
+     "0x5495a1824ad4efa7:0xc853a595e9e5f4e1": 105,
+     "0xa3d78282a982d8b9:0xd2d2f4215d283c15": 257,
+     "0x54950b932fcf87e9:0xcb6b31ed4bd8fb7": 414,
+     "0x549509e5da10f0c7:0x24648f5468257028": 838,
+     "0x54950b41fad7ef09:0x6f914d632baf0799": 183,
+     "0x54950bb866d42245:0xa2d795c5b1007ccf": 237,
+     "0x5495a34c62483999:0x45239e39f2ef9ac3": 239,
+     "0x54950ba6255aa881:0x19248718d29497c8": 378
+    }
+   }
+  }
+ },
+ "restaurant in Manhattan, New York": {
+  "kw": "restaurant in Manhattan, New York",
+  "no_cookie": {
+   "n": 43,
+   "rc": 0
+  },
+  "socs_nid": {
+   "n": 40,
+   "rc": 40
+  },
+  "common_fids": 37,
+  "value_mismatch": [
+   [
+    null,
+    1567
+   ],
+   [
+    null,
+    4030
+   ],
+   [
+    null,
+    3322
+   ],
+   [
+    null,
+    1450
+   ],
+   [
+    null,
+    269
+   ]
+  ],
+  "raw": {
+   "no_cookie": {
+    "n": 43,
+    "rc_fill": 0,
+    "by_fid": {
+     "0x89c25bc797d635a1:0x60b055910436a0a4": null,
+     "0x89c25854faa8d447:0x100a2b0d8c445c5f": null,
+     "0x89c258f64b8364bd:0x1aa365dedf436f88": null,
+     "0x89c25930bc53d1a3:0xe92edb888b740614": null,
+     "0x89c259a1ec5f5573:0x2fc6687f46f682d5": null,
+     "0x89c2596790d044a9:0x71ac280e082c1af5": null,
+     "0x89c25947ea10b457:0x6548e99cd73a1e6b": null,
+     "0x89c258fb1466d69b:0x58ecf24f96cc68e0": null,
+     "0x89c25941500ff861:0x27c5a79af4a49967": null,
+     "0x89c2594b4a30ae29:0x5cf0745813544694": null,
+     "0x89c259941967edc9:0xb134b1b0991fdfa6": null,
+     "0x89c259a67765432b:0xb69ca2cc7e7de7c8": null,
+     "0x89c258f79e07aa35:0x98ad2e3e482c1c17": null,
+     "0x89c258f62fec73a7:0x5e24118dffac8a65": null,
+     "0x89c259b52862a671:0xd50cb6d3dbcffc98": null,
+     "0x89c259b60cf034e7:0x62bbeda26eb1fc39": null,
+     "0x89c25994cdac5b4b:0x639da12ecdd3a36c": null,
+     "0x89c259aed4c31329:0xa97e4ff291d7209b": null,
+     "0x89c2598d8d62e8f3:0x2e4bf77674db6930": null,
+     "0x89c25956b9b83993:0x2e477a2e50237fa4": null,
+     "0x89c258f91d02c513:0xb49a18d9ebedd960": null,
+     "0x89c25a16344bffff:0xd7c97b5c890e7912": null,
+     "0x89c259956941f975:0x50d2166699841d27": null,
+     "0x89c2f7e2310e3dcf:0xd31da46e77075802": null,
+     "0x89c2585159536961:0xceadc4ef21f1f755": null,
+     "0x89c259604e8daf2f:0x3ddcaa65dc31a719": null,
+     "0x89c258f6339d1b6f:0x311bbfaf5cf09635": null,
+     "0x89c2590c830ee3c1:0x978900566765f09b": null,
+     "0x89c2591a2d695879:0xa7a856a673815959": null,
+     "0x89c25854e6657b87:0xed0e40a6b9508db5": null,
+     "0x89c258580e27e405:0xf0ce7f097d8d2244": null,
+     "0x89c259419dbb200d:0xf4179dc573084cb4": null,
+     "0x89c258f8e04f5bf1:0x850b7be1acbae5ea": null,
+     "0x89c259ca8c1b910f:0x7b7628ec26d1b366": null,
+     "0x89c25962a8028f45:0x98bf8bb70341cedb": null,
+     "0x89c258f7986e5f8f:0x5acf86cddfd87133": null,
+     "0x89c258f9c69e166d:0x86b0e5488151ce61": null,
+     "0x89c258fa307cee47:0xae30f455d9e6ebea": null,
+     "0x89c2585130118027:0x237f3e220f422247": null,
+     "0x89c259e27ee4471b:0x623f583a5d3160aa": null,
+     "0x89c258f9f5f6365f:0x12448b5388945afe": null,
+     "0x89c259a715fb5059:0xe5543b76e952fab3": null,
+     "0x89c2598cc8a9879d:0x789b56b053200ec2": null
+    }
+   },
+   "socs_nid": {
+    "n": 40,
+    "rc_fill": 40,
+    "by_fid": {
+     "0x89c25bc797d635a1:0x60b055910436a0a4": 4030,
+     "0x89c258f64b8364bd:0x1aa365dedf436f88": 3116,
+     "0x89c25854faa8d447:0x100a2b0d8c445c5f": 19451,
+     "0x89c25930bc53d1a3:0xe92edb888b740614": 7847,
+     "0x89c259a1ec5f5573:0x2fc6687f46f682d5": 5303,
+     "0x89c2596790d044a9:0x71ac280e082c1af5": 528,
+     "0x89c25947ea10b457:0x6548e99cd73a1e6b": 4641,
+     "0x89c258fb1466d69b:0x58ecf24f96cc68e0": 1932,
+     "0x89c25941500ff861:0x27c5a79af4a49967": 1240,
+     "0x89c2594b4a30ae29:0x5cf0745813544694": 785,
+     "0x89c259941967edc9:0xb134b1b0991fdfa6": 2087,
+     "0x89c258f62fec73a7:0x5e24118dffac8a65": 2141,
+     "0x89c258f79e07aa35:0x98ad2e3e482c1c17": 2658,
+     "0x89c25994cdac5b4b:0x639da12ecdd3a36c": 2771,
+     "0x89c259a67765432b:0xb69ca2cc7e7de7c8": 6393,
+     "0x89c259b60cf034e7:0x62bbeda26eb1fc39": 478,
+     "0x89c259b52862a671:0xd50cb6d3dbcffc98": 2275,
+     "0x89c258f91d02c513:0xb49a18d9ebedd960": 2651,
+     "0x89c259aed4c31329:0xa97e4ff291d7209b": 1772,
+     "0x89c258f6339d1b6f:0x311bbfaf5cf09635": 2009,
+     "0x89c2598d8d62e8f3:0x2e4bf77674db6930": 595,
+     "0x89c2585159536961:0xceadc4ef21f1f755": 1926,
+     "0x89c25854e6657b87:0xed0e40a6b9508db5": 25053,
+     "0x89c258f8e04f5bf1:0x850b7be1acbae5ea": 2713,
+     "0x89c2591a2d695879:0xa7a856a673815959": 667,
+     "0x89c258f7986e5f8f:0x5acf86cddfd87133": 5416,
+     "0x89c259ca8c1b910f:0x7b7628ec26d1b366": 2340,
+     "0x89c258580e27e405:0xf0ce7f097d8d2244": 3322,
+     "0x89c2590c830ee3c1:0x978900566765f09b": 1450,
+     "0x89c259419dbb200d:0xf4179dc573084cb4": 269,
+     "0x89c2585130118027:0x237f3e220f422247": 4966,
+     "0x89c258f9f5f6365f:0x12448b5388945afe": 2742,
+     "0x89c259b573cc8871:0xb6d59a0903f88e5d": 147,
+     "0x89c258f9c69e166d:0x86b0e5488151ce61": 2396,
+     "0x89c2591e500937c5:0xa1015a8734c880ca": 7749,
+     "0x89c2598cc8a9879d:0x789b56b053200ec2": 271,
+     "0x89c259e27ee4471b:0x623f583a5d3160aa": 1567,
+     "0x89c2594c33122dc7:0xfd94158c7fb4f0e6": 1223,
+     "0x89c258fa307cee47:0xae30f455d9e6ebea": 390,
+     "0x89c259956941f975:0x50d2166699841d27": 854
+    }
+   }
+  }
+ },
+ "bakery in Seattle, WA": {
+  "kw": "bakery in Seattle, WA",
+  "no_cookie": {
+   "n": 40,
+   "rc": 0
+  },
+  "socs_nid": {
+   "n": 40,
+   "rc": 40
+  },
+  "common_fids": 38,
+  "value_mismatch": [
+   [
+    null,
+    1738
+   ],
+   [
+    null,
+    530
+   ],
+   [
+    null,
+    243
+   ],
+   [
+    null,
+    346
+   ],
+   [
+    null,
+    1676
+   ]
+  ],
+  "raw": {
+   "no_cookie": {
+    "n": 40,
+    "rc_fill": 0,
+    "by_fid": {
+     "0x5490154c9dd3481b:0x3c608367962e036b": null,
+     "0x54906ab2c4269649:0x115464db6d65f2c3": null,
+     "0x54901507fcb9b727:0x4afd64747e88fdaf": null,
+     "0x54901552e615437d:0x48bd68ab982ef0f3": null,
+     "0x54901509840181f9:0xcc87c06c513b32ae": null,
+     "0x54906be813c02941:0x21cc99498aaa2af1": null,
+     "0x54906b9b0983fbdf:0x70618bf39cd133e": null,
+     "0x5490154edd27ff31:0x80956d9d62987237": null,
+     "0x5490154409f88f45:0x3a9fdfbe3c489fa8": null,
+     "0x5490158a788825d7:0x75219c5bea9a7aad": null,
+     "0x54901551f8322937:0x7c834a186d52b5ca": null,
+     "0x54904194650a68bf:0x989ea9a6e5adbee5": null,
+     "0x54906b5f4e035159:0xdc1257907d0880c8": null,
+     "0x54906ad336fae2fb:0xbec4529c38edc5db": null,
+     "0x549015ccd3418b89:0xecc21c23eae28f9b": null,
+     "0x5490167fd336269d:0x62e9faa48b2ece60": null,
+     "0x54906b4d77f88fc1:0x7abec2f463144ad7": null,
+     "0x54901501c9931b9b:0xa26ce49112053f81": null,
+     "0x549041b39c60c0b1:0xc5a3f19da958c331": null,
+     "0x54906a871cb54843:0x4ee3d589c536e8ad": null,
+     "0x54901421865c6699:0x7f4a5d790f6d85bf": null,
+     "0x549041ea3bbba54f:0x56273fcdaec0e126": null,
+     "0x54906baa64fb91af:0x6910df71aa58c33f": null,
+     "0x54906ba655e1c807:0x6e4ad8a4e5d9fe7d": null,
+     "0x808e1660fbd98677:0x597c76a3f4a7422": null,
+     "0x54906be58e24989d:0x90b184dfe4aa9eb0": null,
+     "0x5490142d17526bb1:0x2feb8dc6da29c63": null,
+     "0x54906a86e7f0c103:0x28aa46919850230f": null,
+     "0x54906ab61f15f63b:0xd8aec19743a6a67b": null,
+     "0x54906bdac8b1fddb:0xbe136ebd88211620": null,
+     "0x5490154e76098177:0xcf3b4acc46c4e70": null,
+     "0x5490156616d713a7:0x49dcf7081b0facb8": null,
+     "0x54906ab2f758b099:0xe5aac42f5dcf2ae7": null,
+     "0x5490113725640d7d:0xe92fce72518af2a0": null,
+     "0x54906adebcd6c68d:0xdb9766a26f275a23": null,
+     "0x549040fbdc183da9:0xb27950e4ea72920f": null,
+     "0x54906a0c31d7ab85:0x597878059d59007e": null,
+     "0x5490117b4b6ab0d7:0x58d5dbfedb1850df": null,
+     "0x54906bbe662c6b11:0x88422ce29c8e5e7a": null,
+     "0x54906ab2c60a5645:0x1b7dab922d998f16": null
+    }
+   },
+   "socs_nid": {
+    "n": 40,
+    "rc_fill": 40,
+    "by_fid": {
+     "0x5490154c9dd3481b:0x3c608367962e036b": 1310,
+     "0x54906ab2c4269649:0x115464db6d65f2c3": 3099,
+     "0x54901507fcb9b727:0x4afd64747e88fdaf": 1240,
+     "0x54901552e615437d:0x48bd68ab982ef0f3": 369,
+     "0x54901509840181f9:0xcc87c06c513b32ae": 62,
+     "0x54906be813c02941:0x21cc99498aaa2af1": 97,
+     "0x54906b9b0983fbdf:0x70618bf39cd133e": 243,
+     "0x5490154edd27ff31:0x80956d9d62987237": 1929,
+     "0x5490154409f88f45:0x3a9fdfbe3c489fa8": 1016,
+     "0x5490158a788825d7:0x75219c5bea9a7aad": 506,
+     "0x54901551f8322937:0x7c834a186d52b5ca": 355,
+     "0x54904194650a68bf:0x989ea9a6e5adbee5": 807,
+     "0x54906b5f4e035159:0xdc1257907d0880c8": 667,
+     "0x54906ad336fae2fb:0xbec4529c38edc5db": 1738,
+     "0x549015ccd3418b89:0xecc21c23eae28f9b": 876,
+     "0x5490167fd336269d:0x62e9faa48b2ece60": 1676,
+     "0x54901501c9931b9b:0xa26ce49112053f81": 1608,
+     "0x54906b4d77f88fc1:0x7abec2f463144ad7": 645,
+     "0x549041b39c60c0b1:0xc5a3f19da958c331": 285,
+     "0x54901421865c6699:0x7f4a5d790f6d85bf": 616,
+     "0x54906a871cb54843:0x4ee3d589c536e8ad": 84,
+     "0x54906be58e24989d:0x90b184dfe4aa9eb0": 689,
+     "0x5490154e76098177:0xcf3b4acc46c4e70": 1356,
+     "0x5490156616d713a7:0x49dcf7081b0facb8": 1027,
+     "0x549041ea3bbba54f:0x56273fcdaec0e126": 593,
+     "0x549040fbdc183da9:0xb27950e4ea72920f": 1872,
+     "0x808e1660fbd98677:0x597c76a3f4a7422": 137,
+     "0x54906ab61f15f63b:0xd8aec19743a6a67b": 861,
+     "0x54906ab2f758b099:0xe5aac42f5dcf2ae7": 606,
+     "0x54906a86e7f0c103:0x28aa46919850230f": 530,
+     "0x54906baa64fb91af:0x6910df71aa58c33f": 120,
+     "0x5490142d17526bb1:0x2feb8dc6da29c63": 538,
+     "0x54906bdac8b1fddb:0xbe136ebd88211620": 839,
+     "0x54906ab2c60a5645:0x1b7dab922d998f16": 5952,
+     "0x54906ba655e1c807:0x6e4ad8a4e5d9fe7d": 346,
+     "0x54906adebcd6c68d:0xdb9766a26f275a23": 361,
+     "0x54906a0c31d7ab85:0x597878059d59007e": 337,
+     "0x54906bbe662c6b11:0x88422ce29c8e5e7a": 673,
+     "0x5490143a1227947b:0x5c8395ca635f6701": 815,
+     "0x5490154ee428cb79:0xab1e106eb514f14": 186
+    }
+   }
+  }
+ },
+ "plumber in Houston, TX": {
+  "kw": "plumber in Houston, TX",
+  "no_cookie": {
+   "n": 40,
+   "rc": 0
+  },
+  "socs_nid": {
+   "n": 40,
+   "rc": 40
+  },
+  "common_fids": 39,
+  "value_mismatch": [
+   [
+    null,
+    58
+   ],
+   [
+    null,
+    108
+   ],
+   [
+    null,
+    2992
+   ],
+   [
+    null,
+    340
+   ],
+   [
+    null,
+    577
+   ]
+  ],
+  "raw": {
+   "no_cookie": {
+    "n": 40,
+    "rc_fill": 0,
+    "by_fid": {
+     "0x8640d1020d94f703:0x7cfe64fd285822f3": null,
+     "0x8640c05f68b6cf21:0x805b0ca1eef4a625": null,
+     "0x8640c76a4c3f8f73:0x7ae991add0786989": null,
+     "0x8640cf8ed1518245:0xcaf0714169e78eff": null,
+     "0x8640eb2f4e55db4b:0xa079ebaf6e51f7dd": null,
+     "0x8640e923d595f387:0xfcd033d065ac0a97": null,
+     "0x8640e99260148083:0x103f08fd2afc21": null,
+     "0x8640ce28b83c0495:0x95919008d9dd5af3": null,
+     "0x8640c7052e231a81:0x31000677e4def1e4": null,
+     "0x8640b88d5b4c98cf:0x745e6636863a4245": null,
+     "0x8640c5c021358155:0xf052183ce5b9ceb1": null,
+     "0x8640c5d54b35a963:0xde884c48d45e5c38": null,
+     "0x8640c216aa5a1427:0x17a1450e1a2afa6c": null,
+     "0x863f5c1972768647:0x3382c39daa6b07d5": null,
+     "0x8640dded7156c785:0x36b81a66b840e750": null,
+     "0x8640a51b0ea18e99:0xfa3186ace2e286cd": null,
+     "0x6ec297b200ca9133:0xa9fe5a96d4553f6e": null,
+     "0x8640c5d23225a117:0x3dbaeb6ea978d1a9": null,
+     "0x8640c096854eefab:0xeb57b427c9563e98": null,
+     "0x4133bf315c45f68b:0xa31450af7d243fa7": null,
+     "0x6459685a16e87f11:0x65140c3865c4ef6e": null,
+     "0x8640d13a5eea2df9:0xd65ed9eff7f1fc52": null,
+     "0x8640c7b2796e3c3b:0xd27e76550a3912dc": null,
+     "0x8640c447250aaef3:0x1b72ec0f9b81430b": null,
+     "0x8640cf5211b87043:0x9a838591ca707231": null,
+     "0x84ab7f0ef348b499:0x3ce9384f6f7ac29": null,
+     "0x8640c5e03374b243:0x1c18f669c9148b2": null,
+     "0x8640dc626fc37bf3:0xcd5ed05ccbd74940": null,
+     "0x8640d7c657afaf91:0x5c954b3678a5ec1d": null,
+     "0x3ad75d20ce0d0e3:0x325bb5186a6fbd22": null,
+     "0x8640c1772997bab1:0xeec872427aeaa022": null,
+     "0x8640eb6e8e6279a7:0x931453a869a5ecc": null,
+     "0x8640c3a4ca8ba62f:0x8ddd785cf5cdb160": null,
+     "0x8640bca0742aa761:0x4f54409025791de1": null,
+     "0x8640cf7160937719:0x6f66b9cfad40f6e1": null,
+     "0x8640eb61c9d6c0f5:0x568616ba0e040a34": null,
+     "0x8640e783ae08eee7:0xbe9121357525d9dc": null,
+     "0x8640e9011a10974b:0x9550284d1c77f5e4": null,
+     "0x8640d00c53882085:0x77b563672150f3b4": null,
+     "0x8640c287697daa1d:0xdf697550f420ee8b": null
+    }
+   },
+   "socs_nid": {
+    "n": 40,
+    "rc_fill": 40,
+    "by_fid": {
+     "0x8640d1020d94f703:0x7cfe64fd285822f3": 577,
+     "0x8640c05f68b6cf21:0x805b0ca1eef4a625": 10741,
+     "0x8640c76a4c3f8f73:0x7ae991add0786989": 4323,
+     "0x8640cf8ed1518245:0xcaf0714169e78eff": 4342,
+     "0x8640eb2f4e55db4b:0xa079ebaf6e51f7dd": 174,
+     "0x8640e99260148083:0x103f08fd2afc21": 845,
+     "0x8640e923d595f387:0xfcd033d065ac0a97": 340,
+     "0x8640c5d54b35a963:0xde884c48d45e5c38": 11772,
+     "0x8640c7052e231a81:0x31000677e4def1e4": 543,
+     "0x8640dded7156c785:0x36b81a66b840e750": 874,
+     "0x8640c216aa5a1427:0x17a1450e1a2afa6c": 71,
+     "0x8640b88d5b4c98cf:0x745e6636863a4245": 1479,
+     "0x6459685a16e87f11:0x65140c3865c4ef6e": 44,
+     "0x6ec297b200ca9133:0xa9fe5a96d4553f6e": 105,
+     "0x8640c5c021358155:0xf052183ce5b9ceb1": 663,
+     "0x8640c7b2796e3c3b:0xd27e76550a3912dc": 2992,
+     "0x8640a51b0ea18e99:0xfa3186ace2e286cd": 496,
+     "0x4133bf315c45f68b:0xa31450af7d243fa7": 150,
+     "0x8640c5d23225a117:0x3dbaeb6ea978d1a9": 225,
+     "0x8640d13a5eea2df9:0xd65ed9eff7f1fc52": 62,
+     "0x8640ce28b83c0495:0x95919008d9dd5af3": 19973,
+     "0x863f5c1972768647:0x3382c39daa6b07d5": 3682,
+     "0x8640c096854eefab:0xeb57b427c9563e98": 228,
+     "0x8640c447250aaef3:0x1b72ec0f9b81430b": 646,
+     "0x8640cf5211b87043:0x9a838591ca707231": 340,
+     "0x84ab7f0ef348b499:0x3ce9384f6f7ac29": 58,
+     "0x8640c5e03374b243:0x1c18f669c9148b2": 326,
+     "0x8640eb6e8e6279a7:0x931453a869a5ecc": 568,
+     "0x8640d7c657afaf91:0x5c954b3678a5ec1d": 287,
+     "0x8640eb61c9d6c0f5:0x568616ba0e040a34": 133,
+     "0x8640dc626fc37bf3:0xcd5ed05ccbd74940": 113,
+     "0x3ad75d20ce0d0e3:0x325bb5186a6fbd22": 71,
+     "0x8640c1772997bab1:0xeec872427aeaa022": 92,
+     "0x8640c3a4ca8ba62f:0x8ddd785cf5cdb160": 93,
+     "0x8640bca0742aa761:0x4f54409025791de1": 204,
+     "0x8640cf7160937719:0x6f66b9cfad40f6e1": 624,
+     "0x8640e783ae08eee7:0xbe9121357525d9dc": 298,
+     "0x8640c287697daa1d:0xdf697550f420ee8b": 108,
+     "0x8640c7cb6ca40001:0x8bbd47170dc7b0ee": 70,
+     "0x8640e9011a10974b:0x9550284d1c77f5e4": 842
+    }
+   }
+  }
+ }
+}

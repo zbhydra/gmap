@@ -1,0 +1,21 @@
+{
+ "den_full": {
+  "pages": 34,
+  "total": 1981,
+  "unique": 1981,
+  "expect_rc": 1981,
+  "secs": 40
+ },
+ "por_full": {
+  "pages": 6,
+  "total": 350,
+  "unique": 350,
+  "expect_rc": 350,
+  "secs": 6
+ },
+ "sort_stability": {
+  "n1": 120,
+  "n2": 120,
+  "identical": true
+ }
+}

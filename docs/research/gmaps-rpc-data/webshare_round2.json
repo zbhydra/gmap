@@ -1,0 +1,902 @@
+[
+ {
+  "job_id": "kBgyMRXwP4aY3J9Qj2opZ6drGqAvENLj",
+  "status": "completed",
+  "keyword": "Restaurant near Alpha, US",
+  "created_at": "2026-09-01T13:26:00.796349Z",
+  "started_at": "2026-09-01T13:26:00.798403Z",
+  "completed_at": "2026-09-01T13:27:20.719217Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "yObpZd5LAKe0DklWjkx7qGmw13NP26jQ",
+  "status": "completed",
+  "keyword": "Restaurant near Alpharetta, US",
+  "created_at": "2026-09-01T13:26:00.813989Z",
+  "started_at": "2026-09-01T13:26:00.899263Z",
+  "completed_at": "2026-09-01T13:27:23.368499Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "5n7YjkAG4J2P8Nl2eDxBeQwWpMX0EmbO",
+  "status": "completed",
+  "keyword": "Restaurant near Alpine, US",
+  "created_at": "2026-09-01T13:26:00.82988Z",
+  "started_at": "2026-09-01T13:26:00.899442Z",
+  "completed_at": "2026-09-01T13:27:09.081449Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "Pgv0dpw85BnE1e9ZjM9k4mQKb27ajD3A",
+  "status": "completed",
+  "keyword": "Restaurant near Alplaus, US",
+  "created_at": "2026-09-01T13:26:00.84874Z",
+  "started_at": "2026-09-01T13:26:00.899632Z",
+  "completed_at": "2026-09-01T13:27:17.640885Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "gmrXnzVaP43d1bl8ZBoOeEjk6MD7R58N",
+  "status": "completed",
+  "keyword": "Restaurant near Alsea, US",
+  "created_at": "2026-09-01T13:26:00.867433Z",
+  "started_at": "2026-09-01T13:26:00.899821Z",
+  "completed_at": "2026-09-01T13:26:11.242553Z",
+  "result_count": 2
+ },
+ {
+  "job_id": "50wGXP1OpqRbjVx6Brx2WkY7ZngM4m8Q",
+  "status": "completed",
+  "keyword": "Restaurant near Alsey, US",
+  "created_at": "2026-09-01T13:26:00.883097Z",
+  "started_at": "2026-09-01T13:26:00.899828Z",
+  "completed_at": "2026-09-01T13:26:08.086745Z",
+  "result_count": 2
+ },
+ {
+  "job_id": "7ZqwLYyRBGnDE29GjzlWbXdVMQNv085r",
+  "status": "completed",
+  "keyword": "Restaurant near Alsip, US",
+  "created_at": "2026-09-01T13:26:00.897417Z",
+  "started_at": "2026-09-01T13:26:08.087554Z",
+  "completed_at": "2026-09-01T13:27:21.480167Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "vGmrzOjXE5PpBVl5QZly1w7RKN4kb3QM",
+  "status": "completed",
+  "keyword": "Restaurant near Alstead, US",
+  "created_at": "2026-09-01T13:26:00.919292Z",
+  "started_at": "2026-09-01T13:26:11.242746Z",
+  "completed_at": "2026-09-01T13:27:18.581109Z",
+  "result_count": 20
+ },
+ {
+  "job_id": "EB68ra5JZjgYvd9Mj6owep1ALGO4NVQK",
+  "status": "completed",
+  "keyword": "Restaurant near Alta, US",
+  "created_at": "2026-09-01T13:26:00.943865Z",
+  "started_at": "2026-09-01T13:27:09.081633Z",
+  "completed_at": "2026-09-01T13:28:16.279719Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "dYL35AjX1Dp20Gxrb6xazweRM4yOWVv7",
+  "status": "completed",
+  "keyword": "Restaurant near Alta Vista, US",
+  "created_at": "2026-09-01T13:26:00.967609Z",
+  "started_at": "2026-09-01T13:27:17.642299Z",
+  "completed_at": "2026-09-01T13:28:40.890794Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "5Z7WOn2BXwVpMAxAjMl1Qz8r6RK0GdLE",
+  "status": "completed",
+  "keyword": "Restaurant near Altadena, US",
+  "created_at": "2026-09-01T13:26:00.990682Z",
+  "started_at": "2026-09-01T13:27:18.584759Z",
+  "completed_at": "2026-09-01T13:28:46.835021Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "1dP73DMwyK2bp69Nj490BANZvXJneVLg",
+  "status": "completed",
+  "keyword": "Restaurant near Altamonte Springs, US",
+  "created_at": "2026-09-01T13:26:01.021173Z",
+  "started_at": "2026-09-01T13:27:20.720184Z",
+  "completed_at": "2026-09-01T13:28:39.33009Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "gpw6EWkRqb7KQm9aKdxye2DJ15OznMar",
+  "status": "completed",
+  "keyword": "Restaurant near Altaville, US",
+  "created_at": "2026-09-01T13:26:01.053634Z",
+  "started_at": "2026-09-01T13:27:21.480599Z",
+  "completed_at": "2026-09-01T13:28:37.770386Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "Pzq6QKjGMb8BpXxz5LovyrDm3OLg5JZe",
+  "status": "completed",
+  "keyword": "Restaurant near Altavista, US",
+  "created_at": "2026-09-01T13:26:01.075766Z",
+  "started_at": "2026-09-01T13:27:23.368749Z",
+  "completed_at": "2026-09-01T13:28:44.112244Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "GvNDL4e0PbKq6V9343ormj2RkdMY8AzJ",
+  "status": "completed",
+  "keyword": "Restaurant near Altenburg, US",
+  "created_at": "2026-09-01T13:26:01.095075Z",
+  "started_at": "2026-09-01T13:28:16.280024Z",
+  "completed_at": "2026-09-01T13:28:43.91609Z",
+  "result_count": 12
+ },
+ {
+  "job_id": "weLD1E4rAbOJ639vZp9ZRXN7P5kdp0qy",
+  "status": "completed",
+  "keyword": "Restaurant near Altha, US",
+  "created_at": "2026-09-01T13:26:01.118116Z",
+  "started_at": "2026-09-01T13:28:37.771291Z",
+  "completed_at": "2026-09-01T13:28:49.341473Z",
+  "result_count": 4
+ },
+ {
+  "job_id": "DMPmrNG50yRQ14lXjVo6pgBweq2a7dKz",
+  "status": "completed",
+  "keyword": "Restaurant near Altmar, US",
+  "created_at": "2026-09-01T13:26:01.135965Z",
+  "started_at": "2026-09-01T13:28:39.367104Z",
+  "completed_at": "2026-09-01T13:28:53.386615Z",
+  "result_count": 5
+ },
+ {
+  "job_id": "qz1P5aZdbRg7X8lkmAorp2wALGQNyWYV",
+  "status": "completed",
+  "keyword": "Restaurant near Alto, US",
+  "created_at": "2026-09-01T13:26:01.152353Z",
+  "started_at": "2026-09-01T13:28:40.89134Z",
+  "completed_at": "2026-09-01T13:30:00.151369Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "G7XOPa8jwMvKpblVjQlzVYrW3501DQ26",
+  "status": "completed",
+  "keyword": "Restaurant near Alton, US",
+  "created_at": "2026-09-01T13:26:01.174693Z",
+  "started_at": "2026-09-01T13:28:43.918199Z",
+  "completed_at": "2026-09-01T13:29:51.692194Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "ALX2k5ab01WEvD9j7Qo7Nw8KJpnQjgYB",
+  "status": "completed",
+  "keyword": "Restaurant near Alton Bay, US",
+  "created_at": "2026-09-01T13:26:01.192338Z",
+  "started_at": "2026-09-01T13:28:44.112454Z",
+  "completed_at": "2026-09-01T13:30:01.627406Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "LB3w4VzAXnKDpj9Yj4oav62mEZqb8yYN",
+  "status": "completed",
+  "keyword": "Restaurant near Altona, US",
+  "created_at": "2026-09-01T13:26:01.211435Z",
+  "started_at": "2026-09-01T13:28:46.835279Z",
+  "completed_at": "2026-09-01T13:29:09.821435Z",
+  "result_count": 7
+ },
+ {
+  "job_id": "dJzP1we205nYV69LjRxROgGpq3QMa8vN",
+  "status": "completed",
+  "keyword": "Restaurant near Altoona, US",
+  "created_at": "2026-09-01T13:26:01.233531Z",
+  "started_at": "2026-09-01T13:28:49.378051Z",
+  "completed_at": "2026-09-01T13:30:02.655274Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "j6wBEX3pmvAd5klBjdlWO1r8D7GVLbZy",
+  "status": "completed",
+  "keyword": "Restaurant near Altura, US",
+  "created_at": "2026-09-01T13:26:01.250389Z",
+  "started_at": "2026-09-01T13:28:53.386809Z",
+  "completed_at": "2026-09-01T13:30:09.874097Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "jgbJ1zmZpEVPQLx0D0xWwvOkrM5RNYDd",
+  "status": "completed",
+  "keyword": "Restaurant near Alturas, US",
+  "created_at": "2026-09-01T13:26:01.265534Z",
+  "started_at": "2026-09-01T13:29:09.821742Z",
+  "completed_at": "2026-09-01T13:30:07.983962Z",
+  "result_count": 19
+ },
+ {
+  "job_id": "q8kQVOg1LBd6GExgwgxXY43wJAvNzr2R",
+  "status": "completed",
+  "keyword": "Restaurant near Altus, US",
+  "created_at": "2026-09-01T13:26:01.279087Z",
+  "started_at": "2026-09-01T13:29:51.692371Z",
+  "completed_at": "2026-09-01T13:30:54.879232Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "PywKLGqQJm4vg5xnDz9Dr8p1bRWeOMnZ",
+  "status": "completed",
+  "keyword": "Restaurant near Alum Bank, US",
+  "created_at": "2026-09-01T13:26:01.293556Z",
+  "started_at": "2026-09-01T13:30:00.151586Z",
+  "completed_at": "2026-09-01T13:30:16.633622Z",
+  "result_count": 5
+ },
+ {
+  "job_id": "7gVRqj4253OMyP9KjAlLGW8vmDkAKNQZ",
+  "status": "completed",
+  "keyword": "Restaurant near Alum Creek, US",
+  "created_at": "2026-09-01T13:26:01.3072Z",
+  "started_at": "2026-09-01T13:30:01.627556Z",
+  "completed_at": "2026-09-01T13:31:52.123976Z",
+  "result_count": 40
+ },
+ {
+  "job_id": "LZVRp8wJe5YBQXxperlrWNjbG3D4ydvO",
+  "status": "completed",
+  "keyword": "Restaurant near Alva, US",
+  "created_at": "2026-09-01T13:26:01.322499Z",
+  "started_at": "2026-09-01T13:30:02.655575Z",
+  "completed_at": "2026-09-01T13:31:15.217454Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "dN3EwYavJA82GbldyK9XLZBe0m6pgPjR",
+  "status": "completed",
+  "keyword": "Restaurant near Alvada, US",
+  "created_at": "2026-09-01T13:26:01.338632Z",
+  "started_at": "2026-09-01T13:30:07.985372Z",
+  "completed_at": "2026-09-01T13:30:14.481782Z",
+  "result_count": 1
+ },
+ {
+  "job_id": "p3gPn1N2QwvzMdoyBDxXkRm87LJVaDZ4",
+  "status": "completed",
+  "keyword": "Restaurant near Alvarado, US",
+  "created_at": "2026-09-01T13:26:01.352551Z",
+  "started_at": "2026-09-01T13:30:09.874258Z",
+  "completed_at": "2026-09-01T13:31:23.203401Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "3YB1Dn5QWLyPdp9OjjlRrXw7KVeqJ08b",
+  "status": "completed",
+  "keyword": "Restaurant near Alvaton, US",
+  "created_at": "2026-09-01T13:26:01.367438Z",
+  "started_at": "2026-09-01T13:30:14.481996Z",
+  "completed_at": "2026-09-01T13:31:42.182255Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "Ma1QJ0kZWXnpVvlEjX9ORLN85K7mGy4q",
+  "status": "completed",
+  "keyword": "Restaurant near Alverda, US",
+  "created_at": "2026-09-01T13:26:01.379667Z",
+  "started_at": "2026-09-01T13:30:16.633839Z",
+  "completed_at": "2026-09-01T13:31:41.69018Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "XGKQwYPnzkWdA8xw8OlO1bgmNJ0RvyVj",
+  "status": "completed",
+  "keyword": "Restaurant near Alverton, US",
+  "created_at": "2026-09-01T13:26:01.392282Z",
+  "started_at": "2026-09-01T13:30:54.879431Z",
+  "completed_at": "2026-09-01T13:31:58.757627Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "gmDGPWEbLXKv87oq4p9jdw4JpA1nkVqa",
+  "status": "completed",
+  "keyword": "Restaurant near Alvin, US",
+  "created_at": "2026-09-01T13:26:01.405269Z",
+  "started_at": "2026-09-01T13:31:15.217867Z",
+  "completed_at": "2026-09-01T13:32:24.554432Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "0w5QzX1qjbDY3ylJjBlaKnARe4LvE7kJ",
+  "status": "completed",
+  "keyword": "Restaurant near Alviso, US",
+  "created_at": "2026-09-01T13:26:01.417232Z",
+  "started_at": "2026-09-01T13:31:23.203593Z",
+  "completed_at": "2026-09-01T13:32:35.783225Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "jgbJ1zmZpEVPQLx0DdxWwvOkrM5RNYDd",
+  "status": "completed",
+  "keyword": "Restaurant near Alvo, US",
+  "created_at": "2026-09-01T13:26:01.428456Z",
+  "started_at": "2026-09-01T13:31:41.690362Z",
+  "completed_at": "2026-09-01T13:32:28.10798Z",
+  "result_count": 11
+ },
+ {
+  "job_id": "q8kQVOg1LBd6GExgw7xXY43wJAvNzr2R",
+  "status": "completed",
+  "keyword": "Restaurant near Alvord, US",
+  "created_at": "2026-09-01T13:26:01.440422Z",
+  "started_at": "2026-09-01T13:31:42.182623Z",
+  "completed_at": "2026-09-01T13:33:03.022182Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "PywKLGqQJm4vg5xnDX9Dr8p1bRWeOMnZ",
+  "status": "completed",
+  "keyword": "Restaurant near Alvordton, US",
+  "created_at": "2026-09-01T13:26:01.454229Z",
+  "started_at": "2026-09-01T13:31:52.124192Z",
+  "completed_at": "2026-09-01T13:32:05.039628Z",
+  "result_count": 1
+ },
+ {
+  "job_id": "7gVRqj4253OMyP9KjalLGW8vmDkAKNQZ",
+  "status": "completed",
+  "keyword": "Restaurant near Ama, US",
+  "created_at": "2026-09-01T13:26:01.467518Z",
+  "started_at": "2026-09-01T13:31:58.779147Z",
+  "completed_at": "2026-09-01T13:33:04.36601Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "LZVRp8wJe5YBQXxpeBlrWNjbG3D4ydvO",
+  "status": "completed",
+  "keyword": "Restaurant near Amagansett, US",
+  "created_at": "2026-09-01T13:26:01.482409Z",
+  "started_at": "2026-09-01T13:32:05.039763Z",
+  "completed_at": "2026-09-01T13:33:23.612614Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "dN3EwYavJA82Gbldy49XLZBe0m6pgPjR",
+  "status": "completed",
+  "keyword": "Restaurant near Amana, US",
+  "created_at": "2026-09-01T13:26:01.497263Z",
+  "started_at": "2026-09-01T13:32:24.556092Z",
+  "completed_at": "2026-09-01T13:33:04.904394Z",
+  "result_count": 15
+ },
+ {
+  "job_id": "p3gPn1N2QwvzMdoyB6xXkRm87LJVaDZ4",
+  "status": "completed",
+  "keyword": "Restaurant near Amanda, US",
+  "created_at": "2026-09-01T13:26:01.510808Z",
+  "started_at": "2026-09-01T13:32:28.108435Z",
+  "completed_at": "2026-09-01T13:33:45.794252Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "3YB1Dn5QWLyPdp9OjMlRrXw7KVeqJ08b",
+  "status": "completed",
+  "keyword": "Restaurant near Amargosa Valley, US",
+  "created_at": "2026-09-01T13:26:01.525719Z",
+  "started_at": "2026-09-01T13:32:35.783433Z",
+  "completed_at": "2026-09-01T13:32:54.04546Z",
+  "result_count": 6
+ },
+ {
+  "job_id": "Ma1QJ0kZWXnpVvlEXmxORLN85K7mGy4q",
+  "status": "completed",
+  "keyword": "Restaurant near Amarillo, US",
+  "created_at": "2026-09-01T13:26:01.542401Z",
+  "started_at": "2026-09-01T13:32:54.045862Z",
+  "completed_at": "2026-09-01T13:34:11.043828Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "XGKQwYPnzkWdA8xwgAxO1bgmNJ0RvyVj",
+  "status": "completed",
+  "keyword": "Restaurant near Amawalk, US",
+  "created_at": "2026-09-01T13:26:01.554979Z",
+  "started_at": "2026-09-01T13:33:03.022422Z",
+  "completed_at": "2026-09-01T13:34:32.096116Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "gmDGPWEbLXKv87oqGKljdw4JpA1nkVqa",
+  "status": "completed",
+  "keyword": "Restaurant near Amazonia, US",
+  "created_at": "2026-09-01T13:26:01.568915Z",
+  "started_at": "2026-09-01T13:33:04.366238Z",
+  "completed_at": "2026-09-01T13:33:24.716446Z",
+  "result_count": 7
+ },
+ {
+  "job_id": "0w5QzX1qjbDY3ylJX0oaKnARe4LvE7kJ",
+  "status": "completed",
+  "keyword": "Restaurant near Amberg, US",
+  "created_at": "2026-09-01T13:26:01.583187Z",
+  "started_at": "2026-09-01T13:33:04.904547Z",
+  "completed_at": "2026-09-01T13:34:49.060299Z",
+  "result_count": 40
+ },
+ {
+  "job_id": "0JE1Wae4DAqkVNo7Xrx2d8XgKrj7L5n6",
+  "status": "completed",
+  "keyword": "Restaurant near Ambler, US",
+  "created_at": "2026-09-01T13:26:01.598588Z",
+  "started_at": "2026-09-01T13:33:23.61284Z",
+  "completed_at": "2026-09-01T13:34:45.831868Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "X58JYEk2bOMA1V9m2LoKaR7pGQWy6wjn",
+  "status": "completed",
+  "keyword": "Restaurant near Amboy, US",
+  "created_at": "2026-09-01T13:26:01.614262Z",
+  "started_at": "2026-09-01T13:33:24.716626Z",
+  "completed_at": "2026-09-01T13:33:58.65926Z",
+  "result_count": 14
+ },
+ {
+  "job_id": "0KR8wzZ1XP2QvkxRX69MDOnjq57VdaAB",
+  "status": "completed",
+  "keyword": "Restaurant near Ambridge, US",
+  "created_at": "2026-09-01T13:26:01.630489Z",
+  "started_at": "2026-09-01T13:33:45.808688Z",
+  "completed_at": "2026-09-01T13:35:05.2836Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "2d81qGPO3wREYyoPXWokbe5DXVNgprvK",
+  "status": "completed",
+  "keyword": "Restaurant near Ambrose, US",
+  "created_at": "2026-09-01T13:26:01.64488Z",
+  "started_at": "2026-09-01T13:33:58.66038Z",
+  "completed_at": "2026-09-01T13:34:19.454642Z",
+  "result_count": 8
+ },
+ {
+  "job_id": "04BZDNd8k1paynxDXQxRwbrAqEgz7WOL",
+  "status": "completed",
+  "keyword": "Restaurant near Amelia, US",
+  "created_at": "2026-09-01T13:26:01.664558Z",
+  "started_at": "2026-09-01T13:34:11.049083Z",
+  "completed_at": "2026-09-01T13:35:57.53822Z",
+  "result_count": 40
+ },
+ {
+  "job_id": "ZkBgGKYPrEqRAV91GdxD16aWjMXnb80p",
+  "status": "completed",
+  "keyword": "Restaurant near Amelia Court House, US",
+  "created_at": "2026-09-01T13:26:01.682996Z",
+  "started_at": "2026-09-01T13:34:19.455127Z",
+  "completed_at": "2026-09-01T13:35:26.957618Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "5RreBPVMLaYkd6oePn9NyAbDwKX1G3vW",
+  "status": "completed",
+  "keyword": "Restaurant near Amenia, US",
+  "created_at": "2026-09-01T13:26:01.698644Z",
+  "started_at": "2026-09-01T13:34:32.096577Z",
+  "completed_at": "2026-09-01T13:35:17.695074Z",
+  "result_count": 15
+ },
+ {
+  "job_id": "PWMJpAedrONGqVo4rjlY4n186jR5y3L7",
+  "status": "completed",
+  "keyword": "Restaurant near America, US",
+  "created_at": "2026-09-01T13:26:01.714119Z",
+  "started_at": "2026-09-01T13:34:45.832103Z",
+  "completed_at": "2026-09-01T13:36:05.904199Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "G3p6Lm0jg7Wy1w9b7eoQOvnNkPE8X4VD",
+  "status": "completed",
+  "keyword": "Restaurant near American Canyon, US",
+  "created_at": "2026-09-01T13:26:01.729612Z",
+  "started_at": "2026-09-01T13:34:49.060531Z",
+  "completed_at": "2026-09-01T13:36:01.889927Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "kBgyMRXwP4aY3J9QXBlpZ6drGqAvENLj",
+  "status": "completed",
+  "keyword": "Restaurant near American Falls, US",
+  "created_at": "2026-09-01T13:26:01.744402Z",
+  "started_at": "2026-09-01T13:35:05.283946Z",
+  "completed_at": "2026-09-01T13:35:39.0013Z",
+  "result_count": 12
+ },
+ {
+  "job_id": "yObpZd5LAKe0DklWgrl7qGmw13NP26jQ",
+  "status": "completed",
+  "keyword": "Restaurant near American Fork, US",
+  "created_at": "2026-09-01T13:26:01.758209Z",
+  "started_at": "2026-09-01T13:35:17.695281Z",
+  "completed_at": "2026-09-01T13:36:46.082321Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "5n7YjkAG4J2P8Nl25jxBeQwWpMX0EmbO",
+  "status": "completed",
+  "keyword": "Restaurant near Americus, US",
+  "created_at": "2026-09-01T13:26:01.773108Z",
+  "started_at": "2026-09-01T13:35:27.053149Z",
+  "completed_at": "2026-09-01T13:36:31.377527Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "Pgv0dpw85BnE1e9ZpBxk4mQKb27ajD3A",
+  "status": "completed",
+  "keyword": "Restaurant near Amery, US",
+  "created_at": "2026-09-01T13:26:01.786435Z",
+  "started_at": "2026-09-01T13:35:39.002529Z",
+  "completed_at": "2026-09-01T13:36:55.648312Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "gmrXnzVaP43d1bl8XwlOeEjk6MD7R58N",
+  "status": "completed",
+  "keyword": "Restaurant near Ames, US",
+  "created_at": "2026-09-01T13:26:01.800751Z",
+  "started_at": "2026-09-01T13:35:57.538469Z",
+  "completed_at": "2026-09-01T13:37:11.789646Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "50wGXP1OpqRbjVx6Xj92WkY7ZngM4m8Q",
+  "status": "completed",
+  "keyword": "Restaurant near Amesbury, US",
+  "created_at": "2026-09-01T13:26:01.814568Z",
+  "started_at": "2026-09-01T13:36:01.890086Z",
+  "completed_at": "2026-09-01T13:37:16.041349Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "7ZqwLYyRBGnDE29GXQoWbXdVMQNv085r",
+  "status": "completed",
+  "keyword": "Restaurant near Amesville, US",
+  "created_at": "2026-09-01T13:26:01.831352Z",
+  "started_at": "2026-09-01T13:36:05.919505Z",
+  "completed_at": "2026-09-01T13:36:19.108026Z",
+  "result_count": 1
+ },
+ {
+  "job_id": "vGmrzOjXE5PpBVl5Anly1w7RKN4kb3QM",
+  "status": "completed",
+  "keyword": "Restaurant near Amherst, US",
+  "created_at": "2026-09-01T13:26:01.846784Z",
+  "started_at": "2026-09-01T13:36:19.108188Z",
+  "completed_at": "2026-09-01T13:37:38.057782Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "EB68ra5JZjgYvd9MYO9wep1ALGO4NVQK",
+  "status": "completed",
+  "keyword": "Restaurant near Amherst Junction, US",
+  "created_at": "2026-09-01T13:26:01.859916Z",
+  "started_at": "2026-09-01T13:36:31.377742Z",
+  "completed_at": "2026-09-01T13:36:56.524765Z",
+  "result_count": 10
+ },
+ {
+  "job_id": "dYL35AjX1Dp20Gxr5EoazweRM4yOWVv7",
+  "status": "completed",
+  "keyword": "Restaurant near Amherstdale, US",
+  "created_at": "2026-09-01T13:26:01.874241Z",
+  "started_at": "2026-09-01T13:36:46.082536Z",
+  "completed_at": "2026-09-01T13:38:12.22349Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "5Z7WOn2BXwVpMAxAXpo1Qz8r6RK0GdLE",
+  "status": "completed",
+  "keyword": "Restaurant near Amidon, US",
+  "created_at": "2026-09-01T13:26:01.889404Z",
+  "started_at": "2026-09-01T13:36:55.648513Z",
+  "completed_at": "2026-09-01T13:37:08.620348Z",
+  "result_count": 3
+ },
+ {
+  "job_id": "1dP73DMwyK2bp69NXyx0BANZvXJneVLg",
+  "status": "completed",
+  "keyword": "Restaurant near Amissville, US",
+  "created_at": "2026-09-01T13:26:01.904444Z",
+  "started_at": "2026-09-01T13:36:56.524954Z",
+  "completed_at": "2026-09-01T13:37:19.60865Z",
+  "result_count": 9
+ },
+ {
+  "job_id": "gpw6EWkRqb7KQm9aJ5oye2DJ15OznMar",
+  "status": "completed",
+  "keyword": "Restaurant near Amite, US",
+  "created_at": "2026-09-01T13:26:01.918236Z",
+  "started_at": "2026-09-01T13:37:08.620736Z",
+  "completed_at": "2026-09-01T13:38:24.667751Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "Pzq6QKjGMb8BpXxzpz9vyrDm3OLg5JZe",
+  "status": "completed",
+  "keyword": "Restaurant near Amity, US",
+  "created_at": "2026-09-01T13:26:01.931529Z",
+  "started_at": "2026-09-01T13:37:11.78999Z",
+  "completed_at": "2026-09-01T13:37:39.879742Z",
+  "result_count": 10
+ },
+ {
+  "job_id": "GvNDL4e0PbKq6V93MPxrmj2RkdMY8AzJ",
+  "status": "completed",
+  "keyword": "Restaurant near Amityville, US",
+  "created_at": "2026-09-01T13:26:01.945282Z",
+  "started_at": "2026-09-01T13:37:16.097472Z",
+  "completed_at": "2026-09-01T13:38:31.168582Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "weLD1E4rAbOJ639v0rxZRXN7P5kdp0qy",
+  "status": "completed",
+  "keyword": "Restaurant near Ammon, US",
+  "created_at": "2026-09-01T13:26:01.959712Z",
+  "started_at": "2026-09-01T13:37:19.608897Z",
+  "completed_at": "2026-09-01T13:38:26.797646Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "DMPmrNG50yRQ14lXnbo6pgBweq2a7dKz",
+  "status": "completed",
+  "keyword": "Restaurant near Amo, US",
+  "created_at": "2026-09-01T13:26:01.973118Z",
+  "started_at": "2026-09-01T13:37:38.071266Z",
+  "completed_at": "2026-09-01T13:39:02.075262Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "qz1P5aZdbRg7X8lkQnorp2wALGQNyWYV",
+  "status": "completed",
+  "keyword": "Restaurant near Amoret, US",
+  "created_at": "2026-09-01T13:26:01.98675Z",
+  "started_at": "2026-09-01T13:37:39.879925Z",
+  "completed_at": "2026-09-01T13:37:48.633252Z",
+  "result_count": 2
+ },
+ {
+  "job_id": "G7XOPa8jwMvKpblVBjlzVYrW3501DQ26",
+  "status": "completed",
+  "keyword": "Restaurant near Amory, US",
+  "created_at": "2026-09-01T13:26:02.000711Z",
+  "started_at": "2026-09-01T13:37:48.633443Z",
+  "completed_at": "2026-09-01T13:39:02.638432Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "ALX2k5ab01WEvD9jbb97Nw8KJpnQjgYB",
+  "status": "completed",
+  "keyword": "Restaurant near Amsterdam, US",
+  "created_at": "2026-09-01T13:26:02.015702Z",
+  "started_at": "2026-09-01T13:38:12.223954Z",
+  "completed_at": "2026-09-01T13:39:36.391395Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "LB3w4VzAXnKDpj9YKLxav62mEZqb8yYN",
+  "status": "completed",
+  "keyword": "Restaurant near Amston, US",
+  "created_at": "2026-09-01T13:26:02.029951Z",
+  "started_at": "2026-09-01T13:38:24.667982Z",
+  "completed_at": "2026-09-01T13:39:45.949457Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "dJzP1we205nYV69LXg9ROgGpq3QMa8vN",
+  "status": "completed",
+  "keyword": "Restaurant near Anacoco, US",
+  "created_at": "2026-09-01T13:26:02.04457Z",
+  "started_at": "2026-09-01T13:38:26.797811Z",
+  "completed_at": "2026-09-01T13:38:48.072247Z",
+  "result_count": 8
+ },
+ {
+  "job_id": "j6wBEX3pmvAd5klBXJoWO1r8D7GVLbZy",
+  "status": "completed",
+  "keyword": "Restaurant near Anaconda, US",
+  "created_at": "2026-09-01T13:26:02.058Z",
+  "started_at": "2026-09-01T13:38:31.193359Z",
+  "completed_at": "2026-09-01T13:39:46.685889Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "jgbJ1zmZpEVPQLx06d9WwvOkrM5RNYDd",
+  "status": "completed",
+  "keyword": "Restaurant near Anacortes, US",
+  "created_at": "2026-09-01T13:26:02.075081Z",
+  "started_at": "2026-09-01T13:38:48.075109Z",
+  "completed_at": "2026-09-01T13:39:54.852328Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "q8kQVOg1LBd6GExg179XY43wJAvNzr2R",
+  "status": "completed",
+  "keyword": "Restaurant near Anadarko, US",
+  "created_at": "2026-09-01T13:26:02.092845Z",
+  "started_at": "2026-09-01T13:39:02.075435Z",
+  "completed_at": "2026-09-01T13:40:21.231075Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "PywKLGqQJm4vg5xnZXxDr8p1bRWeOMnZ",
+  "status": "completed",
+  "keyword": "Restaurant near Anaheim, US",
+  "created_at": "2026-09-01T13:26:02.108761Z",
+  "started_at": "2026-09-01T13:39:02.638663Z",
+  "completed_at": "2026-09-01T13:40:23.507978Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "7gVRqj4253OMyP9KXaoLGW8vmDkAKNQZ",
+  "status": "completed",
+  "keyword": "Restaurant near Anahola, US",
+  "created_at": "2026-09-01T13:26:02.122876Z",
+  "started_at": "2026-09-01T13:39:36.391619Z",
+  "completed_at": "2026-09-01T13:40:06.551977Z",
+  "result_count": 9
+ },
+ {
+  "job_id": "LZVRp8wJe5YBQXxp6B9rWNjbG3D4ydvO",
+  "status": "completed",
+  "keyword": "Restaurant near Anahuac, US",
+  "created_at": "2026-09-01T13:26:02.138546Z",
+  "started_at": "2026-09-01T13:39:45.949716Z",
+  "completed_at": "2026-09-01T13:40:23.132994Z",
+  "result_count": 14
+ },
+ {
+  "job_id": "dN3EwYavJA82GbldR4oXLZBe0m6pgPjR",
+  "status": "completed",
+  "keyword": "Restaurant near Anamosa, US",
+  "created_at": "2026-09-01T13:26:02.1534Z",
+  "started_at": "2026-09-01T13:39:46.68618Z",
+  "completed_at": "2026-09-01T13:40:57.096161Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "p3gPn1N2QwvzMdoyK6lXkRm87LJVaDZ4",
+  "status": "completed",
+  "keyword": "Restaurant near Anchor Point, US",
+  "created_at": "2026-09-01T13:26:02.167786Z",
+  "started_at": "2026-09-01T13:39:54.852591Z",
+  "completed_at": "2026-09-01T13:40:17.827343Z",
+  "result_count": 8
+ },
+ {
+  "job_id": "3YB1Dn5QWLyPdp9OYMxRrXw7KVeqJ08b",
+  "status": "completed",
+  "keyword": "Restaurant near Anchorage, US",
+  "created_at": "2026-09-01T13:26:02.181637Z",
+  "started_at": "2026-09-01T13:40:06.552112Z",
+  "completed_at": "2026-09-01T13:41:30.944689Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "Ma1QJ0kZWXnpVvlE2m9ORLN85K7mGy4q",
+  "status": "completed",
+  "keyword": "Restaurant near Ancona, US",
+  "created_at": "2026-09-01T13:26:02.196595Z",
+  "started_at": "2026-09-01T13:40:17.827494Z",
+  "completed_at": "2026-09-01T13:41:22.470398Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "XGKQwYPnzkWdA8xwOAxO1bgmNJ0RvyVj",
+  "status": "completed",
+  "keyword": "Restaurant near Andale, US",
+  "created_at": "2026-09-01T13:26:02.213764Z",
+  "started_at": "2026-09-01T13:40:21.280673Z",
+  "completed_at": "2026-09-01T13:40:34.853886Z",
+  "result_count": 1
+ },
+ {
+  "job_id": "gmDGPWEbLXKv87oqgKljdw4JpA1nkVqa",
+  "status": "completed",
+  "keyword": "Restaurant near Andalusia, US",
+  "created_at": "2026-09-01T13:26:02.23118Z",
+  "started_at": "2026-09-01T13:40:23.133313Z",
+  "completed_at": "2026-09-01T13:41:40.490266Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "0w5QzX1qjbDY3ylJ50xaKnARe4LvE7kJ",
+  "status": "completed",
+  "keyword": "Restaurant near Anderson, US",
+  "created_at": "2026-09-01T13:26:02.247105Z",
+  "started_at": "2026-09-01T13:40:23.508143Z",
+  "completed_at": "2026-09-01T13:41:43.744764Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "0JE1Wae4DAqkVNo7wro2d8XgKrj7L5n6",
+  "status": "completed",
+  "keyword": "Restaurant near Andersonville, US",
+  "created_at": "2026-09-01T13:26:02.263878Z",
+  "started_at": "2026-09-01T13:40:34.853995Z",
+  "completed_at": "2026-09-01T13:41:58.791241Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "X58JYEk2bOMA1V9mkLxKaR7pGQWy6wjn",
+  "status": "completed",
+  "keyword": "Restaurant near Andes, US",
+  "created_at": "2026-09-01T13:26:02.28161Z",
+  "started_at": "2026-09-01T13:40:57.096402Z",
+  "completed_at": "2026-09-01T13:41:07.218597Z",
+  "result_count": 2
+ },
+ {
+  "job_id": "0KR8wzZ1XP2QvkxRv6xMDOnjq57VdaAB",
+  "status": "completed",
+  "keyword": "Restaurant near Andover, US",
+  "created_at": "2026-09-01T13:26:02.29544Z",
+  "started_at": "2026-09-01T13:41:07.218734Z",
+  "completed_at": "2026-09-01T13:42:22.619733Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "2d81qGPO3wREYyoPvWlkbe5DXVNgprvK",
+  "status": "completed",
+  "keyword": "Restaurant near Andreas, US",
+  "created_at": "2026-09-01T13:26:02.309903Z",
+  "started_at": "2026-09-01T13:41:22.47061Z",
+  "completed_at": "2026-09-01T13:42:28.639399Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "04BZDNd8k1paynxDWQoRwbrAqEgz7WOL",
+  "status": "completed",
+  "keyword": "Restaurant near Andrew, US",
+  "created_at": "2026-09-01T13:26:02.339309Z",
+  "started_at": "2026-09-01T13:41:30.946405Z",
+  "completed_at": "2026-09-01T13:42:50.453751Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "ZkBgGKYPrEqRAV91KdxD16aWjMXnb80p",
+  "status": "completed",
+  "keyword": "Restaurant near Andrews, US",
+  "created_at": "2026-09-01T13:26:02.358697Z",
+  "started_at": "2026-09-01T13:41:40.490425Z",
+  "completed_at": "2026-09-01T13:42:54.091006Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "5RreBPVMLaYkd6oevnxNyAbDwKX1G3vW",
+  "status": "completed",
+  "keyword": "Restaurant near Andrews Air Force Base, US",
+  "created_at": "2026-09-01T13:26:02.378236Z",
+  "started_at": "2026-09-01T13:41:43.745201Z",
+  "completed_at": "2026-09-01T13:42:55.246839Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "PWMJpAedrONGqVo4yjxY4n186jR5y3L7",
+  "status": "completed",
+  "keyword": "Restaurant near Angel Fire, US",
+  "created_at": "2026-09-01T13:26:02.393751Z",
+  "started_at": "2026-09-01T13:41:58.791438Z",
+  "completed_at": "2026-09-01T13:43:04.451695Z",
+  "result_count": 28
+ },
+ {
+  "job_id": "G3p6Lm0jg7Wy1w9bve9QOvnNkPE8X4VD",
+  "status": "completed",
+  "keyword": "Restaurant near Angelica, US",
+  "created_at": "2026-09-01T13:26:02.407189Z",
+  "started_at": "2026-09-01T13:42:22.619898Z",
+  "completed_at": "2026-09-01T13:43:02.041918Z",
+  "result_count": 18
+ }
+]

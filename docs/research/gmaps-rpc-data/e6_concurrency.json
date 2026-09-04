@@ -1,0 +1,35 @@
+{
+ "meta": {
+  "n": 42,
+  "ts": "2026-09-02 14:40:51"
+ },
+ "runs": [
+  {
+   "conc": 8,
+   "wall_s": 10.6,
+   "ok": 42,
+   "fail": 0,
+   "rc_mismatch": [],
+   "throughput_rec_per_min": 237.3,
+   "http_fail_sample": []
+  },
+  {
+   "conc": 16,
+   "wall_s": 7.8,
+   "ok": 42,
+   "fail": 0,
+   "rc_mismatch": [],
+   "throughput_rec_per_min": 323.9,
+   "http_fail_sample": []
+  },
+  {
+   "conc": 32,
+   "wall_s": 3.0,
+   "ok": 42,
+   "fail": 0,
+   "rc_mismatch": [],
+   "throughput_rec_per_min": 854.0,
+   "http_fail_sample": []
+  }
+ ]
+}

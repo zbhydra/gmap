@@ -1,0 +1,83 @@
+{
+ "e12fA": {
+  "portland": {
+   "canary_hit": true,
+   "regular_n": 20,
+   "regular_center": [
+    45.523,
+    -122.68
+   ],
+   "browser_n": 20,
+   "browser_center": [
+    45.52,
+    -122.675
+   ],
+   "common_fids": 2,
+   "jaccard": 0.053,
+   "common_titles": [
+    "COTTA",
+    "Portland Coffee Roasters"
+   ]
+  },
+  "miami": {
+   "canary_hit": true,
+   "regular_n": 20,
+   "regular_center": [
+    25.791,
+    -80.199
+   ],
+   "browser_n": 21,
+   "browser_center": [
+    25.789,
+    -80.198
+   ],
+   "common_fids": 3,
+   "jaccard": 0.079,
+   "common_titles": [
+    "Naughty Coffee",
+    "Studio 24 Artful Coffee",
+    "MIAM CAFE - BISCAYNE"
+   ]
+  }
+ },
+ "e12fB": {
+  "portland": {
+   "canary_hit": true,
+   "regular_n": 20,
+   "regular_center": [
+    45.522,
+    -122.679
+   ],
+   "browser_n": 20,
+   "browser_center": [
+    45.52,
+    -122.674
+   ],
+   "common_fids": 2,
+   "jaccard": 0.053,
+   "common_titles": [
+    "COTTA",
+    "Exquisite Creatures Coffee"
+   ]
+  },
+  "miami": {
+   "canary_hit": true,
+   "regular_n": 20,
+   "regular_center": [
+    25.791,
+    -80.201
+   ],
+   "browser_n": 20,
+   "browser_center": [
+    25.791,
+    -80.193
+   ],
+   "common_fids": 2,
+   "jaccard": 0.053,
+   "common_titles": [
+    "MIAM CAFE - BISCAYNE",
+    "Studio 24 Artful Coffee"
+   ]
+  }
+ }
+}

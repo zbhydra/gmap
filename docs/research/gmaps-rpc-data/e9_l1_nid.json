@@ -1,0 +1,71 @@
+{
+ "no_cookie": {
+  "n": 60,
+  "rc_fill": 47,
+  "rc_values": [
+   2253,
+   1981,
+   1981,
+   1812,
+   1681,
+   1681,
+   1052,
+   1052,
+   808,
+   653
+  ],
+  "titles": [
+   "Bachus & Schanker, Personal Injury Lawyers | Denver Office",
+   "Flatiron Legal Advisors, PLLC",
+   "Robinson & Henry, P.C.",
+   "The Wilhite Law Firm - Personal Injury Attorneys",
+   "Lonn Heymann Law Firm, P.C."
+  ]
+ },
+ "socs_only": {
+  "n": 60,
+  "rc_fill": 41,
+  "rc_values": [
+   2530,
+   1981,
+   1981,
+   1681,
+   1681,
+   1052,
+   1052,
+   808,
+   653,
+   653
+  ],
+  "titles": [
+   "Bachus & Schanker, Personal Injury Lawyers | Denver Office",
+   "Flatiron Legal Advisors, PLLC",
+   "Robinson & Henry, P.C.",
+   "The Wilhite Law Firm - Personal Injury Attorneys",
+   "Lonn Heymann Law Firm, P.C."
+  ]
+ },
+ "socs_nid": {
+  "n": 60,
+  "rc_fill": 60,
+  "rc_values": [
+   2253,
+   2253,
+   1981,
+   1981,
+   1681,
+   1681,
+   1052,
+   1052,
+   808,
+   653
+  ],
+  "titles": [
+   "Bachus & Schanker, Personal Injury Lawyers | Denver Office",
+   "Flatiron Legal Advisors, PLLC",
+   "The Wilhite Law Firm - Personal Injury Attorneys",
+   "Robinson & Henry, P.C.",
+   "Lonn Heymann Law Firm, P.C."
+  ]
+ }
+}

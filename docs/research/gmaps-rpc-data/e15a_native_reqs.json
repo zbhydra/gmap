@@ -1,0 +1,52 @@
+[
+ {
+  "url": "https://www.google.com/maps/_/MapsWizUi/data/batchexecute?rpcids=hspqX&hl=en",
+  "post_data": "f.req=%5B%5B%22hspqX%22%2C%20%22%5B2%2Cnull%2C%5B%5C%220x54950bc11c29c079%3A0xb99d1f303e39195%5C%22%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C0%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5B%5Bnull%2Cnull%2Cnull%2C%5C%22/g/11x0ypdf7w%5C%22%5D%5D%5D%2Cnull%2C%5Bnull%2C%5B203%2C100%5D%2C%5Bnull%2C20%2Cnull%2Cnull%2C1%5D%2Cnull%2Cnull%2Cnull%2C%5B%5B%5B%5B1%2C0%2C3%5D%2C%5B2%2C1%2C2%5D%2C%5B2%2C0%2C3%5D%2C%5B8%2C0%2C3%5D%2C%5B10%2C0%2C3%5D%2C%5B10%2C1%2C2%5D%2C%5B10%2C0%2C4%5D%2C%5B9%2C1%2C2%5D%5D%2C1%5D%2Cnull%2C0%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5B%5B%5B%5B%5B%5B2%5D%5D%5D%2C%5B195%2C195%5D%2C20%5D%5D%5D%5D%2C%5B%5C%22YUqaatDdCJ67i-gPj_TUuA4%5C%22%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C81%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C16698%5D%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5Bnull%2C1%2Cnull%2C1%5D%5D%22%2C%20null%2C%20%22generic%22%5D%5D&",
+  "headers": {
+   "sec-ch-ua-platform": "\"Linux\"",
+   "referer": "https://www.google.com/",
+   "accept-language": "en-US",
+   "sec-ch-ua": "\"Chromium\";v=\"151\", \"Not=A?Brand\";v=\"99\"",
+   "sec-ch-ua-mobile": "?0",
+   "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+   "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+   "rtt": "0",
+   "downlink": "10"
+  },
+  "method": "POST"
+ },
+ {
+  "url": "https://www.google.com/maps/_/MapsWizUi/data/batchexecute?rpcids=hspqX&source-path=%2Fmaps%2Fplace%2FDrip%2BDrop%2BCoffee%2F%4051.175807%2C10.4541194%2C6z%2Fdata%3D!3m1!4b1!4m6!3m5!1s0x54950bc11c29c079%3A0xb99d1f303e39195!8m2!3d45.5166387!4d-122.6773876!16s%252Fg%252F11x0ypdf7w&hl=en&_reqid=216474&rt=c",
+  "post_data": "f.req=%5B%5B%5B%22hspqX%22%2C%22%5B2%2Cnull%2C%5B%5C%220x54950bc11c29c079%3A0xb99d1f303e39195%5C%22%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C0%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5B%5Bnull%2Cnull%2Cnull%2C%5C%22%2Fg%2F11x0ypdf7w%5C%22%5D%5D%5D%2Cnull%2C%5Bnull%2C%5B203%2C100%5D%2C%5Bnull%2C20%2Cnull%2Cnull%2C1%5D%2Cnull%2Cnull%2Cnull%2C%5B%5B%5B1%2C0%2C3%5D%2C%5B2%2C1%2C2%5D%2C%5B2%2C0%2C3%5D%2C%5B8%2C0%2C3%5D%2C%5B10%2C0%2C3%5D%2C%5B10%2C1%2C2%5D%2C%5B10%2C0%2C4%5D%2C%5B9%2C1%2C2%5D%5D%2C1%5D%2Cnull%2C0%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5B%5B%5B%5B%5B%5B2%5D%5D%5D%2C%5B195%2C195%5D%2C20%5D%5D%5D%5D%2C%5B%5C%22V0qaauHHJ9Gsi-gPn6GLQQ%5C%22%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C81%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C16698%5D%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5Bnull%2C1%2Cnull%2C1%5D%5D%22%2Cnull%2C%22generic%22%5D%5D%5D&",
+  "headers": {
+   "sec-ch-ua-platform": "\"Linux\"",
+   "referer": "https://www.google.com/",
+   "accept-language": "en-US",
+   "sec-ch-ua": "\"Chromium\";v=\"151\", \"Not=A?Brand\";v=\"99\"",
+   "sec-ch-ua-mobile": "?0",
+   "x-maps-diversion-context-bin": "CAE=",
+   "x-same-domain": "1",
+   "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+   "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+   "rtt": "0",
+   "downlink": "10"
+  },
+  "method": "POST"
+ },
+ {
+  "url": "https://www.google.com/maps/_/MapsWizUi/data/batchexecute?rpcids=hspqX&hl=en",
+  "post_data": "f.req=%5B%5B%22hspqX%22%2C%20%22%5B2%2Cnull%2C%5B%5C%220x54950bc11c29c079%3A0xb99d1f303e39195%5C%22%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C0%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5B%5Bnull%2Cnull%2Cnull%2C%5C%22/g/11x0ypdf7w%5C%22%5D%5D%5D%2Cnull%2C%5Bnull%2C%5B203%2C100%5D%2C%5Bnull%2C20%2Cnull%2Cnull%2C1%5D%2Cnull%2Cnull%2Cnull%2C%5B%5B%5B%5B1%2C0%2C3%5D%2C%5B2%2C1%2C2%5D%2C%5B2%2C0%2C3%5D%2C%5B8%2C0%2C3%5D%2C%5B10%2C0%2C3%5D%2C%5B10%2C1%2C2%5D%2C%5B10%2C0%2C4%5D%2C%5B9%2C1%2C2%5D%5D%2C1%5D%2Cnull%2C0%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5B%5B%5B%5B%5B%5B2%5D%5D%5D%2C%5B195%2C195%5D%2C20%5D%5D%5D%5D%2C%5B%5C%22YUqaatDdCJ67i-gPj_TUuA4%5C%22%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C81%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C16698%5D%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5Bnull%2C1%2Cnull%2C1%5D%5D%22%2C%20null%2C%20%22generic%22%5D%5D&",
+  "headers": {
+   "sec-ch-ua-platform": "\"Linux\"",
+   "referer": "https://www.google.com/",
+   "accept-language": "en-US",
+   "sec-ch-ua": "\"Chromium\";v=\"151\", \"Not=A?Brand\";v=\"99\"",
+   "sec-ch-ua-mobile": "?0",
+   "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+   "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+   "rtt": "0",
+   "downlink": "10"
+  },
+  "method": "POST"
+ }
+]

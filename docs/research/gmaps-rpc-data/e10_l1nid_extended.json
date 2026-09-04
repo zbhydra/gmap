@@ -1,0 +1,9898 @@
+[
+ {
+  "title": "Bachus & Schanker, Personal Injury Lawyers | Denver Office",
+  "fid": "0x876c78c4e818bd7d:0xb0d704b62827c269",
+  "rc": 1981,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJfb0Y6MR4bIcRacInKLYE17A",
+  "address18": "Bachus & Schanker, Personal Injury Lawyers | Denver Office, 1801 California St Ste 4800, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "1801 California St Ste 4800",
+  "city_zip": [
+   "1801 California St Ste 4800",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJfb0Y6MR4bIcRacInKLYE17A&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1v16qs_y",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Flatiron Legal Advisors, PLLC",
+  "fid": "0x876bec271d492c29:0x882f1fed54939b29",
+  "rc": null,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJKSxJHSfsa4cRKZuTVO0fL4g",
+  "address18": "Flatiron Legal Advisors, PLLC, 2000 S Colorado Blvd Tower 1-2000, Denver, CO 80222",
+  "borough": "University Hills",
+  "street": "2000 S Colorado Blvd Tower 1-2000",
+  "city_zip": [
+   "2000 S Colorado Blvd Tower 1-2000",
+   "Denver",
+   "80222",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "8:30 AM–6 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": null,
+  "price": null,
+  "kgmid": "/g/1vmr1w7_",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Robinson & Henry, P.C.",
+  "fid": "0x876c8771cc4fef17:0x5abb844943721322",
+  "rc": null,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJF-9PzHGHbIcRIhNyQ0mEu1o",
+  "address18": "Robinson & Henry, P.C., 7555 E Hampden Ave #600, Denver, CO 80231",
+  "borough": "Southeast",
+  "street": "7555 E Hampden Ave #600",
+  "city_zip": [
+   "7555 E Hampden Ave #600",
+   "Denver",
+   "80231",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "7:30 AM–6 PM",
+      [
+       [
+        7,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": null,
+  "price": null,
+  "kgmid": "/g/11b8t7xdbh",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "The Wilhite Law Firm - Personal Injury Attorneys",
+  "fid": "0x876c792d7b096d47:0x4eb8ba533d762bb1",
+  "rc": 1681,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJR20Jey15bIcRsSt2PVO6uE4",
+  "address18": "The Wilhite Law Firm - Personal Injury Attorneys, 1600 N Ogden St, Denver, CO 80218",
+  "borough": "Central",
+  "street": "1600 N Ogden St",
+  "city_zip": [
+   "1600 N Ogden St",
+   "Denver",
+   "80218",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJR20Jey15bIcRsSt2PVO6uE4&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11h05vrrb",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Bowman Law, LLC",
+  "fid": "0x876b86aeb2b37eb5:0xbbf4fdc9479c3f86",
+  "rc": 517,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJtX6zsq6Ga4cRhj-cR8n99Ls",
+  "address18": "Bowman Law, LLC, 2727 Bryant St #102, Denver, CO 80211",
+  "borough": "Jefferson Park",
+  "street": "2727 Bryant St #102",
+  "city_zip": [
+   "2727 Bryant St #102",
+   "Denver",
+   "80211",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJtX6zsq6Ga4cRhj-cR8n99Ls&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11y3mg55w",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Lonn Heymann Law Firm, P.C.",
+  "fid": "0x876c78cd5b9e15f5:0x5efddebf675d445f",
+  "rc": 114,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ9RWeW814bIcRX0RdZ7_e_V4",
+  "address18": "Lonn Heymann Law Firm, P.C., 130 W 5th Ave, Denver, CO 80204",
+  "borough": "Baker",
+  "street": "130 W 5th Ave",
+  "city_zip": [
+   "130 W 5th Ave",
+   "Denver",
+   "80204",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJ9RWeW814bIcRX0RdZ7_e_V4&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1tfkr7zs",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Mile High Legal",
+  "fid": "0x876c799cd4a4b40d:0x34a5573618376cbd",
+  "rc": 129,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJDbSk1Jx5bIcRvWw3GDZXpTQ",
+  "address18": "Mile High Legal, 4601 DTC Blvd #950, Denver, CO 80237",
+  "borough": "Hampden South",
+  "street": "4601 DTC Blvd #950",
+  "city_zip": [
+   "4601 DTC Blvd #950",
+   "Denver",
+   "80237",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJDbSk1Jx5bIcRvWw3GDZXpTQ&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11vkf1n1_7",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Morgan & Morgan",
+  "fid": "0x876c7faef20dec67:0x35b335671c6ffc9d",
+  "rc": 1052,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJZ-wN8q5_bIcRnfxvHGc1szU",
+  "address18": "Morgan & Morgan, 999 18th St Unit 3000, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "999 18th St Unit 3000",
+  "city_zip": [
+   "999 18th St Unit 3000",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJZ-wN8q5_bIcRnfxvHGc1szU&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11fwbn8gb0",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Daniels Law Firm",
+  "fid": "0x876c7ed62039d0df:0x3430d489f4ca4923",
+  "rc": 64,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ39A5INZ-bIcRI0nK9InUMDQ",
+  "address18": "Daniels Law Firm, 1159 Delaware St, Denver, CO 80204",
+  "borough": "Central",
+  "street": "1159 Delaware St",
+  "city_zip": [
+   "1159 Delaware St",
+   "Denver",
+   "80204",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJ39A5INZ-bIcRI0nK9InUMDQ&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11b6j2yfxl",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Bourassa Law Group",
+  "fid": "0x876c7e83d64a8411:0x74202d4b15cb9487",
+  "rc": 194,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJEYRK1oN-bIcRh5TLFUstIHQ",
+  "address18": "Bourassa Law Group, 730 17th St Ste 320, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "730 17th St Ste 320",
+  "city_zip": [
+   "730 17th St Ste 320",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJEYRK1oN-bIcRh5TLFUstIHQ&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11g86j65_p",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Baker Law Group, PLLC",
+  "fid": "0x876c7f22c664cfc5:0xa1f9212b0f15e0a2",
+  "rc": null,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJxc9kxiJ_bIcRouAVDysh-aE",
+  "address18": "Baker Law Group, PLLC, 1290 Broadway Ste 1175, Denver, CO 80203",
+  "borough": "Central",
+  "street": "1290 Broadway Ste 1175",
+  "city_zip": [
+   "1290 Broadway Ste 1175",
+   "Denver",
+   "80203",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": null,
+  "price": null,
+  "kgmid": "/g/11y5m102wr",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Sawyer Legal Group, LLC",
+  "fid": "0x876c868e219bc199:0xc8ae83080cbdbe65",
+  "rc": 225,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJmcGbIY6GbIcRZb69DAiDrsg",
+  "address18": "Sawyer Legal Group, LLC, 3801 E Florida Ave #725, Denver, CO 80210",
+  "borough": "Cory - Merrill",
+  "street": "3801 E Florida Ave #725",
+  "city_zip": [
+   "3801 E Florida Ave #725",
+   "Denver",
+   "80210",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    1,
+    1,
+    [
+     "Labor Day hours",
+     "Labor Day",
+     1
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJmcGbIY6GbIcRZb69DAiDrsg&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1trpr8vd",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Rosenthal Injury Law",
+  "fid": "0x876c7f308bd92e09:0xa1de8fd2ad3cf202",
+  "rc": 243,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJCS7ZizB_bIcRAvI8rdKP3qE",
+  "address18": "Rosenthal Injury Law, 600 17th St Suite 2803K, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "600 17th St Suite 2803K",
+  "city_zip": [
+   "600 17th St Suite 2803K",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJCS7ZizB_bIcRAvI8rdKP3qE&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1pp2x7h9j",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Robinson & Henry P.C.",
+  "fid": "0x876c79add9519ddf:0x24b54155cde9726d",
+  "rc": null,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ351R2a15bIcRbXLpzVVBtSQ",
+  "address18": "Robinson & Henry P.C., 518 17th St #1125, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "518 17th St #1125",
+  "city_zip": [
+   "518 17th St #1125",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "7:30 AM–6 PM",
+      [
+       [
+        7,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": null,
+  "price": null,
+  "kgmid": "/g/11t6_3nxd4",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Springer & Steinberg",
+  "fid": "0x876c78d5c0e8955b:0xd375531644150828",
+  "rc": null,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJW5XowNV4bIcRKAgVRBZTddM",
+  "address18": "Springer & Steinberg, 1400 S Colorado Blvd Ste 500, Denver, CO 80222",
+  "borough": "Virginia Village",
+  "street": "1400 S Colorado Blvd Ste 500",
+  "city_zip": [
+   "1400 S Colorado Blvd Ste 500",
+   "Denver",
+   "80222",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": null,
+  "price": null,
+  "kgmid": "/g/1tfjg0hf",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "The Paul Wilkinson Law Firm",
+  "fid": "0x876c7e7518bc9ae3:0xf33e0d8be9757868",
+  "rc": null,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ45q8GHV-bIcRaHh16YsNPvM",
+  "address18": "The Paul Wilkinson Law Firm, 999 Jasmine St, Denver, CO 80220",
+  "borough": "Montclair",
+  "street": "999 Jasmine St",
+  "city_zip": [
+   "999 Jasmine St",
+   "Denver",
+   "80220",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": null,
+  "price": null,
+  "kgmid": "/g/1v8gcjgd",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "The O'Sullivan Law Firm",
+  "fid": "0x876c7e9b34016243:0x367032dde5b876c2",
+  "rc": 121,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJQ2IBNJt-bIcRwna45d0ycDY",
+  "address18": "The O'Sullivan Law Firm, 600 N Ogden St, Denver, CO 80218",
+  "borough": "Speer",
+  "street": "600 N Ogden St",
+  "city_zip": [
+   "600 N Ogden St",
+   "Denver",
+   "80218",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJQ2IBNJt-bIcRwna45d0ycDY&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1tdhm9sk",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Zaner Law Personal Injury and Car Accident Attorneys",
+  "fid": "0x876c78c40b1f340f:0xabb2962540a528a6",
+  "rc": 448,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJDzQfC8R4bIcRpiilQCWWsqs",
+  "address18": "Zaner Law Personal Injury and Car Accident Attorneys, 1610 Wynkoop St #120, Denver, CO 80202",
+  "borough": "Central",
+  "street": "1610 Wynkoop St #120",
+  "city_zip": [
+   "1610 Wynkoop St #120",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJDzQfC8R4bIcRpiilQCWWsqs&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11g__1wtg",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "McDivitt Law Firm",
+  "fid": "0x876c7e83a91d16f3:0x3f8b7249a49f51e5",
+  "rc": 433,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ8xYdqYN-bIcR5VGfpElyiz8",
+  "address18": "McDivitt Law Firm, 1777 S Harrison St #1350, Denver, CO 80210",
+  "borough": "Cory - Merrill",
+  "street": "1777 S Harrison St #1350",
+  "city_zip": [
+   "1777 S Harrison St #1350",
+   "Denver",
+   "80210",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJ8xYdqYN-bIcR5VGfpElyiz8&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1thn5_p5",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Denver Personal Injury Lawyers®",
+  "fid": "0x876c799659134143:0x68e4878f3aedc873",
+  "rc": 336,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJQ0ETWZZ5bIcRc8jtOo-H5Gg",
+  "address18": "Denver Personal Injury Lawyers®, 1001 Bannock St #8, Denver, CO 80204",
+  "borough": "Central",
+  "street": "1001 Bannock St #8",
+  "city_zip": [
+   "1001 Bannock St #8",
+   "Denver",
+   "80204",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJQ0ETWZZ5bIcRc8jtOo-H5Gg&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11p688_q10",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Bachus & Schanker, Personal Injury Lawyers | Denver Office",
+  "fid": "0x876c78c4e818bd7d:0xb0d704b62827c269",
+  "rc": 1981,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJfb0Y6MR4bIcRacInKLYE17A",
+  "address18": "Bachus & Schanker, Personal Injury Lawyers | Denver Office, 1801 California St Ste 4800, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "1801 California St Ste 4800",
+  "city_zip": [
+   "1801 California St Ste 4800",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJfb0Y6MR4bIcRacInKLYE17A&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1v16qs_y",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Flatiron Legal Advisors, PLLC",
+  "fid": "0x876bec271d492c29:0x882f1fed54939b29",
+  "rc": 527,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJKSxJHSfsa4cRKZuTVO0fL4g",
+  "address18": "Flatiron Legal Advisors, PLLC, 2000 S Colorado Blvd Tower 1-2000, Denver, CO 80222",
+  "borough": "University Hills",
+  "street": "2000 S Colorado Blvd Tower 1-2000",
+  "city_zip": [
+   "2000 S Colorado Blvd Tower 1-2000",
+   "Denver",
+   "80222",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "8:30 AM–6 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "8:30 AM–6 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "8:30 AM–6 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "8:30 AM–6 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "8:30 AM–6 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJKSxJHSfsa4cRKZuTVO0fL4g&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1vmr1w7_",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Robinson & Henry, P.C.",
+  "fid": "0x876c8771cc4fef17:0x5abb844943721322",
+  "rc": 2253,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJF-9PzHGHbIcRIhNyQ0mEu1o",
+  "address18": "Robinson & Henry, P.C., 7555 E Hampden Ave #600, Denver, CO 80231",
+  "borough": "Southeast",
+  "street": "7555 E Hampden Ave #600",
+  "city_zip": [
+   "7555 E Hampden Ave #600",
+   "Denver",
+   "80231",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "7:30 AM–6 PM",
+      [
+       [
+        7,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "7:30 AM–6 PM",
+      [
+       [
+        7,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "7:30 AM–6 PM",
+      [
+       [
+        7,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    1,
+    2,
+    [
+     "Labor Day hours",
+     "Labor Day",
+     1
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "7:30 AM–6 PM",
+      [
+       [
+        7,
+        30
+       ],
+       [
+        18
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJF-9PzHGHbIcRIhNyQ0mEu1o&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11b8t7xdbh",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "The Wilhite Law Firm - Personal Injury Attorneys",
+  "fid": "0x876c792d7b096d47:0x4eb8ba533d762bb1",
+  "rc": 1681,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJR20Jey15bIcRsSt2PVO6uE4",
+  "address18": "The Wilhite Law Firm - Personal Injury Attorneys, 1600 N Ogden St, Denver, CO 80218",
+  "borough": "Central",
+  "street": "1600 N Ogden St",
+  "city_zip": [
+   "1600 N Ogden St",
+   "Denver",
+   "80218",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJR20Jey15bIcRsSt2PVO6uE4&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11h05vrrb",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Morgan & Morgan",
+  "fid": "0x876c7faef20dec67:0x35b335671c6ffc9d",
+  "rc": 1052,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJZ-wN8q5_bIcRnfxvHGc1szU",
+  "address18": "Morgan & Morgan, 999 18th St Unit 3000, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "999 18th St Unit 3000",
+  "city_zip": [
+   "999 18th St Unit 3000",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJZ-wN8q5_bIcRnfxvHGc1szU&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11fwbn8gb0",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Bowman Law, LLC",
+  "fid": "0x876b86aeb2b37eb5:0xbbf4fdc9479c3f86",
+  "rc": 517,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJtX6zsq6Ga4cRhj-cR8n99Ls",
+  "address18": "Bowman Law, LLC, 2727 Bryant St #102, Denver, CO 80211",
+  "borough": "Jefferson Park",
+  "street": "2727 Bryant St #102",
+  "city_zip": [
+   "2727 Bryant St #102",
+   "Denver",
+   "80211",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJtX6zsq6Ga4cRhj-cR8n99Ls&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11y3mg55w",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Lonn Heymann Law Firm, P.C.",
+  "fid": "0x876c78cd5b9e15f5:0x5efddebf675d445f",
+  "rc": 114,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ9RWeW814bIcRX0RdZ7_e_V4",
+  "address18": "Lonn Heymann Law Firm, P.C., 130 W 5th Ave, Denver, CO 80204",
+  "borough": "Baker",
+  "street": "130 W 5th Ave",
+  "city_zip": [
+   "130 W 5th Ave",
+   "Denver",
+   "80204",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJ9RWeW814bIcRX0RdZ7_e_V4&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1tfkr7zs",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Bourassa Law Group",
+  "fid": "0x876c7e83d64a8411:0x74202d4b15cb9487",
+  "rc": 194,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJEYRK1oN-bIcRh5TLFUstIHQ",
+  "address18": "Bourassa Law Group, 730 17th St Ste 320, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "730 17th St Ste 320",
+  "city_zip": [
+   "730 17th St Ste 320",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJEYRK1oN-bIcRh5TLFUstIHQ&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11g86j65_p",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Daniels Law Firm",
+  "fid": "0x876c7ed62039d0df:0x3430d489f4ca4923",
+  "rc": 64,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ39A5INZ-bIcRI0nK9InUMDQ",
+  "address18": "Daniels Law Firm, 1159 Delaware St, Denver, CO 80204",
+  "borough": "Central",
+  "street": "1159 Delaware St",
+  "city_zip": [
+   "1159 Delaware St",
+   "Denver",
+   "80204",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "8 AM–8 PM",
+      [
+       [
+        8
+       ],
+       [
+        20
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJ39A5INZ-bIcRI0nK9InUMDQ&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11b6j2yfxl",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Sawyer Legal Group, LLC",
+  "fid": "0x876c868e219bc199:0xc8ae83080cbdbe65",
+  "rc": 225,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJmcGbIY6GbIcRZb69DAiDrsg",
+  "address18": "Sawyer Legal Group, LLC, 3801 E Florida Ave #725, Denver, CO 80210",
+  "borough": "Cory - Merrill",
+  "street": "3801 E Florida Ave #725",
+  "city_zip": [
+   "3801 E Florida Ave #725",
+   "Denver",
+   "80210",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    1,
+    1,
+    [
+     "Labor Day hours",
+     "Labor Day",
+     1
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJmcGbIY6GbIcRZb69DAiDrsg&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1trpr8vd",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Rosenthal Injury Law",
+  "fid": "0x876c7f308bd92e09:0xa1de8fd2ad3cf202",
+  "rc": 243,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJCS7ZizB_bIcRAvI8rdKP3qE",
+  "address18": "Rosenthal Injury Law, 600 17th St Suite 2803K, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "600 17th St Suite 2803K",
+  "city_zip": [
+   "600 17th St Suite 2803K",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJCS7ZizB_bIcRAvI8rdKP3qE&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1pp2x7h9j",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Springer & Steinberg",
+  "fid": "0x876c78d5c0e8955b:0xd375531644150828",
+  "rc": 132,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJW5XowNV4bIcRKAgVRBZTddM",
+  "address18": "Springer & Steinberg, 1400 S Colorado Blvd Ste 500, Denver, CO 80222",
+  "borough": "Virginia Village",
+  "street": "1400 S Colorado Blvd Ste 500",
+  "city_zip": [
+   "1400 S Colorado Blvd Ste 500",
+   "Denver",
+   "80222",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJW5XowNV4bIcRKAgVRBZTddM&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1tfjg0hf",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "McDivitt Law Firm",
+  "fid": "0x876c7e83a91d16f3:0x3f8b7249a49f51e5",
+  "rc": 433,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ8xYdqYN-bIcR5VGfpElyiz8",
+  "address18": "McDivitt Law Firm, 1777 S Harrison St #1350, Denver, CO 80210",
+  "borough": "Cory - Merrill",
+  "street": "1777 S Harrison St #1350",
+  "city_zip": [
+   "1777 S Harrison St #1350",
+   "Denver",
+   "80210",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJ8xYdqYN-bIcR5VGfpElyiz8&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1thn5_p5",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "The Paul Wilkinson Law Firm",
+  "fid": "0x876c7e7518bc9ae3:0xf33e0d8be9757868",
+  "rc": 181,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ45q8GHV-bIcRaHh16YsNPvM",
+  "address18": "The Paul Wilkinson Law Firm, 999 Jasmine St, Denver, CO 80220",
+  "borough": "Montclair",
+  "street": "999 Jasmine St",
+  "city_zip": [
+   "999 Jasmine St",
+   "Denver",
+   "80220",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJ45q8GHV-bIcRaHh16YsNPvM&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1v8gcjgd",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "The O'Sullivan Law Firm",
+  "fid": "0x876c7e9b34016243:0x367032dde5b876c2",
+  "rc": 121,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJQ2IBNJt-bIcRwna45d0ycDY",
+  "address18": "The O'Sullivan Law Firm, 600 N Ogden St, Denver, CO 80218",
+  "borough": "Speer",
+  "street": "600 N Ogden St",
+  "city_zip": [
+   "600 N Ogden St",
+   "Denver",
+   "80218",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJQ2IBNJt-bIcRwna45d0ycDY&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1tdhm9sk",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Baker Law Group, PLLC",
+  "fid": "0x876c7f22c664cfc5:0xa1f9212b0f15e0a2",
+  "rc": 157,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJxc9kxiJ_bIcRouAVDysh-aE",
+  "address18": "Baker Law Group, PLLC, 1290 Broadway Ste 1175, Denver, CO 80203",
+  "borough": "Central",
+  "street": "1290 Broadway Ste 1175",
+  "city_zip": [
+   "1290 Broadway Ste 1175",
+   "Denver",
+   "80203",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJxc9kxiJ_bIcRouAVDysh-aE&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11y5m102wr",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "CGH Injury Lawyers",
+  "fid": "0x876c7e751b73d1c5:0xb1008d987754eb32",
+  "rc": 358,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJxdFzG3V-bIcRMutUd5iNALE",
+  "address18": "CGH Injury Lawyers, 2701 Lawrence St Ste 201, Denver, CO 80205",
+  "borough": "North Denver",
+  "street": "2701 Lawrence St Ste 201",
+  "city_zip": [
+   "2701 Lawrence St Ste 201",
+   "Denver",
+   "80205",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJxdFzG3V-bIcRMutUd5iNALE&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11clw9y2g_",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Colorado Legal Defense Group",
+  "fid": "0x876c78c4e873f5b5:0xef2ecbf8c1f2fe39",
+  "rc": 653,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJtfVz6MR4bIcROf7ywfjLLu8",
+  "address18": "Colorado Legal Defense Group, 140 E 19th Ave STE 500, Denver, CO 80203",
+  "borough": "Central",
+  "street": "140 E 19th Ave STE 500",
+  "city_zip": [
+   "140 E 19th Ave STE 500",
+   "Denver",
+   "80203",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJtfVz6MR4bIcROf7ywfjLLu8&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11cs04t_tl",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Denver Trial Lawyers",
+  "fid": "0x876c8700ed88795f:0xa3ae4805f3ca3ebb",
+  "rc": 82,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJX3mI7QCHbIcRuz7K8wVIrqM",
+  "address18": "Denver Trial Lawyers, 4601 DTC Blvd #950, Denver, CO 80237",
+  "borough": "Hampden South",
+  "street": "4601 DTC Blvd #950",
+  "city_zip": [
+   "4601 DTC Blvd #950",
+   "Denver",
+   "80237",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJX3mI7QCHbIcRuz7K8wVIrqM&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1tdx95rt",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Zaner Law Personal Injury and Car Accident Attorneys",
+  "fid": "0x876c78c40b1f340f:0xabb2962540a528a6",
+  "rc": 448,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJDzQfC8R4bIcRpiilQCWWsqs",
+  "address18": "Zaner Law Personal Injury and Car Accident Attorneys, 1610 Wynkoop St #120, Denver, CO 80202",
+  "borough": "Central",
+  "street": "1610 Wynkoop St #120",
+  "city_zip": [
+   "1610 Wynkoop St #120",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJDzQfC8R4bIcRpiilQCWWsqs&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11g__1wtg",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Denver Personal Injury Lawyers®",
+  "fid": "0x876c799659134143:0x68e4878f3aedc873",
+  "rc": 336,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJQ0ETWZZ5bIcRc8jtOo-H5Gg",
+  "address18": "Denver Personal Injury Lawyers®, 1001 Bannock St #8, Denver, CO 80204",
+  "borough": "Central",
+  "street": "1001 Bannock St #8",
+  "city_zip": [
+   "1001 Bannock St #8",
+   "Denver",
+   "80204",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJQ0ETWZZ5bIcRc8jtOo-H5Gg&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11p688_q10",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Fang Injury Lawyers",
+  "fid": "0x876c7f29c314e241:0xb93d5813019f83a",
+  "rc": 808,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJQeIUwyl_bIcROvgZMIHVkws",
+  "address18": "Fang Injury Lawyers, 101 University Blvd Ste 230, Denver, CO 80206",
+  "borough": "Central",
+  "street": "101 University Blvd Ste 230",
+  "city_zip": [
+   "101 University Blvd Ste 230",
+   "Denver",
+   "80206",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJQeIUwyl_bIcROvgZMIHVkws&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11cp5rbnbp",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "The Wilhite Law Firm",
+  "fid": "0x876c795514ddb763:0xe1d71b5ef63fb5d4",
+  "rc": 143,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJY7fdFFV5bIcR1LU_9l4b1-E",
+  "address18": "The Wilhite Law Firm, 1644 Emerson St, Denver, CO 80218",
+  "borough": "Central",
+  "street": "1644 Emerson St",
+  "city_zip": [
+   "1644 Emerson St",
+   "Denver",
+   "80218",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJY7fdFFV5bIcR1LU_9l4b1-E&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11fn710dv6",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Cornell Johnson",
+  "fid": "0x876c78d7b303b41d:0x5a6f89f6cc044dea",
+  "rc": 99,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJHbQDs9d4bIcR6k0EzPaJb1o",
+  "address18": "Cornell Johnson, 1800 Glenarm Pl Ste 100, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "1800 Glenarm Pl Ste 100",
+  "city_zip": [
+   "1800 Glenarm Pl Ste 100",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJHbQDs9d4bIcR6k0EzPaJb1o&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1tmpwggw",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Baker Law Group, PLLC",
+  "fid": "0x876c7c2b73a19953:0xbaded0e18c56bfb1",
+  "rc": 310,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJU5mhcyt8bIcRsb9WjOHQ3ro",
+  "address18": "Baker Law Group, PLLC, 8301 E Prentice Ave STE 405, Greenwood Village, CO 80111",
+  "borough": "Denver Tech Center",
+  "street": "8301 E Prentice Ave STE 405",
+  "city_zip": [
+   "8301 E Prentice Ave STE 405",
+   "Greenwood Village",
+   "80111",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJU5mhcyt8bIcRsb9WjOHQ3ro&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1txc7jcj",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Levine Law Accident Attorneys - Denver",
+  "fid": "0x876c7dd4d9208fd5:0x2adf9214877f6625",
+  "rc": 294,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJ1Y8g2dR9bIcRJWZ_hxSS3yo",
+  "address18": "Levine Law Accident Attorneys - Denver, 4500 Cherry Creek S Dr #400, Denver, CO 80246",
+  "borough": null,
+  "street": "4500 Cherry Creek S Dr #400",
+  "city_zip": [
+   "4500 Cherry Creek S Dr #400",
+   "Denver",
+   "80246",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJ1Y8g2dR9bIcRJWZ_hxSS3yo&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1hm4f4_3c",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Troxel Fitch, LLC",
+  "fid": "0x876c790ca2826913:0xfd113bd8cee2fd9e",
+  "rc": 190,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJE2mCogx5bIcRnv3iztg7Ef0",
+  "address18": "Troxel Fitch, LLC, 1404 Larimer St Ste 200, Denver, CO 80202",
+  "borough": "Central",
+  "street": "1404 Larimer St Ste 200",
+  "city_zip": [
+   "1404 Larimer St Ste 200",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "9 AM–5 PM",
+      [
+       [
+        9
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "9 AM–5 PM",
+      [
+       [
+        9
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "9 AM–5 PM",
+      [
+       [
+        9
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "9 AM–5 PM",
+      [
+       [
+        9
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "9 AM–5 PM",
+      [
+       [
+        9
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJE2mCogx5bIcRnv3iztg7Ef0&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11g0tkgqmf",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "The Harris Law Firm",
+  "fid": "0x876c78daff848151:0x2b79e9b4a80767ae",
+  "rc": 482,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJUYGE_9p4bIcRrmcHqLTpeSs",
+  "address18": "The Harris Law Firm, 1228 15th Street, 1460 Larimer St Ste 200, Denver, CO 80202",
+  "borough": "Central",
+  "street": "1228 15th Street, 1460 Larimer St Ste 200",
+  "city_zip": [
+   "1228 15th Street, 1460 Larimer St Ste 200",
+   "Denver",
+   "80202",
+   "CO",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "8 AM–5 PM",
+      [
+       [
+        8
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "8 AM–5 PM",
+      [
+       [
+        8
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "8 AM–5 PM",
+      [
+       [
+        8
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    1,
+    2,
+    [
+     "Labor Day hours",
+     "Labor Day",
+     1
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "8 AM–5 PM",
+      [
+       [
+        8
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJUYGE_9p4bIcRrmcHqLTpeSs&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1wn344sk",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Eddington Law Firm",
+  "fid": "0x876c7ed655555507:0x40fa64557ccc462b",
+  "rc": 98,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJB1VVVdZ-bIcRK0bMfFVk-kA",
+  "address18": "Eddington Law Firm, 1391 N Speer Blvd #350, Denver, CO 80204",
+  "borough": "Central",
+  "street": "1391 N Speer Blvd #350",
+  "city_zip": [
+   "1391 N Speer Blvd #350",
+   "Denver",
+   "80204",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJB1VVVdZ-bIcRK0bMfFVk-kA&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11gb3r6sv9",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Flaxman Law Group - Denver Car Accident Lawyer",
+  "fid": "0x876c7f0e8b3f2bab:0x5e2d85c989c80e69",
+  "rc": 83,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJqys_iw5_bIcRaQ7IicmFLV4",
+  "address18": "Flaxman Law Group - Denver Car Accident Lawyer, 1700 Lincoln St 17th floor 16-121, Denver, CO 80203",
+  "borough": "Central",
+  "street": "1700 Lincoln St 17th floor 16-121",
+  "city_zip": [
+   "1700 Lincoln St 17th floor 16-121",
+   "Denver",
+   "80203",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJqys_iw5_bIcRaQ7IicmFLV4&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11v0gqwcq8",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "HKM Employment Attorneys LLP",
+  "fid": "0x876c793535395c9d:0x69da37d60c194e35",
+  "rc": 336,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJnVw5NTV5bIcRNU4ZDNY32mk",
+  "address18": "HKM Employment Attorneys LLP, 518 17th St Unit 1100, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "518 17th St Unit 1100",
+  "city_zip": [
+   "518 17th St Unit 1100",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    1,
+    2,
+    [
+     "Labor Day hours",
+     "Labor Day",
+     1
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJnVw5NTV5bIcRNU4ZDNY32mk&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1s04hjg4v",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Cliff Enten Law",
+  "fid": "0x876c7e9a626e0d1d:0x93b1e67a6b2c15e1",
+  "rc": 314,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJHQ1uYpp-bIcR4RUsa3rmsZM",
+  "address18": "Cliff Enten Law, 50 S Steele St #875, Denver, CO 80209",
+  "borough": "Cherry Creek",
+  "street": "50 S Steele St #875",
+  "city_zip": [
+   "50 S Steele St #875",
+   "Denver",
+   "80209",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJHQ1uYpp-bIcR4RUsa3rmsZM&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1vkxmrrk",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Bendinelli Law Firm, P.C.",
+  "fid": "0x876c7ed7a07be9b1:0x7251db78fca8469a",
+  "rc": 47,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJsel7oNd-bIcRmkao_HjbUXI",
+  "address18": "Bendinelli Law Firm, P.C., 899 Logan St Unit 200, Denver, CO 80203",
+  "borough": "Central",
+  "street": "899 Logan St Unit 200",
+  "city_zip": [
+   "899 Logan St Unit 200",
+   "Denver",
+   "80203",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJsel7oNd-bIcRmkao_HjbUXI&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1tj2ch8s",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Law Office of Kimberly Diego Criminal Defense",
+  "fid": "0x876c7ed7f94c38b5:0x898a17efb7a486fc",
+  "rc": 174,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJtThM-dd-bIcR_Iakt-8Xiok",
+  "address18": "Law Office of Kimberly Diego Criminal Defense, 899 Logan St Suite #103, Denver, CO 80203",
+  "borough": "Central",
+  "street": "899 Logan St Suite #103",
+  "city_zip": [
+   "899 Logan St Suite #103",
+   "Denver",
+   "80203",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJtThM-dd-bIcR_Iakt-8Xiok&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1vhlyp6y",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Right Law Group",
+  "fid": "0x871351b1a2a9771b:0xe110ccfaabea8d37",
+  "rc": 123,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJG3eporFRE4cRN43qq_rMEOE",
+  "address18": "Right Law Group, 730 17th St Ste 924, Denver, CO 80202",
+  "borough": "Central Business District",
+  "street": "730 17th St Ste 924",
+  "city_zip": [
+   "730 17th St Ste 924",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJG3eporFRE4cRN43qq_rMEOE&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11qyqmt1fq",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Hebets & McCallin P.C.",
+  "fid": "0x876c7e74df6517c1:0x2787ff319ff20c43",
+  "rc": 223,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJwRdl33R-bIcRQwzynzH_hyc",
+  "address18": "Hebets & McCallin P.C., 1777 S Harrison St Ste 310, Denver, CO 80210",
+  "borough": "Cory - Merrill",
+  "street": "1777 S Harrison St Ste 310",
+  "city_zip": [
+   "1777 S Harrison St Ste 310",
+   "Denver",
+   "80210",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    1,
+    2,
+    [
+     "Labor Day hours",
+     "Labor Day",
+     1
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJwRdl33R-bIcRQwzynzH_hyc&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1w_vnryn",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Gendelman Klimas Edwards Ltd.",
+  "fid": "0x876b877d6ddce68f:0x9e14f13d3d495b20",
+  "rc": 163,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJj-bcbX2Ha4cRIFtJPT3xFJ4",
+  "address18": "Gendelman Klimas Edwards Ltd., 517 E 16th Ave, Denver, CO 80203",
+  "borough": "Central",
+  "street": "517 E 16th Ave",
+  "city_zip": [
+   "517 E 16th Ave",
+   "Denver",
+   "80203",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    1,
+    2,
+    [
+     "Labor Day hours",
+     "Labor Day",
+     1
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJj-bcbX2Ha4cRIFtJPT3xFJ4&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/11c4656q9p",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Amy G Injury Firm",
+  "fid": "0x876c7e5294ba2765:0x7f8f95819b99cae7",
+  "rc": 1812,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJZSe6lFJ-bIcR58qZm4GVj38",
+  "address18": "Amy G Injury Firm, 3801 E Florida Ave #100, Denver, CO 80210",
+  "borough": "Cory - Merrill",
+  "street": "3801 E Florida Ave #100",
+  "city_zip": [
+   "3801 E Florida Ave #100",
+   "Denver",
+   "80210",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJZSe6lFJ-bIcR58qZm4GVj38&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1vcq8282",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "Setter Roche Smith and Shellenberger, LLP",
+  "fid": "0x876c752396708973:0xdc79aa5868a606c",
+  "rc": 53,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJc4lwliN1bIcRbGCKhqWaxw0",
+  "address18": "Setter Roche Smith and Shellenberger, LLP, 1860 Blake St #500, Denver, CO 80202",
+  "borough": "Central",
+  "street": "1860 Blake St #500",
+  "city_zip": [
+   "1860 Blake St #500",
+   "Denver",
+   "80202",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Closed"
+     ]
+    ],
+    0,
+    2
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "8:30 AM–5 PM",
+      [
+       [
+        8,
+        30
+       ],
+       [
+        17
+       ]
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJc4lwliN1bIcRbGCKhqWaxw0&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1vpfk0d7",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ },
+ {
+  "title": "The Law Office of Jacob E. Martinez",
+  "fid": "0x876c7e7ffb253e6b:0x6af799e264bbf869",
+  "rc": 465,
+  "owner_name": null,
+  "owner_id": null,
+  "place_id": "ChIJaz4l-39-bIcRafi7ZOKZ92o",
+  "address18": "The Law Office of Jacob E. Martinez, 720 S Colorado Blvd, Denver, CO 80246",
+  "borough": null,
+  "street": "720 S Colorado Blvd",
+  "city_zip": [
+   "720 S Colorado Blvd",
+   "Denver",
+   "80246",
+   "Colorado",
+   "US"
+  ],
+  "plus_code": null,
+  "hours": [
+   [
+    "Wednesday",
+    3,
+    [
+     2026,
+     9,
+     2
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Thursday",
+    4,
+    [
+     2026,
+     9,
+     3
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Friday",
+    5,
+    [
+     2026,
+     9,
+     4
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Saturday",
+    6,
+    [
+     2026,
+     9,
+     5
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Sunday",
+    7,
+    [
+     2026,
+     9,
+     6
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ],
+   [
+    "Monday",
+    1,
+    [
+     2026,
+     9,
+     7
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1,
+    [
+     "Labor Day might affect these hours",
+     "Labor Day",
+     2
+    ]
+   ],
+   [
+    "Tuesday",
+    2,
+    [
+     2026,
+     9,
+     8
+    ],
+    [
+     [
+      "Open 24 hours",
+      [
+       [],
+       []
+      ]
+     ]
+    ],
+    0,
+    1
+   ]
+  ],
+  "rpr": null,
+  "thumbnail": null,
+  "popular": null,
+  "review_link": "https://search.google.com/local/reviews?placeid=ChIJaz4l-39-bIcRafi7ZOKZ92o&q=law+firm+in+Denver,+CO&authuser=0&hl=en&gl=US",
+  "price": null,
+  "kgmid": "/g/1pxy_cbvt",
+  "top_cid": null,
+  "b_keys": 260,
+  "top_cid_same_all": null
+ }
+]

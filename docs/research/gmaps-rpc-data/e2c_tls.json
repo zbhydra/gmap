@@ -1,0 +1,70 @@
+[
+ {
+  "variant": "chrome124|proxy",
+  "status": 200,
+  "secs": 1.0,
+  "final_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x876c78c4e818bd7d:0xb0d704b62827c269?hl=en&gl=us",
+  "size": 211007,
+  "payload_sizes": [
+   1929
+  ],
+  "parsed": {},
+  "body_contains": {
+   "Bachus & Schanker": false,
+   "1981": false,
+   "1,981": false,
+   "Denver": false,
+   "/g/1v16qs_y": false
+  }
+ },
+ {
+  "variant": "chrome124|direct",
+  "status": 200,
+  "secs": 0.2,
+  "final_url": "https://consent.google.com/m?continue=https://www.google.com/maps/place/data%3D!4m2!3m1!1s0x876c78c4e818bd7d:0xb0d704b62",
+  "size": 657085,
+  "payload_sizes": [],
+  "parsed": null,
+  "body_contains": {
+   "Bachus & Schanker": false,
+   "1981": false,
+   "1,981": false,
+   "Denver": false,
+   "/g/1v16qs_y": false
+  }
+ },
+ {
+  "variant": "firefox133|proxy",
+  "status": 200,
+  "secs": 0.9,
+  "final_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x876c78c4e818bd7d:0xb0d704b62827c269?hl=en&gl=us",
+  "size": 206378,
+  "payload_sizes": [
+   1928
+  ],
+  "parsed": {},
+  "body_contains": {
+   "Bachus & Schanker": false,
+   "1981": false,
+   "1,981": false,
+   "Denver": false,
+   "/g/1v16qs_y": false
+  }
+ },
+ {
+  "variant": "firefox133|direct",
+  "status": 200,
+  "secs": 0.2,
+  "final_url": "https://consent.google.com/m?continue=https://www.google.com/maps/place/data%3D!4m2!3m1!1s0x876c78c4e818bd7d:0xb0d704b62",
+  "size": 661330,
+  "payload_sizes": [],
+  "parsed": null,
+  "body_contains": {
+   "Bachus & Schanker": false,
+   "1981": false,
+   "1,981": false,
+   "Denver": false,
+   "/g/1v16qs_y": false
+  }
+ }
+]

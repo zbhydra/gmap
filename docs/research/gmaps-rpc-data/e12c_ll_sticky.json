@@ -1,0 +1,1272 @@
+{
+ "sessions": {
+  "e12a": {
+   "exit": {
+    "country": "United States",
+    "regionName": "California",
+    "city": "Costa Mesa",
+    "lat": 33.6433,
+    "lon": -117.9166,
+    "isp": "AT&T Enterprises, LLC",
+    "query": "70.224.65.245"
+   },
+   "viewports": {
+    "baseline_ne": {
+     "n": 20,
+     "center": [
+      39.243,
+      -102.112
+     ],
+     "follows_exit": false,
+     "follows_viewport": false,
+     "sample_titles": [
+      "Grumpy Mugs Coffee House",
+      "Original Barista",
+      "Reactor"
+     ],
+     "records": [
+      {
+       "title": "Grumpy Mugs Coffee House",
+       "fid": "0x8796b3280ec85d05:0x1b3f88072cfc9334",
+       "lat": 41.056899699999995,
+       "lng": -96.6448231
+      },
+      {
+       "title": "Original Barista",
+       "fid": "0x80dcdfd5e5a0655f:0x9fb433deffc6fc29",
+       "lat": 33.644261,
+       "lng": -117.9185763
+      },
+      {
+       "title": "Reactor",
+       "fid": "0x8796beea1bda5ed1:0xf81e3a42cd36c963",
+       "lat": 40.8246298,
+       "lng": -96.6901427
+      },
+      {
+       "title": "Starbucks Coffee Company",
+       "fid": "0x80dcdf87c2e13c9b:0x1ce23fc81023e9d2",
+       "lat": 33.65049,
+       "lng": -117.91870999999999
+      },
+      {
+       "title": "Sips on Lane",
+       "fid": "0x879571963051f6ad:0x579a70bc28c259cf",
+       "lat": 40.061895799999995,
+       "lng": -95.6008322
+      },
+      {
+       "title": "Village Coffee",
+       "fid": "0x87eb73c8f62b92c9:0x2dc6f3a2539c29cc",
+       "lat": 40.8817082,
+       "lng": -94.5591984
+      },
+      {
+       "title": "Black Sheep Coffee House",
+       "fid": "0x87940a38340c3df3:0xa5e8e54677e27ef5",
+       "lat": 41.0886844,
+       "lng": -96.1338775
+      },
+      {
+       "title": "Something's Brewing Cafe",
+       "fid": "0x879b777aefcc6805:0xd80f4075eec6aea",
+       "lat": 41.602374999999995,
+       "lng": -98.92794789999999
+      },
+      {
+       "title": "Ash Hollow Coffee Co",
+       "fid": "0x879b93928f276eb7:0x22ccbb51072233f5",
+       "lat": 41.2730227,
+       "lng": -98.971413
+      },
+      {
+       "title": "Arcadia Cafe",
+       "fid": "0x879b866a1d41e6bd:0x43b2c7f6a5a30876",
+       "lat": 41.423435999999995,
+       "lng": -99.1263841
+      },
+      {
+       "title": "Cafe Refuge",
+       "fid": "0x80dcdff59efe61cd:0x2381c89f4a802516",
+       "lat": 33.660647,
+       "lng": -117.91851539999999
+      },
+      {
+       "title": "Little Lyon Coffee Company",
+       "fid": "0x87906742efe2e79d:0xfb1f5a3d3799244b",
+       "lat": 41.8281038,
+       "lng": -97.45582069999999
+      },
+      {
+       "title": "Tumblereed Mercantile",
+       "fid": "0x87950fb764de868f:0x5a5b9c806f90a40e",
+       "lat": 40.2611288,
+       "lng": -95.59362879999999
+      },
+      {
+       "title": "Endless Quest Roasters",
+       "fid": "0x80dd21d85ad172ff:0x2c9a0e52e93ee1aa",
+       "lat": 33.640293199999995,
+       "lng": -117.9360444
+      },
+      {
+       "title": "Cool beanz",
+       "fid": "0x878fff8f702e3d35:0x589469e5363b7a67",
+       "lat": 42.3510816,
+       "lng": -97.7784453
+      },
+      {
+       "title": "Coffee Trough",
+       "fid": "0x87eb43b959b9166b:0x3bba3482296c3a15",
+       "lat": 40.9893498,
+       "lng": -94.7346531
+      },
+      {
+       "title": "Blend & Brew 402",
+       "fid": "0x879abf653635be49:0x580b399e2d44779e",
+       "lat": 41.982009399999995,
+       "lng": -98.0842953
+      },
+      {
+       "title": "Bookshire Coffee",
+       "fid": "0x8795ab001aef9b23:0xe1aaa9de37edaae9",
+       "lat": 40.4673515,
+       "lng": -95.7333755
+      },
+      {
+       "title": "Homestead Bakery & Cafe",
+       "fid": "0x87968f316fee04f7:0x39201773b5af4ef1",
+       "lat": 40.532896699999995,
+       "lng": -96.6069433
+      },
+      {
+       "title": "Micro Dose Drive Thru",
+       "fid": "0x80dcdffc756f559b:0x81b89ddde01cdef5",
+       "lat": 33.643522,
+       "lng": -117.9157448
+      }
+     ]
+    },
+    "portland": {
+     "n": 20,
+     "center": [
+      45.522,
+      -122.678
+     ],
+     "follows_exit": false,
+     "follows_viewport": true,
+     "sample_titles": [
+      "Oak Street Coffee",
+      "Stumptown Coffee Roasters",
+      "Exquisite Creatures Coffee"
+     ],
+     "records": [
+      {
+       "title": "Oak Street Coffee",
+       "fid": "0x54950a0408d7805b:0xd3a405b69df095f4",
+       "lat": 45.521667799999996,
+       "lng": -122.6781805
+      },
+      {
+       "title": "Stumptown Coffee Roasters",
+       "fid": "0x54950a06e4623e6d:0x3e03c6cb13ad931d",
+       "lat": 45.521802199999996,
+       "lng": -122.67345639999999
+      },
+      {
+       "title": "Exquisite Creatures Coffee",
+       "fid": "0x5495a34c62483999:0x45239e39f2ef9ac3",
+       "lat": 45.521597799999995,
+       "lng": -122.6601769
+      },
+      {
+       "title": "Deadstock Coffee Roasters",
+       "fid": "0x54950bfd3c29a81b:0x843c92bf72e4ed1d",
+       "lat": 45.523435899999996,
+       "lng": -122.67454749999999
+      },
+      {
+       "title": "Spella Caffè @ Alder Street",
+       "fid": "0x54950be31251c311:0x22dfd2507d0505de",
+       "lat": 45.519652799999996,
+       "lng": -122.67863899999999
+      },
+      {
+       "title": "Stumptown Coffee Roasters",
+       "fid": "0x54950a03a1987c13:0xad04b0a54fd20dc8",
+       "lat": 45.5213981,
+       "lng": -122.6826985
+      },
+      {
+       "title": "Less and More Coffee ii",
+       "fid": "0x54950bb866d42245:0xa2d795c5b1007ccf",
+       "lat": 45.5181641,
+       "lng": -122.67926179999999
+      },
+      {
+       "title": "Cascadia Coffee Pub",
+       "fid": "0x5495a75886f5a9b5:0x44a339839ac1ead9",
+       "lat": 45.5380022,
+       "lng": -122.6883313
+      },
+      {
+       "title": "COTTA",
+       "fid": "0x54950b8195b47faf:0xf9706beb922aaa01",
+       "lat": 45.509768099999995,
+       "lng": -122.6985095
+      },
+      {
+       "title": "Coava Coffee Roasters",
+       "fid": "0x54950a0ae93e6b79:0xc63aec4f3d1b3aad",
+       "lat": 45.513549399999995,
+       "lng": -122.6606018
+      },
+      {
+       "title": "Bold Coffee & Books",
+       "fid": "0x54950b00480d5bb5:0xa94d26b036a62ba7",
+       "lat": 45.5180571,
+       "lng": -122.6924258
+      },
+      {
+       "title": "40 LBS Coffee + Bar",
+       "fid": "0x54950bb96229e103:0x38da3b0606758047",
+       "lat": 45.515617899999995,
+       "lng": -122.67562439999999
+      },
+      {
+       "title": "Prince Coffee",
+       "fid": "0x549509efc4dcaebd:0x98957fa3f80ee7b5",
+       "lat": 45.5295621,
+       "lng": -122.6906353
+      },
+      {
+       "title": "40 LBS Coffee Bar",
+       "fid": "0x54950a0f77518b53:0x98829b9d3699aa98",
+       "lat": 45.516945,
+       "lng": -122.6749509
+      },
+      {
+       "title": "Caffe Umbria",
+       "fid": "0x54950a1a9be2b2bb:0x3aa5aabe0751964",
+       "lat": 45.5159447,
+       "lng": -122.6816539
+      },
+      {
+       "title": "Ovation Coffee & Tea",
+       "fid": "0x5495a7561c5ead5f:0xc8ebed04b829449c",
+       "lat": 45.5324934,
+       "lng": -122.6812614
+      },
+      {
+       "title": "Café UNITED",
+       "fid": "0x54950a075289c4d3:0x366f8146c730cfd5",
+       "lat": 45.523759399999996,
+       "lng": -122.67177079999999
+      },
+      {
+       "title": "Green Bridge Coffee",
+       "fid": "0x54950bbbf60080e9:0x46a04e2a742f4da8",
+       "lat": 45.5299377,
+       "lng": -122.6590169
+      },
+      {
+       "title": "The Portland Exchange Grocer & Goods",
+       "fid": "0x54950bbf1887564f:0x2ad23836c9d6c109",
+       "lat": 45.5137894,
+       "lng": -122.6770531
+      },
+      {
+       "title": "Snow Bunny Coffee",
+       "fid": "0x5495a7f336204bb1:0x862bb1e0f1819c6a",
+       "lat": 45.5330683,
+       "lng": -122.6826152
+      }
+     ]
+    },
+    "miami": {
+     "n": 20,
+     "center": [
+      25.795,
+      -80.199
+     ],
+     "follows_exit": false,
+     "follows_viewport": true,
+     "sample_titles": [
+      "Tico Deli Coffee Shop",
+      "Syndicate Wynwood",
+      "Yann Couvreur Café - Wynwood"
+     ],
+     "records": [
+      {
+       "title": "Tico Deli Coffee Shop",
+       "fid": "0x88d9b7f105bf300b:0xd8264c4817639431",
+       "lat": 25.785809399999998,
+       "lng": -80.2168787
+      },
+      {
+       "title": "Syndicate Wynwood",
+       "fid": "0x88d9b6b1cd7ec581:0xad29de50498c914c",
+       "lat": 25.800449999999998,
+       "lng": -80.2029767
+      },
+      {
+       "title": "Yann Couvreur Café - Wynwood",
+       "fid": "0x88d9b7fccab8bb7b:0xc167b69430338c2",
+       "lat": 25.7990356,
+       "lng": -80.1988847
+      },
+      {
+       "title": "Libertino Cafe",
+       "fid": "0x88d9b79ddd7aa63b:0x51d084044d77e4ef",
+       "lat": 25.800012799999998,
+       "lng": -80.1995495
+      },
+      {
+       "title": "{petite} maman",
+       "fid": "0x88d9b1de80b2d669:0x1237d5d0782e27b0",
+       "lat": 25.812278199999998,
+       "lng": -80.1925737
+      },
+      {
+       "title": "V Gelato & Cafe",
+       "fid": "0x88d9b7d2a425860d:0x9bd6291521a880ed",
+       "lat": 25.8008669,
+       "lng": -80.20157209999999
+      },
+      {
+       "title": "Puroast Coffee",
+       "fid": "0x88d9b684a38b4001:0x1cc33025c603f5b3",
+       "lat": 25.767696299999997,
+       "lng": -80.19345849999999
+      },
+      {
+       "title": "La Sandwicherie Wynwood",
+       "fid": "0x88d9b713d7e5f187:0xa040815176abaede",
+       "lat": 25.7992971,
+       "lng": -80.198466
+      },
+      {
+       "title": "Crafty Coffee & Kitchen",
+       "fid": "0x88d9b17676af8141:0x69c25c5d2c3e6d7f",
+       "lat": 25.8102,
+       "lng": -80.1964138
+      },
+      {
+       "title": "MIAM CAFE - BISCAYNE",
+       "fid": "0x88d9b764d94997d5:0xe661672f81fb3853",
+       "lat": 25.784686299999997,
+       "lng": -80.1903751
+      },
+      {
+       "title": "Raccoon coffee & kitchen",
+       "fid": "0x88d9b77e842ee0d5:0x9fb710460b5628d0",
+       "lat": 25.792728,
+       "lng": -80.1942846
+      },
+      {
+       "title": "ALMATCHA",
+       "fid": "0x88d9b1f9f760dfe3:0xe578c1884c994890",
+       "lat": 25.8123273,
+       "lng": -80.1917783
+      },
+      {
+       "title": "ITSI Coffee - i think she is",
+       "fid": "0x88d9b738b22793c1:0xbf25e1f210e705ab",
+       "lat": 25.767404199999998,
+       "lng": -80.1964572
+      },
+      {
+       "title": "The Salty Donut",
+       "fid": "0x88d9b6ac4c2f99c5:0x2c51ba3957e5b50b",
+       "lat": 25.799378599999997,
+       "lng": -80.19581409999999
+      },
+      {
+       "title": "Starbucks Coffee Company",
+       "fid": "0x88d9b7ed3870b529:0xb20a1c246e2b3e3a",
+       "lat": 25.79213,
+       "lng": -80.21104
+      },
+      {
+       "title": "Mr. Baguette - Wynwood",
+       "fid": "0x88d9b704ace5ad6f:0x3b8c8acb90b965d9",
+       "lat": 25.8017248,
+       "lng": -80.194924
+      },
+      {
+       "title": "Studio 24 Artful Coffee",
+       "fid": "0x88d9b7d1d1519763:0xf7932958b5924ac7",
+       "lat": 25.8030068,
+       "lng": -80.1895054
+      },
+      {
+       "title": "Atlantis Cafe",
+       "fid": "0x88d9b6995a277dc9:0x2e3f2bf9194020b6",
+       "lat": 25.7750289,
+       "lng": -80.1939763
+      },
+      {
+       "title": "Angelina's Eatery + Cafe",
+       "fid": "0x88d9b1542058e5fb:0x78cb34479842938b",
+       "lat": 25.809622899999997,
+       "lng": -80.1923146
+      },
+      {
+       "title": "Ficelle Bakery",
+       "fid": "0x88d9b71cdffab1e5:0x14690b87d6624e8a",
+       "lat": 25.7855453,
+       "lng": -80.2201843
+      }
+     ]
+    }
+   }
+  },
+  "e12b": {
+   "exit": {
+    "country": "United States",
+    "regionName": "Georgia",
+    "city": "Perry",
+    "lat": 32.4599,
+    "lon": -83.7244,
+    "isp": "Windstream Communications LLC",
+    "query": "75.117.11.71"
+   },
+   "viewports": {
+    "baseline_ne": {
+     "n": 20,
+     "center": [
+      39.243,
+      -102.112
+     ],
+     "follows_exit": false,
+     "follows_viewport": false,
+     "sample_titles": [
+      "Original Barista",
+      "Grumpy Mugs Coffee House",
+      "Reactor"
+     ],
+     "records": [
+      {
+       "title": "Original Barista",
+       "fid": "0x80dcdfd5e5a0655f:0x9fb433deffc6fc29",
+       "lat": 33.644261,
+       "lng": -117.9185763
+      },
+      {
+       "title": "Grumpy Mugs Coffee House",
+       "fid": "0x8796b3280ec85d05:0x1b3f88072cfc9334",
+       "lat": 41.056899699999995,
+       "lng": -96.6448231
+      },
+      {
+       "title": "Reactor",
+       "fid": "0x8796beea1bda5ed1:0xf81e3a42cd36c963",
+       "lat": 40.8246298,
+       "lng": -96.6901427
+      },
+      {
+       "title": "Starbucks Coffee Company",
+       "fid": "0x80dcdf87c2e13c9b:0x1ce23fc81023e9d2",
+       "lat": 33.65049,
+       "lng": -117.91870999999999
+      },
+      {
+       "title": "Sips on Lane",
+       "fid": "0x879571963051f6ad:0x579a70bc28c259cf",
+       "lat": 40.061895799999995,
+       "lng": -95.6008322
+      },
+      {
+       "title": "Village Coffee",
+       "fid": "0x87eb73c8f62b92c9:0x2dc6f3a2539c29cc",
+       "lat": 40.8817082,
+       "lng": -94.5591984
+      },
+      {
+       "title": "Black Sheep Coffee House",
+       "fid": "0x87940a38340c3df3:0xa5e8e54677e27ef5",
+       "lat": 41.0886844,
+       "lng": -96.1338775
+      },
+      {
+       "title": "Something's Brewing Cafe",
+       "fid": "0x879b777aefcc6805:0xd80f4075eec6aea",
+       "lat": 41.602374999999995,
+       "lng": -98.92794789999999
+      },
+      {
+       "title": "Ash Hollow Coffee Co",
+       "fid": "0x879b93928f276eb7:0x22ccbb51072233f5",
+       "lat": 41.2730227,
+       "lng": -98.971413
+      },
+      {
+       "title": "Arcadia Cafe",
+       "fid": "0x879b866a1d41e6bd:0x43b2c7f6a5a30876",
+       "lat": 41.423435999999995,
+       "lng": -99.1263841
+      },
+      {
+       "title": "Micro Dose Drive Thru",
+       "fid": "0x80dcdffc756f559b:0x81b89ddde01cdef5",
+       "lat": 33.643522,
+       "lng": -117.9157448
+      },
+      {
+       "title": "Little Lyon Coffee Company",
+       "fid": "0x87906742efe2e79d:0xfb1f5a3d3799244b",
+       "lat": 41.8281038,
+       "lng": -97.45582069999999
+      },
+      {
+       "title": "Cafe Refuge",
+       "fid": "0x80dcdff59efe61cd:0x2381c89f4a802516",
+       "lat": 33.660647,
+       "lng": -117.91851539999999
+      },
+      {
+       "title": "Tumblereed Mercantile",
+       "fid": "0x87950fb764de868f:0x5a5b9c806f90a40e",
+       "lat": 40.2611288,
+       "lng": -95.59362879999999
+      },
+      {
+       "title": "Endless Quest Roasters",
+       "fid": "0x80dd21d85ad172ff:0x2c9a0e52e93ee1aa",
+       "lat": 33.640293199999995,
+       "lng": -117.9360444
+      },
+      {
+       "title": "Cool beanz",
+       "fid": "0x878fff8f702e3d35:0x589469e5363b7a67",
+       "lat": 42.3510816,
+       "lng": -97.7784453
+      },
+      {
+       "title": "Coffee Trough",
+       "fid": "0x87eb43b959b9166b:0x3bba3482296c3a15",
+       "lat": 40.9893498,
+       "lng": -94.7346531
+      },
+      {
+       "title": "Blend & Brew 402",
+       "fid": "0x879abf653635be49:0x580b399e2d44779e",
+       "lat": 41.982009399999995,
+       "lng": -98.0842953
+      },
+      {
+       "title": "Bookshire Coffee",
+       "fid": "0x8795ab001aef9b23:0xe1aaa9de37edaae9",
+       "lat": 40.4673515,
+       "lng": -95.7333755
+      },
+      {
+       "title": "Homestead Bakery & Cafe",
+       "fid": "0x87968f316fee04f7:0x39201773b5af4ef1",
+       "lat": 40.532896699999995,
+       "lng": -96.6069433
+      }
+     ]
+    },
+    "portland": {
+     "n": 20,
+     "center": [
+      45.522,
+      -122.678
+     ],
+     "follows_exit": false,
+     "follows_viewport": true,
+     "sample_titles": [
+      "Oak Street Coffee",
+      "Stumptown Coffee Roasters",
+      "Exquisite Creatures Coffee"
+     ],
+     "records": [
+      {
+       "title": "Oak Street Coffee",
+       "fid": "0x54950a0408d7805b:0xd3a405b69df095f4",
+       "lat": 45.521667799999996,
+       "lng": -122.6781805
+      },
+      {
+       "title": "Stumptown Coffee Roasters",
+       "fid": "0x54950a06e4623e6d:0x3e03c6cb13ad931d",
+       "lat": 45.521802199999996,
+       "lng": -122.67345639999999
+      },
+      {
+       "title": "Exquisite Creatures Coffee",
+       "fid": "0x5495a34c62483999:0x45239e39f2ef9ac3",
+       "lat": 45.521597799999995,
+       "lng": -122.6601769
+      },
+      {
+       "title": "Deadstock Coffee Roasters",
+       "fid": "0x54950bfd3c29a81b:0x843c92bf72e4ed1d",
+       "lat": 45.523435899999996,
+       "lng": -122.67454749999999
+      },
+      {
+       "title": "Stumptown Coffee Roasters",
+       "fid": "0x54950a03a1987c13:0xad04b0a54fd20dc8",
+       "lat": 45.5213981,
+       "lng": -122.6826985
+      },
+      {
+       "title": "Spella Caffè @ Alder Street",
+       "fid": "0x54950be31251c311:0x22dfd2507d0505de",
+       "lat": 45.519652799999996,
+       "lng": -122.67863899999999
+      },
+      {
+       "title": "Less and More Coffee ii",
+       "fid": "0x54950bb866d42245:0xa2d795c5b1007ccf",
+       "lat": 45.5181641,
+       "lng": -122.67926179999999
+      },
+      {
+       "title": "Cascadia Coffee Pub",
+       "fid": "0x5495a75886f5a9b5:0x44a339839ac1ead9",
+       "lat": 45.5380022,
+       "lng": -122.6883313
+      },
+      {
+       "title": "COTTA",
+       "fid": "0x54950b8195b47faf:0xf9706beb922aaa01",
+       "lat": 45.509768099999995,
+       "lng": -122.6985095
+      },
+      {
+       "title": "Coava Coffee Roasters",
+       "fid": "0x54950a0ae93e6b79:0xc63aec4f3d1b3aad",
+       "lat": 45.513549399999995,
+       "lng": -122.6606018
+      },
+      {
+       "title": "Prince Coffee",
+       "fid": "0x549509efc4dcaebd:0x98957fa3f80ee7b5",
+       "lat": 45.5295621,
+       "lng": -122.6906353
+      },
+      {
+       "title": "Bold Coffee & Books",
+       "fid": "0x54950b00480d5bb5:0xa94d26b036a62ba7",
+       "lat": 45.5180571,
+       "lng": -122.6924258
+      },
+      {
+       "title": "40 LBS Coffee + Bar",
+       "fid": "0x54950bb96229e103:0x38da3b0606758047",
+       "lat": 45.515617899999995,
+       "lng": -122.67562439999999
+      },
+      {
+       "title": "Caffe Umbria",
+       "fid": "0x54950a1a9be2b2bb:0x3aa5aabe0751964",
+       "lat": 45.5159447,
+       "lng": -122.6816539
+      },
+      {
+       "title": "40 LBS Coffee Bar",
+       "fid": "0x54950a0f77518b53:0x98829b9d3699aa98",
+       "lat": 45.516945,
+       "lng": -122.6749509
+      },
+      {
+       "title": "Ovation Coffee & Tea",
+       "fid": "0x5495a7561c5ead5f:0xc8ebed04b829449c",
+       "lat": 45.5324934,
+       "lng": -122.6812614
+      },
+      {
+       "title": "Café UNITED",
+       "fid": "0x54950a075289c4d3:0x366f8146c730cfd5",
+       "lat": 45.523759399999996,
+       "lng": -122.67177079999999
+      },
+      {
+       "title": "Green Bridge Coffee",
+       "fid": "0x54950bbbf60080e9:0x46a04e2a742f4da8",
+       "lat": 45.5299377,
+       "lng": -122.6590169
+      },
+      {
+       "title": "The Portland Exchange Grocer & Goods",
+       "fid": "0x54950bbf1887564f:0x2ad23836c9d6c109",
+       "lat": 45.5137894,
+       "lng": -122.6770531
+      },
+      {
+       "title": "Snow Bunny Coffee",
+       "fid": "0x5495a7f336204bb1:0x862bb1e0f1819c6a",
+       "lat": 45.5330683,
+       "lng": -122.6826152
+      }
+     ]
+    },
+    "miami": {
+     "n": 20,
+     "center": [
+      25.795,
+      -80.199
+     ],
+     "follows_exit": false,
+     "follows_viewport": true,
+     "sample_titles": [
+      "Tico Deli Coffee Shop",
+      "Syndicate Wynwood",
+      "Yann Couvreur Café - Wynwood"
+     ],
+     "records": [
+      {
+       "title": "Tico Deli Coffee Shop",
+       "fid": "0x88d9b7f105bf300b:0xd8264c4817639431",
+       "lat": 25.785809399999998,
+       "lng": -80.2168787
+      },
+      {
+       "title": "Syndicate Wynwood",
+       "fid": "0x88d9b6b1cd7ec581:0xad29de50498c914c",
+       "lat": 25.800449999999998,
+       "lng": -80.2029767
+      },
+      {
+       "title": "Yann Couvreur Café - Wynwood",
+       "fid": "0x88d9b7fccab8bb7b:0xc167b69430338c2",
+       "lat": 25.7990356,
+       "lng": -80.1988847
+      },
+      {
+       "title": "Libertino Cafe",
+       "fid": "0x88d9b79ddd7aa63b:0x51d084044d77e4ef",
+       "lat": 25.800012799999998,
+       "lng": -80.1995495
+      },
+      {
+       "title": "{petite} maman",
+       "fid": "0x88d9b1de80b2d669:0x1237d5d0782e27b0",
+       "lat": 25.812278199999998,
+       "lng": -80.1925737
+      },
+      {
+       "title": "V Gelato & Cafe",
+       "fid": "0x88d9b7d2a425860d:0x9bd6291521a880ed",
+       "lat": 25.8008669,
+       "lng": -80.20157209999999
+      },
+      {
+       "title": "Puroast Coffee",
+       "fid": "0x88d9b684a38b4001:0x1cc33025c603f5b3",
+       "lat": 25.767696299999997,
+       "lng": -80.19345849999999
+      },
+      {
+       "title": "La Sandwicherie Wynwood",
+       "fid": "0x88d9b713d7e5f187:0xa040815176abaede",
+       "lat": 25.7992971,
+       "lng": -80.198466
+      },
+      {
+       "title": "Crafty Coffee & Kitchen",
+       "fid": "0x88d9b17676af8141:0x69c25c5d2c3e6d7f",
+       "lat": 25.8102,
+       "lng": -80.1964138
+      },
+      {
+       "title": "MIAM CAFE - BISCAYNE",
+       "fid": "0x88d9b764d94997d5:0xe661672f81fb3853",
+       "lat": 25.784686299999997,
+       "lng": -80.1903751
+      },
+      {
+       "title": "Raccoon coffee & kitchen",
+       "fid": "0x88d9b77e842ee0d5:0x9fb710460b5628d0",
+       "lat": 25.792728,
+       "lng": -80.1942846
+      },
+      {
+       "title": "ALMATCHA",
+       "fid": "0x88d9b1f9f760dfe3:0xe578c1884c994890",
+       "lat": 25.8123273,
+       "lng": -80.1917783
+      },
+      {
+       "title": "ITSI Coffee - i think she is",
+       "fid": "0x88d9b738b22793c1:0xbf25e1f210e705ab",
+       "lat": 25.767404199999998,
+       "lng": -80.1964572
+      },
+      {
+       "title": "The Salty Donut",
+       "fid": "0x88d9b6ac4c2f99c5:0x2c51ba3957e5b50b",
+       "lat": 25.799378599999997,
+       "lng": -80.19581409999999
+      },
+      {
+       "title": "Starbucks Coffee Company",
+       "fid": "0x88d9b7ed3870b529:0xb20a1c246e2b3e3a",
+       "lat": 25.79213,
+       "lng": -80.21104
+      },
+      {
+       "title": "Mr. Baguette - Wynwood",
+       "fid": "0x88d9b704ace5ad6f:0x3b8c8acb90b965d9",
+       "lat": 25.8017248,
+       "lng": -80.194924
+      },
+      {
+       "title": "Studio 24 Artful Coffee",
+       "fid": "0x88d9b7d1d1519763:0xf7932958b5924ac7",
+       "lat": 25.8030068,
+       "lng": -80.1895054
+      },
+      {
+       "title": "Atlantis Cafe",
+       "fid": "0x88d9b6995a277dc9:0x2e3f2bf9194020b6",
+       "lat": 25.7750289,
+       "lng": -80.1939763
+      },
+      {
+       "title": "Angelina's Eatery + Cafe",
+       "fid": "0x88d9b1542058e5fb:0x78cb34479842938b",
+       "lat": 25.809622899999997,
+       "lng": -80.1923146
+      },
+      {
+       "title": "Ficelle Bakery",
+       "fid": "0x88d9b71cdffab1e5:0x14690b87d6624e8a",
+       "lat": 25.7855453,
+       "lng": -80.2201843
+      }
+     ]
+    }
+   }
+  },
+  "e12c": {
+   "exit": {
+    "country": "United States",
+    "regionName": "South Carolina",
+    "city": "Ridgeland",
+    "lat": 32.4827,
+    "lon": -80.9784,
+    "isp": "PRTC",
+    "query": "206.74.48.71"
+   },
+   "viewports": {
+    "baseline_ne": {
+     "n": 20,
+     "center": [
+      39.231,
+      -102.113
+     ],
+     "follows_exit": false,
+     "follows_viewport": false,
+     "sample_titles": [
+      "Original Barista",
+      "Reactor",
+      "Better Buzz Coffee Costa Mesa"
+     ],
+     "records": [
+      {
+       "title": "Original Barista",
+       "fid": "0x80dcdfd5e5a0655f:0x9fb433deffc6fc29",
+       "lat": 33.644261,
+       "lng": -117.9185763
+      },
+      {
+       "title": "Reactor",
+       "fid": "0x8796beea1bda5ed1:0xf81e3a42cd36c963",
+       "lat": 40.8246298,
+       "lng": -96.6901427
+      },
+      {
+       "title": "Better Buzz Coffee Costa Mesa",
+       "fid": "0x80dcdfdacc12bc47:0x93e5b346be8837ca",
+       "lat": 33.672094699999995,
+       "lng": -117.9197974
+      },
+      {
+       "title": "Sips on Lane",
+       "fid": "0x879571963051f6ad:0x579a70bc28c259cf",
+       "lat": 40.061895799999995,
+       "lng": -95.6008322
+      },
+      {
+       "title": "Black Sheep Coffee House",
+       "fid": "0x87940a38340c3df3:0xa5e8e54677e27ef5",
+       "lat": 41.0886844,
+       "lng": -96.1338775
+      },
+      {
+       "title": "Village Coffee",
+       "fid": "0x87eb73c8f62b92c9:0x2dc6f3a2539c29cc",
+       "lat": 40.8817082,
+       "lng": -94.5591984
+      },
+      {
+       "title": "Ash Hollow Coffee Co",
+       "fid": "0x879b93928f276eb7:0x22ccbb51072233f5",
+       "lat": 41.2730227,
+       "lng": -98.971413
+      },
+      {
+       "title": "Something's Brewing Cafe",
+       "fid": "0x879b777aefcc6805:0xd80f4075eec6aea",
+       "lat": 41.602374999999995,
+       "lng": -98.92794789999999
+      },
+      {
+       "title": "Starbucks Coffee Company",
+       "fid": "0x80dcdf87c2e13c9b:0x1ce23fc81023e9d2",
+       "lat": 33.65049,
+       "lng": -117.91870999999999
+      },
+      {
+       "title": "Arcadia Cafe",
+       "fid": "0x879b866a1d41e6bd:0x43b2c7f6a5a30876",
+       "lat": 41.423435999999995,
+       "lng": -99.1263841
+      },
+      {
+       "title": "Tumblereed Mercantile",
+       "fid": "0x87950fb764de868f:0x5a5b9c806f90a40e",
+       "lat": 40.2611288,
+       "lng": -95.59362879999999
+      },
+      {
+       "title": "Micro Dose Drive Thru",
+       "fid": "0x80dcdffc756f559b:0x81b89ddde01cdef5",
+       "lat": 33.643522,
+       "lng": -117.9157448
+      },
+      {
+       "title": "Little Lyon Coffee Company",
+       "fid": "0x87906742efe2e79d:0xfb1f5a3d3799244b",
+       "lat": 41.8281038,
+       "lng": -97.45582069999999
+      },
+      {
+       "title": "Cool beanz",
+       "fid": "0x878fff8f702e3d35:0x589469e5363b7a67",
+       "lat": 42.3510816,
+       "lng": -97.7784453
+      },
+      {
+       "title": "Blend & Brew 402",
+       "fid": "0x879abf653635be49:0x580b399e2d44779e",
+       "lat": 41.982009399999995,
+       "lng": -98.0842953
+      },
+      {
+       "title": "Cafe Refuge",
+       "fid": "0x80dcdff59efe61cd:0x2381c89f4a802516",
+       "lat": 33.660647,
+       "lng": -117.91851539999999
+      },
+      {
+       "title": "Coffee Trough",
+       "fid": "0x87eb43b959b9166b:0x3bba3482296c3a15",
+       "lat": 40.9893498,
+       "lng": -94.7346531
+      },
+      {
+       "title": "Centennial Coffee & Tea",
+       "fid": "0x8796bff5d5724b21:0x3b377406b80b16f7",
+       "lat": 40.790175,
+       "lng": -96.6759563
+      },
+      {
+       "title": "Homestead Bakery & Cafe",
+       "fid": "0x87968f316fee04f7:0x39201773b5af4ef1",
+       "lat": 40.532896699999995,
+       "lng": -96.6069433
+      },
+      {
+       "title": "Bookshire Coffee",
+       "fid": "0x8795ab001aef9b23:0xe1aaa9de37edaae9",
+       "lat": 40.4673515,
+       "lng": -95.7333755
+      }
+     ]
+    },
+    "portland": {
+     "n": 20,
+     "center": [
+      45.522,
+      -122.678
+     ],
+     "follows_exit": false,
+     "follows_viewport": true,
+     "sample_titles": [
+      "Oak Street Coffee",
+      "Stumptown Coffee Roasters",
+      "Exquisite Creatures Coffee"
+     ],
+     "records": [
+      {
+       "title": "Oak Street Coffee",
+       "fid": "0x54950a0408d7805b:0xd3a405b69df095f4",
+       "lat": 45.521667799999996,
+       "lng": -122.6781805
+      },
+      {
+       "title": "Stumptown Coffee Roasters",
+       "fid": "0x54950a06e4623e6d:0x3e03c6cb13ad931d",
+       "lat": 45.521802199999996,
+       "lng": -122.67345639999999
+      },
+      {
+       "title": "Exquisite Creatures Coffee",
+       "fid": "0x5495a34c62483999:0x45239e39f2ef9ac3",
+       "lat": 45.521597799999995,
+       "lng": -122.6601769
+      },
+      {
+       "title": "Deadstock Coffee Roasters",
+       "fid": "0x54950bfd3c29a81b:0x843c92bf72e4ed1d",
+       "lat": 45.523435899999996,
+       "lng": -122.67454749999999
+      },
+      {
+       "title": "Stumptown Coffee Roasters",
+       "fid": "0x54950a03a1987c13:0xad04b0a54fd20dc8",
+       "lat": 45.5213981,
+       "lng": -122.6826985
+      },
+      {
+       "title": "Spella Caffè @ Alder Street",
+       "fid": "0x54950be31251c311:0x22dfd2507d0505de",
+       "lat": 45.519652799999996,
+       "lng": -122.67863899999999
+      },
+      {
+       "title": "Less and More Coffee ii",
+       "fid": "0x54950bb866d42245:0xa2d795c5b1007ccf",
+       "lat": 45.5181641,
+       "lng": -122.67926179999999
+      },
+      {
+       "title": "Cascadia Coffee Pub",
+       "fid": "0x5495a75886f5a9b5:0x44a339839ac1ead9",
+       "lat": 45.5380022,
+       "lng": -122.6883313
+      },
+      {
+       "title": "COTTA",
+       "fid": "0x54950b8195b47faf:0xf9706beb922aaa01",
+       "lat": 45.509768099999995,
+       "lng": -122.6985095
+      },
+      {
+       "title": "Prince Coffee",
+       "fid": "0x549509efc4dcaebd:0x98957fa3f80ee7b5",
+       "lat": 45.5295621,
+       "lng": -122.6906353
+      },
+      {
+       "title": "Coava Coffee Roasters",
+       "fid": "0x54950a0ae93e6b79:0xc63aec4f3d1b3aad",
+       "lat": 45.513549399999995,
+       "lng": -122.6606018
+      },
+      {
+       "title": "40 LBS Coffee + Bar",
+       "fid": "0x54950bb96229e103:0x38da3b0606758047",
+       "lat": 45.515617899999995,
+       "lng": -122.67562439999999
+      },
+      {
+       "title": "Bold Coffee & Books",
+       "fid": "0x54950b00480d5bb5:0xa94d26b036a62ba7",
+       "lat": 45.5180571,
+       "lng": -122.6924258
+      },
+      {
+       "title": "Caffe Umbria",
+       "fid": "0x54950a1a9be2b2bb:0x3aa5aabe0751964",
+       "lat": 45.5159447,
+       "lng": -122.6816539
+      },
+      {
+       "title": "40 LBS Coffee Bar",
+       "fid": "0x54950a0f77518b53:0x98829b9d3699aa98",
+       "lat": 45.516945,
+       "lng": -122.6749509
+      },
+      {
+       "title": "Ovation Coffee & Tea",
+       "fid": "0x5495a7561c5ead5f:0xc8ebed04b829449c",
+       "lat": 45.5324934,
+       "lng": -122.6812614
+      },
+      {
+       "title": "Café UNITED",
+       "fid": "0x54950a075289c4d3:0x366f8146c730cfd5",
+       "lat": 45.523759399999996,
+       "lng": -122.67177079999999
+      },
+      {
+       "title": "Green Bridge Coffee",
+       "fid": "0x54950bbbf60080e9:0x46a04e2a742f4da8",
+       "lat": 45.5299377,
+       "lng": -122.6590169
+      },
+      {
+       "title": "The Portland Exchange Grocer & Goods",
+       "fid": "0x54950bbf1887564f:0x2ad23836c9d6c109",
+       "lat": 45.5137894,
+       "lng": -122.6770531
+      },
+      {
+       "title": "Snow Bunny Coffee",
+       "fid": "0x5495a7f336204bb1:0x862bb1e0f1819c6a",
+       "lat": 45.5330683,
+       "lng": -122.6826152
+      }
+     ]
+    },
+    "miami": {
+     "n": 20,
+     "center": [
+      25.795,
+      -80.197
+     ],
+     "follows_exit": false,
+     "follows_viewport": true,
+     "sample_titles": [
+      "Tico Deli Coffee Shop",
+      "Syndicate Wynwood",
+      "Yann Couvreur Café - Wynwood"
+     ],
+     "records": [
+      {
+       "title": "Tico Deli Coffee Shop",
+       "fid": "0x88d9b7f105bf300b:0xd8264c4817639431",
+       "lat": 25.785809399999998,
+       "lng": -80.2168787
+      },
+      {
+       "title": "Syndicate Wynwood",
+       "fid": "0x88d9b6b1cd7ec581:0xad29de50498c914c",
+       "lat": 25.800449999999998,
+       "lng": -80.2029767
+      },
+      {
+       "title": "Yann Couvreur Café - Wynwood",
+       "fid": "0x88d9b7fccab8bb7b:0xc167b69430338c2",
+       "lat": 25.7990356,
+       "lng": -80.1988847
+      },
+      {
+       "title": "Libertino Cafe",
+       "fid": "0x88d9b79ddd7aa63b:0x51d084044d77e4ef",
+       "lat": 25.800012799999998,
+       "lng": -80.1995495
+      },
+      {
+       "title": "{petite} maman",
+       "fid": "0x88d9b1de80b2d669:0x1237d5d0782e27b0",
+       "lat": 25.812278199999998,
+       "lng": -80.1925737
+      },
+      {
+       "title": "V Gelato & Cafe",
+       "fid": "0x88d9b7d2a425860d:0x9bd6291521a880ed",
+       "lat": 25.8008669,
+       "lng": -80.20157209999999
+      },
+      {
+       "title": "Puroast Coffee",
+       "fid": "0x88d9b684a38b4001:0x1cc33025c603f5b3",
+       "lat": 25.767696299999997,
+       "lng": -80.19345849999999
+      },
+      {
+       "title": "La Sandwicherie Wynwood",
+       "fid": "0x88d9b713d7e5f187:0xa040815176abaede",
+       "lat": 25.7992971,
+       "lng": -80.198466
+      },
+      {
+       "title": "Crafty Coffee & Kitchen",
+       "fid": "0x88d9b17676af8141:0x69c25c5d2c3e6d7f",
+       "lat": 25.8102,
+       "lng": -80.1964138
+      },
+      {
+       "title": "MIAM CAFE - BISCAYNE",
+       "fid": "0x88d9b764d94997d5:0xe661672f81fb3853",
+       "lat": 25.784686299999997,
+       "lng": -80.1903751
+      },
+      {
+       "title": "Raccoon coffee & kitchen",
+       "fid": "0x88d9b77e842ee0d5:0x9fb710460b5628d0",
+       "lat": 25.792728,
+       "lng": -80.1942846
+      },
+      {
+       "title": "ALMATCHA",
+       "fid": "0x88d9b1f9f760dfe3:0xe578c1884c994890",
+       "lat": 25.8123273,
+       "lng": -80.1917783
+      },
+      {
+       "title": "The Salty Donut",
+       "fid": "0x88d9b6ac4c2f99c5:0x2c51ba3957e5b50b",
+       "lat": 25.799378599999997,
+       "lng": -80.19581409999999
+      },
+      {
+       "title": "ITSI Coffee - i think she is",
+       "fid": "0x88d9b738b22793c1:0xbf25e1f210e705ab",
+       "lat": 25.767404199999998,
+       "lng": -80.1964572
+      },
+      {
+       "title": "Starbucks Coffee Company",
+       "fid": "0x88d9b7ed3870b529:0xb20a1c246e2b3e3a",
+       "lat": 25.79213,
+       "lng": -80.21104
+      },
+      {
+       "title": "Studio 24 Artful Coffee",
+       "fid": "0x88d9b7d1d1519763:0xf7932958b5924ac7",
+       "lat": 25.8030068,
+       "lng": -80.1895054
+      },
+      {
+       "title": "Mr. Baguette - Wynwood",
+       "fid": "0x88d9b704ace5ad6f:0x3b8c8acb90b965d9",
+       "lat": 25.8017248,
+       "lng": -80.194924
+      },
+      {
+       "title": "Atlantis Cafe",
+       "fid": "0x88d9b6995a277dc9:0x2e3f2bf9194020b6",
+       "lat": 25.7750289,
+       "lng": -80.1939763
+      },
+      {
+       "title": "Flow Station",
+       "fid": "0x88d9b7a6926a2453:0x95ee4c8f5d2eb44e",
+       "lat": 25.780794999999998,
+       "lng": -80.192866
+      },
+      {
+       "title": "Angelina's Eatery + Cafe",
+       "fid": "0x88d9b1542058e5fb:0x78cb34479842938b",
+       "lat": 25.809622899999997,
+       "lng": -80.1923146
+      }
+     ]
+    }
+   }
+  }
+ },
+ "verdict": {
+  "sessions": 3,
+  "follows_exit_all": false,
+  "follows_vp_any": true
+ }
+}

@@ -1,0 +1,192 @@
+{
+ "runs": [
+  {
+   "run": "A_nid",
+   "session": "e12eA",
+   "exit": {
+    "city": "Kailua-Kona",
+    "regionName": "Hawaii",
+    "lat": 19.6531,
+    "lon": -155.9798,
+    "isp": "Charter Communications Inc"
+   },
+   "viewport": "portland",
+   "n": 20,
+   "center": [
+    45.522,
+    -122.677
+   ],
+   "hits_viewport": true,
+   "sample": [
+    "Coava Coffee Roasters",
+    "Spella Caffè @ Alder Street",
+    "Caffe Umbria"
+   ]
+  },
+  {
+   "run": "A_nid",
+   "session": "e12eA",
+   "exit": {
+    "city": "Kailua-Kona",
+    "regionName": "Hawaii",
+    "lat": 19.6531,
+    "lon": -155.9798,
+    "isp": "Charter Communications Inc"
+   },
+   "viewport": "miami",
+   "n": 20,
+   "center": [
+    25.792,
+    -80.201
+   ],
+   "hits_viewport": true,
+   "sample": [
+    "Yann Couvreur Café - Wynwood",
+    "Tico Deli Coffee Shop",
+    "Syndicate Wynwood"
+   ]
+  },
+  {
+   "run": "A_nid",
+   "session": "e12eA",
+   "exit": {
+    "city": "Kailua-Kona",
+    "regionName": "Hawaii",
+    "lat": 19.6531,
+    "lon": -155.9798,
+    "isp": "Charter Communications Inc"
+   },
+   "viewport": "portland",
+   "n": 20,
+   "center": [
+    45.522,
+    -122.677
+   ],
+   "hits_viewport": true,
+   "sample": [
+    "Coava Coffee Roasters",
+    "Spella Caffè @ Alder Street",
+    "Caffe Umbria"
+   ]
+  },
+  {
+   "run": "A_nid",
+   "session": "e12eA",
+   "exit": {
+    "city": "Kailua-Kona",
+    "regionName": "Hawaii",
+    "lat": 19.6531,
+    "lon": -155.9798,
+    "isp": "Charter Communications Inc"
+   },
+   "viewport": "miami",
+   "n": 20,
+   "center": [
+    25.792,
+    -80.201
+   ],
+   "hits_viewport": true,
+   "sample": [
+    "Yann Couvreur Café - Wynwood",
+    "Tico Deli Coffee Shop",
+    "Syndicate Wynwood"
+   ]
+  },
+  {
+   "run": "B_noid",
+   "session": "e12eB",
+   "exit": {
+    "city": "Monterey Park",
+    "regionName": "California",
+    "lat": 34.0482,
+    "lon": -118.1152,
+    "isp": "Charter Communications"
+   },
+   "viewport": "portland",
+   "n": 20,
+   "center": [
+    45.521,
+    -122.678
+   ],
+   "hits_viewport": true,
+   "sample": [
+    "Deadstock Coffee Roasters",
+    "Exquisite Creatures Coffee",
+    "Oak Street Coffee"
+   ]
+  },
+  {
+   "run": "B_noid",
+   "session": "e12eB",
+   "exit": {
+    "city": "Monterey Park",
+    "regionName": "California",
+    "lat": 34.0482,
+    "lon": -118.1152,
+    "isp": "Charter Communications"
+   },
+   "viewport": "miami",
+   "n": 20,
+   "center": [
+    25.792,
+    -80.2
+   ],
+   "hits_viewport": true,
+   "sample": [
+    "Tico Deli Coffee Shop",
+    "Syndicate Wynwood",
+    "Yann Couvreur Café - Wynwood"
+   ]
+  },
+  {
+   "run": "B_noid",
+   "session": "e12eB",
+   "exit": {
+    "city": "Monterey Park",
+    "regionName": "California",
+    "lat": 34.0482,
+    "lon": -118.1152,
+    "isp": "Charter Communications"
+   },
+   "viewport": "portland",
+   "n": 20,
+   "center": [
+    45.521,
+    -122.678
+   ],
+   "hits_viewport": true,
+   "sample": [
+    "Deadstock Coffee Roasters",
+    "Exquisite Creatures Coffee",
+    "Oak Street Coffee"
+   ]
+  },
+  {
+   "run": "B_noid",
+   "session": "e12eB",
+   "exit": {
+    "city": "Monterey Park",
+    "regionName": "California",
+    "lat": 34.0482,
+    "lon": -118.1152,
+    "isp": "Charter Communications"
+   },
+   "viewport": "miami",
+   "n": 20,
+   "center": [
+    25.792,
+    -80.2
+   ],
+   "hits_viewport": true,
+   "sample": [
+    "Tico Deli Coffee Shop",
+    "Syndicate Wynwood",
+    "Yann Couvreur Café - Wynwood"
+   ]
+  }
+ ],
+ "verdict": {
+  "A_hits_all": true,
+  "B_hits_all": true
+ }
+}

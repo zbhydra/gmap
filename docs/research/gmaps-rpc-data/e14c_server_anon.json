@@ -1,0 +1,22 @@
+{
+ "shots": {
+  "anon_n20_nocursor": {
+   "tag": "anon_n20_nocursor",
+   "http": 400,
+   "len": 138,
+   "photos": 0
+  },
+  "anon_n500_nocursor": {
+   "tag": "anon_n500_nocursor",
+   "http": 400,
+   "len": 139,
+   "photos": 0
+  },
+  "anon_n20_cursor": {
+   "tag": "anon_n20_cursor",
+   "http": 400,
+   "len": 139,
+   "photos": 0
+  }
+ }
+}

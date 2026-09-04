@@ -1,0 +1,28 @@
+{
+ "shell": {
+  "http": 200,
+  "size": 211385,
+  "at": true,
+  "final_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950bc11c29c079:0xb99d1f303e39195?hl=en"
+ },
+ "shots": {
+  "at_n20": {
+   "tag": "at_n20",
+   "http": 400,
+   "len": 140,
+   "photos": 0
+  },
+  "at_n500": {
+   "tag": "at_n500",
+   "http": 400,
+   "len": 138,
+   "photos": 0
+  },
+  "noat_n20": {
+   "tag": "noat_n20",
+   "http": 400,
+   "len": 139,
+   "photos": 0
+  }
+ }
+}

@@ -1,0 +1,25 @@
+{
+ "edge_url_glsg": {
+  "tag": "edge_url_glsg",
+  "len": 1552,
+  "head": "<!DOCTYPE html>\n<html lang=en>\n  <meta charset=utf-8>\n  <meta name=viewport cont"
+ },
+ "edge_url_glus": {
+  "tag": "edge_url_glus",
+  "len": 1552,
+  "head": "<!DOCTYPE html>\n<html lang=en>\n  <meta charset=utf-8>\n  <meta name=viewport cont"
+ },
+ "old_place_pb": {
+  "tag": "old_place_pb",
+  "len": 166274,
+  "xssi": true,
+  "title": "Drip Drop Coffee",
+  "d37_1": 263,
+  "heroes_n": 2,
+  "tabs_n": 13,
+  "long_b64_cursors": 2,
+  "cursor_heads": [
+   "EvgDKYQi49-NlUMIDwAAAAEA"
+  ]
+ }
+}

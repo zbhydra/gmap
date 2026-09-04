@@ -1,0 +1,33 @@
+{
+ "baseline_rows": 40,
+ "steps": [
+  {
+   "step": "baseline",
+   "unique": 38
+  },
+  {
+   "step": "rerun",
+   "rows": 40,
+   "new_unique": 8,
+   "cumulative_unique": 46
+  },
+  {
+   "step": "near",
+   "rows": 40,
+   "new_unique": 2,
+   "cumulative_unique": 48
+  },
+  {
+   "step": "cafe",
+   "rows": 40,
+   "new_unique": 8,
+   "cumulative_unique": 56
+  }
+ ],
+ "final_union": 56,
+ "per_task": {
+  "rerun": 40,
+  "near": 40,
+  "cafe": 40
+ }
+}

@@ -1,0 +1,1231 @@
+[
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Drip Drop Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://dripdroppdx.com/",
+  "rating": 4.9,
+  "review_count": null,
+  "fulladdress": "932 SW 4th Ave, Portland, OR 97204",
+  "latitude": 45.5166387,
+  "longitude": -122.67738759999999,
+  "phone": "(971) 383-2734",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950bc11c29c079:0xb99d1f303e39195",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950bc11c29c079:0xb99d1f303e39195?hl=en",
+  "place_id": "ChIJecApHMELlVQRlZHjA_PRmQs",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Roseline Coffee Cafe & Roastery",
+  "categories": [
+   "Coffee shop",
+   "Coffee roastery"
+  ],
+  "website": "http://roselinecoffee.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "321 NE Davis St, Portland, OR 97232",
+  "latitude": 45.5245982,
+  "longitude": -122.662453,
+  "phone": "(503) 809-2890",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a194f48f66f1:0xd4377d7c6c6f67f",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a194f48f66f1:0xd4377d7c6c6f67f?hl=en",
+  "place_id": "ChIJ8WaP9JShlVQRf_bGxtd3Qw0",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Less and more coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "https://lessandmorecoffee.square.site/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "1003 SW 5th Ave, Portland, OR 97204",
+  "latitude": 45.5166008,
+  "longitude": -122.6789361,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a0557af84a5:0xb27f6a7a45bcd13a",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a0557af84a5:0xb27f6a7a45bcd13a?hl=en",
+  "place_id": "ChIJpYSvVwUKlVQROtG8RXpqf7I",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Cadejo Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": null,
+  "rating": 4.9,
+  "review_count": null,
+  "fulladdress": "804 NW Couch St, Portland, OR 97209",
+  "latitude": 45.5235426,
+  "longitude": -122.679434,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b5207045ae7:0x33511ad652f6c708",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b5207045ae7:0x33511ad652f6c708?hl=en",
+  "place_id": "ChIJ51oEB1ILlVQRCMf2UtYaUTM",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Rose City Coffee Co.",
+  "categories": [
+   "Coffee shop",
+   "Breakfast restaurant",
+   "Cafe",
+   "Coffee roastery",
+   "Coffee store",
+   "Coffee wholesaler",
+   "Consignment shop",
+   "Gift shop"
+  ],
+  "website": "https://www.rosecitycoffeecompany.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "3370 SE Milwaukie Ave, Portland, OR 97202",
+  "latitude": 45.4986306,
+  "longitude": -122.653736,
+  "phone": "(503) 956-2211",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a7b65d4b37f:0xe87831d90e1624d4",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a7b65d4b37f:0xe87831d90e1624d4?hl=en",
+  "place_id": "ChIJf7PUZXsKlVQR1CQWDtkxeOg",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Coava Coffee Roasters",
+  "categories": [
+   "Coffee shop",
+   "Cafe"
+  ],
+  "website": "http://www.coavacoffee.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "1300 SE Grand Ave a, Portland, OR 97214",
+  "latitude": 45.513549399999995,
+  "longitude": -122.6606018,
+  "phone": "(503) 894-8134",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a0ae93e6b79:0xc63aec4f3d1b3aad",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a0ae93e6b79:0xc63aec4f3d1b3aad?hl=en",
+  "place_id": "ChIJeWs-6QoKlVQRrTobPU_sOsY",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Superjoy Coffee",
+  "categories": [
+   "Coffee shop",
+   "Breakfast restaurant",
+   "Cafe",
+   "Coffee machine supplier",
+   "Coffee roastery",
+   "Coffee wholesaler",
+   "Restaurant"
+  ],
+  "website": "https://www.superjoy.coffee/",
+  "rating": 4.8,
+  "review_count": null,
+  "fulladdress": "1401 SW Yamhill St, Portland, OR 97205",
+  "latitude": 45.520609,
+  "longitude": -122.6867255,
+  "phone": "(971) 271-7185",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950ba2ef63d92f:0x24d15040bcf49f56",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950ba2ef63d92f:0x24d15040bcf49f56?hl=en",
+  "place_id": "ChIJL9lj76ILlVQRVp_0vEBQ0SQ",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Case Study Coffee Roasters",
+  "categories": [
+   "Coffee shop",
+   "Cafe"
+  ],
+  "website": "http://www.casestudycoffee.com/",
+  "rating": 4.4,
+  "review_count": null,
+  "fulladdress": "802 SW 10th Ave, Portland, OR 97205",
+  "latitude": 45.5191855,
+  "longitude": -122.6823608,
+  "phone": "(503) 477-8221",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a04cba5dd6b:0x736ecdb5e217595e",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a04cba5dd6b:0x736ecdb5e217595e?hl=en",
+  "place_id": "ChIJa92lywQKlVQRXlkX4rXNbnM",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Above Grnd Coffee",
+  "categories": [
+   "Coffee shop",
+   "Bakery",
+   "Cafe",
+   "Lounge bar"
+  ],
+  "website": "https://www.abovegrndpdx.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "1100 SE Grand Ave, Portland, OR 97214",
+  "latitude": 45.514786,
+  "longitude": -122.66021429999999,
+  "phone": "(971) 997-5044",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950bddb065e817:0x58212d6ff6d16d61",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950bddb065e817:0x58212d6ff6d16d61?hl=en",
+  "place_id": "ChIJF-hlsN0LlVQRYW3R9m8tIVg",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Wallflower Coffee Company",
+  "categories": [
+   "Coffee shop",
+   "Cafe"
+  ],
+  "website": null,
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "3158 SE Division St, Portland, OR 97202",
+  "latitude": 45.5046719,
+  "longitude": -122.63281959999999,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a145658b252d:0x17093d8741bcc9c3",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a145658b252d:0x17093d8741bcc9c3?hl=en",
+  "place_id": "ChIJLSWLZUWhlVQRw8m8QYc9CRc",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Kalesa Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "https://www.kalesacoffee.com/",
+  "rating": 4.9,
+  "review_count": null,
+  "fulladdress": "722 N Page St, Portland, OR 97227",
+  "latitude": 45.5394858,
+  "longitude": -122.67419439999999,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a9c41dc65545:0xdb00af124efb4f6d",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a9c41dc65545:0xdb00af124efb4f6d?hl=en",
+  "place_id": "ChIJRVXGHcSplVQRbU_7ThKvANs",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Haven Coffee Co.",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://haven.coffee/",
+  "rating": 4.8,
+  "review_count": null,
+  "fulladdress": "2772 NW Thurman St, Portland, OR 97210",
+  "latitude": 45.5352319,
+  "longitude": -122.7082377,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495097f2cdec4c7:0x692d570778a29d51",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495097f2cdec4c7:0x692d570778a29d51?hl=en",
+  "place_id": "ChIJx8TeLH8JlVQRUZ2ieAdXLWk",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "AdaptCafe",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "https://www.instagram.com/adaptcafe/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "4280 SE Milwaukie Ave Ste 111, Portland, OR 97202",
+  "latitude": 45.4922165,
+  "longitude": -122.65185369999999,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b318b0fc2c5:0xa043e40b7853f35f",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b318b0fc2c5:0xa043e40b7853f35f?hl=en",
+  "place_id": "ChIJxcIPizELlVQRX_NTeAvkQ6A",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "PDX Coffee Club",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "https://pdxcoffeeclub.com/",
+  "rating": 5,
+  "review_count": null,
+  "fulladdress": "306 SW 1st Ave, Portland, OR 97204",
+  "latitude": 45.520157,
+  "longitude": -122.67198099999999,
+  "phone": "(503) 504-5674",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b7db64b0247:0x221e77407278bb30",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b7db64b0247:0x221e77407278bb30?hl=en",
+  "place_id": "ChIJRwJLtn0LlVQRMLt4ckB3HiI",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Abba Coffee Roasters",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://www.abbacoffeeroasters.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "525 NW 11th Ave, Portland, OR 97209",
+  "latitude": 45.526911399999996,
+  "longitude": -122.6824111,
+  "phone": "(503) 985-2531",
+  "timezone": "America/Los_Angeles",
+  "fid": "0xa3d78282a982d8b9:0xd2d2f4215d283c15",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0xa3d78282a982d8b9:0xd2d2f4215d283c15?hl=en",
+  "place_id": "ChIJudiCqYKC16MRFTwoXSH00tI",
+  "_layer2": true
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Good Coffee",
+  "categories": [
+   "Coffee shop",
+   "Cafe"
+  ],
+  "website": "http://goodwith.us/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "1150 SE 12th Ave, Portland, OR 97214",
+  "latitude": 45.5144884,
+  "longitude": -122.65347539999999,
+  "phone": "(971) 282-3388",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a0a1d19e1a39:0x2f9d0b555d287da",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a0a1d19e1a39:0x2f9d0b555d287da?hl=en",
+  "place_id": "ChIJORqe0aGglVQR2ofSVbXQ-QI"
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Stumptown Coffee Roasters",
+  "categories": [
+   "Coffee shop",
+   "Cafe",
+   "Coffee roastery",
+   "Coffee store",
+   "Tea market place",
+   "Tea store"
+  ],
+  "website": "https://www.stumptowncoffee.com/pages/portland-downtown-cafe?utm_source=gbp&utm_medium=organic&utm_campaign=local",
+  "rating": 4.4,
+  "review_count": null,
+  "fulladdress": "128 SW 3rd Ave, Portland, OR 97204",
+  "latitude": 45.521802199999996,
+  "longitude": -122.67345639999999,
+  "phone": "(503) 295-6144",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a06e4623e6d:0x3e03c6cb13ad931d",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a06e4623e6d:0x3e03c6cb13ad931d?hl=en",
+  "place_id": "ChIJbT5i5AYKlVQRHZOtE8vGAz4"
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "All Your Heart Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "https://www.allyourheartcoffee.com/",
+  "rating": 4.9,
+  "review_count": null,
+  "fulladdress": "3875 S Bond Ave, Portland, OR 97239",
+  "latitude": 45.4951471,
+  "longitude": -122.67109909999999,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b6a81e3e733:0x622422e3b63abaa6",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b6a81e3e733:0x622422e3b63abaa6?hl=en",
+  "place_id": "ChIJM-fjgWoLlVQRpro6tuMiJGI"
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Never Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://www.nevercoffeelab.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "537 SW 12th Ave, Portland, OR 97205",
+  "latitude": 45.5214354,
+  "longitude": -122.6839337,
+  "phone": "(503) 607-8545",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b932fcf87e9:0xcb6b31ed4bd8fb7",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b932fcf87e9:0xcb6b31ed4bd8fb7?hl=en",
+  "place_id": "ChIJ6YfPL5MLlVQRt4-91B6ztgw"
+ },
+ {
+  "input_id": "MOWXao-sKZeuptQP6a6F8Qo",
+  "title": "Portland Coffee Shop",
+  "categories": [
+   "Coffee shop",
+   "Bakery",
+   "Cake shop",
+   "Cookie shop",
+   "Cupcake shop",
+   "Espresso bar",
+   "Pastry shop",
+   "Pie shop",
+   "Tea house"
+  ],
+  "website": "https://www.theportlandcoffeeshop.com/",
+  "rating": 4.8,
+  "review_count": null,
+  "fulladdress": "530 NE 118th Ave, Portland, OR 97220",
+  "latitude": 45.5267121,
+  "longitude": -122.540746,
+  "phone": "(503) 255-3012",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a1824ad4efa7:0xc853a595e9e5f4e1",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a1824ad4efa7:0xc853a595e9e5f4e1?hl=en",
+  "place_id": "ChIJp-_USoKhlVQR4fTl6ZWlU8g"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Our Spot",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": null,
+  "rating": 4.8,
+  "review_count": null,
+  "fulladdress": "1816 S River Dr, Portland, OR 97201",
+  "latitude": 45.5088197,
+  "longitude": -122.6732839,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b001f9a5e19:0x449f9b640fdf2294",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b001f9a5e19:0x449f9b640fdf2294?hl=en",
+  "place_id": "ChIJGV6aHwALlVQRlCLfD2Sbn0Q"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Euko Coffee & Company",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "https://www.eukocoffeeco.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "3290 N Vancouver Ave, Portland, OR 97227",
+  "latitude": 45.5466185,
+  "longitude": -122.66742939999999,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a7c4430e0695:0x8dffab6be5295070",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a7c4430e0695:0x8dffab6be5295070?hl=en",
+  "place_id": "ChIJlQYOQ8SnlVQRcFAp5Wur_40"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "La Perlita",
+  "categories": [
+   "Coffee shop",
+   "Coffee roastery",
+   "Coffee stand",
+   "Coffee store"
+  ],
+  "website": "https://www.reformaroasters.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "5610 N Interstate Ave, Portland, OR 97217",
+  "latitude": 45.5635519,
+  "longitude": -122.68178789999999,
+  "phone": "(541) 662-4021",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x549509ca495f4ee7:0xa12cd2c13d208b14",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x549509ca495f4ee7:0xa12cd2c13d208b14?hl=en",
+  "place_id": "ChIJ505fScoJlVQRFIsgPcHSLKE"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "The Dragonfly Coffee House",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://thedragonflycoffeehouse.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "2387 NW Thurman St, Portland, OR 97210",
+  "latitude": 45.5355981,
+  "longitude": -122.700733,
+  "phone": "(503) 224-7888",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x549509e5da10f0c7:0x24648f5468257028",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x549509e5da10f0c7:0x24648f5468257028?hl=en",
+  "place_id": "ChIJx_AQ2uUJlVQRKHAlaFSPZCQ"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "40 LBS Coffee + Bar",
+  "categories": [
+   "Coffee shop",
+   "Cocktail bar",
+   "Wine bar"
+  ],
+  "website": "http://40lbscoffee.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "101 SW Main St #140, Portland, OR 97204",
+  "latitude": 45.515617899999995,
+  "longitude": -122.67562439999999,
+  "phone": "(503) 329-5782",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950bb96229e103:0x38da3b0606758047",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950bb96229e103:0x38da3b0606758047?hl=en",
+  "place_id": "ChIJA-EpYrkLlVQRR4B1BgY72jg"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Roseline Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://roselinecoffee.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "Inside the, 222 SW Columbia St #1400, Portland, OR 97201",
+  "latitude": 45.513134099999995,
+  "longitude": -122.6773642,
+  "phone": "(503) 809-2890",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b46821dd3df:0x3d77b9b9d3848066",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b46821dd3df:0x3d77b9b9d3848066?hl=en",
+  "place_id": "ChIJ39MdgkYLlVQRZoCE07m5dz0"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Tov Coffee II",
+  "categories": [
+   "Coffee shop",
+   "Tea house"
+  ],
+  "website": null,
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "3639 SE Hawthorne Blvd #5044, Portland, OR 97214",
+  "latitude": 45.512306599999995,
+  "longitude": -122.6261363,
+  "phone": "(541) 908-2555",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a091b1d1820d:0x9785b518db6ebf7e",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a091b1d1820d:0x9785b518db6ebf7e?hl=en",
+  "place_id": "ChIJDYLRsZGglVQRfr9u2xi1hZc"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Upper Left Roasters",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://www.upperleftroasters.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "1204 SE Clay St, Portland, OR 97214",
+  "latitude": 45.5113699,
+  "longitude": -122.65342919999999,
+  "phone": "(503) 477-8469",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a09e32fabcd3:0x1ac42e464d67e013",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a09e32fabcd3:0x1ac42e464d67e013?hl=en",
+  "place_id": "ChIJ07z6Mp6glVQRE-BnTUYuxBo"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "BEST Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "https://bestcoffeepdx.com/",
+  "rating": 5,
+  "review_count": null,
+  "fulladdress": "827 SW 2nd Ave, Portland, OR 97204",
+  "latitude": 45.516998199999996,
+  "longitude": -122.6754259,
+  "phone": "(503) 420-7255",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b5e3a0b7c25:0x49aef1145232a6d6",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b5e3a0b7c25:0x49aef1145232a6d6?hl=en",
+  "place_id": "ChIJJXwLOl4LlVQR1qYyUhTxrkk"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Portland Coffee Roasters",
+  "categories": [
+   "Coffee shop",
+   "Cafe",
+   "Coffee roastery",
+   "Coffee store",
+   "Gift shop",
+   "Pastry shop"
+  ],
+  "website": "https://www.portlandcoffeeroasters.com/pages/cafes",
+  "rating": 4.5,
+  "review_count": null,
+  "fulladdress": "815 SE Oak St, Portland, OR 97214",
+  "latitude": 45.5202142,
+  "longitude": -122.6574096,
+  "phone": "(503) 334-4685",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a0a68312bdc5:0xc1b9a2c72793494f",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a0a68312bdc5:0xc1b9a2c72793494f?hl=en",
+  "place_id": "ChIJxb0Sg6aglVQRT0mTJ8eiucE"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Kilo DCofi",
+  "categories": [
+   "Coffee shop",
+   "Espresso bar",
+   "Pastry shop"
+  ],
+  "website": "http://kilodcofi.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "600 SW Pine St, Portland, OR 97205",
+  "latitude": 45.522323899999996,
+  "longitude": -122.6770758,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b001b3310f1:0x201dc6fb658fc933",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b001b3310f1:0x201dc6fb658fc933?hl=en",
+  "place_id": "ChIJ8RAzGwALlVQRM8mPZfvGHSA"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Olé Latte Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": null,
+  "rating": 4.8,
+  "review_count": null,
+  "fulladdress": "510 SW Harrison St, Portland, OR 97201",
+  "latitude": 45.510746999999995,
+  "longitude": -122.68214189999999,
+  "phone": "(971) 221-6318",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a141fe27851:0xf378e5725a7ecc92",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a141fe27851:0xf378e5725a7ecc92?hl=en",
+  "place_id": "ChIJUXjiHxQKlVQRksx-WnLlePM"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Deadstock Coffee Roasters",
+  "categories": [
+   "Coffee shop",
+   "Cafe",
+   "Coffee roastery",
+   "Coffee store"
+  ],
+  "website": "http://www.deadstockcoffee.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "15 NW 4th Ave, Portland, OR 97209",
+  "latitude": 45.523435899999996,
+  "longitude": -122.67454749999999,
+  "phone": "(971) 220-8727",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950bfd3c29a81b:0x843c92bf72e4ed1d",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950bfd3c29a81b:0x843c92bf72e4ed1d?hl=en",
+  "place_id": "ChIJG6gpPP0LlVQRHe3kcr-SPIQ"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Albina Press",
+  "categories": [
+   "Coffee shop",
+   "Espresso bar"
+  ],
+  "website": "https://m.facebook.com/pages/Albina-Press-Coffeehouse/152791121399765",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "4637 N Albina Ave, Portland, OR 97217",
+  "latitude": 45.55675,
+  "longitude": -122.6751472,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a7132430431b:0x1ee724c4aeb7666",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a7132430431b:0x1ee724c4aeb7666?hl=en",
+  "place_id": "ChIJG0MwJBOnlVQRZnbrSkxy7gE"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Sterling Coffee Roasters",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://sterling.coffee/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "518 NW 21st Ave, Portland, OR 97209",
+  "latitude": 45.526635999999996,
+  "longitude": -122.69422379999999,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x549509f73c9e6eef:0x88054f9974a67025",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x549509f73c9e6eef:0x88054f9974a67025?hl=en",
+  "place_id": "ChIJ726ePPcJlVQRJXCmdJlPBYg"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Honey Latte Cafe",
+  "categories": [
+   "Coffee shop",
+   "Cafe",
+   "Coworking space",
+   "Tea house",
+   "Vegan restaurant"
+  ],
+  "website": "https://honeylatte.cafe/",
+  "rating": 4.5,
+  "review_count": null,
+  "fulladdress": "1033 SE Main St, Portland, OR 97214",
+  "latitude": 45.513844,
+  "longitude": -122.65496189999999,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a1184f233779:0x23af70f5bd3fd5f5",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a1184f233779:0x23af70f5bd3fd5f5?hl=en",
+  "place_id": "ChIJeTcjTxihlVQR9dU_vfVwryM"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Exquisite Creatures Coffee",
+  "categories": [
+   "Coffee shop",
+   "Cafe",
+   "Coffee store"
+  ],
+  "website": "http://theexquisitecreatures.com/",
+  "rating": 4.8,
+  "review_count": null,
+  "fulladdress": "537 SE Ash St #108, Portland, OR 97214",
+  "latitude": 45.521597799999995,
+  "longitude": -122.6601769,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a34c62483999:0x45239e39f2ef9ac3",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a34c62483999:0x45239e39f2ef9ac3?hl=en",
+  "place_id": "ChIJmTlIYkyjlVQRw5rv8jmeI0U"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Keeper Coffee Co",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://keepercoffee.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "4515 SE 41st Ave, Portland, OR 97202",
+  "latitude": 45.4899881,
+  "longitude": -122.619976,
+  "phone": "(503) 891-5828",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b1de95b50c1:0x81cb7d42ff5e6ae7",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b1de95b50c1:0x81cb7d42ff5e6ae7?hl=en",
+  "place_id": "ChIJwVBb6R0LlVQR52pe_0J9y4E"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "40 LBS Coffee Bar",
+  "categories": [
+   "Coffee shop",
+   "Beer hall",
+   "Cafe",
+   "Cocktail bar",
+   "Wine bar"
+  ],
+  "website": "http://40lbscoffee.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "824 SW 2nd Ave, Portland, OR 97204",
+  "latitude": 45.516945,
+  "longitude": -122.6749509,
+  "phone": "(503) 329-5782",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a0f77518b53:0x98829b9d3699aa98",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a0f77518b53:0x98829b9d3699aa98?hl=en",
+  "place_id": "ChIJU4tRdw8KlVQRmKqZNp2bgpg"
+ },
+ {
+  "input_id": "M-WXas7mAarj0PEPw6mMoQM",
+  "title": "Wild Rose Coffee",
+  "categories": [
+   "Coffee shop",
+   "Coffee stand",
+   "Coffee store"
+  ],
+  "website": "http://www.wildrosecoffee.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "1909 SW 6th Ave, Portland, OR 97201",
+  "latitude": 45.5103101,
+  "longitude": -122.6837238,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950917061a97fd:0x690603b72c575481",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950917061a97fd:0x690603b72c575481?hl=en",
+  "place_id": "ChIJ_ZcaBhcJlVQRgVRXLLcDBmk"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "The Society Cafe",
+  "categories": [
+   "Coffee shop",
+   "Bar",
+   "Beer hall",
+   "Breakfast restaurant",
+   "Brunch restaurant",
+   "Cafe",
+   "Cocktail bar",
+   "Internet cafe",
+   "Wine bar"
+  ],
+  "website": "https://portland.thesocietyhotel.com/cafe",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "203 NW 3rd Ave Ste 100, Portland, OR 97209",
+  "latitude": 45.5246845,
+  "longitude": -122.6736828,
+  "phone": "(503) 445-0444",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950ba6255aa881:0x19248718d29497c8",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950ba6255aa881:0x19248718d29497c8?hl=en",
+  "place_id": "ChIJgahaJaYLlVQRyJeU0hiHJBk"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Sisters Coffee Company in The Pearl District",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://www.sisterscoffee.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "1235 NW Marshall St, Portland, OR 97209",
+  "latitude": 45.5309181,
+  "longitude": -122.6842805,
+  "phone": "(971) 279-2957",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x549509fc2b2d8753:0x84cf73f21e3cbe6d",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x549509fc2b2d8753:0x84cf73f21e3cbe6d?hl=en",
+  "place_id": "ChIJU4ctK_wJlVQRbb48HvJzz4Q"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Caffe Umbria",
+  "categories": [
+   "Coffee shop",
+   "Cafe"
+  ],
+  "website": "http://www.caffeumbria.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "710 SW Madison St, Portland, OR 97205",
+  "latitude": 45.5159447,
+  "longitude": -122.6816539,
+  "phone": "(503) 719-5248",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a1a9be2b2bb:0x3aa5aabe0751964",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a1a9be2b2bb:0x3aa5aabe0751964?hl=en",
+  "place_id": "ChIJu7LimxoKlVQRZBl14KtaqgM"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Courier Coffee",
+  "categories": [
+   "Coffee shop",
+   "Cafe"
+  ],
+  "website": null,
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "923 SW Oak St, Portland, OR 97205",
+  "latitude": 45.5227806,
+  "longitude": -122.6804722,
+  "phone": "(503) 545-6444",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a03e93c40eb:0x877f627797c66ae8",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a03e93c40eb:0x877f627797c66ae8?hl=en",
+  "place_id": "ChIJ60A86QMKlVQR6GrGl3dif4c"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Less and More Coffee ii",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://lessandmorecoffeeii.com/",
+  "rating": 4.9,
+  "review_count": null,
+  "fulladdress": "811 SW 6th Ave, Portland, OR 97204",
+  "latitude": 45.5181641,
+  "longitude": -122.67926179999999,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950bb866d42245:0xa2d795c5b1007ccf",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950bb866d42245:0xa2d795c5b1007ccf?hl=en",
+  "place_id": "ChIJRSLUZrgLlVQRz3wAscWV16I"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Rimsky-Korsakoffee House",
+  "categories": [
+   "Coffee shop",
+   "Cafe"
+  ],
+  "website": "https://rimskykorsakoffeehouse.shop/",
+  "rating": 4.5,
+  "review_count": null,
+  "fulladdress": "707 SE 12th Ave, Portland, OR 97214",
+  "latitude": 45.5177674,
+  "longitude": -122.6539531,
+  "phone": "(503) 232-2640",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a0a1602f0df9:0xb6405c15e5d2ba49",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a0a1602f0df9:0xb6405c15e5d2ba49?hl=en",
+  "place_id": "ChIJ-Q0vYKGglVQRSbrS5RVcQLY"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Portland Cà Phê",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://www.portlandcaphe.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "2815 SE Holgate Blvd, Portland, OR 97202",
+  "latitude": 45.4904917,
+  "longitude": -122.637198,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b47e61459f9:0x5f0ffaf6ec1bac11",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b47e61459f9:0x5f0ffaf6ec1bac11?hl=en",
+  "place_id": "ChIJ-VkU5kcLlVQREawb7Pb6D18"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Oak Street Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": null,
+  "rating": 4.8,
+  "review_count": null,
+  "fulladdress": "322 SW Broadway, Portland, OR 97205",
+  "latitude": 45.521667799999996,
+  "longitude": -122.6781805,
+  "phone": "(503) 502-6227",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a0408d7805b:0xd3a405b69df095f4",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a0408d7805b:0xd3a405b69df095f4?hl=en",
+  "place_id": "ChIJW4DXCAQKlVQR9JXwnbYFpNM"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Monte Rossa Cafe",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": null,
+  "rating": 4.8,
+  "review_count": null,
+  "fulladdress": "327 NW 4th Ave, Portland, OR 97209",
+  "latitude": 45.525731,
+  "longitude": -122.674804,
+  "phone": "(503) 380-2149",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a00632275ff:0xc634eea0c6101e39",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a00632275ff:0xc634eea0c6101e39?hl=en",
+  "place_id": "ChIJ_3UiYwAKlVQROR4QxqDuNMY"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Good Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://goodwith.us/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "4747 SE Division St, Portland, OR 97206",
+  "latitude": 45.505556399999996,
+  "longitude": -122.61341949999999,
+  "phone": "(971) 282-3388",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a06022e45dd9:0x28f3e75ec945ec9c",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a06022e45dd9:0x28f3e75ec945ec9c?hl=en",
+  "place_id": "ChIJ2V3kImCglVQRnOxFyV7n8yg"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Snow Bunny Coffee",
+  "categories": [
+   "Coffee shop",
+   "Cafe",
+   "Dessert shop",
+   "Pastry shop",
+   "Tea house"
+  ],
+  "website": "https://www.instagram.com/snowbunnycoffee/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "1415 NW 11th Ave, Portland, OR 97209",
+  "latitude": 45.5330683,
+  "longitude": -122.6826152,
+  "phone": "(971) 363-0038",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a7f336204bb1:0x862bb1e0f1819c6a",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a7f336204bb1:0x862bb1e0f1819c6a?hl=en",
+  "place_id": "ChIJsUsgNvOnlVQRapyB8eCxK4Y"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "PUSH PULL | Stark",
+  "categories": [
+   "Coffee shop",
+   "Coffee roastery"
+  ],
+  "website": "http://pushxpullcoffee.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "821 SE Stark St, Portland, OR 97214",
+  "latitude": 45.5194845,
+  "longitude": -122.6568709,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a0a6bb05abfd:0xb2e1a9fb64e8d9e3",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a0a6bb05abfd:0xb2e1a9fb64e8d9e3?hl=en",
+  "place_id": "ChIJ_asFu6aglVQR49noZPup4bI"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "IN JOY COFFEE",
+  "categories": [
+   "Coffee shop",
+   "Cafe"
+  ],
+  "website": null,
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "1431 SW Park Ave, Portland, OR 97201",
+  "latitude": 45.5145334,
+  "longitude": -122.6840848,
+  "phone": null,
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950b5c08e04dad:0x41c4665dab12bf72",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950b5c08e04dad:0x41c4665dab12bf72?hl=en",
+  "place_id": "ChIJrU3gCFwLlVQRcr8Sq11mxEE"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Nossa Familia Coffee",
+  "categories": [
+   "Coffee shop",
+   "Cafe",
+   "Coffee roastery",
+   "Coffee stand",
+   "Coffee store",
+   "Coffee wholesaler",
+   "Espresso bar"
+  ],
+  "website": "http://www.nossacoffee.com/",
+  "rating": 4.8,
+  "review_count": null,
+  "fulladdress": "2007 SE Division St, Portland, OR 97202",
+  "latitude": 45.505035199999995,
+  "longitude": -122.6457523,
+  "phone": "(971) 337-8259",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a131a81e8ba1:0x81c49a38fae0c474",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a131a81e8ba1:0x81c49a38fae0c474?hl=en",
+  "place_id": "ChIJoYseqDGhlVQRdMTg-jiaxIE"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Kaleido Coffee",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "http://instagram.com/kaleidocoffee.pdx",
+  "rating": 4.5,
+  "review_count": null,
+  "fulladdress": "2112 NW Quimby St, Portland, OR 97210",
+  "latitude": 45.5332047,
+  "longitude": -122.69500579999999,
+  "phone": "(971) 495-9265",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950976d05f8253:0x90c33657e360e5e7",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950976d05f8253:0x90c33657e360e5e7?hl=en",
+  "place_id": "ChIJU4Jf0HYJlVQR5-Vg41c2w5A"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Behind The Museum Cafe",
+  "categories": [
+   "Cafe",
+   "Tea house",
+   "Restaurant"
+  ],
+  "website": "http://behindthemuseumcafe.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "1229 SW 10th Ave, Portland, OR 97205",
+  "latitude": 45.5164136,
+  "longitude": -122.6843097,
+  "phone": "(503) 477-6625",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a1a5f3d68e5:0x806ad772fb9d0ebe",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a1a5f3d68e5:0x806ad772fb9d0ebe?hl=en",
+  "place_id": "ChIJ5Wg9XxoKlVQRvg6d-3LXaoA"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Stumptown Coffee Roasters",
+  "categories": [
+   "Coffee shop",
+   "Cafe",
+   "Coffee roastery",
+   "Coffee store",
+   "Tea market place",
+   "Tea store"
+  ],
+  "website": "https://www.stumptowncoffee.com/pages/portland-sw-washington-cafe?utm_source=gbp&utm_medium=organic&utm_campaign=local",
+  "rating": 4.5,
+  "review_count": null,
+  "fulladdress": "1140 SW Washington St, Portland, OR 97205",
+  "latitude": 45.5213981,
+  "longitude": -122.6826985,
+  "phone": "(855) 711-3385",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a03a1987c13:0xad04b0a54fd20dc8",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a03a1987c13:0xad04b0a54fd20dc8?hl=en",
+  "place_id": "ChIJE3yYoQMKlVQRyA3ST6WwBK0"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Barista",
+  "categories": [
+   "Coffee shop"
+  ],
+  "website": "https://baristapdx.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "539 NW 13th Ave, Portland, OR 97209",
+  "latitude": 45.526953899999995,
+  "longitude": -122.6845432,
+  "phone": "(503) 987-2062",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x549509f8cea1d88b:0xc17e2908aff5ebbc",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x549509f8cea1d88b:0xc17e2908aff5ebbc?hl=en",
+  "place_id": "ChIJi9ihzvgJlVQRvOv1rwgpfsE"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Java Rising Coffee",
+  "categories": [
+   "Coffee shop",
+   "Lunch restaurant"
+  ],
+  "website": "http://www.javarisingcoffee.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "431 SW Harvey Milk St, Portland, OR 97204",
+  "latitude": 45.5207999,
+  "longitude": -122.6760309,
+  "phone": "(541) 520-6578",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a1a9aff10ff5:0x1e8e6a3e4acd3ed3",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a1a9aff10ff5:0x1e8e6a3e4acd3ed3?hl=en",
+  "place_id": "ChIJ9Q_xr6mhlVQR0z7NSj5qjh4"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Grendel's Coffee House",
+  "categories": [
+   "Coffee shop",
+   "Cafe",
+   "Tea house"
+  ],
+  "website": "http://grendelspdx.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "729 E Burnside St #107, Portland, OR 97214",
+  "latitude": 45.523047299999995,
+  "longitude": -122.6577938,
+  "phone": "(503) 595-9550",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x5495a0a58b98f06b:0x4b2fcbb078607a7b",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x5495a0a58b98f06b:0x4b2fcbb078607a7b?hl=en",
+  "place_id": "ChIJa_CYi6WglVQRe3pgeLDLL0s"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Fehrenbacher Hof",
+  "categories": [
+   "Coffee shop",
+   "Breakfast restaurant"
+  ],
+  "website": "https://www.fehrenbacherhof.com/",
+  "rating": 4.7,
+  "review_count": null,
+  "fulladdress": "1225 SW 19th Ave, Portland, OR 97205",
+  "latitude": 45.5186091,
+  "longitude": -122.69373979999999,
+  "phone": "(503) 223-4493",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a1e94b1bfbd:0x44d5e135c6025e8",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a1e94b1bfbd:0x44d5e135c6025e8?hl=en",
+  "place_id": "ChIJvb-xlB4KlVQR6CVgXBNeTQQ"
+ },
+ {
+  "input_id": "NeWXarTFMdjIptQPv5_JmAE",
+  "title": "Caffe Umbria",
+  "categories": [
+   "Coffee shop",
+   "Espresso bar"
+  ],
+  "website": "http://www.caffeumbria.com/",
+  "rating": 4.6,
+  "review_count": null,
+  "fulladdress": "303 NW 12th Ave, Portland, OR 97209",
+  "latitude": 45.5251611,
+  "longitude": -122.6834445,
+  "phone": "(503) 241-5300",
+  "timezone": "America/Los_Angeles",
+  "fid": "0x54950a020c19fda9:0xc847d7ee8d2fd024",
+  "place_url": "https://www.google.com/maps/place/data=!4m2!3m1!1s0x54950a020c19fda9:0xc847d7ee8d2fd024?hl=en",
+  "place_id": "ChIJqf0ZDAIKlVQRJNAvje7XR8g"
+ }
+]

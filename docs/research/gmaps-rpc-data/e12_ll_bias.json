@@ -1,0 +1,918 @@
+{
+ "baseline_ne": {
+  "variant": "baseline_ne",
+  "total": 40,
+  "cities": {
+   "other": 40
+  },
+  "center": [
+   40.494,
+   -92.883
+  ],
+  "sample_titles": [
+   "peace on earth coffee PROVO",
+   "Alpha Coffee - Big Cottonwood Canyon",
+   "The Coffee Shop",
+   "La Barba Coffee"
+  ],
+  "records": [
+   {
+    "title": "peace on earth coffee PROVO",
+    "fid": "0x874d975530c2a911:0x6f5528daa0d7024a",
+    "lat": 40.233969099999996,
+    "lng": -111.66418039999999
+   },
+   {
+    "title": "Alpha Coffee - Big Cottonwood Canyon",
+    "fid": "0x875263160d5aa5df:0xc457ca52bd5ef9c6",
+    "lat": 40.6190579,
+    "lng": -111.79197839999999
+   },
+   {
+    "title": "The Coffee Shop",
+    "fid": "0x874d835f96a038e1:0x124e7ccb4789b37b",
+    "lat": 40.365818399999995,
+    "lng": -111.78489929999999
+   },
+   {
+    "title": "La Barba Coffee",
+    "fid": "0x875280cc9af7c29d:0x226e8e5a10935604",
+    "lat": 40.5003925,
+    "lng": -111.8872631
+   },
+   {
+    "title": "The Coffee House 1875",
+    "fid": "0x874c15d48357c267:0x3efdfa297a27bab9",
+    "lat": 39.5425539,
+    "lng": -111.4589374
+   },
+   {
+    "title": "Pueblo Coffee On Main",
+    "fid": "0x874d9741e137aa27:0x64d21d5028fd3ae8",
+    "lat": 40.171947599999996,
+    "lng": -111.6103057
+   },
+   {
+    "title": "The Honeysuckle Coffee Co.",
+    "fid": "0x875288102ac7aaab:0x6e9b5375447e6311",
+    "lat": 40.5924809,
+    "lng": -111.871657
+   },
+   {
+    "title": "The Coffee Depot",
+    "fid": "0x874c1542bded6099:0x7d963cedd9f2aa76",
+    "lat": 39.5341069,
+    "lng": -111.4571112
+   },
+   {
+    "title": "The Tea Barn Utah",
+    "fid": "0x874d9b53df0771b3:0x7e5d63b51b498a6c",
+    "lat": 40.2789152,
+    "lng": -111.6875469
+   },
+   {
+    "title": "Elevated Grounds Coffee and Espresso",
+    "fid": "0x874d84f0e516428d:0x73a9b519511d40d5",
+    "lat": 40.3322268,
+    "lng": -111.7281137
+   },
+   {
+    "title": "Wild Thistle Cafe",
+    "fid": "0x874da9006992df21:0x94f486288239bc7",
+    "lat": 39.9754267,
+    "lng": -111.7869904
+   },
+   {
+    "title": "7 Brew Coffee",
+    "fid": "0x874d9ba877b10f0f:0x3b44bea883209b9b",
+    "lat": 40.2652657,
+    "lng": -111.6696899
+   },
+   {
+    "title": "Art City coffee",
+    "fid": "0x874dbd5ffe6190eb:0x2d4ac5677a9e4276",
+    "lat": 40.1599603,
+    "lng": -111.6416351
+   },
+   {
+    "title": "Pink Axolotl",
+    "fid": "0x874d9b02cd778121:0x30390bdabce7b611",
+    "lat": 40.3042459,
+    "lng": -111.6996676
+   },
+   {
+    "title": "Sinners & Saints Coffee and Beverage Co.",
+    "fid": "0x8752819e96e5196d:0x8d2840517915f595",
+    "lat": 40.4056576,
+    "lng": -111.907319
+   },
+   {
+    "title": "peace on earth coffee RIVERTON",
+    "fid": "0x8752856ec092806f:0x1f9d5369315975f9",
+    "lat": 40.5096048,
+    "lng": -111.99887849999999
+   },
+   {
+    "title": "Cocoa Style",
+    "fid": "0x875287c5c6f55eff:0x2cf8f76fdeb63cf5",
+    "lat": 40.5291387,
+    "lng": -111.88295169999999
+   },
+   {
+    "title": "Daily Espresso",
+    "fid": "0x8752871b843b949b:0x4118f07c73655932",
+    "lat": 40.5265224,
+    "lng": -111.89850489999999
+   },
+   {
+    "title": "Lighthouse Donut, Coffee, & Dessert Co.",
+    "fid": "0x874d913d51020005:0x292b19a3ae1ffbf8",
+    "lat": 40.254231499999996,
+    "lng": -111.6613027
+   },
+   {
+    "title": "Java Junkie",
+    "fid": "0x874d97aa3a59ea1f:0x28a3ce6007989767",
+    "lat": 40.2340058,
+    "lng": -111.6591555
+   },
+   {
+    "title": "Bird & Branch Coffee Roasters",
+    "fid": "0x89c25853c46c584d:0x2be347662f0035e",
+    "lat": 40.7602998,
+    "lng": -73.9907758
+   },
+   {
+    "title": "BEEPUBLIC",
+    "fid": "0x89c25bec74468ef3:0x4d1b275d4a94b0d0",
+    "lat": 40.702543299999995,
+    "lng": -73.9863096
+   },
+   {
+    "title": "Moka & Co",
+    "fid": "0x89c2590006f8c253:0x32b927b9109dab8a",
+    "lat": 40.750363899999996,
+    "lng": -73.9898075
+   },
+   {
+    "title": "787 Coffee",
+    "fid": "0x89c25965910fcfb3:0xd9317b2d87431da",
+    "lat": 40.739911299999996,
+    "lng": -74.003287
+   },
+   {
+    "title": "La Colombe Coffee Workshop",
+    "fid": "0x89c25a1669bb0933:0x87745de24d0b2ff7",
+    "lat": 40.705709899999995,
+    "lng": -74.0085244
+   },
+   {
+    "title": "Remi Flower & Coffee",
+    "fid": "0x89c25b002183f481:0xaf45f449b47b45c2",
+    "lat": 40.709143399999995,
+    "lng": -74.00644609999999
+   },
+   {
+    "title": "Café Chrystie",
+    "fid": "0x89c259ddf956ad4f:0x238012b9d8286f92",
+    "lat": 40.7248532,
+    "lng": -73.9809409
+   },
+   {
+    "title": "Suited NYC",
+    "fid": "0x89c25bec802d50a1:0xe28c89887905242d",
+    "lat": 40.7093261,
+    "lng": -74.0078426
+   },
+   {
+    "title": "Drip Drop Café, coffee shop",
+    "fid": "0x89c259983657f2c9:0x3e55e3407ba88f6e",
+    "lat": 40.7254115,
+    "lng": -74.002083
+   },
+   {
+    "title": "The Lazy Llama Coffee Bar",
+    "fid": "0x89c25983814d41d5:0x979ac7d9cd5f7870",
+    "lat": 40.7234943,
+    "lng": -73.9886523
+   },
+   {
+    "title": "Koré Coffee",
+    "fid": "0x89c25b3c53ecbe67:0x3bccb739cc89dafe",
+    "lat": 40.7161808,
+    "lng": -73.9970865
+   },
+   {
+    "title": "Rêve Coffee",
+    "fid": "0x89c25932c4cc5e99:0x5844b57db28ee708",
+    "lat": 40.7444177,
+    "lng": -73.9937156
+   },
+   {
+    "title": "Cafe Grumpy - Financial District",
+    "fid": "0x89c25a140ebba5df:0x4a1d6c87bee57696",
+    "lat": 40.7039603,
+    "lng": -74.0119572
+   },
+   {
+    "title": "Haraz Coffee House",
+    "fid": "0x89c2593fe41f8fef:0xbdce99ad0e157035",
+    "lat": 40.7253393,
+    "lng": -74.00377759999999
+   },
+   {
+    "title": "BAZU! by Superwow Coffee",
+    "fid": "0x89c25b42451b8e63:0x5971c66ffb37a40f",
+    "lat": 40.714018599999996,
+    "lng": -73.99553879999999
+   },
+   {
+    "title": "Bleu Coffee",
+    "fid": "0x89c25922dcf3cd77:0x254ba421981f7363",
+    "lat": 40.7213642,
+    "lng": -74.0638158
+   },
+   {
+    "title": "787 Coffee",
+    "fid": "0x89c2593215341605:0xd9bbec711e95dc3b",
+    "lat": 40.7400325,
+    "lng": -74.00158929999999
+   },
+   {
+    "title": "Radiant Café & Wine Bar",
+    "fid": "0x89c2590052a5cf25:0x7df162d75e541303",
+    "lat": 40.734024,
+    "lng": -74.0013903
+   },
+   {
+    "title": "787 Coffee",
+    "fid": "0x89c2598d2cd1eaf5:0x3f949b06b7941592",
+    "lat": 40.714345699999996,
+    "lng": -73.94904129999999
+   },
+   {
+    "title": "Liberty Corner Coffee",
+    "fid": "0x89c3bd7417129d71:0xcc830fa007f91abb",
+    "lat": 40.665481,
+    "lng": -74.5789199
+   }
+  ]
+ },
+ "portland": {
+  "variant": "portland",
+  "total": 20,
+  "cities": {
+   "other": 20
+  },
+  "center": [
+   34.123,
+   -118.459
+  ],
+  "sample_titles": [
+   "The Coffee Club",
+   "Common Ground Coffee Shop and Christian Bookstore",
+   "La Colombe Coffee Workshop",
+   "Dolcevita Coffee"
+  ],
+  "records": [
+   {
+    "title": "The Coffee Club",
+    "fid": "0x80c29d6fc8cf7fb9:0x80be0325496b530f",
+    "lat": 34.1918901,
+    "lng": -118.6028327
+   },
+   {
+    "title": "Common Ground Coffee Shop and Christian Bookstore",
+    "fid": "0x80c29d9bab780163:0x623c805e4bfdfd9c",
+    "lat": 34.2076753,
+    "lng": -118.6106964
+   },
+   {
+    "title": "La Colombe Coffee Workshop",
+    "fid": "0x80c2c6d1b0232201:0xea89b6895d0a523f",
+    "lat": 34.101943399999996,
+    "lng": -118.2431446
+   },
+   {
+    "title": "Dolcevita Coffee",
+    "fid": "0x80c2b8a365484b07:0xc23bc9d14ea1f30c",
+    "lat": 34.076739599999996,
+    "lng": -118.30895269999999
+   },
+   {
+    "title": "House Roots Coffee",
+    "fid": "0x80c29d12beecd01f:0xa281f0a1def5dec0",
+    "lat": 34.257608499999996,
+    "lng": -118.58012869999999
+   },
+   {
+    "title": "Constellation Coffee",
+    "fid": "0x80c2c7d41fb10943:0xa6c77978c99013a3",
+    "lat": 34.102052199999996,
+    "lng": -118.2587327
+   },
+   {
+    "title": "Lee's Coffee House",
+    "fid": "0x80c2c19ef5c719b3:0xb51f0e72e7c17f87",
+    "lat": 34.1945987,
+    "lng": -118.50207719999999
+   },
+   {
+    "title": "Shams Cafe",
+    "fid": "0x80c29b006f38598b:0xde6aa660dcfeac15",
+    "lat": 34.172289899999996,
+    "lng": -118.54762
+   },
+   {
+    "title": "Interim Coffee",
+    "fid": "0x80dc73725f34fadf:0xc97129dd6befde9e",
+    "lat": 33.1585483,
+    "lng": -117.35179459999999
+   },
+   {
+    "title": "Alfred Coffee",
+    "fid": "0x80c29df8fe54b47b:0xc2cf182905e23cf9",
+    "lat": 34.185864699999996,
+    "lng": -118.60462179999999
+   },
+   {
+    "title": "Amp Coffee LA",
+    "fid": "0x80c2957517358c7b:0x45393e617335f803",
+    "lat": 34.1663772,
+    "lng": -118.37591529999999
+   },
+   {
+    "title": "Cafe Ole'",
+    "fid": "0x80e82733fd1b326f:0xa41a95b6291166e0",
+    "lat": 34.1595382,
+    "lng": -118.7023296
+   },
+   {
+    "title": "Tortoni Caffe",
+    "fid": "0x80c2979029787ecb:0xc7c999bd920b141",
+    "lat": 34.152878699999995,
+    "lng": -118.46150449999999
+   },
+   {
+    "title": "The Coffee's Crib",
+    "fid": "0x80c29f8c440bb225:0xfd7cc8aeb44caac1",
+    "lat": 34.1787425,
+    "lng": -118.60113299999999
+   },
+   {
+    "title": "Alfred Coffee",
+    "fid": "0x80c285f70101bdb5:0x3bc4c273c0439341",
+    "lat": 34.2747713,
+    "lng": -118.57291339999999
+   },
+   {
+    "title": "RE: COFFEE",
+    "fid": "0x80c29f00481e1c93:0x68dcfd7fc57b2baa",
+    "lat": 34.1666752,
+    "lng": -118.5879573
+   },
+   {
+    "title": "Honey Cup Coffeehouse & Patisserie - Calabasas",
+    "fid": "0x80e827928cfabe83:0x2467241ee1dc8871",
+    "lat": 34.1610534,
+    "lng": -118.7034149
+   },
+   {
+    "title": "Tang and Java",
+    "fid": "0x80c29f99a079f473:0x7a9b5b90a94df95",
+    "lat": 34.1657462,
+    "lng": -118.6229908
+   },
+   {
+    "title": "The Ugly Mug Coffee House",
+    "fid": "0x80c295d7b8e7053b:0x5d53ff5e4695f031",
+    "lat": 34.176305,
+    "lng": -118.34463389999999
+   },
+   {
+    "title": "Jesse's Grind",
+    "fid": "0x80c29d3094d7aa67:0xc9b789112d482365",
+    "lat": 34.2008109,
+    "lng": -118.6005646
+   }
+  ]
+ },
+ "miami": {
+  "variant": "miami",
+  "total": 40,
+  "cities": {
+   "other": 40
+  },
+  "center": [
+   39.129,
+   -85.914
+  ],
+  "sample_titles": [
+   "Artbean Coffee Roasters",
+   "787 Coffee",
+   "La Colombe Coffee Workshop",
+   "MCM coffee"
+  ],
+  "records": [
+   {
+    "title": "Artbean Coffee Roasters",
+    "fid": "0x89c25bc6933d907b:0x53e833b3ca1cd781",
+    "lat": 40.7147104,
+    "lng": -73.9981425
+   },
+   {
+    "title": "787 Coffee",
+    "fid": "0x89c25b377fd2aa47:0x828f2d1d16df18ab",
+    "lat": 40.7165872,
+    "lng": -74.00480639999999
+   },
+   {
+    "title": "La Colombe Coffee Workshop",
+    "fid": "0x89c25a1669bb0933:0x87745de24d0b2ff7",
+    "lat": 40.705709899999995,
+    "lng": -74.0085244
+   },
+   {
+    "title": "MCM coffee",
+    "fid": "0x89c25b41a2b84b57:0x300da2655fed7690",
+    "lat": 40.709188999999995,
+    "lng": -74.005899
+   },
+   {
+    "title": "Blank Street",
+    "fid": "0x89c25b5316dfa08f:0xe961cd0b045ed423",
+    "lat": 40.709478,
+    "lng": -74.0066995
+   },
+   {
+    "title": "Simpl Coffee",
+    "fid": "0x89c25b0066567dbb:0x5e5b874b8df6927d",
+    "lat": 40.709311299999996,
+    "lng": -74.0088552
+   },
+   {
+    "title": "Birch Coffee",
+    "fid": "0x89c25a228f5d3517:0xb6f11c97354562cb",
+    "lat": 40.7109333,
+    "lng": -74.0060101
+   },
+   {
+    "title": "BAZU! by Superwow Coffee",
+    "fid": "0x89c25b42451b8e63:0x5971c66ffb37a40f",
+    "lat": 40.714018599999996,
+    "lng": -73.99553879999999
+   },
+   {
+    "title": "NYC Coffee Mocha & Food",
+    "fid": "0x89c25bd09f0d3135:0x4f112c649d0f6cd2",
+    "lat": 40.7068228,
+    "lng": -74.0085179
+   },
+   {
+    "title": "The Little Shop",
+    "fid": "0x89c25b5bb87997a5:0x24874b18b5456f3a",
+    "lat": 40.7083747,
+    "lng": -74.00095519999999
+   },
+   {
+    "title": "BEEPUBLIC",
+    "fid": "0x89c25bec74468ef3:0x4d1b275d4a94b0d0",
+    "lat": 40.702543299999995,
+    "lng": -73.9863096
+   },
+   {
+    "title": "Zaruma Gold Coffee",
+    "fid": "0x89c25b811e8ac377:0x47b6713f30cd8292",
+    "lat": 40.7024275,
+    "lng": -73.99017309999999
+   },
+   {
+    "title": "Conwell Coffee & Cocktail Hall",
+    "fid": "0x89c25bfb38013381:0xa2be61274a2c8dd5",
+    "lat": 40.7054353,
+    "lng": -74.0091413
+   },
+   {
+    "title": "Cafe Grumpy - Financial District",
+    "fid": "0x89c25a140ebba5df:0x4a1d6c87bee57696",
+    "lat": 40.7039603,
+    "lng": -74.0119572
+   },
+   {
+    "title": "Joe Coffee Company: Brooklyn Heights",
+    "fid": "0x89c25a378cace30f:0x5a0d3a3e6f694184",
+    "lat": 40.6986734,
+    "lng": -73.9943579
+   },
+   {
+    "title": "FASAN",
+    "fid": "0x89c25b005c149975:0xcf441a7c0e129823",
+    "lat": 40.7158361,
+    "lng": -73.9918208
+   },
+   {
+    "title": "Variety Coffee Roasters",
+    "fid": "0x89c25b60b42aa0c9:0xd96c5fac9d89f3bc",
+    "lat": 40.7111924,
+    "lng": -74.0062784
+   },
+   {
+    "title": "Joe Coffee Company: Dumbo",
+    "fid": "0x89c25bee1f137f07:0x16ff3f06d230a01a",
+    "lat": 40.7029365,
+    "lng": -73.9893694
+   },
+   {
+    "title": "Little Canal",
+    "fid": "0x89c25a29a1cde611:0x333f6116dcddfd71",
+    "lat": 40.714310499999996,
+    "lng": -73.99042419999999
+   },
+   {
+    "title": "Bluestone Lane DUMBO Café",
+    "fid": "0x89c25a341b6cafbb:0xdd684defa4f48af8",
+    "lat": 40.7008302,
+    "lng": -73.9883345
+   },
+   {
+    "title": "Stay Grounded Co. Coffee shop",
+    "fid": "0x87b893a5f8a8a2d1:0xc4615044deab7bfa",
+    "lat": 38.071022,
+    "lng": -95.36648679999999
+   },
+   {
+    "title": "Vinny’s Coffee Co.",
+    "fid": "0x87c9c1ac900c2087:0x3108e8be56953c73",
+    "lat": 36.2054811,
+    "lng": -94.79718129999999
+   },
+   {
+    "title": "Front Porch Coffee and Goods",
+    "fid": "0x87b699c64003ca89:0x2567f4fa00b42809",
+    "lat": 35.876363399999995,
+    "lng": -96.06091029999999
+   },
+   {
+    "title": "Watts Coffee Co",
+    "fid": "0x87bc1df3add95277:0x7c716e8a73b96cb6",
+    "lat": 38.661377099999996,
+    "lng": -96.49003619999999
+   },
+   {
+    "title": "Harbor Coffee",
+    "fid": "0x87b6559374e2010d:0x76fc5d0d300ff724",
+    "lat": 36.4469862,
+    "lng": -95.70927089999999
+   },
+   {
+    "title": "KAFE'SITO",
+    "fid": "0x80dc0f188473715d:0xf15b7ba9e5060153",
+    "lat": 32.990396,
+    "lng": -117.271671
+   },
+   {
+    "title": "Main Street Coffee House",
+    "fid": "0x87a580205b2bb9cf:0xf74d479373546e06",
+    "lat": 37.0168259,
+    "lng": -98.4860123
+   },
+   {
+    "title": "A Cup of Grace",
+    "fid": "0x87b7ffe8f0cc23ff:0x36bad8d3b2381081",
+    "lat": 37.164699,
+    "lng": -95.112358
+   },
+   {
+    "title": "Jordan River",
+    "fid": "0x89d6b539764f8299:0xbd768c78e430d01d",
+    "lat": 43.144430799999995,
+    "lng": -77.58952599999999
+   },
+   {
+    "title": "The Ardmore Coffee House",
+    "fid": "0x8830d10026b27b15:0x36f7a809b7c27d99",
+    "lat": 41.131731099999996,
+    "lng": -81.6138414
+   },
+   {
+    "title": "Overflow Coffee",
+    "fid": "0x87b67d3c815e4d15:0x36d274cd5317ae59",
+    "lat": 35.9506492,
+    "lng": -95.65026089999999
+   },
+   {
+    "title": "Wild Bloom Coffee",
+    "fid": "0x87b8f534380617bb:0x64a27834f2580bab",
+    "lat": 37.9211951,
+    "lng": -95.4058586
+   },
+   {
+    "title": "The Hive",
+    "fid": "0x87b9b70829261dc3:0xc11a7506d14de7d3",
+    "lat": 37.5346069,
+    "lng": -95.82820889999999
+   },
+   {
+    "title": "Scooter's Coffee",
+    "fid": "0x87b82b82d3613b95:0x5a0a25cf3a20234e",
+    "lat": 37.223535999999996,
+    "lng": -95.7105211
+   },
+   {
+    "title": "Arwa Yemeni Coffee",
+    "fid": "0x808fb79613aab673:0x3a65ddf1878c9aaf",
+    "lat": 37.4037642,
+    "lng": -122.0095006
+   },
+   {
+    "title": "11th Lane Roastery",
+    "fid": "0x87b9213a7a49ff75:0x24043711abdba3ed",
+    "lat": 38.1933647,
+    "lng": -95.7388476
+   },
+   {
+    "title": "Cowboy Coffee",
+    "fid": "0x808fb72c5d2721db:0x9da46c30e931946d",
+    "lat": 37.3809755,
+    "lng": -121.99879879999999
+   },
+   {
+    "title": "Octagon City Coffee Co.",
+    "fid": "0x87b85f92a85fa8b5:0x5e4607df195d3440",
+    "lat": 37.810978999999996,
+    "lng": -95.4353397
+   },
+   {
+    "title": "Java Junction",
+    "fid": "0x87b84325975b9e8d:0x48951457a2a16d07",
+    "lat": 37.681461399999996,
+    "lng": -95.4596645
+   },
+   {
+    "title": "Backroad Brew",
+    "fid": "0x87c8093df6aa64f7:0x33a2bbeedbaeb428",
+    "lat": 37.1709379,
+    "lng": -94.8314827
+   }
+  ]
+ },
+ "whole_earth": {
+  "variant": "whole_earth",
+  "total": 37,
+  "cities": {
+   "other": 37
+  },
+  "center": [
+   37.623,
+   -95.82
+  ],
+  "sample_titles": [
+   "Harbor Coffee",
+   "True Brew Coffee Co.",
+   "She Brews Coffee Roasters",
+   "Homegrown Coffey"
+  ],
+  "records": [
+   {
+    "title": "Harbor Coffee",
+    "fid": "0x87b6559374e2010d:0x76fc5d0d300ff724",
+    "lat": 36.4469862,
+    "lng": -95.70927089999999
+   },
+   {
+    "title": "True Brew Coffee Co.",
+    "fid": "0x87bf29770e5f0427:0x50249c222c2f3648",
+    "lat": 38.6112046,
+    "lng": -95.684741
+   },
+   {
+    "title": "She Brews Coffee Roasters",
+    "fid": "0x87b6ec5f3e8a43e3:0xc3a98ef6382bd01d",
+    "lat": 36.160004199999996,
+    "lng": -95.9579717
+   },
+   {
+    "title": "Homegrown Coffey",
+    "fid": "0x87b92ddb5f6b8015:0xb985845212e83136",
+    "lat": 38.4157605,
+    "lng": -95.8573184
+   },
+   {
+    "title": "Good Karma Coffee and Wine",
+    "fid": "0x87c0f11b844f1df9:0xf73f2ed99f2eb655",
+    "lat": 39.0696496,
+    "lng": -94.5779254
+   },
+   {
+    "title": "Brew'd Awakening",
+    "fid": "0x87bac3670c6788af:0xe48901f2e81a83da",
+    "lat": 37.5042678,
+    "lng": -97.5005065
+   },
+   {
+    "title": "Hersh's Coffee House",
+    "fid": "0x87b7853196cb46c9:0x66377682d9628290",
+    "lat": 37.0349411,
+    "lng": -95.61680849999999
+   },
+   {
+    "title": "Groundhouse Coffee",
+    "fid": "0x87c0a37aab248ceb:0xedf9125492882472",
+    "lat": 38.810815399999996,
+    "lng": -94.92474899999999
+   },
+   {
+    "title": "The She Shed Coffee & More",
+    "fid": "0x87b93a4169ea77f9:0xe9f6d0be5dccadb",
+    "lat": 38.309053,
+    "lng": -95.9577518
+   },
+   {
+    "title": "Gravel City Roasters",
+    "fid": "0x87b94e9d90e50499:0xb0405b0f9fe2d843",
+    "lat": 38.40685,
+    "lng": -96.1805629
+   },
+   {
+    "title": "Daphne Mae Cafe",
+    "fid": "0x87bb3f3240f42e91:0x41b2838dc890ff55",
+    "lat": 38.004175,
+    "lng": -97.5056468
+   },
+   {
+    "title": "Veil Cafe",
+    "fid": "0x87c0f128859eeee1:0xbcc091c01cf9b2d4",
+    "lat": 39.104544,
+    "lng": -94.588687
+   },
+   {
+    "title": "Java Junction",
+    "fid": "0x87b84325975b9e8d:0x48951457a2a16d07",
+    "lat": 37.681461399999996,
+    "lng": -95.4596645
+   },
+   {
+    "title": "Apogee Coffee & Draft",
+    "fid": "0x87c09554aba79129:0x157ae91856523d58",
+    "lat": 38.8907326,
+    "lng": -94.795485
+   },
+   {
+    "title": "Black Ivory Bru House",
+    "fid": "0x87b713a933b096d9:0x6771e09b0f495170",
+    "lat": 36.7907997,
+    "lng": -95.9356586
+   },
+   {
+    "title": "Octagon City Coffee Co.",
+    "fid": "0x87b85f92a85fa8b5:0x5e4607df195d3440",
+    "lat": 37.810978999999996,
+    "lng": -95.4353397
+   },
+   {
+    "title": "The Hive",
+    "fid": "0x87b9b70829261dc3:0xc11a7506d14de7d3",
+    "lat": 37.5346069,
+    "lng": -95.82820889999999
+   },
+   {
+    "title": "Main Street Coffee House",
+    "fid": "0x87a580205b2bb9cf:0xf74d479373546e06",
+    "lat": 37.0168259,
+    "lng": -98.4860123
+   },
+   {
+    "title": "Spill the Beans",
+    "fid": "0x87b7e147032c7e77:0x902d0b110cde41ad",
+    "lat": 36.8739992,
+    "lng": -95.0913044
+   },
+   {
+    "title": "Java Garage LLC",
+    "fid": "0x87c0f05493450139:0x7728eff605d2b39",
+    "lat": 39.0995779,
+    "lng": -94.60114589999999
+   },
+   {
+    "title": "Corks & Coffees at the press room",
+    "fid": "0x87bc1d005fd238ef:0x35cabe59a5c2af9a",
+    "lat": 38.6611117,
+    "lng": -96.4911132
+   },
+   {
+    "title": "Local Roasters Co.",
+    "fid": "0x87bae32bee18c623:0x3503a5d9fbb1f35a",
+    "lat": 37.686458,
+    "lng": -97.3027192
+   },
+   {
+    "title": "ANCHOR HOUSE",
+    "fid": "0x87b823f9dae541bd:0x9430fa669f9eeb22",
+    "lat": 37.3435564,
+    "lng": -95.4130636
+   },
+   {
+    "title": "WiseBeans Coffee Company",
+    "fid": "0x87b7a5d163aa3863:0xf1128b92510c33c2",
+    "lat": 36.7000266,
+    "lng": -95.63797029999999
+   },
+   {
+    "title": "Java Don's",
+    "fid": "0x87c82d777d5696bb:0xe97a0fb1dca06d75",
+    "lat": 36.5556457,
+    "lng": -94.9703311
+   },
+   {
+    "title": "FireEscape Coffeehouse",
+    "fid": "0x87b84335217f1f1b:0xd3630d5dd6216108",
+    "lat": 37.6819572,
+    "lng": -95.4553146
+   },
+   {
+    "title": "Ane Mae's Coffee and Sandwich Shop",
+    "fid": "0x87b82b6ae567f195:0x176cf6394e53fb1e",
+    "lat": 37.2264099,
+    "lng": -95.706932
+   },
+   {
+    "title": "Scooter's Coffee",
+    "fid": "0x87b81be8ed9393e3:0x75a8cbdb43a2d166",
+    "lat": 37.3402684,
+    "lng": -95.2580376
+   },
+   {
+    "title": "Kane Kan Coffee & Donuts",
+    "fid": "0x87b765a72e5310eb:0x8e084166701f38e4",
+    "lat": 37.0133077,
+    "lng": -95.9389276
+   },
+   {
+    "title": "Remnant Cafe & Coffee Shop",
+    "fid": "0x87b81a8f60f07cd9:0xd200e1c91ce7209c",
+    "lat": 37.3406558,
+    "lng": -95.2617221
+   },
+   {
+    "title": "The Grizzly Grind",
+    "fid": "0x87b81d0029b8576d:0x3f32c7a6d0f149ca",
+    "lat": 37.1927569,
+    "lng": -95.2966477
+   },
+   {
+    "title": "Hot Berries & Crepes",
+    "fid": "0x87baff046df49db7:0x43d16f8b1046f269",
+    "lat": 37.6927567,
+    "lng": -97.13653219999999
+   },
+   {
+    "title": "Scooter's Coffee",
+    "fid": "0x87b82b82d3613b95:0x5a0a25cf3a20234e",
+    "lat": 37.223535999999996,
+    "lng": -95.7105211
+   },
+   {
+    "title": "Sunflower Soda Fountain",
+    "fid": "0x87b78503e67b00b7:0x8d165eab10b716c",
+    "lat": 37.0358543,
+    "lng": -95.6169372
+   },
+   {
+    "title": "Scooter's Coffee",
+    "fid": "0x87baff2aa5455621:0x6bdc180c2b673660",
+    "lat": 37.6770248,
+    "lng": -97.13449849999999
+   },
+   {
+    "title": "Scooter's Coffee",
+    "fid": "0x87b785057e0669e1:0x4885a3605c945203",
+    "lat": 37.033202599999996,
+    "lng": -95.6202708
+   },
+   {
+    "title": "Kings Coffee Co",
+    "fid": "0x87b782164b530677:0x298d869237be7a2d",
+    "lat": 37.0559966,
+    "lng": -95.71070139999999
+   }
+  ]
+ },
+ "browser_portland": {
+  "variant": "browser_portland",
+  "total": 0,
+  "http": "200",
+  "cities": {},
+  "center": null,
+  "sample_titles": [],
+  "records": []
+ },
+ "browser_miami": {
+  "variant": "browser_miami",
+  "total": 0,
+  "http": "200",
+  "cities": {},
+  "center": null,
+  "sample_titles": [],
+  "records": []
+ }
+}

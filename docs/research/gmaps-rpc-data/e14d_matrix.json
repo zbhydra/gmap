@@ -1,0 +1,67 @@
+[
+ {
+  "tag": "flow_chrome124_nosec",
+  "html": {
+   "http": 200,
+   "size": 207661,
+   "ciabi": 0,
+   "gpscs": 0,
+   "snl_empty": true
+  },
+  "hspq_http": 400,
+  "hspq_len": 105,
+  "hspq_photos": 0
+ },
+ {
+  "tag": "flow_chrome124_sec",
+  "html": {
+   "http": 200,
+   "size": 208012,
+   "ciabi": 0,
+   "gpscs": 0,
+   "snl_empty": true
+  },
+  "hspq_http": 400,
+  "hspq_len": 105,
+  "hspq_photos": 0
+ },
+ {
+  "tag": "flow_chrome131_sec",
+  "html": {
+   "http": 200,
+   "size": 207828,
+   "ciabi": 0,
+   "gpscs": 0,
+   "snl_empty": true
+  },
+  "hspq_http": 400,
+  "hspq_len": 106,
+  "hspq_photos": 0
+ },
+ {
+  "tag": "flow_edge101_sec",
+  "html": {
+   "http": 200,
+   "size": 205937,
+   "ciabi": 0,
+   "gpscs": 0,
+   "snl_empty": true
+  },
+  "hspq_http": 400,
+  "hspq_len": 106,
+  "hspq_photos": 0
+ },
+ {
+  "tag": "noflow_chrome131_sec",
+  "html": {
+   "http": 200,
+   "size": 207522,
+   "ciabi": 0,
+   "gpscs": 0,
+   "snl_empty": true
+  },
+  "hspq_http": 400,
+  "hspq_len": 106,
+  "hspq_photos": 0
+ }
+]

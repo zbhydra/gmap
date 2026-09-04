@@ -1,0 +1,101 @@
+[
+ {
+  "title": "Ranger Cafe and Bistro",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": false,
+  "about": true,
+  "rc": null
+ },
+ {
+  "title": "Ajo Eats",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": true,
+  "about": true,
+  "rc": 20
+ },
+ {
+  "title": "Fat Cactus at The Plaza",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": true,
+  "about": true,
+  "rc": 187
+ },
+ {
+  "title": "Olsens Patio Cafe",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": true,
+  "about": true,
+  "rc": 110
+ },
+ {
+  "title": "Ajo Cafe",
+  "desc": false,
+  "desc_head": "",
+  "hours": false,
+  "rpr": false,
+  "about": true,
+  "rc": null
+ },
+ {
+  "title": "Granny's Kitchen",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": true,
+  "about": true,
+  "rc": 407
+ },
+ {
+  "title": "Minimalist Balance",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": true,
+  "about": true,
+  "rc": 14
+ },
+ {
+  "title": "Oasis Coffee",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": true,
+  "about": true,
+  "rc": 275
+ },
+ {
+  "title": "Tacos El Tarasco Restaurant",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": true,
+  "about": true,
+  "rc": 249
+ },
+ {
+  "title": "Ajo Country Club Restaurant & Lounge",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": true,
+  "about": true,
+  "rc": 55
+ },
+ {
+  "title": "Curley Coffee Roasters",
+  "desc": false,
+  "desc_head": "",
+  "hours": true,
+  "rpr": true,
+  "about": true,
+  "rc": 61
+ }
+]
