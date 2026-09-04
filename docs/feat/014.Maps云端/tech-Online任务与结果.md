@@ -23,14 +23,16 @@ Online 创建入口
 
 MySQL 是任务唯一事实源，worker 直接扫描未完成任务。
 
-`APP_NAME` 只表示任务所属 business 实例。`redis.key_prefix` 配置在所有节点固定为 `gmapsexporter`，使登录与既有用量状态在横向部署时保持同一命名空间；开发、测试和生产必须使用不同 Redis DB 或实例。Online 任务本身不写 Redis。切换固定前缀时不迁移旧 key：已有登录会话失效，用户重新登录；匿名月度用量从新命名空间重新计数。
+`APP_NAME` 是任务所属 business 的唯一标识。所有业务节点的配置模板固定使用 `redis.db: 0` 和 `redis.key_prefix: gmapsexporter`；不同环境使用不同 Redis 实例。
 
 ## 3. 文件树
 
 ```text
 backend/src/app/
   api/client/maps_online_client.py            # Online 任务与下载接口
+  main.py                                      # 启动与停止 Online worker
   constants/maps_online.py                    # 20 分表、任务期限、对象前缀
+  models/__init__.py                           # 导入全部 item 分表
   models/maps_online_task_model.py             # 父任务
   models/maps_online_task_item_model.py        # 同构 item 表注册与路由
   schemas/maps_online_schema.py                # 创建、列表和详情合同
@@ -38,9 +40,8 @@ backend/src/app/
   services/maps_online_worker_service.py       # 扫描、flock、Provider 编排
   services/object_storage_service.py           # R2 / AliOSS 写入、签名与下载
 backend/config.yaml.example                    # Redis 固定命名空间
-backend/deploy/.env.example                    # 不同环境的 Redis DB
+backend/deploy/.env.example                    # Redis 环境隔离说明
 backend/deploy/README.md                       # APP_NAME 与 Redis 部署边界
-backend/src/app/core/config_schema.py          # Redis 默认前缀
 backend/tests/integration/real/
   api/client/test_maps_online_real.py
   services/test_maps_online_task_service_real.py
@@ -68,9 +69,8 @@ docs/references/specs/spec-redis.md             # Redis 固定前缀合同
 | `request_data` | `JSON` | NOT NULL | `max_depth / hl / gl / ll / extra` |
 | `total_count` | `INT` | NOT NULL | item 总数 |
 | `processed_count` | `INT` | NOT NULL, DEFAULT 0 | 已收口 item 数 |
-| `record_count` | `BIGINT` | NOT NULL, DEFAULT 0 | 已保存结果记录总数 |
+| `record_count` | `INT` | NOT NULL, DEFAULT 0 | 已保存结果记录总数 |
 | `error_item_count` | `INT` | NOT NULL, DEFAULT 0 | 内部错误 item 数，不对客户端返回 |
-| `deadline_at` | `BIGINT` | NOT NULL | 创建后 24 小时，毫秒时间戳 |
 | `completed_at` | `BIGINT` | NULL | 用量计量完成后的任务终态时间 |
 | `created_at` | `BIGINT` | NOT NULL | 创建时间，毫秒时间戳 |
 | `updated_at` | `BIGINT` | NOT NULL | 最近一次进度变化时间 |
@@ -108,7 +108,7 @@ docs/references/specs/spec-redis.md             # Redis 固定前缀合同
 
 每张表只有 PK `(id)` 与 UK `(task_id, sequence)`。按 `task_id` 命中后最多读取单任务 50 行，不继续为 `completed_at / last_checked_at` 添加索引。
 
-模型模块用一份字段定义注册 20 张表，并暴露唯一分表路由函数；service 不复制 20 份实现。20 张表全部注册到 `Base.metadata`，由现有 `sync_database_schema` 创建和同步。
+item 模型模块用一个抽象模型定义字段，一次生成 20 个物理模型，并暴露 `task_id -> model` 的唯一路由函数。service 直接路由到单表。`models/__init__.py` 导入分表集合，使 20 张表注册到 `Base.metadata` 并由现有 `sync_database_schema` 同步。
 
 ## 5. 创建与查询接口
 
@@ -168,11 +168,11 @@ online/{Ymd}/{task_no}/{item_id}/{attempt_id}.csv
 
 ### 7.1 领取
 
-- 每个业务进程周期扫描 `app_name = settings.app.name AND completed_at IS NULL` 的父任务。
+- `main.py` 在 business lifespan 中创建一个 Online worker 协程。worker 用 `asyncio.TaskGroup` 持有 item 协程，每秒扫描 `app_name = settings.app.name AND completed_at IS NULL` 的父任务并补满空闲名额。进程退出时先取消 worker 及 item，等待文件锁释放，再关闭数据库。
 - 同一个 `APP_NAME` 只部署在一台共享本地文件锁目录的机器上；该机器可以运行多个进程。
-- 每个进程最多同时执行 `gmap_engine.concurrency` 个 item。HTTP Provider 内部的 Google 请求继续共享同一配置值对应的 semaphore。
+- `gmap_engine.concurrency` 同时作为每进程的活跃 item 上限和 HTTP Provider 的 Google 出站上限。gosom 的 submit/get 也占一个 item 名额，单次请求返回后立即释放。
 - item 按最久未检查优先；没有 gosom handle 时 submit，已有 handle 时 get。gosom 两次检查至少间隔 5 秒，每次只做一次短调用并更新 `last_checked_at`。
-- 文件锁固定为系统临时目录下 `gmapsexporter/online/{Ymd}/{task_no}/{item_id}.lock`。执行前非阻塞取得 `fcntl.flock`，取得后重新读取 `completed_at` 与 gosom 轮询间隔；文件描述符保持到本次调用和数据库收口结束，终态事务提交后删除锁文件。
+- 文件锁固定为系统临时目录下 `gmapsexporter/online/{Ymd}/{task_no}/{item_id}.lock`。执行前非阻塞取得 `fcntl.flock`，取得后重新读取 `completed_at` 与 gosom 轮询间隔；文件描述符保持到本次调用和数据库收口结束，在 `finally` 中关闭，终态事务提交后同时删除锁文件。
 
 进程崩溃时操作系统立即释放锁。新进程扫描 `completed_at IS NULL` 的 item 后直接重做。
 
@@ -183,7 +183,7 @@ online/{Ymd}/{task_no}/{item_id}/{attempt_id}.csv
 - HTTP item 直接调用一次 `search_places`。
 - gosom item 没有 handle 时只提交并持久化 `job_id + base_url`；已有 handle 时按该 base URL 查询。
 - gosom 返回 pending/running 时只更新时间，之后由扫描器再次查询；completed 时进入 CSV 流程；failed 时按错误 item 收口。
-- Provider 自身有限重试耗尽、gosom 明确失败或父任务达到 `deadline_at` 时，以 0 条和内部错误收口。
+- worker 处理 item 前先检查父任务是否已创建 24 小时；超时时跳过 gosom 冷却和 Provider 请求，直接使用首次完成事务以 0 条和内部错误收口。Provider 重试耗尽或 gosom 明确失败时同样收口。
 - HTTP partial 保存已有结果，内部记录 warning，不丢弃 CSV。
 - `extra=true` 时，Provider 结果按 50 条分批调用现有 `maps_enrich_service.enrich`，把位置对齐的 Emails 与 6 个社媒链接合并进 CSV；补全 partial 或单站失败只记录内部 warning，其余字段照常保存且不重复计量。
 - 对象存储 SDK 的有限重试耗尽后，以 0 条和内部错误收口，不创建补偿任务。
@@ -209,9 +209,9 @@ WHERE id = item_id AND completed_at IS NULL
 - `progress = processed_count / total_count`。item 已成功保存或已按错误收口后才增加 `processed_count`。
 - `processed_count < total_count` 时任务保持 processing。
 - 全部 item 收口且 `record_count = 0` 时直接写 `completed_at`。
-- `record_count > 0` 时调用 `online_usage_service.consume(records=record_count, request_id=task_no)`；成功或幂等命中后写 `completed_at`。
+- `record_count > 0` 时按 `@../000.架构/tech-额度基建.md` 的 Online 计量合同调用 `online_usage_service`；成功或幂等命中后写 `completed_at`。
 - consume 失败时父任务保持未完成，由同一扫描器再次执行 finalizer；唯一键保证不会重复计量。
-- 父任务终态使用 `WHERE completed_at IS NULL AND processed_count = total_count` 条件更新；只有影响一行的完成者记录完成埋点。
+- 父任务终态使用 `WHERE completed_at IS NULL AND processed_count = total_count` 条件更新。
 - 计量不预扣、不退款、不截断已运行任务，实际 used 可以超过 total。后续新任务在创建入口按 exhausted 拒绝。
 
 内部 item 错误不产生用户可见状态。任务终态只说明处理已经收口，不承诺每个关键词都有结果文件。
@@ -224,7 +224,7 @@ WHERE id = item_id AND completed_at IS NULL
 
 入口先按当前用户读取父任务，再在对应分表使用 `id = item_id AND task_id = parent.id` 查询有 `object_key` 的 item，随后返回短期签名下载 URL。签名响应设置 attachment 文件名 `{item_id}_{关键字}.csv`；对象已被运维清理时，由对象存储返回不存在。
 
-文件名只在下载边界清理路径分隔符、控制字符和文件系统保留字符，保留关键词原语言；按 Unicode 边界限制长度，空值使用 `keyword`。
+文件名只在下载边界清理路径分隔符、控制字符和文件系统保留字符，保留关键词原语言；完整文件名按 Unicode 边界截断到 200 个 UTF-8 字节。清理后关键词为空时，文件名为 `{item_id}.csv`。
 
 ### 9.2 整任务 ZIP
 

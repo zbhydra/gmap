@@ -123,7 +123,7 @@ await db.execute(
 ## 5. 禁止子查询
 
 - service 查询**禁止** `.subquery()` / 嵌套 `EXISTS` / 相关子查询。用 JOIN 或拆成多次查询在 service 内组装。
-- 例外：分表跨表查询（`ShardedService.query_all_shards`）等少数场景，必须注释说明为何无法避免。
+- 例外：分表跨表查询等少数场景，必须注释说明为何无法避免。
 
 ## 6. 批量操作
 

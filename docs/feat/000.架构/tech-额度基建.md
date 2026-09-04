@@ -93,7 +93,8 @@ Online 提交和执行期间不调用 usage service。全部关键词 item 收�
 
 ```text
 record_count = 0  -> 不写消费流水，任务完成
-record_count > 0  -> consume(record_count, request_id=task_no)
+record_count > 0  -> consume(usage_identity(user_id, None), user_id=user_id,
+                             records=record_count, request_id=task_no)
                      -> 成功或幂等命中后任务完成
                      -> 失败时任务保持未完成，由原 finalizer 重试
 ```
