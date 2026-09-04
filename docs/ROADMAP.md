@@ -35,8 +35,8 @@
 
 | # | 功能 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- |
-| B1 | Online Scraper(关键词批量任务,云端执行) | 官网 pricing tab=online | 🔍浅(内部未调研,选型见 research 方案调研) | ⬜ |
-| B2 | Scraper API / Reviews API / Photos API | 官方 Postman 文档(v2 三端点契约) | 🔍 | ⬜ |
+| B1 | Online Scraper(关键词批量任务,云端执行；任务/20 分表/双 OSS/恢复/下载合同见 `feat/014.Maps云端/tech-Online任务与结果.md`) | 官网 pricing tab=online | 🔍 | 🚧 (设计完成，实施待启动) |
+| B2 | 同步 Search / Reviews API；Photos 待实现 | 官方 Postman 文档(v2 三端点契约) | 🔍 | ⬜ |
 | B3 | MCP Server(Claude/Cursor/VSCode/Codex 接入) | 官网落地页 | 🔍 | ⬜ |
 | B4 | 抓取引擎(自研 RPC fetcher 为主、gosom 可选 + 代理池；无状态 Provider 合同见 `feat/014.Maps云端/tech-引擎Provider层.md`，执行计划见 `feat/014.Maps云端/plans/001.Provider采集基建.md`) | research 方案调研 §12.30–§13 | 🚧 | ✅ (2026-09-04，真实 Google/gosom 网络冒烟待凭据) |
 | B5 | 云端 POC:HTTP 长周期封锁率 / 代理流量爬坡 + gosom Postgres 内网化(单机部署 + 1,500 词压测已入 research §12,正式 Gate 判定未做) | research 方案调研 §9/§12.34 | 🔍 | ⬜ |
@@ -95,6 +95,8 @@
 - 估时假设:单人 + AI 助手;插件全量(阶段 1)约 7–9 周,加云端与增长完整对标约 3–4 个月。
 
 ## 5 · 变更记录
+
+- 2026-09-04 **B1 Online 任务与结果设计完成**：父任务 + 20 个 item 分表，MySQL 扫描与本机 `flock` 支持多进程和重启重做；结果按 `online/{Ymd}/{task_no}/{item_id}/{attempt_id}.csv` 写当前 R2 / AliOSS，提供单 item CSV 与整任务 ZIP；提交不预扣，完成后按实际 records 幂等计量。实施计划见 `feat/014.Maps云端/plans/002.Online任务与结果基建.md`。
 
 - 2026-09-04 **B4 Provider 采集基建完成**：HTTP Search/Reviews、gosom submit/get、代理与并发配置、脱敏 fixture/golden 及 real 测试落地；真实 Google/gosom 网络冒烟因缺少可用凭据未执行。
 

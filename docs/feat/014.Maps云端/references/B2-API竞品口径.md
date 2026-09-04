@@ -24,6 +24,8 @@
 
 ## 我方落地要点
 
-- 我方 API 走 gosom(`POST /api/v1/jobs` 异步任务)与竞品的同步 REST 不同构——交互设计二选一:对齐竞品同步简单端点(小数据量),或保留任务制(大数据量);可在 B2 立项时按目标客户定,或两者都出(轻查询同步 + 大任务异步)。
+- 我方 Search 与 Reviews API 对齐竞品采用同步 REST，与 Online 任务入口分离，直接调用 HTTP Provider，不写 Online 任务表或对象存储。
+- Reviews 对外直接使用 Provider 的 opaque cursor，不保存或回放页码状态。
+- Photos 保持待实现，不提供占位接口。
 - fid 依赖:photos/reviews 以 fid 为键,我方导出 schema 已含 Fid 列(A5),天然兼容。
 - 密钥管理、计费扣减归 backend(003/007 扩展)。

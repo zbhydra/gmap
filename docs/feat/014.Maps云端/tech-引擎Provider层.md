@@ -222,7 +222,7 @@ gosom API 配置继续使用独立的 `system_data.gosom_api` 多实例列表。
 | Photos | 待实现，不暴露空接口 |
 | gosom 字段 | 上游 Entry 不完全覆盖 29 列，缺失字段保持空值 |
 | Google 风控 | 现有压测只证明对应样本和时段；周/月持续负载阈值仍未知 |
-| 结果存储 | 不属于 Provider；Online 任务与 OSS 继续单独设计 |
+| 结果存储 | 不属于 Provider；Online 任务与对象存储合同见 `@tech-Online任务与结果.md` |
 
 ## 10. 验收
 

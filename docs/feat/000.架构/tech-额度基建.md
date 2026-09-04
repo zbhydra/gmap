@@ -24,7 +24,7 @@ total 的单一真源是 006 的 `get_user_subscription_config`：所持档位�
 为什么登录侧从 Redis（013 U7 单轨）改为 MySQL 流水：
 
 - 付费额度是合同义务，Redis 重建/淘汰会把已付费用户当月用量清零，产生真实的客诉与资损面；
-- 云端（014）需要 refund（预扣-结算）与负 delta 修正，Redis 计数无法审计、无法退回指定月份；
+- 云端（014）需要按任务幂等记录实际产出，Redis 计数无法提供持久审计；
 - 月度 SUM 在「单用户单线单月」桶上是千行级扫描，覆盖索引下成本可忽略。
 
 匿名侧维持 Redis：防滥用计量而非资损，丢失 = 免费多给额度，容忍（013 双窗口拍板）。
@@ -59,7 +59,7 @@ total 的单一真源是 006 的 `get_user_subscription_config`：所持档位�
 
 - 同用户同线同 `request_id` 重放 → 唯一键命中，跳过写入，used 原样返回（`deducted=False`）。
 - 跨用户或跨线携带他人 `request_id` → 唯一键不命中，是合法的新扣减（各归属者各自计量，无全局请求键语义）。
-- 预扣-结算的多次写入靠请求键命名区分：`{batchId}`（预扣）与 `{batchId}:settle`（结算修正，refund 或 consume 按差值正负分流），见 §5。
+- Online 使用任务编号作为 `request_id`，同一任务 finalizer 重放时只写入一次消费流水，见 §5。
 
 ## 4. Service 合同
 
@@ -75,7 +75,7 @@ refund(*, user_id, records, request_id, target_ym=None) -> UsageSnapshot
 
 - `get_usage`：total（§1 真源）+ used（SUM 或 Redis GET），未命中按零。
 - `consume`：MySQL 路径 INSERT 一行 `delta=records`，唯一键 `IntegrityError` = 幂等命中（返回当前快照 `deducted=False`）；Redis 路径沿用 013 U7 的单 Lua 脚本原子幂等（脚本原样迁移，key 换新构建）。`records` 正数合同由 API 层校验。
-- `refund`：**仅登录路径**（`user_id<=0` 抛 `ValueError`，表合同要求恒大于 0）。内部写 `delta=-records`（入参 records > 0）；`target_ym` 默认当前月，预扣结算传原预扣行 ym。不校验 SUM 非负——退回量由内部调用方保证，与 `CounterService.add` 信任内部合同同口径。返回退回后的**当月**快照（target_ym 指向历史月时不改变当月 used）。
+- `refund`：**仅登录路径**（`user_id<=0` 抛 `ValueError`，表合同要求恒大于 0）。内部写 `delta=-records`（入参 records > 0）；`target_ym` 默认当前月，跨月人工修正时传目标月份。不校验 SUM 非负——退回量由内部调用方保证，与 `CounterService.add` 信任内部合同同口径。返回退回后的**当月**快照（target_ym 指向历史月时不改变当月 used）。
 
 total 链：`(await get_user_subscription_config(user_id, line))[1].metadata.monthly_quota`。匿名（user_id=0）走该函数既有分支返回本线 free 档（006 U4）。三线 free 档合同值：maps_extension=1000 / maps_online=1000 / maps_api=20。
 
@@ -87,20 +87,18 @@ total 链：`(await get_user_subscription_config(user_id, line))[1].metadata.mon
 
 本 service 是 spec-mysql §4 登记的第二个原子数据结构例外（第一个是 MySQL 用户 Counter）：公开任意 CRUD 会破坏「只插入 + 唯一键幂等」合同——一条 UPDATE 就能篡改历史用量、一条 DELETE 就能凭空恢复额度。因此只提供插入（consume/refund 内部）与聚合读（get_usage/SUM），不提供 `lists / info / update / del` 四标准方法。
 
-## 5. 预扣后退组合用法（014 落地约定）
+## 5. Online 完成后计量（014 落地约定）
 
-云端任务按批次预扣、按结果结算：
+Online 提交和执行期间不调用 usage service。全部关键词 item 收口后，以实际保存的记录数计量：
 
 ```text
-提交任务            consume(预估量, request_id=batchId)                        # 预扣，落 ym=提交月
-任务完成·实际<预估   refund(预估-实际, request_id=batchId:settle, target_ym=提交月)   # 退多扣
-任务完成·实际>预估   consume(实际-预估, request_id=batchId:settle)                  # 补少扣（正负互斥，同键安全）
-任务失败            refund(全额预估, request_id=batchId:refund, target_ym=提交月)
+record_count = 0  -> 不写消费流水，任务完成
+record_count > 0  -> consume(record_count, request_id=task_no)
+                     -> 成功或幂等命中后任务完成
+                     -> 失败时任务保持未完成，由原 finalizer 重试
 ```
 
-差值方向：refund 合同是「入参 records>0、内部写 delta=-records」，因此结算退多扣传**预估-实际**（正数）；实际超过预估的补扣走 consume（**实际-预估**，正数、落当前月）。两支同用 `batchId:settle` 键——同一批次只会命中其一（相等时不落行），正负互斥，同键不冲突。
-
-键位约定：失败全额退回**不复用**预扣的 `batchId`——同一 request_id 已被 consume 的预扣行占用，refund 若同键会被唯一键吞掉（只留一行）。因此失败退回写 `batchId:refund`、结算修正写 `batchId:settle`，与预扣行三行并存（+预估、±修正，SUM 自洽）。014 接线时按此命名。
+运行中的任务不预留额度，实际 used 可以超过 total；后续任务创建入口根据 `exhausted` 决定是否接受。`task_no` 是该任务唯一消费键，不使用额外结算或退款键。
 
 ## 6. Redis key 与生命周期
 
@@ -154,5 +152,6 @@ backend/tests/integration/real/api/client/test_maps_usage_real.py
 - Redis 故障：三原语抛 `EXTENSION_USAGE_UNAVAILABLE`（fail-closed），插件侧 fail-open 降级放行（013 既有口径）。
 - MySQL 故障：同上 fail-closed；扣减失败由调用方重试，唯一键保证重试幂等。
 - 配置合同破裂（商品行缺失 / monthly_quota 空）：`PAYMENT_GATEWAY_ERROR`，不静默兜底。
-- 业务成功但 consume 失败：可能少记，接受（与插件上报失败同口径）；consume 成功但上层失败：多记，由 refund 显式修正。
+- 插件上报 consume 失败时由插件按既有可用性口径处理；Online finalizer consume 失败时不写任务终态，由同一 finalizer 重试。
+- Online consume 已成功但父任务终态尚未提交时，重跑使用同一 `task_no`，唯一键命中后继续完成任务，不重复计量。
 - Redis 匿名计数丢失：当月匿名 used 清零 = 免费多给，接受；登录用量在 MySQL，不受影响。

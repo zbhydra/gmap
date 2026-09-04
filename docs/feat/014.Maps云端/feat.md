@@ -2,92 +2,101 @@
 
 ## 功能目标
 
-服务端化的 Google Maps 数据采集,两条产品形态:**Online Scraper**(网页批量任务台,面向运营/销售用户)与 **API**(开发者程序化接入),共用同一抓取引擎与代理池,按订阅分档计量。对标竞品 gmapsextractor.com 的 Online + API 产品线。
+提供两种服务端 Google Maps 采集产品：面向运营与销售用户的 Online Scraper，以及面向开发者的同步 API。两者复用抓取 Provider 和代理配置，分别按 Online records/月与 API requests/月计量。
 
 ## 当前状态
 
-- 抓取引擎调研与生产压测完成：自研 HTTP RPC 为主、gosom 为备选，当前定论见 `@../../research/google-maps-scraping-方案调研.md` §12.30–§13。
-- 竞品 Online 已登录实测、API 官方文档全量抓取(B1/B2 ✅)、MCP 已盘(B3)。
-- 引擎 Provider 层技术合同见 `@tech-引擎Provider层.md`；具体进度以根 `@../../ROADMAP.md` 为准。
-- 未开始产品化开发；Gate(B5)正式判定未做——HTTP 路线待长周期封锁率/代理流量爬坡，gosom 路线上线前待 Postgres 内网化验证。进度见根 `@../../ROADMAP.md`。
-
-## 已拍板差异
-
-- Provider 层只封装取数与 gosom 提交/查询；Online/API 各自决定调用方式和任务合同。HTTP 调用可直接并发，gosom 队列由上游负责。
-- 计费按产品线分开：Online 按实际产出 records/月，API 按 requests/月。
-- **订阅配置已占位落地(2026-08-31,006 域)**:`maps_online`(4 档,records/月)与 `maps_api`(4 档,requests/月)产品线 SKU 与 `monthly_quota` 月度额度配置已在 006 订阅系统落地并可通过 PayPal 一次性支付购买;统一额度消费基建(usage 服务三门面,含云端预扣-结算所需的 consume/refund)已于 000 域落地,云端接线时直接调 `online_usage_service` / `api_usage_service`,见 `@../000.架构/tech-额度基建.md` 与 `@../006.订阅系统/tech-订阅商品与状态.md`。
+- HTTP Search、HTTP Reviews 与 gosom submit/get Provider 已完成，合同见 `@tech-引擎Provider层.md`。
+- Online 的任务、结果存储、进度、恢复和下载合同见 `@tech-Online任务与结果.md`，实施清单见 `@plans/002.Online任务与结果基建.md`。
+- R2 / AliOSS 后台配置已完成，配置合同见 `@../008.管理后台/tech-系统设置.md` 的“对象存储配置”。
+- API 竞品合同已确认；Search 与 Reviews 后续按同步 REST 实现，Photos 待实现。
+- 云端正式上线仍需完成 ROADMAP B5 的长期封锁率、代理流量与 gosom Postgres 内网化 Gate。
 
 ## 产品范围
 
-### 包含
+### Online Scraper
 
-- B1 Online Scraper:关键词批量任务台(网页)、任务状态与结果导出
-- B2 API:Scraper / Reviews / Photos 三件套,密钥 + 限流
-- B4 抓取引擎（自研 HTTP RPC 为主、gosom 为备选）与代理池
-- B5 云端 POC(Gate,见 ROADMAP)
-- Email/社媒补全的云端执行(与 013 A4 同一服务端能力)
+- 登录用户按行输入关键词并提交任务。
+- 每个任务的关键词上限为 Free 2、Lite 5、Basic 10、Growth 20、Pro 50。
+- HTTP 引擎直接异步执行；gosom 的任务排队由 gosom 自身处理。
+- 任务列表展示任务编号、关键词数、已处理数、记录数、状态、创建时间和操作。
+- 用户状态只有 Processing 与 Completed。单个关键词没有产出或内部执行失败，都不增加用户状态分支。
+- 每个有结果文件的关键词可以单独下载 CSV；整个任务可以下载包含全部 CSV 的 ZIP。
+- Online 按实际产出的 records 计量；提交和执行期间不预扣，当前任务允许超过剩余额度。已经 exhausted 的账号不能继续提交新任务。
+
+### API
+
+- Search 与 Reviews 是独立的同步 REST 接口，不创建 Online 任务，也不写对象存储。
+- Search 接受查询词、页数、语言和可选坐标偏置；Reviews 接受 fid、cursor 和排序方式。
+- API 按成功受理的 HTTP 请求计量，使用 `maps_api` 独立月度额度。
+- Photos 保持待实现，不提供占位接口。
 
 ### 不包含
 
-- 插件端采集(013);营销站与登录页(015/007);计费模式决策(006/C2)
-- MCP 接口（B3 已调研，暂不入当前产品范围）
+- 插件端采集与导出，归 013 Maps 插件。
+- 登录与订阅购买，分别归 007 用户系统与 006 订阅系统。
+- MCP Server，已有调研但未进入当前实施范围。
+- 用户删除、取消或重试任务。
 
-## 业务流程
+## Online 主流程
 
-### Online Scraper 主流程(用户视角)
+1. 用户登录后进入 Online Scraper 任务台。
+2. 用户在多行输入框中逐行填写关键词并提交。
+3. 系统立即返回任务编号，任务进入 Processing。
+4. 每个关键词执行完成或内部失败收口后，已处理数增加；记录数只累计实际保存的记录。
+5. 全部关键词收口并完成实际用量计量后，任务进入 Completed。
+6. 用户可以下载单个关键词 CSV，或下载包含该任务全部可用 CSV 的 ZIP。
 
-1. 官网 Google 登录(007 域)后进入任务台(竞品称 Cloud Dashboard,证据 `@references/B1-OnlineScraper竞品口径.md`)。
-2. 新建任务:输入关键词(批量,档位决定单任务关键词数上限:免费 2 个 → 高档 200 个),提交云端。
-3. 任务开始采集：HTTP 引擎的任务直接并发执行，gosom 由上游排队；用户只在任务列表查看统一状态。
-4. 完成后导出 CSV/Excel/JSON(含 Email/社媒列,视套餐)。
-5. 额度:按产出记录数(records/月)扣减;免费档每月固定额度,无需绑卡。
-6. 团队档位含多 seats(竞品 3/10/20 座席,即将上线)。
-
-异常:任务失败(代理耗尽/封控)→ 任务标记 failed 并可重试;额度不足 → 禁止提交,引导订阅。
-
-### API 主流程(开发者视角)
-
-1. 注册并获取 API 密钥。
-2. 调用 Search、Reviews 或 Photos；Search 的同步响应或异步任务合同在 B2 技术设计时确定，不与 Online 任务入口绑定。
-3. 限流:竞品口径 300 requests/分钟;超出返回限流错误。
-4. 计量:按 requests/月,独立档位。
-
-## 界面与操作逻辑(Online 任务台)
-
-竞品任务台需登录后可见,公开口径只有定价与营销壳;界面需求按下述最小集合定义,上线前用竞品免费账号实测一轮补齐(待办)。
+## 界面与操作
 
 | 区块 | 元素 | 行为 |
 | --- | --- | --- |
-| 任务创建 | 关键词输入(单条/批量)、每任务关键词上限提示、提交按钮 | 提交后开始采集;超档位上限拒绝 |
-| 任务列表 | 表:任务名 / 关键词数 / 状态 / 记录数 / 创建时间 / 操作 | 状态实时刷新;操作 = 导出 / 重试 / 删除 |
-| 额度区 | 本期已用 / 总额度 / 重置时间 | 额度不足置灰提交 |
-| 导出 | 按任务导出 CSV/Excel/JSON | 与 013 A8 的字段 schema 对齐 |
+| 任务创建 | 多行关键词输入框 | 每行一个关键词；显示当前数量与套餐上限 |
+| 任务创建 | Submit 按钮 | 输入为空、超过套餐上限或当前额度已 exhausted 时禁用；提交中显示 loading |
+| 额度 | 已用量、总额度、重置时间 | 只展示当前月用量；运行中的任务不占用预留额度 |
+| 当前任务 | 任务编号、状态、进度、记录数 | Processing 时轮询；Completed 后停止轮询 |
+| 任务列表 | Task ID、Keywords、Records、Status、Created At、Actions | 支持分页；不提供删除、取消或重试操作 |
+| 文件列表 | 关键词、记录数、CSV 下载按钮 | 只列出已经生成对象文件的 item |
+| 整体下载 | ZIP 下载按钮 | Completed 且至少存在一个 CSV 时可用 |
 
-## 非功能性需求
+界面沿用主站现有工作台布局和响应式规则；具体尺寸、间距、状态色与组件落点在前端实施文档中定义，不在后端任务合同中重复。
 
-- **安全红线**：gosom 的 Postgres 仅内网可达；自研 HTTP 引擎不引入 Postgres。
-- **容量**：HTTP 任务并发执行，全部 Google 出站请求共享运维可调的并发预算；gosom 容量由上游 worker 数量决定。
-- **成本边界**：代理流量与封锁率按调研 §12.34 的全链路口径继续爬坡观察。
-- **隔离**：单任务失败不影响其他任务；HTTP 任务不排队，gosom 的排队由上游负责。
+## 失败行为
+
+- 单个关键词最终取数失败、对象存储失败或超过任务期限时，该关键词以 0 条收口，任务继续处理其他关键词。
+- 内部保存失败原因与错误 item 数，不向用户增加 Failed 或 Partial 状态。
+- 任务没有任何可下载 CSV 时，下载操作返回失败；用户可以重新创建任务。
+- 已按日期清理的对象不再恢复；单文件链接或 ZIP 下载失败时，用户可以重新创建任务。
+
+## 非功能需求
+
+- gosom 的 Postgres 只允许内网访问。
+- 同一个 `APP_NAME` 只部署在一台共享本地锁目录的机器上；该机器可以运行多个业务进程。
+- Online 结果写入当前启用的 R2 或 AliOSS，MySQL 不保存商家明细。
+- 设计容量为每月约 1,200 万关键词 item、6 亿结果记录；item 固定拆为 20 张同构表。
+- 对象按功能与业务日期组织，支持运维按日期前缀清理。
 
 ## 数据埋点
 
-- 任务创建/完成/失败(含关键词数、记录数、耗时、失败原因枚举)
-- 导出行为(格式、条数)
-- API 调用(密钥、端点、限流触发)
-- 额度水位(扣减事件)
+- 任务创建与完成：关键词数、实际记录数、耗时。
+- item 内部错误：Provider、阶段和错误类型；不记录凭据、代理 URL 或上游响应正文。
+- 下载：单文件或 ZIP、任务编号、文件数。
+- API：端点、请求结果、限流触发和计量结果。
 
-## 验收标准(域级)
+## 验收标准
 
-1. Gate 通过:连续 3 天批量抓取封锁率低于可接受阈值;资源画像实测完成;Postgres 内网化完成。
-2. Online:免费账号从登录 → 提交任务 → 导出全链路通过;额度扣减正确。
-3. API:密钥签发、Search/Reviews 接口、限流和计量生效；Photos 按后续产品合同验收。
-4. 引擎 Google 改版容忍：HTTP 解析器有脱敏原始响应与 golden 回归；gosom 继续跟踪上游 release。
+1. Online 用户可以提交关键词任务，刷新或业务进程重启后任务继续收口。
+2. 多进程不会在正常运行时重复执行同一个 item；崩溃重做不会重复增加进度或记录数。
+3. 每个成功或真实零结果 item 生成 CSV；Completed 任务可以分别下载 CSV 和 ZIP。
+4. Online 不预扣额度，按最终实际记录数幂等计量，并允许当前任务超过剩余额度。
+5. Search 与 Reviews API 同步返回 Provider 结果，不创建 Online 任务；Photos 接口不存在。
+6. R2 与 AliOSS 都能按 `online/{Ymd}/...` 写入和下载结果。
 
 ## 功能索引
 
-| 编号 | 功能 | 调研 |
+| 编号 | 功能 | 合同或调研 |
 | --- | --- | --- |
-| B1 | Online Scraper(登录实测:界面 + 后端契约) | `@references/B1-OnlineScraper竞品口径.md` |
-| B2 | API 三件套(官方文档全量契约) | `@references/B2-API竞品口径.md` |
-| B4/B5 | 引擎与 POC | `@../../research/google-maps-scraping-方案调研.md` |
+| B1 | Online Scraper | `@tech-Online任务与结果.md`、`@references/B1-OnlineScraper竞品口径.md` |
+| B2 | Search / Reviews API；Photos 待实现 | `@references/B2-API竞品口径.md` |
+| B4 | 引擎 Provider | `@tech-引擎Provider层.md` |
+| B5 | 云端 POC Gate | `@../../research/google-maps-scraping-方案调研.md` |

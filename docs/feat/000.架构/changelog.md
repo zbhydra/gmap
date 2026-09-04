@@ -2,7 +2,7 @@
 
 ## 2026-09-01 统一额度基建：usage 服务三线门面 + user_usage_logs
 
-**为什么**：013 U7 的 Maps 月度配额是「Redis 单轨 + config_public 兜底」的线内方案；006 产品线扩展后 maps_extension / maps_online / maps_api 三线共用同一额度语义，且 014 云端需要付费额度可审计、可退回（预扣-结算），Redis 计数与兜底链都不再成立。
+**为什么**：013 U7 的 Maps 月度配额是「Redis 单轨 + config_public 兜底」的线内方案；006 产品线扩展后 maps_extension / maps_online / maps_api 三线共用同一额度语义，且 014 云端需要按任务幂等记录实际产出，Redis 计数与兜底链都不再成立。
 
 **实际产出**：
 - 新表 `user_usage_logs`（只插入不可变流水，used = 按月 SUM(delta)，唯一键 `(product_line, user_id, request_id)` 幂等 + 覆盖索引聚合）；`usage_service` 以 `_BaseUsageService` + 三薄门面（extension/online/api）提供 `get_usage/consume/refund`，登录走 MySQL、匿名走 Redis 月度计数（Lua 原子幂等原样迁移，key 换 `usage:{line}:{ym}:{identity}`）。
