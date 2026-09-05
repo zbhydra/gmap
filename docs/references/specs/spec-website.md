@@ -65,7 +65,7 @@
 
 - 业务错误抛统一错误类型（携带 `status/code/data/failureReason`）；基础设施错误抛 `Error('详细上下文')`。
 - msg 三要素（哪里 + 什么 + 请求/响应详情），见 [[spec-code]] §2。
-- catch 后**必** `console.error(error)`；网络层失败额外上报埋点通道。
+- 在负责处理或终止异常传播的边界记录 `console.error(error)`；继续上抛且上层统一记录时不重复日志。网络层失败额外上报埋点通道。
 - 全局兜底：window error + unhandledrejection 捕获（同指纹去重），在 Layout 启动。
 - 用户可见错误用站级 toast（`type: 'error'`）。
 
@@ -75,5 +75,5 @@
 - [ ] 无 `any`，`as unknown` 仅 JSON.parse 后
 - [ ] API 对接信封成功码
 - [ ] 样式 scoped，`is:global` 仅限必要
-- [ ] catch 后 `console.error`
+- [ ] 异常在处理边界记录一次，无重复日志
 - [ ] i18n 走字典，无硬编码文案

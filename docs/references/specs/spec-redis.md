@@ -91,7 +91,7 @@ Redis 故障没有统一处理方式。每个用途必须按业务语义决定�
 | 互斥优先 | 抛 `RedisLockError` | 锁 acquire 故障 |
 
 - 禁止「默认不处理」——每种 Redis 用途都要在最接近业务 owner 的代码中说明“Redis 挂了怎么办”。fail-closed 可以直接让异常上抛，不为记录策略强加无价值 catch；fail-open、异常映射或局部失败继续执行必须显式 catch。
-- catch 后必须 `logger.error(..., exc_info=True)`，保留原始堆栈。
+- 在负责处理或终止异常传播的边界记录 `logger.error(..., exc_info=True)`，保留原始堆栈；继续上抛且上层统一记录时不重复日志。
 
 ## 8. 测试约束
 
@@ -108,5 +108,5 @@ Redis 故障没有统一处理方式。每个用途必须按业务语义决定�
 - [ ] 已按业务后果决定原子边界；需要原子的 read-modify-write 用 Lua，固定命令序列用 transaction pipeline；不需要原子的分步操作已注释失败语义
 - [ ] 锁走通用 `RedisLock` 且设 `ttl`；普通用户请求短锁没有续租/心跳
 - [ ] 每种 Redis 用途已在业务 owner 处显式决定故障策略（fail-open / fail-closed）并注释
-- [ ] catch 处 `logger.error(exc_info=True)`
+- [ ] 异常在处理边界记录一次并保留堆栈，无重复日志
 - [ ] real 测试无 FakeRedis

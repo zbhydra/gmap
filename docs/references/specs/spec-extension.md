@@ -1,7 +1,7 @@
 # Extension 工程规范（MV3 插件）
 
 > `extension/` 浏览器插件代码**强制规范**。写/改 extension 前必读。
-> ⚠️ 2026-08-29 起 `extension/` 为 Maps Extractor 插件(013 域);本文中 Telegram 页面/下载相关条款失效,工程规范(MV3/RPC/i18n/测试)继续适用。
+> `extension/` 为 Maps Extractor 插件（013 域），`extension-bing/` 为同构的 Bing Maps Scraper（016 域）。
 > 技术栈：Manifest V3 + Vue 3 + Pinia + Vue I18n + Vite 7（vite-plugin-web-extension）。
 > 关联：[[spec-website]]、注释与错误定位见 [[spec-code]]。
 
@@ -26,7 +26,7 @@
 
 ## 4. 四上下文
 
-- **background**（service_worker，常驻）、**content**（隔离 world，业务编排）、**injected**（MAIN world，捕获原生 DOM API）、**popup/options**（Vue UI）。
+- **background**（MV3 service worker，可被浏览器终止并在事件到来时重启）、**content**（隔离 world，业务编排）、**injected**（MAIN world，捕获原生 DOM API）、**popup/options**（Vue UI）。background 不得依赖模块级内存跨生命周期持久存在，需持久化的数据使用 `chrome.storage`。
 - **injected 无 `chrome.*` API**，与 content 通信用 EventRpc（CustomEvent）。
 - background `onSuspend` 时 `messageRouter.destroy()` 释放资源。
 
@@ -50,7 +50,7 @@
 - 自研 `HttpClient`（fetch + 拦截器链 + `AbortController` 超时 + 5xx 重试）。
 - 端点集中声明 `core/api/config.ts`，按域分包（auth/quota/subscription/order/...），每域 `api.ts` + `types.ts` + `index.ts`。
 - 后端信封 `{code, data, msg}`，`code === 10000` 成功（`dataExtractor`）。
-- BASE_URL 走 `__DEV__` 开关（dev `localhost:9680` / prod 域名）。
+- BASE_URL 读取构建期定义的 `__API_BASE_URL__`；环境值及默认值由各端 `vite.config.ts` 的 `resolveBuildEnvironment` 统一解析。
 - 跨域：API/SLS 域后端返回通配 CORS，官网登录走 v3 浏览器身份流程（`chrome.identity.launchWebAuthFlow` + PKCE + 一次性 code 回跳；不登记扩展 ID、无 `externally_connectable`、无 `onMessageExternal`，不进 content script、不授予 host access，合同见 007 域 `tech-第三方登录.md` §9），均**不进 `host_permissions`**；`host_permissions` 只列平台页面与媒体下载实际需要的域。
 - 鉴权拦截器栈：401 用 refresh_token 单飞刷新。
 
@@ -68,14 +68,14 @@
 
 - manifest 静态字段：`chrome.i18n`（`_locales/<locale>/messages.json` + `__MSG_`）。
 - 业务 UI：vue-i18n（`src/locales/*.json`），翻译键走 `I18N_KEYS` 常量，禁硬编码字符串。
-- **新增 locale 必须同时改 `bootstrap.ts` 的 messages map**（目前只 import 5 种，locales 有 15 个）。
+- 新增 locale 必须同步 locale 目录与 `src/locales/messages.ts` 的 `TRANSLATIONS`；支持列表以该对象和 locale 目录为准。
 - `Accept-Language` 由拦截器从 `I18nService.getCurrentLanguage()` 注入。
 
 ## 10. 错误与日志
 
 - 自研 Logger 分级（dev=DEBUG / prod=ERROR，`error` 永远输出）。生产构建仅在扩展自有 `chrome.storage.local.debug_logging` 严格等于布尔 `true` 时启用 DEBUG；background 是配置所有者，content / popup 通过 Chrome RPC 获取，content 再通过 EventRpc 同步给 injected。读取或同步失败保持 prod=ERROR，不阻塞页面业务初始化。
-- catch 后必 `logger.error` / `console.error`。
-- RPC 错误用 `RpcError` 子类（13 类），API 错误用 `ApiError(message, status, code, data)`，业务错误自动 toast（除非 `skipErrorToast`）。
+- catch 并处理或终止异常传播时，记录 `logger.error` / `console.error`；仅补充上下文后继续上抛且上层统一记录时不重复日志。
+- RPC 错误使用 `core/rpc/errors.ts` 的 `RpcError` 子类，API 错误用 `ApiError(message, status, code, data)`，业务错误自动 toast（除非 `skipErrorToast`）。
 - msg 三要素见 [[spec-code]] §2。
 
 ## 11. 权限与环境
@@ -91,7 +91,7 @@
 - [ ] 未直连 `chrome.runtime.sendMessage`（走 RPC）
 - [ ] storage key 在 `STORAGE_KEYS` 声明
 - [ ] `host_permissions` 只含平台域（API/SLS 走 CORS，官网登录走 `identity` 权限 + `launchWebAuthFlow`，无 `externally_connectable`）
-- [ ] 环境判断用 `__DEV__`
-- [ ] 新 locale 已接入 `bootstrap.ts`
+- [ ] API BASE_URL 读取 `__API_BASE_URL__`；其他环境判断用 `__DEV__`
+- [ ] 新 locale 已接入 `src/locales/messages.ts` 的 `TRANSLATIONS`
 - [ ] i18n 键走 `I18N_KEYS`，无硬编码文案
-- [ ] catch 后打印
+- [ ] catch 并处理或终止传播时已记录异常，无重复日志

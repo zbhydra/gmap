@@ -1,14 +1,13 @@
 # Python 工程规范
 
 > 后端（`backend/`）Python 代码的**强制规范**。写/改后端 Python 前必读。
-> 以源码为唯一真相：本规范条款来自 `backend/src/app/` 现有写法，不是通用 PEP8 摘抄。
+> 当前实现以 `backend/src/app/` 与配置为证据，目标合同以本规范及已批准业务文档为准。
 > 关联规范：数据访问见 [[spec-mysql]]，缓存见 [[spec-redis]]，索引见 [[spec-index]]，测试见 [[spec-test-server]]。
 
 ## 1. 工程与依赖
 
 - 用 **uv** 管理依赖与虚拟环境，禁止 `pip install` / `requirements.txt` / `pdm`。增减依赖必须经 hydra 同意。
-- **Python 版本三处对齐为 3.11**：`pyproject.toml` 的 `requires-python`、`[tool.black].target-version`、`[tool.ruff].target-version`。
-  > 现状：`requires-python = ">=3.11"` 但 black/ruff `target-version = "py313"`，不一致。新代码禁止用 3.12+ 语法（如 `type X = ...` 别名、`except*`），统一锁 3.11。
+- Python 版本以 `backend/pyproject.toml` 的 `requires-python`、`[tool.black].target-version`、`[tool.ruff].target-version` 与 `[tool.mypy].python_version` 为权威，四处必须对齐；代码不得使用超出该版本的语法。
 - 依赖版本由 `uv.lock` 锁定，提交时一并提交 lockfile。
 
 ## 2. 代码风格
@@ -100,7 +99,7 @@ raise AppCommonException(
 
 ### 6.3 try/except 约束
 
-错误中间件（`backend/src/app/middleware/error_handling.py`）统一兜底，**不要乱加 try/except**。仅以下三种情况才 catch，且 catch 后**必须** `logger.error(..., exc_info=True)`：
+错误中间件（`backend/src/app/middleware/error_handling.py`）统一兜底，**不要乱加 try/except**。仅以下三种情况才 catch；处理或终止异常传播时按 spec-code §2 记录一次，继续上抛且由上层统一记录时不重复日志：
 
 1. 释放资源（文件/连接）。
 2. 储存运行结果（部分成功也要落库的场景）。
@@ -111,7 +110,7 @@ raise AppCommonException(
 ## 7. 日志
 
 - 用 `from app.utils.logger import logger`（单例，名 `server`），不要自己 `logging.getLogger(...)`。
-- catch 住异常后**必须**打印：`logger.error("xxx failed: ...", exc_info=True)`。
+- catch 并处理或终止异常传播时打印 `logger.error("xxx failed: ...", exc_info=True)`；继续上抛且上层统一记录时不重复打印。
 - 级别走 `settings.logging.level`；`debug=True` 只影响 SQLAlchemy `echo`，与日志级别解耦。
 
 ## 8. API 层
@@ -128,7 +127,7 @@ raise AppCommonException(
 - **模块边界：service 只提供本模块的基础原子方法**，禁把其他模块的场景耦合进来。如 `user_coin_service` 只该有 `get/add/cut`，由 `user_service` 在注册流程里调用 `add`；`signup_add` 这种把注册场景写进 coin service 的写法是坏味道。
 - service 使用普通类与 **Python 模块级实例**：类保持原名，模块底部暴露唯一实例 `xxx_service = XxxService(...)`，调用方只 import 该实例。
 - session 获取与事务见 spec-mysql（`async with get_async_session() as db` + 显式 commit）。
-- 关联 model 的 service **必须**提供四个标准方法 `xxxx_lists` / `xxxx_info` / `xxxx_update` / `xxxx_del`；已在 spec-mysql §4 登记的原子数据结构例外按其专用合同执行。
+- 关联 model 的 service 按真实调用需求提供数据方法；统一命名、session、事务、分页与返回约定见 spec-mysql §4，不为完整 CRUD 预留无调用入口。
 - 禁止在 service 里写子查询（`.subquery()` / `EXISTS` 嵌套）；仅分表跨表查询等少数场景例外并注释。
 
 ## 10. i18n
@@ -146,8 +145,7 @@ raise AppCommonException(
 
 ## 12. 注释与文档
 
-复用公共注释规范（聚焦「为何」、文件顶部说明用途、函数/字段注释、权宜标 `TODO/FIXME`），见 [[spec-code]]。本文件不重复。
-
+注释条件与技术债标记统一见 [[spec-code]]，本文件不重复。
 
 ## 13. 交付前 checklist
 
@@ -157,8 +155,8 @@ raise AppCommonException(
 - [ ] 时间用 `app.utils.time` 工具，存毫秒时间戳
 - [ ] 业务异常用 `AppCommonException`，`ext_msg` 三要素
 - [ ] 新增错误码全局唯一
-- [ ] catch 处满足三条件之一且打印 `logger.error(exc_info=True)`
-- [ ] service 是类，提供 `lists/info/update/del` 四个标准方法或符合 spec-mysql 已登记例外
+- [ ] catch 处满足三条件之一，处理边界记录一次异常且无重复日志
+- [ ] service 是类，只提供真实调用需要的方法并遵守 spec-mysql 的统一约定
 - [ ] service 只提供本模块基础方法，无跨模块耦合
 - [ ] Pydantic schema 无 `extra="forbid"`
 - [ ] 改了 model → 执行 `sync_database_schema.py`（见 spec-mysql）

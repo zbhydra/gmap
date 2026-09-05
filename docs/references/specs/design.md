@@ -117,7 +117,7 @@ Material You 是 GMap Extractor 四端（website / extension / admin / 营销物
 
 | 层级 | token | 用途 |
 | --- | --- | --- |
-| 页面 | `bg`、`bg-image` | 页面底色；`bg-image` 是顶部蓝调渐变带，**全站唯一允许的渐变** |
+| 页面 | `bg`、`bg-image` | 页面底色；`bg-image` 是唯一装饰性渐变，骨架屏 shimmer 仅作状态反馈 |
 | 卡面 | `surface`、`surface-2` | 卡片/浮层实底白面；`surface-2` 为行 hover、表头带、弹窗底条、禁用底 |
 | 边框 | `border`、`border-strong` | 常规分隔线；`border-strong` 用于输入框、强分隔 |
 | 文字 | `text` / `text-2` / `text-3` | 正文 / 次级说明 / 辅助元信息（时间、ID、占位符） |
@@ -125,7 +125,7 @@ Material You 是 GMap Extractor 四端（website / extension / admin / 营销物
 | 强调 | `accent` + `fg` + `soft` | 次级信息色（Google 绿，成功/筛选 chip），不与主色混用于同一控件 |
 | 状态 | `ok` / `warn` / `bad`（各带 `-soft` 与 `-fg`） | 成功 / 警告 / 危险；`-fg` 是状态色作**实底**时的文字色（暗色主题下翻转为深字，亮色恒为白） |
 | 链接与焦点 | `link`、`ring` | 文字链接；键盘焦点环（`ring` 22% 不透明度、3px 扩散） |
-| 浮层 | `overlay`、`head-bg` | 弹窗遮罩；吸顶导航底（90% 白 + 轻模糊可选） |
+| 浮层 | `overlay`、`head-bg` | 弹窗遮罩；吸顶导航实底 |
 
 对比度基线：正文与按钮文字满足 WCAG AA（≥ 4.5:1）；`text-3` 仅用于 ≥ 12px 的辅助信息。
 
@@ -185,6 +185,6 @@ Material You 是 GMap Extractor 四端（website / extension / admin / 营销物
 - **状态色作实底时文字必须用对应 `-fg`**，不得写死白色——这是亮暗双主题共用的合同（暗色下 `-fg` 是深字）。
 - 单视图只放一个 primary 实心主按钮；`accent` 与 `primary` 不进同一控件。
 - 状态不得只靠颜色，一律颜色 + 圆点/图标/文字。
-- 渐变只允许出现在 `bg-image` 顶部带；禁止渐变文字、渐变按钮、彩色投影。
+- 渐变只允许出现在 `bg-image` 顶部带和骨架屏 shimmer 状态反馈；禁止渐变文字、渐变按钮、彩色投影。
 - 键盘可达：所有可交互元素 `:focus-visible` 显示 `ring`；不得移除 outline 而无替代。
 - 中英文混排时中文回退字体固定为 PingFang SC / Microsoft YaHei，不引入第二套无衬线家族。

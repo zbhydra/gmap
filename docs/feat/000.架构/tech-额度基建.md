@@ -83,9 +83,9 @@ total 链：`(await get_user_subscription_config(user_id, line))[1].metadata.mon
 
 失败语义（spec-redis §7，正确性优先 fail-closed）：Redis / MySQL 故障三原语统一抛 `EXTENSION_USAGE_UNAVAILABLE`（31102），错误消息带 product_line 与上下文字段；配置合同破裂（行缺失 / monthly_quota 空）抛 `PAYMENT_GATEWAY_ERROR`。插件侧对 usage 失败自行 fail-open（采集可用性优先），两侧互补。
 
-### 4.1 原子数据结构例外（spec-mysql §4 登记）
+### 4.1 接口边界与不可变合同
 
-本 service 是 spec-mysql §4 登记的第二个原子数据结构例外（第一个是 MySQL 用户 Counter）：公开任意 CRUD 会破坏「只插入 + 唯一键幂等」合同——一条 UPDATE 就能篡改历史用量、一条 DELETE 就能凭空恢复额度。因此只提供插入（consume/refund 内部）与聚合读（get_usage/SUM），不提供 `lists / info / update / del` 四标准方法。
+用量流水遵守「只插入 + 唯一键幂等」合同：一条 UPDATE 即可篡改历史用量，一条 DELETE 即可凭空恢复额度。因此只按真实调用需求提供插入（consume/refund 内部）与聚合读（get_usage/SUM），不提供任意更新或删除接口。
 
 ## 5. Online 完成后计量（014 落地约定）
 

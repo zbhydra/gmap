@@ -65,21 +65,15 @@ async with get_async_session() as db:
     await db.commit()                                         # 调用方统一提交
 ```
 
-## 4. 标准 service 方法
+## 4. service 数据方法
 
-关联 model 的 service **必须**提供这四个基础方法，且只提供基础方法（模块边界见 spec-python §9）。
+关联 model 的 service 按真实调用需求提供数据方法，不为完整 CRUD 预留无调用入口。方法保持模块边界（见 spec-python §9），同类操作统一命名：列表 `xxxx_lists`、单条 `xxxx_info`、更新 `xxxx_update`、删除 `xxxx_del`。
 
-**原子数据结构例外**：一个 service 同时路由多张同构表、且公开任意 CRUD 会破坏数据结构合同的基础设施，不强制提供四标准方法。当前已登记三个例外：
-
-- **MySQL 用户 Counter**：按固定周期路由 daily/monthly/lifetime 三表，只提供 `add/get/get_list`，禁止任意 `update/del/reset`。
-- **用户用量流水**（`usage_service` → `user_usage_logs`）：used = 按月 `SUM(delta)` 的只插入不可变流水，幂等由唯一键 `(product_line, user_id, request_id)` 承担；只提供 `get_usage/consume/refund`（插入 + 聚合读），禁止任意 `update/del`——一条 UPDATE 即可篡改历史用量、一条 DELETE 即可凭空恢复额度。
-- **Online 任务 item**（`maps_online_task_service` → `maps_online_task_items_00` 至 `_19`）：全部操作必须携带 `task_id` 并只访问 `task_id % 20` 对应表；只提供任务创建、任务内查询和 `report_item`，不开放脱离父任务路由的任意 CRUD。
-
-新增例外必须先更新本规范并写明为何标准 CRUD 会破坏合同，不能只在业务代码中自行绕过。
+不可变流水、分表路由等业务约束属于对应域的 canonical 技术合同；service 只暴露符合该合同的操作，不在本规范维护 CRUD 例外名单。
 
 ### `xxxx_lists` —— 全能查询
 
-- 条件与排序**支持该 model 所有数据库字段**；每个过滤字段 `Sequence[X] | None`，`None` 跳过，**数值型过滤必须是数组**。
+- 条件与排序只支持真实调用需要的字段；多值过滤用 `Sequence[X] | None`，`None` 表示不加该条件，数值型多值过滤也使用数组。
 - **直接返回 model 列表，不做 DTO / 字段裁剪**——暴露完整 model 是优点，调用方各取所需。
 - 过滤条件抽 `_apply_xxx_filters` helper，供 `xxxx_lists` 与 `count_xxxx` 复用，禁止两处分别手写 where 漂移。
 
@@ -107,15 +101,9 @@ async def order_lists(
 
 ### `xxxx_update(id, fields: dict)`
 
-- 可更新任意字段。**值为 `None` 的字段跳过不更新**（区分「不更新」与「置空」——置空传空串 / 0 等非 None 值）。
+- 通用更新方法接收字段字典：未提供的字段或值为 `None` 的字段不修改；写入 SQL `NULL` 时显式传入 SQLAlchemy 的 `null()`。空串和 `0` 按原值更新，不代表 SQL `NULL`。
+- 仅过滤 `value is None`，其余值交给 SQLAlchemy；`null()` 不会被该过滤条件移除。字段是否允许 SQL `NULL` 由模型与数据库约束决定。
 - 走 SQL 层 `UPDATE`，禁先 SELECT 加载再逐字段改。
-
-```python
-# None 字段过滤掉
-await db.execute(
-    update(M).where(M.id == id).values(**{k: v for k, v in fields.items() if v is not None})
-)
-```
 
 ### `xxxx_del(ids)`
 
@@ -166,8 +154,8 @@ uv run python -m app.init.sync_database_schema --yes
 - [ ] session 走 `async with get_async_session() as db`，不用 `Depends`
 - [ ] service 方法只 `commit`，未重复包 `try/except rollback`
 - [ ] 跨 service 事务用 `xxx_in_session(db, ...)`
-- [ ] 提供 `lists/info/update/del` 四标准方法，或属于 §4 已登记的原子数据结构例外
-- [ ] 数值型过滤条件是数组，过滤抽 helper 复用
+- [ ] 只提供真实调用需要的数据方法，同类操作命名统一
+- [ ] 多值过滤条件使用数组，过滤抽 helper 复用
 - [ ] 无普通请求 DB 悲观锁/表锁；没有「先 DB 加锁、再查判断、再更新」
 - [ ] 无子查询（或已注释说明例外）
 - [ ] 批量改/删走 SQL 层 `UPDATE`/`DELETE`

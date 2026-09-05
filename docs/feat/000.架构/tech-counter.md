@@ -107,7 +107,7 @@ get_list(user_id: int, counter_ids: list[int]) -> dict[int, int]
 - `get_list` 先校验全部 ID，再按周期分组，最多查询三张表；返回结果包含全部输入 ID，未命中补 `0`。
 - 每个公开方法自行获取 session；签名不出现 `db`、`session` 或调用方事务。
 - 数据库、注册表和参数错误直接向上抛，不 catch、不降级、不重试。
-- 这是 spec-mysql §4 登记的跨三表原子数据结构例外；不提供会破坏只增合同的任意 CRUD。
+- 按真实调用需求只暴露 `add/get/get_list`；跨三表路由与只增合同禁止任意 CRUD。
 - 不提供减计数、reset、delete、任意客户端 HTTP API 或匿名设备合并。
 
 ### 5.1 原子累加

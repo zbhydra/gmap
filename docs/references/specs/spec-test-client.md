@@ -1,7 +1,7 @@
 # 客户端测试规范
 
-> `website`（Astro 静态站）与 `extension`（MV3 插件）测试**强制规范**。写/改前端测试前必读。
-> 两端测试体系完全独立，分章遵守。
+> `website`（Astro 静态站）、`admin` 与 `extension*`（MV3 插件）测试**强制规范**。写/改前端测试前必读。
+> 各端测试体系独立，分章遵守。
 > 关联：[[spec-website]] [[spec-extension]]、设计系统 `design.md`。
 
 ## 1. 总则
@@ -24,7 +24,7 @@
 - **纯函数测试标准手法**：tsc 编译到临时目录 + 动态 import + patch `import.meta.env.*`（参考 `importCompiledTypescriptModule` / `patchCompiledBrowserModuleFiles`）。
 - DOM/浏览器全局：手写 fake（`installGoogleScriptDom` / `installSlsBrowserGlobals` 等）+ 替换 `globalThis.fetch` / `window` / `document` / `navigator`。
 
-### 2.2 e2e：Playwright 双轨
+### 2.2 e2e：Playwright
 
 - 目录 `website/e2e/*.spec.ts`。
 - 浏览器身份由各端自持脚本管理（website：`website/scripts/playwright-browser-identity.mjs`；
@@ -36,15 +36,13 @@
   `navigator.webdriver` 与 Client Hints brands。
 - `browser-identity.spec.ts` 是身份回归门禁，断言 JS 侧 UA 与 `navigator.webdriver`
   不暴露自动化标识。该门禁只证明没有已知自曝字段，不承诺绕过 Cloudflare/WAF。
-- **mock 跑**（默认）：4 浏览器 project（chromium / firefox / webkit / Mobile Chrome），`webServer` 把 `PUBLIC_API_BASE_URL` 强制指向 `http://homepage-api.test`，spec 内 `page.route('**/api/client/**')` mock 后端。`testIgnore` 排除 smoke spec。
-- **真实 smoke**：独立 `parse-download-smoke` project（`testMatch` SMOKE_SPEC），需设 `E2E_REAL_API_BASE_URL`，`globalSetup` 用后端 `e2e_seed_user.py` seed 账号并注入 token。
+- website 的浏览器 project、后端隔离方式与启动命令以 `website/playwright.config.ts` 和 `website/package.json` 为准。
+- admin 的浏览器 project 与入口以 `admin/playwright.config.ts` 和 `admin/package.json` 为准。
 - 断言：Playwright 原生 `expect`（`toHaveTitle` / `toBeVisible` / `toContainText` / `toHaveCount`），用 locator auto-wait，禁 fixed sleep。
 
 | 命令 | 说明 |
 |------|------|
-| `pnpm test:e2e` | mock 跑（4 浏览器） |
-| `pnpm test:e2e:parse-smoke:single-backend` | 真实 playwright smoke（设 `E2E_REAL_API_BASE_URL`） |
-| `pnpm test:e2e:parse-smoke` | ⚠️ **实际调 backend python 脚本**（`e2e_parse_download_multi_node_smoke.py`），非 playwright，注意区分 |
+| `pnpm test:e2e` | 运行当前端 `playwright.config.ts` 定义的项目 |
 
 ## 3. extension 测试
 
@@ -55,23 +53,18 @@
 - **覆盖率 80% 硬门槛**（lines / functions / branches / statements，v8 provider）。
 - 范式：`vi.stubGlobal('__DEV__', ...)` + 动态 import；`vi.mock` 替换 logger / storageManager / Router。
 - 命令：`pnpm test:unit:run` / `test:coverage`。
-- ⚠️ `setup.ts` 把 `console.log/warn/error/info` 全 mock 成 `vi.fn`，单测里看不到错误日志——与「catch 必 console.error」规范冲突，**单测除外**。
+- `setup.ts` 把 `console.log/warn/error/info` mock 成 `vi.fn`；需要验证日志行为时必须显式断言 mock 调用。
 
 ### 3.2 e2e：Playwright + 加载 unpacked 扩展
 
-- 用 `launchPersistentContext` + `--load-extension=dist --disable-extensions-except=dist` 加载扩展（`tests/fixtures.ts`），从 service worker URL 反解 `extensionId`。
+- 用 `launchPersistentContext` + `--load-extension=dist-real --disable-extensions-except=dist-real` 加载扩展（`tests/e2e/harness.ts`），从 service worker URL 反解 `extensionId`。
 - 持久化 context 与 profile setup 使用支持
   `--load-extension` 的完整 Chromium headed 模式，并在任何站点页面创建前安装身份 init
   script。新版稳定 Google Chrome 不允许这条 unpacked extension 启动链路，禁止用于插件 E2E。
-- 目录：`tests/e2e/*.spec.ts`、`tests/manual/*.manual.spec.ts`（manual 仅 `E2E_INCLUDE_MANUAL=1` 入发现）。
+- 目录与测试发现以各端 `playwright.config.ts` 的 `testDir` / `testIgnore` / project 为准。
 - **extension（013 Maps Extractor）e2e 为真实界面单层（2026-09-02 起）**：禁止 route mock 站点页面、本地 fixture 页与本地 mock 服务，直接打开真实 `www.google.com/maps` 采集真实数据。Google 同意页自动接受；环境波动（人机验证/落地域偏离/DOM 改版）条件化 skip 并记 skip-reason，插件自身行为（三态/暂停/计数/导出）失败照常 fail。Playwright 必须做反自动化身份处理（去 `--enable-automation` + `--disable-blink-features=AutomationControlled` + 身份兜底 init script，website browser-identity 同款）。登录流程不做 e2e：登录态由 `backend/scripts/e2e_seed_user.py`（`maps-extension-pro` 场景）签发真实 token 对，spec 经扩展 service worker 直写 `chrome.storage.local` auth 三键；本地 backend（127.0.0.1:7600）不可达时登录态用例 skip，匿名用例不受影响。采集间隔等用户设置经同一 `chrome.storage` 通道直注（真实用户可设的同一通道，压有界时长）。构建变体 `dist-real`（API 指向本地 backend、SLS 构建期禁用）随 `pnpm test:e2e` 前置产出。
-- `extension/` 现有真实 project 继续按平台注册表执行；真实 Telegram project 只在 `E2E_INCLUDE_TELEGRAM_REAL=1` 时加入测试发现。
-- Playwright 配置使用 `fullyParallel=false`、`workers=1`；所有 Telegram project（real、
-  ad-assets、manual）固定 `retries=0`。每条 Telegram test 开始时先关闭 persistent
-  context 遗留的普通页和 Telegram 页，再创建 fresh page，结束时关闭本 test 页面。
-- controlled E2E 的 fixture 必须集中在测试入口，只覆盖当前验收需要的站点合同；不得增加生产测试开关、第二套启动框架或组件级假 E2E。真实 Canary 禁止替换站点 document、DOM、结构化数据与媒体响应。
-- 真实 Telegram 下载只允许固定 `/api/client/quota/check`，避免持久 profile 的线上每日额度污染；必须断言配额调用次数，Telegram DOM、媒体请求和 Chrome 下载不得 mock。
-- Instagram 重新启用后的真实验收固定 Home/Story/Post/Carousel/Reel/Profile 样本；Home 必须滚动覆盖真实视频 current/all，并覆盖图片轮播切换前后按钮绝对序号、可见 media ID 和当前项下载；Story 必须在自动播放状态下载当前张、点击原生下一项并下载新当前张；详情 Carousel 必须覆盖虚拟化 DOM 跨窗口切换后的 current/all 按钮、绝对序号和当前项下载。只允许固定 `/api/client/quota/check`；页面 DOM、结构化数据、媒体请求与 Chrome 下载不得 mock，落盘文件必须逐字节匹配点击后的 CDN 响应。
+- Playwright 配置使用 `fullyParallel=false`、`workers=1`；执行范围以各端配置中的 project 与 `tests/e2e/` 为准。
+- 不得增加生产测试开关、第二套启动框架或组件级假 E2E。
 - **chrome.* 是真实浏览器实现**，不 mock；`chrome.storage` 直接在 page 里操作。
 - **extension-bing（016）e2e 为真实界面单层（2026-09-02 起）**：禁止 route mock 站点页面与
   本地 fixture 页，直接打开真实 `www.bing.com/maps` 采集真实数据；Playwright 必须做反自动化
@@ -84,35 +77,19 @@
   合同见 `docs/feat/016.Bing插件/references/T1-技术设计.md` §6。
   随 v3 移除 manifest 固定 key，扩展 ID 不可预知：service worker 定位、事件 origin 过滤一律从
   `context.serviceWorkers()` 动态提取，禁止写死 `EXTENSION_ID` 常量。
-- Vimeo 重新启用后使用真实公网固定样本；只允许屏蔽 SLS 埋点请求，站点页面、配置、媒体和下载不得 mock。Cloudflare challenge 只能记为环境 skip，不能记为通过。
-- 登录态：所有 Telegram setup、real、ad-assets、manual 和 verify 入口固定使用同一个绝对
-  profile：`extension/tests/logs/test-user-data-telegram/`，不提供 profile 参数或环境变量。
-  `pnpm test:setup` fresh build 后关闭恢复出的普通页和 Telegram 页，再创建唯一 fresh owner
-  Page；同一页面先等待并确认 A 登录成功，再导航 K 并等待、确认 K 登录成功，任一时刻只有一个
-  用于验证的 Telegram Page。A 使用 `.Auth` 与 `#Main #LeftColumn-main` 判断页面状态；K 使用
-  `#auth-pages`、
-  `body.has-auth-pages` 已移除且 `#page-chats` 可见。A 命中应用终态后等待 5 秒并复查一次；
-  K 命中应用终态后固定等待 30 秒再复查，A/K 都通过复查后 setup 自动关闭；真实可用性由随后 A/K smoke 验证，失败时重新执行 setup。
-  日常 E2E 只读取 profile，不重复运行 setup。
-  Instagram setup 在
-  `tests/logs/test-user-data-instagram/` 中维护人工登录 profile 并导出 storage state，real
-  project 每个用例把快照恢复到独立临时 profile；Vimeo 使用 `tests/logs/test-user-data/`。
+- 外部环境导致的挑战页、网络不可达或落地域偏离可以带明确原因 skip；插件自身行为失败必须 fail。报告必须区分通过、失败、环境 skip 与未执行，必需验收不足不能因退出码 0 判为完成。
 
 | 命令 | 说明 |
 |------|------|
 | `pnpm test` / `test:unit:run` | vitest 单元测试 |
 | `pnpm test:e2e` | 构建前置 `pnpm build:real` + playwright 真实界面 e2e（headful，真实出网） |
-| `pnpm test:clean` | 清理 tests/logs 运行输出 |
+| `pnpm test:clean` | 仅 `extension/` 提供：清理 tests/logs 运行输出 |
 
 ## 4. 数据、登录态与清理
 
-| | website smoke | extension 真实跑 | extension-bing 真实 e2e | extension maps 真实 e2e |
-|---|---|---|---|---|
-| 账号 | 后端 `e2e_seed_user.py` seed，**不清理** | Telegram profile 与 Instagram storage state 保留登录态，不创建账号 | `e2e_seed_user.py` `bing-extension-pro` 场景 seed（幂等，**不清理**） | `e2e_seed_user.py` `maps-extension-pro` 场景 seed（幂等，**不清理**） |
-| token | `globalSetup` 注入 env（`E2E_ACCESS_TOKEN` / `E2E_DEVICE_ID`），spec 写 localStorage | Telegram profile / Instagram storage state | `globalSetup` 注入 env（`E2E_BING_AUTH`），spec 经扩展 SW 写 `chrome.storage.local` auth 三键 | `globalSetup` 注入 env（`E2E_MAPS_AUTH`），spec 经扩展 SW 写 `chrome.storage.local` auth 三键 |
-| 隔离 | project + env 切 base URL | Instagram 使用逐用例 profile；`testRunId`（`e2e-{ts}-{6}`）隔离下载目录 | 每用例独立临时 persistent profile（unpacked 扩展 ID 按 profile 派生） | 每用例独立临时 persistent profile（unpacked 扩展 ID 按 profile 派生） |
-
-两端都不做严格 DB 清理，依赖 fixture / seed / profile 隔离。
+- Maps/Bing 登录态由 `backend/scripts/e2e_seed_user.py` 的对应场景幂等签发，spec 经扩展 SW 写 `chrome.storage.local`；本地 backend 不可达时只 skip 登录态用例。
+- 每个真实用例使用独立临时 persistent profile，扩展 ID 从该 context 的 service worker 动态提取。
+- 测试数据依赖 seed 与 profile 隔离，不做无业务价值的严格 DB 清理。
 
 ## 5. 每个 feat 的 e2e 必含
 
@@ -130,24 +107,21 @@
 | extension e2e 用 `page.route` mock chrome API | chrome.* 用真实浏览器实现，单测才 mock |
 | extension-bing e2e route mock 站点页面或使用本地 fixture 页 | 会把真实界面验收降级为 fixture 验收（2026-09-02 hydra 拍板，真实界面为唯一主验收） |
 | extension maps e2e route mock 站点页面、使用本地 fixture 页或本地 mock 服务 | 同上（2026-09-02 拍板，真实 Google Maps 界面为唯一主验收） |
-| 用 component mount 代替 controlled extension e2e | 无法证明 background、content、injected、Manifest 与真实 Chrome API 启动链 |
-| 真实 Canary route 站点页面、DOM、结构化数据或媒体 | 会把外部兼容性验收降级为 fixture 验收 |
-| 默认测试或并发进程读取固定登录 profile | 增加 Telegram session 风险与 Chromium profile 锁冲突 |
-| 固定账号 / ID / 文件名（extension 下载目录已用 testRunId 隔离） | 并行污染 |
+| 用 component mount 代替 extension e2e | 无法证明 background、content、injected、Manifest 与真实 Chrome API 启动链 |
+| 绕过既定 seed/profile 合同硬编码共享账号、token 或文件名 | 破坏幂等 seed 与逐用例隔离，造成并行污染 |
 
 ## 7. checklist
 
 **website**
 - [ ] 纯函数用 `importCompiledTypescriptModule` 编译 + import
 - [ ] e2e mock 跑用 `page.route` + 假 base URL
-- [ ] smoke 用独立 project + `E2E_REAL_API_BASE_URL`
 - [ ] 每个 spec 已注册 `registerE2eBrowserIdentity(test)`，身份门禁通过
 - [ ] 断言用 locator auto-wait，无 fixed sleep
 
 **extension**
 - [ ] 单测 chrome mock 走 `tests/mocks/chrome-api.ts`
 - [ ] 覆盖率达 80%
-- [ ] e2e 用统一完整 Chromium headed 身份的 `launchPersistentContext --load-extension=dist`
-- [ ] controlled hard gate 加载 fresh-built unpacked extension 并证明 background/content/injected 启动，不只挂组件
-- [ ] 真实 Canary 只有配额接口和 SLS 埋点允许固定响应；站点页面、媒体、通用项目 API 与 chrome.* 不 mock
-- [ ] 登录态只走显式 Canary 的固定持久化 profile，串行使用且不复制用户 profile
+- [ ] e2e 用统一完整 Chromium headed 身份的 `launchPersistentContext --load-extension=dist-real`
+- [ ] E2E 加载 fresh-built unpacked extension 并证明 background/content/injected 启动，不只挂组件
+- [ ] Maps/Bing 真实站点页面与 chrome.* 不 mock
+- [ ] 报告已区分通过、失败、环境 skip 与未执行，必需验收证据充足
