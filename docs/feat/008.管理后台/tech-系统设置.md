@@ -10,7 +10,7 @@
 - 生成 / 轮换当前管理员的外部 API Key。
 - 维护 gosom 抓取引擎的多条 API 配置(地址 / Key / 权重,存 `system_data`,调用方按权重随机选用)。
 - 维护 Maps 云端的引擎选择、代理 URL 列表与每进程出站并发预算。
-- 维护 R2 / AliOSS 对象存储配置与当前启用项。
+- 维护多套 R2 / AliOSS 对象存储配置与当前启用项。
 
 除这些明确入口外,它不是通用配置编辑器。
 
@@ -233,26 +233,7 @@ API Key 生成格式:
 
 ## 对象存储配置
 
-系统设置页提供“对象存储” tab，供管理员读取、编辑 R2 与 AliOSS 两组配置，并指定当前启用项。本节只定义后台配置读写与对应界面；Online 对配置的快照和使用方式见 `@../014.Maps云端/tech-Online任务与结果.md`。
-
-### 文件树
-
-```text
-[修改] backend/src/app/api/admin/admin_system_settings.py
-[新增] backend/src/app/constants/object_storage.py
-[修改] backend/src/app/core/database.py
-[修改] backend/src/app/schemas/admin_schema.py
-[新增] backend/src/app/services/object_storage_config_service.py
-[修改] backend/tests/integration/real/api/admin/conftest.py
-[修改] backend/tests/integration/real/api/admin/test_admin_system_settings_real.py
-[修改] admin/src/api/system-settings.ts
-[修改] admin/src/i18n/zh-CN.json
-[修改] admin/src/i18n/en-US.json
-[修改] admin/src/views/SystemSettingsView.vue
-[修改] admin/e2e/system-settings.spec.ts
-```
-
-不删除文件。后端 real 测试覆盖 Admin API 合同与 `system_data` 持久化，Admin E2E 覆盖双配置界面与整对象提交。
+系统设置页提供“对象存储” tab，供管理员维护多套 R2 与 AliOSS 配置，同一服务类型可以有多套账号或 bucket，并选择一套供新任务使用。本节只定义后台配置读写与对应界面；Online 的配置绑定与旧对象过期合同见 `@../014.Maps云端/tech-Online任务与结果.md`，改造文件与执行步骤见 `@../014.Maps云端/plans/002.Online任务与结果基建.md` U1。
 
 ### 数据规格
 
@@ -265,32 +246,41 @@ API Key 生成格式:
 
 ```json
 {
-  "active": "R2",
-  "R2": {
-    "account_id": "",
-    "bucket": "",
-    "access_key_id": "",
-    "secret_access_key": ""
-  },
-  "AliOSS": {
-    "endpoint": "",
-    "bucket": "",
-    "access_key_id": "",
-    "access_key_secret": ""
-  }
+  "active_id": "550e8400-e29b-41d4-a716-446655440000",
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "R2 主存储",
+      "provider": "R2",
+      "account_id": "<account-id>",
+      "bucket": "online-a",
+      "access_key_id": "<access-key-id>",
+      "secret_access_key": "<secret>"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "AliOSS 旧存储",
+      "provider": "AliOSS",
+      "endpoint": "https://oss-cn-hangzhou.aliyuncs.com",
+      "bucket": "online-b",
+      "access_key_id": "<access-key-id>",
+      "access_key_secret": "<secret>"
+    }
+  ]
 }
 ```
 
 存储与校验规则：
 
-- `active` 只接受 `R2` 或 `AliOSS`，键名与枚举值大小写固定。
-- 所有字符串保存前剔除首尾空白，单字段最长 500 个字符。
-- 仅 `active` 指向的配置块要求四个字段均非空；未启用配置块允许为空或不完整，但仍执行字符串长度与 endpoint 格式校验。
-- `AliOSS.endpoint` 只接受 `http` 或 `https`，必须包含 host，不得包含用户名、密码、query 或 fragment，path 只能为空或 `/`；保存时删除末尾 `/`。
-- R2 配置不包含 endpoint 或 region。
-- 两组凭据均明文写入 `system_data`，GET 原值回显。请求体、响应体与凭据不得写入日志、后端异常消息、错误响应详情或前端错误通知；共享 SQLAlchemy engine 设置 `hide_parameters=True`，确保 SQL 日志与 `StatementError` 隐藏绑定参数值。
-- 无 `object_storage` 行时返回上述固定结构的空配置，`active` 默认为 `R2`。已有行按 POST Request 合同读取校验，包括 `active` 配置块完整性；存量脏数据不回显，返回不含凭据的通用内部错误。
-- POST 按固定结构整对象覆盖保存，保存成功后返回归一化结果。
+- `items` 中每项有唯一 UUID `id`、显示名称 `name` 与 `provider`；`provider` 只接受 `R2 / AliOSS`，配置字段按对应类型校验。同类型条目可以重复，ID 不能重复。
+- ID 由新增动作使用浏览器原生 `crypto.randomUUID()` 生成，固定保存为 36 字符字符串，不可编辑或复用。名称必填、最长 100 字符；其余配置字符串保存前剔除首尾空白，单字段最长 500 字符。
+- 非空列表必须有一个有效 `active_id` 指向列表内条目；空列表的 `active_id` 为 `null`。切换启用项只改变该引用。
+- 每个已保存条目的名称和该类型全部配置字段均必填，未启用条目也必须完整，因为历史任务仍会读取它。
+- R2 字段为 `account_id / bucket / access_key_id / secret_access_key`；AliOSS 字段为 `endpoint / bucket / access_key_id / access_key_secret`。AliOSS endpoint 只接受 `http / https`，必须有 host，不含用户名、密码、query 或 fragment，path 只能为空或 `/`；保存时删除末尾 `/`。
+- 已有 ID 的服务类型、账号定位和 bucket 不可原地变更；API 保存时与已有条目比对。R2 定位为 `account_id / bucket`，AliOSS 定位为 `endpoint / bucket`。可修改名称及轮换访问同一位置的凭据；更换存储位置通过新增配置完成。
+- 凭据明文写入 `system_data`，GET 原值回显。请求体、响应体与凭据不得写入日志、后端异常消息、错误响应详情或前端错误通知；共享 SQLAlchemy engine 使用 `hide_parameters=True`。
+- `object_storage_config_service.get_config` 通过 `system_data_service.system_data_info` 直接读取对应单行，不使用进程级配置缓存，确保保存后后续读取拿到新启用项与配置列表。无行时返回 `{active_id: null, items: []}`；已有行按新结构校验，非法数据返回不含凭据的内部错误。
+- POST 整对象覆盖保存，增删条目与启用切换在同一次提交中生效。管理员在旧对象过期后删除旧配置；删除配置不删除 bucket、对象或历史任务，不扫描业务任务判断是否允许删除。
 
 ### 接口
 
@@ -303,20 +293,18 @@ GET 响应 `data` 与 POST 请求、响应 `data` 均采用“数据规格”的
 
 ### UI 与交互
 
-- “对象存储”作为系统设置页分段 tab；内容沿用页面现有 `NCard` / `NTabs` 主题色、字号、边框与悬停/按压状态，不新增自定义色值。
-- 当前启用项使用 R2 / AliOSS 分段控件。切换只修改 `active`，不隐藏、禁用或清空任一配置块，也不立即提交。
-- R2 与 AliOSS 两组表单同时展示且均可编辑，已加载或已编辑的值保留到保存完成或页面离开。R2 包含 Account ID、Bucket、Access Key ID、Secret Access Key；AliOSS 包含 Endpoint、Bucket、Access Key ID、Access Key Secret。`secret_access_key` 与 `access_key_secret` 使用 password input，其余字段使用文本输入；GET 返回值完整回填，不做服务端脱敏。
-- 表单宽度占满 tab 内容区，字段纵向排列，字段间距 16px，标签与输入间距 8px；窄屏保持单列且不得横向滚动。
-- 保存按钮位于右下操作区。加载时表单禁用并显示 loading；保存时按钮 loading 且禁止重复提交；保存成功以后端归一化结果回填，失败只显示不含字段值的 i18n 通知并保留当前编辑内容。
-- 前端保存前只校验 `active` 配置块的四字段完整性；`active=AliOSS` 时同时校验 endpoint 的完整规则。校验失败时不发送 POST 并显示不含字段值的 i18n 提示；未启用配置块不做前端校验。后端仍是最终校验边界。
-- tab 切换沿用现有 `NTabs` 动画，不增加额外过渡。
+- “对象存储”作为系统设置页 tab，沿用现有 Naive UI 布局。列表展示启用单选项、名称、服务类型、bucket 与编辑、删除操作；新增按钮打开类型选择与对应配置表单。
+- 启用项使用单选控件，编辑和删除使用带可访问名称的图标按钮；切换和删除只修改本地表单，统一点击保存后提交。
+- 新条目可选择 R2 或 AliOSS，填写名称及对应类型的字段；已有条目的 ID、类型与存储定位只读，可编辑名称及凭据。编辑表单中的 secret 使用 password input，GET 返回值完整回填。
+- 删除当前启用项时，保存前必须另选一项或清空列表；删除操作需要确认，保留已保存的其余配置及其 ID。
+- 加载时表单禁用；保存时显示 loading 并禁止重复提交。保存成功以后端归一化对象回填，失败保留编辑内容。校验、错误与按钮文案全部走中英文 i18n，不展示凭据值。
 
 ### 验收
 
-- 未配置时打开 tab，R2 为启用项，两组字段为空；保存完整 R2 后重载，所有字段和启用项一致回显。
-- 切换为 AliOSS 并填写完整配置后保存，`system_data.data_key` 为 `object_storage`，`data_value` 保持固定双配置结构，末尾 `/` 从 endpoint 中删除。
-- 当前启用配置任一字段为空，或启用 AliOSS 时 endpoint 非法，前端不发送 POST 并显示提示；未启用配置为空、不完整或格式非法均不阻止前端提交。
-- `active` 非法、字符串超长，以及 AliOSS endpoint 的 scheme、host、认证信息、query、fragment 或 path 不符合规则时，后端拒绝保存。
+- 未配置时列表为空且无启用项；同时新增两套 R2 和两套 AliOSS 后保存，重载时字段、固定 ID 与启用项一致。
+- 切换启用项、修改名称或轮换凭据时，其余条目和历史 ID 保持不变；后续配置读取不等待进程缓存过期。
+- 删除非启用旧配置后，其余条目仍可读取和选择；删除当前启用项时必须一并选择其他条目或清空列表。
+- 重复 ID、不存在的启用 ID、缺少必填字段、非法 endpoint 及变更已有条目存储定位时，API 拒绝保存且不泄漏字段值。
 - GET 与 POST 均要求管理员鉴权；日志、后端异常消息、错误响应详情与前端错误通知中不出现 access key、secret 或完整请求/响应体。
 
 ## 实现锚点
