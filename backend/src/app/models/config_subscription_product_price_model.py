@@ -1,6 +1,6 @@
 """订阅商品渠道价格配置表模型。"""
 
-from sqlalchemy import BigInteger, Boolean, String, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseDBModel
@@ -27,6 +27,13 @@ class ConfigSubscriptionProductPriceModel(BaseDBModel):
     )
     channel_code: Mapped[str] = mapped_column(
         String(32), nullable=False, comment="支付渠道标识"
+    )
+    auto_renew_supported: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("0"),
+        comment="是否允许当前商品以渠道自动续费方式下单",
     )
     currency: Mapped[str] = mapped_column(String(8), nullable=False, comment="币种")
     amount: Mapped[int] = mapped_column(

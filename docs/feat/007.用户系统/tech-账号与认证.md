@@ -336,29 +336,10 @@ Website Pro 恢复登录态时，HTTP 401 与 HTTP 200 但业务码非 10000 都
 | `avatar_url` | str\|null | 头像 |
 | `created_at` | int | 创建时间(毫秒) |
 | `credits_balance` | int | Credits 余额(默认 0,积分系统读) |
-| `current_subscription` | object | 当前订阅与插件次数摘要;Free 也返回结构化对象 |
+| `subscription` | object | extension 线订阅摘要;Free 也返回结构化对象 |
+| `maps_extension_subscription` / `maps_online_subscription` / `maps_api_subscription` | object | maps 三线订阅摘要,与 `subscription` 同构;旧客户端忽略即可 |
 
-`current_subscription` 字段:
-
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `product_id` | str | 当前权益商品;Free 返回 `free` |
-| `display_name` | str | 订阅展示名 |
-| `billing_mode` | str\|null | 当前权益来源购买模式 |
-| `payment_method` | str\|null | 最近成功扣款渠道 |
-| `cancel_at_period_end` | bool | 本站是否已确认到期停止续费;可能晚于渠道后台状态 |
-| `expires_at` | int\|null | 到期时间(毫秒);Free 为 null |
-| `extension_download` | object | 插件今日下载次数对象 |
-
-`current_subscription.extension_download` 字段:
-
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `use` | int | 今日已用次数;不限次数时返回 0 |
-| `remaining` | int | 今日剩余次数;Unlimited 返回 -1 |
-| `limit` | int | 今日上限;Free=5,Unlimited=-1 |
-
-这个字段服务 website pricing、账号入口和已登录 website 展示。插件端和匿名设备的订阅权益与今日次数状态仍读取订阅系统状态接口。
+订阅摘要对象结构(六字段合同)与降级口径以 `@../006.订阅系统/tech-订阅商品与状态.md`「订阅状态响应」为唯一口径,本文不重复。这个字段服务 website pricing、账号入口和已登录 website 展示;插件端和匿名设备的订阅状态仍读取订阅系统状态接口。
 
 ### 8.5 响应 schema(`UserInfo` / `LoginResponse`)
 

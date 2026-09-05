@@ -538,7 +538,8 @@ export const enUS: SiteContent = {
         orderNotFound: 'Order is no longer available. Create a new order.',
         orderExpired: 'Order expired. Please buy again.',
         fulfillmentFailed: 'Payment was received but Credits were not added yet. Please retry later.',
-        authExpired: 'Sign-in expired. Sign in again to continue.'
+        authExpired: 'Sign-in expired. Sign in again to continue.',
+        popupBlocked: 'Your browser blocked the new window. Allow MapsGrab to open pop-ups and try again.'
       },
     },
     pricing: pricingContent,

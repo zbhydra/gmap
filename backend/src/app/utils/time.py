@@ -4,6 +4,7 @@
 +8 时区，应在对应模块显式处理，不修改本公共工具的默认语义。
 """
 
+import calendar
 from datetime import date, datetime, time, timedelta
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -43,6 +44,17 @@ def datetime_to_timestamp(dt: datetime) -> Timestamp:
 def timestamp_to_datetime(ts: Timestamp) -> datetime:
     """将毫秒级时间戳转换为服务器时区 datetime。"""
     return datetime.fromtimestamp(ts / 1000, tz=system_timezone())
+
+
+def add_natural_months(ts: Timestamp, months: int) -> Timestamp:
+    """按业务时区增加自然月，目标月份没有原日期时取月末。"""
+
+    current = timestamp_to_datetime(ts)
+    month_index = current.year * 12 + current.month - 1 + months
+    year, month_index = divmod(month_index, 12)
+    month = month_index + 1
+    day = min(current.day, calendar.monthrange(year, month)[1])
+    return datetime_to_timestamp(current.replace(year=year, month=month, day=day))
 
 
 def timestamp_to_datetime_str(ts: Timestamp, format: str = "%Y-%m-%d %H:%M:%S") -> str:

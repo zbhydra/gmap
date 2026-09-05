@@ -7,10 +7,12 @@
 import json
 from typing import Any
 
+from app.constants.payment import CLINK_PAYMENT_METHOD, PAYPAL_PAYMENT_METHOD
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
+from app.provider.payment.clink import ClinkPaymentProvider
 from app.provider.payment.payment_base import PaymentBase, PaymentProviderError
-from app.provider.payment.paypal import PAYPAL_PAYMENT_METHOD, PayPalPaymentProvider
+from app.provider.payment.paypal import PayPalPaymentProvider
 from app.provider.payment.tg_star import (
     TELEGRAM_STARS_PAYMENT_METHOD,
     TgStarPaymentProvider,
@@ -66,6 +68,8 @@ class PaymentService:
         """用已解析渠道配置构造对应 provider。"""
 
         try:
+            if channel_code == CLINK_PAYMENT_METHOD:
+                return ClinkPaymentProvider(channel_config)
             if channel_code == TELEGRAM_STARS_PAYMENT_METHOD:
                 return TgStarPaymentProvider(channel_config)
             return PayPalPaymentProvider(channel_config)
@@ -83,6 +87,7 @@ class PaymentService:
         return payment_method.strip() in {
             TELEGRAM_STARS_PAYMENT_METHOD,
             PAYPAL_PAYMENT_METHOD,
+            CLINK_PAYMENT_METHOD,
         }
 
     def _assert_supported_method(self, channel_code: str) -> None:

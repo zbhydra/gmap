@@ -27,9 +27,9 @@ vi.mock('../../src/core/utils/logger', () => ({
   }
 }))
 
-const PRO_STATE = { authenticated: true, isPro: true, displayName: 'E2E User' }
-const FREE_STATE = { authenticated: true, isPro: false, displayName: 'Free User' }
-const ANONYMOUS_STATE = { authenticated: false, isPro: false, displayName: null }
+const PRO_STATE = { authenticated: true, isPro: true }
+const FREE_STATE = { authenticated: true, isPro: false }
+const ANONYMOUS_STATE = { authenticated: false, isPro: false }
 
 /** 每用例重置模块级快照与单飞状态（隔离用例间污染）。 */
 async function loadGate() {

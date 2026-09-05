@@ -4,18 +4,13 @@
   逐元素规格 = feat.md「界面与操作逻辑·面板(三态)」+ v3 登录（006 §4.4）
   「面板显示账号与订阅态」：
   - 待命：标题区（含账号/订阅态徽标；未登录同位显示 Sign in，已登录显示
-    FREE/PRO 徽标，点击进 Pricing 视图）、Start Extraction 主按钮（未检测到
+    FREE/PRO 徽标，点击打开官网订阅页）、Start Extraction 主按钮（未检测到
     列表禁用）、提示行（"Please search business first" + For Example 示例
     链接）、How to use 链接；
   - 采集中：加载指示、进度文案（免费 "Exporting N..." / Pro "Have found N
     businesses and still going..."，按门控态切换）、区域提示、Stop（ghost）；
-  - 完成：完成/手动停止文案、免费达限警告条 + Upgrade to Pro Now（跳 Pricing
-    视图）、Export Leads List 下拉（csv / xlsx）、Go Back。
-
-  Pricing 视图（feat.md「Pricing 信息页」）：Free vs Pro 对比表（一次性导出
-  ≤20 vs 无限；CSV/XLSX、官网 URL、电话为免费项；Email+社媒为 Pro 项，一期
-  占位说明）+ Upgrade 按钮新标签打开官网订阅页（官网 base URL 集中声明于
-  core/api/config.ts 的 WEBSITE，生产域名未定）+ VIP 祝贺态 + 账号行。
+  - 完成：完成/手动停止文案、免费达限警告条 + Upgrade to Pro Now（打开官网
+    订阅页）、Export Leads List 下拉（csv / xlsx）、Go Back。
 
   视觉 = design.md / design.dark.md Material You token 合同（scoped CSS 内定义
   同名 CSS 变量并随系统亮暗切换；直插宿主页无法复用全局注入，token 就地声明）。
@@ -25,76 +20,8 @@
 
 <template>
   <section ref="rootRef" class="bing-panel-root" :style="panelStyle">
-    <!-- Pricing 视图（面板内切换；feat.md「Pricing 信息页」规格） -->
-    <template v-if="showPricing">
-      <header class="title-row">
-        <h2 class="pricing-title">{{ t(K.PRICING_TITLE) }}</h2>
-      </header>
-
-      <div v-if="isPro" class="vip-note" role="status">
-        <span class="vip-icon" aria-hidden="true"></span>
-        <span class="vip-text">{{ t(K.PRICING_VIP_NOTE) }}</span>
-      </div>
-
-      <div class="account-row">
-        <span class="account-label">{{ t(K.PRICING_ACCOUNT) }}</span>
-        <span class="account-value" :title="displayName || undefined">
-          {{
-            authenticated
-              ? t(K.PRICING_SIGNED_IN_AS, { name: displayName })
-              : t(K.PRICING_FREE_ACCOUNT)
-          }}
-        </span>
-      </div>
-
-      <table class="pricing-table">
-        <thead>
-          <tr>
-            <th scope="col" class="feature-col"></th>
-            <th scope="col">{{ t(K.PRICING_COLUMN_FREE) }}</th>
-            <th scope="col">{{ t(K.PRICING_COLUMN_PRO) }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{{ t(K.PRICING_ROW_EXPORT_LIMIT) }}</td>
-            <td>{{ t(K.PRICING_EXPORT_LIMIT_FREE) }}</td>
-            <td>{{ t(K.PRICING_EXPORT_LIMIT_PRO) }}</td>
-          </tr>
-          <tr>
-            <td>{{ t(K.PRICING_FEATURE_CSV) }}</td>
-            <td class="cell-included">{{ t(K.PRICING_INCLUDED) }}</td>
-            <td class="cell-included">{{ t(K.PRICING_INCLUDED) }}</td>
-          </tr>
-          <tr>
-            <td>{{ t(K.PRICING_FEATURE_WEBSITE) }}</td>
-            <td class="cell-included">{{ t(K.PRICING_INCLUDED) }}</td>
-            <td class="cell-included">{{ t(K.PRICING_INCLUDED) }}</td>
-          </tr>
-          <tr>
-            <td>{{ t(K.PRICING_FEATURE_PHONE) }}</td>
-            <td class="cell-included">{{ t(K.PRICING_INCLUDED) }}</td>
-            <td class="cell-included">{{ t(K.PRICING_INCLUDED) }}</td>
-          </tr>
-          <tr>
-            <td>{{ t(K.PRICING_FEATURE_EMAIL) }}</td>
-            <td class="cell-pro-only">{{ t(K.PRICING_PRO_ONLY) }}</td>
-            <td class="cell-included">{{ t(K.PRICING_INCLUDED) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p class="pricing-footnote">{{ t(K.PRICING_EMAIL_COMING_SOON) }}</p>
-
-      <button v-if="!isPro" class="button button-primary" type="button" @click="onOpenPricingPage">
-        {{ t(K.PRICING_UPGRADE) }}
-      </button>
-      <button class="button button-ghost" type="button" @click="showPricing = false">
-        {{ t(K.GO_BACK) }}
-      </button>
-    </template>
-
     <!-- 待命 -->
-    <template v-else-if="phase === 'idle'">
+    <template v-if="phase === 'idle'">
       <header class="title-row">
         <h1 class="panel-title">{{ t(K.TITLE) }}</h1>
         <button
@@ -102,7 +29,7 @@
           class="plan-badge"
           :class="{ pro: isPro }"
           type="button"
-          @click="showPricing = true"
+          @click="onOpenPricingPage"
         >
           {{ isPro ? t(K.PRO_BADGE) : t(K.FREE_BADGE) }}
         </button>
@@ -151,7 +78,7 @@
       <div v-if="freeLimitReached" class="limit-alert" role="alert">
         <span class="alert-icon" aria-hidden="true"></span>
         <span class="alert-text">{{ t(K.FREE_LIMIT_NOTE) }}</span>
-        <button class="alert-action text-link" type="button" @click="showPricing = true">
+        <button class="alert-action text-link" type="button" @click="onOpenPricingPage">
           {{ t(K.UPGRADE_TO_PRO) }}
         </button>
       </div>
@@ -183,11 +110,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { I18N_KEYS } from '@/core/constants/i18n'
 import { logger } from '@/core/utils/logger'
-import { buildPricingUrl, openExternalPage } from '@/core/utils/navigation'
+import { openPricingPage } from '@/core/utils/navigation'
 import { BackgroundChannel } from '@/content/rpc/background.rpc'
 import { getBingConfig } from '@/sites/bing/config/loader'
 import type { BingCollector } from '../collector'
@@ -221,7 +148,6 @@ const unsubscribeGate = subscribeGateState(next => {
 })
 const authenticated = computed(() => gate.value.authenticated)
 const isPro = computed(() => gate.value.isPro)
-const displayName = computed(() => gate.value.displayName ?? '')
 
 // —— 采集中文案 ——
 // 进度文案：免费 "Exporting N..."；Pro "Have found N businesses and still
@@ -240,8 +166,7 @@ const areaHint = computed(() =>
 // 完成态计数（主流程「完成:显示计数」）
 const doneCountText = computed(() => t(K.DONE_COUNT, { count: foundCount.value }))
 
-// —— Pricing 视图与导出下拉 ——
-const showPricing = ref(false)
+// —— 导出下拉 ——
 const menuOpen = ref(false)
 
 // —— 登录入口（未登录徽标位 Sign in，006 §4.4） ——
@@ -268,13 +193,6 @@ async function onSignIn(): Promise<void> {
     void refreshGateState()
   }
 }
-
-// 打开 Pricing 时重取门控态（登录/订阅在面板打开后变化的兜底刷新）
-watch(showPricing, opened => {
-  if (opened) {
-    void refreshGateState()
-  }
-})
 
 // —— 停靠与自适应 ——
 const panel = getBingConfig().panel
@@ -366,7 +284,7 @@ function onExport(format: BingExportFormat): void {
 
 /** 订阅引导：新标签打开官网订阅页（官网 base URL 集中声明，生产域名未定）。 */
 function onOpenPricingPage(): void {
-  void openExternalPage(buildPricingUrl('bing_panel'), 'pricing:bing_panel')
+  void openPricingPage('bing_panel')
 }
 </script>
 
@@ -684,103 +602,7 @@ function onOpenPricingPage(): void {
   outline-offset: -2px;
 }
 
-/* —— Pricing 视图 —— */
-.pricing-title {
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 24px;
-}
-
-/* 祝贺条：primary-soft 底 + primary 左圆点（design.md 强调态） */
-.vip-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--gme-primary-soft);
-  border-radius: var(--gme-rounded-md);
-}
-
-.vip-icon {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--gme-primary);
-}
-
-.vip-text {
-  flex: 1;
-  color: var(--gme-text);
-}
-
-.account-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.account-label {
-  flex-shrink: 0;
-  color: var(--gme-text-2);
-}
-
-.account-value {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-/* 对比表：特性列左对齐、值列居中；表头次要色、行间细分隔线 */
-.pricing-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.pricing-table th,
-.pricing-table td {
-  padding: 8px 6px;
-  border-bottom: 1px solid var(--gme-border);
-  text-align: center;
-  vertical-align: top;
-}
-
-.pricing-table th {
-  color: var(--gme-text-2);
-  font-weight: 500;
-}
-
-.pricing-table tbody td:first-child {
-  text-align: left;
-  color: var(--gme-text);
-}
-
-.pricing-table .feature-col {
-  width: 46%;
-}
-
-.pricing-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.cell-included {
-  color: var(--gme-primary);
-  font-weight: 500;
-}
-
-.cell-pro-only {
-  color: var(--gme-text-2);
-}
-
-.pricing-footnote {
-  color: var(--gme-text-2);
-  font-size: 12px;
-}
-
-/* 标题区账号/订阅态徽标（点击进 Pricing 视图） */
+/* 标题区账号/订阅态徽标（点击打开官网订阅页） */
 .plan-badge {
   margin-left: auto;
   padding: 4px 8px;

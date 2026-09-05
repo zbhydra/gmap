@@ -240,9 +240,10 @@ test('Pricing copy keeps the three product-line tabs and checkout shell fields d
       assert.match(card.periodLabel, /one-time/)
     }
     assert.ok(content.faq.items.length > 0)
-    // 取消指引：PayPal 渠道路径
+    // 管理入口与渠道内指引：PayPal / ClinkBill 渠道路径
+    assert.ok(content.account.manageSubscription)
+    assert.ok(content.account.managingSubscription)
     assert.ok(content.cancellationGuide.paths.length > 0)
-    assert.ok(content.cancellationGuide.buttonLabel)
     assert.ok(content.cancellationGuide.closeLabel)
   } finally {
     await imported.cleanup()
@@ -343,10 +344,14 @@ test('language sitemap output matches locale mapping and built canonical pages',
 
   const robotsTxt = await readFile(path.join(distDir, 'robots.txt'), 'utf8')
   assert.match(robotsTxt, /Sitemap: https:\/\/mapsgrab\.com\/sitemap\.xml/)
+  assert.match(robotsTxt, /^Disallow: \/clink\/cancel\/$/m)
+  assert.match(robotsTxt, /^Disallow: \/clink\/success\/$/m)
   assert.match(robotsTxt, /^Disallow: \/paypal\/cancel\/$/m)
   assert.match(robotsTxt, /^Disallow: \/paypal\/success\/$/m)
   assert.equal(sitemapUrls.has(`${siteUrl}/paypal/cancel/`), false)
   assert.equal(sitemapUrls.has(`${siteUrl}/paypal/success/`), false)
+  assert.equal(sitemapUrls.has(`${siteUrl}/clink/cancel/`), false)
+  assert.equal(sitemapUrls.has(`${siteUrl}/clink/success/`), false)
   assert.equal(
     Array.from(sitemapUrls).some((url) => new URL(url).pathname.endsWith('/pricing/')),
     true
@@ -382,8 +387,9 @@ test('About and Contact pages expose localized trust content and structured data
 
 test('every built page exposes complete title, description and Open Graph metadata', async () => {
   const htmlFiles = await collectHtmlFiles(distDir)
-  // 19 内容页（含 Online Scraper / API / MCP / Bing 桥接）+ 2 个 PayPal 回跳页 + 1 个插件登录桥接页（noindex）
-  assert.equal(htmlFiles.length, 22)
+  // 19 内容页（含 Online Scraper / API / MCP / Bing 桥接）+ 2 个 PayPal 回跳页
+  // + 2 个 ClinkBill 回跳页 + 1 个插件登录桥接页（noindex）
+  assert.equal(htmlFiles.length, 24)
 
   const descriptionsByRoute = new Map()
   for (const filePath of htmlFiles) {
@@ -3067,17 +3073,17 @@ test('Google redirect result reader clears only Google URL params', async () => 
   )
 })
 
-test('Credits checkout helpers parse invoice URL and classify paid callback success only', async () => {
+test('Order checkout protocol parses payment URLs and classifies paid callback success only', async () => {
   const { module, cleanup } = await importCompiledTypescriptModule(
-    path.resolve(repoDir, 'src/components/credit-purchase/credit-checkout.ts'),
-    'credit-checkout.js',
-    'credit-checkout-'
+    path.resolve(repoDir, 'src/components/order-checkout/order-checkout-api.ts'),
+    'order-checkout-api.js',
+    'order-checkout-api-url-'
   )
 
   try {
-    assert.equal(module.readTelegramInvoiceUrl({ url: 'https://t.me/$credit_invoice' }), 'https://t.me/$credit_invoice')
-    assert.equal(module.readTelegramInvoiceUrl({ url: 'https://example.com/pay' }), null)
-    assert.equal(module.readTelegramInvoiceUrl({}), null)
+    assert.equal(module.readPaymentUrl({ url: 'https://t.me/$credit_invoice' }, 'telegram_stars'), 'https://t.me/$credit_invoice')
+    assert.equal(module.readPaymentUrl({ url: 'https://example.com/pay' }, 'telegram_stars'), null)
+    assert.equal(module.readPaymentUrl({}, 'telegram_stars'), null)
     assert.equal(
       module.readPaymentUrl(
         { payment_url: 'https://www.sandbox.paypal.com/checkoutnow?token=credit' },
@@ -3089,20 +3095,26 @@ test('Credits checkout helpers parse invoice URL and classify paid callback succ
       module.readPaymentUrl({ payment_url: 'https://evil.example.com/pay' }, 'paypal'),
       null
     )
-    const creditPlan = {
-      product_class: 2,
-      product_id: 'credit_800',
-      product_name: '800 Credits',
-      credits_amount: 800,
-      display_currency: 'USD',
-      display_amount: 14990000,
-      payment_channels: []
-    }
-    assert.equal(module.formatCreditDisplayPrice(creditPlan), '$14.99')
-    assert.equal(module.formatCreditUnitLabel('{credits} Credits'), 'Credits')
     assert.equal(
-      module.formatCreditDisplayUnitPrice(creditPlan, module.formatCreditUnitLabel('{credits} Credits')),
-      '$0.0187/Credits'
+      module.readPaymentUrl(
+        { checkoutUrl: 'https://checkout.clinkbill.com/pay/session-1' },
+        'clink'
+      ),
+      'https://checkout.clinkbill.com/pay/session-1'
+    )
+    assert.equal(
+      module.readPaymentUrl(
+        { checkoutUrl: 'https://checkout.clinkbill.com/pay/session-1' },
+        'paypal'
+      ),
+      null
+    )
+    assert.equal(
+      module.readPaymentUrl(
+        { checkoutUrl: 'https://evil.example.com/pay/session-1' },
+        'clink'
+      ),
+      null
     )
 
     const baseStatus = {
@@ -3119,7 +3131,7 @@ test('Credits checkout helpers parse invoice URL and classify paid callback succ
     }
 
     assert.equal(
-      module.classifyCreditPurchaseOrderStatus({
+      module.classifyOrderStatus({
         ...baseStatus,
         order_status: module.ORDER_STATUS_PAID,
         callback_status: module.CALLBACK_STATUS_SUCCESS
@@ -3127,7 +3139,7 @@ test('Credits checkout helpers parse invoice URL and classify paid callback succ
       'paid'
     )
     assert.equal(
-      module.classifyCreditPurchaseOrderStatus({
+      module.classifyOrderStatus({
         ...baseStatus,
         order_status: module.ORDER_STATUS_PAID,
         callback_status: module.CALLBACK_STATUS_PENDING
@@ -3135,7 +3147,7 @@ test('Credits checkout helpers parse invoice URL and classify paid callback succ
       'pending'
     )
     assert.equal(
-      module.classifyCreditPurchaseOrderStatus({
+      module.classifyOrderStatus({
         ...baseStatus,
         order_status: module.ORDER_STATUS_PAID,
         callback_status: module.CALLBACK_STATUS_FAILED
@@ -3143,7 +3155,7 @@ test('Credits checkout helpers parse invoice URL and classify paid callback succ
       'failed'
     )
     assert.equal(
-      module.classifyCreditPurchaseOrderStatus({
+      module.classifyOrderStatus({
         ...baseStatus,
         order_status: module.ORDER_STATUS_CANCELLED,
         callback_status: module.CALLBACK_STATUS_NOT_CALLED
@@ -3155,128 +3167,7 @@ test('Credits checkout helpers parse invoice URL and classify paid callback succ
   }
 })
 
-test('Credits checkout client uses Credits configs and never unfinished orders', async () => {
-  const { module, cleanup } = await importCompiledTypescriptModule(
-    path.resolve(repoDir, 'src/components/credit-purchase/credit-checkout.ts'),
-    'credit-checkout.js',
-    'credit-checkout-api-'
-  )
-  const fetchCalls = []
-  const previousFetch = globalThis.fetch
-  const previousNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
-  globalThis.document = { documentElement: { lang: 'en-US' } }
-  Object.defineProperty(globalThis, 'navigator', {
-    configurable: true,
-    value: { language: 'en-US' }
-  })
-  globalThis.fetch = async (url, init = {}) => {
-    const parsedUrl = new URL(String(url))
-    fetchCalls.push({ path: parsedUrl.pathname, method: init.method ?? 'GET' })
-    if (parsedUrl.pathname === '/api/client/credit/checkout-configs') {
-      return new Response(JSON.stringify({
-        code: 10000,
-        msg: '',
-        data: {
-          checkout_configs: [
-            {
-              product_class: 2,
-              product_id: 'credit_50',
-              product_name: '50 Credits',
-              credits_amount: 50,
-              display_currency: 'USD',
-              display_amount: 6300000,
-              payment_channels: [
-                {
-                  payment_method: 'paypal',
-                  payment_method_name: 'PayPal',
-                  currency: 'USD',
-                  amount: 6300000,
-                  provider_sku: 'credit-50-paypal'
-                },
-                {
-                  payment_method: 'telegram_stars',
-                  payment_method_name: 'Telegram Stars',
-                  currency: 'XTR',
-                  amount: 350000000,
-                  provider_sku: 'credit-50-telegram-stars'
-                }
-              ]
-            }
-          ]
-        }
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-    }
-    if (parsedUrl.pathname === '/api/client/order/create') {
-      return new Response(JSON.stringify({
-        code: 10000,
-        msg: '',
-        data: {
-          order_no: 'ORD-CREDIT-CREATE',
-          amount: 6300000,
-          currency: 'USD',
-          expired_at: Date.now() + 30 * 60 * 1000,
-          payment_data: {
-            payment_url: 'https://www.sandbox.paypal.com/checkoutnow?token=credit',
-            channel_order_id: 'PAYPAL-ORDER-123'
-          }
-        }
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-    }
-    if (parsedUrl.pathname === '/api/client/order/status/ORD-CREDIT-CREATE') {
-      return new Response(JSON.stringify({
-        code: 10000,
-        msg: '',
-        data: {
-          order_no: 'ORD-CREDIT-CREATE',
-          product_class: 2,
-          product_id: 'credit_50',
-          product_name: '50 Credits',
-          amount: 6300000,
-          currency: 'USD',
-          order_status: 2,
-          callback_status: 3,
-          payment_method: 'paypal',
-          paid_at: Date.now(),
-          created_at: Date.now(),
-          expired_at: Date.now() + 30 * 60 * 1000
-        }
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-    }
-    throw new Error('Unexpected Credits checkout test request: ' + parsedUrl.pathname)
-  }
-
-  try {
-    const context = { deviceId: 'test-device', token: 'token' }
-    const plans = await module.listCreditCheckoutConfigs(context)
-    assert.equal(plans.length, 1)
-    const channel = module.getDefaultCreditPaymentChannel(plans[0])
-    assert.equal(channel.payment_method, 'paypal')
-    const order = await module.createCreditOrder(
-      context,
-      module.buildCreateCreditOrderRequest(plans[0], channel)
-    )
-    assert.equal(order.order_no, 'ORD-CREDIT-CREATE')
-    const status = await module.getCreditOrderStatus(context, order.order_no)
-    assert.equal(module.classifyCreditPurchaseOrderStatus(status), 'paid')
-    assert.deepEqual(fetchCalls.map(call => call.path), [
-      '/api/client/credit/checkout-configs',
-      '/api/client/order/create',
-      '/api/client/order/status/ORD-CREDIT-CREATE'
-    ])
-    assert.equal(fetchCalls.some(call => call.path === '/api/client/order/unfinished'), false)
-  } finally {
-    globalThis.fetch = previousFetch
-    delete globalThis.document
-    if (previousNavigator) {
-      Object.defineProperty(globalThis, 'navigator', previousNavigator)
-    } else {
-      delete globalThis.navigator
-    }
-    await cleanup()
-  }
-})
-
-test('Pricing checkout client loads maps plans and creates subscription orders', async () => {
+test('Pricing checkout client loads maps plans and formats channel prices', async () => {
   const { module, cleanup } = await importCompiledTypescriptModule(
     path.resolve(repoDir, 'src/components/pricing/pricing-checkout.ts'),
     'pricing-checkout.js',
@@ -3296,15 +3187,14 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
           display_currency: 'USD',
           display_amount: amount,
           period: 'month',
-          duration_days: 30,
           auto_renew: true,
           monthly_quota: productId === 'maps_extension_pro' ? 100000 : 500000,
           payment_channels: [{
             payment_method: 'paypal',
             payment_method_name: 'PayPal',
+            product_price_id: 11,
             currency: 'USD',
-            amount,
-            provider_sku: `${productId}-monthly-paypal`
+            amount
           }]
         },
         {
@@ -3315,15 +3205,14 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
           display_currency: 'USD',
           display_amount: 9990000,
           period: 'month',
-          duration_days: 30,
           auto_renew: true,
           monthly_quota: null,
           payment_channels: [{
             payment_method: 'paypal',
             payment_method_name: 'PayPal',
+            product_price_id: 21,
             currency: 'USD',
-            amount: 9990000,
-            provider_sku: 'unlimited-monthly-paypal'
+            amount: 9990000
           }]
         }
       ]
@@ -3352,23 +3241,12 @@ test('Pricing checkout client loads maps plans and creates subscription orders',
     const plan = mapsPlans.get('maps_extension_pro')
     assert.equal(plan.product_line, 'maps_extension')
     assert.equal(plan.monthly_quota, 100000)
+    assert.equal(plan.auto_renew, true)
+    assert.equal(plan.period, 'month')
     assert.equal(module.formatPricingDisplayPrice(plan), '$39.00')
-
-    const channel = module.getDefaultPricingPaymentChannel(plan.payment_channels)
-    const request = module.buildCreateSubscriptionOrderRequest(plan, channel)
-    await module.createPricingOrder(context, request)
+    assert.equal(module.formatPricingDisplayPrice(plan.payment_channels[0]), '$39.00')
     assert.deepEqual(fetchCalls, [
-      { url: 'https://api-mapsgrab.example.com/api/client/subscription/checkout-configs', body: null },
-      {
-        url: 'https://api-mapsgrab.example.com/api/client/order/create',
-        body: {
-          product_class: 1,
-          product_id: 'maps_extension_pro',
-          payment_method: 'paypal',
-          currency: 'USD',
-          amount: 39000000
-        }
-      }
+      { url: 'https://api-mapsgrab.example.com/api/client/subscription/checkout-configs', body: null }
     ])
   } finally {
     globalThis.fetch = previousFetch
@@ -3409,8 +3287,7 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
     plans: {
       loading: 'Loading payment options...',
       loadFailed: 'Failed to load payment options.',
-      noChannels: 'No payment method is available for this plan right now.',
-      alreadyActive: 'Already active.'
+      noChannels: 'No payment method is available for this plan right now.'
     }
   }
   const state = {
@@ -3433,15 +3310,14 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
         display_currency: 'USD',
         display_amount: amount,
         period: 'month',
-        duration_days: 30,
         auto_renew: true,
         monthly_quota: 100000,
         payment_channels: [{
           payment_method: 'paypal',
           payment_method_name: 'PayPal',
+          product_price_id: 31,
           currency: 'USD',
-          amount,
-          provider_sku: 'pricing-race-paypal'
+          amount
         }]
       }]
     }

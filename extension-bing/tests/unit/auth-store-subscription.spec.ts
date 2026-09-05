@@ -120,10 +120,18 @@ describe('AuthStore 订阅态与门控判定', () => {
     expect(mocks.subscriptionStatus).not.toHaveBeenCalled()
   })
 
-  it('付费档（month）判 Pro；free/unavailable 判免费（显式白名单）', async () => {
+  it('付费档（month/quarter/year）判 Pro；free/unavailable 判免费（显式白名单）', async () => {
     const store = await loggedInStore()
 
     mocks.subscriptionStatus.mockResolvedValue(subscriptionOf('month'))
+    await store.refreshSubscription({ force: true })
+    expect(store.isPro).toBe(true)
+
+    mocks.subscriptionStatus.mockResolvedValue(subscriptionOf('quarter'))
+    await store.refreshSubscription({ force: true })
+    expect(store.isPro).toBe(true)
+
+    mocks.subscriptionStatus.mockResolvedValue(subscriptionOf('year'))
     await store.refreshSubscription({ force: true })
     expect(store.isPro).toBe(true)
 

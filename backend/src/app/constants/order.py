@@ -45,6 +45,8 @@ class OrderCheckProductParam:
     payment_method: str
     amount: int
     currency: str
+    auto_renew: bool = False
+    period: str = "none"
     client_ip: str | None = None
     language: str | None = None
 

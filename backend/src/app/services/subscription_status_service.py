@@ -1,13 +1,8 @@
 """客户端订阅状态响应组装服务。"""
 
-from app.constants.subscription import (
-    EXTENSION_PRODUCT_LINE,
-    SubscriptionProductMetadata,
-)
+from app.constants.subscription import EXTENSION_PRODUCT_LINE
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
-from app.models.subscription_model import UserSubscriptionModel
-from app.services.payment_config_service import SubscriptionProductConfig
 from app.services.subscription_service import subscription_service
 from app.utils.logger import logger
 
@@ -27,14 +22,15 @@ class SubscriptionStatusService:
 
         product_line 缺省为 extension（插件下载线），保持既有接口响应不变；
         MapsGrab 网站读取 maps_extension 线展示当前套餐。
+        period 由当前商品配置提供；auto_renew / payment_method 从订阅实例透出。
         """
 
         try:
-            (
-                subscription,
-                config,
-                metadata,
-            ) = await self._load_subscription_metadata(user_id, product_line)
+            subscription, config = (
+                await subscription_service.get_user_subscription_config(
+                    user_id, product_line
+                )
+            )
         except AppCommonException as exc:
             if exc.code != CommonCode.PAYMENT_GATEWAY_ERROR:
                 raise
@@ -47,33 +43,13 @@ class SubscriptionStatusService:
             return self._unavailable_status_data()
 
         return {
-            "period": config.period,
+            "period": ("free" if subscription.expires_at is None else config.period),
             "display_name": config.name,
             "expires_at": subscription.expires_at,
-            "auto_renew": metadata.auto_renew,
+            "auto_renew": subscription_service.is_auto_renew(subscription),
+            "payment_method": subscription.payment_method,
             "status": "active",
         }
-
-    async def _load_subscription_metadata(
-        self,
-        user_id: int,
-        product_line: str,
-    ) -> tuple[
-        UserSubscriptionModel,
-        SubscriptionProductConfig,
-        SubscriptionProductMetadata,
-    ]:
-        """读取用户订阅记录、商品配置和 metadata。"""
-
-        subscription, config = await subscription_service.get_user_subscription_config(
-            user_id, product_line
-        )
-        metadata = SubscriptionProductMetadata.from_metadata(
-            config.metadata,
-            product_id=config.product_id,
-            period=config.period,
-        )
-        return subscription, config, metadata
 
     def _unavailable_status_data(self) -> dict[str, object]:
         """订阅配置异常时返回可渲染状态，不阻断账户和 Credits 业务。"""
@@ -83,6 +59,7 @@ class SubscriptionStatusService:
             "display_name": "Subscription unavailable",
             "expires_at": None,
             "auto_renew": False,
+            "payment_method": None,
             "status": _SUBSCRIPTION_STATUS_UNAVAILABLE,
         }
 

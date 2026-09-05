@@ -127,6 +127,21 @@ class SchemaComparator:
         model_columns = self._get_model_columns(table_name)
         db_columns = await self._get_db_columns(conn, table_name)
 
+        # 模型显式声明删除的列：数据库仍存在时按 removed 差异输出。
+        for col_name in self._get_model_drop_columns(table_name):
+            db_col = db_columns.get(col_name)
+            if db_col is not None:
+                result.column_diffs.append(
+                    ColumnDiff(
+                        table_name=table_name,
+                        column_name=col_name,
+                        expected_type="",
+                        actual_type=db_col.type,
+                        diff_types=("removed",),
+                        actual_comment=db_col.comment,
+                    )
+                )
+
         # 检查缺失的列
         for col_name, col_info in model_columns.items():
             if col_name not in db_columns:
@@ -230,6 +245,13 @@ class SchemaComparator:
                     actual_unique=actual_unique,
                 )
             )
+
+    def _get_model_drop_columns(self, table_name: str) -> tuple[str, ...]:
+        """读取模型显式声明的已删除列。"""
+
+        table = Base.metadata.tables[table_name]
+        value = table.info.get("schema_sync_drop_columns", ())
+        return tuple(str(column_name) for column_name in value)
 
     def _get_model_columns(self, table_name: str) -> dict[str, ColumnInfo]:
         """获取模型中的列定义"""
@@ -359,25 +381,29 @@ class SchemaSync:
                     await conn.run_sync(lambda c: table.create(c, checkfirst=True))
                     executed.append(f"创建表: {table_name}")
 
-                # 处理列差异
+                # 先补齐目标列；被替代的旧列最后删除，给数据回填留出窗口。
                 for col_diff in diff.column_diffs:
+                    if col_diff.diff_type == "removed":
+                        continue
                     sql = await self._generate_column_sql(conn, col_diff)
                     if sql:
-                        try:
-                            await conn.execute(text(sql))
-                            executed.append(f"✅ {sql}")
-                        except Exception as e:
-                            executed.append(f"❌ 执行失败: {sql} - {e}")
+                        await conn.execute(text(sql))
+                        executed.append(f"✅ {sql}")
 
                 # 处理索引差异
                 for idx_diff in diff.index_diffs:
                     sqls = self._generate_index_sql(idx_diff)
                     for sql in sqls:
-                        try:
-                            await conn.execute(text(sql))
-                            executed.append(f"✅ {sql}")
-                        except Exception as e:
-                            executed.append(f"❌ 执行失败: {sql} - {e}")
+                        await conn.execute(text(sql))
+                        executed.append(f"✅ {sql}")
+
+                for col_diff in diff.column_diffs:
+                    if col_diff.diff_type != "removed":
+                        continue
+                    sql = await self._generate_column_sql(conn, col_diff)
+                    if sql:
+                        await conn.execute(text(sql))
+                        executed.append(f"✅ {sql}")
 
         return executed
 
@@ -408,6 +434,12 @@ class SchemaSync:
                 return None
             return (
                 f"ALTER TABLE {col_diff.table_name} " f"ADD COLUMN {column_definition}"
+            )
+
+        if col_diff.diff_type == "removed":
+            return (
+                f"ALTER TABLE {col_diff.table_name} "
+                f"DROP COLUMN {col_diff.column_name}"
             )
 
         elif col_diff.diff_type in {
@@ -619,6 +651,7 @@ def print_diff(diff: TableDiff) -> None:
         comment_mismatch = [
             d for d in diff.column_diffs if "comment_mismatch" in d.diff_types
         ]
+        removed = [d for d in diff.column_diffs if "removed" in d.diff_types]
 
         if missing:
             click.secho(f"\n  缺失的列 ({len(missing)}):", fg="red")
@@ -648,6 +681,11 @@ def print_diff(diff: TableDiff) -> None:
                     f"期望={d.expected_comment!r}, 实际={d.actual_comment!r}",
                     fg="yellow",
                 )
+
+        if removed:
+            click.secho(f"\n  已删除的列 ({len(removed)}):", fg="yellow")
+            for d in removed:
+                click.secho(f"     {d.table_name}.{d.column_name}", fg="yellow")
     else:
         click.secho("\n✅ 列定义一致", fg="green")
 

@@ -28,6 +28,8 @@ import { createSendCodeCooldown } from '../../scripts/homepage/sendCodeCooldown'
 
 /** Pricing 登录成功事件。 */
 export const PRICING_AUTH_SUCCESS_EVENT = 'pricing-auth:success'
+/** 用户主动关闭 Pricing 登录弹窗事件。 */
+export const PRICING_AUTH_CLOSE_EVENT = 'pricing-auth:close'
 
 /** Pricing 登录弹窗 controller 对外接口。 */
 export interface PricingAuthController {
@@ -145,15 +147,20 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
     elements.sendCodeStatus.textContent = ''
   }
 
-  const close = (): void => {
+  const hide = (): void => {
     cancelGoogleRedirectPrompt('Pricing auth modal closed.')
     setHidden(elements.modal, true)
+  }
+
+  const close = (): void => {
+    hide()
+    window.dispatchEvent(new CustomEvent(PRICING_AUTH_CLOSE_EVENT))
   }
 
   const finishLogin = async (accessToken: string): Promise<void> => {
     token = accessToken
     const user = await getCurrentUser(await buildRequestContext())
-    close()
+    hide()
     window.dispatchEvent(new CustomEvent<PricingAuthSuccessPayload>(PRICING_AUTH_SUCCESS_EVENT, {
       detail: { token: accessToken, user }
     }))

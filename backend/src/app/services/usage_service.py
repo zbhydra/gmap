@@ -223,7 +223,6 @@ class _BaseUsageService:
         metadata = SubscriptionProductMetadata.from_metadata(
             config.metadata,
             product_id=config.product_id,
-            period=config.period,
         )
         if metadata.monthly_quota is None:
             # usage 三线商品行的 monthly_quota 必填（表合同），缺失即配置

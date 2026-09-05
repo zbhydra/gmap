@@ -25,6 +25,7 @@ from app.constants.payment import (
     TELEGRAM_STARS_AMOUNT_UNIT,
     TELEGRAM_STARS_CURRENCY,
     TELEGRAM_STARS_PAYMENT_METHOD,
+    payment_currency_matches_channel,
 )
 from app.constants.subscription import SubscriptionPeriodEnum
 from app.exceptions.common_exception import AppCommonException
@@ -54,10 +55,12 @@ class SubscriptionProductConfig:
     # 产品线标识（006 扩展）：下单与状态链路按产品线隔离权益。
     product_line: str
     period: str
-    duration_days: int
+    # 单一计费模式：auto_renew_supported 决定渠道能否卖该商品的自动续费模式。
+    auto_renew: bool
     display_currency: str
     display_amount: int
-    sort_order: int
+    display_order: int
+    tier_rank: int
     metadata: dict[str, Any]
 
 
@@ -74,8 +77,10 @@ class PaymentChannelConfig:
 class SubscriptionProductPriceConfig:
     """订阅商品在指定渠道下的价格配置。"""
 
+    id: int
     product_id: str
     channel_code: str
+    auto_renew_supported: bool
     currency: str
     amount: int
     provider_sku: str | None
@@ -166,10 +171,11 @@ class PaymentConfigService:
                 name=row.name,
                 product_line=self._normalize_product_line(row.product_line),
                 period=row.period,
-                duration_days=row.duration_days,
+                auto_renew=row.auto_renew,
                 display_currency=normalize_currency(row.display_currency),
                 display_amount=row.display_amount,
-                sort_order=row.sort_order,
+                display_order=row.display_order,
+                tier_rank=row.tier_rank,
                 metadata=self._load_json_object(
                     row.metadata_json,
                     context=(
@@ -225,6 +231,9 @@ class PaymentConfigService:
 
         plans: list[SubscriptionCheckoutPlanConfig] = []
         for product in snapshot.products.values():
+            # 方案列表只出可销售周期；free 档（period=none）不是商品。
+            if product.period not in {"month", "quarter", "year"}:
+                continue
             payment_channels = channel_groups.get(product.product_id, [])
             plans.append(
                 SubscriptionCheckoutPlanConfig(
@@ -245,16 +254,19 @@ class PaymentConfigService:
         *,
         product_id: str,
         channel_code: str,
+        auto_renew: bool,
+        period: str,
     ) -> SubscriptionCheckoutChannelConfig:
         """获取指定商品和渠道的下单配置。
 
         下单请求只携带 product_id（HTTP 契约不变），商品按 product_id 辅助索引
         反查：付费 SKU 合同要求全线唯一，free 各线同名是合法状态（不可下单）。
+        auto_renew + period 必须与商品当前单一计费模式一致。
 
         Raises:
-            AppCommonException: 商品、渠道或价格不可用时返回 PAYMENT_PRICE_UPDATED；
-                付费 SKU 的 product_id 跨线重名（seed 合同破坏）返回
-                PAYMENT_GATEWAY_ERROR。
+            AppCommonException: 商品、渠道、价格不可用或计费模式不一致时返回
+                PAYMENT_PRICE_UPDATED；付费 SKU 的 product_id 跨线重名（seed
+                合同破坏）返回 PAYMENT_GATEWAY_ERROR。
         """
 
         normalized_product_id = self._normalize_code(product_id)
@@ -264,13 +276,21 @@ class PaymentConfigService:
         product = self._resolve_checkout_product(snapshot, normalized_product_id)
         channel = snapshot.channels.get(normalized_channel_code)
         price = snapshot.prices.get((normalized_product_id, normalized_channel_code))
-        if product is None or channel is None or price is None:
+        if (
+            product is None
+            or channel is None
+            or price is None
+            or product.auto_renew != auto_renew
+            or product.period != period
+            or not self._is_price_available(product, price)
+        ):
             raise AppCommonException(
                 CommonCode.PAYMENT_PRICE_UPDATED,
                 ext_msg=(
                     "payment_config: checkout config unavailable: "
                     f"product_id={normalized_product_id}, "
-                    f"channel_code={normalized_channel_code}"
+                    f"channel_code={normalized_channel_code}, "
+                    f"auto_renew={auto_renew}, period={period}"
                 ),
                 data={
                     "product_id": normalized_product_id,
@@ -309,10 +329,11 @@ class PaymentConfigService:
                 name=row.name,
                 product_line=self._normalize_product_line(row.product_line),
                 period=row.period,
-                duration_days=row.duration_days,
+                auto_renew=row.auto_renew,
                 display_currency=normalize_currency(row.display_currency),
                 display_amount=row.display_amount,
-                sort_order=row.sort_order,
+                display_order=row.display_order,
+                tier_rank=row.tier_rank,
                 metadata=self._load_json_object(
                     row.metadata_json,
                     context=(
@@ -344,23 +365,32 @@ class PaymentConfigService:
         for price_row in price_rows:
             product_id = self._normalize_code(price_row.product_id)
             channel_code = self._normalize_code(price_row.channel_code)
-            if product_id not in products_by_id or channel_code not in channels:
+            # 渠道价必须唯一归属一个商品才能加载：孤儿价格行直接跳过；
+            # 付费 SKU 跨线重名属于 seed 合同破坏，列表链路跳过、下单链路报错。
+            matched_products = products_by_id.get(product_id, [])
+            if len(matched_products) != 1 or channel_code not in channels:
                 continue
 
             currency = normalize_currency(price_row.currency)
+            price = SubscriptionProductPriceConfig(
+                id=price_row.id,
+                product_id=product_id,
+                channel_code=channel_code,
+                auto_renew_supported=price_row.auto_renew_supported,
+                currency=currency,
+                amount=price_row.amount,
+                provider_sku=price_row.provider_sku,
+            )
+            # 按商品当前计费模式过滤后，价格行才进入快照。
+            if not self._is_price_available(matched_products[0], price):
+                continue
             self._assert_config_amount_valid(
                 product_id=product_id,
                 channel_code=channel_code,
                 currency=currency,
                 amount=price_row.amount,
             )
-            prices[(product_id, channel_code)] = SubscriptionProductPriceConfig(
-                product_id=product_id,
-                channel_code=channel_code,
-                currency=currency,
-                amount=price_row.amount,
-                provider_sku=price_row.provider_sku,
-            )
+            prices[(product_id, channel_code)] = price
 
         return PaymentConfigSnapshot(
             products=products,
@@ -389,7 +419,7 @@ class PaymentConfigService:
         if len(matches) <= 1:
             return matches[0] if matches else None
         if any(
-            product.period != SubscriptionPeriodEnum.FREE.value for product in matches
+            product.period != SubscriptionPeriodEnum.NONE.value for product in matches
         ):
             raise AppCommonException(
                 CommonCode.PAYMENT_GATEWAY_ERROR,
@@ -515,7 +545,7 @@ class PaymentConfigService:
         self,
         product: SubscriptionProductConfig,
     ) -> None:
-        """确认订阅商品用户展示价配置有效。"""
+        """确认订阅商品默认展示价配置有效。"""
 
         self._assert_config_amount_valid(
             product_id=product.product_id,
@@ -524,13 +554,26 @@ class PaymentConfigService:
             amount=product.display_amount,
         )
 
+    def _is_price_available(
+        self,
+        product: SubscriptionProductConfig,
+        price: SubscriptionProductPriceConfig,
+    ) -> bool:
+        """按商品当前计费模式判断渠道价格是否可用于新订单。"""
+
+        if not payment_currency_matches_channel(price.channel_code, price.currency):
+            return False
+        if not product.auto_renew:
+            return True
+        return price.auto_renew_supported
+
     def _product_sort_key(
         self,
         product: SubscriptionProductConfig,
     ) -> tuple[int, str]:
         """生成订阅方案排序键。"""
 
-        return product.sort_order, product.product_id
+        return product.display_order, product.product_id
 
 
 payment_config_service = PaymentConfigService()

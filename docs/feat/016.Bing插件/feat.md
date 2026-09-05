@@ -12,7 +12,7 @@
 - 工程底座就绪:`extension-bing/`(gmap/tg 残留清理;2026-09-01 起 manifest 为 `storage` + `identity` 权限,固定 key 与官网桥白名单已随登录 v3 删除)。
 - website 侧:统一确认页 `/extension-login`(两插件共用);`/extension-login-bing` 桥接页与 `BING_*` 消息常量已随登录 v3 删除。
 - 登录已迁移 v3 浏览器身份流程(2026-09-01,插件内 popup + 面板双入口,合同见 `@../007.用户系统/tech-第三方登录.md` §9):验证单测 175 全绿;登录流程不做 e2e(2026-09-02 拍板,真实回流走 unpacked 人工终验)。
-- 一期功能全部落地并通过 worker/reviewer 循环:sites/bing(适配器/解析/采集状态机/导出)、Vue 直插面板三态、v3 登录(authStore + 订阅联动)、免费 20/Pro 门控、Pricing 视图、远程配置热修通道、5 事件打点。
+- 一期功能全部落地并通过 worker/reviewer 循环:sites/bing(适配器/解析/采集状态机/导出)、Vue 直插面板三态、v3 登录(authStore + 订阅联动)、免费 20/Pro 门控、官网订阅入口、远程配置热修通道、5 事件打点。
 - e2e 已重构为真实界面主验收(2026-09-02,零 mock;含 stealth 反自动化、登录态 token 直注与两处真实接线修复,见 `@changelog.md` 与 `@references/T1-技术设计.md` §6):本机真实 bing.com 5/5 passed。
 - E6 Email/社媒挖掘已接入(2026-09-02,拍板差异 7 二期落地):Pro 会话完成边沿自动补全写回,免费行保持 `###PRO###` 占位;服务端为 013 A4 U8 共享能力。
 - 验证基线(2026-08-30 一期):check 全绿、单测 182;执行循环记录见 `@plans/001.一期实施.md` 验收记录。
@@ -35,7 +35,7 @@
 - B2 18 列导出:CSV/XLSX;免费 20 条截断 + 导出末行提示
 - B3 面板 UI:直插浮层,待命/采集中/完成三态
 - B4 登录(v3 插件发起):popup + 面板双入口发起登录、订阅联动;未登录匿名可用
-- B5 免费/Pro 门控:Pricing 信息页(面板内)、订阅跳转官网
+- B5 免费/Pro 门控与[订阅入口](#订阅入口)
 - B6 远程配置热修通道:包内默认值 + 稀疏覆盖机制就绪(通道常态不启用,仅紧急改版修复用;后端端点接入视后端排期)
 - B7 打点:popup_open / content_open / search / export_results / install
 
@@ -75,17 +75,17 @@ popup 或面板 `Sign in` 发起 → 插件 background 弹出官网统一确认�
 | --- | --- | --- |
 | 待命 | 标题区、Start Extraction 主按钮(未检测到列表时禁用)、提示行("Please search business first" + For Example 示例链接,点击跳竞品同款演示搜索词)、How to use 链接(点击新标签打开官网支持/FAQ 页;官网 FAQ 就绪前暂跳现有联系页)、账号位(未登录:`Sign in` 按钮,点击发起 v3 登录;已登录:FREE/PRO 徽标) | 检测到列表后 Start 可用,点击进入采集中;未登录 `Sign in` 可发起登录(发起后 loading,失败静默复位) |
 | 采集中 | 加载指示、进度文本(Pro:"Have found N businesses and still going...";免费:"Exporting N...")、区域提示("Please wait a moment"/"Please move the map...")、Stop 按钮(ghost) | Stop → 手动停止进完成态 |
-| 完成 | "Search complete." 或 "Manually stopped.";免费达限显示警告条(说明 + "Upgrade to Pro Now" 按钮跳 Pricing 页);Export Leads List 下拉(Download data to csv / xlsx 两项);Go Back 按钮 | 导出 / 返回待命 |
+| 完成 | "Search complete." 或 "Manually stopped.";免费达限显示警告条(说明 + "Upgrade to Pro Now" 按钮);Export Leads List 下拉(Download data to csv / xlsx 两项);Go Back 按钮 | 导出 / 返回待命 / 打开官网订阅页 |
 
 固定行为:面板停靠页面右上(约 top 80px / right 40px),宽度约 300–500px,高度随内容自适应;视觉遵循根级 design.md 亮暗双主题;全部文案走 i18n。
 
-### Pricing 信息页(面板内切换)
+### 订阅入口
 
-Free vs Pro 对比表(一次性导出条数 ≤20 vs 无限;CSV/XLSX、官网 URL、电话为免费项;Email+社媒为 Pro 项,一期占位);订阅引导按钮新标签打开官网订阅页;定价展示与支付执行归 011/006/004 域,不在本域范围。
+已登录用户点击面板 FREE/PRO 徽标，或免费用户采集达限后点击 **Upgrade to Pro Now**，均在新标签打开官网的插件订阅页，采集面板保持原状态。插件保留权益状态和网站入口；报价、购买、升级及订阅管理统一由网站承载，见 [Pricing 页](../011.Pricing页/feat.md)。
 
 ### Popup
 
-标题栏(产品名 + 语言切换)、支持入口(联系邮箱)、账号区(未登录 `Sign in` 按钮 → 发起 v3 登录;已登录 displayName + `Sign out`)。~~Popup 不设账号区~~(2026-08-30 拍板:避免与面板双处维护)——**该拍板已随登录 v3 变更(2026-09-01)**:v3 由插件发起登录,插件内必须有入口,popup 与面板未登录态各设一个 `Sign in`(两入口走同一 background 流程);账号与订阅态展示仍由面板承载。打开即上报 popup_open。
+标题栏(产品名 + 语言切换)、支持入口(联系邮箱)、账号区(未登录 `Sign in` 按钮 → 发起 v3 登录;已登录 displayName + `Sign out`)。~~Popup 不设账号区~~(2026-08-30 拍板:避免与面板双处维护)——**该拍板已随登录 v3 变更(2026-09-01)**:v3 由插件发起登录,插件内必须有入口,popup 与面板未登录态各设一个 `Sign in`(两入口走同一 background 流程);账号信息由 popup 展示，订阅状态由面板承载。打开即上报 popup_open。
 
 ## 非功能性需求
 
@@ -120,7 +120,7 @@ Free vs Pro 对比表(一次性导出条数 ≤20 vs 无限;CSV/XLSX、官网 UR
 1. ✅ 工程底座(清理 + 固定 ID + website 登录桥,2026-08-30;固定 ID 与 v2 官网桥已随 2026-09-01 登录 v3 删除)
 2. M2 `sites/bing` 配置契约 + data-entity 解析(黄金样本作单测 fixture)
 3. M3 采集循环 + 面板 UI + 导出
-4. M4 登录接收 + 免费/Pro 门控 + Pricing 页
+4. M4 登录接收 + 免费/Pro 门控 + 官网订阅入口
 5. M5 远程配置端点接入(可选)+ 打点补齐 + 构建发布准备
 
 细节:`@plans/001.一期实施.md`。

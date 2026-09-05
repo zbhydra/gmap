@@ -1,4 +1,6 @@
 User-agent: *
+Disallow: /clink/cancel/
+Disallow: /clink/success/
 Disallow: /paypal/cancel/
 Disallow: /paypal/success/
 

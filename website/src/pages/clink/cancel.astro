@@ -1,0 +1,22 @@
+---
+/** ClinkBill 英文支付取消回跳页（noindex）。 */
+import ClinkReturnPage from '../../components/pages/ClinkReturnPage.astro'
+import { clinkReturnContent } from '../../i18n/clink-return'
+import Layout from '../../layouts/Layout.astro'
+
+const copy = clinkReturnContent.cancel
+---
+
+<Layout
+  locale="en-US"
+  title={`${copy.title} | MapsGrab`}
+  description={copy.description}
+  includeSoftwareApplicationSchema={false}
+  robots="noindex, nofollow, noarchive"
+>
+  <ClinkReturnPage
+    status="cancel"
+    successCopy={clinkReturnContent.success}
+    cancelCopy={clinkReturnContent.cancel}
+  />
+</Layout>

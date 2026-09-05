@@ -4,6 +4,9 @@
 1. 用本地订单快照创建 PayPal Orders v2 订单或 Billing Subscription。
 2. 校验 PayPal webhook 签名。
 3. 在 webhook 收到一次性订单或订阅扣款成功时返回订单成功结果。
+4. 订阅协议换价收敛（005）：解析 BILLING.SUBSCRIPTION.UPDATED 计划变更
+   事件并查询 Subscription 当前 plan（事件只上交订阅服务，不进订单履约）；
+   PayPal 渠道升级（revise 批准流）按用户裁决禁用。
 """
 
 import hashlib
@@ -18,9 +21,10 @@ from fastapi import Request
 
 from app.constants.order import OrderStatus
 from app.constants.payment import (
-    PAYPAL_CURRENCY,
     PAYPAL_PAYMENT_METHOD,
     PAYPAL_USD_AMOUNT_UNIT,
+    payment_currency_matches_channel,
+    recurring_provider_sku_parts,
 )
 from app.core.config import settings
 from app.core.redis import redis_client
@@ -30,15 +34,17 @@ from app.provider.payment.payment_base import (
     PaymentProviderError,
     PaymentRequest,
     RecurringPaymentReference,
+    SubscriptionState,
 )
 from app.utils.logger import logger
 from app.utils.money import NORMALIZED_AMOUNT_FACTOR
 from app.utils.redis_key import build_redis_key
-from app.utils.time import timestamp_now
+from app.utils.time import parse_timestamp_input, timestamp_now
 
 PAYPAL_APPROVED_EVENT = "CHECKOUT.ORDER.APPROVED"
 PAYPAL_CAPTURE_COMPLETED_EVENT = "PAYMENT.CAPTURE.COMPLETED"
 PAYPAL_SUBSCRIPTION_SALE_COMPLETED_EVENT = "PAYMENT.SALE.COMPLETED"
+PAYPAL_SUBSCRIPTION_UPDATED_EVENT = "BILLING.SUBSCRIPTION.UPDATED"
 _PAYPAL_ACCESS_TOKEN_CACHE_PREFIX = "payment:paypal:access_token"
 _PAYPAL_ACCESS_TOKEN_CACHE_SAFETY_SECONDS = 60
 _PAYPAL_APPROVAL_LINK_RELS = {"payer-action", "approve"}
@@ -46,6 +52,8 @@ _PAYPAL_API_BASE_URL_BY_ENVIRONMENT = {
     "sandbox": "https://api-m.sandbox.paypal.com",
     "live": "https://api-m.paypal.com",
 }
+# 用户在 PayPal 官方站管理自动续费协议的唯一入口（Automatic Payments）。
+_PAYPAL_AUTOMATIC_PAYMENTS_URL = "https://www.paypal.com/myaccount/autopay/"
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,18 +98,24 @@ class PayPalSubscriptionSaleResult:
 
 @dataclass(frozen=True, slots=True)
 class PayPalSubscriptionStatus:
-    """PayPal Billing Subscription 的运维查询结果。"""
+    """PayPal Billing Subscription 的运维与计划变更收敛查询结果。"""
 
     subscription_id: str
     status: str
     status_update_time: str | None
     next_billing_time: str | None
+    last_payment_time: str | None
+    # 当前生效 plan；换价收敛用它映射启用渠道价（未换价前等于首购档 plan）。
+    plan_id: str | None
+    # 创建订阅时写入的本地首单号，用于按本地首单定位订阅关系。
+    custom_id: str | None
 
 
 class PayPalPaymentProvider(PaymentBase):
     """PayPal Checkout 支付 provider。"""
 
     provider_name = PAYPAL_PAYMENT_METHOD
+    supports_upgrade_checkout = True
 
     def __init__(self, config: dict[str, object] | None = None) -> None:
         self.config = self._parse_provider_config(config)
@@ -220,6 +234,16 @@ class PayPalPaymentProvider(PaymentBase):
 
         return await self._create_checkout_order_payment(request, token)
 
+    async def create_subscription_management_url(
+        self,
+        *,
+        channel_uid: str | None,
+        return_url: str,
+    ) -> str | None:
+        """返回 PayPal Automatic Payments 官方入口。"""
+
+        return _PAYPAL_AUTOMATIC_PAYMENTS_URL
+
     async def get_subscription_status(
         self,
         subscription_id: str,
@@ -243,7 +267,19 @@ class PayPalPaymentProvider(PaymentBase):
             access_token=token,
             context="paypal.get_subscription_status",
         )
+        # 本方法是 confirm 幂等、webhook 收敛与续费账期查询的唯一订阅状态
+        # GET owner：响应订阅 ID 必须命中请求 ID，错位响应不得用于本地核对。
+        self._assert_response_subscription_id(
+            data,
+            normalized_id,
+            context="paypal.get_subscription_status",
+        )
         billing_info = self._optional_object_field(data, "billing_info")
+        last_payment = (
+            self._optional_object_field(billing_info, "last_payment")
+            if billing_info
+            else None
+        )
         return PayPalSubscriptionStatus(
             subscription_id=self._string_field(data, "id"),
             status=self._string_field(data, "status").upper(),
@@ -256,6 +292,26 @@ class PayPalPaymentProvider(PaymentBase):
                 if billing_info
                 else None
             ),
+            last_payment_time=(
+                self._optional_string_field(last_payment, "time")
+                if last_payment
+                else None
+            ),
+            plan_id=self._optional_string_field(data, "plan_id"),
+            custom_id=self._optional_string_field(data, "custom_id"),
+        )
+
+    async def get_subscription_state(
+        self, channel_subscription_id: str
+    ) -> SubscriptionState:
+        status = await self.get_subscription_status(channel_subscription_id)
+        if not status.plan_id or not status.custom_id:
+            raise PaymentProviderError(
+                "paypal.get_subscription_state: 渠道缺少计划或首购订单引用: "
+                f"subscription_id={channel_subscription_id}"
+            )
+        return SubscriptionState(
+            provider_sku=status.plan_id, original_order_no=status.custom_id
         )
 
     async def cancel_subscription(
@@ -366,7 +422,18 @@ class PayPalPaymentProvider(PaymentBase):
         if event_type == PAYPAL_CAPTURE_COMPLETED_EVENT:
             return self._handle_capture_completed(resource, event)
         if event_type == PAYPAL_SUBSCRIPTION_SALE_COMPLETED_EVENT:
-            return self._handle_subscription_sale_completed(resource, event)
+            return await self._handle_subscription_sale_completed(resource, event)
+        if event_type == PAYPAL_SUBSCRIPTION_UPDATED_EVENT:
+            # 计划变更事件只上交订阅服务做档位收敛，不进订单履约；权威
+            # plan/custom_id 由订阅服务再查 GET /v1/billing/subscriptions/{id}。
+            return CallbackVerificationResult(
+                valid=True,
+                processed=False,
+                event=event_type,
+                provider_data={
+                    "paypal_subscription_id": self._string_field(resource, "id"),
+                },
+            )
 
         return CallbackVerificationResult(
             valid=False,
@@ -405,7 +472,9 @@ class PayPalPaymentProvider(PaymentBase):
                 "PayPal create order payment method mismatch: "
                 f"order_no={request.order_no}, payment_method={request.payment_method}"
             )
-        if request.currency != PAYPAL_CURRENCY:
+        if not payment_currency_matches_channel(
+            request.payment_method, request.currency
+        ):
             raise PaymentProviderError(
                 "PayPal create order currency mismatch: "
                 f"order_no={request.order_no}, currency={request.currency}"
@@ -419,11 +488,15 @@ class PayPalPaymentProvider(PaymentBase):
             raise PaymentProviderError(
                 f"PayPal create order expired: order_no={request.order_no}"
             )
-        if request.auto_renew and (
-            request.provider_sku is None or not request.provider_sku.strip()
+        if (
+            request.auto_renew
+            and recurring_provider_sku_parts(
+                request.payment_method, request.provider_sku
+            )
+            is None
         ):
             raise PaymentProviderError(
-                "PayPal create subscription provider_sku missing: "
+                "PayPal create subscription provider_sku invalid: "
                 f"order_no={request.order_no}"
             )
         self._paypal_amount_value(request.amount, order_no=request.order_no)
@@ -488,12 +561,15 @@ class PayPalPaymentProvider(PaymentBase):
     ) -> dict[str, object]:
         """生成 PayPal Billing Subscription create payload。"""
 
-        plan_id = request.provider_sku.strip() if request.provider_sku else ""
-        if not plan_id:
+        sku_parts = recurring_provider_sku_parts(
+            request.payment_method, request.provider_sku
+        )
+        if sku_parts is None:
             raise PaymentProviderError(
-                "paypal._create_subscription_payload: provider_sku missing: "
+                "paypal._create_subscription_payload: provider_sku invalid: "
                 f"order_no={request.order_no}"
             )
+        plan_id = sku_parts[0]
         return {
             "plan_id": plan_id,
             "custom_id": request.order_no,
@@ -581,7 +657,7 @@ class PayPalPaymentProvider(PaymentBase):
             capture_result,
         )
 
-    def _handle_subscription_sale_completed(
+    async def _handle_subscription_sale_completed(
         self,
         resource: dict[str, object],
         event: dict[str, object],
@@ -592,7 +668,16 @@ class PayPalPaymentProvider(PaymentBase):
             resource,
             event,
         )
-        return self._verification_result_from_subscription_sale(sale_result)
+        # 订阅账期只信 Provider 归一化的扣款周期：回调里查一次订阅状态，
+        # 用 next_billing_time 作为本地 expires_at，避免按固定时长估算。
+        status = await self.get_subscription_status(sale_result.subscription_id)
+        if not status.next_billing_time:
+            raise PaymentProviderError(
+                "paypal.subscription_sale: subscription expiration missing after query: "
+                f"subscription_id={sale_result.subscription_id}, "
+                f"sale_id={sale_result.sale_id}"
+            )
+        return self._verification_result_from_subscription_sale(sale_result, status)
 
     def _verification_result_from_capture(
         self,
@@ -625,6 +710,7 @@ class PayPalPaymentProvider(PaymentBase):
     def _verification_result_from_subscription_sale(
         self,
         sale_result: PayPalSubscriptionSaleResult,
+        status: PayPalSubscriptionStatus,
     ) -> CallbackVerificationResult:
         """把 PayPal 订阅扣款结果转换为统一订单成功参数。"""
 
@@ -644,6 +730,16 @@ class PayPalPaymentProvider(PaymentBase):
                     "paypal_subscription_id": sale_result.subscription_id,
                     "paypal_sale_id": sale_result.sale_id,
                     "is_recurring": True,
+                    "provider_subscription": {
+                        "channel_subscription_id": sale_result.subscription_id,
+                        "original_order_no": sale_result.original_order_no,
+                        "start_at": (
+                            parse_timestamp_input(status.last_payment_time)
+                            if status.last_payment_time
+                            else None
+                        ),
+                        "expires_at": parse_timestamp_input(status.next_billing_time),
+                    },
                 },
                 ensure_ascii=False,
                 separators=(",", ":"),
@@ -1067,6 +1163,27 @@ class PayPalPaymentProvider(PaymentBase):
         if not normalized:
             raise PaymentProviderError(f"{context}: PayPal subscription_id is empty")
         return normalized
+
+    @staticmethod
+    def _assert_response_subscription_id(
+        data: dict[str, object],
+        requested_subscription_id: str,
+        *,
+        context: str,
+    ) -> None:
+        """官方响应的订阅 ID 必须命中请求 ID，缺失或错位一律拒绝。"""
+
+        response_id = data.get("id")
+        if not isinstance(response_id, str) or not response_id.strip():
+            raise PaymentProviderError(
+                f"{context}: subscription id missing in response"
+            )
+        if response_id.strip() != requested_subscription_id:
+            raise PaymentProviderError(
+                f"{context}: subscription id mismatch: "
+                f"response_subscription_id={response_id.strip()}, "
+                f"requested_subscription_id={requested_subscription_id}"
+            )
 
     async def _verify_webhook_signature(
         self,

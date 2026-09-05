@@ -41,7 +41,8 @@ const checkoutCopy: OrderCheckoutCopy = {
   orderNotFound: creditCopy.orderNotFound,
   orderExpired: creditCopy.orderExpired,
   fulfillmentFailed: creditCopy.fulfillmentFailed,
-  authExpired: creditCopy.authExpired
+  authExpired: creditCopy.authExpired,
+  popupBlocked: creditCopy.popupBlocked
 }
 ---
 
@@ -70,7 +71,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   >
     <header class="order-checkout-payment-header">
       <div>
-        <p class="order-checkout-payment-kicker">{checkoutCopy.paymentMethodLabel}</p>
+        <p class="order-checkout-payment-kicker" data-order-checkout-payment-kicker>{checkoutCopy.paymentMethodLabel}</p>
         <h2 id="order-checkout-payment-title" data-order-checkout-payment-title>
           {checkoutCopy.paymentTitle}
         </h2>

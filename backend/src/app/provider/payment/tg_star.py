@@ -18,6 +18,7 @@ from app.constants.payment import (
     TELEGRAM_STARS_AMOUNT_UNIT,
     TELEGRAM_STARS_CURRENCY,
     TELEGRAM_STARS_PAYMENT_METHOD,
+    payment_currency_matches_channel,
 )
 from app.core.config import settings
 from app.i18n.dependencies import DEFAULT_LANGUAGE, LANGUAGE_MAPPING
@@ -234,6 +235,16 @@ class TgStarPaymentProvider(PaymentBase):
             rendered = rendered.replace(secret, "***")
         return rendered
 
+    async def create_subscription_management_url(
+        self,
+        *,
+        channel_uid: str | None,
+        return_url: str,
+    ) -> str | None:
+        """Telegram Stars 没有 Hosted Web Portal，由客户端展示渠道内路径。"""
+
+        return None
+
     async def create_payment(self, request: PaymentRequest) -> dict[str, object]:
         """创建 Telegram invoice link。"""
         self._validate_payment_request(request)
@@ -344,7 +355,9 @@ class TgStarPaymentProvider(PaymentBase):
                 f"Telegram create invoice payment method mismatch: "
                 f"order_no={request.order_no}, payment_method={request.payment_method}"
             )
-        if request.currency != TELEGRAM_STARS_CURRENCY:
+        if not payment_currency_matches_channel(
+            request.payment_method, request.currency
+        ):
             raise PaymentProviderError(
                 f"Telegram create invoice currency mismatch: "
                 f"order_no={request.order_no}, currency={request.currency}"
@@ -663,6 +676,24 @@ class TgStarPaymentProvider(PaymentBase):
                 f"Telegram successful_payment payer missing: order_no={order_no}, "
                 f"telegram_charge_id={payment.telegram_payment_charge_id}"
             )
+        payment_data = payment.model_dump(mode="json", exclude_none=True)
+        if is_recurring:
+            # Stars 自动续费账期以渠道归一化的订阅到期时间为准；
+            # Test DC 加速周期（60 秒）与生产 30 天由配置区分。
+            expiration_seconds = payment.subscription_expiration_date
+            period_seconds = self.config.subscription_period_seconds
+            if expiration_seconds is None or expiration_seconds <= 0:
+                raise PaymentProviderError(
+                    "Telegram recurring successful_payment expiration invalid: "
+                    f"order_no={order_no}, expiration={expiration_seconds}"
+                )
+            period_end_at = expiration_seconds * 1000
+            payment_data["provider_subscription"] = {
+                "channel_subscription_id": payment.telegram_payment_charge_id,
+                "original_order_no": order_no,
+                "start_at": period_end_at - period_seconds * 1000,
+                "expires_at": period_end_at,
+            }
         return CallbackVerificationResult(
             valid=True,
             processed=True,
@@ -674,10 +705,10 @@ class TgStarPaymentProvider(PaymentBase):
             currency=payment.currency,
             transaction_id=payment.telegram_payment_charge_id,
             extra_metadata=json.dumps(
-                payment.model_dump(mode="json", exclude_none=True),
+                payment_data,
                 ensure_ascii=False,
             ),
-            provider_data=payment.model_dump(mode="json", exclude_none=True),
+            provider_data=payment_data,
             recurring_reference=self.recurring_payment_reference(
                 order_no=order_no,
                 is_recurring=is_recurring,

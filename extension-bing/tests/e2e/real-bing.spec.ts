@@ -3,7 +3,7 @@
  *
  * 真实 www.bing.com/maps 界面采集真实数据(2026-09-02 hydra 拍板,零 mock):
  * 打开演示词 → 面板注入 + 列表检测态 → Start → 免费档 20 条截断自动停止 →
- * 完成态(计数 + 免费超限警告条 + Upgrade 引导)→ 匿名 Pricing 视图 →
+ * 完成态(计数 + 免费超限警告条 + Upgrade 引导)→ 官网订阅页 →
  * CSV 导出(18 列表头 + 20 数据行 + 末行免费提示)。
  *
  * 断言分界:环境/上游问题(网络不可达、人机验证、落地域偏离、DOM 改版)
@@ -93,12 +93,16 @@ test.describe('真实 Bing 匿名采集(免费 20 条截断)', () => {
       const upgradeButton = panelRoot.getByRole('button', { name: 'Upgrade to Pro Now' })
       await expect(upgradeButton).toBeVisible()
 
-      // 匿名 Pricing 实体视图:对比表 + Upgrade 引导;匿名免费账号态
+      // 购买入口在新标签打开对应产品线，采集面板保持完成态。
+      const pricingPagePromise = context.waitForEvent('page')
       await upgradeButton.click()
-      await expect(panelRoot.getByRole('heading', { name: 'Upgrade to Pro' })).toBeVisible()
-      await expect(panelRoot.getByText('Not signed in (free account)')).toBeVisible()
-      await expect(panelRoot.getByRole('button', { name: 'Upgrade Now' })).toBeVisible()
-      await panelRoot.getByRole('button', { name: 'Go Back' }).click()
+      const pricingPage = await pricingPagePromise
+      await expect(pricingPage).toHaveURL(url =>
+        url.pathname === '/pricing/' &&
+        url.searchParams.get('product_line') === 'maps_extension' &&
+        url.searchParams.get('source') === 'bing_panel'
+      )
+      await pricingPage.close()
       await expect(panelRoot.getByText('Search complete.')).toBeVisible()
 
       // 导出并断言下载文件:文件名 / 18 列表头 / 20 数据行 / 末行免费提示

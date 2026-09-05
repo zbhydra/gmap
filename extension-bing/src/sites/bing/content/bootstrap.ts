@@ -49,7 +49,7 @@ async function doBoot(): Promise<void> {
   await mountPanel(collector)
 
   // 门控态拉取放在面板挂载后异步执行：面板先以匿名快照渲染，
-  // 快照到达后经订阅即时切换（Pro 徽标 / Pricing 态）
+  // 快照到达后经订阅即时切换 Pro 徽标与采集进度文案
   void refreshGateState()
 }
 

@@ -5,13 +5,13 @@ import type { PricingPageContent } from './schema'
  *
  * Online（maps_online）/ Extension（maps）/ API（maps_api）三条产品线各一个
  * tab；卡面价格为营销展示事实，真实扣价以下单时的支付配置为准。Online / API
- * 付费档为 30 天一次性 PayPal 支付（不自动续费），Extension 档保持按月订阅口径。
+ * 付费档按商品配置的计费模式购买，升级资格与补差以服务端报价为准。
  */
 export const pricingContent: PricingPageContent = {
   seo: {
     title: 'Pricing — Online, Extension and API Plans | MapsGrab',
     description:
-      'MapsGrab plans for every surface: Online Scraper from $19, browser Extension from $39, and API from $15. Free tiers included with every product — pay once for 30 days, no auto-renewal on Online and API.'
+      'MapsGrab plans for every surface: Online Scraper from $19, browser Extension from $39, and API from $15. Free tiers included with every product — one-time natural-month plans on Online and API, monthly subscriptions on Extension.'
   },
   hero: {
     eyebrow: 'Pricing',
@@ -29,11 +29,12 @@ export const pricingContent: PricingPageContent = {
     planLabel: 'Plan',
     noExpiry: 'No expiry',
     freePlan: 'Free',
-    loadFailed: 'Failed to load your account. Retry from the sign-in button.'
+    loadFailed: 'Failed to load your account. Retry from the sign-in button.',
+    manageSubscription: 'Manage subscription',
+    managingSubscription: 'Opening...'
   },
   cancellationGuide: {
-    buttonLabel: 'How to cancel',
-    title: 'How to cancel your subscription',
+    title: 'Manage your subscription at the payment provider',
     paths: [
       {
         provider: 'PayPal',
@@ -41,6 +42,14 @@ export const pricingContent: PricingPageContent = {
           'Sign in to PayPal and open Settings.',
           'Go to Payments, then Automatic Payments.',
           'Select MapsGrab and choose Cancel.'
+        ]
+      },
+      {
+        provider: 'ClinkBill',
+        steps: [
+          'Open the Customer Portal link from your purchase email.',
+          'Sign in and select your MapsGrab subscription.',
+          'Choose Cancel.'
         ]
       }
     ],
@@ -83,11 +92,11 @@ export const pricingContent: PricingPageContent = {
           name: 'Lite',
           tagline: 'For occasional one-off exports',
           price: '$19',
-          periodLabel: 'one-time · 30 days',
+          periodLabel: 'one-time · 1 month',
           quota: '20,000 records / month',
           features: [
             'Everything in Free',
-            '20,000 records for 30 days',
+            '20,000 records for 1 month',
             'One-time payment — no auto-renewal',
             'Priority email & social enrichment',
             'CSV / JSON download'
@@ -102,11 +111,11 @@ export const pricingContent: PricingPageContent = {
           name: 'Basic',
           tagline: 'For steady weekly lead collection',
           price: '$49',
-          periodLabel: 'one-time · 30 days',
+          periodLabel: 'one-time · 1 month',
           quota: '80,000 records / month',
           features: [
             'Everything in Lite',
-            '80,000 records for 30 days',
+            '80,000 records for 1 month',
             'One-time payment — no auto-renewal',
             'Deduplication across runs by Place ID',
             'CSV / JSON download'
@@ -121,11 +130,11 @@ export const pricingContent: PricingPageContent = {
           name: 'Growth',
           tagline: 'For growing lead pipelines',
           price: '$99',
-          periodLabel: 'one-time · 30 days',
+          periodLabel: 'one-time · 1 month',
           quota: '250,000 records / month',
           features: [
             'Everything in Basic',
-            '250,000 records for 30 days',
+            '250,000 records for 1 month',
             'One-time payment — no auto-renewal',
             'Room for large batch tasks',
             'CSV / JSON download'
@@ -140,11 +149,11 @@ export const pricingContent: PricingPageContent = {
           name: 'Professional',
           tagline: 'For agencies and data-heavy teams',
           price: '$149',
-          periodLabel: 'one-time · 30 days',
+          periodLabel: 'one-time · 1 month',
           quota: '500,000 records / month',
           features: [
             'Everything in Growth',
-            '500,000 records for 30 days',
+            '500,000 records for 1 month',
             'One-time payment — no auto-renewal',
             'Highest enrichment throughput',
             'CSV / JSON download'
@@ -155,12 +164,12 @@ export const pricingContent: PricingPageContent = {
         }
       ],
       quotaNote:
-        'One-time payment covering 30 days — plans on this tab do not auto-renew. A record is one business row collected from Google Maps; usage resets on the 1st and unused records do not roll over.',
+        'One-time payment covering one natural month — plans on this tab do not auto-renew. A record is one business row collected from Google Maps; usage resets on the 1st and unused records do not roll over.',
       checkout: {
         usageNotice: 'Applies to the MapsGrab Online Scraper monthly record quota.',
         successTitle: 'Plan activated',
         successDescription:
-          'Your one-time 30-day plan is live. The Online Scraper picks it up on the next quota refresh.'
+          'Your one-time 1-month plan is live. The Online Scraper picks it up on the next quota refresh.'
       }
     },
     extension: {
@@ -267,11 +276,11 @@ export const pricingContent: PricingPageContent = {
           name: 'Basic',
           tagline: 'For prototypes and light integrations',
           price: '$15',
-          periodLabel: 'one-time · 30 days',
+          periodLabel: 'one-time · 1 month',
           quota: '1,000 requests / month',
           features: [
             'Everything in Free',
-            '1,000 requests for 30 days',
+            '1,000 requests for 1 month',
             'One-time payment — no auto-renewal',
             'All data endpoints unlocked',
             'JSON responses'
@@ -286,11 +295,11 @@ export const pricingContent: PricingPageContent = {
           name: 'Professional',
           tagline: 'For production integrations',
           price: '$65',
-          periodLabel: 'one-time · 30 days',
+          periodLabel: 'one-time · 1 month',
           quota: '5,000 requests / month',
           features: [
             'Everything in Basic',
-            '5,000 requests for 30 days',
+            '5,000 requests for 1 month',
             'One-time payment — no auto-renewal',
             'Higher rate limits',
             'JSON responses'
@@ -305,11 +314,11 @@ export const pricingContent: PricingPageContent = {
           name: 'Business',
           tagline: 'For products built on MapsGrab data',
           price: '$115',
-          periodLabel: 'one-time · 30 days',
+          periodLabel: 'one-time · 1 month',
           quota: '10,000 requests / month',
           features: [
             'Everything in Professional',
-            '10,000 requests for 30 days',
+            '10,000 requests for 1 month',
             'One-time payment — no auto-renewal',
             'Higher rate limits',
             'JSON responses'
@@ -324,11 +333,11 @@ export const pricingContent: PricingPageContent = {
           name: 'Scale',
           tagline: 'For high-volume data operations',
           price: '$365',
-          periodLabel: 'one-time · 30 days',
+          periodLabel: 'one-time · 1 month',
           quota: '50,000 requests / month',
           features: [
             'Everything in Business',
-            '50,000 requests for 30 days',
+            '50,000 requests for 1 month',
             'One-time payment — no auto-renewal',
             'Highest rate limits',
             'JSON responses'
@@ -339,12 +348,12 @@ export const pricingContent: PricingPageContent = {
         }
       ],
       quotaNote:
-        'One-time payment covering 30 days — plans on this tab do not auto-renew. A request is one successful API call that returns data; usage resets on the 1st and unused requests do not roll over.',
+        'One-time payment covering one natural month — plans on this tab do not auto-renew. A request is one successful API call that returns data; usage resets on the 1st and unused requests do not roll over.',
       checkout: {
         usageNotice: 'Applies to the MapsGrab API monthly request quota.',
         successTitle: 'Plan activated',
         successDescription:
-          'Your one-time 30-day plan is live. Your API key picks up the new quota on the next request.'
+          'Your one-time 1-month plan is live. Your API key picks up the new quota on the next request.'
       }
     }
   },
@@ -352,10 +361,31 @@ export const pricingContent: PricingPageContent = {
     loading: 'Loading payment options...',
     loadFailed: 'Failed to load payment options. Refresh the page to retry.',
     noChannels: 'No payment method is available for this plan right now.',
-    alreadyActive:
-      'You already have an active plan on this product line. It must expire before you can buy another one.',
     productTitlePrefix: 'MapsGrab',
-    failedTitle: 'Payment incomplete'
+    failedTitle: 'Payment incomplete',
+    billingPeriodMonthly: '1 month',
+    billingAutoRenew: 'Auto-renews until canceled',
+    billingOneTime: 'One-time payment'
+  },
+  upgrade: {
+    currentPlan: 'Current Plan',
+    button: 'Upgrade · {amount}',
+    title: 'Upgrade your plan',
+    confirm: 'Confirm upgrade',
+    oneTime: 'One-time difference via {channel}. Your expiry date stays {date}.',
+    autoRenew: 'The difference will be charged immediately via {channel}. Your expiry date stays {date}; future renewals use the new plan price.',
+    pendingTitle: 'Waiting for your upgrade',
+    pendingDescription: 'Your payment provider is applying the upgrade. Your current plan stays active until it is confirmed.',
+    successTitle: 'Plan upgraded',
+    successDescription: 'Your new quota is active. Your expiry date stays {date}.',
+    quoteFailed: 'Could not load your upgrade price. Refresh the page to retry.',
+    failed: 'Your upgrade could not be confirmed. Refresh the page to check your plan before trying again.',
+    reasons: {
+      no_active_subscription: 'Your plan is no longer active. Refresh the page to choose a plan.',
+      not_higher_tier: 'Choose a higher tier to upgrade, or wait until your plan expires to change tiers.',
+      non_positive_diff: 'Your remaining plan value is not lower than this tier. You can change tiers after your plan expires.',
+      channel_unavailable: 'Upgrades are unavailable with your current payment method. You can change plans after expiry.'
+    }
   },
   faq: {
     title: 'Questions before you buy?',
@@ -379,12 +409,12 @@ export const pricingContent: PricingPageContent = {
       {
         question: 'Are payments one-time or subscriptions?',
         answer:
-          'Online and API plans are one-time payments through PayPal covering 30 days — they never auto-renew. Extension Pro and Business are billed monthly as subscriptions; you can cancel from your PayPal account at any time using the guide in your account area.'
+          'Online and API plans are one-time payments through PayPal or ClinkBill covering one natural month — they never auto-renew. Extension Pro and Business are billed monthly as subscriptions; use "Manage subscription" in your account area to manage auto-renewal at the payment provider.'
       },
       {
         question: 'Can I switch between tiers?',
         answer:
-          'Yes. Let your current plan run out (or expire at the end of its paid month on the extension) and buy a different tier — your collected data is never affected. Plans on different tabs are independent, so you can hold an Online plan and an API plan at the same time.'
+          'You can upgrade an active plan to an eligible higher tier by paying the difference through your current payment provider. Your expiry date and usage so far stay unchanged. Auto-renewing PayPal subscriptions cannot be upgraded; wait until expiry to change plans. Plans on different tabs are independent.'
       }
     ]
   }

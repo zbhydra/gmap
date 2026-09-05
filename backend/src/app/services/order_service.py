@@ -28,8 +28,11 @@ from app.models.order_model import OrderModel
 from app.provider.payment.payment_base import (
     AfterOrderSuccessContext,
     CallbackVerificationResult,
+    PaymentProviderError,
+    PaymentRequest,
 )
 from app.services.base_service import BaseService
+from app.services.config_public_service import config_public_service
 from app.utils.logger import logger
 from app.utils.money import normalize_currency, validate_normalized_amount
 from app.utils.order_alarm_utils import (
@@ -46,6 +49,7 @@ class OrderSuccessError(RuntimeError):
 
 ORDER_FULFILLMENT_TIMEOUT_SECONDS = 10
 RECHARGE_PURCHASE_REASON = "recharge_purchase"
+_SUPPORT_MAIL_CONFIG_KEY = "support_mail"
 # 续费建单临界区 Redis 锁：ttl 覆盖一次建单正常耗时，timeout 内指数退避抢锁。
 _RECURRING_PAYMENT_LOCK_TTL_SECONDS = 10
 _RECURRING_PAYMENT_LOCK_TIMEOUT_SECONDS = 5
@@ -133,6 +137,78 @@ class OrderService(BaseService[OrderModel]):
             extra_metadata=extra_metadata,
         )
         return await self.create(order)
+
+    async def create_order_with_payment(
+        self,
+        param: OrderCreateParam,
+    ) -> dict[str, object]:
+        """创建订单并完成支付入口创建，返回统一 checkout 响应装配数据。
+
+        order_client 普通下单与 subscription_client 升级差额下单共用：
+        服务端创建订单快照 → Provider 创建支付数据并保存 → 装配响应。
+        Provider 失败或支付数据保存失败统一映射 PAYMENT_GATEWAY_ERROR。
+
+        Args:
+            param: 订单创建参数（含金额、渠道、快照 metadata 与续费语义）。
+
+        Returns:
+            与 CreateOrderResponse 同形的响应 data 字典。
+        """
+
+        order = await self.create_order(param)
+        payment_method = param.payment_method
+        # 延迟导入避免 PaymentService -> Provider -> OrderService 初始化环，
+        # 与 _run_after_order_success_hook 同因。
+        from app.services.payment_service import payment_service
+
+        provider = await payment_service.get_provider(payment_method)
+        try:
+            payment_data = await provider.create_payment(
+                PaymentRequest(
+                    order_no=order.order_no,
+                    payment_method=payment_method,
+                    order_status=order.order_status,
+                    amount=order.amount,
+                    currency=order.currency,
+                    product_name=order.product_name,
+                    expired_at=order.expired_at,
+                    client_ip=param.client_ip,
+                    user_id=order.user_id,
+                    auto_renew=param.auto_renew,
+                    provider_sku=param.provider_sku,
+                )
+            )
+        except PaymentProviderError as exc:
+            raise AppCommonException(
+                CommonCode.PAYMENT_GATEWAY_ERROR,
+                ext_msg=f"order_create_with_payment: payment gateway failed: {exc}",
+            ) from exc
+        payment_data_saved = await self.save_order_payment_data(
+            order_no=order.order_no,
+            payment_data=payment_data,
+        )
+        if not payment_data_saved:
+            raise AppCommonException(
+                CommonCode.PAYMENT_GATEWAY_ERROR,
+                ext_msg=(
+                    "order_create_with_payment: payment data save failed after "
+                    f"gateway success: order_no={order.order_no}, "
+                    f"payment_method={payment_method}"
+                ),
+            )
+
+        raw_support_mail = await config_public_service.get(_SUPPORT_MAIL_CONFIG_KEY)
+        support_mail = (
+            raw_support_mail.strip() if isinstance(raw_support_mail, str) else ""
+        )
+        return {
+            "order_no": order.order_no,
+            "amount": order.amount,
+            "currency": order.currency,
+            "expired_at": order.expired_at,
+            "support_mail": support_mail,
+            "payment_data": payment_data,
+        }
 
     async def order_lists(
         self,

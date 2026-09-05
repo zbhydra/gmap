@@ -1,5 +1,26 @@
 # 011 · Pricing 页 - 变更记录
 
+## 2026-09-05 Pricing 订阅升级与产品线入口接通(005 U4/U5)
+
+- `pricing-page-controller.ts` 消费服务端报价标记当前档与可升级档,并按 `product_line` 入口参数打开既有 tab;普通跨线购买与管理入口沿用原流程。
+- 公共 checkout 复用确认、外链、等待、成功事件与刷新:一次性升级固定订阅渠道创建补差订单;自动续费按统一 `status/action` 处理,等待时只读 quote 的当前档,不重复确认。PayPal 自动续费升级禁用,一次性补差保留。
+- i18n 同步升级金额、到期日不变与失败提示;自动续费等待按钮为 Close,关闭不代表取消渠道操作。`upgrade_quote_shown` 与成功后的 `upgrade_confirmed` 接入既有 GA4 通道。
+- 验证通过(website 目录):`pnpm build`、`pnpm type-check:tests`、`node --test --test-name-pattern='Order checkout protocol|Pricing checkout client' tests/module-scripts.test.js`(2 项)、`pnpm exec playwright test e2e/website.spec.ts --grep 'Pricing full purchase path' --project=chromium --project='Mobile Chrome' --workers=1`(同一路径,2 项)。开发服务器以 `PUBLIC_API_BASE_URL=http://homepage-api.test pnpm dev --host 127.0.0.1 --port 7620` 启动并完成页面验证;桌面/移动截图核对确认与等待文案无重叠。
+- 首次 E2E 因新增 PayPal 回跳检查的选择器与 mock 作用域错误失败,修正后通过;一次中间复跑中止。无环境 skip。验证为网站 route mock,真实支付、自动续费 SKU 与公网 webhook 未验收;`redirect` action 未做真实渠道验证。
+- 运行环境补验:初次 mock 环境因本地后端未启动,设备图标代理出现 `ECONNREFUSED`。随后按现有配置启动 `PYTHONPATH=src uv run uvicorn app.main:app --host 127.0.0.1 --port 7600`,网站以 `PUBLIC_API_BASE_URL=http://127.0.0.1:7600 pnpm dev --host 127.0.0.1 --port 7620` 对齐本地 API。实际请求 health 返回 `healthy`、Pricing 返回 200、携带设备 Cookie 的图标经网站代理返回 200 SVG;检查两端启动及请求日志无错误。未修改后端或运行配置,未重跑已通过测试,两端保留为后台预览服务。
+
+## 2026-09-05 Pricing 购买模型同步落地(004 计划 U3)与 e2e 收敛
+
+**Why**: 后端计费模型同步(商品单一计费模式 + `auto_renew + period` 下单 + ClinkBill 渠道 + 渠道订阅管理入口)后,Pricing 购买链路需对齐新合同并同步文档;TG 时代的旧 tech 文档(metadata.auto_renew / duration_days / 站内取消指引)与实现割裂。
+
+**变更**:
+
+- 前端:checkout 类型与请求体增 `auto_renew + period`;支付选项按商品级单一计费模式展示 `Auto-renews until canceled` / `One-time payment`;新增 Clink 渠道(图标 + `uat-checkout.clinkbill.com` / `checkout.clinkbill.com` 域名白名单);新增 Clink success/cancel 回跳页(`/clink/success|cancel`,noindex)并把 `credit-purchase/paypal-return.ts` 泛化为 PayPal / Clink 共用 payment return 脚本(删除 `credit-checkout.ts`);账号区 `Manage subscription` 调 `POST /api/client/subscription/management`,返回 URL 新标签页打开渠道管理页,空 URL 弹渠道内指引弹窗。
+- 文档(最终分工):`tech-pricing与自动续费.md` 为 Pricing 消费合同唯一 owner(下单参数、渠道白名单、回跳、渠道管理入口、约 3 分钟配置生效的用户可见行为);`tech-实现与配置.md` 只保留前端文件责任与商品配置命令,商品配置唯一口径指向 006 状态 tech;`feat.md` 只定义 10 个付费 SKU,当前可售数量归 ROADMAP C4/C5 与本 changelog。
+- 测试:`website/e2e/website.spec.ts` 收敛为两条用例——Pricing 完整购买主路径(单一计费模式、下单 `auto_renew + period`、Clink success/cancel 回跳、Manage subscription)与压缩保留的站点结构路径;2 tests × 4 项目(chromium/firefox/webkit/Mobile Chrome)= 8 passed;`pnpm build` 24 页通过。
+
+**边界确认**:订阅升级 UI 未实现(005 计划待实施),feat 升级相关章节为目标合同;Clink 公网 webhook 首笔人工验收与 maps_extension 真实渠道 SKU 为外部待办。
+
 ## 2026-09-02 Free 档口径校准(已落库生效)
 
 - 上条「Free 档口径仅卡面展示,不落库、暂不生效」已被 006 域 2026-09-02「FREE 档统一」推翻:free 行已播种落库(monthly_quota:online 1,000 records/月、maps_extension 1,000 records/月、api 20 requests/月),maps_extension 线免费额度经 `/maps/usage` 真实生效(usage total 为唯一真源);online/api 两线尚无消费入口,待 014 云端落地。

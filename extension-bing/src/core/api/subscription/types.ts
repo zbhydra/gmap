@@ -8,7 +8,7 @@
  */
 
 /** 订阅周期（包含免费版） */
-export type SubscriptionPeriod = 'free' | 'month' | 'unavailable'
+export type SubscriptionPeriod = 'free' | 'month' | 'quarter' | 'year' | 'unavailable'
 
 /** 订阅状态 */
 export interface SubscriptionStatus {

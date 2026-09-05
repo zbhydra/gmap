@@ -1,8 +1,8 @@
 # 004 · ClinkBill 支付渠道
 
-> 状态：待用户批准，尚未实施。
+> 状态:已随「004 同步支付系统-计费模型与 ClinkBill」实施(backend 侧)。
 >
-> 本文定义 ClinkBill Hosted Checkout 对接的最终合同。Credits 一次性支付与 Unlimited 一次性/自动续费必须在同一次交付中完成，不发布仅支持一次性支付的中间版本。
+> 本文是 ClinkBill Hosted Checkout 对接的最终合同,与上游实现(2d2f6f82 + 渠道订阅管理)对齐。实现以源码 `backend/src/app/provider/payment/clink.py`、`api/callback/clink_callback.py` 为唯一真相。
 
 ## 1. 目标与边界
 
@@ -12,7 +12,7 @@
 - 服务端用 `CLINK_SECRET_KEY` 创建 Checkout Session，对外返回 `checkoutUrl`。
 - 客户在 ClinkBill Hosted Checkout 完成支付；一次性支付只由验签后的 `order.succeeded` 确认，自动续费只由验签后的 `invoice.paid` 确认。
 - Credits 始终创建一次性支付。
-- Unlimited 按创建订单时的 `metadata.auto_renew` 决定一次性或自动续费。
+- 订阅商品按创建订单时的商品列 `auto_renew`（单一计费模式）决定一次性或自动续费。
 - 支持 Sandbox 首笔真实支付验收，交付本地 curl、Webhook CLI 和数据库核对步骤。
 
 ### 1.2 非目标
@@ -25,12 +25,10 @@
 
 ## 2. 已证实的现有合同
 
-- `SubscriptionProductMetadata.auto_renew` 是运营可修改的 JSON bool，付费商品不在代码中写死计费方式。
-- 创建订阅订单时，`check_product` 只读取一次运营配置：同一份配置既生成 `OrderCreateParam.auto_renew`，也完整写入 `orders.extra_metadata.product_snapshot.metadata`。因此 `auto_renew` 在本地订单创建时已经冻结，不需要新增订单字段。
-- 订单创建后，`OrderCreateParam.auto_renew` 立即通过 `PaymentRequest` 传给 Provider；创建 Clink Session 不再读取实时运营配置。
-- 自动续费回调可通过 `RecurringPaymentReference.original_order_no` 定位首单；首单已支付时，订单服务会按新的渠道扣款号创建本地续费订单。
-- 一次性重复回调由现有订单状态 CAS 和履约状态 CAS 收敛；自动续费并发回调额外复用 OrderService 已有 Redis 短锁和渠道扣款号查重，不新增 Clink 专用幂等层。
-- `orders.payment_data` 可保存 Clink `sessionId` 和 Checkout URL；`orders.payment_channel_order_no` 可保存本次履约的渠道幂等号。
+- 商品单一计费模式:计费方式是 `config_subscription_product.auto_renew` 商品列(不再读 metadata);创建订单时 `check_product` 校验请求 `auto_renew + period` 与商品配置一致,同一份配置完整写入 `orders.extra_metadata.product_snapshot`。订单创建后 `auto_renew` 立即通过 `PaymentRequest` 传给 Provider,创建 Clink Session 不再读取实时运营配置。
+- 自动续费回调通过 `RecurringPaymentReference.original_order_no` 定位首单;首单已支付时,订单服务会按新的渠道扣款号创建本地续费订单。
+- 一次性重复回调由现有订单状态 CAS 和履约状态 CAS 收敛;自动续费并发回调额外复用 OrderService 已有 Redis 短锁和渠道扣款号查重,不新增 Clink 专用幂等层。
+- `orders.payment_data` 可保存 Clink `sessionId` 和 Checkout URL;`orders.payment_channel_order_no` 可保存本次履约的渠道幂等号。
 
 ## 3. 渠道配置
 
@@ -52,31 +50,21 @@ Provider 根据 `environment` 选择官方固定 API 根地址，不允许从前
 
 ### 3.2 密钥
 
-| 环境变量 | 用途 | 来源 |
-| --- | --- | --- |
-| `CLINK_SECRET_KEY` | 创建 Session 和调用服务端 API | Sandbox Dashboard API Key |
-| `CLINK_WEBHOOK_SIGNING_KEY` | Webhook HMAC-SHA256 验签 | `clink webhook endpoint ensure --save-secret` |
-
-- 两个密钥只存在运维侧 `.env.*`、业务服务器权限为 `0600` 的运行时 `.env` 或密钥管理器。
-- 不写入源码、`config.yaml`、`config_payment_channel.config_json`、Supervisor 模板、前端变量、日志、测试 fixture 或文档示例，也不作为部署脚本命令行参数传输。
-- 部署脚本把两个值通过标准输入安全同步到业务服务器运行时 `.env`，Supervisor 启动业务进程时加载该文件；download 节点不生成、不读取。
-- Provider 直接读取模块级环境配置，不新增依赖注入。
+后端密钥唯一配置源为 `config_payment_channel` 中 `channel_code=clink` 行的 `config_json.secret_key` 与 `config_json.webhook_signing_key`。密钥只保存在该配置和运维侧，不写入源码、文档、Supervisor 模板、前端变量、日志或测试 fixture。签名密钥生成、轮换与生效步骤见 [Webhook 注册](#81-webhook-注册)。
 
 ### 3.3 商品与渠道价
 
-Credits 和 `auto_renew=false` 的 Unlimited 使用非注册商品模式，不需要 Clink Product/Price ID。
+`auto_renew=false` 的商品使用非注册商品模式(`priceDataList`),不需要 Clink Product/Price ID。
 
-`auto_renew=true` 的 Unlimited 必须使用 Clink 预注册商品与 recurring Price：
+`auto_renew=true` 的商品必须使用 Clink 预注册商品与 recurring Price:
 
 | 本地字段 | Clink 字段 | 处理 |
 | --- | --- | --- |
-| 新增 `config_subscription_product_price.provider_product_id` | `productId` | 保存 `prd_...` |
-| 现有 `provider_sku` | `priceId` | Clink 价格行保存 `price_...` |
+| `config_subscription_product_price.provider_sku` | `productId:priceId` | 冒号约定,单列存储两个 ID |
 
-- 不把两个 ID 拼接进一个字符串，不用 JSON 字符串伪装 SKU。
-- `provider_product_id` 是渠道价属性，不放入全局渠道配置。
-- 订阅订单快照补充 `provider_product_id`。计费模式只由下单时冻结的 `metadata.auto_renew` 决定；`provider_product_id` 和 `provider_sku` 只冻结该笔 recurring Checkout 使用的 Clink Catalog 资源。
-- 使用官方 `clink catalog validate/plan/import` 创建 Sandbox Product/Price，再用项目 `sql_executor.py` 写入渠道价配置。
+- 不新增 `provider_product_id` 列,不用 JSON 字符串伪装 SKU;`constants/payment.recurring_provider_sku_parts` 在 Provider 边界拆分冒号约定。
+- 自动续费商品只能属于 gmap 对应档位,禁止复用参考项目其他商品的 Catalog ID。
+- 订阅订单快照补充 `provider_sku`;计费模式只由下单时冻结的商品 `auto_renew` 决定。
 
 ## 4. Checkout Session
 
@@ -153,14 +141,15 @@ Clink 成功响应取 `data.sessionId` 和 `data.url`，保存为：
 POST /api/callback/clink/payment
 ```
 
-本期只注册并处理两个成功事件：
+注册以下已消费事件：
 
 - `order.succeeded`：一次性 Credits 和 `auto_renew=false` Unlimited。
 - `invoice.paid`：`auto_renew=true` Unlimited 的首期与后续每期扣款。
+- `subscription.updated.plan_changed`：交订阅服务查询渠道当前价并同步本地档位，不进入订单履约。升级等待页读取本地档位，必须订阅该终态事件；`invoice.paid` 不承担换档，详见 [统一升级结果与动作](../006.订阅系统/tech-订阅升级.md#confirm-结果与动作)。
 
-Clink 可能同时发送 recurring `order.succeeded`；该事件验签、识别为 recurring 后直接返回 2xx，不触发履约。自动续费只认 `invoice.paid`，避免同一账期被 Order 和 Invoice 两种事件各履约一次。
+Clink 可能同时发送 recurring `order.succeeded`；该事件验签并核对本地订单后按账户事件应答(见 §5.3),不触发履约。自动续费只认 `invoice.paid`，避免同一账期被 Order 和 Invoice 两种事件各履约一次。
 
-退款、争议、取消和订阅状态同步不在本期注册事件中。续费失败不会延长本地到期时间；当前权益到期后自然失效，因此本期不需要复制 Clink 订阅状态机。
+退款、争议、取消等其他生命周期事件不在本期注册范围。续费失败不会延长本地到期时间；当前权益到期后自然失效，因此不复制 Clink 订阅状态机。
 
 ### 5.2 验签顺序
 
@@ -168,7 +157,7 @@ Clink 可能同时发送 recurring `order.succeeded`；该事件验签、识别�
 2. `X-Clink-SignType` 必须等于 `SHA256`。
 3. `X-Clink-Timestamp` 必须是整数秒或毫秒时间戳，与当前时间前后相差不超过 300 秒。
 4. 签名原文为 `timestamp + "." + raw_body`。
-5. 用 `CLINK_WEBHOOK_SIGNING_KEY` 计算 HMAC-SHA256 hex，使用常量时间比较。
+5. 用 §3.2 的 `webhook_signing_key` 计算 HMAC-SHA256 hex，使用常量时间比较。
 6. 验签成功后才解析 JSON，校验 `event_` ID、`object="event"`、毫秒 `created`、允许的事件类型和对象形式 `data.object`。
 
 验签、结构或事件类型不合法时返回非 2xx，不进入订单服务。
@@ -182,7 +171,8 @@ Clink 可能同时发送 recurring `order.succeeded`；该事件验签、识别�
 3. 本地 `payment_data.sessionId` 必须与 `data.object.sessionId` 一致。
 4. `amountTotal` 转换为项目 6 位精度整数后，必须与本地订单 `amount` 一致。
 5. `paymentCurrency` 必须与本地订单 `currency` 一致。
-6. 订单快照中的 `auto_renew` 必须是 `false`。
+
+计费模式不在 webhook 内重复核对：`auto_renew` 由 session 创建链路锚定——下单时 `check_product` 校验并冻结进订单快照,Provider 创建 Session 时按快照决定 `priceDataList` 或 `productId+priceId`。
 
 项目已有 Provider 查询本地订单的先例；Clink 本地双引用核对放在 Provider 内，不给通用 OrderService 添加 Clink 专用分支。
 
@@ -195,14 +185,16 @@ order_no = data.object.merchantReferenceId
 
 Provider 把已验证金额/币种的结果交给现有 `handle_payment_callback`。`orderId + 订单 CAS` 负责重复投递幂等，不新增 Redis 或数据库 Inbox。
 
+所有已验签 `order.succeeded`(含 `type=recurring`)的应答按官方 Order Webhook 合同返回 account 事件:`{object:"event", type:"account.reloaded", data:{customerEmail(原样回传请求值), webSite(服务端配置的网站根地址), userId(本地订单 user_id), amount(amountTotal 原值), currency(paymentCurrency)}}`。本地下单要求登录,订单用户必然已存在,固定 `account.reloaded`;recurring 事件核对通过但 processed=false,不触发订单履约(履约只认 `invoice.paid`),一次性事件 processed=true 才进入 `handle_payment_callback`;重复事件复用现有订单幂等结果回传同一应答。`invoice.paid` 核对通过即 processed=true 并进入 `handle_payment_callback`,履约后返回项目统一成功 envelope;未支持事件确认接收,返回 `processed=false` envelope。
+
 ### 5.4 自动续费对账与成功映射
 
 `invoice.paid` 以 Clink 的 `subscriptionId + invoiceId` 表示订阅关系和本账期，不能套用一次性订单的 `merchantReferenceId + sessionId` 规则。Provider 按以下顺序处理：
 
 1. 从 Invoice 事件取得 `subscriptionId`、`invoiceId`、`orderId`、金额和币种。
-2. 服务端调用 `GET /subscription/{subscriptionId}`，取得该订阅的 `merchantReference` 和 `sessionId`。
-3. 用 `merchantReference` 精确定位首笔本地订单，再比对本地 `payment_data.sessionId`、`payment_method=clink` 和订单快照 `auto_renew=true`。
-4. 比对 Invoice 金额、币种与首单；本期不支持促销码和中途变价，因此每期金额必须与首单快照一致。
+2. 服务端调用 `GET /subscription/{subscriptionId}`，取得该订阅的 `merchantReference`、`sessionId` 和 `customerId`。
+3. 用 `merchantReference` 精确定位首笔本地订单，再比对本地 `payment_data.sessionId` 与 `payment_method=clink`(自动续费商品在 session 创建链路已锚定,webhook 不重复核对)。
+4. 核对 Invoice 币种与首单币种，按渠道实付金额记账；折算发票不与首单或新档整月金额比较。换档与实付订单的关系见 [订阅升级](../006.订阅系统/tech-订阅升级.md#路径-b自动续费线maps_extension渠道协议内换价)。
 5. 任一查询或核对失败就返回非 2xx，等待 Clink 重试；不新增本地恢复任务。
 
 核对通过后映射为：
@@ -210,18 +202,20 @@ Provider 把已验证金额/币种的结果交给现有 `handle_payment_callback
 ```text
 channel_order_no = invoice.invoiceId
 transaction_id = invoice.orderId
+channel_uid = subscription.customerId
 recurring_reference.original_order_no = subscription.merchantReference
 ```
 
 - `invoiceId` 进入现有 `(payment_method, payment_channel_order_no)` 查重与续费建单链路，保证同一账期只履约一次。
-- Clink `subscriptionId`、`orderId`、`invoiceId`、`sessionId`、`event.id` 保存在订单支付扩展元数据中用于排查；不把它们提升为新的本地订阅状态，也不为本期新增订单字段。
-- 首期支付时首单仍为 `PENDING`，现有链路直接将首单置为已支付并发放 30 天 Unlimited。
-- 后续扣款时首单已为 `PAID`，现有链路按新 `invoiceId` 创建本地续费订单，复制首单商品快照并续期。
+- `customerId` 沿订单成功与订阅履约链路保存到 `user_subscriptions.channel_uid`,渠道订阅管理用它调用 `POST /billing/session` 创建 Customer Portal Session(带服务端生成的 Pricing `returnUrl`);Portal URL 只接受当前环境官方 HTTPS 主机:Sandbox `uat-portal.clinkbill.com`,正式 `portal.clinkbill.com`。
+- Clink `subscriptionId`、`orderId`、`invoiceId`、`sessionId`、`event.id` 保存在订单支付扩展元数据中用于排查;本地订阅实例只保存 `channel_subscription_id/账期起止`,自动续费本地首单号(`original_order_no`)仅保存在订单回调元数据,不复制渠道实时状态。
+- 首期支付时首单仍为 `PENDING`，现有链路直接将首单置为已支付并按快照周期履约。
+- 后续扣款时首单已为 `PAID`，按新 `invoiceId` 创建本地实付订单并沿首单快照履约；本地到期只向后推进，续费与折算发票不覆盖已升级档位。
 - 运营之后把 `auto_renew` 修改为 `false` 不影响已存在的 Clink 周期协议；续费订单继续使用首单快照。
 
 Clink 针对 `order.succeeded` 的 API 文档明确允许按 `event.id` 或 `orderId` 幂等；订阅指南要求每个 `invoiceId` 只履约一次。本方案分别使用 `orderId` 和 `invoiceId` 进入现有订单幂等链路，并复用自动续费已有 Redis 短锁，不增加 Clink 专用 Redis key 或持久 Inbox 真相源。
 
-Clink 通用 skill 推荐所有事件额外写入按 `event.id` 唯一的持久 Inbox。本项目只消费两个支付成功终态，底层业务对象已经分别有稳定的 `orderId` / `invoiceId`，且用户接受 Redis 或数据库短暂故障时由渠道重试，因此明确不引入该通用加固层。
+Clink 通用 skill 推荐所有事件额外写入按 `event.id` 唯一的持久 Inbox。本项目的支付履约只消费两个支付成功终态，底层业务对象已经分别有稳定的 `orderId` / `invoiceId`，且用户接受 Redis 或数据库短暂故障时由渠道重试，因此明确不引入该通用加固层。
 
 ## 6. 前端合同
 
@@ -244,18 +238,22 @@ Clink 通用 skill 推荐所有事件额外写入按 `event.id` 唯一的持久 
 
 ### 8.1 Webhook 注册
 
-Sandbox 使用与当前 skill 一起发布的 CLI，不使用另一个 customer wallet `clink-cli`：
+Sandbox 使用 [官方 Integration Skill 随附的 CLI](https://github.com/clinkbillcom/clink-integ-skills/blob/main/references/clink-integ-cli-integration.md)。先按官方说明配置同环境 Secret Key，并核对本机 `webhook endpoint ensure --help`；下例的 `clink` 指该 CLI：
 
 ```bash
 clink webhook endpoint ensure \
   --url https://<public-api>/api/callback/clink/payment \
-  --events order.succeeded,invoice.paid \
+  --events order.succeeded,invoice.paid,subscription.updated.plan_changed \
   --save-secret \
-  --sync-env-file <ignored-env-file> \
   --json
 ```
 
-命令成功后重启/重新部署后端，使新的 `CLINK_WEBHOOK_SIGNING_KEY` 生效。
+`--save-secret` 只把签名密钥保存到 CLI profile，不更新 gmap 数据库。已有端点无法返回明文时，CLI 可能轮换密钥并立即使旧值失效；每次成功执行或变更 webhook URL 后都须完成以下同步：
+
+1. 从当前环境的 CLI profile 受控读取最新签名密钥；profile 保持私有权限，不把密钥打印到终端、日志或文档。需要明文输出供受控写入流程消费时，官方支持 `--show-secret --json`，输出不得进入普通命令日志。
+2. 在受控数据库会话中，仅更新 §3.2 所述 `clink` 行的 `config_json.webhook_signing_key` 并提交，保留其他配置键；不把明文密钥拼进 shell 命令参数。
+3. 数据库提交后，下一次 webhook 请求自动读取新值：`payment_service.get_provider_for_existing_payment` 调用 `config_payment_channel_service.get_by_channel_code`，该路径不缓存，随后构造 Provider；无需刷新启用渠道缓存或重启后端。
+4. 用渠道真实投递或重试确认验签与对应业务收敛；本地签名模拟只证明本地验签，不能替代 §8.3 的公网验收。
 
 ### 8.2 最小 demo
 
@@ -274,7 +272,7 @@ clink webhook endpoint ensure \
 4. 确认真实 Clink Webhook 命中公网端点并返回 2xx，不以本地 simulate 代替。
 5. 核对本地订单为已支付且履约成功，Credits 余额或 Unlimited 到期时间已实际变化。
 6. 重放同一一次性事件和同一 Invoice 事件，确认本地订单幂等返回，权益不再增加。
-7. 分别把 Unlimited `metadata.auto_renew` 设为 `false` 和 `true` 创建新订单，确认前者发送 `priceDataList`，后者发送 `productId + priceId`，两者均能完成首期履约。
+7. 分别对一次性商品(如 `unlimited`,商品列 `auto_renew=false`)与自动续费商品创建新订单,确认前者发送 `priceDataList`,后者发送 `productId + priceId`,两者均能完成首期履约。
 8. 对自动续费 Sandbox 订阅使用 Clink Test Clock 推进一个周期，确认新 `invoiceId` 产生新本地续费订单且只续期一次；后续运营修改 `auto_renew` 不改变该结果。
 
 ## 9. 官方证据
@@ -286,5 +284,7 @@ clink webhook endpoint ensure \
 - [Checkout Session](https://docs.clinkbill.com/guides/payments/checkout_session)
 - [Subscriptions](https://docs.clinkbill.com/subscriptions)
 - [Order Webhook](https://docs.clinkbill.com/api-reference/webhook/order)
+- [Customer Portal Session(`POST /billing/session`)](https://docs.clinkbill.com/api-reference/endpoint/create-customer-portal)
+- [Get Subscription(`customerId/merchantReference/recurringInvoiceItem`)](https://docs.clinkbill.com/api-reference/endpoint/get-subscription)
 
-本次设计使用的 skill 仓库版本已于 2026-08-20 刷新官方文档缓存，捆绑 `clink-integ-cli 0.2.1`。实施和上线前必须重跑 freshness gate，不使用本文代替当时官方合同。
+实施时已按上述官方 OpenAPI 复核(2026-09-04);后续上线前必须重跑 freshness gate,不使用本文代替当时官方合同。

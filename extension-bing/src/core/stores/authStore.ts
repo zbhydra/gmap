@@ -92,14 +92,19 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * 是否 Pro（免费/Pro 门控判定，016 §5）。
    *
-   * 付费档显式白名单（period 已知值只有 'month'）：'free' 明确免费；
-   * 'unavailable' 为订阅配置异常，按免费计权（宁严勿松）。
+   * 付费档显式白名单（已知付费周期 'month'/'quarter'/'year'，U4 计费模型
+   * 支持 quarter/year）：'free' 明确免费；'unavailable' 为订阅配置异常，
+   * 按免费计权（宁严勿松）。
    */
   const isPro = computed(() => {
     if (!isAuthenticated.value) {
       return false
     }
-    return subscription.value?.period === 'month'
+    return (
+      subscription.value?.period === 'month' ||
+      subscription.value?.period === 'quarter' ||
+      subscription.value?.period === 'year'
+    )
   })
 
   /** 用户显示名称（优先使用 full_name，其次 email） */

@@ -1,188 +1,75 @@
 # 011 · Pricing 页与订阅配置
 
-> 当前源码实现口径。覆盖 Pricing 页、订阅 checkout 配置、订单快照、支付成功履约。
-> 实现状态:前端已提供 PayPal 与 Telegram Stars 自助取消指引;站内调用支付渠道取消自动续费仍为后续保留方案。
+> 当前源码实现口径。本文是 Pricing 页消费合同的唯一 owner:checkout 配置消费、下单请求、订单轮询、支付回跳与渠道管理入口都在这里;`tech-实现与配置.md` 只负责前端文件责任与商品配置命令。
+> 订阅商品、状态与订单履约的唯一合同在 `@../006.订阅系统/tech-订阅商品与状态.md` 与 `@../004.订单系统/tech-ClinkBill支付.md`、`@../004.订单系统/tech-支付与履约.md`;升级接口与业务规则见 `@../006.订阅系统/tech-订阅升级.md`,本文只定义网站消费方式。
 
 ## 实现结论
 
-- Credits 一次性购买走 `ProductClass.RECHARGE`,支付成功后发放 Credits。
-- Unlimited 订阅走 `ProductClass.SUBSCRIPTION`,支付成功后续期 `user_subscriptions.expires_at`。
-- 订阅商品当前为 `product_id=free, period=free` 与 `product_id=unlimited, period=month`。
-- 商品是否自动续费只由 `metadata.auto_renew` 表达,不是独立列。
-- 下单把当前商品的 `metadata.auto_renew` 传给支付 Provider:`true` 创建渠道订阅,`false` 创建一次性支付。
-- `user_subscriptions` 当前用 `user_id/expires_at` 判权;取消自动续费所需渠道订阅引用为后续方案,Free 不落库。
-- 后续实现取消自动续费时,不保存 `auto_renew_enabled`;本站展示状态由订阅实例 `billing_mode/cancelled_at` 计算,不得从当前商品 metadata 推断。
-- 订阅订单快照写入 `orders.extra_metadata.product_snapshot.period` 和 `duration_days`,履约续期只依赖 `duration_days`。
-- 已有未过期 Unlimited 时,前端灰化订阅购买按钮并提示不可重复购买;后端 `subscription_service.check_product` 拒绝普通重复下单,不为极少数并发或跨渠道重复支付增加锁和协议状态机。
-- 有效且自动续费的订阅在 Pricing 账号状态区展示取消入口,弹窗引导用户到 PayPal 或 Telegram Stars 自助取消。
-- 当前取消指引不调用后端接口,不修改订阅状态或 `expires_at`。
-- 履约层仍保留续期能力,用于正常首期支付、续费回调、补偿或历史订单。
-- `/api/client/auth/me` 返回 website 需要的用户信息、Credits、订阅状态/过期时间。
-- `/api/client/subscription/status` 保持插件兼容。
-- 数据库配置必须直接使用 `backend/src/app/init/sql_executor.py` 执行 SQL,不得新增迁移脚本。
+- 页面按三产品线 tab 展示(online / extension / api),档位卡 SSR 静态渲染;购买走全站统一 OrderCheckout 弹窗,不自建第二套支付弹窗。
+- 入口查询参数 `product_line` 经 `pricing-page-controller.ts` 的 `PRICING_LINE_CONFIG` 映射到初始 tab,例如 `/pricing/?product_line=maps_extension`;缺省或未知值为 Online。正常 tab 切换保持内存状态,不改 URL。插件与网站共用这条购买、升级及管理路径。
+- checkout 配置按商品单一计费模式消费:商品的 `auto_renew` 与 `period` 是商品级字段,支付选项文案据此展示 `Auto-renews until canceled` 或 `One-time payment`。
+- 下单请求携带 `auto_renew + period`,与商品配置不一致时后端按价格已更新拒绝,页面重载配置。
+- 支付渠道为 PayPal 与 ClinkBill;页面不实现 Telegram Stars 渠道。
+- 已登录账号各产品线订阅摘要来自 `/api/client/auth/me` 的 `maps_online_subscription` / `maps_extension_subscription` / `maps_api_subscription`(六字段合同,见 006 状态 tech)。
+- 有效自动续费订阅在账号区展示 `Manage subscription`,经 `POST /api/client/subscription/management` 打开渠道管理页(PayPal Automatic Payments / ClinkBill Customer Portal);URL 为空时展示渠道内操作指引弹窗。站内不做取消、退款或渠道状态同步。
 
 ## 后端接口
 
 | 接口 | 用途 |
 | --- | --- |
-| `GET /api/client/auth/me` | 已登录用户摘要:用户信息、Credits、订阅状态/过期时间 |
-| `GET /api/client/credit/checkout-configs` | Credits 一次性购买套餐 |
-| `GET /api/client/subscription/checkout-configs` | Free/Unlimited 订阅商品配置、好评赠送活动开关与永久领取次数 |
-| `POST /api/client/subscription/review-reward/claim` | 领取一次 7 天好评赠送订阅;活动关闭时拒绝领取 |
-| `POST /api/client/subscription/cancel-auto-renew` | 后续接口:取消当前用户 Unlimited 自动续费;当前暂不实现 |
-| `POST /api/client/order/create` | Credits 和订阅统一创建订单 |
+| `GET /api/client/auth/me` | 已登录用户摘要:用户信息、Credits、各产品线订阅状态(六字段) |
+| `GET /api/client/subscription/checkout-configs` | 全部启用订阅商品、商品级 `auto_renew`/`period`、渠道价(响应含好评赠送合同字段,页面不消费) |
+| `POST /api/client/order/create` | 创建订阅订单(请求含 `auto_renew + period`) |
 | `GET /api/client/order/status/{order_no}` | 支付后轮询订单状态 |
+| `POST /api/client/order/cancel` | Clink cancel 回跳页把用户取消落到本地订单 |
+| `POST /api/client/subscription/management` | 请求只含 `product_line`,返回当前线自动续费订阅的渠道管理 URL(可空) |
 
-好评赠送不进入订单 checkout,详细合同见 `@tech-好评赠送.md` 与 `@../006.订阅系统/tech-好评赠送订阅.md`。
+`/api/client/subscription/status` 继续保留给插件兼容,Pricing 不使用。`POST /api/client/subscription/review-reward/claim` 为 006 域合同(入口已下线),现役页面不调用。
 
-## 订阅商品配置
+## 下单请求
 
-`config_subscription_product` 当前业务字段:
+Pricing 订阅下单调用 `POST /api/client/order/create`,请求核心字段:
 
-| 字段 | 说明 |
-| --- | --- |
-| `product_id` | 商品标识;当前 `free` / `unlimited` |
-| `name` | 商品名 |
-| `period` | 订阅周期;当前 `free` / `month` |
-| `duration_days` | 订阅天数;Free=0,Unlimited=30 |
-| `display_currency` / `display_amount` | 用户可见展示价 |
-| `enabled` | 是否启用 |
-| `sort_order` | 排序 |
-| `metadata` | JSON 扩展配置 |
-
-当前约定:
-
-| product_id | period | daily_limit | auto_renew |
-| --- | --- | ---: | --- |
-| `free` | `free` | 5 | false |
-| `unlimited` | `month` | -1 | false |
-
-Free 不配置付费渠道。Unlimited 渠道价在 `config_subscription_product_price` 中配置,下单时服务端按 `(product_id, channel_code)` 重新验价。Pricing 按 `product_id=unlimited` 选择商品,不重复限制配置中的周期、额度和续费方式。
-
-## 下单与订单快照
-
-Pricing 订阅下单调用:
-
-```text
-POST /api/client/order/create
-```
-
-订阅请求核心字段:
-
-| 字段 | 说明 |
+| 字段 | 来源 |
 | --- | --- |
 | `product_class` | 1,即 `SUBSCRIPTION` |
-| `product_id` | `unlimited` |
-| `payment_method` | 启用支付渠道 |
-| `currency` / `amount` | checkout 配置返回的渠道价 |
+| `product_id` | 所点卡片的 SKU |
+| `payment_method` | checkout 弹窗内选中的渠道(默认 PayPal) |
+| `currency` / `amount` | 所选渠道价行,6 位精度 |
+| `auto_renew` / `period` | 商品级单一计费模式字段,必须与商品配置一致 |
 
-`subscription_service.check_product` 先读取用户当前订阅状态。若同一产品线(006 产品线扩展:下单商品的 `product_line`)上 `user_subscriptions.expires_at` 仍未过期,返回 `INVALID_REQUEST` 和 `reason=active_subscription_exists`,不创建订单;不同产品线互不影响(插件 Unlimited 与 maps_extension 套餐可并存)。无有效订阅时继续读取当前订阅配置并验价,通过后创建订单。订单快照写入:
+同产品线已有未过期订阅时,由服务端升级报价决定卡片状态,见下节;跨产品线购买互不影响。价格被后台调整时弹窗提示价格更新并重载配置。订单快照、履约双路径与渠道幂等合同见 006 状态 tech 与 004 支付履约 tech,本文不重复。
 
-| 字段 | 说明 |
-| --- | --- |
-| `period` | 商品配置周期快照,只用于校验 Free/非法周期不能作为付费订阅发货 |
-| `duration_days` | 商品配置天数,履约续期的唯一时长来源 |
-| `metadata` | 商品 metadata |
-| `provider_sku` | 渠道侧 SKU |
+## 升级交互
 
-## 支付成功履约
+- `pricing-page-controller.ts` 的 `loadUpgradeQuotes` 在登录与配置加载完成、登录成功及支付成功刷新后请求各卡报价。`current_product_id` 唯一决定 Current Plan;`available/reason` 决定升级按钮与禁用提示,不按卡片顺序、展示价或 `auth/me` 套餐名猜档位。
+- `openUpgradeCheckout` 将报价金额、币种与当前订阅渠道交给公共 checkout,隐藏渠道选择,展示补差及到期日不变说明。当前订阅的 `auto_renew` 决定一次性差额订单或协议内确认。三个升级接口的字段与原因合同由 006 升级 tech 维护。
+- 一次性差额订单继续由 `order-checkout-controller.ts` 创建、打开外部支付页并轮询订单;沿用 PayPal/Clink 既有回跳。后端重新计算补差,网站提交的升级请求只含产品线与目标档位。
+- 自动续费确认统一消费 `status/action`。`succeeded` 展示成功;`failed` 展示失败;`requires_action` 复用 `pending_payment`,按 `wait` 等待或按 `redirect` 打开 HTTPS 地址,随后只轮询 quote。仅 `current_product_id === target_product_id` 结束等待,不重复 POST confirm、不以无档位 ID 的 `auth/me` 或 `subscription/status` 判定升级成功。
+- 自动续费升级不产生订单,公共成功事件的 `orderNo/orderStatus` 为空;Pricing 沿用成功事件刷新 `auth/me` 与报价。关闭弹窗停止页面轮询,服务端渠道事件继续负责最终档位。
+- PayPal 自动续费升级由服务端报价拒绝,页面展示渠道不可升级提示;一次性 PayPal 补差保留。升级交互与文案不按渠道写两份流程。
+- `upgrade_quote_shown` 在当前 tab 的可升级卡片曝光时上报;`upgrade_confirmed` 在共享 checkout 确认履约或新档生效时上报,提交按钮点击不算成功。
 
-支付 webhook 确认成功后进入统一订单成功流程:
+验证入口为 `website/e2e/website.spec.ts` 的 `Pricing full purchase path`。route mock 证明网站交互与协议,不证明真实渠道扣款或 webhook;真实 SKU、公网 webhook 的验收归 004/006。
 
-```text
-provider webhook -> order_service.order_success -> order_service.fulfill_paid_order
-```
+## 支付渠道与回跳
 
-订单履约按 `order.product_class` 分发:
+- 渠道展示名与图标:展示名读后端 `payment_method_name`;图标 PayPal / ClinkBill 走本地静态资源。
+- 支付 URL 白名单:PayPal 只允许 HTTPS `paypal.com`(含子域),Clink 只允许 HTTPS `uat-checkout.clinkbill.com` / `checkout.clinkbill.com`;其余一律拒绝并在弹窗内提示。
+- 用户确认后新标签页打开 Hosted Checkout,原页按 2 秒间隔轮询本地订单状态,直到已支付且履约成功;BroadcastChannel/postMessage 同源通知可加速轮询,但不替代轮询。
+- PayPal 回跳页:`/paypal/success|cancel`;Clink 回跳页:`/clink/success|cancel`(noindex)。success 页轮询本地订单状态后确认,确认文案按订单 `product_class` 分发(订阅口径 / Credits 口径);cancel 页调用 `/api/client/order/cancel` 落取消状态。两个渠道共用同一个 payment return 脚本(`credit-purchase/paypal-return.ts`),文案经页内 data 钩子注入。
 
-| product_class | 行为 |
-| --- | --- |
-| `RECHARGE` | 读取 Credits 快照并发放积分 |
-| `SUBSCRIPTION` | 读取订阅快照 `duration_days`,续期 `user_subscriptions.expires_at` |
+## 渠道管理入口(Manage subscription)
 
-订阅续期规则:
-
-- 新订阅:从当前时间加周期时长。
-- 未过期记录:从当前 `expires_at` 继续加时。
-- 已过期后订阅:从当前时间重新加时。
-- `user_subscriptions` 当前保存 Unlimited 到期时间,不存在旧套餐降级分支;取消续费所需渠道引用为后续方案。
-- 后续实现取消状态后,每一笔订阅付款成功都清空 `cancelled_at`;Telegram 收到 `is_recurring=true` 即执行,不区分首期与后续续费。
-
-普通单窗口购买会被有效订阅检查拦截;上述未过期续期规则继续处理并发 checkout、自动续费回调、补偿任务或历史订单。
-
-## 支付渠道自助取消指引
-
-Pricing 使用 `/api/client/auth/me` 已有的 `subscription.expires_at` 与 `subscription.auto_renew` 判断入口状态:
-
-1. `expires_at` 晚于当前时间且 `auto_renew=true` 时,在账号订阅行展示“取消”按钮。
-2. 点击后打开原生 `dialog`,同时展示两条渠道路径:
-   - Telegram Stars:`Telegram → Settings → Telegram Stars → My subscriptions`。
-   - PayPal:`PayPal → Settings → Payments → Automatic payments → TG Downloader → Cancel`。
-3. 弹窗支持关闭按钮、遮罩点击和 Escape,关闭后焦点回到“取消”按钮。
-4. 打开或关闭弹窗都不调用 API,不更新本地订阅状态。
-
-Free、已过期、一次性或非自动续费状态隐藏入口。当前 `auth/me` 不增加取消专用字段。
-
-## 站内直接取消自动续费（暂不实现）
-
-以下为后续保留方案,当前 Pricing 不调用该接口:
-
-Pricing 调用:
-
-```text
-POST /api/client/subscription/cancel-auto-renew
-```
-
-后端流程:
-
-1. 按登录用户读取 `user_subscriptions`。
-2. 无未过期 Unlimited 时返回业务错误。
-3. `cancelled_at` 不为空时幂等返回当前状态。
-4. 缺少 `payment_method/channel_subscription_id`;Telegram Stars 缺少 `channel_uid` 时返回可恢复错误,不修改本地状态。
-5. 按 `payment_method/channel_subscription_id/channel_uid` 调支付渠道取消。
-6. 渠道成功或明确返回已经取消 / 非自动续费状态时写入 `cancelled_at=now,updated_at=now`。
-7. 渠道订阅不存在、权限不足、参数非法、网络失败等不确定状态不更新本地,让用户重试或联系支持。
-
-支付渠道取消动作:
-
-| 渠道 | 动作 | 关键入参 |
-| --- | --- | --- |
-| `paypal` | PayPal Subscriptions API cancel | `channel_subscription_id` |
-| `telegram_stars` | Telegram Bot API `editUserStarSubscription` | `channel_uid` + `channel_subscription_id` + `is_canceled=true` |
-
-后续实现时,取消成功不创建订单、不退款、不改 `expires_at`。`auto_renew/cancel_at_period_end` 是展示字段,由 `billing_mode/cancelled_at/expires_at` 计算。`cancelled_at` 为空只表示本站尚未确认取消,不代表渠道实时状态。用户在支付平台后台取消但平台未通知本站时,页面仍可显示自动续费;下一次站内取消请求收到渠道“已取消”结果后写入 `cancelled_at`。
+- 展示条件:当前 tab 产品线的 `auth/me` 订阅对象 `status=active`、`expires_at` 未过期且 `auto_renew=true`。
+- 点击行为:同步预开空白新标签页(用户手势内,防 popup 拦截),再 `POST /api/client/subscription/management`(`product_line` 为当前线);返回 URL 时新标签页导航到渠道管理页,URL 为空时关闭空白页并弹出渠道内操作指引弹窗(PayPal Automatic Payments 三步 / ClinkBill Customer Portal 三步)。
+- 页面只打开渠道入口,不调用取消接口、不修改订阅状态或到期时间;渠道侧状态允许滞后于本站展示。
 
 ## 用户状态
 
-`GET /api/client/auth/me` 返回 website Pricing 所需账户摘要:
-
-| 字段 | 说明 |
-| --- | --- |
-| 用户基础信息 | `user_id/email/full_name/avatar_url/created_at` |
-| `credits_balance` | Credits 余额 |
-| `subscription` | 当前订阅状态、到期时间、额度对象;后续取消方案再额外返回 `billing_mode/auto_renew/cancel_at_period_end` |
-
-`GET /api/client/subscription/status` 继续作为插件兼容接口,支持已登录用户和匿名设备。
-
-订阅商品配置异常时,账户摘要和订阅状态接口不返回错误;订阅对象返回 `status=unavailable`、`period=unavailable` 和 0 额度,只影响订阅展示。支付下单接口仍按配置错误失败,避免创建错误订单。
-
-## 前端订阅购买状态
-
-Pricing 读取 `/api/client/auth/me` 的 `subscription.expires_at` 判断当前账户是否已有有效 Unlimited:
-
-- 无有效订阅:订阅按钮保持可购买,点击后进入插件安装确认和公共 checkout。
-- 有有效订阅:按钮使用软灰化样式,设置 `aria-disabled=true`,但不写原生 `disabled`,保证用户点击后能看到“已有有效订阅,不可重复购买”的提示。
-- 有有效订阅且 `subscription.auto_renew=true`:在 Pricing 顶部账号订阅行展示“取消”按钮,点击后打开 PayPal 与 Telegram Stars 自助取消指引。
-- Free、已过期、一次性或 `subscription.auto_renew=false`:隐藏取消入口。
-- 后续实现取消自动续费时,有有效订阅且 `cancel_available=true`:在 Pricing 顶部账号状态区的订阅状态行右侧展示取消自动续费按钮;移动端放到同一状态块的到期时间下方。
-- 后续实现取消自动续费时,有有效订阅且 `cancel_at_period_end=true`:隐藏取消按钮,展示到期停止续费状态。
-- Credits 购买不受订阅状态影响。
-
-后续实现取消自动续费时,取消按钮不放入 Unlimited 套餐卡片。套餐卡片继续只表达购买动作,账号状态区表达当前订阅管理动作。
+`GET /api/client/auth/me` 返回 website Pricing 所需账户摘要:用户基础信息、`credits_balance` 与各产品线订阅对象(六字段合同)。订阅商品配置异常时账户摘要不报错,对应线订阅对象返回 `status=unavailable`、`period=unavailable`;支付下单接口仍按配置错误失败,避免创建错误订单。
 
 ## 配置上线
 
-- 订阅商品和价格配置命令见 `@tech-实现与配置.md`。
-- 配置修改只使用 `backend/src/app/init/sql_executor.py` 直接执行 SQL。
-- 不新增迁移脚本承载商品配置。
-- 配置更新后支付配置缓存最多 3 分钟生效。
+- 订阅商品与渠道价的配置方式、播种脚本与修改命令见 `@tech-实现与配置.md`;商品档位表与字段口径见 `@../006.订阅系统/tech-订阅商品与状态.md`。
+- 后端支付配置有缓存:配置更新后最多约 3 分钟在页面上生效,期间新下单仍按旧配置验价并按价格已更新拒绝。

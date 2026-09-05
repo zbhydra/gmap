@@ -1,6 +1,6 @@
 """用户订阅数据模型"""
 
-from sqlalchemy import BigInteger, String
+from sqlalchemy import BigInteger, Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseDBModel
@@ -29,10 +29,31 @@ class UserSubscriptionModel(BaseDBModel):
         default="unlimited",
         comment="当前生效的订阅商品 SKU（购买/续期时写入）",
     )
-    expires_at: Mapped[int | None] = mapped_column(
+    # 购买时续费方式快照；自动续费状态展示还要求 expires_at 未过期。
+    auto_renew: Mapped[bool | None] = mapped_column(
+        Boolean, nullable=True, default=None, comment="购买时续费方式快照"
+    )
+    payment_method: Mapped[str | None] = mapped_column(
+        String(32), nullable=True, default=None, comment="当前订阅支付渠道"
+    )
+    channel_subscription_id: Mapped[str | None] = mapped_column(
+        String(256),
+        nullable=True,
+        default=None,
+        comment="渠道侧订阅协议或取消句柄（PayPal Billing Subscription id 等）",
+    )
+    channel_uid: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        default=None,
+        comment="渠道付款用户标识（Telegram user id / Clink customerId）",
+    )
+    # 只供升级折算，不参与账期判断；普通购买和续费只按 expires_at 判断账期。
+    start_at: Mapped[int | None] = mapped_column(
         BigInteger,
         nullable=True,
-        comment="订阅过期时间(毫秒时间戳)",
+        default=None,
+        comment="当前订阅账期开始（毫秒时间戳，仅升级折算用）",
     )
     created_at: Mapped[int] = mapped_column(
         BigInteger,
@@ -45,6 +66,12 @@ class UserSubscriptionModel(BaseDBModel):
         default=timestamp_now,
         nullable=False,
         comment="更新时间（毫秒时间戳）",
+    )
+    # MySQL upsert 按 Model 列顺序生成更新项，唯一时间真相必须最后写入。
+    expires_at: Mapped[int | None] = mapped_column(
+        BigInteger,
+        nullable=True,
+        comment="订阅过期时间(毫秒时间戳)",
     )
 
     def __repr__(self) -> str:

@@ -35,20 +35,22 @@ export interface HomepageUserInfo {
 }
 
 /** 官网订阅状态接口保留 period 兼容字段，仅表达当前有效计费口径。 */
-export type HomepageSubscriptionPeriod = 'free' | 'month' | 'unavailable'
+export type HomepageSubscriptionPeriod = 'free' | 'month' | 'quarter' | 'year' | 'unavailable'
 
 /** auth/me 返回的订阅权益摘要。 */
 export interface HomepageUserSubscription {
   /** 订阅状态；unavailable 表示订阅配置异常，仅影响权益展示。 */
   status?: 'active' | 'unavailable'
-  /** 订阅周期：free、month；unavailable 表示配置不可用等异常态。 */
+  /** 订阅周期；unavailable 表示配置不可用等异常态。 */
   period: HomepageSubscriptionPeriod
   /** 展示名称，例如 Free 或 Unlimited。 */
   display_name: string
   /** 到期时间，后端可能返回秒或毫秒时间戳；为空表示无到期时间。 */
   expires_at: number | null
-  /** 是否自动续费。 */
+  /** 是否自动续费；从订阅实例读取，反映当前渠道扣款方式。 */
   auto_renew: boolean
+  /** 当前订阅支付渠道；无有效订阅或历史数据时为空。 */
+  payment_method?: string | null
 }
 
 /**

@@ -1,5 +1,16 @@
 # 004 · 订单系统 - 变更记录
 
+## 2026-09-05 升级支付合同接线
+
+- 统一换档结果与渠道能力归 PaymentBase/adapter，具体协议见 [订阅升级](../006.订阅系统/tech-订阅升级.md)。
+- 自动续费 confirm 不预建订单，Clink 折算发票按首购引用进入现有实付建单链；按发票金额记账，账期不前进时不延长权益，续费不回退档位。
+- 本地 provider/一次性升级检查、静态检查、构建启动与 health 已通过；独立审查、跨端汇合及真实 SKU/公网 webhook/人工付款验收待完成，详见 [005 计划](../006.订阅系统/plans/005.订阅升级.md)。
+
+## 2026-09-05 ClinkBill 渠道与计费模型同步实施(004 计划 U1/U2)
+
+- `tech-ClinkBill支付.md` 从待批准方案转为已实施合同(2026-09-04 按官方 OpenAPI 复核),取代上条「渠道现状校准」中「ClinkBill 未实施」的结论:`clink` provider、`POST /api/callback/clink/payment`(`order.succeeded` 一次性 / `invoice.paid` 自动续费)、统一渠道订阅管理入口、下单请求 `auto_renew + period` 校验、商品/价格/订阅实例表结构同步全部落地;`tech-支付与履约.md` 同步 Clink 渠道配置、webhook 与履约合同。
+- 仍属外部待办:自动续费商品(maps_extension Pro/Business)的 PayPal Plan ID 与 Clink `productId:priceId` 真实 SKU 未注册(占位 TODO 播种,enabled=0 不可售);Clink 公网 webhook 首笔人工验收(`tech-ClinkBill支付.md` §8.3)未执行。Stripe/Paddle 仍未立项。
+
 ## 2026-09-02 渠道现状校准(PayPal 在役,ClinkBill 未实施)
 
 - 现役支付渠道:PayPal(Orders v2 一次性 + Billing v1 订阅,创建/验签回调/履约全链路在役)与 Telegram Stars。MapsGrab 三产品线 10 个付费 SKU(2026-08-31 起在售,见 `@../006.订阅系统/`)全部经 PayPal 一次性支付成交,交易流水落 `payment_transaction_id`(见下条)。

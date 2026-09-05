@@ -34,21 +34,21 @@ beforeEach(() => {
 })
 
 describe('pricingUrl 消费（buildMapsPricingUrl）', () => {
-  it('已配置时追加 utm_source=extension 归因参数', () => {
+  it('已配置时选择插件产品线并追加归因参数', () => {
     expect(buildMapsPricingUrl(CONFIGURED_PRICING_URL)).toBe(
-      'https://mapsgrab.com/pricing/?utm_source=extension'
+      'https://mapsgrab.com/pricing/?product_line=maps_extension&utm_source=extension'
     )
   })
 
   it('原 URL 已带 query 时保留原参数并追加归因', () => {
     expect(
-      buildMapsPricingUrl('https://mapsgrab.com/pricing/?utm_campaign=launch')
-    ).toBe('https://mapsgrab.com/pricing/?utm_campaign=launch&utm_source=extension')
+      buildMapsPricingUrl('https://mapsgrab.com/pricing/?utm_campaign=launch&product_line=maps_online')
+    ).toBe('https://mapsgrab.com/pricing/?utm_campaign=launch&product_line=maps_extension&utm_source=extension')
   })
 
   it('空白包裹的远程值按 trim 后解析', () => {
     expect(buildMapsPricingUrl(`  ${CONFIGURED_PRICING_URL}  `)).toBe(
-      'https://mapsgrab.com/pricing/?utm_source=extension'
+      'https://mapsgrab.com/pricing/?product_line=maps_extension&utm_source=extension'
     )
   })
 })
@@ -200,7 +200,7 @@ describe('openMapsPricingPage（打开路径）', () => {
       expect(sendSpy).toHaveBeenCalledTimes(1)
       const request = sendSpy.mock.calls[0]?.[0] as RpcRequest<{ url: string }>
       expect(request.method).toBe('openPricingPage')
-      expect(request.params?.url).toBe('https://mapsgrab.com/pricing/?utm_source=extension')
+      expect(request.params?.url).toBe('https://mapsgrab.com/pricing/?product_line=maps_extension&utm_source=extension')
     } finally {
       sendSpy.mockRestore()
     }

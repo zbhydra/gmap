@@ -7,7 +7,13 @@
 
 import { clearStoredAccessToken, getStoredAccessToken } from '../../scripts/homepage/auth'
 import { ensureDeviceId } from '../../scripts/homepage/device'
-import type { RequestContext } from '../../scripts/homepage/api'
+import { HomepageApiError, type RequestContext } from '../../scripts/homepage/api'
+import { reportGA4Event } from '../../scripts/homepage/ga4'
+import {
+  confirmSubscriptionUpgrade,
+  createSubscriptionUpgradeCheckout,
+  getSubscriptionUpgradeQuote
+} from '../pricing/pricing-checkout'
 import {
   buildCreateOrderRequest,
   classifyOrderStatus,
@@ -21,7 +27,6 @@ import {
   isRecoverableOrderStatusError,
   ORDER_CHECKOUT_POLL_INTERVAL_MS,
   readPaymentUrl,
-  type OrderCheckoutPaymentChannel,
   type OrderStatusResponse
 } from './order-checkout-api'
 import {
@@ -38,6 +43,7 @@ import {
   type OrderCheckoutController,
   type OrderCheckoutCopy,
   type OrderCheckoutOpenOptions,
+  type OrderCheckoutPaymentOption,
   type OrderCheckoutPriceUpdatedPayload,
   type OrderCheckoutProduct,
   type OrderCheckoutSuccessPayload
@@ -181,6 +187,12 @@ function getPaymentChannelIcon(paymentMethod: string): PaymentChannelIcon {
       label: 'Telegram Stars'
     }
   }
+  if (paymentMethod === 'clink') {
+    return {
+      src: '/payment-icons/clinkbill.png',
+      label: 'ClinkBill'
+    }
+  }
   return {
     src: '',
     label: 'Payment method'
@@ -190,7 +202,7 @@ function getPaymentChannelIcon(paymentMethod: string): PaymentChannelIcon {
 /** 渲染支付方式按钮内容。 */
 function appendPaymentChannelButtonContent(
   button: HTMLButtonElement,
-  channel: OrderCheckoutPaymentChannel
+  channel: OrderCheckoutPaymentOption
 ): void {
   const icon = getPaymentChannelIcon(channel.payment_method)
   const iconElement = document.createElement('span')
@@ -219,7 +231,7 @@ function getCurrentProduct(state: OrderCheckoutState): OrderCheckoutProduct | nu
 }
 
 /** 读取当前商品下选中的支付渠道。 */
-function getSelectedPaymentChannel(state: OrderCheckoutState): OrderCheckoutPaymentChannel | null {
+function getSelectedPaymentChannel(state: OrderCheckoutState): OrderCheckoutPaymentOption | null {
   const product = getCurrentProduct(state)
   if (!product || !state.selectedPaymentMethod) {
     return null
@@ -239,9 +251,21 @@ function canSubmitPayment(state: OrderCheckoutState): boolean {
   )
 }
 
-/** 把外部支付 URL 拉起到新窗口。 */
-function openPaymentUrl(url: string): void {
-  window.open(url, '_blank')
+/** 同步预开空白支付窗口：必须在用户手势调用栈内执行，避免 popup 被拦截后订单已被创建。 */
+function openPaymentWindow(): Window | null {
+  const popup = window.open('', '_blank')
+  if (popup) {
+    popup.opener = null
+  }
+  return popup
+}
+
+/** 把可信支付 URL 导航到预开的支付窗口；窗口已被用户关闭时忽略。 */
+function openPaymentUrl(popup: Window, url: string): void {
+  if (popup.closed) {
+    return
+  }
+  popup.location.href = url
 }
 
 /** 根据错误映射用户可见文案。 */
@@ -258,13 +282,13 @@ function mapOrderCheckoutError(copy: OrderCheckoutCopy, error: Error): string {
   return error.message || copy.createFailed
 }
 
-/** 判断 PayPal 返回页通知是否属于当前订单。 */
+/** 判断支付返回页通知是否属于当前订单。 */
 function isCurrentPayPalReturnMessage(
   value: PayPalReturnMessage,
   state: OrderCheckoutState
 ): boolean {
   return (
-    value.provider === 'paypal' &&
+    value.provider === state.selectedPaymentMethod &&
     typeof value.status === 'string' &&
     Boolean(state.orderNo) &&
     value.orderNo === state.orderNo
@@ -288,10 +312,10 @@ function renderPaymentDialog(
   const product = getCurrentProduct(state)
   elements.channelList.textContent = ''
 
-  elements.paymentTitle.textContent = copy.paymentTitle
+  elements.paymentTitle.textContent = state.options?.upgrade?.copy.title ?? copy.paymentTitle
+  setOrderCheckoutHidden(elements.paymentKicker, Boolean(state.options?.upgrade))
+  setOrderCheckoutHidden(elements.channelList, Boolean(state.options?.upgrade))
   elements.selectedTitle.textContent = product?.title ?? ''
-  elements.selectedPrice.textContent = product?.priceText ?? ''
-  setMessage(elements.selectedUsage, product?.usageNotice ?? '')
 
   if (!product) {
     elements.submitButton.textContent = copy.confirmPurchase
@@ -302,6 +326,8 @@ function renderPaymentDialog(
   const selectedChannel =
     getSelectedPaymentChannel(state) ?? getDefaultOrderPaymentChannel(product.paymentChannels)
   state.selectedPaymentMethod = selectedChannel?.payment_method ?? null
+  elements.selectedPrice.textContent = selectedChannel?.priceText ?? product.priceText
+  setMessage(elements.selectedUsage, selectedChannel?.detailText ?? product.usageNotice ?? '')
 
   for (const channel of product.paymentChannels) {
     const button = document.createElement('button')
@@ -319,7 +345,11 @@ function renderPaymentDialog(
   }
 
   elements.submitButton.textContent =
-    state.status === 'creating_order' ? copy.creatingOrder : copy.confirmPurchase
+    state.status === 'creating_order'
+      ? product.autoRenew && state.options?.upgrade
+        ? state.options.upgrade.copy.pendingTitle
+        : copy.creatingOrder
+      : state.options?.upgrade?.copy.confirm ?? copy.confirmPurchase
   elements.submitButton.disabled =
     !canSubmitPayment(state) || state.status === 'creating_order' || !selectedChannel
 }
@@ -334,7 +364,7 @@ function render(
   elements.root.dataset.orderCheckoutStatus = state.status
 
   const showOrderDialog =
-    Boolean(state.orderNo) &&
+    Boolean(state.orderNo || state.options?.upgrade) &&
     (state.status === 'pending_payment' || state.status === 'success' || state.status === 'failed')
   const showPaymentDialog =
     !showOrderDialog &&
@@ -343,6 +373,7 @@ function render(
     Boolean(state.supportMail) &&
     (state.status === 'pending_payment' || state.status === 'failed')
   const product = getCurrentProduct(state)
+  const recurringUpgradeCopy = product?.autoRenew ? state.options?.upgrade?.copy : undefined
 
   setOrderCheckoutHidden(elements.paymentDialog, !showPaymentDialog)
   setOrderCheckoutHidden(elements.orderDialog, !showOrderDialog)
@@ -354,14 +385,14 @@ function render(
     ? product?.successTitle ?? copy.successTitle
     : state.status === 'failed'
       ? copy.failed
-      : copy.pendingPaymentTitle
+      : recurringUpgradeCopy?.pendingTitle ?? copy.pendingPaymentTitle
   elements.orderMessage.textContent = state.status === 'success'
     ? product?.successDescription ?? copy.successDescription
     : state.status === 'failed'
       ? failedOrderMessage
-      : copy.pendingPayment
+      : recurringUpgradeCopy?.pendingDescription ?? copy.pendingPayment
   elements.orderCloseButton.textContent =
-    state.status === 'pending_payment' ? copy.cancelPayment : copy.close
+    state.status === 'pending_payment' && !recurringUpgradeCopy ? copy.cancelPayment : copy.close
   setMessage(elements.orderError, showOrderDialog && state.status !== 'failed' ? state.error ?? '' : '')
   setOrderCheckoutHidden(elements.orderSupport, !showSupportMail)
   if (showSupportMail && state.supportMail) {
@@ -421,9 +452,9 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
     dispatchOrderCheckoutEvent(elements.root, ORDER_CHECKOUT_AUTH_INVALID_EVENT, payload)
   }
 
-  const finishSuccess = (status: OrderStatusResponse): void => {
+  const finishSuccess = (status: OrderStatusResponse | null): void => {
     const product = getCurrentProduct(state)
-    if (!state.open || !state.orderNo || !state.options || !product) {
+    if (!state.open || !state.options || !product) {
       return
     }
 
@@ -432,6 +463,16 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
     state.error = null
     stopPolling()
     render(elements, copy, state)
+
+    if (state.options.upgrade) {
+      const channel = getSelectedPaymentChannel(state)
+      reportGA4Event('upgrade_confirmed', {
+        current_plan: state.options.upgrade.currentProductId ?? undefined,
+        target_plan: product.productId,
+        payment_method: channel?.payment_method,
+        amount: status?.amount ?? channel?.amount
+      })
+    }
 
     const payload: OrderCheckoutSuccessPayload = {
       source: state.options.source,
@@ -449,7 +490,9 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
   }
 
   const pollOrderStatus = async (): Promise<void> => {
-    if (!state.orderNo) {
+    const product = getCurrentProduct(state)
+    const upgrade = state.options?.upgrade
+    if (!product || (!state.orderNo && !upgrade)) {
       return
     }
 
@@ -460,6 +503,19 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
     }
 
     try {
+      if (upgrade && product.autoRenew) {
+        const quote = await getSubscriptionUpgradeQuote(context, upgrade.productLine, product.productId)
+        if (!state.open) {
+          return
+        }
+        if (quote.current_product_id === product.productId) {
+          finishSuccess(null)
+        }
+        return
+      }
+      if (!state.orderNo) {
+        return
+      }
       const status = await getOrderStatus(context, state.orderNo)
       if (!state.open) {
         return
@@ -511,7 +567,7 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
       if (error instanceof Error) {
         stopPolling()
         state.status = 'failed'
-        state.error = mapOrderCheckoutError(copy, error)
+        state.error = upgrade?.copy.failed ?? mapOrderCheckoutError(copy, error)
       } else {
         stopPolling()
         state.status = 'failed'
@@ -550,8 +606,16 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
       return
     }
 
+    const paymentWindow = openPaymentWindow()
+    if (!paymentWindow) {
+      state.error = copy.popupBlocked
+      render(elements, copy, state)
+      return
+    }
+
     const context = await buildRequestContext()
     if (!context) {
+      paymentWindow.close()
       handleAuthFailure(copy.authExpired)
       return
     }
@@ -563,12 +627,44 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
     render(elements, copy, state)
 
     try {
-      const response = await createOrder(
+      const upgrade = state.options?.upgrade
+      if (upgrade && product.autoRenew) {
+        const result = await confirmSubscriptionUpgrade(context, upgrade.productLine, product.productId)
+        if (result.status === 'succeeded') {
+          paymentWindow.close()
+          finishSuccess(null)
+          return
+        }
+        if (result.status === 'failed') {
+          paymentWindow.close()
+          state.status = 'failed'
+          state.error = upgrade.copy.failed
+          render(elements, copy, state)
+          return
+        }
+        if (result.action?.type === 'redirect') {
+          if (new URL(result.action.url).protocol !== 'https:') {
+            throw new Error('[order-checkout] 升级跳转地址必须使用 HTTPS。')
+          }
+          openPaymentUrl(paymentWindow, result.action.url)
+        } else {
+          paymentWindow.close()
+        }
+        state.status = 'pending_payment'
+        render(elements, copy, state)
+        startPolling()
+        return
+      }
+      const response = upgrade
+        ? await createSubscriptionUpgradeCheckout(context, upgrade.productLine, product.productId)
+        : await createOrder(
         context,
         buildCreateOrderRequest(
           {
             product_class: product.productClass,
             product_id: product.productId,
+            auto_renew: product.autoRenew,
+            period: product.period,
             payment_channels: product.paymentChannels
           },
           channel
@@ -576,6 +672,7 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
       )
       const paymentUrl = readPaymentUrl(response.payment_data, channel.payment_method)
       if (!paymentUrl) {
+        paymentWindow.close()
         state.status = 'selecting_payment_method'
         state.error = copy.invalidPaymentData
         render(elements, copy, state)
@@ -587,9 +684,10 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
       state.status = 'pending_payment'
       state.error = null
       render(elements, copy, state)
-      openPaymentUrl(paymentUrl)
+      openPaymentUrl(paymentWindow, paymentUrl)
       startPolling()
     } catch (error) {
+      paymentWindow.close()
       console.error(
         '[order-checkout] Order creation failed.',
         { productId: product.productId, paymentMethod: channel.payment_method },
@@ -612,7 +710,14 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
           return
         }
         state.status = 'selecting_payment_method'
-        state.error = mapOrderCheckoutError(copy, error)
+        const upgradeCopy = state.options?.upgrade?.copy
+        const reason = error instanceof HomepageApiError ? error.data?.reason : null
+        state.error = upgradeCopy
+          ? reason === 'no_active_subscription' || reason === 'not_higher_tier' ||
+            reason === 'non_positive_diff' || reason === 'channel_unavailable'
+            ? upgradeCopy.reasons[reason]
+            : isPaymentGatewayError(error) ? copy.gatewayFailed : upgradeCopy.failed
+          : mapOrderCheckoutError(copy, error)
       } else {
         state.status = 'selecting_payment_method'
         state.error = copy.createFailed
@@ -628,8 +733,12 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
       state.open = true
       state.options = options
       state.status = 'selecting_payment_method'
+      const intendedChannel = options.product.paymentChannels.find(
+        channel => channel.payment_method === options.initialPaymentMethod
+      )
       state.selectedPaymentMethod =
-        getDefaultOrderPaymentChannel(options.product.paymentChannels)?.payment_method ?? null
+        (intendedChannel ?? getDefaultOrderPaymentChannel(options.product.paymentChannels))
+          ?.payment_method ?? null
 
       if (!state.selectedPaymentMethod) {
         state.error = copy.gatewayFailed

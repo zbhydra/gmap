@@ -1,5 +1,30 @@
 # 006 · 订阅系统 - 变更记录
 
+## 2026-09-05 订阅升级后端接线与本地验证
+
+- PaymentBase/渠道 adapter 统一换档能力、预览、确认与状态；业务层消费统一结果，合同归 [订阅升级](tech-订阅升级.md)。
+- PayPal 自动续费升级禁用，一次性补差保留；Clink 处理中不提前换档、不重复 confirm。自动续费 confirm 不预建订单，发票回调复用首购引用创建实付订单。
+- 4 条 Clink provider 检查及一次性升级/旧快照拒绝检查通过；受影响 black/ruff/mypy、compileall、启动与 health 通过。续费与 schema 证据复用，未做真实扣费。
+- 双插件只展示权益并引导至网站购买/管理；页面交互由 [Pricing 域](../011.Pricing页/feat.md) 维护。
+- 独立审查与跨端汇合待完成；真实 Pro/Business SKU、公网 webhook 与人工付款仍未验收，进度见 [005 计划](plans/005.订阅升级.md)。
+
+## 2026-09-05 支付模型同步落地(004 计划 U1–U5 收尾)
+
+**Why**: gmap 支付系统与上游对齐——商品单一计费模式 + 订阅实例账期(自然月/渠道归一)+ ClinkBill 渠道 + 渠道订阅管理入口;同步把订阅状态合同收敛为六字段并清理旧额度文档。
+
+**变更**:
+
+- 后端(2026-09-04 起):`auto_renew` 上移为商品列(不再读 metadata),周期枚举 `none/month/quarter/year`;一次性履约按快照 `period` 自然月续期(不再 `duration_days`);`user_subscriptions` 增实例账期字段(`auto_renew/payment_method/channel_subscription_id/channel_uid/start_at`);新增 Clink provider 与 `POST /api/callback/clink/payment`;下单请求校验 `auto_renew + period` 与商品配置一致;新增 `POST /api/client/subscription/management` 渠道管理入口;`sync_database_schema` 支持 removed 列。
+- 插件端:extension 订阅状态解析按六字段合同收窄(`period` 增 quarter/year、`auto_renew` 必填、透出 `payment_method/status`,去 `one_time` 与每日额度旧字段,允许响应多余字段);extension-bing `period` 联合类型增 quarter/year。
+- 文档:`tech-订阅商品与状态.md` 成为订阅状态响应(六字段)唯一 owner 并补合同表;删除 `tech-额度与速率档位.md`(其现行事实已由 `000.架构/tech-额度基建.md` 与状态 tech 覆盖,每日额度/旧标量字段口径随六字段合同作废);`feat.md` 订阅状态章节与验收改六字段口径。
+- website:U3 购买链路与 e2e 收敛,详见 `@../011.Pricing页/changelog.md` 2026-09-05 条。
+
+**外部待办**:
+
+- maps_extension 两档(Pro/Business)的 PayPal Plan ID 与 Clink `productId:priceId` 真实 SKU 未在渠道后台注册,价格行以 TODO 占位播种(enabled=0 不可售),到手后替换 `provider_sku`。
+- Clink 公网 webhook 首笔人工验收(真实 Sandbox 支付 → 公网 webhook 2xx → 履约核对)未执行,见 `@../004.订单系统/tech-ClinkBill支付.md` §8.3。
+- 005 订阅升级进度以上方后端接线记录和 [执行计划](plans/005.订阅升级.md) 为准。
+
 ## 2026-09-02 FREE 档统一（复合唯一键 + 每产品线 free 行 + 下单按 product_id 反查）
 
 **Why**: 分产品订阅后 Free 仍是全局一行（`product_line` 为空串），maps 线查 free 档会误读 extension 线 free 的 `daily_limit` 配置；且 `config_subscription_product` 的单列唯一键 `uk(product_id)` 锁死商品标识全局唯一，每条产品线无法各自配置 free 档。前序 U1 已把产品线 `maps` 改名 `maps_extension`（常量、存量行与 seed 同步），本批在其上完成 free 档统一。

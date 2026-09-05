@@ -23,7 +23,7 @@
 为付费商品(积分包、订阅首期、订阅续费)提供一条统一的购买/扣款事务链路:
 
 1. 用户在前端选择付费商品并下单;自动续费的后续扣款由 provider webhook 触发服务端创建续费订单。
-2. 后端按商品类别校验价格并生成订单快照,挂接到对应支付渠道(Telegram Stars / PayPal)。
+2. 后端按商品类别校验价格并生成订单快照,挂接到对应支付渠道(Telegram Stars / PayPal / ClinkBill)。
 3. 用户在支付渠道完成付款,渠道通过 webhook 通知后端。
 4. 后端校验回调、抢占订单状态、在同一个事务内完成业务履约(如积分加余额)。
 5. 履约中途失败时由补偿任务重试;履约前所有环节允许局部出错让用户重试。
@@ -34,7 +34,7 @@
 
 - 统一下单接口:接收商品类别、商品标识、支付方式和客户端当前看到的价格字段,后端校验后生成订单快照。
 - 订单状态机:待支付 → 已支付 → 已取消 / 已退款;`已过期` 是预留状态,当前不由自动任务写入。履约回调状态机:未回调 → 处理中 → 成功 / 失败。
-- 支付渠道对接:Telegram Stars(createInvoiceLink、pre_checkout_query、successful_payment)与 PayPal(Standard Checkout Orders API + capture + webhook);渠道配置走配置表,支持未来扩展多渠道。
+- 支付渠道对接:Telegram Stars(createInvoiceLink、pre_checkout_query、successful_payment)、PayPal(Standard Checkout Orders API + capture + webhook)与 ClinkBill(Hosted Checkout + 验签 webhook);渠道配置走配置表,支持未来扩展多渠道。
 - webhook 回调校验:webhook 密钥校验、金额与币种一致性校验、订单状态合法性校验。
 - 订单状态查询、订单列表、未完成订单(可见期内可继续支付)查询、手动取消待支付订单。
 - 履约事务:支付成功后在同一事务内把订单置为履约成功并调用对应商品域的发货能力(如积分加余额)。
@@ -66,7 +66,7 @@
 ## 现状说明
 
 - 当前订单完整闭环支持积分包商品;新的 Unlimited Download 首期和续费也走同一订单履约模型。
-- 支付渠道支持 `telegram_stars` 与 `paypal`;website Credits 购买弹窗同时展示二者,默认选中 `paypal`。
+- 支付渠道支持 `telegram_stars`、`paypal` 与 `clink`(ClinkBill 托管收银台);website 各页面只展示商品当前启用的渠道,具体渠道清单见 `@../011.Pricing页/feat.md`。
 - 订单履约补偿任务已上线,每 60 秒小批量扫描滞留订单重试。
 
 ## 业务流程
@@ -77,10 +77,10 @@
 2. 前端按商品类别与选中支付渠道,把商品标识、支付方式和所选渠道价字段原样提交给统一下单接口;美元展示价只用于 UI 展示。
 3. 后端按商品类别分发到对应业务域校验(积分包 → 积分域;订阅 → 订阅域),读取当前后端配置,比对客户端价格。
 4. 价格一致时后端按配置生成订单快照(商品名、最终金额、币种、支付方式),写入订单。
-5. 后端调用支付渠道 provider 创建支付入口(Telegram Stars 返回 invoice link;PayPal 返回 approval URL 与 PayPal order id),保存到订单。
+5. 后端调用支付渠道 provider 创建支付入口(Telegram Stars 返回 invoice link;PayPal 返回 approval URL 与 PayPal order id;ClinkBill 返回托管收银台地址),保存到订单。
 6. 后端读取公共配置的反馈邮箱,非空时随下单响应回给前端。
 7. 前端在新标签页打开支付入口,展示支付等待界面并按固定间隔轮询订单状态。
-8. 用户在支付渠道完成付款;Telegram 通过 webhook 通知后端,PayPal 通常回跳 success/cancel 页面并由后端 capture,同时 webhook 作为回跳关闭、登录态失效、网络失败或 webhook 先到达时的异步兜底。
+8. 用户在支付渠道完成付款;Telegram 通过 webhook 通知后端,PayPal / ClinkBill 通常回跳 success/cancel 页面,PayPal 由后端 capture、ClinkBill 由验签 webhook 确认,同时 webhook 作为回跳关闭、登录态失效、网络失败或 webhook 先到达时的异步兜底。
 9. 后端校验 webhook / capture 结果、订单存在、状态为待支付、币种与金额一致。
 10. 后端把订单 CAS 置为已支付、履约回调置为处理中,记录渠道流水号、付款人渠道 UID、原始支付快照。
 11. 后端在同一事务内抢占履约状态为成功,并调用对应商品域的发货能力(如积分加余额)。
@@ -99,8 +99,8 @@
 - 履约确定性失败(如商品快照损坏):订单置为履约失败,异步发送 Feishu 失败告警,进入人工排查,不自动重试;补偿任务不扫已明确失败后又被人工置回的订单时仍按状态机判断。
 - 支付成功后下载失败:不退款。
 - 订单超过可见期:从未完成订单列表消失;但已进入支付流程的回调仍允许完成。
-- PayPal 回跳 cancel:页面调用现有取消订单接口把本地待支付订单置为取消,原购买弹窗轮询到 `CANCELLED` 后提示取消并允许重新购买。
-- PayPal success 回跳未发生或 capture 失败:前端继续轮询原订单,等待 PayPal webhook 兜底;轮询超时只提示稍后刷新 / 联系支持,不直接判定支付失败。
+- PayPal / ClinkBill 回跳 cancel:页面调用现有取消订单接口把本地待支付订单置为取消,原购买弹窗轮询到取消态后提示取消并允许重新购买。
+- 回跳页未发生或渠道确认失败:前端继续轮询原订单,等待渠道 webhook 兜底;轮询超时只提示稍后刷新 / 联系支持,不直接判定支付失败。
 
 ### 履约补偿分支
 
@@ -120,7 +120,7 @@
 - 服务器使用系统时区;按天结算以 0 点为界(订单系统本身不按天结算,但与订阅周期计算配合时遵循此口径)。
 - 文字需 i18n;Bot 购买成功消息按订单创建时保存的客户端语言返回。
 - Telegram webhook 注册必须是一次明确的人工运维命令,服务启动脚本不自动注册。
-- PayPal webhook 也必须人工在 PayPal Developer Dashboard 注册到业务 API 公网地址;服务启动脚本不自动注册。
+- PayPal webhook 也必须人工在 PayPal Developer Dashboard 注册到业务 API 公网地址,ClinkBill webhook 同样人工注册;服务启动脚本不自动注册。
 
 ## 验收标准
 
@@ -128,7 +128,7 @@
 
 - 积分包商品能通过统一下单接口购买,走积分域价格校验与履约。
 - 客户端展示价格必须使用商品配置的美元展示价;不得把 Telegram Stars 等具体渠道价展示给用户。
-- website Credits 购买默认选中 PayPal,但用户可以切换 Telegram Stars;两种渠道都不展示渠道价。
+- website 购买只展示商品当前启用的支付渠道,用户在启用渠道中选择;各渠道都不向用户展示渠道侧价格细节。
 - 下单时后端必须校验客户端提交的所选渠道价;不一致时返回价格已更新,前端整体刷新配置。
 - 订单最终金额、币种、商品名以后端校验后的配置快照为准,不信任客户端传值。
 - 支付成功且履约成功后,积分余额立即生效,前端刷新对应域状态。
@@ -141,7 +141,7 @@
 - 用户可手动取消自己的待支付订单;已支付、已取消、已退款订单不能取消。
 - 支付等待界面在反馈邮箱非空时展示邮箱,为空时不展示。
 - Telegram 支付成功消息按钮返回网站首页继续下载。
-- PayPal success 回跳页会按 3 秒间隔轮询本地订单状态,cancel 回跳页会通知原购买弹窗;支付成功只认 PayPal webhook 后端 capture / completed 写入后的订单状态,任何路径都不能绕过订单状态直接展示到账成功。
+- PayPal / ClinkBill success 回跳页会按固定间隔轮询本地订单状态,cancel 回跳页会通知原购买弹窗;支付成功只认渠道 webhook 后端写入(或 capture)后的订单状态,任何路径都不能绕过订单状态直接展示到账成功。
 - 支付渠道密钥(bot token、webhook secret)不出现在服务启动脚本、环境变量透传、日志或进程参数里。
 - webhook 请求头密钥缺失或不一致时回调验签失败,不触发履约。
 
@@ -180,28 +180,7 @@
 
 ## 数据埋点
 
-订单购买闭环的通用埋点口径,事件名是产品规格,埋点失败不得影响购买。
-
-### pricing_* 事件口径
-
-`pricing_*` 事件由新 pricing 页重新启用,用于 Credits 一次性购买与 Unlimited 自动续费订阅。完整事件定义见 `@../011.Pricing页/feat.md`;本域只保留订单相关字段口径。
-
-| 事件 | 触发时机 | 关键字段 |
-| --- | --- | --- |
-| `pricing_checkout_configs_loaded` | checkout config 加载成功 | `available_count` |
-| `pricing_checkout_configs_failed` | checkout config 加载失败 | `error_code`、`message` |
-| `pricing_plan_click` | 用户点击付费方案 | `product_id`、`login_state` |
-| `pricing_order_create_start` | 发起创建订单 | `product_id`、`payment_method` |
-| `pricing_order_create_success` | 创建订单成功 | `order_no`、`product_id`、`amount`、`currency` |
-| `pricing_order_create_failed` | 创建订单失败 | `product_id`、`error_code` |
-| `pricing_invoice_open` | 打开支付入口(如 Telegram invoice) | `order_no` |
-| `pricing_order_paid` | 轮询确认支付并履约成功 | `order_no`、`product_id` |
-| `pricing_order_pending_timeout` | 前端等待超时 | `order_no`、`last_order_status`、`last_callback_status` |
-| `pricing_order_fulfillment_failed` | 支付成功但履约失败 | `order_no` |
-
-### 通用购买埋点建议
-
-所有付费订单复用 `order_no`、`product_id`、`payment_method`、`amount`、`currency` 字段;自动续费订阅额外在订单快照里写 `billing_mode=auto_renew` 与 `renewal_kind`。
+订单域不定义前端埋点。Pricing 页埋点定义见 `@../011.Pricing页/feat.md` 数据埋点章节;订单结果(每次购买有唯一订单号,支付方式、金额、币种与计费方式随订单保存)仅供消费页面关联上报。埋点失败不得影响购买。
 
 ## 关联文档
 

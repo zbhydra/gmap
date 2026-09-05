@@ -74,7 +74,10 @@ export type OrderStatus = 1 | 2 | 3 | 4 | 5
 /** 后端履约回调状态数字枚举。 */
 export type CallbackStatus = 1 | 2 | 3 | 4 | 5
 
-/** 单个支付渠道价格快照。 */
+/** 下单使用的商业与权益周期；非订阅商品使用 none。 */
+export type OrderCheckoutPeriod = 'none' | 'month' | 'quarter' | 'year'
+
+/** 单个支付渠道价格快照（各渠道共有的下单身份字段；渠道专属字段由具体域扩展）。 */
 export interface OrderCheckoutPaymentChannel {
   /** 支付方式，例如 paypal 或 telegram_stars。 */
   payment_method: string
@@ -84,8 +87,6 @@ export interface OrderCheckoutPaymentChannel {
   currency: string
   /** 渠道金额，6 位精度。 */
   amount: number
-  /** 渠道侧 SKU。 */
-  provider_sku: string | null
 }
 
 /** 通用订单商品快照。 */
@@ -94,6 +95,10 @@ export interface OrderCheckoutProductSnapshot {
   product_class: number
   /** 商品标识。 */
   product_id: string
+  /** 是否由渠道自动续费；必须与商品配置一致，否则后端按价格已更新拒绝。 */
+  auto_renew: boolean
+  /** 商业与权益周期。 */
+  period: OrderCheckoutPeriod
   /** 当前商品可用支付渠道。 */
   payment_channels: OrderCheckoutPaymentChannel[]
 }
@@ -110,6 +115,10 @@ export interface CreateOrderRequest {
   currency: string
   /** 渠道金额，6 位精度。 */
   amount: number
+  /** 是否由渠道自动续费。 */
+  auto_renew: boolean
+  /** 商业与权益周期。 */
+  period: OrderCheckoutPeriod
 }
 
 /** 创建订单响应。 */
@@ -192,14 +201,16 @@ export function buildCreateOrderRequest(
     product_id: product.product_id,
     payment_method: channel.payment_method,
     currency: channel.currency,
-    amount: channel.amount
+    amount: channel.amount,
+    auto_renew: product.auto_renew,
+    period: product.period
   }
 }
 
 /** 选取默认支付渠道，优先 PayPal，其次 Telegram Stars。 */
-export function getDefaultOrderPaymentChannel(
-  channels: OrderCheckoutPaymentChannel[]
-): OrderCheckoutPaymentChannel | null {
+export function getDefaultOrderPaymentChannel<T extends OrderCheckoutPaymentChannel>(
+  channels: T[]
+): T | null {
   if (channels.length === 0) {
     return null
   }
@@ -220,7 +231,8 @@ export function readPaymentUrl(paymentData: JsonValue, paymentMethod: string): s
     return null
   }
 
-  const value = paymentData.payment_url ?? paymentData.url ?? paymentData.approval_url
+  const value =
+    paymentData.checkoutUrl ?? paymentData.payment_url ?? paymentData.url ?? paymentData.approval_url
   if (typeof value !== 'string') {
     return null
   }
@@ -236,6 +248,12 @@ export function readPaymentUrl(paymentData: JsonValue, paymentMethod: string): s
     if (paymentMethod === 'paypal') {
       const paypalHostAllowed = hostname === 'paypal.com' || hostname.endsWith('.paypal.com')
       return parsed.protocol === 'https:' && paypalHostAllowed ? trimmed : null
+    }
+
+    if (paymentMethod === 'clink') {
+      const clinkHostAllowed =
+        hostname === 'uat-checkout.clinkbill.com' || hostname === 'checkout.clinkbill.com'
+      return parsed.protocol === 'https:' && clinkHostAllowed ? trimmed : null
     }
 
     const telegramHostAllowed = hostname === 't.me' || hostname === 'telegram.me'
@@ -318,6 +336,8 @@ function createOrderRequestToJson(request: CreateOrderRequest): JsonObject {
     product_id: request.product_id,
     payment_method: request.payment_method,
     currency: request.currency,
-    amount: request.amount
+    amount: request.amount,
+    auto_renew: request.auto_renew,
+    period: request.period
   }
 }

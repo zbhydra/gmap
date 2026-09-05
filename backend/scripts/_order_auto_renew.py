@@ -274,8 +274,8 @@ def _reference_from_order(order: OrderModel) -> OrderAutoRenewReference:
     )
     callback = _object_value(metadata, "payment_callback") or metadata
     snapshot = _object_value(metadata, "product_snapshot")
-    snapshot_metadata = _object_value(snapshot, "metadata")
-    snapshot_auto_renew = _bool_value(snapshot_metadata, "auto_renew") is True
+    # 快照合同（004 单一计费模式）：auto_renew 在 product_snapshot 顶层。
+    snapshot_auto_renew = _bool_value(snapshot, "auto_renew") is True
 
     subscription_id: str | None = None
     callback_is_recurring = _bool_value(callback, "is_recurring") is True

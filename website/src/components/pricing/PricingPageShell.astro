@@ -28,7 +28,13 @@ const tabIds: PricingTabId[] = ['online', 'extension', 'api']
   class="pricing-page"
   data-pricing-page
 >
-  <script is:inline type="application/json" data-pricing-copy set:html={JSON.stringify(copy)} />
+  {/* popupBlocked 单键复用：checkout 与 Manage subscription 共用 AccountContent 的弹窗拦截文案 */}
+  <script
+    is:inline
+    type="application/json"
+    data-pricing-copy
+    set:html={JSON.stringify({ ...copy, popupBlocked: accountCopy.creditPurchase.popupBlocked })}
+  />
 
   <div class="container pricing-container">
     <header class="pricing-hero">
@@ -82,14 +88,14 @@ const tabIds: PricingTabId[] = ['online', 'extension', 'api']
           <button
             type="button"
             class="pricing-cancellation-guide-button"
-            data-pricing-cancellation-guide-button
+            data-pricing-manage-subscription
             hidden
           >
-            {copy.cancellationGuide.buttonLabel}
+            {copy.account.manageSubscription}
           </button>
         </p>
       </div>
-      <p class="pricing-inline-error" data-pricing-account-error hidden></p>
+      <p class="pricing-inline-error" data-pricing-account-error role="alert" hidden></p>
     </aside>
 
     <section class="pricing-plans" aria-labelledby="pricing-plans-title">

@@ -35,8 +35,6 @@ export interface BackgroundGetGateStateResponse {
   authenticated: boolean
   /** 是否 Pro（订阅档有效且非免费档）。 */
   isPro: boolean
-  /** 账号展示名（full_name 优先，其次 email）；未登录为 null。 */
-  displayName: string | null
 }
 
 /** background 记录打点请求。 */

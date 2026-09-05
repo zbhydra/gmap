@@ -9,7 +9,7 @@
 3. `payment_method` 和 `paid_at` 来自订单实际支付进度，未支付订单允许为空。
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -29,6 +29,10 @@ class CreateOrderRequest(BaseModel):
     )
     amount: int = Field(..., ge=0, description="订单金额，统一 6 位精度整数")
     currency: str = Field(..., min_length=1, max_length=8, description="货币类型")
+    auto_renew: bool = Field(default=False, description="是否由渠道自动续费")
+    period: Literal["none", "month", "quarter", "year"] = Field(
+        default="none", description="商业与权益周期"
+    )
 
 
 class CreateOrderResponse(BaseModel):

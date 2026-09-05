@@ -8,9 +8,11 @@
 """
 
 import json
+import time
 import uuid
 
 import pytest
+from fastapi import Request
 from sqlalchemy import select, text
 
 from app.constants.order import OrderStatus
@@ -22,6 +24,7 @@ from app.provider.payment.tg_star import (
     TELEGRAM_STARS_PAYMENT_METHOD,
     TgStarPaymentProvider,
 )
+from app.schemas.telegram_callback_schema import TelegramWebhookUpdate
 from app.utils.time import timestamp_now
 
 
@@ -101,3 +104,70 @@ async def test_real_test_dc_creates_accelerated_subscription_invoice(
         "/test/createInvoiceLink"
     )
     assert str(payment_data["payment_url"]).startswith("https://t.me/")
+
+
+async def test_real_recurring_successful_payment_builds_provider_subscription() -> None:
+    """Stars 循环扣款按渠道到期秒级时间戳写 provider_subscription 账期。"""
+
+    provider = TgStarPaymentProvider(
+        {
+            "environment": "production",
+            "token": "pytest-token",
+            "webhook_secret_token": "pytest-secret",
+            "request_timeout_seconds": 3,
+        }
+    )
+    expiration_seconds = 1_762_592_000
+    update = TelegramWebhookUpdate.model_validate(
+        {
+            "update_id": 1002,
+            "message": {
+                "message_id": 1,
+                "date": int(time.time()),
+                "from": {"id": 987654},
+                "successful_payment": {
+                    "currency": TELEGRAM_STARS_CURRENCY,
+                    "total_amount": 800,
+                    "invoice_payload": "ORTEST123",
+                    "telegram_payment_charge_id": "tg-charge-123",
+                    "is_recurring": True,
+                    "subscription_expiration_date": expiration_seconds,
+                },
+            },
+        }
+    )
+    body = update.model_dump_json(by_alias=True).encode("utf-8")
+    sent = False
+
+    async def receive() -> dict[str, object]:
+        nonlocal sent
+        if sent:
+            return {"type": "http.request", "body": b"", "more_body": False}
+        sent = True
+        return {"type": "http.request", "body": body, "more_body": False}
+
+    request = Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/api/callback/telegram",
+            "headers": [
+                (b"x-telegram-bot-api-secret-token", b"pytest-secret"),
+            ],
+        },
+        receive,
+    )
+
+    verified = await provider.verify_callback(request)
+
+    assert verified.valid is True
+    assert verified.processed is True
+    assert verified.provider_data is not None
+    assert verified.provider_data["provider_subscription"] == {
+        "channel_subscription_id": "tg-charge-123",
+        "original_order_no": "ORTEST123",
+        "start_at": (expiration_seconds - 2_592_000) * 1000,
+        "expires_at": expiration_seconds * 1000,
+    }
+    assert verified.recurring_reference.original_order_no == "ORTEST123"
+    assert verified.channel_uid == "987654"

@@ -100,46 +100,10 @@ export const I18N_KEYS = {
     DOWNLOAD_XLSX: 'bingPanel.downloadXlsx',
     /** Go Back 按钮 */
     GO_BACK: 'bingPanel.goBack',
-    /** 标题区账号/订阅态徽标（免费档，点击进 Pricing 视图） */
+    /** 标题区账号/订阅态徽标（免费档，点击打开官网订阅页） */
     FREE_BADGE: 'bingPanel.freeBadge',
-    /** 标题区账号/订阅态徽标（Pro 档，点击进 Pricing 视图） */
-    PRO_BADGE: 'bingPanel.proBadge',
-    /** Pricing 视图标题 */
-    PRICING_TITLE: 'bingPanel.pricingTitle',
-    /** Pricing 视图：账号行标签 */
-    PRICING_ACCOUNT: 'bingPanel.pricingAccount',
-    /** Pricing 视图：已登录账号展示 */
-    PRICING_SIGNED_IN_AS: 'bingPanel.pricingSignedInAs',
-    /** Pricing 视图：匿名账号展示 */
-    PRICING_FREE_ACCOUNT: 'bingPanel.pricingFreeAccount',
-    /** Pricing 视图：已订阅祝贺态 */
-    PRICING_VIP_NOTE: 'bingPanel.pricingVipNote',
-    /** Pricing 对比表：Free 列头 */
-    PRICING_COLUMN_FREE: 'bingPanel.pricingColumnFree',
-    /** Pricing 对比表：Pro 列头 */
-    PRICING_COLUMN_PRO: 'bingPanel.pricingColumnPro',
-    /** Pricing 对比表行：一次性导出条数 */
-    PRICING_ROW_EXPORT_LIMIT: 'bingPanel.pricingRowExportLimit',
-    /** Pricing 对比表：一次性导出条数（免费档值） */
-    PRICING_EXPORT_LIMIT_FREE: 'bingPanel.pricingExportLimitFree',
-    /** Pricing 对比表：一次性导出条数（Pro 值） */
-    PRICING_EXPORT_LIMIT_PRO: 'bingPanel.pricingExportLimitPro',
-    /** Pricing 对比表行：导出 CSV/XLSX */
-    PRICING_FEATURE_CSV: 'bingPanel.pricingFeatureCsv',
-    /** Pricing 对比表行：提取官网 URL */
-    PRICING_FEATURE_WEBSITE: 'bingPanel.pricingFeatureWebsite',
-    /** Pricing 对比表行：提取电话 */
-    PRICING_FEATURE_PHONE: 'bingPanel.pricingFeaturePhone',
-    /** Pricing 对比表行：提取 Email/社媒 */
-    PRICING_FEATURE_EMAIL: 'bingPanel.pricingFeatureEmail',
-    /** Pricing 对比表单元格：包含 */
-    PRICING_INCLUDED: 'bingPanel.pricingIncluded',
-    /** Pricing 对比表单元格：需 Pro */
-    PRICING_PRO_ONLY: 'bingPanel.pricingProOnly',
-    /** Pricing 视图：Email/社媒一期占位说明 */
-    PRICING_EMAIL_COMING_SOON: 'bingPanel.pricingEmailComingSoon',
-    /** Pricing 视图：订阅引导按钮（新标签打开官网订阅页） */
-    PRICING_UPGRADE: 'bingPanel.pricingUpgrade'
+    /** 标题区账号/订阅态徽标（Pro 档，点击打开官网订阅页） */
+    PRO_BADGE: 'bingPanel.proBadge'
   },
 
   /** 订阅相关 */

@@ -5,7 +5,7 @@
  * background authStore）镜像为模块级快照，供两处同步消费：
  * - 采集停止策略（createBingStopPolicy）：Pro 无上限（null），免费取
  *   scrape.freeRowLimit（可被远程稀疏覆盖）；
- * - 面板 UI（Pricing 视图 / Pro 徽标 / 进度文案变体）。
+ * - 面板 UI（Pro 徽标 / 进度文案变体）。
  *
  * 即时生效机制（T1 §7 U4「下一轮循环读取」）：采集主循环每轮经
  * getRowLimit() 同步读快照，同时触发一次后台刷新（单飞去重）——快照
@@ -24,15 +24,12 @@ export interface BingGateState {
   authenticated: boolean
   /** 是否 Pro（订阅档有效）。 */
   isPro: boolean
-  /** 账号展示名；未登录为 null。 */
-  displayName: string | null
 }
 
 /** 匿名快照（初始值与 RPC 失败兜底）：免费档。 */
 const ANONYMOUS_GATE_STATE: BingGateState = {
   authenticated: false,
-  isPro: false,
-  displayName: null
+  isPro: false
 }
 
 /** 模块级快照（bootstrap boot 时刷新，采集轮增量刷新）。 */

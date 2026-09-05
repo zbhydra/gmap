@@ -16,8 +16,10 @@ from app.utils.time import timestamp_now
 class ConfigSubscriptionProductPriceRow:
     """订阅商品渠道价格配置行。"""
 
+    id: int
     product_id: str
     channel_code: str
+    auto_renew_supported: bool
     currency: str
     amount: int
     provider_sku: str | None
@@ -65,8 +67,10 @@ class ConfigSubscriptionProductPriceService:
 
         return [
             ConfigSubscriptionProductPriceRow(
+                id=row.id,
                 product_id=row.product_id,
                 channel_code=row.channel_code,
+                auto_renew_supported=row.auto_renew_supported,
                 currency=row.currency,
                 amount=row.amount,
                 provider_sku=row.provider_sku,

@@ -18,10 +18,11 @@ class ConfigSubscriptionProductRow:
     name: str
     product_line: str
     period: str
-    duration_days: int
+    auto_renew: bool
     display_currency: str
     display_amount: int
-    sort_order: int
+    display_order: int
+    tier_rank: int
     metadata_json: str | None
 
 
@@ -62,7 +63,7 @@ class ConfigSubscriptionProductService:
                 select(ConfigSubscriptionProductModel)
                 .where(ConfigSubscriptionProductModel.enabled.is_(True))
                 .order_by(
-                    ConfigSubscriptionProductModel.sort_order.asc(),
+                    ConfigSubscriptionProductModel.display_order.asc(),
                     ConfigSubscriptionProductModel.id.asc(),
                 )
             )
@@ -74,10 +75,11 @@ class ConfigSubscriptionProductService:
                 name=row.name,
                 product_line=row.product_line,
                 period=row.period,
-                duration_days=row.duration_days,
+                auto_renew=row.auto_renew,
                 display_currency=row.display_currency,
                 display_amount=row.display_amount,
-                sort_order=row.sort_order,
+                display_order=row.display_order,
+                tier_rank=row.tier_rank,
                 metadata_json=row.metadata_json,
             )
             for row in rows

@@ -113,7 +113,7 @@ class CallbackStatus(int, enum.Enum):
 
 PayPal 一次性订单的 `payment_channel_order_no` 保存 PayPal order id,因为 `CHECKOUT.ORDER.APPROVED` webhook 需要在本地订单仍未支付时查回订单并触发服务端 capture;`payment_transaction_id` 保存 capture id。PayPal 自动续费订单的两个字段都保存本次扣款 transaction/capture id,前者用于同一扣款 webhook 去重;长期 subscription id 写入 `extra_metadata.channel_subscription_id` 或 `user_subscriptions.channel_subscription_id`。
 
-后续实现站内取消自动续费时,取消动作不创建订单、不修改历史订单状态。订阅域使用 `user_subscriptions.channel_subscription_id` 调渠道取消后续扣款,订单表继续只记录已发生的首期和续费扣款。当前站内取消自动续费暂不实现。
+站内不做取消自动续费;取消续费只打开渠道管理入口(见 `@../006.订阅系统/tech-订阅商品与状态.md`)。订单表继续只记录已发生的首期和续费扣款;`user_subscriptions.channel_subscription_id/channel_uid` 供渠道管理入口与运维脚本使用。
 
 未来接入退款、对账、多渠道结算时再独立设计 `payment_records`,届时回审本表是否拆分。
 
@@ -290,7 +290,7 @@ else:
 ```
 
 - 订单侧只负责"按商品类别分发到对应业务域的发货能力 + 同事务抢占状态";具体发货实现不在订单域。
-- `SUBSCRIPTION` 的 `duration_days/channel_subscription_id` 从订单 `extra_metadata.product_snapshot` 读取,不从当前订阅配置重读,避免改价或改权益后历史订单履约漂移。
+- `SUBSCRIPTION` 的 `product_line/auto_renew/period/product_price_id` 从订单 `extra_metadata.product_snapshot` 读取,自动续费履约再读 `extra_metadata.payment_callback.provider_subscription`(渠道订阅 ID / 本地首单号 / 账期起止),不从当前订阅配置重读,避免改价或改周期后历史订单履约漂移。
 - `RECHARGE` 的 `credits_amount` 从订单 `extra_metadata.product_snapshot.credits_amount` 读取(下单时由积分域 `check_product` 写入快照),不从当前积分配置重读,避免改价后到账数量漂移。
 
 ### 8.4 取消订单幂等(`cancel_user_order`)
@@ -314,6 +314,8 @@ class OrderCheckProductParam:   # 下单前校验输入(api 层组装,service �
     payment_method: str
     amount: int                 # 客户端当前看到的渠道金额,6 位精度整数(待校验)
     currency: str
+    auto_renew: bool = False    # 是否由渠道自动续费;须与商品单一计费模式一致
+    period: str = "none"        # 商业与权益周期;须与商品配置周期一致
     client_ip: Optional[str] = None
     language: Optional[str] = None
 

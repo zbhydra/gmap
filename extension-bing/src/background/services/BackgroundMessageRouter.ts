@@ -83,13 +83,12 @@ export class BackgroundMessageRouter {
     await ensureAuthStoreHydrated()
     const store = getBackgroundAuthStore()
     if (!store.isAuthenticated) {
-      return { authenticated: false, isPro: false, displayName: null }
+      return { authenticated: false, isPro: false }
     }
     await store.refreshSubscription()
     return {
       authenticated: true,
-      isPro: store.isPro,
-      displayName: store.displayName || null
+      isPro: store.isPro
     }
   }
 

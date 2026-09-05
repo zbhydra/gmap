@@ -19,6 +19,8 @@ export interface OrderCheckoutElements {
   paymentError: HTMLElement
   /** 支付方式弹窗标题。 */
   paymentTitle: HTMLElement
+  /** 普通购买的支付方式选择说明；固定渠道升级时隐藏。 */
+  paymentKicker: HTMLElement
   /** 已选商品标题摘要。 */
   selectedTitle: HTMLElement
   /** 已选商品展示价摘要。 */
@@ -78,6 +80,7 @@ export function getOrderCheckoutElements(root: HTMLElement): OrderCheckoutElemen
     orderDialog: query<HTMLElement>('[data-order-checkout-order-dialog]'),
     paymentError: query<HTMLElement>('[data-order-checkout-payment-error]'),
     paymentTitle: query<HTMLElement>('[data-order-checkout-payment-title]'),
+    paymentKicker: query<HTMLElement>('[data-order-checkout-payment-kicker]'),
     selectedTitle: query<HTMLElement>('[data-order-checkout-selected-title]'),
     selectedPrice: query<HTMLElement>('[data-order-checkout-selected-price]'),
     selectedUsage: query<HTMLElement>('[data-order-checkout-selected-usage]'),

@@ -33,6 +33,7 @@ export function buildMapsPricingUrl(pricingUrl: string): string {
     return ''
   }
   const url = new URL(source)
+  url.searchParams.set('product_line', 'maps_extension')
   url.searchParams.set(PRICING_UTM_SOURCE_KEY, PRICING_UTM_SOURCE)
   return url.toString()
 }

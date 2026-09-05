@@ -18,6 +18,8 @@ const LEGACY_FLAT_SITEMAP_FILENAME = 'sitemap-0.xml'
 const SITEMAP_STYLESHEET_PATH = '/sitemap.xsl'
 const STATUS_CODE_PAGES = new Set(['404', '500'])
 const SEARCH_BOT_BLOCKED_ROUTE_PATHS = new Set([
+  '/clink/cancel/',
+  '/clink/success/',
   '/paypal/cancel/',
   '/paypal/success/',
   '/extension-login/'
@@ -351,13 +353,8 @@ function getRouteSourceFiles(routePath) {
     ]
   }
 
-  if (normalized === '/paypal/success/' || normalized === '/paypal/cancel/') {
-    const pageName = normalized.split('/').filter(Boolean).join('/')
-    return [
-      `src/pages/${pageName}.astro`,
-      'src/components/credit-purchase/paypal-return.ts'
-    ]
-  }
+  // /paypal/* 与 /clink/* 回跳页在 SEARCH_BOT_BLOCKED_ROUTE_PATHS 中被提前过滤，
+  // 不会进入本映射，因此没有对应的源文件分支。
 
   // W4 工具矩阵（D1 七个公开工具）：路由前缀固定 /tools/<slug>/，页面文件
   // 位于 src/pages/tools/<slug>.astro。

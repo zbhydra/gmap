@@ -17,7 +17,7 @@
 
 具体商品的定价读取与发货实现不在本文件:
 
-- 自动续费订阅走本订单系统。首期订单由用户点击创建,后续每次 provider 自动扣款成功时由 webhook 创建续费订单;订阅域只负责订单履约时给 `user_subscriptions` 加时间。
+- 自动续费订阅走本订单系统。首期订单由用户点击创建,后续每次 provider 自动扣款成功时由 webhook 创建续费订单;订阅域负责订单对应的权益与档位履约，见 [订阅升级](../006.订阅系统/tech-订阅升级.md)。
 - 积分包商品:定价读取在积分域;履约发货(`user_credit_service.add_balance_in_session`,加 Credits 余额)在积分域。本文件只描述"订单侧 `check_product` 按积分包类别分发到积分域"的契约面。
 - 下载消费积分(下载扣 Credits)不在本域,见 `@../003.积分系统/feat.md`。
 
@@ -40,6 +40,8 @@ POST /api/client/order/create
 | `payment_method` | string | 是 | `1..32` 字符 | 支付方式,对应渠道配置 `channel_code` |
 | `amount` | int | 是 | `>= 0` | 客户端当前看到的渠道金额,6 位精度整数(待校验) |
 | `currency` | string | 是 | `1..8` 字符 | 客户端当前看到的币种(待校验) |
+| `auto_renew` | bool | 否 | 默认 false | 是否由渠道自动续费;必须与商品单一计费模式一致 |
+| `period` | string | 否 | 默认 `none` | 商业与权益周期(`month/quarter/year/none`);必须与商品配置周期一致 |
 
 响应(`CreateOrderResponse`):
 
@@ -178,18 +180,19 @@ POST /api/callback/paypal/payment
 - 首期订阅订单走 `/api/client/order/create`。
 - 后续自动续费没有用户点击;provider webhook 验签后,服务端按本次渠道扣款号创建 `ProductClass.SUBSCRIPTION` 续费订单。
 - 创建续费订单前先按 `(payment_method, payment_channel_order_no)` 查重;命中则按已有订单幂等返回。
-- 新续费订单创建后立即调用 `order_success`,再由订单履约分发到订阅域加时间。
+- 新续费订单创建后立即调用 `order_success`,再由订单履约分发到订阅域按 Provider 归一化账期推进(`user_subscriptions.expires_at` 只被更晚的渠道到期时间覆盖)。
 - 续费订单不进入用户未完成订单列表;它是已发生扣款的服务端记录。
+- 自动续费升级确认不预建订单；折算发票复用此实付建单链。统一换档结果与具体引用核对见 [订阅升级合同](../006.订阅系统/tech-订阅升级.md#路径-b自动续费线maps_extension渠道协议内换价)。
 
-### 1.10 取消自动续费（暂不实现）
+### 1.10 渠道订阅管理入口
 
-以下为后续保留方案,当前不实现站内取消自动续费。后续实现时,取消自动续费属于订阅域入口,不创建订单、不改变订单状态:
+站内不做取消、退款或渠道状态同步;取消续费只把用户带到支付渠道:
 
 ```text
-POST /api/client/subscription/cancel-auto-renew
+POST /api/client/subscription/management
 ```
 
-后续实现时,订单域只提供已支付订单里的渠道引用。订阅域读取 `user_subscriptions.payment_method/channel_subscription_id/channel_uid`,调用支付 provider 取消长期订阅,成功或渠道明确表示已取消 / 非自动续费后标记到期停止续费。取消不退款、不立即降级,当前周期权益保留到 `expires_at`。
+请求体只含 `product_line`;响应 data 为可空 `url`。订阅域读取当前有效自动续费实例(有效权益 + 实例 `auto_renew`),按行内 `payment_method` 选择 Provider;渠道订阅 ID 与客户 ID 由后端从实例读取,前端不提交。PayPal 返回官方 Automatic Payments 页面;ClinkBill 用 `channel_uid`(customerId)创建当前环境 Customer Portal Session;Telegram Stars 无 Web 入口,返回空 URL 由客户端展示渠道内路径。订单域不参与该入口。
 
 ## 2. 支付渠道配置
 
@@ -234,7 +237,23 @@ Telegram Bot API 根地址固定为 `https://api.telegram.org`;webhook 公网地
 - return URL 固定拼到 website:`{app.public_website_base_url}/paypal/success/?order_no=<order_no>`;cancel URL 固定拼到 website:`{app.public_website_base_url}/paypal/cancel/?order_no=<order_no>`。
 - webhook URL 在 PayPal Dashboard 人工配置:`{app.public_api_base_url}/api/callback/paypal/payment`;该 URL 不写入渠道 `config_json`。
 - 首次配置顺序:先创建 PayPal Developer App,在 PayPal Dashboard 注册测试服 webhook 并获取 `webhook_id`,最后把 `paypal` 渠道配置写入并启用;不要用占位 `webhook_id` 启用生产渠道。
-- 后续实现取消自动续费时,PayPal 使用同一套 OAuth 配置调用 Subscriptions API cancel,无需新增密钥。
+- PayPal 同一套 OAuth 配置供订阅状态查询使用:自动续费回调查询 Subscription 的 `next_billing_time/last_payment_time` 归一化账期,运维脚本取消续费复用 Subscriptions API cancel,无需新增密钥。
+
+`clink` 渠道的 `config_json` 必须是对象,必填字段:
+
+| config_json 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| `environment` | 是 | `sandbox` / `live`;决定 API 根地址、Checkout 与 Portal 官方主机 |
+| `secret_key` | 是 | 服务端调用 Clink API 的 API Key(`X-API-Key`) |
+| `webhook_signing_key` | 是 | Webhook HMAC-SHA256 验签密钥 |
+| `request_timeout_seconds` | 是 | Clink API HTTP 超时时间(正数) |
+
+约束:
+
+- ClinkBill 密钥只存在 `config_payment_channel.config_json` 与运维侧,不写入源码、文档或部署参数;gmap 的渠道配置从参考项目同环境复制。
+- API 根地址由 `environment` 决定:sandbox `https://uat-api.clinkbill.com/api`,live `https://api.clinkbill.com/api`;不从前端或下单请求覆盖。
+- return URL 固定拼到 website:`{app.public_website_base_url}/clink/success/?order_no=<order_no>` 与 `/clink/cancel/`;webhook URL 为 `{app.public_api_base_url}/api/callback/clink/payment`。
+- 自动续费商品必须配置本仓 Clink `productId:priceId`(冒号约定存 `provider_sku`);一次性商品走 `priceDataList`,无需 Catalog ID。
 
 ### 2.2 商品定价配置表
 
@@ -283,9 +302,9 @@ async def check_product(self, param: OrderCheckProductParam) -> OrderCreateParam
 
 1. 校验 `product_id` 非空且商品已启用。
 2. 校验 `payment_method` 已启用且 provider 已实现(`payment_service.is_supported_method`)。
-3. 读取 `(product_id, payment_method)` 对应的渠道价格配置(走 3 分钟缓存)。
+3. 读取 `(product_id, payment_method)` 对应的渠道价格配置(走 3 分钟缓存);`auto_renew + period` 必须与商品单一计费模式一致,渠道价还须通过币种渠道匹配与 `auto_renew_supported` 校验。
 4. 比较客户端提交的所选渠道 `currency / amount` 是否与当前配置一致;顶层 `display_amount` 是展示口径,不作为支付验价字段。
-5. 不一致 → `PAYMENT_PRICE_UPDATED`(`21005`),`data` 回最新价格:
+5. 不一致或计费模式不匹配 → `PAYMENT_PRICE_UPDATED`(`21005`),`data` 回最新价格:
 
 ```json
 {
@@ -301,7 +320,7 @@ async def check_product(self, param: OrderCheckProductParam) -> OrderCreateParam
 ### 3.2 订单快照落库规则
 
 - 订单最终金额 / 币种 / 商品名以 `check_product()` 返回值为准,**不信任客户端传值**。
-- `SUBSCRIPTION` 商品的 `billing_mode/duration_days/channel_subscription_id/renewal_kind` 由订阅域或 provider webhook 写入 `OrderCreateParam.extra_metadata` 的商品快照,履约时从订单快照读取,不从当前订阅配置重读,避免改价或改时长后历史订单履约漂移。
+- `SUBSCRIPTION` 商品的 `product_line/auto_renew/period/product_price_id/provider_sku` 由订阅域或 provider webhook 写入 `OrderCreateParam.extra_metadata` 的商品快照,履约时从订单快照读取,不从当前订阅配置重读,避免改价或改周期后历史订单履约漂移。
 - `RECHARGE` 商品的 `credits_amount` 由积分域 `check_product` 写入 `OrderCreateParam.extra_metadata` 的商品快照(`product_snapshot.credits_amount`),履约时从订单快照读取(见 `@tech-订单数据与状态机.md` §8.3),不从当前积分配置重读,避免改价后到账数量漂移。
 - 订单创建后,后续支付、回调、履约全部以订单表中的快照为准,不再用当前配置表价格判断旧订单。
 
@@ -331,8 +350,9 @@ class PaymentBase(ABC):
 - provider 实现:
   - `telegram_stars` → `TgStarPaymentProvider`
   - `paypal` → `PayPalPaymentProvider`
+  - `clink` → `ClinkPaymentProvider`
 - PayPal 的 capture 是 PayPal 专属确认动作,不放进 `PaymentBase` 抽象;只由 PayPal webhook provider 内部调用 `PayPalPaymentProvider.capture_order(...)`,成功后统一进入 `order_service.order_success(...)`。
-- 后续实现取消自动续费时,它是长期订阅管理动作,不进入 `order_success`;由具体 provider 暴露专用取消方法,订阅 service 按支付渠道显式调用。
+- 渠道订阅管理是统一 Provider 能力(`create_subscription_management_url`),不进入 `order_success`;订阅域按实例 `payment_method` 选择 Provider,PayPal 返回官方 Automatic Payments 页,Clink 创建 Customer Portal Session,Telegram Stars 返回空 URL。
 
 ## 5. Telegram Stars provider
 
@@ -421,6 +441,7 @@ class PaymentBase(ABC):
   - `amount = total_amount * 1_000_000`、`currency`
   - `extra_metadata` = 完整 successful_payment dump(JSON,不含 None 字段)
 - Telegram 的 `is_recurring/is_first_recurring` 是 Optional True 字段:首期订阅付款两者都为 true;后续自动续费只有 `is_recurring=true`,`is_first_recurring` 缺失。回调以“`is_recurring=true` 且 `is_first_recurring` 不是 true”识别后续续费,测试数据不得构造 `is_first_recurring=false`。
+- `is_recurring=true` 时回调补 `provider_subscription`(Stars 账期):`channel_subscription_id = telegram_payment_charge_id`、`original_order_no = invoice_payload`、`start_at = subscription_expiration_date - 订阅周期`、`expires_at = subscription_expiration_date`;订阅履约只按 Provider 归一化账期推进。
 
 ## 6. PayPal provider
 
@@ -543,6 +564,7 @@ PayPal webhook 入口必须验证签名后才处理。签名校验使用 PayPal 
 | --- | --- |
 | `CHECKOUT.ORDER.APPROVED` | 用 PayPal order id 查本地订单并触发服务端 capture;capture 成功后进入 `order_success` |
 | `PAYMENT.CAPTURE.COMPLETED` | 校验本地订单、金额、币种后触发 `order_success` |
+| `PAYMENT.SALE.COMPLETED` | PayPal 订阅首期与后续续费扣款;回调内查询订阅状态,以 `billing_info.next_billing_time` 作为本账期到期,`last_payment_time` 作为账期起点,连同 `channel_subscription_id/original_order_no` 写入 `provider_subscription` 后进入续费订单链路 |
 | 其他事件 | 忽略并记录事件类型 |
 
 webhook 找回本地订单:
@@ -651,10 +673,12 @@ order_success (PENDING -> PAID, CAS, 独立事务)
                     ├─ 影响 0 行 → 查 _is_order_callback_success,幂等返回
                     └─ 影响 1 行 → 继续
                  2. _fulfill_order_product(db, order): 按商品类别发货(同事务)
+                    ├─ SUBSCRIPTION → subscription_service.fulfill_paid_order(db, order)
                     └─ RECHARGE → user_credit_service.add_balance_in_session(db, ...)
                  3. db.commit()
 ```
 
+- 订阅快照 `purpose=upgrade` 的条件换档与账期保持见 [升级履约合同](../006.订阅系统/tech-订阅升级.md#路径-a一次性线maps_online--maps_api差额订单走收银台)。
 - 业务发货与 `callback_status=SUCCESS` 必须在同一事务内提交。
 - 发货抛确定性异常 → 整事务回滚,`fulfill_paid_order` 捕获后 `mark_callback_failed`(CAS `PENDING -> FAILED`),返回 `False`;`_trigger_order_success_callback` 抛 `OrderSuccessError`。
 - 发货抛运行时异常(锁、连接、网络抖动等)→ 整事务回滚,不主动标 `FAILED`,保留 `PENDING` 等补偿任务下轮重试。
@@ -863,7 +887,8 @@ PayPal webhook 在 PayPal Developer Dashboard 人工配置:
 - Webhook URL:`${public_api_base_url}/api/callback/paypal/payment`。
 - Event types 选择 `All Events`,避免新增 PayPal 订阅生命周期能力时因 Dashboard 白名单未同步而收不到事件。
 - 当前支付履约消费 `CHECKOUT.ORDER.APPROVED`、`PAYMENT.CAPTURE.COMPLETED`、`PAYMENT.SALE.COMPLETED`:前两个负责一次性订单 capture 与 completed 兜底,`PAYMENT.SALE.COMPLETED` 负责 PayPal 订阅首期和后续续费扣款。
-- 其他已验签事件当前按未处理事件确认接收;后续实现站内取消自动续费时,再由订阅域消费 `BILLING.SUBSCRIPTION.CANCELLED/EXPIRED/SUSPENDED/PAYMENT.FAILED` 等生命周期事件。
+- `BILLING.SUBSCRIPTION.UPDATED` 交订阅域查询渠道当前计划并收敛档位，不进入订单履约；站内 PayPal 自动续费升级不开放。
+- 其他已验签事件当前按未处理事件确认接收(与 Clink 未处理事件同口径);后续如需消费 `BILLING.SUBSCRIPTION.CANCELLED/EXPIRED/SUSPENDED/PAYMENT.FAILED` 等生命周期事件,再由订阅域扩展。
 - 注册完成后把 PayPal 返回的 `webhook_id` 写入 `config_payment_channel.config_json.webhook_id`。
 - 上线验收必须用 sandbox 分别完成一笔 PayPal 一次性支付和一笔订阅支付,确认 capture/completed 兜底不会重复发货,订阅 `PAYMENT.SALE.COMPLETED` 能完成首期履约。
 

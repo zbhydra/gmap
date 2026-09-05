@@ -1,5 +1,9 @@
 # 016 · Bing 插件 changelog
 
+## 2026-09-05 订阅交互集中到网站
+
+- 面板 FREE/PRO 徽标与达限升级按钮直接打开官网插件订阅页；移除插件内套餐对比视图及专属状态、文案，报价、购买、升级和管理统一由网站承载。入口与职责见 [产品需求](feat.md#订阅入口) 和 [技术合同](references/T1-技术设计.md)。
+
 ## 2026-09-02 E6 Email/社媒挖掘接入(二期落地)
 
 - **插件端接入自研补全服务**(后端 `POST /api/client/maps/enrich` 为 013 A4 U8 已交付能力,gmap/bing 两线共享):新增 `src/sites/bing/enrich/`(types/enrichApi/enrichClient,与 gmap 线同构)——Pro 会话采集完成边沿(collecting→completed 订阅)先把 5 个云端挖掘列(Emails/Social Medias/Facebook/Instagram/Twitter)清出 `###PRO###` 占位(权益已解锁,无数据留空),再按 website 主机名去重分批(≤50)经新 background RPC `enrichBusinesses` 调服务端写回;免费/匿名会话不触发,行保持占位(营销锁定钩子)。单批失败收敛空结果继续剩余批次(局部可失败),新增 `enrich_complete` 打点(成功/失败均报)。
@@ -33,4 +37,3 @@
 ## 2026-08-31
 
 - UI token 收口(与 013 同构):`src/styles/tokens.css` 引入 popup 入口;popup 域(App/Header/Footer/LanguageSwitcher/Toast)迁移 Material You 语义 token;BingPanel token 名统一 `--gme-` 前缀(原裸名,防宿主变量渗透的全项目单一约定)、间距对齐 4px 刻度;删除旧调色板 `core/constants/style.ts` 与 `--login-*` 死代码。Toast 对比度回归测试改为解析 tokens.css 亮暗双主题断言。验证:unit 182 passed、`pnpm check` + build 绿、lint 0 违规。
-

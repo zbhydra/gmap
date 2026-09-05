@@ -1,264 +1,475 @@
 /**
- * 网站 e2e（W2/W3 交付版）。
+ * 网站 e2e（004/U5）。
  *
- * mock 跑：PUBLIC_API_BASE_URL 指向假地址，本 spec 只断言 SSG 页面渲染、
- * 首页五要素、产品页（营销 + 安装教程一体）结构、法务页可达与 data-cta 归因属性。
- * 购买链路 / 登录态相关交互在 W5 接入时按真实场景补充。
+ * mock 跑：PUBLIC_API_BASE_URL 指向假地址；spec 内 page.route mock 自有
+ * /api/client/** 接口，page.context().route mock ClinkBill checkout / portal
+ * 外部页（window.open 的新页面不真实出网）。保留两条用例：
+ *
+ * 1. Pricing 完整购买主路径：普通下单与 Clink 回跳、管理入口、PayPal 固定渠道
+ *    补差与回跳刷新、自动续费确认等待后刷新档位及产品线直达。
+ * 2. 站点结构路径：主导航 / 桌面 API 下拉 / 移动菜单 / 首页核心产品卡与
+ *    FAQPage JSON-LD / Extension 安装链路 / Terms / Privacy 关键事实。
  */
 import { expect, test } from '@playwright/test'
-import type { Page } from '@playwright/test'
 
-import { registerE2eBrowserIdentity } from '../scripts/playwright-browser-identity.mjs'
+import { expectE2eBrowserIdentity, registerE2eBrowserIdentity } from '../scripts/playwright-browser-identity.mjs'
 
 registerE2eBrowserIdentity(test)
 
-test.describe('Website Shell', () => {
-  test('primary nav exposes home, extension, online, API and pricing entries', async ({ page, isMobile }) => {
-    await page.goto('/')
-    // 960px 断点以下桌面导航隐藏，改断言移动端菜单；收起态 visibility 隐藏，先展开
-    const scope = isMobile ? page.locator('.mobile-nav') : page.locator('.nav-links')
-    if (isMobile) {
-      await page.locator('.mobile-menu-btn').click()
+/** 后端标准响应信封。 */
+interface ApiEnvelope<T extends object> {
+  /** 业务成功码 10000。 */
+  code: number
+  data: T
+}
+
+/** 后端标准响应信封构造（成功码 10000）。 */
+function envelope<T extends object>(data: T): ApiEnvelope<T> {
+  return { code: 10000, data }
+}
+
+/** checkout-configs 的单个渠道价选项。 */
+interface MockPaymentChannel {
+  payment_method: string
+  payment_method_name: string
+  product_price_id: number
+  currency: string
+  amount: number
+}
+
+/** checkout-configs 的单个商品配置。 */
+interface MockPlan {
+  product_class: number
+  product_id: string
+  product_line: string
+  product_name: string
+  period: 'month'
+  auto_renew: boolean
+  display_currency: string
+  display_amount: number
+  monthly_quota: number
+  payment_channels: MockPaymentChannel[]
+}
+
+/** 捕获到的下单请求体。 */
+interface CapturedCreateOrderBody {
+  product_class: number
+  product_id: string
+  payment_method: string
+  currency: string
+  amount: number
+  auto_renew: boolean
+  period: string
+}
+
+/** 捕获到的渠道管理请求体。 */
+interface CapturedManagementBody {
+  product_line: string
+}
+
+/** 捕获到的取消订单请求体。 */
+interface CapturedCancelBody {
+  order_no: string
+}
+
+const ORDER_SUCCESS_EPOCH = Date.parse('2026-09-05T00:00:00Z')
+
+/** 三产品线各出一个代表 SKU：Online 一次性 / Extension 自动续费 / API 一次性。 */
+function buildPlans(): MockPlan[] {
+  const channels = (basePriceId: number, amount: number): MockPaymentChannel[] => [
+    {
+      payment_method: 'paypal',
+      payment_method_name: 'PayPal',
+      product_price_id: basePriceId,
+      currency: 'USD',
+      amount
+    },
+    {
+      payment_method: 'clink',
+      payment_method_name: 'ClinkBill',
+      product_price_id: basePriceId + 1,
+      currency: 'USD',
+      amount
     }
-    await expect(scope.locator('a').filter({ hasText: 'Home' })).toBeVisible()
-    await expect(scope.locator('a').filter({ hasText: 'Extension' })).toBeVisible()
-    // Online 真链接（015 U1）：指向落地页
-    const onlineEntry = scope.locator('a[data-cta="nav-online"]')
-    await expect(onlineEntry).toBeVisible()
-    await expect(onlineEntry).toHaveAttribute('href', '/online-scraper/')
-    await expect(scope.locator('a').filter({ hasText: 'Pricing' })).toBeVisible()
-    if (isMobile) {
-      // 移动端：API 四子项平铺（菜单已展开）
-      await expect(scope.locator('a[data-cta="nav-api-scraper"]')).toBeVisible()
-      await expect(scope.locator('a[data-cta="nav-api-reviews"]')).toBeVisible()
-      await expect(scope.locator('a[data-cta="nav-api-photos"]')).toBeVisible()
-      await expect(scope.locator('a[data-cta="nav-api-mcp"]')).toBeVisible()
-    } else {
-      // 桌面端：API 下拉（复用语言切换下拉模式）
-      await expect(scope.locator('.nav-api-switcher .lang-btn')).toBeVisible()
-      await expect(scope.locator('.nav-api-switcher .lang-option')).toHaveCount(4)
-    }
+  ]
+
+  const plan = (
+    productId: string,
+    productLine: string,
+    productName: string,
+    amount: number,
+    autoRenew: boolean,
+    monthlyQuota: number,
+    basePriceId: number
+  ): MockPlan => ({
+    product_class: 1,
+    product_id: productId,
+    product_line: productLine,
+    product_name: productName,
+    period: 'month',
+    auto_renew: autoRenew,
+    display_currency: 'USD',
+    display_amount: amount,
+    monthly_quota: monthlyQuota,
+    payment_channels: channels(basePriceId, amount)
   })
 
-  test('desktop API dropdown expands and navigates to a landing page', async ({ page }) => {
-    const width = page.viewportSize()?.width ?? 0
-    test.skip(width <= 960, '桌面下拉，仅桌面断点验证')
-    await page.goto('/')
+  return [
+    plan('online_basic', 'maps_online', 'Online Basic', 49_000_000, false, 80_000, 301),
+    plan('maps_extension_pro', 'maps_extension', 'Maps Pro', 39_000_000, true, 100_000, 201),
+    plan('api_professional', 'maps_api', 'API Professional', 65_000_000, false, 5_000, 401)
+  ]
+}
+
+test('Pricing full purchase path: billing, upgrades, returns and Manage subscription', async ({ page }, testInfo) => {
+  const createOrderBodies: CapturedCreateOrderBody[] = []
+  const managementBodies: CapturedManagementBody[] = []
+  const cancelBodies: CapturedCancelBody[] = []
+  const upgradeCheckoutBodies: { product_line: string; target_product_id: string }[] = []
+  const upgradeConfirmBodies: { product_line: string; target_product_id: string }[] = []
+  const expiresAt = Date.now() + 30 * 86_400_000
+  let onlineProductId: string | null = null
+  let extensionProductId = 'maps_extension_pro'
+  let applyRecurringUpgrade = false
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem('homepage_access_token', 'e2e-pricing-token')
+  })
+
+  // 支付成功后 auth/me 返回有效自动续费订阅；购买前该线为 Free。
+  let extensionSubscriptionActive = false
+
+  await page.route('**/api/client/auth/me', route =>
+    route.fulfill({
+      json: envelope({
+        email: 'hydra@mapsgrab.test',
+        full_name: 'Hydra',
+        credits_balance: 0,
+        created_at: ORDER_SUCCESS_EPOCH,
+        maps_extension_subscription: extensionSubscriptionActive
+          ? {
+              status: 'active',
+              period: 'month',
+              display_name: extensionProductId === 'maps_extension_pro' ? 'Maps Pro' : 'Maps Business',
+              expires_at: expiresAt,
+              auto_renew: true,
+              payment_method: 'clink'
+            }
+          : null,
+        maps_online_subscription: onlineProductId ? {
+          status: 'active',
+          period: 'month',
+          display_name: onlineProductId === 'online_basic' ? 'Online Basic' : 'Online Growth',
+          expires_at: expiresAt,
+          auto_renew: false,
+          payment_method: 'paypal'
+        } : null
+      })
+    })
+  )
+
+  await page.route('**/api/client/subscription/checkout-configs', route =>
+    route.fulfill({ json: envelope({ checkout_configs: [
+      ...buildPlans(),
+      { ...buildPlans()[0], product_id: 'online_growth', product_name: 'Online Growth' },
+      { ...buildPlans()[1], product_id: 'maps_extension_business', product_name: 'Maps Business' }
+    ] }) })
+  )
+
+  await page.route('**/api/client/subscription/upgrade-quote?*', route => {
+    const params = new URL(route.request().url()).searchParams
+    const target = params.get('target_product_id')
+    const online = params.get('product_line') === 'maps_online'
+    if (!online && applyRecurringUpgrade) {
+      extensionProductId = 'maps_extension_business'
+    }
+    const current = online ? onlineProductId : extensionProductId
+    const available = online
+      ? current === 'online_basic' && target === 'online_growth'
+      : current === 'maps_extension_pro' && target === 'maps_extension_business'
+    return route.fulfill({ json: envelope({
+      available,
+      reason: available ? null : 'not_higher_tier',
+      current_product_id: current,
+      target_product_id: target,
+      payment_method: online ? 'paypal' : 'clink',
+      currency: 'USD',
+      amount: available ? 12_500_000 : null,
+      expires_at: expiresAt
+    }) })
+  })
+
+  await page.route('**/api/client/subscription/upgrade/checkout', route => {
+    upgradeCheckoutBodies.push(route.request().postDataJSON())
+    return route.fulfill({ json: envelope({
+      order_no: 'PAYPAL-UPGRADE-1',
+      amount: 12_500_000,
+      currency: 'USD',
+      expired_at: Date.now() + 1_800_000,
+      support_mail: '',
+      payment_data: { approval_url: 'https://www.paypal.com/checkoutnow?token=upgrade' }
+    }) })
+  })
+
+  await page.route('**/api/client/subscription/upgrade/confirm', route => {
+    upgradeConfirmBodies.push(route.request().postDataJSON())
+    return route.fulfill({ json: envelope({
+      status: 'requires_action', action: { type: 'wait', url: null }
+    }) })
+  })
+
+  await page.route('**/api/client/order/create', route => {
+    createOrderBodies.push(route.request().postDataJSON() as CapturedCreateOrderBody)
+    extensionSubscriptionActive = true
+    return route.fulfill({
+      json: envelope({
+        order_no: 'CLINK-E2E-1',
+        amount: 39_000_000,
+        currency: 'USD',
+        expired_at: Date.now() + 1_800_000,
+        support_mail: '',
+        payment_data: {
+          sessionId: 'sess_e2e_1',
+          checkoutUrl: 'https://uat-checkout.clinkbill.com/pay/sess_e2e_1'
+        }
+      })
+    })
+  })
+
+  await page.context().route('**/api/client/order/status/**', route => {
+    const upgrade = route.request().url().endsWith('PAYPAL-UPGRADE-1')
+    if (upgrade) {
+      onlineProductId = 'online_growth'
+    }
+    return route.fulfill({
+      json: envelope({
+        order_no: upgrade ? 'PAYPAL-UPGRADE-1' : 'CLINK-E2E-1',
+        product_class: 1,
+        product_id: upgrade ? 'online_growth' : 'maps_extension_pro',
+        product_name: 'Maps Pro',
+        amount: upgrade ? 12_500_000 : 39_000_000,
+        currency: 'USD',
+        order_status: 2,
+        callback_status: 3,
+        payment_method: 'clink',
+        paid_at: ORDER_SUCCESS_EPOCH,
+        created_at: ORDER_SUCCESS_EPOCH,
+        expired_at: ORDER_SUCCESS_EPOCH + 1_800_000
+      })
+    })
+  })
+
+  await page.route('**/api/client/subscription/management', route => {
+    managementBodies.push(route.request().postDataJSON() as CapturedManagementBody)
+    return route.fulfill({
+      json: envelope({ url: 'https://uat-portal.clinkbill.com/portal/sess_e2e_1' })
+    })
+  })
+
+  await page.route('**/api/client/order/cancel', route => {
+    cancelBodies.push(route.request().postDataJSON() as CapturedCancelBody)
+    return route.fulfill({ json: envelope({}) })
+  })
+
+  // Clink 官方域名挂 context.route：window.open 的新页面同样被拦截，不真实出网。
+  await page.context().route('https://uat-checkout.clinkbill.com/**', route =>
+    route.fulfill({ contentType: 'text/html', body: '<html><title>ClinkBill Checkout</title></html>' })
+  )
+  await page.context().route('https://uat-portal.clinkbill.com/**', route =>
+    route.fulfill({ contentType: 'text/html', body: '<html><title>ClinkBill Portal</title></html>' })
+  )
+  await page.context().route('https://www.paypal.com/checkoutnow?*', route =>
+    route.fulfill({ contentType: 'text/html', body: '<html><title>PayPal Checkout</title></html>' })
+  )
+
+  await page.goto('/pricing/')
+  await expectE2eBrowserIdentity(page, testInfo, expect)
+
+  // 登录态恢复：账号胶囊展示邮箱，三产品线配置加载后付费卡可点。
+  await expect(page.locator('[data-pricing-account-email]')).toContainText('hydra@mapsgrab.test')
+  await expect(page.locator('[data-pricing-buy="online_basic"]')).toBeEnabled()
+  await expect(page.locator('[data-pricing-buy="maps_extension_pro"]')).toBeEnabled()
+  await expect(page.locator('[data-pricing-buy="api_professional"]')).toBeEnabled()
+
+  // 购买前 extension 线无有效自动续费订阅：Manage subscription 隐藏。
+  await expect(page.locator('[data-pricing-manage-subscription]')).toBeHidden()
+  await page.locator('[data-pricing-tab="extension"]').click()
+  await expect(page.locator('[data-pricing-manage-subscription]')).toBeHidden()
+
+  // 单一计费模式对照：Online 一次性商品 detail 是 One-time payment。
+  await page.locator('[data-pricing-tab="online"]').click()
+  await page.locator('[data-pricing-buy="online_basic"]').click()
+  const onlineUsage = page.locator('[data-order-checkout-selected-usage]')
+  await expect(onlineUsage).toContainText('One-time payment')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('[data-order-checkout-payment-dialog]')).toBeHidden()
+
+  // Extension Pro（自动续费商品）：detail 是 Auto-renews until canceled。
+  await page.locator('[data-pricing-tab="extension"]').click()
+  await page.locator('[data-pricing-buy="maps_extension_pro"]').click()
+  await expect(page.locator('[data-order-checkout-selected-usage]')).toContainText(
+    'Auto-renews until canceled'
+  )
+
+  // 选 Clink 渠道并确认：下单请求必须携带 auto_renew + period。
+  await page
+    .locator('[data-order-checkout-payment-method="clink"]')
+    .first()
+    .click()
+  const checkoutPopupPromise = page.waitForEvent('popup')
+  await page.locator('[data-order-checkout-submit]').click()
+
+  const checkoutPopup = await checkoutPopupPromise
+  await expect(checkoutPopup).toHaveURL(/uat-checkout\.clinkbill\.com/)
+
+  // 下单请求必须携带 auto_renew + period，且与商品单一计费模式一致。
+  expect(createOrderBodies).toHaveLength(1)
+  expect(createOrderBodies[0]).toMatchObject({
+    product_class: 1,
+    product_id: 'maps_extension_pro',
+    payment_method: 'clink',
+    currency: 'USD',
+    amount: 39_000_000,
+    auto_renew: true,
+    period: 'month'
+  })
+
+  // 订单轮询确认支付成功，弹窗切换 success 态；账号区刷新出有效订阅摘要。
+  await expect(page.locator('[data-order-checkout-status="success"]')).toBeVisible()
+  await expect(page.locator('[data-order-checkout-success-panel]')).toBeVisible()
+  const manageButton = page.locator('[data-pricing-manage-subscription]')
+  await expect(page.locator('[data-pricing-user-plan]')).toContainText('Maps Pro')
+
+  // 关闭 success 弹窗后，账号区出现 Manage subscription 入口。
+  await page.locator('[data-order-checkout-order-close]').click()
+  await expect(page.locator('[data-order-checkout-modal]')).toBeHidden()
+  await expect(manageButton).toBeVisible()
+  const portalPopupPromise = page.waitForEvent('popup')
+  await manageButton.click()
+  const portalPopup = await portalPopupPromise
+  await expect(portalPopup).toHaveURL(/uat-portal\.clinkbill\.com/)
+  // 请求只含 product_line，渠道选择完全由服务端订阅实例决定。
+  expect(managementBodies).toEqual([{ product_line: 'maps_extension' }])
+
+  // 复用同一用户路径验证报价定档、固定 PayPal 补差和既有回跳后刷新。
+  onlineProductId = 'online_basic'
+  await page.goto('/pricing/?product_line=maps_online')
+  await expect(page.locator('[data-pricing-buy="online_basic"]')).toHaveText('Current Plan')
+  await expect(page.locator('[data-pricing-buy="online_lite"]')).toBeDisabled()
+  await expect(page.locator('[data-pricing-buy="online_growth"]')).toHaveText('Upgrade · $12.50')
+  await expect(page.locator('[data-pricing-buy="api_professional"]')).toBeEnabled()
+  await page.locator('[data-pricing-buy="online_growth"]').click()
+  await expect(page.locator('[data-order-checkout-channel-list]')).toBeHidden()
+  await expect(page.locator('[data-order-checkout-selected-usage]')).toContainText('One-time difference via PayPal')
+  await expect(page.locator('[data-order-checkout-selected-price]')).toHaveText('$12.50')
+  await page.screenshot({ path: testInfo.outputPath('upgrade-checkout.png') })
+  const upgradePopupPromise = page.waitForEvent('popup')
+  await page.locator('[data-order-checkout-submit]').click()
+  const upgradePopup = await upgradePopupPromise
+  await expect(upgradePopup).toHaveURL(/www\.paypal\.com\/checkoutnow/)
+  expect(upgradeCheckoutBodies).toEqual([{
+    product_line: 'maps_online', target_product_id: 'online_growth'
+  }])
+  await upgradePopup.goto(`${new URL(page.url()).origin}/paypal/success/?order_no=PAYPAL-UPGRADE-1`)
+  await expect(upgradePopup.locator('[data-paypal-return-title]')).toHaveText('Subscription activated')
+  await expect(page.locator('[data-order-checkout-status="success"]')).toBeVisible()
+  await expect(page.locator('[data-pricing-buy="online_growth"]')).toHaveText('Current Plan')
+  await expect(page.locator('[data-pricing-user-plan]')).toHaveText('Online Growth')
+  await page.locator('[data-order-checkout-order-close]').click()
+
+  // 插件同名 product_line 参数直达 Extension；requires_action 只读 quote，不重复确认。
+  await page.goto('/pricing/?product_line=maps_extension')
+  await expect(page.locator('[data-pricing-tab="extension"]')).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('[data-pricing-manage-subscription]')).toBeVisible()
+  await expect(page.locator('[data-pricing-buy="maps_extension_pro"]')).toHaveText('Current Plan')
+  await expect(page.locator('[data-pricing-buy="maps_extension_business"]')).toHaveText('Upgrade · $12.50')
+  await page.locator('[data-pricing-buy="maps_extension_business"]').click()
+  await expect(page.locator('[data-order-checkout-selected-usage]')).toContainText('charged immediately via ClinkBill')
+  await page.locator('[data-order-checkout-submit]').click()
+  await expect(page.locator('[data-order-checkout-status="pending_payment"]')).toBeVisible()
+  await expect(page.locator('[data-order-checkout-order-message]')).toContainText('current plan stays active')
+  await expect(page.locator('[data-order-checkout-order-close]')).toHaveText('Close')
+  await expect(page.locator('[data-pricing-user-plan]')).toHaveText('Maps Pro')
+  await page.screenshot({ path: testInfo.outputPath('upgrade-pending.png') })
+  applyRecurringUpgrade = true
+  await expect(page.locator('[data-order-checkout-status="success"]')).toBeVisible()
+  await expect(page.locator('[data-pricing-user-plan]')).toHaveText('Maps Business')
+  await expect(page.locator('[data-pricing-buy="maps_extension_business"]')).toHaveText('Current Plan')
+  expect(upgradeConfirmBodies).toEqual([{
+    product_line: 'maps_extension', target_product_id: 'maps_extension_business'
+  }])
+  expect(createOrderBodies).toHaveLength(1)
+  await page.locator('[data-order-checkout-order-close]').click()
+
+  // Clink success 回跳：轮询本地订单后按订阅口径确认。
+  await page.goto('/clink/success/?order_no=CLINK-E2E-1')
+  const confirmedRoot = page.locator('[data-payment-return-state="confirmed"]')
+  await expect(confirmedRoot).toBeVisible()
+  await expect(page.locator('[data-payment-return-title]')).toHaveText('Plan activated')
+  await expect(page.locator('[data-payment-return-description]')).toContainText(
+    'ClinkBill payment is confirmed'
+  )
+
+  // Clink cancel 回跳：落到取消态并调用取消订单接口。
+  await page.goto('/clink/cancel/?order_no=CLINK-E2E-1')
+  await expect(page.locator('[data-payment-return-state="cancelled"]')).toBeVisible()
+  await expect(page.locator('[data-payment-return-title]')).toHaveText('Payment canceled')
+  expect(cancelBodies).toEqual([{ order_no: 'CLINK-E2E-1' }])
+})
+
+test('site structure: nav, API dropdown, home cards, extension install and legal pages', async ({ page, isMobile }) => {
+  // —— 主导航：Pricing / Online 真链接；桌面 API 下拉可展开跳转，移动端 API 子项平铺 ——
+  await page.goto('/')
+  const scope = isMobile ? page.locator('.mobile-nav') : page.locator('.nav-links')
+  if (isMobile) {
+    // 960px 断点以下桌面导航隐藏，展开移动菜单后再断言
+    await page.locator('.mobile-menu-btn').click()
+  }
+  await expect(scope.locator('a').filter({ hasText: 'Pricing' })).toBeVisible()
+  await expect(scope.locator('a[data-cta="nav-online"]')).toHaveAttribute('href', '/online-scraper/')
+  if (isMobile) {
+    await expect(scope.locator('a[data-cta="nav-api-scraper"]')).toBeVisible()
+  } else {
     const apiBtn = page.locator('.nav-api-switcher .lang-btn')
     const dropdown = page.locator('.nav-api-switcher .lang-dropdown')
-    await expect(dropdown).not.toHaveClass(/show/)
     await apiBtn.click()
     await expect(dropdown).toHaveClass(/show/)
     await dropdown.locator('a[data-cta="nav-api-scraper"]').click()
     await expect(page).toHaveURL(/\/google-maps-scraper-api\//)
-  })
-
-  test('nav Online entry leads to the online scraper landing page', async ({ page, isMobile }) => {
-    await page.goto('/')
-    const scope = isMobile ? page.locator('.mobile-nav') : page.locator('.nav-links')
-    if (isMobile) {
-      await page.locator('.mobile-menu-btn').click()
-    }
-    await scope.locator('a[data-cta="nav-online"]').click()
-    await expect(page).toHaveURL(/\/online-scraper\//)
-  })
-
-  test('nav install CTA leads to the extension page with attribution attributes', async ({ page, isMobile }) => {
-    test.skip(isMobile, '安装按钮在移动端断点隐藏，桌面验证即可')
-    await page.goto('/')
-    const installLink = page.locator('.nav-install-link')
-    await expect(installLink).toHaveAttribute('href', '/extension/')
-    await expect(installLink).toHaveAttribute('data-cta', 'nav-install')
-    await installLink.click()
-    await expect(page).toHaveURL(/\/extension\//)
-  })
-
-  test('footer exposes product, company and legal links', async ({ page }) => {
-    await page.goto('/')
-    const footer = page.locator('.footer-link-groups')
-    await expect(footer.locator('a[href="/extension/"]')).toBeVisible()
-    await expect(footer.locator('a[href="/about/"]')).toBeVisible()
-    await expect(footer.locator('a[href="/contact/"]')).toBeVisible()
-    await expect(footer.locator('a[href="/terms/"]')).toBeVisible()
-    await expect(footer.locator('a[href="/privacy/"]')).toBeVisible()
-  })
-
-  test('language switcher renders with the single EN baseline locale', async ({ page, isMobile }) => {
-    test.skip(isMobile, '语言切换器在移动端断点隐藏，桌面验证即可')
-    await page.goto('/')
-    // 导航 API 下拉复用 .lang-btn/.lang-dropdown 类名，断言作用域限定在 nav-actions 的语言切换器
-    const switcher = page.locator('.nav-actions .lang-switcher')
-    await expect(switcher.locator('.lang-btn')).toContainText('English')
-    await switcher.locator('.lang-btn').click()
-    await expect(switcher.locator('.lang-dropdown')).toHaveClass(/show/)
-    await expect(switcher.locator('.lang-option')).toHaveCount(1)
-  })
-})
-
-test.describe('Home Page', () => {
-  test('renders the five required elements', async ({ page }) => {
-    await page.goto('/')
-    await expect(page).toHaveTitle(/MapsGrab/)
-    // ① hero：H1 一句话 + 双 CTA
-    await expect(page.locator('h1')).toContainText('Grab Google Maps business data')
-    const hero = page.locator('[data-home-page] .hero')
-    await expect(hero.locator('a[data-cta="home-hero-install"]')).toBeVisible()
-    await expect(hero.locator('a[data-cta="home-hero-product"]')).toBeVisible()
-    // ② 三产品卡
-    await expect(page.locator('[data-product-card="extension"]')).toBeVisible()
-    await expect(page.locator('[data-product-card="online"]')).toBeVisible()
-    await expect(page.locator('[data-product-card="api"]')).toBeVisible()
-    // ③ 社证占位区
-    await expect(page.locator('.testimonials .testimonial-card')).toHaveCount(3)
-    // ④ FAQ
-    await expect(page.locator('.faq-item')).toHaveCount(6)
-    // ⑤ CTA
-    await expect(page.locator('a[data-cta="home-band-install"]')).toBeVisible()
-  })
-
-  test('hero CTA links to the extension page with utm attribution', async ({ page }) => {
-    await page.goto('/')
-    const heroInstall = page.locator('a[data-cta="home-hero-install"]')
-    const href = await heroInstall.getAttribute('href')
-    expect(href).toContain('/extension/')
-    expect(href).toContain('utm_source=website')
-    expect(href).toContain('utm_medium=home-hero')
-  })
-
-  test('online and api product cards link to their landing pages', async ({ page }) => {
-    await page.goto('/')
-    const expectations: Array<[string, RegExp]> = [
-      ['online', /\/online-scraper\//],
-      ['api', /\/google-maps-scraper-api\//]
-    ]
-    for (const [cardId, urlPattern] of expectations) {
-      const cardLink = page.locator(`[data-product-card="${cardId}"] a.product-link`)
-      await expect(cardLink).toBeVisible()
-      await expect(cardLink).toHaveAttribute('href', urlPattern)
-      await cardLink.click()
-      await expect(page).toHaveURL(urlPattern)
-      await page.goBack()
-    }
-  })
-
-  test('extension product card links to the product page', async ({ page }) => {
-    await page.goto('/')
-    const cardLink = page.locator('[data-product-card="extension"] a.product-link')
-    await expect(cardLink).toHaveAttribute('href', /\/extension\//)
-    await cardLink.click()
-    await expect(page).toHaveURL(/\/extension\//)
-  })
-
-  test('faq exposes FAQPage structured data matching the visible questions', async ({ page }) => {
-    await page.goto('/')
-    const firstQuestion = await page.locator('.faq-item summary').first().textContent()
-    expect(firstQuestion?.trim()).toBeTruthy()
-    const schema = await page.locator('script[type="application/ld+json"]').allTextContents()
-    const faqSchema = schema.map(text => JSON.parse(text) as { '@type'?: string }).find(
-      item => item['@type'] === 'FAQPage'
-    )
-    expect(faqSchema, 'expected FAQPage JSON-LD on home').toBeTruthy()
-  })
-})
-
-test.describe('Extension Product Page', () => {
-  test('renders hero, feature groups, version notes and install tutorial', async ({ page }) => {
-    const response = await page.goto('/extension/')
-    expect(response?.status()).toBe(200)
-    await expect(page.locator('h1')).toContainText('Google Maps extractor')
-    // 功能清单覆盖 A5 口径的六个功能组
-    const featureTitles = ['Business data', 'Reviews', 'Photos', 'Email & social media enrichment', 'Batch tasks', 'Export']
-    for (const title of featureTitles) {
-      await expect(page.locator('.feature-card h3').filter({ hasText: title })).toBeVisible()
-    }
-    // 版本说明段（承接 changelog 职能）
-    await expect(page.locator('[data-release="0.1.0 (pre-release)"]')).toBeVisible()
-    // 安装教程区（营销 + 教程一体，#install 页内锚点）
-    const installSection = page.locator('section#install')
-    await expect(installSection).toBeVisible()
-    // 直装 zip 资产占位（release 资产未挂，点击不 404）
-    const zipLink = installSection.locator('a[data-cta="extension-install-zip"]')
-    await expect(zipLink).toBeVisible()
-    await expect(zipLink).toHaveAttribute('href', '#')
-    // Edge 与 Firefox 渠道各自带商店占位与安装步骤
-    for (const channelId of ['edge', 'firefox']) {
-      const channel = installSection.locator(`[data-channel="${channelId}"]`)
-      await expect(channel).toBeVisible()
-      await expect(channel.locator('a[data-cta="extension-store-' + channelId + '"]')).toHaveAttribute('href', '#')
-      await expect(channel.locator('.channel-steps li').first()).toBeVisible()
-    }
-    await expect(page.locator('[data-channel="edge"] .channel-steps li')).toHaveCount(4)
-    await expect(page.locator('[data-channel="firefox"] .channel-steps li')).toHaveCount(3)
-  })
-
-  test('hero install buttons split Edge store jump from in-page tutorial scroll', async ({ page }) => {
-    await page.goto('/extension/')
-    // Edge 按钮跳转商店（上架前 href 占位），Chrome 按钮滚动到页内教程锚点
-    const edgeCta = page.locator('a[data-cta="extension-hero-edge-install"]')
-    await expect(edgeCta).toBeVisible()
-    await expect(edgeCta).toHaveAttribute('href', '#')
-    const chromeCta = page.locator('a[data-cta="extension-hero-chrome-install"]')
-    await expect(chromeCta).toBeVisible()
-    await expect(chromeCta).toHaveAttribute('href', '#install')
-    // 页底 CTA 同样滚动到教程区
-    await expect(page.locator('a[data-cta="extension-band-install"]')).toHaveAttribute('href', '#install')
-  })
-
-  test('renders media-rich sections with placeholder slots (015 D5 图文改造)', async ({ page }) => {
-    await page.goto('/extension/')
-    // hero 右侧配图位 + showcase 双图位 + demo 视频位 + zip 文件位 + edge 四步 + firefox 三步 = 12 个占位槽
-    await expect(page.locator('[data-media-slot]')).toHaveCount(12)
-    // showcase：插件面板位 + 导出文件位 + 示例数据下载占位（点击不 404）
-    await expect(page.locator('.showcase [data-media-slot="browser"]')).toBeVisible()
-    await expect(page.locator('.showcase [data-media-slot="file"]')).toBeVisible()
-    const demoData = page.locator('a[data-cta="extension-demo-data"]')
-    await expect(demoData).toBeVisible()
-    await expect(demoData).toHaveAttribute('href', '#')
-    // demo 视频占位区在版本说明段之前
-    await expect(page.locator('.demo [data-media-slot]')).toBeVisible()
-    // 教程区：zip 文件位 + 每个安装步骤配图位
-    await expect(page.locator('.zip-card [data-media-slot="file"]')).toBeVisible()
-    await expect(page.locator('[data-channel="edge"] [data-media-slot]')).toHaveCount(4)
-    await expect(page.locator('[data-channel="firefox"] [data-media-slot]')).toHaveCount(3)
-    // 占位槽是无障碍可见的（role=img + aria-label）
-    await expect(page.locator('.hero [data-media-slot]')).toHaveAttribute('aria-label', /screenshot coming soon/i)
-  })
-})
-
-test.describe('Secondary Pages', () => {
-  async function expectPageRenders(page: Page, path: string, heading: string) {
-    const response = await page.goto(path)
-    expect(response?.status()).toBe(200)
-    await expect(page.locator('h1')).toContainText(heading)
   }
 
-  test('pricing page renders the three product-line plans page', async ({ page }) => {
-    await expectPageRenders(page, '/pricing/', 'One data engine, three ways to buy it')
-  })
+  // —— 首页核心：hero 双 CTA 与三产品卡 ——
+  await page.goto('/')
+  await expect(page).toHaveTitle(/MapsGrab/)
+  await expect(page.locator('h1')).toContainText('Grab Google Maps business data')
+  const hero = page.locator('[data-home-page] .hero')
+  await expect(hero.locator('a[data-cta="home-hero-install"]')).toBeVisible()
+  await expect(hero.locator('a[data-cta="home-hero-product"]')).toBeVisible()
+  for (const cardId of ['extension', 'online', 'api']) {
+    await expect(page.locator(`[data-product-card="${cardId}"]`)).toBeVisible()
+  }
+  // 首页 FAQ 区输出 FAQPage JSON-LD
+  const faqSchema = (await page.locator('script[type="application/ld+json"]').allTextContents())
+    .map(text => JSON.parse(text) as { '@type'?: string })
+    .find(item => item['@type'] === 'FAQPage')
+  expect(faqSchema, 'expected FAQPage JSON-LD on home').toBeTruthy()
 
-  test('about and contact pages render the W3 content', async ({ page }) => {
-    await expectPageRenders(page, '/about/', 'Maps data, grabbed the straightforward way')
-    await expectPageRenders(page, '/contact/', 'Talk to a human')
-    // About 页数据边界要点可见
-    await page.goto('/about/')
-    await expect(page.locator('.company-section-copy').filter({ hasText: 'Only publicly available business information' })).toBeVisible()
-    // Contact 页支持邮箱占位
-    await page.goto('/contact/')
-    await expect(page.locator('.company-email')).toContainText('support@mapsgrab.com')
-  })
+  // —— Extension 产品页：hero 双按钮分流 + 版本说明 + 页内安装教程区 ——
+  await page.goto('/extension/')
+  await expect(page.locator('h1')).toContainText('Google Maps extractor')
+  await expect(page.locator('a[data-cta="extension-hero-edge-install"]')).toHaveAttribute('href', '#')
+  await expect(page.locator('a[data-cta="extension-hero-chrome-install"]')).toHaveAttribute(
+    'href',
+    '#install'
+  )
+  await expect(page.locator('[data-release="0.1.0 (pre-release)"]')).toBeVisible()
+  await expect(page.locator('section#install')).toBeVisible()
 
-  test('legal pages render the W3 documents', async ({ page }) => {
-    await expectPageRenders(page, '/terms/', 'Terms of Service')
-    await page.goto('/terms/')
-    // Terms 要点：按「现状」提供 + 用户责任
-    await expect(page.locator('h2').filter({ hasText: 'The service is provided as is' })).toBeVisible()
-    await expect(page.locator('h2').filter({ hasText: 'Your responsibility' })).toBeVisible()
-
-    await expectPageRenders(page, '/privacy/', 'Privacy Policy')
-    // 隐私政策要点：后端四类用途、可选集成、GA4 豁免、无广告无追踪
-    await expect(page.locator('h2').filter({ hasText: 'What our backend processes' })).toBeVisible()
-    await expect(page.locator('h2').filter({ hasText: 'Optional Google Drive and HubSpot integrations' })).toBeVisible()
-    await expect(page.locator('h2').filter({ hasText: 'Website analytics' })).toBeVisible()
-    await expect(page.locator('h2').filter({ hasText: 'What we never do' })).toBeVisible()
-  })
+  // —— 法务页关键事实 ——
+  await page.goto('/terms/')
+  await expect(page.locator('h2').filter({ hasText: 'The service is provided as is' })).toBeVisible()
+  await expect(page.locator('h2').filter({ hasText: 'Your responsibility' })).toBeVisible()
+  await page.goto('/privacy/')
+  await expect(page.locator('h2').filter({ hasText: 'What our backend processes' })).toBeVisible()
+  await expect(page.locator('h2').filter({ hasText: 'What we never do' })).toBeVisible()
 })

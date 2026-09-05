@@ -48,8 +48,8 @@
 | C1 | 用户体系(含竞品 license key 辅轨的取舍;辅轨取舍未决) | ♻️ `007.用户系统` | 逆向 06 | 🔍 | ✅ (2026-09-01,复用 007 全套 + 插件 v3 浏览器身份,Maps/Bing 双插件已接) |
 | C2 | 订阅套餐(分产品订阅:extension / maps_extension / maps_online / maps_api 四线) | ♻️ `006.订阅系统` | 官网 pricing 三 tab | 🔍 | ✅ (2026-08-31,maps_online/maps_api 8 档 PayPal 一次性支付占位落地;额度消费基建 2026-09-01 落 `000.架构/tech-额度基建.md` 三门面,消费接线待 014) |
 | C3 | 积分 / 用量计量(服务端计数、免费月度额度) | ♻️ `003.积分系统` / `005.计数器系统` | 逆向 06 | 🔍 | 🚧 (2026-09-01 统一 usage 三门面 + 月度免费额度落地,maps_extension 线已生效;maps_online/api 消费接线待 014) |
-| C4 | 订单与支付(Stripe / Paddle) | ♻️ `004.订单系统` | 逆向 06 | ♻️ | 🚧 (004 订单系统 + PayPal 一次性支付闭环在售 2026-08-31;Stripe/Paddle 渠道未立项) |
-| C5 | Pricing 页(三产品形态分 tab 展示) | ♻️ `011.Pricing页` | 官网 /pricing | 🔍浅 | ✅ (2026-08-31,Online / Extension / API 三 tab 已实现,10 个付费 SKU 可购买) |
+| C4 | 订单与支付(Stripe / Paddle) | ♻️ `004.订单系统` | 逆向 06 | ♻️ | 🚧 (2026-09-05 支付模型同步落地，005 升级已实施，本地收尾与检查完成；真实渠道及特定宿主验收待办,见 `feat/006.订阅系统/`;maps_extension 自动续费真实渠道 SKU 与 Clink 公网 webhook 首笔人工验收待办;Stripe/Paddle 未立项) |
+| C5 | Pricing 页(三产品形态分 tab 展示) | ♻️ `011.Pricing页` | 官网 /pricing | 🔍浅 | ✅ (2026-08-31,Online / Extension / API 三 tab 已实现,10 个付费 SKU;2026-09-05 起按单一计费模式购买,maps_extension 两档待真实渠道 SKU——TODO 占位 enabled=0 暂不可售) |
 | C6 | 管理后台扩展 | ♻️ `008.管理后台` | — | ♻️ | ✅ (2026-09-02,用户管理页只读列表 + 用户弹窗多线订阅/用量契约 + Dashboard 图表落地;RBAC / 订单写操作 / 订阅额度管理 UI / API key 多条按裁决不做) |
 
 ### D · 增长与内容(拟建 `015.工具与增长`)
@@ -69,7 +69,7 @@
 | --- | --- | --- | --- | --- |
 | E1 | Bing Maps 列表采集(data-entity 解析 + 滚动/翻页) | 竞品 v2.4.9 逆向+动态验证 | ♻️ | ✅ |
 | E2 | 18 列导出 CSV/XLSX(免费 20 条 + Pro 门控,自有订阅体系) | 同上(实测导出样本) | ♻️ | ✅ |
-| E3 | 面板 UI(Vue 直插,非 iframe)+ Pricing 信息页 | 同上 §9.1 | ♻️ | ✅ |
+| E3 | 面板 UI(Vue 直插,非 iframe)+ 官网订阅入口 | 同上 §9.1 | ♻️ | ✅ |
 | E4 | 插件登录(v3 浏览器身份,popup + 面板双入口;2026-09-01 替代 v2 官网桥) | 本站自有模式 | ♻️ | ✅ |
 | E5 | 远程配置热修通道(本地默认+稀疏覆盖,机制复用;后端端点未上线,回退路径已验) | 竞品 bingMapsVersions | ♻️ | ✅ |
 | E6 | Email/社媒挖掘(与 013 A4 同源自研服务,云端执行归 014;输入平台无关) | 竞品 mqfyia/frkaizm 实测 | ♻️ | ✅ (2026-09-02 二期落地:免费行占位锁定、Pro 完成边沿自动补全;云端批量产品化仍归 014) |
@@ -95,6 +95,8 @@
 - 估时假设:单人 + AI 助手;插件全量(阶段 1)约 7–9 周,加云端与增长完整对标约 3–4 个月。
 
 ## 5 · 变更记录
+
+- 2026-09-05 **C4 支付模型同步落地(004 计划 U1–U5)**:商品单一计费模式(auto_renew 商品列)+ 订阅实例账期(自然月/渠道归一)+ ClinkBill 渠道(Hosted Checkout + webhook + Customer Portal)+ 渠道订阅管理入口;订阅状态收敛为六字段合同(去每日额度/旧标量字段,旧 `tech-额度与速率档位.md` 删除);website 购买链路与 e2e、双插件订阅契约同步。剩余外部待办:maps_extension 自动续费真实渠道 SKU(enabled=0 TODO 占位)、Clink 公网 webhook 首笔人工验收;005 订阅升级及网站/双插件接线已实施，本地收尾与检查完成；backend 经 2 轮、website/plugin 各 1 轮 xhigh 单元审查通过，后端两项 P2 文档问题均已关闭。真实渠道与 Bing content/点击宿主验收未完成，EdgeCDP 超时单列。细节见 `feat/006.订阅系统/`、`feat/004.订单系统/`、`feat/011.Pricing页/`。
 
 - 2026-09-04 **B1 Online 任务与结果设计完成**：父任务 + 20 个 item 分表，提交后按 item 直接异步执行，business 启动时恢复未完成任务；结果按 `online/{Ymd}/{task_no}/{item_id}/{attempt_id}.csv` 写当前 R2 / AliOSS，提供单 item CSV 与整任务 ZIP；提交不预扣，完成后按实际 records 幂等计量。实施计划见 `feat/014.Maps云端/plans/002.Online任务与结果基建.md`。
 

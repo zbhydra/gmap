@@ -155,6 +155,8 @@ export interface AccountContent {
     fulfillmentFailed: string
     /** 登录失效文案。 */
     authExpired: string
+    /** 弹窗被浏览器拦截时的引导文案。 */
+    popupBlocked: string
   }
 }
 
@@ -540,21 +542,23 @@ export interface PricingPageContent {
     freePlan: string
     /** 账号区加载失败文案。 */
     loadFailed: string
+    /** 有效自动续费订阅的渠道管理入口按钮。 */
+    manageSubscription: string
+    /** 管理入口请求期间的加载文案。 */
+    managingSubscription: string
   }
-  /** 有效自动续费订阅的支付渠道取消指引。 */
+  /** 渠道内操作指引（管理入口 URL 为空时的兜底展示）。 */
   cancellationGuide: {
-    /** 账号套餐行的取消入口文案。 */
-    buttonLabel: string
-    /** 取消指引弹窗标题。 */
+    /** 操作指引弹窗标题。 */
     title: string
-    /** 各支付渠道内的取消路径。 */
+    /** 各支付渠道内的操作路径。 */
     paths: readonly {
       /** 支付渠道名称。 */
       provider: string
       /** 渠道后台内依次进入的页面或执行的操作。 */
       steps: readonly string[]
     }[]
-    /** 取消指引弹窗关闭按钮文案。 */
+    /** 操作指引弹窗关闭按钮文案。 */
     closeLabel: string
   }
   /** 三条产品线的 tab 标签文案（tab 栏按钮，键为 PricingTabId）。 */
@@ -569,12 +573,54 @@ export interface PricingPageContent {
     loadFailed: string
     /** 商品无可用支付渠道文案。 */
     noChannels: string
-    /** 当前线已有有效套餐时按钮点击的提示。 */
-    alreadyActive: string
     /** 支付弹窗商品标题前缀。 */
     productTitlePrefix: string
     /** 支付未完成标题。 */
     failedTitle: string
+    /** 支付选项的周期说明（当前商品均为月度）。 */
+    billingPeriodMonthly: string
+    /** 自动续费商品的计费说明。 */
+    billingAutoRenew: string
+    /** 一次性商品的计费说明。 */
+    billingOneTime: string
+  }
+  /** 升级报价、确认与结果文案。 */
+  upgrade: {
+    /** 当前档按钮标签。 */
+    currentPlan: string
+    /** 更高档按钮标签，含 {amount}。 */
+    button: string
+    /** 升级确认标题。 */
+    title: string
+    /** 确认扣款按钮。 */
+    confirm: string
+    /** 一次性补差说明，含 {date} 与 {channel}。 */
+    oneTime: string
+    /** 自动续费立即扣款说明，含 {date} 与 {channel}。 */
+    autoRenew: string
+    /** 等待渠道生效标题。 */
+    pendingTitle: string
+    /** 等待渠道生效说明。 */
+    pendingDescription: string
+    /** 升级完成标题。 */
+    successTitle: string
+    /** 升级完成说明，含 {date}。 */
+    successDescription: string
+    /** 报价失败提示。 */
+    quoteFailed: string
+    /** 确认失败提示。 */
+    failed: string
+    /** 服务端不可升级原因对应的用户提示。 */
+    reasons: {
+      /** 无有效订阅。 */
+      no_active_subscription: string
+      /** 同档或低档。 */
+      not_higher_tier: string
+      /** 补差不为正。 */
+      non_positive_diff: string
+      /** 当前渠道不可用于升级。 */
+      channel_unavailable: string
+    }
   }
   /** 页底购买答疑。 */
   faq: {

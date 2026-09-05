@@ -1,7 +1,8 @@
 """PayPal webhook 回调入口。
 
-职责仅限：落原始日志 → Provider 验签 → 交给 OrderService.handle_payment_callback。
-续费派单、并发收敛、履约、Provider 后置动作全部由 OrderService 统一处理。
+职责仅限：落原始日志 → Provider 验签 → 分发：支付成功事件交给
+OrderService.handle_payment_callback；计划变更事件（BILLING.SUBSCRIPTION.
+UPDATED）只上交订阅服务做档位收敛，不进订单履约。
 """
 
 import json
@@ -12,10 +13,12 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from app.constants.payment import PAYPAL_PAYMENT_METHOD
 from app.core.config import settings
-from app.provider.payment.paypal import PAYPAL_PAYMENT_METHOD
+from app.provider.payment.paypal import PAYPAL_SUBSCRIPTION_UPDATED_EVENT
 from app.services.order_service import order_service
 from app.services.payment_service import payment_service
+from app.services.subscription_service import subscription_service
 from app.utils.logger import logger
 from app.utils.time import system_timezone
 from app.utils.response import ResponseUtils
@@ -63,6 +66,35 @@ async def paypal_payment_callback(request: Request) -> JSONResponse:
         )
 
     handle_payment_callback_start_time = time.perf_counter()
+    if verified.event == PAYPAL_SUBSCRIPTION_UPDATED_EVENT:
+        # 计划变更事件不进订单履约：按渠道订阅 ID 查当前 plan 并收敛本地档位。
+        subscription_id = (verified.provider_data or {}).get("paypal_subscription_id")
+        if not isinstance(subscription_id, str) or not subscription_id:
+            raise ValueError(
+                "paypal_payment_callback: BILLING.SUBSCRIPTION.UPDATED "
+                f"subscription id missing: provider_data={verified.provider_data!r}"
+            )
+        synced = await subscription_service.sync_plan_from_channel(
+            payment_method=PAYPAL_PAYMENT_METHOD,
+            channel_subscription_id=subscription_id,
+        )
+        logger.info(
+            "paypal_plan_change_synced: event=%s, subscription_id=%s, "
+            "synced=%s, handle_duration_ms=%.2f",
+            verified.event,
+            subscription_id,
+            synced,
+            _elapsed_ms(handle_payment_callback_start_time),
+        )
+        return ResponseUtils.ok(
+            {
+                "processed": True,
+                "event": verified.event,
+                "subscription_id": subscription_id,
+                "synced": synced,
+            }
+        )
+
     result = await order_service.handle_payment_callback(
         payment_method=PAYPAL_PAYMENT_METHOD,
         callback=verified,

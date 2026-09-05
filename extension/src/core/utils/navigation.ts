@@ -18,6 +18,7 @@ export type PricingSource =
  */
 export function buildPricingUrl(source: PricingSource): string {
   const url = new URL(WEBSITE.PRICING_PATH, WEBSITE.BASE_URL)
+  url.searchParams.set('product_line', 'maps_extension')
   url.searchParams.set('utm_source', 'extension')
   url.searchParams.set('source', source)
   return url.toString()

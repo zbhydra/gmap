@@ -98,6 +98,7 @@ from app.api.admin.admin_orders import router as admin_orders_router
 from app.api.admin.admin_system_settings import router as admin_system_settings_router
 from app.api.admin.admin_users import router as admin_users_router
 from app.api.callback.paypal_callback import router as paypal_callback_router
+from app.api.callback.clink_callback import router as clink_callback_router
 from app.api.callback.telegram_callback import router as telegram_callback_router
 from app.api.callback.test_pay_callback import router as callback_router
 from app.api.client.auth_client import router as auth_router
@@ -218,6 +219,9 @@ def _include_business_routes(app_instance: FastAPI) -> None:
     )
     app_instance.include_router(
         paypal_callback_router, prefix="/api/callback", tags=["callback"]
+    )
+    app_instance.include_router(
+        clink_callback_router, prefix="/api/callback", tags=["callback"]
     )
     app_instance.include_router(admin_auth_router, prefix="/api/admin", tags=["admin"])
     app_instance.include_router(

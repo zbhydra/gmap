@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import Literal
 
 from fastapi import Request
 
@@ -19,6 +20,8 @@ class PaymentRequest:
     expired_at: int
     callback_url: str | None = None
     client_ip: str | None = None
+    # 登录用户 ID；Clink 等需要 referenceCustomerId 的渠道必填。
+    user_id: int | None = None
     auto_renew: bool = False
     provider_sku: str | None = None
 
@@ -75,13 +78,75 @@ class PaymentProviderError(RuntimeError):
     """支付 provider 创建支付或校验回调失败。"""
 
 
+SubscriptionUpdateStatus = Literal["succeeded", "requires_action", "failed"]
+
+
+@dataclass(frozen=True, slots=True)
+class SubscriptionUpdateAction:
+    type: Literal["wait", "redirect"]
+    url: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SubscriptionUpdateResult:
+    status: SubscriptionUpdateStatus
+    action: SubscriptionUpdateAction | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SubscriptionUpdatePreview:
+    """渠道已核对目标 SKU、币种与立即生效条件的扣款快照。"""
+
+    price_snapshot_id: str
+    net_amount: int
+
+
+@dataclass(frozen=True, slots=True)
+class SubscriptionState:
+    """可履约的渠道当前价及首购订单引用。"""
+
+    provider_sku: str
+    original_order_no: str
+
+
 class PaymentBase(ABC):
     """支付提供者抽象基类"""
 
     provider_name: str = ""
+    supports_upgrade_checkout = False
+    supports_subscription_update = False
 
     def __init__(self, config: dict | None = None) -> None:
         pass
+
+    async def preview_subscription_update(
+        self,
+        *,
+        channel_subscription_id: str,
+        target_provider_sku: str | None,
+        currency: str,
+    ) -> SubscriptionUpdatePreview:
+        raise PaymentProviderError(
+            f"{self.provider_name}.preview_subscription_update: 不支持订阅换价"
+        )
+
+    async def confirm_subscription_update(
+        self,
+        *,
+        channel_subscription_id: str,
+        target_provider_sku: str | None,
+        price_snapshot_id: str,
+    ) -> SubscriptionUpdateResult:
+        raise PaymentProviderError(
+            f"{self.provider_name}.confirm_subscription_update: 不支持订阅换价"
+        )
+
+    async def get_subscription_state(
+        self, channel_subscription_id: str
+    ) -> SubscriptionState:
+        raise PaymentProviderError(
+            f"{self.provider_name}.get_subscription_state: 不支持订阅计划查询"
+        )
 
     def recurring_payment_reference(
         self,
@@ -100,6 +165,19 @@ class PaymentBase(ABC):
         """执行订单首次同步履约后的渠道动作，默认无需处理。"""
 
         return AfterOrderSuccessResult()
+
+    async def create_subscription_management_url(
+        self,
+        *,
+        channel_uid: str | None,
+        return_url: str,
+    ) -> str | None:
+        """创建渠道订阅管理入口；无 Web 管理页的渠道返回 None。"""
+
+        raise PaymentProviderError(
+            f"{self.provider_name}.create_subscription_management_url: "
+            "subscription management is unsupported"
+        )
 
     @abstractmethod
     async def create_payment(self, request: PaymentRequest) -> dict[str, object]:

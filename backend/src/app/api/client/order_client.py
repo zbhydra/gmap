@@ -3,9 +3,8 @@
 创建订单流程：
 1. payment_service.is_supported_method 确认支付入口已实现。
 2. order_service.check_product 按 product_class 分发业务校验。
-3. order_service.create_order 写入商品、渠道、金额快照。
-4. payment_service.get_provider 按 payment_method 创建支付 provider。
-5. provider.create_payment 创建支付数据并原样返回给前端。
+3. order_service.create_order_with_payment 写订单快照、创建并保存支付数据、
+   装配统一响应（与订阅升级差额下单共用）。
 """
 
 from fastapi import APIRouter, Depends, Query
@@ -15,7 +14,6 @@ from app.api.user_dependencies import UserContext, get_current_user
 from app.constants.order import OrderCheckProductParam, OrderStatus
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
-from app.provider.payment.payment_base import PaymentProviderError, PaymentRequest
 from app.schemas.order_schema import (
     CancelOrderApiResponse,
     CancelOrderRequest,
@@ -25,15 +23,12 @@ from app.schemas.order_schema import (
     OrderStatusApiResponse,
     UnfinishedOrderListApiResponse,
 )
-from app.services.config_public_service import config_public_service
 from app.services.order_service import order_service
 from app.services.payment_service import payment_service
 from app.utils.response import ResponseUtils
 from app.utils.time import timestamp_now
 
 router = APIRouter(prefix="/order", tags=["订单管理"])
-
-_SUPPORT_MAIL_CONFIG_KEY = "support_mail"
 
 
 @router.post("/create", response_model=CreateOrderApiResponse)
@@ -78,58 +73,14 @@ async def create_order(
             payment_method=payment_method,
             currency=data.currency,
             amount=data.amount,
+            auto_renew=data.auto_renew,
+            period=data.period,
             client_ip=current_user.ip or current_user.device_id,
             language=current_user.language,
         )
     )
-    order = await order_service.create_order(create_param)
-    provider = await payment_service.get_provider(payment_method)
-
-    try:
-        payment_data = await provider.create_payment(
-            PaymentRequest(
-                order_no=order.order_no,
-                payment_method=order.payment_method or "",
-                order_status=order.order_status,
-                amount=order.amount,
-                currency=order.currency,
-                product_name=order.product_name,
-                expired_at=order.expired_at,
-                client_ip=current_user.ip or current_user.device_id,
-                auto_renew=create_param.auto_renew,
-                provider_sku=create_param.provider_sku,
-            )
-        )
-    except PaymentProviderError as exc:
-        raise AppCommonException(
-            CommonCode.PAYMENT_GATEWAY_ERROR,
-            ext_msg=f"order_create: payment gateway failed: {exc}",
-        ) from exc
-    payment_data_saved = await order_service.save_order_payment_data(
-        order_no=order.order_no,
-        payment_data=payment_data,
-    )
-    if not payment_data_saved:
-        raise AppCommonException(
-            CommonCode.PAYMENT_GATEWAY_ERROR,
-            ext_msg=(
-                "order_create: payment data save failed after gateway success: "
-                f"order_no={order.order_no}, payment_method={payment_method}"
-            ),
-        )
-
-    raw_support_mail = await config_public_service.get(_SUPPORT_MAIL_CONFIG_KEY)
-    support_mail = raw_support_mail.strip() if isinstance(raw_support_mail, str) else ""
-    return ResponseUtils.ok(
-        {
-            "order_no": order.order_no,
-            "amount": order.amount,
-            "currency": order.currency,
-            "expired_at": order.expired_at,
-            "support_mail": support_mail,
-            "payment_data": payment_data,
-        }
-    )
+    response_data = await order_service.create_order_with_payment(create_param)
+    return ResponseUtils.ok(response_data)
 
 
 @router.get("/status/{order_no}", response_model=OrderStatusApiResponse)

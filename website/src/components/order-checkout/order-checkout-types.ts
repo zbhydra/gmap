@@ -7,8 +7,18 @@
 
 import type {
   OrderCheckoutPaymentChannel,
+  OrderCheckoutPeriod,
   OrderStatusResponse
 } from './order-checkout-api'
+import type { PricingPageContent } from '../../i18n/schema'
+
+/** 公共 checkout 的单个支付选项及其本地化摘要。 */
+export interface OrderCheckoutPaymentOption extends OrderCheckoutPaymentChannel {
+  /** 该选项的价格摘要；为空时使用商品级摘要。 */
+  priceText?: string
+  /** 该选项的周期、续费方式等说明；为空时使用商品级提示。 */
+  detailText?: string
+}
 
 /** 公共 checkout 弹窗文案。 */
 export interface OrderCheckoutCopy {
@@ -64,6 +74,8 @@ export interface OrderCheckoutCopy {
   fulfillmentFailed: string
   /** 登录失效文案。 */
   authExpired: string
+  /** 支付窗口被浏览器拦截时的引导文案。 */
+  popupBlocked: string
 }
 
 /** 公共 checkout 可售商品。 */
@@ -72,6 +84,10 @@ export interface OrderCheckoutProduct {
   productClass: number
   /** 商品标识。 */
   productId: string
+  /** 是否由渠道自动续费；必须与商品配置一致，否则后端按价格已更新拒绝。 */
+  autoRenew: boolean
+  /** 商业与权益周期；非订阅商品为 none。 */
+  period: OrderCheckoutPeriod
   /** 摘要主文案，如 100 Credits / Extension Unlimited。 */
   title: string
   /** 摘要价格展示。 */
@@ -89,7 +105,7 @@ export interface OrderCheckoutProduct {
   /** Credits 商品到账数量，非 Credits 商品为空。 */
   creditsAmount?: number
   /** 当前商品可用支付渠道。 */
-  paymentChannels: OrderCheckoutPaymentChannel[]
+  paymentChannels: OrderCheckoutPaymentOption[]
 }
 
 /** 打开公共 checkout 弹窗的参数。 */
@@ -98,14 +114,22 @@ export interface OrderCheckoutOpenOptions {
   source: string
   /** 要购买的商品快照。 */
   product: OrderCheckoutProduct
+  /** 恢复购买意图时优先选中的支付方式。 */
+  initialPaymentMethod?: string
+  /** 升级沿用商品快照中的唯一渠道；自动续费走协议确认，一次性走差额订单。 */
+  upgrade?: {
+    productLine: string
+    currentProductId: string | null
+    copy: PricingPageContent['upgrade']
+  }
 }
 
 /** 公共 checkout 成功事件 payload。 */
 export interface OrderCheckoutSuccessPayload {
   /** 触发 checkout 的业务来源。 */
   source: string
-  /** 成功履约的订单号。 */
-  orderNo: string
+  /** 成功履约的订单号；协议内升级不创建订单。 */
+  orderNo: string | null
   /** 商品类别。 */
   productClass: number
   /** 商品标识。 */
@@ -113,7 +137,7 @@ export interface OrderCheckoutSuccessPayload {
   /** Credits 商品到账数量，非 Credits 商品为空。 */
   creditsAmount: number | null
   /** 最近一次订单状态响应。 */
-  orderStatus: OrderStatusResponse
+  orderStatus: OrderStatusResponse | null
   /** 成功态第二行文案可由业务入口刷新，例如 Credits 最新余额。 */
   updateSuccessSecondaryText(text: string): void
 }

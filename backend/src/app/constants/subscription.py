@@ -19,8 +19,10 @@ from app.i18n.common_code import CommonCode
 class SubscriptionPeriodEnum(str, enum.Enum):
     """订阅周期枚举"""
 
-    FREE = "free"
+    NONE = "none"
     MONTH = "month"
+    QUARTER = "quarter"
+    YEAR = "year"
 
 
 FREE_SUBSCRIPTION_PRODUCT_ID = "free"
@@ -64,12 +66,24 @@ SUBSCRIPTION_PRODUCT_LINES = (
 )
 
 
+# 订阅订单快照 purpose=upgrade：一次性线差额订单履约分支的识别标记。
+SUBSCRIPTION_UPGRADE_PURPOSE = "upgrade"
+
+
+class SubscriptionUpgradeQuoteReason(str, enum.Enum):
+    """升级报价不可升级原因（upgrade-quote 响应合同仅此四值）。"""
+
+    NO_ACTIVE_SUBSCRIPTION = "no_active_subscription"
+    NOT_HIGHER_TIER = "not_higher_tier"
+    NON_POSITIVE_DIFF = "non_positive_diff"
+    CHANNEL_UNAVAILABLE = "channel_unavailable"
+
+
 class SubscriptionProductMetadata(BaseModel):
     """订阅商品 metadata 配置。"""
 
     model_config = ConfigDict(extra="ignore")
 
-    auto_renew: bool = Field(default=False, description="是否自动续费")
     # 产品线月度权益额度；单位由产品线定义：maps_extension/maps_online = records/月，
     # maps_api = requests/月；无额度概念的产品线留空。
     monthly_quota: int | None = Field(default=None, description="月度权益额度数")
@@ -80,22 +94,16 @@ class SubscriptionProductMetadata(BaseModel):
         metadata: Mapping[str, object],
         *,
         product_id: str,
-        period: str | SubscriptionPeriodEnum | None = None,
     ) -> "SubscriptionProductMetadata":
         """解析订阅商品 metadata，错误信息带商品 ID。"""
-        period_value = (
-            period.value if isinstance(period, SubscriptionPeriodEnum) else period
-        )
         try:
-            return cls.model_validate(
-                {**metadata, "_product_id": product_id, "_period": period_value}
-            )
+            return cls.model_validate({**metadata, "_product_id": product_id})
         except ValidationError as exc:
             raise AppCommonException(
                 CommonCode.PAYMENT_GATEWAY_ERROR,
                 ext_msg=(
                     "subscription metadata invalid: "
-                    f"product_id={product_id}, period={period_value}, "
+                    f"product_id={product_id}, "
                     f"errors={_format_metadata_errors(exc)}"
                 ),
             ) from exc
@@ -103,29 +111,17 @@ class SubscriptionProductMetadata(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _normalize_legacy_fields(cls, value: object) -> object:
-        """Free 补齐默认值，其余商品直接使用配置的权益和计费方式。"""
+        """Free 判断只看 product_id，各字段直接使用配置值。"""
         if not isinstance(value, dict):
             return value
 
         metadata = dict(value)
         product_id = str(metadata.pop("_product_id", "")).strip().lower()
-        period = str(metadata.pop("_period", "")).strip().lower()
-        is_free = period == SubscriptionPeriodEnum.FREE.value or (
-            product_id == FREE_SUBSCRIPTION_PRODUCT_ID
-        )
-
-        if is_free and "auto_renew" not in metadata:
-            metadata["auto_renew"] = False
+        # free 判断只看 product_id（period 参数已随周期统一移除）。
+        if product_id == FREE_SUBSCRIPTION_PRODUCT_ID:
+            metadata.setdefault("monthly_quota", None)
 
         return metadata
-
-    @field_validator("auto_renew", mode="before")
-    @classmethod
-    def _validate_auto_renew(cls, value: object) -> bool:
-        """自动续费开关必须是 JSON bool，避免配置含义漂移。"""
-        if not isinstance(value, bool):
-            raise ValueError(f"must be boolean, value={value!r}")
-        return value
 
     @field_validator("monthly_quota", mode="before")
     @classmethod
