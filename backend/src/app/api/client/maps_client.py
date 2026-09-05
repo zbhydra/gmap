@@ -25,7 +25,7 @@ from app.api.user_dependencies import UserContext, get_current_user_optional
 from app.schemas.maps_enrich_schema import MapsEnrichRequest
 from app.schemas.maps_hubspot_schema import MapsHubspotSyncRequest
 from app.schemas.maps_usage_schema import MapsUsageReportRequest
-from app.services.maps_enrich_service import maps_enrich_service
+from app.provider.maps_enrich import maps_enrich_provider
 from app.services.maps_hubspot_service import maps_hubspot_service
 from app.services.usage_service import (
     extension_usage_service,
@@ -120,8 +120,8 @@ async def enrich_maps_businesses(
     扣配额**——与 U7 对齐，采集完成边沿已按会话计量，补全不计次。单站失败
     （超时/非 2xx/SSRF 拒绝）收敛为空结果不报错；无 domain 的商家直接空结果。
     """
-    result = await maps_enrich_service.enrich(request.businesses)
-    return ResponseUtils.ok(result)
+    result = await maps_enrich_provider.enrich(request.businesses)
+    return ResponseUtils.ok(dict(result))
 
 
 @router.get("/usage")

@@ -27,7 +27,7 @@ from app.provider.gmap.types import (
     GmapSearchResult,
     GmapViewport,
 )
-from app.services.maps_engine_service import maps_engine_service
+from app.schemas.admin_schema import GmapEngineConfig
 from app.utils.logger import logger
 
 
@@ -37,8 +37,7 @@ class _GmapHttpProvider:
     def __init__(self) -> None:
         self._client = GmapRpcClient()
 
-    async def _initialize(self) -> None:
-        config = await maps_engine_service.get_config()
+    async def initialize(self, config: GmapEngineConfig) -> None:
         await self._client.initialize(config.proxies, config.concurrency)
 
     @staticmethod
@@ -88,7 +87,6 @@ class _GmapHttpProvider:
         """完成常规深分页、browser 覆盖与未覆盖 fid 的 L2 补列。"""
         if not 1 <= max_depth <= 10:
             raise ValueError("search_places max_depth must be between 1 and 10")
-        await self._initialize()
         nid = await self._client.mint_nid(hl)
         cookie = self._cookie(nid)
 
@@ -188,7 +186,6 @@ class _GmapHttpProvider:
         """获取 GetLocalBoqProxy 单页，保留上游 cursor。"""
         if sort_by not in (1, 2, 3, 4):
             raise ValueError("list_reviews sort_by must be between 1 and 4")
-        await self._initialize()
         body = await self._client.get(
             reviews_url(fid, sort_by, cursor, hl),
             cookie=None,

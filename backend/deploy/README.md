@@ -137,7 +137,8 @@ backend/deploy/
 [`../config.yaml`](../config.yaml)
 
 数据库参数从 .env 内 `DB_HOST` / `DB_USER` / `DB_PASSWD` / `DB_NAME` 读取。
-应用名称从 .env 内 `APP_NAME` 读取；它会进入 Redis key 前缀，测试服和正式服共用 Redis 时必须不同。
+应用名称从 .env 内 `APP_NAME` 读取。
+Redis 连接从 .env 内 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` 读取；所有节点固定使用 `db: 0`、`key_prefix: gmapsexporter`，测试服和正式服使用不同 Redis 实例隔离。
 同一台机器部署多套环境时，`APP_NAME` 也会作为 supervisor program 名和 Nginx vhost 文件名，必须不同。
 同机部署正式服和测试服时，至少要分别配置不同的 `APP_NAME` / `DEPLOY_DIR` / `BACKUP_DIR` / `BACKEND_PORT_PY` / `NGINX_SERVER_NAME` / `DB_USER` / `DB_NAME`。
 后端运行日志级别从 .env 内 `LOGGER_LEVEL` 读取，正式环境建议 `WARNING`，避免普通 `INFO` 请求日志刷 supervisor。

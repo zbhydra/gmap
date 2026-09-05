@@ -23,40 +23,15 @@ Online 创建入口
 
 MySQL 是任务事实源。创建事务提交后直接启动 item 协程并返回任务信息；business 启动时按 `APP_NAME` 恢复一次未完成任务。
 
-## 3. 文件树
+## 3. 实现入口
 
-```text
-backend/
-  config.yaml.example                          # Redis 固定默认值
-  deploy/.env.example / README.md              # Redis 环境隔离说明
-  pyproject.toml / uv.lock                      # R2 / AliOSS 官方 SDK
-  src/app/
-    api/client/maps_client.py                   # enrichment Provider 新 owner
-    api/client/maps_online_client.py            # Online 任务与下载接口
-    core/config_schema.py                       # Redis 固定默认值
-    main.py                                      # 启动恢复与关闭协程
-    constants/maps_online.py                    # 20 分表、任务期限、对象前缀
-    models/__init__.py                           # 导入全部 item 分表
-    models/maps_online_task_model.py             # 父任务
-    models/maps_online_task_item_model.py        # 同构 item 表注册与路由
-    provider/maps_online.py                      # item 外部调用与结果文件
-    provider/maps_enrich.py                      # 官网 Email / 社媒补全
-    provider/gmap/http.py                        # 配置由调用方传入
-    provider/gmap/gosom.py                       # 配置由调用方传入
-    provider/gmap/types.py                       # gosom handle 只含 job_id
-    schemas/maps_online_schema.py                # 创建、列表和详情合同
-    services/gosom_api_service.py                # 只保留配置与加权选择
-    services/maps_online_task_service.py         # 任务事务、item 执行与恢复
-    services/maps_enrich_service.py              # 删除
-    utils/object_storage.py                      # R2 / AliOSS SDK 客户端
-  tests/integration/real/
-    api/client/test_maps_online_real.py
-    api/client/test_maps_integrations_real.py    # enrichment import owner
-    provider/gmap/                               # Provider 配置调用合同
-    provider/test_maps_online_provider_real.py
-    services/test_maps_online_task_service_real.py
-    utils/test_object_storage_real.py
-```
+- `@backend/src/app/api/client/maps_online_client.py`：创建、查询与下载边界；请求和响应由 `@backend/src/app/schemas/maps_online_schema.py` 定义。
+- `@backend/src/app/services/maps_online_task_service.py` 的 `maps_online_task_service`：创建事务、item 执行、报告、计量与恢复；生命周期接入 `@backend/src/app/main.py`。
+- `@backend/src/app/models/maps_online_task_model.py` 与 `@backend/src/app/models/maps_online_task_item_model.py`：父任务及分表；后者的路由入口统一决定 item 物理表。
+- `@backend/src/app/provider/maps_online.py` 的 `MapsOnlineProvider`：采集编排、CSV 与下载；`@backend/src/app/provider/maps_enrich.py` 的 `maps_enrich_provider` 为 Online 与插件接口共用的补全入口。
+- `@backend/src/app/utils/object_storage.py`：官方 SDK 读写与签名边界；固定参数归 `@backend/src/app/constants/maps_online.py`。
+
+改动范围与验收记录见 `@plans/002.Online任务与结果基建.md`。
 
 依赖方向固定为 `service -> provider -> utils`。service 读取运行配置并在初始化 Online Provider 时传入；Provider 不读取或引用 service。R2 通过官方 S3 兼容接口，AliOSS 使用官方 Python SDK，同步 I/O 由对象存储工具放入 `asyncio.to_thread`。
 
@@ -238,6 +213,8 @@ business 启动时查询一次 `completed_at = 0 AND app_name = settings.app.nam
 
 入口先按当前用户读取父任务，再在对应分表使用 `id = item_id AND task_id = parent.id` 查询有 `object_key` 的 item，随后由 Online Provider 返回短期签名下载 URL。文件名为 `{item_id}_{关键字}.csv`。
 
+签名前通过对应官方 SDK 执行 HEAD，确认对象存在。HEAD 或下载返回明确缺对象错误时，对象存储工具统一抛出 `FileNotFoundError`，CSV 与 ZIP 的 API 边界映射为 `NOT_FOUND`；其他 SDK 错误不伪装成缺对象。工具在 `except` 块外抛出只含存储 ID、类型和异常类型的安全异常，断开原 SDK 异常上下文，避免凭据或签名 query 随框架日志泄漏。
+
 文件名在下载边界清理路径分隔符、控制字符和文件系统保留字符，保留关键词原语言；完整文件名按 Unicode 边界截断到 200 个 UTF-8 字节。清理后关键词为空时使用 `{item_id}.csv`。
 
 ### 9.2 整任务 ZIP
@@ -268,4 +245,5 @@ business 启动时查询一次 `completed_at = 0 AND app_name = settings.app.nam
 - Cloudflare R2 S3 API：<https://developers.cloudflare.com/r2/api/s3/api/>
 - Cloudflare R2 boto3：<https://developers.cloudflare.com/r2/examples/aws/boto3/>
 - AliOSS Python SDK V2：<https://github.com/aliyun/alibabacloud-oss-python-sdk-v2>
+- AliOSS 使用 SDK 原生 V1 签名，按配置 endpoint 访问；服务端签名合同见 <https://www.alibabacloud.com/help/en/oss/developer-reference/include-signatures-in-the-authorization-header>，上传接口见 <https://www.alibabacloud.com/help/en/oss/developer-reference/putobject>。SDK 版本由 `@backend/uv.lock` 锁定。
 - gosom SaaS API：<https://github.com/gosom/google-maps-scraper/blob/v1.17.4/docs/saas.md>

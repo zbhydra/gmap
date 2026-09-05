@@ -116,10 +116,9 @@ class GmapReviewPage:
 
 @dataclass(frozen=True, slots=True)
 class GosomJobHandle:
-    """gosom job 标识及提交实例地址。"""
+    """gosom job 标识；查询配置由调用方持有。"""
 
     job_id: str
-    base_url: str
 
 
 @dataclass(frozen=True, slots=True)

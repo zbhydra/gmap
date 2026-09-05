@@ -1,4 +1,8 @@
 {
+    "maps_online": {
+        "report_alarm_title": "Online item report failed",
+        "report_alarm_content": "Task: {task_no}\nItem: {item_id}\nAttempts: {attempts}\nError: {error}\nCheck database availability. Unfinished items will resume on business startup."
+    },
     "resp_code": {
         "INTERNAL_SERVER_ERROR": "Internal server error",
         "INVALID_REQUEST": "Invalid request",

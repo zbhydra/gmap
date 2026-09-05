@@ -1,4 +1,8 @@
 {
+    "maps_online": {
+        "report_alarm_title": "Online 条目报告失败",
+        "report_alarm_content": "任务：{task_no}\n条目：{item_id}\n尝试次数：{attempts}\n错误：{error}\n请检查数据库可用性；未完成条目将在 business 启动时恢复。"
+    },
     "resp_code": {
         "INTERNAL_SERVER_ERROR": "系统服务异常",
         "INVALID_REQUEST": "无效的请求",

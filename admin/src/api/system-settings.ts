@@ -67,6 +67,9 @@ export interface GmapEngineConfig {
 
 /** Cloudflare R2 对象存储配置。 */
 export interface R2StorageConfig {
+  id: string;
+  name: string;
+  provider: "R2";
   account_id: string;
   bucket: string;
   access_key_id: string;
@@ -75,17 +78,21 @@ export interface R2StorageConfig {
 
 /** 阿里云 OSS 对象存储配置。 */
 export interface AliOssStorageConfig {
+  id: string;
+  name: string;
+  provider: "AliOSS";
   endpoint: string;
   bucket: string;
   access_key_id: string;
   access_key_secret: string;
 }
 
-/** 对象存储配置；保存时始终完整提交两组配置。 */
+export type ObjectStorageItem = R2StorageConfig | AliOssStorageConfig;
+
+/** 全部配置与供新任务使用的唯一启用项，整对象提交。 */
 export interface ObjectStorageConfig {
-  active: "R2" | "AliOSS";
-  R2: R2StorageConfig;
-  AliOSS: AliOssStorageConfig;
+  active_id: string | null;
+  items: ObjectStorageItem[];
 }
 
 /** 查询当前管理员 API Key 元信息。 */
@@ -100,9 +107,7 @@ export function generateAdminApiKey() {
 
 /** 刷新当前业务进程内配置读取缓存。 */
 export function refreshConfigCache() {
-  return request.post<never, ConfigCacheRefreshResult>(
-    "/system-settings/config-cache/refresh",
-  );
+  return request.post<never, ConfigCacheRefreshResult>("/system-settings/config-cache/refresh");
 }
 
 /** 查询 gosom 引擎 API 配置。 */
@@ -130,10 +135,7 @@ export function getObjectStorageConfig() {
   return request.get<never, ObjectStorageConfig>("/system-settings/object-storage");
 }
 
-/** 完整保存两组对象存储配置，并返回后端归一化结果。 */
+/** 保存全部对象存储配置，并返回后端归一化结果。 */
 export function saveObjectStorageConfig(config: ObjectStorageConfig) {
-  return request.post<never, ObjectStorageConfig>(
-    "/system-settings/object-storage",
-    config,
-  );
+  return request.post<never, ObjectStorageConfig>("/system-settings/object-storage", config);
 }

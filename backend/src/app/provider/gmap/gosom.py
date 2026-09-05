@@ -8,7 +8,6 @@ from curl_cffi.requests import AsyncSession
 from curl_cffi.requests.exceptions import RequestException
 
 from app.provider.gmap.types import (
-    GmapConfigurationError,
     GmapNamedValues,
     GmapParseError,
     GmapPlaceEntry,
@@ -17,7 +16,6 @@ from app.provider.gmap.types import (
     GosomJobSnapshot,
 )
 from app.schemas.admin_schema import GosomApiItem
-from app.services.gosom_api_service import gosom_api_service
 
 JsonValue = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
 
@@ -128,7 +126,7 @@ def _payload(body: str, operation: str) -> dict[str, JsonValue]:
 class _GmapGosomProvider:
     """调用配置指定的 gosom API，不持有或轮询 job 状态。"""
 
-    async def _submit(
+    async def submit_job(
         self, config: GosomApiItem, keyword: str, max_depth: int, lang: str
     ) -> GosomJobHandle:
         try:
@@ -154,20 +152,9 @@ class _GmapGosomProvider:
             raise GmapParseError(
                 "gmap gosom submit_job: response lacks valid job_id or pending status"
             )
-        return GosomJobHandle(job_id=job_id, base_url=config.base_url)
+        return GosomJobHandle(job_id=job_id)
 
-    async def submit_job(
-        self, keyword: str, max_depth: int, lang: str
-    ) -> GosomJobHandle:
-        """按权重选择 gosom 实例并提交一个关键词。"""
-        config = await gosom_api_service.pick()
-        if config is None:
-            raise GmapConfigurationError(
-                "gmap gosom submit_job: no gosom API configured"
-            )
-        return await self._submit(config, keyword, max_depth, lang)
-
-    async def _get(
+    async def get_job(
         self, config: GosomApiItem, handle: GosomJobHandle
     ) -> GosomJobSnapshot:
         try:
@@ -219,16 +206,6 @@ class _GmapGosomProvider:
                 )
             return GosomJobSnapshot(status, result_count, None, error)
         return GosomJobSnapshot(status, result_count, None, None)
-
-    async def get_job(self, handle: GosomJobHandle) -> GosomJobSnapshot:
-        """按 handle 地址定向查询 gosom job，不重新选择实例。"""
-        config = await gosom_api_service.get_by_base_url(handle.base_url)
-        if config is None:
-            raise GmapConfigurationError(
-                "gmap gosom get_job: configured instance no longer exists: "
-                f"job_id={handle.job_id}"
-            )
-        return await self._get(config, handle)
 
 
 gmap_gosom_provider = _GmapGosomProvider()

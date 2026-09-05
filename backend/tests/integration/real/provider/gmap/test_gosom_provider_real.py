@@ -13,11 +13,12 @@ from app.provider.gmap.types import (
     GosomJobHandle,
 )
 from app.schemas.admin_schema import GosomApiItem
+from app.services.gosom_api_service import gosom_api_service
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
 _CONFIG = GosomApiItem(base_url="https://gosom.test/root/", api_key="secret", weight=1)
-_HANDLE = GosomJobHandle("job-1", "https://gosom.test/root")
+_HANDLE = GosomJobHandle("job-1")
 
 
 class _Response:
@@ -59,7 +60,7 @@ def gosom_exit(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_real_gosom_submit_protocol_boundary() -> None:
     _Session.outcome = _Response(202, {"job_id": "job-1", "status": "pending"})
 
-    handle = await gmap_gosom_provider._submit(_CONFIG, "coffee", 3, "en")
+    handle = await gmap_gosom_provider.submit_job(_CONFIG, "coffee", 3, "en")
 
     assert handle == _HANDLE
     assert _Session.calls == [
@@ -80,7 +81,7 @@ async def test_real_gosom_get_maps_status_and_completed_entry() -> None:
         _Session.outcome = _Response(
             200, {"status": upstream, "result_count": 0, "error": "ignored"}
         )
-        snapshot = await gmap_gosom_provider._get(_CONFIG, _HANDLE)
+        snapshot = await gmap_gosom_provider.get_job(_CONFIG, _HANDLE)
         assert snapshot.status == expected
         assert snapshot.entries is None
         assert snapshot.error is None
@@ -117,7 +118,7 @@ async def test_real_gosom_get_maps_status_and_completed_entry() -> None:
         },
     )
 
-    snapshot = await gmap_gosom_provider._get(_CONFIG, _HANDLE)
+    snapshot = await gmap_gosom_provider.get_job(_CONFIG, _HANDLE)
 
     assert snapshot.status == "completed"
     assert snapshot.result_count == 1
@@ -135,7 +136,7 @@ async def test_real_gosom_get_maps_status_and_completed_entry() -> None:
     _Session.outcome = _Response(
         200, {"status": "failed", "result_count": 0, "error": "worker failed"}
     )
-    snapshot = await gmap_gosom_provider._get(_CONFIG, _HANDLE)
+    snapshot = await gmap_gosom_provider.get_job(_CONFIG, _HANDLE)
     assert snapshot.status == "failed"
     assert snapshot.entries is None
     assert snapshot.error == "worker failed"
@@ -154,7 +155,7 @@ async def test_real_gosom_get_rejects_external_failures(outcome: object) -> None
     _Session.outcome = outcome
 
     with pytest.raises(GmapProviderError) as caught:
-        await gmap_gosom_provider._get(_CONFIG, _HANDLE)
+        await gmap_gosom_provider.get_job(_CONFIG, _HANDLE)
 
     assert "secret" not in str(caught.value)
     assert "sensitive response" not in str(caught.value)
@@ -164,12 +165,17 @@ async def test_real_gosom_get_rejects_external_failures(outcome: object) -> None
     os.getenv("GOSOM_REAL_SMOKE") != "1",
     reason="REAL_GOSOM_UNAVAILABLE: 未显式设置 GOSOM_REAL_SMOKE=1",
 )
-async def test_real_gosom_public_submit_and_get_smoke() -> None:
-    config = await gosom_module.gosom_api_service.pick()
+async def test_real_gosom_public_submit_and_get_smoke(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = await gosom_api_service.pick()
     if config is None:
         pytest.skip("REAL_GOSOM_UNAVAILABLE: gosom API 未配置")
 
-    handle = await gmap_gosom_provider.submit_job("coffee shop in Portland", 1, "en")
-    snapshot = await gmap_gosom_provider.get_job(handle)
+    monkeypatch.undo()
+    handle = await gmap_gosom_provider.submit_job(
+        config, "coffee shop in Portland", 1, "en"
+    )
+    snapshot = await gmap_gosom_provider.get_job(config, handle)
 
     assert snapshot.status in ("pending", "running", "completed", "failed")

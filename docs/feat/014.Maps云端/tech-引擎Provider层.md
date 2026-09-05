@@ -23,7 +23,7 @@ Provider 层把 Google Maps HTTP RPC 与 gosom SaaS 封装成可被业务层直�
 ## 2. 分层架构
 
 ```text
-B1 Online（后续） ─┬─ 显式调用 HTTP Search
+B1 Online ─────────┬─ 显式调用 HTTP Search
                    └─ 显式调用 gosom submit/get
 
 B2 API（后续） ────┬─ 显式调用 HTTP Search
@@ -121,7 +121,7 @@ DTO 最小字段：
 
 `GmapReviewPage` 为 `reviews: list[GmapReview] / next_cursor: str | None`。字段位表和时间戳来源只引用调研 §12.36；未有真实样本的 guided 评分块不进入本期 DTO。
 
-Provider 技术错误统一继承 `GmapProviderError`；不在本层映射用户文案或 `AppCommonException`。未来 B1/B2 入口各自完成鉴权、错误码和 i18n 映射。
+Provider 技术错误统一继承 `GmapProviderError`；不在本层映射用户文案或 `AppCommonException`。B1/B2 业务入口各自完成鉴权、错误码和 i18n 映射；Online 合同见 `@tech-Online任务与结果.md`。
 
 ## 5. HTTP Provider
 
@@ -208,7 +208,7 @@ gosom API 配置继续使用独立的 `system_data.gosom_api` 多实例列表。
 ## 8. 数据边界
 
 - Provider 不产生持久状态，没有数据表、索引、分表或 schema 同步。
-- Search 和 Reviews 返回内存 DTO；API 可以直接响应，Online 可以在后续任务层写对象存储。
+- Search 和 Reviews 返回内存 DTO；API 可以直接响应，Online 由 `@backend/src/app/provider/maps_online.py` 的 `MapsOnlineProvider` 补全并写对象存储。
 - Provider 不接受 `task_id / user_id / APP_NAME / object_key`，也不返回任务状态。
 - 29 个核心字段归 Provider；Email 与 6 个社媒字段归现有官网 enrichment，不进入本期。
 

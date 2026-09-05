@@ -89,7 +89,7 @@ total 链：`(await get_user_subscription_config(user_id, line))[1].metadata.mon
 
 ## 5. Online 完成后计量（014 落地约定）
 
-Online 提交和执行期间不调用 usage service。全部关键词 item 收口后，以实际保存的记录数计量：
+Online 提交和采集执行期间不消费、不预留额度；创建入口只读当前额度，已 exhausted 时拒绝新任务。全部关键词 item 收口后，以实际保存的记录数计量：
 
 ```text
 record_count = 0  -> 不写消费流水，任务完成

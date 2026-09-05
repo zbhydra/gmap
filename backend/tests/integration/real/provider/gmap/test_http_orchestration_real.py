@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 import pytest
+from curl_cffi.requests import AsyncSession
 
 import app.provider.gmap.http as http_module
 from app.provider.gmap import GmapProviderError, GmapViewport, gmap_http_provider
@@ -13,6 +14,7 @@ from app.provider.gmap.rpc.parsers import (
     parse_l2_response,
     parse_regular_response,
 )
+from app.schemas.admin_schema import GmapEngineConfig
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
@@ -94,16 +96,27 @@ async def real_google_exit(
     _GoogleSession.urls = []
     _GoogleSession.browser_calls = 0
     client._init_lock = asyncio.Lock()
-    client._semaphore = asyncio.Semaphore(2)
-    client._proxies = (
-        "http://proxy-a.test:8000",
-        "http://proxy-b.test:8000",
+    client._semaphore = None
+    client._proxies = ()
+    client._session = None
+
+    async def get(_self: AsyncSession, url: str, **kwargs: object) -> _Response:
+        return await session.get(url, **kwargs)
+
+    monkeypatch.setattr(AsyncSession, "get", get)
+    await gmap_http_provider.initialize(
+        GmapEngineConfig(
+            provider="http",
+            proxies=["http://proxy-a.test:8000", "http://proxy-b.test:8000"],
+            concurrency=2,
+        )
     )
-    client._session = session
     monkeypatch.setattr(http_module.asyncio, "sleep", _no_sleep)
     try:
         yield
     finally:
+        if client._session is not None:
+            await client._session.close()
         (
             client._init_lock,
             client._semaphore,

@@ -1,0 +1,18 @@
+"""Online 任务的分表、采集期限与关键词档位合同。"""
+
+from app.constants.subscription import (
+    ONLINE_BASIC_PRODUCT_ID,
+    ONLINE_GROWTH_PRODUCT_ID,
+    ONLINE_LITE_PRODUCT_ID,
+    ONLINE_PRO_PRODUCT_ID,
+)
+
+ITEM_SHARD_COUNT = 20
+TASK_TIMEOUT_SECONDS = 60 * 60
+KEYWORD_LIMITS = {
+    "free": 2,
+    ONLINE_LITE_PRODUCT_ID: 5,
+    ONLINE_BASIC_PRODUCT_ID: 10,
+    ONLINE_GROWTH_PRODUCT_ID: 20,
+    ONLINE_PRO_PRODUCT_ID: 50,
+}

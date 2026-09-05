@@ -11,7 +11,7 @@
 <template>
   <div class="system-settings-view">
     <NCard>
-      <NTabs v-model:value="activeTab" type="segment" animated>
+      <NTabs v-model:value="activeTab" type="line" animated>
         <NTabPane
           name="config-cache"
           :tab="t('systemSettings.tabConfigCache')"
@@ -256,114 +256,73 @@
           </section>
         </NTabPane>
 
-        <NTabPane
-          name="object-storage"
-          :tab="t('systemSettings.tabObjectStorage')"
-        >
+        <NTabPane name="object-storage" :tab="t('systemSettings.tabObjectStorage')">
           <section>
             <NSpin :show="objectStorageLoading">
-              <div class="object-storage-form">
-                <div class="gmap-engine-field">
-                  <NText>{{ t("systemSettings.objectStorageActive") }}</NText>
-                  <NRadioGroup
-                    v-model:value="objectStorageConfig.active"
-                    name="object-storage-active"
-                    :disabled="objectStorageLoading"
-                  >
-                    <NRadioButton value="R2">
-                      {{ t("systemSettings.objectStorageR2") }}
-                    </NRadioButton>
-                    <NRadioButton value="AliOSS">
-                      {{ t("systemSettings.objectStorageAliOss") }}
-                    </NRadioButton>
-                  </NRadioGroup>
-                </div>
-
-                <div class="object-storage-groups">
-                  <div class="object-storage-group">
-                    <NText strong>{{ t("systemSettings.objectStorageR2") }}</NText>
-                    <div class="object-storage-fields">
-                      <NFormItem :label="t('systemSettings.objectStorageR2AccountId')">
-                        <NInput
-                          v-model:value="objectStorageConfig.R2.account_id"
-                          :placeholder="t('systemSettings.objectStorageR2AccountId')"
-                          :disabled="objectStorageLoading"
-                        />
-                      </NFormItem>
-                      <NFormItem :label="t('systemSettings.objectStorageBucket')">
-                        <NInput
-                          v-model:value="objectStorageConfig.R2.bucket"
-                          :placeholder="t('systemSettings.objectStorageBucket')"
-                          :disabled="objectStorageLoading"
-                        />
-                      </NFormItem>
-                      <NFormItem :label="t('systemSettings.objectStorageAccessKeyId')">
-                        <NInput
-                          v-model:value="objectStorageConfig.R2.access_key_id"
-                          :placeholder="t('systemSettings.objectStorageAccessKeyId')"
-                          :disabled="objectStorageLoading"
-                        />
-                      </NFormItem>
-                      <NFormItem
-                        :label="t('systemSettings.objectStorageR2SecretAccessKey')"
-                      >
-                        <NInput
-                          v-model:value="objectStorageConfig.R2.secret_access_key"
-                          type="password"
-                          show-password-on="click"
-                          :placeholder="t('systemSettings.objectStorageR2SecretAccessKey')"
-                          :disabled="objectStorageLoading"
-                        />
-                      </NFormItem>
-                    </div>
+              <NEmpty
+                v-if="!objectStorageConfig.items.length"
+                :description="t('systemSettings.objectStorageEmpty')"
+              />
+              <NRadioGroup
+                v-model:value="objectStorageConfig.active_id"
+                name="object-storage-active"
+                class="object-storage-list"
+                :disabled="objectStorageDisabled"
+              >
+                <div
+                  v-for="item in objectStorageConfig.items"
+                  :key="item.id"
+                  class="object-storage-row"
+                >
+                  <NRadio
+                    :value="item.id"
+                    :aria-label="t('systemSettings.objectStorageActivate', { name: item.name })"
+                  />
+                  <div class="object-storage-summary">
+                    <NText strong>{{ item.name }}</NText>
+                    <NText depth="3">{{
+                      item.provider === "R2"
+                        ? t("systemSettings.objectStorageR2")
+                        : t("systemSettings.objectStorageAliOss")
+                    }}</NText>
+                    <code>{{ item.bucket }}</code>
                   </div>
-
-                  <div class="object-storage-group">
-                    <NText strong>{{ t("systemSettings.objectStorageAliOss") }}</NText>
-                    <div class="object-storage-fields">
-                      <NFormItem :label="t('systemSettings.objectStorageAliOssEndpoint')">
-                        <NInput
-                          v-model:value="objectStorageConfig.AliOSS.endpoint"
-                          :placeholder="t('systemSettings.objectStorageAliOssEndpoint')"
-                          :disabled="objectStorageLoading"
-                        />
-                      </NFormItem>
-                      <NFormItem :label="t('systemSettings.objectStorageBucket')">
-                        <NInput
-                          v-model:value="objectStorageConfig.AliOSS.bucket"
-                          :placeholder="t('systemSettings.objectStorageBucket')"
-                          :disabled="objectStorageLoading"
-                        />
-                      </NFormItem>
-                      <NFormItem :label="t('systemSettings.objectStorageAccessKeyId')">
-                        <NInput
-                          v-model:value="objectStorageConfig.AliOSS.access_key_id"
-                          :placeholder="t('systemSettings.objectStorageAccessKeyId')"
-                          :disabled="objectStorageLoading"
-                        />
-                      </NFormItem>
-                      <NFormItem
-                        :label="t('systemSettings.objectStorageAliOssAccessKeySecret')"
-                      >
-                        <NInput
-                          v-model:value="objectStorageConfig.AliOSS.access_key_secret"
-                          type="password"
-                          show-password-on="click"
-                          :placeholder="t('systemSettings.objectStorageAliOssAccessKeySecret')"
-                          :disabled="objectStorageLoading"
-                        />
-                      </NFormItem>
-                    </div>
-                  </div>
+                  <NSpace :wrap="false" size="small">
+                    <NButton
+                      quaternary
+                      circle
+                      :disabled="objectStorageDisabled"
+                      :aria-label="t('systemSettings.objectStorageEdit', { name: item.name })"
+                      :title="t('systemSettings.objectStorageEdit', { name: item.name })"
+                      @click="editObjectStorage(item)"
+                    >
+                      <template #icon><NIcon :component="EditOutlined" /></template>
+                    </NButton>
+                    <NButton
+                      quaternary
+                      circle
+                      type="error"
+                      :disabled="objectStorageDisabled"
+                      :aria-label="t('systemSettings.objectStorageDelete', { name: item.name })"
+                      :title="t('systemSettings.objectStorageDelete', { name: item.name })"
+                      @click="removeObjectStorage(item)"
+                    >
+                      <template #icon><NIcon :component="DeleteOutlined" /></template>
+                    </NButton>
+                  </NSpace>
                 </div>
-              </div>
+              </NRadioGroup>
             </NSpin>
 
-            <div class="tab-actions">
+            <div class="tab-actions object-storage-actions">
+              <NButton :disabled="objectStorageDisabled" @click="addObjectStorage">
+                <template #icon><NIcon :component="PlusOutlined" /></template>
+                {{ t("systemSettings.objectStorageAdd") }}
+              </NButton>
               <NButton
                 type="primary"
                 :loading="objectStorageSaving"
-                :disabled="objectStorageLoading"
+                :disabled="objectStorageDisabled"
                 @click="handleSaveObjectStorageConfig"
               >
                 {{ t("systemSettings.objectStorageSave") }}
@@ -371,9 +330,111 @@
             </div>
           </section>
         </NTabPane>
-
       </NTabs>
     </NCard>
+
+    <NModal
+      :show="objectStorageDraft !== null"
+      preset="card"
+      class="object-storage-modal"
+      :title="t('systemSettings.objectStorageDetails')"
+      @update:show="objectStorageDraft = null"
+    >
+      <NForm
+        v-if="objectStorageDraft"
+        label-placement="top"
+        :disabled="objectStorageDisabled"
+        @submit.prevent="applyObjectStorageDraft"
+      >
+        <NFormItem :label="t('systemSettings.objectStorageName')" required>
+          <NInput
+            v-model:value="objectStorageDraft.name"
+            :maxlength="100"
+            :placeholder="t('systemSettings.objectStorageName')"
+            :input-props="{ 'aria-label': t('systemSettings.objectStorageName') }"
+          />
+        </NFormItem>
+        <NFormItem :label="t('systemSettings.objectStorageProvider')">
+          <NRadioGroup
+            :value="objectStorageDraft.provider"
+            :disabled="objectStorageLocationLocked"
+            @update:value="setObjectStorageProvider"
+          >
+            <NRadioButton value="R2">{{ t("systemSettings.objectStorageR2") }}</NRadioButton>
+            <NRadioButton value="AliOSS">{{
+              t("systemSettings.objectStorageAliOss")
+            }}</NRadioButton>
+          </NRadioGroup>
+        </NFormItem>
+        <NFormItem
+          v-if="objectStorageDraft.provider === 'R2'"
+          :label="t('systemSettings.objectStorageR2AccountId')"
+          required
+        >
+          <NInput
+            v-model:value="objectStorageDraft.account_id"
+            :readonly="objectStorageLocationLocked"
+            :maxlength="500"
+            :placeholder="t('systemSettings.objectStorageR2AccountId')"
+            :input-props="{ 'aria-label': t('systemSettings.objectStorageR2AccountId') }"
+          />
+        </NFormItem>
+        <NFormItem v-else :label="t('systemSettings.objectStorageAliOssEndpoint')" required>
+          <NInput
+            v-model:value="objectStorageDraft.endpoint"
+            :readonly="objectStorageLocationLocked"
+            :maxlength="500"
+            :placeholder="t('systemSettings.objectStorageAliOssEndpoint')"
+            :input-props="{ 'aria-label': t('systemSettings.objectStorageAliOssEndpoint') }"
+          />
+        </NFormItem>
+        <NFormItem :label="t('systemSettings.objectStorageBucket')" required>
+          <NInput
+            v-model:value="objectStorageDraft.bucket"
+            :readonly="objectStorageLocationLocked"
+            :maxlength="500"
+            :placeholder="t('systemSettings.objectStorageBucket')"
+            :input-props="{ 'aria-label': t('systemSettings.objectStorageBucket') }"
+          />
+        </NFormItem>
+        <NFormItem :label="t('systemSettings.objectStorageAccessKeyId')" required>
+          <NInput
+            v-model:value="objectStorageDraft.access_key_id"
+            :maxlength="500"
+            :placeholder="t('systemSettings.objectStorageAccessKeyId')"
+            :input-props="{ 'aria-label': t('systemSettings.objectStorageAccessKeyId') }"
+          />
+        </NFormItem>
+        <NFormItem
+          v-if="objectStorageDraft.provider === 'R2'"
+          :label="t('systemSettings.objectStorageR2SecretAccessKey')"
+          required
+        >
+          <NInput
+            v-model:value="objectStorageDraft.secret_access_key"
+            type="password"
+            show-password-on="click"
+            :maxlength="500"
+            :placeholder="t('systemSettings.objectStorageR2SecretAccessKey')"
+            :input-props="{ 'aria-label': t('systemSettings.objectStorageR2SecretAccessKey') }"
+          />
+        </NFormItem>
+        <NFormItem v-else :label="t('systemSettings.objectStorageAliOssAccessKeySecret')" required>
+          <NInput
+            v-model:value="objectStorageDraft.access_key_secret"
+            type="password"
+            show-password-on="click"
+            :maxlength="500"
+            :placeholder="t('systemSettings.objectStorageAliOssAccessKeySecret')"
+            :input-props="{ 'aria-label': t('systemSettings.objectStorageAliOssAccessKeySecret') }"
+          />
+        </NFormItem>
+        <NSpace justify="end">
+          <NButton @click="objectStorageDraft = null">{{ t("common.cancel") }}</NButton>
+          <NButton type="primary" attr-type="submit">{{ t("common.confirm") }}</NButton>
+        </NSpace>
+      </NForm>
+    </NModal>
 
     <NModal
       :show="showGeneratedApiKeyModal"
@@ -400,19 +461,24 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { DeleteOutlined, EditOutlined, PlusOutlined } from "@vicons/antd";
 import {
   NAlert,
   NButton,
   NCard,
   NDescriptions,
   NDescriptionsItem,
+  NEmpty,
+  NForm,
   NFormItem,
+  NIcon,
   NInput,
   NInputNumber,
   NList,
   NListItem,
   NModal,
   NRadioButton,
+  NRadio,
   NRadioGroup,
   NSpace,
   NSpin,
@@ -439,6 +505,7 @@ import {
   type GosomApiItem,
   type GmapEngineConfig,
   type ObjectStorageConfig,
+  type ObjectStorageItem,
 } from "@/api/system-settings";
 import { formatAdminTimeMs } from "@/utils/time";
 
@@ -473,10 +540,20 @@ const gmapEngineProxies = ref("");
 const gmapEngineConcurrency = ref<number | null>(1);
 const gmapEngineProxiesInput = ref<InputInst | null>(null);
 const objectStorageConfig = ref<ObjectStorageConfig>({
-  active: "R2",
-  R2: { account_id: "", bucket: "", access_key_id: "", secret_access_key: "" },
-  AliOSS: { endpoint: "", bucket: "", access_key_id: "", access_key_secret: "" },
+  active_id: null,
+  items: [],
 });
+const objectStorageLoaded = ref(false);
+const objectStorageSavedIds = ref<string[]>([]);
+const objectStorageDraft = ref<ObjectStorageItem | null>(null);
+const objectStorageDisabled = computed(
+  () => objectStorageLoading.value || objectStorageSaving.value || !objectStorageLoaded.value,
+);
+const objectStorageLocationLocked = computed(
+  () =>
+    objectStorageDraft.value !== null &&
+    objectStorageSavedIds.value.includes(objectStorageDraft.value.id),
+);
 
 /** 只有已知 API Key 状态时才允许生成，避免加载失败时绕过重新生成确认。 */
 const canGenerateApiKey = computed(
@@ -726,6 +803,8 @@ async function loadObjectStorageConfig() {
   objectStorageLoading.value = true;
   try {
     objectStorageConfig.value = await getObjectStorageConfig();
+    objectStorageSavedIds.value = objectStorageConfig.value.items.map((item) => item.id);
+    objectStorageLoaded.value = true;
   } catch {
     // 异常响应可能携带对象存储密钥，禁止把完整响应写入日志。
     console.error("SystemSettingsView.loadObjectStorageConfig() 加载失败");
@@ -735,27 +814,83 @@ async function loadObjectStorageConfig() {
   }
 }
 
-/** 保存完整双存储配置；仅当前启用的配置必须填写完整。 */
-async function handleSaveObjectStorageConfig() {
-  const activeConfig = objectStorageConfig.value[objectStorageConfig.value.active];
-  if (Object.values(activeConfig).some((value) => !value.trim())) {
-    message.warning(t("systemSettings.objectStorageActiveRequired"));
+function addObjectStorage() {
+  objectStorageDraft.value = {
+    id: crypto.randomUUID(),
+    name: "",
+    provider: "R2",
+    account_id: "",
+    bucket: "",
+    access_key_id: "",
+    secret_access_key: "",
+  };
+}
+
+function editObjectStorage(item: ObjectStorageItem) {
+  objectStorageDraft.value = { ...item };
+}
+
+function setObjectStorageProvider(provider: string | number) {
+  if (!objectStorageDraft.value) return;
+  const { id, name, bucket, access_key_id } = objectStorageDraft.value;
+  const common = { id, name, bucket, access_key_id };
+  objectStorageDraft.value =
+    provider === "R2"
+      ? { ...common, provider: "R2", account_id: "", secret_access_key: "" }
+      : { ...common, provider: "AliOSS", endpoint: "", access_key_secret: "" };
+}
+
+function applyObjectStorageDraft() {
+  const draft = objectStorageDraft.value;
+  if (!draft) return;
+  if (Object.values(draft).some((value) => !value.trim())) {
+    message.warning(t("systemSettings.objectStorageRequired"));
     return;
   }
-  if (
-    objectStorageConfig.value.active === "AliOSS" &&
-    !isValidAliOssEndpoint(objectStorageConfig.value.AliOSS.endpoint)
-  ) {
+  if (draft.provider === "AliOSS" && !isValidAliOssEndpoint(draft.endpoint)) {
     message.warning(t("systemSettings.objectStorageAliOssEndpointInvalid"));
+    return;
+  }
+  const index = objectStorageConfig.value.items.findIndex((item) => item.id === draft.id);
+  if (index < 0) {
+    objectStorageConfig.value.items.push(draft);
+    if (objectStorageConfig.value.items.length === 1)
+      objectStorageConfig.value.active_id = draft.id;
+  } else {
+    objectStorageConfig.value.items[index] = draft;
+  }
+  objectStorageDraft.value = null;
+}
+
+function removeObjectStorage(item: ObjectStorageItem) {
+  dialog.warning({
+    title: t("systemSettings.objectStorageDelete", { name: item.name }),
+    content: t("systemSettings.objectStorageDeleteConfirm"),
+    positiveText: t("common.confirm"),
+    negativeText: t("common.cancel"),
+    onPositiveClick: () => {
+      objectStorageConfig.value.items = objectStorageConfig.value.items.filter(
+        (row) => row.id !== item.id,
+      );
+      if (objectStorageConfig.value.active_id === item.id)
+        objectStorageConfig.value.active_id = null;
+    },
+  });
+}
+
+async function handleSaveObjectStorageConfig() {
+  if (objectStorageConfig.value.items.length && objectStorageConfig.value.active_id === null) {
+    message.warning(t("systemSettings.objectStorageActiveRequired"));
     return;
   }
 
   objectStorageSaving.value = true;
   try {
     objectStorageConfig.value = await saveObjectStorageConfig(objectStorageConfig.value);
+    objectStorageSavedIds.value = objectStorageConfig.value.items.map((item) => item.id);
     message.success(t("systemSettings.objectStorageSaveSuccess"));
   } catch {
-    // Axios 错误对象包含请求体，不得把双存储密钥写入日志或通知。
+    // Axios 错误对象包含请求体，不得把存储密钥写入日志或通知。
     console.error("SystemSettingsView.handleSaveObjectStorageConfig() 保存失败");
     message.error(t("systemSettings.objectStorageSaveFailed"));
   } finally {
@@ -792,7 +927,6 @@ onMounted(() => {
   void loadGmapEngineConfig();
   void loadObjectStorageConfig();
 });
-
 </script>
 
 <style scoped>
@@ -868,24 +1002,36 @@ onMounted(() => {
   width: 160px;
 }
 
-.object-storage-form {
+.object-storage-list {
   display: flex;
   flex-direction: column;
-  gap: 24px;
   margin-bottom: 16px;
 }
 
-.object-storage-groups {
+.object-storage-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.object-storage-group,
-.object-storage-fields {
+.object-storage-summary {
   display: flex;
   flex-direction: column;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.object-storage-actions {
+  justify-content: space-between;
   gap: 12px;
+  margin-top: 16px;
+}
+
+:deep(.object-storage-modal) {
+  width: min(560px, calc(100% - 32px));
 }
 
 .api-key-box {
@@ -928,10 +1074,6 @@ onMounted(() => {
 
   .gosom-row-op {
     justify-self: start;
-  }
-
-  .object-storage-groups {
-    grid-template-columns: 100%;
   }
 }
 </style>

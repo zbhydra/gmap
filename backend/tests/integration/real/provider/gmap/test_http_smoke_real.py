@@ -47,6 +47,7 @@ async def test_real_http_search_and_two_reviews_pages() -> None:
     if not config.proxies:
         pytest.skip("REAL_GMAP_PROXY_UNAVAILABLE: gmap_engine 未配置代理")
 
+    await gmap_http_provider.initialize(config)
     search = await gmap_http_provider.search_places(
         "coffee shop in Portland", max_depth=1, hl="en", gl="us"
     )

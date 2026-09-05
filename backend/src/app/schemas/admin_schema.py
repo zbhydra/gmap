@@ -4,10 +4,18 @@ Admin 管理后台请求/响应 Schema
 
 import ipaddress
 import re
-from typing import Literal
+from typing import Annotated, Literal
 from urllib.parse import urlsplit, urlunsplit
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from app.constants.gmap import GMAP_ENGINE_DEFAULT_CONCURRENCY
 
@@ -217,45 +225,43 @@ class GmapEngineConfigRequest(GmapEngineConfig):
         return self
 
 
-class R2StorageConfig(BaseModel):
+StorageId = Annotated[
+    str,
+    Field(min_length=36, max_length=36),
+    AfterValidator(lambda value: str(UUID(value))),
+]
+
+
+class _StorageConfig(BaseModel):
+    """所有保存项必须完整，历史任务会按 ID 读取非启用项。"""
+
+    model_config = ConfigDict(hide_input_in_errors=True, str_strip_whitespace=True)
+
+    id: StorageId
+    name: str = Field(min_length=1, max_length=100)
+    bucket: str = Field(min_length=1, max_length=500)
+    access_key_id: str = Field(min_length=1, max_length=500, repr=False)
+
+
+class R2StorageConfig(_StorageConfig):
     """Cloudflare R2 对象存储配置。"""
 
-    model_config = ConfigDict(hide_input_in_errors=True)
-
-    account_id: str = Field(default="", max_length=500)
-    bucket: str = Field(default="", max_length=500)
-    access_key_id: str = Field(default="", max_length=500)
-    secret_access_key: str = Field(default="", max_length=500)
-
-    @field_validator("*", mode="before")
-    @classmethod
-    def _strip_strings(cls, value: object) -> object:
-        """保存前统一剥除配置值首尾空白。"""
-        return value.strip() if isinstance(value, str) else value
+    provider: Literal["R2"]
+    account_id: str = Field(min_length=1, max_length=500)
+    secret_access_key: str = Field(min_length=1, max_length=500, repr=False)
 
 
-class AliOssStorageConfig(BaseModel):
+class AliOssStorageConfig(_StorageConfig):
     """阿里云 OSS 对象存储配置。"""
 
-    model_config = ConfigDict(hide_input_in_errors=True)
-
-    endpoint: str = Field(default="", max_length=500)
-    bucket: str = Field(default="", max_length=500)
-    access_key_id: str = Field(default="", max_length=500)
-    access_key_secret: str = Field(default="", max_length=500)
-
-    @field_validator("*", mode="before")
-    @classmethod
-    def _strip_strings(cls, value: object) -> object:
-        """保存前统一剥除配置值首尾空白。"""
-        return value.strip() if isinstance(value, str) else value
+    provider: Literal["AliOSS"]
+    endpoint: str = Field(min_length=1, max_length=500)
+    access_key_secret: str = Field(min_length=1, max_length=500, repr=False)
 
     @field_validator("endpoint")
     @classmethod
     def _normalize_endpoint(cls, value: str) -> str:
         """只接受不含凭据和路径的 HTTP(S) OSS 根地址。"""
-        if not value:
-            return value
         try:
             parsed = urlsplit(value)
             _port = parsed.port
@@ -275,36 +281,26 @@ class AliOssStorageConfig(BaseModel):
         return value.rstrip("/")
 
 
+ObjectStorageItem = Annotated[
+    R2StorageConfig | AliOssStorageConfig, Field(discriminator="provider")
+]
+
+
 class ObjectStorageConfig(BaseModel):
     """对象存储配置及未配置时的默认读取视图。"""
 
-    model_config = ConfigDict(validate_by_name=True, hide_input_in_errors=True)
+    model_config = ConfigDict(hide_input_in_errors=True)
 
-    active: Literal["R2", "AliOSS"] = Field(default="R2", max_length=500)
-    r2: R2StorageConfig = Field(default_factory=R2StorageConfig, alias="R2")
-    ali_oss: AliOssStorageConfig = Field(
-        default_factory=AliOssStorageConfig,
-        alias="AliOSS",
-    )
-
-    @field_validator("active", mode="before")
-    @classmethod
-    def _strip_active(cls, value: object) -> object:
-        """active 与配置值使用同一首尾空白归一化规则。"""
-        return value.strip() if isinstance(value, str) else value
-
-
-class ObjectStorageConfigRequest(ObjectStorageConfig):
-    """对象存储保存请求；仅当前启用的存储块必须填写完整。"""
+    active_id: StorageId | None
+    items: list[ObjectStorageItem]
 
     @model_validator(mode="after")
-    def _active_storage_must_be_complete(self) -> "ObjectStorageConfigRequest":
-        """启用不完整配置无法提供对象存储能力，保存时直接拒绝。"""
-        values = (
-            self.r2.model_dump().values()
-            if self.active == "R2"
-            else self.ali_oss.model_dump().values()
-        )
-        if not all(values):
-            raise ValueError("启用的对象存储配置必须填写完整")
+    def _validate_selection(self) -> "ObjectStorageConfig":
+        ids = [item.id for item in self.items]
+        if len(ids) != len(set(ids)):
+            raise ValueError("对象存储配置 ID 不能重复")
+        if (ids and self.active_id not in ids) or (
+            not ids and self.active_id is not None
+        ):
+            raise ValueError("对象存储启用项必须指向列表内配置，空列表不得有启用项")
         return self

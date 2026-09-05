@@ -81,6 +81,7 @@ from app.middleware.cross_origin import CrossOriginMiddleware
 import uvicorn
 
 from app.core.config import settings
+from app.services.maps_online_task_service import maps_online_task_service
 from app.utils.logger import logger, setup_logger
 from app.middleware import (
     ErrorHandlingMiddleware,
@@ -106,6 +107,7 @@ from app.api.client.checkin_client import router as checkin_router
 from app.api.client.credit_client import router as credit_router
 from app.api.client.credits_asset_client import router as credits_asset_router
 from app.api.client.maps_client import router as maps_router
+from app.api.client.maps_online_client import router as maps_online_router
 from app.api.client.mark_client import router as mark_router
 from app.api.client.order_client import router as order_router
 from app.api.client.subscription_client import router as subscription_router
@@ -156,6 +158,7 @@ def _create_lifespan():
         logger.info(f"Starting {settings.app.name} v{settings.app.version}")
 
         await _start_cron_scheduler()
+        await maps_online_task_service.recover()
 
         logger.info("Application started successfully")
 
@@ -165,6 +168,7 @@ def _create_lifespan():
             logger.info("Application is shutting down")
 
             await _stop_cron_scheduler()
+            await maps_online_task_service.close()
             await _shutdown_database_resources()
 
     return lifespan
@@ -210,6 +214,9 @@ def _include_business_routes(app_instance: FastAPI) -> None:
     app_instance.include_router(order_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(mark_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(maps_router, prefix="/api/client", tags=["client"])
+    app_instance.include_router(
+        maps_online_router, prefix="/api/client", tags=["client"]
+    )
     app_instance.include_router(credits_asset_router)
     app_instance.include_router(
         callback_router, prefix="/api/callback", tags=["callback"]

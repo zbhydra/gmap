@@ -25,6 +25,8 @@ dependencies = [
     "maxminddb>=2.6.0",
     "pillow>=12.2.0",
     "curl-cffi>=0.16.3",
+    "boto3>=1.43.89",
+    "alibabacloud-oss-v2>=1.4.0",
 ]
 requires-python = ">=3.11"
 readme = "README.md"

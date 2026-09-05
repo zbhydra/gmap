@@ -1,4 +1,4 @@
-"""Maps Extractor Email/社媒补全服务（013 A4，U8，服务端自研基线 #4）。
+"""Maps 官网 Email/社媒补全 Provider。
 
 数据源决策（research/google-maps-scraping §7）：社媒不在 Maps 页面，唯一现实
 来源是商家官网；Email 同理。流程：fetch 官网首页 → mailto 优先 + 页面文本
@@ -17,7 +17,7 @@
 空结果，不报错不阻断整批；抓取失败（超时/网络/非 2xx）不写缓存，下次可重试，
 解析成功（即使为空）才写缓存。
 
-计量口径：配额已在采集完成边沿按会话计量（U7），本服务不重复扣减。
+计量由调用方负责，本 Provider 不扣减配额。
 
 Redis 故障策略（spec-redis §7，可用性优先）：缓存读写失败 fail-open——读按
 未命中、写静默放弃，主流程（抓取）不依赖缓存。
@@ -26,7 +26,7 @@ Redis 故障策略（spec-redis §7，可用性优先）：缓存读写失败 fa
 import asyncio
 import re
 from html import unescape
-from typing import NamedTuple
+from typing import NamedTuple, TypedDict
 from urllib.parse import urljoin, urlsplit
 
 from curl_cffi.requests import AsyncSession
@@ -216,7 +216,18 @@ def _resolve_enrich_target(business: MapsEnrichBusiness) -> _EnrichTarget | None
     )
 
 
-class MapsEnrichService:
+class EnrichResult(TypedDict):
+    key: str
+    emails: list[str]
+    medias: dict[str, str]
+
+
+class EnrichBatch(TypedDict):
+    results: list[EnrichResult]
+    partial: bool
+
+
+class MapsEnrichProvider:
     """商家官网 Email/社媒补全（批处理 + 缓存 + SSRF 防护）。"""
 
     def __init__(self) -> None:
@@ -224,7 +235,7 @@ class MapsEnrichService:
         # 防多插件同时补全时对外网的瞬时并发放大。
         self._site_semaphore = asyncio.Semaphore(ENRICH_CONCURRENCY)
 
-    async def enrich(self, businesses: list[MapsEnrichBusiness]) -> dict[str, object]:
+    async def enrich(self, businesses: list[MapsEnrichBusiness]) -> EnrichBatch:
         """批量补全，返回与入参位置对齐的 ``{results, partial}`` 载荷。
 
         同域名商家合并为一次抓取（结果扇回同域名各行）；批预算
@@ -232,7 +243,7 @@ class MapsEnrichService:
         ``partial=true`` 标注截断。
         """
 
-        results: list[dict[str, object]] = [
+        results: list[EnrichResult] = [
             {"key": _derive_business_key(business), "emails": [], "medias": {}}
             for business in businesses
         ]
@@ -256,18 +267,20 @@ class MapsEnrichService:
                 group_key: asyncio.create_task(self._enrich_site(target))
                 for group_key, (target, _indexes) in groups.items()
             }
-            done, pending = await asyncio.wait(
-                tasks.values(), timeout=ENRICH_BATCH_BUDGET_SECONDS
-            )
-            if pending:
-                for task in pending:
-                    task.cancel()
-                # 回收已取消任务，避免事件循环残留「task destroyed」告警。
-                await asyncio.gather(*pending, return_exceptions=True)
+            try:
+                done, pending = await asyncio.wait(
+                    tasks.values(), timeout=ENRICH_BATCH_BUDGET_SECONDS
+                )
+            finally:
+                # 外层任务期限或进程关闭取消本批时，也必须回收站点协程。
+                for task in tasks.values():
+                    if not task.done():
+                        task.cancel()
+                await asyncio.gather(*tasks.values(), return_exceptions=True)
             partial = len(pending) > 0
             if partial:
                 logger.warning(
-                    "maps_enrich_service.enrich: 批预算超时，未完成条目返回空结果: "
+                    "maps_enrich_provider.enrich: 批预算超时，未完成条目返回空结果: "
                     f"pending={len(pending)}, total={len(tasks)}"
                 )
             for group_key, task in tasks.items():
@@ -279,7 +292,7 @@ class MapsEnrichService:
 
         return {"results": results, "partial": partial}
 
-    async def _enrich_site(self, target: _EnrichTarget) -> dict[str, object]:
+    async def _enrich_site(self, target: _EnrichTarget) -> EnrichResult:
         """抓取并解析单站点；任何失败路径都收敛为空结果（局部可失败）。
 
         返回 ``{key, emails, medias}``：同域名分组共用该结果。
@@ -296,7 +309,7 @@ class MapsEnrichService:
             )
         except asyncio.TimeoutError:
             logger.warning(
-                "maps_enrich_service._enrich_site: 单站预算超时，返回空结果: "
+                "maps_enrich_provider._enrich_site: 单站预算超时，返回空结果: "
                 f"url={target.fetch_url!r}"
             )
             return {"key": target.key, "emails": [], "medias": {}}
@@ -339,7 +352,7 @@ class MapsEnrichService:
                             await response.aclose()
                             if not location:
                                 logger.error(
-                                    "maps_enrich_service._fetch_html: 重定向缺少 location: "
+                                    "maps_enrich_provider._fetch_html: 重定向缺少 location: "
                                     f"url={current_url!r}, status={response.status_code}"
                                 )
                                 return None
@@ -347,7 +360,7 @@ class MapsEnrichService:
                             continue
                         if not 200 <= response.status_code < 300:
                             logger.error(
-                                "maps_enrich_service._fetch_html: 非 2xx 响应: "
+                                "maps_enrich_provider._fetch_html: 非 2xx 响应: "
                                 f"url={current_url!r}, status={response.status_code}"
                             )
                             await response.aclose()
@@ -373,24 +386,24 @@ class MapsEnrichService:
                             # 站点声明了未知/畸形 charset：回退 UTF-8 宽松解码，
                             # 不因编码问题中断补全（footer 链接为 ASCII，损失可控）。
                             logger.warning(
-                                "maps_enrich_service._fetch_html: charset 解码失败，"
+                                "maps_enrich_provider._fetch_html: charset 解码失败，"
                                 f"回退 UTF-8: charset={charset!r}, url={current_url!r}"
                             )
                             return raw.decode("utf-8", errors="replace")
         except SSRFBlockedError as exc:
             # 安全拒绝是预期路径（商家脏数据），warning 级别即可。
             logger.warning(
-                f"maps_enrich_service._fetch_html: SSRF 拒绝: url={url!r}, {exc}"
+                f"maps_enrich_provider._fetch_html: SSRF 拒绝: url={url!r}, {exc}"
             )
             return None
         except (RequestException, asyncio.TimeoutError) as exc:
             logger.error(
-                f"maps_enrich_service._fetch_html: 站点抓取失败: url={current_url!r}, error={exc!r}",
+                f"maps_enrich_provider._fetch_html: 站点抓取失败: url={current_url!r}, error={exc!r}",
                 exc_info=True,
             )
             return None
         logger.error(
-            f"maps_enrich_service._fetch_html: 重定向超过 {ENRICH_MAX_REDIRECTS} 跳: url={url!r}"
+            f"maps_enrich_provider._fetch_html: 重定向超过 {ENRICH_MAX_REDIRECTS} 跳: url={url!r}"
         )
         return None
 
@@ -404,7 +417,7 @@ class MapsEnrichService:
             raw = await redis.get(build_redis_key(build_enrich_cache_key(cache_domain)))
         except Exception as exc:
             logger.error(
-                "maps_enrich_service._read_cache: Redis 读取失败，按未命中处理: "
+                "maps_enrich_provider._read_cache: Redis 读取失败，按未命中处理: "
                 f"domain={cache_domain}, error={exc!r}",
                 exc_info=True,
             )
@@ -415,7 +428,7 @@ class MapsEnrichService:
             return _SiteDataPayload.model_validate_json(raw)
         except ValueError:
             logger.error(
-                "maps_enrich_service._read_cache: 缓存载荷非法，按未命中处理: "
+                "maps_enrich_provider._read_cache: 缓存载荷非法，按未命中处理: "
                 f"domain={cache_domain}",
                 exc_info=True,
             )
@@ -437,10 +450,10 @@ class MapsEnrichService:
             )
         except Exception as exc:
             logger.error(
-                "maps_enrich_service._write_cache: Redis 写入失败（不阻断主流程）: "
+                "maps_enrich_provider._write_cache: Redis 写入失败（不阻断主流程）: "
                 f"domain={cache_domain}, error={exc!r}",
                 exc_info=True,
             )
 
 
-maps_enrich_service = MapsEnrichService()
+maps_enrich_provider = MapsEnrichProvider()

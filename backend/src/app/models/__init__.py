@@ -15,6 +15,8 @@ from .counter_user_lifetime_model import CounterUserLifetimeModel
 from .counter_user_monthly_model import CounterUserMonthlyModel
 from .cron_task_cursor_model import CronTaskCursorModel
 from .mark_log_model import MarkLogModel
+from .maps_online_task_item_model import ITEM_MODELS
+from .maps_online_task_model import MapsOnlineTaskModel
 from .order_model import OrderModel
 from .subscription_model import UserSubscriptionModel
 from .system_data_model import SystemDataModel
@@ -48,4 +50,6 @@ __all__ = [
     "CounterUserMonthlyModel",
     "CounterUserLifetimeModel",
     "UserUsageLogModel",
+    "MapsOnlineTaskModel",
+    "ITEM_MODELS",
 ]
