@@ -504,7 +504,7 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
 
     try {
       if (upgrade && product.autoRenew) {
-        const quote = await getSubscriptionUpgradeQuote(context, upgrade.productLine, product.productId)
+        const quote = await getSubscriptionUpgradeQuote(context, upgrade.productKind, product.productId)
         if (!state.open) {
           return
         }
@@ -629,7 +629,7 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
     try {
       const upgrade = state.options?.upgrade
       if (upgrade && product.autoRenew) {
-        const result = await confirmSubscriptionUpgrade(context, upgrade.productLine, product.productId)
+        const result = await confirmSubscriptionUpgrade(context, upgrade.productKind, product.productId)
         if (result.status === 'succeeded') {
           paymentWindow.close()
           finishSuccess(null)
@@ -656,7 +656,7 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
         return
       }
       const response = upgrade
-        ? await createSubscriptionUpgradeCheckout(context, upgrade.productLine, product.productId)
+        ? await createSubscriptionUpgradeCheckout(context, upgrade.productKind, product.productId)
         : await createOrder(
         context,
         buildCreateOrderRequest(

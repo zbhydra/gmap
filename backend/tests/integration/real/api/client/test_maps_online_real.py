@@ -326,7 +326,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
         assert _data(await client.get(_ENDPOINT, headers=other_headers))["tasks"] == []
 
         async with get_async_session() as db:
-            db.add(UserSubscriptionModel(user_id=user_id, product_line="maps_online", product_id="online_lite", expires_at=timestamp_now() + 86400000))  # type: ignore[call-arg]
+            db.add(UserSubscriptionModel(user_id=user_id, product_kind="maps_online", product_id="online_lite", expires_at=timestamp_now() + 86400000))  # type: ignore[call-arg]
             await db.commit()
         config.active_id = storage[1].id
         await object_storage_config_service.save_config(config)

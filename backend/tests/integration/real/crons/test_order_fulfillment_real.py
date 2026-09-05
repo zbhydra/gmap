@@ -132,7 +132,7 @@ async def _insert_order(
         order_no=_make_order_no(cleanup, label),
         user_id=_make_user_id(cleanup),
         product_class=product_class.value,
-        product_id="unlimited",
+        product_id="online_basic",
         product_name=f"pytest-order-fulfillment-{cleanup.test_run_id}-{label}",
         amount=950_000_000,
         currency="XTR",

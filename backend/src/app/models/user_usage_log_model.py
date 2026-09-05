@@ -17,24 +17,33 @@ class UserUsageLogModel(BaseDBModel):
     __tablename__ = "user_usage_logs"
     __table_args__ = (
         UniqueConstraint(
-            "product_line",
+            "product_kind",
             "user_id",
             "request_id",
-            name="uk_user_usage_logs_line_user_request",
+            name="uk_user_usage_logs_kind_user_request",
         ),  # usage_service 插入幂等（consume/refund 重放检测）
         Index(
-            "idx_user_usage_logs_line_user_ym_delta",
-            "product_line",
+            "idx_user_usage_logs_kind_user_ym_delta",
+            "product_kind",
             "user_id",
             "ym",
             "delta",
         ),  # usage_service 月度 SUM(delta) 聚合覆盖索引
+        {
+            "info": {
+                "schema_sync_rename_columns": {"product_kind": "product_line"},
+                "schema_sync_rename_indexes": {
+                    "uk_user_usage_logs_kind_user_request": "uk_user_usage_logs_line_user_request",
+                    "idx_user_usage_logs_kind_user_ym_delta": "idx_user_usage_logs_line_user_ym_delta",
+                },
+            }
+        },
     )
 
     id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, autoincrement=True, comment="记录 ID"
     )
-    product_line: Mapped[str] = mapped_column(
+    product_kind: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
         comment="产品线标识（maps_extension / maps_online / maps_api）",

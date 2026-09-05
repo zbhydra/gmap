@@ -88,9 +88,9 @@ from app.constants.auth import (
     UserLoginStatus,
 )
 from app.constants.subscription import (
-    MAPS_API_PRODUCT_LINE,
-    MAPS_EXTENSION_PRODUCT_LINE,
-    MAPS_ONLINE_PRODUCT_LINE,
+    MAPS_API_PRODUCT_KIND,
+    MAPS_EXTENSION_PRODUCT_KIND,
+    MAPS_ONLINE_PRODUCT_KIND,
 )
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
@@ -733,26 +733,21 @@ async def get_me(ctx: UserContext = Depends(get_current_user)) -> JSONResponse:
         )
 
     data = (await user_service.build_client_user_info(user)).model_dump()
-    data["subscription"] = await subscription_status_service.build_status_data(
-        user_id=ctx.user_id,
-    )
-    # 产品线扩展（006）：网站按产品线展示当前套餐；旧字段 subscription
-    # 保持插件下载线语义，旧客户端不受影响。
     data["maps_extension_subscription"] = (
         await subscription_status_service.build_status_data(
             user_id=ctx.user_id,
-            product_line=MAPS_EXTENSION_PRODUCT_LINE,
+            product_kind=MAPS_EXTENSION_PRODUCT_KIND,
         )
     )
     data["maps_online_subscription"] = (
         await subscription_status_service.build_status_data(
             user_id=ctx.user_id,
-            product_line=MAPS_ONLINE_PRODUCT_LINE,
+            product_kind=MAPS_ONLINE_PRODUCT_KIND,
         )
     )
     data["maps_api_subscription"] = await subscription_status_service.build_status_data(
         user_id=ctx.user_id,
-        product_line=MAPS_API_PRODUCT_LINE,
+        product_kind=MAPS_API_PRODUCT_KIND,
     )
     return ResponseUtils.ok(data)
 

@@ -22,6 +22,7 @@ import {
   csvLines,
   detectChallenge,
   describeLandingHost,
+  extensionIdFromServiceWorker,
   launchRealBingContext,
   panel,
   parseCsvLine,
@@ -40,7 +41,13 @@ test.describe('真实 Bing 匿名采集(免费 20 条截断)', () => {
 
     try {
       // 扩展产物加载成功的硬前提(SW 未注册 = 产物问题,不属降级条件)
-      await waitForExtensionServiceWorker(context)
+      const serviceWorker = await waitForExtensionServiceWorker(context)
+      const popup = await context.newPage()
+      await popup.goto(
+        `chrome-extension://${extensionIdFromServiceWorker(serviceWorker)}/src/popup.html`
+      )
+      await expect(popup.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
+      await popup.close()
 
       try {
         await page.goto(MAPS_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 })
@@ -99,7 +106,7 @@ test.describe('真实 Bing 匿名采集(免费 20 条截断)', () => {
       const pricingPage = await pricingPagePromise
       await expect(pricingPage).toHaveURL(url =>
         url.pathname === '/pricing/' &&
-        url.searchParams.get('product_line') === 'maps_extension' &&
+        url.searchParams.get('product_kind') === 'maps_extension' &&
         url.searchParams.get('source') === 'bing_panel'
       )
       await pricingPage.close()

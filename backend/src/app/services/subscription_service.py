@@ -20,7 +20,7 @@ from app.constants.payment import (
     channel_amount_unit,
 )
 from app.constants.subscription import (
-    EXTENSION_PRODUCT_LINE,
+    SUBSCRIPTION_PRODUCT_KINDS,
     FREE_SUBSCRIPTION_PRODUCT_ID,
     SUBSCRIPTION_UPGRADE_PURPOSE,
     SubscriptionPeriodEnum,
@@ -58,10 +58,6 @@ _PERIOD_MONTHS = {
     SubscriptionPeriodEnum.QUARTER: 3,
     SubscriptionPeriodEnum.YEAR: 12,
 }
-
-# 历史订阅行（无档位语义的插件 Unlimited）的行内 product_id 缺省值：
-# extend_subscription_days 未显式传档位时（如好评赠送加时）沿用该档位。
-UNLIMITED_ROW_PRODUCT_ID = "unlimited"
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,12 +103,12 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             auto_renew=param.auto_renew,
             period=param.period,
         )
-        product_line = checkout_config.product.product_line
+        product_kind = checkout_config.product.product_kind
 
         # 重复购买校验按产品线隔离：同产品线存在未过期订阅时拒绝新下单，
-        # 不同产品线互不影响（如插件 Unlimited 与 maps_extension 套餐可并存）。
+        # 不同产品类别互不影响。
         if param.user_id > 0:
-            subscription = await self.get_user_subscription(param.user_id, product_line)
+            subscription = await self.get_user_subscription(param.user_id, product_kind)
             if subscription.expires_at is not None:
                 raise AppCommonException(
                     CommonCode.INVALID_REQUEST,
@@ -120,7 +116,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                         "subscription_check_product: user already has active "
                         "subscription on the same product line, reject duplicate "
                         f"subscription checkout: user_id={param.user_id}, "
-                        f"product_line={product_line}, "
+                        f"product_kind={product_kind}, "
                         f"product_id={param.product_id}, "
                         f"expires_at={subscription.expires_at}"
                     ),
@@ -208,7 +204,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
     async def create_management_url(
         self,
         user_id: int,
-        product_line: str,
+        product_kind: str,
     ) -> str | None:
         """为当前有效自动续费订阅创建渠道管理入口。
 
@@ -216,14 +212,14 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         ClinkBill Customer Portal），不做站内取消，也不推测渠道取消状态。
         """
 
-        subscription = await self.get_user_subscription(user_id, product_line)
+        subscription = await self.get_user_subscription(user_id, product_kind)
         if not self.is_auto_renew(subscription) or not subscription.payment_method:
             raise AppCommonException(
                 CommonCode.INVALID_REQUEST,
                 ext_msg=(
                     "subscription_create_management_url: active auto-renew "
                     f"subscription missing: user_id={user_id}, "
-                    f"product_line={product_line}"
+                    f"product_kind={product_kind}"
                 ),
             )
         provider = await payment_service.get_provider_for_existing_payment(
@@ -246,7 +242,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         self,
         *,
         user_id: int,
-        product_line: str,
+        product_kind: str,
         target_product_id: str,
     ) -> dict[str, object]:
         """实时判定与折算；自动续费金额由渠道已核对的 preview 提供。"""
@@ -254,7 +250,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         target_id = target_product_id.strip()
         resolved = await self._resolve_upgrade(
             user_id=user_id,
-            product_line=product_line,
+            product_kind=product_kind,
             target_product_id=target_id,
         )
         if isinstance(resolved, _UpgradeUnavailable):
@@ -299,7 +295,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 CommonCode.PAYMENT_GATEWAY_ERROR,
                 ext_msg=(
                     "subscription_get_upgrade_quote: 自动续费实例缺少渠道订阅 ID: "
-                    f"user_id={user_id}, product_line={product_line}"
+                    f"user_id={user_id}, product_kind={product_kind}"
                 ),
             )
         try:
@@ -311,7 +307,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         except PaymentProviderError as exc:
             logger.error(
                 "subscription_get_upgrade_quote: 渠道预览不可用: "
-                f"user_id={user_id}, product_line={product_line}, error={exc}",
+                f"user_id={user_id}, product_kind={product_kind}, error={exc}",
                 exc_info=True,
             )
             return self._upgrade_quote_unavailable(
@@ -343,7 +339,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         self,
         *,
         user_id: int,
-        product_line: str,
+        product_kind: str,
         target_product_id: str,
         allow_same_tier: bool = False,
     ) -> _UpgradeResolution | _UpgradeUnavailable:
@@ -360,7 +356,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         """
 
         now_ms = timestamp_now()
-        subscription = await self.get_user_subscription(user_id, product_line)
+        subscription = await self.get_user_subscription(user_id, product_kind)
         if subscription.expires_at is None or subscription.expires_at <= now_ms:
             return _UpgradeUnavailable(
                 SubscriptionUpgradeQuoteReason.NO_ACTIVE_SUBSCRIPTION
@@ -375,9 +371,9 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
         snapshot = await payment_config_service.get_snapshot()
         current_product = snapshot.products.get(
-            (product_line, subscription.product_id or "")
+            (product_kind, subscription.product_id or "")
         )
-        target_product = snapshot.products.get((product_line, target_product_id))
+        target_product = snapshot.products.get((product_kind, target_product_id))
         same_tier_idempotent = (
             allow_same_tier
             and current_product is not None
@@ -458,7 +454,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         self,
         *,
         user_id: int,
-        product_line: str,
+        product_kind: str,
         target_product_id: str,
         client_ip: str | None,
         language: str | None,
@@ -476,7 +472,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         target_id = target_product_id.strip()
         resolved = await self._resolve_upgrade(
             user_id=user_id,
-            product_line=product_line,
+            product_kind=product_kind,
             target_product_id=target_id,
         )
         if isinstance(resolved, _UpgradeUnavailable):
@@ -484,7 +480,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 CommonCode.INVALID_REQUEST,
                 ext_msg=(
                     "subscription_prepare_upgrade_checkout_param: upgrade "
-                    f"unavailable: user_id={user_id}, product_line={product_line}, "
+                    f"unavailable: user_id={user_id}, product_kind={product_kind}, "
                     f"target_product_id={target_id}, "
                     f"reason={resolved.reason.value}"
                 ),
@@ -496,7 +492,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 ext_msg=(
                     "subscription_prepare_upgrade_checkout_param: instance is "
                     "not one-time, differential order not supported: "
-                    f"user_id={user_id}, product_line={product_line}, "
+                    f"user_id={user_id}, product_kind={product_kind}, "
                     f"target_product_id={resolved.target_product.product_id}, "
                     f"auto_renew={resolved.subscription.auto_renew!r}"
                 ),
@@ -516,7 +512,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 CommonCode.INVALID_REQUEST,
                 ext_msg=(
                     "subscription_prepare_upgrade_checkout_param: non-positive "
-                    f"diff: user_id={user_id}, product_line={product_line}, "
+                    f"diff: user_id={user_id}, product_kind={product_kind}, "
                     f"target_product_id={resolved.target_product.product_id}"
                 ),
                 data={"reason": SubscriptionUpgradeQuoteReason.NON_POSITIVE_DIFF.value},
@@ -535,7 +531,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             currency=resolved.currency,
             client_ip=client_ip,
             extra_metadata=self._upgrade_order_metadata_json(
-                product_line=product_line,
+                product_kind=product_kind,
                 target_product=resolved.target_product,
                 target_price=resolved.target_price,
                 source_product_id=resolved.subscription.product_id,
@@ -554,7 +550,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         self,
         *,
         user_id: int,
-        product_line: str,
+        product_kind: str,
         target_product_id: str,
     ) -> dict[str, object]:
         """固定实例换价；仅 succeeded 同步档位，动作交客户端等待终态。"""
@@ -562,7 +558,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         target_id = target_product_id.strip()
         resolved = await self._resolve_upgrade(
             user_id=user_id,
-            product_line=product_line,
+            product_kind=product_kind,
             target_product_id=target_id,
             # confirm 允许同档幂等命中（仅目标 product_id 等于当前档）；
             # 报价与 checkout 仍严格升档，同 rank 不同商品与降档一律拒绝。
@@ -573,7 +569,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 CommonCode.INVALID_REQUEST,
                 ext_msg=(
                     "subscription_confirm_upgrade: upgrade unavailable: "
-                    f"user_id={user_id}, product_line={product_line}, "
+                    f"user_id={user_id}, product_kind={product_kind}, "
                     f"target_product_id={target_id}, "
                     f"reason={resolved.reason.value}"
                 ),
@@ -585,7 +581,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 ext_msg=(
                     "subscription_confirm_upgrade: instance is not "
                     "auto-renewing, channel plan change not supported: "
-                    f"user_id={user_id}, product_line={product_line}, "
+                    f"user_id={user_id}, product_kind={product_kind}, "
                     f"auto_renew={resolved.subscription.auto_renew!r}"
                 ),
             )
@@ -596,7 +592,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 ext_msg=(
                     "subscription_confirm_upgrade: auto-renew subscription "
                     "missing channel_subscription_id: "
-                    f"user_id={user_id}, product_line={product_line}, "
+                    f"user_id={user_id}, product_kind={product_kind}, "
                     f"payment_method={resolved.payment_method}"
                 ),
             )
@@ -635,13 +631,13 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 CommonCode.PAYMENT_GATEWAY_ERROR,
                 ext_msg=(
                     "subscription_confirm_upgrade: 渠道换价失败: "
-                    f"user_id={user_id}, product_line={product_line}, error={exc}"
+                    f"user_id={user_id}, product_kind={product_kind}, error={exc}"
                 ),
             ) from exc
         if result.status == "succeeded":
             await self._sync_local_tier(
                 user_id=user_id,
-                product_line=product_line,
+                product_kind=product_kind,
                 product_id=resolved.target_product.product_id,
             )
         return asdict(result)
@@ -650,7 +646,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         self,
         *,
         user_id: int,
-        product_line: str,
+        product_kind: str,
         product_id: str,
     ) -> None:
         """渠道已生效目标价后本地换档：只写 product_id 与 updated_at。
@@ -664,7 +660,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 update(UserSubscriptionModel)
                 .where(
                     UserSubscriptionModel.user_id == user_id,
-                    UserSubscriptionModel.product_line == product_line,
+                    UserSubscriptionModel.product_kind == product_kind,
                 )
                 .values(product_id=product_id, updated_at=timestamp_now())
             )
@@ -680,7 +676,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
         流程：① 查渠道订阅取得当前完整价与本地首单引用（Clink
         merchantReference / PayPal custom_id，均为创建时的首购订单号）；
-        ② 按首单订单号定位用户与产品线，再按 (user_id, product_line) 主键
+        ② 按首单订单号定位用户与产品线，再按 (user_id, product_kind) 主键
         读取订阅行并核对行内 channel_subscription_id；③ 渠道当前价在同渠道
         唯一映射一个启用渠道价（Clink 完整比较 productId:priceId，PayPal
         比较 plan_id），命中且与行内档位不同才更新 product_id，expires_at、
@@ -716,15 +712,15 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 f"order_payment_method={order.payment_method}, "
                 f"payment_method={payment_method}"
             )
-        product_line = self._snapshot_product_line(
+        product_kind = self._snapshot_product_kind(
             order, self._order_product_snapshot(order)
         )
-        row = await self.get_subscription_row(order.user_id, product_line)
+        row = await self.get_subscription_row(order.user_id, product_kind)
         if row is None or row.channel_subscription_id != channel_subscription_id:
             raise PaymentProviderError(
                 "subscription_sync_plan_from_channel: subscription row "
                 "missing or channel subscription mismatch: "
-                f"user_id={order.user_id}, product_line={product_line}, "
+                f"user_id={order.user_id}, product_kind={product_kind}, "
                 f"channel_subscription_id={channel_subscription_id}, "
                 f"row_channel_subscription_id="
                 f"{row.channel_subscription_id if row else None}"
@@ -738,13 +734,13 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             if price.provider_sku != state.provider_sku:
                 continue
             products = snapshot.products_by_id.get(price.product_id, [])
-            if len(products) == 1 and products[0].product_line == product_line:
+            if len(products) == 1 and products[0].product_kind == product_kind:
                 matched_products.add(products[0].product_id)
         if len(matched_products) > 1:
             raise PaymentProviderError(
                 "subscription_sync_plan_from_channel: channel plan maps to "
                 f"multiple enabled prices: payment_method={payment_method}, "
-                f"product_line={product_line}, "
+                f"product_kind={product_kind}, "
                 f"plan={state.provider_sku}, "
                 f"matched={sorted(matched_products)}"
             )
@@ -752,7 +748,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             raise PaymentProviderError(
                 "subscription_sync_plan_from_channel: channel plan maps to no "
                 f"enabled price: payment_method={payment_method}, "
-                f"product_line={product_line}, "
+                f"product_kind={product_kind}, "
                 f"plan={state.provider_sku}"
             )
         target_product_id = next(iter(matched_products))
@@ -760,7 +756,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             return False
         await self._sync_local_tier(
             user_id=order.user_id,
-            product_line=product_line,
+            product_kind=product_kind,
             product_id=target_product_id,
         )
         return True
@@ -834,14 +830,14 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
     async def get_user_subscription(
         self,
         user_id: int,
-        product_line: str = EXTENSION_PRODUCT_LINE,
+        product_kind: str,
     ) -> UserSubscriptionModel:
         """
         获取用户在指定产品线的当前付费订阅权益。
 
         user_subscriptions 按产品线一行，只保存有效或曾有效的付费权益；Free 不落库。
         """
-        subscription = await self.get_subscription_row(user_id, product_line)
+        subscription = await self.get_subscription_row(user_id, product_kind)
         if (
             subscription
             and subscription.expires_at is not None
@@ -851,16 +847,16 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
         return UserSubscriptionModel(  # type: ignore[call-arg]
             user_id=user_id,
-            product_line=product_line,
+            product_kind=product_kind,
             expires_at=None,
         )
 
     async def get_subscription_row(
         self,
         user_id: int,
-        product_line: str,
+        product_kind: str,
     ) -> UserSubscriptionModel | None:
-        """按复合主键 (user_id, product_line) 读取原始订阅行，不过滤有效性。
+        """按复合主键 (user_id, product_kind) 读取原始订阅行，不过滤有效性。
 
         过期折算、Free 兜底等口径由调用方自行决定（admin profile 透出原始
         过期时间，get_user_subscription 折算为无权益占位）。
@@ -871,7 +867,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             # `Model.col == x` 会被 mypy 视为 bool 而无法过链式 where。
             stmt = select(UserSubscriptionModel).filter_by(
                 user_id=user_id,
-                product_line=product_line,
+                product_kind=product_kind,
             )
             result = await db.execute(stmt)
             return result.scalar_one_or_none()
@@ -879,7 +875,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
     async def get_user_subscription_config(
         self,
         user_id: int,
-        product_line: str = EXTENSION_PRODUCT_LINE,
+        product_kind: str,
     ) -> tuple[UserSubscriptionModel, SubscriptionProductConfig]:
         """
         获取用户订阅配置：有权益行时档位取行内 product_id（购买/续期时写入），
@@ -891,40 +887,32 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         if user_id is None or user_id == 0:
             subscription = UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=0,
-                product_line=product_line,
+                product_kind=product_kind,
                 expires_at=None,
             )
             return subscription, await self._get_subscription_product_config(
-                product_line,
+                product_kind,
                 FREE_SUBSCRIPTION_PRODUCT_ID,
             )
 
-        subscription = await self.get_user_subscription(user_id, product_line)
+        subscription = await self.get_user_subscription(user_id, product_kind)
         if subscription.expires_at is None:
             product_id = FREE_SUBSCRIPTION_PRODUCT_ID
-        elif subscription.product_id:
-            product_id = subscription.product_id
-        elif product_line == EXTENSION_PRODUCT_LINE:
-            # extension 线历史行/内存占位可能缺档位（product_id 列默认值仅在
-            # 落库时生效），唯一付费档是 unlimited，回退它保持旧行为。
-            product_id = UNLIMITED_ROW_PRODUCT_ID
         else:
-            # 其余产品线档位必填；缺失让配置查找失败，按 unavailable 暴露。
-            product_id = subscription.product_id or ""
+            product_id = subscription.product_id
         return subscription, await self._get_subscription_product_config(
-            product_line,
+            product_kind,
             product_id,
         )
 
     async def _get_subscription_product_config(
         self,
-        product_line: str,
+        product_kind: str,
         product_id: str,
     ) -> SubscriptionProductConfig:
-        """按 (product_line, product_id) 精确读取启用配置，不加载支付渠道价格。
+        """按 (product_kind, product_id) 精确读取启用配置，不加载支付渠道价格。
 
-        每条产品线各有自己的 free 行：free 查找按线命中本线配置，不会误读
-        其他线（如 maps 线不会误读 extension 线 free 的 monthly_quota）。
+        每个产品类别各有自己的 free 行，查询同时约束类别与商品 ID。
         """
 
         products = await payment_config_service.list_subscription_products()
@@ -932,7 +920,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             (
                 item
                 for item in products
-                if item.product_line == product_line and item.product_id == product_id
+                if item.product_kind == product_kind and item.product_id == product_id
             ),
             None,
         )
@@ -941,7 +929,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 CommonCode.PAYMENT_GATEWAY_ERROR,
                 ext_msg=(
                     "subscription: enabled subscription product missing, "
-                    f"product_line={product_line}, product_id={product_id}"
+                    f"product_kind={product_kind}, product_id={product_id}"
                 ),
             )
         return product
@@ -976,14 +964,14 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
     ) -> None:
         """升级差额单履约：快照条件命中才换档，未命中报错转人工。
 
-        单条原子 UPDATE 按 (user_id, product_line, product_id=源档,
+        单条原子 UPDATE 按 (user_id, product_kind, product_id=源档,
         expires_at=base_expires_at, expires_at > now) 条件换档：订阅在支付
         等待期内被续费、加时或换档时旧快照不覆盖当前权益。命中时只写
         product_id 与 updated_at，到期时间、账期起点、渠道与续费快照保持；
         rowcount 未命中抛错，由订单 service 统一走履约失败/人工路径。
         """
 
-        product_line = self._snapshot_product_line(order, snapshot)
+        product_kind = self._snapshot_product_kind(order, snapshot)
         source_product_id = snapshot.get("source_product_id")
         target_product_id = snapshot.get("target_product_id")
         base_expires_at = snapshot.get("base_expires_at")
@@ -1004,7 +992,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             update(UserSubscriptionModel)
             .where(
                 UserSubscriptionModel.user_id == order.user_id,
-                UserSubscriptionModel.product_line == product_line,
+                UserSubscriptionModel.product_kind == product_kind,
                 UserSubscriptionModel.product_id == source_product_id,
                 UserSubscriptionModel.expires_at == base_expires_at,
                 UserSubscriptionModel.expires_at > now_ms,
@@ -1017,7 +1005,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 "subscription_fulfillment: upgrade condition missed, escalate "
                 "for manual review: "
                 f"order_no={order.order_no}, user_id={order.user_id}, "
-                f"product_line={product_line}, "
+                f"product_kind={product_kind}, "
                 f"source_product_id={source_product_id}, "
                 f"target_product_id={target_product_id}, "
                 f"base_expires_at={base_expires_at}"
@@ -1028,8 +1016,8 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         *,
         user_id: int,
         duration_days: int,
-        product_line: str = EXTENSION_PRODUCT_LINE,
-        product_id: str = UNLIMITED_ROW_PRODUCT_ID,
+        product_kind: str,
+        product_id: str,
     ) -> None:
         """在独立事务内按天延长指定产品线的订阅权益。"""
 
@@ -1038,7 +1026,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 db,
                 user_id=user_id,
                 duration_days=duration_days,
-                product_line=product_line,
+                product_kind=product_kind,
                 product_id=product_id,
             )
             await db.commit()
@@ -1049,8 +1037,8 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         *,
         user_id: int,
         duration_days: int,
-        product_line: str = EXTENSION_PRODUCT_LINE,
-        product_id: str = UNLIMITED_ROW_PRODUCT_ID,
+        product_kind: str,
+        product_id: str,
     ) -> None:
         """在调用方事务内用 MySQL 原子 upsert 按天延长权益。
 
@@ -1070,7 +1058,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         was_active = expires_at_col > now_ms
         stmt = mysql_insert(UserSubscriptionModel).values(
             user_id=user_id,
-            product_line=product_line,
+            product_kind=product_kind,
             product_id=product_id,
             auto_renew=None,
             payment_method=None,
@@ -1150,8 +1138,8 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         return json.dumps(
             {
                 "product_snapshot": {
-                    # gmap 特有：履约按 product_line 定位 (user_id, product_line) 行。
-                    "product_line": checkout_config.product.product_line,
+                    # gmap 特有：履约按 product_kind 定位 (user_id, product_kind) 行。
+                    "product_kind": checkout_config.product.product_kind,
                     "product_price_id": checkout_config.price.id,
                     "auto_renew": checkout_config.product.auto_renew,
                     "period": checkout_config.product.period,
@@ -1167,7 +1155,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
     def _upgrade_order_metadata_json(
         self,
         *,
-        product_line: str,
+        product_kind: str,
         target_product: SubscriptionProductConfig,
         target_price: SubscriptionProductPriceConfig,
         source_product_id: str,
@@ -1186,9 +1174,9 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         return json.dumps(
             {
                 "product_snapshot": {
-                    # gmap 特有：履约按 product_line 定位 (user_id, product_line) 行。
+                    # gmap 特有：履约按 product_kind 定位 (user_id, product_kind) 行。
                     "purpose": SUBSCRIPTION_UPGRADE_PURPOSE,
-                    "product_line": product_line,
+                    "product_kind": product_kind,
                     "product_price_id": target_price.id,
                     "auto_renew": False,
                     "period": target_product.period,
@@ -1221,15 +1209,18 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         self._parse_paid_period(snapshot.get("period"))
         return cast(dict[str, object], snapshot)
 
-    def _snapshot_product_line(
+    def _snapshot_product_kind(
         self, order: OrderModel, snapshot: dict[str, object]
     ) -> str:
-        """读取快照产品线；历史订单快照缺字段时归入 extension 线（原行为）。"""
+        """在订单快照边界确认受支持的产品类别。"""
 
-        product_line = snapshot.get("product_line")
-        if isinstance(product_line, str) and product_line.strip():
-            return product_line
-        return EXTENSION_PRODUCT_LINE
+        product_kind = snapshot.get("product_kind")
+        if isinstance(product_kind, str) and product_kind in SUBSCRIPTION_PRODUCT_KINDS:
+            return product_kind
+        raise ValueError(
+            "subscription_fulfillment: invalid product_kind: "
+            f"order_id={order.id}, product_kind={product_kind!r}"
+        )
 
     def _assert_order_product_id(self, order: OrderModel) -> str:
         """读取订单档位 SKU 快照。"""
@@ -1257,10 +1248,10 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
         period = self._parse_paid_period(snapshot.get("period"))
         months = _PERIOD_MONTHS[period]
-        product_line = self._snapshot_product_line(order, snapshot)
+        product_kind = self._snapshot_product_kind(order, snapshot)
         product_id = self._assert_order_product_id(order)
         now_ms = timestamp_now()
-        current = await db.get(UserSubscriptionModel, (order.user_id, product_line))
+        current = await db.get(UserSubscriptionModel, (order.user_id, product_kind))
         base_expires_at = (
             current.expires_at
             if current is not None
@@ -1271,7 +1262,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         renewed_expires_at = add_natural_months(base_expires_at, months)
         stmt = mysql_insert(UserSubscriptionModel).values(
             user_id=order.user_id,
-            product_line=product_line,
+            product_kind=product_kind,
             product_id=product_id,
             auto_renew=False,
             payment_method=order.payment_method,
@@ -1313,7 +1304,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
         # 快照 period 仅用于校验合法账期；实例不保存 period，账期由 expires_at 表达。
         self._parse_paid_period(snapshot.get("period"))
-        product_line = self._snapshot_product_line(order, snapshot)
+        product_kind = self._snapshot_product_kind(order, snapshot)
         product_id = self._assert_order_product_id(order)
         callback_metadata = self._load_order_metadata(order).get("payment_callback")
         provider_subscription = (
@@ -1346,7 +1337,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         advances = expires_at.is_(None) | (expires_at < subscription_expires_at)
         stmt = mysql_insert(UserSubscriptionModel).values(
             user_id=order.user_id,
-            product_line=product_line,
+            product_kind=product_kind,
             product_id=product_id,
             auto_renew=True,
             payment_method=order.payment_method,

@@ -7,7 +7,7 @@
 
 用合成 user_id（无外键）+ 随机 request_id 隔离，结束后删除本轮流水量。
 覆盖：MySQL consume/refund 幂等、SUM 聚合、refund 退回指定 target_ym、
-三线 free 档 total、monthly_quota 缺失抛 PAYMENT_GATEWAY_ERROR、
+三类 free 档 total、
 匿名 refund 拒绝。匿名 Redis 路径回归在
 tests/integration/real/api/client/test_maps_usage_real.py。
 """
@@ -19,13 +19,9 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import delete, func, select, text
 
-from app.constants.subscription import EXTENSION_PRODUCT_LINE
 from app.core.database import get_async_session, get_engine
-from app.exceptions.common_exception import AppCommonException
-from app.i18n.common_code import CommonCode
 from app.models.user_usage_log_model import UserUsageLogModel
 from app.services.usage_service import (
-    _BaseUsageService,
     api_usage_service,
     extension_usage_service,
     online_usage_service,
@@ -40,12 +36,6 @@ class _UsageCleanupState:
     """记录本轮测试独占的合成 user_id，结束后删除其全部用量流水。"""
 
     user_ids: list[int] = field(default_factory=list)
-
-
-class _NoQuotaLineService(_BaseUsageService):
-    """extension 线门面（free 档无 monthly_quota），验证配置缺失抛错合同。"""
-
-    product_line = EXTENSION_PRODUCT_LINE
 
 
 async def _table_exists(table_name: str) -> bool:
@@ -233,20 +223,9 @@ async def test_real_three_lines_read_free_monthly_quota(
     ]
     for service, expected_total in expectations:
         snapshot = await service.get_usage(f"d:{uuid4().hex}", user_id=0)
-        assert snapshot.total == expected_total, service.product_line
+        assert snapshot.total == expected_total, service.product_kind
         assert snapshot.used == 0
         assert snapshot.exhausted is False
-
-
-async def test_real_get_total_raises_when_monthly_quota_missing(
-    real_usage_cleanup_state: _UsageCleanupState,
-) -> None:
-    """monthly_quota 缺失（extension 线 free 档）抛 PAYMENT_GATEWAY_ERROR。"""
-
-    with pytest.raises(AppCommonException) as exc_info:
-        await _NoQuotaLineService().get_usage(f"u:{_synthetic_user_id()}", user_id=0)
-
-    assert exc_info.value.code == CommonCode.PAYMENT_GATEWAY_ERROR
 
 
 async def test_real_refund_rejects_anonymous_user(

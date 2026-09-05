@@ -1,5 +1,5 @@
 /**
- * Pricing 订阅商品接口客户端（MapsGrab 三产品线购买链路）。
+ * Pricing 订阅商品接口客户端（MapsGrab 三产品类别购买链路）。
  *
  * 订单创建/状态接口与支付协议由公共 OrderCheckout 维护；本模块只消费订阅
  * checkout 配置、验参和展示价格式化。
@@ -15,12 +15,17 @@ import type {
 /** 订阅商品类别。 */
 export const SUBSCRIPTION_PRODUCT_CLASS = 1
 
-/** Extension（MapsGrab 插件）产品线标识（与后端 product_line 常量对齐）。 */
-export const MAPS_EXTENSION_PRODUCT_LINE = 'maps_extension'
-/** Online Scraper 产品线标识。 */
-export const MAPS_ONLINE_PRODUCT_LINE = 'maps_online'
-/** API 产品线标识。 */
-export const MAPS_API_PRODUCT_LINE = 'maps_api'
+/** Extension（MapsGrab 插件）产品类别标识（与后端 product_kind 常量对齐）。 */
+export const MAPS_EXTENSION_PRODUCT_KIND = 'maps_extension'
+/** Online Scraper 产品类别标识。 */
+export const MAPS_ONLINE_PRODUCT_KIND = 'maps_online'
+/** API 产品类别标识。 */
+export const MAPS_API_PRODUCT_KIND = 'maps_api'
+
+export type SubscriptionProductKind =
+  | typeof MAPS_EXTENSION_PRODUCT_KIND
+  | typeof MAPS_ONLINE_PRODUCT_KIND
+  | typeof MAPS_API_PRODUCT_KIND
 
 export type SubscriptionUpgradeReason =
   | 'no_active_subscription'
@@ -47,33 +52,33 @@ export type SubscriptionUpgradeResult = {
 
 export function getSubscriptionUpgradeQuote(
   context: RequestContext,
-  productLine: string,
+  productKind: SubscriptionProductKind,
   targetProductId: string
 ): Promise<SubscriptionUpgradeQuote> {
   return getJson<SubscriptionUpgradeQuote>('/api/client/subscription/upgrade-quote', context, {
-    product_line: productLine,
+    product_kind: productKind,
     target_product_id: targetProductId
   })
 }
 
 export function createSubscriptionUpgradeCheckout(
   context: RequestContext,
-  productLine: string,
+  productKind: SubscriptionProductKind,
   targetProductId: string
 ): Promise<CreateOrderResponse> {
   return postJson<CreateOrderResponse>('/api/client/subscription/upgrade/checkout', context, {
-    product_line: productLine,
+    product_kind: productKind,
     target_product_id: targetProductId
   })
 }
 
 export function confirmSubscriptionUpgrade(
   context: RequestContext,
-  productLine: string,
+  productKind: SubscriptionProductKind,
   targetProductId: string
 ): Promise<SubscriptionUpgradeResult> {
   return postJson<SubscriptionUpgradeResult>('/api/client/subscription/upgrade/confirm', context, {
-    product_line: productLine,
+    product_kind: productKind,
     target_product_id: targetProductId
   })
 }
@@ -86,7 +91,7 @@ export interface SubscriptionCheckoutConfigsResponse {
 
 /** 订阅配置请求结果。 */
 export interface SubscriptionCheckoutData {
-  /** 全部产品线的可购买商品（按 product_line 过滤后使用）。 */
+  /** 全部产品类别的可购买商品（按 product_kind 过滤后使用）。 */
   plans: SubscriptionCheckoutPlan[]
 }
 
@@ -102,8 +107,8 @@ export interface SubscriptionCheckoutPlan {
   product_class: number
   /** 商品标识（如 maps_extension_pro）。 */
   product_id: string
-  /** 产品线标识（maps_extension / maps_online / maps_api）。 */
-  product_line: string
+  /** 产品类别标识（maps_extension / maps_online / maps_api）。 */
+  product_kind: SubscriptionProductKind
   /** 后端配置商品名。 */
   product_name: string
   /** 商业与权益周期；可售订阅商品只出自然月档期。 */
@@ -115,7 +120,7 @@ export interface SubscriptionCheckoutPlan {
   /** 商品卡默认展示金额，6 位精度。 */
   display_amount: number
   /**
-   * 产品线月度权益额度；单位随产品线：maps_extension / maps_online 为 records/月，
+   * 产品类别月度权益额度；单位随产品类别：maps_extension / maps_online 为 records/月，
    * maps_api 为 requests/月；后端缺省为 null。
    */
   monthly_quota: number | null
@@ -147,14 +152,14 @@ export async function listSubscriptionCheckoutConfigs(
   return { plans }
 }
 
-/** 选取指定产品线的可购买商品，按 product_id 索引。 */
-export function pickPlansByLine(
+/** 选取指定产品类别的可购买商品，按 product_id 索引。 */
+export function pickPlansByKind(
   plans: SubscriptionCheckoutPlan[],
-  productLine: string
+  productKind: SubscriptionProductKind
 ): Map<string, SubscriptionCheckoutPlan> {
   const linePlans = new Map<string, SubscriptionCheckoutPlan>()
   for (const plan of plans) {
-    if (plan.product_line === productLine) {
+    if (plan.product_kind === productKind) {
       linePlans.set(plan.product_id, plan)
     }
   }
@@ -203,8 +208,9 @@ function isSubscriptionCheckoutPlan(value: JsonValue): value is JsonObject & Sub
     value.product_class === SUBSCRIPTION_PRODUCT_CLASS &&
     typeof value.product_id === 'string' &&
     value.product_id.length > 0 &&
-    typeof value.product_line === 'string' &&
-    value.product_line.length > 0 &&
+    (value.product_kind === MAPS_EXTENSION_PRODUCT_KIND ||
+      value.product_kind === MAPS_ONLINE_PRODUCT_KIND ||
+      value.product_kind === MAPS_API_PRODUCT_KIND) &&
     typeof value.product_name === 'string' &&
     (value.period === 'month' || value.period === 'quarter' || value.period === 'year') &&
     typeof value.auto_renew === 'boolean' &&

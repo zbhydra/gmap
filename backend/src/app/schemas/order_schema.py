@@ -63,9 +63,9 @@ class OrderStatusResponse(BaseModel):
     order_no: str = Field(..., description="订单号")
     product_class: int = Field(..., description="商品类别整型枚举值")
     product_id: str = Field(..., description="商品 ID")
-    product_line: str = Field(
-        default="extension",
-        description="产品线标识：extension=插件下载线，maps_extension=MapsGrab 插件采集订阅线",
+    product_kind: str | None = Field(
+        default=None,
+        description="订阅产品类别；非订阅订单为空",
     )
     product_name: str = Field(..., description="商品名称快照")
     amount: int = Field(..., description="订单金额，统一 6 位精度整数")

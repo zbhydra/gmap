@@ -6,7 +6,7 @@
 ## 实现结论
 
 - 页面按三产品线 tab 展示(online / extension / api),档位卡 SSR 静态渲染;购买走全站统一 OrderCheckout 弹窗,不自建第二套支付弹窗。
-- 入口查询参数 `product_line` 经 `pricing-page-controller.ts` 的 `PRICING_LINE_CONFIG` 映射到初始 tab,例如 `/pricing/?product_line=maps_extension`;缺省或未知值为 Online。正常 tab 切换保持内存状态,不改 URL。插件与网站共用这条购买、升级及管理路径。
+- 入口查询参数 `product_kind` 经 `pricing-page-controller.ts` 的 `PRICING_LINE_CONFIG` 映射到初始 tab,例如 `/pricing/?product_kind=maps_extension`;缺省或未知值为 Online。正常 tab 切换保持内存状态,不改 URL。插件与网站共用这条购买、升级及管理路径。
 - checkout 配置按商品单一计费模式消费:商品的 `auto_renew` 与 `period` 是商品级字段,支付选项文案据此展示 `Auto-renews until canceled` 或 `One-time payment`。
 - 下单请求携带 `auto_renew + period`,与商品配置不一致时后端按价格已更新拒绝,页面重载配置。
 - 支付渠道为 PayPal 与 ClinkBill;页面不实现 Telegram Stars 渠道。
@@ -22,7 +22,7 @@
 | `POST /api/client/order/create` | 创建订阅订单(请求含 `auto_renew + period`) |
 | `GET /api/client/order/status/{order_no}` | 支付后轮询订单状态 |
 | `POST /api/client/order/cancel` | Clink cancel 回跳页把用户取消落到本地订单 |
-| `POST /api/client/subscription/management` | 请求只含 `product_line`,返回当前线自动续费订阅的渠道管理 URL(可空) |
+| `POST /api/client/subscription/management` | 请求只含 `product_kind`,返回当前线自动续费订阅的渠道管理 URL(可空) |
 
 `/api/client/subscription/status` 继续保留给插件兼容,Pricing 不使用。`POST /api/client/subscription/review-reward/claim` 为 006 域合同(入口已下线),现役页面不调用。
 
@@ -62,7 +62,7 @@ Pricing 订阅下单调用 `POST /api/client/order/create`,请求核心字段:
 ## 渠道管理入口(Manage subscription)
 
 - 展示条件:当前 tab 产品线的 `auth/me` 订阅对象 `status=active`、`expires_at` 未过期且 `auto_renew=true`。
-- 点击行为:同步预开空白新标签页(用户手势内,防 popup 拦截),再 `POST /api/client/subscription/management`(`product_line` 为当前线);返回 URL 时新标签页导航到渠道管理页,URL 为空时关闭空白页并弹出渠道内操作指引弹窗(PayPal Automatic Payments 三步 / ClinkBill Customer Portal 三步)。
+- 点击行为:同步预开空白新标签页(用户手势内,防 popup 拦截),再 `POST /api/client/subscription/management`(`product_kind` 为当前线);返回 URL 时新标签页导航到渠道管理页,URL 为空时关闭空白页并弹出渠道内操作指引弹窗(PayPal Automatic Payments 三步 / ClinkBill Customer Portal 三步)。
 - 页面只打开渠道入口,不调用取消接口、不修改订阅状态或到期时间;渠道侧状态允许滞后于本站展示。
 
 ## 用户状态

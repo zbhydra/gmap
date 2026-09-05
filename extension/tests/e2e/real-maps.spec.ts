@@ -24,6 +24,7 @@ import {
   describeLandingHost,
   dismissConsent,
   exportButton,
+  extensionIdFromServiceWorker,
   injectFastInterval,
   launchRealMapsContext,
   panelHost,
@@ -44,6 +45,12 @@ test.describe('真实 Google Maps 匿名采集(免费 10 行截断)', () => {
     try {
       // 扩展产物加载成功的硬前提(SW 未注册 = 产物问题,不属降级条件)
       const serviceWorker = await waitForExtensionServiceWorker(context)
+      const popup = await context.newPage()
+      await popup.goto(
+        `chrome-extension://${extensionIdFromServiceWorker(serviceWorker)}/src/popup.html`
+      )
+      await expect(popup.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
+      await popup.close()
       // 真实用户通道注入 5s 采集档(默认 8s 会拉长首批等待)
       await injectFastInterval(serviceWorker)
 

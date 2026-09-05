@@ -23,7 +23,7 @@ from httpx import Response
 from sqlalchemy import delete, select
 
 from app.constants.auth import TokenType
-from app.constants.subscription import MAPS_EXTENSION_PRODUCT_LINE
+from app.constants.subscription import MAPS_EXTENSION_PRODUCT_KIND
 from app.constants.usage import build_dedup_key, build_usage_key
 from app.core.database import get_async_session
 from app.core.redis import redis_client
@@ -182,7 +182,7 @@ async def test_real_usage_report_writes_prefixed_redis_keys(
         )
     )
 
-    usage_subkey, _ = build_usage_key(MAPS_EXTENSION_PRODUCT_LINE, f"d:{device_id}")
+    usage_subkey, _ = build_usage_key(MAPS_EXTENSION_PRODUCT_KIND, f"d:{device_id}")
     prefixed_usage_key = build_redis_key(usage_subkey)
     prefixed_dedup_key = build_redis_key(build_dedup_key(request_id))
 

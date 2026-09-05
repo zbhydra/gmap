@@ -9,9 +9,8 @@ import type { AdminOrder } from "./orders";
 /** 用户账号状态。 */
 export type AdminUserAccountStatus = "normal" | "locked" | "deleted";
 
-/** 产品线标识，与后端 subscription 常量一致。 */
-export type AdminUserProductLine =
-  | "extension"
+/** 产品类别标识，与后端 subscription 常量一致。 */
+export type AdminUserProductKind =
   | "maps_extension"
   | "maps_online"
   | "maps_api";
@@ -66,20 +65,20 @@ export interface AdminUserCreditsInfo {
   balance: number;
 }
 
-/** 单产品线订阅摘要（无付费行为 = expires_at null，过期行保留原始过期时间）。 */
+/** 单产品类别订阅摘要（无付费行为 = expires_at null，过期行保留原始过期时间）。 */
 export interface AdminUserSubscriptionLineInfo {
-  /** 产品线标识。 */
-  product_line: AdminUserProductLine;
+  /** 产品类别标识。 */
+  product_kind: AdminUserProductKind;
   /** 该线是否持有有效付费订阅。 */
   has_subscription: boolean;
   /** 订阅原始过期时间，毫秒时间戳。 */
   expires_at: number | null;
 }
 
-/** 单产品线当月用量快照。 */
+/** 单产品类别当月用量快照。 */
 export interface AdminUserUsageLineInfo {
-  /** 产品线标识。 */
-  product_line: AdminUserProductLine;
+  /** 产品类别标识。 */
+  product_kind: AdminUserProductKind;
   /** 业务月，格式 YYYYMM。 */
   ym: number;
   /** 当月已用量。 */
@@ -96,7 +95,7 @@ export interface AdminUserProfileData {
   user: AdminUserBasicInfo;
   /** Credits 信息。 */
   credits: AdminUserCreditsInfo;
-  /** 订阅摘要，固定四行：extension / maps_extension / maps_online / maps_api。 */
+  /** 订阅摘要，固定三行：maps_extension / maps_online / maps_api。 */
   subscriptions: AdminUserSubscriptionLineInfo[];
   /** 当月用量快照，固定三行：maps 三线。 */
   usage: AdminUserUsageLineInfo[];

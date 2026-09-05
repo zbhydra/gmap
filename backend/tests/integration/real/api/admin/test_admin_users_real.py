@@ -170,7 +170,7 @@ def _email_keyword(label: str, test_run_id: str) -> str:
 
 async def _insert_subscription_row(
     user_id: int,
-    product_line: str,
+    product_kind: str,
     product_id: str,
     expires_at: int,
 ) -> None:
@@ -181,7 +181,7 @@ async def _insert_subscription_row(
         session.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_line=product_line,
+                product_kind=product_kind,
                 product_id=product_id,
                 expires_at=expires_at,
                 created_at=now_ms,
@@ -426,7 +426,7 @@ async def test_real_admin_user_profile_multi_line_subscriptions_and_usage(
     real_admin_users_cleanup: _CleanupState,
     test_run_id: str,
 ) -> None:
-    """多产品线订阅行用户不再 500；订阅恒四行、用量恒三行且 total 随档位。"""
+    """多类别订阅与用量均返回三行，total 随所持档位变化。"""
     headers = {"Authorization": f"Bearer {real_admin_token_for_users}"}
     user = await _insert_real_user(
         email=_make_real_email("users-profile", test_run_id),
@@ -434,12 +434,8 @@ async def test_real_admin_user_profile_multi_line_subscriptions_and_usage(
         created_at=timestamp_now(),
     )
     now_ms = timestamp_now()
-    active_extension_expires = now_ms + 30 * _DAY_MS
     active_maps_expires = now_ms + 15 * _DAY_MS
     expired_online_expires = now_ms - _DAY_MS
-    await _insert_subscription_row(
-        user.user_id, "extension", "unlimited", active_extension_expires
-    )
     await _insert_subscription_row(
         user.user_id,
         "maps_extension",
@@ -466,27 +462,24 @@ async def test_real_admin_user_profile_multi_line_subscriptions_and_usage(
     assert data["credits"]["balance"] == 0
 
     subscriptions = data["subscriptions"]
-    assert [line["product_line"] for line in subscriptions] == [
-        "extension",
+    assert [line["product_kind"] for line in subscriptions] == [
         "maps_extension",
         "maps_online",
         "maps_api",
     ]
     assert subscriptions[0]["has_subscription"] is True
-    assert subscriptions[0]["expires_at"] == active_extension_expires
-    assert subscriptions[1]["has_subscription"] is True
-    assert subscriptions[1]["expires_at"] == active_maps_expires
+    assert subscriptions[0]["expires_at"] == active_maps_expires
     # 已过期行保留原始过期时间，has_subscription 压成 False。
-    assert subscriptions[2]["has_subscription"] is False
-    assert subscriptions[2]["expires_at"] == expired_online_expires
+    assert subscriptions[1]["has_subscription"] is False
+    assert subscriptions[1]["expires_at"] == expired_online_expires
     # 无付费行 = Free 不落库口径。
-    assert subscriptions[3]["has_subscription"] is False
-    assert subscriptions[3]["expires_at"] is None
+    assert subscriptions[2]["has_subscription"] is False
+    assert subscriptions[2]["expires_at"] is None
 
     # total 单一真源 = 所持档位 monthly_quota：持 Pro 的线读 Pro 配置，
     # 过期线与无行线折算 free 档。
     usage = data["usage"]
-    assert [line["product_line"] for line in usage] == [
+    assert [line["product_kind"] for line in usage] == [
         "maps_extension",
         "maps_online",
         "maps_api",
@@ -494,12 +487,12 @@ async def test_real_admin_user_profile_multi_line_subscriptions_and_usage(
     expected_totals = {"maps_extension": 100_000, "maps_online": 1000, "maps_api": 20}
     current_ym = get_current_ym()
     for line in usage:
-        assert line["ym"] == current_ym, line["product_line"]
-        assert line["used"] == 0, line["product_line"]
-        assert line["total"] == expected_totals[line["product_line"]], line[
-            "product_line"
+        assert line["ym"] == current_ym, line["product_kind"]
+        assert line["used"] == 0, line["product_kind"]
+        assert line["total"] == expected_totals[line["product_kind"]], line[
+            "product_kind"
         ]
-        assert line["exhausted"] is False, line["product_line"]
+        assert line["exhausted"] is False, line["product_kind"]
 
 
 async def test_real_admin_user_profile_usage_reads_free_tier_totals(
@@ -525,15 +518,15 @@ async def test_real_admin_user_profile_usage_reads_free_tier_totals(
 
     assert body["code"] == CommonCode.SUCCESS
     usage = data["usage"]
-    assert [line["product_line"] for line in usage] == [
+    assert [line["product_kind"] for line in usage] == [
         "maps_extension",
         "maps_online",
         "maps_api",
     ]
     expected_totals = {"maps_extension": 1000, "maps_online": 1000, "maps_api": 20}
     for line in usage:
-        assert line["total"] == expected_totals[line["product_line"]], line[
-            "product_line"
+        assert line["total"] == expected_totals[line["product_kind"]], line[
+            "product_kind"
         ]
         assert line["used"] == 0
         assert line["exhausted"] is False

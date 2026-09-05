@@ -5,7 +5,7 @@
  * e2e_seed_user.py(bing-extension-pro 场景)签发真实 token(与插件 exchange
  * 同构、已注册 Redis 白名单、账号持 maps_extension Pro 订阅),spec 内经
  * 扩展 service worker 直写 chrome.storage 三键注入——auth/me 与
- * subscription/status?product_line=maps_extension 全部走本地真实 backend
+ * subscription/status?product_kind=maps_extension 全部走本地真实 backend
  * 的真实验证链。
  *
  * 断言链:PRO 徽标(真实订阅判定生效)→ Start → Pro 进度文案 → 采集无

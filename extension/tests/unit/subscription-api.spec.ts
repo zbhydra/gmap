@@ -14,7 +14,7 @@ function subscriptionStatus(period: 'quarter' | 'year') {
   return {
     status: 'active',
     period,
-    display_name: 'Unlimited',
+    display_name: 'Pro',
     expires_at: 1_905_076_800_000,
     auto_renew: false,
     payment_method: 'paypal'
@@ -33,6 +33,9 @@ describe('subscriptionApi', () => {
         auto_renew: false,
         payment_method: 'paypal'
       })
+      expect(mocks.get).toHaveBeenLastCalledWith(
+        '/api/client/subscription/status?product_kind=maps_extension'
+      )
     }
 
     mocks.get.mockResolvedValueOnce({ ...subscriptionStatus('year'), period: 'week' })

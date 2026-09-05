@@ -11,6 +11,7 @@ import type {
   OrderStatusResponse
 } from './order-checkout-api'
 import type { PricingPageContent } from '../../i18n/schema'
+import type { SubscriptionProductKind } from '../pricing/pricing-checkout'
 
 /** 公共 checkout 的单个支付选项及其本地化摘要。 */
 export interface OrderCheckoutPaymentOption extends OrderCheckoutPaymentChannel {
@@ -88,7 +89,7 @@ export interface OrderCheckoutProduct {
   autoRenew: boolean
   /** 商业与权益周期；非订阅商品为 none。 */
   period: OrderCheckoutPeriod
-  /** 摘要主文案，如 100 Credits / Extension Unlimited。 */
+  /** 摘要主文案，如 100 Credits / Maps Pro。 */
   title: string
   /** 摘要价格展示。 */
   priceText: string
@@ -118,7 +119,7 @@ export interface OrderCheckoutOpenOptions {
   initialPaymentMethod?: string
   /** 升级沿用商品快照中的唯一渠道；自动续费走协议确认，一次性走差额订单。 */
   upgrade?: {
-    productLine: string
+    productKind: SubscriptionProductKind
     currentProductId: string | null
     copy: PricingPageContent['upgrade']
   }

@@ -53,7 +53,7 @@ interface AdminUsersListMockData {
 /** 单产品线订阅摘要 mock。 */
 interface SubscriptionLineMockData {
   /** 产品线标识。 */
-  product_line: string;
+  product_kind: string;
   /** 是否有效订阅。 */
   has_subscription: boolean;
   /** 原始过期时间。 */
@@ -63,7 +63,7 @@ interface SubscriptionLineMockData {
 /** 单产品线用量 mock。 */
 interface UsageLineMockData {
   /** 产品线标识。 */
-  product_line: string;
+  product_kind: string;
   /** 业务月 YYYYMM。 */
   ym: number;
   /** 已用量。 */
@@ -255,15 +255,14 @@ async function mockUsersApi(page: Page, requests: UsersRequestParams[]) {
     },
     credits: { balance: 66 },
     subscriptions: [
-      { product_line: "extension", has_subscription: true, expires_at: 1780100000000 },
-      { product_line: "maps_extension", has_subscription: false, expires_at: 1780100000000 },
-      { product_line: "maps_online", has_subscription: false, expires_at: null },
-      { product_line: "maps_api", has_subscription: true, expires_at: 1780100000000 },
+      { product_kind: "maps_extension", has_subscription: false, expires_at: 1780100000000 },
+      { product_kind: "maps_online", has_subscription: false, expires_at: null },
+      { product_kind: "maps_api", has_subscription: true, expires_at: 1780100000000 },
     ],
     usage: [
-      { product_line: "maps_extension", ym: 202609, used: 320, total: 1000, exhausted: false },
-      { product_line: "maps_online", ym: 202609, used: 40, total: 40, exhausted: true },
-      { product_line: "maps_api", ym: 202609, used: 5, total: 100, exhausted: false },
+      { product_kind: "maps_extension", ym: 202609, used: 320, total: 1000, exhausted: false },
+      { product_kind: "maps_online", ym: 202609, used: 40, total: 40, exhausted: true },
+      { product_kind: "maps_api", ym: 202609, used: 5, total: 100, exhausted: false },
     ],
   };
 
@@ -319,16 +318,15 @@ test("用户管理支持筛选、分页和弹窗权益区展示", async ({ page 
   await expect.poll(() => requests.at(-1)?.email).toBeNull();
   await expect.poll(() => requests.at(-1)?.status).toBeNull();
 
-  // 用户 ID 点击打开弹窗，权益区渲染四线订阅 + 三线用量
+  // 用户 ID 点击打开弹窗，权益区渲染三类订阅与用量
   await page.getByRole("button", { name: "2001", exact: true }).first().click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  // 产品线 label：TG 插件仅订阅区一行，maps 三线在订阅区 + 用量区各一行
-  await expect(dialog.getByText("TG 插件", { exact: true })).toHaveCount(1);
+  // 三类产品在订阅区与用量区各一行
   await expect(dialog.getByText("Maps 插件", { exact: true })).toHaveCount(2);
   await expect(dialog.getByText("Maps 云端", { exact: true })).toHaveCount(2);
   await expect(dialog.getByText("Maps API", { exact: true })).toHaveCount(2);
-  await expect(dialog.getByText("订阅中", { exact: true })).toHaveCount(2);
+  await expect(dialog.getByText("订阅中", { exact: true })).toHaveCount(1);
   await expect(dialog.getByText("未订阅", { exact: true })).toHaveCount(2);
   // 过期行保留原始过期时间（maps_extension 已过期）；未订阅行不显示时间
   await expect(dialog.getByText("2026-05-30 08:13:20").first()).toBeVisible();

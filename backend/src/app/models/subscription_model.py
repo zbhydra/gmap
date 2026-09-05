@@ -11,22 +11,23 @@ class UserSubscriptionModel(BaseDBModel):
     """用户订阅表（006 扩展：按产品线隔离，一行 = 一个产品线的当前订阅实例）"""
 
     __tablename__ = "user_subscriptions"
+    __table_args__ = {
+        "info": {"schema_sync_rename_columns": {"product_kind": "product_line"}}
+    }
 
-    # 复合主键 (user_id, product_line)：同一账号可同时持有多个产品线的订阅。
+    # 复合主键 (user_id, product_kind)：同一账号可同时持有多个产品线的订阅。
     user_id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, autoincrement=False, comment="用户 ID"
     )
-    product_line: Mapped[str] = mapped_column(
+    product_kind: Mapped[str] = mapped_column(
         String(32),
         primary_key=True,
-        default="extension",
-        comment="产品线标识：extension=插件下载 Unlimited，maps_extension=MapsGrab 插件采集订阅",
+        comment="产品类别（maps_extension / maps_online / maps_api）",
     )
     # 购买商品 SKU 快照：同产品线存在多档位（如 maps_extension_pro /
     # maps_extension_business）时唯一能说明当前权益档位的字段；续期履约时同步刷新。
     product_id: Mapped[str] = mapped_column(
         String(64),
-        default="unlimited",
         comment="当前生效的订阅商品 SKU（购买/续期时写入）",
     )
     # 购买时续费方式快照；自动续费状态展示还要求 expires_at 未过期。
@@ -77,6 +78,6 @@ class UserSubscriptionModel(BaseDBModel):
     def __repr__(self) -> str:
         return (
             f"<UserSubscription(user_id={self.user_id}, "
-            f"product_line={self.product_line}, product_id={self.product_id}, "
+            f"product_kind={self.product_kind}, product_id={self.product_id}, "
             f"expires_at={self.expires_at})>"
         )

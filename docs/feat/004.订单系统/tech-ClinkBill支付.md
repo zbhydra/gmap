@@ -18,7 +18,7 @@
 ### 1.2 非目标
 
 - 不实现退款、部分退款、争议处理或对账系统。
-- 不实现用户对已生效订阅开启/关闭自动续费。本期的“动态修改”只指运营修改 Unlimited 商品配置，影响之后创建的订单。
+- 不实现用户对已生效订阅开启/关闭自动续费。运营修改订阅商品配置只影响之后创建的订单。
 - 不新建支付订单、支付尝试或 Webhook Inbox 表。
 - 不改写现有订单状态机、履约事务或补偿任务。
 - 不引入 Clink SDK 或新 Web 框架；使用项目已有 `httpx`。
@@ -86,7 +86,7 @@ Provider 根据 `environment` 选择官方固定 API 根地址，不允许从前
 
 ### 4.2 一次性分支
 
-Credits 和 `auto_renew=false` Unlimited 发送：
+Credits 和 Online/API 一次性订阅商品发送：
 
 ```json
 {
@@ -105,7 +105,7 @@ Credits 和 `auto_renew=false` Unlimited 发送：
 
 ### 4.3 自动续费分支
 
-`auto_renew=true` Unlimited 发送：
+`auto_renew=true` 的 Maps 插件订阅商品发送：
 
 ```json
 {
@@ -143,8 +143,8 @@ POST /api/callback/clink/payment
 
 注册以下已消费事件：
 
-- `order.succeeded`：一次性 Credits 和 `auto_renew=false` Unlimited。
-- `invoice.paid`：`auto_renew=true` Unlimited 的首期与后续每期扣款。
+- `order.succeeded`：Credits 和 Online/API 一次性订阅商品。
+- `invoice.paid`：Maps 插件自动续费商品的首期与后续每期扣款。
 - `subscription.updated.plan_changed`：交订阅服务查询渠道当前价并同步本地档位，不进入订单履约。升级等待页读取本地档位，必须订阅该终态事件；`invoice.paid` 不承担换档，详见 [统一升级结果与动作](../006.订阅系统/tech-订阅升级.md#confirm-结果与动作)。
 
 Clink 可能同时发送 recurring `order.succeeded`；该事件验签并核对本地订单后按账户事件应答(见 §5.3),不触发履约。自动续费只认 `invoice.paid`，避免同一账期被 Order 和 Invoice 两种事件各履约一次。
@@ -219,7 +219,7 @@ Clink 通用 skill 推荐所有事件额外写入按 `event.id` 唯一的持久 
 
 ## 6. 前端合同
 
-- `clink` 加入 Credits 和 Unlimited checkout 允许的支付渠道集合。
+- `clink` 属于 Credits 和 Maps 订阅 checkout 的支付渠道集合,是否可售由对应渠道价决定。
 - 渠道展示名从后端 `payment_method_name` 读取，不在多个组件各自写死。
 - 读取 URL 顺序包含 `checkoutUrl`、`payment_url`、`url`，最终只允许 HTTPS 且 host 为 ClinkBill 官方 Checkout 域名：Sandbox `uat-checkout.clinkbill.com`，正式 `checkout.clinkbill.com`。
 - 用户点击支付后在新标签页打开 Hosted Checkout，原页继续轮询本地订单状态。
@@ -259,7 +259,7 @@ clink webhook endpoint ensure \
 
 交付时提供两组可直接运行的 curl：
 
-1. 调用项目 `POST /api/client/order/create` 创建 Credits/Unlimited Clink 订单，从 `data.payment_data.checkoutUrl` 取支付地址。
+1. 调用项目 `POST /api/client/order/create` 创建 Credits 或 Maps 订阅 Clink 订单，从 `data.payment_data.checkoutUrl` 取支付地址。
 2. 仅用于排查的直连 Sandbox `POST /checkout/session` 示例，密钥只从当前 shell 环境变量读取。
 
 两组示例都不包含真实密钥、真实用户 token 或固定线上商品价格。
@@ -270,9 +270,9 @@ clink webhook endpoint ensure \
 2. 检查返回包含 `sessionId` 和 HTTPS `checkoutUrl`，数据库订单仍为待支付。
 3. 由人在 Hosted Checkout 完成 Sandbox 支付。
 4. 确认真实 Clink Webhook 命中公网端点并返回 2xx，不以本地 simulate 代替。
-5. 核对本地订单为已支付且履约成功，Credits 余额或 Unlimited 到期时间已实际变化。
+5. 核对本地订单为已支付且履约成功，Credits 余额或对应 Maps 订阅到期时间已实际变化。
 6. 重放同一一次性事件和同一 Invoice 事件，确认本地订单幂等返回，权益不再增加。
-7. 分别对一次性商品(如 `unlimited`,商品列 `auto_renew=false`)与自动续费商品创建新订单,确认前者发送 `priceDataList`,后者发送 `productId + priceId`,两者均能完成首期履约。
+7. 分别对一次性商品(如 `online_lite`,商品列 `auto_renew=false`)与自动续费商品(如 `maps_extension_pro`)创建新订单,确认前者发送 `priceDataList`,后者发送 `productId + priceId`,两者均能完成首期履约。
 8. 对自动续费 Sandbox 订阅使用 Clink Test Clock 推进一个周期，确认新 `invoiceId` 产生新本地续费订单且只续期一次；后续运营修改 `auto_renew` 不改变该结果。
 
 ## 9. 官方证据

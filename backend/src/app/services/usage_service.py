@@ -6,7 +6,7 @@
 - 003 积分是「余额-流水、永不过期、购买/赠送」模型，与「月度窗口重置的
   防滥用计量」语义不同，且同样只按 user_id 归属；
 - 登录用户用量改为 MySQL 只插入流水 ``user_usage_logs``：used = 按月
-  SUM(delta)，幂等由唯一键 (product_line, user_id, request_id) 承担，
+  SUM(delta)，幂等由唯一键 (product_kind, user_id, request_id) 承担，
   可审计、可退回（云端 014 预扣-结算需要 refund 语义）；
 - 匿名设备（user_id=0）维持 Redis 月度计数（013 双窗口拍板：匿名按
   device_id 归属、容忍丢失的防滥用计量），扣减与幂等组成单 Lua 脚本原子执行。
@@ -30,9 +30,9 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
 from app.constants.subscription import (
-    MAPS_API_PRODUCT_LINE,
-    MAPS_EXTENSION_PRODUCT_LINE,
-    MAPS_ONLINE_PRODUCT_LINE,
+    MAPS_API_PRODUCT_KIND,
+    MAPS_EXTENSION_PRODUCT_KIND,
+    MAPS_ONLINE_PRODUCT_KIND,
     SubscriptionProductMetadata,
 )
 from app.constants.usage import (
@@ -97,20 +97,20 @@ class UsageConsumeResult(NamedTuple):
 
 
 class _BaseUsageService:
-    """单一产品线的用量门面基类：子类只绑定 ``product_line`` 常量。
+    """单一产品线的用量门面基类：子类只绑定 ``product_kind`` 常量。
 
     存储分派按调用方身份：``user_id > 0`` 走 MySQL 只插入流水（匿名不进表），
     ``user_id = 0`` 走 Redis 月度计数（identity 必为 ``d:{device_id}``）。
     """
 
-    product_line: str = ""
+    product_kind: str = ""
 
     async def get_usage(self, identity: str, *, user_id: int) -> UsageSnapshot:
         """读取归属者当月用量快照；未命中按零处理。"""
 
         try:
             total = await self._get_total(user_id)
-            usage_subkey, ym = build_usage_key(self.product_line, identity)
+            usage_subkey, ym = build_usage_key(self.product_kind, identity)
             if user_id > 0:
                 used = await self._sum_used(user_id, ym)
             else:
@@ -130,13 +130,13 @@ class _BaseUsageService:
         """按幂等键扣减当月用量，返回扣减后的最新快照。
 
         同一 ``request_id``（同线同用户）重复上报只扣一次——MySQL 路径由
-        唯一键 ``uk_user_usage_logs_line_user_request`` 承担，重放命中时
+        唯一键 ``uk_user_usage_logs_kind_user_request`` 承担，重放命中时
         ``deducted=False``、used 原样；Redis 路径由 Lua 内幂等键承担。
         """
 
         try:
             total = await self._get_total(user_id)
-            usage_subkey, ym = build_usage_key(self.product_line, identity)
+            usage_subkey, ym = build_usage_key(self.product_kind, identity)
             if user_id > 0:
                 deducted = await self._insert_log(
                     user_id=user_id, ym=ym, delta=records, request_id=request_id
@@ -187,7 +187,7 @@ class _BaseUsageService:
         if user_id <= 0:
             raise ValueError(
                 "usage_service.refund: refund requires a logged-in user: "
-                f"product_line={self.product_line}, user_id={user_id}, "
+                f"product_kind={self.product_kind}, user_id={user_id}, "
                 f"records={records}, request_id={request_id}"
             )
 
@@ -218,7 +218,7 @@ class _BaseUsageService:
         """
 
         _, config = await subscription_service.get_user_subscription_config(
-            user_id, self.product_line
+            user_id, self.product_kind
         )
         metadata = SubscriptionProductMetadata.from_metadata(
             config.metadata,
@@ -231,7 +231,7 @@ class _BaseUsageService:
                 CommonCode.PAYMENT_GATEWAY_ERROR,
                 ext_msg=(
                     "usage_service._get_total: usage product missing monthly_quota: "
-                    f"product_line={self.product_line}, "
+                    f"product_kind={self.product_kind}, "
                     f"product_id={config.product_id}"
                 ),
             )
@@ -243,7 +243,7 @@ class _BaseUsageService:
         async with get_async_session() as db:
             result = await db.execute(
                 select(func.coalesce(func.sum(UserUsageLogModel.delta), 0)).where(
-                    UserUsageLogModel.product_line == self.product_line,
+                    UserUsageLogModel.product_kind == self.product_kind,
                     UserUsageLogModel.user_id == user_id,
                     UserUsageLogModel.ym == ym,
                 )
@@ -256,7 +256,7 @@ class _BaseUsageService:
         """插入一条用量流水；唯一键命中（幂等重放）返回 False。"""
 
         log = UserUsageLogModel(  # type: ignore[call-arg]
-            product_line=self.product_line,
+            product_kind=self.product_kind,
             user_id=user_id,
             ym=ym,
             delta=delta,
@@ -268,12 +268,12 @@ class _BaseUsageService:
                 db.add(log)
                 await db.commit()
         except IntegrityError:
-            # 唯一键 (product_line, user_id, request_id) 命中 = 同一请求的
+            # 唯一键 (product_kind, user_id, request_id) 命中 = 同一请求的
             # 幂等重放，是正常业务路径而非故障，INFO 级避免稀释真实错误
             # 信号；回滚由 get_async_session 统一负责。
             logger.info(
                 "usage_service._insert_log: 唯一键命中，按幂等重放跳过: "
-                f"product_line={self.product_line}, user_id={user_id}, "
+                f"product_kind={self.product_kind}, user_id={user_id}, "
                 f"ym={ym}, delta={delta}, request_id={request_id}"
             )
             return False
@@ -309,14 +309,14 @@ class _BaseUsageService:
         context_line = " ".join(f"{key}={value!r}" for key, value in context.items())
         logger.error(
             f"usage_service.{action}: 存储不可用，用量操作失败 "
-            f"(product_line={self.product_line}): {context_line}",
+            f"(product_kind={self.product_kind}): {context_line}",
             exc_info=True,
         )
         return AppCommonException(
             CommonCode.EXTENSION_USAGE_UNAVAILABLE,
             ext_msg=(
                 f"usage_service.{action}: usage storage unavailable "
-                f"(product_line={self.product_line}): {context_line}"
+                f"(product_kind={self.product_kind}): {context_line}"
             ),
         )
 
@@ -324,19 +324,19 @@ class _BaseUsageService:
 class ExtensionUsageService(_BaseUsageService):
     """maps_extension 门面：插件采集 records/月（/maps/usage 两路由在用）。"""
 
-    product_line = MAPS_EXTENSION_PRODUCT_LINE
+    product_kind = MAPS_EXTENSION_PRODUCT_KIND
 
 
 class OnlineUsageService(_BaseUsageService):
     """maps_online 门面：云端采集 records/月（能力就绪，014 接线路由）。"""
 
-    product_line = MAPS_ONLINE_PRODUCT_LINE
+    product_kind = MAPS_ONLINE_PRODUCT_KIND
 
 
 class ApiUsageService(_BaseUsageService):
     """maps_api 门面：API requests/月（能力就绪，014 接线路由）。"""
 
-    product_line = MAPS_API_PRODUCT_LINE
+    product_kind = MAPS_API_PRODUCT_KIND
 
 
 extension_usage_service = ExtensionUsageService()

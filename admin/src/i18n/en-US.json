@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "TG Download Admin"
+    "title": "MapsGrab Admin"
   },
   "login": {
     "title": "Admin Login",
@@ -127,10 +127,9 @@
     "creditsBalance": "Credits",
     "subscriptionsTitle": "Subscriptions",
     "usageTitle": "Monthly Usage",
-    "productLineExtension": "TG Extension",
-    "productLineMapsExtension": "Maps Extension",
-    "productLineMapsOnline": "Maps Online",
-    "productLineMapsApi": "Maps API",
+    "productKindMapsExtension": "Maps Extension",
+    "productKindMapsOnline": "Maps Online",
+    "productKindMapsApi": "Maps API",
     "subscriptionActive": "Active",
     "subscriptionInactive": "Inactive",
     "usageExhausted": "Exhausted",

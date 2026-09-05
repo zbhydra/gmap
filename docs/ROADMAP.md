@@ -6,10 +6,9 @@
 
 ## 1 · 项目目标
 
-两条产品线共享一套 backend(AWS 类业务服务器 + 执行节点)与商业化基建:
+**MapsGrab**(全称 "MapsGrab — Google Maps Scraper & Extractor")是本仓现役产品:Maps 浏览器插件、云端 Online Scraper、API 与营销站共享后端和商业化基建,Google Maps 与 Bing 共享插件订阅类别。对标 `gmapsextractor.com`,命名依据见 `research/google-maps-品牌命名调研.md`。营销站为 `website/`,域名配置仍待上线。
 
-1. **Telegram 下载**(存量):已发布插件仍在 Chrome 商店运营;**主站 telegramdownloadmedia.com 已退役删除(2026-08-31)**,生产 TG 站点不再由本仓维护(后端 deploy env 的 TG 域名仍指向现役 API 基建)。
-2. **MapsGrab**(新线,全称 "MapsGrab — Google Maps Scraper & Extractor"):对标 `gmapsextractor.com`——Maps 插件 + 云端 Online Scraper + API + 营销站,订阅分档计费。对标站壁垒在内容矩阵与抓取稳定性,不在代码形态。命名依据见 `research/google-maps-品牌命名调研.md`。营销站即本仓 `website/`(原 website-mapsgrab/,2026-08-31 起 replaces 退役的 TG 主站;域名未上线,占位 mapsgrab.com)。
+TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存量数据保留。Telegram Stars 是共享支付基建,Provider、回调、渠道及运维支持继续保留。生产 API 的历史域名不代表本仓仍运营 TG 下载产品。
 
 ## 2 · 功能全景
 
@@ -46,7 +45,7 @@
 | # | 功能 | 归属域 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- | --- |
 | C1 | 用户体系(含竞品 license key 辅轨的取舍;辅轨取舍未决) | ♻️ `007.用户系统` | 逆向 06 | 🔍 | ✅ (2026-09-01,复用 007 全套 + 插件 v3 浏览器身份,Maps/Bing 双插件已接) |
-| C2 | 订阅套餐(分产品订阅:extension / maps_extension / maps_online / maps_api 四线) | ♻️ `006.订阅系统` | 官网 pricing 三 tab | 🔍 | ✅ (2026-08-31,maps_online/maps_api 8 档 PayPal 一次性支付占位落地;额度消费基建 2026-09-01 落 `000.架构/tech-额度基建.md` 三门面,Online 消费接线已完成，API 待 014) |
+| C2 | 订阅套餐(三类产品:maps_extension / maps_online / maps_api) | ♻️ `006.订阅系统` | 官网 pricing 三 tab | 🔍 | ✅ (2026-09-05 全端统一 product_kind,移除 TG 现役商品和默认回退;本地跨端验收通过,详见 006 changelog;Online 消费已接线,API 待 014) |
 | C3 | 积分 / 用量计量(服务端计数、免费月度额度) | ♻️ `003.积分系统` / `005.计数器系统` | 逆向 06 | 🔍 | 🚧 (统一 usage 三门面 + 月度免费额度已落地，maps_extension 已生效；2026-09-05 maps_online 实际计量接线完成，API 待 014) |
 | C4 | 订单与支付(Stripe / Paddle) | ♻️ `004.订单系统` | 逆向 06 | ♻️ | 🚧 (2026-09-05 支付模型同步落地，005 升级已实施，本地收尾与检查完成；真实渠道及特定宿主验收待办,见 `feat/006.订阅系统/`;maps_extension 自动续费真实渠道 SKU 与 Clink 公网 webhook 首笔人工验收待办;Stripe/Paddle 未立项) |
 | C5 | Pricing 页(三产品形态分 tab 展示) | ♻️ `011.Pricing页` | 官网 /pricing | 🔍浅 | ✅ (2026-08-31,Online / Extension / API 三 tab 已实现,10 个付费 SKU;2026-09-05 起按单一计费模式购买,maps_extension 两档待真实渠道 SKU——TODO 占位 enabled=0 暂不可售) |
@@ -81,7 +80,7 @@
 | --- | --- | --- | --- |
 | **Gate · 云端 POC** | B5:HTTP 路线做长周期封锁率/代理流量爬坡;gosom 路线上线前验证 Postgres 内网化;**只 Gate 云端路线,不阻塞插件** | 无 | 3–5 天 |
 | **阶段 1 · 插件全量** | **A1–A13 全部 13 项**,验收 = 功能面对齐竞品 v2.5.1(已拍板的架构差异除外:不强制登录、自研服务端、不上 Chrome 商店)。顺序:A1 地基(骨架+远程配置+搜索闭环)→ A2/A3/A5/A8 采集导出主链 → A6 批量面板 → A9/A12 打磨 → A11 账号配额(扩 007/003)→ A4 服务端自研+接入 → A10 集成 → A7(已调研完毕)→ A13 上架 | 无,可立即启动 | 7–9 周 |
-| **阶段 2 · 云端服务** | B4 + B1/B2 部署与 credits 对接。**与阶段 1 并行**:技术栈零交集(Go/gosom vs TS/MV3);唯一耦合点 = 003 计量对接,C2 计费骨架决策已前置。**C2 已拍板(2026-08-30 hydra):套餐参考竞品分产品订阅**(插件 Free/$39 Pro/$99 Business 月付;Online/API 档位随云端产品化解禁);006 需一轮扩展(产品线维度 + 月度 records 额度映射,当前为 TG 单产品每日次数形态) | Gate 通过;C2 骨架决策 | 2–3 周 |
+| **阶段 2 · 云端服务** | B4 + B1/B2 部署与计量对接。与阶段 1 并行;006 三类订阅与 000 月度额度基建已落地,Online 消费已接线,API 消费随云端产品化推进。 | Gate 通过;C2 骨架决策 | 2–3 周 |
 | **阶段 3 · 营销站 + 商业化** | D5 + C2/C5 定价决策与接入;Edge/Firefox 商店页。**占位入口接真落地页,页内未落地功能按钮点击无效**(2026-08-31 hydra 裁决,替代 2026-08-30「入口留空点击无效」) | 阶段 1 | 1–2 周 |
 | **阶段 3 ✅ 营销站已交付(2026-08-31)** | 营销站 17 页(首页/产品页/下载页/Pricing 三档/7 工具/法务/About/Contact),006 产品线扩展 + PayPal 购买链路 + 额度映射,GA4/SEO/Lighthouse ≥95,插件订阅跳转接线。执行:W1–W7 全部 done + 整体汇合审查通过(1 跨单元 finding:工具页内链闭环已修)。验证:e2e 166 passed、module-scripts 47/47、backend 535 passed。剩余:域名/GA4 ID/渠道 SKU 后配,商店上架(real smoke)。2026-08-31 起站点目录定名 `website/`(replaces 退役 TG 主站),见 §5 变更记录。🚧 增补:Online/API 落地页 ×5 + 导航接线(015 plans/002)→ ✅ done(2026-08-31,U1 三轮 review 闭环;build 23 页、本单元 e2e 全绿、Lighthouse 新页 100×4) | 阶段 1 ✅;W5 含 013 回归验证 | 计划 1–2 周,实际约 2 天 |
 | **阶段 4 · 内容与增长** | D1–D3 铺底后持续运营(D4 联盟暂不做) | 阶段 3 | 铺底 2 周+ |
@@ -95,6 +94,8 @@
 - 估时假设:单人 + AI 助手;插件全量(阶段 1)约 7–9 周,加云端与增长完整对标约 3–4 个月。
 
 ## 5 · 变更记录
+
+- 2026-09-05 **三类产品合同统一**:全端改用 `product_kind`,双插件共享 `maps_extension`;移除 TG 下载商品、默认回退和 Admin 第四类订阅,保留 TG 存量数据与 Telegram Stars 支付基建,好评活动仍关闭。三表三索引原地改名,独立单元及整体审查通过,真实 API + Pricing + Admin 组合验证通过;未做真实付款、商店发布或插件采集分档改造。验收与环境限制见 [006 变更记录](feat/006.订阅系统/changelog.md)。
 
 - 2026-09-05 **B1 Online 后端任务与结果基建完成**：任务执行、恢复、实际计量、CSV / ZIP 下载与 Admin 多存储配置通过单元及整体审查，本地必需验收满足。Online 用户界面未实施；真实云验证与生产旧配置整理未执行，记录见 `feat/014.Maps云端/plans/002.Online任务与结果基建.md`。
 

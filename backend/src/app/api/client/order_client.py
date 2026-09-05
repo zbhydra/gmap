@@ -40,7 +40,7 @@ async def create_order(
 
     请求体:
     - product_class: 商品类别（枚举值，1=订阅，2=充值...）
-    - product_id: 商品ID（业务系统定义，如 "unlimited", "credit_50"）
+    - product_id: 商品ID（业务系统定义，如 "online_basic", "credit_50"）
     - payment_method: 支付方式，对应配置表 channel_code
     - amount: 订单金额，统一 6 位精度整数
     - currency: 货币类型
@@ -115,7 +115,7 @@ async def get_order_status(
             "order_no": order.order_no,
             "product_class": order.product_class,
             "product_id": order.product_id,
-            "product_line": order_service.get_order_product_line(order),
+            "product_kind": order_service.get_order_product_kind(order),
             "product_name": order.product_name,
             "amount": order.amount,
             "currency": order.currency,

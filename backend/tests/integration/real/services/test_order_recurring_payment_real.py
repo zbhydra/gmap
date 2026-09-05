@@ -16,7 +16,6 @@ from app.constants.order import CallbackStatus, OrderStatus, ProductClass
 from app.constants.subscription import (
     MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
     MAPS_EXTENSION_PRO_PRODUCT_ID,
-    UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
 )
 from app.core.database import get_async_session
 from app.models.order_model import OrderModel
@@ -80,7 +79,7 @@ async def test_real_recurring_callback_concurrency_creates_and_fulfills_once(
     first_period_expires_at = now_ms + 30 * _DAY_MS
     renewal_period_expires_at = first_period_expires_at + 30 * _DAY_MS
     product_snapshot = {
-        "product_line": "extension",
+        "product_kind": "maps_extension",
         "product_price_id": 0,
         "auto_renew": True,
         "period": "month",
@@ -92,7 +91,7 @@ async def test_real_recurring_callback_concurrency_creates_and_fulfills_once(
         order_no=original_order_no,
         user_id=cleanup.user_id,
         product_class=ProductClass.SUBSCRIPTION.value,
-        product_id=UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+        product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
         product_name=f"pytest-recurring-{cleanup.test_run_id}",
         amount=_PAID_AMOUNT,
         currency=_PAID_CURRENCY,
@@ -221,7 +220,7 @@ async def test_real_renewal_fulfillment_advances_period_without_tier_revert(
         extra_metadata=json.dumps(
             {
                 "product_snapshot": {
-                    "product_line": "maps_extension",
+                    "product_kind": "maps_extension",
                     "product_price_id": 0,
                     "auto_renew": True,
                     "period": "month",

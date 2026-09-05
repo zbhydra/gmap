@@ -1,5 +1,10 @@
 # 011 · Pricing 页 - 变更记录
 
+## 2026-09-05 三类产品字段与入口统一
+
+- Pricing URL、checkout 配置、报价、升级、管理与公共 checkout 类型统一 `product_kind` / `productKind`;订阅配置解析边界只接收三类 Maps 产品,auth/me 类型删除旧单数订阅摘要。Telegram Stars 公共支付支持保留。
+- 配置解析与购买路径定向检查、构建启动通过;真实插件类 URL 进入 Extension 并显示 Maps Pro,切换 Online/API 显示各自 Free。完整验收与外部待办见 [006 变更记录](../006.订阅系统/changelog.md)。
+
 ## 2026-09-05 Pricing 订阅升级与产品线入口接通(005 U4/U5)
 
 - `pricing-page-controller.ts` 消费服务端报价标记当前档与可升级档,并按 `product_line` 入口参数打开既有 tab;普通跨线购买与管理入口沿用原流程。

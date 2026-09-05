@@ -11,8 +11,7 @@ from app.api.user_dependencies import (
 )
 from app.constants.order import ProductClass
 from app.constants.subscription import (
-    EXTENSION_PRODUCT_LINE,
-    SUBSCRIPTION_PRODUCT_LINES,
+    SUBSCRIPTION_PRODUCT_KINDS,
     SubscriptionProductMetadata,
 )
 from app.exceptions.common_exception import AppCommonException
@@ -88,23 +87,23 @@ async def create_subscription_management(
 ) -> JSONResponse:
     """创建当前登录账号在指定产品线的自动续费订阅管理入口。
 
-    请求只携带 product_line；渠道订阅 ID 和客户 ID 由后端从有效实例读取。
+    请求只携带 product_kind；渠道订阅 ID 和客户 ID 由后端从有效实例读取。
     返回的 URL 可为空：为空时客户端展示渠道内路径指引（如 Telegram Stars）。
     """
 
-    product_line = data.product_line
-    if product_line not in SUBSCRIPTION_PRODUCT_LINES:
+    product_kind = data.product_kind
+    if product_kind not in SUBSCRIPTION_PRODUCT_KINDS:
         raise AppCommonException(
             CommonCode.INVALID_REQUEST,
             ext_msg=(
-                "create_subscription_management: unknown product_line: "
-                f"product_line={product_line}"
+                "create_subscription_management: unknown product_kind: "
+                f"product_kind={product_kind}"
             ),
         )
 
     url = await subscription_service.create_management_url(
         current_user.user_id,
-        product_line,
+        product_kind,
     )
     return ResponseUtils.ok({"url": url})
 
@@ -114,7 +113,7 @@ async def create_subscription_management(
     response_model=SubscriptionUpgradeQuoteResponse,
 )
 async def get_subscription_upgrade_quote(
-    product_line: str = Query(..., min_length=1, max_length=32),
+    product_kind: str = Query(..., min_length=1, max_length=32),
     target_product_id: str = Query(..., min_length=1, max_length=64),
     current_user: UserContext = Depends(get_current_user),
 ) -> JSONResponse:
@@ -124,18 +123,18 @@ async def get_subscription_upgrade_quote(
     返回 available=false + reason（不作为业务错误码）。
     """
 
-    if product_line not in SUBSCRIPTION_PRODUCT_LINES:
+    if product_kind not in SUBSCRIPTION_PRODUCT_KINDS:
         raise AppCommonException(
             CommonCode.INVALID_REQUEST,
             ext_msg=(
-                "get_subscription_upgrade_quote: unknown product_line: "
-                f"product_line={product_line}"
+                "get_subscription_upgrade_quote: unknown product_kind: "
+                f"product_kind={product_kind}"
             ),
         )
 
     data = await subscription_service.get_upgrade_quote(
         user_id=current_user.user_id,
-        product_line=product_line,
+        product_kind=product_kind,
         target_product_id=target_product_id,
     )
     return ResponseUtils.ok(data)
@@ -157,19 +156,19 @@ async def checkout_subscription_upgrade(
     支付与轮询；订单创建与支付入口装配由 order_service 共享方法完成。
     """
 
-    product_line = data.product_line
-    if product_line not in SUBSCRIPTION_PRODUCT_LINES:
+    product_kind = data.product_kind
+    if product_kind not in SUBSCRIPTION_PRODUCT_KINDS:
         raise AppCommonException(
             CommonCode.INVALID_REQUEST,
             ext_msg=(
-                "checkout_subscription_upgrade: unknown product_line: "
-                f"product_line={product_line}"
+                "checkout_subscription_upgrade: unknown product_kind: "
+                f"product_kind={product_kind}"
             ),
         )
 
     create_param = await subscription_service.prepare_upgrade_checkout_param(
         user_id=current_user.user_id,
-        product_line=product_line,
+        product_kind=product_kind,
         target_product_id=data.target_product_id,
         client_ip=current_user.ip or current_user.device_id,
         language=current_user.language,
@@ -192,19 +191,19 @@ async def confirm_subscription_upgrade(
     轮询 quote.current_product_id 等待 webhook 收敛，不重复 confirm。
     """
 
-    product_line = data.product_line
-    if product_line not in SUBSCRIPTION_PRODUCT_LINES:
+    product_kind = data.product_kind
+    if product_kind not in SUBSCRIPTION_PRODUCT_KINDS:
         raise AppCommonException(
             CommonCode.INVALID_REQUEST,
             ext_msg=(
-                "confirm_subscription_upgrade: unknown product_line: "
-                f"product_line={product_line}"
+                "confirm_subscription_upgrade: unknown product_kind: "
+                f"product_kind={product_kind}"
             ),
         )
 
     result = await subscription_service.confirm_upgrade(
         user_id=current_user.user_id,
-        product_line=product_line,
+        product_kind=product_kind,
         target_product_id=data.target_product_id,
     )
     return ResponseUtils.ok(result)
@@ -219,7 +218,7 @@ def _serialize_checkout_plans(
         checkout_plans: 支付配置服务返回的订阅方案快照。
 
     Returns:
-        list[dict]: 包含全部产品线的可售商品（含 product_line 与 Maps 月度
+        list[dict]: 包含全部产品线的可售商品（含 product_kind 与 Maps 月度
         额度）；auto_renew 为商品级单一计费模式。
     """
 
@@ -233,7 +232,7 @@ def _serialize_checkout_plans(
             {
                 "product_class": ProductClass.SUBSCRIPTION.value,
                 "product_id": plan.product.product_id,
-                "product_line": plan.product.product_line,
+                "product_kind": plan.product.product_kind,
                 "product_name": plan.product.name,
                 "period": plan.product.period,
                 "auto_renew": plan.product.auto_renew,
@@ -260,9 +259,9 @@ def _serialize_checkout_plans(
 @router.get("/status", response_model=SubscriptionStatusResponse)
 async def get_subscription_status(
     current_user: UserContext = Depends(get_current_user_optional),
-    product_line: str | None = Query(
-        default=None,
-        description="订阅产品线；缺省为 extension（历史单产品线，旧调用方行为不变）",
+    product_kind: str = Query(
+        ...,
+        description="订阅产品类别",
     ),
 ) -> JSONResponse:
     """获取当前用户订阅状态
@@ -271,21 +270,21 @@ async def get_subscription_status(
     - 已登录：返回当前订阅配置
     - 未登录：返回游客免费订阅（user_id=0）
 
-    product_line 用于多产品线客户端按线查询（MapsGrab 插件传
-    maps_extension）；值必须在 SUBSCRIPTION_PRODUCT_LINES 白名单内。
+    product_kind 用于多产品线客户端按线查询（MapsGrab 插件传
+    maps_extension）；值必须在 SUBSCRIPTION_PRODUCT_KINDS 白名单内。
     """
 
-    if product_line is not None and product_line not in SUBSCRIPTION_PRODUCT_LINES:
+    if product_kind not in SUBSCRIPTION_PRODUCT_KINDS:
         raise AppCommonException(
             CommonCode.INVALID_REQUEST,
             ext_msg=(
-                "get_subscription_status: unknown product_line: "
-                f"product_line={product_line}"
+                "get_subscription_status: unknown product_kind: "
+                f"product_kind={product_kind}"
             ),
         )
 
     data = await subscription_status_service.build_status_data(
         user_id=current_user.user_id,
-        product_line=product_line or EXTENSION_PRODUCT_LINE,
+        product_kind=product_kind,
     )
     return ResponseUtils.ok(data)

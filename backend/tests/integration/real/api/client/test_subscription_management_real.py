@@ -14,9 +14,9 @@ import pytest
 from sqlalchemy import text
 
 from app.constants.subscription import (
-    EXTENSION_PRODUCT_LINE,
-    MAPS_EXTENSION_PRODUCT_LINE,
-    UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+    MAPS_ONLINE_PRODUCT_KIND,
+    MAPS_EXTENSION_PRODUCT_KIND,
+    MAPS_EXTENSION_PRO_PRODUCT_ID,
 )
 from app.core.config import settings
 from app.core.database import get_async_session, get_engine
@@ -89,7 +89,7 @@ async def _load_clink_environment() -> str:
     return environment
 
 
-async def test_real_subscription_management_creates_portal_url_per_product_line(
+async def test_real_subscription_management_creates_portal_url_per_product_kind(
     real_async_client,
     real_user_factory,
     make_test_email,
@@ -108,8 +108,8 @@ async def test_real_subscription_management_creates_portal_url_per_product_line(
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_line=EXTENSION_PRODUCT_LINE,
-                product_id=UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+                product_kind=MAPS_EXTENSION_PRODUCT_KIND,
+                product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
                 auto_renew=True,
                 payment_method="clink",
                 channel_uid=channel_uid,
@@ -151,7 +151,7 @@ async def test_real_subscription_management_creates_portal_url_per_product_line(
 
     response = await real_async_client.post(
         "/api/client/subscription/management",
-        json={"product_line": EXTENSION_PRODUCT_LINE},
+        json={"product_kind": MAPS_EXTENSION_PRODUCT_KIND},
         headers={"Authorization": f"Bearer {token}"},
     )
     body = response.json()
@@ -165,7 +165,7 @@ async def test_real_subscription_management_creates_portal_url_per_product_line(
 
     missing_line = await real_async_client.post(
         "/api/client/subscription/management",
-        json={"product_line": MAPS_EXTENSION_PRODUCT_LINE},
+        json={"product_kind": MAPS_ONLINE_PRODUCT_KIND},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert missing_line.status_code == 400

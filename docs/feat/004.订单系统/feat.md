@@ -65,7 +65,7 @@
 
 ## 现状说明
 
-- 当前订单完整闭环支持积分包商品;新的 Unlimited Download 首期和续费也走同一订单履约模型。
+- 积分包与三类 Maps 订阅商品共用订单履约模型,订阅首期和续费均由订单记录。
 - 支付渠道支持 `telegram_stars`、`paypal` 与 `clink`(ClinkBill 托管收银台);website 各页面只展示商品当前启用的渠道,具体渠道清单见 `@../011.Pricing页/feat.md`。
 - 订单履约补偿任务已上线,每 60 秒小批量扫描滞留订单重试。
 
@@ -147,7 +147,7 @@
 
 ## 用户操作逻辑与 UI 元素
 
-> 订单系统的购买 UI 服务 pricing 页的 Credits 与 Unlimited 首期订单。自动续费的后续扣款没有用户 UI,由 provider webhook 创建续费订单。
+> 公共订单 checkout 服务 Credits 与 Maps 订阅首期订单;现役 Pricing 页只展示 Maps 订阅。自动续费后续扣款没有用户 UI,由支付渠道回调创建续费订单。
 
 ### 积分包购买入口(website 购买弹窗)
 

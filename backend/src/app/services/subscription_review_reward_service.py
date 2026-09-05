@@ -39,7 +39,9 @@ class SubscriptionReviewRewardService:
         )
         return raw_config is True
 
-    async def claim(self, user_id: int) -> SubscriptionReviewRewardClaimResult:
+    async def claim(
+        self, user_id: int, *, product_kind: str, product_id: str
+    ) -> SubscriptionReviewRewardClaimResult:
         """领取一次 7 天订阅，重复领取按成功幂等返回。"""
 
         if not await self.is_enabled():
@@ -92,6 +94,8 @@ class SubscriptionReviewRewardService:
             await subscription_service.extend_subscription_days(
                 user_id=user_id,
                 duration_days=_REVIEW_REWARD_DURATION_DAYS,
+                product_kind=product_kind,
+                product_id=product_id,
             )
             return SubscriptionReviewRewardClaimResult(
                 result="granted",

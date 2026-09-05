@@ -53,7 +53,7 @@ class SubscriptionProductConfig:
     product_id: str
     name: str
     # 产品线标识（006 扩展）：下单与状态链路按产品线隔离权益。
-    product_line: str
+    product_kind: str
     period: str
     # 单一计费模式：auto_renew_supported 决定渠道能否卖该商品的自动续费模式。
     auto_renew: bool
@@ -115,7 +115,7 @@ class SubscriptionCheckoutPlanConfig:
 class PaymentConfigSnapshot:
     """支付配置内存快照。"""
 
-    # 主键 (product_line, product_id)：每条产品线一套档位，free 各线一行。
+    # 主键 (product_kind, product_id)：每条产品线一套档位，free 各线一行。
     products: dict[tuple[str, str], SubscriptionProductConfig]
     # product_id 辅助索引：下单请求只携带 product_id（HTTP 契约），按它反查商品。
     # 付费 SKU 合同要求全线唯一（见 seed 脚本），free 同名多行合法。
@@ -169,7 +169,7 @@ class PaymentConfigService:
             SubscriptionProductConfig(
                 product_id=self._normalize_code(row.product_id),
                 name=row.name,
-                product_line=self._normalize_product_line(row.product_line),
+                product_kind=row.product_kind,
                 period=row.period,
                 auto_renew=row.auto_renew,
                 display_currency=normalize_currency(row.display_currency),
@@ -327,7 +327,7 @@ class PaymentConfigService:
             product = SubscriptionProductConfig(
                 product_id=self._normalize_code(row.product_id),
                 name=row.name,
-                product_line=self._normalize_product_line(row.product_line),
+                product_kind=row.product_kind,
                 period=row.period,
                 auto_renew=row.auto_renew,
                 display_currency=normalize_currency(row.display_currency),
@@ -342,7 +342,7 @@ class PaymentConfigService:
                     ),
                 ),
             )
-            products[(product.product_line, product.product_id)] = product
+            products[(product.product_kind, product.product_id)] = product
             products_by_id.setdefault(product.product_id, []).append(product)
         for product in products.values():
             self._assert_product_display_amount_valid(product)
@@ -427,7 +427,7 @@ class PaymentConfigService:
                     "payment_config: product_id maps to multiple payable products, "
                     "paid product_id must be unique across product lines: "
                     f"product_id={product_id}, "
-                    f"lines={[product.product_line for product in matches]}"
+                    f"lines={[product.product_kind for product in matches]}"
                 ),
                 data={
                     "product_id": product_id,
@@ -441,12 +441,6 @@ class PaymentConfigService:
         """规范化配置标识。"""
 
         return value.strip()
-
-    def _normalize_product_line(self, value: str | None) -> str:
-        """规范化产品线标识；历史行缺省回退 extension（插件下载线行为不变）。"""
-
-        normalized = (value or "").strip()
-        return normalized or "extension"
 
     def _load_json_object(self, raw: str | None, *, context: str) -> dict[str, Any]:
         """读取 JSON 对象配置，空值视为 {}。"""

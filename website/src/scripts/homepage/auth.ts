@@ -24,13 +24,11 @@ export interface HomepageUserInfo {
   avatar_url?: string | null
   /** 账号创建时间，后端可能返回秒或毫秒时间戳。 */
   created_at?: number | null
-  /** 当前订阅权益摘要；未登录或后端缺省时为空。 */
-  subscription?: HomepageUserSubscription | null
-  /** MapsGrab 插件产品线订阅摘要；后端缺省时为空。 */
+  /** MapsGrab 插件产品类别订阅摘要；后端缺省时为空。 */
   maps_extension_subscription?: HomepageUserSubscription | null
-  /** Online Scraper 产品线订阅摘要；后端缺省时为空。 */
+  /** Online Scraper 产品类别订阅摘要；后端缺省时为空。 */
   maps_online_subscription?: HomepageUserSubscription | null
-  /** API 产品线订阅摘要；后端缺省时为空。 */
+  /** API 产品类别订阅摘要；后端缺省时为空。 */
   maps_api_subscription?: HomepageUserSubscription | null
 }
 
@@ -43,7 +41,7 @@ export interface HomepageUserSubscription {
   status?: 'active' | 'unavailable'
   /** 订阅周期；unavailable 表示配置不可用等异常态。 */
   period: HomepageSubscriptionPeriod
-  /** 展示名称，例如 Free 或 Unlimited。 */
+  /** 展示名称，例如 Free 或 Maps Pro。 */
   display_name: string
   /** 到期时间，后端可能返回秒或毫秒时间戳；为空表示无到期时间。 */
   expires_at: number | null

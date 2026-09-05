@@ -25,7 +25,7 @@ class SubscriptionCheckoutPlanItem(BaseModel):
 
     product_class: int = Field(..., description="商品类别")
     product_id: str = Field(..., description="订阅商品ID")
-    product_line: str = Field(..., description="订阅产品线")
+    product_kind: str = Field(..., description="订阅产品线")
     product_name: str = Field(..., description="订阅商品名称")
     period: Literal["month", "quarter", "year"] = Field(
         ..., description="商业与权益周期"
@@ -141,7 +141,7 @@ class SubscriptionUpgradeCheckoutRequest(BaseModel):
     渠道与金额由服务端按当前订阅行实时判定，客户端不可指定。
     """
 
-    product_line: str = Field(
+    product_kind: str = Field(
         ..., min_length=1, max_length=32, description="订阅产品线"
     )
     target_product_id: str = Field(
@@ -167,7 +167,7 @@ class SubscriptionUpgradeConfirmResponse(BaseModel):
 class SubscriptionManagementRequest(BaseModel):
     """订阅渠道管理入口请求。"""
 
-    product_line: str = Field(
+    product_kind: str = Field(
         ..., min_length=1, max_length=32, description="订阅产品线"
     )
 

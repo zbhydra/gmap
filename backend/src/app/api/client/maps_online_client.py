@@ -9,7 +9,7 @@ from starlette.background import BackgroundTask
 
 from app.api.user_dependencies import UserContext, get_current_user
 from app.constants.maps_online import KEYWORD_LIMITS
-from app.constants.subscription import MAPS_ONLINE_PRODUCT_LINE
+from app.constants.subscription import MAPS_ONLINE_PRODUCT_KIND
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.models.maps_online_task_model import MapsOnlineTaskModel
@@ -44,7 +44,7 @@ async def create_task(
     current_user: UserContext = Depends(get_current_user),
 ) -> JSONResponse:
     _, product = await subscription_service.get_user_subscription_config(
-        current_user.user_id, MAPS_ONLINE_PRODUCT_LINE
+        current_user.user_id, MAPS_ONLINE_PRODUCT_KIND
     )
     limit = KEYWORD_LIMITS[product.product_id]
     if len(request.keywords) > limit:

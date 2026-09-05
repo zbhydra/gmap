@@ -7,8 +7,8 @@
 ## 目标
 
 同一产品线内未过期订阅从中档位换到更高档位（如 Online Lite → Growth、Maps Pro → Business）：
-立即生效新档权益，用户只补差价。四条产品线中，`maps_online` / `maps_api` / `maps_extension`
-有可升级档位；`extension` 线唯一付费档 Unlimited 之上无更高档，不进入本期升级范围。
+立即生效新档权益，用户只补差价。`maps_online` / `maps_api` / `maps_extension` 三类产品
+均按本类别的档位与渠道能力判断是否可升级。
 
 ## 业务口径
 
@@ -59,17 +59,17 @@
 
 ### 路径 A：一次性线（maps_online / maps_api）——差额订单走收银台
 
-1. `GET /api/client/subscription/upgrade-quote?product_line=&target_product_id=`（登录）：
+1. `GET /api/client/subscription/upgrade-quote?product_kind=&target_product_id=`（登录）：
    服务端从当前订阅行读取支付渠道，返回可升级性、当前/目标档、`payment_method`、`currency`、`amount`（补差）、`expires_at`（保持不变）。
    实时计算，不落库、无报价单状态；每次展示与下单各算一次，以下单冻结值为准。
-2. `POST /api/client/subscription/upgrade/checkout`（登录），body：`product_line + target_product_id`：
+2. `POST /api/client/subscription/upgrade/checkout`（登录），body：`product_kind + target_product_id`：
    - 服务端校验可升级判定与渠道可用性后**服务端定价**创建订单：`product_class=SUBSCRIPTION`，
      `amount` = 服务端算出的补差，`extra_metadata.product_snapshot` 冻结
      `purpose="upgrade"` + `source_product_id` + `target_product_id` + `base_expires_at` + 折算输入（`period_start`、占比），
      并**跳过现有 `check_product` 的同线有效订阅拦截与客户端价比对**（差额是动态价，不存在配置价目）。
    - 调 Provider `create_payment` 返回支付数据，前端复用 order-checkout 弹窗完成支付与轮询。
 3. 支付成功回调 → 履约分支：快照 `purpose=upgrade` 时以
-   `(user_id, product_line, product_id=source_product_id, expires_at=base_expires_at)` 条件更新；命中时只换档，
+   `(user_id, product_kind, product_id=source_product_id, expires_at=base_expires_at)` 条件更新；命中时只换档，
    写 `product_id = target_product_id`，`expires_at` 保持不变，`auto_renew=false`。
    条件未命中说明订阅已过期或已变化，履约失败转人工，不覆盖当前订阅。
    配额即时跟随行内 `product_id` 生效（`usage_service` 读行内档位），当月已用量自然延续。
@@ -82,7 +82,7 @@
 
 1. `GET upgrade-quote` 调 ClinkBill preview，展示渠道返回的补差金额。
 2. 前端确认弹窗（展示补差估算与"将立即扣款"）→ `POST /api/client/subscription/upgrade/confirm`
-   （登录，body：`product_line + target_product_id`）。**不创建订单、不走收银台**。
+   （登录，body：`product_kind + target_product_id`）。**不创建订单、不走收银台**。
 3. 服务端按行内 `channel_subscription_id` 调 ClinkBill update：preview 核对官方 `immediate=true`，再以 `priceSnapshotId` confirm 折算扣款；渠道返回统一成功结果后尝试本地同步换档：行内 `product_id` 更新为新档，
    `expires_at`、`channel_subscription_id`、`payment_method`、`auto_renew=true` 不变。
 4. `subscription.updated.plan_changed` Webhook 执行同一同步逻辑，保证用户关闭页面后仍能收敛；重复 confirm 或重复事件按渠道“已是该价”幂等成功。
@@ -121,7 +121,7 @@
 
 ### confirm 结果与动作
 
-请求体仍只含 `product_line` 与 `target_product_id`，响应 data：
+请求体仍只含 `product_kind` 与 `target_product_id`，响应 data：
 
 | status | action | 客户端处理 |
 | --- | --- | --- |

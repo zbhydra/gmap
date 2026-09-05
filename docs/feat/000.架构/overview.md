@@ -5,14 +5,15 @@
 
 ## 1. 各端职责
 
-monorepo，各前端子项目独立用 pnpm 管理（无根 workspace），后端用 uv。共 4 个应用：
+monorepo，各前端子项目独立用 pnpm 管理（无根 workspace），后端用 uv。现役端如下：
 
 | 端 | 目录 | 技术栈 | 职责 |
 | --- | --- | --- | --- |
 | **backend** | `backend/` | Python 3 + FastAPI + SQLAlchemy(async) + aiomysql + Redis | 业务服务器（`business` 角色）与执行节点（`download` 角色）共用同一份代码；API、调度、crons、支付、节点管理全在这。详见 `@tech-backend.md` |
-| **website** | `website/` | Astro 5 + Vue 3 岛屿 + Tailwind，nginx 部署 | 面向终端用户的 SEO 多语言站点（14 语言），主域 `telegramdownloadmedia.com`，引导下载与安装 extension。详见 `@tech-website.md` |
-| **extension** | `extension/` | Vue 3 + Pinia + vue-i18n + Tailwind，**Chrome Manifest V3** | Maps Extractor 插件（TG 下载业务已移除，改造中），跨上下文 RPC、与 backend 同一套 HTTP 契约。详见 `@tech-extension.md` |
-| **admin** | `admin/` | Vue 3 + Naive UI + vue-router + Pinia | 独立 SPA 管理后台（节点/订单/渠道/TG 客户端/mark-log 诊断），走 `/api/admin/*`。详见 `@tech-extension.md` 末尾 |
+| **website** | `website/` | Astro，nginx 部署；依赖以本端 package.json 为准 | MapsGrab 主站，提供产品页、Pricing 与工具；站点配置见本端 README，工程职责见 `@tech-website.md` |
+| **extension** | `extension/` | Vue 3 + Pinia + vue-i18n，**Chrome Manifest V3** | Google Maps 采集插件，跨上下文 RPC、与 backend 共用 HTTP 契约。详见 `@tech-extension.md` |
+| **extension-bing** | `extension-bing/` | Vue 3，**Chrome Manifest V3** | Bing Maps 采集插件，与 Google Maps 插件共享 `maps_extension` 订阅类别。详见 `@../016.Bing插件/feat.md` |
+| **admin** | `admin/` | Vue 3 + Naive UI + vue-router + Pinia | 独立 SPA 管理后台，展示用户、订单、三类订阅和用量，走 `/api/admin/*`。详见 `@../008.管理后台/feat.md` |
 
 ### 1.1 本地开发端口
 
@@ -32,7 +33,7 @@ extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式
 ## 2. 技术栈速查
 
 - **后端**：Python（uv 管理）、FastAPI、SQLAlchemy 2.x async（aiomysql 驱动）、Redis（redis.asyncio）、Pydantic、click。唯一 ORM/DB 引擎是 MySQL。
-- **网站**：Astro（SSG）+ Vue 3 岛屿 + Tailwind + mediabunny（下载引擎）；Playwright e2e。
+- **网站**：Astro（SSG）；依赖以 `website/package.json` 为准，Playwright e2e。
 - **插件**：Vue 3 + Pinia + vite-plugin-web-extension（MV3）+ vue-i18n + Tailwind；Playwright e2e。
 - **后台**：Vue 3 + Naive UI + axios + vue-router。
 - **包管理**：前端各子项目独立 pnpm（**无根 workspace**，各自 `package.json` + lockfile），后端 uv（`backend/uv.lock`）。
@@ -43,28 +44,22 @@ extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式
 用户
  │
  ├─ 浏览器 ─→ website (Astro 静态站)
- │             │  解析/下载/计费 调 backend business (HTTP)
+ │             │  登录/订阅/订单 调 backend business (HTTP)
  │             │  mark-log 双写: backend /api/client/mark + 阿里云 SLS WebTracking (后端不可用时逃生)
  │             ▼
  │      backend (business 角色, FastAPI)
- │        ├─ /api/client/*   互联网客户端接口 (下载/解析/积分/计数/订单/登录/签到)
+ │        ├─ /api/client/*   Maps 采集/用量/订阅/订单/登录接口
  │        ├─ /api/admin/*    admin 后台接口
  │        ├─ /api/system/*   健康检查/看板
  │        ├─ /api/internal/* 节点内部接口 (无业务 DB 依赖)
- │        ├─ /api/callback/* 支付/Telegram 回调
+ │        ├─ /api/callback/* 共享支付回调 (保留 Telegram Stars)
  │        ├─ crons 框架 (注册表 + MySQL 游标 + 调度器)
- │        ├─ 调度: 按 权重/健康 加权随机抽 service_nodes →
- │        │
- │        ▼  (业务服务器转发执行请求到选中节点)
- │      backend (download 角色, 同一份代码, 多地区多实例)
- │        ├─ 不连业务数据库, 只连本地运行态 (tg session / cookie 文件)
- │        ├─ /download-pre-v2 /download-v2 执行接口 (由 business 转发)
- │        └─ 上游: Telegram / TikTok / Instagram / X / Reddit / Vimeo / Threads ...
+ │        └─ Maps 云端任务 → 采集 Provider / 结果存储
  │
- └─ 桌面浏览器 ─→ extension (Chrome MV3, 跑在 web.telegram.org)
+ └─ 桌面浏览器 ─→ extension / extension-bing (Google Maps / Bing Maps)
                   │  content/background/injected 三上下文, 自研 RPC
                   │  HTTP 调同一 backend business (X-Device-Id + token)
-                  │  下载大文件时引导用户用插件本地下载
+                  │  采集结果本地导出；订阅购买和管理跳转 website Pricing
                   ▼
               backend business (同上, /api/client/*)
 ```
@@ -75,7 +70,9 @@ extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式
 
 ## 4. 业务域依赖地图
 
-7 个业务域（001-007），依赖信号取各域 `feat.md` 里的 `@` 引用（行依赖列）：
+现役 Maps 产品复用 003–011 的共享计费、订单、计数器、订阅、用户与增长基建。006 按三类产品隔离订阅，购买入口归 011，月度计量归 [额度基建](tech-额度基建.md)；013 与 016 共享插件订阅，014 承接 Online/API。
+
+以下是 TG 下载工程时期 001–007 的历史依赖地图,不表示下载产品仍在本仓运营：
 
 | 依赖方 ↓ ＼ 被依赖方 → | 001 节点 | 002 下载 | 003 积分 | 004 订单 | 005 计数器 | 006 订阅 | 007 用户 |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
@@ -87,9 +84,8 @@ extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式
 | **006 订阅系统** | ✓ | ✓ | ✓ | ✓ | ✓ | — | |
 | **007 用户系统** | ✓ | ✓ | ✓ | ✓ | ✓ | | — |
 
-观察（用于判断地基归属）：
-- **001 节点系统**被 6 个域引用，是执行底座；**003 积分系统**被 5 个域引用，是现行计费权威；**002 下载功能**被 5 个域引用，是核心业务链路。这三个是「最底层」业务域。
-- **006 订阅系统**已重新激活为插件专属权益域,购买入口归 011 Pricing,额度扣减归 005 计数器。
+历史依赖说明：
+- **001 节点系统**、**002 下载功能**是原下载工程的执行链路；共享能力复用边界以各域现行合同为准。
 - 001↔002 存在双向 `@`（节点提供执行环境 ↔ 下载业务跑在节点上）。
 - 007 用户系统在 001-007 内出度最多（5）但在该范围内不被其他域 `@` 回指（其他域谈 user_id 时未加链接），属不对称——因为账号/会话是横切底座，所有域都隐含依赖它。
 

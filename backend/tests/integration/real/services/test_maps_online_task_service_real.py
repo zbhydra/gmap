@@ -12,7 +12,7 @@ from sqlalchemy import delete, select, update
 
 from app.constants.maps_online import TASK_TIMEOUT_SECONDS
 import app.services.maps_online_task_service as online_module
-from app.constants.subscription import MAPS_ONLINE_PRODUCT_LINE
+from app.constants.subscription import MAPS_ONLINE_PRODUCT_KIND
 from app.core.config import settings
 from app.core.database import get_async_session
 from app.models.maps_online_task_item_model import get_item_model
@@ -227,7 +227,7 @@ async def test_real_online_task_reports_once_and_recovers_pending_items(
             )
         )
         # 独占订阅指向不存在的档位，使真实 consume 失败；不写 config_*。
-        db.add(UserSubscriptionModel(user_id=state.user_id, product_line=MAPS_ONLINE_PRODUCT_LINE, product_id=f"missing-{state.test_run_id}", expires_at=timestamp_now() + 60_000))  # type: ignore[call-arg]
+        db.add(UserSubscriptionModel(user_id=state.user_id, product_kind=MAPS_ONLINE_PRODUCT_KIND, product_id=f"missing-{state.test_run_id}", expires_at=timestamp_now() + 60_000))  # type: ignore[call-arg]
         await db.commit()
     assert await service.report_item(
         task.id, items[3].id, "success", 0, f"{object_key}.empty", ""
@@ -266,7 +266,7 @@ async def test_real_online_task_reports_once_and_recovers_pending_items(
         )
         await db.execute(
             delete(UserSubscriptionModel).filter_by(
-                user_id=state.user_id, product_line=MAPS_ONLINE_PRODUCT_LINE
+                user_id=state.user_id, product_kind=MAPS_ONLINE_PRODUCT_KIND
             )
         )
         await db.commit()

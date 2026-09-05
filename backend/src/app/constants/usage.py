@@ -17,7 +17,7 @@ _USAGE_KEY_TTL_SECONDS = 45 * 24 * 60 * 60
 _DEDUP_KEY_TTL_SECONDS = 7 * 24 * 60 * 60
 
 
-def build_usage_key(product_line: str, identity: str) -> tuple[str, int]:
+def build_usage_key(product_kind: str, identity: str) -> tuple[str, int]:
     """构建匿名月度用量业务子键，返回 ``(subkey, ym)``。
 
     仅业务语义段（无全局前缀）；service 层写入/读取前必须经
@@ -27,7 +27,7 @@ def build_usage_key(product_line: str, identity: str) -> tuple[str, int]:
     """
 
     ym = get_current_ym()
-    return f"usage:{product_line}:{ym}:{identity}", ym
+    return f"usage:{product_kind}:{ym}:{identity}", ym
 
 
 def build_dedup_key(request_id: str) -> str:

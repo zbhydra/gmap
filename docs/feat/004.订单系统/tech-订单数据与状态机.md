@@ -24,7 +24,7 @@
 ```python
 # backend/src/app/constants/order.py
 class ProductClass(int, enum.Enum):
-    SUBSCRIPTION = 1  # 订阅商品;Unlimited 首期和续费扣款都走 orders
+    SUBSCRIPTION = 1  # 订阅商品;Maps 订阅首期和续费扣款都走 orders
     RECHARGE = 2      # 充值商品(积分包)
     EXTENSION = 3     # 扩展功能(预留,未接入履约)
     OTHER = 4         # 其他(预留,未接入履约)
@@ -33,7 +33,7 @@ class ProductClass(int, enum.Enum):
 - `RECHARGE` 当前有完整订单闭环(下单 + 履约)。
 - `SUBSCRIPTION` 用于订阅首期和每次自动续费扣款。首期订单由用户点击创建,后续续费订单由 provider webhook 创建。
 - `EXTENSION`、`OTHER` 是预留枚举;未接入履约前 `OrderService.check_product()` 直接拒绝下单,不暴露给客户端购买。
-- 商品标识(`product_id`)由各商品域定义:积分包商品如 `credit_50 / credit_200 / credit_1000`(积分域),订阅商品如 `unlimited_month`(订阅域)。
+- 商品标识(`product_id`)由各商品域定义:积分包商品如 `credit_50 / credit_200 / credit_1000`(积分域),订阅商品如 `maps_extension_pro`(订阅域)。
 
 ## 2. 订单状态枚举
 
@@ -290,7 +290,7 @@ else:
 ```
 
 - 订单侧只负责"按商品类别分发到对应业务域的发货能力 + 同事务抢占状态";具体发货实现不在订单域。
-- `SUBSCRIPTION` 的 `product_line/auto_renew/period/product_price_id` 从订单 `extra_metadata.product_snapshot` 读取,自动续费履约再读 `extra_metadata.payment_callback.provider_subscription`(渠道订阅 ID / 本地首单号 / 账期起止),不从当前订阅配置重读,避免改价或改周期后历史订单履约漂移。
+- `SUBSCRIPTION` 的 `product_kind/auto_renew/period/product_price_id` 从订单 `extra_metadata.product_snapshot` 读取,自动续费履约再读 `extra_metadata.payment_callback.provider_subscription`(渠道订阅 ID / 本地首单号 / 账期起止),不从当前订阅配置重读,避免改价或改周期后历史订单履约漂移。
 - `RECHARGE` 的 `credits_amount` 从订单 `extra_metadata.product_snapshot.credits_amount` 读取(下单时由积分域 `check_product` 写入快照),不从当前积分配置重读,避免改价后到账数量漂移。
 
 ### 8.4 取消订单幂等(`cancel_user_order`)

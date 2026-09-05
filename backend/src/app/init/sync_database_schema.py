@@ -41,6 +41,7 @@ class ColumnDiff:
     diff_types: tuple[str, ...]
     expected_comment: str | None = None
     actual_comment: str | None = None
+    old_name: str | None = None
 
     @property
     def diff_type(self) -> str:
@@ -59,6 +60,7 @@ class IndexDiff:
     expected_unique: bool = False
     actual_columns: list[str] | None = None
     actual_unique: bool | None = None
+    old_name: str | None = None
 
 
 @dataclass
@@ -145,14 +147,22 @@ class SchemaComparator:
         # 检查缺失的列
         for col_name, col_info in model_columns.items():
             if col_name not in db_columns:
+                old_name = (
+                    Base.metadata.tables[table_name]
+                    .info.get("schema_sync_rename_columns", {})
+                    .get(col_name)
+                )
                 result.column_diffs.append(
                     ColumnDiff(
                         table_name=table_name,
                         column_name=col_name,
                         expected_type=col_info.type,
                         actual_type=None,
-                        diff_types=("missing",),
+                        diff_types=(
+                            "renamed" if old_name in db_columns else "missing",
+                        ),
                         expected_comment=col_info.comment,
+                        old_name=old_name if old_name in db_columns else None,
                     )
                 )
                 continue
@@ -192,6 +202,28 @@ class SchemaComparator:
             }
 
         db_indexes = await conn.run_sync(_get_indexes)
+        table_info = Base.metadata.tables[table_name].info
+        renamed_columns = {
+            old: new
+            for new, old in table_info.get("schema_sync_rename_columns", {}).items()
+        }
+        for index in db_indexes.values():
+            index["column_names"] = [
+                renamed_columns.get(column, column) for column in index["column_names"]
+            ]
+        for new_name, old_name in table_info.get(
+            "schema_sync_rename_indexes", {}
+        ).items():
+            if old_name in db_indexes and new_name not in db_indexes:
+                result.index_diffs.append(
+                    IndexDiff(
+                        table_name=table_name,
+                        index_name=new_name,
+                        diff_type="renamed",
+                        old_name=old_name,
+                    )
+                )
+                db_indexes[new_name] = db_indexes.pop(old_name)
 
         for idx_name, idx_info in model_indexes.items():
             if idx_name not in db_indexes:
@@ -409,6 +441,14 @@ class SchemaSync:
 
     async def _generate_column_sql(self, conn, col_diff: ColumnDiff) -> str | None:
         """生成列修改 SQL"""
+        if col_diff.diff_type == "renamed":
+            definition = self._render_model_column(
+                col_diff.table_name, col_diff.column_name
+            )
+            return (
+                f"ALTER TABLE {col_diff.table_name} "
+                f"CHANGE COLUMN {col_diff.old_name} {definition}"
+            )
         if col_diff.diff_type == "missing":
             # 检查是否是主键列重命名（常见情况：id -> user_id）
             old_pk_col = await self._find_old_primary_key_column(
@@ -595,6 +635,12 @@ class SchemaSync:
         """生成索引 SQL（可能包含多条语句：DROP + CREATE）"""
         sqls = []
 
+        if idx_diff.diff_type == "renamed":
+            return [
+                f"ALTER TABLE {idx_diff.table_name} RENAME INDEX "
+                f"{idx_diff.old_name} TO {idx_diff.index_name}"
+            ]
+
         if idx_diff.diff_type == "missing":
             columns = ", ".join(idx_diff.expected_columns)
             unique_sql = "UNIQUE " if idx_diff.expected_unique else ""
@@ -652,6 +698,12 @@ def print_diff(diff: TableDiff) -> None:
             d for d in diff.column_diffs if "comment_mismatch" in d.diff_types
         ]
         removed = [d for d in diff.column_diffs if "removed" in d.diff_types]
+        for d in diff.column_diffs:
+            if d.diff_type == "renamed":
+                click.secho(
+                    f"  列改名: {d.table_name}.{d.old_name} -> {d.column_name}",
+                    fg="yellow",
+                )
 
         if missing:
             click.secho(f"\n  缺失的列 ({len(missing)}):", fg="red")
@@ -698,6 +750,8 @@ def print_diff(diff: TableDiff) -> None:
             )
             if idx_diff.diff_type == "missing":
                 click.secho(f"     缺失，列: {idx_diff.expected_columns}", fg="yellow")
+            elif idx_diff.diff_type == "renamed":
+                click.secho(f"     改名自: {idx_diff.old_name}", fg="yellow")
             elif idx_diff.diff_type == "columns_mismatch":
                 click.secho(
                     "     定义不一致，"

@@ -4,11 +4,10 @@
 
 ## 1. 技术栈
 
-- **Astro 5**（`website/astro.config.mjs`，`site=https://telegramdownloadmedia.com`，`base='/'`）。
+- **Astro**（`website/astro.config.mjs`），MapsGrab 主站；域名配置与依赖以本端配置和 README 为准。
 - 集成：`@astrojs/vue`（Vue 3.5 岛屿）+ 自定义 `languageSitemap()` 集成（`src/sitemap/`）。
-- 下载引擎：`mediabunny`（dev 软链本地 node_modules）。
-- 构建：`pnpm build`（先产出压缩版 `/tg-play-sw.js`，再 `astro check && astro build`）；e2e：Playwright（对接 backend 真实 API）。
-- 部署：nginx（`website/deploy/tg-web.conf`，主域 `telegramdownloadmedia.com`）。
+- 构建：`pnpm build`，具体门禁以 `website/package.json` 为准；e2e：Playwright。
+- 部署：nginx（`website/deploy/mapsgrab.conf`）。旧 TG 主站与其下载引擎已退役,本仓网站提供 Maps 产品、Pricing 和工具。
 
 ## 2. 目录结构（website）
 
@@ -20,8 +19,8 @@ website/
 │   ├── retired-page-redirects.csv   # 废弃 URL 301 重定向表（14 语言全量）
 │   └── README.md
 ├── deploy/
-│   ├── tg-web.conf           # nginx 配置（真实目录无尾斜杠→HTTPS 尾斜杠 301；静态 30d immutable）
-│   ├── tg-web-test.conf      # 测试环境
+│   ├── mapsgrab.conf           # nginx 配置（真实目录无尾斜杠→HTTPS 尾斜杠 301；静态 30d immutable）
+│   ├── mapsgrab-test.conf      # 测试环境
 │   └── deploy.sh
 └── src/
     ├── components/           # download/ homepage/ pages/ site/ UI 组件
@@ -76,7 +75,7 @@ website/
 
 - `cloudflare/retired-page-redirects.csv`：废弃 URL 的 301 重定向表（features/guide/faq/solutions 等历史页，按 14 语言全量列），格式 `source,target,301,true`。Pricing 是当前有效购买页,不在退役页列表中。
 - `cloudflare/README.md`：使用说明。
-- `deploy/tg-web.conf` / `deploy/tg-web-test.conf`：nginx 配置——仅对构建产物中真实存在的目录执行「无尾斜杠 → HTTPS 尾斜杠」单跳 301，不维护第二份路由白名单；已退休 URL 只由 Cloudflare Bulk Redirects 承接。
+- `deploy/mapsgrab.conf` / `deploy/mapsgrab-test.conf`：nginx 配置——仅对构建产物中真实存在的目录执行「无尾斜杠 → HTTPS 尾斜杠」单跳 301，不维护第二份路由白名单；已退休 URL 只由 Cloudflare Bulk Redirects 承接。
 - `deploy/deploy.sh`：发布静态版本后将对应环境的 vhost 安装到 `/usr/local/nginx/vhost/`，执行 `nginx -t`，失败恢复原配置，通过后 reload；静态资源使用 30 天 immutable 缓存。
 
 ## 6. SEO 基建

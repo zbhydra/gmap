@@ -3182,7 +3182,7 @@ test('Pricing checkout client loads maps plans and formats channel prices', asyn
         {
           product_class: 1,
           product_id: productId,
-          product_line: 'maps_extension',
+          product_kind: 'maps_extension',
           product_name: productId === 'maps_extension_pro' ? 'Maps Pro' : 'Maps Business',
           display_currency: 'USD',
           display_amount: amount,
@@ -3199,9 +3199,9 @@ test('Pricing checkout client loads maps plans and formats channel prices', asyn
         },
         {
           product_class: 1,
-          product_id: 'unlimited',
-          product_line: 'extension',
-          product_name: 'Unlimited',
+          product_id: 'online_lite',
+          product_kind: 'maps_online',
+          product_name: 'Online Lite',
           display_currency: 'USD',
           display_amount: 9990000,
           period: 'month',
@@ -3224,7 +3224,13 @@ test('Pricing checkout client loads maps plans and formats channel prices', asyn
   globalThis.document = { documentElement: { lang: 'en-US' } }
   globalThis.fetch = async (url, options = {}) => {
     fetchCalls.push({ url: String(url), body: options.body ? JSON.parse(String(options.body)) : null })
-    return new Response(JSON.stringify(mapsPlan('maps_extension_pro', 39000000)), {
+    const response = mapsPlan('maps_extension_pro', 39000000)
+    const example = response.data.checkout_configs[1]
+    response.data.checkout_configs.push(
+      { ...example, product_id: 'api_starter', product_kind: 'maps_api' },
+      { ...example, product_kind: 'invalid_kind' }
+    )
+    return new Response(JSON.stringify(response), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     })
@@ -3233,13 +3239,15 @@ test('Pricing checkout client loads maps plans and formats channel prices', asyn
   try {
     const context = { deviceId: 'pricing-device', token: 'pricing-token' }
     const subscriptionData = await module.listSubscriptionCheckoutConfigs(context)
-    assert.equal(subscriptionData.plans.length, 2)
+    assert.deepEqual(subscriptionData.plans.map(plan => plan.product_kind), [
+      'maps_extension', 'maps_online', 'maps_api'
+    ])
 
-    // pickPlansByLine 只取 maps_extension 产品线，按 product_id 索引
-    const mapsPlans = module.pickPlansByLine(subscriptionData.plans, 'maps_extension')
+    // pickPlansByKind 只取 maps_extension 产品线，按 product_id 索引
+    const mapsPlans = module.pickPlansByKind(subscriptionData.plans, 'maps_extension')
     assert.equal([...mapsPlans.keys()].sort().join(','), 'maps_extension_pro')
     const plan = mapsPlans.get('maps_extension_pro')
-    assert.equal(plan.product_line, 'maps_extension')
+    assert.equal(plan.product_kind, 'maps_extension')
     assert.equal(plan.monthly_quota, 100000)
     assert.equal(plan.auto_renew, true)
     assert.equal(plan.period, 'month')
@@ -3305,7 +3313,7 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
       checkout_configs: [{
         product_class: 1,
         product_id: productId,
-        product_line: 'maps_extension',
+        product_kind: 'maps_extension',
         product_name: 'Maps Pro',
         display_currency: 'USD',
         display_amount: amount,
@@ -3542,7 +3550,7 @@ test('PayPal success return page polls order status every 3 seconds and switches
     expectedMessageFragment: 'Credits have been added'
   })
   await runScenario({
-    productId: 'unlimited',
+    productId: 'maps_extension_pro',
     productClass: 2,
     expectedTitle: 'Credits added',
     expectedMessageFragment: 'Credits have been added'

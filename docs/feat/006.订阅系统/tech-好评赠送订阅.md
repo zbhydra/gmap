@@ -1,11 +1,11 @@
 # 006 · 好评赠送订阅
 
 > 技术规格。定义领取资格、永久 Counter、Redis 短锁、订阅加时与客户端接口。Pricing 交互见 `@../011.Pricing页/tech-好评赠送.md`。
-> 实现状态:2026-09-02 活动下线——前端字段删除、claim 路由直接返回 INVALID_REQUEST、checkout-configs 活动字段固定关闭态;本文件描述的 service 与锁逻辑代码全部保留,重启活动时恢复路由调用即可。
+> 当前入口固定关闭:claim 路由直接返回 INVALID_REQUEST,checkout-configs 的活动开关固定 false、领取次数固定 0。下文活动编排是保留能力;重新开放前必须先确认赠送产品,再显式传入 `product_kind` 与 `product_id`,不能只修改配置开关。
 
 ## 1. 目标与边界
 
-为登录账号提供一次 7 天 Unlimited 赠送。系统只用 30 秒前端等待降低直接点击领取的概率,不验证 Chrome Web Store 评价、商店账号或评价内容。
+保留每登录账号一次 7 天订阅赠送能力,具体赠送类别与档位待活动重新开放时确认。历史页面只用 30 秒前端等待降低直接点击领取的概率,不验证 Chrome Web Store 评价、商店账号或评价内容。
 
 不新增活动表、订单、补偿任务、对账、锁续租、版本号、session token 或依赖注入。Extension 不参与该流程。
 
@@ -37,7 +37,7 @@ INSERT IGNORE INTO config_public (c_key, g_value)
 VALUES ('subscription_review_reward', 'true');
 ```
 
-运营关闭活动时把值改为 JSON 布尔值 `false`;重新开放时改回 `true`。只有值严格等于 JSON 布尔值 `true` 才开启活动,其余值统一按关闭处理。数据库读取失败由请求统一失败。
+保留 service 只把 JSON 布尔值 `true` 视为开启,其余值统一按关闭处理;数据库读取失败由请求统一失败。当前 API 固定拒绝领取,修改该配置不能开放活动。
 
 `config_public_service` 内存缓存 TTL 为 180 秒。修改后可以在管理后台“系统设置 → 刷新配置缓存”重载当前业务进程;多进程或多实例需要逐实例刷新或等待 TTL 到期。
 
@@ -64,11 +64,11 @@ GET /api/client/subscription/checkout-configs
 
 | 字段 | 类型 | 语义 |
 | --- | --- | --- |
-| `checkout_configs` | array | 现有 Unlimited 购买配置 |
-| `review_reward_enabled` | bool | 当前好评赠送活动是否开放 |
-| `review_reward_claimed_count` | int | 登录账号的永久领取次数;匿名固定为 `0` |
+| `checkout_configs` | array | 三类 Maps 订阅购买配置,合同见 `@tech-订阅商品与状态.md` |
+| `review_reward_enabled` | bool | 固定 `false` |
+| `review_reward_claimed_count` | int | 固定 `0` |
 
-缺少、过期或无效登录态按匿名公开配置处理,不阻断商品展示。活动关闭时不读取账号 Counter,领取次数固定返回 `0`;活动开启时读取 Counter 失败则整个配置请求失败,沿用 Pricing 配置失败行为。
+缺少、过期或无效登录态按匿名公开配置处理,不阻断商品展示。当前配置接口不读取账号 Counter。
 
 ### 5.2 领取赠送
 
@@ -76,7 +76,7 @@ GET /api/client/subscription/checkout-configs
 POST /api/client/subscription/review-reward/claim
 ```
 
-要求有效登录态,无请求体。成功响应 `data`:
+当前路由拒绝领取且不写 Counter、订阅或 Redis 锁。下列为保留 service 的返回合同,不是当前 API 的成功响应:
 
 | 字段 | 类型 | 语义 |
 | --- | --- | --- |
@@ -90,6 +90,8 @@ Redis 锁不可用或 1 秒内抢不到锁返回 `SUBSCRIPTION_REVIEW_REWARD_BUS
 数据库读写失败由统一异常处理中间件返回服务端错误,不在业务层吞掉。
 
 ## 6. 领取流程
+
+以下流程由保留的 `claim(user_id, *, product_kind, product_id)` 承担,当前 API 不调用。调用方必须显式选择已确认的赠送产品,服务不提供默认类别或档位。
 
 ```text
 鉴权
@@ -110,7 +112,7 @@ Redis 锁不可用或 1 秒内抢不到锁返回 `SUBSCRIPTION_REVIEW_REWARD_BUS
 - 无记录、已过期或到期时间为空:新到期时间为 `now + 7 天`。
 - 用 MySQL upsert 在数据库表达式内计算,避免普通读改写覆盖并发的支付续期。
 
-订阅 service 抽出可复用的“按天数延长权益”原子能力。支付订单履约和好评赠送都调用同一算法;好评场景自行开启并提交 session,支付履约继续使用订单 service 已持有的 session。
+订阅 service 提供按天延长权益的原子能力,活动自行开启并提交 session。商品支付的自然月续期与渠道账期算法见 `@tech-订阅商品与状态.md`,不以 7 天活动算法替代。
 
 跨 Counter、Redis 锁和订阅的活动编排放在独立 `SubscriptionReviewRewardService`。模块底部暴露单例,内部直接引用 `counter_service`、`subscription_service` 与模块级 `RedisLock`,不使用构造器依赖注入。`SubscriptionService` 只保留订阅读取和加时原子能力,API 只处理鉴权与响应。
 
@@ -163,7 +165,7 @@ backend/tests/integration/real/api/client/              # MySQL + Redis 真实 A
 
 ## 10. 测试与验收
 
-后端只写真实 MySQL + Redis 测试,不 mock service、数据库、Redis 或鉴权:
+当前接口验收是配置恒为关闭态、领取拒绝且无副作用。以下是活动重新开放后的能力验收口径,须先确认赠送产品;使用真实 MySQL + Redis,不 mock service、数据库、Redis 或鉴权:
 
 - 匿名配置返回活动开关和领取次数 `0`,商品配置保持可用。
 - 已登录未领取账号返回 `0`;已有永久 Counter 返回真实次数。

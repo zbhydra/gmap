@@ -50,7 +50,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
@@ -62,7 +62,7 @@ from app.constants.client_product import ClientProductEnum  # noqa: E402
 from app.constants.counter import CounterId  # noqa: E402
 from app.constants.subscription import (  # noqa: E402
     MAPS_EXTENSION_PRO_PRODUCT_ID,
-    MAPS_EXTENSION_PRODUCT_LINE,
+    MAPS_EXTENSION_PRODUCT_KIND,
     SubscriptionPeriodEnum,
 )
 from app.core.database import (  # noqa: E402
@@ -196,14 +196,14 @@ async def _seed_extension_pro(
     await subscription_service.extend_subscription_days(
         user_id=user_id,
         duration_days=30,
-        product_line=MAPS_EXTENSION_PRODUCT_LINE,
+        product_kind=MAPS_EXTENSION_PRODUCT_KIND,
         product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
     )
 
     # 回读验证：商品配置缺失（未跑 seed_subscription_products.py）会让
     # subscription_status 返回 unavailable、插件 PRO 判定失效，必须在此快速失败。
     _, product_config = await subscription_service.get_user_subscription_config(
-        user_id, MAPS_EXTENSION_PRODUCT_LINE
+        user_id, MAPS_EXTENSION_PRODUCT_KIND
     )
     if product_config.period != SubscriptionPeriodEnum.MONTH.value:
         raise RuntimeError(
@@ -241,14 +241,14 @@ async def _delete_maps_extension_subscription(user_id: int) -> None:
     """删除 e2e 账号的 maps_extension 订阅行。
 
     extend 是按天累加的 upsert，先删行保证重复 seed 状态确定；订阅表为
-    (user_id, product_line) 复合主键，不能走 BaseService 按单主键删除。
+    (user_id, product_kind) 复合主键，不能走 BaseService 按单主键删除。
     """
 
     async with get_async_session() as db:
         await db.execute(
             delete(UserSubscriptionModel).where(
                 UserSubscriptionModel.user_id == user_id,  # type: ignore[arg-type]
-                UserSubscriptionModel.product_line == MAPS_EXTENSION_PRODUCT_LINE,
+                UserSubscriptionModel.product_kind == MAPS_EXTENSION_PRODUCT_KIND,
             )
         )
         await db.commit()
@@ -272,12 +272,17 @@ async def _seed_pricing_review_reward_state(user_id: int) -> None:
         )
         await db.commit()
 
-    subscription = await subscription_service.get_user_subscription(user_id)
+    async with get_async_session() as db:
+        subscription_user_id = await db.scalar(
+            select(UserSubscriptionModel.user_id)
+            .where(UserSubscriptionModel.user_id == user_id)
+            .limit(1)
+        )
     claimed_count = await counter_service.get(user_id, review_reward_counter_id)
-    if subscription.expires_at is not None or claimed_count != 0:
+    if subscription_user_id is not None or claimed_count != 0:
         raise RuntimeError(
             "e2e_seed_user pricing-review-reward verification failed: "
-            f"user_id={user_id}, expires_at={subscription.expires_at}, "
+            f"user_id={user_id}, has_subscription={subscription_user_id is not None}, "
             f"review_reward_claimed_count={claimed_count}"
         )
 

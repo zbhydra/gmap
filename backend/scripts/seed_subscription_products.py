@@ -9,9 +9,9 @@ SKU 唯一性合同：付费 SKU 的 product_id 必须全线唯一——下单�
 product_id（HTTP 契约），跨线重名会让下单反查无法确定目标；free 是唯一
 允许各线同名的档位（各线一行、不下单、无渠道价，拒单保护在
 payment_config 的验价链路）。表级约束是复合唯一键
-(product_line, product_id)，线内唯一性由它保证，付费全线唯一由本合同保证。
+(product_kind, product_id)，线内唯一性由它保证，付费全线唯一由本合同保证。
 
-幂等 upsert 15 个 SKU（4 条 free + 11 个付费）的商品行与渠道价行：
+幂等 upsert Maps 商品行与渠道价行：
 - 商品单一计费模式：auto_renew 是商品列（不再读 metadata）；free 档
   period='none'，付费档 period=month（自然月履约，不再使用 duration_days）。
 - display_order 只负责展示排序；tier_rank 只表达业务档次（free=0，同线付费档递增）。
@@ -30,7 +30,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from sqlalchemy import text
@@ -45,18 +45,16 @@ from app.constants.subscription import (  # noqa: E402
     API_BUSINESS_PRODUCT_ID,
     API_PROFESSIONAL_PRODUCT_ID,
     API_SCALE_PRODUCT_ID,
-    EXTENSION_PRODUCT_LINE,
     FREE_SUBSCRIPTION_PRODUCT_ID,
-    MAPS_API_PRODUCT_LINE,
+    MAPS_API_PRODUCT_KIND,
     MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
-    MAPS_EXTENSION_PRODUCT_LINE,
+    MAPS_EXTENSION_PRODUCT_KIND,
     MAPS_EXTENSION_PRO_PRODUCT_ID,
-    MAPS_ONLINE_PRODUCT_LINE,
+    MAPS_ONLINE_PRODUCT_KIND,
     ONLINE_BASIC_PRODUCT_ID,
     ONLINE_GROWTH_PRODUCT_ID,
     ONLINE_LITE_PRODUCT_ID,
     ONLINE_PRO_PRODUCT_ID,
-    UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
 )
 from app.core.database import get_async_session  # noqa: E402
 
@@ -84,12 +82,10 @@ class _ProductSeedRow:
     paypal_sku / clink_sku 直接存该渠道当前 provider_sku：真实 ID 直接写字符串，
     渠道后台尚未创建时写 TODO 占位（是否 TODO 决定 enabled）；以后只在
     _SEED_ROWS 里替换字符串并重跑本脚本，真实 ID 不会被回退。
-    extra_metadata 用于镜像既有商品 metadata 里的历史字段
-    （如 unlimited 的 daily_limit、extension 线 free 的整组存量字段）。
     """
 
     product_id: str
-    product_line: str
+    product_kind: str
     name: str
     period: str
     display_amount: int
@@ -101,35 +97,13 @@ class _ProductSeedRow:
     paypal_sku: str | None = None
     clink_amount: int | None = None
     clink_sku: str | None = None
-    extra_metadata: dict = field(default_factory=dict)
 
 
 _SEED_ROWS: list[_ProductSeedRow] = [
-    # ---- 四条产品线各自的 free 档（period=none、display_amount=0、无渠道价） ----
+    # ---- 各产品类别的 free 档（period=none、display_amount=0、无渠道价） ----
     _ProductSeedRow(
         FREE_SUBSCRIPTION_PRODUCT_ID,
-        EXTENSION_PRODUCT_LINE,
-        "Free",
-        "none",
-        0,
-        FREE_DISPLAY_ORDER,
-        0,
-        False,
-        None,
-        None,
-        # 原样保留存量 free 行 metadata（含 one_time 历史残留），不借机改动。
-        extra_metadata={
-            "daily_limit": 5,
-            "extension_daily_download_limit": 9999,
-            "one_time": False,
-            "web_daily_download_limit": 0,
-            "web_daily_play_limit": 0,
-            "proxy_user_rate_limit_mb_per_second": 0,
-        },
-    ),
-    _ProductSeedRow(
-        FREE_SUBSCRIPTION_PRODUCT_ID,
-        MAPS_EXTENSION_PRODUCT_LINE,
+        MAPS_EXTENSION_PRODUCT_KIND,
         "Free",
         "none",
         0,
@@ -141,7 +115,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     ),
     _ProductSeedRow(
         FREE_SUBSCRIPTION_PRODUCT_ID,
-        MAPS_ONLINE_PRODUCT_LINE,
+        MAPS_ONLINE_PRODUCT_KIND,
         "Free",
         "none",
         0,
@@ -153,7 +127,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     ),
     _ProductSeedRow(
         FREE_SUBSCRIPTION_PRODUCT_ID,
-        MAPS_API_PRODUCT_LINE,
+        MAPS_API_PRODUCT_KIND,
         "Free",
         "none",
         0,
@@ -162,29 +136,13 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         False,
         20,
         None,
-    ),
-    # ---- extension 线 Unlimited：一次性支付月度套餐（$12.99/月，12_990_000 = 6 位精度）。 ----
-    _ProductSeedRow(
-        UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
-        EXTENSION_PRODUCT_LINE,
-        "Unlimited",
-        "month",
-        12_990_000,
-        20,
-        1,
-        False,
-        None,
-        12_990_000,
-        paypal_sku="unlimited-paypal",
-        clink_amount=12_990_000,
-        extra_metadata={"daily_limit": -1, "proxy_user_rate_limit_mb_per_second": 0},
     ),
     # ---- maps_extension 线：自动续费商品（单一计费模式）。
     # PayPal Plan ID 与 Clink productId:priceId 尚未在渠道后台创建：
     # provider_sku 存 TODO 占位（enabled=0 不可售），真实 ID 到手后替换字符串。 ----
     _ProductSeedRow(
         MAPS_EXTENSION_PRO_PRODUCT_ID,
-        MAPS_EXTENSION_PRODUCT_LINE,
+        MAPS_EXTENSION_PRODUCT_KIND,
         "Maps Pro",
         "month",
         39_000_000,
@@ -199,7 +157,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     ),
     _ProductSeedRow(
         MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
-        MAPS_EXTENSION_PRODUCT_LINE,
+        MAPS_EXTENSION_PRODUCT_KIND,
         "Maps Business",
         "month",
         99_000_000,
@@ -215,7 +173,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     # ---- maps_online 线：一次性支付月度套餐。 ----
     _ProductSeedRow(
         ONLINE_LITE_PRODUCT_ID,
-        MAPS_ONLINE_PRODUCT_LINE,
+        MAPS_ONLINE_PRODUCT_KIND,
         "Online Lite",
         "month",
         19_000_000,
@@ -229,7 +187,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     ),
     _ProductSeedRow(
         ONLINE_BASIC_PRODUCT_ID,
-        MAPS_ONLINE_PRODUCT_LINE,
+        MAPS_ONLINE_PRODUCT_KIND,
         "Online Basic",
         "month",
         49_000_000,
@@ -243,7 +201,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     ),
     _ProductSeedRow(
         ONLINE_GROWTH_PRODUCT_ID,
-        MAPS_ONLINE_PRODUCT_LINE,
+        MAPS_ONLINE_PRODUCT_KIND,
         "Online Growth",
         "month",
         99_000_000,
@@ -257,7 +215,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     ),
     _ProductSeedRow(
         ONLINE_PRO_PRODUCT_ID,
-        MAPS_ONLINE_PRODUCT_LINE,
+        MAPS_ONLINE_PRODUCT_KIND,
         "Online Pro",
         "month",
         149_000_000,
@@ -272,7 +230,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     # ---- maps_api 线：一次性支付月度套餐。 ----
     _ProductSeedRow(
         API_BASIC_PRODUCT_ID,
-        MAPS_API_PRODUCT_LINE,
+        MAPS_API_PRODUCT_KIND,
         "API Basic",
         "month",
         15_000_000,
@@ -286,7 +244,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     ),
     _ProductSeedRow(
         API_PROFESSIONAL_PRODUCT_ID,
-        MAPS_API_PRODUCT_LINE,
+        MAPS_API_PRODUCT_KIND,
         "API Professional",
         "month",
         65_000_000,
@@ -300,7 +258,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     ),
     _ProductSeedRow(
         API_BUSINESS_PRODUCT_ID,
-        MAPS_API_PRODUCT_LINE,
+        MAPS_API_PRODUCT_KIND,
         "API Business",
         "month",
         115_000_000,
@@ -314,7 +272,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
     ),
     _ProductSeedRow(
         API_SCALE_PRODUCT_ID,
-        MAPS_API_PRODUCT_LINE,
+        MAPS_API_PRODUCT_KIND,
         "API Scale",
         "month",
         365_000_000,
@@ -329,12 +287,11 @@ _SEED_ROWS: list[_ProductSeedRow] = [
 ]
 
 
-def _build_metadata(monthly_quota: int | None, extra: dict) -> str:
+def _build_metadata(monthly_quota: int | None) -> str:
     """组装商品 metadata JSON；计费模式在商品列，quota 字段统一为 monthly_quota。"""
     metadata: dict = {}
     if monthly_quota is not None:
         metadata["monthly_quota"] = monthly_quota
-    metadata.update(extra)
     return json.dumps(metadata)
 
 
@@ -345,17 +302,17 @@ async def _upsert_product(db, row: _ProductSeedRow) -> None:
         text(
             """
             INSERT INTO config_subscription_product
-                (product_id, name, product_line, period, auto_renew,
+                (product_id, name, product_kind, period, auto_renew,
                  display_currency, display_amount, enabled, display_order, tier_rank,
                  metadata, created_at, updated_at)
             VALUES
-                (:product_id, :name, :product_line, :period, :auto_renew,
+                (:product_id, :name, :product_kind, :period, :auto_renew,
                  'USD', :display_amount, 1, :display_order, :tier_rank,
                  :metadata, UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000,
                  UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)
             ON DUPLICATE KEY UPDATE
                 name = VALUES(name),
-                product_line = VALUES(product_line),
+                product_kind = VALUES(product_kind),
                 period = VALUES(period),
                 auto_renew = VALUES(auto_renew),
                 display_currency = VALUES(display_currency),
@@ -370,13 +327,13 @@ async def _upsert_product(db, row: _ProductSeedRow) -> None:
         {
             "product_id": row.product_id,
             "name": row.name,
-            "product_line": row.product_line,
+            "product_kind": row.product_kind,
             "period": row.period,
             "auto_renew": 1 if row.auto_renew else 0,
             "display_amount": row.display_amount,
             "display_order": row.display_order,
             "tier_rank": row.tier_rank,
-            "metadata": _build_metadata(row.monthly_quota, row.extra_metadata),
+            "metadata": _build_metadata(row.monthly_quota),
         },
     )
 
@@ -424,7 +381,7 @@ async def _upsert_price(
 
 
 async def seed() -> None:
-    """幂等播种全部订阅商品（4 条 free + 11 个付费）与渠道价。"""
+    """幂等播种 Maps 订阅商品与渠道价。"""
     async with get_async_session() as db:
         for row in _SEED_ROWS:
             await _upsert_product(db, row)
@@ -453,7 +410,7 @@ async def seed() -> None:
                 )
             print(
                 f"播种完成: product_id={row.product_id}, "
-                f"product_line={row.product_line}, period={row.period}, "
+                f"product_kind={row.product_kind}, period={row.period}, "
                 f"auto_renew={row.auto_renew}"
             )
         await db.commit()

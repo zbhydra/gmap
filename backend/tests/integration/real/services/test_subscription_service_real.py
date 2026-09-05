@@ -29,15 +29,14 @@ from app.constants.order import (
 )
 from app.constants.payment import recurring_provider_sku_parts
 from app.constants.subscription import (
-    EXTENSION_PRODUCT_LINE,
-    MAPS_API_PRODUCT_LINE,
+    MAPS_API_PRODUCT_KIND,
     MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
-    MAPS_EXTENSION_PRODUCT_LINE,
+    MAPS_EXTENSION_PRODUCT_KIND,
     MAPS_EXTENSION_PRO_PRODUCT_ID,
-    MAPS_ONLINE_PRODUCT_LINE,
+    MAPS_ONLINE_PRODUCT_KIND,
     ONLINE_GROWTH_PRODUCT_ID,
     ONLINE_LITE_PRODUCT_ID,
-    UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+    ONLINE_BASIC_PRODUCT_ID,
 )
 from app.core.database import get_async_session, get_engine
 from app.exceptions.common_exception import AppCommonException
@@ -147,7 +146,7 @@ async def _count_subscription_rows(user_id: int) -> int:
 
 async def _insert_subscription_row(
     user_id: int,
-    product_line: str,
+    product_kind: str,
     product_id: str,
     expires_at: int | None,
 ) -> None:
@@ -158,7 +157,7 @@ async def _insert_subscription_row(
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_line=product_line,
+                product_kind=product_kind,
                 product_id=product_id,
                 expires_at=expires_at,
                 created_at=now_ms,
@@ -169,36 +168,33 @@ async def _insert_subscription_row(
 
 
 async def _get_subscription_row(
-    user_id: int, product_line: str
+    user_id: int, product_kind: str
 ) -> UserSubscriptionModel | None:
     """按复合主键读取真实订阅行。"""
 
     async with get_async_session() as db:
-        return await db.get(UserSubscriptionModel, (user_id, product_line))
+        return await db.get(UserSubscriptionModel, (user_id, product_kind))
 
 
 async def test_real_free_tier_config_returns_line_local_free_for_anonymous(
     real_free_tier_cleanup_state: _FreeTierCleanupState,
 ) -> None:
-    """user_id=0 分支：四条产品线各自返回本线 free 配置，不落订阅表。"""
+    """user_id=0 分支：三个产品类别各自返回 free 配置，不落订阅表。"""
 
     expectations = {
-        EXTENSION_PRODUCT_LINE: {"monthly_quota": None, "daily_limit": 5},
-        MAPS_EXTENSION_PRODUCT_LINE: {"monthly_quota": 1000, "daily_limit": None},
-        MAPS_ONLINE_PRODUCT_LINE: {"monthly_quota": 1000, "daily_limit": None},
-        MAPS_API_PRODUCT_LINE: {"monthly_quota": 20, "daily_limit": None},
+        MAPS_EXTENSION_PRODUCT_KIND: {"monthly_quota": 1000, "daily_limit": None},
+        MAPS_ONLINE_PRODUCT_KIND: {"monthly_quota": 1000, "daily_limit": None},
+        MAPS_API_PRODUCT_KIND: {"monthly_quota": 20, "daily_limit": None},
     }
-    for product_line, expected in expectations.items():
+    for product_kind, expected in expectations.items():
         subscription, config = await subscription_service.get_user_subscription_config(
-            0, product_line
+            0, product_kind
         )
         assert subscription.user_id == 0
         assert subscription.expires_at is None
-        assert config.product_line == product_line
+        assert config.product_kind == product_kind
         assert config.product_id == "free"
         assert config.period == "none"
-        # 按线隔离的裂缝修复验证：maps 线 free 不再误读 extension 线的
-        # daily_limit，extension 线 free 不携带 monthly_quota。
         assert config.metadata.get("monthly_quota") == expected["monthly_quota"]
         assert config.metadata.get("daily_limit") == expected["daily_limit"]
 
@@ -212,13 +208,13 @@ async def test_real_free_tier_config_missing_row_returns_free(
     assert await _count_subscription_rows(user_id) == 0
 
     subscription, config = await subscription_service.get_user_subscription_config(
-        user_id, MAPS_EXTENSION_PRODUCT_LINE
+        user_id, MAPS_EXTENSION_PRODUCT_KIND
     )
 
     assert subscription.user_id == user_id
-    assert subscription.product_line == MAPS_EXTENSION_PRODUCT_LINE
+    assert subscription.product_kind == MAPS_EXTENSION_PRODUCT_KIND
     assert subscription.expires_at is None
-    assert config.product_line == MAPS_EXTENSION_PRODUCT_LINE
+    assert config.product_kind == MAPS_EXTENSION_PRODUCT_KIND
     assert config.product_id == "free"
     assert config.metadata["monthly_quota"] == 1000
 
@@ -233,14 +229,14 @@ async def test_real_free_tier_config_expired_row_returns_free(
     user_id = real_free_tier_cleanup_state.user_id
     await _insert_subscription_row(
         user_id,
-        MAPS_EXTENSION_PRODUCT_LINE,
+        MAPS_EXTENSION_PRODUCT_KIND,
         MAPS_EXTENSION_PRO_PRODUCT_ID,
         expires_at=timestamp_now() - 3_600_000,
     )
     assert await _count_subscription_rows(user_id) == 1
 
     subscription, config = await subscription_service.get_user_subscription_config(
-        user_id, MAPS_EXTENSION_PRODUCT_LINE
+        user_id, MAPS_EXTENSION_PRODUCT_KIND
     )
 
     assert subscription.expires_at is None
@@ -258,13 +254,13 @@ async def test_real_free_tier_config_active_row_uses_row_product_id(
     user_id = real_free_tier_cleanup_state.user_id
     await _insert_subscription_row(
         user_id,
-        MAPS_EXTENSION_PRODUCT_LINE,
+        MAPS_EXTENSION_PRODUCT_KIND,
         MAPS_EXTENSION_PRO_PRODUCT_ID,
         expires_at=timestamp_now() + 86_400_000,
     )
 
     subscription, config = await subscription_service.get_user_subscription_config(
-        user_id, MAPS_EXTENSION_PRODUCT_LINE
+        user_id, MAPS_EXTENSION_PRODUCT_KIND
     )
 
     assert subscription.expires_at is not None
@@ -280,19 +276,19 @@ async def test_real_check_product_paid_sku_resolves_unique_product(
     param = OrderCheckProductParam(
         user_id=real_free_tier_cleanup_state.user_id,
         product_class=ProductClass.SUBSCRIPTION.value,
-        product_id=UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+        product_id=ONLINE_BASIC_PRODUCT_ID,
         payment_method="paypal",
-        amount=12_990_000,
+        amount=49_000_000,
         currency="USD",
         auto_renew=False,
         period="month",
     )
     create_param = await order_service.check_product(param)
 
-    assert create_param.product_id == UNLIMITED_SUBSCRIPTION_PRODUCT_ID
-    assert create_param.amount == 12_990_000
+    assert create_param.product_id == ONLINE_BASIC_PRODUCT_ID
+    assert create_param.amount == 49_000_000
     assert create_param.auto_renew is False
-    assert create_param.provider_sku == "unlimited-paypal"
+    assert create_param.provider_sku == "online_basic-paypal"
 
 
 async def test_real_check_product_unknown_product_id_rejected(
@@ -337,7 +333,7 @@ async def test_real_check_product_free_not_purchasable(
     assert exc_info.value.code == CommonCode.PAYMENT_PRICE_UPDATED
 
 
-async def test_real_dual_product_line_renewal_keeps_lines_isolated(
+async def test_real_dual_product_kind_renewal_keeps_lines_isolated(
     real_async_client,
     real_user_factory,
     real_dual_line_schema_ready,
@@ -354,7 +350,7 @@ async def test_real_dual_product_line_renewal_keeps_lines_isolated(
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_line=MAPS_EXTENSION_PRODUCT_LINE,
+                product_kind=MAPS_EXTENSION_PRODUCT_KIND,
                 product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
                 auto_renew=True,
                 payment_method="clink",
@@ -368,12 +364,12 @@ async def test_real_dual_product_line_renewal_keeps_lines_isolated(
         )
         await db.commit()
 
-    # 另一线经现有 OrderService 履约入口生成：当前可售 extension/unlimited 一次性月套餐。
+    # Online 订阅经 OrderService 履约入口生成。
     order = OrderModel(  # type: ignore[call-arg]
         order_no=f"ORDL{uuid4().hex[:20].upper()}",
         user_id=user_id,
         product_class=ProductClass.SUBSCRIPTION.value,
-        product_id=UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+        product_id=ONLINE_BASIC_PRODUCT_ID,
         product_name="dual-line-isolated",
         amount=12_990_000,
         currency="USD",
@@ -387,7 +383,7 @@ async def test_real_dual_product_line_renewal_keeps_lines_isolated(
         extra_metadata=json.dumps(
             {
                 "product_snapshot": {
-                    "product_line": EXTENSION_PRODUCT_LINE,
+                    "product_kind": MAPS_ONLINE_PRODUCT_KIND,
                     "product_price_id": 999_004,
                     "auto_renew": False,
                     "period": "month",
@@ -404,10 +400,10 @@ async def test_real_dual_product_line_renewal_keeps_lines_isolated(
     stored_order = await order_service.create(order)
     assert await order_service.fulfill_paid_order(stored_order) is True
 
-    async def _status(product_line: str) -> dict[str, object]:
+    async def _status(product_kind: str) -> dict[str, object]:
         response = await real_async_client.get(
             "/api/client/subscription/status",
-            params={"product_line": product_line},
+            params={"product_kind": product_kind},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
@@ -415,10 +411,12 @@ async def test_real_dual_product_line_renewal_keeps_lines_isolated(
         assert body["code"] == CommonCode.SUCCESS
         return body["data"]
 
-    extension_row_before = await _get_subscription_row(user_id, EXTENSION_PRODUCT_LINE)
+    extension_row_before = await _get_subscription_row(
+        user_id, MAPS_ONLINE_PRODUCT_KIND
+    )
     assert extension_row_before is not None
-    status_ext_before = await _status(EXTENSION_PRODUCT_LINE)
-    status_maps_before = await _status(MAPS_EXTENSION_PRODUCT_LINE)
+    status_ext_before = await _status(MAPS_ONLINE_PRODUCT_KIND)
+    status_maps_before = await _status(MAPS_EXTENSION_PRODUCT_KIND)
     assert status_ext_before["auto_renew"] is False
     assert status_ext_before["payment_method"] == "paypal"
     assert status_ext_before["expires_at"] == extension_row_before.expires_at
@@ -429,12 +427,12 @@ async def test_real_dual_product_line_renewal_keeps_lines_isolated(
     await subscription_service.extend_subscription_days(
         user_id=user_id,
         duration_days=7,
-        product_line=MAPS_EXTENSION_PRODUCT_LINE,
+        product_kind=MAPS_EXTENSION_PRODUCT_KIND,
         product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
     )
 
-    maps_row_after = await _get_subscription_row(user_id, MAPS_EXTENSION_PRODUCT_LINE)
-    extension_row_after = await _get_subscription_row(user_id, EXTENSION_PRODUCT_LINE)
+    maps_row_after = await _get_subscription_row(user_id, MAPS_EXTENSION_PRODUCT_KIND)
+    extension_row_after = await _get_subscription_row(user_id, MAPS_ONLINE_PRODUCT_KIND)
     assert maps_row_after is not None
     assert maps_row_after.expires_at == maps_expires_at + 7 * _DAY_MS
     assert maps_row_after.auto_renew is True
@@ -444,8 +442,8 @@ async def test_real_dual_product_line_renewal_keeps_lines_isolated(
     assert extension_row_after is not None
     assert extension_row_after.to_dict() == extension_row_before.to_dict()
 
-    status_ext_after = await _status(EXTENSION_PRODUCT_LINE)
-    status_maps_after = await _status(MAPS_EXTENSION_PRODUCT_LINE)
+    status_ext_after = await _status(MAPS_ONLINE_PRODUCT_KIND)
+    status_maps_after = await _status(MAPS_EXTENSION_PRODUCT_KIND)
     assert status_maps_after["expires_at"] == maps_expires_at + 7 * _DAY_MS
     assert status_maps_after["auto_renew"] is True
     assert status_ext_after == status_ext_before
@@ -518,7 +516,7 @@ async def _insert_paypal_lite_subscription(user_id: int) -> tuple[int, int]:
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_line=MAPS_ONLINE_PRODUCT_LINE,
+                product_kind=MAPS_ONLINE_PRODUCT_KIND,
                 product_id=ONLINE_LITE_PRODUCT_ID,
                 auto_renew=False,
                 payment_method="paypal",
@@ -571,7 +569,7 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
     async def _checkout_param() -> OrderCreateParam:
         return await subscription_service.prepare_upgrade_checkout_param(
             user_id=user_id,
-            product_line=MAPS_ONLINE_PRODUCT_LINE,
+            product_kind=MAPS_ONLINE_PRODUCT_KIND,
             target_product_id=ONLINE_GROWTH_PRODUCT_ID,
             client_ip=None,
             language=None,
@@ -589,7 +587,7 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
     metadata = json.loads(cast(str, order.extra_metadata))
     snapshot = metadata["product_snapshot"]
     assert snapshot["purpose"] == "upgrade"
-    assert snapshot["product_line"] == MAPS_ONLINE_PRODUCT_LINE
+    assert snapshot["product_kind"] == MAPS_ONLINE_PRODUCT_KIND
     assert snapshot["source_product_id"] == ONLINE_LITE_PRODUCT_ID
     assert snapshot["target_product_id"] == ONLINE_GROWTH_PRODUCT_ID
     assert snapshot["base_expires_at"] == expires_at
@@ -618,7 +616,7 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
     assert await order_service.fulfill_paid_order(paid_order) is True
 
     row = await subscription_service.get_subscription_row(
-        user_id, MAPS_ONLINE_PRODUCT_LINE
+        user_id, MAPS_ONLINE_PRODUCT_KIND
     )
     assert row is not None
     assert row.product_id == ONLINE_GROWTH_PRODUCT_ID
@@ -635,7 +633,7 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
             update(UserSubscriptionModel)
             .where(
                 UserSubscriptionModel.user_id == user_id,
-                UserSubscriptionModel.product_line == MAPS_ONLINE_PRODUCT_LINE,
+                UserSubscriptionModel.product_kind == MAPS_ONLINE_PRODUCT_KIND,
             )
             .values(expires_at=mutated_expires_at, updated_at=timestamp_now())
         )
@@ -651,7 +649,7 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
     assert await order_service.fulfill_paid_order(stale_paid_order) is False
 
     row_after = await subscription_service.get_subscription_row(
-        user_id, MAPS_ONLINE_PRODUCT_LINE
+        user_id, MAPS_ONLINE_PRODUCT_KIND
     )
     assert row_after is not None
     assert row_after.product_id == ONLINE_GROWTH_PRODUCT_ID
@@ -667,7 +665,7 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
             update(UserSubscriptionModel)
             .where(
                 UserSubscriptionModel.user_id == user_id,
-                UserSubscriptionModel.product_line == MAPS_ONLINE_PRODUCT_LINE,
+                UserSubscriptionModel.product_kind == MAPS_ONLINE_PRODUCT_KIND,
             )
             .values(
                 product_id=ONLINE_LITE_PRODUCT_ID,
@@ -734,7 +732,7 @@ async def test_real_paypal_plan_change_event_syncs_local_tier_once(
                 extra_metadata=json.dumps(
                     {
                         "product_snapshot": {
-                            "product_line": MAPS_EXTENSION_PRODUCT_LINE,
+                            "product_kind": MAPS_EXTENSION_PRODUCT_KIND,
                             "product_price_id": 0,
                             "auto_renew": True,
                             "period": "month",
@@ -753,7 +751,7 @@ async def test_real_paypal_plan_change_event_syncs_local_tier_once(
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_line=MAPS_EXTENSION_PRODUCT_LINE,
+                product_kind=MAPS_EXTENSION_PRODUCT_KIND,
                 product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
                 auto_renew=True,
                 payment_method="paypal",
@@ -809,7 +807,7 @@ async def test_real_paypal_plan_change_event_syncs_local_tier_once(
     assert synced is True
 
     row = await subscription_service.get_subscription_row(
-        user_id, MAPS_EXTENSION_PRODUCT_LINE
+        user_id, MAPS_EXTENSION_PRODUCT_KIND
     )
     assert row is not None
     assert row.product_id == MAPS_EXTENSION_BUSINESS_PRODUCT_ID
@@ -872,7 +870,7 @@ async def test_real_clink_confirm_idempotent_when_channel_already_at_target(
                 extra_metadata=json.dumps(
                     {
                         "product_snapshot": {
-                            "product_line": MAPS_EXTENSION_PRODUCT_LINE,
+                            "product_kind": MAPS_EXTENSION_PRODUCT_KIND,
                             "product_price_id": 0,
                             "auto_renew": True,
                             "period": "month",
@@ -891,7 +889,7 @@ async def test_real_clink_confirm_idempotent_when_channel_already_at_target(
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_line=MAPS_EXTENSION_PRODUCT_LINE,
+                product_kind=MAPS_EXTENSION_PRODUCT_KIND,
                 product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
                 auto_renew=True,
                 payment_method="clink",
@@ -937,14 +935,14 @@ async def test_real_clink_confirm_idempotent_when_channel_already_at_target(
     # 渠道完整 productId:priceId 已目标：GET 后直接同步本地，succeeded。
     result = await subscription_service.confirm_upgrade(
         user_id=user_id,
-        product_line=MAPS_EXTENSION_PRODUCT_LINE,
+        product_kind=MAPS_EXTENSION_PRODUCT_KIND,
         target_product_id=MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
     )
     assert result["status"] == "succeeded"
     assert result["action"] is None
 
     row = await subscription_service.get_subscription_row(
-        user_id, MAPS_EXTENSION_PRODUCT_LINE
+        user_id, MAPS_EXTENSION_PRODUCT_KIND
     )
     assert row is not None
     assert row.product_id == MAPS_EXTENSION_BUSINESS_PRODUCT_ID
@@ -955,7 +953,7 @@ async def test_real_clink_confirm_idempotent_when_channel_already_at_target(
     # 本地已目标档：重复 confirm 幂等命中，不发起任何渠道调用。
     result_again = await subscription_service.confirm_upgrade(
         user_id=user_id,
-        product_line=MAPS_EXTENSION_PRODUCT_LINE,
+        product_kind=MAPS_EXTENSION_PRODUCT_KIND,
         target_product_id=MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
     )
     assert result_again["status"] == "succeeded"

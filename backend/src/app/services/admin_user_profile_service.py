@@ -11,10 +11,9 @@ from sqlalchemy import desc, func, select
 from app.api.admin.admin_order_response import serialize_admin_order
 from app.constants.auth import UserAccountStatus
 from app.constants.subscription import (
-    EXTENSION_PRODUCT_LINE,
-    MAPS_API_PRODUCT_LINE,
-    MAPS_EXTENSION_PRODUCT_LINE,
-    MAPS_ONLINE_PRODUCT_LINE,
+    MAPS_API_PRODUCT_KIND,
+    MAPS_EXTENSION_PRODUCT_KIND,
+    MAPS_ONLINE_PRODUCT_KIND,
 )
 from app.core.database import get_async_session
 from app.exceptions.common_exception import AppCommonException
@@ -47,11 +46,10 @@ from app.services.user_service import user_service
 from app.utils.time import timestamp_now
 
 # profile 订阅摘要固定四行，顺序 = extension 历史线在前、maps 三线在后。
-_PROFILE_SUBSCRIPTION_LINES = (
-    EXTENSION_PRODUCT_LINE,
-    MAPS_EXTENSION_PRODUCT_LINE,
-    MAPS_ONLINE_PRODUCT_LINE,
-    MAPS_API_PRODUCT_LINE,
+_PROFILE_SUBSCRIPTION_KINDS = (
+    MAPS_EXTENSION_PRODUCT_KIND,
+    MAPS_ONLINE_PRODUCT_KIND,
+    MAPS_API_PRODUCT_KIND,
 )
 
 # profile 用量快照固定三行（maps 三线门面）。
@@ -129,12 +127,12 @@ class AdminUserProfileService:
         now_ms = timestamp_now()
 
         subscriptions = []
-        for product_line in _PROFILE_SUBSCRIPTION_LINES:
-            row = await subscription_service.get_subscription_row(user_id, product_line)
+        for product_kind in _PROFILE_SUBSCRIPTION_KINDS:
+            row = await subscription_service.get_subscription_row(user_id, product_kind)
             expires_at = row.expires_at if row else None
             subscriptions.append(
                 AdminUserSubscriptionLineInfo(
-                    product_line=product_line,
+                    product_kind=product_kind,
                     has_subscription=(expires_at is not None and expires_at > now_ms),
                     expires_at=expires_at,
                 )
@@ -146,7 +144,7 @@ class AdminUserProfileService:
             snapshot = await facade.get_usage(identity, user_id=user_id)
             usage.append(
                 AdminUserUsageLineInfo(
-                    product_line=facade.product_line,
+                    product_kind=facade.product_kind,
                     ym=snapshot.ym,
                     used=snapshot.used,
                     total=snapshot.total,

@@ -145,6 +145,8 @@ export interface OrderStatusResponse {
   product_class: number
   /** 商品标识。 */
   product_id: string
+  /** 订阅产品类别；Credits 订单为空。 */
+  product_kind: string | null
   /** 商品名称。 */
   product_name: string
   /** 渠道金额，6 位精度。 */

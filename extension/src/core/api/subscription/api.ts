@@ -13,7 +13,9 @@ export const subscriptionApi = {
    */
   async getStatus(): Promise<SubscriptionStatus> {
     return parseSubscriptionStatus(
-      await httpClient.get<JsonValue>(API.ENDPOINTS.SUBSCRIPTION_STATUS)
+      await httpClient.get<JsonValue>(
+        `${API.ENDPOINTS.SUBSCRIPTION_STATUS}?product_kind=maps_extension`
+      )
     )
   }
 }

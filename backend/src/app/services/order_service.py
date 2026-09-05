@@ -22,6 +22,7 @@ from app.constants.order import (
     ProductClass,
 )
 from app.exceptions.common_exception import AppCommonException
+from app.constants.subscription import SUBSCRIPTION_PRODUCT_KINDS
 from app.i18n.common_code import CommonCode
 from app.core.database import get_async_session
 from app.models.order_model import OrderModel
@@ -1407,26 +1408,21 @@ class OrderService(BaseService[OrderModel]):
             f"No fulfillment handler for product_class: {order.product_class}"
         )
 
-    def get_order_product_line(self, order: OrderModel) -> str:
-        """读取订单产品线标识（供状态接口按产品线区分展示语义）。
-
-        历史订单快照缺 ``product_line`` 时回退 extension（插件下载线），
-        与履约续期的回退口径一致；非订阅类订单同样按 extension 兜底，
-        消费方只关心「maps_extension 线走订阅文案」这一分支。
-        """
+    def get_order_product_kind(self, order: OrderModel) -> str | None:
+        """读取订单产品类别；非订阅订单没有产品类别。"""
         try:
             metadata = json.loads(order.extra_metadata or "{}")
         except json.JSONDecodeError:
-            return "extension"
+            return None
         if not isinstance(metadata, dict):
-            return "extension"
+            return None
         snapshot = metadata.get("product_snapshot")
         if not isinstance(snapshot, dict):
-            return "extension"
-        product_line = snapshot.get("product_line")
-        if isinstance(product_line, str) and product_line.strip():
-            return product_line
-        return "extension"
+            return None
+        product_kind = snapshot.get("product_kind")
+        if isinstance(product_kind, str) and product_kind in SUBSCRIPTION_PRODUCT_KINDS:
+            return product_kind
+        return None
 
     def _recharge_order_credits_amount(self, order: OrderModel) -> int:
         """从订单商品快照中读取到账 Credits 数量。"""

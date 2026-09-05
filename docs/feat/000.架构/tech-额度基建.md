@@ -8,7 +8,7 @@
 - `maps_online`：云端采集，单位 records/月（能力就绪，014 接线路由）。
 - `maps_api`：API 调用，单位 requests/月（能力就绪，014 接线路由）。
 
-本模块只回答「某归属者在业务时区自然月的 used / total / exhausted，以及一次扣减或退回」。不负责：订阅购买与到期（006 订阅系统）、TG 插件每日下载额度（005 quota_service）、积分余额（003 积分系统）、价格与订单（004）。
+本模块只回答「某归属者在业务时区自然月的 used / total / exhausted，以及一次扣减或退回」。不负责：订阅购买与到期（006 订阅系统）、积分余额（003 积分系统）、价格与订单（004）。
 
 total 的单一真源是 006 的 `get_user_subscription_config`：所持档位（付费或本线 free 行）的 metadata `monthly_quota`。行缺失或 `monthly_quota` 为空即配置合同破裂，抛 `PAYMENT_GATEWAY_ERROR` 暴露——不做 config_public / 默认值兜底（兜底会让配置错误静默化为「少给或超给」）。013 U7 时期的 `maps_quota` config_public 键与 `DEFAULT_FREE_QUOTA` 兜底链已删除（表中键行保留，仅删代码引用，运营可后续清理数据行）。
 
@@ -18,7 +18,7 @@ total 的单一真源是 006 的 `get_user_subscription_config`：所持档位�
 
 | 身份 | 存储 | used 来源 | 幂等 |
 | --- | --- | --- | --- |
-| 登录用户（user_id > 0） | MySQL 只插入流水 `user_usage_logs` | `SUM(delta)` 按 line + user + ym 聚合 | 唯一键 `(product_line, user_id, request_id)` |
+| 登录用户（user_id > 0） | MySQL 只插入流水 `user_usage_logs` | `SUM(delta)` 按 line + user + ym 聚合 | 唯一键 `(product_kind, user_id, request_id)` |
 | 匿名设备（user_id = 0） | Redis 月度计数 | `GET usage:{line}:{ym}:{identity}` | Lua 脚本内幂等键 |
 
 为什么登录侧从 Redis（013 U7 单轨）改为 MySQL 流水：
@@ -42,15 +42,15 @@ total 的单一真源是 006 的 `get_user_subscription_config`：所持档位�
 | 字段 | 类型 | 约束 | 语义 |
 | --- | --- | --- | --- |
 | `id` | `BIGINT` | PK, AUTO_INCREMENT | 记录 ID |
-| `product_line` | `VARCHAR(32)` | NOT NULL | 产品线标识（maps_extension / maps_online / maps_api） |
+| `product_kind` | `VARCHAR(32)` | NOT NULL | 产品线标识（maps_extension / maps_online / maps_api） |
 | `user_id` | `BIGINT` | NOT NULL | 用户 ID（匿名走 Redis 不进表，恒大于 0） |
 | `ym` | `INT` | NOT NULL | 业务时区自然月 `YYYYMM`；**退回行 = 被修正量所属月** |
 | `delta` | `INT` | NOT NULL | 用量变化：正数 = 消费，负数 = 退回 |
 | `request_id` | `VARCHAR(64)` | NOT NULL | 业务幂等键（插件采集会话 UUID / 云端任务批次键） |
 | `created_at` | `BIGINT` | NOT NULL | 创建时间，毫秒时间戳 |
 
-- 唯一键：`uk_user_usage_logs_line_user_request(product_line, user_id, request_id)`。
-- 聚合索引：`idx_user_usage_logs_line_user_ym_delta(product_line, user_id, ym, delta)`（覆盖 SUM 扫描，免回表）。
+- 唯一键：`uk_user_usage_logs_kind_user_request(product_kind, user_id, request_id)`。
+- 聚合索引：`idx_user_usage_logs_kind_user_ym_delta(product_kind, user_id, ym, delta)`（覆盖 SUM 扫描，免回表）。
 - 纯插入不可变流水：无 update/del、无 updated_at；`used = SUM(delta)` 是派生值，不存冗余。
 
 ### 3.2 幂等域
@@ -63,7 +63,7 @@ total 的单一真源是 006 的 `get_user_subscription_config`：所持档位�
 
 ## 4. Service 合同
 
-`app/services/usage_service.py`：模块内私有基类 `_BaseUsageService` 持 `product_line` 类属性，三个薄门面继承并绑定常量，模块底部暴露单例 `extension_usage_service` / `online_usage_service` / `api_usage_service`。不使用构造器依赖注入（红线 4）。
+`app/services/usage_service.py`：模块内私有基类 `_BaseUsageService` 持 `product_kind` 类属性，三个薄门面继承并绑定常量，模块底部暴露单例 `extension_usage_service` / `online_usage_service` / `api_usage_service`。不使用构造器依赖注入（红线 4）。
 
 三原语（身份分派见 §2）：
 
@@ -81,7 +81,7 @@ total 链：`(await get_user_subscription_config(user_id, line))[1].metadata.mon
 
 公共形态：`UsageSnapshot` / `UsageConsumeResult`（NamedTuple）、`usage_identity(user_id, device_id)`（`u:{id}` / `d:{id}`）、`usage_payload(snapshot)`（竞品同构 used/total/period/exhausted）。
 
-失败语义（spec-redis §7，正确性优先 fail-closed）：Redis / MySQL 故障三原语统一抛 `EXTENSION_USAGE_UNAVAILABLE`（31102），错误消息带 product_line 与上下文字段；配置合同破裂（行缺失 / monthly_quota 空）抛 `PAYMENT_GATEWAY_ERROR`。插件侧对 usage 失败自行 fail-open（采集可用性优先），两侧互补。
+失败语义（spec-redis §7，正确性优先 fail-closed）：Redis / MySQL 故障三原语统一抛 `EXTENSION_USAGE_UNAVAILABLE`（31102），错误消息带 product_kind 与上下文字段；配置合同破裂（行缺失 / monthly_quota 空）抛 `PAYMENT_GATEWAY_ERROR`。插件侧对 usage 失败自行 fail-open（采集可用性优先），两侧互补。
 
 ### 4.1 接口边界与不可变合同
 
@@ -112,16 +112,16 @@ record_count > 0  -> consume(usage_identity(user_id, None), user_id=user_id,
 
 ### 7.1 新表初始清单
 
-- PK `(id)`；UK `uk_user_usage_logs_line_user_request(product_line, user_id, request_id)`；INDEX `idx_user_usage_logs_line_user_ym_delta(product_line, user_id, ym, delta)`。
+- PK `(id)`；UK `uk_user_usage_logs_kind_user_request(product_kind, user_id, request_id)`；INDEX `idx_user_usage_logs_kind_user_ym_delta(product_kind, user_id, ym, delta)`。
 
 ### 7.2 实际查询
 
 | 操作 | 实际 WHERE / 冲突检测 | 当前源码位置 |
 | --- | --- | --- |
-| SUM 聚合读 | `product_line = ? AND user_id = ? AND ym = ?`（SELECT delta 求和） | `backend/src/app/services/usage_service.py:246-249` |
-| 插入幂等 | UK `(product_line, user_id, request_id)` 冲突检测 | `backend/src/app/services/usage_service.py` `_insert_log`（db.add + commit） |
+| SUM 聚合读 | `product_kind = ? AND user_id = ? AND ym = ?`（SELECT delta 求和） | `backend/src/app/services/usage_service.py:246-249` |
+| 插入幂等 | UK `(product_kind, user_id, request_id)` 冲突检测 | `backend/src/app/services/usage_service.py` `_insert_log`（db.add + commit） |
 
-三件套审查：§7.1 已列出新表完整 PK/UK/INDEX 清单；SUM 的 WHERE + 投影列 delta 被聚合索引完整覆盖（覆盖索引免回表）；UK 承担插入冲突检测。两索引均以 (product_line, user_id) 为最左前缀但后续列与用途不同（request_id 幂等 / ym+delta 聚合），互不为对方前缀重复；无单列索引需要回收。Model 中两索引行尾已注明服务的查询（`user_usage_log_model.py:19,25`）。
+三件套审查：§7.1 已列出新表完整 PK/UK/INDEX 清单；SUM 的 WHERE + 投影列 delta 被聚合索引完整覆盖（覆盖索引免回表）；UK 承担插入冲突检测。两索引均以 (product_kind, user_id) 为最左前缀但后续列与用途不同（request_id 幂等 / ym+delta 聚合），互不为对方前缀重复；无单列索引需要回收。Model 中两索引行尾已注明服务的查询（`user_usage_log_model.py:19,25`）。
 
 ## 8. 量级口径
 

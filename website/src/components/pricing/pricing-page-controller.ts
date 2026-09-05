@@ -1,7 +1,7 @@
 /**
- * Pricing 页面控制器（三产品线 tab 版）。
+ * Pricing 页面控制器（三产品类别 tab 版）。
  *
- * 负责恢复登录态、产品线 tab 切换、渲染账户胶囊（当前 tab 产品线的订阅摘要）、
+ * 负责恢复登录态、产品类别 tab 切换、渲染账户胶囊（当前 tab 产品类别的订阅摘要）、
  * 加载支付配置并把付费档购买流程交给公共 OrderCheckoutModal。当前 tab 是唯一
  * 状态源：灰化/重复购买拦截、checkout source、GA4 plan 维度均由当前 tab 派生。
  * 插件来源（utm_source=extension）只做归因标记，不切换布局。
@@ -33,15 +33,16 @@ import {
   isOrderCheckoutAuthFailure
 } from '../order-checkout/order-checkout-api'
 import {
-  MAPS_API_PRODUCT_LINE,
-  MAPS_EXTENSION_PRODUCT_LINE,
-  MAPS_ONLINE_PRODUCT_LINE,
+  MAPS_API_PRODUCT_KIND,
+  MAPS_EXTENSION_PRODUCT_KIND,
+  MAPS_ONLINE_PRODUCT_KIND,
   formatPricingDisplayPrice,
   formatSubscriptionPeriod,
   getSubscriptionUpgradeQuote,
   listSubscriptionCheckoutConfigs,
-  pickPlansByLine,
+  pickPlansByKind,
   type SubscriptionCheckoutPlan,
+  type SubscriptionProductKind,
   type SubscriptionUpgradeQuote
 } from './pricing-checkout'
 import {
@@ -55,18 +56,18 @@ const EXTENSION_UTM_SOURCE = 'extension'
 /** 同 tab Google OAuth 回跳后恢复订阅购买的会话键。 */
 const PENDING_SUBSCRIPTION_PURCHASE_KEY = 'pricing_pending_subscription_purchase'
 
-/** Pricing 页产品线（与 i18n tab 键、后端 product_line 三方对齐）。 */
+/** Pricing 页产品类别（与 i18n tab 键、后端 product_kind 三方对齐）。 */
 type PricingLineId = 'online' | 'extension' | 'api'
 
 const PRICING_LINE_IDS: readonly PricingLineId[] = ['online', 'extension', 'api']
 
-/** 默认展示的产品线 tab（与 SSR 首个可见面板一致）。 */
+/** 默认展示的产品类别 tab（与 SSR 首个可见面板一致）。 */
 const DEFAULT_PRICING_LINE: PricingLineId = 'online'
 
-/** 产品线 → 后端契约常量（product_line / checkout source / auth/me 订阅字段）。 */
+/** 产品类别 → 后端契约常量（product_kind / checkout source / auth/me 订阅字段）。 */
 interface PricingLineConfig {
-  /** 后端 product_line 常量。 */
-  productLine: string
+  /** 后端 product_kind 常量。 */
+  productKind: SubscriptionProductKind
   /** 打开 checkout 弹窗与识别成功/价格变更事件用的业务来源。 */
   checkoutSource: string
   /** auth/me 中本线订阅摘要字段。 */
@@ -75,17 +76,17 @@ interface PricingLineConfig {
 
 const PRICING_LINE_CONFIG: Record<PricingLineId, PricingLineConfig> = {
   online: {
-    productLine: MAPS_ONLINE_PRODUCT_LINE,
+    productKind: MAPS_ONLINE_PRODUCT_KIND,
     checkoutSource: 'pricing_maps_online',
     subscriptionKey: 'maps_online_subscription'
   },
   extension: {
-    productLine: MAPS_EXTENSION_PRODUCT_LINE,
+    productKind: MAPS_EXTENSION_PRODUCT_KIND,
     checkoutSource: 'pricing_maps_extension',
     subscriptionKey: 'maps_extension_subscription'
   },
   api: {
-    productLine: MAPS_API_PRODUCT_LINE,
+    productKind: MAPS_API_PRODUCT_KIND,
     checkoutSource: 'pricing_maps_api',
     subscriptionKey: 'maps_api_subscription'
   }
@@ -132,7 +133,7 @@ interface PricingCopy {
 
 /** 单个可购买档位卡的 DOM 集合。 */
 interface BuyableCardElements {
-  /** 卡所属产品线 tab。 */
+  /** 卡所属产品类别 tab。 */
   line: PricingLineId
   /** 购买按钮。 */
   buy: HTMLButtonElement
@@ -146,9 +147,9 @@ interface BuyableCardElements {
 interface PricingElements {
   /** 页面根节点。 */
   root: HTMLElement
-  /** 产品线 tab 按钮（keyed by line）。 */
+  /** 产品类别 tab 按钮（keyed by line）。 */
   tabButtons: Map<PricingLineId, HTMLButtonElement>
-  /** 产品线面板（keyed by line）。 */
+  /** 产品类别面板（keyed by line）。 */
   panels: Map<PricingLineId, HTMLElement>
   /** 账号加载状态。 */
   accountLoading: HTMLElement
@@ -194,13 +195,13 @@ interface PricingState {
   token: string | null
   /** auth/me 用户。 */
   user: HomepageUserInfo | null
-  /** 全部产品线商品配置（SKU → plan）。 */
+  /** 全部产品类别商品配置（SKU → plan）。 */
   plans: Map<string, SubscriptionCheckoutPlan>
   /** 每张卡的服务端升级报价；不从展示顺序或价格推导档位。 */
   upgradeQuotes: Map<string, SubscriptionUpgradeQuote | null>
   /** 最近一次配置请求版本；旧响应不得覆盖新登录态。 */
   loadVersion: number
-  /** 当前产品线 tab（唯一状态源，其余视图状态由它派生）。 */
+  /** 当前产品类别 tab（唯一状态源，其余视图状态由它派生）。 */
   currentLine: PricingLineId
   /** 是否为插件升级入口（W7 归因口径）。 */
   isExtensionSource: boolean
@@ -210,7 +211,7 @@ interface PricingState {
 
 /** 匿名点击时选中的稳定价格选项身份。 */
 interface PendingSubscriptionPurchase {
-  /** 购买按钮所属产品线 tab。 */
+  /** 购买按钮所属产品类别 tab。 */
   line: PricingLineId
   /** 档位 SKU。 */
   sku: string
@@ -236,9 +237,9 @@ async function initPricingPage(root: HTMLElement): Promise<void> {
     pendingSubscriptionPurchase: readPendingSubscriptionPurchase()
   }
   applyExtensionAttribution(elements, state)
-  const productLine = new URLSearchParams(window.location.search).get('product_line')
+  const productKind = new URLSearchParams(window.location.search).get('product_kind')
   switchLine(elements, state, PRICING_LINE_IDS.find(
-    line => PRICING_LINE_CONFIG[line].productLine === productLine
+    line => PRICING_LINE_CONFIG[line].productKind === productKind
   ) ?? DEFAULT_PRICING_LINE)
 
   bindEvents(elements, copy, state)
@@ -349,7 +350,7 @@ async function loadUpgradeQuotes(
     }
     try {
       const quote = await getSubscriptionUpgradeQuote(
-        buildRequestContext(state), PRICING_LINE_CONFIG[card.line].productLine, sku
+        buildRequestContext(state), PRICING_LINE_CONFIG[card.line].productKind, sku
       )
       if (requestVersion !== state.loadVersion) {
         return
@@ -368,7 +369,7 @@ async function loadUpgradeQuotes(
   }
 }
 
-/** 切换产品线 tab：面板可见性与账户胶囊摘要都随当前线刷新。 */
+/** 切换产品类别 tab：面板可见性与账户胶囊摘要都随当前线刷新。 */
 function switchLine(elements: PricingElements, state: PricingState, line: PricingLineId): void {
   state.currentLine = line
   for (const [tabLine, button] of elements.tabButtons) {
@@ -438,7 +439,7 @@ async function restoreUser(
   }
 }
 
-/** 加载全部产品线支付配置并渲染购买按钮（导出供 module-scripts 回归测试）。 */
+/** 加载全部产品类别支付配置并渲染购买按钮（导出供 module-scripts 回归测试）。 */
 export async function loadPlans(
   elements: PricingElements,
   copy: PricingCopy,
@@ -455,7 +456,7 @@ export async function loadPlans(
     // 各线商品按 SKU 索引合并；SKU 全局唯一，卡查找不依赖当前 tab。
     state.plans = new Map()
     for (const line of PRICING_LINE_IDS) {
-      for (const [sku, plan] of pickPlansByLine(data.plans, PRICING_LINE_CONFIG[line].productLine)) {
+      for (const [sku, plan] of pickPlansByKind(data.plans, PRICING_LINE_CONFIG[line].productKind)) {
         state.plans.set(sku, plan)
       }
     }
@@ -471,7 +472,7 @@ export async function loadPlans(
   renderPlanButtons(elements, copy, state)
 }
 
-/** 读取指定产品线在 auth/me 中的订阅摘要。 */
+/** 读取指定产品类别在 auth/me 中的订阅摘要。 */
 function getLineSubscription(
   state: PricingState,
   line: PricingLineId
@@ -479,7 +480,7 @@ function getLineSubscription(
   return state.user?.[PRICING_LINE_CONFIG[line].subscriptionKey] ?? null
 }
 
-/** 渲染账户胶囊：登录态切换 + 当前 tab 产品线的套餐摘要。 */
+/** 渲染账户胶囊：登录态切换 + 当前 tab 产品类别的套餐摘要。 */
 function renderAccount(elements: PricingElements, copy: PricingCopy, state: PricingState): void {
   const user = state.user
   setHidden(elements.accountSignedOut, Boolean(user))
@@ -509,7 +510,7 @@ function renderAccount(elements: PricingElements, copy: PricingCopy, state: Pric
     : copy.account.noExpiry
 }
 
-/** 只有当前 tab 产品线存在有效且自动续费的订阅时展示渠道管理入口。 */
+/** 只有当前 tab 产品类别存在有效且自动续费的订阅时展示渠道管理入口。 */
 function canShowCancellationGuide(state: PricingState): boolean {
   const subscription = getLineSubscription(state, state.currentLine)
   if (subscription?.status !== 'active' || subscription.expires_at == null) {
@@ -532,7 +533,7 @@ function openManageWindow(): Window | null {
   return popup
 }
 
-/** 打开当前产品线自动续费订阅的渠道管理页；URL 为空时展示渠道内操作指引。 */
+/** 打开当前产品类别自动续费订阅的渠道管理页；URL 为空时展示渠道内操作指引。 */
 async function openManageSubscription(
   elements: PricingElements,
   copy: PricingCopy,
@@ -576,18 +577,18 @@ async function openManageSubscription(
   }
 }
 
-/** 请求当前产品线的渠道管理入口；后端按订阅实例选择渠道，返回 URL 可为空。 */
+/** 请求当前产品类别的渠道管理入口；后端按订阅实例选择渠道，返回 URL 可为空。 */
 async function createSubscriptionManagementUrl(state: PricingState): Promise<string | null> {
   const response = await postJson<{ url: string | null }>(
     '/api/client/subscription/management',
     buildRequestContext(state),
-    { product_line: PRICING_LINE_CONFIG[state.currentLine].productLine }
+    { product_kind: PRICING_LINE_CONFIG[state.currentLine].productKind }
   )
   const url = typeof response.url === 'string' ? response.url.trim() : ''
   return url.length > 0 ? url : null
 }
 
-/** 按当前配置与登录态刷新可购买卡按钮（灰化按卡所属产品线的订阅状态）。 */
+/** 按当前配置与登录态刷新可购买卡按钮（灰化按卡所属产品类别的订阅状态）。 */
 function renderPlanButtons(
   elements: PricingElements,
   copy: PricingCopy,
@@ -620,7 +621,7 @@ function renderPlanButtons(
   }
 }
 
-/** 打开档位对应的公共支付弹窗（重复购买拦截按卡所属产品线）。 */
+/** 打开档位对应的公共支付弹窗（重复购买拦截按卡所属产品类别）。 */
 async function openPlanCheckout(
   elements: PricingElements,
   copy: PricingCopy,
@@ -722,7 +723,7 @@ async function openUpgradeCheckout(
   await window.orderCheckoutController?.open({
     source: PRICING_LINE_CONFIG[line].checkoutSource,
     upgrade: {
-      productLine: plan.product_line,
+      productKind: plan.product_kind,
       currentProductId: quote.current_product_id,
       copy: copy.upgrade
     },
@@ -747,7 +748,7 @@ async function openUpgradeCheckout(
   })
 }
 
-/** 当前账号在指定产品线是否有未过期订阅（同线重复购买拦截口径与后端一致）。 */
+/** 当前账号在指定产品类别是否有未过期订阅（同线重复购买拦截口径与后端一致）。 */
 function hasActiveLineSubscription(state: PricingState, line: PricingLineId): boolean {
   const subscription = getLineSubscription(state, line)
   if (subscription?.status !== 'active' || subscription.expires_at == null) {
@@ -886,7 +887,7 @@ async function handleOrderCheckoutPriceUpdated(
   await loadUpgradeQuotes(elements, copy, state)
 }
 
-/** 判断 checkout 事件来源是否为本页任一产品线。 */
+/** 判断 checkout 事件来源是否为本页任一产品类别。 */
 function isPricingCheckoutSource(source: string): boolean {
   return PRICING_LINE_IDS.some(line => PRICING_LINE_CONFIG[line].checkoutSource === source)
 }
@@ -989,7 +990,7 @@ function getPricingCopy(root: HTMLElement): PricingCopy {
   return JSON.parse(element.textContent) as PricingCopy
 }
 
-/** 判断元素所属产品线 tab（向上找面板容器）。 */
+/** 判断元素所属产品类别 tab（向上找面板容器）。 */
 function resolveCardLine(buy: HTMLButtonElement): PricingLineId | null {
   const panel = buy.closest<HTMLElement>('[data-pricing-panel]')
   const line = panel?.dataset.pricingPanel

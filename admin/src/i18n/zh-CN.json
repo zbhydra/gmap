@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "TG Download 管理后台"
+    "title": "MapsGrab 管理后台"
   },
   "login": {
     "title": "管理员登录",
@@ -127,10 +127,9 @@
     "creditsBalance": "当前积分",
     "subscriptionsTitle": "订阅权益",
     "usageTitle": "当月用量",
-    "productLineExtension": "TG 插件",
-    "productLineMapsExtension": "Maps 插件",
-    "productLineMapsOnline": "Maps 云端",
-    "productLineMapsApi": "Maps API",
+    "productKindMapsExtension": "Maps 插件",
+    "productKindMapsOnline": "Maps 云端",
+    "productKindMapsApi": "Maps API",
     "subscriptionActive": "订阅中",
     "subscriptionInactive": "未订阅",
     "usageExhausted": "已耗尽",

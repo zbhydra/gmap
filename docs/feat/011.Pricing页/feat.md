@@ -51,11 +51,11 @@ Free 档口径(online/api 各 tab 卡面展示)已随各线 free 档位落库,�
 
 ### 不包含
 
-- 不做 Credits 积分包售卖与展示(website 下载计费归 `@../003.积分系统/feat.md`;TG 站时代的积分包卡片已随旧站下线)。
+- 不做 Credits 积分包售卖与展示(TG 站时代的积分包卡片已随旧站下线,共享 Credits 能力归 `@../003.积分系统/feat.md`)。
 - 不做好评赠送入口与倒计时流程(后端合同保留在 checkout-configs 响应中但页面不消费;合同见 `@../006.订阅系统/tech-好评赠送订阅.md`)。
 - 不做站内直接取消自动续费;PayPal / ClinkBill 用户从页面进入渠道管理页。
 - 不做退款、优惠码、年付、多席位、地区差异定价。
-- 不做 Telegram Stars 渠道(当前页面渠道为 PayPal / ClinkBill)。
+- 公共 checkout 保留 Telegram Stars 支持;本页具体商品的可用渠道由后端配置返回。
 - 不承载插件端购买 UI;插件只跳转本页。
 
 ## 用户流程

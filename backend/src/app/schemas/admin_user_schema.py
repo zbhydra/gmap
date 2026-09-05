@@ -49,7 +49,7 @@ class AdminUserSubscriptionLineInfo(BaseModel):
     过期时间，只把 has_subscription 压成 False。
     """
 
-    product_line: str = Field(..., description="产品线标识")
+    product_kind: str = Field(..., description="产品线标识")
     has_subscription: bool = Field(..., description="该线是否持有有效付费订阅")
     expires_at: int | None = Field(
         None, description="订阅原始过期时间（毫秒时间戳），无付费行为 null"
@@ -59,7 +59,7 @@ class AdminUserSubscriptionLineInfo(BaseModel):
 class AdminUserUsageLineInfo(BaseModel):
     """单产品线当月用量快照（当前业务月）。"""
 
-    product_line: str = Field(..., description="产品线标识")
+    product_kind: str = Field(..., description="产品线标识")
     ym: int = Field(..., description="业务月，格式 YYYYMM")
     used: int = Field(..., description="当月已用量")
     total: int = Field(..., description="当月配额总量（所持档位，含 free 档）")

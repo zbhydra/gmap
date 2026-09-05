@@ -95,6 +95,7 @@ GET /api/client/order/status/{order_no}
 | `product_class` | int | 商品类别整型枚举 |
 | `product_id` | string | 商品 ID |
 | `product_name` | string | 商品名称快照 |
+| `product_kind` | string / null | 订阅订单的产品类别,从商品快照读取;Credits 订单为空,缺失时无默认类别 |
 | `amount / currency` | int / string | 订单金额快照 |
 | `order_status` | int | 订单状态整型枚举(1-5) |
 | `callback_status` | int | 履约回调状态整型枚举(1-5) |
@@ -192,7 +193,7 @@ POST /api/callback/paypal/payment
 POST /api/client/subscription/management
 ```
 
-请求体只含 `product_line`;响应 data 为可空 `url`。订阅域读取当前有效自动续费实例(有效权益 + 实例 `auto_renew`),按行内 `payment_method` 选择 Provider;渠道订阅 ID 与客户 ID 由后端从实例读取,前端不提交。PayPal 返回官方 Automatic Payments 页面;ClinkBill 用 `channel_uid`(customerId)创建当前环境 Customer Portal Session;Telegram Stars 无 Web 入口,返回空 URL 由客户端展示渠道内路径。订单域不参与该入口。
+请求体只含 `product_kind`;响应 data 为可空 `url`。订阅域读取当前有效自动续费实例(有效权益 + 实例 `auto_renew`),按行内 `payment_method` 选择 Provider;渠道订阅 ID 与客户 ID 由后端从实例读取,前端不提交。PayPal 返回官方 Automatic Payments 页面;ClinkBill 用 `channel_uid`(customerId)创建当前环境 Customer Portal Session;Telegram Stars 无 Web 入口,返回空 URL 由客户端展示渠道内路径。订单域不参与该入口。
 
 ## 2. 支付渠道配置
 
@@ -261,7 +262,7 @@ Telegram Bot API 根地址固定为 `https://api.telegram.org`;webhook 公网地
 
 | 表 | 归属 | 唯一索引 | 职责 |
 | --- | --- | --- | --- |
-| `config_subscription_product` | 订阅域 | `uk_config_subscription_product_line_product_id(product_line, product_id)` | 订阅商品定义 |
+| `config_subscription_product` | 订阅域 | `uk_config_subscription_product_kind_product_id(product_kind, product_id)` | 订阅商品定义 |
 | `config_subscription_product_price` | 订阅域 | `uk_config_subscription_product_price_product_channel(product_id, channel_code)` | 订阅商品 × 渠道定价 |
 | `config_credit_product` | 积分域 | `uk_config_credit_product_product_id(product_id)` | 积分包商品定义 |
 | `config_credit_product_price` | 积分域 | `uk_config_credit_product_price_product_channel(product_id, channel_code)` | 积分包 × 渠道定价 |
@@ -320,7 +321,7 @@ async def check_product(self, param: OrderCheckProductParam) -> OrderCreateParam
 ### 3.2 订单快照落库规则
 
 - 订单最终金额 / 币种 / 商品名以 `check_product()` 返回值为准,**不信任客户端传值**。
-- `SUBSCRIPTION` 商品的 `product_line/auto_renew/period/product_price_id/provider_sku` 由订阅域或 provider webhook 写入 `OrderCreateParam.extra_metadata` 的商品快照,履约时从订单快照读取,不从当前订阅配置重读,避免改价或改周期后历史订单履约漂移。
+- `SUBSCRIPTION` 商品的 `product_kind/auto_renew/period/product_price_id/provider_sku` 由订阅域或 provider webhook 写入 `OrderCreateParam.extra_metadata` 的商品快照,履约时从订单快照读取,不从当前订阅配置重读,避免改价或改周期后历史订单履约漂移。
 - `RECHARGE` 商品的 `credits_amount` 由积分域 `check_product` 写入 `OrderCreateParam.extra_metadata` 的商品快照(`product_snapshot.credits_amount`),履约时从订单快照读取(见 `@tech-订单数据与状态机.md` §8.3),不从当前积分配置重读,避免改价后到账数量漂移。
 - 订单创建后,后续支付、回调、履约全部以订单表中的快照为准,不再用当前配置表价格判断旧订单。
 
@@ -732,7 +733,7 @@ orders = await order_service.order_lists(
 )
 ```
 
-**与旧文档(006.003)的关键差异**:补偿任务覆盖所有已支付但未履约完成的订单,包括 Credits 与 Unlimited 订阅首期/续费订单。
+补偿任务覆盖所有已支付但未履约完成的订单,包括 Credits 与 Maps 订阅首期/续费订单。
 
 `updated_before_ms` 用 `updated_at` 判断滞留(而非 `created_at`),避免订单创建很久但刚支付成功时被提前补偿。
 

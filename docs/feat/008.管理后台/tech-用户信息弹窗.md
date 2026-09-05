@@ -8,7 +8,7 @@
 
 - 后台内展示的非空 `user_id` 都可作为入口打开同一个用户信息弹窗。
 - 用户基础信息:ID、邮箱、注册来源、注册方式、注册 IP(归属地)、最后登录 IP(归属地)、最后一次操作 IP(归属地)、注册时间、最后登录时间、登录次数、账号状态。
-- 权益信息:当前 Credits 余额、四条产品线(extension / maps_extension / maps_online / maps_api)各自的订阅状态与过期时间、三条 Maps 产品线的当月用量快照。
+- 权益信息:当前 Credits 余额、三类产品(maps_extension / maps_online / maps_api)各自的订阅状态与过期时间、三条 Maps 产品线的当月用量快照。
 - 下方「订单列表」区块:数据源为 `orders`,远程分页,不筛选状态,成功/失败/待支付/取消/过期等所有订单都展示。
 - 管理后台所有展示时间统一格式为 `YYYY-MM-DD HH:mm:ss`,按固定 UTC+8 展示,不使用浏览器 locale 默认格式。
 
@@ -23,7 +23,7 @@
 
 采用「聚合 profile 接口 + 订单独立分页接口 + 前端复用弹窗组件」:
 
-- `GET /api/admin/users/{user_id}/profile` 读取用户基础信息、Credits 余额、四线订阅摘要与三线用量快照(契约与错误码见 `@tech-用户管理.md`)。
+- `GET /api/admin/users/{user_id}/profile` 读取用户基础信息、Credits 余额、三类订阅摘要与三线用量快照(契约与错误码见 `@tech-用户管理.md`)。
 - `GET /api/admin/users/{user_id}/credits` 按流水 ID 倒序分页读取 `user_credit_logs`;前端当前无消费方,接口保留备查。
 - `GET /api/admin/users/{user_id}/orders` 分页读取该用户全部订单。
 - 前端 `UserInfoDialog.vue`,各页面在展示用户 ID 的位置调用弹窗 `open(userId)`。
@@ -66,7 +66,7 @@
 
 ### 订阅(按产品线)
 
-来源 `user_subscriptions` 原始行,`subscriptions` 固定四行;逐线读取方式、`has_subscription` 折算公式、无付费行 / 过期行口径与历史 MultipleResultsFound 修复记录见 `@tech-用户管理.md`(契约唯一落点),本文不重复。
+来源 `user_subscriptions` 原始行,`subscriptions` 固定三行;逐线读取方式、`has_subscription` 折算公式、无付费行 / 过期行口径与历史 MultipleResultsFound 修复记录见 `@tech-用户管理.md`(契约唯一落点),本文不重复。
 
 ### 用量快照
 
@@ -100,7 +100,7 @@
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/api/admin/users/{user_id}/profile` | 用户基础信息 + Credits + 四线订阅摘要 + 三线用量快照 |
+| GET | `/api/admin/users/{user_id}/profile` | 用户基础信息 + Credits + 三类订阅摘要 + 三线用量快照 |
 | GET | `/api/admin/users/{user_id}/credits` | 用户积分记录分页,按流水 ID 倒序 |
 | GET | `/api/admin/users/{user_id}/orders` | 用户订单分页,全状态 |
 
@@ -140,8 +140,8 @@
       "user_id": 123,
       "user_email": "user@example.com",
       "product_class": 1,
-      "product_id": "unlimited",
-      "product_name": "Unlimited",
+      "product_id": "maps_extension_pro",
+      "product_name": "Maps Pro",
       "amount": 9900000,
       "currency": "USD",
       "order_status": 2,
@@ -199,7 +199,7 @@ admin/src/i18n/en-US.json
 - 上半部分为基础信息和权益信息;下半部分为「订单列表」区块(无 tabs)。
 - 权益信息三块:
   - Credits 余额(描述列表项,原样数字)。
-  - 订阅权益:固定四行,行 label = 产品线 i18n 名(TG 插件 / Maps 插件 / Maps 云端 / Maps API),值 = 状态标签 + 过期时间;订阅中绿标签,未订阅灰标签;过期行的过期时间弱化(灰)展示;`expires_at` 为 null 显示 `-`。
+  - 订阅权益:固定三行,行 label = 产品线 i18n 名(Maps 插件 / Maps 云端 / Maps API),值 = 状态标签 + 过期时间;订阅中绿标签,未订阅灰标签;过期行的过期时间弱化(灰)展示;`expires_at` 为 null 显示 `-`。
   - 当月用量:固定三行,行 label 同上,值 = 周期标签(`ym` 整数转 `YYYY-MM`)+ `used/total`(表格数字对齐);`exhausted=true` 追加红色「已耗尽」标签。
 - 订单表格远程分页,列为订单号、商品、金额、订单状态、履约状态、支付方式、创建时间。
 - 所有用户可见文案走 `userInfo.*` i18n;产品线名与订阅 / 用量文案中英同步。
@@ -240,5 +240,5 @@ pnpm test:e2e -- users.spec.ts
 人工:
 
 - 用户管理页与订单管理的用户 ID 都能打开同一个弹窗。
-- 弹窗展示 IP(归属地)、Credits、四线订阅(绿 / 灰标签与过期时间)、三线用量(周期标签、used/total、耗尽红标);订单列表可分页。
+- 弹窗展示 IP(归属地)、Credits、三类订阅(绿 / 灰标签与过期时间)、三线用量(周期标签、used/total、耗尽红标);订单列表可分页。
 - 字段缺失、用户不存在不导致页面崩溃。

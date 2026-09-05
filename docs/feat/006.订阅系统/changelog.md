@@ -1,5 +1,14 @@
 # 006 · 订阅系统 - 变更记录
 
+## 2026-09-05 三类产品合同统一与 TG 现役商品退出
+
+- 后端、网站、Admin 与双插件统一 `product_kind` 及对应项目符号,仅 `maps_extension` / `maps_online` / `maps_api` 三类;Google Maps 与 Bing 共享插件类。状态查询必须显式传类别,auth/me 仅三类 Maps 摘要,Admin 仅三类订阅与用量,Credits 订单类别为空。现行合同见 [订阅商品与状态](tech-订阅商品与状态.md)。
+- 移除旧 TG `extension` / `unlimited` 商品与默认回退,配置读取排除非现役类别。Telegram Stars Provider、webhook、渠道与前端支持保留;7 天好评活动继续关闭,内部领取需显式传类别与档位,未指定新的赠送产品。
+- 本地 MySQL 8.4.7:三表类别列和三索引原地 rename;改名前后 Maps 订阅 2 行,商品配置 TG 2 / Maps 3 / Online 5 / API 5 行均保留,用量与订单均为 0 行,因此无需订单 JSON 数据更新。结构同步二次运行无差异,未删除 TG 存量数据。
+- 独立审查:后端 2 轮(默认 seed 场景漏传类别的阻塞已修复),网站/Admin 与双插件各 1 轮,整体审查 1 轮通过。所有受影响端构建与启动成功;后端相关 real 40 通过、2 个 Business 自动续费升级因渠道价缺失 skip;双插件定向 unit 16 通过,Maps 真实宿主 1 通过,Bing 真实 popup 订阅 1 通过、匿名宿主因地域跳转 skip。
+- 网站配置解析、Pricing 购买路径与 Admin 权益展示各 1 条通过;组合验证通过真实 HTTP 与真实页面确认三类状态、checkout、auth/me 和 Admin 聚合,缺少类别返回 422,页面无运行时异常。验证账号与服务均已清理。
+- 未执行真实付款或商店发布,未实施插件采集分档上限。真实渠道 SKU/公网 webhook 与 Bing 匿名宿主地域限制仍待办;后端全量 mypy 的 jwt 4 项旧错、ruff fixtures 45 项旧错未改动。本次文档阶段只做格式、链接和合同一致性检查,不重复业务测试。
+
 ## 2026-09-05 订阅升级后端接线与本地验证
 
 - PaymentBase/渠道 adapter 统一换档能力、预览、确认与状态；业务层消费统一结果，合同归 [订阅升级](tech-订阅升级.md)。

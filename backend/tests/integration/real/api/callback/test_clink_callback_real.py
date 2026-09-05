@@ -23,8 +23,10 @@ from sqlalchemy.sql.elements import ColumnElement
 from app.constants.order import CallbackStatus, OrderStatus, ProductClass
 from app.constants.payment import CLINK_PAYMENT_METHOD
 from app.constants.subscription import (
-    EXTENSION_PRODUCT_LINE,
-    UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+    MAPS_ONLINE_PRODUCT_KIND,
+    MAPS_EXTENSION_PRODUCT_KIND,
+    MAPS_EXTENSION_PRO_PRODUCT_ID,
+    ONLINE_BASIC_PRODUCT_ID,
 )
 from app.core.config import settings
 from app.core.database import get_async_session, get_engine
@@ -226,10 +228,10 @@ def _install_clink_http(
     )
 
 
-async def _clink_unlimited_price(
+async def _clink_online_basic_price(
     real_async_client: httpx.AsyncClient,
 ) -> dict[str, object]:
-    """从真实 checkout 配置读取 unlimited 的 Clink 渠道价。"""
+    """从真实 checkout 配置读取 online_basic 的 Clink 渠道价。"""
 
     response = await real_async_client.get("/api/client/subscription/checkout-configs")
     assert response.status_code == 200
@@ -241,13 +243,13 @@ async def _clink_unlimited_price(
         (
             item
             for item in plans
-            if item["product_line"] == EXTENSION_PRODUCT_LINE
-            and item["product_id"] == UNLIMITED_SUBSCRIPTION_PRODUCT_ID
+            if item["product_kind"] == MAPS_ONLINE_PRODUCT_KIND
+            and item["product_id"] == ONLINE_BASIC_PRODUCT_ID
         ),
         None,
     )
     if plan is None:
-        pytest.skip("REAL_SCHEMA_UNAVAILABLE: 缺少 extension 线 unlimited 配置")
+        pytest.skip("REAL_SCHEMA_UNAVAILABLE: 缺少 maps_online 类别 online_basic 配置")
     price = next(
         (
             item
@@ -257,19 +259,19 @@ async def _clink_unlimited_price(
         None,
     )
     if price is None:
-        pytest.skip("REAL_CLINK_CHANNEL_UNAVAILABLE: unlimited 缺少 Clink 渠道价")
+        pytest.skip("REAL_CLINK_CHANNEL_UNAVAILABLE: online_basic 缺少 Clink 渠道价")
     return price
 
 
 async def _subscription(
-    user_id: int, product_line: str
+    user_id: int, product_kind: str
 ) -> UserSubscriptionModel | None:
     """读取指定产品线的真实订阅履约结果。"""
 
     async with get_async_session() as db:
         stmt = select(UserSubscriptionModel).filter_by(
             user_id=user_id,
-            product_line=product_line,
+            product_kind=product_kind,
         )
         return await db.scalar(stmt)
 
@@ -305,14 +307,14 @@ async def test_real_clink_purchase_then_onetime_order_fulfills_natural_month(
         settings.app, "public_website_base_url", "https://gmap.example.com"
     )
     _install_clink_http(monkeypatch, checkout_host=_CLINK_CHECKOUT_HOSTS[environment])
-    price = await _clink_unlimited_price(real_async_client)
+    price = await _clink_online_basic_price(real_async_client)
     user_id, token = await real_user_factory(email)
 
     create_response = await real_async_client.post(
         "/api/client/order/create",
         json={
             "product_class": ProductClass.SUBSCRIPTION.value,
-            "product_id": UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+            "product_id": ONLINE_BASIC_PRODUCT_ID,
             "payment_method": CLINK_PAYMENT_METHOD,
             "currency": price["currency"],
             "amount": price["amount"],
@@ -365,9 +367,9 @@ async def test_real_clink_purchase_then_onetime_order_fulfills_natural_month(
     assert stored_orders[0].order_status == OrderStatus.PAID.value
     assert stored_orders[0].callback_status == CallbackStatus.SUCCESS.value
 
-    subscription = await _subscription(user_id, EXTENSION_PRODUCT_LINE)
+    subscription = await _subscription(user_id, MAPS_ONLINE_PRODUCT_KIND)
     assert subscription is not None
-    assert subscription.product_id == UNLIMITED_SUBSCRIPTION_PRODUCT_ID
+    assert subscription.product_id == ONLINE_BASIC_PRODUCT_ID
     assert subscription.auto_renew is False
     assert subscription.payment_method == CLINK_PAYMENT_METHOD
     assert subscription.start_at is not None
@@ -397,7 +399,7 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
         order_no=order_no,
         user_id=cleanup.phantom_user_id,
         product_class=ProductClass.SUBSCRIPTION.value,
-        product_id=UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+        product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
         product_name=f"pytest-clink-{cleanup.test_run_id}",
         amount=12_340_000,
         currency="USD",
@@ -414,7 +416,7 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
         extra_metadata=json.dumps(
             {
                 "product_snapshot": {
-                    "product_line": EXTENSION_PRODUCT_LINE,
+                    "product_kind": MAPS_EXTENSION_PRODUCT_KIND,
                     "product_price_id": 999_002,
                     "auto_renew": True,
                     "period": "month",
@@ -441,7 +443,7 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
     assert await order_service.fulfill_paid_order(stored_order) is True
 
     subscription_before = await _subscription(
-        cleanup.phantom_user_id, EXTENSION_PRODUCT_LINE
+        cleanup.phantom_user_id, MAPS_EXTENSION_PRODUCT_KIND
     )
     assert subscription_before is not None
     assert subscription_before.expires_at == first_period_end
@@ -490,7 +492,7 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
     assert renewal_orders[0].payment_transaction_id == f"ordr_{cleanup.test_run_id}"
 
     subscription_after = await _subscription(
-        cleanup.phantom_user_id, EXTENSION_PRODUCT_LINE
+        cleanup.phantom_user_id, MAPS_EXTENSION_PRODUCT_KIND
     )
     assert subscription_after is not None
     assert subscription_after.expires_at == renewal_period_end
@@ -514,7 +516,7 @@ async def test_real_clink_recurring_order_succeeded_is_not_fulfilled(
         order_no=order_no,
         user_id=cleanup.phantom_user_id,
         product_class=ProductClass.SUBSCRIPTION.value,
-        product_id=UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+        product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
         product_name=f"pytest-clink-{cleanup.test_run_id}",
         amount=12_340_000,
         currency="USD",
@@ -550,7 +552,10 @@ async def test_real_clink_recurring_order_succeeded_is_not_fulfilled(
 
     assert response.status_code == 200
     assert payload["type"] == "account.reloaded"
-    assert await _subscription(cleanup.phantom_user_id, EXTENSION_PRODUCT_LINE) is None
+    assert (
+        await _subscription(cleanup.phantom_user_id, MAPS_EXTENSION_PRODUCT_KIND)
+        is None
+    )
     stored_orders = await _orders_for_channel(f"ord_{cleanup.test_run_id}")
     assert stored_orders[0].order_status == OrderStatus.PENDING.value
 
@@ -582,7 +587,7 @@ async def test_real_clink_plan_changed_webhook_mismatch_returns_http_500(
                 order_no=order_no,
                 user_id=cleanup.phantom_user_id,
                 product_class=ProductClass.SUBSCRIPTION.value,
-                product_id=UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+                product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
                 product_name=f"pytest-clink-plan-{cleanup.test_run_id}",
                 amount=12_340_000,
                 currency="USD",
@@ -596,7 +601,7 @@ async def test_real_clink_plan_changed_webhook_mismatch_returns_http_500(
                 extra_metadata=json.dumps(
                     {
                         "product_snapshot": {
-                            "product_line": EXTENSION_PRODUCT_LINE,
+                            "product_kind": MAPS_EXTENSION_PRODUCT_KIND,
                             "product_price_id": 999_003,
                             "auto_renew": True,
                             "period": "month",
@@ -615,8 +620,8 @@ async def test_real_clink_plan_changed_webhook_mismatch_returns_http_500(
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=cleanup.phantom_user_id,
-                product_line=EXTENSION_PRODUCT_LINE,
-                product_id=UNLIMITED_SUBSCRIPTION_PRODUCT_ID,
+                product_kind=MAPS_EXTENSION_PRODUCT_KIND,
+                product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
                 auto_renew=True,
                 payment_method=CLINK_PAYMENT_METHOD,
                 channel_subscription_id=row_subscription_id,
@@ -653,10 +658,10 @@ async def test_real_clink_plan_changed_webhook_mismatch_returns_http_500(
 
     assert response.status_code == 500
     assert response.json()["code"] == CommonCode.INTERNAL_SERVER_ERROR
-    row = await _subscription(cleanup.phantom_user_id, EXTENSION_PRODUCT_LINE)
+    row = await _subscription(cleanup.phantom_user_id, MAPS_EXTENSION_PRODUCT_KIND)
     assert row is not None
     assert row.channel_subscription_id == row_subscription_id
-    assert row.product_id == UNLIMITED_SUBSCRIPTION_PRODUCT_ID
+    assert row.product_id == MAPS_EXTENSION_PRO_PRODUCT_ID
 
 
 async def test_real_clink_unsupported_event_is_logged_and_acknowledged(

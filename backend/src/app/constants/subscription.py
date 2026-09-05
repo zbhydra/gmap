@@ -9,7 +9,6 @@ from pydantic import (
     Field,
     ValidationError,
     field_validator,
-    model_validator,
 )
 
 from app.exceptions.common_exception import AppCommonException
@@ -26,14 +25,10 @@ class SubscriptionPeriodEnum(str, enum.Enum):
 
 
 FREE_SUBSCRIPTION_PRODUCT_ID = "free"
-UNLIMITED_SUBSCRIPTION_PRODUCT_ID = "unlimited"
 
 # 产品线标识（006 扩展，C2 裁决的分产品订阅）：订阅按产品线隔离权益，
 # 同一账号可同时持有不同产品线的有效订阅，互不冲突也互不续期。
-# extension = 插件下载 Unlimited（历史单产品线的兜底默认值，旧数据行为不变）；
-# maps_extension = MapsGrab 插件采集订阅（maps_extension_pro / maps_extension_business）。
-EXTENSION_PRODUCT_LINE = "extension"
-MAPS_EXTENSION_PRODUCT_LINE = "maps_extension"
+MAPS_EXTENSION_PRODUCT_KIND = "maps_extension"
 
 # maps_extension 产品线付费商品（C2 套餐口径：Pro $39 100,000 / Business $99 500,000 records/月）。
 MAPS_EXTENSION_PRO_PRODUCT_ID = "maps_extension_pro"
@@ -41,8 +36,8 @@ MAPS_EXTENSION_BUSINESS_PRODUCT_ID = "maps_extension_business"
 
 # MapsGrab 新增订阅产品线（006 扩展）：online = 网页采集套餐（records/月），
 # api = API 调用套餐（requests/月）。均为一次性支付月度套餐。
-MAPS_ONLINE_PRODUCT_LINE = "maps_online"
-MAPS_API_PRODUCT_LINE = "maps_api"
+MAPS_ONLINE_PRODUCT_KIND = "maps_online"
+MAPS_API_PRODUCT_KIND = "maps_api"
 
 # maps_online 产品线付费商品（records/月额度档位）。
 ONLINE_LITE_PRODUCT_ID = "online_lite"
@@ -56,13 +51,12 @@ API_PROFESSIONAL_PRODUCT_ID = "api_professional"
 API_BUSINESS_PRODUCT_ID = "api_business"
 API_SCALE_PRODUCT_ID = "api_scale"
 
-# 全部订阅产品线：客户端按线查询订阅状态（如 /subscription/status?product_line=）
-# 的合法值域，缺省为 extension（历史单产品线，旧调用方行为不变）。
-SUBSCRIPTION_PRODUCT_LINES = (
-    EXTENSION_PRODUCT_LINE,
-    MAPS_EXTENSION_PRODUCT_LINE,
-    MAPS_ONLINE_PRODUCT_LINE,
-    MAPS_API_PRODUCT_LINE,
+# 全部订阅产品线：客户端按线查询订阅状态（如 /subscription/status?product_kind=）
+# 的合法值域。
+SUBSCRIPTION_PRODUCT_KINDS = (
+    MAPS_EXTENSION_PRODUCT_KIND,
+    MAPS_ONLINE_PRODUCT_KIND,
+    MAPS_API_PRODUCT_KIND,
 )
 
 
@@ -97,7 +91,7 @@ class SubscriptionProductMetadata(BaseModel):
     ) -> "SubscriptionProductMetadata":
         """解析订阅商品 metadata，错误信息带商品 ID。"""
         try:
-            return cls.model_validate({**metadata, "_product_id": product_id})
+            return cls.model_validate(metadata)
         except ValidationError as exc:
             raise AppCommonException(
                 CommonCode.PAYMENT_GATEWAY_ERROR,
@@ -107,21 +101,6 @@ class SubscriptionProductMetadata(BaseModel):
                     f"errors={_format_metadata_errors(exc)}"
                 ),
             ) from exc
-
-    @model_validator(mode="before")
-    @classmethod
-    def _normalize_legacy_fields(cls, value: object) -> object:
-        """Free 判断只看 product_id，各字段直接使用配置值。"""
-        if not isinstance(value, dict):
-            return value
-
-        metadata = dict(value)
-        product_id = str(metadata.pop("_product_id", "")).strip().lower()
-        # free 判断只看 product_id（period 参数已随周期统一移除）。
-        if product_id == FREE_SUBSCRIPTION_PRODUCT_ID:
-            metadata.setdefault("monthly_quota", None)
-
-        return metadata
 
     @field_validator("monthly_quota", mode="before")
     @classmethod

@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from app.core.database import get_async_session
 from app.constants.config_cache import CONFIG_CACHE_TTL_MS
+from app.constants.subscription import SUBSCRIPTION_PRODUCT_KINDS
 from app.models.config_subscription_product_model import ConfigSubscriptionProductModel
 from app.utils.time import timestamp_now
 
@@ -16,7 +17,7 @@ class ConfigSubscriptionProductRow:
 
     product_id: str
     name: str
-    product_line: str
+    product_kind: str
     period: str
     auto_renew: bool
     display_currency: str
@@ -61,7 +62,12 @@ class ConfigSubscriptionProductService:
         async with get_async_session() as db:
             result = await db.execute(
                 select(ConfigSubscriptionProductModel)
-                .where(ConfigSubscriptionProductModel.enabled.is_(True))
+                .where(
+                    ConfigSubscriptionProductModel.enabled.is_(True),
+                    ConfigSubscriptionProductModel.product_kind.in_(
+                        SUBSCRIPTION_PRODUCT_KINDS
+                    ),
+                )
                 .order_by(
                     ConfigSubscriptionProductModel.display_order.asc(),
                     ConfigSubscriptionProductModel.id.asc(),
@@ -73,7 +79,7 @@ class ConfigSubscriptionProductService:
             ConfigSubscriptionProductRow(
                 product_id=row.product_id,
                 name=row.name,
-                product_line=row.product_line,
+                product_kind=row.product_kind,
                 period=row.period,
                 auto_renew=row.auto_renew,
                 display_currency=row.display_currency,

@@ -24,7 +24,7 @@ export const pricingContent: PricingPageContent = {
     loading: 'Checking your account...',
     signedOutTitle: 'Buying a plan? Sign in first.',
     signedOutDescription:
-      'Plans are linked to your MapsGrab account and apply to the product line you buy.',
+      'Plans are linked to your MapsGrab account and apply to the product you buy.',
     signInCta: 'Sign in',
     planLabel: 'Plan',
     noExpiry: 'No expiry',

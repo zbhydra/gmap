@@ -60,15 +60,16 @@ async def real_subscription_order_schema_ready(
         pytest.skip(f"REAL_SCHEMA_UNAVAILABLE: 数据库缺少 {','.join(missing)} 表")
 
 
-def _unlimited_paypal_price(
+def _online_basic_paypal_price(
     plans: list[dict[str, object]],
 ) -> tuple[dict[str, object], dict[str, object]]:
-    """从 checkout 方案里取 extension 线 unlimited 的 PayPal 渠道价。"""
+    """从 checkout 方案里取 maps_online 类别 online_basic 的 PayPal 渠道价。"""
 
     plan = next(
         item
         for item in plans
-        if item["product_line"] == "extension" and item["product_id"] == "unlimited"
+        if item["product_kind"] == "maps_online"
+        and item["product_id"] == "online_basic"
     )
     channel = next(
         item
@@ -92,7 +93,7 @@ async def test_real_subscription_checkout_configs_serialize_product_level_billin
     plans = body["data"]["checkout_configs"]
     if not plans:
         pytest.skip("REAL_SCHEMA_UNAVAILABLE: 订阅商品展示配置尚未初始化")
-    plan, paypal = _unlimited_paypal_price(plans)
+    plan, paypal = _online_basic_paypal_price(plans)
 
     assert plan["product_class"] == ProductClass.SUBSCRIPTION.value
     assert plan["period"] == "month"
@@ -122,13 +123,13 @@ async def test_real_subscription_order_rejects_mismatched_billing_mode_without_o
     plans = config_response.json()["data"]["checkout_configs"]
     if not plans:
         pytest.skip("REAL_SCHEMA_UNAVAILABLE: 订阅商品展示配置尚未初始化")
-    _plan, paypal = _unlimited_paypal_price(plans)
+    _plan, paypal = _online_basic_paypal_price(plans)
 
     response = await real_async_client.post(
         "/api/client/order/create",
         json={
             "product_class": ProductClass.SUBSCRIPTION.value,
-            "product_id": "unlimited",
+            "product_id": "online_basic",
             "payment_method": paypal["payment_method"],
             "currency": paypal["currency"],
             "amount": paypal["amount"],
@@ -141,7 +142,7 @@ async def test_real_subscription_order_rejects_mismatched_billing_mode_without_o
 
     assert response.status_code == 200
     assert body["code"] == CommonCode.PAYMENT_PRICE_UPDATED.value
-    assert body["data"]["product_id"] == "unlimited"
+    assert body["data"]["product_id"] == "online_basic"
 
     async with get_async_session() as db:
         user_id = await db.scalar(
@@ -173,7 +174,7 @@ async def test_real_subscription_upgrade_quote_prorates_one_time_diff(
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_line="maps_online",
+                product_kind="maps_online",
                 product_id="online_lite",
                 auto_renew=False,
                 payment_method="paypal",
@@ -185,7 +186,7 @@ async def test_real_subscription_upgrade_quote_prorates_one_time_diff(
 
     response = await real_async_client.get(
         "/api/client/subscription/upgrade-quote",
-        params={"product_line": "maps_online", "target_product_id": "online_growth"},
+        params={"product_kind": "maps_online", "target_product_id": "online_growth"},
         headers={"Authorization": f"Bearer {token}"},
     )
     body = response.json()
@@ -230,7 +231,7 @@ async def test_real_subscription_upgrade_quote_prorates_one_time_diff(
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_line="maps_extension",
+                product_kind="maps_extension",
                 product_id="maps_extension_pro",
                 auto_renew=True,
                 payment_method="telegram_stars",
@@ -241,7 +242,7 @@ async def test_real_subscription_upgrade_quote_prorates_one_time_diff(
         await db.commit()
     quote = await subscription_service.get_upgrade_quote(
         user_id=user_id,
-        product_line="maps_extension",
+        product_kind="maps_extension",
         target_product_id="maps_extension_business",
     )
     assert quote["available"] is False

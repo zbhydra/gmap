@@ -6,7 +6,7 @@
  * 外部页（window.open 的新页面不真实出网）。保留两条用例：
  *
  * 1. Pricing 完整购买主路径：普通下单与 Clink 回跳、管理入口、PayPal 固定渠道
- *    补差与回跳刷新、自动续费确认等待后刷新档位及产品线直达。
+ *    补差与回跳刷新、自动续费确认等待后刷新档位及产品类别直达。
  * 2. 站点结构路径：主导航 / 桌面 API 下拉 / 移动菜单 / 首页核心产品卡与
  *    FAQPage JSON-LD / Extension 安装链路 / Terms / Privacy 关键事实。
  */
@@ -41,7 +41,7 @@ interface MockPaymentChannel {
 interface MockPlan {
   product_class: number
   product_id: string
-  product_line: string
+  product_kind: string
   product_name: string
   period: 'month'
   auto_renew: boolean
@@ -64,7 +64,7 @@ interface CapturedCreateOrderBody {
 
 /** 捕获到的渠道管理请求体。 */
 interface CapturedManagementBody {
-  product_line: string
+  product_kind: string
 }
 
 /** 捕获到的取消订单请求体。 */
@@ -74,7 +74,7 @@ interface CapturedCancelBody {
 
 const ORDER_SUCCESS_EPOCH = Date.parse('2026-09-05T00:00:00Z')
 
-/** 三产品线各出一个代表 SKU：Online 一次性 / Extension 自动续费 / API 一次性。 */
+/** 三产品类别各出一个代表 SKU：Online 一次性 / Extension 自动续费 / API 一次性。 */
 function buildPlans(): MockPlan[] {
   const channels = (basePriceId: number, amount: number): MockPaymentChannel[] => [
     {
@@ -95,7 +95,7 @@ function buildPlans(): MockPlan[] {
 
   const plan = (
     productId: string,
-    productLine: string,
+    productKind: string,
     productName: string,
     amount: number,
     autoRenew: boolean,
@@ -104,7 +104,7 @@ function buildPlans(): MockPlan[] {
   ): MockPlan => ({
     product_class: 1,
     product_id: productId,
-    product_line: productLine,
+    product_kind: productKind,
     product_name: productName,
     period: 'month',
     auto_renew: autoRenew,
@@ -125,8 +125,8 @@ test('Pricing full purchase path: billing, upgrades, returns and Manage subscrip
   const createOrderBodies: CapturedCreateOrderBody[] = []
   const managementBodies: CapturedManagementBody[] = []
   const cancelBodies: CapturedCancelBody[] = []
-  const upgradeCheckoutBodies: { product_line: string; target_product_id: string }[] = []
-  const upgradeConfirmBodies: { product_line: string; target_product_id: string }[] = []
+  const upgradeCheckoutBodies: { product_kind: string; target_product_id: string }[] = []
+  const upgradeConfirmBodies: { product_kind: string; target_product_id: string }[] = []
   const expiresAt = Date.now() + 30 * 86_400_000
   let onlineProductId: string | null = null
   let extensionProductId = 'maps_extension_pro'
@@ -179,7 +179,7 @@ test('Pricing full purchase path: billing, upgrades, returns and Manage subscrip
   await page.route('**/api/client/subscription/upgrade-quote?*', route => {
     const params = new URL(route.request().url()).searchParams
     const target = params.get('target_product_id')
-    const online = params.get('product_line') === 'maps_online'
+    const online = params.get('product_kind') === 'maps_online'
     if (!online && applyRecurringUpgrade) {
       extensionProductId = 'maps_extension_business'
     }
@@ -246,6 +246,7 @@ test('Pricing full purchase path: billing, upgrades, returns and Manage subscrip
         order_no: upgrade ? 'PAYPAL-UPGRADE-1' : 'CLINK-E2E-1',
         product_class: 1,
         product_id: upgrade ? 'online_growth' : 'maps_extension_pro',
+        product_kind: upgrade ? 'maps_online' : 'maps_extension',
         product_name: 'Maps Pro',
         amount: upgrade ? 12_500_000 : 39_000_000,
         currency: 'USD',
@@ -285,7 +286,7 @@ test('Pricing full purchase path: billing, upgrades, returns and Manage subscrip
   await page.goto('/pricing/')
   await expectE2eBrowserIdentity(page, testInfo, expect)
 
-  // 登录态恢复：账号胶囊展示邮箱，三产品线配置加载后付费卡可点。
+  // 登录态恢复：账号胶囊展示邮箱，三产品类别配置加载后付费卡可点。
   await expect(page.locator('[data-pricing-account-email]')).toContainText('hydra@mapsgrab.test')
   await expect(page.locator('[data-pricing-buy="online_basic"]')).toBeEnabled()
   await expect(page.locator('[data-pricing-buy="maps_extension_pro"]')).toBeEnabled()
@@ -348,12 +349,12 @@ test('Pricing full purchase path: billing, upgrades, returns and Manage subscrip
   await manageButton.click()
   const portalPopup = await portalPopupPromise
   await expect(portalPopup).toHaveURL(/uat-portal\.clinkbill\.com/)
-  // 请求只含 product_line，渠道选择完全由服务端订阅实例决定。
-  expect(managementBodies).toEqual([{ product_line: 'maps_extension' }])
+  // 请求只含 product_kind，渠道选择完全由服务端订阅实例决定。
+  expect(managementBodies).toEqual([{ product_kind: 'maps_extension' }])
 
   // 复用同一用户路径验证报价定档、固定 PayPal 补差和既有回跳后刷新。
   onlineProductId = 'online_basic'
-  await page.goto('/pricing/?product_line=maps_online')
+  await page.goto('/pricing/?product_kind=maps_online')
   await expect(page.locator('[data-pricing-buy="online_basic"]')).toHaveText('Current Plan')
   await expect(page.locator('[data-pricing-buy="online_lite"]')).toBeDisabled()
   await expect(page.locator('[data-pricing-buy="online_growth"]')).toHaveText('Upgrade · $12.50')
@@ -368,7 +369,7 @@ test('Pricing full purchase path: billing, upgrades, returns and Manage subscrip
   const upgradePopup = await upgradePopupPromise
   await expect(upgradePopup).toHaveURL(/www\.paypal\.com\/checkoutnow/)
   expect(upgradeCheckoutBodies).toEqual([{
-    product_line: 'maps_online', target_product_id: 'online_growth'
+    product_kind: 'maps_online', target_product_id: 'online_growth'
   }])
   await upgradePopup.goto(`${new URL(page.url()).origin}/paypal/success/?order_no=PAYPAL-UPGRADE-1`)
   await expect(upgradePopup.locator('[data-paypal-return-title]')).toHaveText('Subscription activated')
@@ -377,8 +378,8 @@ test('Pricing full purchase path: billing, upgrades, returns and Manage subscrip
   await expect(page.locator('[data-pricing-user-plan]')).toHaveText('Online Growth')
   await page.locator('[data-order-checkout-order-close]').click()
 
-  // 插件同名 product_line 参数直达 Extension；requires_action 只读 quote，不重复确认。
-  await page.goto('/pricing/?product_line=maps_extension')
+  // 插件同名 product_kind 参数直达 Extension；requires_action 只读 quote，不重复确认。
+  await page.goto('/pricing/?product_kind=maps_extension')
   await expect(page.locator('[data-pricing-tab="extension"]')).toHaveAttribute('aria-selected', 'true')
   await expect(page.locator('[data-pricing-manage-subscription]')).toBeVisible()
   await expect(page.locator('[data-pricing-buy="maps_extension_pro"]')).toHaveText('Current Plan')
@@ -396,7 +397,7 @@ test('Pricing full purchase path: billing, upgrades, returns and Manage subscrip
   await expect(page.locator('[data-pricing-user-plan]')).toHaveText('Maps Business')
   await expect(page.locator('[data-pricing-buy="maps_extension_business"]')).toHaveText('Current Plan')
   expect(upgradeConfirmBodies).toEqual([{
-    product_line: 'maps_extension', target_product_id: 'maps_extension_business'
+    product_kind: 'maps_extension', target_product_id: 'maps_extension_business'
   }])
   expect(createOrderBodies).toHaveLength(1)
   await page.locator('[data-order-checkout-order-close]').click()

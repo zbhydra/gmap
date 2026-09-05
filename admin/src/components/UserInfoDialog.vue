@@ -87,8 +87,8 @@
           >
             <NDescriptionsItem
               v-for="line in profile.subscriptions"
-              :key="line.product_line"
-              :label="productLineLabel(line.product_line)"
+              :key="line.product_kind"
+              :label="productKindLabel(line.product_kind)"
             >
               <div class="user-info-line-value">
                 <NTag
@@ -125,8 +125,8 @@
           >
             <NDescriptionsItem
               v-for="line in profile.usage"
-              :key="line.product_line"
-              :label="productLineLabel(line.product_line)"
+              :key="line.product_kind"
+              :label="productKindLabel(line.product_kind)"
             >
               <div class="user-info-line-value">
                 <span class="user-info-usage-text">
@@ -179,7 +179,7 @@ import {
   getAdminUserProfile,
   type AdminUserAccountStatus,
   type AdminUserProfileData,
-  type AdminUserProductLine,
+  type AdminUserProductKind,
 } from "@/api/users";
 import type { AdminOrder, CallbackStatus, OrderStatus } from "@/api/orders";
 import { formatAdminTimeMs } from "@/utils/time";
@@ -386,17 +386,16 @@ function accountStatusTagType(status: AdminUserAccountStatus): TagType {
   return types[status];
 }
 
-/** 产品线展示名 i18n 键，键值与后端 subscription 常量一一对应。 */
-const productLineLabelKeys: Record<AdminUserProductLine, string> = {
-  extension: "userInfo.productLineExtension",
-  maps_extension: "userInfo.productLineMapsExtension",
-  maps_online: "userInfo.productLineMapsOnline",
-  maps_api: "userInfo.productLineMapsApi",
+/** 产品类别展示名 i18n 键，键值与后端 subscription 常量一一对应。 */
+const productKindLabelKeys: Record<AdminUserProductKind, string> = {
+  maps_extension: "userInfo.productKindMapsExtension",
+  maps_online: "userInfo.productKindMapsOnline",
+  maps_api: "userInfo.productKindMapsApi",
 };
 
-/** 产品线展示名。 */
-function productLineLabel(productLine: AdminUserProductLine): string {
-  return t(productLineLabelKeys[productLine]);
+/** 产品类别展示名。 */
+function productKindLabel(productKind: AdminUserProductKind): string {
+  return t(productKindLabelKeys[productKind]);
 }
 
 /** 用量周期标签：后端 ym 整数（YYYYMM）转 YYYY-MM。 */
