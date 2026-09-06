@@ -1,11 +1,12 @@
 ---
 /**
- * Pricing 登录弹窗包装。
+ * 站级登录弹窗装配（全站唯一一份，由 Layout 渲染）。
  *
- * 复用 DownloadAuthModal 的 HTML/CSS 和 homepage auth runtime，避免 Pricing 复制
- * 大量登录表单；外层只注入 Pricing controller 所需的精简文案 payload。
+ * 复用 AuthModal 的 HTML/CSS 和 homepage auth runtime；外层只注入站级
+ * controller 所需的精简文案 payload。导航登录、Pricing 待购与 Dashboard
+ * 工作区共用同一个弹窗实例和会话。
  */
-import AuthModal from '../auth/AuthModal.astro'
+import AuthModal from './AuthModal.astro'
 import type { AccountContent } from '../../i18n/schema'
 
 const { copy } = Astro.props as {
@@ -25,16 +26,22 @@ const authCopy = {
 }
 ---
 
-<div data-pricing-auth-root>
+<div data-site-auth-root>
   <script
     is:inline
     type="application/json"
-    data-pricing-auth-copy
+    data-site-auth-copy
     set:html={JSON.stringify(authCopy)}
   />
-  <AuthModal copy={copy} skinClass="pricing-auth-modal" idPrefix="pricing" />
+  <AuthModal copy={copy} />
 </div>
 
 <script>
-  import './pricing-auth-controller'
+  import { mountSiteAuthController } from './site-auth-controller'
+
+  // Layout 是本组件的唯一装配点；客户端脚本只在浏览器执行。
+  const root = document.querySelector<HTMLElement>('[data-site-auth-root]')
+  if (root) {
+    mountSiteAuthController(root)
+  }
 </script>

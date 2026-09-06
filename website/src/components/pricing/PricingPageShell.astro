@@ -1,15 +1,15 @@
 ---
 /**
- * Pricing 页面 DOM 壳（三产品线 tab 版）。
+ * Pricing 页面 DOM 壳（三产品类别 tab 版）。
  *
- * Online / Extension / API 三条产品线各一个 tab；SSR 静态渲染全部档位卡，
- * 付费卡购买按钮由 pricing-page-controller.ts 接支付配置后启用。tab 切换、
- * 账户区按当前线展示订阅摘要均在 controller 内完成。支付流程交给公共
- * OrderCheckoutModal，避免本页维护第二套支付弹窗和订单轮询。
+ * Online / Extension / API 三条产品类别各一个 tab；SSR 静态渲染全部档位卡，
+ * 付费卡购买按钮由 pricing-page-controller.ts 接支付配置后启用。tab 切换与
+ * 升级资格派生在 controller 内完成；账户摘要、退出与渠道管理已迁 Dashboard
+ * 订阅页，本页只负责套餐比较、购买与升级（匿名购买在原页打开 Layout 装配的
+ * 站级登录弹窗）。支付流程交给公共 OrderCheckoutModal，避免本页维护第二套
+ * 支付弹窗和订单轮询。
  */
 import OrderCheckoutModal from '../order-checkout/OrderCheckoutModal.astro'
-import PricingAuthModal from './PricingAuthModal.astro'
-import PricingCancellationGuideModal from './PricingCancellationGuideModal.astro'
 import type { AccountContent, PricingPageContent, PricingTabId } from '../../i18n/schema'
 
 interface Props {
@@ -28,7 +28,7 @@ const tabIds: PricingTabId[] = ['online', 'extension', 'api']
   class="pricing-page"
   data-pricing-page
 >
-  {/* popupBlocked 单键复用：checkout 与 Manage subscription 共用 AccountContent 的弹窗拦截文案 */}
+  {/* popupBlocked 单键复用：checkout 支付窗口被拦截时共用 AccountContent 的文案 */}
   <script
     is:inline
     type="application/json"
@@ -42,61 +42,6 @@ const tabIds: PricingTabId[] = ['online', 'extension', 'api']
       <h1 class="pricing-hero-title" data-pricing-hero-title>{copy.hero.title}</h1>
       <p class="pricing-hero-description" data-pricing-hero-description>{copy.hero.description}</p>
     </header>
-
-    <aside class="pricing-account" data-pricing-account>
-      <p class="pricing-inline-status" data-pricing-account-loading>
-        {copy.account.loading}
-      </p>
-      <div class="pricing-account-signed-out" data-pricing-account-signed-out hidden>
-        <p class="pricing-account-title">{copy.account.signedOutTitle}</p>
-        <p class="pricing-account-hint">{copy.account.signedOutDescription}</p>
-        <button type="button" class="plan-button plan-button-secondary" data-pricing-login>
-          {copy.account.signInCta}
-        </button>
-      </div>
-      <div class="pricing-account-signed-in" data-pricing-account-signed-in hidden>
-        <div class="pricing-account-menu-wrap">
-          <button
-            type="button"
-            class="pricing-avatar"
-            data-pricing-account-button
-            aria-label={accountCopy.checkin.accountButtonLabel}
-            aria-expanded="false"
-          >
-            <img class="pricing-avatar-image" data-pricing-user-avatar alt="" hidden />
-            <span class="pricing-avatar-initial" data-pricing-user-initial aria-hidden="true"></span>
-          </button>
-          <div
-            class="pricing-account-menu"
-            data-pricing-account-menu
-            role="menu"
-            aria-label={accountCopy.checkin.accountMenuLabel}
-            hidden
-          >
-            <div class="pricing-account-email" data-pricing-account-email role="presentation"></div>
-            <button type="button" class="pricing-account-logout" data-pricing-account-logout role="menuitem">
-              {accountCopy.auth.logout}
-            </button>
-          </div>
-        </div>
-        <p class="pricing-account-plan-line">
-          <span>{copy.account.planLabel}</span>
-          <span aria-hidden="true">·</span>
-          <span data-pricing-user-plan>{copy.account.freePlan}</span>
-          <span aria-hidden="true">·</span>
-          <span data-pricing-user-expires></span>
-          <button
-            type="button"
-            class="pricing-cancellation-guide-button"
-            data-pricing-manage-subscription
-            hidden
-          >
-            {copy.account.manageSubscription}
-          </button>
-        </p>
-      </div>
-      <p class="pricing-inline-error" data-pricing-account-error role="alert" hidden></p>
-    </aside>
 
     <section class="pricing-plans" aria-labelledby="pricing-plans-title">
       <h2 id="pricing-plans-title" class="visually-hidden">{copy.hero.title}</h2>
@@ -217,9 +162,7 @@ const tabIds: PricingTabId[] = ['online', 'extension', 'api']
     </section>
   </div>
 
-  <PricingAuthModal copy={accountCopy} />
   <OrderCheckoutModal copy={accountCopy} />
-  <PricingCancellationGuideModal copy={copy.cancellationGuide} />
 </section>
 
 <script>
@@ -304,178 +247,7 @@ const tabIds: PricingTabId[] = ['online', 'extension', 'api']
     line-height: 1.65;
   }
 
-  /* ---------- 账户胶囊 ---------- */
-  .pricing-account {
-    display: grid;
-    justify-self: center;
-    gap: var(--space-2);
-    width: auto;
-    max-width: 100%;
-    min-width: 0;
-    padding: var(--space-3) var(--space-6);
-    border: 1px solid var(--border);
-    border-radius: var(--rounded-full);
-    background: var(--surface);
-    box-shadow: var(--shadow-card);
-  }
-
-  .pricing-account-loading,
-  .pricing-account-title,
-  .pricing-account-hint {
-    text-align: center;
-  }
-
-  .pricing-account-title {
-    font-weight: 800;
-  }
-
-  .pricing-account-hint {
-    color: var(--text-2);
-    font-size: 13px;
-  }
-
-  .pricing-account .plan-button {
-    min-height: 36px;
-    border-radius: var(--rounded-full);
-  }
-
-  .pricing-account-signed-out,
-  .pricing-account-signed-in {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2) var(--space-4);
-  }
-
-  .pricing-account-plan-line {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--text-2);
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.5;
-  }
-
-  .pricing-account-plan-line [data-pricing-user-plan] {
-    color: var(--text);
-  }
-
-  .pricing-avatar {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
-    overflow: hidden;
-    border-radius: var(--rounded-full);
-    background: var(--surface-2);
-    color: var(--primary-fg);
-    font-weight: 800;
-    font-size: 16px;
-  }
-
-  .pricing-avatar-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .pricing-avatar-initial {
-    display: grid;
-    place-items: center;
-    width: 100%;
-    height: 100%;
-    background: var(--primary);
-  }
-
-  .pricing-account-menu-wrap {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    flex: 0 0 auto;
-  }
-
-  .pricing-account-menu {
-    position: absolute;
-    top: calc(100% + var(--space-1));
-    left: 0;
-    z-index: 30;
-    width: min(280px, calc(100vw - 36px));
-    padding: var(--space-2);
-    border: 1px solid var(--border);
-    border-radius: var(--rounded-md);
-    background: var(--surface);
-    box-shadow: var(--shadow-pop);
-  }
-
-  .pricing-account-email {
-    width: 100%;
-    min-width: 0;
-    padding: var(--space-2) 14px var(--space-3);
-    border-bottom: 1px solid var(--border);
-    color: var(--text-2);
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.35;
-    text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    user-select: text;
-  }
-
-  .pricing-account-logout {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 44px;
-    margin-top: var(--space-1);
-    padding: 0 14px;
-    border-radius: var(--rounded-sm);
-    color: var(--text);
-    font-size: 14px;
-    font-weight: 800;
-    text-align: left;
-  }
-
-  .pricing-account-logout:hover {
-    background: var(--surface-2);
-  }
-
-  .pricing-avatar:focus-visible,
-  .pricing-account-logout:focus-visible,
-  .pricing-cancellation-guide-button:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 3px;
-  }
-
-  .pricing-cancellation-guide-button {
-    display: inline-flex;
-    align-items: center;
-    min-height: 32px;
-    padding: 0 var(--space-3);
-    border: 1px solid var(--border);
-    border-radius: var(--rounded-sm);
-    background: var(--surface);
-    color: var(--text-2);
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1;
-    transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
-  }
-
-  .pricing-cancellation-guide-button:hover {
-    border-color: var(--border-strong);
-    background: var(--surface-2);
-    color: var(--text);
-  }
-
-  /* ---------- 产品线 Tab ---------- */
+  /* ---------- 产品类别 Tab ---------- */
   .pricing-plans {
     display: grid;
     justify-items: center;
@@ -810,10 +582,6 @@ const tabIds: PricingTabId[] = ['online', 'extension', 'api']
   @media (max-width: 960px) {
     .plans-grid {
       grid-template-columns: minmax(0, 1fr);
-    }
-
-    .pricing-account {
-      justify-self: stretch;
     }
 
     .pricing-tabs {

@@ -6,8 +6,8 @@ TG 线主站已删除，生产 TG 站点不再由本仓维护）。品牌与产�
 
 ## 技术栈
 
-- **Astro 5**（SSG 静态站）+ 原生 TS + 命令式 DOM（非 SPA，无 Vue 集成）
-- TypeScript `strict`，`astro check` 做类型门禁
+- **Astro 5**（SSG 静态站）+ 原生 TS + 命令式 DOM；Dashboard 工作区（`/dashboard/*`）用 **Vue 3** 单文件组件（`@astrojs/vue` 官方集成，`client:load`），非 SPA、无客户端路由
+- TypeScript `strict`；类型门禁 = `astro check` + `vue-tsc --noEmit`（构建脚本内串联）
 - 测试：`node --test tests/module-scripts.test.js` + Playwright e2e
 
 ## 本地开发
@@ -19,7 +19,7 @@ pnpm install
 # 启动开发服务器（端口 7620，全仓专属）
 pnpm dev
 
-# 构建生产产物（astro check + astro build）
+# 构建生产产物（astro check + vue-tsc --noEmit + astro build）
 pnpm build
 
 # e2e（四浏览器 project；E2E_WEB_PORT 可覆盖端口）

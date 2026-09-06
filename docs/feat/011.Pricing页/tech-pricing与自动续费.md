@@ -1,6 +1,6 @@
 # 011 · Pricing 页与订阅配置
 
-> 当前源码实现口径。本文是 Pricing 页消费合同的唯一 owner:checkout 配置消费、下单请求、订单轮询、支付回跳与渠道管理入口都在这里;`tech-实现与配置.md` 只负责前端文件责任与商品配置命令。
+> 当前源码实现口径。本文是 Pricing 页消费合同的唯一 owner:checkout 配置消费、下单请求、订单轮询与支付回跳都在这里;`tech-实现与配置.md` 只负责前端文件责任与商品配置命令。渠道管理入口与账户摘要已迁用户 Dashboard(015 域,见 `@../015.工具与增长/tech-用户Dashboard.md`),本文只保留升级资格判断所需的订阅摘要消费。
 > 订阅商品、状态与订单履约的唯一合同在 `@../006.订阅系统/tech-订阅商品与状态.md` 与 `@../004.订单系统/tech-ClinkBill支付.md`、`@../004.订单系统/tech-支付与履约.md`;升级接口与业务规则见 `@../006.订阅系统/tech-订阅升级.md`,本文只定义网站消费方式。
 
 ## 实现结论
@@ -10,8 +10,8 @@
 - checkout 配置按商品单一计费模式消费:商品的 `auto_renew` 与 `period` 是商品级字段,支付选项文案据此展示 `Auto-renews until canceled` 或 `One-time payment`。
 - 下单请求携带 `auto_renew + period`,与商品配置不一致时后端按价格已更新拒绝,页面重载配置。
 - 支付渠道为 PayPal 与 ClinkBill;页面不实现 Telegram Stars 渠道。
-- 已登录账号各产品线订阅摘要来自 `/api/client/auth/me` 的 `maps_online_subscription` / `maps_extension_subscription` / `maps_api_subscription`(六字段合同,见 006 状态 tech)。
-- 有效自动续费订阅在账号区展示 `Manage subscription`,经 `POST /api/client/subscription/management` 打开渠道管理页(PayPal Automatic Payments / ClinkBill Customer Portal);URL 为空时展示渠道内操作指引弹窗。站内不做取消、退款或渠道状态同步。
+- 已登录账号各产品线订阅摘要来自 `/api/client/auth/me` 的 `maps_online_subscription` / `maps_extension_subscription` / `maps_api_subscription`(六字段合同,见 006 状态 tech),经站级会话恢复与 Pricing 页共享一次请求。
+- 渠道管理入口(Manage subscription)已迁用户 Dashboard 订阅管理页,交互合同见 `@../015.工具与增长/tech-用户Dashboard.md`;Pricing 页只消费订阅摘要做同线重复购买拦截与升级报价定档。
 
 ## 后端接口
 
@@ -22,7 +22,7 @@
 | `POST /api/client/order/create` | 创建订阅订单(请求含 `auto_renew + period`) |
 | `GET /api/client/order/status/{order_no}` | 支付后轮询订单状态 |
 | `POST /api/client/order/cancel` | Clink cancel 回跳页把用户取消落到本地订单 |
-| `POST /api/client/subscription/management` | 请求只含 `product_kind`,返回当前线自动续费订阅的渠道管理 URL(可空) |
+| `POST /api/client/subscription/management` | 请求只含 `product_kind`,返回当前线自动续费订阅的渠道管理 URL(可空);Dashboard 订阅页消费,Pricing 不调用 |
 
 `/api/client/subscription/status` 继续保留给插件兼容,Pricing 不使用。`POST /api/client/subscription/review-reward/claim` 为 006 域合同(入口已下线),现役页面不调用。
 
@@ -59,15 +59,13 @@ Pricing 订阅下单调用 `POST /api/client/order/create`,请求核心字段:
 - 用户确认后新标签页打开 Hosted Checkout,原页按 2 秒间隔轮询本地订单状态,直到已支付且履约成功;BroadcastChannel/postMessage 同源通知可加速轮询,但不替代轮询。
 - PayPal 回跳页:`/paypal/success|cancel`;Clink 回跳页:`/clink/success|cancel`(noindex)。success 页轮询本地订单状态后确认,确认文案按订单 `product_class` 分发(订阅口径 / Credits 口径);cancel 页调用 `/api/client/order/cancel` 落取消状态。两个渠道共用同一个 payment return 脚本(`credit-purchase/paypal-return.ts`),文案经页内 data 钩子注入。
 
-## 渠道管理入口(Manage subscription)
+## 渠道管理入口(已迁 Dashboard)
 
-- 展示条件:当前 tab 产品线的 `auth/me` 订阅对象 `status=active`、`expires_at` 未过期且 `auto_renew=true`。
-- 点击行为:同步预开空白新标签页(用户手势内,防 popup 拦截),再 `POST /api/client/subscription/management`(`product_kind` 为当前线);返回 URL 时新标签页导航到渠道管理页,URL 为空时关闭空白页并弹出渠道内操作指引弹窗(PayPal Automatic Payments 三步 / ClinkBill Customer Portal 三步)。
-- 页面只打开渠道入口,不调用取消接口、不修改订阅状态或到期时间;渠道侧状态允许滞后于本站展示。
+渠道管理入口自 Pricing 页迁入用户 Dashboard 订阅管理页(015 U2)。展示条件(有效自动续费订阅)、预开窗口防拦截、`POST /api/client/subscription/management` 消费方式与 URL 为空时的渠道内操作指引弹窗,合同唯一 owner 见 `@../015.工具与增长/tech-用户Dashboard.md`。
 
 ## 用户状态
 
-`GET /api/client/auth/me` 返回 website Pricing 所需账户摘要:用户基础信息、`credits_balance` 与各产品线订阅对象(六字段合同)。订阅商品配置异常时账户摘要不报错,对应线订阅对象返回 `status=unavailable`、`period=unavailable`;支付下单接口仍按配置错误失败,避免创建错误订单。
+`GET /api/client/auth/me` 返回 website 所需账户摘要:用户基础信息、`credits_balance` 与各产品线订阅对象(六字段合同)。订阅商品配置异常时账户摘要不报错,对应线订阅对象返回 `status=unavailable`、`period=unavailable`;支付下单接口仍按配置错误失败,避免创建错误订单。Dashboard 订阅管理页按同一合同展示三线状态,`unavailable` 必须显式展示为不可用而非未订阅。
 
 ## 配置上线
 

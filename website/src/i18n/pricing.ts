@@ -20,41 +20,6 @@ export const pricingContent: PricingPageContent = {
       'Pick the surface that fits your workflow — cloud Online Scraper, browser Extension, or HTTP API — then pick the monthly volume. Upgrade or buy from this page in minutes.'
   },
   popularLabel: 'Most Popular',
-  account: {
-    loading: 'Checking your account...',
-    signedOutTitle: 'Buying a plan? Sign in first.',
-    signedOutDescription:
-      'Plans are linked to your MapsGrab account and apply to the product you buy.',
-    signInCta: 'Sign in',
-    planLabel: 'Plan',
-    noExpiry: 'No expiry',
-    freePlan: 'Free',
-    loadFailed: 'Failed to load your account. Retry from the sign-in button.',
-    manageSubscription: 'Manage subscription',
-    managingSubscription: 'Opening...'
-  },
-  cancellationGuide: {
-    title: 'Manage your subscription at the payment provider',
-    paths: [
-      {
-        provider: 'PayPal',
-        steps: [
-          'Sign in to PayPal and open Settings.',
-          'Go to Payments, then Automatic Payments.',
-          'Select MapsGrab and choose Cancel.'
-        ]
-      },
-      {
-        provider: 'ClinkBill',
-        steps: [
-          'Open the Customer Portal link from your purchase email.',
-          'Sign in and select your MapsGrab subscription.',
-          'Choose Cancel.'
-        ]
-      }
-    ],
-    closeLabel: 'Close'
-  },
   tabLabels: {
     online: 'Online',
     extension: 'Extension',

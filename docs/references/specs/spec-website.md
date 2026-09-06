@@ -2,13 +2,13 @@
 
 > 营销站类子项目（Astro SSG）的**强制规范**。写 / 改 website 前必读。本规范与具体站点无关，可整体移植。
 > 站点身份、dev 端口、页面清单、部署域名等项目事实见该端 `README.md` 与 `docs/ROADMAP.md`，不进本文。
-> 技术栈：Astro（SSG 静态站）+ 原生 TS + 命令式 DOM（**非 SPA**）。
+> 技术栈：Astro（SSG 静态站）+ 原生 TS + 命令式 DOM（**非 SPA**）；Dashboard 工作区等复杂交互界面用 Vue 3 单文件组件（Astro 官方集成，015 U2 起）。
 > 关联：设计系统 `design.md`、注释与错误定位见 [[spec-code]]。
 
 ## 1. 技术栈与构建
 
-- Astro 静态站点（SSG）+ 群岛架构。交互逻辑是 `.astro` 组件 `<script>` 块里的**命令式 DOM 操作**，不是 React/Vue 函数组件。
-- 校验与构建：`pnpm build` = `astro check && astro build`；`astro check` 走 `@astrojs/check` + tsc，替代 `tsc --noEmit`。
+- Astro 静态站点（SSG）+ 群岛架构。默认交互逻辑是 `.astro` 组件 `<script>` 块里的**命令式 DOM 操作**；确有重复状态或 DOM 争用的复杂界面（当前为 Dashboard 工作区）用 Vue 单文件组件 `client:load` 装配，公共静态内容仍由 Astro 组件渲染。
+- 校验与构建：`pnpm build` = `astro check && vue-tsc --noEmit && astro build`；`astro check` 走 `@astrojs/check` + tsc，Vue 单文件组件的 props/类型由 `vue-tsc` 单独把门，两者都过才算过。
 - 无 ESLint/Prettier；类型安全靠 `tsconfig strict: true`。
 - 测试：`node --test tests/`（模块脚本单测）+ Playwright e2e；e2e 端口必须可用 env 覆盖（供并行工作区隔离）。
 
@@ -20,7 +20,7 @@
 
 ## 3. 目录结构
 
-- `pages/`：Astro 文件路由（SSG），页面装配层只做装配，逻辑进组件 / 脚本。
+- `pages/`：Astro 文件路由（SSG），页面装配层只做装配，逻辑进组件 / 脚本；Dashboard 类工作区页面装配 Vue 根组件并传入 i18n 文案 props。
 - `components/`：一域一目录——`pages/`（页面级装配组件）、业务域组件（认证、定价、购买、工具矩阵等）、`site/`（站级横切：确认弹窗、面包屑）。
 - `scripts/`：前端运行时按域拆子目录——API 薄封装、认证、埋点、设备标识、全局错误捕获、站级 UI 运行时（toast / confirm / 语言切换）、各功能域逻辑。
 - `layouts/Layout.astro`：唯一 HTML 外壳，全局 CSS 变量 + nav/footer + 全局错误捕获启动。
@@ -37,8 +37,8 @@
 
 ## 6. 状态管理
 
-- 无 Pinia/Redux/Zustand。状态 = TS interface + 模块级闭包 + DOM `data-*` 属性。
-- 跨组件通信用自定义 `CustomEvent`（`window.dispatchEvent`），不是 EventBus 库。
+- 无 Pinia/Redux/Zustand，无 Vue Router / provide-inject 依赖注入。命令式界面状态 = TS interface + 模块级闭包 + DOM `data-*` 属性；Vue 工作区组件内部用 `ref/computed`，组件间 props/emits。
+- 跨组件通信用自定义 `CustomEvent`（`window.dispatchEvent`），不是 EventBus 库；站级会话（`scripts/site/session.ts`）与登录成功/失效事件是导航、Pricing 与 Dashboard 的唯一共享状态源。
 - 模块拆分约定：`*-state.ts` 持状态，`*-controller.ts` / `*-render.ts` / `*-elements.ts` 拆职责。
 
 ## 7. API 调用
@@ -71,7 +71,7 @@
 
 ## 11. checklist
 
-- [ ] `pnpm build` 通过
+- [ ] `pnpm build` 通过（含 `vue-tsc --noEmit`）
 - [ ] 无 `any`，`as unknown` 仅 JSON.parse 后
 - [ ] API 对接信封成功码
 - [ ] 样式 scoped，`is:global` 仅限必要

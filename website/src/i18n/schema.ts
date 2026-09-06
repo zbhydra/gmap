@@ -452,6 +452,9 @@ export interface DownloadChannelMessage {
 /** Pricing 页 tab 标识：Online Scraper / Extension / API 三条产品线。 */
 export type PricingTabId = 'online' | 'extension' | 'api'
 
+/** Dashboard 订阅管理展示的三条产品线（不含 Telegram / Bing，与 auth/me 三线订阅字段对齐）。 */
+export type DashboardLineId = PricingTabId
+
 /** Pricing 页的套餐卡（SSR 静态展示事实；真实扣价以支付配置为准）。 */
 export interface PricingPlanCardMessage {
   /** 卡片标识，同 tab 内唯一（如 free / pro / business），用于渲染分支与测试锚点。 */
@@ -524,43 +527,6 @@ export interface PricingPageContent {
   }
   /** 主推档位徽章文案（标在各线 featured 卡上）。 */
   popularLabel: string
-  /** 用户状态卡片（登录态 + 当前套餐摘要）。 */
-  account: {
-    /** 加载中文案。 */
-    loading: string
-    /** 未登录标题。 */
-    signedOutTitle: string
-    /** 未登录说明。 */
-    signedOutDescription: string
-    /** 登录按钮。 */
-    signInCta: string
-    /** 当前套餐行前缀标签。 */
-    planLabel: string
-    /** 无到期时间文案。 */
-    noExpiry: string
-    /** Free 档展示名。 */
-    freePlan: string
-    /** 账号区加载失败文案。 */
-    loadFailed: string
-    /** 有效自动续费订阅的渠道管理入口按钮。 */
-    manageSubscription: string
-    /** 管理入口请求期间的加载文案。 */
-    managingSubscription: string
-  }
-  /** 渠道内操作指引（管理入口 URL 为空时的兜底展示）。 */
-  cancellationGuide: {
-    /** 操作指引弹窗标题。 */
-    title: string
-    /** 各支付渠道内的操作路径。 */
-    paths: readonly {
-      /** 支付渠道名称。 */
-      provider: string
-      /** 渠道后台内依次进入的页面或执行的操作。 */
-      steps: readonly string[]
-    }[]
-    /** 操作指引弹窗关闭按钮文案。 */
-    closeLabel: string
-  }
   /** 三条产品线的 tab 标签文案（tab 栏按钮，键为 PricingTabId）。 */
   tabLabels: Record<PricingTabId, string>
   /** 三条产品线套餐区（键为 PricingTabId，与 tabLabels 对齐）。 */
@@ -630,6 +596,198 @@ export interface PricingPageContent {
     description?: string
     /** 问答列表。 */
     items: FAQItemMessage[]
+  }
+}
+
+/** 用户 Dashboard 工作区文案（侧栏 + 历史 / API / 订阅三视图，015 U2）。 */
+export interface DashboardContent {
+  /** 工作区页面 SEO 元信息（noindex 页仅作 title/description 展示）。 */
+  seo: {
+    /** HTML title。 */
+    title: string
+    /** meta description。 */
+    description: string
+  }
+  /** 工作区骨架（侧栏菜单与窄屏开关）。 */
+  shell: {
+    /** 会话恢复中占位文案。 */
+    loading: string
+    /** 会话恢复失败的重试按钮（工作区级面板）。 */
+    retry: string
+    /** 侧栏菜单：在线导出历史。 */
+    navHistory: string
+    /** 侧栏菜单：API 管理。 */
+    navApi: string
+    /** 侧栏菜单：订阅管理。 */
+    navSubscriptions: string
+    /** 窄屏展开侧栏按钮。 */
+    openMenu: string
+    /** 窄屏收起侧栏按钮。 */
+    closeMenu: string
+  }
+  /** 侧栏底部个人信息与退出。 */
+  account: {
+    /** 个人信息按钮无障碍文案。 */
+    menuButtonLabel: string
+    /** 展开菜单无障碍文案。 */
+    menuLabel: string
+    /** 退出登录按钮。 */
+    logout: string
+  }
+  /** 在线导出历史视图。 */
+  history: {
+    /** 视图标题。 */
+    title: string
+    /** 视图说明。 */
+    description: string
+    /** 手动刷新按钮。 */
+    refresh: string
+    /** 列表加载中文案。 */
+    loading: string
+    /** 列表加载失败文案。 */
+    loadFailed: string
+    /** 加载失败重试按钮。 */
+    retry: string
+    /** 无历史标题。 */
+    emptyTitle: string
+    /** 无历史说明。 */
+    emptyHint: string
+    /** 列表表头。 */
+    columns: {
+      /** 任务编号。 */
+      taskNo: string
+      /** 创建时间（含时区标注）。 */
+      createdAt: string
+      /** 关键词总数。 */
+      keywords: string
+      /** 已处理数。 */
+      processed: string
+      /** 结果条数。 */
+      records: string
+      /** 状态。 */
+      status: string
+    }
+    /** 任务两态（后端只公开 processing / completed）。 */
+    status: {
+      /** 处理中。 */
+      processing: string
+      /** 已完成。 */
+      completed: string
+    }
+    /** 创建时间的时区标注（America/New_York）。 */
+    timezone: string
+    /** 分页控件。 */
+    pagination: {
+      /** 上一页。 */
+      previous: string
+      /** 下一页。 */
+      next: string
+      /** 区间摘要，含 {from} {to} {total}。 */
+      summary: string
+    }
+    /** 关键词明细展开区。 */
+    detail: {
+      /** 展开明细按钮。 */
+      show: string
+      /** 收起明细按钮。 */
+      hide: string
+      /** 明细加载中文案。 */
+      loading: string
+      /** 明细加载失败文案。 */
+      loadFailed: string
+      /** 明细关键词列头。 */
+      keyword: string
+      /** 明细记录数列头。 */
+      records: string
+      /** 单项 CSV 下载按钮。 */
+      downloadCsv: string
+    }
+    /** 整包 ZIP 下载按钮。 */
+    downloadZip: string
+    /** 下载请求进行中文案。 */
+    downloading: string
+    /** 无可下载文件或签名已过期的就地提示。 */
+    downloadUnavailable: string
+    /** 下载请求失败提示。 */
+    downloadFailed: string
+    /** 未登录访问工作区提示。 */
+    signInPrompt: string
+    /** 未登录访问工作区的登录按钮。 */
+    signInCta: string
+    /** 会话恢复网络失败提示（可重试，不误判为退出）。 */
+    unreachable: string
+  }
+  /** API 管理视图（本轮展示未开放状态）。 */
+  api: {
+    /** 视图标题。 */
+    title: string
+    /** 未开放说明。 */
+    description: string
+    /** 未开放状态徽章文案。 */
+    badge: string
+    /** API 产品营销页链接文案。 */
+    docsLink: string
+    /** 未登录访问工作区提示。 */
+    signInPrompt: string
+    /** 未登录访问工作区的登录按钮。 */
+    signInCta: string
+    /** 会话恢复网络失败提示。 */
+    unreachable: string
+  }
+  /** 订阅管理视图（Online / Extension / API 三线）。 */
+  subscriptions: {
+    /** 视图标题。 */
+    title: string
+    /** 视图说明。 */
+    description: string
+    /** 加载中文案。 */
+    loading: string
+    /** 加载失败文案。 */
+    loadFailed: string
+    /** 加载失败重试按钮。 */
+    retry: string
+    /** 三线展示名（键为 DashboardLineId）。 */
+    lines: Record<DashboardLineId, string>
+    /** 当前套餐标签。 */
+    planLabel: string
+    /** 到期时间标签。 */
+    expiresLabel: string
+    /** 无到期时间文案。 */
+    noExpiry: string
+    /** 无有效付费订阅状态。 */
+    free: string
+    /** 订阅配置不可用状态（不得伪装成未订阅）。 */
+    unavailable: string
+    /** 自动续费开启文案。 */
+    autoRenewOn: string
+    /** 自动续费关闭文案。 */
+    autoRenewOff: string
+    /** 订阅按钮（跳 Pricing 对应 tab）。 */
+    subscribeCta: string
+    /** 有效自动续费订阅的渠道管理入口按钮。 */
+    manageSubscription: string
+    /** 管理入口请求期间的加载文案。 */
+    managingSubscription: string
+    /** 未登录访问工作区提示。 */
+    signInPrompt: string
+    /** 未登录访问工作区的登录按钮。 */
+    signInCta: string
+    /** 会话恢复网络失败提示。 */
+    unreachable: string
+  }
+  /** 渠道内操作指引（管理入口 URL 为空时的兜底展示，自 Pricing 页迁入）。 */
+  cancelGuide: {
+    /** 操作指引弹窗标题。 */
+    title: string
+    /** 各支付渠道内的操作路径。 */
+    paths: readonly {
+      /** 支付渠道名称。 */
+      provider: string
+      /** 渠道后台内依次进入的页面或执行的操作。 */
+      steps: readonly string[]
+    }[]
+    /** 操作指引弹窗关闭按钮文案。 */
+    closeLabel: string
   }
 }
 
@@ -1165,6 +1323,10 @@ export interface SiteContent {
       /** API 下拉子项：Scraper MCP 落地页。 */
       apiMcp: string
       pricing: string
+      /** 导航登录按钮（匿名态，打开站级登录弹窗）。 */
+      signIn: string
+      /** 导航 Dashboard 链接（登录态）。 */
+      dashboard: string
     }
     footer: {
       /** Footer heading for legal and product-reference links. */
@@ -1191,6 +1353,8 @@ export interface SiteContent {
     /** 通用继续动作。 */
     continue: string
   }
+  /** 用户 Dashboard 工作区（015 U2）。 */
+  dashboard: DashboardContent
   pages: {
     /** 首页内容（W2）。 */
     home: HomePageContent

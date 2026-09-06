@@ -1,0 +1,41 @@
+---
+/** Dashboard 订阅管理页（非默认语言路由；当前仅 en-US 时枚举为空）。 */
+import Layout from '../../../../layouts/Layout.astro'
+import DashboardApp from '../../../../components/dashboard/DashboardApp.vue'
+import { getContent, type Locale } from '../../../../i18n/content'
+import { localePaths } from '../../../../i18n/ui'
+
+export function getStaticPaths() {
+  return Object.entries(localePaths)
+    .map(([locale, path]) => {
+      if (locale === 'en-US') return []
+      return {
+        params: { lang: path },
+        props: { locale }
+      }
+    })
+    .flat()
+}
+
+const { locale } = Astro.props as { locale: Locale }
+const t = getContent(locale)
+const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+---
+
+<Layout
+  locale={locale}
+  title={t.dashboard.seo.title}
+  description={t.dashboard.seo.description}
+  robots="noindex, nofollow"
+  includeSoftwareApplicationSchema={false}
+  includeAlternateLanguageLinks={false}
+  workspaceMode
+>
+  <DashboardApp
+    client:load
+    page="subscriptions"
+    copy={t.dashboard}
+    popupBlocked={t.pages.account.creditPurchase.popupBlocked}
+    localePrefix={localePrefix}
+  />
+</Layout>

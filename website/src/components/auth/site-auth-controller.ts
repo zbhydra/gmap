@@ -1,8 +1,10 @@
 /**
- * Pricing 登录弹窗控制器。
+ * 站级登录弹窗控制器（全站唯一一份，由 Layout 装配）。
  *
- * 复用 DownloadAuthModal 的 DOM 与 homepage-runtime/auth 登录能力，只保留页面需要的
- * open/close、Google redirect、邮箱验证码和登录成功事件。
+ * 复用 AuthModal 的 DOM 与 homepage auth 登录能力，保留 open/close、Google
+ * redirect 换票、邮箱验证码和登录成功事件。导航登录通过 open({ redirectTo })
+ * 声明登录后目的地（仅限本站确定路由，持久化到 sessionStorage 以跨 Google
+ * OAuth 回跳）；Pricing 待购与 Dashboard 工作区不带 redirect，登录后留在原页。
  */
 
 import {
@@ -25,22 +27,34 @@ import {
 import { ensureDeviceId } from '../../scripts/homepage/device'
 import type { RequestContext } from '../../scripts/homepage/api'
 import { createSendCodeCooldown } from '../../scripts/homepage/sendCodeCooldown'
+import { invalidateSiteSession, setSiteSession } from '../../scripts/site/session'
 
-/** Pricing 登录成功事件。 */
-export const PRICING_AUTH_SUCCESS_EVENT = 'pricing-auth:success'
-/** 用户主动关闭 Pricing 登录弹窗事件。 */
-export const PRICING_AUTH_CLOSE_EVENT = 'pricing-auth:close'
+/** 站级登录成功事件。 */
+export const SITE_AUTH_SUCCESS_EVENT = 'site-auth:success'
+/** 用户主动关闭登录弹窗事件。 */
+export const SITE_AUTH_CLOSE_EVENT = 'site-auth:close'
 
-/** Pricing 登录弹窗 controller 对外接口。 */
-export interface PricingAuthController {
-  /** 打开登录弹窗。 */
-  open(): void
+/** 登录后允许跳转的本站路由（当前即 Dashboard 工作区三页）。 */
+const AUTH_REDIRECT_PATHS = ['/dashboard/', '/dashboard/api/', '/dashboard/subscriptions/']
+/** 同 tab Google OAuth 回跳后恢复登录后跳转的会话键。 */
+const PENDING_AUTH_REDIRECT_KEY = 'site_auth_pending_redirect'
+
+/** 站级登录弹窗 controller 对外接口。 */
+export interface SiteAuthController {
+  /** 打开登录弹窗；redirectTo 只接受本站确定路由。 */
+  open(options?: SiteAuthOpenOptions): void
   /** 关闭登录弹窗。 */
   close(): void
 }
 
+/** open() 的触发上下文选项。 */
+export interface SiteAuthOpenOptions {
+  /** 登录成功后的跳转路由；缺省留在当前页。 */
+  redirectTo?: string
+}
+
 /** 登录成功事件 payload。 */
-export interface PricingAuthSuccessPayload {
+export interface SiteAuthSuccessPayload {
   /** 最新 access token。 */
   token: string
   /** auth/me 刷新的用户资料。 */
@@ -48,9 +62,7 @@ export interface PricingAuthSuccessPayload {
 }
 
 /** 登录弹窗 DOM 集合。 */
-interface PricingAuthElements {
-  /** 组件根节点。 */
-  root: HTMLElement
+interface SiteAuthElements {
   /** 弹窗根节点。 */
   modal: HTMLElement
   /** 关闭按钮。 */
@@ -81,8 +93,8 @@ interface PricingAuthElements {
   loginSubmit: HTMLButtonElement
 }
 
-/** Pricing 登录弹窗文案。 */
-interface PricingAuthCopy {
+/** 登录弹窗文案。 */
+interface SiteAuthCopy {
   /** 发送验证码中。 */
   sendingCode: string
   /** 验证码发送成功。 */
@@ -107,10 +119,10 @@ interface PricingAuthCopy {
 
 let deviceIdPromise: Promise<string> | null = null
 
-/** 创建 Pricing 登录弹窗 controller。 */
-export function createPricingAuthController(root: HTMLElement): PricingAuthController {
-  const elements = getPricingAuthElements(root)
-  const copy = getPricingAuthCopy(root)
+/** 创建站级登录弹窗 controller。 */
+export function createSiteAuthController(root: HTMLElement): SiteAuthController {
+  const elements = getSiteAuthElements(root)
+  const copy = getSiteAuthCopy(root)
   const sendCodeCooldown = createSendCodeCooldown(
     elements.sendCodeButton,
     elements.sendCodeButton.textContent?.trim() || 'Send again'
@@ -119,7 +131,7 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
   let token: string | null = null
 
   const buildRequestContext = async (): Promise<RequestContext> => ({
-    deviceId: await getPricingDeviceId(),
+    deviceId: await getSiteDeviceId(),
     token
   })
 
@@ -148,29 +160,37 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
   }
 
   const hide = (): void => {
-    cancelGoogleRedirectPrompt('Pricing auth modal closed.')
+    cancelGoogleRedirectPrompt('Site auth modal closed.')
     setHidden(elements.modal, true)
   }
 
   const close = (): void => {
     hide()
-    window.dispatchEvent(new CustomEvent(PRICING_AUTH_CLOSE_EVENT))
+    clearPendingAuthRedirect()
+    window.dispatchEvent(new CustomEvent(SITE_AUTH_CLOSE_EVENT))
   }
 
   const finishLogin = async (accessToken: string): Promise<void> => {
     token = accessToken
+    invalidateSiteSession()
     const user = await getCurrentUser(await buildRequestContext())
+    // 登录结果直接写入共享会话：导航入口与工作区消费同一份数据，不再二次 auth/me。
+    setSiteSession({ status: 'signed-in', token: accessToken, user })
     hide()
-    window.dispatchEvent(new CustomEvent<PricingAuthSuccessPayload>(PRICING_AUTH_SUCCESS_EVENT, {
+    window.dispatchEvent(new CustomEvent<SiteAuthSuccessPayload>(SITE_AUTH_SUCCESS_EVENT, {
       detail: { token: accessToken, user }
     }))
+    const redirect = consumePendingAuthRedirect()
+    if (redirect) {
+      window.location.assign(redirect)
+    }
   }
 
   const handleGoogleCredentialLogin = async (
     response: GoogleLoginResponse,
     credentialSource: string
   ): Promise<void> => {
-    logGoogleAuthStage('info', 'pricing_google_one_tap_backend_response', {
+    logGoogleAuthStage('info', 'site_google_one_tap_backend_response', {
       credentialSource,
       requiresEmailVerification: isEmailVerificationRequiredResponse(response)
     })
@@ -197,14 +217,14 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
     if (!clientId) {
       // PUBLIC_GOOGLE_CLIENT_ID 为占位空值是预期配置状态（购买链路接入时回填），warn 级即可，
       // error 级会被 Lighthouse best-practices 计为 console error。
-      logGoogleAuthStage('warn', 'pricing_redirect_button_client_id_missing')
+      logGoogleAuthStage('warn', 'site_redirect_button_client_id_missing')
       setMessage(elements.authError, copy.googleClientMissing)
       return
     }
 
     try {
       renderGoogleRedirectButton(elements.googleLoginButton, clientId, {
-        source: 'pricing_google_button',
+        source: 'site_google_button',
         label: copy.continueWithGoogle,
         loadingLabel: copy.googleLoading
       })
@@ -229,8 +249,8 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
       })
     } catch (error) {
       console.error(
-        '[pricing-auth] Google Identity prompt failed.',
-        { source: options.source ?? 'pricing_prompt' },
+        '[site-auth] Google Identity prompt failed.',
+        { source: options.source ?? 'site_prompt' },
         error
       )
       if (!options.silentFailure) {
@@ -273,12 +293,13 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
     }
   }
 
-  const controller: PricingAuthController = {
-    open(): void {
+  const controller: SiteAuthController = {
+    open(options: SiteAuthOpenOptions = {}): void {
+      savePendingAuthRedirect(options.redirectTo)
       resetToGoogleFirst()
       setHidden(elements.modal, false)
       ensureGoogleRedirectButtonRendered()
-      void runGoogleLogin({ silentFailure: true, source: 'pricing_auto_prompt' })
+      void runGoogleLogin({ silentFailure: true, source: 'site_auto_prompt' })
     },
     close
   }
@@ -287,7 +308,7 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
     button.addEventListener('click', () => controller.close())
   })
   elements.emailEntryButton.addEventListener('click', () => {
-    cancelGoogleRedirectPrompt('Email code login selected in pricing.')
+    cancelGoogleRedirectPrompt('Email code login selected on site.')
     openEmailForm()
   })
   elements.emailContinueButton.addEventListener('click', () => {
@@ -363,17 +384,36 @@ export function createPricingAuthController(root: HTMLElement): PricingAuthContr
   }
 }
 
-function getPricingAuthElements(root: HTMLElement): PricingAuthElements {
+/** 保存登录后跳转意图；只在白名单路由内覆盖。无 redirectTo 的 open()（Pricing
+ * 待购、工作区重开、Google 补邮箱验证回跳分支）保留既有意图，不丢失导航目的地。 */
+function savePendingAuthRedirect(redirectTo?: string): void {
+  if (redirectTo && AUTH_REDIRECT_PATHS.includes(redirectTo)) {
+    window.sessionStorage.setItem(PENDING_AUTH_REDIRECT_KEY, redirectTo)
+  }
+}
+
+/** 登录成功时读取并清除跳转意图。 */
+function consumePendingAuthRedirect(): string | null {
+  const redirect = window.sessionStorage.getItem(PENDING_AUTH_REDIRECT_KEY)
+  window.sessionStorage.removeItem(PENDING_AUTH_REDIRECT_KEY)
+  return redirect && AUTH_REDIRECT_PATHS.includes(redirect) ? redirect : null
+}
+
+/** 用户放弃登录时清除跳转意图。 */
+function clearPendingAuthRedirect(): void {
+  window.sessionStorage.removeItem(PENDING_AUTH_REDIRECT_KEY)
+}
+
+function getSiteAuthElements(root: HTMLElement): SiteAuthElements {
   const query = <T extends HTMLElement>(selector: string): T => {
     const element = root.querySelector<T>(selector)
     if (!element) {
-      throw new Error(`[pricing-auth-controller] Missing element: ${selector}`)
+      throw new Error(`[site-auth-controller] Missing element: ${selector}`)
     }
     return element
   }
 
   return {
-    root,
     modal: query<HTMLElement>('[data-download-auth-modal]'),
     closeButtons: Array.from(root.querySelectorAll<HTMLButtonElement>('[data-download-auth-close]')),
     authError: query<HTMLElement>('[data-download-auth-error]'),
@@ -391,19 +431,19 @@ function getPricingAuthElements(root: HTMLElement): PricingAuthElements {
   }
 }
 
-function getPricingAuthCopy(root: HTMLElement): PricingAuthCopy {
-  const element = root.querySelector<HTMLScriptElement>('[data-pricing-auth-copy]')
+function getSiteAuthCopy(root: HTMLElement): SiteAuthCopy {
+  const element = root.querySelector<HTMLScriptElement>('[data-site-auth-copy]')
   if (!element?.textContent) {
-    throw new Error('[pricing-auth-controller] Missing pricing auth copy payload.')
+    throw new Error('[site-auth-controller] Missing site auth copy payload.')
   }
-  return JSON.parse(element.textContent) as PricingAuthCopy
+  return JSON.parse(element.textContent) as SiteAuthCopy
 }
 
 function getGoogleClientId(): string {
   return import.meta.env.PUBLIC_GOOGLE_CLIENT_ID?.trim() || DEFAULT_PUBLIC_GOOGLE_CLIENT_ID
 }
 
-function getPricingDeviceId(): Promise<string> {
+function getSiteDeviceId(): Promise<string> {
   if (!deviceIdPromise) {
     deviceIdPromise = ensureDeviceId()
   }
@@ -421,12 +461,19 @@ function setMessage(element: HTMLElement, message: string): void {
 
 declare global {
   interface Window {
-    /** Pricing 页面登录弹窗 controller。 */
-    pricingAuthController?: PricingAuthController
+    /** 站级登录弹窗 controller。 */
+    siteAuthController?: SiteAuthController
   }
 }
 
-const root = document.querySelector<HTMLElement>('[data-pricing-auth-root]')
-if (root) {
-  window.pricingAuthController = createPricingAuthController(root)
+/**
+ * 装配站级登录弹窗（由 SiteAuthModal.astro 的客户端 script 调用，全站仅一份）。
+ *
+ * 不做模块级自装配：本模块的事件常量被 Vue 工作区与站级脚本引用，Astro SSR
+ * 渲染 Vue 组件时会执行整个依赖图，模块顶层访问 document 会直接失败。
+ */
+export function mountSiteAuthController(root: HTMLElement): SiteAuthController {
+  const controller = createSiteAuthController(root)
+  window.siteAuthController = controller
+  return controller
 }

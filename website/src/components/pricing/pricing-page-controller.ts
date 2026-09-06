@@ -1,24 +1,28 @@
 /**
  * Pricing 页面控制器（三产品类别 tab 版）。
  *
- * 负责恢复登录态、产品类别 tab 切换、渲染账户胶囊（当前 tab 产品类别的订阅摘要）、
- * 加载支付配置并把付费档购买流程交给公共 OrderCheckoutModal。当前 tab 是唯一
- * 状态源：灰化/重复购买拦截、checkout source、GA4 plan 维度均由当前 tab 派生。
- * 插件来源（utm_source=extension）只做归因标记，不切换布局。
+ * 负责产品类别 tab 切换、加载支付配置并把付费档购买流程交给公共
+ * OrderCheckoutModal。当前 tab 是唯一状态源：灰化/重复购买拦截、checkout
+ * source、GA4 plan 维度均由当前 tab 派生。插件来源（utm_source=extension）
+ * 只做归因标记，不切换布局。
+ *
+ * 账户摘要、退出与渠道管理已迁 Dashboard 订阅页；本页通过站级会话恢复
+ * （getSiteSession）与站级登录成功事件获取当前用户，匿名购买在原页打开
+ * 站级登录弹窗并恢复待购意图。
  */
 
 import {
   clearStoredAccessToken,
   getCurrentUser,
   getStoredAccessToken,
-  logoutCurrentUser,
   type HomepageUserInfo,
   type HomepageUserSubscription
 } from '../../scripts/homepage/auth'
 import { ensureDeviceId } from '../../scripts/homepage/device'
 import { reportGA4Event } from '../../scripts/homepage/ga4'
 import type { PricingPageContent } from '../../i18n/schema'
-import { postJson, type JsonObject, type JsonValue, type RequestContext } from '../../scripts/homepage/api'
+import type { JsonObject, JsonValue, RequestContext } from '../../scripts/homepage/api'
+import { getSiteSession } from '../../scripts/site/session'
 import {
   ORDER_CHECKOUT_AUTH_INVALID_EVENT,
   ORDER_CHECKOUT_PRICE_UPDATED_EVENT,
@@ -28,10 +32,7 @@ import {
   type OrderCheckoutPriceUpdatedPayload,
   type OrderCheckoutSuccessPayload
 } from '../order-checkout/order-checkout-types'
-import {
-  getDefaultOrderPaymentChannel,
-  isOrderCheckoutAuthFailure
-} from '../order-checkout/order-checkout-api'
+import { getDefaultOrderPaymentChannel } from '../order-checkout/order-checkout-api'
 import {
   MAPS_API_PRODUCT_KIND,
   MAPS_EXTENSION_PRODUCT_KIND,
@@ -46,10 +47,10 @@ import {
   type SubscriptionUpgradeQuote
 } from './pricing-checkout'
 import {
-  PRICING_AUTH_CLOSE_EVENT,
-  PRICING_AUTH_SUCCESS_EVENT,
-  type PricingAuthSuccessPayload
-} from './pricing-auth-controller'
+  SITE_AUTH_CLOSE_EVENT,
+  SITE_AUTH_SUCCESS_EVENT,
+  type SiteAuthSuccessPayload
+} from '../auth/site-auth-controller'
 
 /** 插件升级入口的 utm_source 值（W7 插件「订阅跳转按钮」落本页时携带）。 */
 const EXTENSION_UTM_SOURCE = 'extension'
@@ -94,16 +95,6 @@ const PRICING_LINE_CONFIG: Record<PricingLineId, PricingLineConfig> = {
 
 /** 页面文案（PricingPageContent 的 controller 消费子集）。 */
 interface PricingCopy {
-  account: {
-    planLabel: string
-    noExpiry: string
-    freePlan: string
-    loadFailed: string
-    /** 有效自动续费订阅的管理入口按钮。 */
-    manageSubscription: string
-    /** 管理入口请求期间的加载文案。 */
-    managingSubscription: string
-  }
   tabs: Record<
     PricingLineId,
     {
@@ -151,36 +142,6 @@ interface PricingElements {
   tabButtons: Map<PricingLineId, HTMLButtonElement>
   /** 产品类别面板（keyed by line）。 */
   panels: Map<PricingLineId, HTMLElement>
-  /** 账号加载状态。 */
-  accountLoading: HTMLElement
-  /** 未登录账号区。 */
-  accountSignedOut: HTMLElement
-  /** 已登录账号区。 */
-  accountSignedIn: HTMLElement
-  /** 账号错误。 */
-  accountError: HTMLElement
-  /** 登录按钮。 */
-  loginButtons: HTMLButtonElement[]
-  /** 账号头像按钮。 */
-  accountButton: HTMLButtonElement
-  /** 账号菜单。 */
-  accountMenu: HTMLElement
-  /** 账号邮箱。 */
-  accountEmail: HTMLElement
-  /** 退出登录按钮。 */
-  accountLogout: HTMLButtonElement
-  /** 用户头像。 */
-  userAvatar: HTMLImageElement
-  /** 用户首字母。 */
-  userInitial: HTMLElement
-  /** 当前套餐名。 */
-  userPlan: HTMLElement
-  /** 当前套餐到期时间。 */
-  userExpires: HTMLElement
-  /** 有效自动续费订阅的渠道管理入口按钮。 */
-  manageSubscriptionButton: HTMLButtonElement
-  /** 渠道内操作指引弹窗（管理入口 URL 为空时的兜底）。 */
-  cancellationGuideDialog: HTMLDialogElement
   /** 支付配置加载状态行。 */
   plansStatus: HTMLElement
   /** 可购买档位卡（SKU → DOM）。 */
@@ -193,7 +154,7 @@ interface PricingState {
   deviceId: string
   /** access token。 */
   token: string | null
-  /** auth/me 用户。 */
+  /** 站级会话恢复的用户。 */
   user: HomepageUserInfo | null
   /** 全部产品类别商品配置（SKU → plan）。 */
   plans: Map<string, SubscriptionCheckoutPlan>
@@ -243,58 +204,18 @@ async function initPricingPage(root: HTMLElement): Promise<void> {
   ) ?? DEFAULT_PRICING_LINE)
 
   bindEvents(elements, copy, state)
-  await Promise.all([restoreUser(elements, copy, state), loadPlans(elements, copy, state)])
+  await restoreSignedInUser(elements, copy, state)
+  await loadPlans(elements, copy, state)
   await loadUpgradeQuotes(elements, copy, state)
 }
 
 /** 绑定页面事件。 */
 function bindEvents(elements: PricingElements, copy: PricingCopy, state: PricingState): void {
-  for (const button of elements.loginButtons) {
-    button.addEventListener('click', () => {
-      window.pricingAuthController?.open()
-    })
-  }
-
   for (const [line, button] of elements.tabButtons) {
     button.addEventListener('click', () => {
       switchLine(elements, state, line)
     })
   }
-
-  document.addEventListener('click', event => {
-    const target = event.target
-    if (!(target instanceof Node)) {
-      return
-    }
-    if (!elements.accountButton.contains(target) && !elements.accountMenu.contains(target)) {
-      setAccountMenuOpen(elements, false)
-    }
-  })
-
-  elements.accountButton.addEventListener('click', event => {
-    event.stopPropagation()
-    setAccountMenuOpen(elements, elements.accountMenu.hidden)
-  })
-
-  elements.accountLogout.addEventListener('click', () => {
-    void logoutPricingUser(elements, copy, state)
-  })
-
-  elements.manageSubscriptionButton.addEventListener('click', () => {
-    void openManageSubscription(elements, copy, state)
-  })
-
-  elements.cancellationGuideDialog.addEventListener('click', event => {
-    if (event.target === elements.cancellationGuideDialog) {
-      elements.cancellationGuideDialog.close()
-    }
-  })
-
-  elements.cancellationGuideDialog.addEventListener('close', () => {
-    if (!elements.manageSubscriptionButton.hidden) {
-      elements.manageSubscriptionButton.focus()
-    }
-  })
 
   for (const [sku, card] of elements.buyableCards) {
     card.buy.addEventListener('click', () => {
@@ -305,12 +226,12 @@ function bindEvents(elements: PricingElements, copy: PricingCopy, state: Pricing
     })
   }
 
-  window.addEventListener(PRICING_AUTH_SUCCESS_EVENT, event => {
-    const payload = (event as CustomEvent<PricingAuthSuccessPayload>).detail
+  window.addEventListener(SITE_AUTH_SUCCESS_EVENT, event => {
+    const payload = (event as CustomEvent<SiteAuthSuccessPayload>).detail
     void handlePricingAuthSuccess(elements, copy, state, payload)
   })
 
-  window.addEventListener(PRICING_AUTH_CLOSE_EVENT, () => {
+  window.addEventListener(SITE_AUTH_CLOSE_EVENT, () => {
     clearPendingSubscriptionPurchase(state)
   })
 
@@ -325,14 +246,30 @@ function bindEvents(elements: PricingElements, copy: PricingCopy, state: Pricing
     state.user = null
     state.upgradeQuotes.clear()
     state.loadVersion += 1
-    renderAccount(elements, copy, state)
-    window.pricingAuthController?.open()
-    setMessage(elements.accountError, payload.message || copy.plans.loadFailed)
+    renderPlanButtons(elements, copy, state)
+    // 会话失效本身就是受保护操作的认证步骤：重开站级登录弹窗继续购买。
+    window.siteAuthController?.open()
+    console.error(new Error(`[pricing-page-controller] checkout auth invalid: ${payload.message}`))
   })
 
   window.addEventListener(ORDER_CHECKOUT_PRICE_UPDATED_EVENT, event => {
     void handleOrderCheckoutPriceUpdated(elements, copy, state, (event as CustomEvent<OrderCheckoutPriceUpdatedPayload>).detail)
   })
+}
+
+/** 恢复站级会话中的登录用户（与导航、Dashboard 共用同一次 auth/me 结果）。 */
+async function restoreSignedInUser(
+  elements: PricingElements,
+  copy: PricingCopy,
+  state: PricingState
+): Promise<void> {
+  const session = await getSiteSession()
+  if (session.status !== 'signed-in') {
+    return
+  }
+  state.token = session.token
+  state.user = session.user
+  renderPlanButtons(elements, copy, state)
 }
 
 /** 登录与配置加载完成后请求各卡报价，旧登录态响应沿用既有版本门禁。 */
@@ -369,7 +306,7 @@ async function loadUpgradeQuotes(
   }
 }
 
-/** 切换产品类别 tab：面板可见性与账户胶囊摘要都随当前线刷新。 */
+/** 切换产品类别 tab：面板可见性随当前线刷新。 */
 function switchLine(elements: PricingElements, state: PricingState, line: PricingLineId): void {
   state.currentLine = line
   for (const [tabLine, button] of elements.tabButtons) {
@@ -378,7 +315,6 @@ function switchLine(elements: PricingElements, state: PricingState, line: Pricin
   for (const [tabLine, panel] of elements.panels) {
     panel.hidden = tabLine !== line
   }
-  renderAccount(elements, getPricingCopy(elements.root), state)
   renderPlanButtons(elements, getPricingCopy(elements.root), state)
   reportVisibleUpgradeQuotes(state, elements)
 }
@@ -403,39 +339,6 @@ function applyExtensionAttribution(elements: PricingElements, state: PricingStat
   }
   for (const card of elements.buyableCards.values()) {
     card.buy.setAttribute('data-ga-source', EXTENSION_UTM_SOURCE)
-  }
-}
-
-/** 恢复 auth/me 并渲染账户胶囊。 */
-async function restoreUser(
-  elements: PricingElements,
-  copy: PricingCopy,
-  state: PricingState
-): Promise<void> {
-  setHidden(elements.accountLoading, false)
-  setHidden(elements.accountError, true)
-
-  if (!state.token) {
-    setHidden(elements.accountLoading, true)
-    renderAccount(elements, copy, state)
-    return
-  }
-
-  try {
-    state.user = await getCurrentUser(buildRequestContext(state))
-  } catch (error) {
-    console.error(error)
-    if (error instanceof Error && isOrderCheckoutAuthFailure(error)) {
-      clearStoredAccessToken()
-      state.token = null
-      state.user = null
-    } else {
-      setMessage(elements.accountError, error instanceof Error ? error.message : copy.account.loadFailed)
-    }
-  } finally {
-    setHidden(elements.accountLoading, true)
-    renderAccount(elements, copy, state)
-    renderPlanButtons(elements, copy, state)
   }
 }
 
@@ -478,114 +381,6 @@ function getLineSubscription(
   line: PricingLineId
 ): HomepageUserSubscription | null {
   return state.user?.[PRICING_LINE_CONFIG[line].subscriptionKey] ?? null
-}
-
-/** 渲染账户胶囊：登录态切换 + 当前 tab 产品类别的套餐摘要。 */
-function renderAccount(elements: PricingElements, copy: PricingCopy, state: PricingState): void {
-  const user = state.user
-  setHidden(elements.accountSignedOut, Boolean(user))
-  setHidden(elements.accountSignedIn, !user)
-  renderManageSubscriptionButton(elements, state)
-
-  if (!user) {
-    setAccountMenuOpen(elements, false)
-    elements.accountEmail.textContent = ''
-    elements.accountEmail.removeAttribute('title')
-    elements.accountButton.setAttribute('aria-expanded', 'false')
-    return
-  }
-
-  renderUserAvatar(elements, user)
-  elements.accountEmail.textContent = user.email
-  elements.accountEmail.title = user.email
-
-  const subscription = getLineSubscription(state, state.currentLine)
-  const isUnavailable = subscription?.status === 'unavailable'
-  const hasActivePlan = !isUnavailable && subscription?.expires_at != null
-  elements.userPlan.textContent = hasActivePlan
-    ? subscription?.display_name || copy.account.freePlan
-    : copy.account.freePlan
-  elements.userExpires.textContent = hasActivePlan
-    ? formatTimestamp(subscription?.expires_at ?? null)
-    : copy.account.noExpiry
-}
-
-/** 只有当前 tab 产品类别存在有效且自动续费的订阅时展示渠道管理入口。 */
-function canShowCancellationGuide(state: PricingState): boolean {
-  const subscription = getLineSubscription(state, state.currentLine)
-  if (subscription?.status !== 'active' || subscription.expires_at == null) {
-    return false
-  }
-  return subscription.auto_renew === true
-}
-
-/** 渲染渠道管理入口按钮可见性。 */
-function renderManageSubscriptionButton(elements: PricingElements, state: PricingState): void {
-  setHidden(elements.manageSubscriptionButton, !canShowCancellationGuide(state))
-}
-
-/** 同步预开空白渠道管理窗口：必须在用户手势调用栈内执行，避免 popup 被拦截后已发管理请求。 */
-function openManageWindow(): Window | null {
-  const popup = window.open('', '_blank')
-  if (popup) {
-    popup.opener = null
-  }
-  return popup
-}
-
-/** 打开当前产品类别自动续费订阅的渠道管理页；URL 为空时展示渠道内操作指引。 */
-async function openManageSubscription(
-  elements: PricingElements,
-  copy: PricingCopy,
-  state: PricingState
-): Promise<void> {
-  // 入口按钮只在已登录（token/user 成对设置）且当前线存在有效自动续费订阅时可见，
-  // 未登录分支不可达，不做对称防御。
-  if (elements.cancellationGuideDialog.open) {
-    return
-  }
-
-  const manageWindow = openManageWindow()
-  if (!manageWindow) {
-    setMessage(elements.accountError, copy.popupBlocked)
-    return
-  }
-
-  // 预开窗口成功后清掉上次可能残留的 popupBlocked 等错误，再发管理请求。
-  setMessage(elements.accountError, '')
-
-  const button = elements.manageSubscriptionButton
-  button.disabled = true
-  button.textContent = copy.account.managingSubscription
-  try {
-    const url = await createSubscriptionManagementUrl(state)
-    if (url) {
-      if (!manageWindow.closed) {
-        manageWindow.location.href = url
-      }
-    } else {
-      manageWindow.close()
-      elements.cancellationGuideDialog.showModal()
-    }
-  } catch (error) {
-    console.error(error)
-    manageWindow.close()
-    setMessage(elements.accountError, error instanceof Error ? error.message : copy.account.loadFailed)
-  } finally {
-    button.disabled = false
-    button.textContent = copy.account.manageSubscription
-  }
-}
-
-/** 请求当前产品类别的渠道管理入口；后端按订阅实例选择渠道，返回 URL 可为空。 */
-async function createSubscriptionManagementUrl(state: PricingState): Promise<string | null> {
-  const response = await postJson<{ url: string | null }>(
-    '/api/client/subscription/management',
-    buildRequestContext(state),
-    { product_kind: PRICING_LINE_CONFIG[state.currentLine].productKind }
-  )
-  const url = typeof response.url === 'string' ? response.url.trim() : ''
-  return url.length > 0 ? url : null
 }
 
 /** 按当前配置与登录态刷新可购买卡按钮（灰化按卡所属产品类别的订阅状态）。 */
@@ -661,7 +456,7 @@ async function openPlanCheckout(
       productPriceId: channel.product_price_id,
       paymentMethod: channel.payment_method
     })
-    window.pricingAuthController?.open()
+    window.siteAuthController?.open()
     return
   }
 
@@ -762,13 +557,11 @@ async function handlePricingAuthSuccess(
   elements: PricingElements,
   copy: PricingCopy,
   state: PricingState,
-  payload: PricingAuthSuccessPayload
+  payload: SiteAuthSuccessPayload
 ): Promise<void> {
   const pendingPurchase = consumePendingSubscriptionPurchase(state)
   state.token = payload.token
   state.user = payload.user
-  setHidden(elements.accountError, true)
-  renderAccount(elements, copy, state)
   await loadPlans(elements, copy, state)
   await loadUpgradeQuotes(elements, copy, state)
   if (pendingPurchase) {
@@ -781,7 +574,7 @@ async function handlePricingAuthSuccess(
       pendingPurchase
     ).catch(error => {
       console.error(error)
-      setMessage(elements.accountError, error instanceof Error ? error.message : copy.account.loadFailed)
+      setMessage(elements.plansStatus, error instanceof Error ? error.message : copy.plans.loadFailed)
     })
   }
 }
@@ -853,7 +646,7 @@ function isJsonObject(value: JsonValue): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-/** 支付成功后刷新账户套餐摘要与按钮态。 */
+/** 支付成功后重新加载报价（用户资料由 auth 刷新方负责，这里只关心档位态）。 */
 async function handleOrderCheckoutSuccess(
   elements: PricingElements,
   copy: PricingCopy,
@@ -865,11 +658,11 @@ async function handleOrderCheckoutSuccess(
   }
   try {
     state.user = await getCurrentUser(buildRequestContext(state))
-    renderAccount(elements, copy, state)
+    renderPlanButtons(elements, copy, state)
     await loadUpgradeQuotes(elements, copy, state)
   } catch (error) {
     console.error(error)
-    setMessage(elements.accountError, error instanceof Error ? error.message : copy.account.loadFailed)
+    setMessage(elements.plansStatus, error instanceof Error ? error.message : copy.plans.loadFailed)
   }
 }
 
@@ -892,65 +685,12 @@ function isPricingCheckoutSource(source: string): boolean {
   return PRICING_LINE_IDS.some(line => PRICING_LINE_CONFIG[line].checkoutSource === source)
 }
 
-/** Pricing 页退出登录后同步刷新账号与按钮态。 */
-async function logoutPricingUser(
-  elements: PricingElements,
-  copy: PricingCopy,
-  state: PricingState
-): Promise<void> {
-  try {
-    if (state.token) {
-      await logoutCurrentUser(buildRequestContext(state))
-    }
-  } catch (error) {
-    console.error(error)
-  } finally {
-    clearStoredAccessToken()
-    state.token = null
-    state.user = null
-    state.upgradeQuotes.clear()
-    state.loadVersion += 1
-    setAccountMenuOpen(elements, false)
-    renderAccount(elements, copy, state)
-    renderPlanButtons(elements, copy, state)
-  }
-}
-
 /** 构建请求上下文。 */
 function buildRequestContext(state: PricingState): RequestContext {
   return {
     deviceId: state.deviceId,
     token: state.token
   }
-}
-
-/** 控制账号菜单展开，保持和首页账号按钮一致的交互。 */
-function setAccountMenuOpen(elements: PricingElements, open: boolean): void {
-  setHidden(elements.accountMenu, !open)
-  elements.accountButton.setAttribute('aria-expanded', open ? 'true' : 'false')
-}
-
-/** 渲染和首页下载区一致的账号头像：有图片用图片，否则回退邮箱首字母。 */
-function renderUserAvatar(elements: PricingElements, user: HomepageUserInfo): void {
-  const avatarUrl = user.avatar_url?.trim()
-  if (avatarUrl) {
-    elements.userAvatar.src = avatarUrl
-    elements.userAvatar.hidden = false
-    elements.userInitial.textContent = ''
-    setHidden(elements.userInitial, true)
-    return
-  }
-
-  elements.userAvatar.removeAttribute('src')
-  elements.userAvatar.hidden = true
-  elements.userInitial.textContent = getAccountInitial(user.email)
-  setHidden(elements.userInitial, false)
-}
-
-/** 账号首字母兜底。 */
-function getAccountInitial(value: string): string {
-  const first = value.trim().charAt(0)
-  return first ? first.toUpperCase() : 'U'
 }
 
 /** 格式化到期时间。 */
@@ -973,12 +713,7 @@ function normalizeTimestampMs(value: number): number {
 /** 设置文本并同步 hidden。 */
 function setMessage(element: HTMLElement, message: string): void {
   element.textContent = message
-  setHidden(element, message.length === 0)
-}
-
-/** 控制 hidden。 */
-function setHidden(element: HTMLElement, hidden: boolean): void {
-  element.hidden = hidden
+  element.hidden = message.length === 0
 }
 
 /** 从 JSON script 读取文案。 */
@@ -1031,21 +766,6 @@ function getPricingElements(root: HTMLElement): PricingElements {
     root,
     tabButtons,
     panels,
-    accountLoading: query<HTMLElement>(root, '[data-pricing-account-loading]'),
-    accountSignedOut: query<HTMLElement>(root, '[data-pricing-account-signed-out]'),
-    accountSignedIn: query<HTMLElement>(root, '[data-pricing-account-signed-in]'),
-    accountError: query<HTMLElement>(root, '[data-pricing-account-error]'),
-    loginButtons: Array.from(root.querySelectorAll<HTMLButtonElement>('[data-pricing-login]')),
-    accountButton: query<HTMLButtonElement>(root, '[data-pricing-account-button]'),
-    accountMenu: query<HTMLElement>(root, '[data-pricing-account-menu]'),
-    accountEmail: query<HTMLElement>(root, '[data-pricing-account-email]'),
-    accountLogout: query<HTMLButtonElement>(root, '[data-pricing-account-logout]'),
-    userAvatar: query<HTMLImageElement>(root, '[data-pricing-user-avatar]'),
-    userInitial: query<HTMLElement>(root, '[data-pricing-user-initial]'),
-    userPlan: query<HTMLElement>(root, '[data-pricing-user-plan]'),
-    userExpires: query<HTMLElement>(root, '[data-pricing-user-expires]'),
-    manageSubscriptionButton: query<HTMLButtonElement>(root, '[data-pricing-manage-subscription]'),
-    cancellationGuideDialog: query<HTMLDialogElement>(root, '[data-pricing-cancellation-guide]'),
     plansStatus: query<HTMLElement>(root, '[data-pricing-plans-status]'),
     buyableCards
   }

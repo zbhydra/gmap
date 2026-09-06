@@ -60,6 +60,7 @@ const authCopy = {
 }
 ---
 
+{/* 插件授权桥唯一认证 owner（自带弹窗与 Google 回跳消费）：includeSiteAuth={false} 不装配站级登录控制器 */}
 <Layout
   locale="en-US"
   title={pageCopy.title}
@@ -68,6 +69,7 @@ const authCopy = {
   robots="noindex, nofollow, noarchive"
   includeAlternateLanguageLinks={false}
   includeLanguageSwitcher={false}
+  includeSiteAuth={false}
 >
   <main class="extension-login-page" data-extension-login>
     <section class="extension-login-panel" aria-labelledby="extension-login-title">

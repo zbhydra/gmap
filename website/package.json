@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro check && vue-tsc --noEmit && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "type-check:tests": "tsc --project tsconfig.tests.json",
@@ -17,11 +17,14 @@
     "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
-    "astro": "^5.5.2"
+    "astro": "^5.5.2",
+    "vue": "^3.5.42"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
+    "@astrojs/vue": "^5.1.4",
     "@playwright/test": "^1.50.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vue-tsc": "^3.3.11"
   }
 }

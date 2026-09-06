@@ -1,6 +1,6 @@
 # 网站用户 Dashboard
 
-> 待批准方案。本文负责网站账户工作区的入口、布局和前端消费边界；业务规则继续归属用户、订阅与 Maps 云端领域。
+> 已批准；代码已落地，三轮 review 通过，已有本地后端+DB+本地存储替身下载闭环通过（2026-09-06）。外部对象存储端点（R2/AliOSS）未验证，用户决定停止验收。本文负责网站账户工作区的入口、布局和前端消费边界；业务规则继续归属用户、订阅与 Maps 云端领域。渠道管理入口的页面归属自 `@../011.Pricing页/tech-pricing与自动续费.md` 迁入本文。
 
 ## 用户行为
 
@@ -38,7 +38,7 @@
 
 ## 技术边界
 
-- 使用 Astro SSG + Vue 3：Astro 负责公开内容与文件路由，Vue 负责 Dashboard 的响应式状态和交互。引入官方 `@astrojs/vue` 集成与 `vue`，并加入 Vue 单文件组件的类型检查工具 `vue-tsc`；不增加 UI 库、数据库表或新的会话机制。
+- 使用 Astro SSG + Vue 3：Astro 负责公开内容与文件路由，Vue 负责 Dashboard 的响应式状态和交互。已引入官方 `@astrojs/vue` 集成与 `vue`，`vue-tsc --noEmit` 已接入 `pnpm build` 门禁（astro check → vue-tsc → astro build）；未增加 UI 库、数据库表或新的会话机制。
 - Dashboard 每个 Astro 路由装配同一个 `DashboardApp.vue`，通过页面标识选择历史、API 或订阅组件；使用 `client:load` 输出公共初始壳并立即激活交互，用户请求只在客户端挂载后执行。Vue 内按侧栏、个人菜单和三个业务视图拆组件，局部状态用 `ref/computed`，组件间用 props/emits，不增加 Pinia、provide/inject 或全局依赖注入。
 - 页面跳转仍使用真实链接与 Astro 文件路由，不新增 Vue Router；切页会重新加载页面，浏览器前进后退与直接访问自然沿用现有部署。后续若明确需要跨页保留编辑状态，再单独评估工作区客户端路由。
 - 静态营销区块继续用 Astro 组件；本轮因全站账号入口和工作区外壳产生的导航职责按需抽为站级组件。后续新增复杂交互优先用 Vue，不因组件化重写无关工具、Pricing 支付或插件登录桥。
@@ -46,10 +46,10 @@
 - 继续由 `website/src/layouts/Layout.astro` 唯一持有 HTML 外壳、主题 token 与全局运行时；增加工作区展示模式以装配侧栏和正文，避免复制全局外壳。
 - 路由建议：`/dashboard/` 为历史，`/dashboard/api/` 为 API，`/dashboard/subscriptions/` 为订阅；遵循现有默认语言根路径与非默认语言前缀规则。
 - 工作区输出 `noindex, nofollow`，从现有 sitemap 生成集合排除；SSG 只产出公共壳，私有数据登录后请求，服务端认证与归属校验仍是权限边界。
-- 将现有 Pricing 登录弹窗及控制器迁到站级认证归属，全站仅装配一份，继续由 Astro 组件和既有控制器维护。继续调用 `scripts/homepage/auth.ts` 的 Google、邮箱验证码、token 存取与登出能力。统一登录成功事件与账户状态，Pricing 和 Vue 工作区消费同一站级结果；删除被替代的 Pricing 登录包装、全局对象与事件。Vue 通过站级登录命令和会话事件接入，不操作登录弹窗 DOM；组件卸载时注销监听。
+- 现有 Pricing 登录弹窗及控制器已迁到 `components/auth/`（`SiteAuthModal.astro` + `site-auth-controller.ts`），由 `Layout.astro` 全站唯一装配；`/extension-login/` 传 `includeSiteAuth=false` 保留插件授权桥独立 owner，不装配站级控制器也不重复消费 Google 回跳。事件为 `site-auth:success` / `site-auth:close`，全局对象为 `window.siteAuthController`。导航登录通过 `open({ redirectTo })` 声明 Dashboard 目的地（sessionStorage 持久化跨 OAuth 回跳，仅白名单本站路由）；Pricing 待购与工作区不带 redirect 留在原页。登录成功结果经 `scripts/site/session.ts` 的 `setSiteSession` 写入共享会话，导航入口、Pricing 与 Vue 工作区消费同一份数据，无第二次 auth/me。
 - 导航登录、工作区登录、Pricing 待购分别按触发上下文决定登录后位置；保留既有 Google 回跳换票及待购恢复。只使用本站确定的路由作为目的地，不增加任意外部回跳参数。
 - `/extension-login/` 保留其独立插件授权确认流程，不装配第二个站级登录控制器，也不在登录后转 Dashboard；它继续复用底层认证能力。
-- 用户资料和三线订阅直接复用 `GET /api/client/auth/me`；导航和当前页面共用一次会话恢复结果。退出调用现有 logout 并清除本地 token，跳主页；不改变后端仅撤销当前 token 的合同。
+- 用户资料和三线订阅直接复用 `GET /api/client/auth/me`；导航和当前页面共用一次会话恢复结果（`scripts/site/session.ts`：无 token 匿名不发请求，401 清 token 回匿名，网络失败返回 unreachable 且不缓存——重试真正重新请求）。业务请求 401 由 `scripts/dashboard/api.ts` 边界统一汇入站级会话失效（清 token + `site-session:expired` 事件），工作区回到登录面板走同一登录流程；普通网络错误就地提示不误判退出。退出调用现有 logout 并清除本地 token，跳当前语言主页；不改变后端仅撤销当前 token 的合同。
 - 历史列表、详情、下载复用 [Online 任务与结果合同](../014.Maps云端/tech-Online任务与结果.md) 的客户端接口。JSON 请求使用现有 API 封装；整包 ZIP 是二进制响应，使用同一请求头构建与认证规则发起 fetch，区分失败信封和文件成功响应，下载后释放临时对象 URL。禁止把 token 放入下载链接或用 JSON 封装读取 ZIP。
 - 本轮不修改后端业务合同。工作树中的订阅与 Online 后端改动是读取依据，实施前重新核对实际响应，不覆盖其他工作。
 - 用户已允许按实际需求引入 Vue 和组件化；实施时同步修订 `spec-website.md` 的纯 Astro/命令式 DOM 限制，明确 Astro 内容与 Vue 交互边界、状态及类型检查规则。`Layout.astro` 继续持有全局样式，Vue 组件消费现有 token，不复制第二套设计系统。
@@ -62,11 +62,10 @@
 
 ## 证据与限制
 
-- `website/src/layouts/Layout.astro` 的 `nav-actions` 没有账号入口；`components/pricing/PricingPageShell.astro` 与 `pricing-page-controller.ts` 的 `restoreUser`、`logoutPricingUser`、`openManageSubscription` 持有当前账户 UI。
-- `components/pricing/pricing-auth-controller.ts` 的 `finishLogin` 发布 Pricing 专属登录事件；底层认证已由 `scripts/homepage/auth.ts` 统一实现。该控制器与 Pricing 的引用必须一起迁移。
-- `backend/src/app/api/client/maps_online_client.py` 已提供按当前用户查询历史、详情、签名 CSV 与 ZIP 下载；`schemas/maps_online_schema.py` 只公开任务两态和关键词记录数。
+- 落地文件：`src/components/dashboard/`（Vue 工作区组件）、`src/scripts/dashboard/api.ts`、`src/scripts/site/{session,account-entry}.ts`、`src/components/auth/{SiteAuthModal.astro,site-auth-controller.ts}`、`src/pages/dashboard/` 与 `src/pages/[lang]/dashboard/` 路由；Pricing 侧删去 `PricingAuthModal.astro`、`pricing-auth-controller.ts`、`PricingCancellationGuideModal.astro`（渠道指引改 Vue 版）。
+- `backend/src/app/api/client/maps_online_client.py` 提供按当前用户查询历史、详情、签名 CSV 与 ZIP 下载；`schemas/maps_online_schema.py` 只公开任务两态和关键词记录数。整包 ZIP 为二进制响应，前端用同一请求头边界 fetch 并区分失败信封。
 - 现有 API Key 路径属于 `backend/src/app/api/admin/admin_system_settings.py`，对应管理员外部接入，不是客户 Maps API 能力。
 - `website/src/components/pages/HomePage.astro` 的采集提交按钮仍为占位。历史界面交付不代表 Online 创建链路已产品化。
-- 本轮只完成源码与合同分析，未验证真实 Google 登录、对象存储下载或支付渠道可用性。复用已批准的认证、支付与存储合同及其官方参考资料，不改第三方协议语义。
+- 真实 Google 登录、真实对象存储下载与支付渠道可用性未在本轮验证：前端验证走 Playwright route mock（证明已核实接口合同的 UI 交互），真实账号/任务下载冒烟依赖本地后端 + 对象存储凭据，见实施清单验收记录。
 
 执行与验证见 [实施清单](plans/003.用户Dashboard.md)。

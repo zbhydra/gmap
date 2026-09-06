@@ -202,13 +202,24 @@ test('Pricing copy keeps the three product-line tabs and checkout shell fields d
     'pricing.js',
     'pricing-i18n-'
   )
+  const dashboardImported = await importCompiledTypescriptModule(
+    'src/i18n/dashboard.ts',
+    'dashboard.js',
+    'dashboard-i18n-'
+  )
 
   try {
     const content = imported.module.pricingContent
     assert.ok(content, 'Expected pricing.ts to export pricingContent')
     assert.ok(content.seo.title)
     assert.ok(content.hero.title)
-    assert.ok(content.account.signedOutTitle)
+    // 账户摘要与渠道指引文案已迁用户 Dashboard 字典（015 U2），Pricing 只保留选购与升级
+    const dashboard = dashboardImported.module.dashboardContent
+    assert.ok(dashboard, 'Expected dashboard.ts to export dashboardContent')
+    assert.ok(dashboard.subscriptions.manageSubscription)
+    assert.ok(dashboard.subscriptions.managingSubscription)
+    assert.ok(dashboard.cancelGuide.paths.length > 0)
+    assert.ok(dashboard.cancelGuide.closeLabel)
     // 三条产品线 tab 齐全
     assert.deepEqual(Object.keys(content.tabs), ['online', 'extension', 'api'])
     assert.deepEqual(Object.keys(content.tabLabels), ['online', 'extension', 'api'])
@@ -240,13 +251,9 @@ test('Pricing copy keeps the three product-line tabs and checkout shell fields d
       assert.match(card.periodLabel, /one-time/)
     }
     assert.ok(content.faq.items.length > 0)
-    // 管理入口与渠道内指引：PayPal / ClinkBill 渠道路径
-    assert.ok(content.account.manageSubscription)
-    assert.ok(content.account.managingSubscription)
-    assert.ok(content.cancellationGuide.paths.length > 0)
-    assert.ok(content.cancellationGuide.closeLabel)
   } finally {
     await imported.cleanup()
+    await dashboardImported.cleanup()
   }
 })
 
@@ -389,7 +396,8 @@ test('every built page exposes complete title, description and Open Graph metada
   const htmlFiles = await collectHtmlFiles(distDir)
   // 19 内容页（含 Online Scraper / API / MCP / Bing 桥接）+ 2 个 PayPal 回跳页
   // + 2 个 ClinkBill 回跳页 + 1 个插件登录桥接页（noindex）
-  assert.equal(htmlFiles.length, 24)
+  // + 3 个 Dashboard 工作区页（noindex，015 U2）
+  assert.equal(htmlFiles.length, 27)
 
   const descriptionsByRoute = new Map()
   for (const filePath of htmlFiles) {
@@ -3054,7 +3062,7 @@ test('extension-sourced Pricing entry tags buy buttons for attribution before fi
   // 在首次账户/配置加载前应用，保证首屏事件即携带来源。
   const utmReadIndex = source.indexOf("get('utm_source') === EXTENSION_UTM_SOURCE")
   const attributionIndex = source.indexOf('applyExtensionAttribution(elements, state)')
-  const initLoadIndex = source.indexOf('await Promise.all([restoreUser(elements, copy, state), loadPlans(elements, copy, state)])')
+  const initLoadIndex = source.indexOf('await restoreSignedInUser(elements, copy, state)')
 
   assert.notEqual(utmReadIndex, -1)
   assert.notEqual(attributionIndex, -1)

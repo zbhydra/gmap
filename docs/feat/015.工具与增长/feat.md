@@ -27,6 +27,7 @@
 - D5 附:**页面图文密度对齐竞品**(hydra 2026-08-31):产品页/下载页按竞品 gmapsextractor.com 的图文结构补分区(hero 截图位、采集→导出成果双图、示例数据下载、demo 视频、逐步安装配图);真实截图/录屏素材未产出时用统一占位组件呈现(标注素材内容),素材产出后仅回填;视觉一律用自有 design token。社证数字条不做(无真实数据,不允许虚报)
 - D5 附:**下载页并入插件产品页**(hydra 2026-09-01,对齐竞品「产品介绍在上、安装教程在下」的单页形态):`/download/` 撤销,安装内容(直装 zip 卡、Edge/Firefox 渠道步骤、安装帮助)整体并入 `/extension/` 页内教程区(锚点 `#install`);hero 双按钮分流——「Install for Edge」跳 Edge Add-ons 商店(上架前 href 占位),「Install for Chrome」滚动到页内教程(产品基线不上 Chrome Web Store,Chrome 走 zip 直装);导航/footer 撤销 Download 入口,首页/工具页/Pricing 的安装 CTA 全部改指 `/extension/`;页底 CTA 改滚动到教程区
 - D5 附:**首页 hero 改造为「营销 + 在线导出操作」**(hydra 2026-09-01):对标竞品首页形态——hero 居中,新增卖点行(免信用卡 / 每月 1,000 条免费额度 / CSV & JSON 导出,额度口径同 Pricing FAQ)与在线导出操作卡(关键词多行输入,一行一条,预填 3 条示例,行数计数上限 100,输入可用但纯本地)。「Start scraping free」主按钮为占位无效(Online 功能未落地,点击无跳转无请求,014 B1 落地后接真交互);卡内脚注说明 Online 排期并引导安装插件,原 hero 双按钮降为卡内文字链接,归因属性不变
+- D5 附:**用户 Dashboard 落地**(hydra 批准,2026-09-06 实施):全站导航右侧匿名显示登录、登录后显示 Dashboard;工作区 `/dashboard/`(历史)、`/dashboard/api/`(API 管理,本轮未开放)、`/dashboard/subscriptions/`(订阅管理)三页,左侧栏为唯一管理菜单。Pricing 只负责套餐比较、购买与升级;账户摘要、退出与渠道管理入口迁入订阅管理页。API 落地页的获取 Key 类 CTA 统一进入 API 管理页。入口与范围合同见 `@tech-用户Dashboard.md`
 - D6 SEO 基建(复用 009 域:sitemap / llms.txt / GSC / GA4)
 
 ### 不包含

@@ -2,10 +2,11 @@
 /**
  * Online / API 落地页渲染器（015 U1，五页共用模板）。
  *
- * 结构：hero（无效主按钮 + Pricing 真链接）→ 能力清单 → FAQ → CTA 行动区。
- * 页内未落地功能按钮（开始采集 / 获取 Key 类）渲染为 aria-disabled 的
+ * 结构：hero（主 CTA + Pricing 真链接）→ 能力清单 → FAQ → CTA 行动区。
+ * API 四页的主 CTA（获取 Key 类）统一进入 Dashboard API 管理页（015 U2）；
+ * Online 页的主 CTA（开始采集）仍是 aria-disabled 的
  * `<button type="button" data-pending-cta>`，无 JS handler——点击无跳转、无请求、
- * 不埋点；014 云端落地时替换为真交互。内容走 i18n 字典（LandingPageContent）。
+ * 不埋点；创建链路产品化时替换为真交互。内容走 i18n 字典（LandingPageContent）。
  */
 import Layout from '../../layouts/Layout.astro'
 import { getContent, type Locale } from '../../i18n/content'
@@ -26,6 +27,9 @@ const page = getLandingPageContent(pageId, locale)
 // locale 前缀（en-US 为空）；后续语言走 [lang]/ 路由时链接自动带上前缀。
 const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
 const pricingPath = `${localePrefix}/pricing/`
+// API 产品线的 Key 获取入口统一指向 Dashboard API 管理页（tech-用户Dashboard §功能归属）。
+const isApiLanding = pageId !== 'online-scraper'
+const dashboardApiPath = `${localePrefix}/dashboard/api/`
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -57,9 +61,15 @@ const faqSchema = {
           <h1 id="landing-hero-title">{page.hero.title}</h1>
           <p class="hero-description">{page.hero.description}</p>
           <div class="hero-actions">
-            <button type="button" class="btn-primary" aria-disabled="true" data-pending-cta>
-              {page.hero.primaryCta}
-            </button>
+            {isApiLanding ? (
+              <a class="btn-primary" href={dashboardApiPath} data-cta={`${pageId}-hero-api-dashboard`}>
+                {page.hero.primaryCta}
+              </a>
+            ) : (
+              <button type="button" class="btn-primary" aria-disabled="true" data-pending-cta>
+                {page.hero.primaryCta}
+              </button>
+            )}
             <a
               class="btn-secondary"
               href={`${pricingPath}?utm_source=website&utm_medium=${pageId}-hero&utm_campaign=pricing`}
@@ -113,9 +123,15 @@ const faqSchema = {
       <div class="container cta-inner">
         <h2 id="landing-cta-title">{page.cta.title}</h2>
         <p>{page.cta.description}</p>
-        <button type="button" class="btn-primary" aria-disabled="true" data-pending-cta>
-          {page.cta.button}
-        </button>
+        {isApiLanding ? (
+          <a class="btn-primary" href={dashboardApiPath} data-cta={`${pageId}-cta-api-dashboard`}>
+            {page.cta.button}
+          </a>
+        ) : (
+          <button type="button" class="btn-primary" aria-disabled="true" data-pending-cta>
+            {page.cta.button}
+          </button>
+        )}
         {page.cta.note && <p class="cta-note">{page.cta.note}</p>}
       </div>
     </section>

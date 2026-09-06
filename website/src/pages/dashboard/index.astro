@@ -1,0 +1,29 @@
+---
+/** Dashboard 默认页：在线导出历史（015 U2，noindex 工作区）。 */
+import Layout from '../../layouts/Layout.astro'
+import DashboardApp from '../../components/dashboard/DashboardApp.vue'
+import { getContent } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+
+const locale = 'en-US'
+const t = getContent(locale)
+const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+---
+
+<Layout
+  locale={locale}
+  title={t.dashboard.seo.title}
+  description={t.dashboard.seo.description}
+  robots="noindex, nofollow"
+  includeSoftwareApplicationSchema={false}
+  includeAlternateLanguageLinks={false}
+  workspaceMode
+>
+  <DashboardApp
+    client:load
+    page="history"
+    copy={t.dashboard}
+    popupBlocked={t.pages.account.creditPurchase.popupBlocked}
+    localePrefix={localePrefix}
+  />
+</Layout>

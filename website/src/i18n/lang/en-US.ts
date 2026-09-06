@@ -1,5 +1,6 @@
 import type { SiteContent } from '../schema'
 import { pricingContent } from '../pricing'
+import { dashboardContent } from '../dashboard'
 import { toolsContent } from '../tools'
 
 /**
@@ -27,7 +28,9 @@ export const enUS: SiteContent = {
       apiReviews: 'Reviews API',
       apiPhotos: 'Photos API',
       apiMcp: 'Scraper MCP',
-      pricing: 'Pricing'
+      pricing: 'Pricing',
+      signIn: 'Sign in',
+      dashboard: 'Dashboard'
     },
     footer: {
       resources: 'Resources',
@@ -53,6 +56,7 @@ export const enUS: SiteContent = {
     cancel: 'Cancel',
     continue: 'Continue'
   },
+  dashboard: dashboardContent,
   pages: {
     home: {
       seo: {

@@ -5,6 +5,7 @@ import { getCompanyContent } from '../company/companyContent';
 import { getLegalContent } from '../legal/legalContent';
 import { DEVELOPER_EMAIL } from '../lib/contact';
 import SiteConfirmModal from '../components/site/SiteConfirmModal.astro';
+import SiteAuthModal from '../components/auth/SiteAuthModal.astro';
 
 type JsonLdPrimitive = string | number | boolean | null;
 type JsonLdValue = JsonLdPrimitive | JsonLdObject | JsonLdValue[];
@@ -24,6 +25,10 @@ interface Props {
   robots?: string;
   includeAlternateLanguageLinks?: boolean;
   includeLanguageSwitcher?: boolean;
+  /** 工作区展示模式（Dashboard）：隐藏营销导航与 footer，主区由页面自管布局。 */
+  workspaceMode?: boolean;
+  /** 装配站级登录弹窗；插件授权桥（/extension-login/）自带认证 owner 时关闭。 */
+  includeSiteAuth?: boolean;
 }
 
 // Base path for assets（根路径部署）
@@ -45,6 +50,8 @@ const {
   robots = 'index, follow',
   includeAlternateLanguageLinks = true,
   includeLanguageSwitcher = true,
+  workspaceMode = false,
+  includeSiteAuth = true,
 } = Astro.props;
 
 const t = getContent(locale);
@@ -94,6 +101,8 @@ const apiPhotosPath = `${currentLocalePath}google-maps-photos-api/`;
 const apiMcpPath = `${currentLocalePath}google-maps-scraper-mcp/`;
 // 导航 Install CTA 指向插件页（营销 + 安装教程一体），商店上架后商店链接在插件页教程区维护。
 const installHref = extensionPath;
+// Dashboard 工作区入口（015 U2）：导航真链接；登录态切换由 account-entry 脚本完成。
+const dashboardPath = `${currentLocalePath}dashboard/`;
 const languageOptionLinks = Object.entries(localePaths).map(([key, path]) => {
   const langPrefix = path === '' ? '' : `/${path}`;
   const targetPath = `${langPrefix}${normalizedPagePathWithoutLocale}`;
@@ -494,6 +503,61 @@ const structuredDataItems = [
         flex: 0 0 24px;
       }
 
+      /* 账户入口（015 U2）：匿名登录（primary 实底）/ 登录后 Dashboard（surface-2 胶囊） */
+      .nav-auth-signin {
+        display: inline-flex;
+        align-items: center;
+        height: 40px;
+        padding: 0 var(--space-4);
+        border-radius: var(--rounded-full);
+        background: var(--primary);
+        color: var(--primary-fg);
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: background-color var(--transition-normal);
+      }
+
+      .nav-auth-signin:hover {
+        background: var(--primary-hover);
+      }
+
+      .nav-dashboard-link {
+        display: inline-flex;
+        align-items: center;
+        height: 40px;
+        padding: 0 14px;
+        border-radius: var(--rounded-full);
+        background: var(--surface-2);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: background-color var(--transition-normal);
+      }
+
+      .nav-dashboard-link:hover {
+        background: var(--border);
+      }
+
+      .nav-auth-signin:focus-visible,
+      .nav-dashboard-link:focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 3px;
+      }
+
+      .mobile-auth-signin {
+        display: block;
+        width: 100%;
+        padding: var(--space-3) 14px;
+        border-radius: var(--rounded-md);
+        background: var(--primary);
+        color: var(--primary-fg);
+        font-size: 14px;
+        font-weight: 600;
+        text-align: left;
+      }
+
       .btn-primary,
       .btn-secondary {
         display: inline-flex;
@@ -808,7 +872,9 @@ const structuredDataItems = [
       @media (max-width: 960px) {
         .nav-links,
         .lang-switcher,
-        .nav-actions > .nav-install-link {
+        .nav-actions > .nav-install-link,
+        .nav-actions > .nav-auth-signin,
+        .nav-actions > .nav-dashboard-link {
           display: none;
         }
 
@@ -858,6 +924,7 @@ const structuredDataItems = [
       hidden
     ></div>
 
+    {!workspaceMode && (
     <header class="header">
       <nav class="nav">
         <a href={currentLocalePath} class="logo">
@@ -908,6 +975,18 @@ const structuredDataItems = [
         </div>
 
         <div class="nav-actions">
+          {/* 账户入口（015 U2）：匿名登录 / 登录后 Dashboard，登录态由站级脚本切换；
+              includeSiteAuth=false（插件授权桥）时不渲染，认证由页面自身 owner 负责 */}
+          {includeSiteAuth && (
+          <button type="button" class="nav-auth-signin" data-site-auth-entry hidden>
+            {t.layout.nav.signIn}
+          </button>
+          )}
+          {includeSiteAuth && (
+          <a href={dashboardPath} class="nav-dashboard-link" data-site-dashboard-link hidden>
+            {t.layout.nav.dashboard}
+          </a>
+          )}
           <a
             href={installHref}
             class="nav-install-link"
@@ -968,6 +1047,16 @@ const structuredDataItems = [
           <a href={currentLocalePath} class={isHomeActive ? 'active' : ''}>
             {t.layout.nav.home}
           </a>
+          {includeSiteAuth && (
+          <button type="button" class="mobile-auth-signin" data-site-auth-entry hidden>
+            {t.layout.nav.signIn}
+          </button>
+          )}
+          {includeSiteAuth && (
+          <a href={dashboardPath} class="mobile-dashboard-link" data-site-dashboard-link hidden>
+            {t.layout.nav.dashboard}
+          </a>
+          )}
           <a href={extensionPath} class={isExtensionActive ? 'active' : ''} data-cta="nav-extension">
             {t.layout.nav.extension}
           </a>
@@ -991,11 +1080,13 @@ const structuredDataItems = [
         </div>
       </div>
     </header>
+    )}
 
     <main class="main">
       <slot />
     </main>
 
+    {!workspaceMode && (
     <footer class="footer">
       <div class="footer-content">
         <nav
@@ -1073,12 +1164,18 @@ const structuredDataItems = [
         </div>
       </div>
     </footer>
+    )}
 
     <SiteConfirmModal locale={locale} />
+    {/* 站级登录弹窗全站唯一装配；插件授权桥页自带认证 owner（含 Google 回跳消费），不重复装配 */}
+    {includeSiteAuth && <SiteAuthModal copy={t.pages.account} />}
 
     <script>
       import { installFrontendErrorCapture } from '../scripts/homepage/frontend-error-capture'
       import '../scripts/globalClickEvents'
+      import { initSiteAccountEntry } from '../scripts/site/account-entry'
+
+      initSiteAccountEntry()
 
       installFrontendErrorCapture(capturedError => {
         void import('../scripts/homepage/sls-mark')

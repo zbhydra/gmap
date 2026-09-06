@@ -22,7 +22,11 @@ const SEARCH_BOT_BLOCKED_ROUTE_PATHS = new Set([
   '/clink/success/',
   '/paypal/cancel/',
   '/paypal/success/',
-  '/extension-login/'
+  '/extension-login/',
+  // Dashboard 工作区 noindex（015 U2）：私有工作区不进搜索与 sitemap。
+  '/dashboard/',
+  '/dashboard/api/',
+  '/dashboard/subscriptions/'
 ])
 const WEBSITE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)))
 const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
