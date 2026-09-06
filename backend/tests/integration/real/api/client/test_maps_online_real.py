@@ -4,6 +4,7 @@
 """
 
 import asyncio
+import logging
 import tempfile
 from io import BytesIO
 from pathlib import Path
@@ -242,7 +243,14 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
     keyword = f'{test_run_id}餐厅/咖啡:*?"|<>\\\x00'
     blank_filename = '/\\<>:"|?*'
     try:
+        caplog.set_level(logging.WARNING, logger="server")
+        caplog.clear()
         _error(await client.get(_ENDPOINT), CommonCode.AUTH_MISSING_CREDENTIALS, 401)
+        records = [record for record in caplog.records if record.name == "server"]
+        assert len(records) == 1
+        assert records[0].levelno == logging.WARNING
+        assert records[0].exc_info is None
+        assert f'GET {_ENDPOINT} HTTP/1.1" 401' in records[0].getMessage()
         for words in ([" ", "\n"], ["one", "two", "three"]):
             _error(
                 await client.post(_ENDPOINT, headers=headers, json={"keywords": words}),
@@ -406,6 +414,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
         assert any(call[1] == storage[1].bucket for call in sdk_calls)
 
         deny_download = True
+        caplog.clear()
         _error(
             await client.get(
                 f"{_ENDPOINT}/{task_no}/items/{old_item['item_id']}/download",
@@ -422,6 +431,14 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
             500,
         )
         deny_download = False
+        diagnostics = [
+            record
+            for record in caplog.records
+            if record.name == "server" and record.exc_info is not None
+        ]
+        assert len(diagnostics) == 2
+        assert all(record.levelno == logging.ERROR for record in diagnostics)
+        assert "Traceback (most recent call last)" in caplog.text
         assert "secret-sdk-diagnostic" not in caplog.text
         assert not list(download_root.iterdir())
 

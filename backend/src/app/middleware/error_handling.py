@@ -18,19 +18,9 @@ async def handle_request_validation_error(request: Request, exc: Exception) -> R
     """将 FastAPI 请求校验错误转换为项目统一响应。"""
     if not isinstance(exc, RequestValidationError):
         raise exc
-    validation_errors = [
-        {"loc": error.get("loc"), "type": error.get("type")} for error in exc.errors()
-    ]
-    logger.error(
-        "Request validation failed: method=%s path=%s errors=%s",
-        request.method,
-        request.url.path,
-        validation_errors,
-    )
     return ResponseUtils.error(
         CommonCode.VALIDATION_ERROR,
         get_locale(request),
-        status_code=422,
     )
 
 
@@ -48,13 +38,15 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         except AppCommonException as e:
             # 业务异常 - 翻译后返回（透传 data 字段）
-            logger.error(f"{e.code} - {e.ext_msg}", exc_info=True)
-            return ResponseUtils.error(
+            response = ResponseUtils.error(
                 e.code,
                 locale,
                 data=e.data,
                 status_code=e.status_code,
             )
+            if response.status_code != 401:
+                logger.error(f"{e.code} - {e.ext_msg}", exc_info=True)
+            return response
         except ValidationError as e:
             logger.error(e, exc_info=True)
             return ResponseUtils.error(CommonCode.VALIDATION_ERROR, locale)
@@ -66,5 +58,4 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             return ResponseUtils.error(
                 CommonCode.INTERNAL_SERVER_ERROR,
                 locale,
-                status_code=500,
             )

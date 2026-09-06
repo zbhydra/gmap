@@ -112,7 +112,7 @@ export function getOnlineItemDownload(
 
 /** 判断下载错误是否为无文件 / 已过期（就地提示，不当作通用失败）。 */
 export function isOnlineDownloadUnavailable(error: Error): boolean {
-  return error instanceof HomepageApiError && error.status === 404
+  return error instanceof HomepageApiError && error.code === 404
 }
 
 /** 请求当前产品类别的渠道管理入口；后端按订阅实例选择渠道，URL 可为空。 */

@@ -421,7 +421,7 @@ def _google_redirect_error_response(
     )
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post("/register")
 async def register(data: RegisterRequest, request: Request) -> JSONResponse:
     """用户注册.
 

@@ -185,7 +185,6 @@ class GmapEngineConfig(BaseModel):
     )
     proxies: list[str] = Field(
         default_factory=list,
-        max_length=100,
         description="完整代理 URL 列表；保存 HTTP 配置时至少一条",
     )
     concurrency: int = Field(

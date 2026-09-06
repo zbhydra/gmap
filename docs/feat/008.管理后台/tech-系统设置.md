@@ -205,7 +205,7 @@ API Key 生成格式:
 | 字段 | 类型 | 必传 | 说明 |
 | --- | --- | --- | --- |
 | `provider` | enum | 是 | `http` / `gosom`，新任务使用的引擎 |
-| `proxies` | `string[]` | 是 | 完整代理 URL，0–100 条；HTTP 保存时至少 1 条 |
+| `proxies` | `string[]` | 是 | 完整代理 URL，不设条数上限，支持万条列表；HTTP 保存时至少 1 条 |
 | `concurrency` | `int` | 是 | 每个 business 进程的 Google 出站并发预算，至少 1 |
 
 | 方法 | 路径 | 鉴权 | 说明 |

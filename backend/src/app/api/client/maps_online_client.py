@@ -51,7 +51,6 @@ async def create_task(
         raise AppCommonException(
             CommonCode.VALIDATION_ERROR,
             ext_msg=f"maps_online.create_task: 关键词数量超限 user_id={current_user.user_id} limit={limit}",
-            status_code=422,
         )
     usage = await online_usage_service.get_usage(
         usage_identity(current_user.user_id, None), user_id=current_user.user_id

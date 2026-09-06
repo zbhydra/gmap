@@ -114,7 +114,6 @@ async def save_object_storage_config(
             raise AppCommonException(
                 CommonCode.VALIDATION_ERROR,
                 ext_msg="save_object_storage_config: 已有配置 ID 的存储定位不可变更",
-                status_code=422,
             )
     config = await object_storage_config_service.save_config(req)
     return ResponseUtils.ok(config.model_dump())

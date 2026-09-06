@@ -49,11 +49,14 @@ async def test_real_save_gmap_engine_persists_and_reads_config(
     real_admin_token_for_system_settings: str,
     test_run_id: str,
 ) -> None:
-    """认证管理员保存配置后，GET 与 system_data 均返回新值。"""
+    """认证管理员保存万条代理后，GET 与 system_data 均完整返回新值。"""
     headers = {"Authorization": f"Bearer {real_admin_token_for_system_settings}"}
     payload = {
         "provider": "http",
-        "proxies": [f"http://user-{test_run_id}:password@proxy.example:8080"],
+        "proxies": [
+            f"http://user-{test_run_id}:password@proxy-{index}.example:8080"
+            for index in range(10_001)
+        ],
         "concurrency": 7,
     }
 
@@ -169,7 +172,7 @@ async def test_real_object_storage_multiple_locations_switch_and_preserve_ids(
         response = await real_async_client.post(
             _OBJECT_STORAGE_ENDPOINT, json=invalid, headers=headers
         )
-        assert response.status_code == 422
+        assert response.status_code == 200
         assert response.json()["code"] == CommonCode.VALIDATION_ERROR
         assert "hidden-secret" not in response.text
     assert await _read_stored_config(OBJECT_STORAGE_DATA_KEY) == expected

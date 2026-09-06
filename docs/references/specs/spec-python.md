@@ -110,7 +110,7 @@ raise AppCommonException(
 ## 7. 日志
 
 - 用 `from app.utils.logger import logger`（单例，名 `server`），不要自己 `logging.getLogger(...)`。
-- catch 并处理或终止异常传播时打印 `logger.error("xxx failed: ...", exc_info=True)`；继续上抛且上层统一记录时不重复打印。
+- catch 并处理或终止异常传播时打印 `logger.error("xxx failed: ...", exc_info=True)`；继续上抛且上层统一记录时不重复打印。HTTP 处理边界最终 4xx 的日志例外按 [[spec-code]] §2 执行。
 - 级别走 `settings.logging.level`；`debug=True` 只影响 SQLAlchemy `echo`，与日志级别解耦。
 
 ## 8. API 层
@@ -119,7 +119,7 @@ raise AppCommonException(
 - router 双层 prefix：`main.py` 里 `include_router(xxx_router, prefix="/api/client|admin|internal")`，router 文件内再带业务 `prefix="/xxx"`。
 - 鉴权/上下文：`Security(HTTPBearer)` + `Depends(get_current_user)`（client）/ `Depends(get_admin_user)`（admin）。**session 不走 Depends**——在 service 内自取（见 spec-mysql）。
 - **参数校验与处理在 api 层完成**：pydantic v2 schema 校验 + 参数清洗，service 层不做参数校验。schema 放 `app/schemas/`（admin 可就近放 api 目录，保持一致性即可）。
-- 统一响应：`ResponseUtils.ok(data)` / `ResponseUtils.error(...)`，结构固定 `{code, data, msg}`，成功 `code=10000`。HTTP 状态由错误码值在 400–599 区间透传，否则 200。
+- 统一响应：`ResponseUtils.ok(data)` / `ResponseUtils.error(...)`，结构固定 `{code, data, msg}`，成功 `code=10000`。认证失效使用 HTTP 401；其他业务错误、参数校验失败和服务端异常均返回 HTTP 200，通过 `code`、`msg` 表达错误，不按业务码推断其他 HTTP 状态。
 
 ## 9. Service 层
 

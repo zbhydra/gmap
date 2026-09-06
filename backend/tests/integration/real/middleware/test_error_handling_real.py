@@ -36,7 +36,7 @@ async def test_real_request_validation_failure_uses_common_response_envelope(
 ) -> None:
     """Pydantic 请求校验失败返回统一信封，且日志不泄露敏感输入。"""
     secret = "SECRET_VALIDATION_INPUT_" * 6
-    caplog.set_level(logging.ERROR, logger="server")
+    caplog.set_level(logging.INFO, logger="server")
     response = await real_async_client.post(
         "/api/client/auth/register",
         json={
@@ -45,14 +45,17 @@ async def test_real_request_validation_failure_uses_common_response_envelope(
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 200
     assert response.json() == {
         "code": CommonCode.VALIDATION_ERROR,
         "data": {},
         "msg": "Request parameters are incomplete or invalid",
     }
-    assert "('body', 'password')" in caplog.text
-    assert "string_too_long" in caplog.text
+    records = [record for record in caplog.records if record.name == "server"]
+    assert len(records) == 1
+    assert records[0].levelno == logging.INFO
+    assert records[0].exc_info is None
+    assert 'POST /api/client/auth/register HTTP/1.1" 200' in records[0].getMessage()
     assert secret not in caplog.text
 
 
