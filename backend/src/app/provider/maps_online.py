@@ -6,6 +6,7 @@ import re
 from collections.abc import Sequence
 from io import StringIO
 from pathlib import Path
+from time import perf_counter
 from uuid import uuid4
 from zipfile import ZIP_DEFLATED, ZipFile
 
@@ -15,6 +16,7 @@ from app.provider.gmap.types import GmapConfigurationError, GmapRequestError
 from app.provider.maps_enrich import maps_enrich_provider
 from app.schemas.admin_schema import GmapEngineConfig, GosomApiItem, ObjectStorageItem
 from app.schemas.maps_enrich_schema import MapsEnrichBusiness
+from app.utils.logger import logger
 from app.utils.object_storage import (
     build_object_key,
     download_file,
@@ -123,6 +125,14 @@ class MapsOnlineProvider:
         include_contacts: bool,
     ) -> tuple[int, str, str]:
         """返回实际记录数、已写入对象 key 和内部 warning；异常由任务层收口。"""
+        stage_started = perf_counter()
+        logger.info(
+            "maps_online.execute: task=%s item=%s stage=start keyword=%r include_contacts=%s",
+            task_no,
+            item_id,
+            keyword,
+            include_contacts,
+        )
         warnings: list[str] = []
         if self.engine.provider == "http":
             await gmap_http_provider.initialize(self.engine)
@@ -146,7 +156,22 @@ class MapsOnlineProvider:
                     entries = snapshot.entries
                     break
 
+        logger.info(
+            "maps_online.execute: task=%s item=%s stage=maps duration_ms=%.2f records=%s",
+            task_no,
+            item_id,
+            (perf_counter() - stage_started) * 1000,
+            len(entries),
+        )
+        stage_started = perf_counter()
         rows = [serialize_entry(entry) for entry in entries]
+        logger.info(
+            "maps_online.execute: task=%s item=%s stage=serialize duration_ms=%.2f",
+            task_no,
+            item_id,
+            (perf_counter() - stage_started) * 1000,
+        )
+        stage_started = perf_counter()
         if include_contacts:
             enriched = await maps_enrich_provider.enrich(
                 [
@@ -171,6 +196,14 @@ class MapsOnlineProvider:
                         platform.lower(), ""
                     )
 
+        logger.info(
+            "maps_online.execute: task=%s item=%s stage=contacts duration_ms=%.2f enabled=%s",
+            task_no,
+            item_id,
+            (perf_counter() - stage_started) * 1000,
+            include_contacts,
+        )
+        stage_started = perf_counter()
         output = StringIO(newline="")
         writer = csv.DictWriter(output, fieldnames=CSV_HEADERS, lineterminator="\r\n")
         writer.writeheader()
@@ -179,5 +212,20 @@ class MapsOnlineProvider:
         key = build_object_key(
             "online", created_at, f"{task_no}/{item_id}/{uuid4().hex}.csv"
         )
-        await put_object(self.storage, key, output.getvalue().encode("utf-8-sig"))
+        body = output.getvalue().encode("utf-8-sig")
+        logger.info(
+            "maps_online.execute: task=%s item=%s stage=csv duration_ms=%.2f bytes=%s",
+            task_no,
+            item_id,
+            (perf_counter() - stage_started) * 1000,
+            len(body),
+        )
+        stage_started = perf_counter()
+        await put_object(self.storage, key, body)
+        logger.info(
+            "maps_online.execute: task=%s item=%s stage=upload duration_ms=%.2f",
+            task_no,
+            item_id,
+            (perf_counter() - stage_started) * 1000,
+        )
         return len(entries), key, "; ".join(warnings)

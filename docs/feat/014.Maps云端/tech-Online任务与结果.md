@@ -145,6 +145,8 @@ Online Provider 接收 service 按 `storage_id` 取得的配置。历史任务�
 
 ### 7.1 执行
 
+阶段耗时直接写入现有应用日志：`maps_online.*` 按任务编号与 item ID 记录创建、准备、采集、补全、CSV、上传、报告及计量；`gmap_http.search` 按关键词记录 NID、常规分页、浏览器补列与 L2。`duration_ms` 使用单调时钟计算；采集总耗时包含 Google 子阶段，不重复累加。用户端等待与文件传输耗时须从客户端计时，不能用后台完成时间代替。
+
 - `maps_online_task_service` 读取配置、初始化 Online Provider，并持有本进程创建的后台 task（item 执行与启动恢复时的任务完成操作）；task 结束后从集合移除，business 关闭时取消剩余 task。
 - 每个 item task 调用 Online Provider，并把返回结果或异常转换为一次 `report_item`。
 - HTTP item 调用一次 `gmap_http_provider.search_places`。Google 出站并发使用 Provider 已有的进程级限制。

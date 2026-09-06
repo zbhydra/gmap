@@ -4,6 +4,7 @@ import asyncio
 import traceback
 from collections.abc import Coroutine, Sequence
 from pathlib import Path
+from time import perf_counter
 from typing import Literal, cast
 from uuid import uuid4
 
@@ -46,6 +47,7 @@ class MapsOnlineTaskService:
         include_contacts: bool,
     ) -> tuple[MapsOnlineTaskModel, list[MapsOnlineTaskItemModel]]:
         """关键词由入口清洗和限量；事务提交后启动 items 并立即返回。"""
+        started = perf_counter()
         async with get_async_session() as db:
             task = MapsOnlineTaskModel(  # type: ignore[call-arg]
                 task_no=uuid4().hex,
@@ -67,6 +69,12 @@ class MapsOnlineTaskService:
             ]
             db.add_all(items)
             await db.commit()
+        logger.info(
+            "maps_online.create: task=%s stage=persist duration_ms=%.2f items=%s",
+            task.task_no,
+            (perf_counter() - started) * 1000,
+            len(items),
+        )
         for item in items:
             self._start(self._run_item(task, item))
         return task, items
@@ -100,6 +108,7 @@ class MapsOnlineTaskService:
         record_count = 0
         object_key = None
         deadline = task.created_at + TASK_TIMEOUT_SECONDS * 1000
+        started = perf_counter()
         try:
             if timestamp_now() >= deadline:
                 raise TimeoutError
@@ -112,6 +121,12 @@ class MapsOnlineTaskService:
             engine = engine.model_copy(update={"provider": task.provider})
             gosom = await gosom_api_service.pick() if task.provider == "gosom" else None
             provider = MapsOnlineProvider(engine, storage, gosom)
+            logger.info(
+                "maps_online.run: task=%s item=%s stage=prepare duration_ms=%.2f",
+                task.task_no,
+                item.id,
+                (perf_counter() - started) * 1000,
+            )
             remaining = (deadline - timestamp_now()) / 1000
             if remaining <= 0:
                 raise TimeoutError
@@ -140,6 +155,7 @@ class MapsOnlineTaskService:
         object_key: str | None,
         status_text: str,
     ) -> None:
+        started = perf_counter()
         for attempt in range(1, 4):
             try:
                 await self.report_item(
@@ -162,11 +178,19 @@ class MapsOnlineTaskService:
                     )
                     return
                 await asyncio.sleep(5)
+        logger.info(
+            "maps_online.report: task=%s item=%s stage=report duration_ms=%.2f status=%s",
+            task.task_no,
+            item_id,
+            (perf_counter() - started) * 1000,
+            status,
+        )
         # CAS 0 也要完成父任务，覆盖数据库已提交但响应丢失后的重放。
         await self.complete_task(task.id)
 
     async def complete_task(self, task_id: int) -> None:
         """最终计量与父终态独立重试，不受采集期限限制；关闭取消直接传播。"""
+        started = perf_counter()
         while True:
             try:
                 task = await self.task_info(task_id)
@@ -195,6 +219,12 @@ class MapsOnlineTaskService:
                         .values(completed_at=timestamp_now())
                     )
                     await db.commit()
+                logger.info(
+                    "maps_online.complete: task=%s stage=meter_complete duration_ms=%.2f records=%s",
+                    task.task_no,
+                    (perf_counter() - started) * 1000,
+                    task.record_count,
+                )
                 return
             except Exception as exc:
                 self._log_failure("complete_task", str(task_id), None, exc)

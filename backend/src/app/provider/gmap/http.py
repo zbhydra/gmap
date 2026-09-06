@@ -1,6 +1,7 @@
 """Gmap HTTP Search / Reviews 唯一异步 Provider 实例。"""
 
 import asyncio
+from time import perf_counter
 
 from app.provider.gmap.rpc.client import GmapRpcClient
 from app.provider.gmap.rpc.entry import merge_entries
@@ -87,9 +88,16 @@ class _GmapHttpProvider:
         """完成常规深分页、browser 覆盖与未覆盖 fid 的 L2 补列。"""
         if not 1 <= max_depth <= 10:
             raise ValueError("search_places max_depth must be between 1 and 10")
+        stage_started = perf_counter()
         nid = await self._client.mint_nid(hl)
         cookie = self._cookie(nid)
+        logger.info(
+            "gmap_http.search: keyword=%r stage=nid duration_ms=%.2f",
+            keyword,
+            (perf_counter() - stage_started) * 1000,
+        )
 
+        stage_started = perf_counter()
         regular_rows: list[dict[str, JsonValue]] = []
         seen: set[str] = set()
         for page in range(max_depth):
@@ -113,9 +121,16 @@ class _GmapHttpProvider:
             if page + 1 < max_depth:
                 await asyncio.sleep(0.8)
 
+        logger.info(
+            "gmap_http.search: keyword=%r stage=regular duration_ms=%.2f records=%s",
+            keyword,
+            (perf_counter() - stage_started) * 1000,
+            len(regular_rows),
+        )
         if not regular_rows:
             return GmapSearchResult(entries=[])
 
+        stage_started = perf_counter()
         partial = False
         warnings: list[str] = []
         browser_rows: list[dict[str, JsonValue]] = []
@@ -149,7 +164,14 @@ class _GmapHttpProvider:
             count += 60
             await asyncio.sleep(1)
         browser_rows.extend(browser_by_fid.values())
+        logger.info(
+            "gmap_http.search: keyword=%r stage=browser duration_ms=%.2f records=%s",
+            keyword,
+            (perf_counter() - stage_started) * 1000,
+            len(browser_rows),
+        )
 
+        stage_started = perf_counter()
         l2_rows: dict[str, dict[str, JsonValue]] = {}
         for fid in seen - browser_by_fid.keys():
             try:
@@ -170,6 +192,12 @@ class _GmapHttpProvider:
                     exc_info=True,
                 )
 
+        logger.info(
+            "gmap_http.search: keyword=%r stage=l2 duration_ms=%.2f records=%s",
+            keyword,
+            (perf_counter() - stage_started) * 1000,
+            len(l2_rows),
+        )
         return GmapSearchResult(
             entries=merge_entries(keyword, regular_rows, browser_rows, l2_rows),
             partial=partial,
