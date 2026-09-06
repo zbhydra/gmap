@@ -301,6 +301,8 @@ test("订单管理支持筛选、分页、详情和复制", async ({ page }) => 
 
   await page.getByPlaceholder("本地订单号").fill("ORD-ADMIN");
   await page.getByPlaceholder("用户 ID").fill("1001");
+  // 当前邮箱、渠道订单号、履约状态、商品 ID、支付方式默认折叠，先展开
+  await page.getByRole("button", { name: "更多筛选" }).click();
   await page.getByPlaceholder("用户当前邮箱").fill("buyer@example.com");
   await page.getByPlaceholder("支付渠道订单号").fill("CHANNEL");
   await page.getByTestId("order-status-select").click();

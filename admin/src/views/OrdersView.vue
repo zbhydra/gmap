@@ -15,8 +15,8 @@
         :show-feedback="false"
         class="orders-filter"
       >
-        <div class="orders-filter-grid">
-          <NFormItem :label="t('orders.orderNo')">
+        <div class="orders-filter-bar">
+          <NFormItem class="f-text" :label="t('orders.orderNo')">
             <NInput
               v-model:value="filters.orderNo"
               clearable
@@ -24,7 +24,7 @@
               @keydown.enter="handleSearch"
             />
           </NFormItem>
-          <NFormItem :label="t('orders.userId')">
+          <NFormItem class="f-id" :label="t('orders.userId')">
             <NInputNumber
               v-model:value="filters.userId"
               clearable
@@ -35,23 +35,7 @@
               @keydown.enter="handleSearch"
             />
           </NFormItem>
-          <NFormItem :label="t('orders.userEmail')">
-            <NInput
-              v-model:value="filters.userEmail"
-              clearable
-              :placeholder="t('orders.userEmailPlaceholder')"
-              @keydown.enter="handleSearch"
-            />
-          </NFormItem>
-          <NFormItem :label="t('orders.channelOrderNo')">
-            <NInput
-              v-model:value="filters.channelOrderNo"
-              clearable
-              :placeholder="t('orders.channelOrderNoPlaceholder')"
-              @keydown.enter="handleSearch"
-            />
-          </NFormItem>
-          <NFormItem :label="t('orders.orderStatus')">
+          <NFormItem class="f-select" :label="t('orders.orderStatus')">
             <NSelect
               v-model:value="filters.orderStatus"
               clearable
@@ -59,31 +43,7 @@
               data-testid="order-status-select"
             />
           </NFormItem>
-          <NFormItem :label="t('orders.callbackStatus')">
-            <NSelect
-              v-model:value="filters.callbackStatus"
-              clearable
-              :options="callbackStatusOptions"
-              data-testid="callback-status-select"
-            />
-          </NFormItem>
-          <NFormItem :label="t('orders.productId')">
-            <NInput
-              v-model:value="filters.productId"
-              clearable
-              :placeholder="t('orders.productIdPlaceholder')"
-              @keydown.enter="handleSearch"
-            />
-          </NFormItem>
-          <NFormItem :label="t('orders.paymentMethod')">
-            <NInput
-              v-model:value="filters.paymentMethod"
-              clearable
-              :placeholder="t('orders.paymentMethodPlaceholder')"
-              @keydown.enter="handleSearch"
-            />
-          </NFormItem>
-          <NFormItem :label="t('orders.createdRange')" class="span-2">
+          <NFormItem class="f-date" :label="t('orders.createdRange')">
             <NDatePicker
               v-model:value="filters.createdRange"
               type="datetimerange"
@@ -92,29 +52,80 @@
               style="width: 100%"
             />
           </NFormItem>
-        </div>
-        <div class="orders-filter-actions">
-          <NSpace :size="8">
-            <NButton type="primary" :loading="loading" @click="handleSearch">
-              <template #icon>
-                <NIcon>
-                  <SearchOutlined />
-                </NIcon>
-              </template>
-              {{ t("orders.search") }}
-            </NButton>
-            <NButton @click="handleReset">
-              {{ t("orders.reset") }}
-            </NButton>
-            <NButton :loading="loading" @click="loadOrders">
-              <template #icon>
-                <NIcon>
-                  <ReloadOutlined />
-                </NIcon>
-              </template>
-              {{ t("common.refresh") }}
-            </NButton>
-          </NSpace>
+          <template v-if="showMoreFilters">
+            <NFormItem class="f-text" :label="t('orders.userEmail')">
+              <NInput
+                v-model:value="filters.userEmail"
+                clearable
+                :placeholder="t('orders.userEmailPlaceholder')"
+                @keydown.enter="handleSearch"
+              />
+            </NFormItem>
+            <NFormItem class="f-text" :label="t('orders.channelOrderNo')">
+              <NInput
+                v-model:value="filters.channelOrderNo"
+                clearable
+                :placeholder="t('orders.channelOrderNoPlaceholder')"
+                @keydown.enter="handleSearch"
+              />
+            </NFormItem>
+            <NFormItem class="f-select" :label="t('orders.callbackStatus')">
+              <NSelect
+                v-model:value="filters.callbackStatus"
+                clearable
+                :options="callbackStatusOptions"
+                data-testid="callback-status-select"
+              />
+            </NFormItem>
+            <NFormItem class="f-text" :label="t('orders.productId')">
+              <NInput
+                v-model:value="filters.productId"
+                clearable
+                :placeholder="t('orders.productIdPlaceholder')"
+                @keydown.enter="handleSearch"
+              />
+            </NFormItem>
+            <NFormItem class="f-text" :label="t('orders.paymentMethod')">
+              <NInput
+                v-model:value="filters.paymentMethod"
+                clearable
+                :placeholder="t('orders.paymentMethodPlaceholder')"
+                @keydown.enter="handleSearch"
+              />
+            </NFormItem>
+          </template>
+          <div class="orders-filter-actions">
+            <NSpace :size="8">
+              <NButton type="primary" :loading="loading" @click="handleSearch">
+                <template #icon>
+                  <NIcon>
+                    <SearchOutlined />
+                  </NIcon>
+                </template>
+                {{ t("orders.search") }}
+              </NButton>
+              <NButton @click="handleReset">
+                {{ t("orders.reset") }}
+              </NButton>
+              <NButton :loading="loading" @click="loadOrders">
+                <template #icon>
+                  <NIcon>
+                    <ReloadOutlined />
+                  </NIcon>
+                </template>
+                {{ t("common.refresh") }}
+              </NButton>
+              <NButton quaternary @click="showMoreFilters = !showMoreFilters">
+                <template #icon>
+                  <NIcon>
+                    <DownOutlined v-if="!showMoreFilters" />
+                    <UpOutlined v-else />
+                  </NIcon>
+                </template>
+                {{ showMoreFilters ? t("orders.lessFilters") : t("orders.moreFilters") }}
+              </NButton>
+            </NSpace>
+          </div>
         </div>
       </NForm>
 
@@ -273,9 +284,11 @@ import {
 } from "naive-ui";
 import {
   CopyOutlined,
+  DownOutlined,
   EyeOutlined,
   ReloadOutlined,
   SearchOutlined,
+  UpOutlined,
 } from "@vicons/antd";
 import {
   getAdminOrderDetail,
@@ -335,6 +348,8 @@ const detailVisible = ref(false);
 const rows = ref<AdminOrder[]>([]);
 const detail = ref<AdminOrder | null>(null);
 const userInfoDialogRef = ref<UserInfoDialogExpose | null>(null);
+/** 是否展开更多筛选项；折叠只隐藏控件，隐藏字段的已填值仍参与查询。 */
+const showMoreFilters = ref(false);
 
 const filters = reactive<OrderFilters>({
   orderNo: "",
@@ -745,11 +760,11 @@ onMounted(() => {
   border-bottom: 1px solid var(--border);
 }
 
-.orders-filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+.orders-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px 16px;
-  align-items: start;
+  align-items: center;
 }
 
 .orders-filter :deep(.n-form-item-label) {
@@ -763,14 +778,25 @@ onMounted(() => {
   min-width: 0;
 }
 
-.span-2 {
-  grid-column: span 2;
+/* 宽度含左置 label；窄内容区收缩为整行宽，避免撑破卡片 */
+.f-text {
+  width: min(280px, 100%);
+}
+
+.f-id {
+  width: min(250px, 100%);
+}
+
+.f-select {
+  width: min(264px, 100%);
+}
+
+.f-date {
+  width: min(500px, 100%);
 }
 
 .orders-filter-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
+  margin-left: auto;
 }
 
 .copy-line {
@@ -813,21 +839,5 @@ onMounted(() => {
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-}
-
-@media (max-width: 960px) {
-  .orders-filter-grid {
-    grid-template-columns: repeat(2, minmax(280px, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .orders-filter-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .span-2 {
-    grid-column: span 1;
-  }
 }
 </style>

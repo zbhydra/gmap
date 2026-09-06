@@ -47,6 +47,8 @@
     "detailTitle": "Order Detail",
     "search": "Search",
     "reset": "Reset",
+    "moreFilters": "More filters",
+    "lessFilters": "Collapse",
     "view": "View",
     "copyValue": "Copy",
     "copyOrderNo": "Copy order no.",

@@ -15,8 +15,8 @@
         :show-feedback="false"
         class="users-filter"
       >
-        <div class="users-filter-grid">
-          <NFormItem :label="t('users.userId')">
+        <div class="users-filter-bar">
+          <NFormItem class="f-id" :label="t('users.userId')">
             <NInputNumber
               v-model:value="filters.userId"
               clearable
@@ -27,7 +27,7 @@
               @keydown.enter="handleSearch"
             />
           </NFormItem>
-          <NFormItem :label="t('users.userEmail')">
+          <NFormItem class="f-text" :label="t('users.userEmail')">
             <NInput
               v-model:value="filters.userEmail"
               clearable
@@ -35,14 +35,14 @@
               @keydown.enter="handleSearch"
             />
           </NFormItem>
-          <NFormItem :label="t('users.status')">
+          <NFormItem class="f-select" :label="t('users.status')">
             <NSelect
               v-model:value="filters.status"
               :options="statusOptions"
               data-testid="user-status-select"
             />
           </NFormItem>
-          <NFormItem :label="t('users.createdRange')" class="span-2">
+          <NFormItem class="f-date" :label="t('users.createdRange')">
             <NDatePicker
               v-model:value="filters.createdRange"
               type="datetimerange"
@@ -51,21 +51,21 @@
               style="width: 100%"
             />
           </NFormItem>
-        </div>
-        <div class="users-filter-actions">
-          <NSpace :size="8">
-            <NButton type="primary" :loading="loading" @click="handleSearch">
-              <template #icon>
-                <NIcon>
-                  <SearchOutlined />
-                </NIcon>
-              </template>
-              {{ t("users.search") }}
-            </NButton>
-            <NButton @click="handleReset">
-              {{ t("users.reset") }}
-            </NButton>
-          </NSpace>
+          <div class="users-filter-actions">
+            <NSpace :size="8">
+              <NButton type="primary" :loading="loading" @click="handleSearch">
+                <template #icon>
+                  <NIcon>
+                    <SearchOutlined />
+                  </NIcon>
+                </template>
+                {{ t("users.search") }}
+              </NButton>
+              <NButton @click="handleReset">
+                {{ t("users.reset") }}
+              </NButton>
+            </NSpace>
+          </div>
         </div>
       </NForm>
 
@@ -370,11 +370,11 @@ onMounted(() => {
   border-bottom: 1px solid var(--border);
 }
 
-.users-filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+.users-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px 16px;
-  align-items: start;
+  align-items: center;
 }
 
 .users-filter :deep(.n-form-item-label) {
@@ -388,29 +388,24 @@ onMounted(() => {
   min-width: 0;
 }
 
-.span-2 {
-  grid-column: span 2;
+/* 宽度含左置 label；窄内容区收缩为整行宽，避免撑破卡片 */
+.f-text {
+  width: min(280px, 100%);
+}
+
+.f-id {
+  width: min(250px, 100%);
+}
+
+.f-select {
+  width: min(264px, 100%);
+}
+
+.f-date {
+  width: min(500px, 100%);
 }
 
 .users-filter-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-
-@media (max-width: 960px) {
-  .users-filter-grid {
-    grid-template-columns: repeat(2, minmax(280px, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .users-filter-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .span-2 {
-    grid-column: span 1;
-  }
+  margin-left: auto;
 }
 </style>
