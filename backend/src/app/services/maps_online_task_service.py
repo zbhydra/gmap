@@ -43,6 +43,7 @@ class MapsOnlineTaskService:
         keywords: Sequence[str],
         provider: Literal["http", "gosom"],
         storage_id: str,
+        include_contacts: bool,
     ) -> tuple[MapsOnlineTaskModel, list[MapsOnlineTaskItemModel]]:
         """关键词由入口清洗和限量；事务提交后启动 items 并立即返回。"""
         async with get_async_session() as db:
@@ -52,6 +53,7 @@ class MapsOnlineTaskService:
                 app_name=settings.app.name,
                 provider=provider,
                 storage_id=storage_id,
+                include_contacts=include_contacts,
                 total_count=len(keywords),
             )
             db.add(task)
@@ -119,6 +121,7 @@ class MapsOnlineTaskService:
                     created_at=task.created_at,
                     task_no=task.task_no,
                     item_id=item.id,
+                    include_contacts=task.include_contacts,
                 )
             status = "success"
         except Exception as exc:

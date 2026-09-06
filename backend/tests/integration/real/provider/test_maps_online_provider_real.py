@@ -178,6 +178,7 @@ async def test_real_online_http_enrichment_csv_and_object_write(
             created_at=created_at,
             task_no=task_no,
             item_id=1,
+            include_contacts=True,
         )
         assert count == 20 and "L2 supplement failed" in warning
         assert key.startswith(f"online/20260904/{task_no}/1/")
@@ -205,7 +206,11 @@ async def test_real_online_http_enrichment_csv_and_object_write(
 
         _GoogleSession.scenario = "empty"
         count, empty_key, warning = await provider.execute(
-            "empty", created_at=created_at, task_no=task_no, item_id=2
+            "empty",
+            created_at=created_at,
+            task_no=task_no,
+            item_id=2,
+            include_contacts=True,
         )
         assert count == 0 and warning == ""
         assert list(
@@ -220,7 +225,11 @@ async def test_real_online_http_enrichment_csv_and_object_write(
         _GoogleSession.browser_calls = 0
         running = asyncio.create_task(
             provider.execute(
-                "cancel", created_at=created_at, task_no=task_no, item_id=3
+                "cancel",
+                created_at=created_at,
+                task_no=task_no,
+                item_id=3,
+                include_contacts=True,
             )
         )
         try:
@@ -236,12 +245,20 @@ async def test_real_online_http_enrichment_csv_and_object_write(
 
         block_site = False
         provider = MapsOnlineProvider(
-            GmapEngineConfig(provider="gosom", proxies=[], concurrency=2),
+            GmapEngineConfig(
+                provider="gosom", proxies=["http://proxy.test:8000"], concurrency=2
+            ),
             provider.storage,
             GosomApiItem(base_url="https://gosom.test", api_key="test", weight=1),
         )
         interrupted = asyncio.create_task(
-            provider.execute("gosom", created_at=created_at, task_no=task_no, item_id=4)
+            provider.execute(
+                "gosom",
+                created_at=created_at,
+                task_no=task_no,
+                item_id=4,
+                include_contacts=True,
+            )
         )
         try:
             await asyncio.wait_for(submitted.wait(), timeout=2)
@@ -250,7 +267,11 @@ async def test_real_online_http_enrichment_csv_and_object_write(
             await asyncio.gather(interrupted, return_exceptions=True)
         count, gosom_key, warning = await asyncio.wait_for(
             provider.execute(
-                "gosom", created_at=created_at, task_no=task_no, item_id=4
+                "gosom",
+                created_at=created_at,
+                task_no=task_no,
+                item_id=4,
+                include_contacts=True,
             ),
             timeout=15,
         )

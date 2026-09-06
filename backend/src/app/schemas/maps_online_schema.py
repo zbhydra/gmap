@@ -9,6 +9,7 @@ from app.models.maps_online_task_model import MapsOnlineTaskModel
 
 class MapsOnlineCreateRequest(BaseModel):
     keywords: list[str]
+    include_contacts: bool = True
 
     @field_validator("keywords")
     @classmethod

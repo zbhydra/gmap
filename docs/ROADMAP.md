@@ -34,10 +34,10 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 
 | # | 功能 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- |
-| B1 | Online Scraper(关键词批量任务,云端执行；合同见 `feat/014.Maps云端/tech-Online任务与结果.md`) | 官网 pricing tab=online | 🔍 | 🚧 (2026-09-05 后端任务与结果基建 ✅；Online 用户界面未实施，真实云验证待凭据) |
+| B1 | Online Scraper(关键词批量任务,云端执行；合同见 `feat/014.Maps云端/tech-Online任务与结果.md`) | 官网 pricing tab=online | 🔍 | 🚧 (2026-09-06 HTTP + R2 真实任务、计量及下载通过；可选联系方式与独立采集库验收及独立复审通过，Online 用户界面未实施；见 `feat/014.Maps云端/plans/003.可选联系方式与独立采集库.md`) |
 | B2 | 同步 Search / Reviews API；Photos 待实现 | 官方 Postman 文档(v2 三端点契约) | 🔍 | ⬜ |
 | B3 | MCP Server(Claude/Cursor/VSCode/Codex 接入) | 官网落地页 | 🔍 | ⬜ |
-| B4 | 抓取引擎(自研 RPC fetcher 为主、gosom 可选 + 代理池；无状态 Provider 合同见 `feat/014.Maps云端/tech-引擎Provider层.md`，执行计划见 `feat/014.Maps云端/plans/001.Provider采集基建.md`) | research 方案调研 §12.30–§13 | 🚧 | ✅ (2026-09-04，真实 Google/gosom 网络冒烟待凭据) |
+| B4 | 抓取引擎(自研 RPC fetcher 为主、gosom 可选 + 代理池；无状态 Provider 合同见 `feat/014.Maps云端/tech-引擎Provider层.md`，执行计划见 `feat/014.Maps云端/plans/001.Provider采集基建.md`) | research 方案调研 §12.30–§13 | 🚧 | ✅ (2026-09-06 Google HTTP 真实搜索及评论翻页通过；gosom 网络冒烟未执行) |
 | B5 | 云端 POC:HTTP 长周期封锁率 / 代理流量爬坡 + gosom Postgres 内网化(单机部署 + 1,500 词压测已入 research §12,正式 Gate 判定未做) | research 方案调研 §9/§12.34 | 🔍 | ⬜ |
 
 ### C · 商业化(扩展现有域)

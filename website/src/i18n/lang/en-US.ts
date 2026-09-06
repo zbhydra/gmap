@@ -622,7 +622,7 @@ export const enUS: SiteContent = {
           {
             title: 'Email and social enrichment',
             description:
-              'Every collected business gets its website checked for email addresses and social profiles automatically.'
+              'With a paid Online plan, business websites are checked for email addresses and social profiles by default. You can turn this off for each task.'
           },
           {
             title: 'CSV / JSON export',

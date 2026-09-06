@@ -30,7 +30,7 @@ export const pricingContent: PricingPageContent = {
       eyebrow: 'Online Scraper plans',
       title: 'Cloud extraction, priced by records',
       description:
-        'Run the MapsGrab engine on our infrastructure. A record is one business row collected — reviews, photos and enrichment attached to it are always included.',
+        'Run the MapsGrab engine on our infrastructure. A record is one business row collected. Paid plans include optional email and social media enrichment at no extra record cost.',
       cards: [
         {
           id: 'free',
@@ -41,9 +41,9 @@ export const pricingContent: PricingPageContent = {
           periodLabel: 'forever',
           quota: '1,000 records / month',
           features: [
-            'Full 36-column business extraction',
+            'Business extraction with 36-column CSV export',
             'Reviews (11 columns) and photo URLs',
-            'Email & social media enrichment',
+            'Email & social enrichment on paid plans',
             'Keyword and review-URL tasks',
             'CSV / JSON download'
           ],
@@ -63,7 +63,7 @@ export const pricingContent: PricingPageContent = {
             'Everything in Free',
             '20,000 records for 1 month',
             'One-time payment — no auto-renewal',
-            'Priority email & social enrichment',
+            'Email & social enrichment, on by default and optional',
             'CSV / JSON download'
           ],
           ctaLabel: 'Get Lite',
@@ -364,7 +364,7 @@ export const pricingContent: PricingPageContent = {
       {
         question: 'Do I need a paid plan to try MapsGrab?',
         answer:
-          'No. Every product has a free tier — the Online Scraper and the extension include 1,000 records per month and the API includes 20 requests per month, with the full feature set and no time limit. Paid plans simply raise the ceiling.'
+          'No. Every product has a free tier with no time limit: the Online Scraper and the extension include 1,000 records per month, and the API includes 20 requests per month. Online Free does not include email or social media enrichment. Paid Online plans include it by default, and you can turn it off for each task.'
       },
       {
         question: 'How does the quota apply to my account?',

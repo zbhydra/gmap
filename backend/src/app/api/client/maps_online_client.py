@@ -43,7 +43,7 @@ async def create_task(
     request: MapsOnlineCreateRequest,
     current_user: UserContext = Depends(get_current_user),
 ) -> JSONResponse:
-    _, product = await subscription_service.get_user_subscription_config(
+    subscription, product = await subscription_service.get_user_subscription_config(
         current_user.user_id, MAPS_ONLINE_PRODUCT_KIND
     )
     limit = KEYWORD_LIMITS[product.product_id]
@@ -61,6 +61,12 @@ async def create_task(
             ext_msg=f"maps_online.create_task: 当前额度已耗尽 user_id={current_user.user_id}",
         )
     engine = await maps_engine_service.get_config()
+    include_contacts = request.include_contacts and subscription.expires_at is not None
+    if include_contacts and not engine.proxies:
+        raise AppCommonException(
+            CommonCode.INTERNAL_SERVER_ERROR,
+            ext_msg=f"maps_online.create_task: 官网补全代理池为空 user_id={current_user.user_id}",
+        )
     storage = await object_storage_config_service.get_active()
     if storage is None:
         raise AppCommonException(
@@ -72,6 +78,7 @@ async def create_task(
         keywords=request.keywords,
         provider=engine.provider,
         storage_id=storage.id,
+        include_contacts=include_contacts,
     )
     return ResponseUtils.ok(MapsOnlineTaskSummary.from_task(task).model_dump())
 

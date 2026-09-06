@@ -1,6 +1,6 @@
 """Online 父任务及首次报告累计进度。"""
 
-from sqlalchemy import BigInteger, Index, Integer, String, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseDBModel
@@ -40,6 +40,11 @@ class MapsOnlineTaskModel(BaseDBModel):
         String(36),
         nullable=False,
         comment="创建时启用的对象存储配置 ID，任务存续期间不变",
+    )
+    include_contacts: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        comment="创建入口按 Online 权益确定的有效联系方式采集选项",
     )
     total_count: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="item 总数"

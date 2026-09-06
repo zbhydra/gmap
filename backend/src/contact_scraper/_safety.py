@@ -1,19 +1,9 @@
-"""外抓 URL 的 SSRF 防护工具（013 A4，U8 enrich 端点安全红线）。
-
-enrich 服务端要代替插件抓取商家官网。商家 website 是用户可控输入，若不校验，
-攻击者可借服务端带宽探测内网（私网/环回/云元数据 169.254.169.254 等）。
-本模块提供唯一入口 ``assert_safe_http_url``：scheme / 凭证 / 解析结果 IP 三重
-校验，任一解析 IP 不为公网地址即拒绝（全拒绝而非部分放行，防 DNS 多记录绕过）。
-
-DNS 重绑定（校验后 TTL 内换记录）不做连接级 pin，属既有架构的已知边界；
-防护目标是「插件直接给内网 URL」与「30x 跳内网」两类显式绕过。
-"""
+"""逐跳校验 URL 与全部 DNS 地址；不实施连接级地址固定。"""
 
 import asyncio
 import ipaddress
 from urllib.parse import urlsplit
 
-from app.utils.logger import logger
 
 # 允许的 scheme：只抓网页，file/ftp/gopher 等一律拒绝。
 _ALLOWED_SCHEMES = ("http", "https")
@@ -69,12 +59,12 @@ async def assert_safe_http_url(url: str) -> str:
 
     parts = urlsplit(url)
     if parts.scheme.lower() not in _ALLOWED_SCHEMES:
-        raise SSRFBlockedError(f"schema 拒绝: scheme={parts.scheme!r}, url={url!r}")
-    if parts.username or parts.password:
-        raise SSRFBlockedError(f"URL 携带凭证被拒绝: url={url!r}")
+        raise SSRFBlockedError("URL 协议被拒绝")
+    if parts.username is not None or parts.password is not None:
+        raise SSRFBlockedError("URL 携带凭证被拒绝")
     hostname = parts.hostname
     if not hostname:
-        raise SSRFBlockedError(f"URL 缺少主机名: url={url!r}")
+        raise SSRFBlockedError("URL 缺少主机名")
 
     port = parts.port or (443 if parts.scheme.lower() == "https" else 80)
     # 字面量 IP 不经 DNS 直接判定；域名解析后全量判定（多记录全拒绝）。
@@ -85,8 +75,9 @@ async def assert_safe_http_url(url: str) -> str:
     else:
         ips = [literal]
 
+    if not ips:
+        raise SSRFBlockedError("DNS 未返回地址")
     for ip in ips:
         if not is_allowed_ip(ip):
-            logger.warning(f"ssrf_guard: 内网地址被拒绝: host={hostname!r}, ip={ip!r}")
-            raise SSRFBlockedError(f"非公网地址被拒绝: host={hostname!r}, ip={ip!r}")
+            raise SSRFBlockedError("非公网地址被拒绝")
     return url

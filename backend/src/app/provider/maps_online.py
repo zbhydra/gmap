@@ -14,7 +14,7 @@ from app.provider.gmap.rpc.entry import serialize_entry
 from app.provider.gmap.types import GmapConfigurationError, GmapRequestError
 from app.provider.maps_enrich import maps_enrich_provider
 from app.schemas.admin_schema import GmapEngineConfig, GosomApiItem, ObjectStorageItem
-from app.schemas.maps_enrich_schema import MAX_ENRICH_BUSINESSES, MapsEnrichBusiness
+from app.schemas.maps_enrich_schema import MapsEnrichBusiness
 from app.utils.object_storage import (
     build_object_key,
     download_file,
@@ -114,7 +114,13 @@ class MapsOnlineProvider:
         return archive
 
     async def execute(
-        self, keyword: str, *, created_at: int, task_no: str, item_id: int
+        self,
+        keyword: str,
+        *,
+        created_at: int,
+        task_no: str,
+        item_id: int,
+        include_contacts: bool,
     ) -> tuple[int, str, str]:
         """返回实际记录数、已写入对象 key 和内部 warning；异常由任务层收口。"""
         warnings: list[str] = []
@@ -140,23 +146,18 @@ class MapsOnlineProvider:
                     entries = snapshot.entries
                     break
 
-        output = StringIO(newline="")
-        writer = csv.DictWriter(output, fieldnames=CSV_HEADERS, lineterminator="\r\n")
-        writer.writeheader()
-        for offset in range(0, len(entries), MAX_ENRICH_BUSINESSES):
-            batch = entries[offset : offset + MAX_ENRICH_BUSINESSES]
+        rows = [serialize_entry(entry) for entry in entries]
+        if include_contacts:
             enriched = await maps_enrich_provider.enrich(
                 [
                     MapsEnrichBusiness(
                         domain=entry.domain or "", website=entry.website or ""
                     )
-                    for entry in batch
-                ]
+                    for entry in entries
+                ],
+                proxies=self.engine.proxies,
             )
-            if enriched["partial"]:
-                warnings.append(f"官网补全批次超时 offset={offset}")
-            for entry, contacts in zip(batch, enriched["results"], strict=True):
-                row = serialize_entry(entry)
+            for row, contacts in zip(rows, enriched["results"], strict=True):
                 row["Emails"] = ", ".join(contacts["emails"])
                 for platform in (
                     "Facebook",
@@ -169,7 +170,11 @@ class MapsOnlineProvider:
                     row[f"{platform} Links"] = contacts["medias"].get(
                         platform.lower(), ""
                     )
-                writer.writerow(row)
+
+        output = StringIO(newline="")
+        writer = csv.DictWriter(output, fieldnames=CSV_HEADERS, lineterminator="\r\n")
+        writer.writeheader()
+        writer.writerows(rows)
 
         key = build_object_key(
             "online", created_at, f"{task_no}/{item_id}/{uuid4().hex}.csv"

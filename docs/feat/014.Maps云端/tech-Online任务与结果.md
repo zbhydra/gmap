@@ -33,6 +33,8 @@ MySQL 是任务事实源。创建事务提交后直接启动 item 协程并返�
 
 改动范围与验收记录见 `@plans/002.Online任务与结果基建.md`。
 
+可选联系方式补全与独立采集库见 [官网联系方式采集](tech-官网联系方式采集.md)；该项方案与实施状态见 [003 实施清单](plans/003.可选联系方式与独立采集库.md)。
+
 依赖方向固定为 `service -> provider -> utils`。service 读取运行配置并在初始化 Online Provider 时传入；Provider 不读取或引用 service。R2 通过官方 S3 兼容接口，AliOSS 使用官方 Python SDK，同步 I/O 由对象存储工具放入 `asyncio.to_thread`。
 
 ## 4. 数据模型
@@ -47,6 +49,7 @@ MySQL 是任务事实源。创建事务提交后直接启动 item 协程并返�
 | `app_name` | `VARCHAR(100)` | NOT NULL | 创建任务的 business 标识 |
 | `provider` | `VARCHAR(16)` | NOT NULL | `http / gosom` 创建时快照 |
 | `storage_id` | `VARCHAR(36)` | NOT NULL | 创建时启用的对象存储配置 ID，任务存续期间不变 |
+| `include_contacts` | `BOOLEAN` | NOT NULL | 创建入口按 Online 权益与请求选项确定的有效值；执行及恢复直接使用 |
 | `total_count` | `INT` | NOT NULL | item 总数 |
 | `processed_count` | `INT` | NOT NULL, DEFAULT 0 | 已收口 item 数 |
 | `record_count` | `INT` | NOT NULL, DEFAULT 0 | 已保存结果记录总数 |
@@ -93,10 +96,13 @@ item 模型模块用一个抽象模型定义字段，一次生成 20 个物理�
 | 字段 | 类型 | 必传 | 说明 |
 | --- | --- | --- | --- |
 | `keywords` | `string[]` | 是 | 逐项 trim、删除空项并按首次出现顺序去重 |
+| `include_contacts` | `boolean` | 否 | 省略按开启请求处理；入口按有效 Online 订阅约束，免费用户的有效值始终为 false |
 
 关键词上限由 `constants/maps_online.py` 按当前 `product_id` 固定映射：`free=2 / online_lite=5 / online_basic=10 / online_growth=20 / online_pro=50`。入口读取当前用量；已经 exhausted 时拒绝新任务，本次任务不预留额度。
 
-Online 固定使用 `max_depth=3`、`hl/lang=en`、无 `gl/ll`，并执行 Email 与社媒补全；深度取值依据调研 §12.3 的批量甜点位。入口读取 `gmap_engine` 与 `object_storage`，把采集 Provider 和当前启用项的 `storage_id` 写入父任务；没有启用的完整对象存储配置时拒绝创建。
+Online 固定使用 `max_depth=3`、`hl/lang=en`、无 `gl/ll`；深度取值依据调研 §12.3 的批量甜点位。入口读取 `gmap_engine` 与 `object_storage`，把采集 Provider 和当前启用项的 `storage_id` 写入父任务；没有启用的完整对象存储配置时拒绝创建。
+
+创建入口复用已读取的 `get_user_subscription_config(user_id, MAPS_ONLINE_PRODUCT_KIND)` 判定有效 Online 权益，将请求与权益合并为明确的 `include_contacts` 布尔值并存入父任务；免费用户即使显式传 true 也保存 false。开启补全时要求配置非空代理池，gosom 任务同样适用；缺少代理时在创建前按配置错误拒绝，关闭补全不增加此项前提。内部执行、重启恢复不重新判断用户权益，也不允许中途修改任务选项。
 
 service 提交创建事务后，用当前引擎与对象存储配置初始化 Online Provider，并立即按 item 启动协程。响应返回 `task_no / status / total_count / processed_count / record_count / created_at`。
 
@@ -106,7 +112,7 @@ service 提交创建事务后，用当前引擎与对象存储配置初始化 On
 
 | 方法与路径 | 入参 | 成功 `data` |
 | --- | --- | --- |
-| `POST /api/client/maps-online/tasks` | `{keywords: string[]}` | 任务摘要 |
+| `POST /api/client/maps-online/tasks` | `{keywords: string[], include_contacts?: boolean}` | 任务摘要 |
 | `GET /api/client/maps-online/tasks` | `offset: int = 0 / limit: int = 20` | `{tasks: 任务摘要[], total, offset, limit}`，按 `id DESC` |
 | `GET /api/client/maps-online/tasks/{task_no}` | path `task_no` | `{task: 任务摘要, items: item 摘要[]}` |
 | `GET /api/client/maps-online/tasks/{task_no}/items/{item_id}/download` | path `task_no / item_id` | `{url, filename}` |
@@ -143,7 +149,7 @@ Online Provider 接收 service 按 `storage_id` 取得的配置。历史任务�
 - 每个 item task 调用 Online Provider，并把返回结果或异常转换为一次 `report_item`。
 - HTTP item 调用一次 `gmap_http_provider.search_places`。Google 出站并发使用 Provider 已有的进程级限制。
 - gosom 每个 item 提交一次单关键词 job，并在同一协程中每 5 秒按返回的 handle 查询；pending/running 继续等待，completed 进入 CSV 流程，failed 抛出 Provider 错误。
-- Online Provider 按 50 条分批调用 `maps_enrich_provider.enrich`，把位置对齐的 Emails 与 6 个社媒链接合并进 CSV；enrichment 继续使用现有 fail-open Redis 缓存。
+- Online Provider 在 Maps 结果就绪后按父任务的 `include_contacts` 决定是否调用官网补全，再合并 CSV、上传对象、报告 item 完成。关闭时直接序列化 Maps 结果，Emails 与 6 个社媒列留空，不访问补全缓存。补全编排、代理与采集库合同见 [官网联系方式采集](tech-官网联系方式采集.md)。
 - 所有 item 共用父任务 `created_at + 60 分钟` 的采集截止时间；每个 item 协程按剩余时间限制 Online Provider 调用，覆盖 HTTP 并发等待、取数、gosom 轮询、enrichment 和对象写入。启动恢复沿用原截止时间。
 - 达到期限时取消本地未完成采集，按 0 条错误收口；已经完成的 item 及其 CSV、记录数保持不变。期限只覆盖 Provider 调用，`report_item` 与最终计量在其外执行。
 - HTTP partial 保存已有结果，并把 warning 写入内部状态文本。

@@ -58,6 +58,7 @@ async def test_real_online_task_reports_once_and_recovers_pending_items(
         keywords=keywords,
         provider="http",
         storage_id=state.test_run_id,
+        include_contacts=False,
     )
     state.task_ids.append(task.id)
     assert len(service._tasks) == 4
@@ -86,6 +87,7 @@ async def test_real_online_task_reports_once_and_recovers_pending_items(
         keywords=[f"{state.test_run_id}-other"],
         provider="gosom",
         storage_id=state.test_run_id,
+        include_contacts=False,
     )
     state.task_ids.append(other_task.id)
     await service.close()
@@ -344,6 +346,7 @@ async def test_real_online_task_reports_once_and_recovers_pending_items(
             keywords=[f"{state.test_run_id}-empty", f"{state.test_run_id}-timeout"],
             provider="http",
             storage_id=storage_id,
+            include_contacts=False,
         )
         state.task_ids.append(live.id)
         assert live.processed_count == 0 and len(service._tasks) == 2
