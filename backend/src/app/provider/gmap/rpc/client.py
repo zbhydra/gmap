@@ -45,7 +45,10 @@ class GmapRpcClient:
                 )
             self._proxies = tuple(proxies)
             self._semaphore = asyncio.Semaphore(concurrency)
-            self._session = AsyncSession(impersonate="chrome")
+            # 连接池沿用配置预算；Cookie 由每次 Search 显式持有，禁止跨调用累积。
+            self._session = AsyncSession(
+                impersonate="chrome", max_clients=concurrency, discard_cookies=True
+            )
 
     def _choose_proxy(self, failed: str | None) -> str:
         candidates = [proxy for proxy in self._proxies if proxy != failed]

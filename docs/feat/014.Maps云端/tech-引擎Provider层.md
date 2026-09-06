@@ -156,6 +156,7 @@ Provider 技术错误统一继承 `GmapProviderError`；不在本层映射用户
 - `http.py` 只导出模块级唯一实例 `gmap_http_provider`，调用方不得自行实例化。service 读取 `gmap_engine` 后调用 `initialize`；该实例持有进程级 semaphore，首次初始化由同一把进程内 `asyncio.Lock` 串行完成。
 - NID、常规 pb、浏览器级 pb、L2 和 Reviews 的每个 Google 请求都先取得同一个进程级 `asyncio.Semaphore`。
 - `gmap_engine.concurrency` 表示**每个 business 进程**的 Google 出站并发数。多实例多进程总上限为 `实例数 × 每实例进程数 × concurrency`；本期不增加集群级分布式并发控制。
+- 底层 HTTP 连接池与信号量使用同一并发预算，不叠加库默认连接数上限。连接可以复用，Cookie 不跨 Search 累积；NID 及后续请求的 Cookie 由本次 Search 显式传递。
 - 每个 Google 请求从代理列表等概率随机选择一条。重试时存在其他代理则排除本次失败代理；只有一条时继续使用同一条。
 - 请求 timeout 和最多 3 次尝试使用脱敏入库的生产脚本参数，不从压测摘要反推。
 - 日志和异常只能记录脱敏后的 scheme、host、port，不得包含用户名、密码、完整代理 URL、NID 或上游响应正文。
