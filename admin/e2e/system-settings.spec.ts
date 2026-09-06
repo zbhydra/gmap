@@ -297,6 +297,73 @@ test("API Key 轮换使用确认弹窗，完整 Key 只在一次性弹窗展示"
   await expect(page.getByText("tdm_test_ful")).toBeVisible();
 });
 
+test("代理双端校验提示与批量连通性结果", async ({ page }, testInfo) => {
+  await loginAsAdmin(page);
+  await mockSystemSettingsApi(page);
+  let saveCalls = 0;
+  let checkCalls = 0;
+  const backendMessage = "proxies 字段第 2 项格式错误：请使用完整代理 URL";
+  await page.route("**/api/admin/system-settings/gmap-engine", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill(successResponse({ provider: "http", proxies: [], concurrency: 2048 }));
+    } else {
+      saveCalls += 1;
+      expect(route.request().headers()["accept-language"]).toBe("zh-CN");
+      await route.fulfill({ json: { code: 999, data: {}, msg: backendMessage } });
+    }
+  });
+  await page.route("**/api/admin/system-settings/gmap-engine/check-proxies", async (route) => {
+    checkCalls += 1;
+    const body: { proxies: string[] } = route.request().postDataJSON();
+    expect(body.proxies.length).toBeLessThanOrEqual(20);
+    await route.fulfill({
+      json: {
+        code: 10000,
+        data: {
+          items: body.proxies.map((proxy, index) => ({
+            proxy: proxy.replace("user:secret@", ""),
+            status: index % 2 === 0 ? "ok" : "timeout",
+            status_code: index % 2 === 0 ? 204 : null,
+            duration_ms: 25,
+          })),
+        },
+        msg: "",
+      },
+    });
+  });
+  await page.goto("/system-settings");
+  await page.locator(".n-tabs-nav").getByText("Gmap 引擎", { exact: true }).click();
+  const input = page.locator(".gmap-engine-proxies textarea");
+  await input.fill("127.0.0.1:8080:user:secret");
+  await page.getByRole("button", { name: "保存", exact: true }).click();
+  await expect(page.getByText(/proxies 字段第 1 项格式错误/)).toBeVisible();
+  expect(saveCalls).toBe(0);
+  await input.fill("http://user:secret@127.0.0.1:80");
+  await page.getByRole("button", { name: "保存", exact: true }).click();
+  await expect(page.getByText(backendMessage, { exact: true })).toBeVisible();
+  expect(saveCalls).toBe(1);
+  await page.getByRole("button", { name: "代理校验器", exact: true }).click();
+  const modal = page.locator(".n-modal").filter({ hasText: "Google 连通性" });
+  await modal.getByRole("textbox").fill("127.0.0.1:8080:user:secret");
+  await modal.getByRole("button", { name: "开始校验" }).click();
+  expect(checkCalls).toBe(0);
+  await modal
+    .getByRole("textbox")
+    .fill(
+      Array.from({ length: 21 }, (_, i) => `http://user:secret@proxy-${i}.example:8080`).join("\n"),
+    );
+  await modal.getByRole("button", { name: "开始校验" }).click();
+  await expect(modal.getByText("已校验 21 / 21，可用 11")).toBeVisible();
+  expect(checkCalls).toBe(2);
+  await expect(modal.locator("tbody tr")).toHaveCount(21);
+  await expect(modal.locator("tbody")).not.toContainText("secret");
+  await expect(page.locator(".n-message")).toHaveCount(0, { timeout: 10000 });
+  await page.screenshot({ path: testInfo.outputPath("proxy-checker-desktop.png") });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(modal.getByRole("button", { name: "开始校验" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("proxy-checker-mobile.png") });
+});
+
 test("刷新配置缓存命中 POST 并展示成功结果", async ({ page }) => {
   await loginAsAdmin(page);
   const api = await mockSystemSettingsApi(page);

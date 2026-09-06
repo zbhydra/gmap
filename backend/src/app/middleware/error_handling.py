@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 
+from app.i18n import translator
 from app.i18n.common_code import CommonCode
 from app.utils.common import get_locale
 from app.utils.response import ResponseUtils
@@ -18,10 +19,19 @@ async def handle_request_validation_error(request: Request, exc: Exception) -> R
     """将 FastAPI 请求校验错误转换为项目统一响应。"""
     if not isinstance(exc, RequestValidationError):
         raise exc
-    return ResponseUtils.error(
-        CommonCode.VALIDATION_ERROR,
-        get_locale(request),
-    )
+    locale = get_locale(request)
+    error = exc.errors()[0]
+    if error["type"] == "proxy_url":
+        message = translator.translate(
+            "resp_code.INVALID_PROXY_URL", locale.language, index=error["ctx"]["index"]
+        )
+    else:
+        field = ".".join(str(part) for part in error["loc"])
+        if error["type"] == "proxy_required":
+            field = f"{field}.proxies"
+        message = translator.translate("resp_code.VALIDATION_ERROR", locale.language)
+        message = f"{field}: {message}"
+    return ResponseUtils.json(CommonCode.VALIDATION_ERROR.value, {}, message)
 
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):

@@ -1,5 +1,6 @@
 {
     "resp_code": {
+        "INVALID_PROXY_URL": "รูปแบบ proxies รายการที่ {index} ไม่ถูกต้อง ใช้ http://ชื่อผู้ใช้:รหัสผ่าน@IP:พอร์ต (ละข้อมูลเข้าสู่ระบบได้หากไม่จำเป็น) รองรับ http, https, socks5, socks5h ไม่รองรับ IP:พอร์ต:ชื่อผู้ใช้:รหัสผ่าน",
         "INTERNAL_SERVER_ERROR": "ข้อผิดพลาดภายในเซิร์ฟเวอร์",
         "INVALID_REQUEST": "คำขอไม่ถูกต้อง",
         "EXTERNAL_API_KEY_INVALID": "คีย์ API ภายนอกไม่ถูกต้อง",

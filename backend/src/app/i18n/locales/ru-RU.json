@@ -1,5 +1,6 @@
 {
     "resp_code": {
+        "INVALID_PROXY_URL": "Неверный формат proxies, элемент {index}: используйте http://логин:пароль@IP:порт (без учётных данных, если они не нужны). Поддерживаются http, https, socks5, socks5h; формат IP:порт:логин:пароль не поддерживается.",
         "INTERNAL_SERVER_ERROR": "Внутренняя ошибка сервера",
         "INVALID_REQUEST": "Неверный запрос",
         "EXTERNAL_API_KEY_INVALID": "Недействительный внешний API-ключ",

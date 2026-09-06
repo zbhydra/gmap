@@ -1,5 +1,6 @@
 {
     "resp_code": {
+        "INVALID_PROXY_URL": "proxies의 {index}번째 형식이 잘못되었습니다. http://사용자명:비밀번호@IP:포트 형식을 사용하세요(인증이 없으면 인증 정보 생략). 지원: http, https, socks5, socks5h. IP:포트:사용자명:비밀번호 형식은 지원하지 않습니다.",
         "INTERNAL_SERVER_ERROR": "서버 내부 오류",
         "INVALID_REQUEST": "잘못된 요청",
         "EXTERNAL_API_KEY_INVALID": "외부 API 키가 올바르지 않습니다",

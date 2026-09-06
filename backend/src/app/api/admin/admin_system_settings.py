@@ -10,6 +10,7 @@ from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.schemas.admin_schema import (
     GmapEngineConfigRequest,
+    GmapProxyCheckRequest,
     GosomApiConfigRequest,
     ObjectStorageConfig,
 )
@@ -76,6 +77,16 @@ async def get_gmap_engine_config(
     """查询 gmap 引擎配置；未配置时返回 HTTP、空代理与默认并发预算。"""
     config = await maps_engine_service.get_config()
     return ResponseUtils.ok(config.model_dump())
+
+
+@router.post("/gmap-engine/check-proxies")
+async def check_gmap_proxies(
+    req: GmapProxyCheckRequest,
+    _admin: AdminContext = Depends(get_admin_user),
+) -> JSONResponse:
+    """管理员批量测试代理到 Google 的连通性，不保存输入。"""
+    results = await maps_engine_service.check_proxies(req.proxies)
+    return ResponseUtils.ok({"items": [item.model_dump() for item in results]})
 
 
 @router.post("/gmap-engine")

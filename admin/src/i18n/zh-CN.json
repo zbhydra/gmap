@@ -155,6 +155,24 @@
     "noData": "暂无数据"
   },
   "systemSettings": {
+    "gmapEngineProxyInvalid": "proxies 字段第 {index} 项格式错误：请使用 http://用户名:密码{'@'}IP:端口（无认证可省略用户名和密码）；支持 http、https、socks5、socks5h，不支持 IP:端口:用户名:密码。",
+    "proxyChecker": "代理校验器",
+    "proxyCheckStart": "开始校验",
+    "proxyCheckStop": "停止",
+    "proxyCheckTarget": "Google 连通性",
+    "proxyCheckProgress": "已校验 {done} / {total}，可用 {ok}",
+    "proxyCheckEmpty": "proxies 字段不能为空，请输入至少一条代理 URL",
+    "proxyCheckFailed": "代理校验请求失败，请重试",
+    "proxyCheckStatus": {
+      "ok": "可用",
+      "http_error": "HTTP 异常",
+      "timeout": "超时",
+      "connection_error": "连接失败"
+    },
+    "proxyCheckIndex": "项号",
+    "proxyCheckAddress": "代理",
+    "proxyCheckResult": "结果",
+    "proxyCheckDuration": "耗时",
     "tabConfigCache": "配置表缓存",
     "tabApiKey": "API Key",
     "refreshConfigCache": "刷新配置缓存",

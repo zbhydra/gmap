@@ -1,5 +1,6 @@
 {
     "resp_code": {
+        "INVALID_PROXY_URL": "Format proxies item {index} tidak valid: gunakan http://pengguna:kata_sandi@IP:port (hilangkan kredensial jika tidak diperlukan). Mendukung http, https, socks5, socks5h; bukan IP:port:pengguna:kata_sandi.",
         "INTERNAL_SERVER_ERROR": "Kesalahan server internal",
         "INVALID_REQUEST": "Permintaan tidak valid",
         "EXTERNAL_API_KEY_INVALID": "Kunci API eksternal tidak valid",

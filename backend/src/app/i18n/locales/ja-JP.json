@@ -1,5 +1,6 @@
 {
     "resp_code": {
+        "INVALID_PROXY_URL": "proxies の {index} 番目の形式が無効です。http://ユーザー名:パスワード@IP:ポート を使用してください（認証不要なら認証情報は省略）。対応: http、https、socks5、socks5h。IP:ポート:ユーザー名:パスワード は非対応です。",
         "INTERNAL_SERVER_ERROR": "サーバー内部エラー",
         "INVALID_REQUEST": "無効なリクエスト",
         "EXTERNAL_API_KEY_INVALID": "外部APIキーが無効です",

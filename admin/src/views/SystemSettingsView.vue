@@ -202,20 +202,26 @@
           <section>
             <NSpin :show="gmapEngineLoading">
               <div class="gmap-engine-form">
-                <div class="gmap-engine-field">
-                  <NText>{{ t("systemSettings.gmapEngineProvider") }}</NText>
-                  <NRadioGroup
-                    v-model:value="gmapEngineProvider"
-                    name="gmap-engine-provider"
-                    :disabled="gmapEngineLoading"
-                  >
-                    <NRadioButton value="http">
-                      {{ t("systemSettings.gmapEngineProviderHttp") }}
-                    </NRadioButton>
-                    <NRadioButton value="gosom">
-                      {{ t("systemSettings.gmapEngineProviderGosom") }}
-                    </NRadioButton>
-                  </NRadioGroup>
+                <div class="gmap-engine-toolbar">
+                  <div class="gmap-engine-field">
+                    <NText>{{ t("systemSettings.gmapEngineProvider") }}</NText>
+                    <NRadioGroup
+                      v-model:value="gmapEngineProvider"
+                      name="gmap-engine-provider"
+                      :disabled="gmapEngineLoading"
+                    >
+                      <NRadioButton value="http">
+                        {{ t("systemSettings.gmapEngineProviderHttp") }}
+                      </NRadioButton>
+                      <NRadioButton value="gosom">
+                        {{ t("systemSettings.gmapEngineProviderGosom") }}
+                      </NRadioButton>
+                    </NRadioGroup>
+                  </div>
+                  <NButton @click="openProxyChecker">
+                    <template #icon><NIcon :component="CheckCircleOutlined" /></template>
+                    {{ t("systemSettings.proxyChecker") }}
+                  </NButton>
                 </div>
 
                 <div class="gmap-engine-field">
@@ -456,12 +462,80 @@
       </NSpace>
     </NModal>
   </div>
+  <NModal
+    v-model:show="proxyCheckerVisible"
+    preset="card"
+    :title="t('systemSettings.proxyChecker')"
+    :closable="!proxyChecking"
+    :mask-closable="!proxyChecking"
+    :close-on-esc="!proxyChecking"
+    style="width: min(860px, calc(100vw - 32px))"
+  >
+    <NSpace vertical :size="16">
+      <NText>{{ t("systemSettings.proxyCheckTarget") }}</NText>
+      <NInput
+        v-model:value="proxyCheckInput"
+        type="textarea"
+        :rows="6"
+        :disabled="proxyChecking"
+        :aria-label="t('systemSettings.gmapEngineProxies')"
+        :placeholder="t('systemSettings.gmapEngineProxiesPlaceholder')"
+      />
+      <NSpace align="center" justify="space-between">
+        <NText aria-live="polite">
+          {{
+            t("systemSettings.proxyCheckProgress", {
+              done: proxyCheckResults.length,
+              total: proxyCheckTotal,
+              ok: proxyCheckResults.filter((item) => item.status === "ok").length,
+            })
+          }}
+        </NText>
+        <NButton
+          v-if="proxyChecking"
+          :disabled="proxyCheckStopRequested"
+          @click="proxyCheckStopRequested = true"
+        >
+          {{ t("systemSettings.proxyCheckStop") }}
+        </NButton>
+        <NButton v-else type="primary" @click="handleCheckProxies">
+          <template #icon><NIcon :component="CheckCircleOutlined" /></template>
+          {{ t("systemSettings.proxyCheckStart") }}
+        </NButton>
+      </NSpace>
+      <div v-if="proxyCheckResults.length" class="proxy-check-results">
+        <NTable :single-line="false" size="small">
+          <thead>
+            <tr>
+              <th>{{ t("systemSettings.proxyCheckIndex") }}</th>
+              <th>{{ t("systemSettings.proxyCheckAddress") }}</th>
+              <th>{{ t("systemSettings.proxyCheckResult") }}</th>
+              <th>{{ t("systemSettings.proxyCheckDuration") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in proxyCheckResults" :key="index">
+              <td>{{ index + 1 }}</td>
+              <td class="proxy-check-address">{{ item.proxy }}</td>
+              <td>
+                <NText :type="item.status === 'ok' ? 'success' : 'error'">
+                  {{ t(`systemSettings.proxyCheckStatus.${item.status}`) }}
+                </NText>
+                <span v-if="item.status_code !== null"> ({{ item.status_code }})</span>
+              </td>
+              <td>{{ item.duration_ms }} ms</td>
+            </tr>
+          </tbody>
+        </NTable>
+      </div>
+    </NSpace>
+  </NModal>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { DeleteOutlined, EditOutlined, PlusOutlined } from "@vicons/antd";
+import { CheckCircleOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from "@vicons/antd";
 import {
   NAlert,
   NButton,
@@ -483,6 +557,7 @@ import {
   NSpace,
   NSpin,
   NTabPane,
+  NTable,
   NTabs,
   NTag,
   NText,
@@ -491,6 +566,7 @@ import {
   type InputInst,
 } from "naive-ui";
 import {
+  checkGmapProxies,
   generateAdminApiKey,
   getAdminApiKeyMeta,
   getGmapEngineConfig,
@@ -504,10 +580,12 @@ import {
   type ConfigCacheRefreshResult,
   type GosomApiItem,
   type GmapEngineConfig,
+  type GmapProxyCheckResult,
   type ObjectStorageConfig,
   type ObjectStorageItem,
 } from "@/api/system-settings";
 import { formatAdminTimeMs } from "@/utils/time";
+import { BusinessError } from "@/api/request";
 
 /** gosom 配置编辑行；weight 在数字输入框被清空时为 null，保存前统一拦截。 */
 interface GosomApiRow {
@@ -527,6 +605,51 @@ const gosomLoading = ref(false);
 const gosomSaving = ref(false);
 const gmapEngineLoading = ref(false);
 const gmapEngineSaving = ref(false);
+const proxyCheckerVisible = ref(false);
+const proxyCheckInput = ref("");
+const proxyChecking = ref(false);
+const proxyCheckStopRequested = ref(false);
+const proxyCheckTotal = ref(0);
+const proxyCheckResults = ref<GmapProxyCheckResult[]>([]);
+
+function openProxyChecker() {
+  proxyCheckInput.value = gmapEngineProxies.value;
+  proxyCheckResults.value = [];
+  proxyCheckTotal.value = 0;
+  proxyCheckerVisible.value = true;
+}
+
+async function handleCheckProxies() {
+  const proxies = proxyCheckInput.value
+    .split("\n")
+    .map((proxy) => proxy.trim())
+    .filter(Boolean);
+  if (proxies.length === 0) {
+    message.warning(t("systemSettings.proxyCheckEmpty"));
+    return;
+  }
+  const invalidIndex = proxies.findIndex((proxy) => !isValidProxyUrl(proxy));
+  if (invalidIndex !== -1) {
+    message.warning(t("systemSettings.gmapEngineProxyInvalid", { index: invalidIndex + 1 }));
+    return;
+  }
+  proxyChecking.value = true;
+  proxyCheckStopRequested.value = false;
+  proxyCheckResults.value = [];
+  proxyCheckTotal.value = proxies.length;
+  try {
+    for (let offset = 0; offset < proxies.length && !proxyCheckStopRequested.value; offset += 20) {
+      const result = await checkGmapProxies(proxies.slice(offset, offset + 20));
+      proxyCheckResults.value.push(...result.items);
+    }
+  } catch (error) {
+    message.error(
+      error instanceof BusinessError ? error.message : t("systemSettings.proxyCheckFailed"),
+    );
+  } finally {
+    proxyChecking.value = false;
+  }
+}
 const objectStorageLoading = ref(false);
 const objectStorageSaving = ref(false);
 const activeTab = ref("config-cache");
@@ -765,7 +888,38 @@ async function loadGmapEngineConfig() {
   }
 }
 
-/** 保存 Gmap Engine 配置；HTTP 模式的空代理列表在前端定位拦截。 */
+/** 使用原生 URL 解析，并校验代理协议、显式端口和凭据格式。 */
+function isValidProxyUrl(value: string): boolean {
+  if (value.length > 2048 || /[\s\\]/u.test(value)) return false;
+  try {
+    const url = new URL(value);
+    const authority = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]+)\/?$/i.exec(value)?.[1] ?? "";
+    const userinfo = authority.includes("@")
+      ? authority.slice(0, authority.lastIndexOf("@"))
+      : null;
+    return (
+      ["http:", "https:", "socks5:", "socks5h:"].includes(url.protocol) &&
+      Boolean(url.hostname) &&
+      (url.hostname.startsWith("[") ||
+        url.hostname
+          .split(".")
+          .every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))) &&
+      /:\d+$/.test(authority) &&
+      Number(authority.slice(authority.lastIndexOf(":") + 1)) <= 65535 &&
+      !value.includes("?") &&
+      !value.includes("#") &&
+      (url.pathname === "" || url.pathname === "/") &&
+      (userinfo === null ||
+        (userinfo.length > 0 &&
+          !userinfo.startsWith(":") &&
+          /^(?:[a-zA-Z0-9._~!$&'()*+,;=:-]|%[0-9a-fA-F]{2})*$/.test(userinfo)))
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** 保存前校验代理列表，错误项号与发送给后端的数组一致。 */
 async function handleSaveGmapEngineConfig() {
   const proxies = gmapEngineProxies.value
     .split("\n")
@@ -776,6 +930,12 @@ async function handleSaveGmapEngineConfig() {
     gmapEngineProxiesInput.value?.focus();
     return;
   }
+  const invalidProxyIndex = proxies.findIndex((proxy) => !isValidProxyUrl(proxy));
+  if (invalidProxyIndex !== -1) {
+    message.warning(t("systemSettings.gmapEngineProxyInvalid", { index: invalidProxyIndex + 1 }));
+    gmapEngineProxiesInput.value?.focus();
+    return;
+  }
   if (gmapEngineConcurrency.value === null || gmapEngineConcurrency.value < 1) {
     message.warning(t("systemSettings.gmapEngineConcurrencyRequired"));
     return;
@@ -783,16 +943,22 @@ async function handleSaveGmapEngineConfig() {
 
   gmapEngineSaving.value = true;
   try {
-    fillGmapEngineForm(await saveGmapEngineConfig({
-      provider: gmapEngineProvider.value,
-      proxies,
-      concurrency: gmapEngineConcurrency.value,
-    }));
+    fillGmapEngineForm(
+      await saveGmapEngineConfig({
+        provider: gmapEngineProvider.value,
+        proxies,
+        concurrency: gmapEngineConcurrency.value,
+      }),
+    );
     message.success(t("systemSettings.gmapEngineSaveSuccess"));
-  } catch {
-    // 保存异常可能携带请求体，禁止把明文代理凭据写入日志或通知。
+  } catch (error) {
+    // 仅展示后端业务消息，网络异常可能携带含凭据的请求体。
     console.error("SystemSettingsView.handleSaveGmapEngineConfig() 保存失败");
-    message.error(t("systemSettings.gmapEngineSaveFailed"));
+    if (error instanceof BusinessError) {
+      message.warning(error.message);
+    } else {
+      message.error(t("systemSettings.gmapEngineSaveFailed"));
+    }
   } finally {
     gmapEngineSaving.value = false;
   }
@@ -983,6 +1149,28 @@ onMounted(() => {
   flex-direction: column;
   gap: 16px;
   margin-bottom: 16px;
+}
+
+.gmap-engine-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.gmap-engine-toolbar .gmap-engine-field {
+  width: auto;
+}
+
+.proxy-check-results {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.proxy-check-address {
+  overflow-wrap: anywhere;
+  min-width: 140px;
 }
 
 .gmap-engine-field {

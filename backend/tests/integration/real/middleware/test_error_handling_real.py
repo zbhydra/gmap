@@ -49,13 +49,18 @@ async def test_real_request_validation_failure_uses_common_response_envelope(
     assert response.json() == {
         "code": CommonCode.VALIDATION_ERROR,
         "data": {},
-        "msg": "Request parameters are incomplete or invalid",
+        "msg": "body.password: Request parameters are incomplete or invalid",
     }
     records = [record for record in caplog.records if record.name == "server"]
-    assert len(records) == 1
-    assert records[0].levelno == logging.INFO
-    assert records[0].exc_info is None
-    assert 'POST /api/client/auth/register HTTP/1.1" 200' in records[0].getMessage()
+    assert len(records) == 2
+    assert all(record.levelno == logging.INFO for record in records)
+    assert all(record.exc_info is None for record in records)
+    assert (
+        f"code={CommonCode.VALIDATION_ERROR.value} status_code=200"
+        in records[0].getMessage()
+    )
+    assert response.json()["msg"] in records[0].getMessage()
+    assert 'POST /api/client/auth/register HTTP/1.1" 200' in records[1].getMessage()
     assert secret not in caplog.text
 
 

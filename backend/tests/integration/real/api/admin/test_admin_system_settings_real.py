@@ -11,6 +11,8 @@ from typing import TypedDict
 from uuid import uuid4
 
 import pytest
+from curl_cffi.requests import AsyncSession as CurlSession, Response
+from curl_cffi.requests.exceptions import Timeout
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -72,6 +74,85 @@ async def test_real_save_gmap_engine_persists_and_reads_config(
     assert get_response.json()["code"] == CommonCode.SUCCESS
     assert get_response.json()["data"] == payload
     assert await _read_stored_config(GMAP_ENGINE_DATA_KEY) == payload
+
+
+async def test_real_proxy_check_validation_and_connectivity(
+    real_async_client,
+    real_admin_token_for_system_settings: str,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """真实管理员入口校验字段；仅 Google 网络出口用确定结果替换。"""
+    endpoint = f"{_GMAP_ENDPOINT}/check-proxies"
+    headers = {
+        "Authorization": f"Bearer {real_admin_token_for_system_settings}",
+        "Accept-Language": "zh-CN",
+    }
+    proxies = ["http://user:TEST_PROXY_SECRET@127.0.0.1:1"]
+    unauthenticated = await real_async_client.post(endpoint, json={"proxies": proxies})
+    assert unauthenticated.status_code == 401
+    assert unauthenticated.json()["code"] == CommonCode.AUTH_MISSING_CREDENTIALS
+    empty = await real_async_client.post(
+        _GMAP_ENDPOINT, headers=headers, json={"proxies": []}
+    )
+    assert empty.status_code == 200
+    assert empty.json()["code"] == CommonCode.VALIDATION_ERROR
+    assert "body.proxies" in empty.json()["msg"]
+    for path in (_GMAP_ENDPOINT, endpoint):
+        invalid = await real_async_client.post(
+            path,
+            headers=headers,
+            json={"proxies": [proxies[0], "127.0.0.1:8080:user:TEST_PROXY_SECRET"]},
+        )
+        assert invalid.status_code == 200
+        assert invalid.json()["code"] == CommonCode.VALIDATION_ERROR
+        assert "proxies 字段第 2 项格式错误" in invalid.json()["msg"]
+        assert "http://用户名:密码@IP:端口" in invalid.json()["msg"]
+        assert "TEST_PROXY_SECRET" not in invalid.text
+
+    disconnected = await real_async_client.post(
+        endpoint, headers=headers, json={"proxies": proxies}
+    )
+    assert disconnected.status_code == 200
+    assert disconnected.json()["code"] == CommonCode.SUCCESS
+    assert disconnected.json()["data"]["items"][0]["status"] == "connection_error"
+
+    async def google_response(
+        self: CurlSession, url: str, *, proxy: str, timeout: int, allow_redirects: bool
+    ) -> Response:
+        assert url == "https://www.google.com/generate_204"
+        assert timeout == 10
+        assert not allow_redirects
+        if "timeout.example" in proxy:
+            raise Timeout("TEST_PROXY_SECRET")
+        response = Response()
+        response.status_code = 403 if "blocked.example" in proxy else 204
+        return response
+
+    monkeypatch.setattr(CurlSession, "get", google_response)
+    response = await real_async_client.post(
+        endpoint,
+        headers=headers,
+        json={
+            "proxies": [
+                f"http://user:TEST_PROXY_SECRET@{host}:8080"
+                for host in (
+                    "ok.example",
+                    "blocked.example",
+                    "timeout.example",
+                    "ok.example",
+                )
+            ]
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["code"] == CommonCode.SUCCESS
+    items = response.json()["data"]["items"]
+    assert [item["status"] for item in items] == ["ok", "http_error", "timeout", "ok"]
+    assert [item["status_code"] for item in items] == [204, 403, None, 204]
+    assert all(item["duration_ms"] >= 0 for item in items)
+    assert "TEST_PROXY_SECRET" not in response.text
+    assert "TEST_PROXY_SECRET" not in caplog.text
 
 
 async def test_real_object_storage_multiple_locations_switch_and_preserve_ids(

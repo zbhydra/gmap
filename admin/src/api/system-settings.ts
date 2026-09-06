@@ -125,6 +125,20 @@ export function getGmapEngineConfig() {
   return request.get<never, GmapEngineConfig>("/system-settings/gmap-engine");
 }
 
+export interface GmapProxyCheckResult {
+  proxy: string;
+  status: "ok" | "http_error" | "timeout" | "connection_error";
+  status_code: number | null;
+  duration_ms: number;
+}
+
+export function checkGmapProxies(proxies: string[]) {
+  return request.post<never, { items: GmapProxyCheckResult[] }>(
+    "/system-settings/gmap-engine/check-proxies",
+    { proxies },
+  );
+}
+
 /** 保存 Gmap 采集引擎配置，并返回后端归一化结果。 */
 export function saveGmapEngineConfig(config: GmapEngineConfig) {
   return request.post<never, GmapEngineConfig>("/system-settings/gmap-engine", config);

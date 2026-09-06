@@ -212,6 +212,7 @@ API Key 生成格式:
 | --- | --- | --- | --- |
 | GET | `/api/admin/system-settings/gmap-engine` | `get_admin_user` | 读取配置；未配置时返回默认视图 |
 | POST | `/api/admin/system-settings/gmap-engine` | `get_admin_user` | 校验并整对象覆盖保存 |
+| POST | `/api/admin/system-settings/gmap-engine/check-proxies` | `get_admin_user` | 接收 `proxies` 数组，逐条校验 Google 连通性，不保存配置 |
 
 保存时将每行首尾空白剔除，忽略空行，按规范化后完整 URL 去重并保留首次出现顺序。URL 只接受 `http`、`https`、`socks5`、`socks5h` scheme，必须有 host 和 port；用户名与密码作为 URL authority 的可选部分。HTTP + 空列表、URL 无效或并发预算小于 1 时返回全局 `VALIDATION_ERROR`，不新增错误码。
 
@@ -223,6 +224,9 @@ API Key 生成格式:
 - 代理列表用全宽多行输入，每行一条完整 URL，高度至少 200px；支持一次粘贴一条或多条。
 - 每进程并发预算用整数输入，宽 160px，最小值 1。
 - Gosom 模式下代理列表仍可编辑，允许保存空列表；HTTP 模式下空列表时前端拦截并定位到输入区。
+- 保存和连通性校验前都检查代理格式；后端独立执行同一格式合同。格式错误消息明确 `proxies` 字段、从 1 开始的项号和完整 URL 格式要求，不回显输入。前端展示后端业务 `msg`，请求语言跟随界面语言。
+- 引擎切换控件右侧提供“代理校验器”，弹窗初始填入当前代理列表，可独立修改和重复校验。前端忽略空行，每批最多 20 条；后端逐条经代理请求固定地址 `https://www.google.com/generate_204`，使用引擎同款 Chrome TLS 指纹，单条超时 10 秒，不重试、不跟随重定向。HTTP 204 表示 Google 连通，其他结果区分 HTTP 异常、超时和连接失败；连通不代表 Maps 采集不会触发封锁。
+- 校验返回 `items`，按提交顺序保留重复项；每项包含脱敏 `proxy`、`status`（`ok/http_error/timeout/connection_error`）、可空 `status_code` 和 `duration_ms`。弹窗显示进度、可用数及结果表；停止操作等待当前批结束后停止后续批次，已完成结果保留。
 - 全部文案走 i18n；保存成功以后端返回的归一化对象回填。
 
 ### 验收
@@ -230,6 +234,7 @@ API Key 生成格式:
 - HTTP 模式分别保存 1 条和多条代理，重载后顺序与内容一致。
 - 多行粘贴中的空行与重复 URL 被正确归一化；非法 scheme、无 host/port 和 HTTP 空列表无法保存。
 - Gosom 模式可保存空代理列表；系统日志、校验错误与前端通知中均不出现代理凭据。
+- 未认证请求不能触发代理网络校验；格式错误在双端拦截，校验结果和失败日志不含凭据，校验操作不修改引擎配置。
 
 ## 对象存储配置
 

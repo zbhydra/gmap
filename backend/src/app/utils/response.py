@@ -7,6 +7,7 @@ from typing import Optional
 from app.i18n import translator
 from app.i18n.common_code import CommonCode
 from app.i18n.dependencies import DEFAULT_LANGUAGE, LocaleContext
+from app.utils.logger import logger
 from fastapi.responses import JSONResponse
 
 
@@ -22,6 +23,10 @@ class ResponseUtils:
         """
         返回 JSON 响应
         """
+        if code != CommonCode.SUCCESS:
+            logger.info(
+                "业务响应: code=%s status_code=%s msg=%s", code, status_code, msg
+            )
         return JSONResponse(
             content={
                 "code": code,

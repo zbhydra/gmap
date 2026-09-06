@@ -1,5 +1,6 @@
 {
     "resp_code": {
+        "INVALID_PROXY_URL": "Formato inválido em proxies, item {index}: use http://usuário:senha@IP:porta (omita credenciais se não forem necessárias). Suporta http, https, socks5 e socks5h; não IP:porta:usuário:senha.",
         "INTERNAL_SERVER_ERROR": "Erro interno do servidor",
         "INVALID_REQUEST": "Solicitação inválida",
         "EXTERNAL_API_KEY_INVALID": "A chave de API externa é inválida",

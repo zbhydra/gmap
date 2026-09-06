@@ -1,5 +1,6 @@
 {
     "resp_code": {
+        "INVALID_PROXY_URL": "Sai định dạng proxies tại mục {index}: dùng http://tên:mật_khẩu@IP:cổng (bỏ thông tin đăng nhập nếu không cần). Hỗ trợ http, https, socks5, socks5h; không hỗ trợ IP:cổng:tên:mật_khẩu.",
         "INTERNAL_SERVER_ERROR": "Lỗi máy chủ nội bộ",
         "INVALID_REQUEST": "Yêu cầu không hợp lệ",
         "EXTERNAL_API_KEY_INVALID": "Khóa API bên ngoài không hợp lệ",

@@ -155,6 +155,24 @@
     "noData": "No data"
   },
   "systemSettings": {
+    "gmapEngineProxyInvalid": "Invalid proxies item {index}: use http://username:password{'@'}IP:port (omit credentials when not required). Supported schemes: http, https, socks5, socks5h. IP:port:username:password is not supported.",
+    "proxyChecker": "Proxy checker",
+    "proxyCheckStart": "Check proxies",
+    "proxyCheckStop": "Stop",
+    "proxyCheckTarget": "Google connectivity",
+    "proxyCheckProgress": "Checked {done} / {total}, available {ok}",
+    "proxyCheckEmpty": "proxies is required. Enter at least one proxy URL.",
+    "proxyCheckFailed": "Proxy check request failed. Try again.",
+    "proxyCheckStatus": {
+      "ok": "Available",
+      "http_error": "HTTP error",
+      "timeout": "Timed out",
+      "connection_error": "Connection failed"
+    },
+    "proxyCheckIndex": "Item",
+    "proxyCheckAddress": "Proxy",
+    "proxyCheckResult": "Result",
+    "proxyCheckDuration": "Duration",
     "tabConfigCache": "Config Table Cache",
     "tabApiKey": "API Key",
     "refreshConfigCache": "Refresh Config Cache",

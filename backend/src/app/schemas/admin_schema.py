@@ -16,6 +16,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic_core import PydanticCustomError
 
 from app.constants.gmap import GMAP_ENGINE_DEFAULT_CONCURRENCY
 
@@ -176,16 +177,56 @@ class GosomApiConfigRequest(BaseModel):
         return self
 
 
-class GmapEngineConfig(BaseModel):
+class GmapProxyList(BaseModel):
+    """保存配置和连通性校验共用的代理格式边界。"""
+
+    proxies: list[str] = Field(
+        default_factory=list,
+        description="完整代理 URL 列表；保存 HTTP 配置时至少一条",
+    )
+
+    @field_validator("proxies", mode="before")
+    @classmethod
+    def _normalize_proxies(cls, value: object) -> object:
+        """去空行并规范化完整 URL，错误项号对应原始输入数组。"""
+        if not isinstance(value, list):
+            return value
+        normalized: list[object] = []
+        for index, item in enumerate(value):
+            if isinstance(item, str):
+                if not item.strip():
+                    continue
+                try:
+                    item = _normalize_url(item, schemes=_PROXY_SCHEMES, proxy=True)
+                except ValueError as exc:
+                    raise PydanticCustomError(
+                        "proxy_url", "代理 URL 格式无效", {"index": index + 1}
+                    ) from exc
+            normalized.append(item)
+        return normalized
+
+
+class GmapProxyCheckRequest(GmapProxyList):
+    """按批校验，限制单次网络请求数量。"""
+
+    proxies: list[str] = Field(min_length=1, max_length=20)
+
+
+class GmapProxyCheckResult(BaseModel):
+    """连通性结果不返回凭据或底层异常文本。"""
+
+    proxy: str
+    status: Literal["ok", "http_error", "timeout", "connection_error"]
+    status_code: int | None = None
+    duration_ms: int
+
+
+class GmapEngineConfig(GmapProxyList):
     """gmap 采集引擎配置与未配置时的默认读取视图。"""
 
     provider: Literal["http", "gosom"] = Field(
         default="http",
         description="抓取引擎选择：http=自研直采，gosom=云端引擎",
-    )
-    proxies: list[str] = Field(
-        default_factory=list,
-        description="完整代理 URL 列表；保存 HTTP 配置时至少一条",
     )
     concurrency: int = Field(
         default=GMAP_ENGINE_DEFAULT_CONCURRENCY,
@@ -193,24 +234,10 @@ class GmapEngineConfig(BaseModel):
         description="每个 business 进程的 Google 出站并发预算",
     )
 
-    @field_validator("proxies", mode="before")
+    @field_validator("proxies")
     @classmethod
-    def _normalize_proxies(cls, value: object) -> object:
-        """去空行并按规范化后的完整 URL 去重，保留首次出现顺序。"""
-        if not isinstance(value, list):
-            return value
-        normalized: list[object] = []
-        seen: set[str] = set()
-        for item in value:
-            if isinstance(item, str):
-                if not item.strip():
-                    continue
-                item = _normalize_url(item, schemes=_PROXY_SCHEMES, proxy=True)
-                if item in seen:
-                    continue
-                seen.add(item)
-            normalized.append(item)
-        return normalized
+    def _deduplicate_proxies(cls, value: list[str]) -> list[str]:
+        return list(dict.fromkeys(value))
 
 
 class GmapEngineConfigRequest(GmapEngineConfig):
@@ -220,7 +247,9 @@ class GmapEngineConfigRequest(GmapEngineConfig):
     def _http_requires_proxy(self) -> "GmapEngineConfigRequest":
         """HTTP Provider 没有代理无法工作，保存时直接拒绝。"""
         if self.provider == "http" and not self.proxies:
-            raise ValueError("HTTP provider 至少需要一条代理 URL")
+            raise PydanticCustomError(
+                "proxy_required", "HTTP provider 至少需要一条代理 URL"
+            )
         return self
 
 

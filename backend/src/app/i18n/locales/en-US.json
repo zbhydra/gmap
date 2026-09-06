@@ -4,6 +4,7 @@
         "report_alarm_content": "Task: {task_no}\nItem: {item_id}\nAttempts: {attempts}\nError: {error}\nCheck database availability. Unfinished items will resume on business startup."
     },
     "resp_code": {
+        "INVALID_PROXY_URL": "Invalid proxies item {index}: use http://username:password@IP:port (omit credentials when not required). Supported schemes: http, https, socks5, socks5h. IP:port:username:password is not supported.",
         "INTERNAL_SERVER_ERROR": "Internal server error",
         "INVALID_REQUEST": "Invalid request",
         "EXTERNAL_API_KEY_INVALID": "Invalid external API key",

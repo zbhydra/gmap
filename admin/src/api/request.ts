@@ -8,6 +8,7 @@
  */
 import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/stores/auth";
+import i18n from "@/i18n";
 
 /**
  * 后端业务 API 根地址。
@@ -123,6 +124,7 @@ export async function refreshAdminTokenAfterUnauthorized(): Promise<string | nul
 
 // 请求拦截器
 request.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  config.headers["Accept-Language"] = i18n.global.locale.value;
   const auth = useAuthStore();
   if (auth.token) {
     config.headers.Authorization = `Bearer ${auth.token}`;
