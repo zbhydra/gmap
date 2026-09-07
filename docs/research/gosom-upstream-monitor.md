@@ -35,8 +35,8 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-09-06`
-- 本地仓库提交:`ba8f3b22acdbfe0474af75a7371994603ecba009`
+- 检查时间:`2026-09-07`
+- 本地仓库提交:`b464e3adf55eb4c889e48c3f5ea77538adcdc503`
 - GOSOM 最新提交:`beca11f148c7dc9651ee2da9aa9ce111f3dd3bea`
 - SCRAPEMATE 最新提交:`9f3c1ce9966808a43483d96b65b23c9ac72f0a0d`
 - 结论:GOSOM 与 SCRAPEMATE 的本地 `main` HEAD 均与最后完整检查基线相同,无新增提交;复核「待确认项」为无,不建议主动更新线上 `latest` 镜像。
