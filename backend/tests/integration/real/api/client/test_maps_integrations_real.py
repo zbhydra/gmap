@@ -62,6 +62,7 @@ class _EnrichResponse:
     status_code = 200
     headers: dict[str, str] = {}
     charset_encoding = "utf-8"
+    infos: dict = {}
 
     async def aiter_content(self) -> AsyncIterator[bytes]:
         yield (

@@ -7,7 +7,7 @@
 
 - **技术路线**：官方 Places API 每地点仅返回 5 条评论且有存储限制，全量评论产品只能走抓取路线。业界通用做法是逆向 Google Maps 网页版内部接口（快、易碎）或无头浏览器渲染（慢、稳），商业服务再外包一层 REST API + 计费。gmapsextractor.com 这类小服务多为 Apify Actor 或开源方案的包装。
 - **选型结论**：自研 HTTP RPC fetcher 是主引擎，gosom SaaS Edition 作可切换的备选 Provider。HTTP 路线已用 1,500 词 / 66,796 条记录验证，相对 gosom 浏览器路线吞吐更高、资源和代理流量更低；证据见 §12.19、§12.32–§12.34。
-- **HTTP 主链**：常规 `search?tbm=map` 深分页 + NID 解锁批量字段 → 浏览器级 pb 批量补 Owner/Claimed/Featured Image/About → 仅对未覆盖 fid 调 `preview/place` 补齐。正确分页模板是 `!7i20!8i{offset}`，必须开 gzip。
+- **HTTP 主链**：常规 `search?tbm=map` 深分页 + NID 解锁批量字段 → 浏览器级 pb 批量补 Owner/Claimed/Featured Image/About → 仅对未覆盖 fid 调 `preview/place` 补齐。正确分页模板是 `!7i20!8i{offset}`，必须启用响应压缩。
 - **部署边界**：HTTP Provider 是异步取数调用，可由调用方直接并发；Provider 不建立任务队列。gosom Provider 只提交和查询上游 job，River/Postgres 队列完全归 gosom 管理。
 - **字段合同**：对标竞品云端 36 列，其中 29 列为 Maps 核心列，Emails + 6 个社媒链接归独立官网 enrichment；逐列取值见 §12.30。
 - **三缺口定论（2026-09-04 终版）**：`ll` 视口块注入精确生效可接入（§12.35）；Reviews 走 GetLocalBoqProxy 全量可行、四排序/商家回复全通（§12.36）；Photos **批量纯 HTTP 打通**——门控为服务端按 cookie 会话记录的交互状态，headful 点击一次养会话后，curl 即可全量翻页（12 页/232 条与浏览器一致、跨 fid 复用会话）（§12.37）。
@@ -1223,10 +1223,10 @@ hours 89.4%；流量 842.7MB（0.84MB/词）、browser_fail 0。与 batch500 全
 
 ### 13.2 HTTP 采集链
 
-1. 每次 Search 调用铸造一枚 NID；NID 不绑定出口 IP，可跨请求级轮换代理使用。
-2. 常规 pb 以 `!7i20!8i{offset}` 分页，开 gzip，每页用 fid 去重；请求最多重试 3 次。
+1. 每次 Search 调用铸造一枚 NID，并固定一个代理供本次分页与补列复用连接；失败才切换代理。NID 不绑定出口 IP，切换后仍可沿用。具体连接策略见 `../feat/014.Maps云端/tech-引擎Provider层.md` §5.3。
+2. 常规 pb 以 `!7i20!8i{offset}` 分页，协商 gzip/Brotli 压缩；首屏后并行预取后续页，按页序用 fid 去重和早停；请求最多重试 3 次。
 3. 浏览器级 pb 按 fid 与常规分页结果合并，沿用 §12.34 的自适应放大重试策略。
-4. 对浏览器级 pb 未覆盖的 fid 调 `preview/place`，补 Claimed/Owner/Featured Image/About；不为 29 列以外的星级分布做抽样请求。
+4. 对浏览器级 pb 未覆盖的 fid 并行调用 `preview/place`，补 Claimed/Owner/Featured Image/About；不为 29 列以外的星级分布做抽样请求。
 5. 常规分页重试后仍失败则整任务失败；批量补列或单店补列失败只标记部分结果，不丢弃已取得的核心列表。
 
 `ll` 坐标偏置已验证（§12.35）：常规 pb 视口块 `!1d{直径米}!2d{lng}!3d{lat}` 注入即生效，城区精度 <100m，浏览器级 pb 同构位；接入时须带视口 canary（软降级会静默回退出口地理）。B2 的地区参数按此实现。

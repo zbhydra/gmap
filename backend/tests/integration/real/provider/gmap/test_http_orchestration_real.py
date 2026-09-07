@@ -3,7 +3,7 @@
 import asyncio
 from collections.abc import AsyncIterator
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 import pytest
 from curl_cffi.requests import AsyncSession
@@ -41,19 +41,27 @@ class _Response:
     def __init__(self, status_code: int, text: str, nid: str | None = None) -> None:
         self.status_code = status_code
         self.text = text
+        self.content = text.encode()
+        self.headers: dict[str, str] = {}
         self.cookies = {"NID": nid} if nid else {}
+        self.infos: dict = {}
+        self.url = "https://www.google.com/test"
 
 
 class _GoogleSession:
     scenario = ""
     urls: list[str] = []
     browser_calls = 0
+    proxies: list[str] = []
 
     async def get(self, url: str, **kwargs: object) -> _Response:
         self.urls.append(url)
+        proxy = kwargs.get("proxy")
+        if isinstance(proxy, str):
+            self.proxies.append(proxy)
         if url.startswith("https://www.google.com/maps?hl="):
             return _Response(200, "maps", nid="test-nid")
-        if "/search?" in url and "maps.google.com" in url:
+        if "/search?authuser=" in url:
             if self.scenario == "empty":
                 return _Response(200, _EMPTY_REGULAR)
             if self.scenario == "timeout":
@@ -95,6 +103,7 @@ async def real_google_exit(
     session = _GoogleSession()
     _GoogleSession.urls = []
     _GoogleSession.browser_calls = 0
+    _GoogleSession.proxies = []
     client._init_lock = asyncio.Lock()
     client._semaphore = None
     client._proxies = ()
@@ -144,10 +153,8 @@ async def test_real_http_public_search_treats_ll_empty_page_as_normal_stop() -> 
 
     assert result.entries == []
     assert result.partial is False
-    assert not any(
-        urlsplit(url).hostname == "www.google.com" and urlsplit(url).path == "/search"
-        for url in _GoogleSession.urls
-    )
+    assert len(set(_GoogleSession.proxies)) == 1
+    assert not any("/search?tbm=map" in url for url in _GoogleSession.urls)
 
 
 async def test_real_http_public_search_marks_l2_failure_partial() -> None:
@@ -172,3 +179,34 @@ async def test_real_http_public_search_adapts_then_requests_only_uncovered_l2() 
     entry = next(entry for entry in result.entries if entry.fid == _L2_FID)
     assert entry.owner_id is not None
     assert result.partial is False
+    assert len(set(_GoogleSession.proxies)) == 1
+    assert {urlsplit(url).hostname for url in _GoogleSession.urls} == {"www.google.com"}
+
+
+async def test_real_http_prefetches_pages_and_cancels_unused_tail(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """第二页等待第三页已发出，第二页早停后必须取消未使用的第三页。"""
+    third_started = asyncio.Event()
+    third_cancelled = asyncio.Event()
+    google = _GoogleSession()
+    _GoogleSession.scenario = "adaptive_l2"
+
+    async def get(session: AsyncSession, url: str, **kwargs: object) -> _Response:
+        if "/search?authuser=" in url:
+            pb = parse_qs(urlsplit(url).query)["pb"][0]
+            if "!8i20!" in pb:
+                await asyncio.wait_for(third_started.wait(), 1)
+                return _Response(200, _EMPTY_REGULAR)
+            if "!8i40!" in pb:
+                third_started.set()
+                try:
+                    await asyncio.Event().wait()
+                finally:
+                    third_cancelled.set()
+        return await google.get(url, **kwargs)
+
+    monkeypatch.setattr(AsyncSession, "get", get)
+    result = await gmap_http_provider.search_places("coffee shop in Portland", 3, "en")
+    assert third_started.is_set() and third_cancelled.is_set()
+    assert len(result.entries) == 20 and not result.partial

@@ -3,13 +3,18 @@
 import asyncio
 from dataclasses import dataclass, field
 import re
+import logging
 from html import unescape
+from time import perf_counter
 from urllib.parse import urljoin, urlsplit
+from uuid import uuid4
 
-from curl_cffi import CurlOpt
+from curl_cffi import CurlInfo, CurlOpt
 from curl_cffi.requests import AsyncSession
 
 from ._safety import assert_safe_http_url
+
+logger = logging.getLogger(__name__)
 
 _MAX_HTML_BYTES = 2 * 1024 * 1024
 _MAX_REDIRECTS = 3
@@ -162,6 +167,7 @@ async def scrape_contacts(
 
 
 async def _fetch_html(url: str, proxy: str | None) -> str:
+    request_id = uuid4().hex
     # 空代理字符串同时关闭 libcurl 的环境代理；None 是公开直连合同。
     async with AsyncSession(
         impersonate="chrome",
@@ -171,10 +177,79 @@ async def _fetch_html(url: str, proxy: str | None) -> str:
         curl_options={CurlOpt.NOPROXY: ""},
         allow_redirects=False,
         headers={"Accept-Language": "en-US,en;q=0.9"},
+        curl_infos=[
+            CurlInfo.NAMELOOKUP_TIME,
+            CurlInfo.CONNECT_TIME,
+            CurlInfo.APPCONNECT_TIME,
+            CurlInfo.PRETRANSFER_TIME,
+            CurlInfo.STARTTRANSFER_TIME,
+            CurlInfo.CONN_ID,
+            CurlInfo.NUM_CONNECTS,
+            CurlInfo.HTTP_VERSION,
+        ],
     ) as session:
         for hop in range(_MAX_REDIRECTS + 1):
-            await assert_safe_http_url(url)
-            response = await session.get(url, stream=True)
+            started = perf_counter()
+            safe = False
+            try:
+                await assert_safe_http_url(url)
+                safe = True
+            finally:
+                logger.info(
+                    "contact_scraper.check: request=%s hop=%s host=%s safe=%s duration_ms=%.2f",
+                    request_id,
+                    hop,
+                    urlsplit(url).hostname,
+                    safe,
+                    (perf_counter() - started) * 1000,
+                )
+            started = perf_counter()
+            try:
+                response = await session.get(url, stream=True)
+            except (Exception, asyncio.CancelledError) as exc:
+                logger.info(
+                    "contact_scraper.request: request=%s hop=%s host=%s "
+                    "duration_ms=%.2f error=%s",
+                    request_id,
+                    hop,
+                    urlsplit(url).hostname,
+                    (perf_counter() - started) * 1000,
+                    type(exc).__name__,
+                )
+                raise
+            headers_at = perf_counter()
+            info = response.infos
+            logger.info(
+                "contact_scraper.headers: request=%s hop=%s host=%s proxy_host=%s "
+                "status=%s connection_id=%s new_connections=%s curl_http_version=%s "
+                "headers_ms=%.2f dns_ms=%.2f tcp_ms=%.2f tunnel_tls_ms=%.2f ttfb_ms=%.2f",
+                request_id,
+                hop,
+                urlsplit(url).hostname,
+                urlsplit(proxy).hostname if proxy else "direct",
+                response.status_code,
+                info.get(CurlInfo.CONN_ID, -1),
+                info.get(CurlInfo.NUM_CONNECTS, 0),
+                info.get(CurlInfo.HTTP_VERSION, 0),
+                (headers_at - started) * 1000,
+                info.get(CurlInfo.NAMELOOKUP_TIME, 0) * 1000,
+                (
+                    info.get(CurlInfo.CONNECT_TIME, 0)
+                    - info.get(CurlInfo.NAMELOOKUP_TIME, 0)
+                )
+                * 1000,
+                max(
+                    0,
+                    info.get(CurlInfo.APPCONNECT_TIME, 0)
+                    - info.get(CurlInfo.CONNECT_TIME, 0),
+                )
+                * 1000,
+                (
+                    info.get(CurlInfo.STARTTRANSFER_TIME, 0)
+                    - info.get(CurlInfo.PRETRANSFER_TIME, 0)
+                )
+                * 1000,
+            )
             try:
                 if response.is_redirect:
                     location = response.headers.get("location")
@@ -205,4 +280,13 @@ async def _fetch_html(url: str, proxy: str | None) -> str:
                     return raw.decode("utf-8", errors="replace")
             finally:
                 await response.aclose()
+                logger.info(
+                    "contact_scraper.request: request=%s hop=%s status=%s "
+                    "duration_ms=%.2f body_wait_ms=%.2f",
+                    request_id,
+                    hop,
+                    response.status_code,
+                    (perf_counter() - started) * 1000,
+                    (perf_counter() - headers_at) * 1000,
+                )
     raise ContactScrapeError("scrape_contacts: 未取得目标页面")

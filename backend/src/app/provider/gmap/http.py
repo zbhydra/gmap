@@ -2,8 +2,9 @@
 
 import asyncio
 from time import perf_counter
+from uuid import uuid4
 
-from app.provider.gmap.rpc.client import GmapRpcClient
+from app.provider.gmap.rpc.client import GmapRequestState, GmapRpcClient
 from app.provider.gmap.rpc.entry import merge_entries
 from app.provider.gmap.rpc.parsers import (
     JsonValue,
@@ -84,15 +85,24 @@ class _GmapHttpProvider:
         hl: str,
         gl: str | None = None,
         ll: GmapViewport | None = None,
+        *,
+        request_id: str | None = None,
     ) -> GmapSearchResult:
         """完成常规深分页、browser 覆盖与未覆盖 fid 的 L2 补列。"""
         if not 1 <= max_depth <= 10:
             raise ValueError("search_places max_depth must be between 1 and 10")
         stage_started = perf_counter()
-        nid = await self._client.mint_nid(hl)
+        state = GmapRequestState(self._client.choose_proxy(), request_id or uuid4().hex)
+        logger.info(
+            "gmap_http.search: request=%s keyword=%r stage=start",
+            state.request_id,
+            keyword,
+        )
+        nid = await self._client.mint_nid(hl, state=state)
         cookie = self._cookie(nid)
         logger.info(
-            "gmap_http.search: keyword=%r stage=nid duration_ms=%.2f",
+            "gmap_http.search: request=%s keyword=%r stage=nid duration_ms=%.2f",
+            state.request_id,
             keyword,
             (perf_counter() - stage_started) * 1000,
         )
@@ -100,29 +110,49 @@ class _GmapHttpProvider:
         stage_started = perf_counter()
         regular_rows: list[dict[str, JsonValue]] = []
         seen: set[str] = set()
-        for page in range(max_depth):
+
+        async def fetch_page(page: int) -> list[dict[str, JsonValue]]:
             url = regular_search_url(keyword, page * 20, hl, gl, ll)
             body = await self._client.get(
                 url,
+                state=state,
                 cookie=cookie,
                 timeout=30,
                 retry_delay=lambda attempt: 1 + attempt,
                 accept=lambda value: self._accept_regular(value, ll),
             )
-            page_rows = parse_regular_response(body)
-            new_rows = [row for row in page_rows if row.get("fid") not in seen]
-            for row in new_rows:
-                fid = row.get("fid")
-                if isinstance(fid, str):
-                    seen.add(fid)
-            regular_rows.extend(new_rows)
-            if len(page_rows) < 20 or not new_rows:
-                break
-            if page + 1 < max_depth:
-                await asyncio.sleep(0.8)
+            return parse_regular_response(body)
+
+        pending: list[asyncio.Task[list[dict[str, JsonValue]]]] = []
+        try:
+            for page in range(max_depth):
+                if page == 0:
+                    page_rows = await fetch_page(0)
+                else:
+                    if not pending:
+                        pending = [
+                            asyncio.create_task(fetch_page(i))
+                            for i in range(1, max_depth)
+                        ]
+                    page_rows = await pending[page - 1]
+                new_rows = [row for row in page_rows if row.get("fid") not in seen]
+                for row in new_rows:
+                    fid = row.get("fid")
+                    if isinstance(fid, str):
+                        seen.add(fid)
+                regular_rows.extend(new_rows)
+                if len(page_rows) < 20 or not new_rows:
+                    break
+        finally:
+            # 后续页已并行发出；按页序早停后取消未使用请求，回收完成的异常。
+            for task in pending:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*pending, return_exceptions=True)
 
         logger.info(
-            "gmap_http.search: keyword=%r stage=regular duration_ms=%.2f records=%s",
+            "gmap_http.search: request=%s keyword=%r stage=regular duration_ms=%.2f records=%s",
+            state.request_id,
             keyword,
             (perf_counter() - stage_started) * 1000,
             len(regular_rows),
@@ -142,6 +172,7 @@ class _GmapHttpProvider:
                     browser_search_url(
                         BROWSER_SEARCH_TEMPLATE_URL, keyword, count, hl, gl, ll
                     ),
+                    state=state,
                     cookie=cookie,
                     timeout=60,
                     retry_delay=lambda attempt: 2 + attempt * 2,
@@ -158,14 +189,15 @@ class _GmapHttpProvider:
                 partial = True
                 warnings.append("browser pb supplement failed")
                 logger.error(
-                    "gmap_http_provider.search_places: browser pb supplement failed",
+                    "gmap_http_provider.search_places: request=%s browser pb supplement failed",
+                    state.request_id,
                     exc_info=True,
                 )
             count += 60
-            await asyncio.sleep(1)
         browser_rows.extend(browser_by_fid.values())
         logger.info(
-            "gmap_http.search: keyword=%r stage=browser duration_ms=%.2f records=%s",
+            "gmap_http.search: request=%s keyword=%r stage=browser duration_ms=%.2f records=%s",
+            state.request_id,
             keyword,
             (perf_counter() - stage_started) * 1000,
             len(browser_rows),
@@ -173,27 +205,43 @@ class _GmapHttpProvider:
 
         stage_started = perf_counter()
         l2_rows: dict[str, dict[str, JsonValue]] = {}
-        for fid in seen - browser_by_fid.keys():
+
+        async def fetch_l2(fid: str) -> dict[str, JsonValue] | None:
             try:
                 body = await self._client.get(
                     preview_place_url(fid, hl, gl),
+                    state=state,
                     cookie=cookie,
                     timeout=40,
                     retry_delay=lambda attempt: 1 + attempt,
                     accept=self._accept_l2,
                 )
-                l2_rows[fid] = parse_l2_response(body)
+                return parse_l2_response(body)
             except GmapProviderError:
-                partial = True
-                warnings.append(f"L2 supplement failed: fid={fid}")
                 logger.error(
-                    "gmap_http_provider.search_places: L2 supplement failed: fid=%s",
+                    "gmap_http_provider.search_places: request=%s L2 supplement failed: fid=%s",
+                    state.request_id,
                     fid,
                     exc_info=True,
                 )
+                return None
+
+        async with asyncio.TaskGroup() as group:
+            detail_tasks = {
+                fid: group.create_task(fetch_l2(fid))
+                for fid in seen - browser_by_fid.keys()
+            }
+        for fid, detail_task in detail_tasks.items():
+            detail_row = detail_task.result()
+            if detail_row is None:
+                partial = True
+                warnings.append(f"L2 supplement failed: fid={fid}")
+            else:
+                l2_rows[fid] = detail_row
 
         logger.info(
-            "gmap_http.search: keyword=%r stage=l2 duration_ms=%.2f records=%s",
+            "gmap_http.search: request=%s keyword=%r stage=l2 duration_ms=%.2f records=%s",
+            state.request_id,
             keyword,
             (perf_counter() - stage_started) * 1000,
             len(l2_rows),
@@ -216,6 +264,7 @@ class _GmapHttpProvider:
             raise ValueError("list_reviews sort_by must be between 1 and 4")
         body = await self._client.get(
             reviews_url(fid, sort_by, cursor, hl),
+            state=GmapRequestState(self._client.choose_proxy(), uuid4().hex),
             cookie=None,
             timeout=40,
             retry_delay=lambda attempt: 1 + attempt,

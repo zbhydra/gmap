@@ -136,7 +136,9 @@ class MapsOnlineProvider:
         warnings: list[str] = []
         if self.engine.provider == "http":
             await gmap_http_provider.initialize(self.engine)
-            result = await gmap_http_provider.search_places(keyword, 3, "en")
+            result = await gmap_http_provider.search_places(
+                keyword, 3, "en", request_id=f"{task_no}:{item_id}"
+            )
             entries = result.entries
             warnings.extend(result.warnings)
         else:

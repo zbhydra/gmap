@@ -6,7 +6,7 @@ import pytest
 from curl_cffi.requests import AsyncSession, Response
 
 import app.provider.gmap.rpc.client as client_module
-from app.provider.gmap.rpc.client import GmapRpcClient
+from app.provider.gmap.rpc.client import GmapRequestState, GmapRpcClient
 from app.provider.gmap.types import GmapRequestError
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
@@ -68,12 +68,26 @@ async def test_real_rpc_client_honors_concurrency_and_isolates_search_cookies(
     monkeypatch.setattr(AsyncSession, "get", local_google)
     client = GmapRpcClient()
     await client.initialize(["http://proxy.test:8000"], parallel)
-    calls = [asyncio.create_task(client.mint_nid("en")) for _ in range(parallel)]
+    calls = [
+        asyncio.create_task(
+            client.mint_nid(
+                "en", state=GmapRequestState(client.choose_proxy(), str(index))
+            )
+        )
+        for index in range(parallel)
+    ]
     try:
         await asyncio.wait_for(all_connected.wait(), timeout=5)
         release.set()
         nids = await asyncio.gather(*calls)
-        nids.extend([await client.mint_nid("en"), await client.mint_nid("en")])
+        nids.extend(
+            [
+                await client.mint_nid(
+                    "en", state=GmapRequestState(client.choose_proxy(), str(index))
+                )
+                for index in range(2)
+            ]
+        )
         assert len(set(nids)) == parallel + 2
         assert all(b"NID=" not in headers for headers in cookie_headers)
     finally:
@@ -91,7 +105,11 @@ class _Response:
     def __init__(self, status_code: int, text: str) -> None:
         self.status_code = status_code
         self.text = text
+        self.content = text.encode()
+        self.headers: dict[str, str] = {}
         self.cookies: dict[str, str] = {}
+        self.infos: dict = {}
+        self.url = "https://www.google.com/test"
 
 
 class _Session:
@@ -132,6 +150,7 @@ async def test_real_rpc_client_returns_successful_google_body(
 
     body = await client.get(
         "https://www.google.com/test",
+        state=GmapRequestState(client.choose_proxy(), "success"),
         cookie=None,
         timeout=30,
         retry_delay=lambda attempt: 0,
@@ -143,19 +162,84 @@ async def test_real_rpc_client_returns_successful_google_body(
 async def test_real_rpc_client_timeout_retries_with_another_proxy(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    client = await _client(monkeypatch, [asyncio.TimeoutError(), _Response(200, "ok")])
+    nid = _Response(200, "maps")
+    nid.cookies = {"NID": "item-nid"}
+    client = await _client(
+        monkeypatch,
+        [nid, asyncio.TimeoutError(), _Response(200, "ok"), _Response(200, "next")],
+    )
+    state = GmapRequestState(client.choose_proxy(), "retry")
+    assert await client.mint_nid("en", state=state) == "item-nid"
 
     assert (
         await client.get(
             "https://www.google.com/test",
+            state=state,
             cookie=None,
             timeout=30,
             retry_delay=lambda attempt: 0,
         )
         == "ok"
     )
-    assert len(_Session.proxies) == 2
-    assert _Session.proxies[0] != _Session.proxies[1]
+    assert (
+        await client.get(
+            "https://www.google.com/next",
+            state=state,
+            cookie="NID=item-nid",
+            timeout=30,
+            retry_delay=lambda attempt: 0,
+        )
+        == "next"
+    )
+    assert len(_Session.proxies) == 4
+    assert _Session.proxies[0] == _Session.proxies[1]
+    assert _Session.proxies[1] != _Session.proxies[2]
+    assert _Session.proxies[2] == _Session.proxies[3] == state.proxy
+
+
+async def test_real_rpc_parallel_failures_keep_the_already_switched_proxy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = await _client(monkeypatch, [])
+    state = GmapRequestState(client.choose_proxy(), "parallel-retry")
+    initial = state.proxy
+    both_started = asyncio.Event()
+    switched = asyncio.Event()
+    used: list[str] = []
+
+    async def get(
+        _session: _Session, url: str, *, proxy: str, **kwargs: object
+    ) -> _Response:
+        used.append(proxy)
+        if proxy == initial:
+            if len(used) == 2:
+                both_started.set()
+            await both_started.wait()
+            if url.endswith("/b"):
+                await switched.wait()
+            raise asyncio.TimeoutError
+        switched.set()
+        return _Response(200, "ok")
+
+    monkeypatch.setattr(_Session, "get", get)
+    results = await asyncio.wait_for(
+        asyncio.gather(
+            *(
+                client.get(
+                    f"https://www.google.com/{name}",
+                    state=state,
+                    cookie=None,
+                    timeout=30,
+                    retry_delay=lambda attempt: 0,
+                )
+                for name in ("a", "b")
+            )
+        ),
+        1,
+    )
+    assert results == ["ok", "ok"] and state.sequence == 4
+    assert used[:2] == [initial, initial]
+    assert used[2:] == [state.proxy, state.proxy] and state.proxy != initial
 
 
 @pytest.mark.parametrize(
@@ -176,6 +260,7 @@ async def test_real_rpc_client_maps_exhausted_google_failures(
     with pytest.raises(GmapRequestError, match="exhausted retries") as caught:
         await client.get(
             "https://www.google.com/test",
+            state=GmapRequestState(client.choose_proxy(), "failure"),
             cookie=None,
             timeout=30,
             retry_delay=lambda attempt: 0,

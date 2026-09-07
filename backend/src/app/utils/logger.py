@@ -98,3 +98,6 @@ def setup_logger(
 
 # 创建默认日志记录器
 logger = setup_logger("server")
+
+# 独立采集库只发标准日志，由宿主接入现有输出配置。
+setup_logger("contact_scraper")

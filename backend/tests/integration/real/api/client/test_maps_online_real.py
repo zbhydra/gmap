@@ -151,7 +151,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
     async def google_get(_self: AsyncSession, url: str, **kwargs: object) -> _Response:
         if url.startswith("https://www.google.com/maps?hl="):
             return _Response(200, "maps", nid="test-nid")
-        assert "maps.google.com" in url
+        assert url.startswith("https://www.google.com/search?authuser=")
         await release.wait()
         return _Response(200, _EMPTY_REGULAR)
 

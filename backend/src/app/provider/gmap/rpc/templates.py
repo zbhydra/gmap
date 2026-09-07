@@ -64,7 +64,7 @@ def regular_search_url(
     """构造经生产验证的 `!7i20!8i{offset}` 常规分页 URL。"""
     region = f"&gl={quote_plus(gl)}" if gl else ""
     return (
-        f"https://maps.google.com/search?authuser=0&hl={quote_plus(hl)}{region}"
+        f"https://www.google.com/search?authuser=0&hl={quote_plus(hl)}{region}"
         f"&pb={viewport_block(ll)}%217i20%218i{offset}{REGULAR_TAIL}"
         f"&q={quote_plus(keyword)}"
     )

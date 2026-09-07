@@ -157,8 +157,12 @@ Provider 技术错误统一继承 `GmapProviderError`；不在本层映射用户
 - NID、常规 pb、浏览器级 pb、L2 和 Reviews 的每个 Google 请求都先取得同一个进程级 `asyncio.Semaphore`。
 - `gmap_engine.concurrency` 表示**每个 business 进程**的 Google 出站并发数。多实例多进程总上限为 `实例数 × 每实例进程数 × concurrency`；本期不增加集群级分布式并发控制。
 - 底层 HTTP 连接池与信号量使用同一并发预算，不叠加库默认连接数上限。连接可以复用，Cookie 不跨 Search 累积；NID 及后续请求的 Cookie 由本次 Search 显式传递。
-- 每个 Google 请求从代理列表等概率随机选择一条。重试时存在其他代理则排除本次失败代理；只有一条时继续使用同一条。
+- 每次 Search 开始时随机选择一条代理，NID、分页和补列沿用该代理与本次 Cookie；失败重试时才切换代理，后续请求继续使用切换后的代理。只有一条代理时继续使用原代理。独立 Reviews 调用按一次请求选择代理。
+- NID、常规分页与补列统一使用 `www.google.com`，复用现有 HTTP 会话及底层连接。是否真正复用以请求日志的连接 ID 和新建连接数为准；对端主动关闭或重试切换仍可能建立新连接。
+- `gmap_rpc.request` 按请求标识和序号记录代理、连接 ID、新建连接数、HTTP 版本、排队、DNS、TCP、隧道/TLS、首字节、正文传输及总耗时；`gmap_rpc.retry` 记录切换原因和等待。Online 的请求标识由任务编号与 item ID 组成。
 - 请求 timeout 和最多 3 次尝试使用脱敏入库的生产脚本参数，不从压测摘要反推。
+- 常规分页在首屏确认需要后续页后并行预取，按页序消费、去重和判断早停；未使用的在途页取消。多个缺失商家的 L2 请求并行执行。请求继续共享配置的出站预算，不增加独立限流器。
+- 压缩由 HTTP 库协商 gzip/Brotli；不强制覆盖 `Accept-Encoding`。分页和正常补列扩页不额外插入固定等待，失败重试仍使用既有退避。
 - 日志和异常只能记录脱敏后的 scheme、host、port，不得包含用户名、密码、完整代理 URL、NID 或上游响应正文。
 
 ## 6. gosom Provider

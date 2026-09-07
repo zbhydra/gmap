@@ -23,6 +23,7 @@ class _Page:
         self.is_redirect = location is not None
         self.status_code = 302 if location else 200
         self.headers = {"location": location} if location else {}
+        self.infos: dict = {}
 
     async def aiter_content(self) -> AsyncIterator[bytes]:
         yield (
@@ -43,6 +44,68 @@ class _Page:
 
     async def aclose(self) -> None:
         pass
+
+
+async def test_real_contacts_reuses_connection_across_same_host_redirect(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """只替换 HTTP 目的地，实际 curl 连续两跳必须复用同一条 TCP 连接。"""
+    connections = 0
+    requests = 0
+    closed = asyncio.Event()
+
+    async def respond(
+        reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
+        nonlocal connections, requests
+        connections += 1
+        try:
+            while True:
+                try:
+                    await reader.readuntil(b"\r\n\r\n")
+                except asyncio.IncompleteReadError:
+                    return
+                requests += 1
+                body = (
+                    b"moved"
+                    if requests == 1
+                    else b'<a href="mailto:owner@merchant.test">email</a>'
+                )
+                status = (
+                    b"302 Found\r\nLocation: /contact" if requests == 1 else b"200 OK"
+                )
+                writer.write(
+                    b"HTTP/1.1 "
+                    + status
+                    + b"\r\nContent-Length: "
+                    + str(len(body)).encode()
+                    + b"\r\nConnection: keep-alive\r\n\r\n"
+                    + body
+                )
+                await writer.drain()
+        finally:
+            writer.close()
+            await writer.wait_closed()
+            closed.set()
+
+    server = await asyncio.start_server(respond, "127.0.0.1", 0)
+    port = server.sockets[0].getsockname()[1]
+    original_get = AsyncSession.get
+
+    async def local_site(session: AsyncSession, url: str, *, stream: bool):
+        return await original_get(
+            session, f"http://127.0.0.1:{port}/", stream=stream, proxy=""
+        )
+
+    monkeypatch.setattr(AsyncSession, "get", local_site)
+    try:
+        result = await scrape_contacts("http://1.1.1.1/start", proxy=None)
+        await asyncio.wait_for(closed.wait(), 1)
+        assert result.emails == ["owner@merchant.test"]
+        assert requests == 2 and connections == 1
+    finally:
+        server.close()
+        await server.wait_closed()
 
 
 async def test_real_contacts_preserves_path_proxy_safety_and_cancellation(
