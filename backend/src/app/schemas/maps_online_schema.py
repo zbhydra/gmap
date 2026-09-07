@@ -7,6 +7,18 @@ from pydantic import BaseModel, Field, field_validator
 from app.models.maps_online_task_model import MapsOnlineTaskModel
 
 
+class MapsOnlinePreviewRequest(BaseModel):
+    keyword: str
+
+    @field_validator("keyword")
+    @classmethod
+    def normalize_keyword(cls, keyword: str) -> str:
+        keyword = keyword.strip()
+        if not 1 <= len(keyword) <= 500 or len(keyword.splitlines()) != 1:
+            raise ValueError("关键词须为 1–500 字符的单行文本")
+        return keyword
+
+
 class MapsOnlineCreateRequest(BaseModel):
     keywords: list[str]
     include_contacts: bool = True

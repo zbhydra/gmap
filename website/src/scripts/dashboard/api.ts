@@ -14,7 +14,36 @@ import {
   postJson,
   type RequestContext
 } from '../homepage/api'
+import type { JsonValue } from '../homepage/api'
 import { notifySessionExpired } from '../site/session'
+
+export interface OnlineOptions {
+  keyword_limit: number
+  contacts_allowed: boolean
+  usage: { used: number; total: number; period: string; exhausted: boolean }
+}
+
+export function getOnlineOptions(context: RequestContext): Promise<OnlineOptions> {
+  return withSessionExpiry(getJson<JsonValue>('/api/client/maps-online/options', context).then(data => {
+    if (!data || typeof data !== 'object' || Array.isArray(data)
+      || typeof data.keyword_limit !== 'number' || typeof data.contacts_allowed !== 'boolean') {
+      throw new Error('dashboard options: invalid creation constraints')
+    }
+    const usage = data.usage
+    if (!usage || typeof usage !== 'object' || Array.isArray(usage)
+      || typeof usage.used !== 'number' || typeof usage.total !== 'number'
+      || typeof usage.period !== 'string' || typeof usage.exhausted !== 'boolean') {
+      throw new Error('dashboard options: invalid monthly usage')
+    }
+    return { keyword_limit: data.keyword_limit, contacts_allowed: data.contacts_allowed,
+      usage: { used: usage.used, total: usage.total, period: usage.period, exhausted: usage.exhausted } }
+  }))
+}
+
+export function createOnlineTask(context: RequestContext, keywords: string[], includeContacts: boolean): Promise<OnlineTaskSummary> {
+  return withSessionExpiry(postJson<OnlineTaskSummary>('/api/client/maps-online/tasks', context,
+    { keywords, include_contacts: includeContacts }))
+}
 
 /** Online 任务公开摘要（后端 MapsOnlineTaskSummary）。 */
 export interface OnlineTaskSummary {

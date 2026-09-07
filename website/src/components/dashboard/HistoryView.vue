@@ -1,12 +1,11 @@
 <script setup lang="ts">
 /**
- * 在线导出历史视图：列表（最新在前，每页 20，手动刷新）、行内关键词明细
- * 展开与单项 CSV / 整包 ZIP 下载。只消费历史与下载，不接任务创建。
+ * Online 创建与历史：复用实时权益，串行刷新处理中任务及展开明细。
  *
  * 展开失败只影响该任务，下载失败只影响该操作；后端只公开任务两态，不
  * 展示接口没有提供的成功或失败结论。
  */
-import { onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
 import {
   downloadOnlineTaskZip,
@@ -14,6 +13,9 @@ import {
   getOnlineTaskDetail,
   isOnlineDownloadUnavailable,
   listOnlineTasks,
+  createOnlineTask,
+  getOnlineOptions,
+  type OnlineOptions,
   type OnlineTaskDetailResponse,
   type OnlineTaskSummary
 } from '../../scripts/dashboard/api'
@@ -51,6 +53,53 @@ const total = ref(0)
 const offset = ref(0)
 const loading = ref(false)
 const loadError = ref(false)
+const options = ref<OnlineOptions | null>(null)
+const optionsLoading = ref(false)
+const optionsError = ref(false)
+const keywordsText = ref('')
+const includeContacts = ref(true)
+const submitting = ref(false)
+const submitError = ref(false)
+const keywords = computed(() => [...new Set(keywordsText.value.split(/\r?\n/).map(word => word.trim()).filter(Boolean))])
+const invalid = computed(() => !options.value || keywords.value.length > options.value.keyword_limit || keywords.value.some(word => word.length > 500))
+let pollTimer: ReturnType<typeof setTimeout> | undefined
+let disposed = false
+
+async function loadOptions(): Promise<void> {
+  optionsLoading.value = true
+  optionsError.value = false
+  try {
+    options.value = await getOnlineOptions(context())
+    if (!options.value.contacts_allowed) includeContacts.value = false
+  } catch (error) {
+    console.error(new Error('dashboard creation: options failed', { cause: error }))
+    options.value = null
+    optionsError.value = true
+  } finally {
+    optionsLoading.value = false
+  }
+}
+
+async function submitTask(): Promise<void> {
+  if (submitting.value || loading.value || !keywords.value.length || invalid.value || options.value?.usage.exhausted) return
+  submitting.value = true
+  clearTimeout(pollTimer)
+  submitError.value = false
+  let nextOffset = offset.value
+  try {
+    await createOnlineTask(context(), keywords.value, includeContacts.value && !!options.value?.contacts_allowed)
+    keywordsText.value = ''
+    expanded.value = new Set()
+    details.value = new Map()
+    nextOffset = 0
+  } catch (error) {
+    console.error(new Error('dashboard creation: submission failed', { cause: error }))
+    submitError.value = true
+  } finally {
+    submitting.value = false
+    await loadPage(nextOffset)
+  }
+}
 
 /** 展开中的任务明细（按任务号独立加载，互不影响）。 */
 const details = ref<Map<string, OnlineTaskDetailResponse>>(new Map())
@@ -90,18 +139,31 @@ function paginationSummary(): string {
 }
 
 async function loadPage(nextOffset: number): Promise<void> {
+  if (loading.value || submitting.value || disposed) return
+  clearTimeout(pollTimer)
   loading.value = true
   loadError.value = false
   try {
     const data = await listOnlineTasks(context(), nextOffset, PAGE_SIZE)
+    if (disposed) return
+    const processing = new Set(tasks.value.filter(task => task.status === 'processing').map(task => task.task_no))
     tasks.value = data.tasks
     total.value = data.total
     offset.value = data.offset
+    for (const task of data.tasks) {
+      if (expanded.value.has(task.task_no) && (task.status === 'processing' || processing.has(task.task_no))) {
+        if (!await loadDetail(task.task_no)) throw new Error(`dashboard polling: detail failed task_no=${task.task_no}`)
+      }
+    }
+    if (data.tasks.some(task => task.status === 'completed' && processing.has(task.task_no))) await loadOptions()
   } catch (error) {
     console.error(new Error('[dashboard-history] load tasks failed.', { cause: error }))
     loadError.value = true
   } finally {
     loading.value = false
+    if (!disposed && !loadError.value && tasks.value.some(task => task.status === 'processing')) {
+      pollTimer = setTimeout(() => { void loadPage(offset.value) }, 5000)
+    }
   }
 }
 
@@ -115,9 +177,7 @@ async function toggleDetail(taskNo: string): Promise<void> {
     return
   }
   expanded.value = new Set(expanded.value).add(taskNo)
-  if (!details.value.has(taskNo)) {
-    await loadDetail(taskNo)
-  }
+  await loadDetail(taskNo)
 }
 
 /** 明细加载失败只影响该任务；重试直接重新请求。 */
@@ -126,16 +186,19 @@ async function retryDetail(taskNo: string): Promise<void> {
   await loadDetail(taskNo)
 }
 
-async function loadDetail(taskNo: string): Promise<void> {
+async function loadDetail(taskNo: string): Promise<boolean> {
   detailLoading.value = new Set(detailLoading.value).add(taskNo)
   try {
     const detail = await getOnlineTaskDetail(context(), taskNo)
     const next = new Map(details.value)
     next.set(taskNo, detail)
     details.value = next
+    detailErrors.value = new Set([...detailErrors.value].filter(item => item !== taskNo))
+    return true
   } catch (error) {
     console.error(new Error(`[dashboard-history] load task detail failed: task_no=${taskNo}`, { cause: error }))
     detailErrors.value = new Set(detailErrors.value).add(taskNo)
+    return false
   } finally {
     const nextLoading = new Set(detailLoading.value)
     nextLoading.delete(taskNo)
@@ -223,15 +286,41 @@ function triggerAnchorDownload(url: string, filename: string): void {
 }
 
 onMounted(() => {
+  void loadOptions()
   void loadPage(0)
+})
+onBeforeUnmount(() => {
+  disposed = true
+  clearTimeout(pollTimer)
 })
 </script>
 
 <template>
   <section class="history" aria-labelledby="dashboard-history-title">
+    <form class="create-form" @submit.prevent="submitTask">
+      <h1>{{ props.copy.create.title }}</h1>
+      <p v-if="optionsLoading" role="status">{{ props.copy.create.loading }}</p>
+      <div v-else-if="optionsError" role="alert">
+        <p>{{ props.copy.create.optionsFailed }}</p>
+        <button type="button" class="history-download" @click="loadOptions">{{ props.copy.history.retry }}</button>
+      </div>
+      <template v-if="options">
+        <p class="history-status">{{ props.copy.create.usage.replace('{used}', String(options.usage.used)).replace('{total}', String(options.usage.total)) }}</p>
+        <p class="history-status">{{ props.copy.create.reset }}</p>
+        <label for="online-keywords">{{ props.copy.create.keywords }}</label>
+        <textarea id="online-keywords" v-model="keywordsText" rows="4" required :placeholder="props.copy.create.placeholder" :disabled="submitting" />
+        <p class="history-status" aria-live="polite">{{ props.copy.create.count.replace('{count}', String(keywords.length)).replace('{limit}', String(options.keyword_limit)) }}</p>
+        <label class="create-contacts"><input v-model="includeContacts" type="checkbox" :disabled="!options.contacts_allowed || submitting" />{{ props.copy.create.contacts }}</label>
+        <p v-if="!options.contacts_allowed" class="history-status">{{ props.copy.create.contactsPaid }}</p>
+        <p v-if="options.usage.exhausted" class="create-error" role="alert">{{ props.copy.create.exhausted }}</p>
+        <p v-else-if="invalid" class="create-error" role="alert">{{ props.copy.create.invalid.replace('{limit}', String(options.keyword_limit)) }}</p>
+        <button type="submit" class="history-primary" :disabled="submitting || loading || optionsLoading || options.usage.exhausted || !keywords.length || invalid">{{ submitting ? props.copy.create.submitting : props.copy.create.submit }}</button>
+      </template>
+      <p v-if="submitError" class="create-error" role="alert">{{ props.copy.create.failed }}</p>
+    </form>
     <header class="history-head">
       <div>
-        <h1 id="dashboard-history-title">{{ props.copy.history.title }}</h1>
+        <h2 id="dashboard-history-title">{{ props.copy.history.title }}</h2>
         <p class="history-description">{{ props.copy.history.description }}</p>
       </div>
       <button
@@ -385,6 +474,14 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.create-form { display: grid; gap: var(--space-3); padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
+.create-form h1 { font-size: 24px; line-height: 32px; letter-spacing: 0; }
+.create-form textarea { width: 100%; min-height: 112px; padding: var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--rounded-sm); background: var(--surface); color: var(--text); font: inherit; resize: vertical; }
+.create-form textarea:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.create-contacts { display: flex; gap: var(--space-2); align-items: center; }
+.create-form button { justify-self: start; }
+.create-form button:disabled { opacity: .55; cursor: not-allowed; }
+.create-error { color: var(--bad); font-size: 14px; }
 .history {
   display: grid;
   /* minmax(0, 1fr)：阻止 nowrap 表格内容把 grid 列最小宽撑破视口（移动端横滚收进表格容器内） */
@@ -400,7 +497,7 @@ onMounted(() => {
   gap: var(--space-4);
 }
 
-.history-head h1 {
+.history-head h2 {
   font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.015em;

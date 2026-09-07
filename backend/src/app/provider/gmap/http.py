@@ -112,16 +112,7 @@ class _GmapHttpProvider:
         seen: set[str] = set()
 
         async def fetch_page(page: int) -> list[dict[str, JsonValue]]:
-            url = regular_search_url(keyword, page * 20, hl, gl, ll)
-            body = await self._client.get(
-                url,
-                state=state,
-                cookie=cookie,
-                timeout=30,
-                retry_delay=lambda attempt: 1 + attempt,
-                accept=lambda value: self._accept_regular(value, ll),
-            )
-            return parse_regular_response(body)
+            return await self._regular_page(keyword, page, hl, gl, ll, state, cookie)
 
         pending: list[asyncio.Task[list[dict[str, JsonValue]]]] = []
         try:
@@ -251,6 +242,41 @@ class _GmapHttpProvider:
             partial=partial,
             warnings=warnings,
         )
+
+    async def _regular_page(
+        self,
+        keyword: str,
+        page: int,
+        hl: str,
+        gl: str | None,
+        ll: GmapViewport | None,
+        state: GmapRequestState,
+        cookie: str,
+    ) -> list[dict[str, JsonValue]]:
+        body = await self._client.get(
+            regular_search_url(keyword, page * 20, hl, gl, ll),
+            state=state,
+            cookie=cookie,
+            timeout=30,
+            retry_delay=lambda attempt: 1 + attempt,
+            accept=lambda value: self._accept_regular(value, ll),
+        )
+        return parse_regular_response(body)
+
+    async def preview_places(self, keyword: str, hl: str = "en") -> GmapSearchResult:
+        """只读常规首屏，复用字段映射与 fid 去重，不进入任何补全步骤。"""
+        state = GmapRequestState(self._client.choose_proxy(), uuid4().hex)
+        nid = await self._client.mint_nid(hl, state=state)
+        rows = await self._regular_page(
+            keyword, 0, hl, None, None, state, self._cookie(nid)
+        )
+        entries = merge_entries(keyword, rows, [], {})[:20]
+        logger.info(
+            "gmap_http.preview: request=%s pages=1 records=%s",
+            state.request_id,
+            len(entries),
+        )
+        return GmapSearchResult(entries=entries)
 
     async def list_reviews(
         self,

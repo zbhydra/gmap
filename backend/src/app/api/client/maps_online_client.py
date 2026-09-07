@@ -1,9 +1,10 @@
 """Online 任务入口：登录、创建约束、归属校验与结果下载。"""
 
+import asyncio
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from starlette.background import BackgroundTask
 
@@ -13,19 +14,95 @@ from app.constants.subscription import MAPS_ONLINE_PRODUCT_KIND
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.models.maps_online_task_model import MapsOnlineTaskModel
+from app.provider.gmap.http import gmap_http_provider
+from app.provider.gmap.types import GmapProviderError
 from app.schemas.maps_online_schema import (
     MapsOnlineCreateRequest,
     MapsOnlineItemSummary,
+    MapsOnlinePreviewRequest,
     MapsOnlineTaskSummary,
 )
 from app.services.maps_engine_service import maps_engine_service
 from app.services.maps_online_task_service import maps_online_task_service
 from app.services.object_storage_config_service import object_storage_config_service
 from app.services.subscription_service import subscription_service
-from app.services.usage_service import online_usage_service, usage_identity
+from app.services.usage_service import (
+    online_usage_service,
+    usage_identity,
+    usage_payload,
+)
+from app.utils.common import get_client_ip
+from app.utils.redis_fixed_limiter import RedisFixedLimiter
 from app.utils.response import ResponseUtils
 
-router = APIRouter(prefix="/maps-online/tasks", tags=["Online 任务"])
+router = APIRouter(prefix="/maps-online", tags=["Online 任务"])
+# 限流沿用 Redis 故障放行语义，独立计数不参与账号用量。
+_preview_limiter = RedisFixedLimiter(key_prefix="maps_online_preview")
+
+
+@router.post("/preview")
+async def preview(request: Request, payload: MapsOnlinePreviewRequest) -> JSONResponse:
+    ip = get_client_ip(request)
+    if not ip:
+        raise AppCommonException(
+            CommonCode.INVALID_REQUEST, ext_msg="maps_online.preview: 无法获取客户端 IP"
+        )
+    if not await _preview_limiter.is_allowed(ip, limit=3, window=60):
+        raise AppCommonException(
+            CommonCode.RATE_LIMIT_EXCEEDED,
+            ext_msg=f"maps_online.preview: 每分钟预览次数超限 ip={ip}",
+        )
+    try:
+        async with asyncio.timeout(15):
+            await gmap_http_provider.initialize(await maps_engine_service.get_config())
+            result = await gmap_http_provider.preview_places(payload.keyword)
+    except (TimeoutError, GmapProviderError) as exc:
+        raise AppCommonException(
+            CommonCode.INTERNAL_SERVER_ERROR,
+            ext_msg=f"maps_online.preview: 首屏采集失败 error={type(exc).__name__}",
+        ) from exc
+    response = ResponseUtils.ok(
+        {
+            "count": len(result.entries),
+            "rows": [
+                {
+                    "name": entry.name,
+                    "address": entry.full_address,
+                    "category": ", ".join(entry.categories) or None,
+                    "rating": entry.average_rating,
+                    "review_count": entry.review_count,
+                    "phone": entry.phone,
+                }
+                for entry in result.entries[:3]
+            ],
+        }
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+async def _creation_rights(user_id: int) -> tuple[int, bool]:
+    subscription, product = await subscription_service.get_user_subscription_config(
+        user_id, MAPS_ONLINE_PRODUCT_KIND
+    )
+    return KEYWORD_LIMITS[product.product_id], subscription.expires_at is not None
+
+
+@router.get("/options")
+async def options(
+    current_user: UserContext = Depends(get_current_user),
+) -> JSONResponse:
+    limit, contacts_allowed = await _creation_rights(current_user.user_id)
+    usage = await online_usage_service.get_usage(
+        usage_identity(current_user.user_id, None), user_id=current_user.user_id
+    )
+    return ResponseUtils.ok(
+        {
+            "keyword_limit": limit,
+            "contacts_allowed": contacts_allowed,
+            "usage": usage_payload(usage),
+        }
+    )
 
 
 async def _user_task(task_no: str, user_id: int) -> MapsOnlineTaskModel:
@@ -38,15 +115,12 @@ async def _user_task(task_no: str, user_id: int) -> MapsOnlineTaskModel:
     return task
 
 
-@router.post("")
+@router.post("/tasks")
 async def create_task(
     request: MapsOnlineCreateRequest,
     current_user: UserContext = Depends(get_current_user),
 ) -> JSONResponse:
-    subscription, product = await subscription_service.get_user_subscription_config(
-        current_user.user_id, MAPS_ONLINE_PRODUCT_KIND
-    )
-    limit = KEYWORD_LIMITS[product.product_id]
+    limit, contacts_allowed = await _creation_rights(current_user.user_id)
     if len(request.keywords) > limit:
         raise AppCommonException(
             CommonCode.VALIDATION_ERROR,
@@ -61,7 +135,7 @@ async def create_task(
             ext_msg=f"maps_online.create_task: 当前额度已耗尽 user_id={current_user.user_id}",
         )
     engine = await maps_engine_service.get_config()
-    include_contacts = request.include_contacts and subscription.expires_at is not None
+    include_contacts = request.include_contacts and contacts_allowed
     if include_contacts and not engine.proxies:
         raise AppCommonException(
             CommonCode.INTERNAL_SERVER_ERROR,
@@ -83,7 +157,7 @@ async def create_task(
     return ResponseUtils.ok(MapsOnlineTaskSummary.from_task(task).model_dump())
 
 
-@router.get("")
+@router.get("/tasks")
 async def list_tasks(
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1),
@@ -105,7 +179,7 @@ async def list_tasks(
     )
 
 
-@router.get("/{task_no}")
+@router.get("/tasks/{task_no}")
 async def task_detail(
     task_no: str, current_user: UserContext = Depends(get_current_user)
 ) -> JSONResponse:
@@ -124,7 +198,7 @@ async def task_detail(
     )
 
 
-@router.get("/{task_no}/items/{item_id}/download")
+@router.get("/tasks/{task_no}/items/{item_id}/download")
 async def download_item(
     task_no: str,
     item_id: int,
@@ -149,7 +223,7 @@ async def download_item(
     return ResponseUtils.ok({"url": url, "filename": filename})
 
 
-@router.get("/{task_no}/download")
+@router.get("/tasks/{task_no}/download")
 async def download_task(
     task_no: str, current_user: UserContext = Depends(get_current_user)
 ) -> FileResponse:

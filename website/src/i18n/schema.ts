@@ -222,7 +222,7 @@ export interface HomePageContent {
     description: string
     /** 卖点行（操作卡上方的短卖点，逐条带对勾图标）。 */
     highlights: readonly string[]
-    /** 在线导出操作卡（Online 功能未落地：主按钮为 aria-disabled 占位，点击无效）。 */
+    /** 匿名首屏预览。 */
     scraperCard: {
       /** 卡片标签（输入区标题）。 */
       label: string
@@ -232,10 +232,20 @@ export interface HomePageContent {
       textareaLabel: string
       /** 预填示例关键词（逐行一条，仅作输入示范）。 */
       sampleKeywords: readonly string[]
-      /** 主按钮文案（占位无效）。 */
+      /** 预览提交按钮。 */
       submitLabel: string
-      /** 卡片脚注（说明 Online 排期并引导插件）。 */
+      /** 匿名预览范围。 */
       note: string
+      /** 预览状态与登录入口。 */
+      loading: string
+      failed: string
+      empty: string
+      count: string
+      signIn: string
+      dashboard: string
+      locked: string
+      /** 六字段列名。 */
+      columns: { name: string; address: string; category: string; rating: string; review_count: string; phone: string }
     }
     /** 主 CTA（安装，指向下载页）。 */
     primaryCta: string
@@ -601,6 +611,24 @@ export interface PricingPageContent {
 
 /** 用户 Dashboard 工作区文案（侧栏 + 历史 / API / 订阅三视图，015 U2）。 */
 export interface DashboardContent {
+  /** 正式任务创建表单。 */
+  create: {
+    title: string
+    keywords: string
+    placeholder: string
+    count: string
+    contacts: string
+    contactsPaid: string
+    usage: string
+    reset: string
+    loading: string
+    optionsFailed: string
+    submit: string
+    submitting: string
+    failed: string
+    exhausted: string
+    invalid: string
+  }
   /** 工作区页面 SEO 元信息（noindex 页仅作 title/description 展示）。 */
   seo: {
     /** HTML title。 */

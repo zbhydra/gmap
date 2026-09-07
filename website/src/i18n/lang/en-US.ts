@@ -75,17 +75,20 @@ export const enUS: SiteContent = {
           'CSV & JSON export'
         ],
         scraperCard: {
-          label: 'Enter your keywords',
-          hint: 'One keyword or Google Maps URL per line',
-          textareaLabel: 'Keywords, one per line',
-          sampleKeywords: [
-            'coffee shop in Portland',
-            'restaurant in Austin',
-            'hotel near Central Park, NY'
-          ],
-          submitLabel: 'Start scraping free',
-          note:
-            'The hosted Online Scraper is rolling out — until then, the browser extension grabs the same data while you browse.'
+          label: 'Search Google Maps',
+          hint: 'Business type and location',
+          textareaLabel: 'Search keyword',
+          sampleKeywords: ['coffee shop in Portland'],
+          submitLabel: 'Preview results',
+          note: 'Preview up to 3 rows from the first results page. Sign in to run a full task and export CSV.',
+          loading: 'Searching...',
+          failed: 'Could not load the preview. Please try again.',
+          empty: 'No businesses found on the first results page.',
+          count: '{count} businesses on the first results page',
+          signIn: 'Sign in to start a full task',
+          dashboard: 'Open Online Scraper',
+          locked: 'Sign in and submit your keywords in Online Scraper to collect and export results.',
+          columns: { name: 'Name', address: 'Address', category: 'Category', rating: 'Rating', review_count: 'Reviews', phone: 'Phone' }
         },
         primaryCta: 'Install MapsGrab',
         secondaryCta: 'See what it grabs'
@@ -120,9 +123,9 @@ export const enUS: SiteContent = {
             description:
               'A hosted version of the same extraction engine. Paste keywords, get results — no browser required.',
             bullets: [
-              'Keyword and review-URL cloud tasks',
-              'Same 36-column schema as the extension',
-              'CSV / JSON export with field selection'
+              'Batch keyword tasks in the cloud',
+              'Business details with optional contact enrichment',
+              'Per-keyword CSV and task ZIP downloads'
             ],
             ctaLabel: 'Explore the Online Scraper',
             href: '/online-scraper/'
@@ -586,13 +589,13 @@ export const enUS: SiteContent = {
       seo: {
         title: 'Online Google Maps Scraper — Run Extraction in the Cloud | MapsGrab',
         description:
-          'The MapsGrab Online Scraper runs the same extraction engine as the extension in the cloud: paste keywords, collect business data, reviews, and photos, and download CSV or JSON.'
+          'Run Google Maps keyword searches in the cloud, collect business data, and download CSV files or a ZIP bundle.'
       },
       hero: {
         eyebrow: 'Online scraper',
         title: 'Google Maps extraction in the cloud, no install',
         description:
-          'The Online Scraper is the hosted version of the MapsGrab extraction engine. Queue keywords or review URLs, let the cloud do the scrolling and collecting, and download clean CSV or JSON files.',
+          'Submit keywords, collect business details in the cloud, and download CSV files or a ZIP bundle from your dashboard.',
         primaryCta: 'Start scraping',
         secondaryCta: 'View pricing',
         visualLabel:
@@ -602,22 +605,22 @@ export const enUS: SiteContent = {
         eyebrow: 'Capabilities',
         title: 'What the Online Scraper does',
         description:
-          'The same 36-column extraction schema as the browser extension, executed on cloud infrastructure so nothing runs on your machine.',
+          'Business details collected in the cloud, with optional emails and social profiles on paid plans.',
         items: [
           {
             title: 'Keyword tasks',
             description:
-              'Paste a list of Google Maps keywords — one search per keyword, with automatic scrolling to load every result, just like the extension.'
+              'Submit business types and locations as separate keywords. Your plan determines the keyword limit and monthly record quota.'
           },
           {
-            title: 'Review-URL tasks',
+            title: 'Task history',
             description:
-              'Queue business pages by URL to collect their reviews: author, rating, text, date, photos, and owner replies.'
+              'Follow task progress and view the record count for each keyword in your dashboard.'
           },
           {
-            title: 'The 36-column business schema',
+            title: 'Business details',
             description:
-              'Name, address, phone, website, rating, hours, coordinates, Place ID, and more — identical to the extension output.'
+              'Collect names, addresses, phone numbers, websites, ratings, hours, coordinates, and place identifiers when available.'
           },
           {
             title: 'Email and social enrichment',
@@ -625,9 +628,9 @@ export const enUS: SiteContent = {
               'With a paid Online plan, business websites are checked for email addresses and social profiles by default. You can turn this off for each task.'
           },
           {
-            title: 'CSV / JSON export',
+            title: 'CSV and ZIP downloads',
             description:
-              'Download exactly the columns you need, deduplicated by Place ID across runs.'
+              'Download a CSV for each keyword or all available files as one ZIP bundle.'
           },
           {
             title: 'Nothing to install',
@@ -642,7 +645,7 @@ export const enUS: SiteContent = {
           {
             question: 'How is the Online Scraper different from the extension?',
             answer:
-              'The extension runs inside your browser while you browse Google Maps; the Online Scraper runs the same extraction engine on cloud infrastructure, so you can queue keywords and walk away. The output schema is identical.'
+              'The extension collects data in your browser. Online Scraper runs keyword tasks in the cloud and keeps the results in your dashboard.'
           },
           {
             question: 'Where does the data come from, and is it legal to collect?',
@@ -652,7 +655,7 @@ export const enUS: SiteContent = {
           {
             question: 'What formats can I export to?',
             answer:
-              'Exports come as CSV or JSON with the field selection you choose, deduplicated by Place ID. Optional delivery to your Google Drive or HubSpot account is supported when connected.'
+              'Each keyword produces a CSV file. Download individual files or a ZIP bundle from the task history.'
           },
           {
             question: 'How much does it cost?',
@@ -664,7 +667,7 @@ export const enUS: SiteContent = {
       cta: {
         title: 'Queue your first cloud task',
         description:
-          'Paste keywords, let the cloud collect, and download a clean spreadsheet — the same schema you get from the extension.',
+          'Submit keywords, follow your task progress, and download business data from your dashboard.',
         button: 'Start scraping',
         note: 'Free monthly quota included. No credit card.'
       }

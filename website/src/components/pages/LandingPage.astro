@@ -4,9 +4,7 @@
  *
  * 结构：hero（主 CTA + Pricing 真链接）→ 能力清单 → FAQ → CTA 行动区。
  * API 四页的主 CTA（获取 Key 类）统一进入 Dashboard API 管理页（015 U2）；
- * Online 页的主 CTA（开始采集）仍是 aria-disabled 的
- * `<button type="button" data-pending-cta>`，无 JS handler——点击无跳转、无请求、
- * 不埋点；创建链路产品化时替换为真交互。内容走 i18n 字典（LandingPageContent）。
+ * Online 主 CTA 进入 Dashboard 创建任务。内容走 i18n 字典（LandingPageContent）。
  */
 import Layout from '../../layouts/Layout.astro'
 import { getContent, type Locale } from '../../i18n/content'
@@ -53,7 +51,7 @@ const faqSchema = {
   structuredData={[faqSchema]}
 >
   <div class="landing" data-landing-page={pageId}>
-    <!-- hero：主 CTA 为无效按钮（未落地功能），次 CTA 指向 Pricing -->
+    <!-- 主 CTA 进入对应工作区，次 CTA 指向 Pricing。 -->
     <section class="hero" aria-labelledby="landing-hero-title">
       <div class="container hero-grid">
         <div class="hero-copy">
@@ -66,9 +64,9 @@ const faqSchema = {
                 {page.hero.primaryCta}
               </a>
             ) : (
-              <button type="button" class="btn-primary" aria-disabled="true" data-pending-cta>
+              <a class="btn-primary" href={`${localePrefix}/dashboard/`} data-cta="online-hero-dashboard">
                 {page.hero.primaryCta}
-              </button>
+              </a>
             )}
             <a
               class="btn-secondary"
@@ -118,7 +116,7 @@ const faqSchema = {
       </div>
     </section>
 
-    <!-- CTA 行动区：按钮为无效按钮 -->
+    <!-- CTA 行动区 -->
     <section class="cta-band" aria-labelledby="landing-cta-title">
       <div class="container cta-inner">
         <h2 id="landing-cta-title">{page.cta.title}</h2>
@@ -128,9 +126,9 @@ const faqSchema = {
             {page.cta.button}
           </a>
         ) : (
-          <button type="button" class="btn-primary" aria-disabled="true" data-pending-cta>
+          <a class="btn-primary" href={`${localePrefix}/dashboard/`} data-cta="online-cta-dashboard">
             {page.cta.button}
-          </button>
+          </a>
         )}
         {page.cta.note && <p class="cta-note">{page.cta.note}</p>}
       </div>

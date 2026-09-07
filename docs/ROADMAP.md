@@ -34,7 +34,7 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 
 | # | 功能 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- |
-| B1 | Online Scraper(关键词批量任务,云端执行；合同见 `feat/014.Maps云端/tech-Online任务与结果.md`) | 官网 pricing tab=online | 🔍 | 🚧 (2026-09-06 HTTP + R2 真实任务、计量及下载通过；可选联系方式与独立采集库验收及独立复审通过，Online 用户界面未实施；见 `feat/014.Maps云端/plans/003.可选联系方式与独立采集库.md`) |
+| B1 | Online Scraper(关键词批量任务,云端执行；合同见 `feat/014.Maps云端/tech-Online任务与结果.md`) | 官网 pricing tab=online | 🔍 | ✅ (首页预览与 Dashboard 创建、历史下载闭环已交付；验收与限制见 [实施清单](feat/014.Maps云端/plans/004.首页预览与Dashboard创建.md)) |
 | B2 | 同步 Search / Reviews API；Photos 待实现 | 官方 Postman 文档(v2 三端点契约) | 🔍 | ⬜ |
 | B3 | MCP Server(Claude/Cursor/VSCode/Codex 接入) | 官网落地页 | 🔍 | ⬜ |
 | B4 | 抓取引擎(自研 RPC fetcher 为主、gosom 可选 + 代理池；无状态 Provider 合同见 `feat/014.Maps云端/tech-引擎Provider层.md`，执行计划见 `feat/014.Maps云端/plans/001.Provider采集基建.md`) | research 方案调研 §12.30–§13 | 🚧 | ✅ (2026-09-06 Google HTTP 真实搜索及评论翻页通过；gosom 网络冒烟未执行) |
@@ -81,7 +81,7 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 | **Gate · 云端 POC** | B5:HTTP 路线做长周期封锁率/代理流量爬坡;gosom 路线上线前验证 Postgres 内网化;**只 Gate 云端路线,不阻塞插件** | 无 | 3–5 天 |
 | **阶段 1 · 插件全量** | **A1–A13 全部 13 项**,验收 = 功能面对齐竞品 v2.5.1(已拍板的架构差异除外:不强制登录、自研服务端、不上 Chrome 商店)。顺序:A1 地基(骨架+远程配置+搜索闭环)→ A2/A3/A5/A8 采集导出主链 → A6 批量面板 → A9/A12 打磨 → A11 账号配额(扩 007/003)→ A4 服务端自研+接入 → A10 集成 → A7(已调研完毕)→ A13 上架 | 无,可立即启动 | 7–9 周 |
 | **阶段 2 · 云端服务** | B4 + B1/B2 部署与计量对接。与阶段 1 并行;006 三类订阅与 000 月度额度基建已落地,Online 消费已接线,API 消费随云端产品化推进。 | Gate 通过;C2 骨架决策 | 2–3 周 |
-| **阶段 3 · 营销站 + 商业化** | D5 + C2/C5 定价决策与接入;Edge/Firefox 商店页。**占位入口接真落地页,页内未落地功能按钮点击无效**(2026-08-31 hydra 裁决,替代 2026-08-30「入口留空点击无效」) | 阶段 1 | 1–2 周 |
+| **阶段 3 · 营销站 + 商业化** | D5 + C2/C5 定价决策与接入;Edge/Firefox 商店页。Online/API 产品介绍页接相应 Dashboard 工作区 | 阶段 1 | 1–2 周 |
 | **阶段 3 ✅ 营销站已交付(2026-08-31)** | 营销站 17 页(首页/产品页/下载页/Pricing 三档/7 工具/法务/About/Contact),006 产品线扩展 + PayPal 购买链路 + 额度映射,GA4/SEO/Lighthouse ≥95,插件订阅跳转接线。执行:W1–W7 全部 done + 整体汇合审查通过(1 跨单元 finding:工具页内链闭环已修)。验证:e2e 166 passed、module-scripts 47/47、backend 535 passed。剩余:域名/GA4 ID/渠道 SKU 后配,商店上架(real smoke)。2026-08-31 起站点目录定名 `website/`(replaces 退役 TG 主站),见 §5 变更记录。🚧 增补:Online/API 落地页 ×5 + 导航接线(015 plans/002)→ ✅ done(2026-08-31,U1 三轮 review 闭环;build 23 页、本单元 e2e 全绿、Lighthouse 新页 100×4)。🚧 增补:用户 Dashboard(015 plans/003)→ 🚧 核心交付(2026-09-06:导航登录/Dashboard 入口、Vue 工作区三视图〔历史/API 未开放/订阅管理〕、站级认证与会话共享、渠道管理自 Pricing 迁入、build 27 页含 vue-tsc 门禁、聚焦 e2e 全绿;module-scripts 3 处断言已适配并通过;review 三轮通过。本地后端+DB+本地存储替身下载闭环通过(隔离当前源码后端 + seed 身份,auth/me→历史→CSV/ZIP 实际落盘,内容与 DB 一致;对象存储 SDK 层按 real 测试机制本地化)。外部 R2/AliOSS 端点未验证,用户决定停止验收) | 阶段 1 ✅;W5 含 013 回归验证 | 计划 1–2 周,实际约 2 天 |
 | **阶段 4 · 内容与增长** | D1–D3 铺底后持续运营(D4 联盟暂不做) | 阶段 3 | 铺底 2 周+ |
 

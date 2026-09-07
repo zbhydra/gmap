@@ -22,12 +22,12 @@
 - D3 教程/Guides 博客(how-to 类长文)
 - D4 Affiliates 联盟计划(注册、追踪链接、结算口径)
 - D5 营销站(首页、插件产品页〔营销 + 安装教程一体〕、Pricing、法务页、Online/API 落地页 ×5、工具矩阵、多语言)
-- D5 附:**占位入口接真落地页**(hydra 2026-08-31 裁决,替代 2026-08-30「入口留空点击无效」基线):导航 Online 与新增 API 下拉、首页 Online/API 产品卡均接真落地页(页面全部可打开),页内未落地功能按钮点击无效;云端功能本体仍归 014。页面清单与交互口径见 `@plans/002.营销站Online与API落地页.md`
+- D5 附:导航 Online、API 下拉与首页产品卡指向产品介绍页；页内主 CTA 进入相应 Dashboard 工作区，云端业务合同归 014。
 - D5 附:**套餐与法务均参考竞品**(hydra 2026-08-30):Pricing 展示对齐竞品插件档位(Free 1,000 records/月;Pro $39 100,000;Business $99 500,000);法务页(隐私政策/条款)以竞品口径为基准改写为 MapsGrab 事实
 - D5 附:**页面图文密度对齐竞品**(hydra 2026-08-31):产品页/下载页按竞品 gmapsextractor.com 的图文结构补分区(hero 截图位、采集→导出成果双图、示例数据下载、demo 视频、逐步安装配图);真实截图/录屏素材未产出时用统一占位组件呈现(标注素材内容),素材产出后仅回填;视觉一律用自有 design token。社证数字条不做(无真实数据,不允许虚报)
 - D5 附:**下载页并入插件产品页**(hydra 2026-09-01,对齐竞品「产品介绍在上、安装教程在下」的单页形态):`/download/` 撤销,安装内容(直装 zip 卡、Edge/Firefox 渠道步骤、安装帮助)整体并入 `/extension/` 页内教程区(锚点 `#install`);hero 双按钮分流——「Install for Edge」跳 Edge Add-ons 商店(上架前 href 占位),「Install for Chrome」滚动到页内教程(产品基线不上 Chrome Web Store,Chrome 走 zip 直装);导航/footer 撤销 Download 入口,首页/工具页/Pricing 的安装 CTA 全部改指 `/extension/`;页底 CTA 改滚动到教程区
-- D5 附:**首页 hero 改造为「营销 + 在线导出操作」**(hydra 2026-09-01):对标竞品首页形态——hero 居中,新增卖点行(免信用卡 / 每月 1,000 条免费额度 / CSV & JSON 导出,额度口径同 Pricing FAQ)与在线导出操作卡(关键词多行输入,一行一条,预填 3 条示例,行数计数上限 100,输入可用但纯本地)。「Start scraping free」主按钮为占位无效(Online 功能未落地,点击无跳转无请求,014 B1 落地后接真交互);卡内脚注说明 Online 排期并引导安装插件,原 hero 双按钮降为卡内文字链接,归因属性不变
-- D5 附:**用户 Dashboard 落地**(hydra 批准,2026-09-06 实施):全站导航右侧匿名显示登录、登录后显示 Dashboard;工作区 `/dashboard/`(历史)、`/dashboard/api/`(API 管理,本轮未开放)、`/dashboard/subscriptions/`(订阅管理)三页,左侧栏为唯一管理菜单。Pricing 只负责套餐比较、购买与升级;账户摘要、退出与渠道管理入口迁入订阅管理页。API 落地页的获取 Key 类 CTA 统一进入 API 管理页。入口与范围合同见 `@tech-用户Dashboard.md`
+- D5 附:**首页匿名预览**：首页提供单关键词预览和站级登录入口，正式任务在 Dashboard 手动创建。产品规则见 [Maps 云端](../014.Maps云端/feat.md)，详细交互见 [首页预览与任务创建](../014.Maps云端/tech-首页预览与任务创建.md)。
+- D5 附:**用户 Dashboard 落地**(hydra 批准,2026-09-06 实施):全站导航右侧匿名显示登录、登录后显示 Dashboard;工作区 `/dashboard/`(Online 创建与历史)、`/dashboard/api/`(API 管理,本轮未开放)、`/dashboard/subscriptions/`(订阅管理)三页,左侧栏为唯一管理菜单。Pricing 只负责套餐比较、购买与升级;账户摘要、退出与渠道管理入口迁入订阅管理页。API 落地页的获取 Key 类 CTA 统一进入 API 管理页。入口与范围合同见 `@tech-用户Dashboard.md`
 - D6 SEO 基建(复用 009 域:sitemap / llms.txt / GSC / GA4)
 
 ### 不包含
@@ -75,7 +75,7 @@ H1(= 目标搜索词)、TL;DR 结论框、分步教程(步骤编号 + 截图)、
 
 - 页面 ×5:Online Scraper(`/online-scraper/`)、Scraper API(`/google-maps-scraper-api/`)、Reviews API(`/google-maps-reviews-scraper-api/`)、Photos API(`/google-maps-photos-api/`)、Scraper MCP(`/google-maps-scraper-mcp/`)。Online 为独立落地页(竞品为 Pricing tab 形态,本站 Pricing 为插件三档,不做 tab 重构)。
 - 导航:Online 占位改真链接;新增 API 桌面下拉(4 子项,交互复用语言切换下拉模式);移动端导航平铺(Online + API 4 子项)。
-- 页内未落地功能按钮(Online 的开始采集类、API 页的获取 Key 类):可聚焦、点击无跳转、无请求、无报错;不埋点。
+- Online 开始采集 CTA 进入 Online Scraper 工作区；API 获取 Key 类 CTA 进入 API 管理页，未开放能力在工作区明确显示。
 - 页面内容以竞品对应页公开口径改写为 MapsGrab 事实(同法务页模式),素材见 `@references/D2-文章矩阵与产品矩阵.md`。
 
 ### 对比页模板(统一)
@@ -107,7 +107,7 @@ H1(= 目标搜索词)、TL;DR 结论框、分步教程(步骤编号 + 截图)、
 1. 工具页:功能可用、Lighthouse 达标、进 sitemap、CTA 归因正确。
 2. 对比页:9 篇对齐竞品清单,数据带核实日期。
 3. Guides:首批 ≥5 篇教程文收录。
-4. 营销站导航与竞品形态对齐:Online/API 入口可点、对应落地页可打开;页内未落地功能按钮点击无效(无跳转、无请求、无报错)。
+4. 营销站导航与竞品形态对齐:Online/API 入口可点、对应落地页可打开;页内主 CTA 进入对应工作区。
 
 ## 功能索引
 
