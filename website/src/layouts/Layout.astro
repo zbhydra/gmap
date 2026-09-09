@@ -1174,6 +1174,8 @@ const structuredDataItems = [
       import { installFrontendErrorCapture } from '../scripts/homepage/frontend-error-capture'
       import '../scripts/globalClickEvents'
       import { initSiteAccountEntry } from '../scripts/site/account-entry'
+      import { initializeWebsiteFirstOpenedMark } from '../scripts/homepage/first-opened-mark'
+      import { initializeFooterBrandIcon } from '../scripts/homepage/device'
 
       initSiteAccountEntry()
 
@@ -1189,32 +1191,10 @@ const structuredDataItems = [
           })
       })
 
-      let visitRuntimeScheduled = false
-      const initializeVisitRuntime = (): void => {
-        if (visitRuntimeScheduled) {
-          return
-        }
-        visitRuntimeScheduled = true
-        window.setTimeout(() => {
-          void Promise.all([
-            import('../scripts/homepage/first-opened-mark'),
-            import('../scripts/homepage/device')
-          ])
-            .then(([markModule, deviceModule]) => {
-              markModule.initializeWebsiteFirstOpenedMark()
-              return deviceModule.initializeFooterBrandIcon()
-            })
-            .catch(error => {
-              console.error(
-                new Error('[layout] Failed to initialize deferred visit telemetry.', { cause: error })
-              )
-            })
-        }, 3000)
-      }
-
-      window.addEventListener('pointerdown', initializeVisitRuntime, { once: true, passive: true })
-      window.addEventListener('keydown', initializeVisitRuntime, { once: true })
-      window.addEventListener('scroll', initializeVisitRuntime, { once: true, passive: true })
+      // device_trust 写入与 web_first_opened 上报必须随页面启动立刻提交；
+      // 交互门控或延迟会漏掉零交互 / 提前关闭的访客，禁止再引入懒加载。
+      initializeWebsiteFirstOpenedMark()
+      void initializeFooterBrandIcon()
     </script>
 
     <script>
