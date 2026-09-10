@@ -19,7 +19,7 @@
 
 | 上游 | 仓库 | 分支 | 最后完整检查提交 | 提交时间 | 最新 release |
 | --- | --- | --- | --- | --- | --- |
-| GOSOM | `https://github.com/gosom/google-maps-scraper.git` | `main` | `beca11f148c7dc9651ee2da9aa9ce111f3dd3bea` | `2026-08-22T18:04:13+03:00` | `v1.17.4` |
+| GOSOM | `https://github.com/gosom/google-maps-scraper.git` | `main` | `a41dffe18c69e6b84085bfa847d410cca094da0b` | `2026-09-10T07:37:07+03:00` | `v1.17.4` |
 | SCRAPEMATE | `https://github.com/gosom/scrapemate.git` | `main` | `9f3c1ce9966808a43483d96b65b23c9ac72f0a0d` | `2026-07-21T16:49:05+03:00` | `v1.3.0` |
 
 基线语义:提交必须已完成重点路径 diff、解析 / 合同生成点核对和影响映射。检查失败或 diff 不完整时不得推进基线。检查成功后可以推进基线,但新发现必须继续保留在「待确认项」,不能因基线推进而消失。
@@ -35,11 +35,11 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-09-09`
-- 本地仓库提交:`f9ab0e8a8d8438b1d6d42792427713f628fd6863`
-- GOSOM 最新提交:`beca11f148c7dc9651ee2da9aa9ce111f3dd3bea`
+- 检查时间:`2026-09-10`
+- 本地仓库提交:`e923b3a8cdb785f2111b1187fb40477880397d3c`
+- GOSOM 最新提交:`a41dffe18c69e6b84085bfa847d410cca094da0b`
 - SCRAPEMATE 最新提交:`9f3c1ce9966808a43483d96b65b23c9ac72f0a0d`
-- 结论:GOSOM 与 SCRAPEMATE 的本地 `main` HEAD 均与最后完整检查基线相同,无新增提交;复核「待确认项」为无,不建议主动更新线上 `latest` 镜像。
+- 结论:GOSOM 新增 1 个赞助商资料提交,仅改 `README.md`、`docs/proxies.md`、`img/swiftproxy.png` 与 AI Agent Skill 的赞助商注册表 / 对应测试;重点运行路径(`gmaps/`、runner、SaaS REST / worker、镜像构建、`go.mod`)完整 diff 为空,无线上抓取引擎影响,已推进 GOSOM 基线。SCRAPEMATE 的本地 `main` HEAD 仍与基线相同;复核「待确认项」为无,不建议主动更新线上 `latest` 镜像。
 
 该区只保留最近一次结果。只有上游提交变化、检查失败或待确认项状态变化时,才在「变更记录」追加事件,避免每天写入无信息量的记录。
 
@@ -119,6 +119,12 @@ SCRAPEMATE 至少检查:
 无。
 
 ## 变更记录
+
+### 2026-09-10:GOSOM 赞助商资料更新,无线上影响
+
+- GOSOM 从 `beca11f148c7dc9651ee2da9aa9ce111f3dd3bea` 推进至 `a41dffe18c69e6b84085bfa847d410cca094da0b`(`chore: Adds swiftproxy as a sponsor`)。完整 `git diff --name-status` 仅含 `README.md`、`docs/proxies.md`、`img/swiftproxy.png`、`skills/google-maps-scraper/references/proxy-sponsors.json` 与 `skills/google-maps-scraper/scripts/select-proxy-sponsors.test.mjs`;为赞助商展示 / AI Agent Skill 推荐资料及其测试,不进入 SaaS 镜像的抓取、REST、队列或浏览器运行合同。
+- 已核对 `gmaps/`、`runner/webrunner/`、`runner/databaserunner/`、`runner/installplaywright/`、`web/`、`api/`、`saas/`、`rqueue/`、`admin/`、`main.go`、`cmd/gmapssaas/main.go`、`Dockerfile`、`Dockerfile.saas`、`go.mod` 的基线至新 HEAD diff 均为空;`gmaps/entry.go`、浏览器复用、SaaS `POST /api/v1/scrape` / worker、镜像构建和依赖版本均未变。新 HEAD 的 `go.mod` 仍为 `github.com/gosom/scrapemate v1.3.0` 与 `github.com/mxschmitt/playwright-go v0.6100.0`。
+- SCRAPEMATE 仍为 `9f3c1ce9966808a43483d96b65b23c9ac72f0a0d`,无新增提交;GOSOM 侧未跟进任何 scrapemate 升级。无待确认项,不建议主动更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。
 
 ### 2026-09-01:建立初始基线
 
