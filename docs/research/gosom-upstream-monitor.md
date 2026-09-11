@@ -35,11 +35,11 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-09-10`
-- 本地仓库提交:`e923b3a8cdb785f2111b1187fb40477880397d3c`
+- 检查时间:`2026-09-11`
+- 本地仓库提交:`c8a8953f417ca2e5a1479275c8ab11e3c4d9b5e0`
 - GOSOM 最新提交:`a41dffe18c69e6b84085bfa847d410cca094da0b`
 - SCRAPEMATE 最新提交:`9f3c1ce9966808a43483d96b65b23c9ac72f0a0d`
-- 结论:GOSOM 新增 1 个赞助商资料提交,仅改 `README.md`、`docs/proxies.md`、`img/swiftproxy.png` 与 AI Agent Skill 的赞助商注册表 / 对应测试;重点运行路径(`gmaps/`、runner、SaaS REST / worker、镜像构建、`go.mod`)完整 diff 为空,无线上抓取引擎影响,已推进 GOSOM 基线。SCRAPEMATE 的本地 `main` HEAD 仍与基线相同;复核「待确认项」为无,不建议主动更新线上 `latest` 镜像。
+- 结论:GOSOM 与 SCRAPEMATE 的本地 `main` HEAD 均与各自基线相同,基线至 `main` 的完整 `git diff --name-status` 均为空;无新增上游提交。复核「待确认项」为无。GOSOM `go.mod` 仍锁定 `github.com/gosom/scrapemate v1.3.0` 与 `github.com/mxschmitt/playwright-go v0.6100.0`,未跟进任何 scrapemate 升级;不建议主动更新线上 `latest` 镜像。
 
 该区只保留最近一次结果。只有上游提交变化、检查失败或待确认项状态变化时,才在「变更记录」追加事件,避免每天写入无信息量的记录。
 
