@@ -35,8 +35,8 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-09-11`
-- 本地仓库提交:`c8a8953f417ca2e5a1479275c8ab11e3c4d9b5e0`
+- 检查时间:`2026-09-12`
+- 本地仓库提交:`df7b9478b1b84d42ba07ff2584e712c81081ee8c`
 - GOSOM 最新提交:`a41dffe18c69e6b84085bfa847d410cca094da0b`
 - SCRAPEMATE 最新提交:`9f3c1ce9966808a43483d96b65b23c9ac72f0a0d`
 - 结论:GOSOM 与 SCRAPEMATE 的本地 `main` HEAD 均与各自基线相同,基线至 `main` 的完整 `git diff --name-status` 均为空;无新增上游提交。复核「待确认项」为无。GOSOM `go.mod` 仍锁定 `github.com/gosom/scrapemate v1.3.0` 与 `github.com/mxschmitt/playwright-go v0.6100.0`,未跟进任何 scrapemate 升级;不建议主动更新线上 `latest` 镜像。
