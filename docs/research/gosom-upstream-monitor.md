@@ -19,8 +19,8 @@
 
 | 上游 | 仓库 | 分支 | 最后完整检查提交 | 提交时间 | 最新 release |
 | --- | --- | --- | --- | --- | --- |
-| GOSOM | `https://github.com/gosom/google-maps-scraper.git` | `main` | `a41dffe18c69e6b84085bfa847d410cca094da0b` | `2026-09-10T07:37:07+03:00` | `v1.17.4` |
-| SCRAPEMATE | `https://github.com/gosom/scrapemate.git` | `main` | `9f3c1ce9966808a43483d96b65b23c9ac72f0a0d` | `2026-07-21T16:49:05+03:00` | `v1.3.0` |
+| GOSOM | `https://github.com/gosom/google-maps-scraper.git` | `main` | `cfb0440472ad1547b87cae8e1f43240a112b2c7b` | `2026-09-13T10:59:25+03:00` | `v1.17.4` |
+| SCRAPEMATE | `https://github.com/gosom/scrapemate.git` | `main` | `859d15f56ba5ed3851587edc305fab6ee956cc71` | `2026-09-13T09:51:23+03:00` | `v1.3.0` |
 
 基线语义:提交必须已完成重点路径 diff、解析 / 合同生成点核对和影响映射。检查失败或 diff 不完整时不得推进基线。检查成功后可以推进基线,但新发现必须继续保留在「待确认项」,不能因基线推进而消失。
 
@@ -35,11 +35,11 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-09-12`
-- 本地仓库提交:`df7b9478b1b84d42ba07ff2584e712c81081ee8c`
-- GOSOM 最新提交:`a41dffe18c69e6b84085bfa847d410cca094da0b`
-- SCRAPEMATE 最新提交:`9f3c1ce9966808a43483d96b65b23c9ac72f0a0d`
-- 结论:GOSOM 与 SCRAPEMATE 的本地 `main` HEAD 均与各自基线相同,基线至 `main` 的完整 `git diff --name-status` 均为空;无新增上游提交。复核「待确认项」为无。GOSOM `go.mod` 仍锁定 `github.com/gosom/scrapemate v1.3.0` 与 `github.com/mxschmitt/playwright-go v0.6100.0`,未跟进任何 scrapemate 升级;不建议主动更新线上 `latest` 镜像。
+- 检查时间:`2026-09-13`
+- 本地仓库提交:`7e28c0b4ab46b2792013a689a16bc7b42922c0ba`
+- GOSOM 最新提交:`cfb0440472ad1547b87cae8e1f43240a112b2c7b`
+- SCRAPEMATE 最新提交:`859d15f56ba5ed3851587edc305fab6ee956cc71`
+- 结论:题设限定无网络,未执行 `git ls-remote`;已以提供的两个 `main` HEAD 和 `.upstream/` 完整历史完成检查。两个旧基线均为新 HEAD 的祖先,各自完整 `git diff --name-status` 均只含一个提交。GOSOM 的 `cfb0440` 将构建链升级至 Go 1.27.1,并调整 SaaS worker 健康服务的取消后优雅关闭路径,属镜像构建和 worker 运行影响项;建议在预发评估更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`,待确认项见下。`gmaps/entry.go` 的 `Entry` / `CsvHeaders()` / `CsvRow()`、Maps RPC / 页面解析、REST 路由与鉴权、浏览器复用和 playwright-go `v0.6100.0` 均未改变。SCRAPEMATE 的核心框架接口、`browser.go`、playwright-go `v0.6100.0` 均未改变,适配器变更为静态检查注释或等价简化;GOSOM `go.mod` 已从 `github.com/gosom/scrapemate v1.3.0` 跟进至 `v1.4.0`,但该库变更本身无独立线上影响,不建议仅为此主动更新镜像。两个本地 tag 集合的最新 release 仍为 GOSOM `v1.17.4`、SCRAPEMATE `v1.3.0`。
 
 该区只保留最近一次结果。只有上游提交变化、检查失败或待确认项状态变化时,才在「变更记录」追加事件,避免每天写入无信息量的记录。
 
@@ -116,9 +116,17 @@ SCRAPEMATE 至少检查:
 
 ## 待确认项
 
-无。
+- GOSOM `cfb0440472ad1547b87cae8e1f43240a112b2c7b` 的线上镜像升级评估:预发构建 / 拉取候选镜像后,以实际 `gosom_api` 配置验证 `POST /api/v1/scrape`、任务查询和结果写入链路,并向 worker 发送终止信号,确认 `cmd/gmapssaas/cmdworker.runHealthServer()` 在根 context 已取消时仍可于 5 秒窗口内正常关闭健康服务。通过后再由人工按部署机 digest 决定是否更新漂移 tag `ghcr.io/gosom/google-maps-scraper-saas:latest`。
 
 ## 变更记录
+
+### 2026-09-13:GOSOM 构建链与 worker 健康服务关闭路径调整,建议预发评估镜像更新
+
+- GOSOM 从 `a41dffe18c69e6b84085bfa847d410cca094da0b` 推进至 `cfb0440472ad1547b87cae8e1f43240a112b2c7b`(`Upgrades scrapemate to v1.4.0 and Go 1.27.1 (#329)`)。完整 diff 共一个提交;`Dockerfile` 将 Playwright 依赖阶段和 builder 从固定 Go `1.26.6` 切换为 `ARG GO_VERSION=1.27.1`,`Dockerfile.saas` 也将 SaaS builder 切换至 Go `1.27.1`。`go.mod` 同步声明 `go 1.27.1`,并将直接依赖 `github.com/gosom/scrapemate` 从 `v1.3.0` 升至 `v1.4.0`;这是线上镜像构建影响项,候选镜像须按待确认项完成构建与抓取链路验证。
+- `cmd/gmapssaas/cmdworker/cmd_worker.go` 的 `runHealthServer()` 将终止时的 `server.Shutdown(context.Background())` 改为基于 `context.WithoutCancel(shutdownSource)` 的 5 秒超时 context,使 worker 根 context 取消后健康服务仍有可用的优雅关闭窗口。这是 SaaS worker 运行路径影响项,应在预发以终止 worker 验证健康端口关闭与任务重启行为。`api/api.go` 路由和 `rqueue/` 对外任务状态 / 结果合同未变。
+- 已核对 GOSOM `gmaps/entry.go` 的 `Entry`、`CsvHeaders()`、`CsvRow()` 未改;`gmaps/searchjob.go`、`job.go`、`place.go`、`reviews.go`、`emailjob.go`、`multiple.go` 的变化为 UUID 包替换、常量复用或等价格式化,没有 Maps 页面 / 内部 RPC 解析语义变化。`runner/runner.go` 仅作容量预分配与字符串写入等价调整,`runner/webrunner/` 仅测试变更,`runner/databaserunner/`、`runner/installplaywright/`、根 `main.go` 均无 diff;`go.mod` 中 `github.com/mxschmitt/playwright-go` 仍为 `v0.6100.0`。
+- SCRAPEMATE 从 `9f3c1ce9966808a43483d96b65b23c9ac72f0a0d` 推进至 `859d15f56ba5ed3851587edc305fab6ee956cc71`(`chore: upgrade to Go 1.27.1 (#28)`)。`go.mod` 升至 Go `1.27.1`,但 playwright-go 仍为 `v0.6100.0`;`browser.go` 和 `scrapemate.go` / `scrapemateapp/` / `job.go` / `request_hooks.go` / `response.go` / `result.go` / `services.go` / `proxy.go` / `context.go` / `constants.go` 均无 diff。`adapters/` 的实际源码变化为静态检查注释与 `jsonwriter.asSlice()` 的等价单元素切片返回,不改变浏览器、代理、请求 / 响应或结果合同。GOSOM 已在同次提交跟进 `scrapemate v1.4.0`;SCRAPEMATE 无独立待确认项,不建议仅为该库变更主动更新线上镜像。
+- 两段 diff 均通过 `git diff --check`;本次检查完整,已推进两条基线。题设限定无网络,未执行远端 `git ls-remote`;新 HEAD 使用题设值并与本地 `.upstream/*` `main` 一致。无旧待确认项,新增的 GOSOM 预发验证项保留在上节。
 
 ### 2026-09-10:GOSOM 赞助商资料更新,无线上影响
 
