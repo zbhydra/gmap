@@ -35,8 +35,8 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-09-15`
-- 本地仓库提交:`c296f5c29d691e1322d362ae490e48c9c800286a`
+- 检查时间:`2026-09-16`
+- 本地仓库提交:`16f7d69fca1a46d4c19932a2c83808479df81218`
 - GOSOM 最新提交:`2b8616d0ccf7d3c578b42a7440e3c13bb22e5083`
 - SCRAPEMATE 最新提交:`859d15f56ba5ed3851587edc305fab6ee956cc71`
 - 结论:题设限定无网络,未执行 `git ls-remote`;已以提供的两个 `main` HEAD 和 `.upstream/` 完整历史完成检查。GOSOM 与 SCRAPEMATE 的 `main` HEAD 分别等于各自基线,两段 `git diff --name-status` 为空并均通过 `git diff --check`,无需 force-push 树比较。GOSOM 的 `gmaps/entry.go` 的 `Entry` / `CsvHeaders()` / `CsvRow()`、Maps RPC / 页面解析、SaaS REST 路由与鉴权、River worker、浏览器复用、镜像构建以及 playwright-go `v0.6100.0` 均无本次变化。复核 `cfb0440` 至当前 GOSOM `main` 的待确认 SaaS 路径后,`Dockerfile`、`Dockerfile.saas`、`cmd/gmapssaas/cmdworker/cmd_worker.go`、`api/`、`rqueue/`、`saas/`、`runner/databaserunner/`、`runner/installplaywright/`、`main.go` 和 `go.mod` 未再变动;`runHealthServer()` 仍以 `context.WithoutCancel` 提供 5 秒关闭窗口,原 Go 1.27.1 镜像构建与 worker 健康服务关闭路径的预发验证尚未完成,故仍建议在预发评估更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`,不因本次无新增线上影响而撤销。SCRAPEMATE 没有新提交;其核心框架接口、`browser.go`、适配器和 playwright-go `v0.6100.0` 均无本次变化,GOSOM `go.mod` 仍已跟进 `github.com/gosom/scrapemate v1.4.0`,不建议仅为该库主动更新镜像。两个本地 tag 集合的最新 release 仍为 GOSOM `v1.17.4`、SCRAPEMATE `v1.3.0`。
