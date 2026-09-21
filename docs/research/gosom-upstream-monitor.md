@@ -35,11 +35,11 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-09-20`
-- 本地仓库提交:`f0c18f945f7323c218f3458173d8494b1dd1afc4`
+- 检查时间:`2026-09-21`
+- 本地仓库提交:`a663d2841d99517b759f7887cfc94313aa78df54`
 - GOSOM 最新提交:`549e4b5e61c7103685ef8392f246ebdba783ed03`
 - SCRAPEMATE 最新提交:`859d15f56ba5ed3851587edc305fab6ee956cc71`
-- 结论:题设限定无网络,未执行 `git ls-remote`;已以提供的两个 `main` HEAD 和 `.upstream/` 完整历史完成检查。GOSOM 基线 `2b8616d0ccf7d3c578b42a7440e3c13bb22e5083` 是新 HEAD 的祖先,完整范围为 `ce4908e025453789e70b0acbe0888985ed3949a4` 与 `549e4b5e61c7103685ef8392f246ebdba783ed03` 的 5 个文件,`git diff --check` 通过,无需 force-push 树比较。`ce4908e` 在 `gmaps/job.go:NewGmapJob()` 与 `gmaps/place.go:NewPlaceJob()` 对唯一的 `https://www.google.com/maps/place/../data=` 路径替换为 `/_/`,保留原始 `data=` payload,防止 RFC 3986 规范化移除 `/maps/place/` 标记。该标记被 `GmapJob.Process()` 用于决定是否创建 `PlaceJob`,修复会使此前被丢弃的详情页进入 `PlaceJob.Process()` 的 `EntryFromJSON()` 结果链路,属于 Maps 页面 URL 解析影响项;本项目的 `POST /api/v1/scrape` 将 `keyword` 经 River 传给 `NewGmapJob()`,故建议预发评估更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。`549e4b5` 仅改 `Makefile` 版本号。`gmaps/entry.go` 的 `Entry` / `CsvHeaders()` / `CsvRow()`、其他 Maps RPC / 页面解析、SaaS REST 路由与鉴权、River worker、浏览器复用、镜像构建以及 `go.mod` 中 scrapemate `v1.4.0`、playwright-go `v0.6100.0` 均无本次变化。SCRAPEMATE `main` HEAD 等于基线,其重点文件、核心框架接口、`browser.go`、适配器和 playwright-go 均无 diff;GOSOM `go.mod` 已跟进 `github.com/gosom/scrapemate v1.4.0`,不建议仅为该库主动更新镜像。两个本地 tag 集合可达的最新 release 仍为 GOSOM `v1.17.4`、SCRAPEMATE `v1.3.0`;既有 worker 健康服务待确认项未完成,并新增本次 Maps URL 回归验证项。
+- 结论:题设限定无网络,未执行 `git ls-remote`;已以提供的两个 `main` HEAD 和 `.upstream/` 完整历史完成检查。GOSOM 与 SCRAPEMATE 的 `main` HEAD 均等于各自最后完整检查提交,基线均为新 HEAD 的祖先;两侧基线至 `main` 的完整 `git diff --name-status` 为空且 `git diff --check` 通过,无需 force-push 树比较或推进基线。GOSOM 的 `gmaps/entry.go` 的 `Entry` / `CsvHeaders()` / `CsvRow()`、Maps RPC / 页面解析、SaaS REST 路由与鉴权、River worker、浏览器复用、镜像构建及 `go.mod` 中 scrapemate `v1.4.0`、playwright-go `v0.6100.0` 均未变;SCRAPEMATE 的重点文件、核心框架接口、`browser.go`、适配器和 playwright-go 均无 diff,GOSOM `go.mod` 仍已跟进 `github.com/gosom/scrapemate v1.4.0`。两个本地 tag 集合可达的最新 release 仍为 GOSOM `v1.17.4`、SCRAPEMATE `v1.3.0`。既有 GOSOM worker 健康服务与 Maps URL 解析修复的两项预发验证待确认项均无完成证据,验证条件与待人工按部署机 digest 决策状态不变;因此继续建议先预发评估 `ghcr.io/gosom/google-maps-scraper-saas:latest`,不建议仅为 SCRAPEMATE 主动更新镜像。
 
 该区只保留最近一次结果。只有上游提交变化、检查失败或待确认项状态变化时,才在「变更记录」追加事件,避免每天写入无信息量的记录。
 
