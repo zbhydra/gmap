@@ -35,11 +35,11 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-09-24`
-- 本地仓库提交:`91eee43631068c8ff6cafeb95d1372cacdb5a42e`
+- 检查时间:`2026-09-25`
+- 本地仓库提交:`ad66ec8e46c2656067d3ad7f613483ee2a35281f`
 - GOSOM 最新提交:`d0b51bcf3cd56d9a3f71e049cb6e226554e24162`
 - SCRAPEMATE 最新提交:`859d15f56ba5ed3851587edc305fab6ee956cc71`
-- 结论:题设限定无网络,未执行 `git ls-remote`;已以提供的两个 `main` HEAD 和 `.upstream/` 完整历史完成检查。GOSOM 从 `549e4b5e61c7103685ef8392f246ebdba783ed03` 至 `d0b51bcf3cd56d9a3f71e049cb6e226554e24162` 仅有 `d0b51bc` 一个提交,旧基线是新 HEAD 的祖先;完整 diff 仅改 README、`docs/proxies.md` 与 Skill 赞助商资料中的 NodeMaven 推荐链接,不进入 SaaS 抓取运行合同,无新增影响项。`gmaps/entry.go` 的 `Entry` / `CsvHeaders()` / `CsvRow()` 与 JSON 输出、Maps RPC / 页面解析、SaaS REST 路由与鉴权、River worker、浏览器复用、镜像构建及 `go.mod` 的范围 diff 均为空。SCRAPEMATE HEAD 等于基线,完整 diff 为空,重点文件、核心框架接口、浏览器层均无新增变化;GOSOM `go.mod` 仍已跟进 `github.com/gosom/scrapemate v1.4.0`,playwright-go 仍为 `v0.6100.0`。两侧 `git diff --check` 均通过;本地 tag 集合可达的最新 release 仍为 GOSOM `v1.17.4`、SCRAPEMATE `v1.3.0`。已推进 GOSOM 基线,SCRAPEMATE 基线不变。既有 worker 健康服务与 Maps URL 解析修复两项预发验证尚无本仓库内的完成证据,继续建议先预发评估 `ghcr.io/gosom/google-maps-scraper-saas:latest` 并按部署机 digest 人工决策;不建议仅为 SCRAPEMATE 主动更新镜像。
+- 结论:题设限定无网络,未执行 `git ls-remote`;提供的两个 `main` HEAD 均与本地 `.upstream/` 一致,且各自等于当前基线。两仓库从基线到 HEAD 的完整 `git diff --name-status` 均为空,`git diff --check` 均通过;GOSOM 解析 schema、Maps 页面 / RPC、浏览器层、SaaS REST / 鉴权与 worker、镜像构建和安全相关路径无新增变化,SCRAPEMATE 浏览器层与框架核心语义也无新增变化。GOSOM `go.mod` 仍已跟进 `github.com/gosom/scrapemate v1.4.0`,两仓库 playwright-go 均为 `v0.6100.0`。复核「待确认项」及 `docs/ROADMAP.md` B4 后,仍未见 worker 健康服务与 Maps URL 解析修复两项预发验证的完成证据;两项继续待确认,建议先预发评估 `ghcr.io/gosom/google-maps-scraper-saas:latest`,通过后按部署机 digest 人工决定是否更新。SCRAPEMATE 无独立影响项,不建议仅为该库主动更新镜像。两条基线不变,本轮不追加变更记录。
 
 该区只保留最近一次结果。只有上游提交变化、检查失败或待确认项状态变化时,才在「变更记录」追加事件,避免每天写入无信息量的记录。
 
