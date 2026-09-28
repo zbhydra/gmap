@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from typing import NamedTuple, TypedDict
 from urllib.parse import urlsplit
 
-from contact_scraper import ContactScrapeError, scrape_contacts
+from contact_scraper import ContactScrapeError, classify_social_url, scrape_contacts
 from pydantic import BaseModel, Field
 
 from app.constants.maps_enrich import (
@@ -44,7 +44,15 @@ def _derive_business_key(business: MapsEnrichBusiness) -> str:
     domain = business.domain.strip().lower()
     if domain:
         return domain
-    hostname = urlsplit(business.website).hostname
+    website = business.website.strip()
+    if not website:
+        return ""
+    try:
+        hostname = urlsplit(
+            website if "://" in website else f"https://{website}"
+        ).hostname
+    except ValueError:
+        return ""
     return hostname.lower().rstrip(".") if hostname else ""
 
 
@@ -87,8 +95,8 @@ class MapsEnrichProvider:
     ) -> EnrichBatch:
         """批量补全，返回与入参位置对齐的 ``{results, partial}`` 载荷。
 
-        同域名共用结果；None 代理策略为插件直连，空池拒绝真实抓取。
-        只有插件传批预算，Online 由父任务期限约束。
+        同域名共用结果；None 代理策略为插件直连，Online 按需代理回退。
+        插件传固定批预算，Online 传父任务采集剩余时间。
         """
 
         results: list[EnrichResult] = [
@@ -102,12 +110,19 @@ class MapsEnrichProvider:
             target = _resolve_enrich_target(business)
             if target is None or target.fetch_url is None:
                 continue
+            medias = classify_social_url(target.fetch_url)
+            if medias:
+                results[index]["medias"] = medias
+                continue
             group_key = target.cache_domain or f"raw:{target.key}"
             group = groups.get(group_key)
             if group is None:
                 groups[group_key] = (target, [index])
             else:
                 group[1].append(index)
+
+        if groups and batch_timeout is not None and batch_timeout <= 0:
+            return {"results": results, "partial": True}
 
         partial = False
         if groups:
@@ -134,7 +149,15 @@ class MapsEnrichProvider:
             for group_key, task in tasks.items():
                 if task not in done:
                     continue
-                payload = task.result()
+                try:
+                    payload = task.result()
+                except Exception:
+                    partial = True
+                    logger.error(
+                        "maps_enrich_provider.enrich: 单站补全异常，保留其他结果",
+                        exc_info=True,
+                    )
+                    continue
                 for index in groups[group_key][1]:
                     results[index] = payload
 
@@ -147,13 +170,25 @@ class MapsEnrichProvider:
         if cached is not None:
             return {"key": target.key, "emails": cached.emails, "medias": cached.medias}
         try:
-            if proxies is not None and not proxies:
-                raise ContactScrapeError("maps_enrich: 官网代理池为空")
             async with _SITE_SEMAPHORE:
-                contacts = await scrape_contacts(
-                    target.fetch_url or "",
-                    proxy=random.choice(proxies) if proxies is not None else None,
-                )
+                if proxies is None:
+                    contacts = await scrape_contacts(target.fetch_url or "", proxy=None)
+                else:
+                    # 单站 12 秒内为直连保留 8 秒，其余留给一次代理回退。
+                    deadline = asyncio.get_running_loop().time() + 12
+                    try:
+                        contacts = await scrape_contacts(
+                            target.fetch_url or "", proxy=None, timeout=8
+                        )
+                    except ContactScrapeError as exc:
+                        remaining = deadline - asyncio.get_running_loop().time()
+                        if not exc.retryable or not proxies or remaining <= 0:
+                            raise
+                        contacts = await scrape_contacts(
+                            target.fetch_url or "",
+                            proxy=random.choice(proxies),
+                            timeout=remaining,
+                        )
         except ContactScrapeError:
             logger.error(
                 "maps_enrich_provider._enrich_site: 单站补全失败",

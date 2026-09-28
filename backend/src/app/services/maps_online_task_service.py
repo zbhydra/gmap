@@ -11,10 +11,12 @@ from uuid import uuid4
 from sqlalchemy import Select, func, select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import SQLAlchemyError
+from traffic_scope import TrafficScope, current_scope
 
 from app.constants.maps_online import TASK_TIMEOUT_SECONDS
 from app.core.config import settings
 from app.core.database import get_async_session
+from app.i18n.dependencies import DEFAULT_LANGUAGE, SupportedLanguage
 from app.models.maps_online_task_item_model import (
     MapsOnlineTaskItemModel,
     get_item_model,
@@ -22,7 +24,7 @@ from app.models.maps_online_task_item_model import (
 from app.models.maps_online_task_model import MapsOnlineTaskModel
 from app.i18n.translator import translator
 from app.provider.maps_online import MapsOnlineProvider
-from app.provider.gmap.types import GmapConfigurationError
+from app.provider.gmap.types import GmapConfigurationError, GmapViewport
 from app.schemas.admin_schema import ObjectStorageItem
 from app.services.gosom_api_service import gosom_api_service
 from app.services.maps_engine_service import maps_engine_service
@@ -45,6 +47,8 @@ class MapsOnlineTaskService:
         provider: Literal["http", "gosom"],
         storage_id: str,
         include_contacts: bool,
+        csv_language: SupportedLanguage = DEFAULT_LANGUAGE,
+        search_viewports: Sequence[GmapViewport] | None = None,
     ) -> tuple[MapsOnlineTaskModel, list[MapsOnlineTaskItemModel]]:
         """关键词由入口清洗和限量；事务提交后启动 items 并立即返回。"""
         started = perf_counter()
@@ -56,6 +60,15 @@ class MapsOnlineTaskService:
                 provider=provider,
                 storage_id=storage_id,
                 include_contacts=include_contacts,
+                csv_language=csv_language,
+                search_viewports=(
+                    [
+                        {"lat": point.lat, "lng": point.lng, "zoom": point.zoom}
+                        for point in search_viewports
+                    ]
+                    if search_viewports is not None
+                    else None
+                ),
                 total_count=len(keywords),
             )
             db.add(task)
@@ -109,6 +122,8 @@ class MapsOnlineTaskService:
         object_key = None
         deadline = task.created_at + TASK_TIMEOUT_SECONDS * 1000
         started = perf_counter()
+        traffic = TrafficScope(f"{task.task_no}:{item.id}")
+        token = current_scope.set(traffic)
         try:
             if timestamp_now() >= deadline:
                 raise TimeoutError
@@ -130,18 +145,59 @@ class MapsOnlineTaskService:
             remaining = (deadline - timestamp_now()) / 1000
             if remaining <= 0:
                 raise TimeoutError
-            async with asyncio.timeout(remaining):
-                record_count, object_key, status_text = await provider.execute(
-                    item.keyword,
-                    created_at=task.created_at,
-                    task_no=task.task_no,
-                    item_id=item.id,
-                    include_contacts=task.include_contacts,
-                )
+            record_count, object_key, status_text = await provider.execute(
+                item.keyword,
+                created_at=task.created_at,
+                task_no=task.task_no,
+                item_id=item.id,
+                include_contacts=task.include_contacts,
+                csv_language=cast(SupportedLanguage, task.csv_language),
+                deadline=asyncio.get_running_loop().time() + remaining,
+                search_viewports=(
+                    [
+                        GmapViewport(point["lat"], point["lng"], point["zoom"])
+                        for point in task.search_viewports
+                    ]
+                    if task.search_viewports is not None
+                    else None
+                ),
+            )
             status = "success"
         except Exception as exc:
             status_text = f"采集失败 error={type(exc).__name__}"
             self._log_failure("_run_item", task.task_no, item.id, exc)
+        finally:
+            running_task = asyncio.current_task()
+            logger.info(
+                "maps_online.traffic: task=%s item=%s scope=%s stage=traffic status=%s "
+                "google_source=%s google_attempts=%s google_partial=%s google_unmeasured=%s "
+                "google_curl_request_bytes=%s google_curl_header_bytes=%s "
+                "google_curl_download_bytes=%s site_proxy_attempts=%s site_partial=%s "
+                "site_unmeasured=%s site_curl_request_bytes=%s site_curl_header_bytes=%s "
+                "site_decoded_body_consumed_bytes=%s",
+                task.task_no,
+                item.id,
+                traffic.scope_id,
+                (
+                    "cancelled"
+                    if running_task is not None and running_task.cancelling()
+                    else status
+                ),
+                "unobservable_remote" if task.provider == "gosom" else "local_curl",
+                traffic.google.attempts,
+                traffic.google.partial_attempts,
+                traffic.google.unmeasured_attempts,
+                traffic.google.request_bytes,
+                traffic.google.header_bytes,
+                traffic.google.body_bytes,
+                traffic.site.attempts,
+                traffic.site.partial_attempts,
+                traffic.site.unmeasured_attempts,
+                traffic.site.request_bytes,
+                traffic.site.header_bytes,
+                traffic.site.body_bytes,
+            )
+            current_scope.reset(token)
         await self._report_and_complete(
             task, item.id, status, record_count, object_key, status_text
         )

@@ -103,7 +103,7 @@ async def test_real_online_contact_options_persist_recover_and_meter(
     ) -> _Response | _EnrichResponse:
         nonlocal site_calls
         if kwargs.get("stream"):
-            assert session.proxies["all"] in engine.proxies
+            assert session.proxies["all"] == ""
             site_calls += 1
             return _EnrichResponse()
         started.set()
@@ -156,6 +156,7 @@ async def test_real_online_contact_options_persist_recover_and_meter(
             csv.DictReader(StringIO(objects[item.object_key].decode("utf-8-sig")))
         )
         assert list(rows[0]) == CSV_HEADERS and len(rows[0]) == 36
+        assert rows.pop(0)["Fulladdress"] == "Full address"
         assert len(rows) == 20
         assert all(row["Emails"] == (email if row["Website"] else "") for row in rows)
 
@@ -164,6 +165,12 @@ async def test_real_online_contact_options_persist_recover_and_meter(
         release.set()
         free = await create(True)
         assert free.include_contacts is False
+        async with get_async_session() as db:
+            assert await db.scalar(
+                select(MapsOnlineTaskModel.search_viewports.is_(None)).where(
+                    MapsOnlineTaskModel.id == free.id
+                )
+            )
         await finish(free, "")
         assert site_calls == 0 and await redis.get(cache_key) == cached
 

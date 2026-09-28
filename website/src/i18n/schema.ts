@@ -614,6 +614,8 @@ export interface DashboardContent {
   /** 正式任务创建表单。 */
   create: {
     title: string
+    modeLabel: string
+    modes: { keywords: string; map: string; regions: string }
     keywords: string
     placeholder: string
     count: string
@@ -628,6 +630,45 @@ export interface DashboardContent {
     failed: string
     exhausted: string
     invalid: string
+    map: {
+      latitude: string
+      longitude: string
+      radius: string
+      spacing: string
+      sampleCount: string
+      overLimit: string
+      chooseCenter: string
+      mapLabel: string
+      tilesUnavailable: string
+      attribution: string
+    }
+    region: {
+      baseKeywords: string
+      basePlaceholder: string
+      country: string
+      state: string
+      citySearch: string
+      cityPlaceholder: string
+      city: string
+      selectCountry: string
+      allStates: string
+      selectCity: string
+      loading: string
+      loadFailed: string
+      retry: string
+      addCountry: string
+      addState: string
+      addCity: string
+      selectedRegions: string
+      remove: string
+      matchMode: string
+      inMode: string
+      nearMode: string
+      generate: string
+      finalQueries: string
+      finalPlaceholder: string
+      attribution: string
+    }
   }
   /** 工作区页面 SEO 元信息（noindex 页仅作 title/description 展示）。 */
   seo: {
@@ -1231,6 +1272,8 @@ export interface MergeCsvContent {
     filesLabel: string
     /** 文件选择说明（多选 + 纯浏览器处理）。 */
     filesHint: string
+    /** 每文件第二行译名跳过选项；{name} 为文件名。 */
+    translationRow: string
     /** 文件选择按钮。 */
     browse: string
     /** 合并按钮。 */

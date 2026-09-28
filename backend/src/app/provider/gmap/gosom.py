@@ -3,19 +3,23 @@
 import asyncio
 import json
 from typing import Literal
+from uuid import uuid4
 
 from curl_cffi.requests import AsyncSession
 from curl_cffi.requests.exceptions import RequestException
+from traffic_scope import current_scope
 
 from app.provider.gmap.types import (
     GmapNamedValues,
     GmapParseError,
     GmapPlaceEntry,
     GmapRequestError,
+    GmapViewport,
     GosomJobHandle,
     GosomJobSnapshot,
 )
 from app.schemas.admin_schema import GosomApiItem
+from app.utils.logger import logger
 
 JsonValue = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
 
@@ -127,20 +131,47 @@ class _GmapGosomProvider:
     """调用配置指定的 gosom API，不持有或轮询 job 状态。"""
 
     async def submit_job(
-        self, config: GosomApiItem, keyword: str, max_depth: int, lang: str
+        self,
+        config: GosomApiItem,
+        keyword: str,
+        max_depth: int,
+        lang: str,
+        viewport: GmapViewport | None = None,
     ) -> GosomJobHandle:
+        request_id = uuid4().hex
+        scope = current_scope.get()
+        request_payload: dict[str, str | int] = {
+            "keyword": keyword,
+            "lang": lang,
+            "max_depth": max_depth,
+        }
+        if viewport is not None:
+            request_payload["geo_coordinates"] = f"{viewport.lat},{viewport.lng}"
+            request_payload["zoom"] = int(viewport.zoom)
         try:
             async with AsyncSession() as session:
                 response = await session.post(
                     f"{config.base_url}/api/v1/scrape",
                     headers={"X-API-Key": config.api_key},
-                    json={"keyword": keyword, "lang": lang, "max_depth": max_depth},
+                    json=request_payload,
                     timeout=120,
                 )
         except (RequestException, asyncio.TimeoutError) as exc:
+            logger.warning(
+                "gmap_gosom.submit: scope=%s request=%s error=%s",
+                scope.scope_id if scope else "unscoped",
+                request_id,
+                type(exc).__name__,
+            )
             raise GmapRequestError(
                 "gmap gosom submit_job: request failed: " f"reason={type(exc).__name__}"
             ) from exc
+        logger.info(
+            "gmap_gosom.submit: scope=%s request=%s status=%s",
+            scope.scope_id if scope else "unscoped",
+            request_id,
+            response.status_code,
+        )
         if response.status_code != 202:
             raise GmapRequestError(
                 "gmap gosom submit_job: unexpected response status: "
@@ -157,6 +188,8 @@ class _GmapGosomProvider:
     async def get_job(
         self, config: GosomApiItem, handle: GosomJobHandle
     ) -> GosomJobSnapshot:
+        request_id = uuid4().hex
+        scope = current_scope.get()
         try:
             async with AsyncSession() as session:
                 response = await session.get(
@@ -165,10 +198,22 @@ class _GmapGosomProvider:
                     timeout=120,
                 )
         except (RequestException, asyncio.TimeoutError) as exc:
+            logger.warning(
+                "gmap_gosom.get: scope=%s request=%s error=%s",
+                scope.scope_id if scope else "unscoped",
+                request_id,
+                type(exc).__name__,
+            )
             raise GmapRequestError(
                 "gmap gosom get_job: request failed: "
                 f"job_id={handle.job_id}, reason={type(exc).__name__}"
             ) from exc
+        logger.info(
+            "gmap_gosom.get: scope=%s request=%s status=%s",
+            scope.scope_id if scope else "unscoped",
+            request_id,
+            response.status_code,
+        )
         if response.status_code != 200:
             raise GmapRequestError(
                 "gmap gosom get_job: unexpected response status: "

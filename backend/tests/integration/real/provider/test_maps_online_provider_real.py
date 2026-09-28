@@ -15,6 +15,7 @@ from curl_cffi.requests import AsyncSession
 
 from app.constants.maps_enrich import build_enrich_cache_key
 from app.core.redis import redis_client
+from app.i18n.translator import translator
 from app.provider.gmap import gmap_http_provider
 from app.provider.gmap.rpc.parsers import parse_regular_response
 from app.provider.maps_online import MapsOnlineProvider
@@ -179,6 +180,7 @@ async def test_real_online_http_enrichment_csv_and_object_write(
             task_no=task_no,
             item_id=1,
             include_contacts=True,
+            deadline=asyncio.get_running_loop().time() + 30,
         )
         assert count == 20 and "L2 supplement failed" in warning
         assert key.startswith(f"online/20260904/{task_no}/1/")
@@ -199,6 +201,8 @@ async def test_real_online_http_enrichment_csv_and_object_write(
         assert isinstance(assignment, ast.Assign)
         headers = ast.literal_eval(assignment.value)
         assert len(headers) == 36 and list(rows[0]) == headers
+        assert rows.pop(0)["Fulladdress"] == "Full address"
+        assert len(rows) == count
         assert rows[0]["Emails"] == "owner@maps-real.example"
         assert rows[0]["Linkedin Links"] == "https://www.linkedin.com/company/maps-real"
         assert rows[0]["Search Keyword"] == f'coffee, "{test_run_id}"'
@@ -211,11 +215,18 @@ async def test_real_online_http_enrichment_csv_and_object_write(
             task_no=task_no,
             item_id=2,
             include_contacts=True,
+            deadline=asyncio.get_running_loop().time() + 30,
         )
         assert count == 0 and warning == ""
         assert list(
             csv.reader(StringIO((tmp_path / empty_key).read_text(encoding="utf-8-sig")))
-        ) == [headers]
+        ) == [
+            headers,
+            [
+                translator.translate(f"maps_online.csv_headers.{header}")
+                for header in headers
+            ],
+        ]
 
         # Online 外层期限取消 enrichment 时，所有官网子协程在返回前完成回收。
         await redis.delete(cache_key)
@@ -230,6 +241,7 @@ async def test_real_online_http_enrichment_csv_and_object_write(
                 task_no=task_no,
                 item_id=3,
                 include_contacts=True,
+                deadline=asyncio.get_running_loop().time() + 30,
             )
         )
         try:
@@ -258,6 +270,7 @@ async def test_real_online_http_enrichment_csv_and_object_write(
                 task_no=task_no,
                 item_id=4,
                 include_contacts=True,
+                deadline=asyncio.get_running_loop().time() + 30,
             )
         )
         try:
@@ -272,6 +285,7 @@ async def test_real_online_http_enrichment_csv_and_object_write(
                 task_no=task_no,
                 item_id=4,
                 include_contacts=True,
+                deadline=asyncio.get_running_loop().time() + 30,
             ),
             timeout=15,
         )
@@ -281,6 +295,7 @@ async def test_real_online_http_enrichment_csv_and_object_write(
                 StringIO((tmp_path / gosom_key).read_text(encoding="utf-8-sig"))
             )
         )
+        assert gosom_rows.pop(0)["Fulladdress"] == "Full address"
         assert count == len(gosom_rows) == 51 and warning == ""
         assert all(row["Emails"] == "owner@maps-real.example" for row in gosom_rows)
         assert [row["Name"] for row in gosom_rows] == [

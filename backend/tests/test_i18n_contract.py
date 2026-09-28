@@ -9,6 +9,7 @@ import pytest
 from app.i18n import translator
 from app.i18n.common_code import CommonCode
 from app.i18n.dependencies import SupportedLanguage
+from app.provider.maps_online import CSV_HEADERS
 from app.utils.response import ResponseUtils
 
 
@@ -41,6 +42,28 @@ def test_non_english_messages_do_not_equal_english_baseline() -> None:
         messages = json.loads(path.read_text(encoding="utf-8"))["resp_code"]
         for key, english_message in english.items():
             assert messages[key] != english_message, f"{path.stem}: {key}"
+
+
+def test_proxy_url_validation_message_exists_for_every_locale() -> None:
+    locale_dir = Path(__file__).parents[1] / "src/app/i18n/locales"
+    for path in locale_dir.glob("*.json"):
+        message = translator.translate("validation.proxy_url", path.stem, index=2)
+        assert "2" in message, path.name
+
+
+def test_online_csv_headers_have_translations_in_every_locale() -> None:
+    locale_dir = Path(__file__).parents[1] / "src/app/i18n/locales"
+    for path in locale_dir.glob("*.json"):
+        labels = json.loads(path.read_text(encoding="utf-8"))["maps_online"][
+            "csv_headers"
+        ]
+        assert list(labels) == CSV_HEADERS, path.name
+        assert all(
+            translator.translate(f"maps_online.csv_headers.{header}", path.stem)
+            == labels[header]
+            and labels[header]
+            for header in CSV_HEADERS
+        )
 
 
 def test_missing_translation_raises_configuration_error() -> None:

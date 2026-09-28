@@ -155,7 +155,7 @@ def parse_l2_response(body: str) -> dict[str, JsonValue]:
 
 
 def response_center(rows: list[dict[str, JsonValue]]) -> tuple[float, float] | None:
-    """计算结果坐标重心，供 E12 canary 判定软降级。"""
+    """计算结果坐标重心，仅供视口偏移诊断。"""
     points = [
         (lat, lng)
         for row in rows
@@ -171,7 +171,7 @@ def response_center(rows: list[dict[str, JsonValue]]) -> tuple[float, float] | N
 
 
 def viewport_matches(rows: list[dict[str, JsonValue]], lat: float, lng: float) -> bool:
-    """按 E12e 生产脚本的经纬各 1° bbox canary 判定视口是否生效。"""
+    """按经纬各 1° 判断结果重心是否接近视口，仅用于诊断。"""
     center = response_center(rows)
     return bool(center and abs(center[0] - lat) <= 1.0 and abs(center[1] - lng) <= 1.0)
 

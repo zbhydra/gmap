@@ -6,6 +6,7 @@
  * mock 下进入失败态（按钮禁用），购买交互链路由 OrderCheckout 底座承载。
  */
 import { expect, test } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 
 import { registerE2eBrowserIdentity } from '../scripts/playwright-browser-identity.mjs'
 
@@ -214,6 +215,27 @@ test.describe('Tool Matrix', () => {
     const preview = await page.locator('[data-merged-preview]').inputValue()
     // textarea 会把 CRLF 归一化为 LF，预览按 LF 断言（下载文件保持 CRLF）。
     expect(preview.split('\n')).toEqual(['name,city,email', 'Acme,Paris,', 'Globex,Lyon,', 'Acme,,a@acme.io', ''])
+
+    await page.locator('[data-tool-files]').setInputFiles([
+      { name: 'new-online.csv', mimeType: 'text/csv', buffer: Buffer.from('Name,Fulladdress\n名称,完整地址\nAcme,Paris\n') },
+      { name: 'old-online.csv', mimeType: 'text/csv', buffer: Buffer.from('Name,Fulladdress\nGlobex,Lyon\n') },
+      { name: 'plain.csv', mimeType: 'text/csv', buffer: Buffer.from('name,email\nOther,o@example.test\n') }
+    ])
+    const translationRows = page.locator('[data-translation-row]')
+    await expect(translationRows).toHaveCount(3)
+    await expect(translationRows.first()).not.toBeChecked()
+    await translationRows.first().check()
+    await page.locator('[data-tool-form] button[type="submit"]').click()
+    await expect(page.locator('[data-result-summary]')).toHaveText('Merged 3 files into 3 rows × 4 columns.')
+    await expect(page.locator('[data-file-summaries] li')).toHaveCount(3)
+    const mixed = await page.locator('[data-merged-preview]').inputValue()
+    expect(mixed.split('\n')).toEqual([
+      'Name,Fulladdress,name,email', 'Acme,Paris,,', 'Globex,Lyon,,', ',,Other,o@example.test', ''
+    ])
+    const downloadStarted = page.waitForEvent('download')
+    await page.locator('[data-download-merged]').click()
+    const download = await downloadStarted
+    expect(await readFile(await download.path(), 'utf8')).toBe(`\ufeff${mixed.replaceAll('\n', '\r\n')}`)
 
     // 单文件触发守卫
     await page.locator('[data-tool-files]').setInputFiles([

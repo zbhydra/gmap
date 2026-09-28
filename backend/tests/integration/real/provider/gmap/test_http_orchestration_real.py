@@ -1,15 +1,18 @@
 """通过唯一 Provider 公共入口验证 Search 编排，仅替换 Google HTTP 出口。"""
 
 import asyncio
+import json
 from collections.abc import AsyncIterator
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 
 import pytest
 from curl_cffi.requests import AsyncSession
+from traffic_scope import TrafficScope, current_scope
 
 import app.provider.gmap.http as http_module
 from app.provider.gmap import GmapProviderError, GmapViewport, gmap_http_provider
+from app.provider.gmap.rpc.client import GmapRequestState
 from app.provider.gmap.rpc.parsers import (
     parse_l2_response,
     parse_regular_response,
@@ -46,6 +49,9 @@ class _Response:
         self.cookies = {"NID": nid} if nid else {}
         self.infos: dict = {}
         self.url = "https://www.google.com/test"
+        self.request_size = 101
+        self.header_size = 202
+        self.download_size = 303
 
 
 class _GoogleSession:
@@ -139,9 +145,101 @@ async def test_real_http_public_search_rejects_main_page_failure(
     scenario: str,
 ) -> None:
     _GoogleSession.scenario = scenario
+    scope = TrafficScope("retry-task")
+    token = current_scope.set(scope)
+    try:
+        with pytest.raises(GmapProviderError):
+            await gmap_http_provider.search_places("coffee", 1, "en")
+    finally:
+        current_scope.reset(token)
+    assert scope.google.attempts == 4  # NID 与常规页三次尝试。
+    assert scope.google.unmeasured_attempts == (3 if scenario == "timeout" else 0)
+    assert scope.google.request_bytes == 101 * (4 - scope.google.unmeasured_attempts)
 
-    with pytest.raises(GmapProviderError):
-        await gmap_http_provider.search_places("coffee", 1, "en")
+
+async def test_real_http_traffic_scopes_isolate_concurrent_child_tasks(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _GoogleSession.scenario = "empty"
+    scopes = [TrafficScope("task-a"), TrafficScope("task-b")]
+
+    async def run(scope: TrafficScope) -> None:
+        token = current_scope.set(scope)
+        try:
+            await asyncio.create_task(
+                gmap_http_provider.search_places("coffee", 1, "en")
+            )
+            assert current_scope.get() is scope
+        finally:
+            current_scope.reset(token)
+        assert current_scope.get() is None
+
+    await asyncio.gather(*(run(scope) for scope in scopes))
+    for scope in scopes:
+        assert scope.google.attempts == 2
+        assert scope.google.request_bytes == 202
+        assert scope.google.header_bytes == 404
+        assert scope.google.body_bytes == 606
+        assert scope.google.partial_attempts == scope.google.unmeasured_attempts == 0
+        assert f"gmap_rpc.request: scope={scope.scope_id} request=" in caplog.text
+
+
+async def test_real_http_traffic_counts_only_started_cancellation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = gmap_http_provider._client  # noqa: SLF001
+    assert client._semaphore is not None
+    semaphore = client._semaphore
+    scope = TrafficScope("cancel-task")
+    token = current_scope.set(scope)
+    client._semaphore = asyncio.Semaphore(0)
+    try:
+        queued = asyncio.create_task(
+            client._request(
+                "https://www.google.com/maps",
+                GmapRequestState("http://proxy.test", "queued"),
+                None,
+                5,
+                proxy="http://proxy.test",
+                sequence=1,
+            )
+        )
+        await asyncio.sleep(0)
+        queued.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await queued
+        assert scope.google.attempts == 0
+    finally:
+        client._semaphore = semaphore
+
+    started = asyncio.Event()
+
+    async def blocked(
+        _session: AsyncSession, _url: str, **_kwargs: object
+    ) -> _Response:
+        started.set()
+        await asyncio.Event().wait()
+        raise AssertionError("unreachable")
+
+    monkeypatch.setattr(AsyncSession, "get", blocked)
+    try:
+        in_flight = asyncio.create_task(
+            client._request(
+                "https://www.google.com/maps",
+                GmapRequestState("http://proxy.test", "started"),
+                None,
+                5,
+                proxy="http://proxy.test",
+                sequence=2,
+            )
+        )
+        await asyncio.wait_for(started.wait(), 1)
+        in_flight.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await in_flight
+    finally:
+        current_scope.reset(token)
+    assert scope.google.attempts == scope.google.unmeasured_attempts == 1
 
 
 async def test_real_http_public_search_treats_ll_empty_page_as_normal_stop() -> None:
@@ -210,3 +308,56 @@ async def test_real_http_prefetches_pages_and_cancels_unused_tail(
     result = await gmap_http_provider.search_places("coffee shop in Portland", 3, "en")
     assert third_started.is_set() and third_cancelled.is_set()
     assert len(result.entries) == 20 and not result.partial
+
+
+async def test_real_search_accepts_far_missing_and_empty_viewport_results(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """真实协议解析与请求编排：位置诊断不触发拒绝、重试或 partial。"""
+    google = _GoogleSession()
+    mode = "far"
+
+    def remove_coordinates(value: object) -> None:
+        if not isinstance(value, list):
+            return
+        if (
+            len(value) > 11
+            and isinstance(value[10], str)
+            and value[10].startswith("0x")
+        ):
+            value[9] = None
+        for child in value:
+            remove_coordinates(child)
+
+    async def get(_session: AsyncSession, url: str, **kwargs: object) -> _Response:
+        response = await google.get(url, **kwargs)
+        if mode == "empty_browser" and "/search?tbm=map" in url:
+            response.text = ")]}'\n[]"
+        elif mode == "missing" and "/search?" in url:
+            body = json.loads(response.text.split("\n", 1)[1])
+            remove_coordinates(body)
+            response.text = ")]}'\n" + json.dumps(body)
+        return response
+
+    monkeypatch.setattr(AsyncSession, "get", get)
+    for mode in ("far", "missing", "empty_browser"):
+        _GoogleSession.scenario = ""
+        _GoogleSession.urls = []
+        _GoogleSession.browser_calls = 0
+        caplog.clear()
+        result = await gmap_http_provider.search_places(
+            "coffee", 1, "en", ll=GmapViewport(0, 0, 14), request_id=f"viewport-{mode}"
+        )
+        assert len(result.entries) == 20 and not result.partial and not result.warnings
+        assert sum("/search?authuser=" in url for url in _GoogleSession.urls) == 1
+        assert _GoogleSession.browser_calls == (4 if mode == "empty_browser" else 2)
+        assert "gmap_rpc.retry" not in caplog.text
+        if mode != "empty_browser":
+            reason = "viewport_mismatch" if mode == "far" else "missing_coordinates"
+            assert (
+                f"request=viewport-{mode} kind=regular reason={reason}" in caplog.text
+            )
+            assert (
+                f"request=viewport-{mode} kind=browser reason={reason}" in caplog.text
+            )

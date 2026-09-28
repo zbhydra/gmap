@@ -16,7 +16,7 @@ test('creation on page two pauses polling and reopening details reads completed 
   const pageGate = new Promise<void>(resolve => { releasePage = resolve })
   const task = (taskNo: string, processing = false) => ({ task_no: taskNo, status: processing && !completed ? 'processing' : 'completed', total_count: 1, processed_count: completed ? 1 : 0, record_count: completed ? 58 : 0, created_at: Date.now() })
   await page.route('**/api/client/auth/me', route => route.fulfill({ json: envelope({ email: 'refresh@example.test', full_name: 'Refresh', credits_balance: 0, created_at: Date.now() }) }))
-  await page.route('**/api/client/maps-online/options', route => route.fulfill({ json: envelope({ keyword_limit: 2, contacts_allowed: false, usage: { used: completed ? 58 : 0, total: 1000, period: '2026-09', exhausted: false } }) }))
+  await page.route('**/api/client/maps-online/options', route => route.fulfill({ json: envelope({ keyword_limit: 2, logical_sample_limit: 50, contacts_allowed: false, usage: { used: completed ? 58 : 0, total: 1000, period: '2026-09', exhausted: false } }) }))
   await page.route('**/api/client/maps-online/tasks*', async route => {
     if (route.request().method() === 'POST') {
       await createGate
@@ -87,7 +87,7 @@ test('preview and manual dashboard creation', async ({ page }, testInfo) => {
   await page.route('**/api/client/auth/me', route => route.fulfill({ json: envelope({ email: 'preview@example.test', full_name: 'Preview', credits_balance: 0, created_at: Date.now() }) }))
   await page.route('**/api/client/auth/send-email-code', route => route.fulfill({ json: envelope({}) }))
   await page.route('**/api/client/auth/email-verify-login', route => route.fulfill({ json: envelope({ access_token: 'preview-token', user: { email: 'preview@example.test', full_name: 'Preview', credits_balance: 0 } }) }))
-  await page.route('**/api/client/maps-online/options', route => route.fulfill({ json: optionsFail ? { code: 500, data: {} } : envelope({ keyword_limit: 2, contacts_allowed: false, usage: { used: completed ? 20 : 0, total: 1000, period: '2026-09', exhausted } }) }))
+  await page.route('**/api/client/maps-online/options', route => route.fulfill({ json: optionsFail ? { code: 500, data: {} } : envelope({ keyword_limit: 2, logical_sample_limit: 50, contacts_allowed: false, usage: { used: completed ? 20 : 0, total: 1000, period: '2026-09', exhausted } }) }))
   await page.route('**/api/client/maps-online/tasks*', route => {
     if (route.request().method() === 'POST') {
       expect(route.request().postDataJSON()).toEqual({ keywords: ['coffee Portland', 'coffee Austin'], include_contacts: false })

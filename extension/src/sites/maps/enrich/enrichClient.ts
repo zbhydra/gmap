@@ -25,9 +25,9 @@ export const ENRICH_BATCH_SIZE = 50
 
 /** 补全运行结果摘要（打点与观测用）。 */
 export interface EnrichRunSummary {
-  /** 本次提交补全的目标数（按 domain 去重后）。 */
+  /** 本次提交补全的目标数（按 domain + website 去重后）。 */
   totalTargets: number
-  /** 写回数据的行数（同域名多行都会写）。 */
+  /** 写回数据的行数（同域名且官网相同的行都会写）。 */
   writtenRows: number
   /** 批预算截断标注（服务端返回）。 */
   partial: boolean
@@ -49,7 +49,7 @@ function normalizeDomain(domain: string): string {
 }
 
 /**
- * 收集补全目标：有 domain 的行按 domain 去重（同域多行共用一次补全），
+ * 收集补全目标：有 domain 的行按 domain + website 去重，
  * 无 domain 行跳过。顺序保持首见序，保证与批次结果位置对齐可稳定写回。
  */
 export function collectEnrichTargets(rows: readonly MapsPlaceRow[]): MapsEnrichBusinessInput[] {
@@ -57,10 +57,11 @@ export function collectEnrichTargets(rows: readonly MapsPlaceRow[]): MapsEnrichB
   const targets: MapsEnrichBusinessInput[] = []
   for (const row of rows) {
     const domain = normalizeDomain(row.domain)
-    if (domain.length === 0 || seen.has(domain)) {
+    const key = JSON.stringify([domain, row.website])
+    if (domain.length === 0 || seen.has(key)) {
       continue
     }
-    seen.add(domain)
+    seen.add(key)
     targets.push({
       domain,
       website: row.website,
@@ -80,15 +81,15 @@ export function formatSocialMedias(medias: Record<string, string>): string {
   return platforms.map(platform => `${platform}: ${medias[platform]}`).join('\n')
 }
 
-/** 把单条补全结果写回同域名的全部行，返回写回行数。 */
+/** 把单条补全结果写回同域名且官网相同的行，返回写回行数。 */
 function applyResultToRows(
   rows: readonly MapsPlaceRow[],
-  domain: string,
+  target: MapsEnrichBusinessInput,
   result: MapsEnrichResult
 ): number {
   let written = 0
   for (const row of rows) {
-    if (normalizeDomain(row.domain) !== domain) {
+    if (normalizeDomain(row.domain) !== target.domain || row.website !== target.website) {
       continue
     }
     row.email = result.emails.join(',')
@@ -134,7 +135,7 @@ export async function enrichRows(
         response.results.forEach((result, index) => {
           const target = batch[index]
           if (target) {
-            summary.writtenRows += applyResultToRows(rows, target.domain, result)
+            summary.writtenRows += applyResultToRows(rows, target, result)
           }
         })
       } catch (error) {

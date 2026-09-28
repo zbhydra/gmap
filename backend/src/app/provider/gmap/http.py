@@ -12,6 +12,7 @@ from app.provider.gmap.rpc.parsers import (
     parse_l2_response,
     parse_regular_response,
     parse_reviews_response,
+    response_center,
     viewport_matches,
 )
 from app.provider.gmap.rpc.templates import (
@@ -47,20 +48,39 @@ class _GmapHttpProvider:
         return f"SOCS={SOCS_COOKIE}; NID={nid}"
 
     @staticmethod
-    def _accept_regular(body: str, ll: GmapViewport | None) -> bool:
+    def _accept_search(
+        body: str,
+        ll: GmapViewport | None,
+        request_id: str,
+        *,
+        browser: bool = False,
+    ) -> bool:
+        kind = "browser" if browser else "regular"
         try:
-            rows = parse_regular_response(body)
+            rows = (
+                parse_browser_response(body)
+                if browser
+                else parse_regular_response(body)
+            )
         except GmapParseError:
+            logger.warning(
+                "gmap_http.search_response: request=%s kind=%s reason=parse_error",
+                request_id,
+                kind,
+            )
             return False
-        return not rows or ll is None or viewport_matches(rows, ll.lat, ll.lng)
-
-    @staticmethod
-    def _accept_browser(body: str, ll: GmapViewport | None) -> bool:
-        try:
-            rows = parse_browser_response(body)
-        except GmapParseError:
-            return False
-        return ll is None or viewport_matches(rows, ll.lat, ll.lng)
+        if rows and ll is not None and not viewport_matches(rows, ll.lat, ll.lng):
+            center = response_center(rows)
+            logger.info(
+                "gmap_http.viewport: request=%s kind=%s reason=%s rows=%s lat_delta=%s lng_delta=%s",
+                request_id,
+                kind,
+                "viewport_mismatch" if center else "missing_coordinates",
+                len(rows),
+                round(abs(center[0] - ll.lat), 3) if center else None,
+                round(abs(center[1] - ll.lng), 3) if center else None,
+            )
+        return True
 
     @staticmethod
     def _accept_l2(body: str) -> bool:
@@ -167,7 +187,9 @@ class _GmapHttpProvider:
                     cookie=cookie,
                     timeout=60,
                     retry_delay=lambda attempt: 2 + attempt * 2,
-                    accept=lambda value: self._accept_browser(value, ll),
+                    accept=lambda value: self._accept_search(
+                        value, ll, state.request_id, browser=True
+                    ),
                 )
                 for row in parse_browser_response(body):
                     fid = row.get("fid")
@@ -259,7 +281,7 @@ class _GmapHttpProvider:
             cookie=cookie,
             timeout=30,
             retry_delay=lambda attempt: 1 + attempt,
-            accept=lambda value: self._accept_regular(value, ll),
+            accept=lambda value: self._accept_search(value, ll, state.request_id),
         )
         return parse_regular_response(body)
 

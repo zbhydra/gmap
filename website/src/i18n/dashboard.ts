@@ -10,6 +10,8 @@ import type { DashboardContent } from './schema'
 export const dashboardContent: DashboardContent = {
   create: {
     title: 'Online Scraper',
+    modeLabel: 'Search mode',
+    modes: { keywords: 'Keywords', map: 'Map', regions: 'Regions' },
     keywords: 'Keywords',
     placeholder: 'coffee shop in Portland\nrestaurant in Austin',
     count: '{count} / {limit} keywords',
@@ -23,7 +25,46 @@ export const dashboardContent: DashboardContent = {
     submitting: 'Submitting...',
     failed: 'Task submission failed. Refresh the history before trying again.',
     exhausted: 'Your monthly quota is exhausted.',
-    invalid: 'Enter up to {limit} keywords, each no longer than 500 characters.'
+    invalid: 'Enter up to {limit} keywords, each no longer than 500 characters.',
+    map: {
+      latitude: 'Latitude',
+      longitude: 'Longitude',
+      radius: 'Radius (km)',
+      spacing: 'Grid spacing (km)',
+      sampleCount: '{count} / {limit} search locations',
+      overLimit: 'Reduce the radius or increase grid spacing to stay within {limit} search locations.',
+      chooseCenter: 'Choose a center on the map or enter coordinates.',
+      mapLabel: 'Choose a search center on the map',
+      tilesUnavailable: 'Map tiles could not load. You can still enter coordinates.',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+    },
+    region: {
+      baseKeywords: 'Base keywords',
+      basePlaceholder: 'coffee shop\nrestaurant',
+      country: 'Country',
+      state: 'State or region',
+      citySearch: 'Find a city',
+      cityPlaceholder: 'Type at least two letters',
+      city: 'City',
+      selectCountry: 'Select a country',
+      allStates: 'All states or regions',
+      selectCity: 'Select a city',
+      loading: 'Loading locations...',
+      loadFailed: 'Locations could not load. Please retry.',
+      retry: 'Retry',
+      addCountry: 'Add country',
+      addState: 'Add state',
+      addCity: 'Add city',
+      selectedRegions: 'Selected locations',
+      remove: 'Remove {name}',
+      matchMode: 'Search phrasing',
+      inMode: 'In',
+      nearMode: 'Near',
+      generate: 'Generate queries',
+      finalQueries: 'Final queries',
+      finalPlaceholder: 'Generated queries appear here. You can edit them.',
+      attribution: 'Location data: GeoNames (CC BY)'
+    }
   },
   seo: {
     title: 'Dashboard | MapsGrab',

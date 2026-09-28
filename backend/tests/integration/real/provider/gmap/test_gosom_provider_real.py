@@ -10,6 +10,7 @@ import app.provider.gmap.gosom as gosom_module
 from app.provider.gmap.gosom import gmap_gosom_provider
 from app.provider.gmap.types import (
     GmapProviderError,
+    GmapViewport,
     GosomJobHandle,
 )
 from app.schemas.admin_schema import GosomApiItem
@@ -74,6 +75,17 @@ async def test_real_gosom_submit_protocol_boundary() -> None:
             },
         )
     ]
+    _Session.calls.clear()
+    await gmap_gosom_provider.submit_job(
+        _CONFIG, "coffee", 3, "en", GmapViewport(40.7128, -74.006, 15)
+    )
+    assert _Session.calls[0][2]["json"] == {
+        "keyword": "coffee",
+        "lang": "en",
+        "max_depth": 3,
+        "geo_coordinates": "40.7128,-74.006",
+        "zoom": 15,
+    }
 
 
 async def test_real_gosom_get_maps_status_and_completed_entry() -> None:

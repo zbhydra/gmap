@@ -10,7 +10,9 @@ from urllib.parse import urljoin, urlsplit
 from uuid import uuid4
 
 from curl_cffi import CurlInfo, CurlOpt
-from curl_cffi.requests import AsyncSession
+from curl_cffi.requests import AsyncSession, Response
+from curl_cffi.requests.exceptions import RequestException
+from traffic_scope import current_scope
 
 from ._safety import assert_safe_http_url
 
@@ -108,6 +110,35 @@ def extract_emails(html: str) -> list[str]:
     return emails
 
 
+def classify_social_url(url: str) -> dict[str, str]:
+    """校验并归类单条 HTTP(S) 社媒主页，不执行 DNS 或网络访问。"""
+
+    try:
+        parts = urlsplit(url)
+        if (
+            parts.scheme not in ("http", "https")
+            or not parts.hostname
+            or parts.username is not None
+            or parts.password is not None
+        ):
+            return {}
+        # 读取 port 以拒绝非法端口，避免直返路径绕过抓取入口的 URL 校验。
+        _ = parts.port
+    except ValueError:
+        return {}
+    host = parts.hostname.lower().rstrip(".")
+    if any(
+        parts.path.lower().startswith(blocked) for blocked in _SOCIAL_PATH_BLOCKLIST
+    ):
+        return {}
+    for platform, host_suffixes in _SOCIAL_PLATFORM_HOSTS.items():
+        if any(
+            host == suffix or host.endswith(f".{suffix}") for suffix in host_suffixes
+        ):
+            return {platform: f"https://{host}{parts.path}".rstrip("/")}
+    return {}
+
+
 def extract_social_medias(html: str) -> dict[str, str]:
     """从官网 HTML 的 <a> 外链按域名匹配抽社媒链接，每平台一条（取首个）。"""
 
@@ -116,22 +147,8 @@ def extract_social_medias(html: str) -> dict[str, str]:
         href = unescape(match.group(1)).strip()
         if href.startswith("//"):
             href = f"https:{href}"
-        parts = urlsplit(href)
-        if parts.scheme not in ("http", "https") or not parts.hostname:
-            continue
-        host = parts.hostname.lower().rstrip(".")
-        path = parts.path.lower()
-        if any(path.startswith(blocked) for blocked in _SOCIAL_PATH_BLOCKLIST):
-            continue
-        for platform, host_suffixes in _SOCIAL_PLATFORM_HOSTS.items():
-            if platform in found:
-                continue
-            if any(
-                host == suffix or host.endswith(f".{suffix}")
-                for suffix in host_suffixes
-            ):
-                found[platform] = f"https://{host}{parts.path}".rstrip("/")
-                break
+        for platform, url in classify_social_url(href).items():
+            found.setdefault(platform, url)
         if len(found) == len(_SOCIAL_PLATFORM_HOSTS):
             break
     return found
@@ -145,6 +162,10 @@ class ContactResult:
 
 class ContactScrapeError(Exception):
     """单站采集失败；消息不含目标 URL、代理凭据或上游异常文本。"""
+
+    def __init__(self, message: str, *, retryable: bool = False) -> None:
+        super().__init__(message)
+        self.retryable = retryable
 
 
 async def scrape_contacts(
@@ -160,6 +181,11 @@ async def scrape_contacts(
             return ContactResult(extract_emails(html), extract_social_medias(html))
     except ContactScrapeError:
         raise
+    except (TimeoutError, OSError, RequestException) as exc:
+        raise ContactScrapeError(
+            f"scrape_contacts: 采集失败 error={type(exc).__name__}",
+            retryable=True,
+        ) from None
     except Exception as exc:
         raise ContactScrapeError(
             f"scrape_contacts: 采集失败 error={type(exc).__name__}"
@@ -168,6 +194,8 @@ async def scrape_contacts(
 
 async def _fetch_html(url: str, proxy: str | None) -> str:
     request_id = uuid4().hex
+    scope = current_scope.get()
+    scope_id = scope.scope_id if scope else "unscoped"
     # 空代理字符串同时关闭 libcurl 的环境代理；None 是公开直连合同。
     async with AsyncSession(
         impersonate="chrome",
@@ -196,7 +224,8 @@ async def _fetch_html(url: str, proxy: str | None) -> str:
                 safe = True
             finally:
                 logger.info(
-                    "contact_scraper.check: request=%s hop=%s host=%s safe=%s duration_ms=%.2f",
+                    "contact_scraper.check: scope=%s request=%s hop=%s host=%s safe=%s duration_ms=%.2f",
+                    scope_id,
                     request_id,
                     hop,
                     urlsplit(url).hostname,
@@ -207,12 +236,24 @@ async def _fetch_html(url: str, proxy: str | None) -> str:
             try:
                 response = await session.get(url, stream=True)
             except (Exception, asyncio.CancelledError) as exc:
+                observed = getattr(exc, "response", None)
+                if proxy and scope:
+                    if isinstance(observed, Response):
+                        scope.site.add(
+                            request_bytes=getattr(observed, "request_size", None),
+                            header_bytes=getattr(observed, "header_size", None),
+                            partial=True,
+                        )
+                    else:
+                        scope.site.add(unmeasured=True)
                 logger.info(
-                    "contact_scraper.request: request=%s hop=%s host=%s "
-                    "duration_ms=%.2f error=%s",
+                    "contact_scraper.request: scope=%s request=%s hop=%s host=%s "
+                    "proxy=%s duration_ms=%.2f error=%s",
+                    scope_id,
                     request_id,
                     hop,
                     urlsplit(url).hostname,
+                    "proxy" if proxy else "direct",
                     (perf_counter() - started) * 1000,
                     type(exc).__name__,
                 )
@@ -220,9 +261,10 @@ async def _fetch_html(url: str, proxy: str | None) -> str:
             headers_at = perf_counter()
             info = response.infos
             logger.info(
-                "contact_scraper.headers: request=%s hop=%s host=%s proxy_host=%s "
+                "contact_scraper.headers: scope=%s request=%s hop=%s host=%s proxy_host=%s "
                 "status=%s connection_id=%s new_connections=%s curl_http_version=%s "
                 "headers_ms=%.2f dns_ms=%.2f tcp_ms=%.2f tunnel_tls_ms=%.2f ttfb_ms=%.2f",
+                scope_id,
                 request_id,
                 hop,
                 urlsplit(url).hostname,
@@ -250,6 +292,12 @@ async def _fetch_html(url: str, proxy: str | None) -> str:
                 )
                 * 1000,
             )
+            request_bytes = getattr(response, "request_size", None)
+            header_bytes = getattr(response, "header_size", None)
+            body_consumed = 0
+            body_started = False
+            body_complete = False
+            first_chunk = True
             try:
                 if response.is_redirect:
                     location = response.headers.get("location")
@@ -261,16 +309,25 @@ async def _fetch_html(url: str, proxy: str | None) -> str:
                     continue
                 if not 200 <= response.status_code < 300:
                     raise ContactScrapeError(
-                        f"scrape_contacts: HTTP 非成功响应 status={response.status_code}"
+                        f"scrape_contacts: HTTP 非成功响应 status={response.status_code}",
+                        retryable=response.status_code in (401, 403, 407, 429),
                     )
                 chunks: list[bytes] = []
                 total = 0
+                body_started = True
                 async for chunk in response.aiter_content():
+                    body_consumed += len(chunk)
+                    if first_chunk:
+                        request_bytes = getattr(response, "request_size", request_bytes)
+                        header_bytes = getattr(response, "header_size", header_bytes)
+                        first_chunk = False
                     remaining = _MAX_HTML_BYTES - total
                     chunks.append(chunk[:remaining])
                     total += len(chunks[-1])
                     if total >= _MAX_HTML_BYTES:
                         break
+                else:
+                    body_complete = True
                 raw = b"".join(chunks)
                 try:
                     return raw.decode(
@@ -279,14 +336,27 @@ async def _fetch_html(url: str, proxy: str | None) -> str:
                 except (LookupError, UnicodeDecodeError):
                     return raw.decode("utf-8", errors="replace")
             finally:
-                await response.aclose()
-                logger.info(
-                    "contact_scraper.request: request=%s hop=%s status=%s "
-                    "duration_ms=%.2f body_wait_ms=%.2f",
-                    request_id,
-                    hop,
-                    response.status_code,
-                    (perf_counter() - started) * 1000,
-                    (perf_counter() - headers_at) * 1000,
-                )
+                try:
+                    await response.aclose()
+                finally:
+                    if proxy and scope:
+                        scope.site.add(
+                            request_bytes=getattr(
+                                response, "request_size", request_bytes
+                            ),
+                            header_bytes=getattr(response, "header_size", header_bytes),
+                            body_bytes=body_consumed if body_started else None,
+                            partial=not body_complete,
+                        )
+                    logger.info(
+                        "contact_scraper.request: scope=%s request=%s hop=%s status=%s "
+                        "proxy=%s duration_ms=%.2f body_wait_ms=%.2f",
+                        scope_id,
+                        request_id,
+                        hop,
+                        response.status_code,
+                        "proxy" if proxy else "direct",
+                        (perf_counter() - started) * 1000,
+                        (perf_counter() - headers_at) * 1000,
+                    )
     raise ContactScrapeError("scrape_contacts: 未取得目标页面")

@@ -1,6 +1,14 @@
 """Online 父任务及首次报告累计进度。"""
 
-from sqlalchemy import BigInteger, Boolean, Index, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    Boolean,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseDBModel
@@ -45,6 +53,18 @@ class MapsOnlineTaskModel(BaseDBModel):
         Boolean,
         nullable=False,
         comment="创建入口按 Online 权益确定的有效联系方式采集选项",
+    )
+    csv_language: Mapped[str] = mapped_column(
+        String(5),
+        nullable=False,
+        default="en-US",
+        server_default="en-US",
+        comment="创建时固定的 Online CSV 译名语言",
+    )
+    search_viewports: Mapped[list[dict[str, float]] | None] = mapped_column(
+        JSON(none_as_null=True),
+        nullable=True,
+        comment="地图搜索实际视口快照；NULL 为普通或地区关键词",
     )
     total_count: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="item 总数"

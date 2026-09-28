@@ -41,7 +41,7 @@
 
 ### Dashboard 创建约束
 
-登录保护的 `GET /api/client/maps-online/options`，返回 `keyword_limit`、`contacts_allowed` 与 `usage`（复用 `usage_service.usage_payload` 的 `used/total/period/exhausted` 合同）。读取既有订阅配置、`KEYWORD_LIMITS` 和 `online_usage_service`，不扩展通用账号摘要，不在前端维护套餐映射。
+登录保护的 `GET /api/client/maps-online/options`，返回 `keyword_limit`、`logical_sample_limit`（地图模式最多 50 个逻辑采样）、`contacts_allowed` 与 `usage`（复用 `usage_service.usage_payload` 的 `used/total/period/exhausted` 合同）。读取既有订阅配置、`KEYWORD_LIMITS` 和 `online_usage_service`，不扩展通用账号摘要，不在前端维护套餐映射。
 
 创建入口和 options 在本模块复用同一份权益读取逻辑，创建请求仍重新校验实时上限、有效订阅和用量。options 不初始化采集引擎、不探测代理或对象存储。配置或用量不可用时按现有错误合同返回，前端不放行提交。
 

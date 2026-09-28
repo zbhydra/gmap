@@ -32,6 +32,7 @@ const copyJson = JSON.stringify({ common: t.pages.tools.common, content: tool })
       data-tool-files
     />
     <p class="tool-hint">{tool.form.filesHint}</p>
+    <ul class="tool-file-options" data-file-options></ul>
     <ul class="tool-file-summaries" data-file-summaries></ul>
     <p class="tool-error" data-tool-error hidden></p>
     <div class="tool-actions">
@@ -87,6 +88,11 @@ const copyJson = JSON.stringify({ common: t.pages.tools.common, content: tool })
   .tool-file-summaries:empty {
     display: none;
   }
+
+  .tool-file-options:empty { display: none; }
+  .tool-file-options { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+  .tool-file-options label { display: flex; align-items: center; gap: var(--space-2); color: var(--text); font-size: 14px; overflow-wrap: anywhere; cursor: pointer; }
+  .tool-file-options input { accent-color: var(--primary); }
 
   .tool-file-summaries {
     margin: 0;

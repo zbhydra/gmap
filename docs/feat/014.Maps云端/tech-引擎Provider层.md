@@ -81,14 +81,14 @@ admin/src/
 | 入口 | 入参 | 返回 | 失败 |
 | --- | --- | --- | --- |
 | `gmap_http_provider.initialize` | `GmapEngineConfig` | `None` | HTTP 配置缺失 |
-| `gmap_http_provider.search_places` | `keyword: str`、`max_depth: int`（1–10）、`hl: str`、`gl: str \| None`、`ll: GmapViewport \| None` | `GmapSearchResult` | 主分页失败、地理软降级重试耗尽、解析失败 |
+| `gmap_http_provider.search_places` | `keyword: str`、`max_depth: int`（1–10）、`hl: str`、`gl: str \| None`、`ll: GmapViewport \| None` | `GmapSearchResult` | 主分页失败、解析失败 |
 | `gmap_http_provider.list_reviews` | `fid: str`、`sort_by: int`（1–4）、`cursor: str \| None`、`hl: str` | `GmapReviewPage` | 请求或解析失败 |
 | `gmap_gosom_provider.submit_job` | `config: GosomApiItem`、`keyword: str`、`max_depth: int`、`lang: str` | `GosomJobHandle` | 提交失败 |
 | `gmap_gosom_provider.get_job` | `config: GosomApiItem`、`GosomJobHandle` | `GosomJobSnapshot` | 上游 job 不存在、查询失败 |
 
 DTO 最小字段：
 
-- `GmapViewport`：`lat / lng / zoom`。
+- `GmapViewport`：`lat / lng / zoom`。视口用于向上游表达搜索位置，不是结果的硬范围约束。常规与浏览器搜索响应只要结构可解析，就不因商家坐标偏离或缺少坐标而拒绝、重试或标记局部失败；有效空结果正常接受。位置偏差只记录诊断日志，协议解析失败仍按既有错误与重试规则处理。
 - `GmapSearchResult`：`entries: list[GmapPlaceEntry] / partial: bool / warnings: list[str]`。补列局部失败时 `partial=true`；主分页失败不返回结果。
 - `GmapReviewPage`：`reviews / next_cursor`。
 - `GosomJobHandle`：`job_id`。
@@ -141,7 +141,7 @@ Provider 技术错误统一继承 `GmapProviderError`；不在本层映射用户
 - `max_depth` 上限 10。单页不足 20 条或没有新 fid 时停止后续分页。
 - NID 在一次 Search 调用内共享，不绑定代理出口；不同 Search 调用互不共享 NID。
 - 常规分页重试耗尽则整次调用失败。浏览器级 pb 或 L2 补列失败时保留核心列表，以 `partial + warnings` 返回。
-- `ll` 同时注入常规 pb 与浏览器级 pb。软降级检测及换代理策略必须来自调研 §12.35 对应实验脚本，不根据文档描述重新猜测阈值。
+- `ll` 同时注入常规 pb 与浏览器级 pb。响应可解析但商家位置偏远或缺少坐标时只记诊断，不因此换代理或重试。
 
 ### 5.2 Reviews
 
@@ -172,7 +172,7 @@ gosom 官方 SaaS 合同按 [v1.17.4 SaaS 文档](https://github.com/gosom/googl
 ```text
 POST /api/v1/scrape
   X-API-Key: <api_key>
-  {keyword: str, lang: str, max_depth: int}
+  {keyword: str, lang: str, max_depth: int, geo_coordinates?: "lat,lon", zoom?: int}
   → 202 {job_id, status}
 
 GET /api/v1/jobs/{job_id}
@@ -180,7 +180,7 @@ GET /api/v1/jobs/{job_id}
   → {status, result_count, results, error}
 ```
 
-- 一次提交只接受一个关键词。本仓不批量包装关键词，不感知 River/Postgres 队列，不管理 worker。
+- 一次提交只接受一个关键词；可选坐标和 zoom 沿用官方请求字段，`radius` 不参与 Online 单点视口。本仓不批量包装关键词，不感知 River/Postgres 队列，不管理 worker。
 - 上游 `available/scheduled/retryable` 映射为 `pending`，`running` 保持不变，`completed` 保持不变，`cancelled/discarded` 映射为 `failed`；Provider 对外只暴露这四种状态。
 - service 按现有权重选择 gosom 配置并传给 `submit_job`；Provider 返回 `job_id`。
 - `get_job` 使用调用方传入的同一配置和 handle 查询。
@@ -221,7 +221,7 @@ gosom API 配置继续使用独立的 `system_data.gosom_api` 多实例列表。
 
 | 项 | 本期合同 |
 | --- | --- |
-| `ll` | 注入已验证；软降级检测必须以 §12.35 实验脚本为实现证据 |
+| `ll` | 注入已验证；位置偏差只作诊断，不作为拒绝或重试条件 |
 | Reviews | 实现单页与 cursor；是否抓取全量由调用方循环决定 |
 | Photos | 待实现，不暴露空接口 |
 | gosom 字段 | 上游 Entry 不完全覆盖 29 列，缺失字段保持空值 |

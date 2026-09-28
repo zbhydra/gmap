@@ -4,9 +4,10 @@
 """
 
 import asyncio
+import csv
 import logging
 import tempfile
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import uuid4
@@ -25,6 +26,7 @@ from app.core.database import get_async_session
 from app.i18n.common_code import CommonCode
 from app.models.subscription_model import UserSubscriptionModel
 from app.provider.gmap import gmap_http_provider
+from app.provider.maps_online import CSV_HEADERS
 from app.schemas.admin_schema import (
     AliOssStorageConfig,
     GmapEngineConfigRequest,
@@ -106,7 +108,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
                 _ENDPOINT, headers=headers, json={"keywords": [test_run_id]}
             ),
             CommonCode.INTERNAL_SERVER_ERROR,
-            500,
+            200,
         )
         assert await maps_online_task_service.count_tasks(user_id=user_id) == 0
 
@@ -255,7 +257,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
             _error(
                 await client.post(_ENDPOINT, headers=headers, json={"keywords": words}),
                 CommonCode.VALIDATION_ERROR,
-                422,
+                200,
             )
         first = _data(
             await client.post(
@@ -281,12 +283,13 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
         _error(
             await client.get(f"{_ENDPOINT}/{task_no}/download", headers=headers),
             CommonCode.INVALID_REQUEST,
-            400,
+            200,
         )
         first_task = await maps_online_task_service.task_info(
             task_no=task_no, user_id=user_id
         )
         assert first_task is not None and first_task.storage_id == storage[0].id
+        assert first_task.csv_language == "en-US"
         release.set()
         detail = await _completed(client, headers, task_no)
         assert detail["task"]["processed_count"] == 2
@@ -317,7 +320,22 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
         assert f"{task_no}.zip" in zipped.headers["content-disposition"]
         with ZipFile(BytesIO(zipped.content)) as archive:
             assert archive.namelist() == names
-            assert all(archive.read(name).startswith(b"\xef\xbb\xbf") for name in names)
+            for name, item in zip(names, detail["items"], strict=True):
+                body = archive.read(name)
+                assert body.startswith(b"\xef\xbb\xbf")
+                rows = list(csv.reader(StringIO(body.decode("utf-8-sig"))))
+                assert rows[0] == CSV_HEADERS and rows[1][1] == "Full address"
+                assert len(rows) == item["record_count"] + 2
+                saved = await maps_online_task_service.item_info(
+                    first_task.id, item["item_id"]
+                )
+                assert saved is not None and saved.object_key is not None
+                assert (
+                    body
+                    == (
+                        tmp_path / "objects" / storage[0].bucket / saved.object_key
+                    ).read_bytes()
+                )
         assert not list(download_root.iterdir())
 
         for suffix in (
@@ -329,7 +347,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
                 f"{_ENDPOINT}/{task_no}{suffix}",
                 headers={**other_headers, "Accept-Language": "en-US"},
             )
-            _error(response, CommonCode.NOT_FOUND, 404)
+            _error(response, CommonCode.NOT_FOUND, 200)
             assert response.json()["msg"] == "Resource not found"
         assert _data(await client.get(_ENDPOINT, headers=other_headers))["tasks"] == []
 
@@ -345,12 +363,12 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
                 json={"keywords": [str(i) for i in range(6)]},
             ),
             CommonCode.VALIDATION_ERROR,
-            422,
+            200,
         )
         second = _data(
             await client.post(
                 _ENDPOINT,
-                headers=headers,
+                headers={**headers, "Accept-Language": "zh-CN"},
                 json={
                     "keywords": [
                         "餐厅" * 100,
@@ -364,6 +382,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
             task_no=second["task_no"]
         )
         assert second_task is not None and second_task.storage_id == storage[1].id
+        assert second_task.csv_language == "zh-CN"
         assert second_detail["task"]["total_count"] == 5
         listed = _data(
             await client.get(
@@ -402,6 +421,13 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
                 archive.namelist()[0] == signed["filename"]
                 and len(archive.namelist()) == 5
             )
+            rows = list(
+                csv.reader(
+                    StringIO(archive.read(signed["filename"]).decode("utf-8-sig"))
+                )
+            )
+            assert rows[0] == CSV_HEADERS and rows[1][1] == "完整地址"
+            assert len(rows) == long_item["record_count"] + 2
         old_item = detail["items"][0]
         before = len(sdk_calls)
         _data(
@@ -421,14 +447,14 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
                 headers=headers,
             ),
             CommonCode.INTERNAL_SERVER_ERROR,
-            500,
+            200,
         )
         _error(
             await client.get(
                 f"{_ENDPOINT}/{second['task_no']}/download", headers=headers
             ),
             CommonCode.INTERNAL_SERVER_ERROR,
-            500,
+            200,
         )
         deny_download = False
         diagnostics = [
@@ -451,7 +477,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
                 f"{_ENDPOINT}/{task_no}{suffix}",
                 headers={**headers, "Accept-Language": "zh-CN"},
             )
-            _error(response, CommonCode.NOT_FOUND, 404)
+            _error(response, CommonCode.NOT_FOUND, 200)
             assert response.json()["msg"] == "资源不存在"
         assert not list(download_root.iterdir())
         second_items = await maps_online_task_service.item_lists(second_task.id)
@@ -463,7 +489,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
                     f"{_ENDPOINT}/{second['task_no']}{suffix}", headers=headers
                 ),
                 CommonCode.NOT_FOUND,
-                404,
+                200,
             )
         assert not list(download_root.iterdir())
         # 删除历史配置后不尝试当前启用项；另一份原对象仍存在。
@@ -474,7 +500,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
             _error(
                 await client.get(f"{_ENDPOINT}/{task_no}{suffix}", headers=headers),
                 CommonCode.NOT_FOUND,
-                404,
+                200,
             )
         assert len(sdk_calls) == before
 
@@ -492,7 +518,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
                 f"{_ENDPOINT}/{empty['task_no']}/download", headers=headers
             ),
             CommonCode.NOT_FOUND,
-            404,
+            200,
         )
         fail_upload = False
         usage = await online_usage_service.get_usage(identity, user_id=user_id)
@@ -507,7 +533,7 @@ async def test_real_online_client_creates_queries_downloads_and_preserves_storag
                 _ENDPOINT, headers=headers, json={"keywords": [test_run_id]}
             ),
             CommonCode.INVALID_REQUEST,
-            400,
+            200,
         )
         assert await maps_online_task_service.count_tasks(user_id=user_id) == 3
         assert "secret-sdk-diagnostic" not in caplog.text

@@ -2,8 +2,8 @@
  * Maps Email/社媒补全单元测试（013 A4，U8 验收行为直接覆盖）。
  *
  * 覆盖面：设置开关门控基线（默认关 + 非法值回退）、collectEnrichTargets
- * （无 domain 跳过 / 同 domain 去重 / 目标字段映射）、enrichRows（分批 ≤50、
- * 结果按 domain 写回行、无 domain 行不动、失败收敛 ok=false、每批回调、
+ * （无 domain 跳过 / 同 domain + website 去重 / 目标字段映射）、enrichRows（分批 ≤50、
+ * 结果按 domain + website 写回行、无 domain 行不动、失败收敛 ok=false、每批回调、
  * enrich_complete 打点成功与失败均发）、formatSocialMedias（平台序 + 行格式）。
  */
 
@@ -167,11 +167,11 @@ describe('设置开关（U8 门控基线）', () => {
 })
 
 describe('collectEnrichTargets', () => {
-  it('无 domain 行跳过；同 domain 去重；目标映射 name/address/website', () => {
+  it('无 domain 行跳过；同 domain + website 去重；目标映射 name/address/website', () => {
     const targets = collectEnrichTargets([
       makeRow({ domain: '' }), // 无官网：跳过
       makeRow({ domain: 'Cafe.com', name: 'Cafe A', fullAddress: '1 St' }),
-      makeRow({ domain: 'cafe.com', name: 'Cafe B' }), // 同域（大小写不敏感）：去重
+      makeRow({ domain: 'cafe.com', website: 'https://Cafe.com', name: 'Cafe B' }), // 同域（大小写不敏感）：去重
       makeRow({ domain: 'shop.org', name: 'Shop' })
     ])
 
@@ -184,6 +184,29 @@ describe('collectEnrichTargets', () => {
 })
 
 describe('enrichRows', () => {
+  it('同平台不同主页分别提交并按官网写回', async () => {
+    rpcState.respond = async businesses => ({
+      results: businesses.map(business => ({
+        key: business.domain,
+        emails: [],
+        medias: { facebook: business.website }
+      })),
+      partial: false
+    })
+    const rows = ['First', 'Second', 'First'].map(name =>
+      makeRow({ domain: 'facebook.com', website: `https://facebook.com/${name}` })
+    )
+    const { emitter } = makeEmitter()
+    const summary = await enrichRows(rows, emitter)
+    expect(summary.totalTargets).toBe(2)
+    expect(summary.writtenRows).toBe(3)
+    expect(rows.map(row => row.socialMedias)).toEqual([
+      'facebook: https://facebook.com/First',
+      'facebook: https://facebook.com/Second',
+      'facebook: https://facebook.com/First'
+    ])
+  })
+
   it('分批 ≤50：51 个目标拆 50+1 两批', async () => {
     rpcState.respond = async businesses => ({
       results: businesses.map(business => ({ key: business.domain, emails: [], medias: {} })),
@@ -206,7 +229,7 @@ describe('enrichRows', () => {
     })
   })
 
-  it('结果按 domain 写回行：Email 逗号分隔、Social Medias 多行；无 domain 行不动', async () => {
+  it('结果按 domain + website 写回行：Email 逗号分隔、Social Medias 多行；无 domain 行不动', async () => {
     rpcState.respond = async businesses => ({
       results: businesses.map(business =>
         business.domain === 'cafe.com'

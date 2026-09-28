@@ -29,6 +29,7 @@ function initMergeCsv(root: HTMLElement): void {
   const copy = getToolCopy(root)
   const form = queryRequired<HTMLFormElement>(root, '[data-tool-form]')
   const fileInput = queryRequired<HTMLInputElement>(root, '[data-tool-files]')
+  const fileOptions = queryRequired<HTMLElement>(root, '[data-file-options]')
   const errorBox = queryRequired<HTMLElement>(root, '[data-tool-error]')
   const fileSummaries = queryRequired<HTMLElement>(root, '[data-file-summaries]')
   const resultSection = queryRequired<HTMLElement>(root, '[data-tool-result]')
@@ -42,6 +43,18 @@ function initMergeCsv(root: HTMLElement): void {
   fileInput.addEventListener('change', () => {
     setError(errorBox, '')
     resultSection.hidden = true
+    fileSummaries.textContent = ''
+    fileOptions.textContent = ''
+    for (const file of fileInput.files ?? []) {
+      const item = document.createElement('li')
+      const label = document.createElement('label')
+      const checkbox = document.createElement('input')
+      checkbox.type = 'checkbox'
+      checkbox.dataset.translationRow = ''
+      label.append(checkbox, document.createTextNode(copy.content.form.translationRow.replace('{name}', file.name)))
+      item.append(label)
+      fileOptions.append(item)
+    }
   })
 
   form.addEventListener('submit', event => {
@@ -57,14 +70,15 @@ function initMergeCsv(root: HTMLElement): void {
 
     void (async () => {
       try {
-        const contents = await Promise.all(
-          files.map(async file => ({ name: file.name, text: await readFileAsText(file) }))
+        const translationRows = [...fileOptions.querySelectorAll<HTMLInputElement>('[data-translation-row]')]
+        const parsedFiles = await Promise.all(
+          files.map(async (file, index) => ({
+            name: file.name,
+            parsed: parseCsv(await readFileAsText(file), translationRows[index]?.checked ?? false)
+          }))
         )
-        const summaries = contents.map(file => {
-          const parsed = parseCsv(file.text)
-          return { name: file.name, rowCount: parsed?.rows.length ?? 0 }
-        })
-        const merged = mergeCsvFiles(contents)
+        const summaries = parsedFiles.map(file => ({ name: file.name, rowCount: file.parsed?.rows.length ?? 0 }))
+        const merged = mergeCsvFiles(parsedFiles)
         if (!merged.ok) {
           setError(
             errorBox,
@@ -78,7 +92,7 @@ function initMergeCsv(root: HTMLElement): void {
 
         renderFileSummaries(fileSummaries, summaries, copy)
         resultSummary.textContent = copy.content.form.resultSummary
-          .replace('{files}', String(contents.length))
+          .replace('{files}', String(parsedFiles.length))
           .replace('{rows}', String(merged.rows.length))
           .replace('{columns}', String(merged.header.length))
         mergedCsvText = toCsv(merged.header, merged.rows)

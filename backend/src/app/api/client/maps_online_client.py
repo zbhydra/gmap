@@ -9,13 +9,13 @@ from fastapi.responses import FileResponse, JSONResponse
 from starlette.background import BackgroundTask
 
 from app.api.user_dependencies import UserContext, get_current_user
-from app.constants.maps_online import KEYWORD_LIMITS
+from app.constants.maps_online import KEYWORD_LIMITS, MAX_LOGICAL_SAMPLES
 from app.constants.subscription import MAPS_ONLINE_PRODUCT_KIND
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.models.maps_online_task_model import MapsOnlineTaskModel
 from app.provider.gmap.http import gmap_http_provider
-from app.provider.gmap.types import GmapProviderError
+from app.provider.gmap.types import GmapProviderError, GmapViewport
 from app.schemas.maps_online_schema import (
     MapsOnlineCreateRequest,
     MapsOnlineItemSummary,
@@ -31,7 +31,7 @@ from app.services.usage_service import (
     usage_identity,
     usage_payload,
 )
-from app.utils.common import get_client_ip
+from app.utils.common import get_client_ip, get_locale
 from app.utils.redis_fixed_limiter import RedisFixedLimiter
 from app.utils.response import ResponseUtils
 
@@ -99,6 +99,7 @@ async def options(
     return ResponseUtils.ok(
         {
             "keyword_limit": limit,
+            "logical_sample_limit": MAX_LOGICAL_SAMPLES,
             "contacts_allowed": contacts_allowed,
             "usage": usage_payload(usage),
         }
@@ -118,6 +119,7 @@ async def _user_task(task_no: str, user_id: int) -> MapsOnlineTaskModel:
 @router.post("/tasks")
 async def create_task(
     request: MapsOnlineCreateRequest,
+    http_request: Request,
     current_user: UserContext = Depends(get_current_user),
 ) -> JSONResponse:
     limit, contacts_allowed = await _creation_rights(current_user.user_id)
@@ -136,11 +138,6 @@ async def create_task(
         )
     engine = await maps_engine_service.get_config()
     include_contacts = request.include_contacts and contacts_allowed
-    if include_contacts and not engine.proxies:
-        raise AppCommonException(
-            CommonCode.INTERNAL_SERVER_ERROR,
-            ext_msg=f"maps_online.create_task: 官网补全代理池为空 user_id={current_user.user_id}",
-        )
     storage = await object_storage_config_service.get_active()
     if storage is None:
         raise AppCommonException(
@@ -153,6 +150,15 @@ async def create_task(
         provider=engine.provider,
         storage_id=storage.id,
         include_contacts=include_contacts,
+        csv_language=get_locale(http_request).language,
+        search_viewports=(
+            [
+                GmapViewport(point.lat, point.lng, point.zoom)
+                for point in request.search_viewports
+            ]
+            if request.search_viewports is not None
+            else None
+        ),
     )
     return ResponseUtils.ok(MapsOnlineTaskSummary.from_task(task).model_dump())
 

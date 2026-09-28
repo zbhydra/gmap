@@ -35,13 +35,12 @@ export interface MergeFileSummary {
 }
 
 /** 解析一段 CSV 文本（首行为表头；空文本视为空文件）。 */
-export function parseCsv(text: string): ParsedCsv | null {
+export function parseCsv(text: string, skipTranslationRow = false): ParsedCsv | null {
   const records = parseCsvRecords(text)
   if (records.length === 0) {
     return null
   }
-  const [header, ...rows] = records
-  return { header: header ?? [], rows }
+  return { header: records[0] ?? [], rows: records.slice(skipTranslationRow ? 2 : 1) }
 }
 
 /** RFC 4180 记录切分：返回全部记录（含表头）。 */
@@ -125,9 +124,9 @@ function formatCsvField(value: string): string {
 /**
  * 合并多份 CSV 文本：表头并集对齐，数据行顺序拼接。
  *
- * @param files 已读取的文件（name + 文本内容）。
+ * @param files 已解析的文件及文件名。
  */
-export function mergeCsvFiles(files: readonly { name: string; text: string }[]): MergeCsvResult {
+export function mergeCsvFiles(files: readonly { name: string; parsed: ParsedCsv | null }[]): MergeCsvResult {
   if (files.length === 0) {
     return { ok: false, error: 'no-files', fileName: '' }
   }
@@ -139,7 +138,7 @@ export function mergeCsvFiles(files: readonly { name: string; text: string }[]):
   const headerIndex = new Map<string, number>()
 
   for (const file of files) {
-    const parsed = parseCsv(file.text)
+    const parsed = file.parsed
     if (parsed === null) {
       return { ok: false, error: 'empty-file', fileName: file.name }
     }

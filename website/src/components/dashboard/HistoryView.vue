@@ -5,8 +5,9 @@
  * 展开失败只影响该任务，下载失败只影响该操作；后端只公开任务两态，不
  * 展示接口没有提供的成功或失败结论。
  */
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
+import type { OnlineViewport } from '../../scripts/dashboard/map-grid'
 import {
   downloadOnlineTaskZip,
   getOnlineItemDownload,
@@ -27,6 +28,8 @@ export interface Props {
 }
 
 const props = defineProps<Props>()
+const OnlineMapInput = defineAsyncComponent(() => import('./OnlineMapInput.vue'))
+const OnlineRegionInput = defineAsyncComponent(() => import('./OnlineRegionInput.vue'))
 
 /** 每页条数（与方案合同一致，后端默认一致）。 */
 const PAGE_SIZE = 20
@@ -57,13 +60,30 @@ const options = ref<OnlineOptions | null>(null)
 const optionsLoading = ref(false)
 const optionsError = ref(false)
 const keywordsText = ref('')
+const mode = ref<'keywords' | 'map' | 'regions'>('keywords')
+const mapOpened = ref(false)
+const regionsOpened = ref(false)
+const mapViewports = ref<OnlineViewport[]>([])
+const regionQueries = ref<string[]>([])
+const regionResetKey = ref(0)
 const includeContacts = ref(true)
 const submitting = ref(false)
 const submitError = ref(false)
 const keywords = computed(() => [...new Set(keywordsText.value.split(/\r?\n/).map(word => word.trim()).filter(Boolean))])
-const invalid = computed(() => !options.value || keywords.value.length > options.value.keyword_limit || keywords.value.some(word => word.length > 500))
+const activeKeywords = computed(() => mode.value === 'regions' ? regionQueries.value : keywords.value)
+const keywordInvalid = computed(() => !!options.value && (activeKeywords.value.length > options.value.keyword_limit || activeKeywords.value.some(word => word.length > 500)))
+const logicalSamples = computed(() => activeKeywords.value.length * (mode.value === 'map' ? mapViewports.value.length : 1))
+const invalid = computed(() => !options.value || !activeKeywords.value.length || keywordInvalid.value
+  || (mode.value === 'map' && (!mapViewports.value.length || logicalSamples.value > options.value.logical_sample_limit)))
 let pollTimer: ReturnType<typeof setTimeout> | undefined
 let disposed = false
+
+function selectMode(next: 'keywords' | 'map' | 'regions'): void {
+  if (submitting.value) return
+  mode.value = next
+  if (next === 'map') mapOpened.value = true
+  if (next === 'regions') regionsOpened.value = true
+}
 
 async function loadOptions(): Promise<void> {
   optionsLoading.value = true
@@ -81,14 +101,18 @@ async function loadOptions(): Promise<void> {
 }
 
 async function submitTask(): Promise<void> {
-  if (submitting.value || loading.value || !keywords.value.length || invalid.value || options.value?.usage.exhausted) return
+  if (submitting.value || loading.value || invalid.value || options.value?.usage.exhausted) return
   submitting.value = true
   clearTimeout(pollTimer)
   submitError.value = false
   let nextOffset = offset.value
   try {
-    await createOnlineTask(context(), keywords.value, includeContacts.value && !!options.value?.contacts_allowed)
-    keywordsText.value = ''
+    await createOnlineTask(context(), activeKeywords.value, includeContacts.value && !!options.value?.contacts_allowed,
+      mode.value === 'map' ? mapViewports.value : undefined)
+    if (mode.value === 'regions') {
+      regionQueries.value = []
+      regionResetKey.value += 1
+    } else keywordsText.value = ''
     expanded.value = new Set()
     details.value = new Map()
     nextOffset = 0
@@ -307,14 +331,23 @@ onBeforeUnmount(() => {
       <template v-if="options">
         <p class="history-status">{{ props.copy.create.usage.replace('{used}', String(options.usage.used)).replace('{total}', String(options.usage.total)) }}</p>
         <p class="history-status">{{ props.copy.create.reset }}</p>
-        <label for="online-keywords">{{ props.copy.create.keywords }}</label>
-        <textarea id="online-keywords" v-model="keywordsText" rows="4" required :placeholder="props.copy.create.placeholder" :disabled="submitting" />
-        <p class="history-status" aria-live="polite">{{ props.copy.create.count.replace('{count}', String(keywords.length)).replace('{limit}', String(options.keyword_limit)) }}</p>
+        <div class="create-modes" role="group" :aria-label="props.copy.create.modeLabel">
+          <button type="button" :aria-pressed="mode === 'keywords'" :disabled="submitting" @click="selectMode('keywords')">{{ props.copy.create.modes.keywords }}</button>
+          <button type="button" :aria-pressed="mode === 'map'" :disabled="submitting" @click="selectMode('map')">{{ props.copy.create.modes.map }}</button>
+          <button type="button" :aria-pressed="mode === 'regions'" :disabled="submitting" @click="selectMode('regions')">{{ props.copy.create.modes.regions }}</button>
+        </div>
+        <template v-if="mode !== 'regions'">
+          <label for="online-keywords">{{ props.copy.create.keywords }}</label>
+          <textarea id="online-keywords" v-model="keywordsText" rows="4" required :placeholder="props.copy.create.placeholder" :disabled="submitting" />
+        </template>
+        <OnlineMapInput v-if="mapOpened" v-show="mode === 'map'" :copy="props.copy.create.map" :active="mode === 'map'" :disabled="submitting" :keyword-count="keywords.length" :logical-sample-limit="options.logical_sample_limit" @viewports="mapViewports = $event" />
+        <OnlineRegionInput v-if="regionsOpened" v-show="mode === 'regions'" :copy="props.copy.create.region" :disabled="submitting || mode !== 'regions'" :reset-key="regionResetKey" @queries="regionQueries = $event" />
+        <p class="history-status" aria-live="polite">{{ props.copy.create.count.replace('{count}', String(activeKeywords.length)).replace('{limit}', String(options.keyword_limit)) }}</p>
         <label class="create-contacts"><input v-model="includeContacts" type="checkbox" :disabled="!options.contacts_allowed || submitting" />{{ props.copy.create.contacts }}</label>
         <p v-if="!options.contacts_allowed" class="history-status">{{ props.copy.create.contactsPaid }}</p>
         <p v-if="options.usage.exhausted" class="create-error" role="alert">{{ props.copy.create.exhausted }}</p>
-        <p v-else-if="invalid" class="create-error" role="alert">{{ props.copy.create.invalid.replace('{limit}', String(options.keyword_limit)) }}</p>
-        <button type="submit" class="history-primary" :disabled="submitting || loading || optionsLoading || options.usage.exhausted || !keywords.length || invalid">{{ submitting ? props.copy.create.submitting : props.copy.create.submit }}</button>
+        <p v-else-if="keywordInvalid" class="create-error" role="alert">{{ props.copy.create.invalid.replace('{limit}', String(options.keyword_limit)) }}</p>
+        <button type="submit" class="history-primary" :disabled="submitting || loading || optionsLoading || options.usage.exhausted || invalid">{{ submitting ? props.copy.create.submitting : props.copy.create.submit }}</button>
       </template>
       <p v-if="submitError" class="create-error" role="alert">{{ props.copy.create.failed }}</p>
     </form>
@@ -476,6 +509,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .create-form { display: grid; gap: var(--space-3); padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
 .create-form h1 { font-size: 24px; line-height: 32px; letter-spacing: 0; }
+.create-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 420px; border: 1px solid var(--border-strong); border-radius: var(--rounded-sm); overflow: hidden; }
+.create-modes button { min-width: 0; min-height: 40px; padding: var(--space-2); border: 0; border-right: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.create-modes button:last-child { border-right: 0; }
+.create-modes button[aria-pressed='true'] { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+.create-modes button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .create-form textarea { width: 100%; min-height: 112px; padding: var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--rounded-sm); background: var(--surface); color: var(--text); font: inherit; resize: vertical; }
 .create-form textarea:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .create-contacts { display: flex; gap: var(--space-2); align-items: center; }

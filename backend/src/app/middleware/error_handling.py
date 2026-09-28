@@ -23,7 +23,7 @@ async def handle_request_validation_error(request: Request, exc: Exception) -> R
     error = exc.errors()[0]
     if error["type"] == "proxy_url":
         message = translator.translate(
-            "resp_code.INVALID_PROXY_URL", locale.language, index=error["ctx"]["index"]
+            "validation.proxy_url", locale.language, index=error["ctx"]["index"]
         )
     else:
         field = ".".join(str(part) for part in error["loc"])

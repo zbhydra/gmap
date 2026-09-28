@@ -472,7 +472,8 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     },
     form: {
       filesLabel: 'CSV files',
-      filesHint: 'Select two or more .csv files. The first row of each file must be the header row; everything is processed locally.',
+      filesHint: 'Select two or more .csv files. Check each file with translated labels on row 2 to skip that row. The merged CSV keeps one field-name header row. Files stay in your browser.',
+      translationRow: 'Skip row 2 (translated labels) in {name}',
       browse: 'Choose files',
       submit: 'Merge files',
       errorNoFiles: 'Select at least two CSV files to merge.',

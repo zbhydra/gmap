@@ -2,8 +2,8 @@
  * Email/社媒补全单元测试（016 E6 二期验收行为直接覆盖）。
  *
  * 覆盖面：websiteKey（协议补齐/端口剥离/大小写/尾点/非法输入）、
- * collectEnrichTargets（无 website 跳过 / 同主机名去重 / 目标字段映射）、
- * enrichRows（先清占位、分批 batchSize、结果按主机名写回同域多行、失败
+ * collectEnrichTargets（无 website 跳过 / 同官网去重 / 目标字段映射）、
+ * enrichRows（先清占位、分批 batchSize、结果按官网写回多行、失败
  * 批次收敛 ok=false 行保持空、enrich_complete 打点成功与失败均发）、
  * formatSocialMedias（canonical 平台序 + 未知平台后置 + 多行格式）。
  */
@@ -97,10 +97,10 @@ describe('websiteKey', () => {
 })
 
 describe('collectEnrichTargets', () => {
-  it('无 website 行跳过；同主机名多行去重为一目标；domain 恒空串', () => {
+  it('无 website 行跳过；同官网多行去重为一目标；domain 恒空串', () => {
     const rows = [
       makeRow('https://cafe.com'),
-      makeRow('http://CAFE.com/other'),
+      makeRow('https://cafe.com'),
       makeRow(''),
       makeRow('https://bar.com')
     ]
@@ -134,6 +134,28 @@ describe('formatSocialMedias', () => {
 })
 
 describe('enrichRows', () => {
+  it('同平台不同主页分别提交并按官网写回', async () => {
+    rpcState.respond = async businesses => ({
+      results: businesses.map(business => ({
+        key: websiteKey(business.website),
+        emails: [],
+        medias: { facebook: business.website }
+      })),
+      partial: false
+    })
+    const rows = ['First', 'Second', 'First'].map(name =>
+      makeRow(`https://facebook.com/${name}`)
+    )
+    const summary = await enrichRows(rows)
+    expect(summary.totalTargets).toBe(2)
+    expect(summary.writtenRows).toBe(3)
+    expect(rows.map(row => row.socialMedias)).toEqual([
+      'facebook: https://facebook.com/First',
+      'facebook: https://facebook.com/Second',
+      'facebook: https://facebook.com/First'
+    ])
+  })
+
   it('先清占位再写回：5 列覆盖为结果，无 website 行同样清占位留空', async () => {
     const withSite = makeRow('https://cafe.com')
     const noSite = makeRow('')
@@ -161,7 +183,7 @@ describe('enrichRows', () => {
     }
   })
 
-  it('同主机名多行共用一次补全并全部写回；分批按 batchSize 切片', async () => {
+  it('同官网多行共用一次补全并全部写回；分批按 batchSize 切片', async () => {
     const rows = [
       makeRow('https://a.com'),
       makeRow('https://a.com'),

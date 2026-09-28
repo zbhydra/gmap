@@ -9,6 +9,8 @@ from app.constants.subscription import (
 
 ITEM_SHARD_COUNT = 20
 TASK_TIMEOUT_SECONDS = 60 * 60
+DELIVERY_TIMEOUT_SECONDS = 120
+MAX_LOGICAL_SAMPLES = 50
 KEYWORD_LIMITS = {
     "free": 2,
     ONLINE_LITE_PRODUCT_ID: 5,

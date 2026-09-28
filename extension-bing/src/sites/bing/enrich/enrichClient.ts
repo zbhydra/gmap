@@ -7,7 +7,7 @@
  * 解锁，无数据留空），再按结果写回。
  *
  * 编排与 gmap 线 `extension/src/sites/maps/enrich/enrichClient.ts` 同构：
- * 从采集行收集有 website 的目标 → 按 website 主机名去重分批（≤50）→ 经
+ * 从采集行收集有 website 的目标 → 按 website 去重分批（≤50）→ 经
  * background RPC 调 enrich 端点（content 不直连后端，零 CORS 面）→ 写回
  * 行对象 → enrich_complete 打点（成功/失败均报）。
  *
@@ -29,9 +29,9 @@ export const ENRICH_BATCH_SIZE = 50
 
 /** 补全运行结果摘要（打点与观测用）。 */
 export interface EnrichRunSummary {
-  /** 本次提交补全的目标数（按 website 主机名去重后）。 */
+  /** 本次提交补全的目标数（按 website 去重后）。 */
   totalTargets: number
-  /** 写回数据的行数（同域名多行都会写）。 */
+  /** 写回数据的行数（官网相同的行都会写）。 */
   writtenRows: number
   /** 批预算截断标注（服务端返回）。 */
   partial: boolean
@@ -40,8 +40,7 @@ export interface EnrichRunSummary {
 }
 
 /**
- * 归一化 website 主机名（补协议后解析，去端口，小写，去尾点）——去重与
- * 写回匹配的统一键；非法/空 website 返回空串。
+ * 归一化 website 主机名（补协议后解析，去端口，小写，去尾点）——补全目标的主机名有效性检查；非法/空 website 返回空串。
  */
 export function websiteKey(website: string): string {
   const source = website.includes('://') ? website : `https://${website}`
@@ -61,7 +60,7 @@ export function formatSocialMedias(medias: Record<string, string>): string {
 }
 
 /**
- * 收集补全目标：有 website 的行按主机名去重（同域多行共用一次补全），
+ * 收集补全目标：有 website 的行按 website 去重，
  * 无 website 行跳过。顺序保持首见序，保证与批次结果位置对齐可稳定写回。
  */
 export function collectEnrichTargets(rows: readonly BingExportRow[]): EnrichBusinessInput[] {
@@ -69,10 +68,10 @@ export function collectEnrichTargets(rows: readonly BingExportRow[]): EnrichBusi
   const targets: EnrichBusinessInput[] = []
   for (const row of rows) {
     const key = websiteKey(row.website)
-    if (key.length === 0 || seen.has(key)) {
+    if (key.length === 0 || seen.has(row.website)) {
       continue
     }
-    seen.add(key)
+    seen.add(row.website)
     targets.push({ domain: '', website: row.website, name: row.name, address: row.address })
   }
   return targets
@@ -87,15 +86,15 @@ function clearProPlaceholders(row: BingExportRow): void {
   row.twitter = ''
 }
 
-/** 把单条补全结果写回同主机名的全部行（5 列就地覆盖），返回写回行数。 */
+/** 把单条补全结果写回官网相同的全部行（5 列就地覆盖），返回写回行数。 */
 function applyResultToRows(
   rows: readonly BingExportRow[],
-  key: string,
+  website: string,
   result: EnrichResult
 ): number {
   let written = 0
   for (const row of rows) {
-    if (websiteKey(row.website) !== key) {
+    if (row.website !== website) {
       continue
     }
     row.emails = result.emails.join(',')
@@ -153,7 +152,7 @@ export async function enrichRows(
         response.results.forEach((result, index) => {
           const target = batch[index]
           if (target) {
-            summary.writtenRows += applyResultToRows(rows, websiteKey(target.website), result)
+            summary.writtenRows += applyResultToRows(rows, target.website, result)
           }
         })
       } catch (error) {

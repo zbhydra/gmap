@@ -10,9 +10,17 @@ from time import perf_counter
 from uuid import uuid4
 from zipfile import ZIP_DEFLATED, ZipFile
 
+from app.constants.maps_online import DELIVERY_TIMEOUT_SECONDS
+from app.i18n.dependencies import DEFAULT_LANGUAGE, SupportedLanguage
+from app.i18n.translator import translator
 from app.provider.gmap import gmap_gosom_provider, gmap_http_provider
 from app.provider.gmap.rpc.entry import serialize_entry
-from app.provider.gmap.types import GmapConfigurationError, GmapRequestError
+from app.provider.gmap.types import (
+    GmapConfigurationError,
+    GmapPlaceEntry,
+    GmapRequestError,
+    GmapViewport,
+)
 from app.provider.maps_enrich import maps_enrich_provider
 from app.schemas.admin_schema import GmapEngineConfig, GosomApiItem, ObjectStorageItem
 from app.schemas.maps_enrich_schema import MapsEnrichBusiness
@@ -123,6 +131,9 @@ class MapsOnlineProvider:
         task_no: str,
         item_id: int,
         include_contacts: bool,
+        deadline: float,
+        csv_language: SupportedLanguage = DEFAULT_LANGUAGE,
+        search_viewports: Sequence[GmapViewport] | None = None,
     ) -> tuple[int, str, str]:
         """返回实际记录数、已写入对象 key 和内部 warning；异常由任务层收口。"""
         stage_started = perf_counter()
@@ -134,30 +145,73 @@ class MapsOnlineProvider:
             include_contacts,
         )
         warnings: list[str] = []
+        entries: list[GmapPlaceEntry] = []
+        seen: set[str] = set()
+        successes = 0
+        last_error: Exception | None = None
         if self.engine.provider == "http":
-            await gmap_http_provider.initialize(self.engine)
-            result = await gmap_http_provider.search_places(
-                keyword, 3, "en", request_id=f"{task_no}:{item_id}"
-            )
-            entries = result.entries
-            warnings.extend(result.warnings)
-        else:
-            if self.gosom is None:
-                raise GmapConfigurationError("maps_online.execute: gosom 未配置")
-            handle = await gmap_gosom_provider.submit_job(self.gosom, keyword, 3, "en")
-            while True:
-                await asyncio.sleep(5)
-                snapshot = await gmap_gosom_provider.get_job(self.gosom, handle)
-                if snapshot.status == "failed":
-                    # 上游自由文本可能带凭据，诊断只保留可定位的 job_id。
-                    raise GmapRequestError(
-                        f"maps_online.execute: gosom job 失败 job_id={handle.job_id}"
-                    )
-                if snapshot.status == "completed":
-                    assert snapshot.entries is not None
-                    entries = snapshot.entries
-                    break
+            async with asyncio.timeout_at(deadline):
+                await gmap_http_provider.initialize(self.engine)
+        elif self.gosom is None:
+            raise GmapConfigurationError("maps_online.execute: gosom 未配置")
 
+        for index, viewport in enumerate(search_viewports or (None,)):
+            if asyncio.get_running_loop().time() >= deadline:
+                warnings.append("map_sampling_deadline")
+                break
+            try:
+                async with asyncio.timeout_at(deadline):
+                    if self.engine.provider == "http":
+                        result = await gmap_http_provider.search_places(
+                            keyword,
+                            3,
+                            "en",
+                            ll=viewport,
+                            request_id=(
+                                f"{task_no}:{item_id}:{index}"
+                                if search_viewports is not None
+                                else f"{task_no}:{item_id}"
+                            ),
+                        )
+                        sample_entries = result.entries
+                        warnings.extend(result.warnings)
+                    else:
+                        assert self.gosom is not None
+                        handle = await gmap_gosom_provider.submit_job(
+                            self.gosom, keyword, 3, "en", viewport
+                        )
+                        while True:
+                            await asyncio.sleep(5)
+                            snapshot = await gmap_gosom_provider.get_job(
+                                self.gosom, handle
+                            )
+                            if snapshot.status == "failed":
+                                raise GmapRequestError(
+                                    f"maps_online.execute: gosom job 失败 job_id={handle.job_id}"
+                                )
+                            if snapshot.status == "completed":
+                                assert snapshot.entries is not None
+                                sample_entries = snapshot.entries
+                                break
+            except Exception as exc:
+                if search_viewports is None:
+                    raise
+                last_error = exc
+                warnings.append(
+                    "map_sampling_deadline"
+                    if isinstance(exc, TimeoutError)
+                    else f"map_sample_failed:{index}:{type(exc).__name__}"
+                )
+                if isinstance(exc, TimeoutError):
+                    break
+                continue
+            successes += 1
+            for entry in sample_entries:
+                if entry.fid not in seen:
+                    seen.add(entry.fid)
+                    entries.append(entry)
+        if successes == 0:
+            raise last_error or TimeoutError("maps_online.execute: 所有地图采样均失败")
         logger.info(
             "maps_online.execute: task=%s item=%s stage=maps duration_ms=%.2f records=%s",
             task_no,
@@ -166,37 +220,32 @@ class MapsOnlineProvider:
             len(entries),
         )
         stage_started = perf_counter()
-        rows = [serialize_entry(entry) for entry in entries]
-        logger.info(
-            "maps_online.execute: task=%s item=%s stage=serialize duration_ms=%.2f",
-            task_no,
-            item_id,
-            (perf_counter() - stage_started) * 1000,
-        )
-        stage_started = perf_counter()
         if include_contacts:
-            enriched = await maps_enrich_provider.enrich(
-                [
-                    MapsEnrichBusiness(
-                        domain=entry.domain or "", website=entry.website or ""
-                    )
-                    for entry in entries
-                ],
-                proxies=self.engine.proxies,
-            )
-            for row, contacts in zip(rows, enriched["results"], strict=True):
-                row["Emails"] = ", ".join(contacts["emails"])
-                for platform in (
-                    "Facebook",
-                    "Instagram",
-                    "Youtube",
-                    "Tiktok",
-                    "Linkedin",
-                    "Twitter",
-                ):
-                    row[f"{platform} Links"] = contacts["medias"].get(
-                        platform.lower(), ""
-                    )
+            try:
+                enriched = await maps_enrich_provider.enrich(
+                    [
+                        MapsEnrichBusiness(
+                            domain=entry.domain or "", website=entry.website or ""
+                        )
+                        for entry in entries
+                    ],
+                    proxies=self.engine.proxies,
+                    batch_timeout=max(0, deadline - asyncio.get_running_loop().time()),
+                )
+            except Exception:
+                logger.error(
+                    "maps_online.execute: task=%s item=%s 补全失败，继续交付基础结果",
+                    task_no,
+                    item_id,
+                    exc_info=True,
+                )
+                enriched = None
+                warnings.append("contact_supplement_failed")
+            else:
+                if enriched is not None and enriched["partial"]:
+                    warnings.append("contact_supplement_partial")
+        else:
+            enriched = None
 
         logger.info(
             "maps_online.execute: task=%s item=%s stage=contacts duration_ms=%.2f enabled=%s",
@@ -205,29 +254,58 @@ class MapsOnlineProvider:
             (perf_counter() - stage_started) * 1000,
             include_contacts,
         )
-        stage_started = perf_counter()
-        output = StringIO(newline="")
-        writer = csv.DictWriter(output, fieldnames=CSV_HEADERS, lineterminator="\r\n")
-        writer.writeheader()
-        writer.writerows(rows)
+
+        def build_csv() -> bytes:
+            rows = [serialize_entry(entry) for entry in entries]
+            if enriched is not None:
+                for row, contacts in zip(rows, enriched["results"], strict=True):
+                    row["Emails"] = ", ".join(contacts["emails"])
+                    for platform in (
+                        "Facebook",
+                        "Instagram",
+                        "Youtube",
+                        "Tiktok",
+                        "Linkedin",
+                        "Twitter",
+                    ):
+                        row[f"{platform} Links"] = contacts["medias"].get(
+                            platform.lower(), ""
+                        )
+            output = StringIO(newline="")
+            writer = csv.DictWriter(
+                output, fieldnames=CSV_HEADERS, lineterminator="\r\n"
+            )
+            writer.writeheader()
+            writer.writerow(
+                {
+                    header: translator.translate(
+                        f"maps_online.csv_headers.{header}", csv_language
+                    )
+                    for header in CSV_HEADERS
+                }
+            )
+            writer.writerows(rows)
+            return output.getvalue().encode("utf-8-sig")
 
         key = build_object_key(
             "online", created_at, f"{task_no}/{item_id}/{uuid4().hex}.csv"
         )
-        body = output.getvalue().encode("utf-8-sig")
-        logger.info(
-            "maps_online.execute: task=%s item=%s stage=csv duration_ms=%.2f bytes=%s",
-            task_no,
-            item_id,
-            (perf_counter() - stage_started) * 1000,
-            len(body),
-        )
-        stage_started = perf_counter()
-        await put_object(self.storage, key, body)
-        logger.info(
-            "maps_online.execute: task=%s item=%s stage=upload duration_ms=%.2f",
-            task_no,
-            item_id,
-            (perf_counter() - stage_started) * 1000,
-        )
+        async with asyncio.timeout(DELIVERY_TIMEOUT_SECONDS):
+            stage_started = perf_counter()
+            body = await asyncio.to_thread(build_csv)
+            logger.info(
+                "maps_online.execute: task=%s item=%s stage=csv duration_ms=%.2f bytes=%s",
+                task_no,
+                item_id,
+                (perf_counter() - stage_started) * 1000,
+                len(body),
+            )
+            stage_started = perf_counter()
+            await put_object(self.storage, key, body)
+            logger.info(
+                "maps_online.execute: task=%s item=%s stage=upload duration_ms=%.2f",
+                task_no,
+                item_id,
+                (perf_counter() - stage_started) * 1000,
+            )
         return len(entries), key, "; ".join(warnings)

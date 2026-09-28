@@ -15,10 +15,12 @@ import {
   type RequestContext
 } from '../homepage/api'
 import type { JsonValue } from '../homepage/api'
+import type { OnlineViewport } from './map-grid'
 import { notifySessionExpired } from '../site/session'
 
 export interface OnlineOptions {
   keyword_limit: number
+  logical_sample_limit: number
   contacts_allowed: boolean
   usage: { used: number; total: number; period: string; exhausted: boolean }
 }
@@ -26,7 +28,8 @@ export interface OnlineOptions {
 export function getOnlineOptions(context: RequestContext): Promise<OnlineOptions> {
   return withSessionExpiry(getJson<JsonValue>('/api/client/maps-online/options', context).then(data => {
     if (!data || typeof data !== 'object' || Array.isArray(data)
-      || typeof data.keyword_limit !== 'number' || typeof data.contacts_allowed !== 'boolean') {
+      || typeof data.keyword_limit !== 'number' || typeof data.logical_sample_limit !== 'number'
+      || typeof data.contacts_allowed !== 'boolean') {
       throw new Error('dashboard options: invalid creation constraints')
     }
     const usage = data.usage
@@ -35,14 +38,16 @@ export function getOnlineOptions(context: RequestContext): Promise<OnlineOptions
       || typeof usage.period !== 'string' || typeof usage.exhausted !== 'boolean') {
       throw new Error('dashboard options: invalid monthly usage')
     }
-    return { keyword_limit: data.keyword_limit, contacts_allowed: data.contacts_allowed,
+    return { keyword_limit: data.keyword_limit, logical_sample_limit: data.logical_sample_limit,
+      contacts_allowed: data.contacts_allowed,
       usage: { used: usage.used, total: usage.total, period: usage.period, exhausted: usage.exhausted } }
   }))
 }
 
-export function createOnlineTask(context: RequestContext, keywords: string[], includeContacts: boolean): Promise<OnlineTaskSummary> {
+export function createOnlineTask(context: RequestContext, keywords: string[], includeContacts: boolean, viewports?: OnlineViewport[]): Promise<OnlineTaskSummary> {
   return withSessionExpiry(postJson<OnlineTaskSummary>('/api/client/maps-online/tasks', context,
-    { keywords, include_contacts: includeContacts }))
+    { keywords, include_contacts: includeContacts,
+      ...(viewports ? { search_viewports: viewports.map(point => ({ lat: point.lat, lng: point.lng, zoom: point.zoom })) } : {}) }))
 }
 
 /** Online 任务公开摘要（后端 MapsOnlineTaskSummary）。 */

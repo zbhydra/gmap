@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 from curl_cffi import CurlInfo
 from curl_cffi.requests import AsyncSession, Response
 from curl_cffi.requests.exceptions import RequestException
+from traffic_scope import current_scope
 
 from app.provider.gmap.types import GmapConfigurationError, GmapRequestError
 from app.utils.logger import logger
@@ -46,6 +47,21 @@ def _proxy_label(proxy: str | None) -> str:
         return "unavailable"
     parsed = urlsplit(proxy)
     return f"{parsed.scheme}://{parsed.hostname}:{parsed.port}"
+
+
+def _record_traffic(response: Response | None, *, partial: bool = False) -> None:
+    scope = current_scope.get()
+    if scope is None:
+        return
+    if response is None:
+        scope.google.add(unmeasured=True)
+        return
+    scope.google.add(
+        request_bytes=getattr(response, "request_size", None),
+        header_bytes=getattr(response, "header_size", None),
+        body_bytes=getattr(response, "download_size", None),
+        partial=partial,
+    )
 
 
 class GmapRpcClient:
@@ -95,6 +111,8 @@ class GmapRpcClient:
         if self._semaphore is None or self._session is None:
             raise GmapConfigurationError("gmap rpc request: client is not initialized")
         started = perf_counter()
+        scope = current_scope.get()
+        scope_id = scope.scope_id if scope else "unscoped"
         headers = dict(_ACCEPT_HEADERS)
         if cookie:
             headers["Cookie"] = cookie
@@ -105,9 +123,15 @@ class GmapRpcClient:
                     url, headers=headers, proxy=proxy, timeout=timeout
                 )
             except (RequestException, asyncio.TimeoutError) as exc:
+                observed = getattr(exc, "response", None)
+                _record_traffic(
+                    observed if isinstance(observed, Response) else None,
+                    partial=True,
+                )
                 logger.warning(
-                    "gmap_rpc.request: request=%s seq=%s host=%s path=%s proxy=%s "
+                    "gmap_rpc.request: scope=%s request=%s seq=%s host=%s path=%s proxy=%s "
                     "queue_ms=%.2f duration_ms=%.2f error=%s",
+                    scope_id,
                     state.request_id,
                     sequence,
                     urlsplit(url).hostname,
@@ -118,13 +142,18 @@ class GmapRpcClient:
                     type(exc).__name__,
                 )
                 raise
+            except asyncio.CancelledError:
+                _record_traffic(None)
+                raise
+        _record_traffic(response)
         info = response.infos
         logger.info(
-            "gmap_rpc.request: request=%s seq=%s host=%s path=%s final_host=%s proxy=%s "
+            "gmap_rpc.request: scope=%s request=%s seq=%s host=%s path=%s final_host=%s proxy=%s "
             "status=%s connection_id=%s new_connections=%s curl_http_version=%s "
             "queue_ms=%.2f duration_ms=%.2f network_ms=%.2f dns_ms=%.2f "
             "tcp_ms=%.2f tunnel_tls_ms=%.2f ttfb_ms=%.2f body_ms=%.2f "
             "bytes=%s decoded_bytes=%s content_encoding=%s",
+            scope_id,
             state.request_id,
             sequence,
             urlsplit(url).hostname,
@@ -170,9 +199,11 @@ class GmapRpcClient:
         # 并行请求可能已经完成切换，旧请求的失败不再覆盖新的代理选择。
         if state.proxy == previous:
             state.proxy = self.choose_proxy(previous)
+        scope = current_scope.get()
         logger.warning(
-            "gmap_rpc.retry: request=%s seq=%s previous_proxy=%s next_proxy=%s "
+            "gmap_rpc.retry: scope=%s request=%s seq=%s previous_proxy=%s next_proxy=%s "
             "reason=%s wait_ms=%.2f",
+            scope.scope_id if scope else "unscoped",
             state.request_id,
             sequence,
             _proxy_label(previous),
