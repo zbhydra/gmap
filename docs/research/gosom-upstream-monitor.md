@@ -35,8 +35,8 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-10-09`
-- 本地仓库提交:`73ae64efe532f669ef5268a743a58a6493445e11`
+- 检查时间:`2026-10-10`
+- 本地仓库提交:`48881905c2ba21bc18144878e05851ef29e5126f`
 - GOSOM 最新提交:`d0b51bcf3cd56d9a3f71e049cb6e226554e24162`
 - SCRAPEMATE 最新提交:`859d15f56ba5ed3851587edc305fab6ee956cc71`
 - 结论:题设限定无网络,未执行 `git ls-remote`;提供的两个 `main` HEAD 均与本地 `.upstream/` 的 `main` 一致,且各自等于当前基线。两仓库从基线到 HEAD 的完整 `git diff --name-status` 均为空,`git diff --check` 均通过;GOSOM 解析 schema、Maps 页面 / RPC、浏览器层、SaaS REST / 鉴权与 worker、镜像构建和安全相关路径无新增变化,SCRAPEMATE 浏览器层与框架核心语义也无新增变化。GOSOM `go.mod` 仍已跟进 `github.com/gosom/scrapemate v1.4.0`,两仓库 playwright-go 均为 `v0.6100.0`。复核「待确认项」、`docs/ROADMAP.md` B4 与 `docs/feat/014.Maps云端/plans/001.Provider采集基建.md`、`002.Online任务与结果基建.md`、`003.可选联系方式与独立采集库.md` 的验收记录后,仍未见 worker 健康服务与 Maps URL 解析修复两项预发验证的完成证据;两项继续待确认,建议先预发评估 `ghcr.io/gosom/google-maps-scraper-saas:latest`,通过后按部署机 digest 人工决定是否更新。SCRAPEMATE 无独立影响项,不建议仅为该库主动更新镜像。两条基线不变,本轮不追加变更记录。
@@ -116,8 +116,8 @@ SCRAPEMATE 至少检查:
 
 ## 待确认项
 
-- GOSOM `cfb0440472ad1547b87cae8e1f43240a112b2c7b` 的线上镜像升级评估:预发构建 / 拉取候选镜像后,以实际 `gosom_api` 配置验证 `POST /api/v1/scrape`、任务查询和结果写入链路,并向 worker 发送终止信号,确认 `cmd/gmapssaas/cmdworker.runHealthServer()` 在根 context 已取消时仍可于 5 秒窗口内正常关闭健康服务。通过后再由人工按部署机 digest 决定是否更新漂移 tag `ghcr.io/gosom/google-maps-scraper-saas:latest`。2026-09-14 已复核最新 `2b8616d0ccf7d3c578b42a7440e3c13bb22e5083` 未触及该 SaaS 路径;2026-09-24 新提交 `d0b51bc` 也未触及,且本仓库内未见预发完成证据,原验证条件与待人工决策状态不变。
-- GOSOM `ce4908e025453789e70b0acbe0888985ed3949a4` 的 Maps URL 解析修复:预发候选镜像须经实际 `gosom_api` 向 `POST /api/v1/scrape` 提交 `https://www.google.com/maps/place/../data=` 形式的 `keyword`,轮询任务至终态并核对详情结果写入;同时以常规关键词确认搜索结果中同类 href 不再因 URL 规范化丢失详情任务。通过后再结合上一项 worker 健康服务验证,由人工按部署机 digest 决定是否更新漂移 tag `ghcr.io/gosom/google-maps-scraper-saas:latest`。2026-09-24 新提交 `d0b51bc` 未触及 Maps 解析路径,且本仓库内未见预发完成证据,本项继续待确认。
+- GOSOM `cfb0440472ad1547b87cae8e1f43240a112b2c7b` 的线上镜像升级评估:预发构建 / 拉取候选镜像后,以实际 `gosom_api` 配置验证 `POST /api/v1/scrape`、任务查询和结果写入链路,并向 worker 发送终止信号,确认 `cmd/gmapssaas/cmdworker.runHealthServer()` 在根 context 已取消时仍可于 5 秒窗口内正常关闭健康服务。通过后再由人工按部署机 digest 决定是否更新漂移 tag `ghcr.io/gosom/google-maps-scraper-saas:latest`。2026-09-14 已复核最新 `2b8616d0ccf7d3c578b42a7440e3c13bb22e5083` 未触及该 SaaS 路径;2026-09-24 新提交 `d0b51bc` 也未触及,且本仓库内未见预发完成证据;2026-10-10 再次复核当前 HEAD 未触及该 SaaS 路径,原验证条件与待人工决策状态不变。
+- GOSOM `ce4908e025453789e70b0acbe0888985ed3949a4` 的 Maps URL 解析修复:预发候选镜像须经实际 `gosom_api` 向 `POST /api/v1/scrape` 提交 `https://www.google.com/maps/place/../data=` 形式的 `keyword`,轮询任务至终态并核对详情结果写入;同时以常规关键词确认搜索结果中同类 href 不再因 URL 规范化丢失详情任务。通过后再结合上一项 worker 健康服务验证,由人工按部署机 digest 决定是否更新漂移 tag `ghcr.io/gosom/google-maps-scraper-saas:latest`。2026-09-24 新提交 `d0b51bc` 未触及 Maps 解析路径,且本仓库内未见预发完成证据;2026-10-10 再次复核当前 HEAD 未触及 Maps 解析路径,本项继续待确认。
 
 ## 变更记录
 
