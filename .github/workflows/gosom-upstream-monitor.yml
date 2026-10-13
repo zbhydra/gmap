@@ -6,7 +6,7 @@
 #       影响本项目线上抓取引擎（解析 schema、Maps 页面解析逻辑、Playwright/
 #       浏览器层、SaaS serve/worker、安全修复），按
 #       docs/research/gosom-upstream-monitor.md 的 SOP 推进基线、产出报告、
-#       有影响时告警并给出「是否建议更新线上镜像」结论。
+#       有新增影响时告警并给出「是否建议更新线上镜像」结论。
 #
 # 流程：
 #   checkout 本仓库（不持久化凭证）
@@ -17,7 +17,7 @@
 #     → bash: 组装巡检 prompt（注入基线/HEAD/是否有变化/影响判定规则摘要）
 #     → codex exec: 沙箱内禁网 + 可写工作区，按 SOP 分析 diff、更新巡检文档
 #     → bash: 变更白名单校验（只放行巡检文档，越界即失败）→ commit + push main
-#     → bash: 解析报告尾部机器标记 → 有影响时飞书通知 + 开 Issue
+#     → bash: 解析报告尾部机器标记 → 有新增影响时飞书通知 + 开 Issue
 #     → 任一步失败：job 失败（基线自然不推进，符合 SOP「检查失败不得推进基线」）+ 飞书告警
 #
 # 设计要点：
@@ -63,7 +63,7 @@ concurrency:
 
 permissions:
   contents: write # 写回巡检基线 commit
-  issues: write   # 有影响项时开 Issue
+  issues: write   # 有新增影响项时开 Issue
 
 env:
   # 巡检 SOP 文档（也是唯一允许 codex 修改的文件）
@@ -161,7 +161,7 @@ jobs:
           - GOSOM 上游 gosom/google-maps-scraper main：基线 $GOSOM_BASE → 最新 $GOSOM_HEAD
           - SCRAPEMATE 上游 gosom/scrapemate main：基线 $SCRAPEMATE_BASE → 最新 $SCRAPEMATE_HEAD
           - 上游仓库已就位：.upstream/google-maps-scraper 与 .upstream/scrapemate（main 全历史，可自由 git log / git diff / 读文件；若基线不是新 HEAD 的祖先，按 SOP 步骤 4 以 force-push 处理，比较两棵完整树）
-          - 上游是否有变化：$CHANGED（false 表示两个 HEAD 均等于基线：只更新「最近巡检」并复核「待确认项」，不推进基线、不追加变更记录）
+          - 上游是否有变化：$CHANGED（false 表示两个 HEAD 均等于基线：只更新「最近巡检」并复核「待确认项」，不推进基线、不追加变更记录，两个 IMPACT 标记均为 no）
 
           ## 影响判定规则摘要（全文以巡检文档「影响判定规则」为准）
 
@@ -179,11 +179,11 @@ jobs:
           ## 产出
 
           1. 更新巡检文档：上游有变化且检查完整成功时推进对应基线，并更新「最近巡检」「变更记录」「待确认项」；检查不完整则不得推进基线。巡检结论、证据与规则表述与文档现有写法保持一致。
-          2. 最终报告作为 final message 输出，分 GOSOM / SCRAPEMATE 两节，每节包含：旧提交 → 新提交、是否有变化、影响项列表（影响面 / 证据路径 / 上游提交 / 建议动作，无则写「无」）、是否建议更新线上镜像（ghcr.io/gosom/google-maps-scraper-saas:latest）、巡检文档是否更新。
+          2. 最终报告作为 final message 输出，分 GOSOM / SCRAPEMATE 两节，每节包含：旧提交 → 新提交、是否有变化、本轮新增影响项列表（影响面 / 证据路径 / 上游提交 / 建议动作，无则写「无」）、是否建议更新线上镜像（ghcr.io/gosom/google-maps-scraper-saas:latest）、巡检文档是否更新。既有待确认项单独列出。
           3. 报告最后两行固定输出机器可读标记（CI 靠它决定是否告警，缺失或格式不符会被当作有影响处理）：
           GOSOM_IMPACT=yes 或 no
           SCRAPEMATE_IMPACT=yes 或 no
-          （存在影响项或待确认项或无法判断时，必须为 yes。）
+          （仅本次基线至最新 HEAD 范围内存在新增影响项或无法判断时为 yes；既有待确认项不触发 yes，HEAD 等于基线时必须为 no。）
           EOF
 
       # ── judgment 步骤：codex 按 SOP 巡检（沙箱内禁网、可写工作区）─────
@@ -285,7 +285,7 @@ jobs:
             cat /tmp/patrol-report.txt
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: 有影响时飞书通知并开 Issue
+      - name: 有新增影响时飞书通知并开 Issue
         if: steps.writeback.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -302,21 +302,24 @@ jobs:
           SCRAPEMATE_FLAG=$(printf '%s\n' "$REPORT" | grep -E '^SCRAPEMATE_IMPACT=(yes|no)$' | tail -1 | cut -d= -f2 || true)
           [ "$GOSOM_FLAG" = yes ] || [ "$GOSOM_FLAG" = no ] || GOSOM_FLAG=yes
           [ "$SCRAPEMATE_FLAG" = yes ] || [ "$SCRAPEMATE_FLAG" = no ] || SCRAPEMATE_FLAG=yes
+          # 空检查区间没有新增影响，避免模型将既有待确认项误报为新告警。
+          if [ "$GOSOM_HEAD" = "$GOSOM_BASE" ]; then GOSOM_FLAG=no; fi
+          if [ "$SCRAPEMATE_HEAD" = "$SCRAPEMATE_BASE" ]; then SCRAPEMATE_FLAG=no; fi
           echo "GOSOM_IMPACT=$GOSOM_FLAG SCRAPEMATE_IMPACT=$SCRAPEMATE_FLAG"
           if [ "$GOSOM_FLAG" != yes ] && [ "$SCRAPEMATE_FLAG" != yes ]; then
-            echo "无影响项，不告警（每日心跳见 Actions run 历史与巡检文档）"
+            echo "无新增影响项，不告警（每日心跳见 Actions run 历史与巡检文档）"
             exit 0
           fi
           RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           ISSUE_URL=$(gh issue create \
             --repo "$GITHUB_REPOSITORY" \
-            --title "【GOSOM巡检】上游影响待确认（$(date -u +%F)）" \
+            --title "【GOSOM巡检】新增上游影响待确认（$(date -u +%F)）" \
             --body "$(printf '%s\n\n---\n\nRun: %s' "$REPORT" "$RUN_URL")")
           echo "Issue：$ISSUE_URL"
           # 飞书 text 消息；「GOSOM巡检」前缀对应机器人的关键词安全设置
-          GOSOM_MARK='✅ 无影响'; [ "$GOSOM_FLAG" = yes ] && GOSOM_MARK='⚠️ 有影响'
-          SCRAPEMATE_MARK='✅ 无影响'; [ "$SCRAPEMATE_FLAG" = yes ] && SCRAPEMATE_MARK='⚠️ 有影响'
-          FEISHU_TEXT=$(printf '【GOSOM巡检】发现上游影响项，待人工确认。\nGOSOM：%s → %s %s\nSCRAPEMATE：%s → %s %s\n详情：%s' \
+          GOSOM_MARK='✅ 无新增影响'; [ "$GOSOM_FLAG" = yes ] && GOSOM_MARK='⚠️ 有新增影响'
+          SCRAPEMATE_MARK='✅ 无新增影响'; [ "$SCRAPEMATE_FLAG" = yes ] && SCRAPEMATE_MARK='⚠️ 有新增影响'
+          FEISHU_TEXT=$(printf '【GOSOM巡检】发现新增上游影响项，待人工确认。\nGOSOM：%s → %s %s\nSCRAPEMATE：%s → %s %s\n详情：%s' \
             "${GOSOM_BASE:0:7}" "${GOSOM_HEAD:0:7}" "$GOSOM_MARK" \
             "${SCRAPEMATE_BASE:0:7}" "${SCRAPEMATE_HEAD:0:7}" "$SCRAPEMATE_MARK" "$ISSUE_URL")
           curl -sf -X POST "$FEISHU_WEBHOOK" \
