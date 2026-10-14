@@ -1212,6 +1212,28 @@ hours 89.4%；流量 842.7MB（0.84MB/词）、browser_fail 0。与 batch500 全
 
 数据：`e14_photos.json`、`e14_hspqx_req_sample.md`、`e14_hspqx_bulk_resp.txt`（157 张原始响应样本）；脚本 `scripts/e14_photos.py`。
 
+### 12.38 E18 复现与续测：count500 单页全量、门控形态漂移、寿命探针重建（2026-09-09）
+
+本机复现（macOS 直连出口，再次佐证出口无关），实验现场 `docs/scratch/e18_photos/`（不入 git，含会话凭证）。
+
+**混合链路复现成功**：headful Chromium trusted 点击「See photos」→ 凭证包 → 纯 HTTP 字节级替换 fid/kg，20/20 店成功、内嵌 fid 路由校验全对、平均 0.34s/店。跨店路由以**响应照片对象内嵌 fid** 与请求 fid 比对为准（响应含滚动会话串，hash 对比不可用）。
+
+**count500 单页全量（新配方）**：数量槽 `[null,20,null,null,1]` 字节级替换为 `[null,500,...]`，单响应即全量相册；payload[1]=相册总数，与 unique 对比可校验完整性。服务端单响应 cap 约 201（E14 时实测 156，已上调）。多店实测 unique≈total（134–201 张），>cap 店需翻页兜底。
+
+**翻页形态仍未破解**：首翻形态+数量槽回填游标（`_reqid` 递增与否同）→ 400 er/3；E14 Edge 取证理解的轻量形态 `[null,20,"<cursor>",null,1]` 作为整体 payload → 200 但空载荷 `[3]`。E14「数量槽第三位携带游标」的取证结论可能有误，需重新浏览器取证（UI 内无翻页请求可捕，成本高；工程上 count500 已覆盖 ≤cap 场景，暂不追）。
+
+**门控形态漂移（相对 E14c–k）**：新 mint SOCS+NID + 原生 body 直发不再 400 er/3，而是 200 + lite——count20 回 10 个照片对象、count500 压至 1 个；全量仍必须交互会话。门控从「请求级拒绝」变为「数据深度差」，E14b/E14c–k 的 400 结论已不代表当前服务端行为。
+
+**boot 通道排除**：place 页 boot（未点击）也会发一条 hspqX（200/0 张，fid 由 URL source-path 承载、body 无 fid），重放为空——凭证包必须取点击后的请求，E14m 门控结论再次成立。
+
+**E17d 寿命探针重建**：`e18_probe.py` 每 30 分钟用同一凭证包拉一个新 fid（3 连败判死），数据 `session/lifetime.json`；上一轮探针数据从未入库，本轮重新起测。
+
+**工程坑**：fid 在 encoded body/URL 中冒号为 `%3A`，裸冒号替换会静默失效；空名字 place URL 会被 Google 重写丢 fid（必须带店名）。
+
+**E18b 纯 HTTP 全量路径系统性否证（2026-09-09 追加）**：针对「真实链路 0 Chromium」诉求补齐了 E15a 的监控盲区——CDP 全量捕获点击前后所有请求，点击除 hspqX 外仅新增 `photometa/v1`（照片元数据）与 `preview/log204`+`gen_204`（交互遥测打点，内嵌会话串）；用新 mint NID 模拟完整浏览序列（place 页 → photometa → log204 重放 → hspqX）全部无法升级照片对象数（凭证会话 20 对象 vs 新 NID 0~1 对象，同店 total=131）；curl 全套伪装（UA/TLS/sec-fetch）拿到的 place 页一律 206KB 降级壳、零 gallery 数据，浏览器 537KB"完整页"系 JS 执行后的 DOM。全量门控的写入无纯 HTTP 等价物，0 Chromium 仅 lite 口径成立且量级不稳定。判据注意：必须数 payload[0] 照片对象数，unique URL 计数会把 tabs 缩略图误判为 full。实验现场 `docs/scratch/e18_photos/`（e18_full_monitor.py、e18_pure_sequence.py）。
+
+**E18c 门控两层模型定稿（2026-09-09 傍晚）**：持续调研修正了单层模型——点击同时写入两层服务端状态：① cookie 级长状态（被点击 NID 稳定 FULL，实测 5h+，E17d 旧观测 48h）；② IP 级短窗口（点击给出口 IP 开 ~10 分钟全量窗口，窗口内任何 cookie 含新 mint NID 都 FULL，16:00 养护 → 16:07 四变体含零干预 C0 全 FULL → 16:12 关）。分离实验证明页面加载不开窗（不点击的浏览器加载后 curl 新 NID 仍 0），开窗 = trusted 点击。窗口内重放点击后全部请求不能续窗；参数穷尽（cookie 组成/payload 各槽含壳页 token 与响应串滚动/Origin 等全套头/页面预载/boot 前置/打点重放/时序）全部无效。判定：FULL 写入通道唯一，运行时纯 curl 已达成（凭证包长复用），凭证生产必须浏览器（15s/次 ÷ 5h 摊薄）。脚本 `e18_pure_v2.py`、`e18_bootstrap.py`、`e18_window_probe.py`、`e18_page_vs_click.py`，数据 `session/window_curve.json`。
+
 ## 13. 当前引擎 Provider 定论
 
 ### 13.1 Provider 边界

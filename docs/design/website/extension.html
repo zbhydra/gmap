@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MapsGrab for Edge &amp; Firefox — Google Maps Extractor Extension</title>
+    <meta
+      name="description"
+      content="Extract 36 columns of business data, reviews, and photos from Google Maps, enrich records with emails and social links, run batch tasks, and export to CSV or JSON."
+    />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <script src="assets/js/theme-boot.js"></script>
+    <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages/extension.css" />
+    <script src="assets/js/chrome.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/site.js" defer></script>
+    <script src="assets/js/pages/extension.js" defer></script>
+  </head>
+  <body data-page="extension">
+    <div data-chrome="nav"></div>
+
+    <main>
+      <!-- ================================================================
+           ① Hero：左文案 + 右侧浏览器剧场（Maps 结果列表自动滚动 → 面板逐行采集 → 导出到下载）
+           ================================================================ -->
+      <section class="page-hero xh-hero has-deco" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i></div>
+          <div class="bg-contours"></div>
+          <div class="bg-grid"></div>
+          <div class="noise"></div>
+        </div>
+
+        <div class="container page-hero-grid">
+          <div class="page-hero-copy">
+            <a class="pill-announce" href="#release-notes" data-enter>
+              <span class="badge badge--solid">v0.1.0</span>
+              <span>Pre-release for Edge, Firefox &amp; Chromium</span>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+            </a>
+
+            <h1 class="h1 xh-title" data-split="static" style="--split-delay: 90ms">
+              <span class="w"><span class="wi" style="--i: 0">The</span></span>
+              <span class="w"><span class="wi" style="--i: 1">Google</span></span>
+              <span class="w"><span class="wi" style="--i: 2">Maps</span></span>
+              <span class="w"><span class="wi" style="--i: 3">extractor</span></span>
+              <span class="w"><span class="wi" style="--i: 4">for</span></span>
+              <span class="w"><span class="wi" style="--i: 5"><span class="accent text-grad is-animated">Edge &amp; Firefox</span></span></span>
+            </h1>
+
+            <p class="lead" data-enter style="--enter-delay: 180ms">
+              Open any Google Maps search or business page and grab what is publicly shown there — business data,
+              reviews, photos and contact details. Everything exports to CSV or JSON, right from your browser.
+            </p>
+
+            <div class="page-hero-actions" data-enter style="--enter-delay: 270ms">
+              <a class="btn btn-primary btn-lg" href="#install" data-magnetic="0.2">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>Install for Edge
+              </a>
+              <a class="btn btn-secondary btn-lg" href="#install">Chrome &amp; Firefox</a>
+            </div>
+
+            <div class="page-hero-meta" data-enter style="--enter-delay: 360ms">
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>No account required</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>1,000 free records / month</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Exports stay on your machine</span>
+            </div>
+          </div>
+
+          <div class="page-hero-visual xh" data-reveal="rise" data-reveal-onload="420" data-xh>
+            <div class="browser xh-frame">
+              <div class="browser-bar">
+                <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                <div class="browser-url">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>
+                  <span data-xh-url>google.com/maps/search/bakery+in+seattle</span>
+                </div>
+                <span class="dl-ring" data-xh-dl aria-hidden="true">
+                  <svg class="dl-ring-svg" viewBox="0 0 36 36">
+                    <circle class="dl-ring-track" cx="18" cy="18" r="15" />
+                    <circle class="dl-ring-fill" cx="18" cy="18" r="15" pathLength="100" />
+                  </svg>
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>
+                </span>
+                <span class="xh-ext" title="MapsGrab is active on this page" aria-hidden="true">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg><i class="ext-dot"></i>
+                </span>
+              </div>
+
+              <div class="xh-body">
+                <!-- Google Maps 结果侧栏（风格化） -->
+                <div class="xh-side" aria-hidden="true">
+                  <div class="xh-search">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>
+                    <span data-xh-query>bakery in Seattle</span>
+                  </div>
+                  <div class="xh-chips"><span>Open now</span><span>Top rated</span><span>Price</span></div>
+                  <div class="xh-results">
+                    <div class="xh-track" data-xh-track></div>
+                  </div>
+                </div>
+
+                <!-- 地图（右侧可见条带） -->
+                <div class="xh-map" aria-hidden="true">
+                  <svg class="xh-map-svg" viewBox="0 0 420 520" preserveAspectRatio="xMidYMid slice">
+                    <rect class="m-land" width="420" height="520" />
+                    <g class="m-streets">
+                      <path d="M40 0V520M92 0V520M144 0V520M196 0V520M248 0V520M300 0V520M352 0V520M404 0V520" />
+                      <path d="M0 36H420M0 84H420M0 132H420M0 228H420M0 276H420M0 324H420M0 420H420M0 468H420" />
+                    </g>
+                    <path class="m-park" d="M262 300c16-34 82-40 104-12 22 26 8 72-30 84-40 12-90-32-74-72z" />
+                    <path class="m-park" d="M30 404c0-11 9-20 20-20h64c11 0 20 9 20 20v34c0 11-9 20-20 20H50c-11 0-20-9-20-20z" />
+                    <path class="m-water" d="M330 -10C318 70 360 140 344 220C330 290 288 350 300 430C308 480 330 510 324 530H420V-10Z" />
+                    <g class="m-major">
+                      <path class="casing" d="M-10 180H430" />
+                      <path class="casing" d="M120 -10C132 120 112 260 132 340C150 420 122 480 132 530" />
+                      <path class="road" d="M-10 180H430" />
+                      <path class="road" d="M120 -10C132 120 112 260 132 340C150 420 122 480 132 530" />
+                    </g>
+                    <g class="m-labels">
+                      <text x="150" y="172">PIKE ST</text>
+                      <text x="20" y="372" class="m-label-sm">CAPITOL HILL</text>
+                      <text x="188" y="262" class="m-label-sm">FIRST HILL</text>
+                    </g>
+                  </svg>
+                  <div class="xh-pins" data-xh-pins></div>
+                </div>
+
+                <!-- MapsGrab 面板：停靠在地图左侧（搜索页默认左侧），三态与真实面板一致 -->
+                <aside class="mgp xh-panel" data-xh-panel aria-label="MapsGrab panel preview">
+                  <div class="mgp-head">
+                    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+                      <rect width="32" height="32" rx="9" fill="#1a73e8" />
+                      <path d="M16 6.2c-4.42 0-8 3.36-8 7.66 0 5.5 6.64 11.04 7.4 11.66.35.28.85.28 1.2 0 .76-.62 7.4-6.16 7.4-11.66 0-4.3-3.58-7.66-8-7.66Z" fill="#fff" />
+                      <path d="M16 10.1v6.2m-2.9-2.9 2.9 2.9 2.9-2.9" fill="none" stroke="#1a73e8" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="mgp-title">MapsGrab</span>
+                    <span class="xh-dock" title="Dock left / right" aria-hidden="true">
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-swap" /></svg>
+                    </span>
+                  </div>
+                  <div class="mgp-status">
+                    <div class="mgp-status-row">
+                      <span class="xh-state" data-xh-state></span>
+                      <span class="mgp-pause" data-xh-pill></span>
+                    </div>
+                    <div class="progress"><i data-xh-progress></i></div>
+                    <div class="mgp-kpis">
+                      <span><b data-xh-kpi="phone">0</b> phones</span>
+                      <span><b data-xh-kpi="site">0</b> websites</span>
+                      <span><b data-xh-kpi="email">0</b> emails</span>
+                    </div>
+                  </div>
+                  <div class="mgp-list" data-xh-list></div>
+                  <div class="mgp-foot">
+                    <button class="btn btn-primary" type="button" data-xh-export tabindex="-1">
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>
+                      <span>Export Detailed List - <span data-xh-count>0</span> (.CSV)</span>
+                    </button>
+                  </div>
+                </aside>
+              </div>
+
+              <!-- 浏览器下载气泡 -->
+              <div class="dl-pop" data-xh-dlpop aria-hidden="true">
+                <span class="dl-pop-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg></span>
+                <span class="dl-pop-text">
+                  <b data-xh-file>MapsGrab-Extractor-24-bakery+in+Seattle-2026-10-13.csv</b>
+                  <small>Saved to Downloads</small>
+                </span>
+                <svg class="icon dl-pop-ok" aria-hidden="true"><use href="assets/img/icons.svg#i-check-circle" /></svg>
+              </div>
+            </div>
+
+            <div class="float-chip xh-fc-scroll floaty" style="--float-t: 7s" data-parallax="0.05" aria-hidden="true">
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg></span>
+              <span><small>Auto-scroll</small>Human-paced, 5–10 s</span>
+            </div>
+            <div class="float-chip xh-fc-dedupe floaty" style="--float-t: 8s; --float-d: -3s" data-parallax="-0.04" aria-hidden="true">
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-layers" /></svg></span>
+              <span><small>Deduplicated</small>by Place ID</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ② 产品事实条（真实产品参数）
+           ================================================================ -->
+      <section class="facts">
+        <div class="container">
+          <p class="facts-caption" data-reveal>The extension at a glance</p>
+          <div class="facts-grid" data-stagger="80">
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="36">36</div>
+              <div class="stat-label">columns per business, from name to Place ID</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="11">11</div>
+              <div class="stat-label">review columns, owner replies included</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="6">6</div>
+              <div class="stat-label">social networks matched per website</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="1000">1,000</div>
+              <div class="stat-label">free records every month, no account needed</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="500">500</div>
+              <div class="stat-label">keywords or review URLs per batch task</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ③ 三种 Maps 视图：搜索结果 / 商家页 / 保存列表
+           ================================================================ -->
+      <section class="section xv band" id="views" data-inview>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Where it works</span>
+            <h2 class="h2" data-split>One panel for every <span class="accent">Maps view</span></h2>
+            <p class="lead" data-reveal>
+              The MapsGrab panel appears right on Google Maps. Search results, business pages and saved lists each get the
+              right extraction mode — no copy-paste, no tab juggling.
+            </p>
+          </header>
+
+          <div class="feature-grid" data-spotlight-group data-stagger="110">
+            <article class="feature card xv-card" data-spotlight data-reveal>
+              <div class="xv-visual xv-search" aria-hidden="true">
+                <div class="xv-win">
+                  <div class="xv-winbar"><span class="xv-q"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>florist in Denver</span></div>
+                  <div class="xv-scroll">
+                    <div class="xv-scroll-track">
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.9</b></div>
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.6</b></div>
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.8</b></div>
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.7</b></div>
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.5</b></div>
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.9</b></div>
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.6</b></div>
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.8</b></div>
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.7</b></div>
+                      <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>4.5</b></div>
+                    </div>
+                    <span class="xv-thumb"></span>
+                  </div>
+                </div>
+                <span class="xv-badge"><span class="spinner"></span>Extracting <b data-xv-count="search">36</b>…</span>
+              </div>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg></span>
+              <h3>Search results</h3>
+              <p>Press Start Extracting on any search. MapsGrab scrolls the results list at a human pace and collects every listing until the end of the list.</p>
+            </article>
+
+            <article class="feature card xv-card" data-spotlight data-reveal>
+              <div class="xv-visual xv-place" aria-hidden="true">
+                <div class="xv-win">
+                  <div class="xv-cover"><i></i><i></i><i></i></div>
+                  <div class="xv-place-body">
+                    <span class="skel xv-place-name"></span>
+                    <div class="xv-tabs"><span>Overview</span><span class="is-on">Reviews &amp; Photos</span></div>
+                    <div class="xv-act">
+                      <span class="xv-act-btn">Start Extracting Reviews</span>
+                      <span class="xv-act-count mono"><b data-xv-count="reviews">184</b> reviews</span>
+                    </div>
+                    <div class="xv-act">
+                      <span class="xv-act-btn xv-act-btn--alt">Start Extracting Photos</span>
+                      <span class="xv-act-count mono"><b data-xv-count="photos">64</b> photos</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <span class="icon-tile icon-tile--pin"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-building" /></svg></span>
+              <h3>Business pages</h3>
+              <p>On a business page, the Reviews &amp; Photos tab pages through every review and photo album — reviews export with 11 columns, photos as URL lists.</p>
+            </article>
+
+            <article class="feature card xv-card" data-spotlight data-reveal>
+              <div class="xv-visual xv-saved" aria-hidden="true">
+                <div class="xv-win">
+                  <div class="xv-winbar"><span class="xv-q"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg>Favorites · 6 places</span></div>
+                  <div class="xv-saved-list">
+                    <span class="xv-saved-hl"></span>
+                    <div class="xv-srow" style="--i: 0"><span class="skel"></span><i class="xv-check"></i></div>
+                    <div class="xv-srow" style="--i: 1"><span class="skel"></span><i class="xv-check"></i></div>
+                    <div class="xv-srow" style="--i: 2"><span class="skel"></span><i class="xv-check"></i></div>
+                    <div class="xv-srow" style="--i: 3"><span class="skel"></span><i class="xv-check"></i></div>
+                    <div class="xv-srow" style="--i: 4"><span class="skel"></span><i class="xv-check"></i></div>
+                  </div>
+                </div>
+              </div>
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list" /></svg></span>
+              <h3>Saved lists</h3>
+              <p>Open a saved list and press Start once. MapsGrab opens each place in turn and collects it — no per-item clicks, no missed entries.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ④ 能力展台：6 组能力自动轮播（进度条 + 右侧场景）
+           ================================================================ -->
+      <section class="section xs" id="features">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Features</span>
+            <h2 class="h2" data-split>Everything a Maps page shows, <span class="accent">structured</span></h2>
+            <p class="lead" data-reveal>
+              One extraction schema across search results and business pages, tuned against the current Google Maps interface
+              and updated remotely when Google changes.
+            </p>
+          </header>
+
+          <div class="xs-layout" data-xs data-inview>
+            <div class="xs-tabs" role="tablist" aria-label="Extension features" data-stagger="60">
+              <button class="xs-tab" type="button" role="tab" id="xs-tab-biz" aria-controls="xs-biz" aria-selected="true" data-reveal>
+                <span class="xs-tab-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-building" /></svg></span>
+                <span class="xs-tab-text"><b>Business data</b><span>36 columns per business, captured as the list scrolls.</span></span>
+                <span class="xs-bar"><i></i></span>
+              </button>
+              <button class="xs-tab" type="button" role="tab" id="xs-tab-rev" aria-controls="xs-rev" aria-selected="false" data-reveal>
+                <span class="xs-tab-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg></span>
+                <span class="xs-tab-text"><b>Reviews</b><span>Paginated automatically up to your plan limit.</span></span>
+                <span class="xs-bar"><i></i></span>
+              </button>
+              <button class="xs-tab" type="button" role="tab" id="xs-tab-pho" aria-controls="xs-pho" aria-selected="false" data-reveal>
+                <span class="xs-tab-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-image" /></svg></span>
+                <span class="xs-tab-text"><b>Photos</b><span>Album photos as ready-to-use URL lists.</span></span>
+                <span class="xs-bar"><i></i></span>
+              </button>
+              <button class="xs-tab" type="button" role="tab" id="xs-tab-enr" aria-controls="xs-enr" aria-selected="false" data-reveal>
+                <span class="xs-tab-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg></span>
+                <span class="xs-tab-text"><b>Email &amp; social enrichment</b><span>Direct contact channels from the official website.</span></span>
+                <span class="xs-bar"><i></i></span>
+              </button>
+              <button class="xs-tab" type="button" role="tab" id="xs-tab-bat" aria-controls="xs-bat" aria-selected="false" data-reveal>
+                <span class="xs-tab-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-plus" /></svg></span>
+                <span class="xs-tab-text"><b>Batch tasks</b><span>A queue of keywords or review URLs, walked item by item.</span></span>
+                <span class="xs-bar"><i></i></span>
+              </button>
+              <button class="xs-tab" type="button" role="tab" id="xs-tab-exp" aria-controls="xs-exp" aria-selected="false" data-reveal>
+                <span class="xs-tab-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg></span>
+                <span class="xs-tab-text"><b>Export</b><span>CSV or JSON on your machine — Pro adds Drive and HubSpot.</span></span>
+                <span class="xs-bar"><i></i></span>
+              </button>
+            </div>
+
+            <div class="xs-stage card" data-reveal="zoom">
+              <div class="xs-stage-grid" aria-hidden="true"></div>
+
+              <!-- 1. 商家数据：记录卡逐字段填充 -->
+              <div class="xs-panel xp-biz is-active" id="xs-biz" role="tabpanel" aria-labelledby="xs-tab-biz">
+                <div class="xp-record">
+                  <div class="xp-rec-head">
+                    <span class="xp-rec-avatar"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-coffee" /></svg></span>
+                    <div>
+                      <b>Pike Street Bakehouse</b>
+                      <span>Bakery · Café · 1420 Pike St, Seattle, WA</span>
+                    </div>
+                    <span class="badge badge--ok">Claimed</span>
+                  </div>
+                  <dl class="xp-fields">
+                    <div style="--i: 0"><dt>Phone</dt><dd class="mono">+1 206-555-0147</dd></div>
+                    <div style="--i: 1"><dt>Website</dt><dd>pikestreetbakehouse.com</dd></div>
+                    <div style="--i: 2"><dt>Average rating</dt><dd><span class="rating"><svg class="icon icon--fill" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg>4.8</span> · 2,031 reviews</dd></div>
+                    <div style="--i: 3"><dt>Opening hours</dt><dd>Mon–Sun · 06:30–18:00</dd></div>
+                    <div style="--i: 4"><dt>Time zone</dt><dd class="mono">America/Los_Angeles</dd></div>
+                    <div style="--i: 5"><dt>Coordinates</dt><dd class="mono">47.61084, -122.33837</dd></div>
+                    <div style="--i: 6"><dt>Place ID</dt><dd class="mono">ChIJ1ePxxLJqkFQRGeDEt2IaP40</dd></div>
+                    <div style="--i: 7"><dt>Google Maps URL</dt><dd class="mono">maps.google.com/?cid=10177882694172860441</dd></div>
+                  </dl>
+                  <div class="xp-rec-foot">
+                    <span class="xp-ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" /><circle class="xp-ring-fill" cx="18" cy="18" r="15" pathLength="100" /></svg></span>
+                    <span><b>36 / 36</b> columns captured</span>
+                    <span class="xp-rec-more mono">+28 more</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. 评论：卡片级联 + 店主回复 -->
+              <div class="xs-panel xp-rev" id="xs-rev" role="tabpanel" aria-labelledby="xs-tab-rev" hidden>
+                <div class="xp-rev-top">
+                  <span class="xp-rev-title"><b>Reviews</b> · Pike Street Bakehouse</span>
+                  <span class="badge">11 columns</span>
+                </div>
+                <div class="xp-rev-list">
+                  <article class="xp-review" style="--i: 0">
+                    <span class="xp-av" style="--h: 210">M</span>
+                    <div>
+                      <div class="xp-review-meta"><b>Maya R.</b><span class="xp-stars" style="--r: 5"></span><span class="mono">2026-09-28</span></div>
+                      <p>Cardamom buns sell out by ten — worth the early alarm.</p>
+                      <div class="xp-owner"><b>Response from the owner</b> · 2026-09-29<br />Thank you, Maya! A fresh batch comes out at 7 every morning.</div>
+                    </div>
+                  </article>
+                  <article class="xp-review" style="--i: 1">
+                    <span class="xp-av" style="--h: 150">J</span>
+                    <div>
+                      <div class="xp-review-meta"><b>Jonah K.</b><span class="xp-stars" style="--r: 4"></span><span class="mono">2026-09-21</span></div>
+                      <p>Great sourdough and friendly staff. Seating is tight at lunch.</p>
+                    </div>
+                  </article>
+                  <article class="xp-review" style="--i: 2">
+                    <span class="xp-av" style="--h: 330">P</span>
+                    <div>
+                      <div class="xp-review-meta"><b>Priya S.</b><span class="xp-stars" style="--r: 5"></span><span class="mono">2026-09-14</span></div>
+                      <p>Best croissant I've had in the city. Two photos attached.</p>
+                    </div>
+                  </article>
+                </div>
+                <div class="xp-rev-foot"><span class="spinner"></span>Loading page 4 — up to your plan limit</div>
+              </div>
+
+              <!-- 3. 照片：相册 URL，街景被过滤 -->
+              <div class="xs-panel xp-pho" id="xs-pho" role="tabpanel" aria-labelledby="xs-tab-pho" hidden>
+                <div class="xp-pho-grid">
+                  <span class="xp-ph" style="--i: 0; --h: 28"></span>
+                  <span class="xp-ph" style="--i: 1; --h: 200"></span>
+                  <span class="xp-ph xp-ph--sv" style="--i: 2; --h: 120"><em><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg>Street View · filtered</em></span>
+                  <span class="xp-ph" style="--i: 3; --h: 340"></span>
+                  <span class="xp-ph" style="--i: 4; --h: 46"></span>
+                  <span class="xp-ph" style="--i: 5; --h: 168"></span>
+                </div>
+                <div class="xp-pho-urls mono">
+                  <span style="--i: 0">https://lh5.googleusercontent.com/p/AF1QipN…=w1600</span>
+                  <span style="--i: 1">https://lh5.googleusercontent.com/p/AF1QipO…=w1600</span>
+                  <span style="--i: 2">https://lh5.googleusercontent.com/p/AF1QipP…=w1600</span>
+                </div>
+              </div>
+
+              <!-- 4. Email / 社媒补全：官网 → 联系渠道逐个点亮 -->
+              <div class="xs-panel xp-enr" id="xs-enr" role="tabpanel" aria-labelledby="xs-tab-enr" hidden>
+                <div class="xp-site">
+                  <span class="xp-site-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-web" /></svg></span>
+                  <div><small>Official website</small><b class="mono">pikestreetbakehouse.com</b></div>
+                  <span class="xp-site-scan"></span>
+                </div>
+                <span class="xp-wire" aria-hidden="true"></span>
+                <ul class="xp-found" role="list">
+                  <li style="--i: 0; --c: var(--accent)"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg><span class="mono">hello@pikestreetbakehouse.com</span><svg class="icon xp-ok" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></li>
+                  <li style="--i: 1; --c: #1877f2"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-facebook" /></svg><span class="mono">facebook.com/pikestreetbakehouse</span><svg class="icon xp-ok" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></li>
+                  <li style="--i: 2; --c: #e1306c"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-instagram" /></svg><span class="mono">instagram.com/pikestbake</span><svg class="icon xp-ok" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></li>
+                  <li style="--i: 3; --c: #0a66c2"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-linkedin" /></svg><span class="mono">linkedin.com/company/pike-street-bakehouse</span><svg class="icon xp-ok" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></li>
+                </ul>
+                <div class="xp-nets" aria-hidden="true">
+                  <span style="--i: 4"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x-social" /></svg></span>
+                  <span style="--i: 5"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-youtube" /></svg></span>
+                  <span style="--i: 6"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-tiktok" /></svg></span>
+                  <em>X, YouTube and TikTok checked too</em>
+                </div>
+              </div>
+
+              <!-- 5. 批量任务：逐项状态 -->
+              <div class="xs-panel xp-bat" id="xs-bat" role="tabpanel" aria-labelledby="xs-tab-bat" hidden>
+                <div class="xp-bat-head">
+                  <b>Pacific Northwest bakeries</b>
+                  <span class="xp-bat-counts mono"><span class="ok">9 complete</span><span class="warn">1 stuck</span><span>12 total</span></span>
+                </div>
+                <ul class="xp-bat-list" role="list">
+                  <li class="is-done" style="--i: 0"><span>bakery in Seattle</span><em>Complete · 24</em></li>
+                  <li class="is-done" style="--i: 1"><span>bakery in Tacoma</span><em>Complete · 17</em></li>
+                  <li class="is-stuck" style="--i: 2"><span>bakery in Everett</span><em>No progress for 90 s · skipped</em></li>
+                  <li class="is-done" style="--i: 3"><span>bakery in Bellevue</span><em>Complete · 21</em></li>
+                  <li class="is-run" style="--i: 4"><span>bakery in Portland</span><em><span class="spinner"></span>Extracting…</em></li>
+                  <li style="--i: 5"><span>bakery in Spokane</span><em>Queued</em></li>
+                </ul>
+                <div class="xp-bat-foot"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>Exports automatically when the task finishes</div>
+              </div>
+
+              <!-- 6. 导出：格式 + 目的地 -->
+              <div class="xs-panel xp-exp" id="xs-exp" role="tabpanel" aria-labelledby="xs-tab-exp" hidden>
+                <div class="xp-formats" aria-hidden="true">
+                  <span class="is-on">.CSV</span><span>.JSON</span>
+                </div>
+                <div class="xp-file">
+                  <span class="xp-file-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg></span>
+                  <div><b class="mono" data-xp-file>MapsGrab-Extractor-24-bakery+in+Seattle-2026-10-13.csv</b><small>24 rows · 31 of 36 columns selected · deduplicated by Place ID</small></div>
+                </div>
+                <div class="xp-dests">
+                  <div class="xp-dest is-hit" style="--i: 0"><span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg></span><b>Downloads</b><small>Saved by your browser</small></div>
+                  <div class="xp-dest" style="--i: 1"><span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud" /></svg></span><b>Google Drive</b><small>Pro · your own account</small></div>
+                  <div class="xp-dest" style="--i: 2"><span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-users" /></svg></span><b>HubSpot</b><small>Pro · your own account</small></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑤ 批量任务（暗色岛）：插件 Dashboard 页 mock
+           ================================================================ -->
+      <section class="section xb scheme-dark has-deco" id="batch" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="bg-grid xb-grid"></div>
+          <div class="xb-glow"></div>
+          <div class="noise"></div>
+        </div>
+        <div class="container xb-layout">
+          <div class="xb-copy" data-stagger="80">
+            <span class="kicker" data-reveal>Batch tasks</span>
+            <h2 class="h2" data-split>Queue the list. <span class="accent text-grad">Walk away.</span></h2>
+            <p class="lead" data-reveal>
+              Paste up to 500 keywords or review URLs into one task. MapsGrab walks through them item by item with live
+              progress, skips anything that stalls, and exports automatically when the task finishes.
+            </p>
+            <ul class="check-list" role="list" data-reveal>
+              <li>Keyword tasks run one Maps search per keyword</li>
+              <li>Review-URL tasks collect reviews business by business</li>
+              <li>Task state is saved to disk — it picks up again after a browser restart</li>
+              <li>Up to 150 saved tasks, one batch running at a time</li>
+            </ul>
+          </div>
+
+          <div class="xb-visual" data-reveal="right" data-xb>
+            <div class="browser xb-frame">
+              <div class="browser-bar">
+                <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                <div class="browser-url">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>
+                  <span>extension://mapsgrab/dashboard</span>
+                </div>
+              </div>
+              <div class="xb-body" aria-hidden="true">
+                <div class="xb-tabs"><span class="is-on">Bulk Keyword Data Tool</span><span>Bulk Google Reviews Extractor</span></div>
+                <div class="xb-form">
+                  <div class="xb-field">
+                    <small>Task Name</small>
+                    <span class="xb-input" data-xb-name data-placeholder="e.g. 100 keywords, design agency"></span>
+                  </div>
+                  <div class="xb-field">
+                    <small>Keywords · one per line <em class="mono" data-xb-lines>0 / 500</em></small>
+                    <div class="xb-area" data-xb-area></div>
+                  </div>
+                  <span class="btn btn-primary btn-sm xb-start" data-xb-start><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg>Start Extracting</span>
+                </div>
+                <div class="xb-table">
+                  <div class="xb-th"><span>Task Name</span><span>Status</span><span>Actions</span></div>
+                  <div class="xb-rows" data-xb-rows>
+                    <div class="xb-tr">
+                      <span class="xb-task">Austin dentists</span>
+                      <span class="xb-status"><span class="badge badge--ok">Complete</span><em class="mono">24 / 24</em></span>
+                      <span class="xb-acts"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg></span>
+                    </div>
+                    <div class="xb-tr">
+                      <span class="xb-task">Chicago plumbers · reviews</span>
+                      <span class="xb-status"><span class="badge badge--ok">Complete</span><em class="mono">40 / 40</em></span>
+                      <span class="xb-acts"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="xb-toast" data-xb-toast aria-hidden="true">
+                <span class="toast-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></span>
+                <span class="xb-toast-text"><b>Task complete — exported</b><small class="mono" data-xb-file>MapsGrab-Extractor-109-Pacific+Northwest+bakeries.csv</small></span>
+              </div>
+            </div>
+            <div class="float-chip xb-chip floaty" style="--float-t: 7.5s" aria-hidden="true">
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-database" /></svg></span>
+              <span><small>Task state</small>Saved to disk</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑥ 本地优先：数据流示意（浏览器内 vs MapsGrab 服务端）
+           ================================================================ -->
+      <section class="section xl" id="privacy" data-inview>
+        <div class="container split">
+          <div class="split-copy" data-stagger="80">
+            <span class="kicker" data-reveal>Local-first</span>
+            <h2 class="h2" data-split>Your results stay <span class="accent">in your browser</span></h2>
+            <p class="lead" data-reveal>
+              Settings and results are stored locally. Our servers only handle remote configuration, account and quota status,
+              optional email and social enrichment, and minimal usage logs.
+            </p>
+            <ul class="check-list" role="list" data-reveal>
+              <li>Exports are generated on your machine</li>
+              <li>Pro and Business can also deliver to your own Google Drive or HubSpot account</li>
+              <li>Remote configuration keeps the panel current when Google Maps changes — no reinstall</li>
+              <li>If something can't be read, the panel shows an error instead of failing silently</li>
+            </ul>
+          </div>
+
+          <div class="split-visual xl-diagram" data-reveal="zoom" aria-hidden="true">
+            <div class="xl-zone xl-zone--browser"><span class="xl-zone-label mono">Your browser</span></div>
+            <div class="xl-zone xl-zone--server"><span class="xl-zone-label mono">MapsGrab servers</span></div>
+
+            <svg class="xl-lines" viewBox="0 0 560 440">
+              <!-- 底线：浏览器内实线，跨端虚线 -->
+              <path class="xl-path xl-base" d="M196 114V150" />
+              <path class="xl-path xl-base" d="M196 194V230" />
+              <path class="xl-path xl-base" d="M196 274V310" />
+              <path class="xl-path xl-base xl-base--remote" d="M438 116C352 116 330 166 278 166" />
+              <path class="xl-path xl-base xl-base--remote" d="M278 172C344 172 372 204 438 204" />
+              <path class="xl-path xl-base xl-base--remote" d="M278 178C330 178 366 292 438 292" />
+              <!-- 流动点：方向即数据流向 -->
+              <path class="xl-path xl-flow xl-flow--local" d="M196 114V150" />
+              <path class="xl-path xl-flow xl-flow--local" d="M196 194V230" />
+              <path class="xl-path xl-flow xl-flow--local" d="M196 274V310" />
+              <path class="xl-path xl-flow xl-flow--remote" d="M438 116C352 116 330 166 278 166" />
+              <path class="xl-path xl-flow xl-flow--remote" d="M278 172C344 172 372 204 438 204" />
+              <path class="xl-path xl-flow xl-flow--remote" d="M278 178C330 178 366 292 438 292" />
+            </svg>
+
+            <div class="xl-node" style="--x: 35%; --y: 20.9%">
+              <span class="xl-ic xl-ic--map"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-map" /></svg></span><b>Google Maps tab</b>
+            </div>
+            <div class="xl-node xl-node--brand" style="--x: 35%; --y: 39.1%">
+              <span class="xl-ic xl-ic--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg></span><b>MapsGrab panel</b>
+            </div>
+            <div class="xl-node" style="--x: 35%; --y: 57.3%">
+              <span class="xl-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-database" /></svg></span><b>Local storage</b>
+            </div>
+            <div class="xl-node" style="--x: 35%; --y: 75.5%">
+              <span class="xl-ic xl-ic--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg></span><b>Your exports</b>
+            </div>
+
+            <div class="xl-node xl-node--sm" style="--x: 87.1%; --y: 26.4%">
+              <span class="xl-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-settings" /></svg></span><b>Remote config</b>
+            </div>
+            <div class="xl-node xl-node--sm" style="--x: 87.1%; --y: 46.4%">
+              <span class="xl-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg></span><b>Account &amp; quota</b>
+            </div>
+            <div class="xl-node xl-node--sm" style="--x: 87.1%; --y: 66.4%">
+              <span class="xl-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg></span><b>Enrichment</b>
+            </div>
+
+            <span class="xl-tag mono" style="--x: 47.5%; --y: 30%">business rows</span>
+            <span class="xl-tag mono" style="--x: 67%; --y: 28.4%">rules</span>
+            <span class="xl-tag mono" style="--x: 66%; --y: 43.6%">usage</span>
+            <span class="xl-tag mono xl-tag--wide" style="--x: 63%; --y: 60%">website hostnames → emails &amp; socials</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑦ 安装：商店状态 + release zip + 分浏览器步骤（锚点 #install）
+           ================================================================ -->
+      <section class="section xi band" id="install">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Install</span>
+            <h2 class="h2" data-split>Install <span class="accent">MapsGrab</span></h2>
+            <p class="lead" data-reveal>
+              Edge Add-ons and Firefox Add-ons listings are in review. Until they go live, every Chromium browser and Firefox
+              installs from the release zip — the identical package submitted to the stores.
+            </p>
+          </header>
+
+          <div class="xi-stack">
+            <div class="xi-top" data-stagger="90" data-spotlight-group>
+              <article class="xi-store card" data-spotlight data-reveal>
+                <span class="xi-logo xi-logo--edge" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-window" /></svg></span>
+                <div class="xi-store-text">
+                  <b>Microsoft Edge</b>
+                  <span>Edge Add-ons</span>
+                </div>
+                <span class="badge badge--warn"><span class="dot dot--live"></span>In review</span>
+                <p>The store link goes live here as soon as Edge Add-ons approves the listing.</p>
+                <button class="btn btn-secondary btn-sm" type="button" data-proto-note="Edge Add-ons listing is in review — this button links to the store once it is approved.">
+                  Open Edge Add-ons<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-external" /></svg>
+                </button>
+              </article>
+
+              <article class="xi-store card" data-spotlight data-reveal>
+                <span class="xi-logo xi-logo--firefox" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-globe" /></svg></span>
+                <div class="xi-store-text">
+                  <b>Mozilla Firefox</b>
+                  <span>Firefox Add-ons (AMO)</span>
+                </div>
+                <span class="badge badge--warn"><span class="dot dot--live"></span>In review</span>
+                <p>The store link goes live here as soon as Firefox Add-ons approves the listing.</p>
+                <button class="btn btn-secondary btn-sm" type="button" data-proto-note="Firefox Add-ons listing is in review — this button links to the store once it is approved.">
+                  Open Firefox Add-ons<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-external" /></svg>
+                </button>
+              </article>
+
+              <article class="xi-zip card has-deco" data-spotlight data-reveal>
+                <div class="deco" aria-hidden="true"><div class="bg-grid xi-zip-grid"></div></div>
+                <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-archive" /></svg></span>
+                <div>
+                  <b>Direct install (release zip)</b>
+                  <p>The release zip is the identical package submitted to both stores. Load it manually while store listings are in review.</p>
+                </div>
+                <button class="btn btn-primary" type="button" data-proto-note="Release asset link is being prepared — it will attach to the public release of version 0.1.0.">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>Download release zip
+                </button>
+                <span class="xi-zip-meta mono">Version 0.1.0 · pre-release</span>
+              </article>
+            </div>
+
+            <div class="xi-main card" data-tabs data-reveal>
+              <div class="xi-main-head">
+                <div class="seg" role="tablist" aria-label="Browser">
+                  <span class="seg-thumb" aria-hidden="true"></span>
+                  <button class="seg-btn" type="button" role="tab" aria-selected="true" aria-controls="xi-chromium" data-tab="chromium">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-window" /></svg>Edge &amp; Chromium
+                  </button>
+                  <button class="seg-btn" type="button" role="tab" aria-selected="false" aria-controls="xi-firefox" data-tab="firefox">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-globe" /></svg>Firefox
+                  </button>
+                </div>
+                <span class="xi-main-note" data-xi-note>Edge, Chrome, Brave and other Chromium browsers</span>
+              </div>
+
+              <div id="xi-chromium" role="tabpanel">
+                <ol class="xi-steps" role="list" style="--n: 4">
+                  <li class="xi-step">
+                    <div class="media-slot xi-shot" style="--ratio: 16 / 10"><div class="media-slot-label"><span class="media-slot-kicker">Screenshot</span><span class="media-slot-text">The release zip in the browser downloads bar</span></div></div>
+                    <span class="xi-num mono">01</span>
+                    <div class="xi-step-text"><b>Download and unzip</b><p>Download the release zip and unzip it to a folder you keep.</p></div>
+                  </li>
+                  <li class="xi-step">
+                    <div class="media-slot xi-shot" style="--ratio: 16 / 10"><div class="media-slot-label"><span class="media-slot-kicker">Screenshot</span><span class="media-slot-text">The extensions management page</span></div></div>
+                    <span class="xi-num mono">02</span>
+                    <div class="xi-step-text"><b>Open the extensions page</b><p>In Edge, Chrome, Chromium or Brave, open the extensions management page.</p></div>
+                  </li>
+                  <li class="xi-step">
+                    <div class="media-slot xi-shot" style="--ratio: 16 / 10"><div class="media-slot-label"><span class="media-slot-kicker">Screenshot</span><span class="media-slot-text">Developer mode toggled on</span></div></div>
+                    <span class="xi-num mono">03</span>
+                    <div class="xi-step-text"><b>Enable Developer mode</b><p>Toggle Developer mode in the extensions page sidebar.</p></div>
+                  </li>
+                  <li class="xi-step">
+                    <div class="media-slot xi-shot" style="--ratio: 16 / 10"><div class="media-slot-label"><span class="media-slot-kicker">Screenshot</span><span class="media-slot-text">Load unpacked with the MapsGrab card added</span></div></div>
+                    <span class="xi-num mono">04</span>
+                    <div class="xi-step-text"><b>Load the unpacked folder</b><p>Click “Load unpacked” and select the unzipped folder. The MapsGrab panel appears on Google Maps search pages.</p></div>
+                  </li>
+                </ol>
+              </div>
+
+              <div id="xi-firefox" role="tabpanel" hidden>
+                <ol class="xi-steps" role="list" style="--n: 3">
+                  <li class="xi-step">
+                    <div class="media-slot xi-shot" style="--ratio: 16 / 10"><div class="media-slot-label"><span class="media-slot-kicker">Screenshot</span><span class="media-slot-text">The release zip in the browser downloads bar</span></div></div>
+                    <span class="xi-num mono">01</span>
+                    <div class="xi-step-text"><b>Download and unzip</b><p>Download the release zip and unzip it to a folder you keep.</p></div>
+                  </li>
+                  <li class="xi-step">
+                    <div class="media-slot xi-shot" style="--ratio: 16 / 10"><div class="media-slot-label"><span class="media-slot-kicker">Screenshot</span><span class="media-slot-text">about:debugging with “This Firefox” selected</span></div></div>
+                    <span class="xi-num mono">02</span>
+                    <div class="xi-step-text"><b>Open the debugging page</b><p>Navigate to <code>about:debugging</code>, then choose “This Firefox”.</p></div>
+                  </li>
+                  <li class="xi-step">
+                    <div class="media-slot xi-shot" style="--ratio: 16 / 10"><div class="media-slot-label"><span class="media-slot-kicker">Screenshot</span><span class="media-slot-text">Load Temporary Add-on picking manifest.json</span></div></div>
+                    <span class="xi-num mono">03</span>
+                    <div class="xi-step-text"><b>Load the add-on</b><p>Click “Load Temporary Add-on…” and pick <code>manifest.json</code> inside the unzipped folder. A temporary add-on unloads when Firefox restarts — the AMO listing makes it permanent once live.</p></div>
+                  </li>
+                </ol>
+              </div>
+
+              <div class="xi-help">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>
+                <span><b>Installation trouble?</b> Send us the browser name and what you saw — we will get you unblocked.</span>
+                <a class="link-arrow" href="about.html#contact">Contact support<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 版本说明 -->
+          <article class="xi-notes card" id="release-notes" data-reveal>
+            <div class="xi-notes-head">
+              <span class="kicker">Release notes</span>
+              <div class="xi-notes-ver"><b>0.1.0</b><span class="badge badge--muted">Pre-release</span><span class="mono">August 2026</span></div>
+            </div>
+            <ul class="check-list check-list--sm xi-notes-list" role="list">
+              <li>First public pre-release of the MapsGrab extension</li>
+              <li>Google Maps search extraction with automatic scrolling and the 36-column schema</li>
+              <li>Review and photo extraction from business pages</li>
+              <li>Email and social media enrichment per business</li>
+              <li>Batch keyword and review-URL tasks with on-disk task state</li>
+              <li>CSV / JSON export with field selection and Place ID deduplication</li>
+              <li>Builds for Microsoft Edge and Firefox</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑧ 方案摘要（数据来自 website/src/i18n/pricing.ts · extension tab）
+           ================================================================ -->
+      <section class="section x-plans" id="plans">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Extension plans</span>
+            <h2 class="h2" data-split>One extension, three <span class="accent">record volumes</span></h2>
+            <p class="lead" data-reveal>
+              Records are the businesses you extract. Every plan includes reviews, photos, email and social enrichment, and
+              batch tasks. Pro and Business add cross-run deduplication and Google Drive &amp; HubSpot delivery.
+            </p>
+          </header>
+
+          <div class="x-plan-grid" data-stagger="100">
+            <article class="price-card" data-reveal>
+              <div>
+                <div class="price-name">Free</div>
+                <div class="price-tagline">Everything the extension does, on a small scale</div>
+              </div>
+              <div class="price-amount"><b>$0</b><span class="price-period">forever</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>1,000 records / month</div>
+              <ul class="check-list check-list--sm" role="list">
+                <li>Full 36-column business extraction</li>
+                <li>Reviews (11 columns) and photo URLs</li>
+                <li>Email &amp; social media enrichment</li>
+                <li>Batch keyword and review-URL tasks</li>
+                <li>CSV / JSON export with field selection</li>
+              </ul>
+              <a class="btn btn-secondary btn-block" href="#install">Install the extension</a>
+            </article>
+
+            <article class="price-card is-featured" data-reveal>
+              <span class="badge badge--solid price-flag">Most Popular</span>
+              <div>
+                <div class="price-name">Pro</div>
+                <div class="price-tagline">For freelancers and growing lead pipelines</div>
+              </div>
+              <div class="price-amount"><b>$39</b><span class="price-period">per month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>100,000 records / month</div>
+              <ul class="check-list check-list--sm" role="list">
+                <li>Everything in Free</li>
+                <li>100,000 records every month</li>
+                <li>Priority email &amp; social enrichment</li>
+                <li>Deduplication across runs by Place ID</li>
+                <li>Optional Google Drive &amp; HubSpot delivery</li>
+              </ul>
+              <a class="btn btn-primary btn-block" href="pricing.html#extension">Get Pro</a>
+            </article>
+
+            <article class="price-card" data-reveal>
+              <div>
+                <div class="price-name">Business</div>
+                <div class="price-tagline">For agencies and data-heavy teams</div>
+              </div>
+              <div class="price-amount"><b>$99</b><span class="price-period">per month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>500,000 records / month</div>
+              <ul class="check-list check-list--sm" role="list">
+                <li>Everything in Pro</li>
+                <li>500,000 records every month</li>
+                <li>Room for multi-market batch tasks</li>
+                <li>Highest enrichment throughput</li>
+                <li>Same local-first export pipeline</li>
+              </ul>
+              <a class="btn btn-secondary btn-block" href="pricing.html#extension">Get Business</a>
+            </article>
+          </div>
+
+          <p class="x-plan-note" data-reveal>
+            A record is one business row extracted from Google Maps. Monthly usage resets on the 1st; unused records do not roll over.
+            <a class="link-arrow" href="pricing.html#extension">Compare all plans<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑨ FAQ
+           ================================================================ -->
+      <section class="section faq band" id="faq">
+        <div class="container faq-layout">
+          <div class="faq-aside" data-stagger="80">
+            <span class="kicker" data-reveal>FAQ</span>
+            <h2 class="h2" data-split>Extension <span class="accent">questions</span></h2>
+            <p class="lead" data-reveal>The short answers. Anything else, support is one email away.</p>
+            <a class="btn btn-secondary" href="about.html#contact" data-reveal>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>Contact support
+            </a>
+          </div>
+          <div class="faq-list" data-stagger="60">
+            <details class="acc" data-reveal>
+              <summary>Is the extension free to use?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Yes. The extension works without an account and includes 1,000 records every month. Paid plans on the Pricing page raise the limits when you need more.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Which browsers are supported?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>MapsGrab targets Microsoft Edge (Edge Add-ons) and Firefox (Firefox Add-ons). Chrome and other Chromium-based browsers load the extension directly from the release zip — see the install steps above.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Do I need to sign in?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>No. Core extraction works without an account. Quota is counted per signed-in account, or per browser device when you are not signed in — sign in with the account that owns a plan so its higher ceiling applies.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>What counts as a record?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>A record is one business row collected from Google Maps. Reviews, photos and enrichment attached to that business do not count as extra records.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>What happens when Google Maps changes?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Extraction rules ship as remote configuration, so fixes reach the panel without reinstalling the extension. If a page can't be read, the panel shows an error instead of failing silently.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Does MapsGrab see the data I collect?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Your settings and results are stored locally in your browser. Our servers only handle remote configuration, account and quota status, optional email/social enrichment, and minimal usage logs.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Where does the data come from, and is it legal to collect?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>MapsGrab only collects information that is publicly displayed on the Google Maps pages you visit — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.</p></div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑩ 收尾 CTA
+           ================================================================ -->
+      <section class="section final-cta">
+        <div class="container">
+          <div class="cta-panel has-deco" data-inview data-reveal="zoom">
+            <div class="deco" aria-hidden="true">
+              <div class="aurora"><i></i><i></i><i></i></div>
+              <div class="bg-contours"></div>
+              <div class="bg-grid cta-grid"></div>
+              <div class="cta-pins" data-cta-pins></div>
+              <div class="noise"></div>
+            </div>
+            <span class="kicker" data-reveal>Get started</span>
+            <h2 class="display cta-title" data-split>Grab your first list <span class="accent text-grad is-animated">today</span></h2>
+            <p class="lead cta-lead" data-reveal>
+              Install the extension, search Google Maps, and export a clean spreadsheet in minutes — no account required.
+            </p>
+            <div class="cta-actions" data-reveal>
+              <a class="btn btn-primary btn-lg" href="#install" data-magnetic="0.22">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>Install MapsGrab
+              </a>
+              <a class="btn btn-secondary btn-lg" href="pricing.html#extension">Compare plans</a>
+            </div>
+            <p class="cta-note" data-reveal>Free monthly quota included. No credit card.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-chrome="footer"></div>
+  </body>
+</html>

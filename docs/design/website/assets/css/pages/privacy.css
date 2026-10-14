@@ -1,0 +1,785 @@
+/* =========================================================================
+   Legal 页私有样式（privacy.html；?doc=terms 切换为 Terms of Service）
+   法务页以可读性为先：装饰层更淡，动效只保留标题入场、插画洗牌与要点卡显现
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   ① Hero
+   --------------------------------------------------------------------------- */
+.legal-hero {
+  padding-bottom: clamp(44px, 5vw, 76px);
+}
+
+.legal-hero .aurora > i {
+  --size: 36vw;
+  opacity: 0.75;
+}
+
+.legal-hero .bg-contours {
+  opacity: 0.7;
+}
+
+/* 装饰层底部淡出，与正文区无缝衔接 */
+.legal-hero .deco {
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent);
+  mask-image: linear-gradient(180deg, #000 55%, transparent);
+}
+
+.legal-hero-grid {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+}
+
+.legal-hero .page-hero-copy {
+  gap: 20px;
+}
+
+.legal-switch .seg-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.legal-switch .seg-btn .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.legal-title {
+  margin-top: 4px;
+}
+
+.legal-hero .page-hero-copy > .legal-intro {
+  max-width: 660px;
+}
+
+.legal-meta {
+  gap: 10px 26px;
+}
+
+.legal-meta .icon {
+  color: var(--text-3);
+  stroke-width: 1.9;
+}
+
+.legal-meta time {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* 切换文档时，摘要与元信息重新淡入 */
+.is-swapping {
+  animation: fade-up 0.6s var(--ease-out) both;
+}
+
+/* 文档叠放插画 */
+.legal-visual {
+  display: grid;
+  justify-items: center;
+  padding: 30px 30px 0 0;
+}
+
+.doc-stack {
+  position: relative;
+  width: min(100%, 330px);
+  aspect-ratio: 0.8;
+}
+
+.doc-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 22px 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md), var(--hairline-hl);
+  opacity: 0.7;
+  transform: translate3d(28px, -28px, 0) rotate(5deg) scale(0.93);
+  transform-origin: 50% 100%;
+  transition:
+    transform 0.9s var(--ease-out),
+    opacity 0.6s var(--ease-out),
+    box-shadow 0.6s;
+}
+
+.doc-sheet.is-front {
+  z-index: 2;
+  box-shadow: var(--shadow-lg), var(--hairline-hl);
+  opacity: 1;
+  transform: none;
+}
+
+/* 离开的那张先向右滑出，再收到后面 */
+.doc-sheet.is-leaving {
+  animation: sheet-leave 0.95s var(--ease-out) both;
+}
+
+@keyframes sheet-leave {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+
+  45% {
+    opacity: 1;
+    transform: translate3d(64%, 4%, 0) rotate(12deg) scale(0.97);
+  }
+
+  100% {
+    opacity: 0.7;
+    transform: translate3d(28px, -28px, 0) rotate(5deg) scale(0.93);
+  }
+}
+
+.sheet-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sheet-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--grad-brand);
+  box-shadow: 0 10px 22px -10px rgba(26, 115, 232, 0.7);
+  color: #fff;
+}
+
+.doc-sheet--terms .sheet-icon {
+  background: var(--grad-ai);
+  box-shadow: 0 10px 22px -10px rgba(124, 58, 237, 0.65);
+}
+
+.sheet-icon .icon {
+  width: 19px;
+  height: 19px;
+}
+
+.sheet-heading b {
+  display: block;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.sheet-heading span {
+  color: var(--text-3);
+  font-size: 11px;
+}
+
+.sheet-toc {
+  display: grid;
+  gap: 13px;
+  padding: 0;
+  list-style: none;
+}
+
+.sheet-toc li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 6px 8px;
+  align-items: baseline;
+}
+
+.sheet-toc .mono {
+  color: var(--primary-text);
+  font-size: 10.5px;
+}
+
+.doc-sheet--terms .sheet-toc .mono {
+  color: var(--ai);
+}
+
+.sheet-toc b {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-toc i {
+  grid-column: 2;
+  width: var(--w, 80%);
+  height: 5px;
+  border-radius: 3px;
+  background: var(--surface-3);
+}
+
+.sheet-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  color: var(--text-3);
+  font-size: 10.5px;
+}
+
+.sheet-foot b {
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.sheet-seal {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-left: auto;
+  border: 1.5px dashed color-mix(in srgb, var(--ok) 55%, transparent);
+  border-radius: 50%;
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.sheet-seal .icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.4;
+}
+
+/* 前面那张上缓慢扫过的“阅读高亮” */
+.sheet-scan {
+  position: absolute;
+  top: 74px;
+  right: 0;
+  left: 0;
+  height: 48px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--blue-500) 9%, transparent) 50%,
+    transparent
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s;
+}
+
+.doc-sheet.is-front .sheet-scan {
+  opacity: 1;
+  animation: sheet-scan 7s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes sheet-scan {
+  to {
+    transform: translate3d(0, 236px, 0);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   ② 正文布局：左侧粘性目录 + 求助卡，右侧要点速览 + 正文
+   --------------------------------------------------------------------------- */
+.legal-body {
+  padding-block: clamp(8px, 2vw, 24px) var(--section-y);
+}
+
+.legal-layout {
+  grid-template-columns: 250px minmax(0, 1fr);
+}
+
+.legal-aside {
+  position: sticky;
+  top: calc(var(--nav-h) + 36px);
+  display: grid;
+  gap: 28px;
+}
+
+.legal-aside .toc {
+  position: static;
+}
+
+/* 桌面目录：编号悬挂缩进，长标题折行与文字对齐 */
+.legal-toc a {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+}
+
+.toc-num {
+  display: inline-block;
+  min-width: 26px;
+  padding-top: 1px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  font-weight: 500;
+  transition: color var(--dur-2);
+}
+
+.legal-toc a.is-active .toc-num {
+  color: var(--primary-text);
+}
+
+.legal-help {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+
+.legal-help-label {
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.legal-email {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+  transition:
+    border-color var(--dur-2),
+    transform var(--dur-2);
+}
+
+.legal-email .icon {
+  width: 15px;
+  height: 15px;
+  color: var(--text-3);
+}
+
+.legal-email .icon-copy {
+  margin-left: auto;
+}
+
+.legal-email:hover {
+  border-color: var(--text-3);
+}
+
+.legal-email:hover .icon-copy {
+  color: var(--primary-text);
+}
+
+.legal-email:active {
+  transform: scale(0.98);
+}
+
+.legal-help .link-arrow {
+  font-size: 13.5px;
+}
+
+.legal-main {
+  min-width: 0;
+  max-width: 780px;
+}
+
+/* 要点速览 */
+.legal-glance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: clamp(52px, 6vw, 76px);
+}
+
+.glance-head {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 6px;
+}
+
+.glance-note {
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.glance-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+  padding: 18px 18px 20px;
+  transition:
+    border-color var(--dur-3),
+    transform 0.45s var(--ease-out),
+    box-shadow 0.45s var(--ease-out);
+}
+
+.glance-card:hover {
+  border-color: var(--border-2);
+  box-shadow: var(--shadow-md), var(--hairline-hl);
+  transform: translateY(-2px);
+}
+
+.glance-card .icon-tile {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+}
+
+.glance-card .icon-tile .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.glance-text b {
+  display: block;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.glance-text > span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-2);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.glance-go {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  color: var(--text-3);
+  transition:
+    transform var(--dur-3) var(--ease-out),
+    color var(--dur-2);
+}
+
+.glance-card:hover .glance-go {
+  color: var(--primary-text);
+  transform: translateY(3px);
+}
+
+/* 正文：小节分隔 + 编号徽标 + 悬停出现的小节链接 */
+.legal-prose > .legal-section + .legal-section {
+  margin-top: 48px;
+  padding-top: 44px;
+  border-top: 1px solid var(--border);
+}
+
+/* html 已有 scroll-padding-top（导航高度），这里只补一点呼吸距离 */
+.legal-section {
+  scroll-margin-top: 12px;
+}
+
+.legal-section > * + * {
+  margin-top: 1em;
+}
+
+.legal-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.legal-prose .legal-head h2 {
+  margin-top: 0;
+}
+
+.legal-num {
+  display: grid;
+  place-items: center;
+  height: 26px;
+  flex-shrink: 0;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.legal-prose .h-anchor {
+  padding: 2px 8px;
+  border-radius: 8px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 15px;
+  text-decoration: none;
+  opacity: 0;
+  transition:
+    opacity var(--dur-2),
+    background-color var(--dur-2),
+    color var(--dur-2);
+}
+
+.legal-head:hover .h-anchor,
+.legal-prose .h-anchor:focus-visible {
+  opacity: 1;
+}
+
+.legal-prose .h-anchor:hover {
+  background: var(--surface-2);
+  color: var(--primary-text);
+}
+
+@media (hover: none) {
+  .legal-prose .h-anchor {
+    opacity: 0.55;
+  }
+}
+
+/* 列表：菱形点；“禁止 / 绝不”类清单用叉号 */
+.legal-prose .legal-list {
+  display: grid;
+  gap: 12px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.legal-prose .legal-list li {
+  position: relative;
+  margin-top: 0;
+  padding-left: 28px;
+}
+
+.legal-list li::before {
+  position: absolute;
+  top: 0.68em;
+  left: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--grad-brand);
+  transform: rotate(45deg);
+  content: '';
+}
+
+.legal-list--x li::before {
+  top: 0.32em;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bad-soft);
+  transform: none;
+}
+
+.legal-list--x li::after {
+  position: absolute;
+  top: calc(0.32em + 5px);
+  left: 5px;
+  width: 8px;
+  height: 8px;
+  background: var(--bad);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 1.5l7 7M8.5 1.5l-7 7' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 1.5l7 7M8.5 1.5l-7 7' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  content: '';
+}
+
+/* 原型待办：真实条款尚未覆盖的产品 */
+.legal-tbd {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 64px;
+  padding: 18px 20px;
+  border: 1.5px dashed color-mix(in srgb, var(--warn) 50%, var(--border));
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--warn-soft) 45%, transparent);
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.legal-tbd .badge {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.legal-tbd b {
+  color: var(--text);
+}
+
+/* 下一篇文档 */
+.legal-next {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 24px;
+  margin-top: 20px;
+  padding: 24px 26px;
+  transition:
+    border-color var(--dur-3),
+    transform 0.45s var(--ease-out),
+    box-shadow 0.45s var(--ease-out);
+}
+
+.legal-next:hover {
+  border-color: var(--border-2);
+  box-shadow: var(--shadow-md), var(--hairline-hl);
+  transform: translateY(-3px);
+}
+
+.legal-next-label {
+  color: var(--text-3);
+  font-size: 11px;
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.legal-next-title {
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.legal-next-desc {
+  color: var(--text-2);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.legal-next-go {
+  display: grid;
+  grid-row: 1 / 4;
+  grid-column: 2;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: var(--glow-primary);
+  color: var(--primary-fg);
+  transition: transform 0.45s var(--ease-out);
+}
+
+.legal-next:hover .legal-next-go {
+  transform: translateX(4px);
+}
+
+/* ---------------------------------------------------------------------------
+   Responsive
+   --------------------------------------------------------------------------- */
+@media (max-width: 1080px) {
+  .legal-hero-grid {
+    grid-template-columns: minmax(0, 1fr) 270px;
+  }
+
+  .legal-visual {
+    padding-right: 24px;
+  }
+}
+
+@media (max-width: 960px) {
+  /* 本页覆盖过列定义，需在断点内重新收为单列 */
+  .legal-hero-grid,
+  .legal-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .legal-visual {
+    display: none;
+  }
+
+  /* 手机 / 平板：目录变成吸顶的横向胶囊条，随阅读位置自动滚动 */
+  .legal-aside {
+    top: calc(var(--nav-h) + 8px);
+    z-index: 5;
+    margin-inline: calc(var(--gutter) * -1);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    backdrop-filter: blur(14px) saturate(1.4);
+  }
+
+  .legal-aside .toc {
+    display: flex;
+    gap: 6px;
+    padding-inline: var(--gutter);
+    overflow-x: auto;
+    scroll-padding-inline: var(--gutter);
+    scrollbar-width: none;
+  }
+
+  .legal-aside .toc::-webkit-scrollbar {
+    display: none;
+  }
+
+  .legal-aside .toc a {
+    display: inline-flex;
+    flex: none;
+    padding: 7px 13px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .legal-aside .toc a.is-active {
+    border-color: transparent;
+    background: var(--primary-soft);
+  }
+
+  .legal-aside .toc-title,
+  .legal-help {
+    display: none;
+  }
+
+  .legal-main {
+    max-width: none;
+  }
+
+  .legal-section {
+    scroll-margin-top: 60px;
+  }
+}
+
+@media (max-width: 640px) {
+  .legal-glance {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .legal-switch .seg-btn {
+    padding: 0 13px;
+    font-size: 13.5px;
+  }
+
+  .legal-head {
+    gap: 10px;
+  }
+
+  .legal-next {
+    padding: 20px;
+  }
+
+  .legal-next-title {
+    font-size: 19px;
+  }
+}
+
+/* 减弱动效：插画不洗牌、不扫描 */
+@media (prefers-reduced-motion: reduce) {
+  .doc-sheet.is-front .sheet-scan {
+    animation: none;
+    opacity: 0;
+  }
+}

@@ -1,0 +1,424 @@
+/* =========================================================================
+   MapsGrab Website · Motion — 关键帧、滚动显现、循环暂停、减弱动效
+   分级（时长 token 见 tokens.css §8）：
+     T1 微交互 ≤200ms：hover / press / focus
+     T2 过渡 200–400ms：菜单、tab、手风琴、弹窗
+     T3 入场 600–1100ms：滚动显现、标题逐词、数字滚动
+     T4 叙事循环 3–12s：首屏剧场、光束、跑马灯、极光 —— 离屏暂停，减弱动效下停用
+   ========================================================================= */
+
+@property --angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* ---------------------------------------------------------------------------
+   Keyframes
+   --------------------------------------------------------------------------- */
+@keyframes spin-angle {
+  to {
+    --angle: 360deg;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes grad-pan {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes contour-drift {
+  from {
+    transform: translate3d(-1.2%, -0.8%, 0) scale(1.03);
+  }
+
+  to {
+    transform: translate3d(1.2%, 0.8%, 0) scale(1.07);
+  }
+}
+
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(7%, 5%, 0) scale(1.1);
+  }
+
+  100% {
+    transform: translate3d(-5%, 9%, 0) scale(0.95);
+  }
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -9px, 0);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes sweep {
+  from {
+    transform: translateX(-120%);
+  }
+
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(calc(-100% - var(--marquee-gap, 16px)));
+  }
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes pin-drop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -56px, 0) scale(0.7);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translate3d(0, 3px, 0) scale(1.04, 0.94);
+  }
+
+  75% {
+    transform: translate3d(0, -4px, 0) scale(0.98, 1.03);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -12px, 0) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -64;
+  }
+}
+
+@keyframes draw-line {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes blink-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   滚动显现：仅在 JS 可用（html.js）时初始隐藏，保证无 JS 时内容可读
+   data-reveal = fade-up(默认) | fade | zoom | blur | left | right | rise | clip
+   --------------------------------------------------------------------------- */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition:
+    opacity var(--dur-4) var(--ease-out),
+    transform var(--dur-5) var(--ease-out),
+    filter var(--dur-4) var(--ease-out),
+    clip-path var(--dur-5) var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.js [data-reveal='fade'] {
+  transform: none;
+}
+
+.js [data-reveal='zoom'] {
+  transform: scale(0.94);
+}
+
+.js [data-reveal='blur'] {
+  filter: blur(14px);
+  transform: translate3d(0, 14px, 0);
+}
+
+.js [data-reveal='left'] {
+  transform: translate3d(-44px, 0, 0);
+}
+
+.js [data-reveal='right'] {
+  transform: translate3d(44px, 0, 0);
+}
+
+/* 大块产品视觉“从地面立起” */
+.js [data-reveal='rise'] {
+  transform: perspective(1600px) rotateX(16deg) translate3d(0, 70px, 0) scale(0.96);
+  transform-origin: 50% 0%;
+  transition-duration: 1.2s, 1.4s, 0s, 0s;
+}
+
+.js [data-reveal='clip'] {
+  opacity: 1;
+  transform: none;
+  clip-path: inset(0 0 100% 0 round var(--r-lg));
+}
+
+.js [data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* 只有 clip 变体保留终态裁剪；其他变体不能带 clip-path，否则会裁掉阴影和越界浮卡 */
+.js [data-reveal='clip'].is-revealed {
+  clip-path: inset(0 0 0 0 round 0);
+}
+
+/* 标题逐词上升：.w 为遮罩，.wi 为位移层（--i 为词序）
+   - data-split：motion.js 运行时拆词，进入视口后加 .is-revealed，用过渡升起（首屏以下的标题）
+   - data-split="static"：HTML 里已拆好（对应 Astro 构建期拆词），CSS 动画首帧即开始，不等 JS。
+     首屏标题必须用 static：它通常就是 LCP 元素，运行时拆词要等 deferred 脚本下载并执行后才显现，移动端 LCP 会被推迟约 1 秒 */
+[data-split] .w {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.1em 0.07em 0.14em;
+  margin: -0.1em -0.07em -0.14em;
+  vertical-align: top;
+}
+
+[data-split] .wi {
+  display: inline-block;
+  transform-origin: 0% 100%;
+}
+
+.js [data-split]:not([data-split='static']) .wi {
+  transform: translate3d(0, 110%, 0) rotate(4deg);
+  transition: transform 1s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 42ms + var(--split-delay, 0ms));
+}
+
+.js [data-split].is-revealed .wi {
+  transform: none;
+}
+
+/* 错峰延迟写在 HTML 内联的 --split-delay 上：动画首帧已开始，事后由脚本改 delay 会跳帧。
+   fill-mode 用 backwards：结束后不残留 transform（both 会留下单位矩阵，多出一层合成层与层叠上下文） */
+[data-split='static'] .wi {
+  animation: split-rise 1s var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 42ms + var(--split-delay, 0ms));
+}
+
+@keyframes split-rise {
+  from {
+    transform: translate3d(0, 110%, 0) rotate(4deg);
+  }
+}
+
+/* 首屏入场（data-enter）：CSS 首帧启动、起始即可见（半透明 + 下移），不等 JS；错峰写在内联 --enter-delay。
+   首屏文案（公告、导语、按钮、勾选项）用它。首屏最大的文本块就是 LCP 候选（手机上通常是导语）：
+   若像 data-reveal 那样由 JS 从透明度 0 渐显，LCP 会推迟到渐显结束（实测约 1.4 秒）；起始可见则 LCP 落在首帧。
+   起始透明度不能为 0：Chrome 不把首帧透明的元素记为 LCP 候选，那是绕开指标而不是变快。
+   不加 blur()：模糊会扩大像素范围，Chrome 无法把它放到合成线程 */
+[data-enter] {
+  animation: enter-settle 0.8s var(--ease-out) backwards;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
+@keyframes enter-settle {
+  from {
+    opacity: 0.4;
+    transform: translate3d(0, 12px, 0);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   T4 循环的离屏暂停：data-inview 容器不在视口时，子树动画全部暂停
+   --------------------------------------------------------------------------- */
+[data-inview]:not(.is-inview),
+[data-inview]:not(.is-inview)::before,
+[data-inview]:not(.is-inview)::after,
+[data-inview]:not(.is-inview) *,
+[data-inview]:not(.is-inview) *::before,
+[data-inview]:not(.is-inview) *::after {
+  animation-play-state: paused !important;
+}
+
+/* 首屏入场（静态拆词、data-enter）是一次性动画，不受离屏暂停约束：.is-inview 由脚本添加，若跟随暂停就又回到了等 JS */
+[data-inview]:not(.is-inview) [data-split='static'] .wi,
+[data-inview]:not(.is-inview) [data-enter] {
+  animation-play-state: running !important;
+}
+
+/* 跑马灯 */
+.marquee {
+  --marquee-gap: 14px;
+  --marquee-duration: 48s;
+  display: flex;
+  gap: var(--marquee-gap);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--marquee-gap);
+  min-width: 100%;
+  animation: marquee var(--marquee-duration) linear infinite;
+}
+
+.marquee[data-reverse] .marquee-track {
+  animation-direction: reverse;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* 3D 倾斜 / 磁吸：JS 写 transform，这里只负责平滑 */
+[data-tilt] {
+  transform-style: preserve-3d;
+  transition: transform 0.35s var(--ease-out);
+  will-change: transform;
+}
+
+[data-magnetic] {
+  transition: transform 0.3s var(--ease-out);
+}
+
+/* 主题切换的圆形揭示（site.js 在切换期间加 .theme-switching） */
+html.theme-switching::view-transition-old(root),
+html.theme-switching::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* 跨页过渡：导航保持，正文淡入 */
+::view-transition-old(root) {
+  animation-duration: 0.28s;
+}
+
+::view-transition-new(root) {
+  animation-duration: 0.42s;
+}
+
+/* ---------------------------------------------------------------------------
+   减弱动效：直接展示终态，停用循环、视差、打字与逐词
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  .js [data-reveal],
+  [data-split] .wi {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    clip-path: none !important;
+  }
+}

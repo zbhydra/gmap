@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MapsGrab — Grab Google Maps business data in one click</title>
+    <meta
+      name="description"
+      content="MapsGrab collects public business data from Google Maps — names, phones, reviews, photos and emails — and exports clean CSV or JSON files."
+    />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <script src="assets/js/theme-boot.js"></script>
+    <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages/home.css" />
+    <script src="assets/js/chrome.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/site.js" defer></script>
+    <script src="assets/js/pages/home.js" defer></script>
+  </head>
+  <body data-page="home">
+    <div data-chrome="nav"></div>
+
+    <main>
+      <!-- ================================================================
+           ① Hero：搜索命令条（匿名预览）+ 产品剧场（地图 → 插件面板 → 导出）
+           ================================================================ -->
+      <section class="hero has-deco" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i><i></i></div>
+          <div class="bg-contours hero-contours"></div>
+          <div class="bg-grid"></div>
+          <div class="noise"></div>
+        </div>
+
+        <div class="container hero-copy">
+          <a class="pill-announce" href="google-maps-scraper-mcp.html" data-enter>
+            <span class="badge badge--solid">New</span>
+            <span>MCP server for AI agents</span>
+            <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+          </a>
+
+          <h1 class="display hero-title" data-split="static" style="--split-delay: 90ms">
+            <span class="w"><span class="wi" style="--i: 0">Grab</span></span>
+            <span class="w"><span class="wi" style="--i: 1">Google</span></span>
+            <span class="w"><span class="wi" style="--i: 2">Maps</span></span>
+            <span class="w"><span class="wi" style="--i: 3">data</span></span><br class="hide-md" />
+            <span class="w"><span class="wi" style="--i: 4">in</span></span>
+            <span class="w"><span class="wi" style="--i: 5"><span class="accent text-grad is-animated">one click</span></span></span><span class="w"><span class="wi" style="--i: 6">.</span></span>
+          </h1>
+
+          <p class="lead hero-lead" data-enter style="--enter-delay: 180ms">
+            Collect public business data from Google Maps — names, phones, websites, reviews, photos and emails —
+            and export clean CSV or JSON in seconds.
+          </p>
+
+          <form class="hero-search" data-enter style="--enter-delay: 270ms" data-hero-search autocomplete="off">
+            <div class="searchbar">
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>
+              <label class="sr-only" for="hero-q">Search keyword</label>
+              <input
+                id="hero-q"
+                name="q"
+                type="text"
+                data-hero-input
+                data-typing='["coffee shop in Portland","dentist in Austin, TX","plumber near Chicago","yoga studio in Brooklyn","hotels in Miami Beach"]'
+              />
+              <span class="kbd hide-md" aria-hidden="true">↵</span>
+              <button class="btn btn-primary" type="submit" data-hero-submit>
+                <span data-hero-submit-label>Preview results</span>
+                <svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+              </button>
+            </div>
+            <div class="hero-suggest">
+              <span class="subtle">Try</span>
+              <button class="chip" type="button" data-suggest="coffee shop in Portland">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-coffee" /></svg>coffee shop in Portland
+              </button>
+              <button class="chip" type="button" data-suggest="dentist in Austin, TX">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkles" /></svg>dentist in Austin, TX
+              </button>
+              <button class="chip hide-md" type="button" data-suggest="plumber near Chicago">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-wrench" /></svg>plumber near Chicago
+              </button>
+            </div>
+          </form>
+
+          <ul class="hero-trust" role="list" data-enter style="--enter-delay: 360ms">
+            <li><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>No credit card required</li>
+            <li><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>1,000 free records / month</li>
+            <li><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>CSV &amp; JSON export</li>
+          </ul>
+        </div>
+
+        <div class="container-wide hero-stage-wrap">
+          <div class="hero-stage" data-reveal="rise" data-reveal-onload="650" data-hero-stage>
+            <div class="browser stage-frame">
+              <div class="browser-bar">
+                <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                <div class="browser-url">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>
+                  <span data-stage-url>google.com/maps/search/coffee+shop+in+portland</span>
+                </div>
+                <span class="stage-ext" title="MapsGrab extension active">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>
+                  <i class="ext-dot"></i>
+                </span>
+              </div>
+
+              <div class="stage-body">
+                <!-- 风格化地图（纯 SVG，颜色全部走 --map-* token） -->
+                <div class="stage-map" data-stage-map>
+                  <svg class="map-svg" viewBox="0 0 860 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                    <defs>
+                      <clipPath id="clip-west"><path d="M-10 -10H262C250 80 300 150 282 230C266 300 214 360 226 440C236 500 262 530 254 580H-10Z" /></clipPath>
+                      <clipPath id="clip-east"><path d="M326 -10C312 80 362 150 348 230C334 300 284 370 292 430C300 480 326 520 318 580H880V-10Z" /></clipPath>
+                    </defs>
+                    <rect class="m-land" width="860" height="560" />
+                    <!-- 东区街道网格 -->
+                    <g class="m-streets" clip-path="url(#clip-east)">
+                      <path d="M380 0V560M432 0V560M484 0V560M536 0V560M588 0V560M640 0V560M692 0V560M744 0V560M796 0V560M848 0V560" />
+                      <path d="M300 30H860M300 76H860M300 122H860M300 214H860M300 260H860M300 306H860M300 352H860M300 444H860M300 490H860M300 536H860" />
+                    </g>
+                    <!-- 西区（市中心）倾斜网格 -->
+                    <g class="m-streets" clip-path="url(#clip-west)">
+                      <g transform="rotate(-9 130 280)">
+                        <path d="M-60 -40V620M-20 -40V620M20 -40V620M60 -40V620M100 -40V620M140 -40V620M180 -40V620M220 -40V620M260 -40V620M300 -40V620" />
+                        <path d="M-80 20H340M-80 60H340M-80 100H340M-80 140H340M-80 180H340M-80 220H340M-80 260H340M-80 300H340M-80 340H340M-80 380H340M-80 420H340M-80 460H340M-80 500H340M-80 540H340" />
+                      </g>
+                    </g>
+                    <!-- 公园 -->
+                    <path class="m-park" d="M598 86c0-10 8-18 18-18h112c10 0 18 8 18 18v58c0 10-8 18-18 18H616c-10 0-18-8-18-18z" />
+                    <path class="m-park" d="M668 396c18-40 92-46 118-14 24 30 8 82-34 96-46 14-102-36-84-82z" />
+                    <path class="m-park" d="M226 300c10-36 26-52 40-70l6 6c-14 22-26 40-32 66-6 30-14 64-6 100l-10 2c-8-36-6-70 2-104z" />
+                    <path class="m-park" d="M64 440c0-12 10-22 22-22h50c12 0 22 10 22 22v26c0 12-10 22-22 22H86c-12 0-22-10-22-22z" />
+                    <!-- 河流 -->
+                    <path class="m-water" d="M262 -10C250 80 300 150 282 230C266 300 214 360 226 440C236 500 262 530 254 580H318C326 520 300 480 292 430C284 370 334 300 348 230C362 150 312 80 326 -10Z" />
+                    <path class="m-water-edge draw" pathLength="1" d="M262 -10C250 80 300 150 282 230C266 300 214 360 226 440C236 500 262 530 254 580" />
+                    <path class="m-water-edge draw" pathLength="1" d="M326 -10C312 80 362 150 348 230C334 300 284 370 292 430C300 480 326 520 318 580" />
+                    <!-- 主干道（描边绘入） -->
+                    <g class="m-major">
+                      <path class="casing" d="M-10 168H870" />
+                      <path class="casing" d="M-10 398H870" />
+                      <path class="casing" d="M366 -10C378 120 358 260 378 340C398 420 366 500 378 580" />
+                      <path class="casing" d="M486 168C560 120 700 40 790 -10" />
+                      <path class="road draw" pathLength="1" d="M-10 168H870" />
+                      <path class="road draw" pathLength="1" d="M-10 398H870" />
+                      <path class="road draw" pathLength="1" d="M366 -10C378 120 358 260 378 340C398 420 366 500 378 580" />
+                      <path class="road draw" pathLength="1" d="M486 168C560 120 700 40 790 -10" />
+                    </g>
+                    <!-- 标注 -->
+                    <g class="m-labels">
+                      <text x="560" y="160">E BURNSIDE ST</text>
+                      <text x="470" y="390">SE HAWTHORNE BLVD</text>
+                      <text x="640" y="72" class="m-label-sm">LAURELHURST PARK</text>
+                      <text x="702" y="440" class="m-label-sm">MT TABOR</text>
+                      <text x="70" y="120" class="m-district">PEARL</text>
+                      <text x="62" y="300" class="m-district">DOWNTOWN</text>
+                      <text x="604" y="122" transform="rotate(-27 604 122)" class="m-label-sm">NE SANDY BLVD</text>
+                      <text class="m-water-label" transform="translate(296 330) rotate(-78)">WILLAMETTE RIVER</text>
+                    </g>
+                  </svg>
+
+                  <div class="map-search" aria-hidden="true">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>
+                    <span class="map-query" data-map-query>coffee shop in Portland</span>
+                  </div>
+                  <div class="map-filters" aria-hidden="true">
+                    <span>Open now</span><span>Top rated</span><span>Price</span>
+                  </div>
+                  <div class="map-pins" data-map-pins aria-hidden="true"></div>
+                  <div class="map-scan" data-map-scan aria-hidden="true"></div>
+                  <div class="map-zoom" aria-hidden="true"><span>+</span><span>−</span></div>
+                </div>
+
+                <!-- 插件面板：文案与真实 MapsGrab 面板一致 -->
+                <aside class="mgp stage-panel" data-panel aria-label="MapsGrab panel preview">
+                  <div class="mgp-head">
+                    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+                      <rect width="32" height="32" rx="9" fill="#1a73e8" />
+                      <path d="M16 6.2c-4.42 0-8 3.36-8 7.66 0 5.5 6.64 11.04 7.4 11.66.35.28.85.28 1.2 0 .76-.62 7.4-6.16 7.4-11.66 0-4.3-3.58-7.66-8-7.66Z" fill="#fff" />
+                      <path d="M16 10.1v6.2m-2.9-2.9 2.9 2.9 2.9-2.9" fill="none" stroke="#1a73e8" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="mgp-title">MapsGrab</span>
+                    <span class="badge badge--ok panel-live" data-panel-badge><span class="dot dot--live"></span><span data-panel-badge-text>Live</span></span>
+                  </div>
+                  <div class="mgp-status">
+                    <div class="mgp-status-row">
+                      <span data-panel-state>Start Extracting</span>
+                      <span class="mgp-pause" aria-hidden="true">
+                        <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pause" /></svg>Pause
+                      </span>
+                    </div>
+                    <div class="progress"><i data-panel-progress></i></div>
+                    <div class="mgp-kpis">
+                      <span><b data-kpi="phone">0</b> phones</span>
+                      <span><b data-kpi="email">0</b> emails</span>
+                      <span><b data-kpi="web">0</b> websites</span>
+                    </div>
+                  </div>
+                  <div class="mgp-list" data-panel-list></div>
+                  <div class="panel-lock" data-panel-lock hidden>
+                    <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg></span>
+                    <p class="panel-lock-count" data-lock-count>18 businesses on the first results page</p>
+                    <p class="panel-lock-text">Sign in and submit your keywords in Online Scraper to collect and export results.</p>
+                    <div class="panel-lock-actions">
+                      <button class="btn btn-primary btn-sm" type="button" data-signin>Sign in to start a full task</button>
+                      <a class="btn btn-ghost btn-sm" href="online-scraper.html">Open Online Scraper</a>
+                    </div>
+                  </div>
+                  <div class="mgp-foot">
+                    <button class="btn btn-primary" type="button" data-panel-export tabindex="-1">
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>
+                      <span>Export Detailed List - <span data-export-count>0</span> (.CSV)</span>
+                    </button>
+                  </div>
+                  <div class="panel-toast" data-panel-toast>
+                    <span class="toast-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></span>
+                    <div>
+                      <div class="toast-title">Export saved</div>
+                      <div class="toast-desc mono" data-panel-file>MapsGrab-Extractor-48-coffee+shop+in+Portland-2026-10-13.csv</div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </div>
+
+            <!-- 剧场周边浮动数据卡（视差 + 漂浮） -->
+            <div class="float-chip fc-email floaty" style="--float-t: 6.5s" data-parallax="0.05" aria-hidden="true">
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg></span>
+              <span><small>Email found</small><span data-fc-email>hello@emberandoak.coffee</span></span>
+            </div>
+            <div class="float-chip fc-rating floaty" style="--float-t: 7.5s; --float-d: -2s" data-parallax="-0.04" aria-hidden="true">
+              <span class="icon-tile icon-tile--pin"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg></span>
+              <span><small>Average rating</small><span data-fc-rating>4.7 · 1,284 reviews</span></span>
+            </div>
+            <div class="float-chip fc-id floaty" style="--float-t: 8s; --float-d: -4s" data-parallax="0.07" aria-hidden="true">
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-hash" /></svg></span>
+              <span><small>Place ID</small><span class="mono" data-fc-id>ChIJ8Qv2kSIKlVQR…</span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ② 产品事实条（真实产品参数，不是虚报的用户量）
+           ================================================================ -->
+      <section class="facts">
+        <div class="container">
+          <p class="facts-caption" data-reveal>One extraction engine behind every MapsGrab product</p>
+          <div class="facts-grid" data-stagger="80">
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="36">36</div>
+              <div class="stat-label">data columns per business</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="11">11</div>
+              <div class="stat-label">review fields, owner replies included</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="6">6</div>
+              <div class="stat-label">social networks matched per website</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="1000">1,000</div>
+              <div class="stat-label">free records, every month</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad">3<span class="fact-plus">+1</span></div>
+              <div class="stat-label">ways to run it: Extension, Online, API — plus MCP</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ③ 三步流程
+           ================================================================ -->
+      <section class="section how" id="how" data-inview>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>How it works</span>
+            <h2 class="h2" data-split>From a map search to a <span class="accent">spreadsheet</span> in three steps</h2>
+            <p class="lead" data-reveal>
+              No code and no copy-paste. MapsGrab reads what Google Maps already shows you and turns it into structured rows.
+            </p>
+          </header>
+
+          <ol class="how-steps" role="list" data-stagger="120" data-spotlight-group>
+            <li class="how-arrow" aria-hidden="true" style="--col: 1"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></li>
+            <li class="how-arrow" aria-hidden="true" style="--col: 2"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></li>
+            <li class="how-step card" data-reveal data-spotlight>
+              <div class="how-visual how-search" aria-hidden="true">
+                <div class="hs-bar">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>
+                  <span class="hs-typed">bakery in Seattle</span>
+                </div>
+                <div class="hs-results">
+                  <div class="hs-row"><i class="hs-pin"></i><span class="skel"></span><span class="skel short"></span></div>
+                  <div class="hs-row"><i class="hs-pin"></i><span class="skel"></span><span class="skel short"></span></div>
+                  <div class="hs-row"><i class="hs-pin"></i><span class="skel"></span><span class="skel short"></span></div>
+                </div>
+              </div>
+              <div class="how-text">
+                <span class="how-num">01</span>
+                <h3 class="h4">Search Google Maps</h3>
+                <p>Open Google Maps and search any business type and location — exactly like you normally would.</p>
+              </div>
+            </li>
+            <li class="how-step card" data-reveal data-spotlight>
+              <div class="how-visual how-extract" aria-hidden="true">
+                <div class="hx-ring">
+                  <svg viewBox="0 0 120 120">
+                    <defs>
+                      <linearGradient id="hx-grad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0" stop-color="#1a73e8" /><stop offset=".55" stop-color="#0aa5d6" /><stop offset="1" stop-color="#14b37d" />
+                      </linearGradient>
+                    </defs>
+                    <circle class="hx-track" cx="60" cy="60" r="50" />
+                    <circle class="hx-fill" cx="60" cy="60" r="50" pathLength="1" />
+                  </svg>
+                  <div class="hx-count"><b>36</b><span>columns</span></div>
+                </div>
+                <div class="hx-tags">
+                  <span class="chip chip--mono">Name</span><span class="chip chip--mono">Phone</span><span class="chip chip--mono">Rating</span><span class="chip chip--mono">Email</span>
+                </div>
+              </div>
+              <div class="how-text">
+                <span class="how-num">02</span>
+                <h3 class="h4">Start extracting</h3>
+                <p>Click <b>Start Extracting</b>. MapsGrab scrolls the results, collects every listing and enriches contacts.</p>
+              </div>
+            </li>
+            <li class="how-step card" data-reveal data-spotlight>
+              <div class="how-visual how-export" aria-hidden="true">
+                <div class="file-card f-json"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-braces" /></svg><b>.json</b></div>
+                <div class="file-card f-reviews"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg><b>reviews</b></div>
+                <div class="file-card f-csv"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg><b>.csv</b></div>
+              </div>
+              <div class="how-text">
+                <span class="how-num">03</span>
+                <h3 class="h4">Export anywhere</h3>
+                <p>Download CSV or JSON with the columns you choose — reviews and photos land in their own files, ready for Excel or your CRM.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ④ 三种产品形态（bento）
+           ================================================================ -->
+      <section class="section products band" id="products" data-inview>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Products</span>
+            <h2 class="h2" data-split>One engine. <span class="accent">Three</span> ways to grab.</h2>
+            <p class="lead" data-reveal>
+              Pick the browser extension, the cloud-based Online Scraper, or the API — the same extraction engine runs behind all three.
+            </p>
+          </header>
+
+          <div class="bento" data-spotlight-group data-stagger="100">
+            <!-- Extension -->
+            <a class="bento-card card card-link bento-ext" href="extension.html" data-spotlight data-reveal>
+              <div class="bento-copy">
+                <span class="badge"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>Browser extension</span>
+                <h3 class="h3">Grab data while you browse Google Maps</h3>
+                <p>Extract business data, reviews and photos from the Maps pages you open, then export everything locally. Edge, Firefox and Chromium.</p>
+                <span class="link-arrow">Explore the extension <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+              </div>
+              <div class="bento-visual ext-visual" aria-hidden="true">
+                <div class="ev-map">
+                  <i class="ev-pin" style="--x: 22%; --y: 34%"></i>
+                  <i class="ev-pin" style="--x: 48%; --y: 22%"></i>
+                  <i class="ev-pin" style="--x: 38%; --y: 62%"></i>
+                  <i class="ev-pin" style="--x: 70%; --y: 48%"></i>
+                  <i class="ev-pin" style="--x: 60%; --y: 80%"></i>
+                </div>
+                <div class="ev-panel">
+                  <div class="ev-head"><span class="ev-logo"></span>MapsGrab<span class="ev-count mono">Extracting 24…</span></div>
+                  <div class="progress"><i style="--p: 64%"></i></div>
+                  <div class="ev-rows">
+                    <div class="ev-row"><span class="ev-dot"></span><span class="skel"></span><b>4.8</b></div>
+                    <div class="ev-row"><span class="ev-dot"></span><span class="skel"></span><b>4.6</b></div>
+                    <div class="ev-row"><span class="ev-dot"></span><span class="skel"></span><b>4.9</b></div>
+                    <div class="ev-row"><span class="ev-dot"></span><span class="skel"></span><b>4.5</b></div>
+                  </div>
+                </div>
+              </div>
+            </a>
+
+            <!-- Online -->
+            <a class="bento-card card card-link bento-online" href="online-scraper.html" data-spotlight data-reveal>
+              <div class="bento-copy">
+                <span class="badge"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud" /></svg>Online Scraper</span>
+                <h3 class="h3">Cloud runs. Nothing to install.</h3>
+                <p>Paste keywords, collect business details in the cloud and download CSV files or a ZIP bundle.</p>
+                <span class="link-arrow">Explore Online Scraper <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+              </div>
+              <div class="bento-visual queue" aria-hidden="true">
+                <div class="q-row is-done"><span class="q-kw">coffee shop in Portland</span><span class="q-state">48 rows</span><span class="progress"><i style="--p: 100%"></i></span></div>
+                <div class="q-row is-running"><span class="q-kw">dentist in Austin, TX</span><span class="q-state">Running</span><span class="progress"><i class="q-anim"></i></span></div>
+                <div class="q-row"><span class="q-kw">plumber near Chicago</span><span class="q-state">Queued</span><span class="progress"><i style="--p: 0%"></i></span></div>
+                <div class="q-zip"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-archive" /></svg>task-0193.zip</div>
+              </div>
+            </a>
+
+            <!-- API -->
+            <a class="bento-card card card-link bento-api" href="google-maps-scraper-api.html" data-spotlight data-reveal>
+              <div class="bento-copy">
+                <span class="badge"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-code" /></svg>API</span>
+                <h3 class="h3">Clean JSON over HTTP</h3>
+                <p>Business data, reviews and photos for your own applications — one API key.</p>
+                <span class="link-arrow">Explore the API <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+              </div>
+              <div class="bento-visual mini-code" aria-hidden="true">
+                <div class="mc-req"><span class="mc-verb">GET</span> /v1/search?q=coffee+portland</div>
+                <pre class="mc-res"><span class="tok-punc">{</span>
+  <span class="tok-key">"name"</span><span class="tok-punc">:</span> <span class="tok-str">"Ember &amp; Oak Coffee"</span><span class="tok-punc">,</span>
+  <span class="tok-key">"rating"</span><span class="tok-punc">:</span> <span class="tok-num">4.7</span><span class="tok-punc">,</span>
+  <span class="tok-key">"phone"</span><span class="tok-punc">:</span> <span class="tok-str">"+1 503-555-0142"</span><span class="tok-punc">,</span>
+  <span class="tok-key">"email"</span><span class="tok-punc">:</span> <span class="tok-str">"hello@emberandoak.coffee"</span>
+<span class="tok-punc">}</span></pre>
+              </div>
+            </a>
+
+            <!-- MCP -->
+            <a class="bento-card card card-link bento-mcp" href="google-maps-scraper-mcp.html" data-spotlight data-reveal>
+              <div class="bento-copy">
+                <span class="badge badge--ai"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-bot" /></svg>MCP server</span>
+                <h3 class="h3">Live Maps data for your AI agents</h3>
+                <p>Search, reviews and photos as MCP tools for Claude Code, Cursor, VS Code and Codex.</p>
+                <span class="link-arrow">Explore the MCP server <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+              </div>
+              <div class="bento-visual chat" aria-hidden="true">
+                <div class="chat-msg user">Find dentists in Austin rated 4.5+ with a website</div>
+                <div class="chat-tool"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-plug" /></svg>mapsgrab · search_businesses</div>
+                <div class="chat-msg bot">
+                  Found <b>18</b> matches. Top three:
+                  <span class="chat-list"><span>Lone Star Family Dentistry <em>4.9</em></span><span>South Congress Smiles <em>4.9</em></span><span>Bright Smile Dental Studio <em>4.8</em></span></span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑤ 36 列字段浏览器
+           ================================================================ -->
+      <section class="section fields" id="fields">
+        <div class="container fields-grid">
+          <div class="fields-copy" data-stagger="80">
+            <span class="kicker" data-reveal>The data</span>
+            <h2 class="h2" data-split>36 columns. <span class="accent">Every one</span> useful.</h2>
+            <p class="lead" data-reveal>
+              One schema across search results and business pages — contact details, location, profile, ratings and every
+              identifier you need to match records later.
+            </p>
+            <div class="field-filters" role="tablist" aria-label="Field groups" data-field-filters data-reveal>
+              <button type="button" role="tab" aria-selected="true" data-filter="all">All <span>36</span></button>
+              <button type="button" role="tab" aria-selected="false" data-filter="contact">Contact <span>6</span></button>
+              <button type="button" role="tab" aria-selected="false" data-filter="location">Location <span>7</span></button>
+              <button type="button" role="tab" aria-selected="false" data-filter="profile">Profile <span>14</span></button>
+              <button type="button" role="tab" aria-selected="false" data-filter="reviews">Ratings <span>3</span></button>
+              <button type="button" role="tab" aria-selected="false" data-filter="ids">IDs &amp; links <span>6</span></button>
+            </div>
+          </div>
+
+          <div class="fields-stage" data-reveal="zoom">
+            <div class="field-inspector card" data-inspector aria-live="polite">
+              <div class="insp-head">
+                <span class="icon-tile icon-tile--brand" data-insp-icon><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-phone" /></svg></span>
+                <div>
+                  <div class="insp-name" data-insp-name>Phone</div>
+                  <div class="insp-group" data-insp-group>Contact</div>
+                </div>
+                <span class="insp-index mono" data-insp-index>14 / 36</span>
+              </div>
+              <p class="insp-desc" data-insp-desc>Primary phone number shown on the listing.</p>
+              <div class="insp-sample">
+                <span class="insp-sample-label">Sample value</span>
+                <code data-insp-sample>+1 503-555-0142</code>
+              </div>
+            </div>
+            <div class="field-cloud" data-field-cloud></div>
+          </div>
+        </div>
+
+        <div class="container fields-extra" data-stagger="100">
+          <div class="card card-pad extra-card" data-reveal>
+            <div class="extra-head">
+              <span class="icon-tile icon-tile--pin"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg></span>
+              <div>
+                <h3 class="h4">+ 11 review columns</h3>
+                <p class="body-sm muted">Exported separately, paginated up to your plan limit.</p>
+              </div>
+            </div>
+            <div class="extra-tags">
+              <span class="chip chip--mono">Author</span><span class="chip chip--mono">Review Text</span><span class="chip chip--mono">Rating</span><span class="chip chip--mono">Date</span><span class="chip chip--mono">Photos</span><span class="chip chip--mono">Likes</span><span class="chip chip--mono">Owner Answer</span><span class="chip chip--mono">Owner Answer Date</span><span class="chip chip--mono">Author Profile</span><span class="chip chip--mono">Author Image</span><span class="chip chip--mono">Review URL</span>
+            </div>
+          </div>
+          <div class="card card-pad extra-card" data-reveal>
+            <div class="extra-head">
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-image" /></svg></span>
+              <div>
+                <h3 class="h4">+ photo URL lists</h3>
+                <p class="body-sm muted">Every public album photo per business, Street View filtered out.</p>
+              </div>
+            </div>
+            <div class="photo-strip" aria-hidden="true">
+              <i style="--h: 210"></i><i style="--h: 32"></i><i style="--h: 160"></i><i style="--h: 12"></i><i style="--h: 190"></i>
+            </div>
+            <a class="link-arrow" href="#" data-proto-note="Sample CSV download is wired to the real demo export at implementation time.">
+              Download sample CSV <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑥ Email / 社媒补全（轨道图）
+           ================================================================ -->
+      <section class="section enrich band" id="enrichment" data-inview>
+        <div class="container enrich-grid">
+          <div class="enrich-copy" data-stagger="80">
+            <span class="kicker" data-reveal>Enrichment</span>
+            <h2 class="h2" data-split>From a pin to a person you can <span class="accent">email</span></h2>
+            <p class="lead" data-reveal>
+              For every business with a website, MapsGrab checks the official site and fills in direct contact channels —
+              automatically, while it extracts.
+            </p>
+            <ul class="check-list" data-reveal>
+              <li>Email addresses found on the business website</li>
+              <li>Social profiles: Facebook, Instagram, LinkedIn, X, YouTube, TikTok</li>
+              <li>Runs automatically during extraction — no extra clicks</li>
+              <li>Included in API responses — no separate enrichment step</li>
+            </ul>
+          </div>
+
+          <div class="orbit" data-orbit data-reveal="zoom" aria-hidden="true">
+            <div class="orbit-ring r1"></div>
+            <div class="orbit-ring r2"></div>
+            <div class="orbit-ring r3"></div>
+            <div class="orbit-spokes" data-orbit-spokes></div>
+            <div class="orbit-center">
+              <span class="oc-avatar"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-coffee" /></svg></span>
+              <b>Ember &amp; Oak Coffee</b>
+              <span class="oc-site mono">emberandoak.coffee</span>
+              <span class="oc-scan"><i></i></span>
+              <div class="oc-results" data-orbit-results></div>
+            </div>
+            <div class="orbit-nodes" data-orbit-nodes></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑦ 开发者（恒暗主题岛）
+           ================================================================ -->
+      <section class="section dev scheme-dark has-deco" id="developers" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="bg-grid dev-grid-bg"></div>
+          <div class="dev-glow"></div>
+          <div class="noise"></div>
+        </div>
+        <div class="container dev-layout">
+          <div class="dev-copy" data-stagger="80">
+            <span class="kicker" data-reveal>For developers</span>
+            <h2 class="h2" data-split>Plug Maps data into <span class="accent text-grad">anything</span> you build</h2>
+            <p class="lead" data-reveal>
+              The same engine behind the extension, exposed as an HTTP API and an MCP server. Structured JSON, one key, no HTML to parse.
+            </p>
+            <div class="dev-list" role="tablist" aria-label="Developer products" data-dev-list data-reveal>
+              <button type="button" role="tab" aria-selected="true" data-dev="search">
+                <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-database" /></svg></span>
+                <span><b>Scraper API</b><small>Businesses for any keyword and location</small></span>
+              </button>
+              <button type="button" role="tab" aria-selected="false" data-dev="reviews">
+                <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg></span>
+                <span><b>Reviews API</b><small>Ratings, text and owner replies</small></span>
+              </button>
+              <button type="button" role="tab" aria-selected="false" data-dev="photos">
+                <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-image" /></svg></span>
+                <span><b>Photos API</b><small>Public photo URLs per business</small></span>
+              </button>
+              <button type="button" role="tab" aria-selected="false" data-dev="mcp">
+                <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-bot" /></svg></span>
+                <span><b>MCP server</b><small>Three tools for any MCP client</small></span>
+              </button>
+            </div>
+            <div class="cluster" style="--cluster-gap: 12px" data-reveal>
+              <a class="btn btn-primary" href="google-maps-scraper-api.html">Explore the API <svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+              <a class="btn btn-secondary" href="pricing.html#api">API pricing</a>
+            </div>
+          </div>
+
+          <div class="dev-code" data-reveal="right">
+            <div class="codewin">
+              <div class="codewin-bar">
+                <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                <div class="codewin-tabs" role="tablist" aria-label="Language" data-dev-langs>
+                  <button class="codewin-tab" type="button" role="tab" aria-selected="true" data-lang="curl">cURL</button>
+                  <button class="codewin-tab" type="button" role="tab" aria-selected="false" data-lang="python">Python</button>
+                  <button class="codewin-tab" type="button" role="tab" aria-selected="false" data-lang="node">Node.js</button>
+                </div>
+                <button class="codewin-copy" type="button" aria-label="Copy request" data-copy-target="[data-dev-request]">
+                  <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                </button>
+              </div>
+              <pre class="dev-request" data-dev-request></pre>
+              <div class="codewin-label"><span class="dot" style="color: var(--ok)"></span> <span data-dev-status>Response · 200 OK · 412 ms</span></div>
+              <pre class="dev-response" data-dev-response></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="dev-works" data-reveal>
+          <p class="dev-works-label">Works with the tools you already use</p>
+          <div class="marquee" data-marquee>
+            <div class="marquee-track">
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-terminal" /></svg>Claude Code</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cursor" /></svg>Cursor</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-code" /></svg>VS Code</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkles" /></svg>Codex</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>MCP Inspector</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud" /></svg>Google Drive</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-users" /></svg>HubSpot</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-table" /></svg>Microsoft Excel</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg>CSV</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-braces" /></svg>JSON</span>
+              <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-archive" /></svg>ZIP bundles</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑧ 早期用户场景（非虚构具名评价）
+           ================================================================ -->
+      <section class="section usecases" id="use-cases" data-inview>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Use cases</span>
+            <h2 class="h2" data-split>Made for the work <span class="accent">after</span> the search</h2>
+          </header>
+
+          <div class="uc-grid" data-stagger="110">
+            <article class="uc-card card" data-reveal>
+              <div class="uc-visual uc-leads" aria-hidden="true">
+                <div class="ul-row"><span class="ul-check"></span><span class="skel"></span><span class="ul-tag">email</span></div>
+                <div class="ul-row"><span class="ul-check"></span><span class="skel"></span><span class="ul-tag">phone</span></div>
+                <div class="ul-row"><span class="ul-check"></span><span class="skel"></span><span class="ul-tag">email</span></div>
+                <div class="ul-row"><span class="ul-check"></span><span class="skel"></span><span class="ul-tag">site</span></div>
+              </div>
+              <div class="uc-label"><span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-target" /></svg></span>Lead generation</div>
+              <h3>Local lead lists</h3>
+              <p>Search a category and a city, then export the whole results page — phones, websites and emails included — into one spreadsheet.</p>
+            </article>
+            <article class="uc-card card" data-reveal>
+              <div class="uc-visual uc-bars" aria-hidden="true">
+                <div class="ub"><i style="--v: 0.92"></i><span>4.8</span></div>
+                <div class="ub"><i style="--v: 0.74"></i><span>4.3</span></div>
+                <div class="ub is-you"><i style="--v: 0.86"></i><span>4.6</span></div>
+                <div class="ub"><i style="--v: 0.58"></i><span>3.9</span></div>
+                <div class="ub"><i style="--v: 0.97"></i><span>4.9</span></div>
+                <div class="ub"><i style="--v: 0.66"></i><span>4.1</span></div>
+              </div>
+              <div class="uc-label"><span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chart" /></svg></span>Local SEO</div>
+              <h3>Competitor benchmarks</h3>
+              <p>Pull ratings and review counts for every competitor in an area in one pass, and build the report straight from the export.</p>
+            </article>
+            <article class="uc-card card" data-reveal>
+              <div class="uc-visual uc-geo" aria-hidden="true">
+                <i style="--x: 18%; --y: 30%; --s: 1"></i><i style="--x: 30%; --y: 58%; --s: 0.7"></i><i style="--x: 46%; --y: 36%; --s: 1.3"></i>
+                <i style="--x: 58%; --y: 66%; --s: 0.8"></i><i style="--x: 70%; --y: 28%; --s: 1.1"></i><i style="--x: 82%; --y: 56%; --s: 0.9"></i>
+                <span class="ug-coord mono">45.5231° N, 122.6765° W</span>
+              </div>
+              <div class="uc-label"><span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-route" /></svg></span>Market research</div>
+              <h3>Location datasets</h3>
+              <p>Collect Place IDs and coordinates for every branch or competitor location, ready for your mapping and routing tools.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑨ 定价摘要
+           ================================================================ -->
+      <section class="section pricing-teaser band" id="pricing">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Pricing</span>
+            <h2 class="h2" data-split>Start free. <span class="accent">Scale</span> when it pays off.</h2>
+            <p class="lead" data-reveal>Every product has a free tier with no time limit. Upgrade only the surface you actually use.</p>
+          </header>
+
+          <div class="pt-grid" data-stagger="100" data-spotlight-group>
+            <a class="pt-card card card-link card--lift" href="pricing.html#extension" data-spotlight data-reveal>
+              <div class="pt-top">
+                <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg></span>
+                <span class="badge badge--muted">Monthly</span>
+              </div>
+              <h3 class="h4">Browser Extension</h3>
+              <div class="pt-price"><b>$0</b><span>1,000 records / month</span></div>
+              <div class="pt-next"><span>Pro</span><b>$39</b><span>/ month · 100,000 records</span></div>
+              <span class="link-arrow">See extension plans <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+            </a>
+            <a class="pt-card card card-link card--lift" href="pricing.html#online" data-spotlight data-reveal>
+              <div class="pt-top">
+                <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud" /></svg></span>
+                <span class="badge badge--muted">One-time</span>
+              </div>
+              <h3 class="h4">Online Scraper</h3>
+              <div class="pt-price"><b>$0</b><span>1,000 records / month</span></div>
+              <div class="pt-next"><span>From</span><b>$19</b><span>· 20,000 records for a month</span></div>
+              <span class="link-arrow">See Online plans <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+            </a>
+            <a class="pt-card card card-link card--lift" href="pricing.html#api" data-spotlight data-reveal>
+              <div class="pt-top">
+                <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-code" /></svg></span>
+                <span class="badge badge--muted">One-time</span>
+              </div>
+              <h3 class="h4">API &amp; MCP</h3>
+              <div class="pt-price"><b>$0</b><span>20 requests / month</span></div>
+              <div class="pt-next"><span>From</span><b>$15</b><span>· 1,000 requests for a month</span></div>
+              <span class="link-arrow">See API plans <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑩ 免费工具
+           ================================================================ -->
+      <section class="section tools" id="tools">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Free tools</span>
+            <h2 class="h2" data-split>Small tools for Maps <span class="accent">power users</span></h2>
+            <p class="lead" data-reveal>Seven utilities that run entirely in your browser — what you paste never leaves your device.</p>
+          </header>
+          <div class="tools-grid" data-tools-grid data-more data-spotlight-group data-stagger="60"></div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑪ FAQ
+           ================================================================ -->
+      <section class="section faq band" id="faq">
+        <div class="container faq-layout">
+          <div class="faq-aside" data-stagger="80">
+            <span class="kicker" data-reveal>FAQ</span>
+            <h2 class="h2" data-split>Frequently asked <span class="accent">questions</span></h2>
+            <p class="lead" data-reveal>The short answers. Anything else, support is one email away.</p>
+            <a class="btn btn-secondary" href="about.html#contact" data-reveal>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>Contact support
+            </a>
+          </div>
+          <div class="faq-list" data-stagger="60">
+            <details class="acc" data-reveal>
+              <summary>Is MapsGrab free to use?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Yes. The extension works without an account and includes a free monthly quota of records. Paid plans on the Pricing page raise the limits when you need more.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Which browsers are supported?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>MapsGrab targets Microsoft Edge (Edge Add-ons) and Firefox (Firefox Add-ons). Chromium-based browsers can also load the extension directly from the release zip — see the install guide on the Extension page.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Where does the data come from, and is it legal to collect?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>MapsGrab only collects information that is publicly displayed on the Google Maps pages you visit — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Do I need to install anything for the web tools?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>No. The free web tools run entirely in your browser — your input never leaves your device.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>What formats can I export to?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Exports come as CSV or JSON with the field selection you choose, deduplicated by Place ID. Results can also be delivered to your own Google Drive or HubSpot account if you connect them.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Does MapsGrab see the data I collect?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Your settings and results are stored locally in your browser. Our servers only handle remote configuration, account and quota status, optional email/social enrichment, and minimal usage logs.</p></div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑫ 收尾 CTA
+           ================================================================ -->
+      <section class="section final-cta">
+        <div class="container">
+          <div class="cta-panel has-deco" data-inview data-reveal="zoom">
+            <div class="deco" aria-hidden="true">
+              <div class="aurora"><i></i><i></i><i></i></div>
+              <div class="bg-contours"></div>
+              <div class="bg-grid cta-grid"></div>
+              <div class="cta-pins" data-cta-pins></div>
+              <div class="noise"></div>
+            </div>
+            <span class="kicker" data-reveal>Get started</span>
+            <h2 class="display cta-title" data-split>Start grabbing in <span class="accent text-grad is-animated">minutes</span></h2>
+            <p class="lead cta-lead" data-reveal>
+              Install the extension, open Google Maps, search, and export your first list — no account required.
+            </p>
+            <div class="cta-actions" data-reveal>
+              <a class="btn btn-primary btn-lg" href="extension.html#install" data-magnetic="0.22">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>Install MapsGrab free
+              </a>
+              <a class="btn btn-secondary btn-lg" href="online-scraper.html">Try the Online Scraper</a>
+            </div>
+            <p class="cta-note" data-reveal>Free monthly quota included. No credit card.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-chrome="footer"></div>
+  </body>
+</html>

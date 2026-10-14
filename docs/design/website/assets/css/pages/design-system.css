@@ -1,0 +1,1626 @@
+/* =========================================================================
+   Design system 页私有样式（design-system.html）
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   Hero：Tokens → Components → Pages 分层爆炸图
+   --------------------------------------------------------------------------- */
+.ds-hero {
+  padding-bottom: clamp(40px, 5vw, 72px);
+}
+
+.ds-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ds-stack {
+  position: relative;
+  height: 470px;
+  perspective: 1600px;
+  transform-style: preserve-3d;
+}
+
+.ds-layer {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: ds-bob 7s var(--ease-in-out) var(--d, 0s) infinite alternate;
+}
+
+@keyframes ds-bob {
+  to {
+    transform: translateY(-10px);
+  }
+}
+
+.ds-plane {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  width: 330px;
+  height: 220px;
+  margin: -110px 0 0 -165px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  box-shadow: var(--shadow-lg), var(--hairline-hl);
+  transform: rotateX(58deg) rotateZ(-40deg) translateZ(var(--z, 0px));
+  transition: transform 1.4s var(--ease-spring);
+}
+
+/* 显现后三层沿法线拉开 */
+.ds-stack.is-revealed .ds-plane--tokens {
+  --z: -120px;
+}
+
+.ds-stack.is-revealed .ds-plane--pages {
+  --z: 120px;
+}
+
+.ds-plane--tokens {
+  transition-delay: 0.15s;
+}
+
+.ds-plane--pages {
+  transition-delay: 0.3s;
+}
+
+/* Pages 层：迷你页面线框 */
+.dp-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dp-nav i {
+  width: 34px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--surface-3);
+}
+
+.dp-nav .dp-logo {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  background: var(--grad-brand);
+}
+
+.dp-nav b {
+  width: 46px;
+  height: 18px;
+  margin-left: auto;
+  border-radius: 9px;
+  background: var(--primary);
+}
+
+.dp-title {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.dp-title i {
+  width: 82%;
+  height: 13px;
+  border-radius: 5px;
+  background: var(--text);
+  opacity: 0.85;
+}
+
+.dp-title .dp-grad {
+  width: 56%;
+  background: var(--grad-brand);
+  opacity: 1;
+}
+
+.dp-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.dp-cards i {
+  height: 62px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-2);
+}
+
+/* Components 层：按钮 / chip / 分段 / 输入 / 开关 */
+.ds-plane--components {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 12px;
+}
+
+.dp-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 99px;
+  background: var(--primary);
+  box-shadow: var(--glow-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.dp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 99px;
+  background: var(--ok-soft);
+  color: var(--ok);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dp-chip i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.dp-seg {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 99px;
+  background: var(--surface-3);
+}
+
+.dp-seg b,
+.dp-seg i {
+  width: 40px;
+  height: 20px;
+  border-radius: 99px;
+}
+
+.dp-seg b {
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.dp-input {
+  display: flex;
+  align-items: center;
+  width: 180px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.dp-input i {
+  width: 60%;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--surface-3);
+}
+
+.dp-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 99px;
+  background: var(--grad-brand);
+}
+
+.dp-toggle b {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* Tokens 层：色点 + 字样 */
+.ds-plane--tokens {
+  align-content: center;
+  gap: 20px;
+}
+
+.dp-swatches {
+  display: flex;
+  gap: 10px;
+}
+
+.dp-swatches i {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.dp-swatches i:nth-child(1) {
+  background: var(--primary);
+}
+
+.dp-swatches i:nth-child(2) {
+  background: var(--cyan);
+}
+
+.dp-swatches i:nth-child(3) {
+  background: var(--accent);
+}
+
+.dp-swatches i:nth-child(4) {
+  background: var(--pin);
+}
+
+.dp-swatches i:nth-child(5) {
+  background: var(--star);
+}
+
+.dp-swatches i:nth-child(6) {
+  background: var(--ai);
+}
+
+.dp-type {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  color: var(--text);
+}
+
+.dp-type b {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.dp-type em {
+  font-family: var(--font-serif);
+  font-size: 44px;
+}
+
+.dp-type code {
+  margin-left: auto;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12px;
+}
+
+/* 层标签：带引线的等宽小签 */
+.ds-tag {
+  position: absolute;
+  left: 0;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    opacity 0.6s var(--ease-out),
+    transform 0.6s var(--ease-out);
+}
+
+.ds-tag::after {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 54px;
+  border-top: 1px dashed var(--border-2);
+  content: '';
+}
+
+.ds-tag--pages {
+  top: 15%;
+}
+
+.ds-tag--components {
+  top: calc(50% - 14px);
+}
+
+.ds-tag--tokens {
+  bottom: 15%;
+}
+
+.ds-stack.is-revealed .ds-tag {
+  opacity: 1;
+  transform: none;
+}
+
+.ds-stack.is-revealed .ds-tag--pages {
+  transition-delay: 0.9s;
+}
+
+.ds-stack.is-revealed .ds-tag--components {
+  transition-delay: 1s;
+}
+
+.ds-stack.is-revealed .ds-tag--tokens {
+  transition-delay: 1.1s;
+}
+
+/* ---------------------------------------------------------------------------
+   正文框架
+   --------------------------------------------------------------------------- */
+.ds-body {
+  padding-top: clamp(24px, 3vw, 40px);
+}
+
+.ds-main {
+  min-width: 0;
+}
+
+.ds-section {
+  scroll-margin-top: calc(var(--nav-h) + 24px);
+}
+
+.ds-section + .ds-section {
+  margin-top: clamp(96px, 11vw, 160px);
+}
+
+.ds-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 720px;
+  margin-bottom: clamp(32px, 4vw, 48px);
+}
+
+.ds-h2 {
+  font-size: clamp(2rem, 1.3rem + 2vw, 2.875rem);
+  font-weight: 650;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.ds-h3 {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.ds-note {
+  max-width: 660px;
+  color: var(--text-2);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.ds-note b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ds-sub {
+  margin-top: clamp(44px, 5vw, 64px);
+}
+
+.ds-head + .ds-sub,
+.ds-head + .ds-fonts {
+  margin-top: 0;
+}
+
+.ds-sub > * + *,
+.ds-two > div > * + * {
+  margin-top: 20px;
+}
+
+.ds-sub > .ds-h3 + .ds-note,
+.ds-two > div > .ds-h3 + .ds-note {
+  margin-top: 6px;
+}
+
+.ds-sub-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ds-sub-head .ds-note {
+  margin-top: 6px;
+}
+
+.ds-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.ds-sub.ds-two > * + * {
+  margin-top: 0;
+}
+
+.ds-two > div > .ds-demo {
+  margin-top: 20px;
+}
+
+/* 行内代码 */
+.ds-ic {
+  padding: 0.1em 0.42em;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 0.84em;
+}
+
+.ds-file {
+  margin-left: 4px;
+  color: var(--code-muted);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   示例框：舞台 + 标记折叠
+   --------------------------------------------------------------------------- */
+.ds-demo {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.ds-demo + .ds-demo {
+  margin-top: 16px;
+}
+
+.ds-stage {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: clamp(20px, 3vw, 32px);
+  background-color: var(--bg-2);
+  background-image: radial-gradient(circle at 1px 1px, var(--grid-line) 1px, transparent 0);
+  background-size: 18px 18px;
+  color: var(--text);
+}
+
+.ds-stage--ink {
+  background-color: var(--bg);
+}
+
+.ds-stage--col {
+  flex-direction: column;
+  flex-wrap: nowrap; /* 单行时行宽 = 容器宽；多行会按最宽子项的内容宽度撑开，长 URL 之类会溢出 */
+  align-items: stretch;
+}
+
+.ds-stage--grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.ds-stage--form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+
+.ds-span-2 {
+  grid-column: 1 / -1;
+}
+
+.ds-stage--wide {
+  padding-block: 40px;
+}
+
+.ds-stage--mock {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 16px;
+}
+
+/* 共享部件示例：浏览器工具栏（下载环 + 插件在线点 + 下载气泡）与面板状态 */
+.ds-bar {
+  position: relative;
+  margin-bottom: 76px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.ds-ext {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--text-2);
+}
+
+.ds-parts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.ds-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.ds-facts {
+  padding-top: 0;
+}
+
+.ds-facts .stat-value {
+  font-size: 40px;
+}
+
+.ds-grad--wide {
+  grid-column: 1 / -1;
+}
+
+.ds-stage--stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px;
+}
+
+.ds-stage--prices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 20px;
+  padding-top: 40px;
+}
+
+.ds-card-link {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 10px;
+}
+
+.ds-tab-panel {
+  margin-top: 16px;
+  color: var(--text-2);
+  font-size: 14.5px;
+}
+
+.ds-acc {
+  border-top: 1px solid var(--border);
+}
+
+.ds-progress {
+  width: 180px;
+}
+
+/* 产品 mock 内的迷你地图 */
+.ds-browser {
+  display: flex;
+  flex-direction: column;
+}
+
+.ds-minimap {
+  position: relative;
+  flex: 1;
+  min-height: 220px;
+  background:
+    linear-gradient(var(--map-road) 0 0) 0 62% / 100% 10px no-repeat,
+    linear-gradient(var(--map-road) 0 0) 38% 0 / 10px 100% no-repeat,
+    radial-gradient(ellipse 30% 40% at 85% 90%, var(--map-park) 98%, transparent) no-repeat,
+    linear-gradient(115deg, transparent 18%, var(--map-water) 18% 27%, transparent 27%),
+    var(--map-land);
+}
+
+.ds-chip-float {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.ds-mgp {
+  position: relative;
+  inset: auto;
+  width: auto;
+}
+
+.ds-mark {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: var(--grad-brand);
+}
+
+/* 标记折叠（details） */
+.ds-code {
+  border-top: 1px solid var(--border);
+}
+
+.ds-code summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  list-style: none;
+  cursor: pointer;
+  transition: color var(--dur-2);
+}
+
+.ds-code summary::-webkit-details-marker {
+  display: none;
+}
+
+.ds-code summary:hover {
+  color: var(--text);
+}
+
+.ds-code summary .icon {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--dur-3) var(--ease-out);
+}
+
+.ds-code[open] summary .icon {
+  transform: rotate(90deg);
+}
+
+.ds-code-body {
+  position: relative;
+  background: var(--code-bg);
+}
+
+.ds-code-body pre {
+  max-height: 380px;
+  margin: 0;
+  padding: 18px 56px 18px 20px;
+  overflow: auto;
+  color: var(--code-text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12.5px;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+.ds-code-body .codewin-copy {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+/* ---------------------------------------------------------------------------
+   颜色
+   --------------------------------------------------------------------------- */
+.ds-prims {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 12px;
+}
+
+.ds-prim-group {
+  display: grid;
+  flex: var(--n) 1 calc(var(--n) * 84px);
+  gap: 10px;
+}
+
+.ds-prim-group > span {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ds-prim-row {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.ds-prim {
+  display: grid;
+  align-content: end;
+  gap: 2px;
+  min-height: 104px;
+  padding: 10px;
+  background: var(--c);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 10.5px;
+}
+
+.ds-prim.is-light {
+  color: #0b1324;
+}
+
+.ds-prim b {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.ds-prim.is-brand {
+  position: relative;
+}
+
+.ds-prim.is-brand::before {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  content: 'BRAND';
+}
+
+.ds-token-groups {
+  display: grid;
+  gap: 28px;
+}
+
+.ds-tgroup > span {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ds-tgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(186px, 1fr));
+  gap: 12px;
+}
+
+.ds-token {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.ds-token-swatch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 58px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-token-swatch i {
+  background: var(--c);
+}
+
+.ds-token-meta {
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px 14px;
+}
+
+.ds-token-meta code {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ds-token-hex {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 10.5px;
+}
+
+.ds-token-meta p {
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.ds-grads {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ds-grad {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.ds-grad-fill {
+  display: block;
+  height: 76px;
+  background: var(--g);
+}
+
+.ds-grad code {
+  display: block;
+  margin: 12px 16px 0;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ds-grad p {
+  margin: 4px 16px 14px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.ds-glows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--bg-2);
+}
+
+.ds-glow {
+  display: grid;
+  place-items: center;
+  height: 84px;
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.ds-glow code {
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   字体
+   --------------------------------------------------------------------------- */
+.ds-fonts {
+  display: grid;
+  gap: 12px;
+}
+
+.ds-font {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 24px 28px;
+}
+
+.ds-font-aa {
+  color: var(--text);
+  font-size: 76px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.ds-font-aa--serif {
+  font-family: var(--font-serif);
+  font-size: 84px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.ds-font-aa--mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 58px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.ds-font h3 {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.ds-font h3 em {
+  font-family: var(--font-serif);
+  font-size: 1.1em;
+  font-weight: 400;
+}
+
+.ds-font p {
+  margin-top: 4px;
+  color: var(--text-2);
+  font-size: 14.5px;
+}
+
+.ds-weights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 12px;
+  color: var(--text);
+  font-size: 20px;
+}
+
+.ds-weights.mono {
+  font-size: 15px;
+}
+
+.ds-scale {
+  border-top: 1px solid var(--border);
+}
+
+.ds-scale-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-scale-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.ds-scale-meta code {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.ds-scale-meta span {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+}
+
+.ds-scale-sample {
+  min-width: 0;
+}
+
+.ds-scale-sample.display,
+.ds-scale-sample.h1,
+.ds-scale-sample.h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   间距 / 圆角 / 投影
+   --------------------------------------------------------------------------- */
+.ds-space {
+  display: grid;
+  gap: 8px;
+}
+
+.ds-space-row {
+  display: grid;
+  grid-template-columns: 64px 54px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12px;
+}
+
+.ds-space-row code {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ds-space-row i {
+  width: var(--w);
+  height: 12px;
+  border-radius: 4px;
+  background: var(--grad-brand);
+}
+
+.ds-radii,
+.ds-shadows {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 12px;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--bg-2);
+}
+
+.ds-radius,
+.ds-shadow {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  text-align: center;
+}
+
+.ds-radius i {
+  width: 64px;
+  height: 64px;
+  border: 1.5px solid var(--primary-text);
+  border-radius: var(--r);
+  background: var(--primary-soft);
+}
+
+.ds-shadow i {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--sh);
+}
+
+/* ---------------------------------------------------------------------------
+   图标
+   --------------------------------------------------------------------------- */
+.ds-icon-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ds-search {
+  position: relative;
+  flex: 1;
+  max-width: 380px;
+}
+
+.ds-search .icon {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  color: var(--text-3);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.ds-search .input {
+  padding-left: 44px;
+}
+
+.ds-icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.ds-icon {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 18px 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2),
+    color var(--dur-2),
+    box-shadow var(--dur-3);
+}
+
+.ds-icon:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  color: var(--primary-text);
+  transform: translateY(-2px);
+}
+
+.ds-icon .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.ds-icon span {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-icon-usage {
+  margin-top: 16px;
+}
+
+/* ---------------------------------------------------------------------------
+   动效
+   --------------------------------------------------------------------------- */
+.ds-curves {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ds-curve {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.ds-curve svg {
+  width: 100%;
+  height: 136px;
+  overflow: visible;
+}
+
+.ds-c-box {
+  fill: none;
+  stroke: var(--border-2);
+  stroke-dasharray: 3 4;
+}
+
+.ds-c-handle {
+  stroke: var(--text-3);
+  stroke-width: 1;
+}
+
+.ds-c-dot {
+  fill: var(--surface);
+  stroke: var(--text-2);
+  stroke-width: 1.5;
+}
+
+.ds-c-path {
+  fill: none;
+  stroke: var(--primary-text);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.ds-track {
+  position: relative;
+  height: 14px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  container-type: inline-size;
+}
+
+.ds-ball {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: var(--glow-primary);
+  animation: ds-ease 2.2s var(--e) infinite alternate;
+}
+
+@keyframes ds-ease {
+  to {
+    translate: calc(100cqi - 14px) 0;
+  }
+}
+
+.ds-curve code {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ds-curve p {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.ds-reveals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ds-rv {
+  display: grid;
+  place-items: center;
+  height: 96px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  border-radius: 16px;
+  background: var(--primary-soft);
+}
+
+.ds-rv code {
+  color: var(--primary-text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.ds-behaviors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ds-bh {
+  display: grid;
+  align-content: space-between;
+  gap: 18px;
+  min-height: 176px;
+  padding: 20px;
+}
+
+.ds-bh-label {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.ds-bh--tilt {
+  justify-items: start;
+}
+
+.ds-bh--tilt .icon-tile {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+}
+
+.ds-bh .btn {
+  justify-self: start;
+}
+
+.ds-bh--wide {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
+.ds-bh .marquee {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.ds-pins {
+  position: relative;
+  height: 92px;
+  border-radius: 12px;
+  background: var(--map-land);
+}
+
+/* ---------------------------------------------------------------------------
+   背景 / 主题岛
+   --------------------------------------------------------------------------- */
+.ds-bgs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ds-bg {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 210px;
+  padding: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.ds-bg .deco {
+  border-radius: inherit;
+}
+
+.ds-bg .aurora > i {
+  --size: 300px;
+}
+
+.ds-bg--noise .noise {
+  opacity: calc(var(--noise-opacity) * 5);
+}
+
+.ds-bg code {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.ds-bg p {
+  color: var(--text-2);
+  font-size: 13.5px;
+}
+
+.ds-islands {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ds-island {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------------------
+   规则
+   --------------------------------------------------------------------------- */
+.ds-rules {
+  display: grid;
+  gap: 12px;
+}
+
+.ds-rule {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ds-do,
+.ds-dont {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.ds-do {
+  box-shadow: inset 0 3px 0 var(--ok);
+}
+
+.ds-dont {
+  box-shadow: inset 0 3px 0 var(--bad);
+}
+
+.ds-badge-bad {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.ds-do > p:last-child,
+.ds-dont > p:last-child {
+  color: var(--text-2);
+  font-size: 14.5px;
+}
+
+.ds-rule-demo {
+  justify-self: stretch;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--bg-2);
+}
+
+.ds-btn-wrong {
+  background: var(--grad-warm);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------------------
+   页面索引
+   --------------------------------------------------------------------------- */
+.ds-pages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ds-page {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.ds-page .icon-tile {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+}
+
+.ds-page b {
+  display: block;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.ds-page small {
+  display: block;
+  overflow: hidden;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-page > .icon {
+  color: var(--text-3);
+  transition:
+    transform var(--dur-3) var(--ease-out),
+    color var(--dur-2);
+}
+
+.ds-page:hover > .icon {
+  color: var(--text);
+  transform: translate(3px, -3px);
+}
+
+/* ---------------------------------------------------------------------------
+   Responsive
+   --------------------------------------------------------------------------- */
+@media (max-width: 1080px) {
+  .ds-stage--grid,
+  .ds-behaviors {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ds-curves {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 960px) {
+  .ds-stack {
+    height: 430px;
+  }
+
+  /* 目录改为横向滚动的胶囊条 */
+  .ds-body .toc {
+    display: flex;
+    gap: 6px;
+    margin-inline: calc(var(--gutter) * -1);
+    padding: 0 var(--gutter) 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ds-body .toc-title {
+    display: none;
+  }
+
+  .ds-body .toc a {
+    padding: 7px 13px;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+
+  .ds-body .toc a.is-active {
+    border-color: var(--primary);
+  }
+
+  .ds-two,
+  .ds-stage--mock {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  /* 用 zoom 整体缩小：transform 会被显现规则覆盖，scale 又会让大投影在合成层边缘被裁出硬边 */
+  .ds-stack {
+    zoom: 0.7;
+  }
+
+  .ds-tag {
+    display: none;
+  }
+
+  .ds-stage--grid,
+  .ds-stage--form,
+  .ds-stage--stats,
+  .ds-stage--prices,
+  .ds-grads,
+  .ds-glows,
+  .ds-behaviors,
+  .ds-bgs,
+  .ds-islands,
+  .ds-rule,
+  .ds-pages {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ds-reveals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ds-scale-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .ds-font {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .ds-radii,
+  .ds-shadows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ds-sub-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

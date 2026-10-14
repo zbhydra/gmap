@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atlas — MapsGrab design system</title>
+    <meta
+      name="description"
+      content="Atlas, the MapsGrab website design system: tokens, typography, icons, components and motion — rendered live from the production CSS."
+    />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <script src="assets/js/theme-boot.js"></script>
+    <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages/design-system.css" />
+    <script src="assets/js/chrome.js" defer></script>
+    <!-- 页面脚本放在 motion.js 之前：先抓取示例的原始标记，再由运行时初始化动效 -->
+    <script src="assets/js/pages/design-system.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/site.js" defer></script>
+  </head>
+  <body data-page="system">
+    <div data-chrome="nav"></div>
+
+    <main>
+      <!-- ================================================================
+           Hero：分层爆炸图（Tokens → Components → Pages）
+           ================================================================ -->
+      <section class="page-hero has-deco ds-hero" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i></div>
+          <div class="bg-contours"></div>
+          <div class="bg-grid"></div>
+          <div class="noise"></div>
+        </div>
+        <div class="container page-hero-grid">
+          <div class="page-hero-copy">
+            <nav class="crumbs" aria-label="Breadcrumb" data-enter>
+              <a href="index.html">MapsGrab</a>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-right" /></svg>
+              <span aria-current="page">Design system</span>
+            </nav>
+            <span class="kicker" data-enter style="--enter-delay: 80ms">Design system · Atlas v1</span>
+            <h1 class="h1" data-split="static" style="--split-delay: 160ms">
+              <span class="w"><span class="wi" style="--i: 0">From</span></span>
+              <span class="w"><span class="wi" style="--i: 1"><span class="accent text-grad is-animated">map</span></span></span>
+              <span class="w"><span class="wi" style="--i: 2">to</span></span>
+              <span class="w"><span class="wi" style="--i: 3">data,</span></span>
+              <span class="w"><span class="wi" style="--i: 4">one</span></span>
+              <span class="w"><span class="wi" style="--i: 5">system</span></span>
+            </h1>
+            <p class="lead" data-enter style="--enter-delay: 240ms">
+              The living reference for the MapsGrab website. Every token, component and animation below renders from the same
+              CSS and runtime that ship the pages — copy the markup, not a screenshot.
+            </p>
+            <div class="ds-hero-chips" data-enter style="--enter-delay: 320ms">
+              <span class="chip chip--mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sun" /></svg>Light + dark via light-dark()</span>
+              <span class="chip chip--mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg>Zero-dependency motion</span>
+              <span class="chip chip--mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-eye" /></svg>Reduced-motion ready</span>
+            </div>
+            <div class="page-hero-actions" data-enter style="--enter-delay: 400ms">
+              <a class="btn btn-primary" href="#components">
+                Browse components<svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+              </a>
+              <a class="btn btn-secondary" href="#pages">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-layers" /></svg>All prototype pages
+              </a>
+            </div>
+          </div>
+
+          <div class="page-hero-visual">
+            <div class="ds-stack" data-reveal="fade" data-reveal-onload="300" aria-hidden="true">
+              <div class="ds-layer" style="--d: -4s">
+                <div class="ds-plane ds-plane--tokens">
+                  <div class="dp-swatches"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div class="dp-type"><b>Aa</b><em>Aa</em><code>--r-lg</code></div>
+                </div>
+              </div>
+              <div class="ds-layer" style="--d: -2s">
+                <div class="ds-plane ds-plane--components">
+                  <span class="dp-btn">Install free</span>
+                  <span class="dp-chip"><i></i>Live</span>
+                  <span class="dp-seg"><b></b><i></i><i></i></span>
+                  <span class="dp-input"><i></i></span>
+                  <span class="dp-toggle"><b></b></span>
+                </div>
+              </div>
+              <div class="ds-layer" style="--d: 0s">
+                <div class="ds-plane ds-plane--pages">
+                  <div class="dp-nav"><i class="dp-logo"></i><i></i><i></i><i></i><b></b></div>
+                  <div class="dp-title"><i></i><i class="dp-grad"></i></div>
+                  <div class="dp-cards"><i></i><i></i><i></i></div>
+                </div>
+              </div>
+              <span class="ds-tag ds-tag--pages">Pages</span>
+              <span class="ds-tag ds-tag--components">Components</span>
+              <span class="ds-tag ds-tag--tokens">Tokens</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           正文：目录 + 规范
+           ================================================================ -->
+      <section class="section ds-body">
+        <div class="container doc-layout">
+          <nav class="toc" data-toc aria-label="On this page">
+            <span class="toc-title">On this page</span>
+            <a href="#principles">Principles</a>
+            <a href="#color">Color</a>
+            <a href="#type">Typography</a>
+            <a href="#space">Space &amp; shape</a>
+            <a href="#icons">Icons</a>
+            <a href="#components">Components</a>
+            <a href="#motion">Motion</a>
+            <a href="#backgrounds">Backgrounds</a>
+            <a href="#rules">Rules</a>
+            <a href="#pages">Pages</a>
+          </nav>
+
+          <div class="ds-main">
+            <!-- ---------------------------------------------------- 01 原则 -->
+            <section class="ds-section" id="principles">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>01 — Principles</span>
+                <h2 class="ds-h2" data-split>Four ideas behind <span class="accent">every</span> page</h2>
+                <p class="lead" data-reveal>When a decision is not covered below, fall back to these.</p>
+              </header>
+              <div class="feature-grid feature-grid--2" data-stagger="80" data-spotlight-group>
+                <article class="feature card" data-reveal data-spotlight>
+                  <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-map" /></svg></span>
+                  <h3>Map in, data out</h3>
+                  <p>Every visual tells one story: a place on a map becomes a clean row. Pins, contours and the graticule are the motifs; rows, columns and JSON are the payoff.</p>
+                </article>
+                <article class="feature card" data-reveal data-spotlight>
+                  <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-layers" /></svg></span>
+                  <h3>Calm base, expressive moments</h3>
+                  <p>Surfaces stay quiet — white or ink, hairline borders, one blue for action. Gradients, glows and serif accents are reserved for headlines, hero visuals and big numbers.</p>
+                </article>
+                <article class="feature card" data-reveal data-spotlight>
+                  <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-shield" /></svg></span>
+                  <h3>Honest by default</h3>
+                  <p>No invented metrics, logos or reviews. Prices and quotas come from the pricing source; sample data uses fictional businesses and 555-01xx phone numbers.</p>
+                </article>
+                <article class="feature card" data-reveal data-spotlight>
+                  <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg></span>
+                  <h3>Motion explains</h3>
+                  <p>Animation demonstrates the product — search, scan, extract, export. Loops pause off-screen, and every effect has a reduced-motion end state.</p>
+                </article>
+              </div>
+            </section>
+
+            <!-- ---------------------------------------------------- 02 颜色 -->
+            <section class="ds-section" id="color">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>02 — Color</span>
+                <h2 class="ds-h2" data-split>One palette, <span class="accent">two</span> themes</h2>
+                <p class="lead" data-reveal>
+                  Primitives come from the map itself — water blue, cyan shallows, park green, pin coral. Components only consume semantic
+                  tokens, and every semantic token carries its light and dark value in one <code class="ds-ic">light-dark()</code>.
+                </p>
+              </header>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Brand primitives</h3>
+                <p class="ds-note">Used inside tokens.css and illustrations only. <b>--blue-500</b> is shared with the extension and the admin app.</p>
+                <div class="ds-prims" data-prims></div>
+              </div>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Semantic tokens</h3>
+                <p class="ds-note">Left half renders in the light scheme, right half in the dark scheme — values are read live from the CSS.</p>
+                <div class="ds-token-groups" data-tokens></div>
+              </div>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Gradients &amp; glows</h3>
+                <p class="ds-note">Marketing layer only. Never on body copy, never on the dashboard or extension UI.</p>
+                <div class="ds-grads">
+                  <div class="ds-grad" style="--g: var(--grad-brand)"><span class="ds-grad-fill"></span><code>--grad-brand</code><p>Water → parkland. Badges, progress, icon tiles on hover.</p></div>
+                  <div class="ds-grad" style="--g: var(--grad-brand-text)"><span class="ds-grad-fill"></span><code>--grad-brand-text</code><p>Headline accent words and big numbers via <b>.text-grad</b>.</p></div>
+                  <div class="ds-grad" style="--g: var(--grad-ai)"><span class="ds-grad-fill"></span><code>--grad-ai</code><p>MCP and AI surfaces: <b>.kicker--ai</b>, AI badges.</p></div>
+                  <div class="ds-grad" style="--g: var(--grad-warm)"><span class="ds-grad-fill"></span><code>--grad-warm</code><p>Reserved for pin moments. Use sparingly.</p></div>
+                  <div class="ds-grad ds-grad--wide" style="--g: var(--grad-ai-text)"><span class="ds-grad-fill"></span><code>--grad-ai-text</code><p>AI headline words via <b class="text-grad-ai">.text-grad-ai</b> — MCP and agent pages only, never next to <b>.text-grad</b>.</p></div>
+                </div>
+                <div class="ds-glows">
+                  <div class="ds-glow" style="box-shadow: var(--glow-primary)"><code>--glow-primary</code></div>
+                  <div class="ds-glow" style="box-shadow: var(--glow-soft)"><code>--glow-soft</code></div>
+                </div>
+              </div>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">How theming works</h3>
+                <p class="ds-note">System preference by default, a manual override on <b>&lt;html&gt;</b>, and theme islands for sections that must stay dark or light.</p>
+                <div class="codewin">
+                  <div class="codewin-bar">
+                    <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                    <span class="ds-file">tokens.css</span>
+                  </div>
+<pre data-highlight>:root {
+  color-scheme: light dark;
+  --surface: light-dark(#ffffff, #0e1424); /* one token, both themes */
+}
+
+/* manual override — theme-boot.js restores it before first paint */
+:root[data-theme='dark'] { color-scheme: dark; }
+
+/* island: every token flips inside, no second set of variables */
+.scheme-dark { color-scheme: dark; }</pre>
+                </div>
+              </div>
+            </section>
+
+            <!-- ---------------------------------------------------- 03 字体 -->
+            <section class="ds-section" id="type">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>03 — Typography</span>
+                <h2 class="ds-h2" data-split>A grotesk, a serif <span class="accent">accent</span>, a mono</h2>
+                <p class="lead" data-reveal>Three self-hosted OFL families, latin subset, variable where possible. Sizes are fluid with <code class="ds-ic">clamp()</code>.</p>
+              </header>
+
+              <div class="ds-fonts" data-stagger="80">
+                <article class="ds-font card" data-reveal>
+                  <span class="ds-font-aa">Aa</span>
+                  <div>
+                    <h3>Plus Jakarta Sans</h3>
+                    <p>Display, headings, UI and body. Variable 300–800, tight negative tracking on large sizes.</p>
+                    <div class="ds-weights"><span style="font-weight: 400">400</span><span style="font-weight: 500">500</span><span style="font-weight: 600">600</span><span style="font-weight: 700">700</span><span style="font-weight: 800">800</span></div>
+                  </div>
+                </article>
+                <article class="ds-font card" data-reveal>
+                  <span class="ds-font-aa ds-font-aa--serif">Aa</span>
+                  <div>
+                    <h3>Instrument Serif <em>Italic</em></h3>
+                    <p>The human word in a headline. One <b>.accent</b> per heading, never in body copy.</p>
+                    <div class="ds-weights"><span class="accent">one click</span><span class="accent text-grad">minutes</span></div>
+                  </div>
+                </article>
+                <article class="ds-font card" data-reveal>
+                  <span class="ds-font-aa ds-font-aa--mono">Aa</span>
+                  <div>
+                    <h3>Azeret Mono</h3>
+                    <p>Kickers, IDs, coordinates, code and anything a machine produced.</p>
+                    <div class="ds-weights mono"><span>ChIJ8Qv2kSIKlVQR</span><span>45.5049°</span></div>
+                  </div>
+                </article>
+              </div>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Scale</h3>
+                <p class="ds-note">Measured live at the current viewport — resize the window to watch the fluid sizes move.</p>
+                <div class="ds-scale">
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>.display</code><span data-metrics></span></div><p class="display ds-scale-sample">Grab Maps data</p></div>
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>.h1</code><span data-metrics></span></div><p class="h1 ds-scale-sample">Plans for every surface</p></div>
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>.h2</code><span data-metrics></span></div><p class="h2 ds-scale-sample">Thirty-six columns</p></div>
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>.h3</code><span data-metrics></span></div><p class="h3 ds-scale-sample">Search, reviews and photos</p></div>
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>.h4</code><span data-metrics></span></div><p class="h4 ds-scale-sample">Export anywhere</p></div>
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>.lead</code><span data-metrics></span></div><p class="lead ds-scale-sample">Collect public business data from Google Maps and export clean CSV or JSON.</p></div>
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>body</code><span data-metrics></span></div><p class="ds-scale-sample">Records are the businesses you extract. Every plan includes reviews, photos, email and social enrichment, and batch tasks. Pro and Business add cross-run deduplication and Google Drive &amp; HubSpot delivery.</p></div>
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>.body-sm</code><span data-metrics></span></div><p class="body-sm muted ds-scale-sample">Usage resets on the 1st and unused records do not roll over.</p></div>
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>.kicker</code><span data-metrics></span></div><p class="ds-scale-sample"><span class="kicker">How it works</span></p></div>
+                  <div class="ds-scale-row"><div class="ds-scale-meta"><code>.mono</code><span data-metrics></span></div><p class="mono ds-scale-sample">ChIJ8Qv2kSIKlVQRq-DRw_KltL4</p></div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ---------------------------------------------------- 04 间距 / 圆角 / 投影 -->
+            <section class="ds-section" id="space">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>04 — Space &amp; shape</span>
+                <h2 class="ds-h2" data-split>A 4px grid with <span class="accent">soft</span> corners</h2>
+                <p class="lead" data-reveal>Spacing steps on a 4px base; radii grow with the size of the surface; dark mode lowers shadows and lets surface brightness carry depth.</p>
+              </header>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Spacing</h3>
+                <div class="ds-space" data-space></div>
+              </div>
+
+              <div class="ds-sub ds-two">
+                <div>
+                  <h3 class="ds-h3">Radius</h3>
+                  <div class="ds-radii" data-radii></div>
+                </div>
+                <div>
+                  <h3 class="ds-h3">Elevation</h3>
+                  <div class="ds-shadows" data-shadows></div>
+                </div>
+              </div>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Layout &amp; breakpoints</h3>
+                <div class="dtable-wrap">
+                  <table class="dtable">
+                    <thead><tr><th>Token / breakpoint</th><th>Value</th><th>What happens</th></tr></thead>
+                    <tbody>
+                      <tr><td class="cell-mono">--container</td><td class="cell-mono">1200px</td><td>Default content width</td></tr>
+                      <tr><td class="cell-mono">--container-wide</td><td class="cell-mono">1360px</td><td>Hero theater and wide visuals</td></tr>
+                      <tr><td class="cell-mono">--container-narrow</td><td class="cell-mono">820px</td><td>Long-form reading</td></tr>
+                      <tr><td class="cell-mono">--gutter</td><td class="cell-mono">16 → 32px</td><td>Side padding, fluid</td></tr>
+                      <tr><td class="cell-mono">--section-y</td><td class="cell-mono">80 → 136px</td><td>Vertical rhythm between sections</td></tr>
+                      <tr><td class="cell-mono">≤ 1240px</td><td class="cell-mono">—</td><td>Floating data chips around visuals hide</td></tr>
+                      <tr><td class="cell-mono">≤ 1080px</td><td class="cell-mono">—</td><td>Bento and 4-column grids step down</td></tr>
+                      <tr><td class="cell-mono">≤ 960px</td><td class="cell-mono">—</td><td>Single column; nav collapses into the menu</td></tr>
+                      <tr><td class="cell-mono">≤ 640px</td><td class="cell-mono">—</td><td>Phone: every grid is one column</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            <!-- ---------------------------------------------------- 05 图标 -->
+            <section class="ds-section" id="icons">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>05 — Icons</span>
+                <h2 class="ds-h2" data-split>One sprite, <span class="accent">one</span> stroke</h2>
+                <p class="lead" data-reveal>Line icons on a 24px grid, 1.75 stroke, <code class="ds-ic">currentColor</code>. Sizes: <code class="ds-ic">.icon</code> 20px, <code class="ds-ic">.icon--sm</code> 16px, <code class="ds-ic">.icon--lg</code> 24px. Click any icon to copy its markup.</p>
+              </header>
+              <div class="ds-icon-tools">
+                <label class="ds-search">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>
+                  <input class="input" type="search" placeholder="Filter icons…" aria-label="Filter icons" data-icon-filter />
+                </label>
+                <span class="chip chip--mono" data-icon-count>— icons</span>
+              </div>
+              <div class="ds-icons" data-icons></div>
+              <div class="codewin ds-icon-usage">
+                <div class="codewin-bar">
+                  <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                  <span class="ds-file">usage.html</span>
+                </div>
+<pre data-highlight>&lt;svg class="icon" aria-hidden="true"&gt;&lt;use href="assets/img/icons.svg#i-search" /&gt;&lt;/svg&gt;</pre>
+              </div>
+            </section>
+
+            <!-- ---------------------------------------------------- 06 组件 -->
+            <section class="ds-section" id="components">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>06 — Components</span>
+                <h2 class="ds-h2" data-split>Building blocks, <span class="accent">live</span></h2>
+                <p class="lead" data-reveal>Each demo below is the real component. Open “Markup” under a demo for the exact HTML it was rendered from.</p>
+              </header>
+
+              <!-- 按钮 -->
+              <div class="ds-sub">
+                <h3 class="ds-h3">Buttons</h3>
+                <p class="ds-note">One primary per view. <b>.btn-invert</b> lives on dark islands; icon-only actions use <b>.icon-btn</b> with an aria-label.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage">
+                    <a class="btn btn-primary" href="#components">Install free<svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+                    <button class="btn btn-secondary" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-play" /></svg>Watch how it works</button>
+                    <button class="btn btn-ghost" type="button">Learn more</button>
+                    <button class="btn btn-primary btn-sm" type="button">Small</button>
+                    <button class="btn btn-primary btn-lg" type="button">Large</button>
+                    <button class="btn btn-primary" type="button" disabled>Disabled</button>
+                    <button class="icon-btn" type="button" aria-label="Copy"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg></button>
+                    <a class="link-arrow" href="#components">Explore the API<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+                  </div>
+                </figure>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage scheme-dark ds-stage--ink">
+                    <a class="btn btn-invert" href="#components">Get an API key</a>
+                    <a class="btn btn-primary" href="#components">Install free</a>
+                    <button class="btn btn-ghost" type="button">Read the docs</button>
+                  </div>
+                </figure>
+              </div>
+
+              <!-- 标签 -->
+              <div class="ds-sub">
+                <h3 class="ds-h3">Chips, badges &amp; status</h3>
+                <p class="ds-note">Chips are interactive or descriptive; badges are short mono labels. Status color always pairs with text.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage">
+                    <span class="chip">Coffee shop</span>
+                    <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>Portland, OR</span>
+                    <span class="chip chip--soft">36 columns</span>
+                    <span class="chip chip--mono">task-0193.zip</span>
+                    <span class="badge">New</span>
+                    <span class="badge badge--ok"><span class="dot dot--live"></span>Live</span>
+                    <span class="badge badge--warn">Queued</span>
+                    <span class="badge badge--ai">MCP</span>
+                    <span class="badge badge--pin">Pin</span>
+                    <span class="badge badge--solid">Pro</span>
+                    <span class="badge badge--muted">Soon</span>
+                    <span class="kbd">⌘</span><span class="kbd">K</span>
+                  </div>
+                </figure>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage">
+                    <a class="pill-announce" href="#components">
+                      <span class="badge badge--solid">New</span>
+                      <span>MCP server for AI agents</span>
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+                    </a>
+                  </div>
+                </figure>
+              </div>
+
+              <!-- 卡片 -->
+              <div class="ds-sub">
+                <h3 class="ds-h3">Cards &amp; icon tiles</h3>
+                <p class="ds-note">Cards are flat surfaces with a hairline. Add <b>data-spotlight</b> for the pointer glow and <b>.card--lift</b> for links.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--grid" data-spotlight-group>
+                    <article class="feature card" data-spotlight>
+                      <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg></span>
+                      <h3>Email enrichment</h3>
+                      <p>Emails published on the business website, matched while it extracts.</p>
+                    </article>
+                    <a class="card card-pad card-link card--lift ds-card-link" href="#components" data-spotlight>
+                      <span class="badge badge--ai">MCP</span>
+                      <h3 class="h4">Live Maps data for your agents</h3>
+                      <p class="body-sm muted">Search, reviews and photos as MCP tools.</p>
+                      <span class="link-arrow">Explore the MCP server<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+                    </a>
+                    <div class="card card-pad">
+                      <ul class="check-list" role="list">
+                        <li>Full 36-column business extraction</li>
+                        <li>Reviews (11 columns) and photo URLs</li>
+                        <li>CSV / JSON export with field selection</li>
+                      </ul>
+                    </div>
+                  </div>
+                </figure>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage">
+                    <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-database" /></svg></span>
+                    <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg></span>
+                    <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-bot" /></svg></span>
+                    <span class="icon-tile icon-tile--pin"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg></span>
+                    <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></span>
+                  </div>
+                </figure>
+              </div>
+
+              <!-- 表单 -->
+              <div class="ds-sub">
+                <h3 class="ds-h3">Forms</h3>
+                <p class="ds-note">Labels sit above inputs; hints are muted; errors say what to do next. The search bar is the one expressive input.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--form">
+                    <label class="field">
+                      <span class="field-label">Work email</span>
+                      <input class="input" type="email" placeholder="you@company.com" />
+                      <span class="field-hint">We send a 6-digit sign-in code. No password.</span>
+                    </label>
+                    <label class="field">
+                      <span class="field-label">Keywords</span>
+                      <input class="input is-invalid" type="text" value="coffee shop" />
+                      <span class="field-error"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>Add a location, for example “coffee shop in Portland”.</span>
+                    </label>
+                    <label class="field ds-span-2">
+                      <span class="field-label">Message</span>
+                      <textarea class="textarea" placeholder="How can we help?"></textarea>
+                    </label>
+                  </div>
+                </figure>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--wide">
+                    <form class="searchbar" onsubmit="return false">
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>
+                      <input type="text" placeholder="coffee shop in Portland" aria-label="Search Google Maps" />
+                      <button class="btn btn-primary" type="submit">Preview results<svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></button>
+                    </form>
+                  </div>
+                </figure>
+              </div>
+
+              <!-- 分段 tab + 手风琴 -->
+              <div class="ds-sub ds-two">
+                <div>
+                  <h3 class="ds-h3">Segmented tabs</h3>
+                  <p class="ds-note">Sliding thumb, arrow-key navigation, <b>tabchange</b> event.</p>
+                  <figure class="ds-demo" data-snippet>
+                    <div class="ds-stage ds-stage--col">
+                      <div data-tabs>
+                        <div class="seg" role="tablist" aria-label="Product">
+                          <span class="seg-thumb" aria-hidden="true"></span>
+                          <button class="seg-btn" type="button" role="tab" aria-selected="true" aria-controls="ds-tab-ext" data-tab="extension">Extension</button>
+                          <button class="seg-btn" type="button" role="tab" aria-selected="false" aria-controls="ds-tab-online" data-tab="online">Online</button>
+                          <button class="seg-btn" type="button" role="tab" aria-selected="false" aria-controls="ds-tab-api" data-tab="api">API</button>
+                        </div>
+                        <p class="ds-tab-panel" id="ds-tab-ext" role="tabpanel">Monthly subscriptions, from $39.</p>
+                        <p class="ds-tab-panel" id="ds-tab-online" role="tabpanel" hidden>One-time, natural-month plans, from $19.</p>
+                        <p class="ds-tab-panel" id="ds-tab-api" role="tabpanel" hidden>Request-based plans, from $15.</p>
+                      </div>
+                    </div>
+                  </figure>
+                </div>
+                <div>
+                  <h3 class="ds-h3">Accordion</h3>
+                  <p class="ds-note">Native <b>details</b>, animated height, plus icon rotates.</p>
+                  <figure class="ds-demo" data-snippet>
+                    <div class="ds-stage ds-stage--col">
+                      <div class="ds-acc">
+                        <details class="acc">
+                          <summary>Is MapsGrab free to use?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+                          <div class="acc-body"><p>Yes. Every product has a free tier with a monthly quota.</p></div>
+                        </details>
+                        <details class="acc">
+                          <summary>What formats can I export to?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+                          <div class="acc-body"><p>CSV or JSON, with the field selection you choose.</p></div>
+                        </details>
+                      </div>
+                    </div>
+                  </figure>
+                </div>
+              </div>
+
+              <!-- 数据表 -->
+              <div class="ds-sub">
+                <h3 class="ds-h3">Data table</h3>
+                <p class="ds-note">For extracted rows and specs. Numbers use tabular figures; loading rows use skeletons.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--col">
+                    <div class="dtable-wrap">
+                      <table class="dtable">
+                        <thead><tr><th>Name</th><th>Rating</th><th>Phone</th><th>Place ID</th></tr></thead>
+                        <tbody>
+                          <tr><td class="cell-strong">Ember &amp; Oak Coffee</td><td><span class="rating"><svg class="icon icon--fill" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg>4.7</span></td><td class="cell-num">+1 503-555-0142</td><td class="cell-mono">ChIJ8Qv2kSIKlVQR…</td></tr>
+                          <tr><td class="cell-strong">Rose City Roasters</td><td><span class="rating"><svg class="icon icon--fill" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg>4.6</span></td><td class="cell-num">+1 503-555-0118</td><td class="cell-mono">ChIJx2LpQ0WglVQR…</td></tr>
+                          <tr><td><span class="skel" style="width: 70%"></span></td><td><span class="skel" style="width: 40px"></span></td><td><span class="skel" style="width: 80%"></span></td><td><span class="skel" style="width: 60%"></span></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </figure>
+              </div>
+
+              <!-- 代码窗 -->
+              <div class="ds-sub">
+                <h3 class="ds-h3">Code window</h3>
+                <p class="ds-note">Always dark, in both themes. Write plain text inside <b>pre[data-highlight]</b>; the runtime adds token colors.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--col">
+                    <div class="codewin">
+                      <div class="codewin-bar">
+                        <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                        <div class="codewin-tabs" role="tablist" aria-label="Language">
+                          <button class="codewin-tab" type="button" role="tab" aria-selected="true">cURL</button>
+                          <button class="codewin-tab" type="button" role="tab" aria-selected="false">Python</button>
+                        </div>
+                        <button class="codewin-copy" type="button" aria-label="Copy code" data-copy-target="#ds-code-sample"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg></button>
+                      </div>
+<pre id="ds-code-sample" data-highlight>{
+  "name": "Ember &amp; Oak Coffee",
+  "rating": 4.7,
+  "review_count": 1284,
+  "claimed": true,
+  "phone": "+1 503-555-0142" // fictional sample
+}</pre>
+                      <div class="codewin-label"><span class="dot" style="color: var(--ok)"></span> Response · 200 OK</div>
+                    </div>
+                  </div>
+                </figure>
+              </div>
+
+              <!-- 产品 mock -->
+              <div class="ds-sub">
+                <h3 class="ds-h3">Product mocks</h3>
+                <p class="ds-note">Illustrations are built from components, not screenshots: browser frame, MapsGrab panel, pins and data chips, plus the shared parts below — toolbar download ring and popover, panel states, the typing caret and the stylized map primitives. Use a media slot until real footage exists.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--mock">
+                    <div class="browser ds-browser">
+                      <div class="browser-bar">
+                        <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                        <div class="browser-url"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>google.com/maps/search/coffee+shop</div>
+                      </div>
+                      <div class="ds-minimap">
+                        <i class="map-pin is-dropped" style="--x: 22%; --y: 44%"></i>
+                        <i class="map-pin is-dropped is-active" style="--x: 46%; --y: 70%"></i>
+                        <i class="map-pin is-dropped" style="--x: 64%; --y: 38%"></i>
+                        <div class="float-chip ds-chip-float">
+                          <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg></span>
+                          <span><small>Email found</small>hello@emberandoak.coffee</span>
+                        </div>
+                      </div>
+                    </div>
+                    <aside class="mgp ds-mgp" aria-label="MapsGrab panel">
+                      <div class="mgp-head"><span class="brand-mark ds-mark"></span><span class="mgp-title">MapsGrab</span></div>
+                      <div class="mgp-status">
+                        <div class="mgp-status-row"><span>Extracting <b>24</b>…</span></div>
+                        <div class="progress"><i style="--p: 56%"></i></div>
+                      </div>
+                      <div class="mgp-list">
+                        <div class="mgp-row"><span class="mgp-avatar"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-coffee" /></svg></span><div style="min-width: 0"><div class="mgp-name">Ember &amp; Oak Coffee</div><div class="mgp-meta">Coffee shop · +1 503-555-0142</div></div><span class="rating"><svg class="icon icon--fill" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg>4.7</span></div>
+                        <div class="mgp-row"><span class="mgp-avatar"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-coffee" /></svg></span><div style="min-width: 0"><div class="mgp-name">Hawthorne Bean Co.</div><div class="mgp-meta">Coffee shop · +1 503-555-0129</div></div><span class="rating"><svg class="icon icon--fill" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg>4.8</span></div>
+                      </div>
+                      <div class="mgp-foot"><button class="btn btn-primary" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>Export Detailed List - 24 (.CSV)</button></div>
+                    </aside>
+                  </div>
+                </figure>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--col">
+                    <div class="browser-bar ds-bar">
+                      <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                      <div class="browser-url"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg><span class="is-typing">google.com/maps/search/coffee+sh</span></div>
+                      <span class="dl-ring is-on is-done" aria-hidden="true">
+                        <svg class="dl-ring-svg" viewBox="0 0 36 36"><circle class="dl-ring-track" cx="18" cy="18" r="15" /><circle class="dl-ring-fill" cx="18" cy="18" r="15" pathLength="100" /></svg>
+                        <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>
+                      </span>
+                      <span class="ds-ext" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg><i class="ext-dot"></i></span>
+                      <div class="dl-pop is-on" aria-hidden="true">
+                        <span class="dl-pop-ic"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg></span>
+                        <span class="dl-pop-text"><b>MapsGrab-Extractor-24-coffee+shop-2026-10-13.csv</b><small>Saved to Downloads</small></span>
+                        <svg class="icon dl-pop-ok" aria-hidden="true"><use href="assets/img/icons.svg#i-check-circle" /></svg>
+                      </div>
+                    </div>
+                    <div class="ds-parts">
+                      <span class="mgp-start"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-play" /></svg>Start Extracting</span>
+                      <span class="mgp-pause"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pause" /></svg>Pause</span>
+                      <div class="mgp-kpis"><span><b>45</b> phones</span><span><b>29</b> emails</span><span><b>43</b> websites</span></div>
+                    </div>
+                  </div>
+                </figure>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--col">
+                    <svg class="ds-map" viewBox="0 0 600 180" role="img" aria-label="Map primitives">
+                      <rect class="m-land" width="600" height="180" />
+                      <g class="m-streets"><path d="M0 36H600M0 92H600M0 148H600M64 0V180M176 0V180M288 0V180M512 0V180" /></g>
+                      <path class="m-park" d="M84 108h104a14 14 0 0 1 14 14v24a14 14 0 0 1-14 14H84a14 14 0 0 1-14-14v-24a14 14 0 0 1 14-14z" />
+                      <path class="m-water" d="M372 0C338 54 412 112 370 180H468C508 112 436 54 470 0Z" />
+                      <path class="m-water-edge" d="M372 0C338 54 412 112 370 180" />
+                      <g class="m-major"><path class="casing" d="M0 58L600 122" /><path class="road" d="M0 58L600 122" /></g>
+                      <g class="m-labels">
+                        <text x="84" y="26" class="m-district">PEARL</text>
+                        <text x="214" y="84" transform="rotate(6.09 214 81)">BURNSIDE</text>
+                        <text x="88" y="138" class="m-label-sm">PARK BLOCKS</text>
+                        <text x="404" y="156" class="m-water-label">RIVER</text>
+                      </g>
+                    </svg>
+                  </div>
+                </figure>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--col">
+                    <div class="media-slot" style="--ratio: 21 / 8">
+                      <div class="media-slot-label">
+                        <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-play" /></svg></span>
+                        <span class="media-slot-kicker">Media slot · 21:8</span>
+                        <span class="media-slot-text">Screen recording of a real extraction goes here.</span>
+                      </div>
+                    </div>
+                  </div>
+                </figure>
+              </div>
+
+              <!-- 数字 + 定价卡 -->
+              <div class="ds-sub">
+                <h3 class="ds-h3">Stats</h3>
+                <p class="ds-note">Only real product facts. Numbers count up once when they enter the viewport.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--stats">
+                    <div><div class="stat-value text-grad" data-count="36">36</div><div class="stat-label">data columns per business</div></div>
+                    <div><div class="stat-value" data-count="11">11</div><div class="stat-label">review fields, owner replies included</div></div>
+                    <div><div class="stat-value" data-count="1000">1,000</div><div class="stat-label">free records, every month</div></div>
+                  </div>
+                </figure>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--col">
+                    <div class="facts ds-facts">
+                      <p class="facts-caption">The extension at a glance</p>
+                      <div class="facts-grid">
+                        <div class="fact"><div class="stat-value text-grad">36</div><div class="stat-label">columns per business</div></div>
+                        <div class="fact"><div class="stat-value">11</div><div class="stat-label">review columns</div></div>
+                        <div class="fact"><div class="stat-value">6</div><div class="stat-label">social networks</div></div>
+                        <div class="fact"><div class="stat-value">1,000</div><div class="stat-label">free records a month</div></div>
+                        <div class="fact"><div class="stat-value">500</div><div class="stat-label">keywords per batch task</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </figure>
+              </div>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Pricing card</h3>
+                <p class="ds-note">Content comes verbatim from the pricing source. <b>.is-featured</b> adds the rotating gradient border — only on the plan the source marks as featured.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage ds-stage--prices">
+                    <article class="price-card">
+                      <div><h3 class="price-name">Free</h3><p class="price-tagline">Everything the extension does, on a small scale</p></div>
+                      <div class="price-amount"><b>$0</b><span class="price-period">forever</span></div>
+                      <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>1,000 records / month</div>
+                      <ul class="check-list check-list--sm" role="list">
+                        <li>Full 36-column business extraction</li>
+                        <li>Reviews (11 columns) and photo URLs</li>
+                        <li>Email &amp; social media enrichment</li>
+                      </ul>
+                      <a class="btn btn-secondary btn-block" href="#components">Install the extension</a>
+                    </article>
+                    <article class="price-card is-featured">
+                      <span class="badge badge--solid price-flag">Most Popular</span>
+                      <div><h3 class="price-name">Pro</h3><p class="price-tagline">For freelancers and growing lead pipelines</p></div>
+                      <div class="price-amount"><b>$39</b><span class="price-period">per month</span></div>
+                      <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>100,000 records / month</div>
+                      <ul class="check-list check-list--sm" role="list">
+                        <li>Everything in Free</li>
+                        <li>Priority email &amp; social enrichment</li>
+                        <li>Deduplication across runs by Place ID</li>
+                      </ul>
+                      <a class="btn btn-primary btn-block" href="#components">Get Pro</a>
+                    </article>
+                  </div>
+                </figure>
+              </div>
+
+              <!-- 反馈 -->
+              <div class="ds-sub">
+                <h3 class="ds-h3">Feedback</h3>
+                <p class="ds-note">Toasts confirm (green check) or inform (blue, <code>MG.toast(title, desc, 'info')</code>); the dialog asks; spinners and progress wait. The sign-in dialog is the real email + code flow.</p>
+                <figure class="ds-demo" data-snippet>
+                  <div class="ds-stage">
+                    <button class="btn btn-secondary" type="button" data-ds-toast>
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check-circle" /></svg>Success toast
+                    </button>
+                    <button class="btn btn-secondary" type="button" data-ds-toast="info">
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>Info toast
+                    </button>
+                    <button class="btn btn-secondary" type="button" data-signin>
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-user" /></svg>Open sign-in dialog
+                    </button>
+                    <span class="spinner" style="color: var(--primary)"></span>
+                    <div class="progress ds-progress"><i style="--p: 64%"></i></div>
+                  </div>
+                </figure>
+              </div>
+            </section>
+
+            <!-- ---------------------------------------------------- 07 动效 -->
+            <section class="ds-section" id="motion">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>07 — Motion</span>
+                <h2 class="ds-h2" data-split>Fast in, slow <span class="accent">settle</span></h2>
+                <p class="lead" data-reveal>
+                  A declarative runtime: write <code class="ds-ic">data-*</code> attributes, the runtime does the rest. Four tiers keep motion purposeful;
+                  loops pause off-screen and the reduced-motion preference renders every end state.
+                </p>
+              </header>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Tiers</h3>
+                <div class="dtable-wrap">
+                  <table class="dtable">
+                    <thead><tr><th>Tier</th><th>Duration</th><th>Tokens</th><th>Used for</th></tr></thead>
+                    <tbody>
+                      <tr><td class="cell-strong">T1 · Micro</td><td class="cell-mono">≤ 200ms</td><td class="cell-mono">--dur-1 · --dur-2</td><td>Hover, press, focus</td></tr>
+                      <tr><td class="cell-strong">T2 · Transition</td><td class="cell-mono">200–400ms</td><td class="cell-mono">--dur-3</td><td>Menus, tabs, accordion, dialog</td></tr>
+                      <tr><td class="cell-strong">T3 · Entrance</td><td class="cell-mono">600–1100ms</td><td class="cell-mono">--dur-4 · --dur-5</td><td>Scroll reveals, split headings, counters</td></tr>
+                      <tr><td class="cell-strong">T4 · Narrative</td><td class="cell-mono">3–12s loops</td><td class="cell-mono">data-inview</td><td>Hero theater, scan beam, marquee, aurora — paused off-screen, off for reduced motion</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Easing</h3>
+                <div class="ds-curves" data-inview>
+                  <div class="ds-curve" style="--e: var(--ease-out)" data-bezier="0.16,1,0.3,1"><svg viewBox="-6 -40 112 152" aria-hidden="true"></svg><span class="ds-track"><i class="ds-ball"></i></span><code>--ease-out</code><p>Entrances and expanding. Quick start, long settle.</p></div>
+                  <div class="ds-curve" style="--e: var(--ease-in-out)" data-bezier="0.65,0,0.35,1"><svg viewBox="-6 -40 112 152" aria-hidden="true"></svg><span class="ds-track"><i class="ds-ball"></i></span><code>--ease-in-out</code><p>Loops and back-and-forth movement.</p></div>
+                  <div class="ds-curve" style="--e: var(--ease-spring)" data-bezier="0.34,1.56,0.64,1"><svg viewBox="-6 -40 112 152" aria-hidden="true"></svg><span class="ds-track"><i class="ds-ball"></i></span><code>--ease-spring</code><p>Pins landing, playful feedback. A small overshoot.</p></div>
+                </div>
+              </div>
+
+              <div class="ds-sub">
+                <div class="ds-sub-head">
+                  <div>
+                    <h3 class="ds-h3">Reveal variants</h3>
+                    <p class="ds-note"><b>data-reveal</b> once on entering the viewport; <b>data-stagger</b> on a parent spaces children.</p>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" type="button" data-replay="reveals"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Replay</button>
+                </div>
+                <div class="ds-reveals" data-replay-target="reveals" data-stagger="90">
+                  <div class="ds-rv" data-reveal><code>fade-up</code></div>
+                  <div class="ds-rv" data-reveal="fade"><code>fade</code></div>
+                  <div class="ds-rv" data-reveal="zoom"><code>zoom</code></div>
+                  <div class="ds-rv" data-reveal="blur"><code>blur</code></div>
+                  <div class="ds-rv" data-reveal="left"><code>left</code></div>
+                  <div class="ds-rv" data-reveal="right"><code>right</code></div>
+                  <div class="ds-rv" data-reveal="rise"><code>rise</code></div>
+                  <div class="ds-rv" data-reveal="clip"><code>clip</code></div>
+                </div>
+              </div>
+
+              <div class="ds-sub">
+                <div class="ds-sub-head">
+                  <div>
+                    <h3 class="ds-h3">Behaviors</h3>
+                    <p class="ds-note">Hover the cards, move toward the button, watch the input.</p>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" type="button" data-replay="behaviors"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Replay</button>
+                </div>
+                <div class="ds-behaviors" data-replay-target="behaviors">
+                  <div class="ds-bh card">
+                    <span class="ds-bh-label">data-split</span>
+                    <p class="h3" data-split>Every word rises <span class="accent">in turn</span></p>
+                  </div>
+                  <div class="ds-bh card">
+                    <span class="ds-bh-label">data-count</span>
+                    <div class="stat-value text-grad" data-count="100000" data-count-duration="2200">100,000</div>
+                  </div>
+                  <div class="ds-bh card ds-bh--tilt" data-tilt="8" data-spotlight>
+                    <span class="ds-bh-label">data-tilt · data-spotlight</span>
+                    <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cursor" /></svg></span>
+                  </div>
+                  <div class="ds-bh card">
+                    <span class="ds-bh-label">data-magnetic</span>
+                    <button class="btn btn-primary" type="button" data-magnetic="0.3">Pull me</button>
+                  </div>
+                  <div class="ds-bh card">
+                    <span class="ds-bh-label">data-typing</span>
+                    <input class="input" type="text" aria-label="Typing demo" data-typing='["coffee shop in Portland", "dentist in Austin, TX", "plumber near Chicago"]' />
+                  </div>
+                  <div class="ds-bh card">
+                    <span class="ds-bh-label">map-pin · pin-drop</span>
+                    <div class="ds-pins">
+                      <i class="map-pin is-dropped" style="--x: 24%; --y: 76%"><span class="pin-ring"></span></i>
+                      <i class="map-pin is-dropped is-active" style="--x: 50%; --y: 70%; animation-delay: 0.15s"><span class="pin-ring"></span></i>
+                      <i class="map-pin is-dropped" style="--x: 76%; --y: 80%; animation-delay: 0.3s"><span class="pin-ring"></span></i>
+                    </div>
+                  </div>
+                  <div class="ds-bh card ds-bh--wide">
+                    <span class="ds-bh-label">data-marquee</span>
+                    <div class="marquee" data-marquee>
+                      <div class="marquee-track">
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-terminal" /></svg>Claude Code</span>
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cursor" /></svg>Cursor</span>
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-code" /></svg>VS Code</span>
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkles" /></svg>Codex</span>
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>MCP Inspector</span>
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud" /></svg>Google Drive</span>
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-users" /></svg>HubSpot</span>
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg>CSV</span>
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-braces" /></svg>JSON</span>
+                        <span class="chip"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-archive" /></svg>ZIP bundles</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Attribute API</h3>
+                <div class="dtable-wrap">
+                  <table class="dtable ds-api">
+                    <thead><tr><th>Attribute</th><th>Effect</th><th>Reduced motion</th></tr></thead>
+                    <tbody>
+                      <tr><td class="cell-mono">data-reveal[=variant]</td><td>Reveal once on entering the viewport</td><td>Shown immediately</td></tr>
+                      <tr><td class="cell-mono">data-reveal-delay="120"</td><td>Per-element delay in ms</td><td>—</td></tr>
+                      <tr><td class="cell-mono">data-reveal-onload="650"</td><td>Above-the-fold visuals: reveal after load, no scroll needed</td><td>Shown immediately</td></tr>
+                      <tr><td class="cell-mono">data-enter</td><td>Above-the-fold copy: pure CSS, visible from the first frame</td><td>Shown immediately</td></tr>
+                      <tr><td class="cell-mono">data-stagger="70"</td><td>Spaces the reveals of its children</td><td>—</td></tr>
+                      <tr><td class="cell-mono">data-split</td><td>Headline words rise in turn; .accent stays one unit</td><td>Static</td></tr>
+                      <tr><td class="cell-mono">data-split="static"</td><td>Above-the-fold headline, pre-split in HTML; rises with no JS</td><td>Static</td></tr>
+                      <tr><td class="cell-mono">data-count="36"</td><td>Counts up once; prefix / suffix / decimals / duration</td><td>Final value</td></tr>
+                      <tr><td class="cell-mono">data-spotlight(-group)</td><td>Pointer glow on cards</td><td>Kept (pointer only)</td></tr>
+                      <tr><td class="cell-mono">data-tilt="6"</td><td>3D tilt toward the pointer</td><td>Off</td></tr>
+                      <tr><td class="cell-mono">data-magnetic="0.25"</td><td>Button follows the pointer slightly</td><td>Off</td></tr>
+                      <tr><td class="cell-mono">data-marquee</td><td>Infinite strip; the track is duplicated</td><td>Static</td></tr>
+                      <tr><td class="cell-mono">data-parallax="0.12"</td><td>Scroll parallax via the translate property</td><td>Off</td></tr>
+                      <tr><td class="cell-mono">data-typing='[…]'</td><td>Typing loop in an input placeholder</td><td>First value only</td></tr>
+                      <tr><td class="cell-mono">data-inview</td><td>Pauses CSS animations of the subtree off-screen</td><td>—</td></tr>
+                      <tr><td class="cell-mono">MG.init(el)</td><td>Initialize rendered nodes; safe to call again</td><td>—</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            <!-- ---------------------------------------------------- 08 背景 -->
+            <section class="ds-section" id="backgrounds">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>08 — Backgrounds</span>
+                <h2 class="ds-h2" data-split>Layers that read as <span class="accent">terrain</span></h2>
+                <p class="lead" data-reveal>Stack them inside <code class="ds-ic">.deco</code> on a <code class="ds-ic">.has-deco</code> section. Content is lifted above automatically.</p>
+              </header>
+              <div class="ds-bgs" data-stagger="80">
+                <div class="ds-bg has-deco" data-reveal data-inview><div class="deco" aria-hidden="true"><div class="aurora"><i></i><i></i><i></i></div></div><code>.aurora</code><p>Drifting radial light. No blur filters.</p></div>
+                <div class="ds-bg has-deco" data-reveal data-inview><div class="deco" aria-hidden="true"><div class="bg-contours"></div></div><code>.bg-contours</code><p>Topographic lines as a mask, colored by token.</p></div>
+                <div class="ds-bg has-deco" data-reveal><div class="deco" aria-hidden="true"><div class="bg-grid"></div></div><code>.bg-grid</code><p>64px graticule with a radial fade.</p></div>
+                <div class="ds-bg has-deco ds-bg--noise" data-reveal><div class="deco" aria-hidden="true"><div class="noise"></div></div><code>.noise</code><p>Film grain against gradient banding.</p></div>
+              </div>
+
+              <div class="ds-sub">
+                <h3 class="ds-h3">Theme islands</h3>
+                <p class="ds-note">Same markup, two schemes. <b>.scheme-dark</b> keeps the developer section dark in both themes; <b>.scheme-light</b> does the opposite.</p>
+                <div class="ds-islands">
+                  <div class="ds-island scheme-light">
+                    <span class="kicker">scheme-light</span>
+                    <p class="h4">Clean JSON over HTTP</p>
+                    <div class="cluster"><span class="badge badge--ok">200 OK</span><span class="chip chip--mono">/v1/search</span></div>
+                    <a class="btn btn-primary btn-sm" href="#backgrounds">Get started</a>
+                  </div>
+                  <div class="ds-island scheme-dark">
+                    <span class="kicker">scheme-dark</span>
+                    <p class="h4">Clean JSON over HTTP</p>
+                    <div class="cluster"><span class="badge badge--ok">200 OK</span><span class="chip chip--mono">/v1/search</span></div>
+                    <a class="btn btn-primary btn-sm" href="#backgrounds">Get started</a>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ---------------------------------------------------- 09 规则 -->
+            <section class="ds-section" id="rules">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>09 — Rules</span>
+                <h2 class="ds-h2" data-split>Do this, <span class="accent">not</span> that</h2>
+                <p class="lead" data-reveal>The short list reviewers check first.</p>
+              </header>
+              <div class="ds-rules" data-stagger="60">
+                <div class="ds-rule" data-reveal>
+                  <div class="ds-do"><span class="badge badge--ok">Do</span><p class="ds-rule-demo h4">From a map to a <span class="accent">spreadsheet</span></p><p>One serif accent per heading — the human word.</p></div>
+                  <div class="ds-dont"><span class="badge ds-badge-bad">Don’t</span><p class="ds-rule-demo h4"><span class="accent">From</span> a map to a <span class="accent">spreadsheet</span></p><p>Two accents, or accents in body copy.</p></div>
+                </div>
+                <div class="ds-rule" data-reveal>
+                  <div class="ds-do"><span class="badge badge--ok">Do</span><div class="ds-rule-demo"><span class="btn btn-primary btn-sm">Export</span></div><p>Primary blue is the only action color.</p></div>
+                  <div class="ds-dont"><span class="badge ds-badge-bad">Don’t</span><div class="ds-rule-demo"><span class="btn btn-sm ds-btn-wrong">Export</span></div><p>Pin coral, AI violet or gradients as button fills.</p></div>
+                </div>
+                <div class="ds-rule" data-reveal>
+                  <div class="ds-do"><span class="badge badge--ok">Do</span><p>Real facts from the pricing and copy sources; fictional businesses and <b>555-01xx</b> numbers in samples.</p></div>
+                  <div class="ds-dont"><span class="badge ds-badge-bad">Don’t</span><p>Invented user counts, customer logos, star ratings or named testimonials.</p></div>
+                </div>
+                <div class="ds-rule" data-reveal>
+                  <div class="ds-do"><span class="badge badge--ok">Do</span><p>Loops inside <b>data-inview</b> that move only transform and opacity; repaint-heavy effects play a few cycles, then rest. Above the fold, use <b>data-enter</b> and <b>data-split="static"</b>.</p></div>
+                  <div class="ds-dont"><span class="badge ds-badge-bad">Don’t</span><p>Loops that run off-screen or repaint forever, or first-screen copy that stays hidden until JavaScript runs.</p></div>
+                </div>
+                <div class="ds-rule" data-reveal>
+                  <div class="ds-do"><span class="badge badge--ok">Do</span><p>Semantic tokens: <code class="ds-ic">var(--surface)</code>, <code class="ds-ic">var(--r-lg)</code>, <code class="ds-ic">var(--shadow-md)</code>.</p></div>
+                  <div class="ds-dont"><span class="badge ds-badge-bad">Don’t</span><p>Hex values, ad-hoc radii or one-off shadows inside components.</p></div>
+                </div>
+                <div class="ds-rule" data-reveal>
+                  <div class="ds-do"><span class="badge badge--ok">Do</span><p>Every user-facing string through i18n when implemented in Astro.</p></div>
+                  <div class="ds-dont"><span class="badge ds-badge-bad">Don’t</span><p>Hard-coded copy in components — the prototype is English-only by design.</p></div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ---------------------------------------------------- 10 页面索引 -->
+            <section class="ds-section" id="pages">
+              <header class="ds-head" data-stagger="70">
+                <span class="kicker" data-reveal>10 — Pages</span>
+                <h2 class="ds-h2" data-split>Every page in the <span class="accent">prototype</span></h2>
+                <p class="lead" data-reveal>Each prototype page maps to a route in the Astro site. Variants are query parameters on a shared template.</p>
+              </header>
+              <div class="ds-pages" data-stagger="40" data-spotlight-group data-pages></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-chrome="footer"></div>
+  </body>
+</html>

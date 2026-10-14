@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Online Google Maps Scraper — Run Extraction in the Cloud | MapsGrab</title>
+    <meta
+      name="description"
+      content="Run Google Maps keyword searches in the cloud, collect business data, and download CSV files or a ZIP bundle."
+    />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <script src="assets/js/theme-boot.js"></script>
+    <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages/online-scraper.css" />
+    <script src="assets/js/chrome.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/site.js" defer></script>
+    <script src="assets/js/pages/online-scraper.js" defer></script>
+  </head>
+  <body data-page="online">
+    <div data-chrome="nav"></div>
+
+    <main>
+      <!-- ================================================================
+           ① Hero：左文案 + 右侧 Dashboard 剧场（关键词输入 → 云端并行任务 → CSV / ZIP 下载）
+           ================================================================ -->
+      <section class="page-hero oh-hero has-deco" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i></div>
+          <div class="bg-contours"></div>
+          <div class="bg-grid"></div>
+          <div class="noise"></div>
+        </div>
+
+        <div class="container page-hero-grid">
+          <div class="page-hero-copy">
+            <a class="pill-announce" href="#modes" data-enter>
+              <span class="badge badge--solid">3 modes</span>
+              <span>Keywords, a map area or whole regions</span>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+            </a>
+
+            <h1 class="h1 oh-title" data-split="static" style="--split-delay: 90ms">
+              <span class="w"><span class="wi" style="--i: 0">Google</span></span>
+              <span class="w"><span class="wi" style="--i: 1">Maps</span></span>
+              <span class="w"><span class="wi" style="--i: 2">extraction</span></span>
+              <span class="w"><span class="wi" style="--i: 3"><span class="accent text-grad is-animated">in the cloud,</span></span></span>
+              <span class="w"><span class="wi" style="--i: 4">no</span></span>
+              <span class="w"><span class="wi" style="--i: 5">install</span></span>
+            </h1>
+
+            <p class="lead" data-enter style="--enter-delay: 180ms">
+              Submit keywords, collect business details in the cloud, and download CSV files or a ZIP bundle from your
+              dashboard.
+            </p>
+
+            <div class="page-hero-actions" data-enter style="--enter-delay: 270ms">
+              <button class="btn btn-primary btn-lg" type="button" data-signin data-magnetic="0.2">
+                Start scraping<svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+              </button>
+              <a class="btn btn-secondary btn-lg" href="pricing.html#online">View pricing</a>
+            </div>
+
+            <div class="page-hero-meta" data-enter style="--enter-delay: 360ms">
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>1,000 free records / month</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Works in any browser</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>One CSV per keyword, plus a ZIP</span>
+            </div>
+          </div>
+
+          <div class="page-hero-visual oh" data-reveal="rise" data-reveal-onload="420" data-oh>
+            <div class="browser oh-frame">
+              <div class="browser-bar">
+                <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                <div class="browser-url">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>
+                  <span>mapsgrab.com/dashboard/</span>
+                </div>
+                <span class="dl-ring" data-oh-dl aria-hidden="true">
+                  <svg class="dl-ring-svg" viewBox="0 0 36 36"><circle class="dl-ring-track" cx="18" cy="18" r="15" /><circle class="dl-ring-fill" cx="18" cy="18" r="15" pathLength="100" /></svg>
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>
+                </span>
+              </div>
+
+              <div class="oh-body">
+                <!-- 工作区侧栏：真实 Dashboard 三视图（收起态） -->
+                <nav class="oh-side" aria-hidden="true">
+                  <svg class="brand-mark" viewBox="0 0 32 32">
+                    <rect width="32" height="32" rx="9" fill="#1a73e8" />
+                    <path d="M16 6.2c-4.42 0-8 3.36-8 7.66 0 5.5 6.64 11.04 7.4 11.66.35.28.85.28 1.2 0 .76-.62 7.4-6.16 7.4-11.66 0-4.3-3.58-7.66-8-7.66Z" fill="#fff" />
+                    <path d="M16 10.1v6.2m-2.9-2.9 2.9 2.9 2.9-2.9" fill="none" stroke="#1a73e8" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <span class="oh-side-item is-on" title="Online Scraper"><svg class="icon"><use href="assets/img/icons.svg#i-cloud" /></svg></span>
+                  <span class="oh-side-item" title="API management"><svg class="icon"><use href="assets/img/icons.svg#i-code" /></svg></span>
+                  <span class="oh-side-item" title="Subscriptions"><svg class="icon"><use href="assets/img/icons.svg#i-tag" /></svg></span>
+                </nav>
+
+                <div class="oh-main" aria-hidden="true">
+                  <!-- 创建表单：多行关键词 / 数量与上限 / Email 与社媒开关 / 月度用量 / 提交 -->
+                  <div class="oh-create">
+                    <div class="oh-create-head">
+                      <b>Online Scraper</b>
+                      <span class="oh-modes"><span class="is-on">Keywords</span><span>Map</span><span>Regions</span></span>
+                    </div>
+                    <div class="oh-kw" data-oh-kw data-placeholder="coffee shop in Portland&#10;restaurant in Austin"></div>
+                    <div class="oh-create-row">
+                      <span class="oh-count mono"><b data-oh-count>0</b> / 10 keywords</span>
+                      <span class="oh-toggle"><i></i>Find emails and social profiles</span>
+                    </div>
+                    <div class="oh-create-row">
+                      <span class="oh-usage">
+                        <span><b data-oh-used>12,480</b> / 80,000 records this month</span>
+                        <span class="progress"><i data-oh-usage></i></span>
+                      </span>
+                      <span class="btn btn-primary btn-sm oh-submit" data-oh-submit>Start scraping</span>
+                    </div>
+                  </div>
+
+                  <!-- 唯一历史列表：Task / Keywords / Processed / Records / Status -->
+                  <div class="oh-history">
+                    <div class="oh-hist-head">
+                      <b>Online export history</b>
+                      <span class="oh-refresh"><svg class="icon"><use href="assets/img/icons.svg#i-refresh" /></svg>Refresh</span>
+                    </div>
+                    <div class="oh-th"><span>Task</span><span>Keywords</span><span>Processed</span><span>Records</span><span>Status</span></div>
+                    <div class="oh-rows" data-oh-rows>
+                      <div class="oh-task">
+                        <div class="oh-tr">
+                          <span class="mono oh-no">a19f03…</span>
+                          <span class="mono">5</span>
+                          <span class="mono">5 / 5</span>
+                          <span class="mono">212</span>
+                          <span class="oh-status"><span class="badge badge--ok">Completed</span><span class="oh-zip"><svg class="icon"><use href="assets/img/icons.svg#i-archive" /></svg>ZIP</span></span>
+                        </div>
+                      </div>
+                      <div class="oh-task">
+                        <div class="oh-tr">
+                          <span class="mono oh-no">5d2b8e…</span>
+                          <span class="mono">2</span>
+                          <span class="mono">2 / 2</span>
+                          <span class="mono">87</span>
+                          <span class="oh-status"><span class="badge badge--ok">Completed</span><span class="oh-zip"><svg class="icon"><use href="assets/img/icons.svg#i-archive" /></svg>ZIP</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="dl-pop" data-oh-dlpop aria-hidden="true">
+              <span class="dl-pop-ic"><svg class="icon"><use href="assets/img/icons.svg#i-archive" /></svg></span>
+              <span class="dl-pop-text"><b class="mono" data-oh-file>7c41e2d98b0f4a6c9e15d3a27b8f60c4.zip</b><small data-oh-files>3 CSV files · Saved to Downloads</small></span>
+              <svg class="icon dl-pop-ok"><use href="assets/img/icons.svg#i-check-circle" /></svg>
+            </div>
+
+            <div class="float-chip oh-fc-par floaty" style="--float-d: 0.4s" data-parallax="0.05">
+              <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg></span>
+              <span><small>Keywords run</small><b>In parallel</b></span>
+            </div>
+            <div class="float-chip oh-fc-bill floaty" style="--float-d: 1.6s">
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg></span>
+              <span><small>Billed by</small><b>Delivered rows</b></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ② 产品事实条
+           ================================================================ -->
+      <section class="facts">
+        <div class="container">
+          <p class="facts-caption" data-reveal>The Online Scraper at a glance</p>
+          <div class="facts-grid" data-stagger="80">
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="36">36</div>
+              <div class="stat-label">columns in every CSV, from name to Place ID</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="6">6</div>
+              <div class="stat-label">social profile columns on paid plans</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="50">50</div>
+              <div class="stat-label">search locations per map-mode task</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="60" data-count-suffix=" min">60 min</div>
+              <div class="stat-label">collection window for each task</div>
+            </div>
+            <div class="fact" data-reveal>
+              <div class="stat-value text-grad" data-count="1000">1,000</div>
+              <div class="stat-label">free records every month</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ③ 流程：首页预览 → 登录 → Dashboard 创建 → 并行执行 → 下载
+           ================================================================ -->
+      <section class="section of band" id="flow" data-inview>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>How it works</span>
+            <h2 class="h2" data-split>From a quick preview to a <span class="accent">full export</span></h2>
+            <p class="lead" data-reveal>
+              Try one keyword on the homepage without an account. When you want the whole list, sign in and run it as a task
+              in your Dashboard.
+            </p>
+          </header>
+
+          <ol class="of-rail" data-of data-stagger="90">
+            <li class="of-step card" data-reveal>
+              <div class="of-mini of-mini--preview" aria-hidden="true">
+                <span class="of-row"><i></i><b>Ember &amp; Oak Coffee</b><em>4.7</em></span>
+                <span class="of-row"><i></i><b>Rose City Espresso</b><em>4.8</em></span>
+                <span class="of-row"><i></i><b>Willamette Roasting</b><em>4.6</em></span>
+                <span class="of-row is-locked"><i></i><b></b><em></em></span>
+                <span class="of-lock"><svg class="icon"><use href="assets/img/icons.svg#i-lock" /></svg>Sign in for the full list</span>
+              </div>
+              <span class="of-num">01</span>
+              <h3>Preview on the homepage</h3>
+              <p>One keyword, no account. See how many businesses the first results page holds, with the first 3 rows.</p>
+            </li>
+            <li class="of-step card" data-reveal>
+              <div class="of-mini of-mini--signin" aria-hidden="true">
+                <span class="of-field"><svg class="icon"><use href="assets/img/icons.svg#i-mail" /></svg>you@company.com</span>
+                <span class="of-code"><i>4</i><i>8</i><i>1</i><i>9</i><i></i><i></i></span>
+              </div>
+              <span class="of-num">02</span>
+              <h3>Sign in</h3>
+              <p>Previews are not saved and never use your quota. After signing in, you submit the keyword again.</p>
+            </li>
+            <li class="of-step card" data-reveal>
+              <div class="of-mini of-mini--create" aria-hidden="true">
+                <span class="of-lines mono"><span>coffee shop in Portland</span><span>bakery in Seattle</span><span>florist in Denver</span></span>
+                <span class="of-go">Start scraping</span>
+              </div>
+              <span class="of-num">03</span>
+              <h3>Create the task</h3>
+              <p>In Dashboard › Online Scraper, enter one keyword per line — or let a map area or regions build the list.</p>
+            </li>
+            <li class="of-step card" data-reveal>
+              <div class="of-mini of-mini--run" aria-hidden="true">
+                <span class="badge badge--ai">Processing</span>
+                <span class="of-job is-done"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg><i></i></span>
+                <span class="of-job"><span class="spinner"></span><i></i></span>
+                <span class="of-job"><span class="spinner"></span><i></i></span>
+              </div>
+              <span class="of-num">04</span>
+              <h3>Keywords run in parallel</h3>
+              <p>The task stays Processing until every keyword finishes. Your history refreshes every 5 seconds meanwhile.</p>
+            </li>
+            <li class="of-step card" data-reveal>
+              <div class="of-mini of-mini--files" aria-hidden="true">
+                <span class="of-file"><svg class="icon"><use href="assets/img/icons.svg#i-file-sheet" /></svg>CSV</span>
+                <span class="of-file"><svg class="icon"><use href="assets/img/icons.svg#i-file-sheet" /></svg>CSV</span>
+                <span class="of-file of-file--zip"><svg class="icon"><use href="assets/img/icons.svg#i-archive" /></svg>ZIP</span>
+              </div>
+              <span class="of-num">05</span>
+              <h3>Download</h3>
+              <p>Grab a CSV for each keyword from the task details, or every file at once as one ZIP.</p>
+            </li>
+          </ol>
+
+          <div class="of-links" data-reveal>
+            <a class="link-arrow" href="index.html">Try the homepage preview<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            <a
+              class="link-arrow"
+              href="#"
+              data-proto-note="The Dashboard is outside this prototype. In production this opens Dashboard › Online Scraper after sign-in."
+              >Open Dashboard › Online Scraper<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ④ 三种创建模式（签名交互）：关键词 / 地图采样 / 地区批量
+           ================================================================ -->
+      <section class="section om-sec" id="modes">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Search modes</span>
+            <h2 class="h2" data-split>Three ways to say <span class="accent">where to look</span></h2>
+            <p class="lead" data-reveal>
+              Type keywords line by line, sample a map area around a center point, or turn countries, states and cities into
+              ready-made queries.
+            </p>
+          </header>
+
+          <div class="om card" data-tabs data-reveal="zoom">
+            <div class="om-head">
+              <div class="seg" role="tablist" aria-label="Search mode">
+                <span class="seg-thumb" aria-hidden="true"></span>
+                <button class="seg-btn" type="button" role="tab" id="om-tab-keywords" aria-selected="false" aria-controls="om-keywords" data-tab="keywords">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list" /></svg>Keywords
+                </button>
+                <button class="seg-btn" type="button" role="tab" id="om-tab-map" aria-selected="true" aria-controls="om-map" data-tab="map">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-map" /></svg>Map
+                </button>
+                <button class="seg-btn" type="button" role="tab" id="om-tab-regions" aria-selected="false" aria-controls="om-regions" data-tab="regions">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-globe" /></svg>Regions
+                </button>
+              </div>
+              <span class="om-note" data-om-note>Sample a circle around a center point</span>
+            </div>
+
+            <!-- 4.1 关键词：去空行与重复后计数，套餐关键词上限 -->
+            <div class="om-panel om-kw" id="om-keywords" role="tabpanel" aria-labelledby="om-tab-keywords" data-omk hidden>
+              <div class="om-box">
+                <div class="om-label"><b>Keywords</b><span class="mono" data-omk-count>0 / 10 keywords</span></div>
+                <ol class="om-lines mono" data-omk-lines></ol>
+                <p class="om-hint">
+                  One keyword per line. Blank lines and duplicates are dropped before counting, and every keyword gets its own CSV.
+                </p>
+              </div>
+              <div class="om-box">
+                <div class="om-label"><b>Keywords per task</b><span>by Online plan</span></div>
+                <ul class="om-bars" role="list">
+                  <li style="--v: 2"><span>Free</span><i><s></s></i><b class="mono">2</b></li>
+                  <li style="--v: 5"><span>Lite</span><i><s></s></i><b class="mono">5</b></li>
+                  <li class="is-on" style="--v: 10"><span>Basic</span><i><s></s></i><b class="mono">10</b></li>
+                  <li style="--v: 20"><span>Growth</span><i><s></s></i><b class="mono">20</b></li>
+                  <li style="--v: 50"><span>Professional</span><i><s></s></i><b class="mono">50</b></li>
+                </ul>
+                <p class="om-hint">Start scraping stays disabled while the list is empty, over your plan's limit, or your monthly quota is used up.</p>
+              </div>
+            </div>
+
+            <!-- 4.2 地图：中心 + 半径 + 网格间距 → 由近及远的采样点；关键词数 × 点数 ≤ 50，超限阻止不截断 -->
+            <div class="om-panel om-mp" id="om-map" role="tabpanel" aria-labelledby="om-tab-map" data-omm>
+              <div class="om-stage" aria-hidden="true">
+                <svg class="om-map-svg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+                  <defs>
+                    <pattern id="om-streets" width="38" height="38" patternUnits="userSpaceOnUse">
+                      <path d="M0 0.8H38M0.8 0V38" />
+                    </pattern>
+                  </defs>
+                  <g class="om-art" data-omm-art>
+                    <rect class="m-land" x="-1600" y="-1600" width="3600" height="3600" />
+                    <rect class="m-streets" x="-1600" y="-1600" width="3600" height="3600" fill="url(#om-streets)" />
+                    <path class="m-water" d="M-1600 300C-400 240 -120 330 60 296C210 268 300 330 420 312C700 270 1200 360 2000 300V2000H-1600Z" />
+                    <path class="m-park" d="M226 120c24-30 90-26 106 10 14 30-8 66-44 70-38 4-82-48-62-80z" />
+                    <path class="m-park" d="M44 168c0-12 10-22 22-22h70c12 0 22 10 22 22v40c0 12-10 22-22 22H66c-12 0-22-10-22-22z" />
+                    <path class="m-park" d="M-420 -260c40-60 180-50 210 20 26 60-20 120-90 126-80 6-160-80-120-146z" />
+                    <path class="m-park" d="M560 -120c30-40 140-36 160 18 18 46-14 96-74 100-66 4-122-70-86-118z" />
+                    <g class="m-major">
+                      <path class="casing" d="M-1600 214H2000" />
+                      <path class="casing" d="M184 -1600C196 -400 170 0 196 200C214 340 188 520 200 2000" />
+                      <path class="casing" d="M-1600 -380L2000 520" />
+                      <path class="road" d="M-1600 214H2000" />
+                      <path class="road" d="M184 -1600C196 -400 170 0 196 200C214 340 188 520 200 2000" />
+                      <path class="road" d="M-1600 -380L2000 520" />
+                    </g>
+                    <g class="m-labels">
+                      <text x="232" y="238">BURNSIDE</text>
+                      <text x="58" y="140" class="m-label-sm">PEARL DISTRICT</text>
+                      <text x="236" y="102" class="m-label-sm">IRVINGTON</text>
+                      <text x="70" y="352" class="m-label-sm">WILLAMETTE</text>
+                    </g>
+                  </g>
+                </svg>
+                <svg class="om-grid" viewBox="0 0 400 400">
+                  <circle class="om-scan" data-omm-scan cx="200" cy="200" r="150" />
+                  <circle class="om-cover" data-omm-cover cx="200" cy="200" r="150" />
+                  <g data-omm-dots></g>
+                  <circle class="om-center-ring" cx="200" cy="200" r="11" />
+                  <circle class="om-center" cx="200" cy="200" r="6.5" />
+                </svg>
+                <span class="om-scale mono"><i data-omm-scale></i><span data-omm-scale-label>5 km</span></span>
+                <span class="om-pin-tag mono"><svg class="icon"><use href="assets/img/icons.svg#i-locate" /></svg>45.5152, -122.6784</span>
+              </div>
+
+              <div class="om-side">
+                <div class="om-label"><b>Keywords</b><span class="mono">2 / 10 keywords</span></div>
+                <div class="om-chips-static mono"><span>coffee shop</span><span>bakery</span></div>
+                <div class="om-coords">
+                  <span><small>Latitude</small><b class="mono">45.5152</b></span>
+                  <span><small>Longitude</small><b class="mono">-122.6784</b></span>
+                </div>
+                <label class="om-range">
+                  <span>Radius (km)</span><b class="mono" data-omm-rv>10</b>
+                  <input type="range" min="0" max="30" step="1" value="10" data-omm-radius aria-label="Radius in kilometers" />
+                </label>
+                <label class="om-range">
+                  <span>Grid spacing (km)</span><b class="mono" data-omm-sv>5</b>
+                  <input type="range" min="1" max="20" step="1" value="5" data-omm-spacing aria-label="Grid spacing in kilometers" />
+                </label>
+                <div class="om-readout" data-omm-readout aria-live="polite">
+                  <b><span class="mono" data-omm-count>26</span> / 50 search locations</b>
+                  <small><span data-omm-k>2</span> keywords × <span data-omm-p>13</span> grid points</small>
+                  <span class="om-meter"><i data-omm-meter></i></span>
+                </div>
+                <p class="om-error" data-omm-error hidden>
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>Reduce the radius or increase grid spacing to stay within 50 search locations.
+                </p>
+                <div class="om-submit">
+                  <span class="btn btn-primary btn-sm" data-omm-submit aria-hidden="true">Start scraping</span>
+                </div>
+                <ul class="om-facts" role="list">
+                  <li>Points are searched from the center outward.</li>
+                  <li>The circle only places search centers — results are not clipped to it.</li>
+                  <li>A business found at several points is kept once per keyword.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 4.3 地区：GeoNames 国家 / 州 / 城市 → In / Near → 可编辑的最终查询词 -->
+            <div class="om-panel om-rg" id="om-regions" role="tabpanel" aria-labelledby="om-tab-regions" data-omr hidden>
+              <div class="om-box">
+                <div class="om-label"><b>Base keywords</b></div>
+                <div class="om-chips-static mono"><span>dentist</span><span>plumber</span></div>
+                <div class="om-selects">
+                  <span class="om-select"><small>Country</small><b>United States</b><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-down" /></svg></span>
+                  <span class="om-select"><small>State or region</small><b>Texas</b><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-down" /></svg></span>
+                  <span class="om-select"><small>City</small><b data-omr-next>Austin</b><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-down" /></svg></span>
+                  <button class="btn btn-secondary btn-sm om-add" type="button" data-omr-add>
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg>Add city
+                  </button>
+                </div>
+                <div class="om-label"><b>Selected locations</b></div>
+                <div class="om-places" data-omr-places></div>
+                <div class="om-phrasing">
+                  <span>Search phrasing</span>
+                  <span class="om-radio" role="radiogroup" aria-label="Search phrasing">
+                    <button type="button" role="radio" aria-checked="true" data-omr-mode="in">In</button>
+                    <button type="button" role="radio" aria-checked="false" data-omr-mode="near">Near</button>
+                  </span>
+                  <button class="btn btn-primary btn-sm om-generate" type="button" data-omr-generate>
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkles" /></svg>Generate queries
+                  </button>
+                </div>
+              </div>
+              <div class="om-box om-final">
+                <div class="om-label"><b>Final queries</b><span class="mono" data-omr-count>0 / 10 keywords</span></div>
+                <ol class="om-queries mono" data-omr-queries></ol>
+                <p class="om-error" data-omr-error hidden>
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>Enter up to 10 keywords, each no longer than 500 characters.
+                </p>
+                <p class="om-hint">You can edit the generated queries before submitting. Each one counts as a keyword.</p>
+                <p class="om-attr">Location data: <a href="https://www.geonames.org/" target="_blank" rel="noopener">GeoNames</a> (CC BY)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑤ 结果文件：每关键词一个 CSV（第一行字段名 / 第二行任务语言译名 / 第三行起数据）+ 整任务 ZIP
+           ================================================================ -->
+      <section class="section oc band" id="results" data-inview>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Results</span>
+            <h2 class="h2" data-split>One CSV per keyword, <span class="accent">one ZIP</span> per task</h2>
+            <p class="lead" data-reveal>
+              Every keyword gets its own CSV with all 36 columns. Download files one by one from the task details, or the whole
+              task as a single ZIP.
+            </p>
+          </header>
+
+          <div class="oc-layout">
+            <div class="oc-side" data-stagger="90">
+              <div class="oc-zip card" data-reveal="left">
+                <div class="oc-zip-head">
+                  <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-archive" /></svg></span>
+                  <span class="oc-zip-name"><b class="mono">7c41e2d98b0f4a6c9e15d3a27b8f60c4.zip</b><small>Task ZIP · 3 CSV files</small></span>
+                </div>
+                <ul class="oc-files" role="list">
+                  <li style="--i: 0"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg><span class="mono">4821_coffee shop in Portland.csv</span><em>46 rows</em></li>
+                  <li style="--i: 1"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg><span class="mono">4822_bakery in Seattle.csv</span><em>31 rows</em></li>
+                  <li class="is-empty" style="--i: 2"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg><span class="mono">4823_ski rental in Key West.csv</span><em>Headers only</em></li>
+                </ul>
+              </div>
+              <ul class="check-list oc-notes" role="list" data-reveal>
+                <li>Row 1 keeps the fixed field names, so imports and scripts keep working.</li>
+                <li>Row 2 labels each column in the interface language you used when creating the task.</li>
+                <li>A keyword that finds nothing still gets a file with both header rows.</li>
+                <li>The label row never counts toward your records.</li>
+              </ul>
+            </div>
+
+            <div class="oc-sheet-card card" data-reveal="right" data-oc>
+              <div class="oc-sheet-head">
+                <span class="oc-file mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg>4821_coffee shop in Portland.csv</span>
+                <div class="oc-langs" role="group" aria-label="Task language" data-oc-langs></div>
+              </div>
+              <div class="oc-scroll">
+                <table class="oc-sheet">
+                  <thead>
+                    <tr>
+                      <th class="oc-rn" scope="col"><span class="sr-only">Row</span></th>
+                      <th scope="col">A</th>
+                      <th scope="col">B</th>
+                      <th class="is-skip" scope="col">E</th>
+                      <th class="is-skip" scope="col">G</th>
+                      <th class="is-skip" scope="col">M</th>
+                      <th scope="col">N</th>
+                      <th class="is-skip" scope="col">V</th>
+                      <th class="is-skip" scope="col">AC</th>
+                      <th class="is-skip" scope="col">AJ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="oc-r1">
+                      <td class="oc-rn">1</td>
+                      <td>Name</td>
+                      <td>Fulladdress</td>
+                      <td>Categories</td>
+                      <td>Phone</td>
+                      <td>Review Count</td>
+                      <td>Average Rating</td>
+                      <td>Website</td>
+                      <td>Emails</td>
+                      <td>Search Keyword</td>
+                    </tr>
+                    <tr class="oc-r2" data-oc-labels>
+                      <td class="oc-rn">2</td>
+                      <td>Name</td>
+                      <td>Full address</td>
+                      <td>Categories</td>
+                      <td>Phone</td>
+                      <td>Review Count</td>
+                      <td>Average Rating</td>
+                      <td>Website</td>
+                      <td>Email</td>
+                      <td>Search Keyword</td>
+                    </tr>
+                    <tr>
+                      <td class="oc-rn">3</td>
+                      <td class="oc-strong">Ember &amp; Oak Coffee</td>
+                      <td>3021 SE Division St, Portland, OR 97202</td>
+                      <td>Coffee shop</td>
+                      <td class="mono">+1 503-555-0142</td>
+                      <td class="mono">1284</td>
+                      <td class="mono">4.7</td>
+                      <td>https://emberandoak.coffee</td>
+                      <td>hello@emberandoak.coffee</td>
+                      <td>coffee shop in Portland</td>
+                    </tr>
+                    <tr>
+                      <td class="oc-rn">4</td>
+                      <td class="oc-strong">Rose City Espresso Bar</td>
+                      <td>415 SE Hawthorne Blvd, Portland, OR 97214</td>
+                      <td>Espresso bar</td>
+                      <td class="mono">+1 503-555-0119</td>
+                      <td class="mono">377</td>
+                      <td class="mono">4.8</td>
+                      <td>https://rosecityespresso.com</td>
+                      <td>info@rosecityespresso.com</td>
+                      <td>coffee shop in Portland</td>
+                    </tr>
+                    <tr>
+                      <td class="oc-rn">5</td>
+                      <td class="oc-strong">Willamette Roasting Co.</td>
+                      <td>2130 NE Alberta St, Portland, OR 97211</td>
+                      <td>Coffee roasters</td>
+                      <td class="mono">+1 503-555-0178</td>
+                      <td class="mono">642</td>
+                      <td class="mono">4.6</td>
+                      <td>https://willametteroasting.com</td>
+                      <td class="oc-empty"></td>
+                      <td>coffee shop in Portland</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="oc-legend" aria-hidden="true">
+                <span class="oc-key oc-key--1">Row 1 · field names</span>
+                <span class="oc-key oc-key--2">Row 2 · task language</span>
+                <span class="oc-key oc-key--3">Row 3+ · businesses</span>
+                <span class="oc-more mono">+27 more columns</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑥ 能力（en-US features.items 逐字）
+           ================================================================ -->
+      <section class="section" id="features">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Capabilities</span>
+            <h2 class="h2" data-split>What the Online Scraper <span class="accent">does</span></h2>
+            <p class="lead" data-reveal>
+              Business details collected in the cloud, with optional emails and social profiles on paid plans.
+            </p>
+          </header>
+
+          <div class="feature-grid o-feat" data-spotlight-group data-stagger="90">
+            <article class="feature card" data-spotlight data-reveal>
+              <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-plus" /></svg></span>
+              <h3>Keyword tasks</h3>
+              <p>Submit business types and locations as separate keywords. Your plan determines the keyword limit and monthly record quota.</p>
+              <span class="o-feat-meta mono">2 · 5 · 10 · 20 · 50 keywords per task</span>
+            </article>
+            <article class="feature card" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-clock" /></svg></span>
+              <h3>Task history</h3>
+              <p>Follow task progress and view the record count for each keyword in your dashboard.</p>
+              <span class="o-feat-meta mono">Processing → Completed</span>
+            </article>
+            <article class="feature card" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-building" /></svg></span>
+              <h3>Business details</h3>
+              <p>Collect names, addresses, phone numbers, websites, ratings, hours, coordinates, and place identifiers when available.</p>
+              <span class="o-feat-meta mono">36 columns per business</span>
+            </article>
+            <article class="feature card" data-spotlight data-reveal>
+              <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg></span>
+              <h3>Email and social enrichment</h3>
+              <p>With a paid Online plan, business websites are checked for email addresses and social profiles by default. You can turn this off for each task.</p>
+              <span class="o-feat-meta mono">Paid plans · on by default</span>
+            </article>
+            <article class="feature card" data-spotlight data-reveal>
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-archive" /></svg></span>
+              <h3>CSV and ZIP downloads</h3>
+              <p>Download a CSV for each keyword or all available files as one ZIP bundle.</p>
+              <span class="o-feat-meta mono">{item}_{keyword}.csv · {task}.zip</span>
+            </article>
+            <article class="feature card" data-spotlight data-reveal>
+              <span class="icon-tile icon-tile--pin"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud" /></svg></span>
+              <h3>Nothing to install</h3>
+              <p>Runs in the cloud from any browser — Edge, Firefox, or anything else. Results stay downloadable from your account.</p>
+              <span class="o-feat-meta mono">Edge · Firefox · any browser</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑦ 计量（暗色岛）：按实际交付行数计量、不预扣、运行中任务可超额、exhausted 不可再提交
+           ================================================================ -->
+      <section class="section ou scheme-dark has-deco" id="usage" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="bg-grid ou-grid"></div>
+          <div class="ou-glow"></div>
+          <div class="noise"></div>
+        </div>
+        <div class="container ou-layout">
+          <div class="ou-copy" data-stagger="80">
+            <span class="kicker" data-reveal>Usage</span>
+            <h2 class="h2" data-split>Billed by the rows <span class="accent text-grad">you actually get</span></h2>
+            <p class="lead" data-reveal>
+              Online tasks are metered by delivered business rows once a task completes. Nothing is set aside when you submit,
+              and the label row in each CSV is never counted.
+            </p>
+            <ul class="check-list" role="list" data-reveal>
+              <li>Submitting a task reserves nothing from your quota</li>
+              <li>A task that is already running finishes, even past your remaining quota</li>
+              <li>Once the quota is used up, new tasks can't be submitted</li>
+              <li>Usage resets on the 1st in New York time; unused records don't roll over</li>
+            </ul>
+          </div>
+
+          <div class="ou-visual" data-reveal="right" data-ou aria-hidden="true">
+            <div class="ou-card">
+              <div class="ou-head">
+                <span><small>Records this month</small><b><span class="mono" data-ou-used>12,480</span> <em>/ <span data-ou-total>80,000</span></em></b></span>
+                <span class="badge" data-ou-plan>Basic</span>
+              </div>
+              <div class="ou-meter"><i class="ou-fill" data-ou-fill></i><i class="ou-ghost" data-ou-ghost></i></div>
+              <div class="ou-scale mono"><span>0</span><span data-ou-left>67,520 left</span></div>
+
+              <div class="ou-ticket">
+                <div class="ou-ticket-head">
+                  <span class="mono" data-ou-task>Task 7c41e2…</span>
+                  <span class="badge badge--ai" data-ou-status>Processing</span>
+                </div>
+                <div class="ou-items" data-ou-items></div>
+                <div class="ou-ticket-foot">
+                  <span data-ou-note>Delivered so far — not billed until the task completes</span>
+                  <b class="mono" data-ou-sum>0</b>
+                </div>
+              </div>
+
+              <div class="ou-submit">
+                <span class="btn btn-primary btn-sm" data-ou-btn>Start scraping</span>
+                <span class="ou-msg" data-ou-msg>Monthly quota resets on the 1st in New York time.</span>
+              </div>
+            </div>
+            <div class="ou-delta mono" data-ou-delta>+95 records</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑧ Online 套餐（pricing.ts 逐字；每任务关键词上限与补全权益来自 014）
+           ================================================================ -->
+      <section class="section op" id="plans">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Online Scraper plans</span>
+            <h2 class="h2" data-split>Cloud extraction, <span class="accent">priced by records</span></h2>
+            <p class="lead" data-reveal>
+              Run the MapsGrab engine on our infrastructure. A record is one business row collected. Paid plans include optional
+              email and social media enrichment at no extra record cost.
+            </p>
+          </header>
+
+          <div class="op-rail" data-stagger="80">
+            <article class="price-card op-card" data-reveal>
+              <div>
+                <div class="price-name">Free</div>
+                <div class="price-tagline">Try the cloud scraper on a small scale</div>
+              </div>
+              <div class="price-amount"><b>$0</b><span class="price-period">forever</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>1,000 records / month</div>
+              <dl class="op-specs">
+                <div><dt>Keywords per task</dt><dd class="mono">2</dd></div>
+                <div><dt>Emails &amp; social</dt><dd class="op-off">Not included</dd></div>
+              </dl>
+              <button class="btn btn-secondary btn-block" type="button" data-signin>Start free</button>
+            </article>
+
+            <article class="price-card op-card" data-reveal>
+              <div>
+                <div class="price-name">Lite</div>
+                <div class="price-tagline">For occasional one-off exports</div>
+              </div>
+              <div class="price-amount"><b>$19</b><span class="price-period">one-time · 1 month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>20,000 records / month</div>
+              <dl class="op-specs">
+                <div><dt>Keywords per task</dt><dd class="mono">5</dd></div>
+                <div><dt>Emails &amp; social</dt><dd>On by default</dd></div>
+              </dl>
+              <a class="btn btn-secondary btn-block" href="pricing.html#online">Get Lite</a>
+            </article>
+
+            <article class="price-card op-card is-featured" data-reveal>
+              <span class="badge badge--solid price-flag">Most Popular</span>
+              <div>
+                <div class="price-name">Basic</div>
+                <div class="price-tagline">For steady weekly lead collection</div>
+              </div>
+              <div class="price-amount"><b>$49</b><span class="price-period">one-time · 1 month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>80,000 records / month</div>
+              <dl class="op-specs">
+                <div><dt>Keywords per task</dt><dd class="mono">10</dd></div>
+                <div><dt>Emails &amp; social</dt><dd>On by default</dd></div>
+              </dl>
+              <a class="btn btn-primary btn-block" href="pricing.html#online">Get Basic</a>
+            </article>
+
+            <article class="price-card op-card" data-reveal>
+              <div>
+                <div class="price-name">Growth</div>
+                <div class="price-tagline">For growing lead pipelines</div>
+              </div>
+              <div class="price-amount"><b>$99</b><span class="price-period">one-time · 1 month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>250,000 records / month</div>
+              <dl class="op-specs">
+                <div><dt>Keywords per task</dt><dd class="mono">20</dd></div>
+                <div><dt>Emails &amp; social</dt><dd>On by default</dd></div>
+              </dl>
+              <a class="btn btn-secondary btn-block" href="pricing.html#online">Get Growth</a>
+            </article>
+
+            <article class="price-card op-card" data-reveal>
+              <div>
+                <div class="price-name">Professional</div>
+                <div class="price-tagline">For agencies and data-heavy teams</div>
+              </div>
+              <div class="price-amount"><b>$149</b><span class="price-period">one-time · 1 month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>500,000 records / month</div>
+              <dl class="op-specs">
+                <div><dt>Keywords per task</dt><dd class="mono">50</dd></div>
+                <div><dt>Emails &amp; social</dt><dd>On by default</dd></div>
+              </dl>
+              <a class="btn btn-secondary btn-block" href="pricing.html#online">Get Professional</a>
+            </article>
+          </div>
+
+          <p class="op-note" data-reveal>
+            One-time payment covering one natural month — plans on this tab do not auto-renew. A record is one business row
+            collected from Google Maps; usage resets on the 1st and unused records do not roll over.
+          </p>
+          <p class="op-compare" data-reveal>
+            <a class="link-arrow" href="pricing.html#online">Compare all plans<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑨ FAQ（前 4 条为 en-US 逐字，其余来自 pricing FAQ 与 014 合同）
+           ================================================================ -->
+      <section class="section faq band" id="faq">
+        <div class="container faq-layout">
+          <div class="faq-aside" data-stagger="80">
+            <span class="kicker" data-reveal>FAQ</span>
+            <h2 class="h2" data-split>Online Scraper <span class="accent">questions</span></h2>
+            <p class="lead" data-reveal>The short answers. Anything else, support is one email away.</p>
+            <a class="btn btn-secondary" href="about.html#contact" data-reveal>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>Contact support
+            </a>
+          </div>
+          <div class="faq-list" data-stagger="60">
+            <details class="acc" data-reveal>
+              <summary>How is the Online Scraper different from the extension?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>The extension collects data in your browser. Online Scraper runs keyword tasks in the cloud and keeps the results in your dashboard.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Where does the data come from, and is it legal to collect?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>MapsGrab only collects information that is publicly displayed on Google Maps — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>What formats can I export to?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Each keyword produces a CSV file. Download individual files or a ZIP bundle from the task history.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>How much does it cost?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>The Online Scraper follows the MapsGrab plans on the Pricing page, including the free monthly quota of records. Paid plans raise the limits when you need more.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Do I need a paid plan for emails and social profiles?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Online Free does not include email or social media enrichment. Paid Online plans include it by default, and you can turn it off for each task. The choice is fixed once the task is submitted.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>How long can a task run?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Each task has a 60-minute collection window. When it closes, keywords that already found businesses still deliver them, along with any emails and social profiles found so far.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Is my homepage preview saved when I sign in?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>No. The homepage preview is a quick look that is not stored. After you sign in, open Online Scraper in your Dashboard and submit the keyword again as a full task.</p></div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑩ 收尾 CTA（en-US cta 逐字）
+           ================================================================ -->
+      <section class="section final-cta">
+        <div class="container">
+          <div class="cta-panel has-deco" data-inview data-reveal="zoom">
+            <div class="deco" aria-hidden="true">
+              <div class="aurora"><i></i><i></i><i></i></div>
+              <div class="bg-contours"></div>
+              <div class="bg-grid cta-grid"></div>
+              <div class="cta-pins" data-cta-pins></div>
+              <div class="noise"></div>
+            </div>
+            <span class="kicker" data-reveal>Get started</span>
+            <h2 class="display cta-title" data-split>Queue your first <span class="accent text-grad is-animated">cloud task</span></h2>
+            <p class="lead cta-lead" data-reveal>Submit keywords, follow your task progress, and download business data from your dashboard.</p>
+            <div class="cta-actions" data-reveal>
+              <button class="btn btn-primary btn-lg" type="button" data-signin data-magnetic="0.22">
+                Start scraping<svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+              </button>
+              <a class="btn btn-secondary btn-lg" href="pricing.html#online">View pricing</a>
+            </div>
+            <p class="cta-note" data-reveal>Free monthly quota included. No credit card.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-chrome="footer"></div>
+  </body>
+</html>

@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Google Maps Scraper MCP Server | MapsGrab</title>
+    <meta
+      name="description"
+      content="Connect AI agents to live Google Maps data with the MapsGrab MCP server: search businesses, collect reviews, and retrieve photos over one secure MCP connection."
+    />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <script src="assets/js/theme-boot.js"></script>
+    <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages/mcp.css" />
+    <script src="assets/js/chrome.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/site.js" defer></script>
+    <script src="assets/js/pages/mcp.js" defer></script>
+  </head>
+  <!--
+    MCP 落地页：/google-maps-scraper-mcp/
+    工具名（search_businesses / get_reviews / get_photos）与端点 https://mcp.mapsgrab.com/mcp 为示意，以 014 B3 合同为准；
+    参数沿用 API 口径：search_businesses q / pages / hl / ll，get_reviews fid / sort_by / cursor，get_photos fid / page。
+    Photos 按 014 仍待实现，差距由主线程写入 README 交 hydra 裁决；原型按现网文案呈现三个工具。
+    计费为合理假设：B3 定义 MCP 为 B2 三端点的包装并复用 API 密钥，故工具调用计入 API 月度请求额度。
+  -->
+  <body data-page="mcp">
+    <div data-chrome="nav"></div>
+
+    <main>
+      <!-- ================================================================
+           ① Hero：标题 + Agent 会话（提问 → 工具调用卡 → 结果流入 → 回答）
+           ================================================================ -->
+      <section class="page-hero mcp-hero has-deco" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i></div>
+          <div class="bg-contours"></div>
+          <div class="bg-grid"></div>
+          <div class="noise"></div>
+        </div>
+
+        <div class="container page-hero-grid">
+          <div class="page-hero-copy">
+            <span class="kicker kicker--ai" data-enter>MCP server</span>
+
+            <h1 class="h1 mcp-title" data-split="static" style="--split-delay: 90ms">
+              <span class="w"><span class="wi" style="--i: 0">Google</span></span>
+              <span class="w"><span class="wi" style="--i: 1">Maps</span></span>
+              <span class="w"><span class="wi" style="--i: 2">Scraper</span></span>
+              <span class="w"><span class="wi" style="--i: 3"><span class="accent text-grad-ai">MCP</span></span></span>
+              <span class="w"><span class="wi" style="--i: 4">Server</span></span>
+            </h1>
+
+            <p class="lead" data-enter style="--enter-delay: 180ms">
+              The MapsGrab MCP server exposes Google Maps search, reviews, and photos to AI agents over one secure MCP
+              connection — live, structured data for Claude Code, Cursor, VS Code, and any MCP client.
+            </p>
+
+            <div class="page-hero-actions" data-enter style="--enter-delay: 270ms">
+              <a class="btn btn-primary btn-lg" href="#" data-magnetic="0.22" data-proto-note="Get API key opens Dashboard → API. That workspace currently shows the API as not yet open — keys, API calls and the MCP server ship with the 014 cloud products.">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg>Get API key
+              </a>
+              <a class="btn btn-secondary btn-lg" href="pricing.html#api">View pricing</a>
+            </div>
+
+            <div class="page-hero-meta" data-enter style="--enter-delay: 360ms">
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Streamable HTTP</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>One endpoint, one auth header</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>20 free requests / month</span>
+            </div>
+          </div>
+
+          <div class="page-hero-visual mcp-stage" data-reveal="right" data-reveal-onload="520">
+            <div
+              class="mcp-agent"
+              role="img"
+              aria-label="Example agent session: a question about local businesses, a MapsGrab tool call with structured results, and the agent's answer"
+              data-agent
+            >
+              <div class="mcp-agent-bar">
+                <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                <span class="mcp-agent-client" data-a-client>
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-terminal" /></svg><span>Claude Code</span>
+                </span>
+                <span class="mcp-agent-model">Agent session</span>
+              </div>
+              <div class="mcp-agent-log" data-a-log>
+                <p class="mcp-sys"><span class="dot dot--live"></span>MCP server <b>mapsgrab</b> connected</p>
+              </div>
+              <div class="mcp-agent-input" data-a-input>
+                <span class="mcp-draft" data-a-draft>Ask about any place on Google Maps…</span>
+                <span class="mcp-send"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-send" /></svg></span>
+              </div>
+            </div>
+
+            <div class="float-chip mcp-fc mcp-fc--a floaty" style="--float-t: 7s" data-parallax="0.05" aria-hidden="true">
+              <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plug" /></svg></span>
+              <span><small>Transport</small>Streamable HTTP</span>
+            </div>
+            <div class="float-chip mcp-fc mcp-fc--b floaty" style="--float-t: 8s; --float-d: -3s" data-parallax="-0.05" aria-hidden="true">
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-braces" /></svg></span>
+              <span><small>Tool results</small>Structured JSON</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ② 三个工具（签名卡）
+           ================================================================ -->
+      <section class="section mcp-tools" id="tools">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker kicker--ai" data-reveal>Tools</span>
+            <h2 class="h2" data-split>What the MCP server <span class="accent">exposes</span></h2>
+            <p class="lead" data-reveal>Three tools over one endpoint, backed by the same extraction engine as the extension and the APIs.</p>
+          </header>
+
+          <div class="mcp-tool-grid" data-stagger="90">
+            <article class="mcp-tool card card--lift" data-spotlight data-reveal>
+              <div class="mcp-tool-top">
+                <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg></span>
+                <span class="mcp-tool-kind">Tool</span>
+              </div>
+              <code class="mcp-sig"><b>search_businesses</b>(q, pages?, hl?, ll?)</code>
+              <h3>Search businesses</h3>
+              <p>Keyword and location searches that return the listing details a Google Maps search would show — names, phones, ratings, hours, coordinates, Place IDs.</p>
+              <dl class="mcp-args">
+                <div><dt>q</dt><dd>Keyword plus city, state or ZIP</dd></div>
+                <div><dt>pages</dt><dd>Result pages to collect, 1–10 · up to 20 places each</dd></div>
+                <div><dt>hl</dt><dd>Result language, e.g. <code>en</code></dd></div>
+                <div><dt>ll</dt><dd>Location bias, <code>@lat,lng,zoom</code></dd></div>
+              </dl>
+              <div class="mcp-returns"><span>Returns</span><code>places · 36 fields each</code></div>
+              <a class="link-arrow" href="google-maps-scraper-api.html">Same data as the Scraper API <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            </article>
+
+            <article class="mcp-tool card card--lift" data-spotlight data-reveal>
+              <div class="mcp-tool-top">
+                <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg></span>
+                <span class="mcp-tool-kind">Tool</span>
+              </div>
+              <code class="mcp-sig"><b>get_reviews</b>(fid, sort_by?, cursor?)</code>
+              <h3>Collect reviews</h3>
+              <p>Ratings, review text, reviewer details, dates, and owner replies for any business your agent is investigating.</p>
+              <dl class="mcp-args">
+                <div><dt>fid</dt><dd>From any search result</dd></div>
+                <div><dt>sort_by</dt><dd>1 relevant · 2 newest · 3 highest · 4 lowest</dd></div>
+                <div><dt>cursor</dt><dd><code>next_cursor</code> from the last page; omit for the first</dd></div>
+              </dl>
+              <div class="mcp-returns"><span>Returns</span><code>reviews ≤ 60 · next_cursor</code></div>
+              <a class="link-arrow" href="google-maps-scraper-api.html?api=reviews">Same data as the Reviews API <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            </article>
+
+            <article class="mcp-tool card card--lift" data-spotlight data-reveal>
+              <div class="mcp-tool-top">
+                <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-image" /></svg></span>
+                <span class="mcp-tool-kind">Tool</span>
+              </div>
+              <code class="mcp-sig"><b>get_photos</b>(fid, page?)</code>
+              <h3>Retrieve photos</h3>
+              <p>Public photo URLs per business, with Street View imagery filtered out — useful for enrichment and audits.</p>
+              <dl class="mcp-args">
+                <div><dt>fid</dt><dd>From any search result</dd></div>
+                <div><dt>page</dt><dd>Results page for large galleries</dd></div>
+              </dl>
+              <div class="mcp-returns"><span>Returns</span><code>photos · one url each</code></div>
+              <a class="link-arrow" href="google-maps-scraper-api.html?api=photos">Same data as the Photos API <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ③ 连接拓扑（恒暗主题岛）：客户端 → MCP 端点 → 工具，连线由 JS 计算
+           ================================================================ -->
+      <section class="section mcp-flow scheme-dark has-deco" id="how" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="bg-grid mcp-flow-grid"></div>
+          <div class="mcp-flow-glow"></div>
+          <div class="noise"></div>
+        </div>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker kicker--ai" data-reveal>How it connects</span>
+            <h2 class="h2" data-split>One endpoint between your agent and <span class="accent text-grad-ai">live Maps data</span></h2>
+            <p class="lead" data-reveal>
+              Your client connects over streamable HTTP with one auth header. The agent discovers the tools, calls them when a
+              prompt needs Maps data, and gets structured JSON back.
+            </p>
+          </header>
+
+          <div
+            class="mcp-net"
+            role="img"
+            aria-label="Claude Code, Cursor, VS Code, Codex and other MCP clients connect to the MapsGrab MCP endpoint, which serves the search_businesses, get_reviews and get_photos tools"
+            data-net
+            data-reveal="fade"
+          >
+            <svg class="mcp-net-lines" data-net-svg aria-hidden="true"></svg>
+
+            <div class="mcp-net-col mcp-net-clients">
+              <span class="mcp-net-label">MCP clients</span>
+              <div class="mcp-node" data-client><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-terminal" /></svg>Claude Code</div>
+              <div class="mcp-node" data-client><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cursor" /></svg>Cursor</div>
+              <div class="mcp-node" data-client><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-code" /></svg>VS Code</div>
+              <div class="mcp-node" data-client><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkles" /></svg>Codex</div>
+              <div class="mcp-node mcp-node--any" data-client><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plug" /></svg>Any MCP client</div>
+            </div>
+
+            <div class="mcp-net-center">
+              <div class="mcp-hub" data-hub>
+                <span class="mcp-hub-rings" aria-hidden="true"><i></i><i></i></span>
+                <span class="mcp-hub-mark" data-hub-mark></span>
+                <b>MapsGrab MCP</b>
+                <code>mcp.mapsgrab.com/mcp</code>
+                <span class="mcp-hub-auth"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>Authorization: Bearer</span>
+              </div>
+              <span class="mcp-hub-call" data-hub-call><span>tools/list</span></span>
+            </div>
+
+            <div class="mcp-net-col mcp-net-tools">
+              <span class="mcp-net-label">Tools</span>
+              <div class="mcp-node mcp-node--tool" data-tool><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg><code>search_businesses</code></div>
+              <div class="mcp-node mcp-node--tool" data-tool><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg><code>get_reviews</code></div>
+              <div class="mcp-node mcp-node--tool" data-tool><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-image" /></svg><code>get_photos</code></div>
+              <span class="mcp-net-foot"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>Public Google Maps data</span>
+            </div>
+          </div>
+
+          <ol class="mcp-flow-steps" data-stagger="90">
+            <li data-reveal>
+              <span class="mcp-flow-num">01</span>
+              <div><b>Connect</b><p>Add one config block with the endpoint and your API key.</p></div>
+            </li>
+            <li data-reveal>
+              <span class="mcp-flow-num">02</span>
+              <div><b>Discover</b><p>Your agent lists the MapsGrab tools and their parameters.</p></div>
+            </li>
+            <li data-reveal>
+              <span class="mcp-flow-num">03</span>
+              <div><b>Call</b><p>When a prompt needs Maps data, the agent calls a tool and reads the JSON.</p></div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ④ 客户端接入：四个客户端的可复制配置（共享 [data-tabs]）
+           ================================================================ -->
+      <section class="section band mcp-connect" id="connect">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker kicker--ai" data-reveal>Setup</span>
+            <h2 class="h2" data-split>One config block <span class="accent">per client</span></h2>
+            <p class="lead" data-reveal>Point your client at the MapsGrab endpoint and pass your API key in the Authorization header. No SDK, no local process to run.</p>
+          </header>
+
+          <div class="mcp-setup" data-tabs data-reveal>
+            <div class="seg mcp-setup-tabs" role="tablist" aria-label="MCP client">
+              <span class="seg-thumb" aria-hidden="true"></span>
+              <button class="seg-btn" type="button" role="tab" id="tab-claude" aria-controls="setup-claude" aria-selected="true" data-tab="claude">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-terminal" /></svg>Claude Code
+              </button>
+              <button class="seg-btn" type="button" role="tab" id="tab-cursor" aria-controls="setup-cursor" aria-selected="false" data-tab="cursor">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cursor" /></svg>Cursor
+              </button>
+              <button class="seg-btn" type="button" role="tab" id="tab-vscode" aria-controls="setup-vscode" aria-selected="false" data-tab="vscode">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-code" /></svg>VS Code
+              </button>
+              <button class="seg-btn" type="button" role="tab" id="tab-codex" aria-controls="setup-codex" aria-selected="false" data-tab="codex">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkles" /></svg>Codex
+              </button>
+            </div>
+
+            <div class="mcp-setup-panel card" role="tabpanel" id="setup-claude" aria-labelledby="tab-claude">
+              <ol class="mcp-steps">
+                <li><b>Get your API key</b><span>Copy it from Dashboard → API.</span></li>
+                <li><b>Add the server</b><span>Run the command in your terminal. It registers <code>mapsgrab</code> over HTTP with your key in the header.</span></li>
+                <li><b>Ask for Maps data</b><span>Start a session — Claude Code lists the MapsGrab tools and calls them when a prompt needs them.</span></li>
+              </ol>
+              <div class="codewin mcp-cfg">
+                <div class="codewin-bar">
+                  <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                  <span class="mcp-cfg-file"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-terminal" /></svg>Terminal</span>
+                  <button class="codewin-copy" type="button" aria-label="Copy command" data-copy data-copy-target="#cfg-claude">
+                    <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                  </button>
+                </div>
+                <pre id="cfg-claude" data-highlight>claude mcp add --transport http mapsgrab https://mcp.mapsgrab.com/mcp \
+  --header "Authorization: Bearer YOUR_API_KEY"</pre>
+              </div>
+            </div>
+
+            <div class="mcp-setup-panel card" role="tabpanel" id="setup-cursor" aria-labelledby="tab-cursor" hidden>
+              <ol class="mcp-steps">
+                <li><b>Get your API key</b><span>Copy it from Dashboard → API.</span></li>
+                <li><b>Edit mcp.json</b><span>Add the block to <code>~/.cursor/mcp.json</code> for every project, or <code>.cursor/mcp.json</code> for one.</span></li>
+                <li><b>Reload Cursor</b><span><code>mapsgrab</code> appears in the MCP server list with its tools.</span></li>
+              </ol>
+              <div class="codewin mcp-cfg">
+                <div class="codewin-bar">
+                  <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                  <span class="mcp-cfg-file"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-braces" /></svg>~/.cursor/mcp.json</span>
+                  <button class="codewin-copy" type="button" aria-label="Copy configuration" data-copy data-copy-target="#cfg-cursor">
+                    <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                  </button>
+                </div>
+                <pre id="cfg-cursor" data-highlight>{
+  "mcpServers": {
+    "mapsgrab": {
+      "url": "https://mcp.mapsgrab.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}</pre>
+              </div>
+            </div>
+
+            <div class="mcp-setup-panel card" role="tabpanel" id="setup-vscode" aria-labelledby="tab-vscode" hidden>
+              <ol class="mcp-steps">
+                <li><b>Get your API key</b><span>Copy it from Dashboard → API.</span></li>
+                <li><b>Add .vscode/mcp.json</b><span>VS Code asks for the key once and stores it securely — it never lands in the file.</span></li>
+                <li><b>Use agent mode</b><span>Open Chat in agent mode and enable the MapsGrab tools.</span></li>
+              </ol>
+              <div class="codewin mcp-cfg">
+                <div class="codewin-bar">
+                  <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                  <span class="mcp-cfg-file"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-braces" /></svg>.vscode/mcp.json</span>
+                  <button class="codewin-copy" type="button" aria-label="Copy configuration" data-copy data-copy-target="#cfg-vscode">
+                    <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                  </button>
+                </div>
+                <pre id="cfg-vscode" data-highlight>{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "mapsgrab-api-key",
+      "description": "MapsGrab API key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "mapsgrab": {
+      "type": "http",
+      "url": "https://mcp.mapsgrab.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:mapsgrab-api-key}"
+      }
+    }
+  }
+}</pre>
+              </div>
+            </div>
+
+            <div class="mcp-setup-panel card" role="tabpanel" id="setup-codex" aria-labelledby="tab-codex" hidden>
+              <ol class="mcp-steps">
+                <li><b>Export your key</b><span>Set <code>MAPSGRAB_API_KEY</code> in your shell. Codex reads the bearer token from it.</span></li>
+                <li><b>Add the server</b><span>Paste the block into <code>~/.codex/config.toml</code>.</span></li>
+                <li><b>Start Codex</b><span>New sessions load <code>mapsgrab</code> and its tools.</span></li>
+              </ol>
+              <div class="codewin mcp-cfg">
+                <div class="codewin-bar">
+                  <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                  <span class="mcp-cfg-file"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-settings" /></svg>~/.codex/config.toml</span>
+                  <button class="codewin-copy" type="button" aria-label="Copy configuration" data-copy data-copy-target="#cfg-codex">
+                    <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                  </button>
+                </div>
+                <pre id="cfg-codex" data-highlight># export MAPSGRAB_API_KEY=YOUR_API_KEY
+[mcp_servers.mapsgrab]
+url = "https://mcp.mapsgrab.com/mcp"
+bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="mcp-spec" data-reveal>
+            <span class="mcp-spec-title">
+              <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plug" /></svg></span>
+              <span><b>Any other MCP client</b><small>MCP Inspector included</small></span>
+            </span>
+            <dl class="mcp-spec-list">
+              <div><dt>Transport</dt><dd>Streamable HTTP</dd></div>
+              <div>
+                <dt>Endpoint</dt>
+                <dd>
+                  <span id="mcp-endpoint">https://mcp.mapsgrab.com/mcp</span>
+                  <button class="mcp-spec-copy" type="button" aria-label="Copy endpoint" data-copy data-copy-target="#mcp-endpoint">
+                    <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                  </button>
+                </dd>
+              </div>
+              <div><dt>Header</dt><dd>Authorization: Bearer YOUR_API_KEY</dd></div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑤ 示例提示词墙（两行反向跑马灯；减弱动效改为静态网格）
+           ================================================================ -->
+      <section class="section mcp-prompts" id="prompts" data-inview>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker kicker--ai" data-reveal>Example prompts</span>
+            <h2 class="h2" data-split>Ask in plain language. <span class="accent">Get rows back.</span></h2>
+            <p class="lead" data-reveal>
+              Prospecting, local market research, listing enrichment — describe the job, and your agent decides which MapsGrab
+              tool to call.
+            </p>
+          </header>
+        </div>
+
+        <div class="mcp-wall" data-reveal>
+          <div class="marquee mcp-row" style="--marquee-duration: 76s" data-marquee>
+            <div class="marquee-track">
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-target" /></svg>Prospecting</span>
+                <blockquote>“Find dentists in Austin, TX rated 4.8 or higher and list their phone numbers.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg>Reputation</span>
+                <blockquote>“Summarize what people say in the newest reviews of Ember &amp; Oak Coffee in Portland.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg><code class="mcp-tchip">get_reviews</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-plus" /></svg>Lead lists</span>
+                <blockquote>“Build a list of yoga studios in Denver with their emails and Instagram profiles.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><code class="mcp-fchip">email · social_medias</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chart" /></svg>Market research</span>
+                <blockquote>“Compare ratings and review counts for the coffee shops on Division St in Portland.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><code class="mcp-fchip">average_rating · review_count</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-table" /></svg>Enrichment</span>
+                <blockquote>“Add the Place ID, phone and website for every business in this spreadsheet.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><code class="mcp-fchip">place_id · phone · website</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>Owner replies</span>
+                <blockquote>“Pull the lowest-rated reviews of Rose City Roasters and draft polite replies.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg><code class="mcp-tchip">get_reviews</code></figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="marquee mcp-row" style="--marquee-duration: 84s" data-marquee data-reverse>
+            <div class="marquee-track">
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-web" /></svg>Website gaps</span>
+                <blockquote>“Which plumbers in Chicago don't list a website? Put them in a table.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><code class="mcp-fchip">website: null</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-clock" /></svg>Opening hours</span>
+                <blockquote>“Which auto repair shops near 60614 are open on Sundays?”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><code class="mcp-fchip">opening_hours</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-map" /></svg>Mapping</span>
+                <blockquote>“Export the vegan restaurants in Brooklyn with coordinates as GeoJSON.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><code class="mcp-fchip">latitude · longitude</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-globe" /></svg>Localization</span>
+                <blockquote>“Search for bakeries in Lyon and return the listing details in French.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><code class="mcp-fchip">hl: fr</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check-circle" /></svg>Claimed listings</span>
+                <blockquote>“Check which gyms in Austin have claimed their Google Business listing.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><code class="mcp-fchip">claimed</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-image" /></svg>Listing audit</span>
+                <blockquote>“Pull the public photos for each café on this list so we can audit their listings.”</blockquote>
+                <figcaption><code class="mcp-tchip">search_businesses</code><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg><code class="mcp-tchip">get_photos</code></figcaption>
+              </figure>
+              <figure class="mcp-prompt">
+                <span class="mcp-prompt-tag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-trend" /></svg>Response time</span>
+                <blockquote>“Do these salons answer their reviews, and how long do owner replies take?”</blockquote>
+                <figcaption><code class="mcp-tchip">get_reviews</code><code class="mcp-fchip">owner_response_at_ms</code></figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑥ 认证与数据边界：请求检视器（扫描 → 密钥校验）+ 四项要点
+           ================================================================ -->
+      <section class="section band mcp-trust" id="security" data-inview>
+        <div class="container">
+          <header class="section-head section-head--left" data-stagger="80">
+            <span class="kicker kicker--ai" data-reveal>Auth &amp; data</span>
+            <h2 class="h2" data-split>One key in one header. <span class="accent">Public data only.</span></h2>
+            <p class="lead" data-reveal>
+              Every call to the MCP endpoint is authorized with your MapsGrab API key, and every result comes from what Google
+              Maps shows publicly.
+            </p>
+          </header>
+
+          <div class="mcp-trust-grid">
+            <div class="mcp-inspect" data-reveal="left">
+              <div class="mcp-inspect-bar">
+                <span class="mcp-inspect-dot"></span>
+                <span>Request</span>
+                <span class="mcp-inspect-ok"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Key verified</span>
+              </div>
+              <div class="mcp-inspect-body">
+                <p><span class="tok-fn">POST</span> /mcp HTTP/1.1</p>
+                <p><span class="tok-key">Host</span><span class="tok-punc">:</span> mcp.mapsgrab.com</p>
+                <p class="mcp-inspect-auth"><span class="tok-key">Authorization</span><span class="tok-punc">:</span> Bearer <span class="mcp-inspect-key">••••••••••••••••••••</span></p>
+                <p><span class="tok-key">Content-Type</span><span class="tok-punc">:</span> application/json</p>
+                <p><span class="tok-key">Accept</span><span class="tok-punc">:</span> application/json, text/event-stream</p>
+                <p class="mcp-inspect-gap"></p>
+                <p><span class="tok-punc">{</span><span class="tok-key">"jsonrpc"</span><span class="tok-punc">:</span> <span class="tok-str">"2.0"</span><span class="tok-punc">,</span> <span class="tok-key">"id"</span><span class="tok-punc">:</span> <span class="tok-num">7</span><span class="tok-punc">,</span> <span class="tok-key">"method"</span><span class="tok-punc">:</span> <span class="tok-str">"tools/call"</span><span class="tok-punc">,</span></p>
+                <p> <span class="tok-key">"params"</span><span class="tok-punc">: {</span><span class="tok-key">"name"</span><span class="tok-punc">:</span> <span class="tok-str">"get_reviews"</span><span class="tok-punc">,</span></p>
+                <p>  <span class="tok-key">"arguments"</span><span class="tok-punc">: {</span><span class="tok-key">"fid"</span><span class="tok-punc">:</span> <span class="tok-str">"0x5495…e0ab"</span><span class="tok-punc">,</span> <span class="tok-key">"sort_by"</span><span class="tok-punc">:</span> <span class="tok-num">2</span><span class="tok-punc">}}}</span></p>
+              </div>
+              <div class="mcp-inspect-res">
+                <p class="mcp-inspect-label">Response</p>
+                <p><span class="tok-num">200</span> OK <span class="tok-punc">·</span> application/json</p>
+                <p><span class="tok-punc">{</span><span class="tok-key">"jsonrpc"</span><span class="tok-punc">:</span> <span class="tok-str">"2.0"</span><span class="tok-punc">,</span> <span class="tok-key">"id"</span><span class="tok-punc">:</span> <span class="tok-num">7</span><span class="tok-punc">,</span> <span class="tok-key">"result"</span><span class="tok-punc">: {</span><span class="tok-key">"structuredContent"</span><span class="tok-punc">: {</span></p>
+                <p>  <span class="tok-key">"reviews"</span><span class="tok-punc">: [{</span><span class="tok-key">"rating"</span><span class="tok-punc">:</span> <span class="tok-num">5</span><span class="tok-punc">,</span> <span class="tok-key">"text"</span><span class="tok-punc">:</span> <span class="tok-str">"Best cortado on Division…"</span><span class="tok-punc">, … }, …],</span></p>
+                <p>  <span class="tok-key">"next_cursor"</span><span class="tok-punc">:</span> <span class="tok-str">"CAESBkVnSUlDZw…"</span><span class="tok-punc">}}}</span></p>
+              </div>
+            </div>
+
+            <div class="feature-grid feature-grid--2 mcp-trust-features" data-stagger="80">
+              <article class="feature card card--lift" data-reveal>
+                <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg></span>
+                <h3>One key, one header</h3>
+                <p>Calls carry your MapsGrab API key as a bearer token — the same key that covers the Scraper, Reviews and Photos APIs.</p>
+              </article>
+              <article class="feature card card--lift" data-reveal>
+                <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-eye" /></svg></span>
+                <h3>Retrieval only</h3>
+                <p>The tools search and read. None of them change your MapsGrab account or anything on Google Maps.</p>
+              </article>
+              <article class="feature card card--lift" data-reveal>
+                <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg></span>
+                <h3>Keep keys out of repos</h3>
+                <p>Use VS Code's secure input or an environment variable for Codex, so the key never sits in a shared config file.</p>
+              </article>
+              <article class="feature card card--lift" data-reveal>
+                <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-shield" /></svg></span>
+                <h3>Public data only</h3>
+                <p>The server returns only information publicly displayed on Google Maps — the same details any visitor can read.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑦ 计费：沿用 API 方案（pricing.ts 原文；额度条按对数刻度）
+           ================================================================ -->
+      <section class="section mcp-billing" id="pricing">
+        <div class="container mcp-billing-layout">
+          <div class="mcp-billing-copy" data-stagger="80">
+            <span class="kicker kicker--ai" data-reveal>Pricing</span>
+            <h2 class="h2" data-split>Covered by your <span class="accent">API plan</span></h2>
+            <p class="lead" data-reveal>
+              The MCP server runs on your MapsGrab API key, so tool calls draw from the same monthly request quota as the Scraper,
+              Reviews and Photos APIs.
+            </p>
+            <div class="cluster" style="--cluster-gap: 12px" data-reveal>
+              <a class="btn btn-primary" href="#" data-proto-note="Get API key opens Dashboard → API. That workspace currently shows the API as not yet open — keys, API calls and the MCP server ship with the 014 cloud products.">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg>Get API key
+              </a>
+              <a class="btn btn-secondary" href="pricing.html#api">Compare API plans</a>
+            </div>
+          </div>
+
+          <div class="mcp-ladder card" data-reveal="right">
+            <div class="mcp-ladder-head">
+              <span>Plan</span>
+              <span>Monthly requests <small>(log scale)</small></span>
+              <span>Price</span>
+            </div>
+            <div class="mcp-rung" style="--w: 0.28; --i: 0">
+              <div class="mcp-rung-name"><b>Free</b><small>Evaluate the API on a small scale</small></div>
+              <div class="mcp-rung-quota"><span class="mcp-meter"><i></i></span><span>20 requests / month</span></div>
+              <div class="mcp-rung-price"><b>$0</b><small>forever</small></div>
+            </div>
+            <div class="mcp-rung" style="--w: 0.64; --i: 1">
+              <div class="mcp-rung-name"><b>Basic</b><small>For prototypes and light integrations</small></div>
+              <div class="mcp-rung-quota"><span class="mcp-meter"><i></i></span><span>1,000 requests / month</span></div>
+              <div class="mcp-rung-price"><b>$15</b><small>one-time · 1 month</small></div>
+            </div>
+            <div class="mcp-rung is-featured" style="--w: 0.79; --i: 2">
+              <div class="mcp-rung-name"><b>Professional <span class="badge badge--solid">Most Popular</span></b><small>For production integrations</small></div>
+              <div class="mcp-rung-quota"><span class="mcp-meter"><i></i></span><span>5,000 requests / month</span></div>
+              <div class="mcp-rung-price"><b>$65</b><small>one-time · 1 month</small></div>
+            </div>
+            <div class="mcp-rung" style="--w: 0.85; --i: 3">
+              <div class="mcp-rung-name"><b>Business</b><small>For products built on MapsGrab data</small></div>
+              <div class="mcp-rung-quota"><span class="mcp-meter"><i></i></span><span>10,000 requests / month</span></div>
+              <div class="mcp-rung-price"><b>$115</b><small>one-time · 1 month</small></div>
+            </div>
+            <div class="mcp-rung" style="--w: 1; --i: 4">
+              <div class="mcp-rung-name"><b>Scale</b><small>For high-volume data operations</small></div>
+              <div class="mcp-rung-quota"><span class="mcp-meter"><i></i></span><span>50,000 requests / month</span></div>
+              <div class="mcp-rung-price"><b>$365</b><small>one-time · 1 month</small></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="container">
+          <p class="mcp-billing-note" data-reveal>
+            <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>
+            One-time payment covering one natural month — plans on this tab do not auto-renew. A request is one successful API
+            call that returns data; usage resets on the 1st and unused requests do not roll over.
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑧ FAQ
+           ================================================================ -->
+      <section class="section band faq" id="faq">
+        <div class="container faq-layout">
+          <div class="faq-aside" data-stagger="80">
+            <span class="kicker kicker--ai" data-reveal>FAQ</span>
+            <h2 class="h2" data-split>MCP server <span class="accent">questions</span></h2>
+            <p class="lead" data-reveal>The short answers. Anything else, support is one email away.</p>
+            <a class="btn btn-secondary" href="about.html#contact" data-reveal>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>Contact support
+            </a>
+          </div>
+          <div class="faq-list" data-stagger="60">
+            <details class="acc" data-reveal>
+              <summary>What is the MapsGrab MCP server?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>It is an MCP (Model Context Protocol) server that lets AI agents query live Google Maps data — business search, reviews, and photos — through the same MapsGrab extraction engine used by the extension and the APIs.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Which clients can connect?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Any MCP-compatible client: Claude Code, Cursor, VS Code, Codex, MCP Inspector, and others. Connection is a standard config block pointing at the MapsGrab MCP endpoint with your API key.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>How is it authenticated?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>With a MapsGrab API key passed as a bearer token — the same key the API plans on the Pricing page cover, including the free monthly request quota.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>What data can my agent retrieve?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Business search results with the 36-column schema, review threads with ratings and owner replies, and public photo URL lists per business.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>How are tool calls counted?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>Tool calls run on the MapsGrab API, so each one that returns data counts as a request against your monthly API quota. Usage resets on the 1st and unused requests do not roll over.</p></div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑨ 收尾 CTA
+           ================================================================ -->
+      <section class="section final-cta mcp-cta">
+        <div class="container">
+          <div class="cta-panel has-deco" data-inview data-reveal="zoom">
+            <div class="deco" aria-hidden="true">
+              <div class="aurora"><i></i><i></i><i></i></div>
+              <div class="bg-contours"></div>
+              <div class="bg-grid cta-grid"></div>
+              <div class="cta-pins" data-cta-pins></div>
+              <div class="noise"></div>
+            </div>
+            <span class="kicker kicker--ai" data-reveal>Get started</span>
+            <h2 class="display cta-title" data-split>Give your agent <span class="accent text-grad-ai">live Maps data</span></h2>
+            <p class="lead cta-lead" data-reveal>
+              One MCP connection, three tools, structured results — search, reviews, and photos for data-aware AI workflows.
+            </p>
+            <div class="cta-actions" data-reveal>
+              <a class="btn btn-primary btn-lg" href="#" data-magnetic="0.22" data-proto-note="Get API key opens Dashboard → API. That workspace currently shows the API as not yet open — keys, API calls and the MCP server ship with the 014 cloud products.">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg>Get API key
+              </a>
+              <a class="btn btn-secondary btn-lg" href="pricing.html#api">View pricing</a>
+            </div>
+            <p class="cta-note" data-reveal>Free monthly quota included. No credit card.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-chrome="footer"></div>
+  </body>
+</html>

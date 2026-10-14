@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Place ID Finder — Get a Google Maps Place ID from a URL | MapsGrab</title>
+    <meta
+      name="description"
+      content="Paste a Google Maps place URL and get its Place ID, CID, and FID instantly. Free browser-based Place ID finder — no sign-in, your URL never leaves your device."
+    />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <script src="assets/js/theme-boot.js"></script>
+    <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages/place-id-finder.css" />
+    <script src="assets/js/chrome.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/site.js" defer></script>
+    <script src="assets/js/pages/place-id-finder.js" defer></script>
+  </head>
+  <!--
+    免费工具模板页（7 个工具共用；真实路由 /tools/<id>/，结构对应 website ToolShell.astro）：
+    Hero（面包屑 + 工具名 + 描述）→ 工具面板 → How-to → ID 讲解 → 相关工具 → FAQ → 收尾 CTA。
+    原型只实现 Place ID Finder；?tool=<id> 时替换 Hero / CTA 文案，工具面板换成同模板占位，
+    并隐藏 Place ID 专属区块（[data-pid-only]）。文案逐字来自 website/src/i18n/tools.ts。
+  -->
+  <body data-page="tool">
+    <div data-chrome="nav"></div>
+
+    <main>
+      <!-- ================================================================
+           ① Hero + 工具面板（URL 输入 → 解析动画 → Place ID / CID / FID）
+           ================================================================ -->
+      <section class="page-hero page-hero--center tool-hero has-deco" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i></div>
+          <div class="bg-contours"></div>
+          <div class="bg-grid"></div>
+          <div class="noise"></div>
+        </div>
+
+        <div class="container">
+          <div class="page-hero-copy">
+            <div class="tool-eyebrow" data-enter>
+              <span class="icon-tile icon-tile--brand" data-tool-icon><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-scan" /></svg></span>
+              <nav class="crumbs" aria-label="Breadcrumb">
+                <a href="index.html#tools">Free tools</a>
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-right" /></svg>
+                <span aria-current="page" data-tool-crumb>Place ID Finder</span>
+              </nav>
+            </div>
+            <h1 class="h1 tool-title" data-split="static" style="--split-delay: 80ms" data-tool-title>
+              <span class="w"><span class="wi" style="--i: 0">Place</span></span>
+              <span class="w"><span class="wi" style="--i: 1">ID</span></span>
+              <span class="w"><span class="wi" style="--i: 2"><span class="accent text-grad is-animated">Finder</span></span></span>
+            </h1>
+            <p class="lead" data-enter style="--enter-delay: 160ms" data-tool-desc>
+              Paste a full Google Maps place URL and read out its Place ID, CID, and FID in one click. Everything is decoded in
+              your browser — the URL is never uploaded.
+            </p>
+          </div>
+
+          <div class="page-hero-visual tool-stage" data-reveal="rise" data-reveal-onload="480">
+            <div class="float-chip tool-float tool-float--l floaty" style="--float-t: 7s" aria-hidden="true" data-pid-only>
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg></span>
+              <span><small>Google API key</small>Not needed</span>
+            </div>
+            <div class="float-chip tool-float tool-float--r floaty" style="--float-t: 8s; --float-d: -3s" aria-hidden="true" data-pid-only>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg></span>
+              <span><small>Your URL</small>Never uploaded</span>
+            </div>
+
+            <!-- Place ID Finder 工具面板 -->
+            <div class="pid" data-pid>
+              <form class="pid-form" data-pid-form autocomplete="off" novalidate>
+                <label class="pid-label" for="pid-url">Google Maps place URL</label>
+                <div class="searchbar pid-bar" data-pid-bar>
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-link" /></svg>
+                  <input
+                    id="pid-url"
+                    name="place-url"
+                    type="text"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder="https://www.google.com/maps/place/…/data=…"
+                    data-pid-input
+                  />
+                  <button class="btn btn-primary" type="submit" data-pid-submit>
+                    <span class="pid-submit-label">Find Place ID</span>
+                    <svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+                  </button>
+                </div>
+                <div class="pid-examples">
+                  <span class="subtle">Try</span>
+                  <button class="chip" type="button" data-pid-example="sf">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>San Francisco
+                  </button>
+                  <button class="chip" type="button" data-pid-example="coffee">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-coffee" /></svg>Coffee shop · Portland
+                  </button>
+                  <button class="chip" type="button" data-pid-example="short">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-link" /></svg>Short link
+                  </button>
+                </div>
+                <p class="field-error pid-error" role="alert" data-pid-error hidden></p>
+              </form>
+
+              <div class="pid-result" data-pid-result aria-live="polite">
+                <div class="pid-anatomy">
+                  <div class="pid-anatomy-head">
+                    <span class="pid-anatomy-label">Result</span>
+                    <span class="pid-legend" aria-hidden="true">
+                      <span class="lg-a">FID · 1st half</span><span class="lg-b">FID · 2nd half</span>
+                    </span>
+                  </div>
+                  <code class="pid-url" data-pid-url><span class="pid-url-empty">Paste a place URL — the identifiers it carries light up here.</span></code>
+                </div>
+
+                <dl class="pid-rows">
+                  <div class="pid-row pid-row--place" data-pid-row="place">
+                    <dt><span class="pid-dot"></span>Place ID<small>base64url of the two FID halves</small></dt>
+                    <dd>
+                      <output id="pid-out-place" class="pid-val" data-pid-out="place">—</output>
+                      <button class="icon-btn pid-copy" type="button" data-copy data-copy-target="#pid-out-place" aria-label="Copy Place ID" disabled>
+                        <svg class="icon i-copy" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                        <svg class="icon i-done" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>
+                      </button>
+                    </dd>
+                  </div>
+                  <div class="pid-row pid-row--cid" data-pid-row="cid">
+                    <dt><span class="pid-dot"></span>CID<small>FID 2nd half, hex → decimal</small></dt>
+                    <dd>
+                      <output id="pid-out-cid" class="pid-val" data-pid-out="cid">—</output>
+                      <button class="icon-btn pid-copy" type="button" data-copy data-copy-target="#pid-out-cid" aria-label="Copy CID" disabled>
+                        <svg class="icon i-copy" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                        <svg class="icon i-done" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>
+                      </button>
+                    </dd>
+                  </div>
+                  <div class="pid-row pid-row--fid" data-pid-row="fid">
+                    <dt><span class="pid-dot"></span>FID<small>last two 0x… segments in the URL</small></dt>
+                    <dd>
+                      <output id="pid-out-fid" class="pid-val" data-pid-out="fid">—</output>
+                      <button class="icon-btn pid-copy" type="button" data-copy data-copy-target="#pid-out-fid" aria-label="Copy FID" disabled>
+                        <svg class="icon i-copy" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                        <svg class="icon i-done" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>
+                      </button>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <p class="pid-privacy">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>Decoded in your browser — the URL
+                is never uploaded.
+              </p>
+            </div>
+
+            <!-- ?tool=<id> 变体：同模板占位 -->
+            <div class="media-slot tool-slot" data-tool-slot hidden>
+              <div class="media-slot-label">
+                <span class="icon-tile" data-tool-slot-icon><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-wrench" /></svg></span>
+                <span class="media-slot-kicker">Same template</span>
+                <p class="media-slot-text" data-tool-slot-text>
+                  This prototype implements Place ID Finder. Every other tool reuses this layout — hero, tool panel, how-to,
+                  related tools, FAQ and CTA.
+                </p>
+                <a class="btn btn-secondary btn-sm" href="place-id-finder.html">Open Place ID Finder</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ② 三步用法（tools.ts howTo[1]）
+           ================================================================ -->
+      <section class="section how-pid" id="how" data-pid-only data-inview>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>How it works</span>
+            <h2 class="h2" data-split>From a Maps link to a <span class="accent">Place ID</span></h2>
+            <p class="lead" data-reveal>No API key and no sign-in — the identifiers are already inside the place URL you copy.</p>
+          </header>
+
+          <ol class="pid-steps" role="list" data-stagger="120" data-spotlight-group>
+            <li class="card pid-step" data-spotlight data-reveal>
+              <div class="pid-step-visual pv-open" aria-hidden="true">
+                <div class="pv-search">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg><span>San Francisco</span>
+                </div>
+                <div class="pv-place">
+                  <div class="pv-map"><i class="map-pin pv-pin" style="--x: 50%; --y: 62%"></i></div>
+                  <div class="pv-place-text">
+                    <b>San Francisco</b>
+                    <span class="skel" style="width: 70%"></span>
+                    <span class="skel" style="width: 45%"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="pid-step-text">
+                <span class="pid-step-num">01</span>
+                <h3 class="h4">Open the place in Google Maps</h3>
+                <p>Search for the business and click its listing so the place page opens.</p>
+              </div>
+            </li>
+            <li class="card pid-step" data-spotlight data-reveal>
+              <div class="pid-step-visual pv-copy" aria-hidden="true">
+                <div class="pv-bar">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>
+                  <span class="pv-url"><span class="pv-sel">google.com/maps/place/San+Francisco/@37.77…/data=!…!1s<em class="pv-a">0x8085…</em>:<em class="pv-b">0xa64e…</em></span></span>
+                </div>
+                <span class="pv-copied"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Copied</span>
+                <svg class="icon pv-cursor" aria-hidden="true"><use href="assets/img/icons.svg#i-cursor" /></svg>
+              </div>
+              <div class="pid-step-text">
+                <span class="pid-step-num">02</span>
+                <h3 class="h4">Copy the full URL</h3>
+                <p>Copy the long URL from the address bar — it contains the business name, an "@" coordinate segment, and a "data=" parameter.</p>
+              </div>
+            </li>
+            <li class="card pid-step" data-spotlight data-reveal>
+              <div class="pid-step-visual pv-decode" aria-hidden="true">
+                <div class="pv-row pv-row--place"><i></i><span>Place ID</span><code>ChIJZzUZI5yAhYAR5c…</code></div>
+                <div class="pv-row pv-row--cid"><i></i><span>CID</span><code>119836395033524…</code></div>
+                <div class="pv-row pv-row--fid"><i></i><span>FID</span><code>0x8085…:0xa64e…</code></div>
+              </div>
+              <div class="pid-step-text">
+                <span class="pid-step-num">03</span>
+                <h3 class="h4">Paste and decode</h3>
+                <p>Paste it above and press "Find Place ID". The Place ID, CID, and FID appear, each with a copy button.</p>
+              </div>
+            </li>
+          </ol>
+
+          <p class="pid-note" data-reveal>
+            <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>
+            <span>Short links like maps.app.goo.gl cannot be decoded without following them across domains, so open the link first and paste the full address.</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ③ 三种 ID 与本地换算（tools.ts howTo[0] / howTo[2] + FAQ；推导图由 JS 按最近一次解析结果渲染）
+           ================================================================ -->
+      <section class="section band pid-ids" id="identifiers" data-pid-only data-inview>
+        <div class="container">
+          <div class="split">
+            <div class="split-copy" data-stagger="80">
+              <span class="kicker" data-reveal>The identifiers</span>
+              <h2 class="h2" data-split>Three IDs, <span class="accent">one place</span></h2>
+              <p class="lead" data-reveal>
+                A Place ID is Google's stable identifier for a location — a string starting with "ChIJ" that stays valid even if
+                the business renames or moves.
+              </p>
+              <ul class="pid-keys" role="list" data-reveal>
+                <li class="pk-place"><b>Place ID</b><span>The "ChIJ…" string consumed by the Places API, review widgets, and booking systems.</span></li>
+                <li class="pk-fid"><b>FID</b><span>A pair of hexadecimal values that identify the same feature internally.</span></li>
+                <li class="pk-cid"><b>CID</b><span>The decimal form of the FID's second half, used by older Maps URLs and ads tooling.</span></li>
+              </ul>
+            </div>
+            <div class="split-visual" data-reveal="zoom">
+              <div class="card derive" data-derive aria-label="How the Place ID and CID are derived from the FID"></div>
+            </div>
+          </div>
+
+          <div class="feature-grid pid-local" data-stagger="90" data-spotlight-group>
+            <article class="card feature" data-spotlight data-reveal>
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg></span>
+              <h3>No API key</h3>
+              <p>The Place ID is already encoded inside the place URL you paste, so the tool can decode it offline.</p>
+            </article>
+            <article class="card feature" data-spotlight data-reveal>
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg></span>
+              <h3>No rate limits</h3>
+              <p>No lookup service is involved — the conversion from a Maps URL to a Place ID is deterministic.</p>
+            </article>
+            <article class="card feature" data-spotlight data-reveal>
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg></span>
+              <h3>Never uploaded</h3>
+              <p>The entire computation runs in your browser tab — the URL you paste is never sent to any server.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ④ 相关工具（site.js 渲染，排除当前工具）
+           ================================================================ -->
+      <section class="section related" id="tools">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Related tools</span>
+            <h2 class="h2" data-split>More free tools for <span class="accent">Maps data</span></h2>
+            <p class="lead" data-reveal>Small utilities that run entirely in your browser — what you paste never leaves your device.</p>
+          </header>
+          <div class="tools-grid tools-grid--3" data-tools-grid data-exclude="place-id-finder" data-spotlight-group data-stagger="60"></div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑤ FAQ（tools.ts placeIdFinder.faq 逐字）
+           ================================================================ -->
+      <section class="section faq band" id="faq" data-pid-only>
+        <div class="container faq-layout">
+          <div class="faq-aside" data-stagger="80">
+            <span class="kicker" data-reveal>FAQ</span>
+            <h2 class="h2" data-split>Place ID <span class="accent">questions</span></h2>
+            <p class="lead" data-reveal>The short answers. Anything else, support is one email away.</p>
+            <a class="btn btn-secondary" href="about.html#contact" data-reveal>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>Contact support
+            </a>
+          </div>
+          <div class="faq-list" data-stagger="60">
+            <details class="acc" data-reveal>
+              <summary>Does a Place ID ever change?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body">
+                <p>
+                  Rarely. Google documents Place IDs as stable long-term identifiers, but a small number of IDs can be retired
+                  when locations are merged or restructured. If a consumer of a Place ID reports it as invalid, look the place
+                  up again and refresh the stored value.
+                </p>
+              </div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Is the Place ID the same as the CID?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body">
+                <p>
+                  No. The CID is a decimal identifier used by older Maps links and advertising tools, while the Place ID is the
+                  "ChIJ…" string consumed by the Places API. They identify the same feature but are not interchangeable, which
+                  is why this tool reports both.
+                </p>
+              </div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Why is my maps.app.goo.gl link rejected?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body">
+                <p>
+                  Short links only resolve to the full place URL after a cross-domain redirect, which a browser-only tool cannot
+                  follow without sending your link to a third party. Open the short link in your browser and paste the full URL
+                  that appears in the address bar.
+                </p>
+              </div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Do I need a Google API key for this?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body">
+                <p>
+                  No. The Place ID is already encoded inside the place URL you paste, so the tool can decode it offline. A
+                  Google API key is only needed when you want to call the Places API with the ID afterwards.
+                </p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑥ 收尾 CTA（tools.ts placeIdFinder.cta；变体时按工具替换标题与描述）
+           ================================================================ -->
+      <section class="section final-cta">
+        <div class="container">
+          <div class="cta-panel has-deco" data-inview data-reveal="zoom">
+            <div class="deco" aria-hidden="true">
+              <div class="aurora"><i></i><i></i><i></i></div>
+              <div class="bg-contours"></div>
+              <div class="bg-grid cta-grid"></div>
+              <div class="cta-pins" data-cta-pins></div>
+              <div class="noise"></div>
+            </div>
+            <span class="kicker" data-reveal>Bulk extraction</span>
+            <h2 class="display cta-title" data-split data-tool-cta-title>Need Place IDs <span class="accent text-grad is-animated">at scale?</span></h2>
+            <p class="lead cta-lead" data-reveal data-tool-cta-desc>
+              MapsGrab extracts the Place ID, CID, and FID for every business it collects — alongside 33 other columns — and exports
+              straight to CSV or JSON.
+            </p>
+            <div class="cta-actions" data-reveal>
+              <a class="btn btn-primary btn-lg" href="extension.html#install" data-magnetic="0.22">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>Install MapsGrab
+              </a>
+              <a class="btn btn-secondary btn-lg" href="pricing.html#extension">View pricing</a>
+            </div>
+            <p class="cta-note" data-reveal>Free monthly quota included. No credit card.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-chrome="footer"></div>
+  </body>
+</html>

@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pricing — Online, Extension and API Plans | MapsGrab</title>
+    <meta
+      name="description"
+      content="MapsGrab plans for every surface: Online Scraper from $19, browser Extension from $39, and API from $15. Free tiers included with every product — one-time natural-month plans on Online and API, monthly subscriptions on Extension."
+    />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <script src="assets/js/theme-boot.js"></script>
+    <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages/pricing.css" />
+    <script src="assets/js/chrome.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/site.js" defer></script>
+    <script src="assets/js/pages/pricing.js" defer></script>
+  </head>
+  <body data-page="pricing">
+    <div data-chrome="nav"></div>
+
+    <main>
+      <!-- ================================================================
+           ① Hero（紧凑居中）+ 产品切换（三条产品线 tab，与 URL hash 同步）
+           文案：pricing.ts hero；产品线顺序与默认 tab 按 011 feat：Online 默认
+           ================================================================ -->
+      <section class="page-hero page-hero--center page-hero--compact pricing-hero has-deco" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i></div>
+          <div class="bg-contours"></div>
+          <div class="bg-grid"></div>
+          <div class="noise"></div>
+        </div>
+
+        <div class="container">
+          <div class="page-hero-copy">
+            <span class="kicker" data-enter>Pricing</span>
+            <h1 class="h1 pricing-title" data-split="static" style="--split-delay: 90ms">
+              <span class="w"><span class="wi" style="--i: 0">One</span></span>
+              <span class="w"><span class="wi" style="--i: 1">data</span></span>
+              <span class="w"><span class="wi" style="--i: 2">engine,</span></span>
+              <span class="w"><span class="wi" style="--i: 3"><span class="accent text-grad is-animated">three ways</span></span></span>
+              <span class="w"><span class="wi" style="--i: 4">to</span></span>
+              <span class="w"><span class="wi" style="--i: 5">buy</span></span>
+              <span class="w"><span class="wi" style="--i: 6">it</span></span>
+            </h1>
+            <p class="lead" data-enter style="--enter-delay: 180ms">
+              Pick the surface that fits your workflow — cloud Online Scraper, browser Extension, or HTTP API — then pick the
+              monthly volume. Upgrade or buy from this page in minutes.
+            </p>
+            <div class="page-hero-meta" data-enter style="--enter-delay: 270ms">
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Free tier on every product</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Pay with PayPal or ClinkBill</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Upgrade by paying the difference</span>
+            </div>
+          </div>
+
+          <!-- 产品切换：MG.setupTabs 驱动（role=tab + aria-controls），.seg-thumb 为滑动高亮 -->
+          <div class="plan-switch-wrap" data-tabs data-pricing-tabs data-reveal="rise" data-reveal-onload="520">
+            <div class="plan-switch" role="tablist" aria-label="Product line">
+              <span class="seg-thumb plan-switch-thumb" aria-hidden="true"></span>
+              <button class="plan-switch-btn" type="button" role="tab" id="tab-online" data-tab="online" aria-controls="panel-online" aria-selected="true">
+                <span class="ps-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud" /></svg></span>
+                <span class="ps-copy">
+                  <span class="ps-name">Online Scraper</span>
+                  <span class="ps-meta">From $19 · one-time</span>
+                </span>
+              </button>
+              <button class="plan-switch-btn" type="button" role="tab" id="tab-extension" data-tab="extension" aria-controls="panel-extension" aria-selected="false">
+                <span class="ps-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg></span>
+                <span class="ps-copy">
+                  <span class="ps-name">Extension</span>
+                  <span class="ps-meta">From $39 · per month</span>
+                </span>
+              </button>
+              <button class="plan-switch-btn" type="button" role="tab" id="tab-api" data-tab="api" aria-controls="panel-api" aria-selected="false">
+                <span class="ps-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-code" /></svg></span>
+                <span class="ps-copy">
+                  <span class="ps-name">API &amp; MCP</span>
+                  <span class="ps-meta">From $15 · one-time</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ② 方案面板：表头 / 计费方式 / 用量估算条 / 方案卡 / 额度注记（pricing.js 按 pricing.ts 渲染）
+           ================================================================ -->
+      <section class="plans" id="plans" aria-label="Plans">
+        <div class="container-wide">
+          <div class="plan-panel" role="tabpanel" id="panel-online" aria-labelledby="tab-online" data-plan-panel="online"></div>
+          <div class="plan-panel" role="tabpanel" id="panel-extension" aria-labelledby="tab-extension" data-plan-panel="extension" hidden></div>
+          <div class="plan-panel" role="tabpanel" id="panel-api" aria-labelledby="tab-api" data-plan-panel="api" hidden></div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ③ 对比表（跟随当前产品线；行文案逐字取自各档 features）
+           ================================================================ -->
+      <section class="section compare band" id="compare">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Compare</span>
+            <h2 class="h2" data-split>Every plan, <span class="accent">side by side</span></h2>
+            <p class="lead" data-reveal data-compare-lead>Online Scraper plans — cloud extraction, priced by records.</p>
+          </header>
+
+          <div class="compare-bar" data-reveal>
+            <div class="seg compare-seg" data-compare-seg>
+              <span class="seg-thumb" aria-hidden="true"></span>
+              <button class="seg-btn" type="button" data-key="online" aria-pressed="true">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud" /></svg>Online
+              </button>
+              <button class="seg-btn" type="button" data-key="extension" aria-pressed="false">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>Extension
+              </button>
+              <button class="seg-btn" type="button" data-key="api" aria-pressed="false">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-code" /></svg>API &amp; MCP
+              </button>
+            </div>
+          </div>
+
+          <div class="dtable-wrap compare-wrap" data-reveal>
+            <table class="dtable compare-table" data-compare-table></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ④ 用量口径：record / request 各一张动画卡 + 每月 1 日重置时间线（页面标志性动画）
+           ================================================================ -->
+      <section class="section usage" id="usage" data-inview>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Usage</span>
+            <h2 class="h2" data-split>What counts toward your <span class="accent">quota</span></h2>
+            <p class="lead" data-reveal>
+              Two units: records for the extension and the Online Scraper, requests for the API — and both reset on the 1st of
+              every month.
+            </p>
+          </header>
+
+          <div class="usage-grid" data-stagger="120">
+            <article class="card usage-card" data-reveal>
+              <div class="usage-visual" data-usage-records>
+                <div class="meter">
+                  <div class="meter-top">
+                    <span class="meter-label">Records used this month</span>
+                    <span class="meter-num"><b data-meter-value>1,284</b><span>/ 20,000</span></span>
+                  </div>
+                  <div class="meter-bar"><i data-meter-bar style="--p: 6.4%"></i></div>
+                </div>
+                <div class="ur-list" data-ur-list></div>
+              </div>
+              <div class="usage-copy">
+                <span class="badge">Extension · Online</span>
+                <h3 class="h4">1 record = 1 business row</h3>
+                <p>
+                  A record is one business row collected from Google Maps. Reviews, photos, and enrichment attached to that
+                  business do not count as extra records.
+                </p>
+              </div>
+            </article>
+
+            <article class="card usage-card" data-reveal>
+              <div class="usage-visual usage-visual--code" data-usage-requests>
+                <div class="meter">
+                  <div class="meter-top">
+                    <span class="meter-label">Requests used this month</span>
+                    <span class="meter-num"><b data-meter-value>412</b><span>/ 1,000</span></span>
+                  </div>
+                  <div class="meter-bar"><i data-meter-bar style="--p: 41.2%"></i></div>
+                </div>
+                <div class="ul-list" data-ul-list></div>
+              </div>
+              <div class="usage-copy">
+                <span class="badge badge--ai">API · MCP</span>
+                <h3 class="h4">1 request = 1 successful call</h3>
+                <p>
+                  A request is one successful API call that returns data. The MCP server uses the same API key, so the same
+                  plans cover it.
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <!-- 每月 1 日重置：用量曲线逐日推进，月初归零，未用额度不结转 -->
+          <div class="card reset" data-reveal>
+            <div class="reset-copy">
+              <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg></span>
+              <h3 class="h4">Resets on the 1st</h3>
+              <p>Usage resets on the 1st of every month. Unused records and requests do not roll over.</p>
+            </div>
+            <div class="reset-chart" aria-hidden="true">
+              <div class="reset-plot">
+                <span class="reset-limit"><span>Plan limit</span></span>
+                <svg class="reset-svg" viewBox="0 0 600 200" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="reset-fill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#1a73e8" stop-opacity=".32" />
+                      <stop offset="1" stop-color="#1a73e8" stop-opacity="0" />
+                    </linearGradient>
+                    <pattern id="reset-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <rect width="3" height="8" fill="currentColor" />
+                    </pattern>
+                  </defs>
+                  <g class="reset-draw">
+                    <rect class="reset-unused" x="268" y="40" width="32" height="48" fill="url(#reset-hatch)" />
+                    <path
+                      class="reset-area"
+                      d="M0 190 L40 182 L70 176 L90 176 L130 160 L160 151 L180 151 L220 130 L250 118 L270 118 L300 88 L300 190 L330 184 L360 172 L380 172 L420 160 L450 150 L470 150 L510 138 L540 130 L560 130 L600 122 L600 190 Z"
+                      fill="url(#reset-fill)"
+                    />
+                    <path
+                      class="reset-line"
+                      d="M0 190 L40 182 L70 176 L90 176 L130 160 L160 151 L180 151 L220 130 L250 118 L270 118 L300 88 L300 190 L330 184 L360 172 L380 172 L420 160 L450 150 L470 150 L510 138 L540 130 L560 130 L600 122"
+                      fill="none"
+                      vector-effect="non-scaling-stroke"
+                    />
+                  </g>
+                </svg>
+                <span class="reset-unused-label">Unused · doesn’t roll over</span>
+                <span class="reset-flag"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Reset</span>
+                <span class="reset-marker"></span>
+              </div>
+              <div class="reset-axis">
+                <span>Oct 1</span><span>Oct 15</span><span>Nov 1</span><span>Nov 15</span><span>Dec 1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑤ 计费事实（pricing.ts FAQ + 011 feat）
+           ================================================================ -->
+      <section class="section billing band" id="billing">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Billing</span>
+            <h2 class="h2" data-split>Simple billing, <span class="accent">no surprises</span></h2>
+            <p class="lead" data-reveal>How payment, renewal and upgrades work across the three product lines.</p>
+          </header>
+
+          <div class="feature-grid feature-grid--4" data-stagger="90" data-spotlight-group>
+            <article class="card feature" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-credit-card" /></svg></span>
+              <h3>PayPal or ClinkBill</h3>
+              <p>Pay for any plan through PayPal or ClinkBill. Checkout happens at the payment provider you choose.</p>
+            </article>
+            <article class="card feature" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-calendar" /></svg></span>
+              <h3>One-time or monthly</h3>
+              <p>
+                Online and API plans are one-time payments covering one natural month — they never auto-renew. Extension Pro
+                and Business are billed monthly as subscriptions.
+              </p>
+            </article>
+            <article class="card feature" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-trend" /></svg></span>
+              <h3>Upgrade by paying the difference</h3>
+              <p>
+                Move an active plan to an eligible higher tier through your current payment provider. Your expiry date and
+                usage so far stay unchanged.
+              </p>
+            </article>
+            <article class="card feature" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-layers" /></svg></span>
+              <h3>Independent plans</h3>
+              <p>
+                Plans on different tabs are independent. When a plan expires, the account automatically returns to the free
+                tier.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑥ FAQ（pricing.ts faq 逐字）
+           ================================================================ -->
+      <section class="section faq" id="faq">
+        <div class="container faq-layout">
+          <div class="faq-aside" data-stagger="80">
+            <span class="kicker" data-reveal>FAQ</span>
+            <h2 class="h2" data-split>Questions before you <span class="accent">buy?</span></h2>
+            <p class="lead" data-reveal>The billing basics. Anything else, support is one email away.</p>
+            <a class="btn btn-secondary" href="about.html#contact" data-reveal>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>Contact support
+            </a>
+          </div>
+          <div class="faq-list" data-stagger="60">
+            <details class="acc" data-reveal>
+              <summary>What counts as a record?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body">
+                <p>
+                  A record is one business row collected from Google Maps — the same unit the free plans count. Reviews,
+                  photos, and enrichment attached to that business do not count as extra records. On the API tab, usage is
+                  counted in successful requests instead.
+                </p>
+              </div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Do I need a paid plan to try MapsGrab?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body">
+                <p>
+                  No. Every product has a free tier with no time limit: the Online Scraper and the extension include 1,000
+                  records per month, and the API includes 20 requests per month. Online Free does not include email or social
+                  media enrichment. Paid Online plans include it by default, and you can turn it off for each task.
+                </p>
+              </div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>How does the quota apply to my account?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body">
+                <p>
+                  Quota is counted per signed-in account (and per browser device for the extension when you are not signed
+                  in). Sign in with the account that owns the plan so the higher ceiling applies. When a plan expires, the
+                  account automatically returns to the free tier.
+                </p>
+              </div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Are payments one-time or subscriptions?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body">
+                <p>
+                  Online and API plans are one-time payments through PayPal or ClinkBill covering one natural month — they
+                  never auto-renew. Extension Pro and Business are billed monthly as subscriptions; use “Manage subscription”
+                  in your account area to manage auto-renewal at the payment provider.
+                </p>
+              </div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary>Can I switch between tiers?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body">
+                <p>
+                  You can upgrade an active plan to an eligible higher tier by paying the difference through your current
+                  payment provider. Your expiry date and usage so far stay unchanged. Auto-renewing PayPal subscriptions
+                  cannot be upgraded; wait until expiry to change plans. Plans on different tabs are independent.
+                </p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑦ 收尾 CTA
+           ================================================================ -->
+      <section class="section final-cta">
+        <div class="container">
+          <div class="cta-panel has-deco" data-inview data-reveal="zoom">
+            <div class="deco" aria-hidden="true">
+              <div class="aurora"><i></i><i></i><i></i></div>
+              <div class="bg-contours"></div>
+              <div class="bg-grid cta-grid"></div>
+              <div class="cta-pins" data-cta-pins></div>
+              <div class="noise"></div>
+            </div>
+            <span class="kicker" data-reveal>Get started</span>
+            <h2 class="display cta-title" data-split>Start on the <span class="accent text-grad is-animated">free tier</span></h2>
+            <p class="lead cta-lead" data-reveal>
+              Every product has a free tier with no time limit — 1,000 records a month on the extension and the Online
+              Scraper, 20 requests a month on the API.
+            </p>
+            <div class="cta-actions" data-reveal>
+              <a class="btn btn-primary btn-lg" href="extension.html#install" data-magnetic="0.22">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>Install the extension
+              </a>
+              <a class="btn btn-secondary btn-lg" href="online-scraper.html">Try the Online Scraper</a>
+            </div>
+            <p class="cta-note" data-reveal>Free monthly quota included. No credit card.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-chrome="footer"></div>
+  </body>
+</html>

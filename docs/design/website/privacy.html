@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy | MapsGrab</title>
+    <meta
+      name="description"
+      content="The MapsGrab Privacy Policy: what data the extension and website process, where it is stored, what our backend is used for, and the boundaries we follow."
+    />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <script src="assets/js/theme-boot.js"></script>
+    <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages/privacy.css" />
+    <script src="assets/js/chrome.js" defer></script>
+    <!-- privacy.js 必须早于 motion.js：先按 ?doc= 写入初始文档，再由 motion.js 逐词拆分标题 -->
+    <script src="assets/js/pages/privacy.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/site.js" defer></script>
+  </head>
+  <body data-page="legal">
+    <div data-chrome="nav"></div>
+
+    <main>
+      <!-- ================================================================
+           ① Hero（紧凑）：面包屑 + 文档切换 + 标题 / 摘要 / 更新日期；右侧文档叠放插画
+           法务页以可读性为先：只有标题逐词入场与插画洗牌两处动效
+           ================================================================ -->
+      <section class="page-hero page-hero--compact legal-hero has-deco" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i></div>
+          <div class="bg-contours"></div>
+          <div class="bg-grid"></div>
+          <div class="noise"></div>
+        </div>
+
+        <div class="container page-hero-grid legal-hero-grid">
+          <div class="page-hero-copy">
+            <nav class="crumbs" aria-label="Breadcrumb" data-enter>
+              <a href="index.html">Home</a>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-right" /></svg>
+              <span>Legal</span>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-right" /></svg>
+              <span aria-current="page" data-doc-crumb>Privacy Policy</span>
+            </nav>
+
+            <div class="legal-switch" data-tabs data-doc-tabs data-enter style="--enter-delay: 80ms">
+              <div class="seg" role="tablist" aria-label="Legal documents">
+                <span class="seg-thumb" aria-hidden="true"></span>
+                <button class="seg-btn" type="button" role="tab" id="tab-privacy" aria-controls="doc-privacy" aria-selected="true" data-tab="privacy">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-shield" /></svg>Privacy Policy
+                </button>
+                <button class="seg-btn" type="button" role="tab" id="tab-terms" aria-controls="doc-terms" aria-selected="false" data-tab="terms">
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-book" /></svg>Terms of Service
+                </button>
+              </div>
+            </div>
+
+            <h1 class="h1 legal-title" data-split="static" style="--split-delay: 160ms" data-doc-title>
+              <span class="w"><span class="wi" style="--i: 0">Privacy</span></span>
+              <span class="w"><span class="wi" style="--i: 1">Policy</span></span>
+            </h1>
+            <p class="lead legal-intro" data-enter style="--enter-delay: 240ms" data-doc-intro>
+              This policy explains what data MapsGrab handles, where it is stored, and what reaches our servers. The short version: the
+              extension works on publicly displayed data and keeps results in your browser, our backend only powers configuration,
+              quotas, optional enrichment, and minimal usage logs, and we run no ads and no third-party trackers in the extension.
+            </p>
+            <div class="page-hero-meta legal-meta" data-enter style="--enter-delay: 320ms" data-doc-meta>
+              <span>
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-calendar" /></svg>Last updated
+                <time datetime="2026-08-31" data-doc-updated>August 31, 2026</time>
+              </span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-clock" /></svg><span data-doc-read>3 min read</span></span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list" /></svg><span data-doc-count>9 sections</span></span>
+            </div>
+          </div>
+
+          <!-- 文档叠放：当前文档在前，切换时另一张洗牌到前面；内容取自真实小节标题 -->
+          <div class="page-hero-visual legal-visual" aria-hidden="true" data-reveal="zoom" data-reveal-delay="260">
+            <div class="doc-stack" data-doc-stack data-tilt="5">
+              <div class="doc-sheet doc-sheet--terms" data-sheet="terms">
+                <div class="sheet-top">
+                  <span class="sheet-icon"><svg class="icon"><use href="assets/img/icons.svg#i-book" /></svg></span>
+                  <span class="sheet-heading"><b>Terms of Service</b><span class="mono">MapsGrab · 9 sections</span></span>
+                </div>
+                <ol class="sheet-toc">
+                  <li style="--w: 86%"><span class="mono">01</span><b>Acceptance of terms</b><i></i></li>
+                  <li style="--w: 72%"><span class="mono">02</span><b>What the service does</b><i></i></li>
+                  <li style="--w: 90%"><span class="mono">03</span><b>Publicly available data</b><i></i></li>
+                  <li style="--w: 64%"><span class="mono">04</span><b>Your responsibility</b><i></i></li>
+                  <li style="--w: 80%"><span class="mono">05</span><b>Accounts and quotas</b><i></i></li>
+                  <li style="--w: 58%"><span class="mono">06</span><b>Purchases and subscriptions</b><i></i></li>
+                </ol>
+                <div class="sheet-foot">
+                  <span class="mono">Last updated</span><b class="mono">2026-08-31</b>
+                  <span class="sheet-seal"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg></span>
+                </div>
+                <span class="sheet-scan"></span>
+              </div>
+              <div class="doc-sheet doc-sheet--privacy is-front" data-sheet="privacy">
+                <div class="sheet-top">
+                  <span class="sheet-icon"><svg class="icon"><use href="assets/img/icons.svg#i-shield" /></svg></span>
+                  <span class="sheet-heading"><b>Privacy Policy</b><span class="mono">MapsGrab · 9 sections</span></span>
+                </div>
+                <ol class="sheet-toc">
+                  <li style="--w: 82%"><span class="mono">01</span><b>Data the extension processes</b><i></i></li>
+                  <li style="--w: 66%"><span class="mono">02</span><b>Where data is stored</b><i></i></li>
+                  <li style="--w: 88%"><span class="mono">03</span><b>What our backend processes</b><i></i></li>
+                  <li style="--w: 60%"><span class="mono">04</span><b>Google Drive and HubSpot</b><i></i></li>
+                  <li style="--w: 76%"><span class="mono">05</span><b>Website analytics</b><i></i></li>
+                  <li style="--w: 54%"><span class="mono">06</span><b>What we never do</b><i></i></li>
+                </ol>
+                <div class="sheet-foot">
+                  <span class="mono">Last updated</span><b class="mono">2026-08-31</b>
+                  <span class="sheet-seal"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg></span>
+                </div>
+                <span class="sheet-scan"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ② 正文：两份文档各占一个 tabpanel（目录 + 要点速览 + 正文 + 下一篇）
+           正文逐字取自 website/src/legal/legalContent.ts，不改写；
+           同页并存两份文档时 Terms 的 Contact 小节 id 加 -terms 后缀避免冲突
+           ================================================================ -->
+      <section class="legal-body" aria-label="Document">
+        <div class="container">
+          <div
+            class="legal-doc"
+            id="doc-privacy"
+            role="tabpanel"
+            aria-labelledby="tab-privacy"
+            data-doc="privacy"
+            data-doc-title="Privacy Policy"
+            data-doc-seo-title="Privacy Policy | MapsGrab"
+            data-doc-description="The MapsGrab Privacy Policy: what data the extension and website process, where it is stored, what our backend is used for, and the boundaries we follow."
+            data-doc-intro="This policy explains what data MapsGrab handles, where it is stored, and what reaches our servers. The short version: the extension works on publicly displayed data and keeps results in your browser, our backend only powers configuration, quotas, optional enrichment, and minimal usage logs, and we run no ads and no third-party trackers in the extension."
+            data-doc-updated="August 31, 2026"
+            data-doc-updated-iso="2026-08-31"
+          >
+            <div class="doc-layout legal-layout">
+              <aside class="legal-aside">
+                <nav class="toc legal-toc" data-toc aria-label="Privacy Policy sections">
+                  <span class="toc-title">On this page</span>
+                  <a href="#data-the-extension-processes"><span class="toc-num" aria-hidden="true">01</span>Data the extension processes</a>
+                  <a href="#where-data-is-stored"><span class="toc-num" aria-hidden="true">02</span>Where data is stored</a>
+                  <a href="#what-our-backend-processes"><span class="toc-num" aria-hidden="true">03</span>What our backend processes</a>
+                  <a href="#optional-google-drive-and-hubspot-integrations"><span class="toc-num" aria-hidden="true">04</span>Optional Google Drive and HubSpot integrations</a>
+                  <a href="#website-analytics"><span class="toc-num" aria-hidden="true">05</span>Website analytics</a>
+                  <a href="#what-we-never-do"><span class="toc-num" aria-hidden="true">06</span>What we never do</a>
+                  <a href="#data-removal"><span class="toc-num" aria-hidden="true">07</span>Data removal</a>
+                  <a href="#changes-to-this-policy"><span class="toc-num" aria-hidden="true">08</span>Changes to this policy</a>
+                  <a href="#contact"><span class="toc-num" aria-hidden="true">09</span>Contact</a>
+                </nav>
+                <div class="legal-help">
+                  <span class="legal-help-label">Questions about this policy?</span>
+                  <button class="legal-email" type="button" data-copy="support@mapsgrab.com" aria-label="Copy support@mapsgrab.com">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>
+                    <span class="mono">support@mapsgrab.com</span>
+                    <svg class="icon icon-copy" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                  </button>
+                  <a class="link-arrow" href="about.html#contact">
+                    Contact support<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+                  </a>
+                </div>
+              </aside>
+
+              <div class="legal-main">
+                <!-- 要点速览：只概括正文明确写了的内容，每张卡跳到对应小节 -->
+                <div class="legal-glance" data-stagger="70" data-spotlight-group>
+                  <div class="glance-head" data-reveal>
+                    <span class="kicker">At a glance</span>
+                    <span class="glance-note">A summary of the full text below.</span>
+                  </div>
+                  <a class="glance-card card card-link" href="#where-data-is-stored" data-spotlight data-reveal>
+                    <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg></span>
+                    <span class="glance-text">
+                      <b>Results stay in your browser</b>
+                      <span>Settings, extraction results and batch task state are stored locally.</span>
+                    </span>
+                    <svg class="icon glance-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-down" /></svg>
+                  </a>
+                  <a class="glance-card card card-link" href="#what-our-backend-processes" data-spotlight data-reveal>
+                    <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-database" /></svg></span>
+                    <span class="glance-text">
+                      <b>Four backend purposes</b>
+                      <span>Remote configuration, account and quotas, optional enrichment and minimal usage logs.</span>
+                    </span>
+                    <svg class="icon glance-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-down" /></svg>
+                  </a>
+                  <a class="glance-card card card-link" href="#what-we-never-do" data-spotlight data-reveal>
+                    <span class="icon-tile icon-tile--pin"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-shield" /></svg></span>
+                    <span class="glance-text">
+                      <b>No ads, no trackers</b>
+                      <span>No third-party trackers in the extension, and no selling or renting of personal data.</span>
+                    </span>
+                    <svg class="icon glance-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-down" /></svg>
+                  </a>
+                  <a class="glance-card card card-link" href="#data-removal" data-spotlight data-reveal>
+                    <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg></span>
+                    <span class="glance-text">
+                      <b>Data removal</b>
+                      <span>Removing the extension deletes local data; email us to delete backend account data.</span>
+                    </span>
+                    <svg class="icon glance-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-down" /></svg>
+                  </a>
+                </div>
+
+                <article class="prose legal-prose">
+                  <section class="legal-section" id="data-the-extension-processes" aria-labelledby="data-the-extension-processes-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">01</span>
+                      <h2 id="data-the-extension-processes-h">Data the extension processes</h2>
+                      <a class="h-anchor" href="#data-the-extension-processes" aria-label="Copy link to “Data the extension processes”" data-anchor-copy>#</a>
+                    </header>
+                    <p>The extension handles the following categories of data:</p>
+                    <ul class="legal-list">
+                      <li>Public business data — information displayed on the Google Maps pages you visit (name, address, phone, website, rating, reviews, photos, etc.) while you use the extraction features.</li>
+                      <li>Your settings — preferences you configure (export format, field selection, automation switches, interface language).</li>
+                      <li>Technical and interaction data — minimal usage events (feature usage counters, error messages) used to keep the extension working against Google page changes.</li>
+                      <li>Account identifiers we issue — an anonymous device identifier and, if you sign in, your account email and plan or quota status.</li>
+                    </ul>
+                  </section>
+
+                  <section class="legal-section" id="where-data-is-stored" aria-labelledby="where-data-is-stored-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">02</span>
+                      <h2 id="where-data-is-stored-h">Where data is stored</h2>
+                      <a class="h-anchor" href="#where-data-is-stored" aria-label="Copy link to “Where data is stored”" data-anchor-copy>#</a>
+                    </header>
+                    <p>Settings, extraction results, and batch task state are stored locally in your browser (extension local storage and IndexedDB). They never leave your device unless you trigger an export or one of the optional integrations described below.</p>
+                    <p>Google Drive and HubSpot OAuth tokens, if you connect them, are also stored only in your browser.</p>
+                  </section>
+
+                  <section class="legal-section" id="what-our-backend-processes" aria-labelledby="what-our-backend-processes-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">03</span>
+                      <h2 id="what-our-backend-processes-h">What our backend processes</h2>
+                      <a class="h-anchor" href="#what-our-backend-processes" aria-label="Copy link to “What our backend processes”" data-anchor-copy>#</a>
+                    </header>
+                    <p>The extension and this website contact our own servers for four purposes:</p>
+                    <ul class="legal-list">
+                      <li>Remote configuration — page-structure presets that keep extraction working when Google changes its pages.</li>
+                      <li>Account and quota services — sign-in, plan status, and monthly usage accounting.</li>
+                      <li>Email and social media enrichment — looking up publicly listed contact details on collected business websites when the feature is used.</li>
+                      <li>Usage logging — minimal records of feature usage and errors used to maintain and improve the service.</li>
+                    </ul>
+                  </section>
+
+                  <section class="legal-section" id="optional-google-drive-and-hubspot-integrations" aria-labelledby="optional-google-drive-and-hubspot-integrations-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">04</span>
+                      <h2 id="optional-google-drive-and-hubspot-integrations-h">Optional Google Drive and HubSpot integrations</h2>
+                      <a class="h-anchor" href="#optional-google-drive-and-hubspot-integrations" aria-label="Copy link to “Optional Google Drive and HubSpot integrations”" data-anchor-copy>#</a>
+                    </header>
+                    <p>Only if you explicitly connect them in settings, exported data is uploaded to your own Google Drive or synced to your own HubSpot account. These integrations use your authorization, act on your behalf, and can be revoked at any time from the extension settings or from your Google / HubSpot account.</p>
+                  </section>
+
+                  <section class="legal-section" id="website-analytics" aria-labelledby="website-analytics-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">05</span>
+                      <h2 id="website-analytics-h">Website analytics</h2>
+                      <a class="h-anchor" href="#website-analytics" aria-label="Copy link to “Website analytics”" data-anchor-copy>#</a>
+                    </header>
+                    <p>This website uses Google Analytics 4 (GA4) to measure aggregate page usage. GA4 is the only third-party analytics we use, and it runs on this website only — the extension itself contains no analytics.</p>
+                  </section>
+
+                  <section class="legal-section" id="what-we-never-do" aria-labelledby="what-we-never-do-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">06</span>
+                      <h2 id="what-we-never-do-h">What we never do</h2>
+                      <a class="h-anchor" href="#what-we-never-do" aria-label="Copy link to “What we never do”" data-anchor-copy>#</a>
+                    </header>
+                    <p>These boundaries hold across the extension and the website:</p>
+                    <ul class="legal-list legal-list--x">
+                      <li>No ads.</li>
+                      <li>No third-party trackers in the extension.</li>
+                      <li>No selling or renting of personal data.</li>
+                      <li>No collection of your browsing history beyond the Google Maps pages you extract from.</li>
+                    </ul>
+                  </section>
+
+                  <section class="legal-section" id="data-removal" aria-labelledby="data-removal-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">07</span>
+                      <h2 id="data-removal-h">Data removal</h2>
+                      <a class="h-anchor" href="#data-removal" aria-label="Copy link to “Data removal”" data-anchor-copy>#</a>
+                    </header>
+                    <p>Removing the extension deletes all locally stored data. If you want your backend account data deleted, contact us at <a href="mailto:support@mapsgrab.com">support@mapsgrab.com</a> and we will remove it.</p>
+                  </section>
+
+                  <section class="legal-section" id="changes-to-this-policy" aria-labelledby="changes-to-this-policy-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">08</span>
+                      <h2 id="changes-to-this-policy-h">Changes to this policy</h2>
+                      <a class="h-anchor" href="#changes-to-this-policy" aria-label="Copy link to “Changes to this policy”" data-anchor-copy>#</a>
+                    </header>
+                    <p>We update this policy when the service changes. The date above reflects the latest revision, and material changes will be announced on this website.</p>
+                  </section>
+
+                  <section class="legal-section" id="contact" aria-labelledby="contact-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">09</span>
+                      <h2 id="contact-h">Contact</h2>
+                      <a class="h-anchor" href="#contact" aria-label="Copy link to “Contact”" data-anchor-copy>#</a>
+                    </header>
+                    <p>Questions or requests about privacy can be sent to <a href="mailto:support@mapsgrab.com">support@mapsgrab.com</a>.</p>
+                  </section>
+                </article>
+
+                <aside class="legal-tbd" aria-label="Prototype note">
+                  <span class="badge badge--warn">TBD</span>
+                  <p>
+                    <b>Not covered yet:</b> the Online Scraper (cloud runs), the Scraper / Reviews / Photos API and the MCP server. The
+                    text above describes the extension, this website and the free web tools.
+                  </p>
+                </aside>
+
+                <a class="legal-next card card-link" href="privacy.html?doc=terms" data-doc-switch="terms">
+                  <span class="legal-next-label mono">Next document</span>
+                  <span class="legal-next-title">Terms of Service</span>
+                  <span class="legal-next-desc">
+                    Acceptable use, user responsibility for collected data, purchases, disclaimers, and how to contact us.
+                  </span>
+                  <span class="legal-next-go"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="legal-doc"
+            id="doc-terms"
+            role="tabpanel"
+            aria-labelledby="tab-terms"
+            hidden
+            data-doc="terms"
+            data-doc-title="Terms of Service"
+            data-doc-seo-title="Terms of Service | MapsGrab"
+            data-doc-description="The MapsGrab Terms of Service: acceptable use, user responsibility for collected data, purchases, disclaimers, and how to contact us."
+            data-doc-intro="These Terms govern your use of MapsGrab: the browser extension, this website, and the free web tools. Please read them before using the service."
+            data-doc-updated="August 31, 2026"
+            data-doc-updated-iso="2026-08-31"
+          >
+            <div class="doc-layout legal-layout">
+              <aside class="legal-aside">
+                <nav class="toc legal-toc" data-toc aria-label="Terms of Service sections">
+                  <span class="toc-title">On this page</span>
+                  <a href="#acceptance-of-terms"><span class="toc-num" aria-hidden="true">01</span>Acceptance of terms</a>
+                  <a href="#what-the-service-does"><span class="toc-num" aria-hidden="true">02</span>What the service does</a>
+                  <a href="#publicly-available-data"><span class="toc-num" aria-hidden="true">03</span>Publicly available data</a>
+                  <a href="#your-responsibility"><span class="toc-num" aria-hidden="true">04</span>Your responsibility</a>
+                  <a href="#accounts-and-quotas"><span class="toc-num" aria-hidden="true">05</span>Accounts and quotas</a>
+                  <a href="#purchases-and-subscriptions"><span class="toc-num" aria-hidden="true">06</span>Purchases and subscriptions</a>
+                  <a href="#the-service-is-provided-as-is"><span class="toc-num" aria-hidden="true">07</span>The service is provided as is</a>
+                  <a href="#limitation-of-liability"><span class="toc-num" aria-hidden="true">08</span>Limitation of liability</a>
+                  <a href="#contact-terms"><span class="toc-num" aria-hidden="true">09</span>Contact</a>
+                </nav>
+                <div class="legal-help">
+                  <span class="legal-help-label">Questions about these Terms?</span>
+                  <button class="legal-email" type="button" data-copy="support@mapsgrab.com" aria-label="Copy support@mapsgrab.com">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>
+                    <span class="mono">support@mapsgrab.com</span>
+                    <svg class="icon icon-copy" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                  </button>
+                  <a class="link-arrow" href="about.html#contact">
+                    Contact support<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+                  </a>
+                </div>
+              </aside>
+
+              <div class="legal-main">
+                <div class="legal-glance" data-stagger="70" data-spotlight-group>
+                  <div class="glance-head" data-reveal>
+                    <span class="kicker">At a glance</span>
+                    <span class="glance-note">A summary of the full text below.</span>
+                  </div>
+                  <a class="glance-card card card-link" href="#publicly-available-data" data-spotlight data-reveal>
+                    <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-eye" /></svg></span>
+                    <span class="glance-text">
+                      <b>Public data only</b>
+                      <span>The service works only with information publicly shown on the pages you browse.</span>
+                    </span>
+                    <svg class="icon glance-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-down" /></svg>
+                  </a>
+                  <a class="glance-card card card-link" href="#your-responsibility" data-spotlight data-reveal>
+                    <span class="icon-tile icon-tile--pin"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-user" /></svg></span>
+                    <span class="glance-text">
+                      <b>Your use, your responsibility</b>
+                      <span>You decide what to collect and how to use it — within the laws that apply to you.</span>
+                    </span>
+                    <svg class="icon glance-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-down" /></svg>
+                  </a>
+                  <a class="glance-card card card-link" href="#accounts-and-quotas" data-spotlight data-reveal>
+                    <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg></span>
+                    <span class="glance-text">
+                      <b>No account needed to start</b>
+                      <span>The extension works without an account within a free monthly quota.</span>
+                    </span>
+                    <svg class="icon glance-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-down" /></svg>
+                  </a>
+                  <a class="glance-card card card-link" href="#purchases-and-subscriptions" data-spotlight data-reveal>
+                    <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg></span>
+                    <span class="glance-text">
+                      <b>Cancel anytime</b>
+                      <span>Subscriptions renew until canceled; cancellation stops future renewals.</span>
+                    </span>
+                    <svg class="icon glance-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-down" /></svg>
+                  </a>
+                </div>
+
+                <article class="prose legal-prose">
+                  <section class="legal-section" id="acceptance-of-terms" aria-labelledby="acceptance-of-terms-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">01</span>
+                      <h2 id="acceptance-of-terms-h">Acceptance of terms</h2>
+                      <a class="h-anchor" href="#acceptance-of-terms" aria-label="Copy link to “Acceptance of terms”" data-anchor-copy>#</a>
+                    </header>
+                    <p>By accessing or using MapsGrab, you agree to these Terms. If you do not agree with them, do not install the extension or use the website and tools.</p>
+                  </section>
+
+                  <section class="legal-section" id="what-the-service-does" aria-labelledby="what-the-service-does-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">02</span>
+                      <h2 id="what-the-service-does-h">What the service does</h2>
+                      <a class="h-anchor" href="#what-the-service-does" aria-label="Copy link to “What the service does”" data-anchor-copy>#</a>
+                    </header>
+                    <p>MapsGrab helps you collect information that is publicly displayed on Google Maps pages you visit — business details, reviews, photos, and related contact information — and export it. The service consists of a browser extension for Microsoft Edge and Firefox, this website, and free web tools that run in your browser.</p>
+                  </section>
+
+                  <section class="legal-section" id="publicly-available-data" aria-labelledby="publicly-available-data-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">03</span>
+                      <h2 id="publicly-available-data-h">Publicly available data</h2>
+                      <a class="h-anchor" href="#publicly-available-data" aria-label="Copy link to “Publicly available data”" data-anchor-copy>#</a>
+                    </header>
+                    <p>The service is designed to work only with information that is publicly shown on the pages you browse. It does not access private accounts, gated content, or data that requires special access beyond what any visitor can see.</p>
+                  </section>
+
+                  <section class="legal-section" id="your-responsibility" aria-labelledby="your-responsibility-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">04</span>
+                      <h2 id="your-responsibility-h">Your responsibility</h2>
+                      <a class="h-anchor" href="#your-responsibility" aria-label="Copy link to “Your responsibility”" data-anchor-copy>#</a>
+                    </header>
+                    <p>You decide what to collect and how to use it, and you are responsible for that use. When you use collected information, comply with the laws that apply to you and to your purpose.</p>
+                    <p>In particular, you agree not to:</p>
+                    <ul class="legal-list legal-list--x">
+                      <li>Use the service for any unlawful activity or in violation of third-party rights.</li>
+                      <li>Re-identify individuals or build profiles of private persons from collected business data.</li>
+                      <li>Use collected contact details for spam or unsolicited bulk messaging.</li>
+                      <li>Resell raw collected data as a competing data product without a separate agreement with us.</li>
+                      <li>Interfere with, overload, or attempt to disrupt the service or the platforms it works with.</li>
+                    </ul>
+                  </section>
+
+                  <section class="legal-section" id="accounts-and-quotas" aria-labelledby="accounts-and-quotas-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">05</span>
+                      <h2 id="accounts-and-quotas-h">Accounts and quotas</h2>
+                      <a class="h-anchor" href="#accounts-and-quotas" aria-label="Copy link to “Accounts and quotas”" data-anchor-copy>#</a>
+                    </header>
+                    <p>The extension works without an account within a free monthly quota. Some features — higher limits, purchases, cloud integrations — require an account. You are responsible for keeping your account credentials secure and for activity that happens under your account.</p>
+                  </section>
+
+                  <section class="legal-section" id="purchases-and-subscriptions" aria-labelledby="purchases-and-subscriptions-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">06</span>
+                      <h2 id="purchases-and-subscriptions-h">Purchases and subscriptions</h2>
+                      <a class="h-anchor" href="#purchases-and-subscriptions" aria-label="Copy link to “Purchases and subscriptions”" data-anchor-copy>#</a>
+                    </header>
+                    <p>Paid plans are described on the Pricing page. Prices, quotas, and billing periods are shown before you buy, and purchases are handled through the payment providers offered at checkout. Subscription plans renew automatically until canceled, and you can cancel at any time; cancellation stops future renewals.</p>
+                  </section>
+
+                  <section class="legal-section" id="the-service-is-provided-as-is" aria-labelledby="the-service-is-provided-as-is-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">07</span>
+                      <h2 id="the-service-is-provided-as-is-h">The service is provided as is</h2>
+                      <a class="h-anchor" href="#the-service-is-provided-as-is" aria-label="Copy link to “The service is provided as is”" data-anchor-copy>#</a>
+                    </header>
+                    <p>The service is provided "as is" and "as available". Platforms change frequently, and collection features can stop working partially or entirely at any time. MapsGrab makes no warranties, express or implied, about uninterrupted availability, completeness of collected data, or fitness for a particular purpose.</p>
+                    <p>We may change, suspend, or discontinue any part of the service, and we may update these Terms. When the changes are material, we will announce them on this website. Continued use after changes take effect means you accept the updated Terms.</p>
+                  </section>
+
+                  <section class="legal-section" id="limitation-of-liability" aria-labelledby="limitation-of-liability-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">08</span>
+                      <h2 id="limitation-of-liability-h">Limitation of liability</h2>
+                      <a class="h-anchor" href="#limitation-of-liability" aria-label="Copy link to “Limitation of liability”" data-anchor-copy>#</a>
+                    </header>
+                    <p>To the maximum extent permitted by law, MapsGrab and its operators are not liable for indirect, incidental, special, or consequential damages — including lost profits or data — arising from your use of or inability to use the service.</p>
+                  </section>
+
+                  <section class="legal-section" id="contact-terms" aria-labelledby="contact-terms-h">
+                    <header class="legal-head">
+                      <span class="legal-num" aria-hidden="true">09</span>
+                      <h2 id="contact-terms-h">Contact</h2>
+                      <a class="h-anchor" href="#contact-terms" aria-label="Copy link to “Contact”" data-anchor-copy>#</a>
+                    </header>
+                    <p>Questions about these Terms can be sent to <a href="mailto:support@mapsgrab.com">support@mapsgrab.com</a>.</p>
+                  </section>
+                </article>
+
+                <aside class="legal-tbd" aria-label="Prototype note">
+                  <span class="badge badge--warn">TBD</span>
+                  <p>
+                    <b>Not covered yet:</b> the Online Scraper (cloud runs), the Scraper / Reviews / Photos API and the MCP server. The
+                    text above describes the extension, this website and the free web tools.
+                  </p>
+                </aside>
+
+                <a class="legal-next card card-link" href="privacy.html" data-doc-switch="privacy">
+                  <span class="legal-next-label mono">Next document</span>
+                  <span class="legal-next-title">Privacy Policy</span>
+                  <span class="legal-next-desc">
+                    What data the extension and website process, where it is stored, what our backend is used for, and the boundaries we
+                    follow.
+                  </span>
+                  <span class="legal-next-go"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-chrome="footer"></div>
+  </body>
+</html>

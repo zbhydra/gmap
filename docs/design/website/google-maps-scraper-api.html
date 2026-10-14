@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Google Maps Scraper API — Business Data in JSON | MapsGrab</title>
+    <meta
+      name="description"
+      content="The MapsGrab Scraper API returns Google Maps business data as clean JSON: names, phones, ratings, hours, coordinates, Place IDs, emails, and social profiles — powered by the same engine as the extension."
+    />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <script src="assets/js/theme-boot.js"></script>
+    <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages/api.css" />
+    <script src="assets/js/chrome.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/site.js" defer></script>
+    <script src="assets/js/pages/api.js" defer></script>
+  </head>
+  <!--
+    API 落地页模板：一页承载三个真实路由
+      /google-maps-scraper-api/          → 默认（Scraper API）
+      /google-maps-reviews-scraper-api/  → ?api=reviews
+      /google-maps-photos-api/           → ?api=photos（014：Photos 待实现，差距由主线程写入 README 交 hydra 裁决；原型按现网文案呈现）
+    静态 HTML 是 Scraper API 版本（无 JS 可读）；api.js 按 ?api= 替换带 data-v 的文案、代码台与参考表。
+    端点路径为示意（POST + JSON body + Bearer），参数与响应顶层键按 014 B2 口径：Search q / pages / hl / ll → places（pages 为抓取页数）；
+    Reviews fid / sort_by / cursor → reviews + next_cursor；Photos fid / page → photos[{url}]（字段取自 tech-引擎Provider层 的 DTO）。
+  -->
+  <body data-page="api">
+    <div data-chrome="nav"></div>
+
+    <main>
+      <!-- ================================================================
+           ① Hero：端点切换 + 标题 + 代码台（请求打字 → 响应逐行流入）
+           ================================================================ -->
+      <section class="page-hero api-hero has-deco" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i></div>
+          <div class="bg-contours"></div>
+          <div class="bg-grid"></div>
+          <div class="noise"></div>
+        </div>
+
+        <div class="container page-hero-grid">
+          <div class="page-hero-copy">
+            <nav class="seg api-switch" aria-label="API endpoints" data-enter data-api-switch>
+              <span class="seg-thumb" aria-hidden="true"></span>
+              <a class="seg-btn" href="google-maps-scraper-api.html" data-api="search" aria-current="page">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-database" /></svg>Scraper
+              </a>
+              <a class="seg-btn" href="google-maps-scraper-api.html?api=reviews" data-api="reviews">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg>Reviews
+              </a>
+              <a class="seg-btn" href="google-maps-scraper-api.html?api=photos" data-api="photos">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-image" /></svg>Photos
+              </a>
+            </nav>
+
+            <h1 class="h1 api-title" data-split="static" style="--split-delay: 90ms" data-v="title">
+              <span class="w"><span class="wi" style="--i: 0">Google</span></span>
+              <span class="w"><span class="wi" style="--i: 1">Maps</span></span>
+              <span class="w"><span class="wi" style="--i: 2"><span class="accent text-grad">Scraper</span></span></span>
+              <span class="w"><span class="wi" style="--i: 3">API</span></span>
+            </h1>
+
+            <p class="lead" data-enter style="--enter-delay: 180ms" data-v="lead">
+              Query Google Maps business data over a simple HTTP API and get clean JSON back: name, address, phone, website,
+              rating, opening hours, coordinates, Place ID, plus email and social enrichment.
+            </p>
+
+            <div class="page-hero-actions" data-enter style="--enter-delay: 270ms">
+              <a class="btn btn-primary btn-lg" href="#" data-magnetic="0.22" data-proto-note="Get API key opens Dashboard → API. That workspace currently shows the API as not yet open — keys and calls ship with the 014 API product.">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg>Get API key
+              </a>
+              <a class="btn btn-secondary btn-lg" href="pricing.html#api">View pricing</a>
+            </div>
+
+            <div class="page-hero-meta" data-enter style="--enter-delay: 360ms">
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>20 free requests / month</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>One key for every endpoint</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>JSON over HTTPS</span>
+            </div>
+          </div>
+
+          <div class="page-hero-visual api-stage" data-reveal="right" data-reveal-onload="520">
+            <div class="api-console codewin" data-console>
+              <div class="codewin-bar">
+                <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                <span class="api-endpoint" data-c-endpoint><b>POST</b>/v1/search</span>
+                <div class="codewin-tabs" role="tablist" aria-label="Request language" data-c-langs>
+                  <button class="codewin-tab" type="button" role="tab" aria-selected="true" data-lang="curl">cURL</button>
+                  <button class="codewin-tab" type="button" role="tab" aria-selected="false" data-lang="python">Python</button>
+                  <button class="codewin-tab" type="button" role="tab" aria-selected="false" data-lang="node">Node.js</button>
+                </div>
+                <button class="codewin-copy" type="button" aria-label="Copy request" data-copy data-copy-target="[data-c-request]">
+                  <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
+                </button>
+              </div>
+              <pre class="api-req" data-c-request>curl https://api.mapsgrab.com/v1/search \
+  -H "Authorization: Bearer $MAPSGRAB_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"q": "coffee shop in Portland", "hl": "en"}'</pre>
+              <div class="codewin-label api-status" data-c-statusbar>
+                <span class="api-status-dot"></span>
+                <span data-c-status>Response · 200 OK · application/json</span>
+                <button class="api-replay" type="button" aria-label="Replay request" data-c-replay>
+                  <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>
+                </button>
+              </div>
+              <pre class="api-res" data-c-response tabindex="0" aria-label="Example response"></pre>
+            </div>
+
+            <div class="float-chip api-fc api-fc--a floaty" style="--float-t: 7s" data-parallax="0.05" aria-hidden="true">
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-table" /></svg></span>
+              <span><small data-v="chipA-label">Per place</small><span data-v="chipA">36 data fields</span></span>
+            </div>
+            <div class="float-chip api-fc api-fc--b floaty" style="--float-t: 8s; --float-d: -3s" data-parallax="-0.05" aria-hidden="true">
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-layers" /></svg></span>
+              <span><small data-v="chipB-label">Per page</small><span data-v="chipB">Up to 20 places</span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ② 三个端点（互链）+ MCP 横幅
+           ================================================================ -->
+      <section class="section api-endpoints" id="endpoints">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Endpoints</span>
+            <h2 class="h2" data-split>One key. <span class="accent">Three</span> endpoints.</h2>
+            <p class="lead" data-reveal>
+              Search for places, then pass each result's <code class="api-code">fid</code> to the next endpoint. Every response is
+              structured JSON, and one API key covers them all.
+            </p>
+          </header>
+
+          <div class="api-ep-grid" data-stagger="90" data-spotlight-group>
+            <a class="api-ep card card-link card--lift" href="google-maps-scraper-api.html" data-ep="search" data-spotlight data-reveal>
+              <div class="api-ep-top">
+                <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-database" /></svg></span>
+                <span class="badge api-ep-here">You're here</span>
+              </div>
+              <code class="api-ep-path"><b>POST</b>/v1/search</code>
+              <h3>Scraper API</h3>
+              <p>Businesses for any keyword and location, with the 36-column schema for every place.</p>
+              <div class="api-ep-params" aria-label="Parameters">
+                <span>q</span><span>pages</span><span>hl</span><span>ll</span>
+              </div>
+              <span class="link-arrow">Explore the Scraper API <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+            </a>
+
+            <a class="api-ep card card-link card--lift" href="google-maps-scraper-api.html?api=reviews" data-ep="reviews" data-spotlight data-reveal>
+              <div class="api-ep-top">
+                <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg></span>
+                <span class="badge api-ep-here">You're here</span>
+              </div>
+              <code class="api-ep-path"><b>POST</b>/v1/reviews</code>
+              <h3>Reviews API</h3>
+              <p>Every public review for a business, sorted your way and paged with a cursor.</p>
+              <div class="api-ep-params" aria-label="Parameters">
+                <span>fid</span><span>sort_by</span><span>cursor</span>
+              </div>
+              <span class="link-arrow">Explore the Reviews API <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+            </a>
+
+            <a class="api-ep card card-link card--lift" href="google-maps-scraper-api.html?api=photos" data-ep="photos" data-spotlight data-reveal>
+              <div class="api-ep-top">
+                <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-image" /></svg></span>
+                <span class="badge api-ep-here">You're here</span>
+              </div>
+              <code class="api-ep-path"><b>POST</b>/v1/photos</code>
+              <h3>Photos API</h3>
+              <p>Public album photos per business as ready-to-use URL lists, with Street View filtered out.</p>
+              <div class="api-ep-params" aria-label="Parameters">
+                <span>fid</span><span>page</span>
+              </div>
+              <span class="link-arrow">Explore the Photos API <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+            </a>
+          </div>
+
+          <a class="api-mcp card card-link" href="google-maps-scraper-mcp.html" data-reveal>
+            <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-bot" /></svg></span>
+            <span class="api-mcp-text">
+              <b>Building with AI agents?</b>
+              <span>The same key powers the MapsGrab MCP server — search, reviews and photos as tools for Claude Code, Cursor, VS Code and Codex.</span>
+            </span>
+            <span class="link-arrow api-mcp-go">Explore MCP <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+          </a>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ③ 能力清单（按变体替换）
+           ================================================================ -->
+      <section class="section band api-caps" id="capabilities">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Capabilities</span>
+            <h2 class="h2" data-split data-v="capsTitle">What the <span class="accent">Scraper API</span> returns</h2>
+            <p class="lead" data-reveal data-v="capsLead">
+              One request per keyword and location, answered with the same structured fields the extension exports — built for
+              your own applications.
+            </p>
+          </header>
+
+          <div class="feature-grid" data-stagger="70" data-spotlight-group data-caps>
+            <article class="feature card card--lift" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg></span>
+              <h3>Search by keyword and location</h3>
+              <p>Send a keyword with an optional location bias and receive the businesses a Google Maps search would show.</p>
+            </article>
+            <article class="feature card card--lift" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-table" /></svg></span>
+              <h3>The 36-column business schema</h3>
+              <p>Name, categories, full address, phone, website, rating and review count, opening hours, latitude / longitude, Place ID, CID, and more.</p>
+            </article>
+            <article class="feature card card--lift" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg></span>
+              <h3>Email and social enrichment</h3>
+              <p>Responses include email addresses and social profiles found on each business website — no separate enrichment step.</p>
+            </article>
+            <article class="feature card card--lift" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-braces" /></svg></span>
+              <h3>Clean JSON responses</h3>
+              <p>Structured, predictable field names ready for your CRM, spreadsheet pipeline, or backend — no HTML to parse.</p>
+            </article>
+            <article class="feature card card--lift" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-shield" /></svg></span>
+              <h3>Public data only</h3>
+              <p>The API returns only what is publicly displayed on Google Maps — the same details any visitor can read.</p>
+            </article>
+            <article class="feature card card--lift" data-spotlight data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg></span>
+              <h3>Same engine as the extension</h3>
+              <p>The API is backed by the MapsGrab extraction engine, tuned against the current Google Maps interface and updated remotely when Google changes.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ④ 标志性动画：fid 串联端点（恒暗主题岛）
+           ================================================================ -->
+      <section class="section api-chain scheme-dark has-deco" id="chain" data-inview>
+        <div class="deco" aria-hidden="true">
+          <div class="bg-grid api-chain-grid"></div>
+          <div class="api-chain-glow"></div>
+          <div class="noise"></div>
+        </div>
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>Chain endpoints</span>
+            <h2 class="h2" data-split>One ID connects <span class="accent text-grad">every</span> endpoint</h2>
+            <p class="lead" data-reveal>
+              Every Search result carries its <code class="api-code">fid</code>. Pass it to Reviews and Photos to go from a list of
+              places to everything about each one.
+            </p>
+          </header>
+
+          <div class="chain" data-chain aria-label="Search returns a fid that the Reviews and Photos requests reuse" role="img">
+            <article class="chain-step chain-search" data-reveal>
+              <header class="chain-head">
+                <span class="chain-num">01</span>
+                <code class="chain-ep"><b>POST</b>/v1/search</code>
+              </header>
+              <div class="chain-req"><span class="tok-punc">{</span><span class="tok-key">"q"</span><span class="tok-punc">:</span> <span class="tok-str">"coffee shop in Portland"</span><span class="tok-punc">}</span></div>
+              <ul class="chain-list" role="list">
+                <li class="chain-place is-picked" style="--i: 0">
+                  <span class="chain-pin"></span>
+                  <span class="chain-name">Ember &amp; Oak Coffee<small><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg>4.7 · 1,284 reviews</small></span>
+                  <code class="chain-fid">0x5495…e0ab</code>
+                </li>
+                <li class="chain-place" style="--i: 1">
+                  <span class="chain-pin"></span>
+                  <span class="chain-name">Rose City Roasters<small><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg>4.6 · 892 reviews</small></span>
+                  <code class="chain-fid">0x5495…8f7a</code>
+                </li>
+                <li class="chain-place" style="--i: 2">
+                  <span class="chain-pin"></span>
+                  <span class="chain-name">Hawthorne Bean Co.<small><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg>4.8 · 2,106 reviews</small></span>
+                  <code class="chain-fid">0x5495…3a5c</code>
+                </li>
+              </ul>
+            </article>
+
+            <div class="chain-link chain-link--a" aria-hidden="true"><span class="chain-track"></span><span class="chain-token">fid</span></div>
+
+            <article class="chain-step chain-reviews" data-reveal>
+              <header class="chain-head">
+                <span class="chain-num">02</span>
+                <code class="chain-ep"><b>POST</b>/v1/reviews</code>
+              </header>
+              <div class="chain-req"><span class="tok-punc">{</span><span class="tok-key">"fid"</span><span class="tok-punc">:</span> <span class="tok-str chain-slot">"<span>0x5495…e0ab</span>"</span><span class="tok-punc">,</span> <span class="tok-key">"sort_by"</span><span class="tok-punc">:</span> <span class="tok-num">2</span><span class="tok-punc">}</span></div>
+              <ul class="chain-list" role="list">
+                <li class="chain-review" style="--i: 0">
+                  <span class="chain-stars" aria-label="5 stars">★★★★★</span>
+                  <p>“Best cortado on Division. Friendly crew.”</p>
+                  <small>Maya R. · 2 weeks ago</small>
+                  <span class="chain-reply"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg>Owner: Thanks Maya — see you soon!</span>
+                </li>
+                <li class="chain-review" style="--i: 1">
+                  <span class="chain-stars" aria-label="4 stars">★★★★<i>★</i></span>
+                  <p>“Great beans. Cozy but small — come early on weekends.”</p>
+                  <small>Daniel K. · 3 weeks ago</small>
+                </li>
+              </ul>
+            </article>
+
+            <div class="chain-link chain-link--b" aria-hidden="true"><span class="chain-track"></span><span class="chain-token">fid</span></div>
+
+            <article class="chain-step chain-photos" data-reveal>
+              <header class="chain-head">
+                <span class="chain-num">03</span>
+                <code class="chain-ep"><b>POST</b>/v1/photos</code>
+              </header>
+              <div class="chain-req"><span class="tok-punc">{</span><span class="tok-key">"fid"</span><span class="tok-punc">:</span> <span class="tok-str chain-slot">"<span>0x5495…e0ab</span>"</span><span class="tok-punc">}</span></div>
+              <div class="chain-photos-grid">
+                <i style="--h: 24; --i: 0"></i><i style="--h: 32; --i: 1"></i><i style="--h: 200; --i: 2"></i><i style="--h: 14; --i: 3"></i><i style="--h: 150; --i: 4"></i><i style="--h: 40; --i: 5"></i>
+              </div>
+              <p class="chain-caption"><code>{"url": "https://lh3.googleusercontent.com/p/…"}</code></p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑤ 参考：请求参数 + 响应字段（按变体替换）
+           ================================================================ -->
+      <section class="section api-ref" id="reference">
+        <div class="container">
+          <header class="section-head section-head--left api-ref-head" data-stagger="80">
+            <span class="kicker" data-reveal>Reference</span>
+            <h2 class="h2" data-split>Request in, <span class="accent">JSON</span> out</h2>
+            <p class="lead" data-reveal>
+              Authenticate with <code class="api-code">Authorization: Bearer YOUR_API_KEY</code> and send a JSON body. Fields that
+              can't be confirmed come back as <code class="api-code">null</code> — never as empty strings.
+            </p>
+          </header>
+
+          <div class="api-ref-grid" data-stagger="120">
+            <div class="api-ref-card card" data-reveal>
+              <div class="api-ref-top">
+                <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-send" /></svg></span>
+                <div>
+                  <h3>Request</h3>
+                  <code class="api-ep-path" data-ref-endpoint><b>POST</b>/v1/search</code>
+                </div>
+              </div>
+              <div class="dtable-wrap">
+                <table class="dtable api-params">
+                  <thead>
+                    <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                  </thead>
+                  <tbody data-ref-params>
+                    <tr><td><code>q</code><span class="badge api-req-badge">required</span></td><td class="cell-mono">string</td><td>What to search for — a business type plus a place, e.g. <code>coffee shop in Portland</code>.</td></tr>
+                    <tr><td><code>pages</code></td><td class="cell-mono">integer</td><td>Result pages to collect, 1–10. Each page adds up to 20 places, returned together in one response; collection stops early when a page has no new places. Default <code>1</code>.</td></tr>
+                    <tr><td><code>hl</code></td><td class="cell-mono">string</td><td>Language for names, categories and addresses, e.g. <code>en</code>.</td></tr>
+                    <tr><td><code>ll</code></td><td class="cell-mono">string</td><td>Optional location bias as <code>@lat,lng,zoom</code>. Tells Maps where to search — results aren't clipped to a radius.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="api-ref-card card" data-reveal>
+              <div class="api-ref-top">
+                <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-braces" /></svg></span>
+                <div>
+                  <h3>Response</h3>
+                  <code class="api-ep-path api-ep-path--muted" data-ref-shape>{ places: place[] }</code>
+                </div>
+              </div>
+              <nav class="seg api-groups" aria-label="Field groups" data-ref-groups>
+                <span class="seg-thumb" aria-hidden="true"></span>
+              </nav>
+              <div class="dtable-wrap api-fields-wrap">
+                <table class="dtable api-fields">
+                  <thead>
+                    <tr><th>Field</th><th>Type</th><th>Example</th></tr>
+                  </thead>
+                  <tbody data-ref-fields>
+                    <tr><td><code>name</code></td><td class="cell-mono">string</td><td class="cell-mono">"Ember &amp; Oak Coffee"</td></tr>
+                    <tr><td><code>categories</code></td><td class="cell-mono">string[]</td><td class="cell-mono">["Coffee shop", "Espresso bar"]</td></tr>
+                    <tr><td><code>place_id</code></td><td class="cell-mono">string</td><td class="cell-mono">"ChIJ8Qv2kSIKlVQRq-DRw_KltL4"</td></tr>
+                    <tr><td><code>fid</code></td><td class="cell-mono">string</td><td class="cell-mono">"0x54950a2291f60bf1:0xbeb4a5f2c3d1e0ab"</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <ul class="api-notes" role="list" data-stagger="70">
+            <li data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg></span>
+              <b>Billed per successful request</b>
+              <span>A request is one successful API call that returns data. Failed calls don't count.</span>
+            </li>
+            <li data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-locate" /></svg></span>
+              <b>Location is a bias, not a fence</b>
+              <span><code>ll</code> tells Maps where to search. Nearby results outside the view can still appear.</span>
+            </li>
+            <li data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg></span>
+              <b>Cursor paging for reviews</b>
+              <span>Up to 60 reviews per page. Pass <code>next_cursor</code> back to keep reading.</span>
+            </li>
+            <li data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-target" /></svg></span>
+              <b>Name the place</b>
+              <span>Add a city, state or ZIP to <code>q</code> — “near me” has nothing to anchor to on a server.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑥ API 方案（pricing.ts 原文）
+           ================================================================ -->
+      <section class="section band api-pricing" id="pricing">
+        <div class="container">
+          <header class="section-head" data-stagger="80">
+            <span class="kicker" data-reveal>API plans</span>
+            <h2 class="h2" data-split>Programmatic access, <span class="accent">priced by requests</span></h2>
+            <p class="lead" data-reveal>
+              Query business data, reviews and photos from your own applications over a simple HTTP API. A request is one
+              successful API call that returns data.
+            </p>
+          </header>
+        </div>
+
+        <div class="container-wide">
+          <div class="api-plans" data-stagger="70">
+            <article class="price-card api-plan" data-reveal>
+              <div>
+                <h3 class="price-name">Free</h3>
+                <p class="price-tagline">Evaluate the API on a small scale</p>
+              </div>
+              <div class="price-amount"><b>$0</b><span class="price-period">forever</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg>20 requests / month</div>
+              <ul class="check-list check-list--sm" role="list">
+                <li>Business search and Place ID lookup</li>
+                <li>Reviews and photo endpoints</li>
+                <li>JSON responses</li>
+                <li>API key tied to your account</li>
+                <li>Community support</li>
+              </ul>
+              <a class="btn btn-secondary btn-block" href="#" data-proto-note="Start free opens Dashboard → API, which currently shows the API as not yet open.">Start free</a>
+            </article>
+
+            <article class="price-card api-plan" data-reveal>
+              <div>
+                <h3 class="price-name">Basic</h3>
+                <p class="price-tagline">For prototypes and light integrations</p>
+              </div>
+              <div class="price-amount"><b>$15</b><span class="price-period">one-time · 1 month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg>1,000 requests / month</div>
+              <ul class="check-list check-list--sm" role="list">
+                <li>Everything in Free</li>
+                <li>1,000 requests for 1 month</li>
+                <li>One-time payment — no auto-renewal</li>
+                <li>All data endpoints unlocked</li>
+                <li>JSON responses</li>
+              </ul>
+              <a class="btn btn-secondary btn-block" href="pricing.html#api">Get Basic</a>
+            </article>
+
+            <article class="price-card api-plan is-featured" data-reveal>
+              <span class="badge badge--solid price-flag">Most Popular</span>
+              <div>
+                <h3 class="price-name">Professional</h3>
+                <p class="price-tagline">For production integrations</p>
+              </div>
+              <div class="price-amount"><b>$65</b><span class="price-period">one-time · 1 month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg>5,000 requests / month</div>
+              <ul class="check-list check-list--sm" role="list">
+                <li>Everything in Basic</li>
+                <li>5,000 requests for 1 month</li>
+                <li>One-time payment — no auto-renewal</li>
+                <li>Higher rate limits</li>
+                <li>JSON responses</li>
+              </ul>
+              <a class="btn btn-primary btn-block" href="pricing.html#api">Get Professional</a>
+            </article>
+
+            <article class="price-card api-plan" data-reveal>
+              <div>
+                <h3 class="price-name">Business</h3>
+                <p class="price-tagline">For products built on MapsGrab data</p>
+              </div>
+              <div class="price-amount"><b>$115</b><span class="price-period">one-time · 1 month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg>10,000 requests / month</div>
+              <ul class="check-list check-list--sm" role="list">
+                <li>Everything in Professional</li>
+                <li>10,000 requests for 1 month</li>
+                <li>One-time payment — no auto-renewal</li>
+                <li>Higher rate limits</li>
+                <li>JSON responses</li>
+              </ul>
+              <a class="btn btn-secondary btn-block" href="pricing.html#api">Get Business</a>
+            </article>
+
+            <article class="price-card api-plan" data-reveal>
+              <div>
+                <h3 class="price-name">Scale</h3>
+                <p class="price-tagline">For high-volume data operations</p>
+              </div>
+              <div class="price-amount"><b>$365</b><span class="price-period">one-time · 1 month</span></div>
+              <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg>50,000 requests / month</div>
+              <ul class="check-list check-list--sm" role="list">
+                <li>Everything in Business</li>
+                <li>50,000 requests for 1 month</li>
+                <li>One-time payment — no auto-renewal</li>
+                <li>Highest rate limits</li>
+                <li>JSON responses</li>
+              </ul>
+              <a class="btn btn-secondary btn-block" href="pricing.html#api">Get Scale</a>
+            </article>
+          </div>
+        </div>
+
+        <div class="container">
+          <p class="api-plans-note" data-reveal>
+            <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>
+            One-time payment covering one natural month — plans on this tab do not auto-renew. A request is one successful API
+            call that returns data; usage resets on the 1st and unused requests do not roll over.
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑦ FAQ（按变体替换问答文本；条目数固定 5）
+           ================================================================ -->
+      <section class="section faq" id="faq">
+        <div class="container faq-layout">
+          <div class="faq-aside" data-stagger="80">
+            <span class="kicker" data-reveal>FAQ</span>
+            <h2 class="h2" data-split data-v="faqTitle">Scraper API <span class="accent">questions</span></h2>
+            <p class="lead" data-reveal>The short answers. Anything else, support is one email away.</p>
+            <a class="btn btn-secondary" href="about.html#contact" data-reveal>
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>Contact support
+            </a>
+          </div>
+          <div class="faq-list" data-stagger="60" data-faq>
+            <details class="acc" data-reveal>
+              <summary><span data-q>What does the Scraper API return?</span><span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p data-a>Structured JSON with the MapsGrab 36-column business schema: name, address, phone, website, rating, review count, opening hours, coordinates, Place ID, and email / social enrichment where available.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary><span data-q>How do I authenticate?</span><span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p data-a>Requests are authorized with a MapsGrab API key sent as a bearer token. Keys are issued per account and follow the API plans on the Pricing page, including 20 free requests per month.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary><span data-q>Is the data legal to collect?</span><span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p data-a>The API only returns information that is publicly displayed on Google Maps — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary><span data-q>Can I also get reviews and photos?</span><span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p data-a>Yes — pass the fid from any Scraper API result to the Reviews API or the Photos API, using the same API key.</p></div>
+            </details>
+            <details class="acc" data-reveal>
+              <summary><span data-q>How are requests counted?</span><span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p data-a>A request is one successful API call that returns data. Usage resets on the 1st of each month and unused requests do not roll over.</p></div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           ⑧ 收尾 CTA（按变体替换标题与说明）
+           ================================================================ -->
+      <section class="section final-cta">
+        <div class="container">
+          <div class="cta-panel has-deco" data-inview data-reveal="zoom">
+            <div class="deco" aria-hidden="true">
+              <div class="aurora"><i></i><i></i><i></i></div>
+              <div class="bg-contours"></div>
+              <div class="bg-grid cta-grid"></div>
+              <div class="cta-pins" data-cta-pins></div>
+              <div class="noise"></div>
+            </div>
+            <span class="kicker" data-reveal>Get started</span>
+            <h2 class="display cta-title" data-split data-v="ctaTitle">Put Maps data in your <span class="accent text-grad is-animated">application</span></h2>
+            <p class="lead cta-lead" data-reveal data-v="ctaLead">
+              One HTTP request per search, structured JSON in the response — the same extraction quality the extension delivers.
+            </p>
+            <div class="cta-actions" data-reveal>
+              <a class="btn btn-primary btn-lg" href="#" data-magnetic="0.22" data-proto-note="Get API key opens Dashboard → API. That workspace currently shows the API as not yet open — keys and calls ship with the 014 API product.">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg>Get API key
+              </a>
+              <a class="btn btn-secondary btn-lg" href="pricing.html#api">View pricing</a>
+            </div>
+            <p class="cta-note" data-reveal>Free monthly quota included. No credit card.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div data-chrome="footer"></div>
+  </body>
+</html>
