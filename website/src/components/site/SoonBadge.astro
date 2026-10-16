@@ -1,0 +1,12 @@
+---
+/** 未交付能力的统一提示徽章（文案 common.comingSoon）；何时显示由 lib/capabilities.ts 决定。 */
+import { getContent, type Locale } from '../../i18n/content'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+---
+
+<span class="badge badge--muted soon-badge">{getContent(locale).common.comingSoon}</span>

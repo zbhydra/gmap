@@ -1,0 +1,686 @@
+---
+/**
+ * About「Principles」（设计稿 about.html ③）：四条数据边界规则，每张卡上方一个微动画面板，最后一张卡链到隐私政策。
+ *
+ * 设计稿第 04 条（Drive / HubSpot 授权）按 013 A10 未承诺交付，公司页不展示；「In writing」卡跨两列补齐末行。
+ * 常驻循环只动 transform / opacity（高亮用叠加层的透明度），都在 data-inview 子树内；
+ * 减弱动效下停在讲得清楚的终态（划线完整显示、无扫光）。
+ */
+import type { AboutPageContent } from '../../company/companyContent'
+import type { Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import ProductSectionHead from '../product/ProductSectionHead.astro'
+import Icon from '../site/Icon.astro'
+
+interface Props {
+  locale: Locale
+  principles: AboutPageContent['principles']
+}
+
+const { locale, principles } = Astro.props
+const { publicData, localFirst, backend, never, inWriting } = principles
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const LOCAL_ICONS = ['settings', 'table', 'layers'] as const
+const BACKEND_ICONS = ['settings', 'user', 'at', 'chart'] as const
+const rowNumber = (index: number) => String(index + 1).padStart(2, '0')
+---
+
+<section class="section about-principles band" id="principles" data-inview>
+  <div class="container">
+    <ProductSectionHead head={principles} />
+
+    <div class="principles" data-stagger="80" data-spotlight-group>
+      <div class="principle-cell" data-reveal>
+        <article class="principle card" data-spotlight>
+          <div class="pv pv-public" aria-hidden="true">
+            <div class="pvp-listing">
+              <span class="pvp-pin"><Icon name="pin" /></span>
+              <span class="pvp-lines"><i style="--w: 74%"></i><i style="--w: 46%"></i></span>
+              <span class="pvp-row pvp-row--star"><Icon name="star" /><i style="--w: 36%"></i></span>
+              <span class="pvp-row"><Icon name="phone" /><i style="--w: 52%"></i></span>
+              <span class="pvp-row"><Icon name="web" /><i style="--w: 44%"></i></span>
+              <span class="pvp-beam"></span>
+            </div>
+            <span class="pv-tag pv-tag--ok"><Icon name="eye" />{publicData.visibleTag}</span>
+            <span class="pv-tag pv-tag--off"><Icon name="lock" />{publicData.privateTag}</span>
+          </div>
+          <div class="principle-copy">
+            <span class="principle-num mono">{rowNumber(0)}</span>
+            <h3>{publicData.title}</h3>
+            <p>{publicData.text}</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="principle-cell" data-reveal>
+        <article class="principle card" data-spotlight>
+          <div class="pv pv-local" aria-hidden="true">
+            <div class="pvl-window">
+              <span class="pvl-bar"><span class="win-dots"><i></i><i></i><i></i></span><span class="pvl-url mono">{localFirst.storage}</span></span>
+              {localFirst.rows.map((row, index) => (
+                <span class="pvl-row" style={`--i: ${index}`}><Icon name={LOCAL_ICONS[index]} />{row}</span>
+              ))}
+              <span class="pvl-lock"><Icon name="lock" /></span>
+            </div>
+          </div>
+          <div class="principle-copy">
+            <span class="principle-num mono">{rowNumber(1)}</span>
+            <h3>{localFirst.title}</h3>
+            <p>{localFirst.text}</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="principle-cell" data-reveal>
+        <article class="principle card" data-spotlight>
+          <div class="pv pv-four" aria-hidden="true">
+            <span class="pvf-big">{backend.chips.length}</span>
+            {backend.chips.map((chip, index) => (
+              <span class="pvf-chip" style={`--i: ${index}`}><Icon name={BACKEND_ICONS[index]} />{chip}</span>
+            ))}
+          </div>
+          <div class="principle-copy">
+            <span class="principle-num mono">{rowNumber(2)}</span>
+            <h3>{backend.title}</h3>
+            <p>{backend.text}</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="principle-cell" data-reveal>
+        <article class="principle card" data-spotlight>
+          <div class="pv pv-never" aria-hidden="true">
+            {never.chips.map((chip, index) => (
+              <span class="pvn-chip" style={`--i: ${index}`}><span class="pvn-x"><Icon name="x" /></span>{chip}</span>
+            ))}
+          </div>
+          <div class="principle-copy">
+            <span class="principle-num mono">{rowNumber(3)}</span>
+            <h3>{never.title}</h3>
+            <p>{never.text}</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="principle-cell principle-cell--wide" data-reveal>
+        <a class="principle principle--doc card card-link" href={`${prefix}/privacy/`} data-spotlight data-cta="about-principles-privacy">
+          <div class="pv pv-doc" aria-hidden="true">
+            <span class="pvd-sheet pvd-sheet--back"><Icon name="book" /></span>
+            <span class="pvd-sheet"><Icon name="shield" /><i></i><i></i><i></i></span>
+          </div>
+          <div class="principle-copy">
+            <span class="principle-num mono">{inWriting.kicker}</span>
+            <h3>{inWriting.title}</h3>
+            <p>{inWriting.text}</p>
+            <span class="link-arrow">{inWriting.link}<Icon name="arrow-right" /></span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: clamp(40px, 5vw, 64px);
+  }
+
+  /* 显现动效放在外层格子上，卡片自己的 hover 过渡不与 data-reveal 的过渡互相覆盖 */
+  .principle-cell {
+    display: grid;
+  }
+
+  .principle-cell--wide {
+    grid-column: span 2;
+  }
+
+  .principle {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    transition:
+      transform var(--dur-3) var(--ease-out),
+      box-shadow var(--dur-3) var(--ease-out),
+      border-color var(--dur-3);
+  }
+
+  .principle:hover {
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-md), var(--hairline-hl);
+    transform: translateY(-4px);
+  }
+
+  .principle-copy {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 18px 14px 14px;
+  }
+
+  .principle-num {
+    color: var(--primary-text);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .principle h3 {
+    font-size: clamp(16px, 0.25vw + 15px, 18px);
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+  }
+
+  .principle p {
+    color: var(--text-2);
+    font-size: 14.5px;
+    line-height: 1.6;
+  }
+
+  /* 「In writing」卡跨两列：左侧文档插画，右侧文字 */
+  .principle--doc {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .principle--doc .pv {
+    flex: 0 0 44%;
+    height: auto;
+    min-height: 172px;
+  }
+
+  .principle--doc .principle-copy {
+    align-content: center;
+    padding: 18px 24px;
+  }
+
+  .principle--doc .link-arrow {
+    margin-top: 4px;
+    font-size: 14.5px;
+  }
+
+  .pv {
+    position: relative;
+    height: 172px;
+    overflow: hidden;
+    border-radius: var(--r-md);
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 22px 22px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 22px 22px,
+      var(--surface-2);
+  }
+
+  /* 01 公开数据：商户卡被扫描，「公开」贴纸与划掉的「私有」 */
+  .pvp-listing {
+    position: absolute;
+    top: 26px;
+    left: 50%;
+    display: grid;
+    gap: 8px;
+    width: 60%;
+    padding: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    translate: -50% 0;
+  }
+
+  .pvp-pin {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--r-xs);
+    background: var(--pin-soft);
+    color: var(--pin);
+  }
+
+  .pvp-pin :global(.icon) {
+    width: 15px;
+    height: 15px;
+  }
+
+  .pvp-lines {
+    display: grid;
+    gap: 6px;
+    padding-right: 32px;
+  }
+
+  .pvp-lines i {
+    display: block;
+    width: var(--w);
+    height: 7px;
+    border-radius: var(--r-2xs);
+    background: var(--surface-3);
+  }
+
+  .pvp-lines i:first-child {
+    height: 9px;
+    background: color-mix(in srgb, var(--text) 55%, transparent);
+  }
+
+  .pvp-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-3);
+  }
+
+  .pvp-row :global(.icon) {
+    width: 13px;
+    height: 13px;
+  }
+
+  .pvp-row--star :global(.icon) {
+    color: var(--star);
+  }
+
+  .pvp-row i {
+    display: block;
+    width: var(--w);
+    height: 6px;
+    border-radius: var(--r-2xs);
+    background: var(--surface-3);
+  }
+
+  .pvp-beam {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--accent) 22%, transparent) 50%, transparent 70%);
+    animation: sweep 3.2s var(--ease-in-out) infinite;
+  }
+
+  .pv-tag {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: var(--r-full);
+    box-shadow: var(--shadow-sm);
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .pv-tag :global(.icon) {
+    width: 13px;
+    height: 13px;
+  }
+
+  .pv-tag--ok {
+    top: 12px;
+    left: 12px;
+    background: color-mix(in srgb, var(--ok) 14%, var(--surface));
+    color: var(--ok);
+    rotate: -5deg;
+  }
+
+  .pv-tag--off {
+    right: 12px;
+    bottom: 12px;
+    border: 1px dashed var(--border-2);
+    background: var(--surface);
+    color: var(--text-3);
+    text-decoration: line-through;
+    rotate: 4deg;
+  }
+
+  /* 02 本地优先：浏览器窗口内逐行「保存」（叠加层透明度） */
+  .pvl-window {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    padding: 0 12px 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .pvl-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 -12px 4px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .pvl-bar .win-dots {
+    gap: 4px;
+  }
+
+  .pvl-bar .win-dots i {
+    width: 8px;
+    height: 8px;
+  }
+
+  .pvl-url {
+    color: var(--text-2);
+    font-size: 10px;
+  }
+
+  .pvl-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 27px;
+    padding: 0 8px;
+    border-radius: var(--r-xs);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .pvl-row::after {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--ok) 11%, transparent);
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ok) 55%, transparent);
+    opacity: 0;
+    animation: pv-highlight 4.5s var(--ease-out) infinite;
+    animation-delay: calc(var(--i) * 0.55s);
+    content: '';
+  }
+
+  .pvl-row :global(.icon) {
+    width: 14px;
+    height: 14px;
+    color: var(--primary-text);
+  }
+
+  .pvl-lock {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 6px 14px -6px var(--ok);
+    color: var(--ok-fg);
+  }
+
+  .pvl-lock :global(.icon) {
+    width: 15px;
+    height: 15px;
+    stroke-width: 2.2;
+  }
+
+  /* 03 后端只做四件事：四块依次点亮（上浮 + 描边叠加层），背后一个大号 4 */
+  .pv-four {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: center;
+    gap: 10px;
+    padding: 20px 24px;
+  }
+
+  .pvf-big {
+    position: absolute;
+    right: -4px;
+    bottom: -46px;
+    background: var(--grad-brand-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: clamp(150px, 16vw, 190px);
+    font-weight: 700;
+    letter-spacing: -0.06em;
+    line-height: 1;
+    opacity: 0.16;
+    pointer-events: none;
+  }
+
+  .pvf-chip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 600;
+    animation: pvf-lift 4s var(--ease-out) infinite;
+    animation-delay: calc(var(--i) * 0.6s);
+  }
+
+  .pvf-chip::after {
+    position: absolute;
+    inset: -1px;
+    border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
+    border-radius: inherit;
+    box-shadow: 0 10px 20px -12px color-mix(in srgb, var(--primary) 70%, transparent);
+    opacity: 0;
+    animation: pv-highlight 4s var(--ease-out) infinite;
+    animation-delay: inherit;
+    content: '';
+  }
+
+  .pvf-chip :global(.icon) {
+    width: 15px;
+    height: 15px;
+    color: var(--primary-text);
+  }
+
+  @keyframes pvf-lift {
+    0%,
+    45%,
+    100% {
+      transform: none;
+    }
+
+    12%,
+    28% {
+      transform: translateY(-2px);
+    }
+  }
+
+  /* 逐项高亮：叠加层在 10%–28% 之间显现 */
+  @keyframes pv-highlight {
+    0%,
+    45%,
+    100% {
+      opacity: 0;
+    }
+
+    10%,
+    28% {
+      opacity: 1;
+    }
+  }
+
+  /* 04 绝不做的事：依次被划掉 */
+  .pv-never {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .pvn-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 33px;
+    padding: 0 14px 0 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+    color: var(--text-2);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .pvn-x {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--bad-soft);
+    color: var(--bad);
+  }
+
+  .pvn-x :global(.icon) {
+    width: 9px;
+    height: 9px;
+    stroke-width: 3.5;
+  }
+
+  .pvn-chip::after {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    left: 32px;
+    height: 2px;
+    border-radius: var(--r-2xs);
+    background: var(--bad);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: pvn-strike 4.8s var(--ease-out) infinite;
+    animation-delay: calc(var(--i) * 0.45s);
+    content: '';
+  }
+
+  @keyframes pvn-strike {
+    0%,
+    6% {
+      opacity: 1;
+      transform: scaleX(0);
+    }
+
+    22%,
+    84% {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
+    96%,
+    100% {
+      opacity: 0;
+      transform: scaleX(1);
+    }
+  }
+
+  /* 书面承诺：两页文档，hover 时散开 */
+  .pv-doc {
+    display: grid;
+    place-items: center;
+  }
+
+  .pvd-sheet {
+    position: absolute;
+    top: 22px;
+    left: calc(50% - 58px);
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    width: 116px;
+    height: 150px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+    transition: transform var(--dur-4) var(--ease-out);
+  }
+
+  .pvd-sheet :global(.icon) {
+    width: 22px;
+    height: 22px;
+    margin-bottom: 4px;
+    color: var(--primary-text);
+  }
+
+  .pvd-sheet i {
+    display: block;
+    height: 6px;
+    border-radius: var(--r-2xs);
+    background: var(--surface-3);
+  }
+
+  .pvd-sheet i:nth-of-type(2) {
+    width: 78%;
+  }
+
+  .pvd-sheet i:nth-of-type(3) {
+    width: 56%;
+  }
+
+  .pvd-sheet--back {
+    transform: translate(28px, -4px) rotate(9deg);
+  }
+
+  .principle--doc:hover .pvd-sheet--back {
+    transform: translate(46px, -8px) rotate(13deg);
+  }
+
+  .principle--doc:hover .pvd-sheet:not(.pvd-sheet--back) {
+    transform: translate(-12px, -4px) rotate(-5deg);
+  }
+
+  @media (max-width: 1080px) {
+    .principles {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .principles {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .principle-cell--wide {
+      grid-column: auto;
+    }
+
+    .principle--doc {
+      flex-direction: column;
+    }
+
+    .principle--doc .principle-copy {
+      padding: 18px 14px 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pvp-beam {
+      display: none;
+    }
+
+    .pvn-chip::after {
+      animation: none;
+      transform: none;
+    }
+  }
+</style>

@@ -222,7 +222,7 @@ test('Pricing copy keeps the three product-line tabs and checkout shell fields d
     assert.ok(dashboard.cancelGuide.closeLabel)
     // 三条产品线 tab 齐全
     assert.deepEqual(Object.keys(content.tabs), ['online', 'extension', 'api'])
-    assert.deepEqual(Object.keys(content.tabLabels), ['online', 'extension', 'api'])
+    assert.deepEqual(Object.values(content.tabs).map(tab => tab.name), ['Online Scraper', 'Extension', 'API & MCP'])
     // Extension 线 C2 套餐口径：Free 1,000 / Pro $39 100,000 / Business $99 500,000 records/月
     const extensionCards = content.tabs.extension.cards
     assert.deepEqual(extensionCards.map(card => card.id), ['free', 'pro', 'business'])
@@ -397,7 +397,8 @@ test('every built page exposes complete title, description and Open Graph metada
   // 19 内容页（含 Online Scraper / API / MCP / Bing 桥接）+ 2 个 PayPal 回跳页
   // + 2 个 ClinkBill 回跳页 + 1 个插件登录桥接页（noindex）
   // + 3 个 Dashboard 工作区页（noindex，015 U2）
-  assert.equal(htmlFiles.length, 27)
+  // + 1 个 MCP OAuth 确认页（noindex，014 U2）
+  assert.equal(htmlFiles.length, 28)
 
   const descriptionsByRoute = new Map()
   for (const filePath of htmlFiles) {
@@ -3576,4 +3577,51 @@ test('PayPal success return page polls order status every 3 seconds and switches
     expectedTitle: 'Subscription activated',
     expectedMessageFragment: 'MapsGrab plan is active'
   })
+})
+
+test('MCP OAuth 票据恢复与固定凭证', async () => {
+  const { module, cleanup } = await importCompiledTypescriptModule(
+    'src/scripts/mcp-oauth/client.ts', 'client.js', 'mcp-oauth-entry-'
+  )
+  const originals = {
+    window: globalThis.window, location: globalThis.location, history: globalThis.history,
+    sessionStorage: globalThis.sessionStorage, fetch: globalThis.fetch
+  }
+  const stored = new Map()
+  const ticket = 'a'.repeat(43)
+  let replacedUrl = ''
+  let sent = false
+  try {
+    const auth = installLocalStorage()
+    auth.set('homepage_access_token', 'account-B')
+    globalThis.sessionStorage = {
+      getItem: key => stored.get(key) ?? null,
+      setItem: (key, value) => stored.set(key, value),
+      removeItem: key => stored.delete(key)
+    }
+    globalThis.location = { hash: '#request=' + ticket, pathname: '/oauth/consent/', search: '' }
+    globalThis.history = {
+      state: null,
+      replaceState: (_state, _title, url) => { replacedUrl = url; globalThis.location.hash = '' }
+    }
+    assert.deepEqual(module.readConsentEntry(), { kind: 'request', request: ticket })
+    assert.equal(replacedUrl, '/oauth/consent/')
+    assert.deepEqual(module.readConsentEntry(), { kind: 'request', request: ticket })
+    stored.set('cas_mcp_oauth_request', JSON.stringify({ request: ticket, saved_at: Date.now() - 30 * 60 * 1000 }))
+    assert.deepEqual(module.readConsentEntry(), { kind: 'invalid' })
+    assert.equal(stored.size, 0)
+    globalThis.location.hash = '#request=' + ticket + '&error=server_error'
+    assert.deepEqual(module.readConsentEntry(), { kind: 'invalid' })
+    globalThis.location.hash = '#error=invalid_resource'
+    assert.deepEqual(module.readConsentEntry(), { kind: 'error', reason: 'invalid_resource' })
+
+    globalThis.fetch = async () => { sent = true; throw new Error('不应发送已变更凭证的请求') }
+    const context = { token: 'account-A', deviceId: 'mcp-oauth-test-device' }
+    await assert.rejects(module.getConsentDetail(context, ticket), module.McpOAuthCredentialChangedError)
+    await assert.rejects(module.decideConsent(context, ticket, true), module.McpOAuthCredentialChangedError)
+    assert.equal(sent, false)
+  } finally {
+    Object.assign(globalThis, originals)
+    await cleanup()
+  }
 })

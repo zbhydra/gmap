@@ -1,0 +1,336 @@
+---
+/**
+ * About「What we build」（设计稿 about.html ②）：枢纽胶囊连到四个产品卡，下方是免费工具胶囊。
+ *
+ * 卡片徽标、标题、正文与入口与首页产品卡同源（pages.home.products.cards），标签为公司页自有；
+ * 未交付的产品照常链到介绍页，按能力表灰化并带 Coming soon。连线由 about-wires.ts 按卡片位置绘制，
+ * 两行卡片（≤1080px）时不画分叉线，改为胶囊下方一段短竖线。
+ */
+import type { AboutPageContent } from '../../company/companyContent'
+import { getContent, type Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import { capabilities } from '../../lib/capabilities'
+import ProductSectionHead from '../product/ProductSectionHead.astro'
+import BrandMark from '../site/BrandMark.astro'
+import Icon from '../site/Icon.astro'
+import SoonBadge from '../site/SoonBadge.astro'
+import { TOOL_ICONS } from '../tools/tool-catalog'
+import './about-wires.css'
+
+interface Props {
+  locale: Locale
+  build: AboutPageContent['build']
+}
+
+const { locale, build } = Astro.props
+const t = getContent(locale)
+const cards = t.pages.home.products.cards
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const products = [
+  { id: 'extension', icon: 'puzzle', tile: 'icon-tile--brand', path: '/extension/', available: capabilities.extensionInstall },
+  { id: 'online', icon: 'cloud', tile: '', path: '/online-scraper/', available: true },
+  { id: 'api', icon: 'code', tile: '', path: '/google-maps-scraper-api/', available: capabilities.scraperApi },
+  { id: 'mcp', icon: 'bot', tile: 'icon-tile--ai', path: '/google-maps-scraper-mcp/', available: capabilities.mcp }
+] as const
+---
+
+<section class="section about-build" id="what-we-build" data-inview>
+  <div class="container">
+    <ProductSectionHead head={build} />
+
+    <div class="family" data-family>
+      <svg class="wires" data-wires data-reveal="fade" data-reveal-delay="350" aria-hidden="true"></svg>
+      <div class="family-core" data-wire-core data-reveal="zoom">
+        <BrandMark />
+        <span class="core-text">
+          <b>{build.hub.title}</b>
+          <span class="mono">{build.hub.detail}</span>
+        </span>
+        <span class="core-beam" aria-hidden="true"></span>
+      </div>
+
+      <div class="family-grid" data-stagger="90" data-spotlight-group>
+        {products.map(product => (
+          <div class="family-cell" data-reveal data-wire-leaf={product.id === 'mcp' ? 'ai' : ''}>
+            <a
+              class:list={['family-card card card-link', { 'is-unavailable': !product.available }]}
+              href={`${prefix}${product.path}`}
+              data-spotlight
+              data-cta={`about-product-${product.id}`}
+            >
+              <span class="family-top">
+                <span class:list={['icon-tile', product.tile]}><Icon name={product.icon} /></span>
+                <span class="family-badges">
+                  <span class:list={['badge', { 'badge--ai': product.id === 'mcp' }]}>{cards[product.id].badge}</span>
+                  {!product.available && <SoonBadge locale={locale} />}
+                </span>
+              </span>
+              <h3>{cards[product.id].title}</h3>
+              <p>{cards[product.id].body}</p>
+              <ul class="family-tags" role="list">
+                {build.tags[product.id].map(tag => <li>{tag}</li>)}
+              </ul>
+              <span class="link-arrow">{cards[product.id].link}<Icon name="arrow-right" /></span>
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="family-tools" data-reveal>
+      <p><b>{build.toolsLead}</b> {build.toolsText}</p>
+      <nav class="tool-chips" aria-label={build.toolsLabel}>
+        {t.layout.footer.tools.map((tool, index) => (
+          <a class="chip tool-chip" href={`${prefix}${tool.path}`} style={`--i: ${index}`} data-cta={`about-tool-${tool.id}`}>
+            <Icon name={TOOL_ICONS[tool.id]} />{tool.label}
+          </a>
+        ))}
+      </nav>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { boxIn, setupWires, type Wire } from './about-wires'
+
+  // 枢纽胶囊底边 → 四张卡片顶边；MCP 卡的光点用 AI 叙事色
+  const family = document.querySelector<HTMLElement>('[data-family]')
+  const core = family?.querySelector<HTMLElement>('[data-wire-core]')
+  if (family && core) {
+    setupWires(family, () => {
+      const hub = boxIn(core, family)
+      const start = [hub.x + hub.w / 2, hub.y + hub.h] as const
+      const wires = Array.from(family.querySelectorAll<HTMLElement>('[data-wire-leaf]'), (leaf, index): Wire => {
+        const box = boxIn(leaf, family)
+        return {
+          from: start,
+          to: [box.x + box.w / 2, box.y],
+          vertical: true,
+          pulses: [{ color: leaf.dataset.wireLeaf === 'ai' ? 'var(--ai)' : 'var(--cyan)', delay: index * 0.55, duration: 3 }]
+        }
+      })
+      return { wires, dots: [start, ...wires.map(wire => wire.to)] }
+    })
+  }
+</script>
+
+<style>
+  .family {
+    position: relative;
+    margin-top: clamp(48px, 6vw, 80px);
+  }
+
+  .family-core {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+    padding: 12px 24px 12px 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-md), var(--hairline-hl);
+  }
+
+  .family-core :global(.brand-mark) {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--r-md);
+  }
+
+  .core-text b {
+    display: block;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .core-text .mono {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  /* 扫过枢纽胶囊的光泽 */
+  .core-beam {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--cyan) 20%, transparent) 50%, transparent 65%);
+    animation: sweep 3.8s var(--ease-in-out) infinite;
+    pointer-events: none;
+  }
+
+  .family-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: clamp(64px, 7vw, 96px);
+  }
+
+  /* 显现动效放在外层格子上，卡片自己的 hover 过渡不与 data-reveal 的过渡互相覆盖 */
+  .family-cell {
+    display: grid;
+  }
+
+  .family-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    transition:
+      transform var(--dur-3) var(--ease-out),
+      box-shadow var(--dur-3) var(--ease-out),
+      border-color var(--dur-3);
+  }
+
+  .family-card:hover {
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-md), var(--hairline-hl);
+    transform: translateY(-4px);
+  }
+
+  .family-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .family-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .family-badges :global(.soon-badge) {
+    margin-left: 0;
+  }
+
+  .family-card h3 {
+    margin-top: 4px;
+    font-size: clamp(16px, 0.25vw + 15px, 18px);
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+  }
+
+  .family-card p {
+    color: var(--text-2);
+    font-size: 14.5px;
+    line-height: 1.6;
+  }
+
+  .family-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: auto;
+    padding: 0;
+    list-style: none;
+  }
+
+  .family-tags li {
+    padding: 4px 10px;
+    border-radius: var(--r-full);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11px;
+  }
+
+  .family-card .link-arrow {
+    font-size: 14.5px;
+  }
+
+  .family-tools {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: clamp(40px, 5vw, 48px);
+    text-align: center;
+  }
+
+  .family-tools p {
+    max-width: 660px;
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .family-tools b {
+    color: var(--text);
+  }
+
+  .tool-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .family-tools.is-revealed .tool-chip {
+    animation: pop-in var(--dur-4) var(--ease-out) backwards;
+    animation-delay: calc(var(--i) * 45ms + 200ms);
+  }
+
+  .tool-chip :global(.icon) {
+    color: var(--primary-text);
+  }
+
+  .tool-chip:hover {
+    border-color: var(--border-2);
+    color: var(--text);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 1080px) {
+    .family-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 64px;
+    }
+
+    /* 两行卡片时不画分叉连线，改为枢纽胶囊下方一段短竖线 */
+    .family .wires {
+      display: none;
+    }
+
+    .family-grid::before {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      width: 2px;
+      height: 64px;
+      background: linear-gradient(color-mix(in srgb, var(--text) 18%, transparent), transparent);
+      translate: -50% 0;
+      content: '';
+    }
+  }
+
+  @media (max-width: 640px) {
+    .family-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .family-core {
+      border-radius: var(--r-lg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .core-beam {
+      display: none;
+    }
+  }
+</style>

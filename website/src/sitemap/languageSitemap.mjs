@@ -6,6 +6,7 @@
  * resolve page lastmod from Git/file metadata -> write XML files.
  */
 import { execFile } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { mkdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -26,9 +27,12 @@ const SEARCH_BOT_BLOCKED_ROUTE_PATHS = new Set([
   // Dashboard 工作区 noindex（015 U2）：私有工作区不进搜索与 sitemap。
   '/dashboard/',
   '/dashboard/api/',
-  '/dashboard/subscriptions/'
+  '/dashboard/subscriptions/',
+  // MCP OAuth 确认页 noindex（014 U2）：授权流程中间页，不进 sitemap。
+  '/oauth/consent/'
 ])
 const WEBSITE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)))
+const ATLAS_TOKENS = readFileSync(new URL('../styles/tokens.css', import.meta.url), 'utf8')
 const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -42,39 +46,13 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>XML Sitemap Index | MapsGrab</title>
         <style>
-          :root {
-            color-scheme: light dark;
-            --bg: #ffffff;
-            --surface: #ffffff;
-            --surface-2: #f0f4f9;
-            --border: #dde3ea;
-            --text: #1f1f1f;
-            --text-2: #5f6368;
-            --link: #1a73e8;
-            --rounded-sm: 10px;
-            --shadow-card: 0 1px 2px rgba(60, 64, 67, 0.1), 0 3px 8px rgba(60, 64, 67, 0.06);
-            --font-display: "Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
-            --font-body: "Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
-          }
-
-          @media (prefers-color-scheme: dark) {
-            :root {
-              --bg: #15171c;
-              --surface: #1d2026;
-              --surface-2: #262a31;
-              --border: #31353d;
-              --text: #e8eaed;
-              --text-2: #9aa0a6;
-              --link: #8ab4f8;
-              --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
-            }
-          }
+          <![CDATA[${ATLAS_TOKENS}]]>
 
           body {
             margin: 0;
             background: var(--bg);
             color: var(--text);
-            font-family: var(--font-body);
+            font-family: var(--font-sans);
           }
 
           main {
@@ -85,7 +63,7 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
           h1 {
             margin: 0;
             color: var(--text);
-            font-family: var(--font-display);
+            font-family: var(--font-sans);
             font-size: clamp(32px, 5vw, 56px);
             line-height: 1;
           }
@@ -93,13 +71,13 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
           .brand {
             margin: 22px 0 16px;
             color: var(--text);
-            font-family: var(--font-display);
-            font-size: 32px;
-            font-weight: 800;
+            font-family: var(--font-sans);
+            font-size: var(--fs-h2);
+            font-weight: 700;
           }
 
           .summary {
-            margin: 0 0 28px;
+            margin: 0 0 var(--s-8);
             color: var(--text-2);
             font-size: 16px;
           }
@@ -108,9 +86,9 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
             width: 100%;
             border-collapse: collapse;
             overflow: hidden;
-            border-radius: var(--rounded-sm);
+            border-radius: var(--r-sm);
             background: var(--surface);
-            box-shadow: var(--shadow-card);
+            box-shadow: var(--shadow-sm);
           }
 
           th,
@@ -132,7 +110,7 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
           }
 
           a {
-            color: var(--link);
+            color: var(--primary-text);
             font-weight: 700;
             text-decoration: none;
           }
@@ -238,8 +216,21 @@ function normalizeRoutePath(routePath) {
   return normalized.endsWith('/') ? normalized : `${normalized}/`
 }
 
+/** 拆出语言前缀：/zh-tw/pricing/ → zh-TW + /pricing/；无前缀归默认语言。 */
+function splitLanguagePrefix(pathname) {
+  const segments = pathname.split('/').filter(Boolean)
+  const prefixedLanguage = segments.length > 0 ? PREFIX_LANGUAGE_MAP.get(segments[0]) : undefined
+  const routeSegments = prefixedLanguage ? segments.slice(1) : segments
+
+  return {
+    language: prefixedLanguage ?? DEFAULT_LANGUAGE,
+    routePath: routeSegments.length === 0 ? '/' : `/${routeSegments.join('/')}/`
+  }
+}
+
+/** 屏蔽清单按去掉语言前缀后的路由匹配，根路径与各语言前缀版本一并排除。 */
 function isIgnoredRoutePath(routePath) {
-  const normalized = normalizeRoutePath(routePath)
+  const normalized = splitLanguagePrefix(normalizeRoutePath(routePath)).routePath
   if (SEARCH_BOT_BLOCKED_ROUTE_PATHS.has(normalized)) {
     return true
   }
@@ -298,17 +289,7 @@ function collectPageUrls(pages, routes, astroConfig) {
 }
 
 export function classifySitemapUrl(url) {
-  const pathname = new URL(url).pathname
-  const segments = pathname.split('/').filter(Boolean)
-  const prefixedLanguage = segments.length > 0 ? PREFIX_LANGUAGE_MAP.get(segments[0]) : undefined
-  const language = prefixedLanguage ?? DEFAULT_LANGUAGE
-  const routeSegments = prefixedLanguage ? segments.slice(1) : segments
-  const routePath = routeSegments.length === 0 ? '/' : `/${routeSegments.join('/')}/`
-
-  return {
-    language,
-    routePath
-  }
+  return splitLanguagePrefix(new URL(url).pathname)
 }
 
 function getRouteSourceFiles(routePath) {
@@ -318,11 +299,51 @@ function getRouteSourceFiles(routePath) {
     return ['src/pages/index.astro', 'src/pages/[lang]/index.astro', 'src/components/pages/HomePage.astro']
   }
 
+  // 插件页与云端页：root + [lang] 双路由，区块组件与演示数据在 components/extension|online/，
+  // 两页共用 components/product/ 与演示脚本 product-page.ts，方案卡的价格与额度取自 i18n/pricing.ts。
+  const PRODUCT_SHARED_SOURCES = [
+    'src/components/product/AccentHeading.astro',
+    'src/components/product/ProductCta.astro',
+    'src/components/product/ProductFacts.astro',
+    'src/components/product/ProductFaq.astro',
+    'src/components/product/ProductSectionHead.astro',
+    'src/components/product/copy.ts',
+    'src/components/product/faq-schema.ts',
+    'src/scripts/pages/product-page.ts',
+    'src/i18n/pricing.ts'
+  ]
+
   if (normalized === '/extension/') {
     return [
       'src/pages/extension.astro',
       'src/pages/[lang]/extension.astro',
-      'src/components/pages/ExtensionPage.astro'
+      'src/components/pages/ExtensionPage.astro',
+      'src/components/extension/ExtensionHero.astro',
+      'src/components/extension/ExtensionViews.astro',
+      'src/components/extension/ExtensionShowcase.astro',
+      'src/components/extension/ExtensionBatch.astro',
+      'src/components/extension/ExtensionPrivacy.astro',
+      'src/components/extension/ExtensionInstall.astro',
+      'src/components/extension/StarBar.astro',
+      'src/components/extension/extension-samples.ts',
+      'src/i18n/extension.ts',
+      ...PRODUCT_SHARED_SOURCES
+    ]
+  }
+
+  if (normalized === '/online-scraper/') {
+    return [
+      'src/pages/online-scraper.astro',
+      'src/pages/[lang]/online-scraper.astro',
+      'src/components/pages/OnlineScraperPage.astro',
+      'src/components/online/OnlineHero.astro',
+      'src/components/online/OnlineFlow.astro',
+      'src/components/online/OnlineModes.astro',
+      'src/components/online/OnlineResults.astro',
+      'src/components/online/OnlineUsage.astro',
+      'src/components/online/online-samples.ts',
+      'src/i18n/online-scraper.ts',
+      ...PRODUCT_SHARED_SOURCES
     ]
   }
 
@@ -332,17 +353,34 @@ function getRouteSourceFiles(routePath) {
       `src/pages/${pageName}.astro`,
       `src/pages/[lang]/${pageName}.astro`,
       'src/components/pages/LegalPage.astro',
+      'src/components/legal/LegalHero.astro',
+      'src/components/legal/LegalDocument.astro',
       'src/legal/legalContent.ts'
     ]
   }
 
+  // 公司页：About 的区块组件与地球 / 连线脚本、Contact 的联系区都在 components/company/。
   if (normalized === '/about/' || normalized === '/contact/') {
     const pageName = normalized.split('/').filter(Boolean)[0]
+    const pageSources =
+      pageName === 'about'
+        ? [
+            'src/components/company/AboutHero.astro',
+            'src/components/company/AboutBuild.astro',
+            'src/components/company/AboutPrinciples.astro',
+            'src/components/company/AboutDataFlow.astro',
+            'src/components/company/AboutStatus.astro',
+            'src/components/company/about-globe.ts',
+            'src/components/company/about-wires.ts',
+            'src/components/company/about-wires.css'
+          ]
+        : ['src/components/company/ContactSection.astro']
     return [
       `src/pages/${pageName}.astro`,
       `src/pages/[lang]/${pageName}.astro`,
       'src/components/pages/CompanyPage.astro',
-      'src/company/companyContent.ts'
+      'src/company/companyContent.ts',
+      ...pageSources
     ]
   }
 
@@ -360,44 +398,74 @@ function getRouteSourceFiles(routePath) {
   // /paypal/* 与 /clink/* 回跳页在 SEARCH_BOT_BLOCKED_ROUTE_PATHS 中被提前过滤，
   // 不会进入本映射，因此没有对应的源文件分支。
 
-  // W4 工具矩阵（D1 七个公开工具）：路由前缀固定 /tools/<slug>/，页面文件
-  // 位于 src/pages/tools/<slug>.astro。
-  const TOOL_ROUTE_PAGE_FILES = {
-    '/tools/place-id-finder/': ['src/scripts/tools/placeIdFinder.ts', 'src/scripts/tools/lib/placeUrl.ts'],
-    '/tools/review-link-generator/': ['src/scripts/tools/reviewLinkGenerator.ts', 'src/scripts/tools/lib/placeUrl.ts'],
-    '/tools/email-checker/': ['src/scripts/tools/emailChecker.ts', 'src/scripts/tools/lib/emailCheck.ts'],
-    '/tools/lat-long-to-dms/': ['src/scripts/tools/latLongToDms.ts', 'src/scripts/tools/lib/coordinates.ts'],
-    '/tools/dms-to-dd/': ['src/scripts/tools/dmsToDd.ts', 'src/scripts/tools/lib/coordinates.ts'],
-    '/tools/bulk-keywords-generator/': ['src/scripts/tools/bulkKeywords.ts', 'src/scripts/tools/lib/keywords.ts'],
-    '/tools/merge-csv-files-online/': ['src/scripts/tools/mergeCsv.ts', 'src/scripts/tools/lib/csv.ts']
+  // 工具矩阵（D1 七个公开工具）：路由前缀固定 /tools/<slug>/，页面文件位于 src/pages/tools/<slug>.astro。
+  // 外壳 ToolShell 复用产品页的区块头 / FAQ / CTA；Place ID Finder 另有面板与讲解组件，其余工具共用 ToolGuide。
+  const TOOL_SHARED_SOURCES = [
+    'src/components/tools/ToolShell.astro',
+    'src/components/tools/tool-catalog.ts',
+    'src/components/tools/tool-panel.css',
+    'src/i18n/tools.ts',
+    'src/components/product/AccentHeading.astro',
+    'src/components/product/ProductCta.astro',
+    'src/components/product/ProductFaq.astro',
+    'src/components/product/ProductSectionHead.astro',
+    'src/components/product/faq-schema.ts'
+  ]
+  const TOOL_GUIDE = 'src/components/tools/ToolGuide.astro'
+  const TOOL_ROUTE_SOURCES = {
+    '/tools/place-id-finder/': [
+      'src/scripts/tools/placeIdFinder.ts',
+      'src/scripts/tools/lib/placeUrl.ts',
+      'src/components/tools/PlaceIdPanel.astro',
+      'src/components/tools/PlaceIdGuide.astro',
+      'src/components/tools/place-id-samples.ts',
+      'src/components/product/copy.ts',
+      'src/scripts/pages/product-page.ts'
+    ],
+    '/tools/review-link-generator/': ['src/scripts/tools/reviewLinkGenerator.ts', 'src/scripts/tools/lib/placeUrl.ts', TOOL_GUIDE],
+    '/tools/email-checker/': ['src/scripts/tools/emailChecker.ts', 'src/scripts/tools/lib/emailCheck.ts', TOOL_GUIDE],
+    '/tools/lat-long-to-dms/': ['src/scripts/tools/latLongToDms.ts', 'src/scripts/tools/lib/coordinates.ts', TOOL_GUIDE],
+    '/tools/dms-to-dd/': ['src/scripts/tools/dmsToDd.ts', 'src/scripts/tools/lib/coordinates.ts', TOOL_GUIDE],
+    '/tools/bulk-keywords-generator/': ['src/scripts/tools/bulkKeywords.ts', 'src/scripts/tools/lib/keywords.ts', TOOL_GUIDE],
+    '/tools/merge-csv-files-online/': ['src/scripts/tools/mergeCsv.ts', 'src/scripts/tools/lib/csv.ts', TOOL_GUIDE]
   }
-  const toolSourceFiles = TOOL_ROUTE_PAGE_FILES[normalized]
+  const toolSourceFiles = TOOL_ROUTE_SOURCES[normalized]
   if (toolSourceFiles) {
     const pageFile = `src/pages/tools/${normalized.replace('/tools/', '').slice(0, -1)}.astro`
-    return [
-      pageFile,
-      'src/components/tools/ToolShell.astro',
-      ...toolSourceFiles
-    ]
+    return [pageFile, ...toolSourceFiles, ...TOOL_SHARED_SOURCES]
   }
 
-  // 015 U1：Online / API 落地页 ×5，root + [lang] 双路由，共用 LandingPage 组件与 i18n 字典。
-  const LANDING_ROUTE_SLUGS = {
-    '/online-scraper/': 'online-scraper',
-    '/google-maps-scraper-api/': 'google-maps-scraper-api',
-    '/google-maps-reviews-scraper-api/': 'google-maps-reviews-scraper-api',
-    '/google-maps-photos-api/': 'google-maps-photos-api',
-    '/google-maps-scraper-mcp/': 'google-maps-scraper-mcp'
+  // W4：API 三页共用 ApiPage（按 variant 渲染），MCP 页为 McpPage；root + [lang] 双路由，
+  // 文案在 i18n/api.ts / mcp.ts，共用区块在 components/api/，标题 / FAQ / 收尾 CTA 复用 components/product/，
+  // 套餐卡与额度取自 i18n/pricing.ts。
+  const API_SHARED_SOURCES = [
+    'src/components/api/CodeText.astro',
+    'src/components/api/JsonLine.astro',
+    'src/components/api/endpoints.ts',
+    'src/components/product/AccentHeading.astro',
+    'src/components/product/ProductCta.astro',
+    'src/components/product/ProductFaq.astro',
+    'src/components/product/faq-schema.ts',
+    'src/i18n/api.ts',
+    'src/i18n/pricing.ts'
+  ]
+  const API_PAGE_SOURCES = ['src/components/pages/ApiPage.astro', 'src/scripts/pages/api-page.ts']
+  const MCP_PAGE_SOURCES = [
+    'src/components/pages/McpPage.astro',
+    'src/components/api/McpScene.astro',
+    'src/i18n/mcp.ts',
+    'src/scripts/pages/mcp-page.ts'
+  ]
+  const API_ROUTE_SOURCES = {
+    '/google-maps-scraper-api/': API_PAGE_SOURCES,
+    '/google-maps-reviews-scraper-api/': API_PAGE_SOURCES,
+    '/google-maps-photos-api/': API_PAGE_SOURCES,
+    '/google-maps-scraper-mcp/': MCP_PAGE_SOURCES
   }
-  const landingSlug = LANDING_ROUTE_SLUGS[normalized]
-  if (landingSlug) {
-    return [
-      `src/pages/${landingSlug}.astro`,
-      `src/pages/[lang]/${landingSlug}.astro`,
-      'src/components/pages/LandingPage.astro',
-      'src/i18n/schema.ts',
-      'src/i18n/lang/en-US.ts'
-    ]
+  const apiPageSources = API_ROUTE_SOURCES[normalized]
+  if (apiPageSources) {
+    const slug = normalized.slice(1, -1)
+    return [`src/pages/${slug}.astro`, `src/pages/[lang]/${slug}.astro`, ...apiPageSources, ...API_SHARED_SOURCES]
   }
 
   throw new Error(`languageSitemap: route source files are not mapped for routePath=${normalized}`)

@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-- 营销站本体已交付(2026-08-31,`plans/001.营销站实施.md` W1–W7 done:17 页 + 006 扩展 + PayPal 链路 + GA4/SEO);Online/API 落地页 ×5 增补已完成(`@plans/002.营销站Online与API落地页.md` U1 done,2026-08-31);后下载页撤销并入 `/extension/`(2026-09-01),现 dist 22 页。7 个工具页全为真交互(D1 ✅)。
+- 营销站本体已交付(2026-08-31,`plans/001.营销站实施.md` W1–W7 done:17 页 + 006 扩展 + PayPal 链路 + GA4/SEO);Online/API 落地页 ×5 增补已完成(`@plans/002.营销站Online与API落地页.md` U1 done,2026-08-31);后下载页撤销并入 `/extension/`(2026-09-01),现 dist 28 页(2026-10-16 核查)。7 个工具页全为真交互(D1 ✅)。
 - 工具清单、文章矩阵、联盟形态已盘(2026-08-29 官网抓取);逐篇内容未深挖(内容生产属阶段 4 运营,非一次性调研)。进度见根 `@../../ROADMAP.md` D 组。SEO 执行走 `spec-google-seo.md`;基建复用 009 域。
 
 ## 竞品事实
@@ -24,10 +24,10 @@
 - D5 营销站(首页、插件产品页〔营销 + 安装教程一体〕、Pricing、法务页、Online/API 落地页 ×5、工具矩阵、多语言)
 - D5 附:导航 Online、API 下拉与首页产品卡指向产品介绍页；页内主 CTA 进入相应 Dashboard 工作区，云端业务合同归 014。
 - D5 附:**套餐与法务均参考竞品**(hydra 2026-08-30):Pricing 展示对齐竞品插件档位(Free 1,000 records/月;Pro $39 100,000;Business $99 500,000);法务页(隐私政策/条款)以竞品口径为基准改写为 MapsGrab 事实
-- D5 附:**页面图文密度对齐竞品**(hydra 2026-08-31):产品页/下载页按竞品 gmapsextractor.com 的图文结构补分区(hero 截图位、采集→导出成果双图、示例数据下载、demo 视频、逐步安装配图);真实截图/录屏素材未产出时用统一占位组件呈现(标注素材内容),素材产出后仅回填;视觉一律用自有 design token。社证数字条不做(无真实数据,不允许虚报)
-- D5 附:**下载页并入插件产品页**(hydra 2026-09-01,对齐竞品「产品介绍在上、安装教程在下」的单页形态):`/download/` 撤销,安装内容(直装 zip 卡、Edge/Firefox 渠道步骤、安装帮助)整体并入 `/extension/` 页内教程区(锚点 `#install`);hero 双按钮分流——「Install for Edge」跳 Edge Add-ons 商店(上架前 href 占位),「Install for Chrome」滚动到页内教程(产品基线不上 Chrome Web Store,Chrome 走 zip 直装);导航/footer 撤销 Download 入口,首页/工具页/Pricing 的安装 CTA 全部改指 `/extension/`;页底 CTA 改滚动到教程区
+- D5 附:**页面图文密度对齐竞品**(hydra 2026-08-31):产品页/下载页按竞品 gmapsextractor.com 的图文结构补分区;2026-10 Atlas 改版后各页分区以定稿 [README](../../design/website/README.md) §7 为准,首屏为组件搭建的产品演示,不再用截图位;真实截图/录屏素材未产出时用统一占位组件呈现(标注素材内容),素材产出后仅回填;视觉一律用自有 design token。社证数字条不做(无真实数据,不允许虚报)
+- D5 附:**下载页并入插件产品页**(hydra 2026-09-01,对齐竞品「产品介绍在上、安装教程在下」的单页形态):`/download/` 撤销,安装内容(直装 zip 卡、Edge/Firefox 渠道步骤、安装帮助)整体并入 `/extension/` 页内教程区(锚点 `#install`);hero 双按钮「Install for Edge」「Chrome & Firefox」都滚动到页内教程区,由教程区分流 Edge / Firefox 商店与 zip 直装(商店上架前地址占位;产品基线不上 Chrome Web Store,Chrome 走 zip 直装);插件安装开放前,hero、教程区、套餐卡与页底的安装入口统一显示 Coming soon 灰化,不可触发;导航/footer 撤销 Download 入口,首页/工具页/Pricing 的安装 CTA 全部改指 `/extension/`;页底 CTA 改滚动到教程区
 - D5 附:**首页匿名预览**：首页提供单关键词预览和站级登录入口，正式任务在 Dashboard 手动创建。产品规则见 [Maps 云端](../014.Maps云端/feat.md)，详细交互见 [首页预览与任务创建](../014.Maps云端/tech-首页预览与任务创建.md)。
-- D5 附:**用户 Dashboard 落地**(hydra 批准,2026-09-06 实施):全站导航右侧匿名显示登录、登录后显示 Dashboard;工作区 `/dashboard/`(Online 创建与历史)、`/dashboard/api/`(API 管理,本轮未开放)、`/dashboard/subscriptions/`(订阅管理)三页,左侧栏为唯一管理菜单。Pricing 只负责套餐比较、购买与升级;账户摘要、退出与渠道管理入口迁入订阅管理页。API 落地页的获取 Key 类 CTA 统一进入 API 管理页。入口与范围合同见 `@tech-用户Dashboard.md`
+- D5 附:**用户 Dashboard**：全站导航右侧匿名显示登录、登录后显示 Dashboard；工作区提供 Online 创建与历史、API 管理、订阅管理三页，左侧栏为唯一管理菜单。API 管理提供本人 Key、月用量与套餐、连接信息及 MCP 授权撤销。Pricing 只负责套餐比较、购买与升级；账户摘要、退出与渠道管理归 Dashboard。API 获取 Key 与 MCP 连接类 CTA 统一进入 API 管理页，授权确认复用现有官网登录。入口与消费边界见 [Dashboard 合同](tech-用户Dashboard.md)。
 - D6 SEO 基建(复用 009 域:sitemap / llms.txt / GSC / GA4)
 
 ### 不包含
@@ -40,7 +40,7 @@
 
 1. 搜索引擎命中工具页(工具名即搜索词,如 merge csv files online)。
 2. 用户在页面完成工具功能(纯前端,不上传数据)。
-3. 页内 CTA 引导安装插件 / 注册 Online(带 utm 归因)。
+3. 页内收尾 CTA 引导安装插件或查看插件套餐(带 utm 归因,见「工具页模板」)。
 
 ### 内容矩阵(运营视角)
 
@@ -57,7 +57,14 @@
 
 ### 工具页模板(统一)
 
-标题(H1 = 工具名)、功能输入区(表单,按工具而定)、结果区(复制/下载按钮)、How-to 文案段(SEO 正文)、CTA 区(插件/Online)、页脚(导航 + 免责声明)。工具逻辑全部前端执行,无后端依赖(除 License Generator 类与账号挂钩的工具,后置)。
+自上而下:
+
+- 首屏:工具图标与「Free tools › 工具名」面包屑、H1(= 工具名)、一句说明、工具面板;功能输入(表单,按工具而定)与结果区(复制/下载按钮)都在面板内。
+- 用法区(SEO 正文):Place ID Finder 为三步用法、三种 ID 讲解与特性卡;其余工具为三节 How-to。
+- 相关工具(其余 6 个工具卡)→ FAQ → 收尾 CTA:安装插件 + 查看插件套餐(均带 utm 归因);插件安装开放前,安装按钮显示 Coming soon 灰化,不可触发。
+- 页脚(导航 + 免责声明)。**实态(2026-10-16 核查)**:全站页脚尚无免责声明,待补。
+
+工具逻辑全部前端执行,无后端依赖(除 License Generator 类与账号挂钩的工具,后置)。
 
 Merge CSV 选取文件后，可逐文件勾选“第二行为译名”；默认不勾选，勾选时该行不计入输入摘要和合并数据。普通 CSV、旧 Online CSV 与新双表头 Online CSV 可以混合，合并下载文件仍只有一行由输入字段名并集组成的表头。
 
@@ -71,14 +78,14 @@ H1(= 目标搜索词)、TL;DR 结论框、分步教程(步骤编号 + 截图)、
 
 ### 营销站(复用 website/ 模板,阶段 3 交付)
 
-首页(hero + 产品三形态卡 + 社证 + FAQ + CTA)、插件产品页(功能表 + 安装引导 + 版本说明)、下载/安装引导页(Edge/Firefox 分支)、Pricing(011 域)、关于/联系/隐私/条款法务页;全站导航 + 语言切换(010 域)。
+首页(hero 关键词预览 + 产品卡 + 免费工具 + FAQ + CTA,完整分区见 Atlas [README](../../design/website/README.md) §7)、插件产品页(功能介绍 + 页内安装教程〔Edge / Firefox 商店与 zip 直装分支〕 + 版本说明)、Pricing(011 域)、关于/联系/隐私/条款法务页;全站导航 + 语言切换(010 域)。
 
 ### Online/API 落地页(2026-08-31 增补)
 
-- 页面 ×5:Online Scraper(`/online-scraper/`)、Scraper API(`/google-maps-scraper-api/`)、Reviews API(`/google-maps-reviews-scraper-api/`)、Photos API(`/google-maps-photos-api/`)、Scraper MCP(`/google-maps-scraper-mcp/`)。Online 为独立落地页(竞品为 Pricing tab 形态,本站 Pricing 为插件三档,不做 tab 重构)。
-- 导航:Online 占位改真链接;新增 API 桌面下拉(4 子项,交互复用语言切换下拉模式);移动端导航平铺(Online + API 4 子项)。
-- Online 开始采集 CTA 进入 Online Scraper 工作区；API 获取 Key 类 CTA 进入 API 管理页，未开放能力在工作区明确显示。
-- 页面内容以竞品对应页公开口径改写为 MapsGrab 事实(同法务页模式),素材见 `@references/D2-文章矩阵与产品矩阵.md`。
+- 页面 ×5:Online Scraper(`/online-scraper/`)、Scraper API(`/google-maps-scraper-api/`)、Reviews API(`/google-maps-reviews-scraper-api/`)、Photos API(`/google-maps-photos-api/`)、Scraper MCP(`/google-maps-scraper-mcp/`)。Online 产品介绍为独立落地页,套餐在 Pricing 的 Online tab(Pricing 按 Online / Extension / API 三条产品线分 tab)。
+- 导航:桌面依次为 Extension、Online、API 下拉、Pricing;API 下拉 4 子项各带一句说明,底部注明 API 与 MCP 共用月请求额度并链到 API 套餐;移动端菜单平铺(Extension、Online、API 4 子项、Pricing、Free tools)。未开放能力的入口照常进入介绍页,带 Coming soon 标记。
+- Online 开始采集 CTA 进入 Online Scraper 工作区；API 获取 Key 与 MCP 连接类 CTA 进入 API 管理页(Scraper / Reviews API 与 MCP 2026-10-16 开放)；Photos API 单独开放，开放前其获取 Key 入口显示 Coming soon 灰化、不可触发。
+- 页面结构按 Atlas 定稿([README](../../design/website/README.md) §7),端点、计量与字段等事实以 [Maps 云端](../014.Maps云端/feat.md) 合同为准;最初的竞品口径素材见 `@references/D2-文章矩阵与产品矩阵.md`。
 
 ### 对比页模板(统一)
 

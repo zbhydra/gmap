@@ -29,6 +29,11 @@ api:
   docs_url: "/docs"
   redoc_url: "/redoc"
 
+mcp:
+  public_url: "{PUBLIC_API_BASE_URL}/mcp/"
+  allowed_hosts: ["{NGINX_SERVER_NAME}"]
+  allowed_origins: ["{PUBLIC_WEBSITE_BASE_URL}"]
+
 auth:
   jwt_secret_key: "abcabcss$%^&*()_+"
   jwt_algorithm: "HS256"

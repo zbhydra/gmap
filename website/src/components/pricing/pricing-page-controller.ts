@@ -1,10 +1,12 @@
 /**
  * Pricing 页面控制器（三产品类别 tab 版）。
  *
- * 负责产品类别 tab 切换、加载支付配置并把付费档购买流程交给公共
- * OrderCheckoutModal。当前 tab 是唯一状态源：灰化/重复购买拦截、checkout
- * source、GA4 plan 维度均由当前 tab 派生。插件来源（utm_source=extension）
- * 只做归因标记，不切换布局。
+ * 产品类别 tab 是站级 [data-tabs]（选中态是唯一状态源），本控制器负责 URL 与 tab 的同步：
+ * 首屏按 hash（#online / #extension / #api）→ product_kind → 默认 Online 预选，切换后写回 hash，
+ * hash 变化时切 tab。另负责加载支付配置并把付费档购买流程交给公共 OrderCheckoutModal；
+ * 只有页面输出了 [data-pricing-buy] 的档位可购买（插件、API 按能力开关灰化时不输出）。
+ * 重复购买拦截、checkout source、GA4 plan 维度按卡所属产品类别派生。插件来源
+ * （utm_source=extension）只做归因标记，不切换布局。
  *
  * 账户摘要、退出与渠道管理已迁 Dashboard 订阅页；本页通过站级会话恢复
  * （getSiteSession）与站级登录成功事件获取当前用户，匿名购买在原页打开
@@ -62,7 +64,7 @@ type PricingLineId = 'online' | 'extension' | 'api'
 
 const PRICING_LINE_IDS: readonly PricingLineId[] = ['online', 'extension', 'api']
 
-/** 默认展示的产品类别 tab（与 SSR 首个可见面板一致）。 */
+/** 默认展示的产品类别 tab（与 SSR 首个选中 tab 一致）。 */
 const DEFAULT_PRICING_LINE: PricingLineId = 'online'
 
 /** 产品类别 → 后端契约常量（product_kind / checkout source / auth/me 订阅字段）。 */
@@ -136,12 +138,10 @@ interface BuyableCardElements {
 
 /** 页面 DOM 集合。 */
 interface PricingElements {
-  /** 页面根节点。 */
-  root: HTMLElement
+  /** 产品类别 tab 容器（站级 [data-tabs]，切换时派发 tabchange）。 */
+  tabs: HTMLElement
   /** 产品类别 tab 按钮（keyed by line）。 */
   tabButtons: Map<PricingLineId, HTMLButtonElement>
-  /** 产品类别面板（keyed by line）。 */
-  panels: Map<PricingLineId, HTMLElement>
   /** 支付配置加载状态行。 */
   plansStatus: HTMLElement
   /** 可购买档位卡（SKU → DOM）。 */
@@ -162,7 +162,7 @@ interface PricingState {
   upgradeQuotes: Map<string, SubscriptionUpgradeQuote | null>
   /** 最近一次配置请求版本；旧响应不得覆盖新登录态。 */
   loadVersion: number
-  /** 当前产品类别 tab（唯一状态源，其余视图状态由它派生）。 */
+  /** 当前产品类别（随 tabchange 同步，用于报价曝光与 hash 回写）。 */
   currentLine: PricingLineId
   /** 是否为插件升级入口（W7 归因口径）。 */
   isExtensionSource: boolean
@@ -186,6 +186,9 @@ interface PendingSubscriptionPurchase {
 async function initPricingPage(root: HTMLElement): Promise<void> {
   const copy = getPricingCopy(root)
   const elements = getPricingElements(root)
+  // 站级 tabs 在 Layout 脚本里按 aria-selected 初始化，预选必须发生在首个 await 之前
+  const initialLine = readUrlLine() ?? readProductKindLine() ?? DEFAULT_PRICING_LINE
+  preselectLine(elements, initialLine)
   const state: PricingState = {
     deviceId: await ensureDeviceId(),
     token: getStoredAccessToken(),
@@ -193,15 +196,11 @@ async function initPricingPage(root: HTMLElement): Promise<void> {
     plans: new Map(),
     upgradeQuotes: new Map(),
     loadVersion: 0,
-    currentLine: DEFAULT_PRICING_LINE,
+    currentLine: initialLine,
     isExtensionSource: new URLSearchParams(window.location.search).get('utm_source') === EXTENSION_UTM_SOURCE,
     pendingSubscriptionPurchase: readPendingSubscriptionPurchase()
   }
   applyExtensionAttribution(elements, state)
-  const productKind = new URLSearchParams(window.location.search).get('product_kind')
-  switchLine(elements, state, PRICING_LINE_IDS.find(
-    line => PRICING_LINE_CONFIG[line].productKind === productKind
-  ) ?? DEFAULT_PRICING_LINE)
 
   bindEvents(elements, copy, state)
   await restoreSignedInUser(elements, copy, state)
@@ -211,11 +210,23 @@ async function initPricingPage(root: HTMLElement): Promise<void> {
 
 /** 绑定页面事件。 */
 function bindEvents(elements: PricingElements, copy: PricingCopy, state: PricingState): void {
-  for (const [line, button] of elements.tabButtons) {
-    button.addEventListener('click', () => {
-      switchLine(elements, state, line)
-    })
-  }
+  // 用户切换写回 hash（replaceState 不产生历史记录，也不触发 hashchange）；初始化派发的同值事件忽略
+  elements.tabs.addEventListener('tabchange', () => {
+    const line = selectedLine(elements)
+    if (line === state.currentLine) {
+      return
+    }
+    state.currentLine = line
+    window.history.replaceState(window.history.state, '', `#${line}`)
+    reportVisibleUpgradeQuotes(state, elements)
+  })
+
+  window.addEventListener('hashchange', () => {
+    const line = readUrlLine()
+    if (line && line !== state.currentLine) {
+      elements.tabButtons.get(line)?.click()
+    }
+  })
 
   for (const [sku, card] of elements.buyableCards) {
     card.buy.addEventListener('click', () => {
@@ -306,17 +317,32 @@ async function loadUpgradeQuotes(
   }
 }
 
-/** 切换产品类别 tab：面板可见性随当前线刷新。 */
-function switchLine(elements: PricingElements, state: PricingState, line: PricingLineId): void {
-  state.currentLine = line
+/** URL hash 指定的产品类别（#online / #extension / #api）；其他 hash 是页内锚点，不算。 */
+function readUrlLine(): PricingLineId | null {
+  return PRICING_LINE_IDS.find(line => `#${line}` === window.location.hash) ?? null
+}
+
+/** product_kind 查询参数指定的产品类别（导航、Dashboard、插件升级入口沿用的直达口径）。 */
+function readProductKindLine(): PricingLineId | null {
+  const productKind = new URLSearchParams(window.location.search).get('product_kind')
+  return PRICING_LINE_IDS.find(line => PRICING_LINE_CONFIG[line].productKind === productKind) ?? null
+}
+
+/** 站级 tabs 初始化前写入选中态，初始化时据此选中面板并派发首个 tabchange。 */
+function preselectLine(elements: PricingElements, line: PricingLineId): void {
   for (const [tabLine, button] of elements.tabButtons) {
     button.setAttribute('aria-selected', tabLine === line ? 'true' : 'false')
   }
-  for (const [tabLine, panel] of elements.panels) {
-    panel.hidden = tabLine !== line
+}
+
+/** 当前选中的产品类别。 */
+function selectedLine(elements: PricingElements): PricingLineId {
+  for (const [line, button] of elements.tabButtons) {
+    if (button.getAttribute('aria-selected') === 'true') {
+      return line
+    }
   }
-  renderPlanButtons(elements, getPricingCopy(elements.root), state)
-  reportVisibleUpgradeQuotes(state, elements)
+  return DEFAULT_PRICING_LINE
 }
 
 /** 报价随卡片所在 tab 可见时曝光，不上报隐藏面板。 */
@@ -738,16 +764,10 @@ function resolveCardLine(buy: HTMLButtonElement): PricingLineId | null {
 /** 查询页面 DOM。 */
 function getPricingElements(root: HTMLElement): PricingElements {
   const tabButtons = new Map<PricingLineId, HTMLButtonElement>()
-  const panels = new Map<PricingLineId, HTMLElement>()
   const buyableCards = new Map<string, BuyableCardElements>()
 
   for (const line of PRICING_LINE_IDS) {
-    const tab = root.querySelector<HTMLButtonElement>(`[data-pricing-tab="${line}"]`)
-    const panel = root.querySelector<HTMLElement>(`[data-pricing-panel="${line}"]`)
-    if (tab && panel) {
-      tabButtons.set(line, tab)
-      panels.set(line, panel)
-    }
+    tabButtons.set(line, query<HTMLButtonElement>(root, `[data-pricing-tab="${line}"]`))
   }
 
   for (const buy of root.querySelectorAll<HTMLButtonElement>('[data-pricing-buy]')) {
@@ -763,9 +783,8 @@ function getPricingElements(root: HTMLElement): PricingElements {
   }
 
   return {
-    root,
+    tabs: query<HTMLElement>(root, '[data-pricing-tabs]'),
     tabButtons,
-    panels,
     plansStatus: query<HTMLElement>(root, '[data-pricing-plans-status]'),
     buyableCards
   }

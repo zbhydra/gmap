@@ -1,0 +1,12 @@
+---
+/** 站点图标：引用 public/img/icons.svg sprite 的 i-<name>，纯装饰（aria-hidden），可读名称由所在控件提供。 */
+interface Props {
+  /** sprite 内的图标名（不含 i- 前缀），如 search、arrow-right。 */
+  name: string
+  class?: string
+}
+
+const { name, class: className } = Astro.props
+---
+
+<svg class:list={['icon', className]} aria-hidden="true"><use href={`/img/icons.svg#i-${name}`} /></svg>

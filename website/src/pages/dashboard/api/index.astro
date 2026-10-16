@@ -1,5 +1,5 @@
 ---
-/** Dashboard API 管理页：本轮未开放状态（015 U2，noindex 工作区）。 */
+/** API / MCP 接入工作区。 */
 import Layout from '../../../layouts/Layout.astro'
 import DashboardApp from '../../../components/dashboard/DashboardApp.vue'
 import { getContent } from '../../../i18n/content'
@@ -24,6 +24,7 @@ const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
     page="api"
     copy={t.dashboard}
     popupBlocked={t.pages.account.creditPurchase.popupBlocked}
+    comingSoon={t.common.comingSoon}
     localePrefix={localePrefix}
   />
 </Layout>

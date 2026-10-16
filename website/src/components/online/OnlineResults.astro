@@ -1,0 +1,391 @@
+---
+/**
+ * 云端页结果文件（设计稿 online-scraper.html ⑤）：整任务 ZIP 目录树 + 单关键词 CSV 表格。
+ * CSV 第 1 行是固定字段名（backend maps_online.CSV_HEADERS），第 2 行是创建任务时界面语言的字段译名，
+ * 第 3 行起是数据；零结果关键词的文件保留两行表头。站点目前只有 en-US，第 2 行按 en-US 译名展示，
+ * 原型的多语言切换演示等站点多语言上线后再做（README §10）。
+ */
+import type { OnlineScraperPageContent } from '../../i18n/schema'
+import Icon from '../site/Icon.astro'
+import ProductSectionHead from '../product/ProductSectionHead.astro'
+import { fillCopy } from '../product/copy'
+import { CSV_ROWS, CSV_SHOWN_COLUMNS, CSV_TOTAL_COLUMNS, RESULT_FILES, RESULT_TASK_NO } from './online-samples'
+
+interface Props {
+  results: OnlineScraperPageContent['results']
+}
+
+const { results } = Astro.props
+const fileName = (file: (typeof RESULT_FILES)[number]) => `${file.item}_${file.keyword}.csv`
+const sheetName = fileName(RESULT_FILES[0])
+---
+
+<section class="section oc band" id="results" data-inview>
+  <div class="container">
+    <ProductSectionHead head={results.head} />
+
+    <div class="oc-layout">
+      <div class="oc-side" data-stagger="90">
+        <div class="oc-zip card" data-reveal="left">
+          <div class="oc-zip-head">
+            <span class="icon-tile icon-tile--brand"><Icon name="archive" /></span>
+            <span class="oc-zip-name">
+              <b class="mono">{RESULT_TASK_NO}.zip</b>
+              <small>{fillCopy(results.zipMeta, { count: RESULT_FILES.length })}</small>
+            </span>
+          </div>
+          <ul class="oc-files" role="list">
+            {RESULT_FILES.map((file, index) => (
+              <li class:list={{ 'is-empty': file.rows === 0 }} style={`--i: ${index}`}>
+                <Icon name="file-sheet" />
+                <span class="mono">{fileName(file)}</span>
+                <em>{file.rows ? fillCopy(results.rows, { count: file.rows }) : results.headersOnly}</em>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <ul class="check-list oc-notes" role="list" data-reveal>
+          {results.notes.map(item => <li>{item}</li>)}
+        </ul>
+      </div>
+
+      <div class="oc-sheet-card card" data-reveal="right">
+        <div class="oc-sheet-head">
+          <span class="oc-file mono"><Icon name="file-sheet" />{sheetName}</span>
+          <span class="badge badge--muted">{results.language}</span>
+        </div>
+        <div class="oc-scroll" role="region" aria-label={sheetName} tabindex="0">
+          <table class="oc-sheet">
+            <thead>
+              <tr>
+                <th class="oc-rn" scope="col"><span class="sr-only">{results.rowLabel}</span></th>
+                {CSV_SHOWN_COLUMNS.map(column => <th class:list={{ 'is-skip': column.skip }} scope="col">{column.letter}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="oc-r1">
+                <td class="oc-rn">1</td>
+                {CSV_SHOWN_COLUMNS.map(column => <td>{column.field}</td>)}
+              </tr>
+              <tr class="oc-r2">
+                <td class="oc-rn">2</td>
+                {CSV_SHOWN_COLUMNS.map(column => <td>{results.csvLabels[column.field]}</td>)}
+              </tr>
+              {CSV_ROWS.map((row, index) => (
+                <tr>
+                  <td class="oc-rn">{index + 3}</td>
+                  {CSV_SHOWN_COLUMNS.map(column => (
+                    <td class:list={{ 'mono': column.mono, 'oc-strong': column.strong, 'oc-empty': !row[column.field] }}>{row[column.field]}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div class="oc-legend" aria-hidden="true">
+          <span class="oc-key oc-key--1">{results.legend.fields}</span>
+          <span class="oc-key oc-key--2">{results.legend.labels}</span>
+          <span class="oc-key oc-key--3">{results.legend.data}</span>
+          <span class="oc-more mono">{fillCopy(results.more, { count: CSV_TOTAL_COLUMNS - CSV_SHOWN_COLUMNS.length })}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .oc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    align-items: start;
+    gap: clamp(20px, 3vw, 40px);
+    margin-top: clamp(40px, 5vw, 64px);
+  }
+
+  .oc-side {
+    display: grid;
+    gap: 24px;
+    min-width: 0;
+  }
+
+  .oc-zip {
+    padding: 18px;
+  }
+
+  .oc-zip-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .oc-zip-name {
+    display: grid;
+    min-width: 0;
+  }
+
+  .oc-zip-name b {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 12.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oc-zip-name small {
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .oc-files {
+    position: relative;
+    display: grid;
+    gap: 8px;
+    margin: 16px 0 0 18px;
+    padding: 0 0 0 20px;
+    list-style: none;
+  }
+
+  /* 目录树竖线 */
+  .oc-files::before {
+    position: absolute;
+    top: -8px;
+    bottom: 22px;
+    left: 0;
+    border-left: 1.5px dashed var(--border-2);
+    content: '';
+  }
+
+  .oc-files li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    font-size: 12px;
+  }
+
+  .oc-files li::before {
+    position: absolute;
+    top: 50%;
+    left: -20px;
+    width: 16px;
+    border-top: 1.5px dashed var(--border-2);
+    content: '';
+  }
+
+  .oc-files li :global(.icon) {
+    width: 16px;
+    height: 16px;
+    color: var(--ok);
+  }
+
+  .oc-files li span {
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oc-files li em {
+    color: var(--text-3);
+    font-size: 11.5px;
+    font-style: normal;
+    white-space: nowrap;
+  }
+
+  .oc-files li.is-empty :global(.icon),
+  .oc-files li.is-empty em {
+    color: var(--warn);
+  }
+
+  /* 目录树里的文件在 ZIP 卡片显现后逐个落位（无 JS 时直接显示） */
+  :global(.js) .oc-zip .oc-files li {
+    opacity: 0;
+  }
+
+  .oc-zip.is-revealed .oc-files li {
+    animation: fade-up var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(380ms + var(--i, 0) * 130ms);
+  }
+
+  .oc-notes {
+    font-size: 14.5px;
+  }
+
+  .oc-sheet-card {
+    min-width: 0;
+    padding: 0;
+  }
+
+  .oc-sheet-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .oc-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-2);
+    font-size: 12.5px;
+  }
+
+  .oc-file :global(.icon) {
+    width: 16px;
+    height: 16px;
+    color: var(--ok);
+  }
+
+  .oc-scroll {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -webkit-mask-image: linear-gradient(90deg, var(--mask-solid) 86%, transparent);
+    mask-image: linear-gradient(90deg, var(--mask-solid) 86%, transparent);
+  }
+
+  .oc-sheet {
+    min-width: 1040px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12.5px;
+  }
+
+  .oc-sheet th,
+  .oc-sheet td {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .oc-sheet th {
+    position: relative;
+    height: 28px;
+    padding: 0 12px;
+    background: var(--surface-2);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* 跳过的列之间用双线标记（类似表格软件里的隐藏列） */
+  .oc-sheet th.is-skip::before {
+    position: absolute;
+    top: 7px;
+    bottom: 7px;
+    left: -3px;
+    width: 4px;
+    border-inline: 1px solid var(--border-2);
+    background: var(--surface-2);
+    content: '';
+  }
+
+  .oc-sheet td {
+    height: 38px;
+    padding: 0 12px;
+    color: var(--text-2);
+  }
+
+  /* 表格单元格的 width 在自动布局下不生效，用 min-width 撑住行号列 */
+  .oc-sheet .oc-rn {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    width: 40px;
+    min-width: 40px;
+    padding: 0;
+    background: var(--surface-2);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .oc-r1 td:not(.oc-rn) {
+    background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12px;
+  }
+
+  .oc-r2 td:not(.oc-rn) {
+    background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .oc-sheet .oc-strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .oc-sheet .oc-empty {
+    background: repeating-linear-gradient(-45deg, transparent 0 6px, var(--surface-3) 6px 7px);
+  }
+
+  .oc-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .oc-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .oc-key::before {
+    width: 10px;
+    height: 10px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-2xs);
+    content: '';
+  }
+
+  .oc-key--1::before {
+    background: color-mix(in srgb, var(--primary) 22%, var(--surface));
+  }
+
+  .oc-key--2::before {
+    background: color-mix(in srgb, var(--accent) 26%, var(--surface));
+  }
+
+  .oc-key--3::before {
+    background: var(--surface);
+  }
+
+  .oc-more {
+    margin-left: auto;
+  }
+
+  @media (max-width: 1080px) {
+    .oc-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 960px) {
+    .oc-more {
+      margin-left: 0;
+    }
+  }
+</style>

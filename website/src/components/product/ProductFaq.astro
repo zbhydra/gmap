@@ -1,0 +1,47 @@
+---
+/**
+ * 营销页 FAQ（产品页、工具页、API / MCP 页共用）：左侧标题 + 联系支持，右侧手风琴（details.acc，交互由站级组件运行时负责）。
+ * 问答是纯文本，页面组件用同一份数据经 faq-schema.ts 输出 FAQPage 结构化数据。
+ */
+import type { Locale } from '../../i18n/content'
+import type { ProductFaqMessage } from '../../i18n/schema'
+import { localePaths } from '../../i18n/ui'
+import Icon from '../site/Icon.astro'
+import AccentHeading from './AccentHeading.astro'
+
+interface Props {
+  locale: Locale
+  faq: ProductFaqMessage
+  /** MCP 语境用紫色 kicker。 */
+  ai?: boolean
+  /** 是否铺交替底色带。 */
+  band?: boolean
+}
+
+const { locale, faq, ai = false, band = true } = Astro.props
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+---
+
+<section class:list={['section', 'faq', { band }]} id="faq">
+  <div class="container faq-layout">
+    <div class="faq-aside" data-stagger="80">
+      <span class:list={['kicker', { 'kicker--ai': ai }]} data-reveal>{faq.kicker}</span>
+      <h2 class="h2" data-split><AccentHeading title={faq.title} /></h2>
+      <p class="lead" data-reveal>{faq.lead}</p>
+      <a class="btn btn-secondary" href={`${prefix}/contact/`} data-reveal>
+        <Icon name="mail" />{faq.contact}
+      </a>
+    </div>
+    <div class="faq-list" data-stagger="60">
+      {faq.items.map(item => (
+        <details class="acc" data-reveal>
+          <summary>
+            {item.question}
+            <span class="acc-icon"><Icon name="plus" /></span>
+          </summary>
+          <div class="acc-body"><p>{item.answer}</p></div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,30 @@
+---
+/** 产品页事实条：数字进入视口后滚动到 value（站级 data-count），无 JS 时直接显示终值。 */
+import type { Locale } from '../../i18n/content'
+import type { ProductFactMessage } from '../../i18n/schema'
+
+interface Props {
+  locale: Locale
+  caption: string
+  items: readonly ProductFactMessage[]
+}
+
+const { locale, caption, items } = Astro.props
+const format = new Intl.NumberFormat(locale)
+---
+
+<section class="facts">
+  <div class="container">
+    <p class="facts-caption" data-reveal>{caption}</p>
+    <div class="facts-grid" data-stagger="80">
+      {items.map(item => (
+        <div class="fact" data-reveal>
+          <div class="stat-value text-grad" data-count={item.value} data-count-suffix={item.suffix}>
+            {format.format(item.value)}{item.suffix}
+          </div>
+          <div class="stat-label">{item.label}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

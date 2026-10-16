@@ -1,0 +1,39 @@
+---
+/**
+ * 首屏标题构建期拆词，配合 data-split="static"（设计稿 README §5）：每个词输出 .w > .wi（--i 为词序），
+ * CSS 首帧即开始逐词升起，不等 JS。标题元素与错峰延迟由页面自己写：
+ *   <h1 class="display" data-split="static" style="--split-delay: 90ms"><SplitWords parts={[...]} /></h1>
+ * parts：字符串按空白拆词；{ text, class } 整体算一个词（.accent / .text-grad 强调词）；
+ * { br } 输出换行，值为 br 的 class（如 hide-md）。
+ */
+type Part = string | { text: string; class: string } | { br: string }
+type Token = { kind: 'space' } | { kind: 'br'; className: string } | { kind: 'word'; text: string; className: string; index: number }
+
+interface Props {
+  parts: readonly Part[]
+}
+
+const { parts } = Astro.props
+const tokens: Token[] = []
+let wordIndex = 0
+for (const part of parts) {
+  if (typeof part === 'string') {
+    for (const chunk of part.split(/(\s+)/)) {
+      if (!chunk) continue
+      tokens.push(/^\s+$/.test(chunk) ? { kind: 'space' } : { kind: 'word', text: chunk, className: '', index: wordIndex++ })
+    }
+  } else if ('br' in part) {
+    tokens.push({ kind: 'br', className: part.br })
+  } else {
+    tokens.push({ kind: 'word', text: part.text, className: part.class, index: wordIndex++ })
+  }
+}
+---
+
+{tokens.map(token => {
+  if (token.kind === 'space') return ' '
+  if (token.kind === 'br') return <br class={token.className || undefined} />
+  return (
+    <span class="w"><span class="wi" style={`--i: ${token.index}`}>{token.className ? <span class={token.className}>{token.text}</span> : token.text}</span></span>
+  )
+})}

@@ -45,6 +45,8 @@
         "proxy_url": "Invalid proxies item {index}: use http://username:password@IP:port (omit credentials when not required). Supported schemes: http, https, socks5, socks5h. IP:port:username:password is not supported."
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "Monthly API request quota exhausted. Try after the reset or upgrade your plan.",
+    "MCP_OAUTH_REQUEST_INVALID": "The authorization request is invalid or has expired. Go back to your AI app and connect again.",
         "INTERNAL_SERVER_ERROR": "Internal server error",
         "INVALID_REQUEST": "Invalid request",
         "EXTERNAL_API_KEY_INVALID": "Invalid external API key",
@@ -124,5 +126,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "Secure · Fast · Convenient",
         "subject": "Verification Code Login"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "Search Google Maps places. Each successful call uses one API request. page is the number of pages to collect (1–10). ll uses @lat,lng,zoom.",
+      "list_reviews": "Read Google Maps reviews by fid and optional cursor. Each successful call uses one API request."
     }
+  }
 }

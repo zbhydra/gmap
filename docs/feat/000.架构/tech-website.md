@@ -23,7 +23,7 @@ website/
 │   ├── mapsgrab-test.conf      # 测试环境
 │   └── deploy.sh
 └── src/
-    ├── components/           # download/ homepage/ pages/ site/ UI 组件
+    ├── components/           # site/ 外壳、pages/ 页面编排，其余按页面或领域分目录（home/ extension/ online/ product/ legal/ company/ tools/ dashboard/ …）
     ├── i18n/
     │   ├── index.ts
     │   ├── ui.ts             # 14 locale + localeNames + localePaths + hreflangMap
@@ -35,7 +35,7 @@ website/
     ├── legal/
     │   └── legalContent.ts   # terms/privacy 文案中心
     ├── company/
-    │   └── companyContent.ts # about/contact 的 14 语言文案、页面日期与 footer 标签
+    │   └── companyContent.ts # about/contact 文案（en-US 基线）、页面日期与 footer 标签
     ├── lib/
     │   └── contact.ts        # 公开支持邮箱与官方 X 账号身份常量
     ├── middleware.ts         # 当前空壳（pass-through，无语言重定向）

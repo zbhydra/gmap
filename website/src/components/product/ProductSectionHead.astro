@@ -1,0 +1,17 @@
+---
+/** 产品页居中区块头：kicker + 标题（运行时逐词显现）+ 导语。 */
+import type { ProductSectionHeadMessage } from '../../i18n/schema'
+import AccentHeading from './AccentHeading.astro'
+
+interface Props {
+  head: ProductSectionHeadMessage
+}
+
+const { head } = Astro.props
+---
+
+<header class="section-head" data-stagger="80">
+  <span class="kicker" data-reveal>{head.kicker}</span>
+  <h2 class="h2" data-split><AccentHeading title={head.title} /></h2>
+  <p class="lead" data-reveal>{head.lead}</p>
+</header>

@@ -126,20 +126,20 @@ const titleId = `${idPrefix}-auth-title`
 
   .download-field {
     display: grid;
-    gap: var(--space-2);
+    gap: var(--s-2);
   }
 
   .download-auth-heading {
     display: grid;
-    gap: var(--space-2);
+    gap: var(--s-2);
     margin-bottom: 22px;
-    padding-right: var(--space-16);
+    padding-right: var(--s-16);
   }
 
   .download-auth-heading h2 {
     margin: 0;
     color: var(--text);
-    font-size: 24px;
+    font-size: var(--fs-h3);
     line-height: 1.08;
   }
 
@@ -153,14 +153,14 @@ const titleId = `${idPrefix}-auth-title`
 
   .download-auth-eyebrow {
     width: max-content;
-    padding: 6px var(--space-2);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--rounded-full);
+    padding: 6px var(--s-2);
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-full);
     background: var(--surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
     color: var(--primary) !important;
     font-size: 11px !important;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0;
     text-transform: uppercase;
   }
@@ -189,17 +189,17 @@ const titleId = `${idPrefix}-auth-title`
     width: 100%;
     min-height: 58px;
     padding: 0 20px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--rounded-sm);
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-sm);
     background: var(--surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
     color: var(--text);
     font-size: 16px;
   }
 
   .download-input:focus {
     outline: 3px solid var(--ring);
-    border-color: var(--border-strong);
+    border-color: var(--border-2);
     background: var(--surface);
   }
 
@@ -214,16 +214,16 @@ const titleId = `${idPrefix}-auth-title`
     justify-content: center;
     min-height: 58px;
     padding: 0 22px;
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     font-size: 15px;
-    font-weight: 800;
-    transition: all var(--transition-normal);
+    font-weight: 700;
+    transition: all var(--dur-2);
   }
 
   .download-primary-button {
     color: var(--primary-fg);
     background: var(--primary);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 
   .download-primary-button:hover {
@@ -233,33 +233,33 @@ const titleId = `${idPrefix}-auth-title`
   .download-secondary-button {
     color: var(--text);
     background: var(--surface);
-    border: 1px solid var(--border-strong);
-    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-2);
+    box-shadow: var(--shadow-sm);
   }
 
   .download-secondary-button:hover {
-    border-color: var(--border-strong);
-    color: var(--primary);
+    border-color: var(--border-2);
+    color: var(--primary-text);
   }
 
   .download-continue-email-button {
     color: var(--primary-fg);
     background: var(--primary);
-    border-color: var(--border-strong);
-    box-shadow: var(--shadow-card);
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-sm);
   }
 
   .download-continue-email-button:hover {
     color: var(--primary-fg);
     border-color: var(--primary);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 
   .download-google-button {
     width: 100%;
     min-height: 54px;
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--s-4);
     display: grid;
   }
 
@@ -270,23 +270,23 @@ const titleId = `${idPrefix}-auth-title`
     align-items: center;
     justify-content: center;
     gap: 12px;
-    padding: 0 var(--space-4);
+    padding: 0 var(--s-4);
     border: 1px solid var(--border);
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     background: var(--surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
     color: var(--text);
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 700;
     transition:
-      transform var(--transition-normal),
-      border-color var(--transition-normal),
-      box-shadow var(--transition-normal);
+      transform var(--dur-2),
+      border-color var(--dur-2),
+      box-shadow var(--dur-2);
   }
 
   .google-oauth-button:hover {
-    border-color: var(--border-strong);
-    box-shadow: var(--shadow-card);
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-sm);
     transform: translateY(-1px);
   }
 
@@ -315,7 +315,7 @@ const titleId = `${idPrefix}-auth-title`
 
   .download-send-code-button {
     min-height: 54px;
-    padding: 0 var(--space-4);
+    padding: 0 var(--s-4);
     white-space: nowrap;
     flex-shrink: 0;
     width: auto;
@@ -351,8 +351,8 @@ const titleId = `${idPrefix}-auth-title`
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-2);
-    margin-top: var(--space-4);
+    gap: var(--s-2);
+    margin-top: var(--s-4);
     color: var(--text-2);
     font-size: 13px;
     line-height: 1.5;
@@ -363,10 +363,10 @@ const titleId = `${idPrefix}-auth-title`
     padding: 0;
     border: 0;
     background: transparent;
-    color: var(--primary);
+    color: var(--primary-text);
     cursor: pointer;
     font: inherit;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   .download-email-link:hover {
@@ -402,12 +402,12 @@ const titleId = `${idPrefix}-auth-title`
   .download-auth-dialog {
     position: relative;
     width: min(520px, 100%);
-    padding: var(--space-8) var(--space-6) 24px;
+    padding: var(--s-8) var(--s-6) 24px;
     overflow: hidden;
     border: 1px solid var(--border);
-    border-radius: var(--rounded-lg);
+    border-radius: var(--r-lg);
     background: var(--surface);
-    box-shadow: var(--shadow-modal);
+    box-shadow: var(--shadow-lg);
   }
 
   .download-auth-close {
@@ -416,13 +416,13 @@ const titleId = `${idPrefix}-auth-title`
     position: absolute;
     top: 18px;
     right: 18px;
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     background: var(--surface);
-    border: 1px solid var(--border-strong);
+    border: 1px solid var(--border-2);
     color: var(--text);
-    font-size: 24px;
+    font-size: var(--fs-h3);
     line-height: 1;
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 
   @media (max-width: 720px) {
@@ -431,12 +431,12 @@ const titleId = `${idPrefix}-auth-title`
     }
 
     .download-auth-dialog {
-      padding: var(--space-8) var(--space-4) 20px;
-      border-radius: var(--rounded-lg);
+      padding: var(--s-8) var(--s-4) 20px;
+      border-radius: var(--r-lg);
     }
 
     .download-auth-heading h2 {
-      font-size: 24px;
+      font-size: var(--fs-h3);
     }
 
     .download-primary-button,

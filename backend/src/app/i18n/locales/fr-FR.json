@@ -43,6 +43,8 @@
         "proxy_url": "Format invalide dans proxies, élément {index} : utilisez http://utilisateur:motdepasse@IP:port (sans identifiants si inutiles). Protocoles : http, https, socks5, socks5h. IP:port:utilisateur:motdepasse n’est pas accepté."
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "Le quota mensuel de requêtes API est épuisé. Attendez la réinitialisation ou changez de forfait.",
+    "MCP_OAUTH_REQUEST_INVALID": "La demande d’autorisation est invalide ou a expiré. Reconnectez votre application.",
         "INTERNAL_SERVER_ERROR": "Erreur interne du serveur",
         "INVALID_REQUEST": "Requête invalide",
         "EXTERNAL_API_KEY_INVALID": "La clé d'API externe est invalide",
@@ -122,5 +124,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "Sécurisé · Rapide · Pratique",
         "subject": "Connexion par Code de Vérification"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "Rechercher des lieux Google Maps. Chaque appel réussi consomme une requête API. page : nombre de pages (1–10) ; ll : @lat,lng,zoom.",
+      "list_reviews": "Lire les avis Google Maps avec fid et un cursor facultatif. Chaque appel réussi consomme une requête API."
     }
+  }
 }

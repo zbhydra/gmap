@@ -8,7 +8,7 @@
  * 1. 匿名入口：登录弹窗打开 / 取消回主页；导航邮箱验证码登录成功进入 Dashboard。
  * 2. 历史视图：列表、分页、明细展开、CSV / ZIP 下载与无文件就地提示。
  * 3. 订阅视图：三线状态（免费 / 有效 / 不可用）、Pricing tab 跳转、渠道管理 portal。
- * 4. API 视图未开放、工作区 noindex、退出回主页与移动视口可达性。
+ * 4. API 接入空态、工作区 noindex、退出回主页与移动视口可达性。
  */
 import { expect, test } from '@playwright/test'
 
@@ -58,11 +58,11 @@ async function signInByStoredToken(page: import('@playwright/test').Page, token:
 /** 打开导航登录入口（移动端在汉堡菜单内）。 */
 async function openNavSignIn(page: import('@playwright/test').Page, isMobile: boolean): Promise<void> {
   if (isMobile) {
-    await page.locator('.mobile-menu-btn').click()
-    await page.locator('.mobile-auth-signin').click()
+    await page.locator('[data-menu-toggle]').click()
+    await page.locator('[data-mobile-menu] [data-site-auth-entry]').click()
     return
   }
-  await page.locator('.nav-auth-signin').click()
+  await page.locator('[data-nav] [data-site-auth-entry]').click()
 }
 
 /** 匿名 / 登录通用的 auth/me mock。 */
@@ -130,7 +130,7 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
   await page.keyboard.press('Escape')
   await expect(page).toHaveURL(url => new URL(url).pathname === '/')
 
-  // API 未开放页同样统一：匿名取消登录回主页，无公开特例。
+  // API 工作区同样统一：匿名取消登录回主页。
   await page.goto('/dashboard/api/')
   await expect(page.locator('.workspace-primary-button')).toBeVisible()
   await page.locator('.workspace-primary-button').click()
@@ -140,9 +140,9 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
 
   // 导航登录：邮箱验证码路径，登录成功后进入 Dashboard（移动端登录入口在汉堡菜单内）。
   await page.goto('/')
-  const navSignIn = page.locator(isMobile ? '.mobile-auth-signin' : '.nav-auth-signin')
+  const navSignIn = page.locator(isMobile ? '[data-mobile-menu] [data-site-auth-entry]' : '[data-nav] [data-site-auth-entry]')
   if (isMobile) {
-    await page.locator('.mobile-menu-btn').click()
+    await page.locator('[data-menu-toggle]').click()
   }
   await expect(navSignIn).toBeVisible()
   await navSignIn.click()
@@ -155,7 +155,7 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
 
   await expect(page).toHaveURL(/\/dashboard\/$/)
   // 工作区页不渲染营销导航：唯一菜单是工作区侧栏（窄屏收起，菜单按钮可达）
-  await expect(page.locator('.header')).toHaveCount(0)
+  await expect(page.locator('[data-nav]')).toHaveCount(0)
   if (isMobile) {
     await expect(page.locator('.workspace-menu-button')).toBeVisible()
   } else {
@@ -377,9 +377,18 @@ test('dashboard subscriptions: three-line states, pricing tab links and manage s
   const apiCard = page.locator('[data-subscription-line="api"]')
   await expect(apiCard).toContainText('Temporarily unavailable')
 
-  // 选购统一跳 Pricing 对应产品 tab。
+  // 选购统一跳 Pricing 对应产品 tab；购买未交付的产品线（插件）灰化为 Coming soon，
+  // 没有链接，鼠标与键盘都不跳转；存量订阅的渠道管理不受影响（见下）。
   await expect(onlineCard.locator('[data-subs-buy]')).toHaveAttribute('href', /\/pricing\/\?product_kind=maps_online/)
   await expect(apiCard.locator('[data-subs-buy]')).toHaveAttribute('href', /\/pricing\/\?product_kind=maps_api/)
+  const extensionBuy = extensionCard.locator('[data-subs-buy]')
+  await expect(extensionBuy).toHaveAttribute('aria-disabled', 'true')
+  await expect(extensionBuy).not.toHaveAttribute('href')
+  await expect(extensionBuy).toContainText('Coming soon')
+  await extensionBuy.click({ force: true })
+  await extensionBuy.focus()
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/dashboard\/subscriptions\/$/)
 
   // 渠道管理：预开窗口跳支付渠道 portal。
   const portalPopupPromise = page.waitForEvent('popup')
@@ -394,12 +403,26 @@ test('dashboard subscriptions: three-line states, pricing tab links and manage s
 test('dashboard api view, logout returns home and mobile workspace reachability', async ({ page, isMobile }, testInfo) => {
   mockAuthMe(page)
   await page.route('**/api/client/auth/logout', route => route.fulfill({ json: envelope({}) }))
+  await page.route('**/api/client/maps/api/key', route => route.fulfill({
+    json: envelope({ has_api_key: false, api_key_prefix: '', api_key_created_at: null })
+  }))
+  await page.route('**/api/client/maps/api/usage', route => route.fulfill({
+    json: envelope({ used: 0, total: 20, period: '2026-10', exhausted: false })
+  }))
+  await page.route('**/api/client/maps/api/connection', route => route.fulfill({
+    json: envelope({ api_base_url: 'https://api.mapsgrab.test/api/client/maps/api', mcp_url: '' })
+  }))
+  await page.route('**/api/client/mcp-oauth/grants?*', route => route.fulfill({
+    json: envelope({ items: [], total: 0 })
+  }))
   await signInByStoredToken(page, 'e2e-api-token')
 
-  // API 管理页：未开放徽章 + 产品页链接，不出现 Key 管理按钮。
+  // 已登录 API 空态仍保留真实的零用量，不把不可用订阅或连接地址当作已开放。
   await page.goto('/dashboard/api/')
-  await expect(page.locator('[data-api-badge]')).toHaveText('Not open yet')
-  await expect(page.locator('[data-api-badge]')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Generate API key' })).toBeVisible()
+  await expect(page.locator('[data-api-usage]')).toHaveText('0 / 20 requests')
+  await expect(page.getByText('No apps are connected.')).toBeVisible()
+  await expect(page.getByText('The MCP connection address is not available yet.')).toBeVisible()
   await expect(page.getByRole('link', { name: 'View API products' })).toHaveAttribute('href', '/google-maps-scraper-api/')
 
   // 移动视口：侧栏收起，菜单按钮展开后个人信息可达（订阅卡在主区）。
@@ -426,5 +449,5 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
   await page.locator('[data-dashboard-account-button]').click()
   await page.locator('[data-dashboard-logout]').click()
   await expect(page).toHaveURL(url => new URL(url).pathname === '/')
-  await expect(page.locator('.nav-auth-signin')).toBeVisible()
+  await expect(page.locator('[data-nav] [data-site-auth-entry]')).toBeVisible()
 })

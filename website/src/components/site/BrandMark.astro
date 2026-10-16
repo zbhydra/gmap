@@ -1,0 +1,19 @@
+---
+/**
+ * 品牌标：渐变方块 + 白色 pin + 下载箭头（插画，品牌原色按合同 §1 只在这里使用，样式见 site.css）。
+ * trustIcon 只给页脚实例：device.ts 在 [data-footer-brand-icon] 内挂载 device_trust 透明图片，叠在品牌标上方。
+ */
+interface Props {
+  class?: string
+  trustIcon?: boolean
+}
+
+const { class: className, trustIcon = false } = Astro.props
+---
+
+<span class:list={['brand-mark', className]} data-footer-brand-icon={trustIcon || undefined}>
+  <svg viewBox="0 0 32 32" aria-hidden="true">
+    <path class="brand-mark-pin" d="M16 6.2c-4.42 0-8 3.36-8 7.66 0 5.5 6.64 11.04 7.4 11.66.35.28.85.28 1.2 0 .76-.62 7.4-6.16 7.4-11.66 0-4.3-3.58-7.66-8-7.66Z" />
+    <path class="brand-mark-arrow" d="M16 10.1v6.2m-2.9-2.9 2.9 2.9 2.9-2.9" />
+  </svg>
+</span>

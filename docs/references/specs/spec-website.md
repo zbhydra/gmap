@@ -3,7 +3,7 @@
 > 营销站类子项目（Astro SSG）的**强制规范**。写 / 改 website 前必读。本规范与具体站点无关，可整体移植。
 > 站点身份、dev 端口、页面清单、部署域名等项目事实见该端 `README.md` 与 `docs/ROADMAP.md`，不进本文。
 > 技术栈：Astro（SSG 静态站）+ 原生 TS + 命令式 DOM（**非 SPA**）；Dashboard 工作区等复杂交互界面用 Vue 3 单文件组件（Astro 官方集成，015 U2 起）。
-> 关联：设计系统 `design.md`、注释与错误定位见 [[spec-code]]。
+> 关联：设计系统 `design-website.md`、注释与错误定位见 [[spec-code]]。
 
 ## 1. 技术栈与构建
 
@@ -21,17 +21,20 @@
 ## 3. 目录结构
 
 - `pages/`：Astro 文件路由（SSG），页面装配层只做装配，逻辑进组件 / 脚本；Dashboard 类工作区页面装配 Vue 根组件并传入 i18n 文案 props。
-- `components/`：一域一目录——`pages/`（页面级装配组件）、业务域组件（认证、定价、购买、工具矩阵等）、`site/`（站级横切：确认弹窗、面包屑）。
-- `scripts/`：前端运行时按域拆子目录——API 薄封装、认证、埋点、设备标识、全局错误捕获、站级 UI 运行时（toast / confirm / 语言切换）、各功能域逻辑。
-- `layouts/Layout.astro`：唯一 HTML 外壳，全局 CSS 变量 + nav/footer + 全局错误捕获启动。
+- `components/`：一域一目录——`pages/`（页面级装配组件）、业务域组件（认证、定价、购买、工具矩阵等）、`site/`（站级横切：外壳导航 / 页脚、能力灰化入口、确认弹窗等通用组件）。
+- `scripts/`：前端运行时按域拆子目录——API 薄封装、认证、埋点、设备标识、全局错误捕获、站级 UI 运行时（外壳交互 / 动效 / 声明式组件交互 / toast / confirm / 语言切换）、各功能域逻辑。
+- `styles/`：全局样式唯一 owner——token、基础样式、动效、组件目录样式与外壳补充，由 Layout 统一引入。
+- `layouts/Layout.astro`：唯一 HTML 外壳——引入全局样式、首帧前恢复主题、装配 nav/footer、启动全局脚本（错误捕获、外壳交互、动效）。
 - `i18n/`：纯 TS 字典。
 - 生成产物（`dist/` / `tmp/` / `.astro/`）不入 git，禁止手改。
 
 ## 4. 组件与样式
 
 - 纯 `.astro` 组件 + 命令式 DOM；无第三方 UI 库。
-- 设计 token = `Layout.astro` 的 `<style is:inline is:global>` 里一组 CSS 变量（`--color-primary` 等），组件只消费 `var(--xxx)`。
-- 样式原生 CSS + Astro `<style>` scoped（默认）；`is:global` 仅用于 Layout 全局 token、以及跨组件需命中动态插入 DOM 的场景（弹窗类）。
+- 设计 token 唯一来源 = `styles/tokens.css`（分层与刻度见 `design-website.md`），组件只消费 `var(--xxx)`。
+- 样式原生 CSS + Astro `<style>` scoped（默认）；全局样式只写在 `styles/*.css`，`is:global` 仅用于跨组件需命中动态插入 DOM 的场景（弹窗类）。
+- 全站导航是 fixed 悬浮层，不占文档流：页面首个区块自己留出 `var(--nav-h)`（`.page-hero`、首页 `.hero` 已包含）。全局组件类按设计稿组合使用（如 `.btn` + `.btn-primary`），修饰类不单独使用。
+- 未交付能力统一消费一份能力可用性表，页面不各自判断：动作入口（安装、购买、获取 Key）用灰化组件，显示但鼠标、键盘都不能触发；指向介绍页的链接（含按钮样式与 `.card-link` 卡片）照常可点，只灰化并加 Coming soon 徽章，不用禁用外观；灰化样式统一由 `styles/site.css` 提供，页面不另写。
 - 移动端断点统一 `@media (max-width: 960px)`。
 - 禁 Tailwind / CSS-in-JS / CSS Modules。
 
@@ -53,6 +56,7 @@
 
 - Astro 文件路由，全 SSG。
 - 语言路由：默认语言走根路径，其余 locale 走 `[lang]/`，由 `getStaticPaths` 枚举（**非运行时检测**）；新增语言 = 新增字典文件 + 枚举项。
+- noindex 页面（工作区、支付回跳、授权中间页等）由 Layout 输出 robots meta，并加入 sitemap 屏蔽清单（按去掉语言前缀后的路由匹配）；不统计的页面给 Layout 传 `analytics={false}`，同时关闭 GA4 注入与首开打点（错误上报、device、登录链不受影响）。
 
 ## 9. i18n
 

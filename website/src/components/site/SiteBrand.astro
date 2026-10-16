@@ -1,0 +1,17 @@
+---
+/** 导航 / 页脚的品牌链接：品牌标 + 字标，链接到当前语言首页。 */
+import BrandMark from './BrandMark.astro'
+
+interface Props {
+  href: string
+  label: string
+  footer?: boolean
+}
+
+const { href, label, footer = false } = Astro.props
+---
+
+<a class="brand" href={href}>
+  <BrandMark trustIcon={footer} />
+  <span>{label}</span>
+</a>

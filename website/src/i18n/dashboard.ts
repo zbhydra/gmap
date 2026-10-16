@@ -3,8 +3,7 @@ import type { DashboardContent } from './schema'
 /**
  * 用户 Dashboard 工作区文案（en-US 基线，015 U2）。
  *
- * 侧栏三视图：在线导出历史（列表 / 明细 / CSV 与 ZIP 下载）、API 管理
- * （本轮未开放）、订阅管理（三线摘要与渠道管理）。渠道内操作指引自
+ * 侧栏三视图：在线导出历史、API / MCP 接入、订阅管理。渠道内操作指引自
  * Pricing 页迁入，随有效自动续费订阅的管理入口展示。
  */
 export const dashboardContent: DashboardContent = {
@@ -132,12 +131,59 @@ export const dashboardContent: DashboardContent = {
   api: {
     title: 'API management',
     description:
-      'The MapsGrab API is not open for self-service keys yet. Your API quota is managed with your API plan — product details stay on the API pages.',
-    badge: 'Not open yet',
+      'Manage your API key, monthly request allowance and connected AI apps.',
     docsLink: 'View API products',
     signInPrompt: 'Sign in to manage your API access.',
     signInCta: 'Sign in',
-    unreachable: 'Could not reach MapsGrab right now.'
+    unreachable: 'Could not reach MapsGrab right now.',
+    loading: 'Loading your API access...',
+    loadFailed: 'Could not load your API access. Please try again.',
+    retry: 'Retry',
+    refresh: 'Refresh',
+    keyTitle: 'API key',
+    keyEmpty: 'You have not generated an API key yet.',
+    generateKey: 'Generate API key',
+    rotateKey: 'Replace API key',
+    generatingKey: 'Generating...',
+    keyOnce: 'Copy this key now. You will not be able to view it again after leaving or refreshing this page.',
+    keyCreated: 'Created',
+    rotateTitle: 'Replace your API key?',
+    rotateMessage: 'Your current key will stop working immediately. Update any apps that use it with the new key.',
+    cancel: 'Cancel',
+    copyKey: 'Copy API key',
+    copied: 'Copied',
+    copyFailed: 'Could not copy. Select the text and copy it manually.',
+    keyFailed: 'Could not generate an API key. Please try again.',
+    usageTitle: 'Monthly API usage',
+    usageValue: '{used} / {total} requests',
+    usagePeriod: 'Period: {period}',
+    quotaExhausted: 'Your monthly request allowance is exhausted.',
+    quotaReset: 'Resets on the 1st of each month in New York time. API and MCP share this allowance.',
+    planTitle: 'API plan',
+    managePlan: 'Manage subscriptions',
+    connectionsTitle: 'Connection addresses',
+    apiUrl: 'API base URL',
+    mcpUrl: 'MCP server URL',
+    mcpHint: 'Add this URL in your MCP client. Sign in and approve the connection when it opens this website.',
+    mcpUnavailable: 'The MCP connection address is not available yet.',
+    copyUrl: 'Copy URL',
+    grants: {
+      title: 'Connected apps',
+      description: 'Apps you have allowed to search businesses and read reviews using your API allowance.',
+      loading: 'Loading connected apps...',
+      empty: 'No apps are connected.',
+      loadFailed: 'Could not load connected apps. Please try again.',
+      selfDeclared: 'Name the app gives itself: {name}',
+      createdLabel: 'Connected (ET)',
+      refreshedLabel: 'Last refreshed (ET)',
+      notRefreshed: 'Not yet',
+      revoke: 'Disconnect',
+      revokeTitle: 'Disconnect this app?',
+      revokeMessage: '{host} will lose access immediately and will need your approval to connect again.',
+      revokeFailed: 'Could not disconnect this app. Please try again.',
+      paginationLabel: 'Connected apps pages',
+      pageOf: 'Page {page} of {pages}'
+    }
   },
   subscriptions: {
     title: 'Subscriptions',

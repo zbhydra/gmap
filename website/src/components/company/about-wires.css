@@ -1,0 +1,59 @@
+/* About 页连线层（产品家族 / 数据流向共用）：路径由 about-wires.ts 按节点位置绘制 */
+.wires {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.wire {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 15%, transparent);
+  stroke-width: 1.5;
+}
+
+.wire--dashed {
+  stroke-dasharray: 5 6;
+}
+
+.wire-dot {
+  fill: var(--surface);
+  stroke: color-mix(in srgb, var(--text) 26%, transparent);
+  stroke-width: 1.5;
+}
+
+/* 流动光点：pathLength=100，10 长的光点间隔 110，保证一轮之间完全消失。
+   stroke-dashoffset 属重绘属性，不做常驻循环：匀速播三轮后停在路径末端之外（不可见） */
+.wire-pulse {
+  fill: none;
+  stroke: var(--pc, var(--cyan));
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-dasharray: 10 110;
+  stroke-dashoffset: 10;
+  filter: drop-shadow(0 0 4px var(--pc, var(--cyan)));
+  animation: wire-pulse var(--t, 3s) linear var(--d, 0s) 3 both;
+}
+
+.wire-pulse--rev {
+  animation-direction: reverse;
+}
+
+@keyframes wire-pulse {
+  from {
+    stroke-dashoffset: 10;
+  }
+
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wire-pulse {
+    display: none;
+  }
+}

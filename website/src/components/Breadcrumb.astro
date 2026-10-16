@@ -41,7 +41,7 @@ const t = getContent(locale)
 
 <style>
   .breadcrumb {
-    padding: var(--space-2) 0;
+    padding: var(--s-2) 0;
     background: var(--surface-2);
     border-bottom: 1px solid var(--border);
   }
@@ -51,7 +51,7 @@ const t = getContent(locale)
     flex-wrap: wrap;
     align-items: center;
     list-style: none;
-    gap: var(--space-2);
+    gap: var(--s-2);
     margin: 0;
     padding: 0;
   }
@@ -65,13 +65,13 @@ const t = getContent(locale)
 
   .breadcrumb-item:not(:last-child)::after {
     content: '/';
-    margin-left: var(--space-2);
+    margin-left: var(--s-2);
     color: var(--text-3);
   }
 
   .breadcrumb-item a {
-    color: var(--primary);
-    transition: color var(--transition-normal);
+    color: var(--primary-text);
+    transition: color var(--dur-2);
   }
 
   .breadcrumb-item a:hover {
@@ -86,7 +86,7 @@ const t = getContent(locale)
 
   @media (max-width: 640px) {
     .breadcrumb {
-      padding: var(--space-1) 0;
+      padding: var(--s-1) 0;
     }
 
     .breadcrumb-list {

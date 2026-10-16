@@ -6,7 +6,7 @@
 
 - `maps_extension`：插件采集，单位 records/月（`/maps/usage` 两路由在用）。
 - `maps_online`：云端采集，单位 records/月（能力就绪，014 接线路由）。
-- `maps_api`：API 调用，单位 requests/月（能力就绪，014 接线路由）。
+- `maps_api`：同步 API 与 MCP 调用，单位 requests/月；成功受理口径见 [014 API 与 MCP](../014.Maps云端/tech-API与MCP.md#业务入口与计量)。
 
 本模块只回答「某归属者在业务时区自然月的 used / total / exhausted，以及一次扣减或退回」。不负责：订阅购买与到期（006 订阅系统）、积分余额（003 积分系统）、价格与订单（004）。
 

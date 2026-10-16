@@ -202,6 +202,7 @@ generate_config_from_example() {
     local db_name_escaped
     local app_name_escaped
     local app_role_escaped
+    local nginx_server_name_escaped
     local public_api_base_url_escaped
     local backend_port_escaped
     local google_client_id_escaped
@@ -220,7 +221,8 @@ generate_config_from_example() {
     db_passwd_escaped=$(escape_sed_replacement "$DB_PASSWD")
     db_name_escaped=$(escape_sed_replacement "$DB_NAME")
     app_name_escaped=$(escape_sed_replacement "$APP_NAME")
-    public_api_base_url_escaped=$(escape_sed_replacement "$PUBLIC_API_BASE_URL")
+    nginx_server_name_escaped=$(escape_sed_replacement "$NGINX_SERVER_NAME")
+    public_api_base_url_escaped=$(escape_sed_replacement "${PUBLIC_API_BASE_URL%/}")
     backend_port_escaped=$(escape_sed_replacement "$BACKEND_PORT_PY")
     google_client_id_escaped=$(escape_sed_replacement "$GOOGLE_CLIENT_ID")
     google_client_secret_escaped=$(escape_sed_replacement "$GOOGLE_CLIENT_SECRET")
@@ -246,6 +248,7 @@ generate_config_from_example() {
         -e "s|{APP_NAME}|$app_name_escaped|g" \
         -e "s|{BACKEND_PORT_PY}|$backend_port_escaped|g" \
         -e "s|{PUBLIC_API_BASE_URL}|$public_api_base_url_escaped|g" \
+        -e "s|{NGINX_SERVER_NAME}|$nginx_server_name_escaped|g" \
         -e "s|{GOOGLE_CLIENT_ID}|$google_client_id_escaped|g" \
         -e "s|{GOOGLE_CLIENT_SECRET}|$google_client_secret_escaped|g" \
         -e "s|{PUBLIC_WEBSITE_BASE_URL}|$public_website_base_url_escaped|g" \

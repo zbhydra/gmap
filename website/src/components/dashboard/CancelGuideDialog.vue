@@ -87,10 +87,10 @@ function handleCancel(event: Event): void {
   padding: 0;
   overflow: visible;
   border: 1px solid var(--border);
-  border-radius: var(--rounded-lg);
+  border-radius: var(--r-lg);
   background: var(--surface);
   color: var(--text);
-  box-shadow: var(--shadow-modal);
+  box-shadow: var(--shadow-lg);
 }
 
 .guide::backdrop {
@@ -100,15 +100,15 @@ function handleCancel(event: Event): void {
 .guide-panel {
   position: relative;
   display: grid;
-  gap: var(--space-6);
-  padding: var(--space-6);
+  gap: var(--s-6);
+  padding: var(--s-6);
 }
 
 .guide h2 {
   margin: 0;
   padding-right: 40px;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: var(--fs-h4);
+  font-weight: 700;
   line-height: 28px;
   letter-spacing: 0;
 }
@@ -123,13 +123,13 @@ function handleCancel(event: Event): void {
   height: 36px;
   padding: 0;
   border: 0;
-  border-radius: var(--rounded-full);
+  border-radius: var(--r-full);
   background: transparent;
   color: var(--text-2);
-  font-size: 20px;
+  font-size: var(--fs-h4);
   line-height: 1;
   cursor: pointer;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--dur-1), background var(--dur-1);
 }
 
 .guide-close:hover {
@@ -139,16 +139,16 @@ function handleCancel(event: Event): void {
 
 .guide-paths {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--s-4);
 }
 
 .guide-provider {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--s-2);
 }
 
 .guide-provider + .guide-provider {
-  padding-top: var(--space-4);
+  padding-top: var(--s-4);
   border-top: 1px solid var(--border);
 }
 
@@ -156,7 +156,7 @@ function handleCancel(event: Event): void {
   margin: 0;
   color: var(--text);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 18px;
   letter-spacing: 0;
 }
@@ -164,7 +164,7 @@ function handleCancel(event: Event): void {
 .guide-path {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2) var(--space-2);
+  gap: var(--s-2) var(--s-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -177,7 +177,7 @@ function handleCancel(event: Event): void {
 .guide-path li {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -192,7 +192,7 @@ function handleCancel(event: Event): void {
 .guide-actions {
   display: flex;
   justify-content: flex-end;
-  padding-top: var(--space-1);
+  padding-top: var(--s-1);
 }
 
 .guide-dismiss {
@@ -200,13 +200,13 @@ function handleCancel(event: Event): void {
   min-height: 40px;
   padding: 0 14px;
   border: 0;
-  border-radius: var(--rounded-full);
+  border-radius: var(--r-full);
   background: var(--primary);
   color: var(--primary-fg);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background var(--dur-1);
 }
 
 .guide-dismiss:hover {

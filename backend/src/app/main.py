@@ -88,6 +88,11 @@ from app.middleware import (
     RequestLoggingMiddleware,
 )
 from fastapi import FastAPI
+from starlette.routing import Route
+from app.api.mcp_oauth import build_mcp_oauth_routes
+from app.api.mcp_server import mcp_endpoint, mcp_server
+from app.api.client.maps_api_client import router as maps_api_router
+from app.api.client.mcp_oauth_client import router as mcp_oauth_router
 from fastapi.exceptions import RequestValidationError
 from app.middleware.error_handling import handle_request_validation_error
 
@@ -163,7 +168,8 @@ def _create_lifespan():
         logger.info("Application started successfully")
 
         try:
-            yield
+            async with mcp_server.session_manager.run():
+                yield
         finally:
             logger.info("Application is shutting down")
 
@@ -214,6 +220,16 @@ def _include_business_routes(app_instance: FastAPI) -> None:
     app_instance.include_router(order_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(mark_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(maps_router, prefix="/api/client", tags=["client"])
+    app_instance.include_router(maps_api_router, prefix="/api/client", tags=["client"])
+    app_instance.include_router(mcp_oauth_router, prefix="/api/client", tags=["client"])
+    app_instance.router.routes.extend(
+        [
+            Route("/mcp/", endpoint=mcp_endpoint),
+            Route("/mcp", endpoint=mcp_endpoint),
+        ]
+    )
+    if settings.mcp.public_url:
+        app_instance.router.routes.extend(build_mcp_oauth_routes())
     app_instance.include_router(
         maps_online_router, prefix="/api/client", tags=["client"]
     )

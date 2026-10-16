@@ -1,0 +1,250 @@
+---
+/**
+ * Contact 页主体（设计稿 about.html ⑥「#contact」区，作为 /contact 的首屏）。
+ *
+ * 现无后端收信：只给邮箱（复制 / mailto，沿用原 GA / CTA 标记），不做表单提交；
+ * 设计稿右栏的表单改为可咨询主题卡（主题即原 Contact 页的帮助范围），卡底链到 About 与法务页。
+ */
+import type { ContactPageContent } from '../../company/companyContent'
+import type { Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import { DEVELOPER_EMAIL } from '../../lib/contact'
+import { fillCopy } from '../product/copy'
+import Icon from '../site/Icon.astro'
+import SplitWords from '../site/SplitWords.astro'
+
+interface Props {
+  locale: Locale
+  contact: ContactPageContent
+  /** 相关页面链接组的无障碍名称（页脚公司组标题）。 */
+  relatedLabel: string
+}
+
+const { locale, contact, relatedLabel } = Astro.props
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+/** 与 topics.items 同序：安装、账号、额度与付款、网页工具、隐私。 */
+const TOPIC_ICONS = ['puzzle', 'user', 'tag', 'wrench', 'shield'] as const
+---
+
+<section class="page-hero contact-hero has-deco" data-inview>
+  <div class="deco" aria-hidden="true">
+    <div class="aurora"><i></i><i></i><i></i></div>
+    <div class="bg-contours"></div>
+    <div class="bg-grid"></div>
+    <div class="noise"></div>
+  </div>
+
+  <div class="container contact-grid">
+    <div class="contact-copy">
+      <span class="kicker" data-enter>{contact.eyebrow}</span>
+      <h1 class="h1" data-split="static" style="--split-delay: 90ms">
+        <SplitWords parts={[contact.title.lead, { text: contact.title.accent, class: 'accent' }, contact.title.tail]} />
+      </h1>
+      <p class="lead" data-enter style="--enter-delay: 180ms">{contact.intro}</p>
+
+      <div class="email-card card" data-enter style="--enter-delay: 270ms">
+        <span class="icon-tile icon-tile--brand"><Icon name="mail" /></span>
+        <span class="email-text"><small>{contact.emailCardLabel}</small><b class="mono">{DEVELOPER_EMAIL}</b></span>
+        <button class="icon-btn" type="button" data-copy={DEVELOPER_EMAIL} aria-label={fillCopy(contact.copyEmail, { email: DEVELOPER_EMAIL })}>
+          <Icon name="copy" />
+        </button>
+        <a
+          class="btn btn-primary btn-sm"
+          href={`mailto:${DEVELOPER_EMAIL}?subject=${encodeURIComponent(contact.emailSubject)}`}
+          data-ga-event="internal_workflow_click"
+          data-ga-source="contact"
+          data-ga-target="email"
+          data-cta="contact-primary"
+        >{contact.emailLabel}</a>
+      </div>
+
+      <p class="response-note" data-enter style="--enter-delay: 330ms"><Icon name="clock" /><span>{contact.responseTimes}</span></p>
+
+      <div class="include" data-enter style="--enter-delay: 390ms">
+        <h2>{contact.include.title}</h2>
+        <p>{contact.include.text}</p>
+        <ul class="check-list check-list--sm">
+          {contact.include.items.map(item => <li>{item}</li>)}
+        </ul>
+      </div>
+    </div>
+
+    <aside class="contact-topics card" data-enter style="--enter-delay: 240ms">
+      <h2>{contact.topics.title}</h2>
+      <ul class="topic-list" role="list">
+        {contact.topics.items.map((item, index) => (
+          <li><span class="icon-tile"><Icon name={TOPIC_ICONS[index]} /></span>{item}</li>
+        ))}
+      </ul>
+      <nav class="contact-related" aria-label={relatedLabel}>
+        <a class="link-arrow" href={`${prefix}/about/`}>{contact.aboutLabel}<Icon name="arrow-right" /></a>
+        <a class="link-arrow" href={`${prefix}/privacy/`}>{contact.privacyLabel}<Icon name="arrow-right" /></a>
+        <a class="link-arrow" href={`${prefix}/terms/`}>{contact.termsLabel}<Icon name="arrow-right" /></a>
+      </nav>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .contact-hero .deco {
+    -webkit-mask-image: linear-gradient(180deg, var(--mask-solid) 55%, transparent);
+    mask-image: linear-gradient(180deg, var(--mask-solid) 55%, transparent);
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    align-items: start;
+    gap: clamp(40px, 6vw, 80px);
+  }
+
+  .contact-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  /* 邮箱地址不截断：空间不够时按钮换到第二行 */
+  .email-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 520px;
+    padding: 14px 14px 14px 16px;
+  }
+
+  .email-text {
+    flex: 1 0 auto;
+  }
+
+  .email-text small {
+    display: block;
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .email-text b {
+    display: block;
+    color: var(--text);
+    font-size: 14.5px;
+    white-space: nowrap;
+  }
+
+  .email-card .btn {
+    margin-left: auto;
+  }
+
+  .response-note {
+    display: flex;
+    gap: 10px;
+    max-width: 520px;
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .response-note :global(.icon) {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--primary-text);
+  }
+
+  .include {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    max-width: 520px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+  }
+
+  .include h2 {
+    font-size: 16px;
+    font-weight: 650;
+  }
+
+  .include > p {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* 右栏：可咨询的主题 + 相关页面 */
+  .contact-topics {
+    display: grid;
+    gap: 20px;
+    padding: clamp(22px, 3vw, 32px);
+  }
+
+  .contact-topics h2 {
+    font-size: var(--fs-h4);
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .topic-list {
+    display: grid;
+    padding: 0;
+    list-style: none;
+  }
+
+  .topic-list li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  .topic-list li + li {
+    border-top: 1px solid var(--border);
+  }
+
+  .topic-list .icon-tile {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--r-sm);
+  }
+
+  .topic-list .icon-tile :global(.icon) {
+    width: 18px;
+    height: 18px;
+  }
+
+  .contact-related {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+
+  .contact-related .link-arrow {
+    font-size: 14px;
+  }
+
+  @media (max-width: 1080px) {
+    /* 两栏会把邮箱卡挤到截断，提前改为上下排列 */
+    .contact-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .contact-topics {
+      max-width: 720px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .email-card .btn {
+      width: 100%;
+    }
+  }
+</style>

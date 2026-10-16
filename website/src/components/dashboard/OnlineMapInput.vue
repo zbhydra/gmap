@@ -126,12 +126,12 @@ watch(() => props.active, async active => { if (active) { await nextTick(); map?
 </template>
 
 <style scoped>
-.map-input { display: grid; gap: var(--space-3); min-width: 0; }
-.map-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin: 0; padding: 0; border: 0; }
-.map-fields label { display: grid; gap: var(--space-2); min-width: 0; }
-.map-fields input { width: 100%; min-width: 0; padding: var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--rounded-sm); background: var(--surface); color: var(--text); font: inherit; }
+.map-input { display: grid; gap: var(--s-3); min-width: 0; }
+.map-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-3); margin: 0; padding: 0; border: 0; }
+.map-fields label { display: grid; gap: var(--s-2); min-width: 0; }
+.map-fields input { width: 100%; min-width: 0; padding: var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; }
 .map-fields input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.map-surface { width: 100%; min-height: 280px; height: 400px; max-height: 50vh; border: 1px solid var(--border); border-radius: var(--rounded-sm); z-index: 0; isolation: isolate; }
+.map-surface { width: 100%; min-height: 280px; height: 400px; max-height: 50vh; border: 1px solid var(--border); border-radius: var(--r-sm); z-index: 0; isolation: isolate; }
 .map-summary { margin: 0; color: var(--text-2); font-size: 14px; }
 .map-error { margin: 0; color: var(--bad); font-size: 14px; }
 @media (max-width: 960px) { .map-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } .map-surface { height: 320px; } }

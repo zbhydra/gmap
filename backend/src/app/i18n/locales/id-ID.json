@@ -43,6 +43,8 @@
         "proxy_url": "Format proxies item {index} tidak valid: gunakan http://pengguna:kata_sandi@IP:port (hilangkan kredensial jika tidak diperlukan). Mendukung http, https, socks5, socks5h; bukan IP:port:pengguna:kata_sandi."
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "Kuota permintaan API bulanan habis. Tunggu pengaturan ulang atau tingkatkan paket.",
+    "MCP_OAUTH_REQUEST_INVALID": "Permintaan otorisasi tidak valid atau kedaluwarsa. Hubungkan kembali aplikasi.",
         "INTERNAL_SERVER_ERROR": "Kesalahan server internal",
         "INVALID_REQUEST": "Permintaan tidak valid",
         "EXTERNAL_API_KEY_INVALID": "Kunci API eksternal tidak valid",
@@ -122,5 +124,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "Aman · Cepat · Mudah",
         "subject": "Masuk dengan Kode Verifikasi"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "Cari tempat Google Maps. Setiap panggilan berhasil memakai satu permintaan API. page: jumlah halaman (1–10); ll: @lat,lng,zoom.",
+      "list_reviews": "Baca ulasan Google Maps dengan fid dan cursor opsional. Setiap panggilan berhasil memakai satu permintaan API."
     }
+  }
 }

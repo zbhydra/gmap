@@ -45,6 +45,8 @@
         "proxy_url": "proxies 字段第 {index} 项格式错误：请使用 http://用户名:密码@IP:端口（无认证可省略用户名和密码）；支持 http、https、socks5、socks5h，不支持 IP:端口:用户名:密码。"
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "本月 API 请求额度已用尽，请等待重置或升级套餐。",
+    "MCP_OAUTH_REQUEST_INVALID": "授权请求无效或已过期，请回到 AI 应用重新发起连接",
         "INTERNAL_SERVER_ERROR": "系统服务异常",
         "INVALID_REQUEST": "无效的请求",
         "EXTERNAL_API_KEY_INVALID": "外部 API Key 无效",
@@ -124,5 +126,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "安全 · 快速 · 便捷",
         "subject": "验证码登录"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "搜索 Google Maps 商家，每次成功调用消耗一次 API 请求额度。page 为累计采集页数（1–10），ll 格式为 @lat,lng,zoom。",
+      "list_reviews": "按 fid 和可选 cursor 读取 Google Maps 评论，每次成功调用消耗一次 API 请求额度。"
     }
+  }
 }

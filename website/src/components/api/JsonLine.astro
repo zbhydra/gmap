@@ -1,0 +1,30 @@
+---
+/**
+ * 产品 mock 里的单行 JSON 片段：构建期按全局 .tok-* 类着色（代码窗配色，见 styles/components.css），
+ * 不进运行时。字符串后跟冒号的是键；省略号等非 JSON 字符原样输出。
+ */
+interface Props {
+  source: string
+}
+
+type Token = { kind: 'key' | 'str' | 'num' | 'bool' | 'punc' | 'text'; text: string }
+
+const { source } = Astro.props
+const PATTERN = /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?)|\b(true|false|null)\b|([{}[\],:])/g
+const tokens: Token[] = []
+let cursor = 0
+for (const match of source.matchAll(PATTERN)) {
+  const index = match.index ?? 0
+  if (index > cursor) tokens.push({ kind: 'text', text: source.slice(cursor, index) })
+  if (match[1]) {
+    tokens.push({ kind: match[2] ? 'key' : 'str', text: match[1] })
+    if (match[2]) tokens.push({ kind: 'punc', text: match[2] })
+  } else if (match[3]) tokens.push({ kind: 'num', text: match[3] })
+  else if (match[4]) tokens.push({ kind: 'bool', text: match[4] })
+  else tokens.push({ kind: 'punc', text: match[0] })
+  cursor = index + match[0].length
+}
+if (cursor < source.length) tokens.push({ kind: 'text', text: source.slice(cursor) })
+---
+
+{tokens.map(token => (token.kind === 'text' ? token.text : <span class={`tok-${token.kind}`}>{token.text}</span>))}

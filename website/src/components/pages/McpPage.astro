@@ -1,0 +1,1895 @@
+---
+/**
+ * MCP 落地页（W4）：/google-maps-scraper-mcp。
+ *
+ * 事实按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）：Streamable HTTP 入口 {PUBLIC_API_BASE_URL}/mcp/（必须带结尾斜杠），
+ * 工具 search_places / list_reviews，API Key 或 OAuth access token 以 Authorization: Bearer 携带；照片工具尚无合同，只标 Coming soon。
+ * 获取 Key 按钮绑 mcp 能力；额度与价格逐字取自 pricing.ts 的 API tab。
+ * 会话轮播与拓扑高亮由 scripts/pages/mcp-page.ts 驱动；无 JS 与减弱动效下展示首个场景与静态拓扑。
+ */
+import { Code } from 'astro:components'
+import Layout from '../../layouts/Layout.astro'
+import { getContent, type Locale } from '../../i18n/content'
+import type { McpClientId, ProductCtaMessage, ProductFaqMessage } from '../../i18n/schema'
+import { localePaths } from '../../i18n/ui'
+import { capabilities } from '../../lib/capabilities'
+import CapabilityAction from '../site/CapabilityAction.astro'
+import Icon from '../site/Icon.astro'
+import SoonBadge from '../site/SoonBadge.astro'
+import SplitWords from '../site/SplitWords.astro'
+import CodeText from '../api/CodeText.astro'
+import McpScene from '../api/McpScene.astro'
+import { MCP_URL } from '../api/endpoints'
+import AccentHeading from '../product/AccentHeading.astro'
+import ProductCta from '../product/ProductCta.astro'
+import ProductFaq from '../product/ProductFaq.astro'
+import { faqPageSchema } from '../product/faq-schema'
+
+interface Props {
+  locale?: Locale
+}
+
+const { locale = 'en-US' } = Astro.props
+const t = getContent(locale)
+const page = t.pages.scraperMcp
+const shared = t.pages.apiPage
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const pageId = 'google-maps-scraper-mcp'
+const keyHref = `${prefix}/dashboard/api/`
+const pricingHref = (medium: string) =>
+  `${prefix}/pricing/?product_kind=maps_api&utm_source=website&utm_medium=${pageId}-${medium}&utm_campaign=pricing`
+
+/** 014 合同里的 MCP 服务名（客户端连接后显示的名称）。 */
+const SERVER_NAME = 'MapsGrab'
+const mcpHost = new URL(MCP_URL).host
+const [connectedBefore, connectedAfter = ''] = page.agent.connected.split('{server}')
+
+/** 客户端顺序与通用图标（不用品牌 logo）。 */
+const CLIENT_IDS: readonly McpClientId[] = ['claude', 'cursor', 'vscode', 'codex']
+const CLIENT_ICONS: Record<McpClientId, string> = { claude: 'sparkles', cursor: 'cursor', vscode: 'code', codex: 'terminal' }
+
+/** 各客户端的接入配置（远程 Streamable HTTP + Bearer 头；VS Code 用安全输入，Codex 从环境变量读 Key）。 */
+const CONFIGS: Record<McpClientId, { lang: 'bash' | 'json' | 'toml'; code: string }> = {
+  claude: {
+    lang: 'bash',
+    code: `claude mcp add --transport http mapsgrab ${MCP_URL} \\\n  --header "Authorization: Bearer YOUR_API_KEY"`
+  },
+  cursor: {
+    lang: 'json',
+    code: JSON.stringify({ mcpServers: { mapsgrab: { url: MCP_URL, headers: { Authorization: 'Bearer YOUR_API_KEY' } } } }, null, 2)
+  },
+  vscode: {
+    lang: 'json',
+    code: JSON.stringify(
+      {
+        inputs: [{ type: 'promptString', id: 'mapsgrab-api-key', description: 'MapsGrab API key', password: true }],
+        servers: { mapsgrab: { type: 'http', url: MCP_URL, headers: { Authorization: 'Bearer ${input:mapsgrab-api-key}' } } }
+      },
+      null,
+      2
+    )
+  },
+  codex: {
+    lang: 'toml',
+    code: `[mcp_servers.mapsgrab]\nurl = "${MCP_URL}"\nbearer_token_env_var = "MAPSGRAB_API_KEY"`
+  }
+}
+
+/** 认证检视器：一次 tools/call 的请求与响应（响应结构与后端 CallToolResult 序列化一致）。 */
+const INSPECT_REQUEST = [
+  'POST /mcp/ HTTP/1.1',
+  `Host: ${mcpHost}`,
+  'Authorization: Bearer YOUR_API_KEY',
+  'Content-Type: application/json',
+  '',
+  '{',
+  '  "jsonrpc": "2.0", "id": 7, "method": "tools/call",',
+  '  "params": {',
+  '    "name": "list_reviews",',
+  '    "arguments": {"fid": "0x5495…e0ab", "sort_by": 2}',
+  '  }',
+  '}'
+].join('\n')
+const INSPECT_RESPONSE = [
+  '{',
+  '  "jsonrpc": "2.0", "id": 7,',
+  '  "result": {',
+  '    "content": [{"type": "text", "text": "{\\"reviews\\": […"}],',
+  '    "structuredContent": {',
+  '      "reviews": [{"rating": 5, "author_name": "Maya R.", …}],',
+  '      "next_cursor": "CAESBkVnSUlDZw…"',
+  '    },',
+  '    "isError": false',
+  '  }',
+  '}'
+].join('\n')
+
+// 首屏勾选行与计费阶梯都取 pricing.ts 的 API tab。
+const apiPlans = t.pages.pricing.tabs.api
+const freePlan = apiPlans.cards.find(card => card.status === 'free')
+if (!freePlan) throw new Error('[mcp-page] pricing.ts API tab has no free plan card for the {quota} hero line.')
+const heroMeta = page.hero.meta.map(item => item.replace('{quota}', freePlan.quota))
+const quotaOf = (quota: string) => {
+  const match = quota.match(/[\d,]+/)
+  if (!match) throw new Error(`[mcp-page] Cannot read a request count from pricing quota "${quota}".`)
+  return Number(match[0].replace(/,/g, ''))
+}
+const maxQuota = Math.max(...apiPlans.cards.map(card => quotaOf(card.quota)))
+// 对数刻度：免费档 20 与 Scale 50,000 同屏可读；最短条保留 6% 可见长度。
+const ladder = apiPlans.cards.map(card => ({
+  card,
+  width: Math.max(0.06, Math.log10(quotaOf(card.quota)) / Math.log10(maxQuota))
+}))
+
+// FAQ 与收尾 CTA：标题、问答与导语按页，kicker、侧栏导语、按钮与说明是 API / MCP 共用文案。
+const faq: ProductFaqMessage = { ...shared.faq, kicker: t.common.faqLabel, title: page.faq.title, items: page.faq.items }
+const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: page.cta.lead, primary: shared.primaryCta, secondary: shared.pricingCta }
+---
+
+<Layout
+  locale={locale}
+  title={page.seo.title}
+  description={page.seo.description}
+  includeSoftwareApplicationSchema={false}
+  structuredData={[faqPageSchema(faq.items)]}
+  preloadAccentFont
+>
+  <div class="mcp-page" data-mcp-page>
+    <!-- ① Hero：标题 + 示例会话（提问 → 工具调用 → 回答，轮播四个场景） -->
+    <section class="page-hero mcp-hero has-deco" data-inview>
+      <div class="deco" aria-hidden="true">
+        <div class="aurora"><i></i><i></i><i></i></div>
+        <div class="bg-contours"></div>
+        <div class="bg-grid"></div>
+        <div class="noise"></div>
+      </div>
+
+      <div class="container page-hero-grid">
+        <div class="page-hero-copy">
+          <span class="kicker kicker--ai" data-enter><Icon name="plug" />{page.hero.kicker}</span>
+
+          <h1 class="h1 mcp-title" data-split="static" style="--split-delay: 90ms">
+            <SplitWords parts={[page.hero.title.lead, { text: page.hero.title.accent, class: 'accent text-grad-ai' }, page.hero.title.tail]} />
+          </h1>
+
+          <p class="lead" data-enter style="--enter-delay: 180ms">{page.hero.lead}</p>
+
+          <div class="page-hero-actions" data-enter style="--enter-delay: 270ms">
+            <CapabilityAction capability="mcp" locale={locale} href={keyHref} class="btn btn-primary btn-lg" data-magnetic="0.22" data-cta={`${pageId}-hero-api-dashboard`}>
+              <Icon name="key" />{shared.primaryCta}
+            </CapabilityAction>
+            <a class="btn btn-secondary btn-lg" href={pricingHref('hero')} data-cta={`${pageId}-hero-pricing`}>{shared.pricingCta}</a>
+          </div>
+
+          <div class="page-hero-meta" data-enter style="--enter-delay: 360ms">
+            {heroMeta.map(item => <span><Icon name="check" />{item}</span>)}
+          </div>
+        </div>
+
+        <div class="page-hero-visual mcp-stage" data-reveal="right" data-reveal-onload="520">
+          <div class="mcp-agent" role="img" aria-label={page.agent.label} data-mcp-agent>
+            <div class="mcp-agent-bar">
+              <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+              <span class="mcp-agent-title">{page.agent.session}</span>
+              <span class="badge badge--ai mcp-agent-client" data-mcp-client>{page.clients[CLIENT_IDS[0]]}</span>
+            </div>
+            <p class="mcp-agent-conn">
+              <span class="dot dot--live"></span>
+              <span>{connectedBefore}<b>{SERVER_NAME}</b>{connectedAfter}</span>
+            </p>
+            <div class="mcp-agent-body" data-mcp-stage>
+              <McpScene scene={page.agent.scenes[0]} thinking={page.agent.thinking} running={page.agent.running} />
+            </div>
+            <div class="mcp-agent-input">
+              <span class="mcp-input" data-mcp-input>{page.agent.placeholder}</span>
+              <span class="mcp-send"><Icon name="send" /></span>
+            </div>
+          </div>
+          {page.agent.scenes.map((scene, index) => (
+            <template data-mcp-scene data-client={page.clients[CLIENT_IDS[index % CLIENT_IDS.length]]}>
+              <McpScene scene={scene} thinking={page.agent.thinking} running={page.agent.running} />
+            </template>
+          ))}
+
+          <div class="float-chip mcp-fc mcp-fc--a floaty" style="--float-t: 7s" aria-hidden="true">
+            <span class="icon-tile icon-tile--ai"><Icon name="plug" /></span>
+            <span><small>{page.hero.chips[0].label}</small>{page.hero.chips[0].value}</span>
+          </div>
+          <div class="float-chip mcp-fc mcp-fc--b floaty" style="--float-t: 8s; --float-d: -3s" data-parallax="-0.05" aria-hidden="true">
+            <span class="icon-tile icon-tile--ok"><Icon name="braces" /></span>
+            <span><small>{page.hero.chips[1].label}</small>{page.hero.chips[1].value}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ② 工具：search_places / list_reviews + 照片工具 Coming soon -->
+    <section class="section" id="tools">
+      <div class="container">
+        <header class="section-head" data-stagger="80">
+          <span class="kicker kicker--ai" data-reveal>{page.tools.kicker}</span>
+          <h2 class="h2" data-split><AccentHeading title={page.tools.title} /></h2>
+          <p class="lead" data-reveal>{page.tools.lead}</p>
+        </header>
+
+        <div class="mcp-tools" data-stagger="90" data-spotlight-group>
+          {page.tools.items.map((tool, index) => (
+            <article class="mcp-tool card card--lift" data-spotlight data-reveal>
+              <div class="mcp-tool-top">
+                <span class="icon-tile icon-tile--ai"><Icon name={tool.icon} /></span>
+                <span class="mcp-tool-kind">{page.tools.kind}</span>
+              </div>
+              <code class="mcp-tool-name">{tool.name}</code>
+              <h3>{tool.title}</h3>
+              <p>{tool.description}</p>
+              <dl class="mcp-tool-args">
+                {tool.args.map(arg => (
+                  <div>
+                    <dt><code>{arg.name}</code></dt>
+                    <dd><CodeText text={arg.description} /></dd>
+                  </div>
+                ))}
+              </dl>
+              <div class="mcp-tool-returns">
+                <span>{page.tools.returns}</span>
+                <code>{tool.returns}</code>
+              </div>
+              <a class="link-arrow" href={`${prefix}/${index === 0 ? 'google-maps-scraper-api' : 'google-maps-reviews-scraper-api'}/`} data-cta={`${pageId}-tool-${tool.name}`}>
+                {tool.link}<Icon name="arrow-right" />
+              </a>
+            </article>
+          ))}
+          <article class="mcp-tool mcp-tool--soon card" data-reveal>
+            <div class="mcp-tool-top">
+              <span class="icon-tile"><Icon name="image" /></span>
+              {!capabilities.photosApi && <SoonBadge locale={locale} />}
+            </div>
+            <h3>{page.tools.photos.title}</h3>
+            <p>{page.tools.photos.description}</p>
+            <a
+              class:list={['link-arrow', { 'is-unavailable': !capabilities.photosApi }]}
+              href={`${prefix}/google-maps-photos-api/`}
+              data-cta={`${pageId}-tool-photos`}
+            >
+              {page.tools.photos.link}<Icon name="arrow-right" />
+            </a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 连接拓扑（恒暗主题岛）：客户端 → MCP 入口 → 工具 -->
+    <section class="section mcp-flow scheme-dark has-deco" id="how-it-works" data-inview>
+      <div class="deco" aria-hidden="true">
+        <div class="bg-grid mcp-flow-grid"></div>
+        <div class="mcp-flow-glow"></div>
+        <div class="noise"></div>
+      </div>
+      <div class="container">
+        <header class="section-head" data-stagger="80">
+          <span class="kicker kicker--ai" data-reveal>{page.flow.kicker}</span>
+          <h2 class="h2" data-split><AccentHeading title={page.flow.title} accentClass="text-grad-ai" /></h2>
+          <p class="lead" data-reveal>{page.flow.lead}</p>
+        </header>
+
+        <div class="topo" role="img" aria-label={page.flow.label} data-mcp-topo data-reveal>
+          <div class="topo-col">
+            <span class="topo-label">{page.flow.clientsLabel}</span>
+            {CLIENT_IDS.map((id, index) => (
+              <span class:list={['topo-node', { 'is-active': index === 0 }]} data-topo-client>
+                <Icon name={CLIENT_ICONS[id]} />{page.clients[id]}
+              </span>
+            ))}
+            <span class="topo-node topo-node--any"><Icon name="plug" />{page.flow.anyClient}</span>
+          </div>
+
+          <div class="topo-wire topo-wire--in">
+            <span class="topo-dash"></span>
+            <span class="topo-rail"><span class="topo-pulse"></span></span>
+          </div>
+
+          <div class="topo-hub">
+            <span class="topo-hub-icon"><Icon name="bot" /></span>
+            <b>{page.flow.hub}</b>
+            <code class="topo-url">{mcpHost}/mcp/</code>
+            <span class="topo-auth"><Icon name="key" />Authorization: Bearer</span>
+            <span class="topo-call">
+              <code data-topo-call-tool>{page.tools.items[0].name}</code>
+              <span>→ {page.flow.resultLabel}</span>
+              <b data-topo-call-result>{page.flow.results[0]}</b>
+            </span>
+          </div>
+
+          <div class="topo-wire topo-wire--out">
+            <span class="topo-dash"></span>
+            <span class="topo-rail"><span class="topo-pulse"></span></span>
+          </div>
+
+          <div class="topo-col">
+            <span class="topo-label">{page.flow.toolsLabel}</span>
+            {page.tools.items.map((tool, index) => (
+              <span class:list={['topo-node topo-node--tool', { 'is-active': index === 0 }]} data-topo-tool={tool.name} data-topo-result={page.flow.results[index]}>
+                <Icon name={tool.icon} /><code>{tool.name}</code>
+              </span>
+            ))}
+            <span class="topo-node topo-node--soon">
+              <Icon name="image" />{page.flow.photos}
+              {!capabilities.photosApi && <SoonBadge locale={locale} />}
+            </span>
+            <span class="topo-foot"><Icon name="globe" />{page.flow.publicData}</span>
+          </div>
+        </div>
+
+        <ol class="topo-steps" data-stagger="90">
+          {page.flow.steps.map((step, index) => (
+            <li data-reveal>
+              <span class="topo-step-num">{String(index + 1).padStart(2, '0')}</span>
+              <b>{step.title}</b>
+              <span>{step.description}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <!-- ④ 接入：每个客户端一段配置 + OAuth 说明 + 通用规格 -->
+    <section class="section band" id="setup">
+      <div class="container">
+        <header class="section-head" data-stagger="80">
+          <span class="kicker kicker--ai" data-reveal>{page.setup.kicker}</span>
+          <h2 class="h2" data-split><AccentHeading title={page.setup.title} /></h2>
+          <p class="lead" data-reveal>{page.setup.lead}</p>
+        </header>
+
+        <div class="setup" data-tabs data-reveal>
+          <div class="seg setup-tabs" role="tablist" aria-label={page.setup.tabsLabel}>
+            <span class="seg-thumb" aria-hidden="true"></span>
+            {CLIENT_IDS.map((id, index) => (
+              <button
+                class="seg-btn"
+                type="button"
+                role="tab"
+                id={`mcp-setup-tab-${id}`}
+                aria-controls={`mcp-setup-${id}`}
+                aria-selected={index === 0 ? 'true' : 'false'}
+                data-tab={id}
+              >
+                <Icon name={CLIENT_ICONS[id]} />{page.clients[id]}
+              </button>
+            ))}
+          </div>
+          {CLIENT_IDS.map((id, index) => (
+            <div class="setup-panel" role="tabpanel" id={`mcp-setup-${id}`} aria-labelledby={`mcp-setup-tab-${id}`} hidden={index !== 0}>
+              <ol class="setup-steps">
+                {page.setup.clients[id].steps.map((step, stepIndex) => (
+                  <li>
+                    <span class="setup-num">{stepIndex + 1}</span>
+                    <div>
+                      <b>{step.title}</b>
+                      <p><CodeText text={step.description} /></p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <div class="codewin setup-code">
+                <div class="codewin-bar">
+                  <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                  <span class="setup-file">{page.setup.clients[id].file}</span>
+                  <button class="codewin-copy" type="button" aria-label={page.setup.copy} data-copy={CONFIGS[id].code}>
+                    <Icon name="copy" class="icon--sm" />
+                  </button>
+                </div>
+                <Code code={CONFIGS[id].code} lang={CONFIGS[id].lang} theme="css-variables" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div class="setup-extra" data-stagger="90">
+          <article class="setup-oauth card" data-reveal>
+            <span class="icon-tile icon-tile--ai"><Icon name="user" /></span>
+            <div>
+              <b>{page.setup.oauth.title}</b>
+              <p>{page.setup.oauth.description}</p>
+            </div>
+          </article>
+          <div class="setup-spec card" data-reveal>
+            <div class="setup-spec-head">
+              <b>{page.setup.spec.title}</b>
+              <span>{page.setup.spec.subtitle}</span>
+            </div>
+            <dl>
+              <div>
+                <dt>{page.setup.spec.transport}</dt>
+                <dd>{page.setup.spec.transportValue}</dd>
+              </div>
+              <div>
+                <dt>{page.setup.spec.endpoint}</dt>
+                <dd>
+                  <code>{MCP_URL}</code>
+                  <button class="setup-copy" type="button" aria-label={page.setup.spec.copyEndpoint} data-copy={MCP_URL}>
+                    <Icon name="copy" class="icon--sm" />
+                  </button>
+                </dd>
+              </div>
+              <div>
+                <dt>{page.setup.spec.auth}</dt>
+                <dd>{page.setup.spec.authValue}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑤ 示例提示词墙（两行跑马灯，反向） -->
+    <section class="section mcp-prompts" id="prompts">
+      <div class="container">
+        <header class="section-head" data-stagger="80">
+          <span class="kicker kicker--ai" data-reveal>{page.prompts.kicker}</span>
+          <h2 class="h2" data-split><AccentHeading title={page.prompts.title} accentClass="text-grad-ai" /></h2>
+          <p class="lead" data-reveal>{page.prompts.lead}</p>
+        </header>
+      </div>
+      <div class="prompt-rows" data-reveal>
+        {page.prompts.rows.map((row, rowIndex) => (
+          <div class="marquee prompt-marquee" data-marquee data-reverse={rowIndex % 2 === 1 ? '' : undefined} style={`--marquee-duration: ${rowIndex % 2 === 1 ? 64 : 56}s`}>
+            <div class="marquee-track" role="list">
+              {row.map(item => (
+                <article class="prompt-card" role="listitem">
+                  <div class="prompt-top">
+                    <span class="icon-tile icon-tile--ai"><Icon name={item.icon} /></span>
+                    <span class="prompt-tag">{item.tag}</span>
+                  </div>
+                  <p class="prompt-quote">{item.quote}</p>
+                  <div class="prompt-meta">
+                    {item.tools.map(tool => <code class="prompt-tool">{tool}</code>)}
+                    {item.fields && <span class="prompt-fields">{item.fields}</span>}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ⑥ 认证与数据边界：请求检视器 + 要点 -->
+    <section class="section band" id="trust">
+      <div class="container trust">
+        <div class="trust-copy">
+          <header class="section-head section-head--left" data-stagger="80">
+            <span class="kicker kicker--ai" data-reveal>{page.trust.kicker}</span>
+            <h2 class="h2" data-split><AccentHeading title={page.trust.title} /></h2>
+            <p class="lead" data-reveal>{page.trust.lead}</p>
+          </header>
+          <ul class="trust-items" role="list" data-stagger="70">
+            {page.trust.items.map(item => (
+              <li data-reveal>
+                <span class="icon-tile"><Icon name={item.icon} /></span>
+                <div>
+                  <b>{item.title}</b>
+                  <p><CodeText text={item.description} /></p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <figure class="inspector codewin" aria-label={page.trust.inspector.label} data-reveal="right">
+          <div class="codewin-bar">
+            <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+            <span class="inspector-path"><b>POST</b>/mcp/</span>
+            <span class="badge badge--ok inspector-ok"><Icon name="shield" />{page.trust.inspector.verified}</span>
+          </div>
+          <div class="codewin-label">{page.trust.inspector.request}</div>
+          <Code code={INSPECT_REQUEST} lang="http" theme="css-variables" />
+          <div class="codewin-label">{page.trust.inspector.response}</div>
+          <Code code={INSPECT_RESPONSE} lang="json" theme="css-variables" />
+        </figure>
+      </div>
+    </section>
+
+    <!-- ⑦ 计费：共享 API 额度，阶梯取自 pricing.ts -->
+    <section class="section" id="pricing">
+      <div class="container billing">
+        <div class="billing-copy">
+          <header class="section-head section-head--left" data-stagger="80">
+            <span class="kicker kicker--ai" data-reveal>{page.billing.kicker}</span>
+            <h2 class="h2" data-split><AccentHeading title={page.billing.title} /></h2>
+            <p class="lead" data-reveal>{page.billing.lead}</p>
+          </header>
+          <a class="link-arrow" href={pricingHref('billing')} data-cta={`${pageId}-billing-pricing`} data-reveal>
+            {page.billing.compare}<Icon name="arrow-right" />
+          </a>
+        </div>
+        <div class="ladder card" data-reveal>
+          <table class="ladder-table">
+            <thead>
+              <tr>
+                <th scope="col">{page.billing.head.plan}</th>
+                <th scope="col">{page.billing.head.requests} <span>{page.billing.head.scale}</span></th>
+                <th scope="col">{page.billing.head.price}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ladder.map(({ card, width }, index) => (
+                <tr class:list={{ 'is-featured': card.featured }} style={`--w: ${width.toFixed(3)}; --i: ${index}`}>
+                  <th scope="row">
+                    <span class="ladder-name">
+                      {card.name}
+                      {card.featured && <span class="badge badge--ai">{t.pages.pricing.popularLabel}</span>}
+                    </span>
+                  </th>
+                  <td>
+                    <span class="ladder-bar" aria-hidden="true"><i></i></span>
+                    <span class="ladder-quota">{card.quota}</span>
+                  </td>
+                  <td class="ladder-price"><b>{card.price}</b><span>{card.periodLabel}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p class="ladder-note"><Icon name="info" class="icon--sm" />{apiPlans.quotaNote}</p>
+        </div>
+      </div>
+    </section>
+
+    <ProductFaq locale={locale} faq={faq} ai />
+
+    <ProductCta cta={cta} ai>
+      <CapabilityAction capability="mcp" locale={locale} href={keyHref} class="btn btn-primary btn-lg" data-magnetic="0.22" data-cta={`${pageId}-cta-api-dashboard`}>
+        <Icon name="key" />{cta.primary}
+      </CapabilityAction>
+      <a class="btn btn-secondary btn-lg" href={pricingHref('cta')} data-cta={`${pageId}-cta-pricing`}>{cta.secondary}</a>
+    </ProductCta>
+  </div>
+</Layout>
+
+<script>
+  import { initMcpPage } from '../../scripts/pages/mcp-page'
+
+  initMcpPage()
+</script>
+
+<style>
+  /* MCP 语境：首屏与 CTA 极光换成紫 / 蓝 / 青 */
+  .mcp-page :global(.aurora > i:nth-child(1)) {
+    --c: light-dark(color-mix(in srgb, var(--violet-600) 16%, transparent), color-mix(in srgb, var(--violet-600) 36%, transparent));
+  }
+
+  .mcp-page :global(.aurora > i:nth-child(2)) {
+    --c: light-dark(color-mix(in srgb, var(--blue-500) 16%, transparent), color-mix(in srgb, var(--blue-500) 34%, transparent));
+  }
+
+  .mcp-page :global(.aurora > i:nth-child(3)) {
+    --c: light-dark(color-mix(in srgb, var(--cyan-500) 12%, transparent), color-mix(in srgb, var(--cyan-500) 24%, transparent));
+  }
+
+  /* ---------------------------------------------------------------------------
+     ① Hero
+     --------------------------------------------------------------------------- */
+  .mcp-hero {
+    --hero-cols: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  }
+
+  .mcp-hero .kicker :global(.icon) {
+    width: 14px;
+    height: 14px;
+  }
+
+  .mcp-title {
+    max-width: 620px;
+  }
+
+  .mcp-stage {
+    isolation: isolate;
+  }
+
+  .mcp-stage::before {
+    position: absolute;
+    inset: 8% -4% -6% 6%;
+    z-index: -1;
+    border-radius: var(--r-xl);
+    background:
+      radial-gradient(60% 55% at 70% 30%, color-mix(in srgb, var(--violet-600) 42%, transparent), transparent 70%),
+      radial-gradient(55% 50% at 25% 85%, color-mix(in srgb, var(--blue-500) 36%, transparent), transparent 72%),
+      radial-gradient(40% 40% at 90% 90%, color-mix(in srgb, var(--cyan-500) 26%, transparent), transparent 70%);
+    filter: blur(48px);
+    opacity: 0.5;
+    content: '';
+  }
+
+  /* 会话窗：外圈渐变描边只转两圈 */
+  .mcp-agent {
+    --edge: 1px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg), var(--hairline-hl);
+  }
+
+  .mcp-agent::before {
+    position: absolute;
+    inset: calc(var(--edge) * -1);
+    z-index: 1;
+    padding: var(--edge);
+    border-radius: inherit;
+    background: conic-gradient(from var(--angle), var(--border-2) 0%, var(--border-2) 60%, var(--ai) 76%, var(--primary) 88%, var(--border-2) 100%);
+    -webkit-mask:
+      linear-gradient(var(--mask-solid) 0 0) content-box,
+      linear-gradient(var(--mask-solid) 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(var(--mask-solid) 0 0) content-box exclude,
+      linear-gradient(var(--mask-solid) 0 0);
+    animation: spin-angle 6s linear 2;
+    content: '';
+    pointer-events: none;
+  }
+
+  .mcp-agent-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 48px;
+    padding: 0 14px 0 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mcp-agent-title {
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .mcp-agent-client {
+    margin-left: auto;
+  }
+
+  .mcp-agent-conn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px dashed var(--border);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+  }
+
+  .mcp-agent-conn .dot {
+    color: var(--ok);
+  }
+
+  .mcp-agent-conn b {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* 对话区定高、内容贴底：新内容把旧内容向上推出视野 */
+  .mcp-agent-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 448px;
+    padding: 16px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(180deg, transparent, var(--mask-solid) 8%);
+    mask-image: linear-gradient(180deg, transparent, var(--mask-solid) 8%);
+  }
+
+  .mcp-agent-body > :global(*) {
+    transition: opacity var(--dur-3) var(--ease-out);
+  }
+
+  .mcp-agent-body.is-leaving > :global(*) {
+    opacity: 0;
+  }
+
+  .mcp-agent-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .mcp-input {
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    padding: 0 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface-2);
+    color: var(--text-3);
+    font-size: 13.5px;
+    line-height: 40px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mcp-input.is-filled {
+    color: var(--text);
+  }
+
+  .mcp-send {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--primary-fg);
+  }
+
+  .mcp-send :global(.icon) {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* 挂在窗口左下角外缘、输入框正下方：静止时卡片上沿贴窗口底边，floaty 上浮 9px 后仍低于输入框
+     （输入行下内边距 12px）。这张卡不加视差，视差位移会把它推回输入框上 */
+  .mcp-fc--a {
+    bottom: -64px;
+    left: -48px;
+  }
+
+  /* 压在标题栏中段的空白处，不遮对话内容 */
+  .mcp-fc--b {
+    top: -30px;
+    right: 120px;
+  }
+
+  /* ---------------------------------------------------------------------------
+     ② 工具
+     --------------------------------------------------------------------------- */
+  .mcp-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.72fr);
+    gap: 16px;
+    margin-top: clamp(40px, 5vw, 64px);
+  }
+
+  .mcp-tool {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+  }
+
+  .mcp-tool-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .mcp-tool-kind {
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .mcp-tool-name {
+    width: fit-content;
+    padding: 4px 10px;
+    border-radius: var(--r-sm);
+    background: var(--code-bg);
+    box-shadow: inset 0 0 0 1px var(--code-border);
+    color: var(--syn-fn);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .mcp-tool h3 {
+    font-size: var(--fs-h4);
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .mcp-tool p {
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .mcp-tool-args {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .mcp-tool-args > div {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+
+  .mcp-tool-args dt code {
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12.5px;
+  }
+
+  .mcp-tool-args dd {
+    margin: 0;
+    color: var(--text-2);
+    line-height: 1.5;
+  }
+
+  .mcp-tool-returns {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .mcp-tool-returns span {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .mcp-tool-returns code {
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12.5px;
+  }
+
+  .mcp-tool .link-arrow {
+    margin-top: auto;
+  }
+
+  .mcp-tool--soon {
+    border-style: dashed;
+    background: var(--bg-2);
+  }
+
+  .mcp-tool--soon .icon-tile {
+    opacity: 0.6;
+  }
+
+  /* ---------------------------------------------------------------------------
+     ③ 连接拓扑（暗色岛）
+     --------------------------------------------------------------------------- */
+  .mcp-flow {
+    overflow: hidden;
+  }
+
+  .mcp-flow-grid {
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, var(--mask-solid) 15%, transparent 75%);
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, var(--mask-solid) 15%, transparent 75%);
+  }
+
+  .mcp-flow-glow {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(520px 360px at 50% 60%, color-mix(in srgb, var(--violet-600) 26%, transparent), transparent 70%),
+      radial-gradient(480px 320px at 16% 70%, color-mix(in srgb, var(--blue-500) 18%, transparent), transparent 70%),
+      radial-gradient(420px 300px at 86% 66%, color-mix(in srgb, var(--cyan-500) 12%, transparent), transparent 70%);
+  }
+
+  .topo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(48px, 0.6fr) minmax(0, 1.1fr) minmax(48px, 0.6fr) minmax(0, 1fr);
+    align-items: center;
+    margin-top: clamp(48px, 6vw, 64px);
+  }
+
+  .topo-col {
+    display: grid;
+    gap: 10px;
+  }
+
+  .topo-label {
+    margin-bottom: 4px;
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .topo-node {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 600;
+    transition:
+      border-color var(--dur-3),
+      box-shadow var(--dur-3),
+      color var(--dur-3);
+  }
+
+  .topo-node :global(.icon) {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    color: var(--text-3);
+    transition: color var(--dur-3);
+  }
+
+  .topo-node code {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 13px;
+  }
+
+  .topo-node.is-active {
+    border-color: color-mix(in srgb, var(--ai) 60%, transparent);
+    box-shadow: 0 0 0 3px var(--ai-soft), 0 0 24px color-mix(in srgb, var(--violet-600) 40%, transparent);
+    color: var(--text);
+  }
+
+  .topo-node.is-active :global(.icon) {
+    color: var(--ai);
+  }
+
+  .topo-node--any {
+    border-style: dashed;
+    color: var(--text-3);
+  }
+
+  .topo-node--soon {
+    border-style: dashed;
+    color: var(--text-3);
+  }
+
+  .topo-node--soon :global(.badge) {
+    margin-left: auto;
+  }
+
+  .topo-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .topo-foot :global(.icon) {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* 连线：虚线在裁剪层内匀速平移（只动 transform）；脉冲点随整条导轨平移到终点 */
+  .topo-wire {
+    position: relative;
+    height: 2px;
+    margin-inline: 10px;
+  }
+
+  .topo-dash {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .topo-dash::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -12px;
+    width: calc(100% + 12px);
+    background: repeating-linear-gradient(90deg, var(--border-2) 0 6px, transparent 6px 12px);
+    animation: topo-dash var(--dur-5) linear infinite;
+    content: '';
+  }
+
+  @keyframes topo-dash {
+    to {
+      transform: translateX(12px);
+    }
+  }
+
+  @keyframes topo-dash-y {
+    to {
+      transform: translateY(12px);
+    }
+  }
+
+  .topo-rail {
+    position: absolute;
+    inset: 0;
+  }
+
+  .topo-pulse {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--ai);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--violet-400) 90%, transparent);
+    opacity: 0;
+    translate: -50% -50%;
+  }
+
+  @keyframes topo-travel {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes topo-travel-y {
+    from {
+      transform: translateY(0);
+    }
+
+    to {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes topo-blip {
+    0%,
+    100% {
+      opacity: 0;
+    }
+
+    15%,
+    85% {
+      opacity: 1;
+    }
+  }
+
+  .topo.is-pulsing .topo-rail {
+    animation: topo-travel var(--dur-5) var(--ease-in-out) both;
+  }
+
+  .topo.is-pulsing .topo-pulse {
+    animation: topo-blip var(--dur-5) linear both;
+  }
+
+  .topo.is-pulsing .topo-wire--out .topo-rail,
+  .topo.is-pulsing .topo-wire--out .topo-pulse {
+    animation-delay: var(--dur-5);
+  }
+
+  .topo-hub {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 32px 20px 24px;
+    border: 1px solid color-mix(in srgb, var(--ai) 50%, var(--border-2));
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: var(--shadow-lg), 0 0 48px color-mix(in srgb, var(--violet-600) 30%, transparent);
+    text-align: center;
+  }
+
+  .topo-hub-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 4px;
+    border-radius: var(--r-md);
+    background: var(--grad-ai);
+    color: var(--primary-fg);
+  }
+
+  .topo-hub-icon :global(.icon) {
+    width: 24px;
+    height: 24px;
+  }
+
+  .topo-hub > b {
+    color: var(--text);
+    font-size: var(--fs-lead);
+    font-weight: 650;
+  }
+
+  .topo-url {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--syn-fn);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topo-auth {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--r-full);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+  }
+
+  .topo-auth :global(.icon) {
+    width: 13px;
+    height: 13px;
+    color: var(--warn);
+  }
+
+  .topo-call {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-2);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+  }
+
+  .topo-call code {
+    color: var(--ai);
+  }
+
+  .topo-call b {
+    color: var(--ok);
+    font-weight: 600;
+  }
+
+  .topo-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: clamp(48px, 6vw, 64px);
+    padding: 0;
+    list-style: none;
+  }
+
+  .topo-steps li {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 20px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+  }
+
+  .topo-step-num {
+    color: var(--ai);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .topo-steps b {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 650;
+  }
+
+  .topo-steps li > span:last-child {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  /* ---------------------------------------------------------------------------
+     ④ 接入
+     --------------------------------------------------------------------------- */
+  .setup {
+    display: grid;
+    justify-items: center;
+    gap: 24px;
+    margin-top: clamp(40px, 5vw, 48px);
+  }
+
+  .setup-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .setup-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    align-items: start;
+    gap: 24px;
+    width: 100%;
+  }
+
+  .setup-steps {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .setup-steps li {
+    display: flex;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+  }
+
+  .setup-num {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--ai-soft);
+    color: var(--ai);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .setup-steps b {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 650;
+  }
+
+  .setup-steps p {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .setup-code {
+    min-width: 0;
+  }
+
+  .setup-file {
+    overflow: hidden;
+    color: var(--code-muted);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .setup-code :global(pre) {
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+
+  .setup-extra {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  .setup-oauth {
+    display: flex;
+    gap: 16px;
+    padding: 22px;
+    border-color: color-mix(in srgb, var(--ai) 24%, var(--border));
+    background: linear-gradient(120deg, var(--ai-soft), var(--surface) 70%);
+  }
+
+  .setup-oauth b,
+  .setup-spec-head b {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text);
+    font-size: 15.5px;
+    font-weight: 650;
+  }
+
+  .setup-oauth p {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .setup-spec {
+    display: grid;
+    gap: 14px;
+    padding: 22px;
+  }
+
+  .setup-spec-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .setup-spec-head span {
+    color: var(--text-3);
+    font-size: 13px;
+  }
+
+  .setup-spec dl {
+    display: grid;
+    gap: 0;
+    margin: 0;
+  }
+
+  .setup-spec dl > div {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .setup-spec dt {
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .setup-spec dd {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .setup-spec dd code {
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12.5px;
+  }
+
+  .setup-copy {
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border-radius: var(--r-xs);
+    color: var(--text-3);
+    transition:
+      background-color var(--dur-2),
+      color var(--dur-2);
+  }
+
+  .setup-copy:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  /* ---------------------------------------------------------------------------
+     ⑤ 提示词墙
+     --------------------------------------------------------------------------- */
+  .prompt-rows {
+    display: grid;
+    gap: 16px;
+    margin-top: clamp(40px, 5vw, 64px);
+  }
+
+  .prompt-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 340px;
+    flex: none;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .prompt-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .prompt-top .icon-tile {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-sm);
+  }
+
+  .prompt-top .icon-tile :global(.icon) {
+    width: 16px;
+    height: 16px;
+  }
+
+  .prompt-tag {
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .prompt-quote {
+    flex: 1;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.55;
+    white-space: normal;
+  }
+
+  .prompt-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .prompt-tool {
+    padding: 2px 8px;
+    border-radius: var(--r-xs);
+    background: var(--ai-soft);
+    color: var(--ai);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+  }
+
+  .prompt-fields {
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+  }
+
+  /* 减弱动效：跑马灯改为换行静态墙（站级规则），这里去掉两侧渐隐并居中 */
+  @media (prefers-reduced-motion: reduce) {
+    .prompt-marquee {
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    .prompt-marquee .marquee-track {
+      justify-content: center;
+    }
+  }
+
+  /* ---------------------------------------------------------------------------
+     ⑥ 认证与数据
+     --------------------------------------------------------------------------- */
+  .trust {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(40px, 5vw, 64px);
+  }
+
+  .trust-items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 32px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .trust-items li {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+  }
+
+  .trust-items .icon-tile {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--r-sm);
+  }
+
+  .trust-items .icon-tile :global(.icon) {
+    width: 18px;
+    height: 18px;
+  }
+
+  .trust-items b {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 650;
+  }
+
+  .trust-items p {
+    margin-top: 4px;
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .inspector {
+    margin: 0;
+    box-shadow: var(--shadow-lg), var(--glow-soft);
+  }
+
+  .inspector-path {
+    color: var(--code-text);
+    font-size: 12px;
+  }
+
+  .inspector-path b {
+    margin-right: 8px;
+    color: var(--syn-str);
+    font-weight: 600;
+  }
+
+  .inspector-ok {
+    margin-left: auto;
+  }
+
+  .inspector :global(pre) {
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  /* ---------------------------------------------------------------------------
+     ⑦ 计费阶梯
+     --------------------------------------------------------------------------- */
+  .billing {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    align-items: center;
+    gap: clamp(40px, 5vw, 64px);
+  }
+
+  .billing-copy {
+    display: grid;
+    justify-items: start;
+    gap: 24px;
+  }
+
+  .ladder {
+    padding: 8px 24px 20px;
+  }
+
+  .ladder-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .ladder-table th,
+  .ladder-table td {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .ladder-table thead th {
+    padding: 12px 0;
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .ladder-table thead th span {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .ladder-table thead th:last-child,
+  .ladder-table .ladder-price {
+    text-align: right;
+  }
+
+  /* 档位列不设百分比宽度，由表格按内容分配：放得下时徽标与档位名同行，放不下才换行 */
+  .ladder-table tbody th {
+    padding-right: 12px;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+
+  /* 列宽不够时「Most popular」徽标换到档位名下一行（同原型），三列表格的最小宽度随之压低，两栏布局里也放得下 */
+  .ladder-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+  }
+
+  .ladder-table tbody td:nth-child(2) {
+    padding-right: 16px;
+  }
+
+  .ladder-bar {
+    display: block;
+    height: 8px;
+    margin-bottom: 6px;
+    overflow: hidden;
+    border-radius: var(--r-full);
+    background: var(--surface-3);
+  }
+
+  .ladder-bar i {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--grad-ai);
+    transform: scaleX(var(--w));
+    transform-origin: left center;
+    transition: transform var(--dur-5) var(--ease-out);
+    transition-delay: calc(var(--i, 0) * var(--stagger));
+  }
+
+  /* 只有 JS 可用时才从 0 生长（与站级 data-reveal 一致），无 JS 直接展示终态 */
+  :global(.js) .ladder:not(.is-revealed) .ladder-bar i {
+    transform: scaleX(0);
+  }
+
+  .ladder-quota {
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .ladder-price b {
+    display: block;
+    color: var(--text);
+    font-size: var(--fs-lead);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ladder-price span {
+    color: var(--text-3);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .ladder-table tr.is-featured th,
+  .ladder-table tr.is-featured .ladder-price b {
+    color: var(--ai);
+  }
+
+  .ladder-note {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    color: var(--text-3);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .ladder-note :global(.icon) {
+    flex: none;
+    margin-top: 4px;
+  }
+
+  /* ---------------------------------------------------------------------------
+     Responsive
+     --------------------------------------------------------------------------- */
+  @media (max-width: 1240px) {
+    .mcp-fc {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1080px) {
+    .mcp-tools {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mcp-tool--soon {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 960px) {
+    .mcp-stage::before {
+      inset: 10% 0 -6%;
+    }
+
+    .mcp-tools,
+    .setup-panel,
+    .setup-extra,
+    .trust,
+    .billing {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* 拓扑改为纵向：客户端与工具改成可换行的胶囊，连线竖排 */
+    .topo {
+      grid-template-columns: minmax(0, 1fr);
+      max-width: 560px;
+      margin-inline: auto;
+    }
+
+    .topo-col {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .topo-label,
+    .topo-foot {
+      justify-content: center;
+      width: 100%;
+      text-align: center;
+    }
+
+    .topo-node {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .topo-wire {
+      width: 2px;
+      height: 48px;
+      margin: 12px auto;
+    }
+
+    .topo-dash::before {
+      top: -12px;
+      right: 0;
+      bottom: auto;
+      left: 0;
+      width: auto;
+      height: calc(100% + 12px);
+      background: repeating-linear-gradient(180deg, var(--border-2) 0 6px, transparent 6px 12px);
+      animation-name: topo-dash-y;
+    }
+
+    .topo-pulse {
+      top: 0;
+      left: 50%;
+    }
+
+    .topo.is-pulsing .topo-rail {
+      animation-name: topo-travel-y;
+    }
+
+    .topo-steps {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .ladder {
+      padding: 4px 16px 16px;
+    }
+
+    /* 窄屏：每档改为「档位 | 价格」一行 + 额度条一行；表头只留额度列，保住 log scale 刻度说明 */
+    .ladder-table,
+    .ladder-table thead,
+    .ladder-table thead tr,
+    .ladder-table tbody {
+      display: block;
+    }
+
+    .ladder-table thead th:not(:nth-child(2)) {
+      display: none;
+    }
+
+    .ladder-table thead th:nth-child(2) {
+      display: block;
+    }
+
+    .ladder-table tbody tr {
+      display: grid;
+      grid-template-areas:
+        'plan price'
+        'bar bar';
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ladder-table tbody th,
+    .ladder-table tbody td {
+      padding: 0;
+      border: 0;
+    }
+
+    .ladder-table tbody th {
+      grid-area: plan;
+      white-space: normal;
+    }
+
+    .ladder-table tbody td:nth-child(2) {
+      grid-area: bar;
+      padding-right: 0;
+    }
+
+    .ladder-price {
+      grid-area: price;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .mcp-agent-body {
+      height: 464px;
+      padding: 14px 12px;
+    }
+
+    .setup-tabs .seg-btn {
+      padding: 0 12px;
+      font-size: 13.5px;
+    }
+
+    .setup-tabs .seg-btn :global(.icon) {
+      display: none;
+    }
+
+    .mcp-tool,
+    .setup-oauth,
+    .setup-spec {
+      padding: 20px;
+    }
+
+    .setup-oauth {
+      flex-direction: column;
+    }
+
+    .setup-spec dl > div {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
+    }
+
+    .trust-items {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .prompt-card {
+      width: 280px;
+    }
+  }
+</style>

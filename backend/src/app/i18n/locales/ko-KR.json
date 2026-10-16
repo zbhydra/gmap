@@ -43,6 +43,8 @@
         "proxy_url": "proxies의 {index}번째 형식이 잘못되었습니다. http://사용자명:비밀번호@IP:포트 형식을 사용하세요(인증이 없으면 인증 정보 생략). 지원: http, https, socks5, socks5h. IP:포트:사용자명:비밀번호 형식은 지원하지 않습니다."
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "이번 달 API 요청 한도를 모두 사용했습니다. 초기화를 기다리거나 요금제를 업그레이드하세요.",
+    "MCP_OAUTH_REQUEST_INVALID": "인증 요청이 유효하지 않거나 만료되었습니다. 앱에서 다시 연결하세요.",
         "INTERNAL_SERVER_ERROR": "서버 내부 오류",
         "INVALID_REQUEST": "잘못된 요청",
         "EXTERNAL_API_KEY_INVALID": "외부 API 키가 올바르지 않습니다",
@@ -122,5 +124,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "안전 · 빠름 · 편리",
         "subject": "인증 코드 로그인"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "Google Maps 장소를 검색합니다. 성공한 호출마다 API 요청 1회를 사용합니다. page는 수집할 페이지 수(1–10), ll은 @lat,lng,zoom 형식입니다.",
+      "list_reviews": "fid와 선택 사항인 cursor로 Google Maps 리뷰를 가져옵니다. 성공한 호출마다 API 요청 1회를 사용합니다."
     }
+  }
 }

@@ -6,6 +6,9 @@ import type { PricingPageContent } from './schema'
  * Online（maps_online）/ Extension（maps）/ API（maps_api）三条产品线各一个
  * tab；卡面价格为营销展示事实，真实扣价以下单时的支付配置为准。Online / API
  * 付费档按商品配置的计费模式购买，升级资格与补差以服务端报价为准。
+ * Online 卖点按 014 合同（每任务关键词上限 Free 2 / Lite 5 / Basic 10 / Growth 20 / Pro 50、
+ * 关键词 / 地图 / 地区模式、单关键词 CSV + 整任务 ZIP、付费档补全默认开启可关闭）。
+ * 对比表行名逐字取自各档卖点，包含关系按卡面「Everything in X」继承展开。
  */
 export const pricingContent: PricingPageContent = {
   seo: {
@@ -14,23 +17,25 @@ export const pricingContent: PricingPageContent = {
       'MapsGrab plans for every surface: Online Scraper from $19, browser Extension from $39, and API from $15. Free tiers included with every product — one-time natural-month plans on Online and API, monthly subscriptions on Extension.'
   },
   hero: {
-    eyebrow: 'Pricing',
-    title: 'One data engine, three ways to buy it',
-    description:
-      'Pick the surface that fits your workflow — cloud Online Scraper, browser Extension, or HTTP API — then pick the monthly volume. Upgrade or buy from this page in minutes.'
+    kicker: 'Pricing',
+    title: { lead: 'Plans for ', accent: 'three ways', tail: ' to grab Maps data' },
+    lead:
+      'Pick the surface that fits your workflow — cloud Online Scraper, browser Extension, or HTTP API — then pick the monthly volume. Upgrade or buy from this page in minutes.',
+    meta: ['Free tier on every product', 'Pay with PayPal or ClinkBill', 'Upgrade by paying the difference'],
+    switchLabel: 'Product line'
   },
   popularLabel: 'Most Popular',
-  tabLabels: {
-    online: 'Online',
-    extension: 'Extension',
-    api: 'API'
-  },
   tabs: {
     online: {
+      name: 'Online Scraper',
+      shortName: 'Online',
+      switchMeta: 'From {price} · one-time',
+      unit: 'records',
       eyebrow: 'Online Scraper plans',
       title: 'Cloud extraction, priced by records',
       description:
         'Run the MapsGrab engine on our infrastructure. A record is one business row collected. Paid plans include optional email and social media enrichment at no extra record cost.',
+      billingChips: ['One-time payment', 'Covers one natural month', 'No auto-renewal'],
       cards: [
         {
           id: 'free',
@@ -42,10 +47,10 @@ export const pricingContent: PricingPageContent = {
           quota: '1,000 records / month',
           features: [
             'Business extraction with 36-column CSV export',
-            'Reviews (11 columns) and photo URLs',
+            'Up to 2 keywords per task',
+            'Map and region modes for area searches',
             'Email & social enrichment on paid plans',
-            'Keyword and review-URL tasks',
-            'CSV / JSON download'
+            'CSV per keyword, ZIP per task'
           ],
           ctaLabel: 'Start free',
           status: 'free',
@@ -63,8 +68,8 @@ export const pricingContent: PricingPageContent = {
             'Everything in Free',
             '20,000 records for 1 month',
             'One-time payment — no auto-renewal',
-            'Email & social enrichment, on by default and optional',
-            'CSV / JSON download'
+            'Up to 5 keywords per task',
+            'Email & social enrichment, on by default and optional'
           ],
           ctaLabel: 'Get Lite',
           status: 'buyable',
@@ -82,8 +87,7 @@ export const pricingContent: PricingPageContent = {
             'Everything in Lite',
             '80,000 records for 1 month',
             'One-time payment — no auto-renewal',
-            'Deduplication across runs by Place ID',
-            'CSV / JSON download'
+            'Up to 10 keywords per task'
           ],
           ctaLabel: 'Get Basic',
           status: 'buyable',
@@ -101,8 +105,7 @@ export const pricingContent: PricingPageContent = {
             'Everything in Basic',
             '250,000 records for 1 month',
             'One-time payment — no auto-renewal',
-            'Room for large batch tasks',
-            'CSV / JSON download'
+            'Up to 20 keywords per task'
           ],
           ctaLabel: 'Get Growth',
           status: 'buyable',
@@ -120,8 +123,7 @@ export const pricingContent: PricingPageContent = {
             'Everything in Growth',
             '500,000 records for 1 month',
             'One-time payment — no auto-renewal',
-            'Highest enrichment throughput',
-            'CSV / JSON download'
+            'Up to 50 keywords per task'
           ],
           ctaLabel: 'Get Professional',
           status: 'buyable',
@@ -130,6 +132,36 @@ export const pricingContent: PricingPageContent = {
       ],
       quotaNote:
         'One-time payment covering one natural month — plans on this tab do not auto-renew. A record is one business row collected from Google Maps; usage resets on the 1st and unused records do not roll over.',
+      compare: {
+        lead: 'Online Scraper plans — cloud extraction, priced by records.',
+        volume: 'Records per month',
+        groups: [
+          {
+            label: 'Data',
+            rows: [
+              { label: 'Business extraction with 36-column CSV export', cells: [true, true, true, true, true] },
+              {
+                label: 'Email & social enrichment',
+                cells: [
+                  false,
+                  'On by default, optional',
+                  'On by default, optional',
+                  'On by default, optional',
+                  'On by default, optional'
+                ]
+              }
+            ]
+          },
+          {
+            label: 'Workflow',
+            rows: [
+              { label: 'Keywords per task', cells: ['2', '5', '10', '20', '50'] },
+              { label: 'Map and region modes', cells: [true, true, true, true, true] },
+              { label: 'CSV per keyword, ZIP per task', cells: [true, true, true, true, true] }
+            ]
+          }
+        ]
+      },
       checkout: {
         usageNotice: 'Applies to the MapsGrab Online Scraper monthly record quota.',
         successTitle: 'Plan activated',
@@ -138,23 +170,27 @@ export const pricingContent: PricingPageContent = {
       }
     },
     extension: {
+      name: 'Extension',
+      shortName: 'Extension',
+      switchMeta: 'From {price} · per month',
+      unit: 'records',
       eyebrow: 'Extension plans',
-      title: 'One extension, three record volumes',
+      title: 'Browser extraction, priced by records',
       description:
-        'Records are the businesses you extract. Every plan includes reviews, photos, email and social enrichment, and batch tasks — the ceiling is the only thing that changes.',
+        'Every row the extension collects — a business, a review or a photo — counts as one record. All plans include reviews, photos and batch tasks; paid plans export all 36 columns, including email and social enrichment.',
+      billingChips: ['Auto-renews until canceled', 'Billed monthly', 'Manage at your payment provider'],
       cards: [
         {
           id: 'free',
           productId: null,
           name: 'Free',
-          tagline: 'Everything the extension does, on a small scale',
+          tagline: 'Core extraction, on a small scale',
           price: '$0',
           periodLabel: 'forever',
           quota: '1,000 records / month',
           features: [
-            'Full 36-column business extraction',
+            'Business data extraction',
             'Reviews (11 columns) and photo URLs',
-            'Email & social media enrichment',
             'Batch keyword and review-URL tasks',
             'CSV / JSON export with field selection'
           ],
@@ -173,9 +209,8 @@ export const pricingContent: PricingPageContent = {
           features: [
             'Everything in Free',
             '100,000 records every month',
-            'Priority email & social enrichment',
-            'Deduplication across runs by Place ID',
-            'Optional Google Drive & HubSpot delivery'
+            'Full 36-column business extraction',
+            'Email & social media enrichment'
           ],
           ctaLabel: 'Get Pro',
           status: 'buyable',
@@ -193,7 +228,6 @@ export const pricingContent: PricingPageContent = {
             'Everything in Pro',
             '500,000 records every month',
             'Room for multi-market batch tasks',
-            'Highest enrichment throughput',
             'Same local-first export pipeline'
           ],
           ctaLabel: 'Get Business',
@@ -202,7 +236,30 @@ export const pricingContent: PricingPageContent = {
         }
       ],
       quotaNote:
-        'A record is one business row extracted from Google Maps. Monthly usage resets on the 1st; unused records do not roll over.',
+        'Each row the extension collects counts as one record: a business from a search or saved list, a review, or a photo. Email and social enrichment does not add records. Monthly usage resets on the 1st; unused records do not roll over.',
+      compare: {
+        lead: 'Extension plans — browser extraction, priced by records.',
+        volume: 'Records per month',
+        groups: [
+          {
+            label: 'Data',
+            rows: [
+              { label: 'Business data extraction', cells: [true, true, true] },
+              { label: 'Full 36-column business extraction', cells: [false, true, true] },
+              { label: 'Reviews (11 columns) and photo URLs', cells: [true, true, true] },
+              { label: 'Email & social media enrichment', cells: [false, true, true] },
+              { label: 'Batch keyword and review-URL tasks', cells: [true, true, true] }
+            ]
+          },
+          {
+            label: 'Export',
+            rows: [
+              { label: 'CSV / JSON export with field selection', cells: [true, true, true] },
+              { label: 'Local-first export pipeline', cells: [true, true, true] }
+            ]
+          }
+        ]
+      },
       checkout: {
         usageNotice: 'Applies to the MapsGrab browser extension monthly quota.',
         successTitle: 'Plan activated',
@@ -211,10 +268,15 @@ export const pricingContent: PricingPageContent = {
       }
     },
     api: {
+      name: 'API & MCP',
+      shortName: 'API & MCP',
+      switchMeta: 'From {price} · one-time',
+      unit: 'requests',
       eyebrow: 'API plans',
       title: 'Programmatic access, priced by requests',
       description:
-        'Query business data, reviews and photos from your own applications over a simple HTTP API. A request is one successful API call that returns data.',
+        'Search Google Maps businesses and fetch their reviews from your own applications over a simple HTTP API. Each successful call counts as one request, even when it returns no results or partial data.',
+      billingChips: ['One-time payment', 'Covers one natural month', 'No auto-renewal'],
       cards: [
         {
           id: 'free',
@@ -225,8 +287,8 @@ export const pricingContent: PricingPageContent = {
           periodLabel: 'forever',
           quota: '20 requests / month',
           features: [
-            'Business search and Place ID lookup',
-            'Reviews and photo endpoints',
+            'Business search by keyword and location',
+            'Reviews endpoint with sorting and paging',
             'JSON responses',
             'API key tied to your account',
             'Community support'
@@ -247,7 +309,6 @@ export const pricingContent: PricingPageContent = {
             'Everything in Free',
             '1,000 requests for 1 month',
             'One-time payment — no auto-renewal',
-            'All data endpoints unlocked',
             'JSON responses'
           ],
           ctaLabel: 'Get Basic',
@@ -266,7 +327,6 @@ export const pricingContent: PricingPageContent = {
             'Everything in Basic',
             '5,000 requests for 1 month',
             'One-time payment — no auto-renewal',
-            'Higher rate limits',
             'JSON responses'
           ],
           ctaLabel: 'Get Professional',
@@ -285,7 +345,6 @@ export const pricingContent: PricingPageContent = {
             'Everything in Professional',
             '10,000 requests for 1 month',
             'One-time payment — no auto-renewal',
-            'Higher rate limits',
             'JSON responses'
           ],
           ctaLabel: 'Get Business',
@@ -304,7 +363,6 @@ export const pricingContent: PricingPageContent = {
             'Everything in Business',
             '50,000 requests for 1 month',
             'One-time payment — no auto-renewal',
-            'Highest rate limits',
             'JSON responses'
           ],
           ctaLabel: 'Get Scale',
@@ -313,12 +371,113 @@ export const pricingContent: PricingPageContent = {
         }
       ],
       quotaNote:
-        'One-time payment covering one natural month — plans on this tab do not auto-renew. A request is one successful API call that returns data; usage resets on the 1st and unused requests do not roll over.',
+        'One-time payment covering one natural month — plans on this tab do not auto-renew. Each successful API or MCP call counts as one request, including empty and partial results; failed calls are not counted. Usage resets on the 1st and unused requests do not roll over.',
+      compare: {
+        lead: 'API plans — programmatic access, priced by requests.',
+        volume: 'Requests per month',
+        groups: [
+          {
+            label: 'Endpoints',
+            rows: [
+              { label: 'Business search by keyword and location', cells: [true, true, true, true, true] },
+              { label: 'Reviews endpoint with sorting and paging', cells: [true, true, true, true, true] },
+              { label: 'JSON responses', cells: [true, true, true, true, true] },
+              { label: 'MCP server with the same API key', cells: [true, true, true, true, true] }
+            ]
+          },
+          {
+            label: 'Access',
+            rows: [
+              { label: 'API key tied to your account', cells: [true, true, true, true, true] },
+              { label: 'Community support', cells: [true, true, true, true, true] }
+            ]
+          }
+        ]
+      },
       checkout: {
         usageNotice: 'Applies to the MapsGrab API monthly request quota.',
         successTitle: 'Plan activated',
         successDescription:
           'Your one-time 1-month plan is live. Your API key picks up the new quota on the next request.'
+      }
+    }
+  },
+  plansSection: {
+    label: 'Plans',
+    finder: {
+      label: 'How many {unit} do you need a month?',
+      result: '{value} {unit}',
+      valueText: '{value} {unit} a month — {plan} plan',
+      fits: 'Fits'
+    }
+  },
+  compare: {
+    kicker: 'Compare',
+    title: { lead: 'Every plan, ', accent: 'side by side', tail: '' },
+    plan: 'Plan',
+    volumeGroup: 'Volume & billing',
+    billing: 'Billing',
+    included: 'Included',
+    notIncluded: 'Not included'
+  },
+  usage: {
+    head: {
+      kicker: 'Usage',
+      title: { lead: 'What counts toward your ', accent: 'quota', tail: '' },
+      lead:
+        'Two units: records for the extension and the Online Scraper, requests for the API — and both reset on the 1st of every month.'
+    },
+    records: {
+      meter: 'Records used this month',
+      badge: 'Extension · Online',
+      title: '1 record = 1 collected row',
+      body:
+        'Each row you collect counts as one record: a business on the Online Scraper; a business, a review or a photo in the extension. Email and social enrichment does not add records.',
+      count: '+1 record',
+      attachments: ['Phone & website', 'Opening hours', 'Email & socials']
+    },
+    requests: {
+      meter: 'Requests used this month',
+      badge: 'API · MCP',
+      title: '1 request = 1 successful call',
+      body:
+        'A request is one successful API call, even when it returns no results or partial data; failed calls are not counted. MCP tool calls draw on the same request quota.',
+      counted: 'Successful call — counted',
+      notCounted: 'Failed call — not counted'
+    },
+    reset: {
+      title: 'Resets on the 1st',
+      body: 'Usage resets on the 1st of every month. Unused records and requests do not roll over.',
+      limit: 'Plan limit',
+      unused: 'Unused · doesn’t roll over',
+      flag: 'Reset'
+    }
+  },
+  billing: {
+    head: {
+      kicker: 'Billing',
+      title: { lead: 'Simple billing, ', accent: 'no surprises', tail: '' },
+      lead: 'How payment, renewal and upgrades work across the three product lines.'
+    },
+    items: {
+      channels: {
+        title: 'PayPal or ClinkBill',
+        body: 'Pay for any plan through PayPal or ClinkBill. Checkout happens at the payment provider you choose.'
+      },
+      cadence: {
+        title: 'One-time or monthly',
+        body:
+          'Online and API plans are one-time payments covering one natural month — they never auto-renew. Extension Pro and Business are billed monthly as subscriptions.'
+      },
+      upgrade: {
+        title: 'Upgrade by paying the difference',
+        body:
+          'Move an active plan to an eligible higher tier through your current payment provider. Your expiry date and usage so far stay unchanged.'
+      },
+      independent: {
+        title: 'Independent plans',
+        body:
+          'Plans on different tabs are independent. When a plan expires, the account automatically returns to the free tier.'
       }
     }
   },
@@ -353,18 +512,20 @@ export const pricingContent: PricingPageContent = {
     }
   },
   faq: {
-    title: 'Questions before you buy?',
-    description: 'The billing basics. Anything else, support is one email away.',
+    kicker: 'FAQ',
+    title: { lead: 'Questions before you ', accent: 'buy?', tail: '' },
+    lead: 'The billing basics. Anything else, support is one email away.',
+    contact: 'Contact support',
     items: [
       {
         question: 'What counts as a record?',
         answer:
-          'A record is one business row collected from Google Maps — the same unit the free plans count. Reviews, photos, and enrichment attached to that business do not count as extra records. On the API tab, usage is counted in successful requests instead.'
+          'A record is one collected row — the same unit the free plans count. On the Online Scraper that is one business; in the extension, each business, review or photo it collects is one record. Email and social enrichment does not add records. On the API tab, usage is counted in successful requests instead.'
       },
       {
         question: 'Do I need a paid plan to try MapsGrab?',
         answer:
-          'No. Every product has a free tier with no time limit: the Online Scraper and the extension include 1,000 records per month, and the API includes 20 requests per month. Online Free does not include email or social media enrichment. Paid Online plans include it by default, and you can turn it off for each task.'
+          'No. Every product has a free tier with no time limit: the Online Scraper and the extension include 1,000 records per month, and the API includes 20 requests per month. The Online Scraper and extension free plans do not include email or social media enrichment. Paid Online plans include it by default, and you can turn it off for each task.'
       },
       {
         question: 'How does the quota apply to my account?',
@@ -382,5 +543,14 @@ export const pricingContent: PricingPageContent = {
           'You can upgrade an active plan to an eligible higher tier by paying the difference through your current payment provider. Your expiry date and usage so far stay unchanged. Auto-renewing PayPal subscriptions cannot be upgraded; wait until expiry to change plans. Plans on different tabs are independent.'
       }
     ]
+  },
+  cta: {
+    kicker: 'Get started',
+    title: { lead: 'Start on the ', accent: 'free tier', tail: '' },
+    lead:
+      'Every product has a free tier with no time limit — 1,000 records a month on the extension and the Online Scraper, 20 requests a month on the API.',
+    primary: 'Install the extension',
+    secondary: 'Try the Online Scraper',
+    note: 'Free monthly quota included. No credit card.'
   }
 }

@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
-"""ui-token 合同静态扫描器（docs/references/specs/design.md / design.dark.md 的执行门）。
+"""ui-token 合同静态扫描器（docs/references/specs/ 下 UI 设计合同的执行门）。
+
+两套合同按端分配：
+  material  design.md / design.dark.md（Material You）——extension / extension-bing / admin
+  atlas     design-website.md（Atlas）——website
 
 每次改动 UI 样式后运行：
     python3 scripts/ui_token_lint.py        # enforced 端存在违规则退出码 1
     python3 scripts/ui_token_lint.py -v     # 追加打印 pending 端（未迁移端）债务明细
 
-检查规则（依据 design.md §0 / §8，扫描 .css 全文、.vue / .astro 的 <style> 块、
+检查规则（扫描 .css 全文、.vue / .astro 的 <style> 块、
 website sitemap 构建器内直接产出的 XSL <style> 块，以及登记的 Canvas 运行时样式 owner）：
   1. 色值    token 定义行之外禁止 #hex、rgb()/rgba()、常用具名色；
              允许 var()、color-mix(... var(...))、transparent、currentColor、inherit
-  2. 渐变    linear/radial/conic-gradient 只允许出现在 token 定义（bg-image）内
-  3. 圆角    border-radius 必须消费 var()；豁免 50%（正圆几何，合同刻度外的必然写法）
-  4. 投影    box-shadow / text-shadow 必须消费 var()
-  5. 间距    margin*/padding*/gap 的 px 值必须在 4px 刻度上；6px 为 design.md §7
-             下拉菜单内边距关键值，单独豁免
-  6. 字型    font-size / line-height 必须落在 typography 刻度，或 clamp()/var()
+  2. 渐变    material：linear/radial/conic-gradient 只允许出现在 token 定义（bg-image）内；
+             atlas：渐变可作结构写法（遮罩、网格线、进度填充），其中的颜色仍受规则 1 约束
+  3. 圆角    border-radius 必须消费 var()；豁免 50%（正圆几何）与 inherit
+  4. 投影    box-shadow / text-shadow 必须消费 var()；豁免 none / inherit
+  5. 间距    margin*/padding*/gap 的 px 值必须落在所属合同的间距刻度上
+  6. 字型    font-size / line-height 必须落在所属合同的字型刻度，或 clamp()/var()
 
 「token 定义行」指自定义属性声明（`--x:` 起、至行内分号收尾，值可跨多行），
 其间的裸值就是合同取值本体，放行。宽高/定位属布局自由尺寸，不在合同管辖内，不检查。
 
-enforced 端（website / admin / extension / extension-bing）已迁移 Material You，违规即失败。
+enforced 端违规即失败。
 """
 
 from __future__ import annotations
@@ -32,15 +36,15 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# enforced：已接入 Material You token 合同的端，违规即退出码 1
+# enforced：(端, 目录, 合同)，违规即退出码 1
 ENFORCED = [
-    ("extension", "extension/src"),
-    ("extension-bing", "extension-bing/src"),
-    ("website", "website/src"),
-    ("admin", "admin/src"),
+    ("extension", "extension/src", "material"),
+    ("extension-bing", "extension-bing/src", "material"),
+    ("admin", "admin/src", "material"),
+    ("website", "website/src", "atlas"),
 ]
-# pending：整端尚未迁移，只报告数量；迁移完成后移入 ENFORCED
-PENDING: list[tuple[str, str]] = []
+# pending：整端尚未迁移到所属合同，只报告数量；迁移完成后移入 ENFORCED
+PENDING: list[tuple[str, str, str]] = []
 EXCLUDED_DIRS = {"node_modules", "dist", ".astro", "coverage", "test-results"}
 STYLE_EXTS = {".css", ".vue", ".astro"}
 EXTRA_STYLE_FILES = {
@@ -50,10 +54,18 @@ RUNTIME_STYLE_FILES = {
     "admin": ("admin/src/views/DashboardView.vue",),
 }
 
-SPACING_SCALE = {4, 8, 12, 16, 24, 32, 40, 64, 96}
-# spec 关键值豁免：6 菜单内边距、14 输入框水平 padding（§7），20/22 紧凑面板、28 容器左右留白（§3）
-SPACING_ALLOWED = SPACING_SCALE | {6, 14, 20, 22, 28}
-FONT_SCALE = {10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 15, 16, 20, 24, 32}
+# material 间距：design.md §3 刻度 + 关键值豁免（6 菜单内边距、14 输入框水平 padding、
+# 20/22 紧凑面板、28 容器左右留白）
+MATERIAL_SPACING = {4, 8, 12, 16, 24, 32, 40, 64, 96} | {6, 14, 20, 22, 28}
+MATERIAL_FONT = {10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 15, 16, 20, 24, 32}
+# atlas 间距：design-website.md §3，24 以内 2px 半步，其上为大刻度
+ATLAS_SPACING = set(range(2, 25, 2)) | {32, 40, 48, 64, 80, 96, 128}
+# atlas 字号：10–16 的 0.5 步裸值供密集 UI 与产品 mock；更大字号只能走 var()/clamp()
+ATLAS_FONT = {n / 2 for n in range(20, 33)}
+PROFILES = {
+    "material": {"spacing": MATERIAL_SPACING, "font": MATERIAL_FONT, "gradient_in_token_only": True},
+    "atlas": {"spacing": ATLAS_SPACING, "font": ATLAS_FONT, "gradient_in_token_only": False},
+}
 LINE_HEIGHT_SCALE = {16, 18, 24, 28, 32, 40}
 
 SPACING_PROPS = {"margin", "padding", "gap", "row-gap", "column-gap"}
@@ -102,7 +114,7 @@ def strip_comment(line: str) -> str:
     return re.sub(r"/\*.*?\*/", "", line)
 
 
-def check_block(block: str) -> tuple[list[str], int]:
+def check_block(block: str, profile: dict) -> tuple[list[str], int]:
     """扫描一个样式块，返回 (违规列表, px 裸值总数)。"""
     issues: list[str] = []
     raw_px = 0
@@ -153,26 +165,27 @@ def check_block(block: str) -> tuple[list[str], int]:
 
         if HEX_COLOR.search(code) or RGB_COLOR.search(code) or NAMED_COLORS.search(code):
             issues.append(f"L{offset} 色值: {code.strip()[:110]}")
-        if GRADIENT.search(code):
+        if profile["gradient_in_token_only"] and GRADIENT.search(code):
             issues.append(f"L{offset} 渐变: {code.strip()[:110]}")
 
         value = code.split(":", 1)[1] if ":" in code else ""
-        if prop == "border-radius" and "var(" not in value and "50%" not in value:
+        keyword = value.strip(" ;")
+        if prop == "border-radius" and "var(" not in value and "50%" not in value and keyword != "inherit":
             issues.append(f"L{offset} 圆角: {value.strip()[:110]}")
-        if prop in ("box-shadow", "text-shadow") and "var(" not in value:
+        if prop in ("box-shadow", "text-shadow") and "var(" not in value and keyword not in ("none", "inherit"):
             issues.append(f"L{offset} 投影: {value.strip()[:110]}")
 
         if prop in SPACING_PROPS or SPACING_SUB.match(prop):
             for token in value.split():
                 for m in PX.finditer(token):
                     n = float(m.group(1))
-                    if n != 0 and abs(n) not in SPACING_ALLOWED:
-                        issues.append(f"L{offset} 间距 {m.group(0)} 不在 4px 刻度: {code.strip()[:110]}")
+                    if n != 0 and abs(n) not in profile["spacing"]:
+                        issues.append(f"L{offset} 间距 {m.group(0)} 不在刻度: {code.strip()[:110]}")
 
         if prop == "font-size":
             if "clamp(" not in value and "var(" not in value:
                 for m in PX.finditer(value):
-                    if float(m.group(1)) not in FONT_SCALE:
+                    if float(m.group(1)) not in profile["font"]:
                         issues.append(f"L{offset} 字号 {m.group(0)} 不在刻度: {code.strip()[:110]}")
         if prop == "line-height":
             if "var(" not in value and "." not in value and value.strip() not in ("normal", "inherit"):
@@ -185,7 +198,7 @@ def check_block(block: str) -> tuple[list[str], int]:
     return issues, raw_px
 
 
-def scan_end(label: str, rel_dir: str) -> tuple[list[str], dict[str, int], int]:
+def scan_end(label: str, rel_dir: str, contract: str) -> tuple[list[str], dict[str, int], int]:
     base = REPO_ROOT / rel_dir
     issues: list[str] = []
     file_px: dict[str, int] = {}
@@ -201,7 +214,7 @@ def scan_end(label: str, rel_dir: str) -> tuple[list[str], dict[str, int], int]:
         rel = str(path.relative_to(REPO_ROOT))
         file_total = 0
         for start, block in style_blocks(text, path.suffix):
-            block_issues, block_px = check_block(block)
+            block_issues, block_px = check_block(block, PROFILES[contract])
             file_total += block_px
             for issue in block_issues:
                 issues.append(f"{rel}:{issue}")
@@ -226,10 +239,10 @@ def main() -> int:
     report: dict = {"enforced": {}, "pending": {}}
     failed = False
 
-    for label, rel in ENFORCED:
-        issues, file_px, total = scan_end(label, rel)
+    for label, rel, contract in ENFORCED:
+        issues, file_px, total = scan_end(label, rel, contract)
         report["enforced"][label] = {"violations": issues, "px_by_file": file_px}
-        print(f"== {label}（enforced）==")
+        print(f"== {label}（enforced · {contract}）==")
         if issues:
             failed = True
             for item in issues:
@@ -239,8 +252,8 @@ def main() -> int:
             print("  ✓ 0 违规")
         print(f"  裸 px 总量（含豁免面）: {total}")
 
-    for label, rel in PENDING:
-        issues, _file_px, total = scan_end(label, rel)
+    for label, rel, contract in PENDING:
+        issues, _file_px, total = scan_end(label, rel, contract)
         report["pending"][label] = {"count": len(issues), "px_total": total}
         note = "" if not args.verbose else "（-v 明细见下）"
         print(f"== {label}（pending 未迁移）== {len(issues)} 处 / 裸 px {total}{note}")

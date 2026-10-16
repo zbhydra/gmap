@@ -29,6 +29,8 @@ export interface Props {
   copy: DashboardContent
   /** 支付窗口被拦截时的引导文案（AccountContent 公共键）。 */
   popupBlocked: string
+  /** 未交付能力提示（common.comingSoon），订阅页灰化选购按钮用。 */
+  comingSoon: string
   /** 当前语言路径前缀（en-US 为空），用于 Pricing / 首页链接。 */
   localePrefix: string
 }
@@ -53,10 +55,11 @@ function viewCopy(): DashboardContent['history'] | DashboardContent['api'] | Das
 }
 
 async function restoreSession(): Promise<void> {
-  session.value = await getSiteSession()
+  const restored = await getSiteSession()
   if (!deviceId.value) {
     deviceId.value = await ensureDeviceId()
   }
+  session.value = restored
 }
 
 function openSignIn(): void {
@@ -151,11 +154,13 @@ onBeforeUnmount(() => {
           :device-id="deviceId"
         />
         <ApiView
-          v-else-if="props.page === 'api'"
+          v-else-if="props.page === 'api' && session.status === 'signed-in'"
+          :key="session.token"
           :copy="props.copy"
           :locale-prefix="props.localePrefix"
-          :signed-in="session.status === 'signed-in'"
-          @sign-in="openSignIn"
+          :user="session.user"
+          :token="session.token"
+          :device-id="deviceId"
         />
         <SubscriptionsView
           v-else-if="props.page === 'subscriptions' && session.status === 'signed-in'"
@@ -164,6 +169,7 @@ onBeforeUnmount(() => {
           :token="session.token"
           :device-id="deviceId"
           :popup-blocked="props.popupBlocked"
+          :coming-soon="props.comingSoon"
           :locale-prefix="props.localePrefix"
         />
       </template>
@@ -177,7 +183,7 @@ onBeforeUnmount(() => {
   align-items: stretch;
   width: min(1200px, calc(100vw - 32px));
   margin: 0 auto;
-  padding: var(--space-4) 0 var(--space-8);
+  padding: var(--s-4) 0 var(--s-8);
   min-height: 72vh;
 }
 
@@ -196,12 +202,12 @@ onBeforeUnmount(() => {
 .workspace-panel {
   display: grid;
   justify-items: center;
-  gap: var(--space-4);
-  margin: var(--space-16) auto;
+  gap: var(--s-4);
+  margin: var(--s-16) auto;
   max-width: 420px;
-  padding: var(--space-8) var(--space-6);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--rounded-md);
+  padding: var(--s-8) var(--s-6);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--r-md);
   background: var(--surface);
   text-align: center;
 }
@@ -211,13 +217,13 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   min-height: 40px;
-  padding: 0 var(--space-6);
-  border-radius: var(--rounded-full);
+  padding: 0 var(--s-6);
+  border-radius: var(--r-full);
   background: var(--primary);
   color: var(--primary-fg);
   font-size: 14px;
   font-weight: 600;
-  transition: background-color var(--transition-fast);
+  transition: background-color var(--dur-1);
 }
 
 .workspace-primary-button:hover {
@@ -234,11 +240,11 @@ onBeforeUnmount(() => {
   display: none;
   flex-direction: column;
   justify-content: center;
-  gap: var(--space-1);
+  gap: var(--s-1);
   width: 40px;
   height: 40px;
-  margin-bottom: var(--space-4);
-  border-radius: var(--rounded-full);
+  margin-bottom: var(--s-4);
+  border-radius: var(--r-full);
   background: var(--surface-2);
 }
 
@@ -247,7 +253,7 @@ onBeforeUnmount(() => {
   width: 18px;
   height: 2px;
   margin: 0 auto;
-  border-radius: var(--rounded-sm);
+  border-radius: var(--r-sm);
   background: var(--text);
 }
 

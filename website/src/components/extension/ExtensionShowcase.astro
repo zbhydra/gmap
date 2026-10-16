@@ -1,0 +1,1455 @@
+---
+/**
+ * 插件页能力展台（设计稿 extension.html ④）：左侧 6 个能力 tab，右侧场景面板交叉淡入。
+ *
+ * 选中 tab 底部进度条走完即切到下一项；悬停舞台或键盘聚焦时暂停，方向键切换，离屏暂停（data-inview）。
+ * 减弱动效下不自动轮播，只保留手动切换。场景内容与插件导出口径一致：36 列（Plus Code 列位保留、当前为空）、
+ * 11 个评论列、街景图被过滤、官网补全 6 个社媒、批量任务 90 秒无进展跳过、导出 CSV / JSON。
+ */
+import type { Locale } from '../../i18n/content'
+import type { ExtensionFeatureId, ExtensionPageContent } from '../../i18n/schema'
+import Icon from '../site/Icon.astro'
+import { fillCopy, splitCopy } from '../product/copy'
+import ProductSectionHead from '../product/ProductSectionHead.astro'
+import StarBar from './StarBar.astro'
+import {
+  BATCH_PANEL_SAMPLE,
+  ENRICH_SAMPLES,
+  EXPORT_SAMPLE,
+  PHOTO_SAMPLES,
+  RECORD_SAMPLE,
+  REVIEW_SAMPLES,
+  exportFileName,
+  type BatchItemState
+} from './extension-samples'
+
+interface Props {
+  locale: Locale
+  features: ExtensionPageContent['features']
+}
+
+const { locale, features } = Astro.props
+const { business, reviews, photos, enrichment, batch, files } = features
+
+// 键名加引号：Astro frontmatter 会把行首的裸 export 当作导出语句提升
+const TAB_ICONS: Record<ExtensionFeatureId, string> = {
+  'business': 'building',
+  'reviews': 'review',
+  'photos': 'image',
+  'enrichment': 'mail',
+  'batch': 'list-plus',
+  'export': 'download'
+}
+const DESTINATION_ICONS = ['download', 'filter', 'zap']
+
+const fields: Array<{ label: string; value: string; mono?: boolean; rating?: boolean }> = [
+  { label: business.fields.phone, value: RECORD_SAMPLE.phone, mono: true },
+  { label: business.fields.website, value: RECORD_SAMPLE.website },
+  { label: business.fields.rating, value: fillCopy(business.reviewCount, { count: new Intl.NumberFormat(locale).format(RECORD_SAMPLE.reviews) }), rating: true },
+  { label: business.fields.hours, value: RECORD_SAMPLE.hours },
+  { label: business.fields.timeZone, value: RECORD_SAMPLE.timeZone, mono: true },
+  { label: business.fields.coordinates, value: RECORD_SAMPLE.coordinates, mono: true },
+  { label: business.fields.placeId, value: RECORD_SAMPLE.placeId, mono: true },
+  { label: business.fields.mapsUrl, value: RECORD_SAMPLE.mapsUrl, mono: true }
+]
+/** 960px 以下记录卡改单列，只显示前 5 个字段（同设计稿移动端）；脚注「+N more」按当前可见字段数分别计数。 */
+const NARROW_FIELDS = 5
+const moreCopy = (shown: number) => fillCopy(business.more, { count: RECORD_SAMPLE.totalColumns - shown })
+const [columnsBefore, columnsAfter] = splitCopy(business.columns, 'count')
+const batchStates: Record<BatchItemState, (rows: number) => string> = {
+  done: rows => fillCopy(batch.done, { count: rows }),
+  stuck: () => batch.skipped,
+  run: () => batch.running,
+  queued: () => batch.queued
+}
+---
+
+<section class="section xs" id="features">
+  <div class="container">
+    <ProductSectionHead head={features.head} />
+
+    <div class="xs-layout" data-xs data-inview>
+      <div class="xs-tabs" role="tablist" aria-label={features.tabsLabel} data-stagger="60">
+        {features.tabs.map((tab, index) => (
+          <button
+            class="xs-tab"
+            type="button"
+            role="tab"
+            id={`xs-tab-${tab.id}`}
+            aria-controls={`xs-${tab.id}`}
+            aria-selected={index === 0 ? 'true' : 'false'}
+            tabindex={index === 0 ? 0 : -1}
+            data-reveal
+          >
+            <span class="xs-tab-ic"><Icon name={TAB_ICONS[tab.id]} /></span>
+            <span class="xs-tab-text"><b>{tab.title}</b><span>{tab.description}</span></span>
+            <span class="xs-bar"><i></i></span>
+          </button>
+        ))}
+      </div>
+
+      <div class="xs-stage card" data-reveal="zoom">
+        <div class="xs-stage-grid" aria-hidden="true"></div>
+
+        <div class="xs-panel is-active" id="xs-business" role="tabpanel" aria-labelledby="xs-tab-business">
+          <div class="xp-record">
+            <div class="xp-rec-head">
+              <span class="xp-rec-avatar"><Icon name="coffee" /></span>
+              <div>
+                <b>{RECORD_SAMPLE.name}</b>
+                <span>{RECORD_SAMPLE.summary}</span>
+              </div>
+              <span class="badge badge--ok">{business.claimed}</span>
+            </div>
+            <dl class="xp-fields">
+              {fields.map((field, index) => (
+                <div class:list={{ 'xp-wide-only': index >= NARROW_FIELDS }} style={`--i: ${index}`}>
+                  <dt>{field.label}</dt>
+                  <dd class:list={{ mono: field.mono }}>
+                    {field.rating ? (
+                      <>
+                        <span class="rating"><Icon name="star" class="icon--fill" />{RECORD_SAMPLE.rating.toFixed(1)}</span> · {field.value}
+                      </>
+                    ) : field.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <div class="xp-rec-foot">
+              <span class="xp-ring" aria-hidden="true">
+                <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15"></circle><circle class="xp-ring-fill" cx="18" cy="18" r="15" pathLength="100"></circle></svg>
+              </span>
+              <span>{columnsBefore}<b>{RECORD_SAMPLE.totalColumns}</b>{columnsAfter} · {business.reserved}</span>
+              <span class="xp-rec-more mono xp-wide-only">{moreCopy(fields.length)}</span>
+              <span class="xp-rec-more mono xp-narrow-only">{moreCopy(NARROW_FIELDS)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="xs-panel" id="xs-reviews" role="tabpanel" aria-labelledby="xs-tab-reviews" hidden>
+          <div class="xp-rev-top">
+            <span class="xp-rev-title"><b>{reviews.title}</b> · {RECORD_SAMPLE.name}</span>
+            <span class="badge">{fillCopy(reviews.columns, { count: RECORD_SAMPLE.reviewColumns })}</span>
+          </div>
+          <div class="xp-rev-list">
+            {REVIEW_SAMPLES.map((review, index) => (
+              <article class="xp-review" style={`--i: ${index}`}>
+                <span class="xp-av" style={`--tone: var(--${review.tone})`} aria-hidden="true">{review.initial}</span>
+                <div>
+                  <div class="xp-review-meta"><b>{review.author}</b><StarBar rating={review.rating} /><span class="mono">{review.date}</span></div>
+                  <p>{review.text}</p>
+                  {review.owner && (
+                    <div class="xp-owner"><b>{reviews.ownerReply}</b> · {review.owner.date}<br />{review.owner.text}</div>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+          <div class="xp-rev-foot"><span class="spinner"></span>{reviews.loading}</div>
+        </div>
+
+        <div class="xs-panel" id="xs-photos" role="tabpanel" aria-labelledby="xs-tab-photos" hidden>
+          <div class="xp-pho-grid">
+            {PHOTO_SAMPLES.tones.map((tone, index) => (
+              <span class:list={['xp-ph', { 'xp-ph--sv': index === PHOTO_SAMPLES.streetView }]} style={`--i: ${index}; --tone: var(--${tone})`}>
+                {index === PHOTO_SAMPLES.streetView && <em><Icon name="x" />{photos.streetView}</em>}
+              </span>
+            ))}
+          </div>
+          <div class="xp-pho-urls mono">
+            {PHOTO_SAMPLES.urls.map((url, index) => <span style={`--i: ${index}`}>{url}</span>)}
+          </div>
+        </div>
+
+        <div class="xs-panel" id="xs-enrichment" role="tabpanel" aria-labelledby="xs-tab-enrichment" hidden>
+          <div class="xp-site">
+            <span class="xp-site-ic"><Icon name="web" /></span>
+            <div><small>{enrichment.website}</small><b class="mono">{ENRICH_SAMPLES.domain}</b></div>
+            <span class="xp-site-scan" aria-hidden="true"></span>
+          </div>
+          <span class="xp-wire" aria-hidden="true"></span>
+          <ul class="xp-found" role="list">
+            {ENRICH_SAMPLES.found.map((item, index) => (
+              <li style={`--i: ${index}; --c: var(--${item.tone})`}>
+                <Icon name={item.icon} class="xp-found-ic" /><span class="mono">{item.value}</span><Icon name="check" class="xp-ok" />
+              </li>
+            ))}
+          </ul>
+          <div class="xp-nets">
+            {ENRICH_SAMPLES.more.map((icon, index) => <span style={`--i: ${index + ENRICH_SAMPLES.found.length}`} aria-hidden="true"><Icon name={icon} /></span>)}
+            <em>{enrichment.moreNetworks}</em>
+          </div>
+        </div>
+
+        <div class="xs-panel" id="xs-batch" role="tabpanel" aria-labelledby="xs-tab-batch" hidden>
+          <div class="xp-bat-head">
+            <b>{BATCH_PANEL_SAMPLE.name}</b>
+            <span class="xp-bat-counts mono">
+              <span class="ok">{fillCopy(batch.complete, { count: BATCH_PANEL_SAMPLE.complete })}</span>
+              <span class="warn">{fillCopy(batch.stuck, { count: BATCH_PANEL_SAMPLE.stuck })}</span>
+              <span>{fillCopy(batch.total, { count: BATCH_PANEL_SAMPLE.total })}</span>
+            </span>
+          </div>
+          <ul class="xp-bat-list" role="list">
+            {BATCH_PANEL_SAMPLE.items.map((item, index) => (
+              <li class={`is-${item.state}`} style={`--i: ${index}`}>
+                <span>{item.keyword}</span>
+                <em>{item.state === 'run' && <span class="spinner"></span>}{batchStates[item.state](item.rows)}</em>
+              </li>
+            ))}
+          </ul>
+          <div class="xp-bat-foot"><Icon name="download" />{batch.autoExport}</div>
+        </div>
+
+        <div class="xs-panel" id="xs-export" role="tabpanel" aria-labelledby="xs-tab-export" hidden>
+          <div class="xp-formats" aria-hidden="true">
+            {files.formats.map((format, index) => <span class:list={{ 'is-on': index === 0 }}>{format}</span>)}
+          </div>
+          <div class="xp-file">
+            <span class="xp-file-ic"><Icon name="file-sheet" /></span>
+            <div>
+              <b class="mono" data-xp-file>{exportFileName(EXPORT_SAMPLE.rows, EXPORT_SAMPLE.keyword, new Date())}</b>
+              <small>{fillCopy(files.fileMeta, { rows: EXPORT_SAMPLE.rows, selected: EXPORT_SAMPLE.selectedColumns, total: RECORD_SAMPLE.totalColumns })}</small>
+            </div>
+          </div>
+          <div class="xp-dests">
+            {files.destinations.map((destination, index) => (
+              <div class:list={['xp-dest', { 'is-hit': index === 0 }]} style={`--i: ${index}`}>
+                <span><Icon name={DESTINATION_ICONS[index]} /></span><b>{destination.title}</b><small>{destination.description}</small>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { reducedMotion } from '../../scripts/site/motion'
+  import { part } from '../../scripts/pages/product-page'
+  import { EXPORT_SAMPLE, exportFileName } from './extension-samples'
+
+  const KEY_STEPS: Partial<Record<string, number>> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }
+
+  function initShowcase(layout: HTMLElement): void {
+    const tabs = Array.from(layout.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
+    const panels = tabs.map(tab => part(layout, `#${tab.getAttribute('aria-controls')}`, HTMLElement))
+    const strip = part(layout, '[role="tablist"]', HTMLElement)
+    const stage = part(layout, '.xs-stage', HTMLElement)
+    let current = 0
+
+    // 脚本接管后所有面板常驻，改用 is-active 交叉淡入
+    panels.forEach(panel => {
+      panel.hidden = false
+    })
+
+    const select = (index: number, focus = false) => {
+      current = index
+      tabs.forEach((tab, position) => {
+        const active = position === index
+        tab.setAttribute('aria-selected', String(active))
+        tab.tabIndex = active ? 0 : -1
+        panels[position].classList.toggle('is-active', active)
+        panels[position].setAttribute('aria-hidden', String(!active))
+      })
+      if (focus) tabs[index].focus()
+      // 窄屏横向标签：把当前项滚进可视区
+      if (strip.scrollWidth > strip.clientWidth) {
+        strip.scrollTo({ left: tabs[index].offsetLeft - 16, behavior: reducedMotion() ? 'auto' : 'smooth' })
+      }
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => select(index))
+      // 进度条走完：自动切到下一项。会话中途开启减弱动效时全局规则把进度条压到近乎 0 时长，
+      // 这里改为停止轮播、停在当前项（与加载时即减弱动效的终态一致），不再每帧切换
+      part(tab, '.xs-bar i', HTMLElement).addEventListener('animationend', () => {
+        if (reducedMotion()) {
+          layout.classList.remove('is-auto')
+          return
+        }
+        if (index === current) select((current + 1) % tabs.length)
+      })
+    })
+    strip.addEventListener('keydown', event => {
+      const step = KEY_STEPS[event.key]
+      if (!step) return
+      event.preventDefault()
+      select((current + step + tabs.length) % tabs.length, true)
+    })
+
+    if (!reducedMotion()) {
+      layout.classList.add('is-auto')
+      const pause = () => layout.classList.add('is-paused')
+      const resume = () => {
+        if (!layout.contains(document.activeElement)) layout.classList.remove('is-paused')
+      }
+      stage.addEventListener('pointerenter', pause)
+      stage.addEventListener('pointerleave', resume)
+      layout.addEventListener('focusin', pause)
+      layout.addEventListener('focusout', () => window.setTimeout(resume, 0))
+    }
+
+    part(layout, '[data-xp-file]', HTMLElement).textContent = exportFileName(EXPORT_SAMPLE.rows, EXPORT_SAMPLE.keyword, new Date())
+    select(0)
+  }
+
+  const layout = document.querySelector<HTMLElement>('[data-xs]')
+  if (layout) initShowcase(layout)
+</script>
+
+<style>
+  .xs-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: clamp(24px, 4vw, 64px);
+    margin-top: clamp(40px, 5vw, 64px);
+  }
+
+  .xs-tabs {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+  }
+
+  .xs-tab {
+    position: relative;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: start;
+    gap: 14px;
+    padding: 16px 18px 18px;
+    overflow: hidden;
+    border-radius: var(--r-md);
+    text-align: left;
+    transition:
+      background-color var(--dur-3) var(--ease-out),
+      box-shadow var(--dur-3) var(--ease-out);
+  }
+
+  .xs-tab:hover {
+    background: var(--surface-2);
+  }
+
+  .xs-tab[aria-selected='true'] {
+    background: var(--surface);
+    box-shadow: var(--shadow-sm), inset 0 0 0 1px var(--border);
+  }
+
+  .xs-tab-ic {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    color: var(--text-3);
+    transition:
+      background var(--dur-3) var(--ease-out),
+      color var(--dur-3) var(--ease-out),
+      border-color var(--dur-3) var(--ease-out),
+      transform var(--dur-3) var(--ease-spring);
+  }
+
+  .xs-tab-ic :global(.icon) {
+    width: 19px;
+    height: 19px;
+  }
+
+  .xs-tab[aria-selected='true'] .xs-tab-ic {
+    border-color: transparent;
+    background: var(--grad-brand);
+    box-shadow: var(--shadow-sm);
+    color: var(--primary-fg);
+    transform: rotate(-6deg);
+  }
+
+  .xs-tab-text {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .xs-tab-text b {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -0.012em;
+  }
+
+  .xs-tab-text span {
+    color: var(--text-3);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .xs-tab[aria-selected='true'] .xs-tab-text span {
+    color: var(--text-2);
+  }
+
+  .xs-bar {
+    position: absolute;
+    right: 18px;
+    bottom: 0;
+    left: 18px;
+    height: 2px;
+    overflow: hidden;
+    border-radius: var(--r-2xs);
+  }
+
+  .xs-tab[aria-selected='true'] .xs-bar {
+    background: var(--border);
+  }
+
+  .xs-bar i {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--grad-brand);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+
+  /* 轮播节拍：进度条匀速走满（7 秒一项），走完由脚本切到下一项 */
+  .xs-layout.is-auto .xs-tab[aria-selected='true'] .xs-bar i {
+    animation: xs-progress 7s linear forwards;
+  }
+
+  .xs-layout.is-paused .xs-tab[aria-selected='true'] .xs-bar i {
+    animation-play-state: paused;
+  }
+
+  @keyframes xs-progress {
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .xs-stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 540px;
+    border-radius: var(--r-xl);
+    background:
+      radial-gradient(90% 70% at 85% 0%, var(--primary-soft), transparent 62%),
+      radial-gradient(70% 60% at 0% 100%, var(--accent-soft), transparent 60%),
+      var(--surface);
+  }
+
+  .xs-stage-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-position: center;
+    background-size: 32px 32px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 65% at 50% 50%, var(--mask-solid) 20%, transparent 80%);
+    mask-image: radial-gradient(ellipse 70% 65% at 50% 50%, var(--mask-solid) 20%, transparent 80%);
+  }
+
+  .xs-stage .xs-panel {
+    position: relative;
+    grid-area: 1 / 1;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: clamp(24px, 3.4vw, 48px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translate3d(0, 12px, 0) scale(0.985);
+    /* 面板切换自带交叉淡入，不叠站级 tabpanel 入场 */
+    animation: none;
+    transition:
+      opacity var(--dur-3) var(--ease-out),
+      transform var(--dur-4) var(--ease-out),
+      visibility var(--dur-3) var(--ease-out);
+  }
+
+  .xs-stage .xs-panel.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  .xs-panel > * {
+    width: min(100%, 520px);
+  }
+
+  /* 激活时子元素错峰入场（--i 为序号） */
+  @keyframes xp-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 14px, 0);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes xp-pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.82);
+    }
+
+    60% {
+      opacity: 1;
+      transform: scale(1.04);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* 1. 商家记录卡 */
+  .xp-record {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .xp-rec-head {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .xp-rec-avatar {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--r-sm);
+    background: var(--grad-brand);
+    box-shadow: var(--shadow-sm);
+    color: var(--primary-fg);
+  }
+
+  .xp-rec-head b {
+    display: block;
+    color: var(--text);
+    font-size: var(--fs-lead);
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .xp-rec-head div span {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-3);
+    font-size: 13px;
+  }
+
+  .xp-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+  }
+
+  .xp-fields > div {
+    min-width: 0;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .xp-fields > div:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .xp-fields > div:nth-child(even) {
+    border-left: 1px solid var(--border);
+  }
+
+  .xp-fields dt {
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .xp-fields dd {
+    margin: 2px 0 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .xp-fields dd.mono {
+    font-size: 12.5px;
+  }
+
+  .xp-fields .rating :global(.icon) {
+    width: 13px;
+    height: 13px;
+  }
+
+  .xs-panel.is-active .xp-fields > div {
+    animation:
+      xp-in var(--dur-4) var(--ease-out) both,
+      xp-flash var(--dur-5) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 120ms + 180ms);
+  }
+
+  @keyframes xp-flash {
+    0% {
+      background-color: var(--primary-soft);
+    }
+
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .xp-rec-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-size: 13px;
+  }
+
+  .xp-rec-foot b {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .xp-ring svg {
+    display: block;
+    width: 26px;
+    height: 26px;
+    transform: rotate(-90deg);
+  }
+
+  .xp-ring circle {
+    fill: none;
+    stroke: var(--border-2);
+    stroke-width: 3.5;
+  }
+
+  .xp-ring .xp-ring-fill {
+    stroke: var(--accent);
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    stroke-linecap: round;
+  }
+
+  .xs-panel.is-active .xp-ring-fill {
+    animation: xp-ring var(--dur-5) var(--ease-out) forwards;
+    animation-delay: 300ms;
+  }
+
+  @keyframes xp-ring {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .xp-rec-more {
+    margin-left: auto;
+    color: var(--text-3);
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  /* 窄屏才显示的计数（宽屏版与字段的切换见 960 断点） */
+  .xp-narrow-only {
+    display: none;
+  }
+
+  /* 2. 评论 */
+  .xp-rev-top,
+  .xp-bat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .xp-rev-title {
+    color: var(--text-2);
+    font-size: 14px;
+  }
+
+  .xp-rev-title b {
+    color: var(--text);
+  }
+
+  .xp-rev-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .xp-review {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .xs-panel.is-active .xp-review {
+    animation: xp-in var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 160ms + 120ms);
+  }
+
+  .xp-av {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--tone);
+    color: var(--primary-fg);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .xp-review-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+  }
+
+  .xp-review-meta b {
+    color: var(--text);
+  }
+
+  .xp-review-meta .mono {
+    margin-left: auto;
+    color: var(--text-3);
+    font-size: 11px;
+  }
+
+  .xp-review p {
+    margin-top: 4px;
+    color: var(--text-2);
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+
+  .xp-owner {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-left: 2px solid var(--primary);
+    border-radius: 0 var(--r-sm) var(--r-sm) 0;
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .xp-owner b {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .xp-rev-foot,
+  .xp-bat-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+  }
+
+  .xp-rev-foot .spinner {
+    width: 13px;
+    height: 13px;
+    border-width: 1.5px;
+    color: var(--primary);
+  }
+
+  /* 3. 照片：叙事色 --tone 调出的风景插画，街景位灰化并标注已过滤 */
+  .xp-pho-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .xp-ph {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--r-sm);
+    background: linear-gradient(170deg, color-mix(in srgb, var(--tone) 35%, var(--surface)), color-mix(in srgb, var(--tone) 75%, var(--surface)));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .xp-ph::before {
+    position: absolute;
+    top: 18%;
+    right: 18%;
+    width: 16%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--highlight-strong);
+    content: '';
+  }
+
+  .xp-ph::after {
+    position: absolute;
+    inset: auto 0 0;
+    height: 56%;
+    background: color-mix(in srgb, var(--tone) 70%, var(--text));
+    opacity: 0.6;
+    clip-path: polygon(0 100%, 0 56%, 24% 22%, 46% 60%, 68% 30%, 100% 70%, 100% 100%);
+    content: '';
+  }
+
+  .xs-panel.is-active .xp-ph {
+    animation: xp-pop var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 110ms + 100ms);
+  }
+
+  .xp-ph--sv {
+    filter: grayscale(1);
+  }
+
+  .xp-ph--sv em {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 4px;
+    background: color-mix(in srgb, var(--bg) 62%, transparent);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+
+  .xp-ph--sv em :global(.icon) {
+    width: 22px;
+    height: 22px;
+    padding: 4px;
+    border-radius: 50%;
+    background: var(--bad);
+    color: var(--bad-fg);
+    stroke-width: 2.6;
+  }
+
+  .xp-pho-urls {
+    display: grid;
+    gap: 6px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    color: var(--text-2);
+    font-size: 11.5px;
+  }
+
+  .xp-pho-urls span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .xs-panel.is-active .xp-pho-urls span {
+    animation: xp-in var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 120ms + 700ms);
+  }
+
+  /* 4. Email / 社媒补全 */
+  .xp-site {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  .xp-site small {
+    display: block;
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .xp-site b {
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .xp-site-ic {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-sm);
+    background: var(--primary-soft);
+    color: var(--primary-text);
+  }
+
+  .xp-site-scan {
+    position: absolute;
+    inset: auto 0 0;
+    height: 2px;
+    overflow: hidden;
+  }
+
+  .xp-site-scan::after {
+    display: block;
+    width: 40%;
+    height: 100%;
+    background: var(--grad-brand);
+    animation: sweep 1.6s var(--ease-in-out) infinite;
+    content: '';
+  }
+
+  /* 官网 → 联系渠道的连线：虚线段由平移的伪元素流动（只动 transform） */
+  .xp-wire {
+    position: relative;
+    width: 2px !important;
+    height: 26px;
+    margin-block: -8px;
+    overflow: hidden;
+  }
+
+  .xp-wire::before {
+    position: absolute;
+    inset: -18px 0 0;
+    background: repeating-linear-gradient(180deg, var(--primary) 0 4px, transparent 4px 9px);
+    animation: xp-wire 0.8s linear infinite;
+    content: '';
+  }
+
+  @keyframes xp-wire {
+    to {
+      transform: translateY(18px);
+    }
+  }
+
+  .xp-found {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .xp-found li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+    font-size: 12.5px;
+  }
+
+  .xp-found li > span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .xp-found :global(.xp-found-ic) {
+    width: 18px;
+    height: 18px;
+    color: var(--c);
+  }
+
+  .xp-found :global(.xp-ok) {
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+    color: var(--ok);
+    stroke-width: 2.6;
+  }
+
+  .xs-panel.is-active .xp-found li {
+    animation: xp-in var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 260ms + 450ms);
+  }
+
+  .xs-panel.is-active .xp-found :global(.xp-ok) {
+    animation: xp-pop var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 260ms + 700ms);
+  }
+
+  .xp-nets {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .xp-nets span {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text-2);
+  }
+
+  .xp-nets :global(.icon) {
+    width: 14px;
+    height: 14px;
+  }
+
+  .xs-panel.is-active .xp-nets span {
+    animation: xp-pop var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 160ms + 900ms);
+  }
+
+  .xp-nets em {
+    margin-left: 4px;
+    color: var(--text-3);
+    font-size: 12.5px;
+    font-style: normal;
+  }
+
+  /* 5. 批量任务 */
+  .xp-bat-head b {
+    color: var(--text);
+    font-size: 16px;
+    letter-spacing: -0.01em;
+  }
+
+  .xp-bat-counts {
+    display: flex;
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .xp-bat-counts span {
+    padding: 4px 10px;
+    border-radius: var(--r-full);
+    background: var(--surface-2);
+    color: var(--text-3);
+    white-space: nowrap;
+  }
+
+  .xp-bat-counts .ok {
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+
+  .xp-bat-counts .warn {
+    background: var(--warn-soft);
+    color: var(--warn);
+  }
+
+  .xp-bat-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .xp-bat-list li {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+  }
+
+  .xp-bat-list li::before {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border-2);
+    content: '';
+  }
+
+  .xp-bat-list li span {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .xp-bat-list li em {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11px;
+    font-style: normal;
+    white-space: nowrap;
+  }
+
+  .xp-bat-list .is-done::before {
+    background: var(--ok);
+  }
+
+  .xp-bat-list .is-done em {
+    color: var(--ok);
+  }
+
+  .xp-bat-list .is-stuck::before {
+    background: var(--warn);
+  }
+
+  .xp-bat-list .is-stuck em {
+    color: var(--warn);
+  }
+
+  .xp-bat-list .is-run {
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+    box-shadow: 0 0 0 4px var(--primary-soft);
+  }
+
+  .xp-bat-list .is-run::before {
+    background: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+  }
+
+  .xp-bat-list .is-run em {
+    color: var(--primary-text);
+  }
+
+  .xp-bat-list .spinner {
+    width: 11px;
+    height: 11px;
+    border-width: 1.5px;
+  }
+
+  .xs-panel.is-active .xp-bat-list li {
+    animation: xp-in var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 110ms + 100ms);
+  }
+
+  .xp-bat-foot :global(.icon) {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+  }
+
+  /* 6. 导出 */
+  .xp-formats {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    width: auto !important;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface-3);
+  }
+
+  .xp-formats span {
+    padding: 6px 16px;
+    border-radius: var(--r-full);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .xp-formats .is-on {
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--text);
+  }
+
+  .xp-file {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .xs-panel.is-active .xp-file {
+    animation: xp-drop var(--dur-4) var(--ease-out) both;
+    animation-delay: 150ms;
+  }
+
+  @keyframes xp-drop {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, -26px, 0) rotate(-2deg) scale(0.96);
+    }
+
+    60% {
+      opacity: 1;
+      transform: translate3d(0, 4px, 0) rotate(0.5deg);
+    }
+
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .xp-file-ic {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: var(--r-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .xp-file > div {
+    min-width: 0;
+  }
+
+  .xp-file b {
+    display: block;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .xp-file small {
+    display: block;
+    margin-top: 2px;
+    overflow: hidden;
+    color: var(--text-3);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .xp-dests {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .xp-dest {
+    display: grid;
+    justify-items: start;
+    gap: 2px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+  }
+
+  .xp-dest > span {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    margin-bottom: 8px;
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    color: var(--text-2);
+  }
+
+  .xp-dest :global(.icon) {
+    width: 17px;
+    height: 17px;
+  }
+
+  .xp-dest b {
+    color: var(--text);
+    font-size: 13.5px;
+  }
+
+  .xp-dest small {
+    color: var(--text-3);
+    font-size: 11.5px;
+  }
+
+  .xs-panel.is-active .xp-dest {
+    animation: xp-in var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 100ms + 450ms);
+  }
+
+  .xs-panel.is-active .xp-dest.is-hit {
+    animation:
+      xp-in var(--dur-4) var(--ease-out) both,
+      xp-hit var(--dur-4) var(--ease-out) both;
+    animation-delay: 450ms, 1100ms;
+  }
+
+  @keyframes xp-hit {
+    from {
+      border-color: var(--border);
+      box-shadow: none;
+    }
+
+    to {
+      border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+      box-shadow: 0 0 0 4px var(--primary-soft);
+    }
+  }
+
+  .xp-dest.is-hit > span {
+    background: var(--primary);
+    color: var(--primary-fg);
+  }
+
+  @media (max-width: 1080px) {
+    .xs-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .xs-tabs {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .xs-tab-text span {
+      display: none;
+    }
+  }
+
+  @media (max-width: 960px) {
+    .xs-tabs {
+      display: flex;
+      margin-inline: calc(var(--gutter) * -1);
+      padding-inline: var(--gutter);
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+
+    /* 横向滚动条内只做淡入：位移会让尚未进入视口的标签撑出纵向溢出 */
+    :global(.js) .xs-tabs > [data-reveal] {
+      transform: none;
+    }
+
+    .xs-tab {
+      flex: 0 0 auto;
+      grid-template-columns: 34px auto;
+      align-items: center;
+      padding: 10px 14px 12px 10px;
+    }
+
+    .xs-tab-ic {
+      width: 34px;
+      height: 34px;
+    }
+
+    .xs-tab-text b {
+      font-size: 14.5px;
+      white-space: nowrap;
+    }
+
+    .xs-stage {
+      min-height: 0;
+    }
+
+    .xp-fields {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .xp-fields > div:nth-child(2) {
+      border-top: 1px solid var(--border);
+    }
+
+    .xp-fields > div:nth-child(even) {
+      border-left: 0;
+    }
+
+    .xp-wide-only {
+      display: none;
+    }
+
+    .xp-narrow-only {
+      display: inline;
+    }
+
+    .xp-dests {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .xp-dest {
+      grid-template-columns: 34px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 12px;
+    }
+
+    .xp-dest > span {
+      grid-row: span 2;
+      margin: 0;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .xp-pho-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .xp-ph:nth-child(n + 5) {
+      display: none;
+    }
+
+    .xp-nets em {
+      display: none;
+    }
+
+    .xp-bat-head {
+      flex-wrap: wrap;
+    }
+
+    .xp-bat-list li.is-stuck {
+      grid-template-columns: 10px minmax(0, 1fr);
+      row-gap: 2px;
+    }
+
+    .xp-bat-list li.is-stuck em {
+      grid-column: 2;
+    }
+  }
+</style>

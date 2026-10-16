@@ -2,7 +2,7 @@
 version: 1.0
 name: Material You
 theme: dark
-description: GMap Extractor 全项目 UI token 合同之暗色主题；交互与组件规则见 design.md（亮色），本文件只记录 token 取值与暗色差异。
+description: 插件（extension / extension-bing）与 Admin 的 UI token 合同之暗色主题；website 见 design-website.md；交互与组件规则见 design.md（亮色），本文件只记录 token 取值与暗色差异。
 source: 风格选型探索稿 scratch/design-explore/gmap-ui-styles.html（不入 git），方案 06D；token 合同以本文件为准。
 colors:
   bg: "#15171c"

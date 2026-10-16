@@ -1,0 +1,27 @@
+---
+import Layout from '../../../../layouts/Layout.astro'
+import McpOAuthConsent from '../../../../components/auth/McpOAuthConsent.vue'
+import { getMcpOAuthContent } from '../../../../i18n/mcp-oauth'
+import { localePaths, type Locale } from '../../../../i18n/ui'
+
+export function getStaticPaths() {
+  return Object.entries(localePaths)
+    .filter(([locale]) => locale !== 'en-US')
+    .map(([locale, path]) => ({ params: { lang: path }, props: { locale } }))
+}
+
+const { locale } = Astro.props as { locale: Locale }
+const copy = getMcpOAuthContent(locale)
+---
+
+<Layout
+  locale={locale}
+  title={copy.seoTitle}
+  description={copy.intro}
+  robots="noindex, nofollow"
+  analytics={false}
+  includeSoftwareApplicationSchema={false}
+  includeAlternateLanguageLinks={false}
+>
+  <McpOAuthConsent client:load copy={copy} />
+</Layout>

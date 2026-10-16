@@ -43,6 +43,8 @@
         "proxy_url": "proxies の {index} 番目の形式が無効です。http://ユーザー名:パスワード@IP:ポート を使用してください（認証不要なら認証情報は省略）。対応: http、https、socks5、socks5h。IP:ポート:ユーザー名:パスワード は非対応です。"
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "今月の API リクエスト上限に達しました。リセットを待つかプランをアップグレードしてください。",
+    "MCP_OAUTH_REQUEST_INVALID": "認可リクエストが無効または期限切れです。アプリから再接続してください。",
         "INTERNAL_SERVER_ERROR": "サーバー内部エラー",
         "INVALID_REQUEST": "無効なリクエスト",
         "EXTERNAL_API_KEY_INVALID": "外部APIキーが無効です",
@@ -122,5 +124,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "安全 · 高速 · 便利",
         "subject": "認証コードログイン"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "Google Maps の場所を検索します。成功した呼び出しごとに API リクエストを1回使用します。page は取得ページ数（1–10）、ll は @lat,lng,zoom 形式です。",
+      "list_reviews": "fid と任意の cursor で Google Maps のレビューを取得します。成功した呼び出しごとに API リクエストを1回使用します。"
     }
+  }
 }

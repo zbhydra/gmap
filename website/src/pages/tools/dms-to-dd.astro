@@ -1,132 +1,123 @@
 ---
 /**
- * Convert DMS to DD 工具页（W4，度分秒 → 十进制度）。
+ * Convert DMS to DD 工具页：度分秒 + 半球 → 十进制度。
  */
+import Icon from '../../components/site/Icon.astro'
+import ToolGuide from '../../components/tools/ToolGuide.astro'
 import ToolShell from '../../components/tools/ToolShell.astro'
 import { getContent } from '../../i18n/content'
 
-const t = getContent('en-US')
-const tool = t.pages.tools.dmsToDd
-const copyJson = JSON.stringify({ common: t.pages.tools.common, content: tool })
+const common = getContent('en-US').pages.tools.common
+const tool = getContent('en-US').pages.tools.dmsToDd
+const copyJson = JSON.stringify({ common, content: tool })
+
+// 两轴同构：data-<axis>-degrees / minutes / seconds / hemisphere 是脚本读取的钩子；占位即 San Francisco 的坐标
+const axes = [
+  {
+    key: 'lat',
+    legend: tool.form.latitudeHeading,
+    maxDegrees: 90,
+    placeholders: ['37', '46', '29.74'],
+    hemisphereLabel: tool.form.latitudeHemisphereLabel,
+    hemispheres: ['N', 'S'],
+    selected: 'N'
+  },
+  {
+    key: 'lng',
+    legend: tool.form.longitudeHeading,
+    maxDegrees: 180,
+    placeholders: ['122', '25', '9.90'],
+    hemisphereLabel: tool.form.longitudeHemisphereLabel,
+    hemispheres: ['E', 'W'],
+    selected: 'W'
+  }
+]
 ---
 
-<ToolShell
-  toolId="dms-to-dd"
-  seo={tool.seo}
-  hero={tool.hero}
-  howTo={tool.howTo}
-  faq={tool.faq}
-  cta={tool.cta}
-  copyJson={copyJson}
-  commonCopy={t.pages.tools.common}
->
-  <form data-tool-form novalidate>
-    <fieldset class="tool-fieldset">
-      <legend>{tool.form.latitudeHeading}</legend>
-      <div class="tool-field-row">
-        <div class="tool-field">
-          <label for="lat-degrees">{tool.form.degreesLabel}</label>
-          <input class="tool-input" id="lat-degrees" type="number" min="0" max="90" step="1" placeholder="37" data-lat-degrees />
-        </div>
-        <div class="tool-field">
-          <label for="lat-minutes">{tool.form.minutesLabel}</label>
-          <input class="tool-input" id="lat-minutes" type="number" min="0" max="59.99" step="any" placeholder="46" data-lat-minutes />
-        </div>
-        <div class="tool-field">
-          <label for="lat-seconds">{tool.form.secondsLabel}</label>
-          <input class="tool-input" id="lat-seconds" type="number" min="0" max="59.99" step="any" placeholder="29.74" data-lat-seconds />
-        </div>
-        <div class="tool-field">
-          <label for="lat-hemisphere">N / S</label>
-          <select class="tool-input" id="lat-hemisphere" data-lat-hemisphere>
-            <option value="N" selected>N</option>
-            <option value="S">S</option>
-          </select>
-        </div>
-      </div>
-    </fieldset>
-
-    <fieldset class="tool-fieldset">
-      <legend>{tool.form.longitudeHeading}</legend>
-      <div class="tool-field-row">
-        <div class="tool-field">
-          <label for="lng-degrees">{tool.form.degreesLabel}</label>
-          <input class="tool-input" id="lng-degrees" type="number" min="0" max="180" step="1" placeholder="122" data-lng-degrees />
-        </div>
-        <div class="tool-field">
-          <label for="lng-minutes">{tool.form.minutesLabel}</label>
-          <input class="tool-input" id="lng-minutes" type="number" min="0" max="59.99" step="any" placeholder="25" data-lng-minutes />
-        </div>
-        <div class="tool-field">
-          <label for="lng-seconds">{tool.form.secondsLabel}</label>
-          <input class="tool-input" id="lng-seconds" type="number" min="0" max="59.99" step="any" placeholder="9.90" data-lng-seconds />
-        </div>
-        <div class="tool-field">
-          <label for="lng-hemisphere">E / W</label>
-          <select class="tool-input" id="lng-hemisphere" data-lng-hemisphere>
-            <option value="E">E</option>
-            <option value="W" selected>W</option>
-          </select>
-        </div>
-      </div>
-    </fieldset>
-
-    <p class="tool-error" data-tool-error hidden></p>
-    <div class="tool-actions">
-      <button class="tool-button" type="submit" data-ga-event="tool_use" data-ga-tool-id="dms-to-dd">
-        {tool.form.submit}
-      </button>
-    </div>
-  </form>
-
-  <section class="tool-result" data-tool-result hidden aria-label={t.pages.tools.common.resultHeading}>
-    <h2>{t.pages.tools.common.resultHeading}</h2>
-    <div class="tool-result-row">
-      <label for="dd-value">{tool.result.dd}</label>
-      <div class="tool-output">
-        <output class="tool-output-value" id="dd-value" data-dd-value></output>
-        <button
-          class="tool-secondary-button"
-          type="button"
-          data-copy-dd
-          data-ga-event="tool_copy"
-          data-ga-tool-id="dms-to-dd"
-        >
-          {t.pages.tools.common.copy}
+<ToolShell toolId="dms-to-dd" content={tool} howToSteps={tool.howTo} copyJson={copyJson}>
+  <div class="tool-panel">
+    <form class="tool-form" data-tool-form autocomplete="off" novalidate>
+      {axes.map(axis => (
+        <fieldset class="tool-fieldset">
+          <legend>{axis.legend}</legend>
+          <div class="tool-field-row">
+            <div class="field">
+              <label class="field-label" for={`${axis.key}-degrees`}>{tool.form.degreesLabel}</label>
+              <input
+                class="input tool-mono"
+                id={`${axis.key}-degrees`}
+                type="number"
+                min="0"
+                max={axis.maxDegrees}
+                step="1"
+                placeholder={axis.placeholders[0]}
+                {...{ [`data-${axis.key}-degrees`]: '' }}
+              />
+            </div>
+            <div class="field">
+              <label class="field-label" for={`${axis.key}-minutes`}>{tool.form.minutesLabel}</label>
+              <input
+                class="input tool-mono"
+                id={`${axis.key}-minutes`}
+                type="number"
+                min="0"
+                max="59.99"
+                step="any"
+                placeholder={axis.placeholders[1]}
+                {...{ [`data-${axis.key}-minutes`]: '' }}
+              />
+            </div>
+            <div class="field">
+              <label class="field-label" for={`${axis.key}-seconds`}>{tool.form.secondsLabel}</label>
+              <input
+                class="input tool-mono"
+                id={`${axis.key}-seconds`}
+                type="number"
+                min="0"
+                max="59.99"
+                step="any"
+                placeholder={axis.placeholders[2]}
+                {...{ [`data-${axis.key}-seconds`]: '' }}
+              />
+            </div>
+            <div class="field">
+              <label class="field-label" for={`${axis.key}-hemisphere`}>{axis.hemisphereLabel}</label>
+              <select class="input" id={`${axis.key}-hemisphere`} {...{ [`data-${axis.key}-hemisphere`]: '' }}>
+                {axis.hemispheres.map(letter => <option value={letter} selected={letter === axis.selected}>{letter}</option>)}
+              </select>
+            </div>
+          </div>
+        </fieldset>
+      ))}
+      <p class="tool-error" role="alert" data-tool-error hidden></p>
+      <div class="tool-actions">
+        <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="dms-to-dd">
+          {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />
         </button>
       </div>
-    </div>
-  </section>
+    </form>
+
+    <section class="tool-result" data-tool-result hidden aria-label={common.resultHeading}>
+      <h2 class="tool-result-label">{common.resultHeading}</h2>
+      <div class="tool-output">
+        <label class="tool-output-label" for="dd-value">{tool.result.dd}</label>
+        <div class="tool-output-row">
+          <output class="tool-output-value" id="dd-value" data-dd-value></output>
+          <button
+            class="btn btn-secondary btn-sm"
+            type="button"
+            data-copy-dd
+            data-ga-event="tool_copy"
+            data-ga-tool-id="dms-to-dd"
+          >
+            <Icon name="copy" />{common.copy}
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <ToolGuide slot="guide" head={common.guide} sections={tool.howTo} />
 </ToolShell>
-
-<style>
-  /* 本页私有：度/分/秒 + 半球的四列输入排布。 */
-  .tool-fieldset {
-    display: grid;
-    gap: var(--space-3);
-    margin: 0;
-    padding: var(--space-4);
-    border: 1px solid var(--border);
-    border-radius: var(--rounded-sm);
-  }
-
-  .tool-fieldset legend {
-    padding: 0 var(--space-2);
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-  .tool-field-row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-3);
-  }
-
-  @media (max-width: 600px) {
-    .tool-field-row {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-</style>
 
 <script src="../../scripts/tools/dmsToDd.ts"></script>

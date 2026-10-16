@@ -930,36 +930,36 @@ const authCopy = {
     min-height: 72vh;
     display: grid;
     place-items: center;
-    padding: clamp(var(--space-16), 8vw, var(--space-24)) 24px var(--space-16);
+    padding: calc(var(--nav-h) + clamp(var(--s-16), 8vw, var(--s-24))) 24px var(--s-16);
   }
 
   .extension-login-panel {
     width: 720px;
     display: grid;
     gap: 24px;
-    padding: clamp(24px, 4vw, var(--space-8));
+    padding: clamp(24px, 4vw, var(--s-8));
     border: 1px solid var(--border);
-    border-radius: var(--rounded-sm);
+    border-radius: var(--r-sm);
     background: var(--surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 
   .extension-login-heading {
     display: grid;
-    gap: var(--space-2);
+    gap: var(--s-2);
   }
 
   .extension-login-eyebrow,
   .extension-login-state {
     width: max-content;
     margin: 0;
-    padding: var(--space-1) var(--space-2);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--rounded-full);
-    color: var(--primary);
+    padding: var(--s-1) var(--s-2);
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-full);
+    color: var(--primary-text);
     background: var(--primary-soft);
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0;
   }
 
@@ -1000,7 +1000,7 @@ const authCopy = {
 
   .extension-login-confirm {
     display: grid;
-    gap: var(--space-4);
+    gap: var(--s-4);
   }
 
   .extension-login-confirm[hidden] {
@@ -1012,9 +1012,9 @@ const authCopy = {
     flex-wrap: wrap;
     align-items: center;
     gap: 6px 14px;
-    padding: 16px var(--space-4);
+    padding: 16px var(--s-4);
     border: 1px solid var(--border);
-    border-radius: var(--rounded-sm);
+    border-radius: var(--r-sm);
     background: var(--surface-2);
   }
 
@@ -1025,7 +1025,7 @@ const authCopy = {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     object-fit: cover;
   }
 
@@ -1034,17 +1034,17 @@ const authCopy = {
   }
 
   .extension-login-avatar-fallback {
-    border: 1px solid var(--border-strong);
+    border: 1px solid var(--border-2);
     background: var(--primary-soft);
-    color: var(--primary);
-    font-size: 20px;
-    font-weight: 800;
+    color: var(--primary-text);
+    font-size: var(--fs-h4);
+    font-weight: 700;
   }
 
   .extension-login-account-name {
     color: var(--text);
     font-size: 16px;
-    font-weight: 800;
+    font-weight: 700;
     overflow-wrap: anywhere;
   }
 
@@ -1057,7 +1057,7 @@ const authCopy = {
   .extension-login-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
+    gap: var(--s-2);
   }
 
   .extension-login-primary,
@@ -1067,28 +1067,28 @@ const authCopy = {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-2);
+    gap: var(--s-2);
     padding: 0 14px;
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     font-size: 14px;
-    font-weight: 800;
+    font-weight: 700;
     transition:
-      border-color var(--transition-fast),
-      background var(--transition-fast),
-      color var(--transition-fast),
-      box-shadow var(--transition-fast);
+      border-color var(--dur-1),
+      background var(--dur-1),
+      color var(--dur-1),
+      box-shadow var(--dur-1);
   }
 
   .extension-login-secondary {
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 
   .extension-login-secondary:hover {
-    border-color: var(--border-strong);
-    color: var(--primary);
+    border-color: var(--border-2);
+    color: var(--primary-text);
   }
 
   .extension-login-primary {
@@ -1115,12 +1115,12 @@ const authCopy = {
 
   @media (max-width: 640px) {
     .extension-login-page {
-      padding: 32px 16px var(--space-16);
+      padding: calc(var(--nav-h) + var(--s-8)) 16px var(--s-16);
       place-items: start center;
     }
 
     .extension-login-panel {
-      padding: 22px var(--space-4);
+      padding: 22px var(--s-4);
     }
 
     .extension-login-actions {

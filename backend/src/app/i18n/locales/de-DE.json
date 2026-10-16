@@ -43,6 +43,8 @@
         "proxy_url": "Ungültiges Format in proxies, Eintrag {index}: Verwenden Sie http://Benutzer:Passwort@IP:Port (ohne Zugangsdaten, falls nicht erforderlich). Unterstützt: http, https, socks5, socks5h; nicht IP:Port:Benutzer:Passwort."
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "Das monatliche API-Kontingent ist aufgebraucht. Warten Sie auf die Zurücksetzung oder wechseln Sie den Tarif.",
+    "MCP_OAUTH_REQUEST_INVALID": "Die Autorisierungsanfrage ist ungültig oder abgelaufen. Verbinden Sie die App erneut.",
         "INTERNAL_SERVER_ERROR": "Interner Serverfehler",
         "INVALID_REQUEST": "Ungültige Anfrage",
         "EXTERNAL_API_KEY_INVALID": "Ungültiger externer API-Schlüssel",
@@ -122,5 +124,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "Sicher · Schnell · Bequem",
         "subject": "Verifizierungscode-Login"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "Google-Maps-Orte suchen. Jeder erfolgreiche Aufruf verbraucht eine API-Anfrage. page: Seitenanzahl (1–10); ll: @lat,lng,zoom.",
+      "list_reviews": "Google-Maps-Rezensionen mit fid und optionalem cursor lesen. Jeder erfolgreiche Aufruf verbraucht eine API-Anfrage."
     }
+  }
 }

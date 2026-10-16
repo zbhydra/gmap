@@ -143,6 +143,8 @@ Redis 连接从 .env 内 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` 读取�
 同机部署正式服和测试服时，至少要分别配置不同的 `APP_NAME` / `DEPLOY_DIR` / `BACKUP_DIR` / `BACKEND_PORT_PY` / `NGINX_SERVER_NAME` / `DB_USER` / `DB_NAME`。
 后端运行日志级别从 .env 内 `LOGGER_LEVEL` 读取，正式环境建议 `WARNING`，避免普通 `INFO` 请求日志刷 supervisor。
 对外 API 根地址从 .env 内 `PUBLIC_API_BASE_URL` 读取，用于生成后端返回的 API 绝对地址。
+
+MCP 的公开 URL、允许的 Host/Origin 随部署模板从现有 API 地址、Nginx 域名和官网地址生成；协议入口及 OAuth 确认合同见 [014 API 与 MCP](../../docs/feat/014.Maps云端/tech-API与MCP.md)。
 对外 Website 根地址从 .env 内 `PUBLIC_WEBSITE_BASE_URL` 读取，用于 Google redirect 登录后跳回网站。
 Google Data OAuth 授权完成后跳回管理后台的地址由 Admin SPA 发起授权时传入，不进入业务后端发布配置。
 Google 登录 Client ID 从 .env 内 `GOOGLE_CLIENT_ID` 读取，用于后端校验 Google ID Token 的 `aud`。

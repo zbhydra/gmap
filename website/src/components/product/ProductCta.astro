@@ -1,0 +1,37 @@
+---
+/**
+ * 营销页收尾 CTA 面板；按钮由页面经默认插槽传入（插件页主按钮受能力开关控制，云端页直达 Dashboard，
+ * API / MCP 页为获取 Key 与定价）。
+ */
+import type { ProductCtaMessage } from '../../i18n/schema'
+import AccentHeading from './AccentHeading.astro'
+
+interface Props {
+  cta: ProductCtaMessage
+  /** MCP 语境用紫色 kicker 与 AI 渐变。 */
+  ai?: boolean
+}
+
+const { cta, ai = false } = Astro.props
+---
+
+<section class="section final-cta">
+  <div class="container">
+    <div class="cta-panel has-deco" data-inview data-reveal="zoom">
+      <div class="deco" aria-hidden="true">
+        <div class="aurora"><i></i><i></i><i></i></div>
+        <div class="bg-contours"></div>
+        <div class="bg-grid cta-grid"></div>
+        <div class="cta-pins" data-cta-pins></div>
+        <div class="noise"></div>
+      </div>
+      <span class:list={['kicker', { 'kicker--ai': ai }]} data-reveal>{cta.kicker}</span>
+      <h2 class="display cta-title" data-split><AccentHeading title={cta.title} accentClass={ai ? 'text-grad-ai' : 'text-grad is-animated'} /></h2>
+      <p class="lead cta-lead" data-reveal>{cta.lead}</p>
+      <div class="cta-actions" data-reveal>
+        <slot />
+      </div>
+      <p class="cta-note" data-reveal>{cta.note}</p>
+    </div>
+  </div>
+</section>

@@ -43,6 +43,8 @@
         "proxy_url": "Formato inválido en proxies, elemento {index}: use http://usuario:contraseña@IP:puerto (omita credenciales si no se requieren). Se admite http, https, socks5 y socks5h; no IP:puerto:usuario:contraseña."
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "Se agotó la cuota mensual de solicitudes API. Espere al reinicio o mejore su plan.",
+    "MCP_OAUTH_REQUEST_INVALID": "La solicitud de autorización no es válida o ha caducado. Vuelva a conectar la aplicación.",
         "INTERNAL_SERVER_ERROR": "Error interno del servidor",
         "INVALID_REQUEST": "Solicitud inválida",
         "EXTERNAL_API_KEY_INVALID": "La clave de API externa no es válida",
@@ -122,5 +124,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "Seguro · Rápido · Conveniente",
         "subject": "Código de Verificación de Inicio de Sesión"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "Buscar lugares de Google Maps. Cada llamada correcta consume una solicitud API. page: número de páginas (1–10); ll: @lat,lng,zoom.",
+      "list_reviews": "Leer reseñas de Google Maps mediante fid y cursor opcional. Cada llamada correcta consume una solicitud API."
     }
+  }
 }

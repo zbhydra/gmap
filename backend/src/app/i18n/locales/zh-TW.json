@@ -43,6 +43,8 @@
         "proxy_url": "proxies 欄位第 {index} 項格式錯誤：請使用 http://使用者名稱:密碼@IP:連接埠（無驗證可省略帳密）；支援 http、https、socks5、socks5h，不支援 IP:連接埠:使用者名稱:密碼。"
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "本月 API 請求額度已用盡，請等待重置或升級方案。",
+    "MCP_OAUTH_REQUEST_INVALID": "授權請求無效或已過期，請回到 AI 應用重新發起連線",
         "INTERNAL_SERVER_ERROR": "伺服器內部錯誤",
         "INVALID_REQUEST": "無效的請求",
         "EXTERNAL_API_KEY_INVALID": "外部 API Key 無效",
@@ -122,5 +124,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "安全 · 快速 · 便捷",
         "subject": "驗證碼登入"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "搜尋 Google Maps 商家，每次成功呼叫消耗一次 API 請求額度。page 為累計擷取頁數（1–10），ll 格式為 @lat,lng,zoom。",
+      "list_reviews": "依 fid 和選填 cursor 讀取 Google Maps 評論，每次成功呼叫消耗一次 API 請求額度。"
     }
+  }
 }

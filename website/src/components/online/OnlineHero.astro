@@ -1,0 +1,924 @@
+---
+/**
+ * 云端页首屏（设计稿 online-scraper.html ①）。
+ *
+ * 左侧：模式胶囊（指向页内 #modes）、标题、开始采集（直达 Dashboard）与定价入口、信任行。
+ * 右侧 Dashboard 剧场循环三组虚构任务：逐行输入关键词 → Start scraping → 历史列表出现 Processing 任务，
+ * 各关键词并行完成并显示行数与 CSV → Completed 后本月用量才增加（提交不预扣）→ 下载整任务 ZIP。
+ * 表单、历史列表与状态文案直接取 Dashboard 文案段。剧场离屏 / 后台暂停，减弱动效下呈现第一组的完成态。
+ */
+import type { Locale } from '../../i18n/content'
+import type { DashboardContent, OnlineScraperPageContent } from '../../i18n/schema'
+import { localePaths } from '../../i18n/ui'
+import BrandMark from '../site/BrandMark.astro'
+import Icon from '../site/Icon.astro'
+import SplitWords from '../site/SplitWords.astro'
+import { fillCopy, splitCopy } from '../product/copy'
+import { DASHBOARD_URL, DEMO_PLAN, THEATER_HISTORY, THEATER_RUNS, THEATER_USED, shortTaskNo } from './online-samples'
+
+interface Props {
+  locale: Locale
+  hero: OnlineScraperPageContent['hero']
+  dashboard: DashboardContent
+}
+
+const { locale, hero, dashboard } = Astro.props
+const { create, history, shell } = dashboard
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const pricingHref = `${prefix}/pricing/?product_kind=maps_online&utm_source=website&utm_medium=online-scraper-hero&utm_campaign=pricing`
+const format = new Intl.NumberFormat(locale)
+const [countBefore, countAfter] = splitCopy(fillCopy(create.count, { limit: DEMO_PLAN.keywordLimit }), 'count')
+const [usedBefore, usedAfter] = splitCopy(fillCopy(create.usage, { total: format.format(DEMO_PLAN.records) }), 'used')
+const usagePercent = ((THEATER_USED / DEMO_PLAN.records) * 100).toFixed(2)
+const firstRun = THEATER_RUNS[0]
+const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent text-grad is-animated' }, hero.title.tail]
+---
+
+<section class="page-hero oh-hero has-deco" data-inview>
+  <div class="deco" aria-hidden="true">
+    <div class="aurora"><i></i><i></i><i></i></div>
+    <div class="bg-contours"></div>
+    <div class="bg-grid"></div>
+    <div class="noise"></div>
+  </div>
+
+  <div class="container page-hero-grid">
+    <div class="page-hero-copy">
+      <a class="pill-announce" href="#modes" data-enter>
+        <span class="badge badge--solid">{hero.announce.badge}</span>
+        <span>{hero.announce.text}</span>
+        <Icon name="arrow-right" />
+      </a>
+
+      <h1 class="h1 oh-title" data-split="static" style="--split-delay: 90ms"><SplitWords parts={titleParts} /></h1>
+
+      <p class="lead" data-enter style="--enter-delay: 180ms">{hero.lead}</p>
+
+      <div class="page-hero-actions" data-enter style="--enter-delay: 270ms">
+        <a class="btn btn-primary btn-lg" href={`${prefix}/dashboard/`} data-magnetic="0.2" data-cta="online-hero-dashboard">
+          {hero.primaryCta}<Icon name="arrow-right" class="icon-arrow" />
+        </a>
+        <a class="btn btn-secondary btn-lg" href={pricingHref} data-cta="online-scraper-hero-pricing">{hero.pricingCta}</a>
+      </div>
+
+      <div class="page-hero-meta" data-enter style="--enter-delay: 360ms">
+        {hero.meta.map(item => <span><Icon name="check" />{item}</span>)}
+      </div>
+    </div>
+
+    <div class="page-hero-visual oh" data-reveal="rise" data-reveal-onload="420" data-oh data-files={hero.theater.files}>
+      <div class="browser oh-frame">
+        <div class="browser-bar">
+          <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="browser-url">
+            <Icon name="lock" />
+            <span>{DASHBOARD_URL}</span>
+          </div>
+          <span class="dl-ring" data-oh-dl aria-hidden="true">
+            <svg class="dl-ring-svg" viewBox="0 0 36 36">
+              <circle class="dl-ring-track" cx="18" cy="18" r="15"></circle>
+              <circle class="dl-ring-fill" cx="18" cy="18" r="15" pathLength="100"></circle>
+            </svg>
+            <Icon name="download" />
+          </span>
+        </div>
+
+        <div class="oh-body" aria-hidden="true">
+          <!-- 工作区侧栏：Dashboard 三视图（收起态） -->
+          <div class="oh-side">
+            <BrandMark />
+            <span class="oh-side-item is-on" title={shell.navHistory}><Icon name="cloud" /></span>
+            <span class="oh-side-item" title={shell.navApi}><Icon name="code" /></span>
+            <span class="oh-side-item" title={shell.navSubscriptions}><Icon name="tag" /></span>
+          </div>
+
+          <div class="oh-main">
+            <!-- 创建表单：多行关键词 / 数量与上限 / Email 与社媒开关 / 月度用量 / 提交 -->
+            <div class="oh-create">
+              <div class="oh-create-head">
+                <b>{create.title}</b>
+                <span class="oh-modes"><span class="is-on">{create.modes.keywords}</span><span>{create.modes.map}</span><span>{create.modes.regions}</span></span>
+              </div>
+              <div class="oh-kw" data-oh-kw data-placeholder={create.placeholder}></div>
+              <div class="oh-create-row">
+                <span class="oh-count mono">{countBefore}<b data-oh-count>0</b>{countAfter}</span>
+                <span class="oh-toggle"><i></i>{create.contacts}</span>
+              </div>
+              <div class="oh-create-row">
+                <span class="oh-usage">
+                  <span>{usedBefore}<b data-oh-used>{format.format(THEATER_USED)}</b>{usedAfter}</span>
+                  <span class="progress"><i data-oh-usage style={`--p: ${usagePercent}%`}></i></span>
+                </span>
+                <span class="btn btn-primary btn-sm oh-submit" data-oh-submit>
+                  <span class="oh-submit-idle">{create.submit}</span>
+                  <span class="oh-submit-busy"><span class="spinner"></span>{create.submitting}</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- 历史列表：Task / Keywords / Processed / Records / Status -->
+            <div class="oh-history">
+              <div class="oh-hist-head">
+                <b>{history.title}</b>
+                <span class="oh-refresh" data-oh-refresh><Icon name="refresh" />{history.refresh}</span>
+              </div>
+              <div class="oh-th">
+                <span>{history.columns.taskNo}</span>
+                <span>{history.columns.keywords}</span>
+                <span>{history.columns.processed}</span>
+                <span>{history.columns.records}</span>
+                <span>{history.columns.status}</span>
+              </div>
+              <div class="oh-rows" data-oh-rows>
+                {THEATER_HISTORY.map(task => (
+                  <div class="oh-task">
+                    <div class="oh-tr">
+                      <span class="mono oh-no">{shortTaskNo(task.no)}</span>
+                      <span class="mono">{task.keywords}</span>
+                      <span class="mono">{task.keywords} / {task.keywords}</span>
+                      <span class="mono">{format.format(task.records)}</span>
+                      <span class="oh-status">
+                        <span class="badge badge--ok">{history.status.completed}</span>
+                        <span class="oh-zip"><Icon name="archive" />{hero.theater.zip}</span>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dl-pop" data-oh-dlpop aria-hidden="true">
+        <span class="dl-pop-ic"><Icon name="archive" /></span>
+        <span class="dl-pop-text">
+          <b class="mono" data-oh-file>{firstRun.no}.zip</b>
+          <small data-oh-files>{fillCopy(hero.theater.files, { count: firstRun.items.length })}</small>
+        </span>
+        <Icon name="check-circle" class="dl-pop-ok" />
+      </div>
+
+      <div class="float-chip oh-fc-parallel floaty" style="--float-d: 0.4s" data-parallax="0.05" aria-hidden="true">
+        <span class="icon-tile icon-tile--brand"><Icon name="zap" /></span>
+        <span><small>{hero.theater.parallelChip.label}</small>{hero.theater.parallelChip.value}</span>
+      </div>
+      <div class="float-chip oh-fc-bill floaty" style="--float-d: 1.6s" aria-hidden="true">
+        <span class="icon-tile icon-tile--ok"><Icon name="gauge" /></span>
+        <span><small>{hero.theater.billingChip.label}</small>{hero.theater.billingChip.value}</span>
+      </div>
+
+      <template data-oh-line-template><div></div></template>
+      <template data-oh-task-template>
+        <div class="oh-task is-new">
+          <div class="oh-tr">
+            <span class="mono oh-no" data-no></span>
+            <span class="mono" data-keywords></span>
+            <span class="mono" data-processed></span>
+            <span class="mono" data-records>0</span>
+            <span class="oh-status" data-status><span class="badge">{history.status.processing}</span></span>
+          </div>
+          <div class="oh-detail" data-detail></div>
+        </div>
+      </template>
+      <template data-oh-item-template>
+        <div class="oh-item">
+          <span class="oh-item-kw mono" data-keyword></span>
+          <span class="oh-item-state">
+            <span class="skel oh-bar"></span>
+            <span class="oh-item-rec mono"><Icon name="check" /><span data-rows>0</span></span>
+          </span>
+          <span class="oh-csv">{history.detail.downloadCsv}</span>
+        </div>
+      </template>
+      <template data-oh-done-template>
+        <span class="oh-status">
+          <span class="badge badge--ok">{history.status.completed}</span>
+          <span class="oh-zip"><Icon name="archive" />{hero.theater.zip}</span>
+        </span>
+      </template>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { countTo, formatNumber, reducedMotion, visibilityGate } from '../../scripts/site/motion'
+  import { copyOf, part, stamp } from '../../scripts/pages/product-page'
+  import { fillCopy } from '../product/copy'
+  import { DEMO_PLAN, THEATER_RUNS, THEATER_USED, shortTaskNo, type TheaterRun } from './online-samples'
+
+  /** 历史列表最多保留的任务数（与剧场高度匹配）。 */
+  const HISTORY_LIMIT = 3
+
+  function initTheater(stage: HTMLElement): void {
+    const gate = visibilityGate(stage, 0.12)
+    const keywords = part(stage, '[data-oh-kw]', HTMLElement)
+    const count = part(stage, '[data-oh-count]', HTMLElement)
+    const submit = part(stage, '[data-oh-submit]', HTMLElement)
+    const used = part(stage, '[data-oh-used]', HTMLElement)
+    const usage = part(stage, '[data-oh-usage]', HTMLElement)
+    const rows = part(stage, '[data-oh-rows]', HTMLElement)
+    const refresh = part(stage, '[data-oh-refresh]', HTMLElement)
+    const download = part(stage, '[data-oh-dl]', HTMLElement)
+    const popup = part(stage, '[data-oh-dlpop]', HTMLElement)
+    const file = part(stage, '[data-oh-file]', HTMLElement)
+    const files = part(stage, '[data-oh-files]', HTMLElement)
+    const filesCopy = copyOf(stage, 'files')
+    let usedRecords = THEATER_USED
+
+    const setUsage = (value: number) => {
+      usage.style.setProperty('--p', `${((value / DEMO_PLAN.records) * 100).toFixed(2)}%`)
+    }
+
+    const buildTask = (run: TheaterRun) => {
+      const task = stamp(stage, '[data-oh-task-template]', HTMLElement)
+      part(task, '[data-no]', HTMLElement).textContent = shortTaskNo(run.no)
+      part(task, '[data-keywords]', HTMLElement).textContent = String(run.items.length)
+      part(task, '[data-processed]', HTMLElement).textContent = `0 / ${run.items.length}`
+      const detail = part(task, '[data-detail]', HTMLElement)
+      const items = run.items.map(([keyword], index) => {
+        const item = stamp(stage, '[data-oh-item-template]', HTMLElement)
+        item.style.setProperty('--i', String(index))
+        part(item, '[data-keyword]', HTMLElement).textContent = keyword
+        detail.append(item)
+        return item
+      })
+      return { task, items }
+    }
+
+    const complete = (task: HTMLElement) => {
+      part(task, '[data-status]', HTMLElement).replaceWith(stamp(stage, '[data-oh-done-template]', HTMLElement))
+    }
+
+    const typeLine = async (text: string) => {
+      const line = stamp(stage, '[data-oh-line-template]', HTMLElement)
+      keywords.append(line)
+      for (let index = 1; index <= text.length; index++) {
+        line.textContent = text.slice(0, index)
+        await gate.nap(22 + Math.random() * 26)
+      }
+    }
+
+    const play = async (run: TheaterRun) => {
+      await gate.wait()
+      keywords.replaceChildren()
+      count.textContent = '0'
+      keywords.classList.add('is-focus')
+      await gate.nap(400)
+      for (const [index, [keyword]] of run.items.entries()) {
+        await typeLine(keyword)
+        count.textContent = String(index + 1)
+        await gate.nap(160)
+      }
+      keywords.classList.remove('is-focus')
+      await gate.nap(450)
+
+      // 提交：按下 → Submitting... → 成功后清空输入并刷新历史第一页
+      submit.classList.add('is-pressed')
+      await gate.nap(150)
+      submit.classList.replace('is-pressed', 'is-busy')
+      await gate.nap(750)
+      submit.classList.remove('is-busy')
+      keywords.replaceChildren()
+      count.textContent = '0'
+      refresh.classList.remove('is-spin')
+      void refresh.offsetWidth
+      refresh.classList.add('is-spin')
+
+      const { task, items } = buildTask(run)
+      rows.prepend(task)
+      while (rows.children.length > HISTORY_LIMIT) rows.lastElementChild?.remove()
+      const processed = part(task, '[data-processed]', HTMLElement)
+      const records = part(task, '[data-records]', HTMLElement)
+
+      // 关键词之间并行：各自按耗时完成，完成顺序与输入顺序无关
+      let done = 0
+      let delivered = 0
+      await Promise.all(
+        run.items.map(async ([, rowCount, duration], index) => {
+          await gate.nap(duration)
+          items[index].classList.add('is-done')
+          void countTo(part(items[index], '[data-rows]', HTMLElement), 0, rowCount, 500)
+          done += 1
+          processed.textContent = `${done} / ${run.items.length}`
+          const before = delivered
+          delivered += rowCount
+          void countTo(records, before, delivered, 500)
+        })
+      )
+      await gate.nap(500)
+
+      // 全部完成并计量后才进入 Completed：本月用量此时才增加（提交时不预扣）
+      complete(task)
+      const before = usedRecords
+      usedRecords += delivered
+      setUsage(usedRecords)
+      void countTo(used, before, usedRecords, 900)
+      await gate.nap(1000)
+
+      const zip = part(task, '.oh-zip', HTMLElement)
+      zip.classList.add('is-ready')
+      await gate.nap(1200)
+      zip.classList.replace('is-ready', 'is-pressed')
+      await gate.nap(160)
+      zip.classList.remove('is-pressed')
+      file.textContent = `${run.no}.zip`
+      files.textContent = fillCopy(filesCopy, { count: run.items.length })
+      download.classList.add('is-on')
+      await gate.nap(60)
+      download.classList.add('is-done')
+      await gate.nap(900)
+      popup.classList.add('is-on')
+      await gate.nap(2600)
+      popup.classList.remove('is-on')
+      download.classList.remove('is-on', 'is-done')
+      // 收起明细，变回普通历史行
+      part(task, '[data-detail]', HTMLElement).remove()
+      task.classList.remove('is-new')
+      await gate.nap(900)
+    }
+
+    if (reducedMotion()) {
+      // 减弱动效：第一组任务的完成态静帧
+      const run = THEATER_RUNS[0]
+      const { task, items } = buildTask(run)
+      let delivered = 0
+      run.items.forEach(([, rowCount], index) => {
+        items[index].classList.add('is-done')
+        part(items[index], '[data-rows]', HTMLElement).textContent = formatNumber(rowCount)
+        delivered += rowCount
+      })
+      part(task, '[data-processed]', HTMLElement).textContent = `${run.items.length} / ${run.items.length}`
+      part(task, '[data-records]', HTMLElement).textContent = formatNumber(delivered)
+      complete(task)
+      task.classList.remove('is-new')
+      rows.prepend(task)
+      usedRecords += delivered
+      used.textContent = formatNumber(usedRecords)
+      setUsage(usedRecords)
+      return
+    }
+
+    void (async () => {
+      for (let round = 0; ; round++) await play(THEATER_RUNS[round % THEATER_RUNS.length])
+    })()
+  }
+
+  const stage = document.querySelector<HTMLElement>('[data-oh]')
+  if (stage) initTheater(stage)
+</script>
+
+<style>
+  .oh-hero {
+    --hero-cols: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    padding-bottom: clamp(64px, 8vw, 128px);
+  }
+
+  .oh-title {
+    font-size: clamp(2.5rem, 1.45rem + 3vw, 3.9rem);
+  }
+
+  .oh {
+    position: relative;
+  }
+
+  .oh-frame {
+    position: relative;
+    z-index: 2;
+    box-shadow: var(--shadow-lg), var(--glow-soft);
+  }
+
+  .oh-frame .browser-url {
+    max-width: 340px;
+  }
+
+  .oh-body {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    height: 500px;
+    overflow: hidden;
+    background: var(--bg-2);
+  }
+
+  /* 收起态工作区侧栏 */
+  .oh-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 0;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .oh-side :global(.brand-mark) {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 10px;
+  }
+
+  .oh-side-item {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-sm);
+    color: var(--text-3);
+  }
+
+  .oh-side-item.is-on {
+    background: var(--primary-soft);
+    color: var(--primary-text);
+  }
+
+  .oh-side-item :global(.icon) {
+    width: 18px;
+    height: 18px;
+  }
+
+  .oh-main {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+    min-width: 0;
+    padding: 14px;
+  }
+
+  /* 创建表单 */
+  .oh-create {
+    display: grid;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .oh-create-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .oh-create-head b {
+    font-size: 14px;
+  }
+
+  .oh-modes {
+    display: inline-flex;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface-3);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .oh-modes span {
+    padding: 4px 10px;
+    border-radius: var(--r-full);
+    color: var(--text-3);
+  }
+
+  .oh-modes .is-on {
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+    color: var(--text);
+  }
+
+  /* 关键词框容纳四行（第二组任务有四个关键词） */
+  .oh-kw {
+    height: 96px;
+    padding: 8px 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-sm);
+    background: var(--bg-2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12px;
+    line-height: 1.65;
+    transition:
+      border-color var(--dur-3),
+      box-shadow var(--dur-3);
+  }
+
+  .oh-kw.is-focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+  }
+
+  .oh-kw:empty::before {
+    color: var(--text-3);
+    white-space: pre-line;
+    content: attr(data-placeholder);
+  }
+
+  .oh-kw div {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oh-create-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--text-2);
+    font-size: 12px;
+  }
+
+  .oh-count b {
+    color: var(--text);
+  }
+
+  .oh-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .oh-toggle i {
+    position: relative;
+    width: 28px;
+    height: 16px;
+    border-radius: var(--r-full);
+    background: var(--primary);
+  }
+
+  .oh-toggle i::after {
+    position: absolute;
+    top: 2px;
+    left: 14px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary-fg);
+    box-shadow: var(--shadow-xs);
+    content: '';
+  }
+
+  .oh-usage {
+    display: grid;
+    flex: 1;
+    gap: 6px;
+    min-width: 0;
+    max-width: 260px;
+  }
+
+  .oh-usage b {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .oh-usage .progress {
+    height: 4px;
+  }
+
+  .oh-submit {
+    flex-shrink: 0;
+    pointer-events: none;
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+
+  .oh-submit.is-pressed {
+    transform: scale(0.95);
+  }
+
+  .oh-submit-busy {
+    display: none;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .oh-submit.is-busy .oh-submit-idle {
+    display: none;
+  }
+
+  .oh-submit.is-busy .oh-submit-busy {
+    display: inline-flex;
+  }
+
+  .oh-submit .spinner {
+    width: 13px;
+    height: 13px;
+    border-color: color-mix(in srgb, var(--primary-fg) 35%, transparent);
+    border-top-color: var(--primary-fg);
+  }
+
+  /* 历史列表 */
+  .oh-history {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+  }
+
+  .oh-hist-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .oh-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-3);
+    font-size: 11.5px;
+  }
+
+  .oh-refresh :global(.icon) {
+    width: 13px;
+    height: 13px;
+  }
+
+  .oh-refresh.is-spin :global(.icon) {
+    animation: spin var(--dur-4) var(--ease-in-out);
+  }
+
+  .oh-th,
+  .oh-tr {
+    display: grid;
+    grid-template-columns: 1.1fr 0.85fr 0.9fr 0.8fr 1.75fr;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+  }
+
+  .oh-th {
+    height: 28px;
+    border-block: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .oh-th span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oh-rows {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(180deg, var(--mask-solid) 80%, transparent);
+    mask-image: linear-gradient(180deg, var(--mask-solid) 80%, transparent);
+  }
+
+  .oh-task {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .oh-task.is-new {
+    background: linear-gradient(90deg, var(--primary-soft), transparent 70%);
+    animation: row-in var(--dur-4) var(--ease-out) both;
+  }
+
+  .oh-tr {
+    height: 42px;
+    color: var(--text-2);
+    font-size: 12px;
+  }
+
+  .oh-no {
+    overflow: hidden;
+    color: var(--text);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oh-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .oh-zip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    color: var(--text-2);
+    font-size: 10.5px;
+    font-weight: 650;
+    transition:
+      transform var(--dur-2) var(--ease-out),
+      background-color var(--dur-3),
+      color var(--dur-3);
+  }
+
+  .oh-zip :global(.icon) {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* 下载就绪：按钮轻微放大两次提示可点击（只动 transform，限次） */
+  .oh-zip.is-ready {
+    border-color: transparent;
+    background: var(--primary);
+    color: var(--primary-fg);
+    animation: oh-ready var(--dur-4) var(--ease-in-out) 2 alternate;
+  }
+
+  .oh-zip.is-pressed {
+    transform: scale(0.92);
+  }
+
+  @keyframes oh-ready {
+    to {
+      transform: scale(1.08);
+    }
+  }
+
+  .oh-detail {
+    display: grid;
+    gap: 6px;
+    padding: 2px 14px 10px 24px;
+  }
+
+  .oh-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 76px 46px;
+    align-items: center;
+    gap: 10px;
+    height: 26px;
+    padding: 0 6px 0 10px;
+    border-radius: var(--r-xs);
+    background: var(--surface-2);
+    font-size: 11.5px;
+    animation: fade-up var(--dur-4) var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 90ms);
+  }
+
+  .oh-item-kw {
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oh-item-state {
+    display: grid;
+    align-items: center;
+    justify-items: end;
+  }
+
+  /* 处理中：不确定进度的扫光条（明细只有完成后的记录数，不伪造百分比） */
+  .oh-bar {
+    width: 100%;
+    height: 4px;
+    border-radius: var(--r-full);
+    background: var(--border);
+  }
+
+  .oh-bar::after {
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  }
+
+  .oh-item-rec {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    color: var(--ok);
+    font-weight: 650;
+  }
+
+  .oh-item-rec :global(.icon) {
+    width: 12px;
+    height: 12px;
+  }
+
+  .oh-item.is-done .oh-bar {
+    display: none;
+  }
+
+  .oh-item.is-done .oh-item-rec {
+    display: inline-flex;
+    animation: pop-in var(--dur-3) var(--ease-spring);
+  }
+
+  .oh-csv {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-xs);
+    color: var(--text-3);
+    font-size: 10px;
+    font-weight: 650;
+    opacity: 0.45;
+    transition:
+      opacity var(--dur-3),
+      color var(--dur-3),
+      border-color var(--dur-3);
+  }
+
+  .oh-item.is-done .oh-csv {
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+    color: var(--primary-text);
+    opacity: 1;
+  }
+
+  /* 本页下载的是整任务 ZIP，气泡图标用主色 */
+  .dl-pop-ic {
+    background: var(--primary-soft);
+    color: var(--primary-text);
+  }
+
+  .oh-fc-parallel {
+    bottom: -40px;
+    left: -24px;
+  }
+
+  .oh-fc-bill {
+    top: -46px;
+    right: -14px;
+    z-index: 5;
+  }
+
+  @media (min-width: 1320px) {
+    .oh-frame {
+      margin-right: -48px;
+    }
+  }
+
+  @media (max-width: 1240px) {
+    .oh .float-chip {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1080px) {
+    .oh-hero {
+      --hero-cols: minmax(0, 1fr);
+    }
+
+    .oh-hero .page-hero-copy {
+      max-width: 720px;
+    }
+  }
+
+  @media (max-width: 960px) {
+    .oh .dl-pop {
+      right: 12px;
+      left: 12px;
+      width: auto;
+    }
+
+    .oh-body {
+      grid-template-columns: minmax(0, 1fr);
+      height: 520px;
+    }
+
+    .oh-side,
+    .oh-modes {
+      display: none;
+    }
+
+    .oh-main {
+      padding: 10px;
+    }
+
+    .oh-create-row {
+      flex-wrap: wrap;
+      gap: 8px 12px;
+    }
+
+    .oh-th,
+    .oh-tr {
+      grid-template-columns: 1fr 0.8fr 1.6fr;
+    }
+
+    .oh-th > :nth-child(2),
+    .oh-th > :nth-child(3),
+    .oh-tr > :nth-child(2),
+    .oh-tr > :nth-child(3) {
+      display: none;
+    }
+
+    .oh-detail {
+      padding-left: 14px;
+    }
+  }
+</style>

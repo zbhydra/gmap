@@ -1,0 +1,161 @@
+/* =========================================================================
+   站点外壳补充：原型 components.css 之外、落地到 Astro 才需要的规则。
+   导航为 fixed 悬浮层，不占文档流；每页首个区块自己留出 var(--nav-h)
+   （.page-hero / 首页 .hero 已包含，独立小页面在各自样式里加）。
+   ========================================================================= */
+
+/* 工作区（Dashboard）沿用紧凑正文字号 */
+.site-workspace {
+  font-size: var(--fs-sm);
+}
+
+/* ---------------------------------------------------------------------------
+   品牌标（插画）：渐变底 + 白色 pin + 品牌蓝下载箭头；品牌原色只在这里使用
+   --------------------------------------------------------------------------- */
+.brand-mark {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--blue-500), var(--cyan-500) 55%, var(--green-500));
+}
+
+.brand-mark > svg,
+.brand-mark > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.brand-mark-pin {
+  fill: var(--primary-fg);
+}
+
+.brand-mark-arrow {
+  fill: none;
+  stroke: var(--blue-500);
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------------------------------------------------------------------------
+   导航补充：语言 / 主题紧凑下拉（原型只有 API 下拉）
+   --------------------------------------------------------------------------- */
+.dd-panel--compact {
+  left: auto;
+  right: 0;
+  width: max-content;
+  min-width: 160px;
+  grid-template-columns: 1fr;
+  transform: translateY(8px);
+}
+
+.dd.is-open .dd-panel--compact {
+  transform: none;
+}
+
+.dd-panel--compact .dd-item {
+  text-align: left;
+  font-size: var(--fs-sm);
+}
+
+.dd-item[aria-pressed='true'] {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
+/* ---------------------------------------------------------------------------
+   未交付能力（lib/capabilities.ts）
+   - 介绍页入口（文字链接、卡片、按钮样式的链接）：照常可点，灰化 + .soon-badge，不用禁用外观
+   - 动作入口（CapabilityAction）：可聚焦的 aria-disabled 按钮，没有 href 与埋点，用禁用外观
+   --------------------------------------------------------------------------- */
+.soon-badge {
+  flex-shrink: 0;
+  margin-left: var(--s-2);
+  vertical-align: middle;
+}
+
+/* flex 容器（下拉标题、按钮、分段切换）里与文字的间距由 gap 提供 */
+.dd-title .soon-badge,
+.btn .soon-badge,
+.seg-btn .soon-badge {
+  margin-left: 0;
+}
+
+a.is-unavailable {
+  color: var(--text-3);
+}
+
+a.is-unavailable:hover {
+  color: var(--text-2);
+}
+
+/* 介绍卡（.card-link）：标题与箭头链接自带颜色，不继承卡片的灰色，单独降一档 */
+.card-link.is-unavailable h3,
+.card-link.is-unavailable h4,
+.card-link.is-unavailable .h3,
+.card-link.is-unavailable .h4 {
+  color: var(--text-2);
+}
+
+.card-link.is-unavailable .link-arrow {
+  color: var(--text-3);
+}
+
+/* 分段切换（.seg-btn）的槽底是 --surface-3，--text-3 文字在上面不到 4.5:1：文字停在 --text-2（悬停也不提亮），
+   只把图标降到 --text-3，未交付状态主要靠徽章表达 */
+.seg-btn.is-unavailable {
+  color: var(--text-2);
+}
+
+.seg-btn.is-unavailable .icon {
+  color: var(--text-3);
+}
+
+/* 徽章放不下时整体换到下一行，不拆开名称 */
+.is-unavailable .dd-title {
+  flex-wrap: wrap;
+  row-gap: var(--s-1);
+  color: var(--text-2);
+}
+
+.is-unavailable .dd-icon {
+  background: var(--surface-2);
+  color: var(--text-3);
+}
+
+/* 禁用外观只给动作入口（CapabilityAction 渲染的 button）；按钮样式的介绍页链接 a.btn.is-unavailable
+   沿用上面的灰化链接，保留指针、箭头与 hover（用次级按钮样式，主按钮底色上灰字不可读） */
+button.btn.is-unavailable,
+button.btn.is-unavailable:hover {
+  background: var(--surface-2);
+  color: var(--text-3);
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+button.btn.is-unavailable::before,
+button.btn.is-unavailable::after,
+button.btn.is-unavailable .icon-arrow {
+  display: none;
+}
+
+button.btn.is-unavailable .soon-badge {
+  background: var(--surface);
+  color: var(--text-2);
+}
+
+/* [data-cta-pins] 落点到期淡出（scripts/site/components.ts） */
+.cta-pins .map-pin.is-leaving {
+  opacity: 0;
+  transition: opacity var(--dur-4) var(--ease-out);
+}
+
+@media (max-width: 960px) {
+  .footer-bottom nav {
+    flex-wrap: wrap;
+  }
+}

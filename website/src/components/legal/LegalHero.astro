@@ -1,0 +1,434 @@
+---
+/**
+ * 法务页首屏（设计稿 privacy.html ①）：面包屑、Privacy / Terms 切换、标题、摘要与元信息，右侧文档叠放插画。
+ *
+ * 设计稿用 ?doc=terms 在同页切换两份文档；站点里两份文档是 /privacy 与 /terms 两条路由，切换按钮就是两条链接，
+ * 标题、title、description、面包屑随页面跳转天然更新，每个 URL 只承载自己的正文。
+ * 插画的「洗牌」在载入时播放：另一份文档先在前面，滑出后收到后面，当前文档翻到前面（纯 CSS，等首屏进入视口才开始）。
+ */
+import { getContent, type Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import type { LegalContent, LegalPageKind } from '../../legal/legalContent'
+import { fillCopy } from '../product/copy'
+import Icon from '../site/Icon.astro'
+import SplitWords from '../site/SplitWords.astro'
+
+interface Props {
+  locale: Locale
+  kind: LegalPageKind
+  content: LegalContent
+}
+
+const { locale, kind, content } = Astro.props
+const t = getContent(locale)
+const copy = content.page
+const doc = content[kind]
+const other: LegalPageKind = kind === 'privacy' ? 'terms' : 'privacy'
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const DOC_ICONS: Record<LegalPageKind, string> = { privacy: 'shield', terms: 'book' }
+/** 插画目录行的占位条宽度（%），只为让两张纸看起来不同。 */
+const SHEET_BARS: Record<LegalPageKind, readonly number[]> = {
+  privacy: [82, 66, 88, 60, 76, 54],
+  terms: [86, 72, 90, 64, 80, 58]
+}
+const SHEET_ROWS = 6
+const WORDS_PER_MINUTE = 200
+const words = doc.sections
+  .flatMap(section => [section.title, ...section.paragraphs, ...(section.items ?? [])])
+  .join(' ')
+  .split(/\s+/)
+  .filter(Boolean).length
+const readMinutes = Math.max(1, Math.round(words / WORDS_PER_MINUTE))
+const sectionLabel = (count: number) => fillCopy(copy.sectionCount, { count })
+const rowNumber = (index: number) => String(index + 1).padStart(2, '0')
+---
+
+<section class="page-hero page-hero--compact legal-hero has-deco" data-inview>
+  <div class="deco" aria-hidden="true">
+    <div class="aurora"><i></i><i></i><i></i></div>
+    <div class="bg-contours"></div>
+    <div class="bg-grid"></div>
+    <div class="noise"></div>
+  </div>
+
+  <div class="container page-hero-grid legal-hero-grid">
+    <div class="page-hero-copy">
+      <nav class="crumbs" aria-label={t.common.breadcrumbLabel} data-enter>
+        <a href={`${prefix}/`}>{copy.crumbHome}</a>
+        <Icon name="chevron-right" />
+        <span>{copy.crumbLegal}</span>
+        <Icon name="chevron-right" />
+        <span aria-current="page">{doc.title}</span>
+      </nav>
+
+      <nav class="legal-switch" aria-label={copy.switchLabel} data-enter style="--enter-delay: 80ms">
+        <div class="seg">
+          {(['privacy', 'terms'] as const).map(item => (
+            <a class="seg-btn" href={`${prefix}/${item}/`} aria-current={item === kind ? 'page' : undefined}>
+              <Icon name={DOC_ICONS[item]} />{content[item].title}
+            </a>
+          ))}
+        </div>
+      </nav>
+
+      <h1 class="h1 legal-title" data-split="static" style="--split-delay: 160ms"><SplitWords parts={[doc.title]} /></h1>
+
+      <p class="lead legal-intro" data-enter style="--enter-delay: 240ms">{doc.intro}</p>
+
+      <div class="page-hero-meta legal-meta" data-enter style="--enter-delay: 320ms">
+        <span><Icon name="calendar" />{doc.updatedLabel} <time datetime={doc.updatedAtISO}>{doc.updatedAt}</time></span>
+        <span><Icon name="clock" />{fillCopy(copy.readTime, { minutes: readMinutes })}</span>
+        <span><Icon name="list" />{sectionLabel(doc.sections.length)}</span>
+      </div>
+    </div>
+
+    <div class="page-hero-visual legal-visual" aria-hidden="true">
+      <div class="doc-stack" data-tilt="5">
+        {[other, kind].map(item => {
+          const sheet = content[item]
+          return (
+            <div class:list={['doc-sheet', `doc-sheet--${item}`, { 'is-front': item === kind }]}>
+              <div class="sheet-top">
+                <span class="sheet-icon"><Icon name={DOC_ICONS[item]} /></span>
+                <span class="sheet-heading"><b>{sheet.title}</b><span class="mono">{t.layout.nav.brand} · {sectionLabel(sheet.sections.length)}</span></span>
+              </div>
+              <ol class="sheet-toc">
+                {sheet.sections.slice(0, SHEET_ROWS).map((section, index) => (
+                  <li style={`--w: ${SHEET_BARS[item][index]}%`}><span class="mono">{rowNumber(index)}</span><b>{section.title}</b><i></i></li>
+                ))}
+              </ol>
+              <div class="sheet-foot">
+                <span class="mono">{sheet.updatedLabel}</span><b class="mono">{sheet.updatedAtISO}</b>
+                <span class="sheet-seal"><Icon name="check" /></span>
+              </div>
+              <span class="sheet-scan"></span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* 法务页以可读性为先：装饰层更淡，并在底部淡出接上正文区 */
+  .legal-hero {
+    padding-bottom: clamp(40px, 5vw, 80px);
+  }
+
+  .legal-hero .aurora > i {
+    --size: 36vw;
+    opacity: 0.75;
+  }
+
+  .legal-hero .bg-contours {
+    opacity: 0.7;
+  }
+
+  .legal-hero .deco {
+    -webkit-mask-image: linear-gradient(180deg, var(--mask-solid) 55%, transparent);
+    mask-image: linear-gradient(180deg, var(--mask-solid) 55%, transparent);
+  }
+
+  .legal-hero-grid {
+    --hero-cols: minmax(0, 1.3fr) minmax(0, 0.7fr);
+  }
+
+  .legal-hero .page-hero-copy {
+    gap: 20px;
+  }
+
+  /* 文档切换：两条路由链接沿用分段控件外观，当前页的胶囊底由伪元素画在文字下面 */
+  .legal-switch .seg-btn {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+
+  .legal-switch .seg-btn :global(.icon) {
+    width: 16px;
+    height: 16px;
+  }
+
+  .legal-switch .seg-btn[aria-current='page'] {
+    color: var(--text);
+  }
+
+  .legal-switch .seg-btn[aria-current='page']::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm), var(--hairline-hl);
+    content: '';
+  }
+
+  .legal-title {
+    margin-top: 4px;
+  }
+
+  .legal-hero .page-hero-copy > .legal-intro {
+    max-width: 660px;
+  }
+
+  .legal-meta {
+    gap: 10px 24px;
+  }
+
+  .legal-meta :global(.icon) {
+    color: var(--text-3);
+    stroke-width: 1.9;
+  }
+
+  .legal-meta time {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* 文档叠放插画 */
+  .legal-visual {
+    display: grid;
+    justify-items: center;
+    padding: 32px 32px 0 0;
+  }
+
+  .doc-stack {
+    position: relative;
+    width: min(100%, 330px);
+    aspect-ratio: 0.8;
+  }
+
+  .doc-sheet {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 22px 22px 18px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-md), var(--hairline-hl);
+    opacity: 0.7;
+    transform: translate3d(28px, -28px, 0) rotate(5deg) scale(0.93);
+    transform-origin: 50% 100%;
+  }
+
+  .doc-sheet.is-front {
+    z-index: 2;
+    box-shadow: var(--shadow-lg), var(--hairline-hl);
+    opacity: 1;
+    transform: none;
+  }
+
+  /* 洗牌：只在有 JS 时播放（无 JS 时 data-inview 永不进入视口，动画会停在起始帧） */
+  :global(.js) .doc-sheet {
+    animation: sheet-tuck var(--dur-5) var(--ease-out) var(--dur-3) backwards;
+  }
+
+  :global(.js) .doc-sheet.is-front {
+    animation: sheet-rise var(--dur-5) var(--ease-out) var(--dur-3) backwards;
+  }
+
+  /* 另一份文档：先保持在上层向右滑出，再收到后面 */
+  @keyframes sheet-tuck {
+    0% {
+      z-index: 3;
+      opacity: 1;
+      transform: none;
+    }
+
+    40% {
+      z-index: 3;
+      opacity: 1;
+      transform: translate3d(64%, 4%, 0) rotate(12deg) scale(0.97);
+    }
+
+    41% {
+      z-index: 1;
+    }
+
+    100% {
+      z-index: 1;
+      opacity: 0.7;
+      transform: translate3d(28px, -28px, 0) rotate(5deg) scale(0.93);
+    }
+  }
+
+  /* 当前文档：从后面翻到前面 */
+  @keyframes sheet-rise {
+    from {
+      opacity: 0.7;
+      transform: translate3d(28px, -28px, 0) rotate(5deg) scale(0.93);
+    }
+  }
+
+  .sheet-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sheet-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: var(--r-sm);
+    background: var(--grad-brand);
+    box-shadow: var(--glow-primary);
+    color: var(--primary-fg);
+  }
+
+  /* Terms 用浅底区分（AI 渐变只属于 MCP / agent 语境） */
+  .doc-sheet--terms .sheet-icon {
+    background: var(--primary-soft);
+    box-shadow: none;
+    color: var(--primary-text);
+  }
+
+  .sheet-icon :global(.icon) {
+    width: 19px;
+    height: 19px;
+  }
+
+  .sheet-heading b {
+    display: block;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .sheet-heading span {
+    color: var(--text-2);
+    font-size: 11px;
+  }
+
+  .sheet-toc {
+    display: grid;
+    gap: 12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sheet-toc li {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 6px 8px;
+    align-items: baseline;
+  }
+
+  .sheet-toc .mono {
+    color: var(--primary-text);
+    font-size: 10.5px;
+  }
+
+  .sheet-toc b {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sheet-toc i {
+    grid-column: 2;
+    width: var(--w, 80%);
+    height: 5px;
+    border-radius: var(--r-2xs);
+    background: var(--surface-3);
+  }
+
+  .sheet-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    color: var(--text-2);
+    font-size: 11px;
+  }
+
+  .sheet-foot b {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .sheet-seal {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+    border: 1.5px dashed color-mix(in srgb, var(--ok) 55%, transparent);
+    border-radius: 50%;
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+
+  .sheet-seal :global(.icon) {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.4;
+  }
+
+  /* 前面那张上缓慢扫过的「阅读高亮」：T4 循环，只动 transform，首屏离屏时由 data-inview 暂停 */
+  .sheet-scan {
+    position: absolute;
+    top: 74px;
+    right: 0;
+    left: 0;
+    height: 48px;
+    background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--primary) 9%, transparent) 50%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .doc-sheet.is-front .sheet-scan {
+    opacity: 1;
+    animation: sheet-scan 7s var(--ease-in-out) infinite alternate;
+  }
+
+  @keyframes sheet-scan {
+    to {
+      transform: translate3d(0, 236px, 0);
+    }
+  }
+
+  @media (max-width: 1080px) {
+    .legal-hero-grid {
+      --hero-cols: minmax(0, 1fr) 270px;
+    }
+
+    .legal-visual {
+      padding-right: 24px;
+    }
+  }
+
+  @media (max-width: 960px) {
+    .legal-visual {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .legal-switch .seg-btn {
+      padding: 0 12px;
+      font-size: 13.5px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .doc-sheet.is-front .sheet-scan {
+      animation: none;
+      opacity: 0;
+    }
+  }
+</style>

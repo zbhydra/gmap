@@ -1,5 +1,5 @@
 ---
-import LandingPage from '../../components/pages/LandingPage.astro'
+import ApiPage from '../../components/pages/ApiPage.astro'
 import { localePaths } from '../../i18n/ui'
 import type { Locale } from '../../i18n/content'
 
@@ -18,4 +18,4 @@ export function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale }
 ---
 
-<LandingPage pageId="google-maps-scraper-api" locale={locale} />
+<ApiPage variant="search" locale={locale} />

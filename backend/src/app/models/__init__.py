@@ -1,5 +1,7 @@
 """Database schema definitions."""
 
+from .mcp_oauth_client_model import McpOAuthClientModel
+from .mcp_oauth_grant_model import McpOAuthGrantModel
 from .admin_model import AdminModel
 from .callback_log_model import CallbackLogModel
 from .config_credit_product_model import ConfigCreditProductModel
@@ -29,6 +31,8 @@ from .user_model import UserModel
 from .user_usage_log_model import UserUsageLogModel
 
 __all__ = [
+    "McpOAuthClientModel",
+    "McpOAuthGrantModel",
     "UserModel",
     "UserSubscriptionModel",
     "OrderModel",

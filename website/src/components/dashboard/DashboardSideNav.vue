@@ -90,14 +90,14 @@ function menuItems(): MenuItem[] {
 .side-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--s-6);
   width: 240px;
   flex: 0 0 240px;
-  padding: var(--space-4);
+  padding: var(--s-4);
   border: 1px solid var(--border);
-  border-radius: var(--rounded-md);
+  border-radius: var(--r-md);
   background: var(--surface);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-sm);
 }
 
 .side-nav-head {
@@ -109,9 +109,9 @@ function menuItems(): MenuItem[] {
 .side-nav-brand {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   color: var(--text);
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -126,21 +126,21 @@ function menuItems(): MenuItem[] {
   display: none;
   width: 32px;
   height: 32px;
-  border-radius: var(--rounded-full);
+  border-radius: var(--r-full);
   background: var(--surface-2);
   color: var(--text);
-  font-size: 20px;
+  font-size: var(--fs-h4);
   line-height: 1;
 }
 
 .side-nav-menu {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--s-1);
 }
 
 .side-nav-item {
-  padding: var(--space-3) 14px;
-  border-radius: var(--rounded-sm);
+  padding: var(--s-3) 14px;
+  border-radius: var(--r-sm);
   color: var(--text-2);
   font-size: 14px;
   font-weight: 600;
@@ -153,7 +153,7 @@ function menuItems(): MenuItem[] {
 
 .side-nav-item-active {
   background: var(--primary-soft);
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .side-nav-item:focus-visible {
@@ -174,17 +174,17 @@ function menuItems(): MenuItem[] {
     z-index: 120;
     width: min(300px, 84vw);
     flex: none;
-    border-radius: 0 var(--rounded-md) var(--rounded-md) 0;
+    border-radius: 0 var(--r-md) var(--r-md) 0;
     transform: translateX(-100%);
     visibility: hidden;
-    transition: transform var(--transition-normal) ease-out, visibility 0s linear var(--transition-normal);
+    transition: transform var(--dur-2) var(--ease-out), visibility 0s var(--dur-2);
     overflow-y: auto;
   }
 
   .side-nav-open {
     transform: translateX(0);
     visibility: visible;
-    transition: transform var(--transition-normal) ease-out, visibility 0s;
+    transition: transform var(--dur-2) var(--ease-out), visibility 0s;
   }
 
   .side-nav-close {

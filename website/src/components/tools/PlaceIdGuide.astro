@@ -1,0 +1,894 @@
+---
+/**
+ * Place ID Finder 的用法与讲解区（设计稿 place-id-finder ②③）：三步用法（CSS 循环小插画）+ 三种标识与推导图。
+ * 推导图结构在构建期按城市示例输出（无 JS 时即终态），脚本只按最近一次解析结果回填数值并重播。
+ */
+import { getContent, type Locale } from '../../i18n/content'
+import { placeIdBytes } from '../../scripts/tools/lib/placeUrl'
+import ProductSectionHead from '../product/ProductSectionHead.astro'
+import AccentHeading from '../product/AccentHeading.astro'
+import Icon from '../site/Icon.astro'
+import { citySample, clip } from './place-id-samples'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+const t = getContent(locale)
+const tool = t.pages.tools.placeIdFinder
+const { steps, identifiers } = tool
+const [openStep, copyStep, decodeStep] = steps.items
+if (!openStep || !copyStep || !decodeStep) throw new Error('[place-id-guide] placeIdFinder.steps needs three items.')
+const city = tool.form.examples.city
+
+const sample = citySample()
+const [fidHigh = '', fidLow = ''] = sample.fid.split(':')
+const bytes = placeIdBytes(sample.fid)
+if (!bytes) throw new Error('[place-id-guide] The city sample FID must encode to bytes.')
+// 字节分区：0–2 头部，3–10 前半段，11 分隔，12–19 后半段
+const byteTone = (index: number) => (index >= 3 && index <= 10 ? 'is-a' : index >= 12 ? 'is-b' : '')
+const hex = (byte: number) => byte.toString(16).padStart(2, '0')
+const decodeRows = [
+  { tone: 'place', label: tool.result.placeId, value: clip(sample.placeId, 18) },
+  { tone: 'cid', label: tool.result.cid, value: clip(sample.cid, 15) },
+  { tone: 'fid', label: tool.result.fid, value: `${clip(fidHigh, 6)}:${clip(fidLow, 6)}` }
+]
+const featureIcons = ['key', 'gauge', 'lock']
+---
+
+<section class="section how-pid" id="how" data-inview>
+  <div class="container">
+    <ProductSectionHead head={steps.head} />
+
+    <ol class="pid-steps" role="list" data-stagger="120" data-spotlight-group>
+      <li class="card pid-step" data-spotlight data-reveal>
+        <div class="pid-step-visual pv-open" aria-hidden="true">
+          <div class="pv-search"><Icon name="search" /><span>{city}</span></div>
+          <div class="pv-place">
+            <div class="pv-map"><i class="map-pin pv-pin" style="--x: 50%; --y: 62%"></i></div>
+            <div class="pv-place-text">
+              <b>{city}</b>
+              <span class="skel" style="width: 70%"></span>
+              <span class="skel" style="width: 45%"></span>
+            </div>
+          </div>
+        </div>
+        <div class="pid-step-text">
+          <span class="pid-step-num">01</span>
+          <h3 class="h4">{openStep.heading}</h3>
+          <p>{openStep.body}</p>
+        </div>
+      </li>
+
+      <li class="card pid-step" data-spotlight data-reveal>
+        <div class="pid-step-visual pv-copy" aria-hidden="true">
+          <div class="pv-bar">
+            <Icon name="lock" />
+            <span class="pv-url">
+              <span class="pv-sel">google.com/maps/place/{city.replaceAll(' ', '+')}/@37.77…/data=!…!1s<em class="pv-a">{clip(fidHigh, 6)}</em>:<em class="pv-b">{clip(fidLow, 6)}</em></span>
+            </span>
+          </div>
+          <span class="pv-copied"><Icon name="check" />{steps.copiedBadge}</span>
+          <Icon name="cursor" class="pv-cursor" />
+        </div>
+        <div class="pid-step-text">
+          <span class="pid-step-num">02</span>
+          <h3 class="h4">{copyStep.heading}</h3>
+          <p>{copyStep.body}</p>
+        </div>
+      </li>
+
+      <li class="card pid-step" data-spotlight data-reveal>
+        <div class="pid-step-visual pv-decode" aria-hidden="true">
+          {decodeRows.map(row => (
+            <div class={`pv-row pv-row--${row.tone}`}><i></i><span>{row.label}</span><code>{row.value}</code></div>
+          ))}
+        </div>
+        <div class="pid-step-text">
+          <span class="pid-step-num">03</span>
+          <h3 class="h4">{decodeStep.heading}</h3>
+          <p>{decodeStep.body}</p>
+        </div>
+      </li>
+    </ol>
+
+    <p class="pid-note" data-reveal><Icon name="info" /><span>{steps.note}</span></p>
+  </div>
+</section>
+
+<section class="section band pid-ids" id="identifiers" data-inview>
+  <div class="container">
+    <div class="split">
+      <div class="split-copy" data-stagger="80">
+        <span class="kicker" data-reveal>{identifiers.head.kicker}</span>
+        <h2 class="h2" data-split><AccentHeading title={identifiers.head.title} /></h2>
+        <p class="lead" data-reveal>{identifiers.head.lead}</p>
+        <ul class="pid-keys" role="list" data-reveal>
+          <li class="pk-place"><b>{tool.result.placeId}</b><span>{identifiers.keys.placeId}</span></li>
+          <li class="pk-fid"><b>{tool.result.fid}</b><span>{identifiers.keys.fid}</span></li>
+          <li class="pk-cid"><b>{tool.result.cid}</b><span>{identifiers.keys.cid}</span></li>
+        </ul>
+      </div>
+
+      <div class="split-visual" data-reveal="zoom">
+        <div class="card derive is-s1 is-s2 is-s3" role="img" aria-label={identifiers.derive.label} data-derive={sample.fid}>
+          <div class="dv-head">
+            <span class="dv-label">{identifiers.derive.source}</span>
+            <span class="dv-fid">
+              <span class="dv-hex dv-hex--a" data-dv-high>{fidHigh}</span><span class="dv-colon">:</span><span class="dv-hex dv-hex--b" data-dv-low>{fidLow}</span>
+            </span>
+          </div>
+          <div class="dv-paths">
+            <div class="dv-path dv-path--place">
+              <span class="dv-step is-on" data-dv-step="1"><i class="dv-line"></i><span>{identifiers.derive.protobuf}</span></span>
+              <div class="dv-bytes">
+                {bytes.map((byte, index) => (
+                  <span class={`dv-byte ${byteTone(index)}`} style={`--k: ${index}`} data-dv-byte>{hex(byte)}</span>
+                ))}
+              </div>
+              <span class="dv-step is-on" data-dv-step="2"><i class="dv-line"></i><span>{identifiers.derive.base64}</span></span>
+              <div class="dv-out"><small>{tool.result.placeId}</small><code data-dv-place>{sample.placeId}</code></div>
+            </div>
+            <div class="dv-path dv-path--cid">
+              <span class="dv-step is-on" data-dv-step="1"><i class="dv-line"></i><span>{identifiers.derive.secondHalf}</span></span>
+              <div class="dv-hexbox"><code data-dv-low>{fidLow}</code></div>
+              <span class="dv-step is-on" data-dv-step="2"><i class="dv-line"></i><span>{identifiers.derive.hexToDecimal}</span></span>
+              <div class="dv-out dv-out--cid"><small>{tool.result.cid}</small><code data-dv-cid>{sample.cid}</code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-grid pid-local" data-stagger="90" data-spotlight-group>
+      {identifiers.features.map((feature, index) => (
+        <article class="card feature" data-spotlight data-reveal>
+          <span class="icon-tile icon-tile--ok"><Icon name={featureIcons[index] ?? 'check'} /></span>
+          <h3>{feature.heading}</h3>
+          <p>{feature.body}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* 三步插画是 T4 叙事循环：所在区块带 data-inview，离屏暂停，减弱动效下停在终态 */
+  .pid-steps {
+    --pv-loop: 5.5s;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    margin-top: 64px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pid-step {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .pid-step-visual {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    border-radius: var(--r-md);
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 22px 22px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 22px 22px,
+      var(--surface-2);
+  }
+
+  .pid-step-text {
+    padding: 22px 12px 12px;
+  }
+
+  .pid-step-num {
+    color: var(--primary-text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+  }
+
+  .pid-step-text h3 {
+    margin-top: 8px;
+  }
+
+  .pid-step-text p {
+    margin-top: 8px;
+    color: var(--text-2);
+    font-size: 15px;
+  }
+
+  /* 01 搜索 → 地点卡 + pin 落下 */
+  .pv-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    margin: 18px 20px 0;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+    color: var(--text);
+    font-size: 12.5px;
+  }
+
+  .pv-search :global(.icon) {
+    width: 14px;
+    height: 14px;
+    color: var(--text-3);
+  }
+
+  .pv-place {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    margin: 14px 20px 0;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    animation: pv-card var(--pv-loop) var(--ease-out) infinite;
+  }
+
+  .pv-map {
+    position: relative;
+    height: 96px;
+    overflow: hidden;
+    border-radius: var(--r-sm);
+    background:
+      linear-gradient(90deg, transparent 46%, var(--map-road) 46% 54%, transparent 54%),
+      linear-gradient(transparent 58%, var(--map-road) 58% 64%, transparent 64%),
+      radial-gradient(circle at 20% 25%, var(--map-park) 0 18%, transparent 19%),
+      var(--map-land);
+  }
+
+  .pv-pin {
+    animation: pv-pin var(--pv-loop) var(--ease-out) infinite;
+  }
+
+  .pv-place-text {
+    display: grid;
+    align-content: center;
+    gap: 8px;
+  }
+
+  .pv-place-text b {
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  @keyframes pv-card {
+    0%,
+    8% {
+      opacity: 0;
+      transform: translate3d(0, 12px, 0);
+    }
+
+    18%,
+    88% {
+      opacity: 1;
+      transform: none;
+    }
+
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes pv-pin {
+    0%,
+    18% {
+      opacity: 0;
+      transform: translate3d(0, -40px, 0);
+    }
+
+    28% {
+      opacity: 1;
+      transform: translate3d(0, 2px, 0) scale(1.04, 0.94);
+    }
+
+    34%,
+    88% {
+      opacity: 1;
+      transform: none;
+    }
+
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* 02 地址栏选中 → 已复制（选区用伪元素 scaleX 展开，不动 background-size） */
+  .pv-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    margin: 48px 18px 0;
+    padding: 0 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .pv-bar :global(.icon) {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--text-3);
+  }
+
+  .pv-url {
+    overflow: hidden;
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* z-index 建立层叠上下文：选区伪元素垫在文字下、地址栏背景之上 */
+  .pv-sel {
+    position: relative;
+    z-index: 0;
+    padding: 2px 0;
+  }
+
+  .pv-sel::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: color-mix(in srgb, var(--primary) 24%, transparent);
+    transform-origin: left;
+    animation: pv-select var(--pv-loop) var(--ease-in-out) infinite;
+    content: '';
+  }
+
+  .pv-sel em {
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .pv-a {
+    color: var(--cyan);
+  }
+
+  .pv-b {
+    color: var(--pin);
+  }
+
+  .pv-copied {
+    position: absolute;
+    top: 98px;
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: var(--r-full);
+    background: var(--text);
+    box-shadow: var(--shadow-md);
+    color: var(--bg);
+    font-size: 12px;
+    font-weight: 600;
+    translate: -50% 0;
+    animation: pv-copied var(--pv-loop) var(--ease-out) infinite;
+  }
+
+  .pv-copied :global(.icon) {
+    width: 13px;
+    height: 13px;
+    stroke-width: 2.6;
+  }
+
+  .pv-copy :global(.pv-cursor) {
+    position: absolute;
+    top: 66px;
+    left: 24%;
+    width: 20px;
+    height: 20px;
+    color: var(--text);
+    fill: var(--surface);
+    animation: pv-cursor var(--pv-loop) var(--ease-in-out) infinite;
+  }
+
+  @keyframes pv-select {
+    0%,
+    14% {
+      transform: scaleX(0);
+    }
+
+    42%,
+    88% {
+      transform: none;
+    }
+
+    100% {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes pv-copied {
+    0%,
+    48% {
+      opacity: 0;
+      transform: translate3d(0, 8px, 0) scale(0.9);
+    }
+
+    54%,
+    84% {
+      opacity: 1;
+      transform: none;
+    }
+
+    92%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes pv-cursor {
+    0%,
+    12% {
+      transform: translate3d(0, 0, 0);
+    }
+
+    42%,
+    100% {
+      transform: translate3d(150px, 0, 0);
+    }
+  }
+
+  /* 03 三行结果依次出现 */
+  .pv-decode {
+    display: grid;
+    align-content: center;
+    gap: 10px;
+    padding: 0 18px;
+  }
+
+  .pv-row {
+    --rc: var(--primary);
+    display: grid;
+    grid-template-columns: 8px 62px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+    animation: pv-row var(--pv-loop) var(--ease-out) infinite;
+  }
+
+  .pv-row i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--rc);
+  }
+
+  .pv-row span {
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .pv-row code {
+    overflow: hidden;
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pv-row--cid {
+    --rc: var(--pin);
+    animation-delay: calc(var(--stagger) * 3);
+  }
+
+  .pv-row--fid {
+    --rc: var(--cyan);
+    animation-delay: calc(var(--stagger) * 7);
+  }
+
+  @keyframes pv-row {
+    0%,
+    10% {
+      opacity: 0;
+      transform: translate3d(-12px, 0, 0);
+    }
+
+    20%,
+    86% {
+      opacity: 1;
+      transform: none;
+    }
+
+    96%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .pid-note {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 10px;
+    max-width: 760px;
+    margin: 32px auto 0;
+    color: var(--text-3);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .pid-note :global(.icon) {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ③ 三种标识 */
+  .pid-keys {
+    display: grid;
+    gap: 14px;
+    margin-top: 6px;
+  }
+
+  .pid-keys li {
+    --kc: var(--primary);
+    --kt: var(--primary-text);
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 14px;
+    padding-left: 14px;
+    border-left: 3px solid var(--kc);
+  }
+
+  .pid-keys b {
+    color: var(--kt);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .pid-keys span {
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .pid-keys .pk-fid {
+    --kc: var(--cyan);
+    --kt: var(--cyan-text);
+  }
+
+  .pid-keys .pk-cid {
+    --kc: var(--pin);
+    --kt: var(--pin-text);
+  }
+
+  /* 推导图：FID → protobuf 字节 → base64url → Place ID；FID 后半 → 十进制 → CID
+     图对读屏可见（role="img"），图内文字照正文算对比度：--c-* 只画线与描边，文字用 --t-*，底色用 --s-* */
+  .derive {
+    --c-place: var(--primary);
+    --c-a: var(--cyan);
+    --c-b: var(--pin);
+    --t-place: var(--primary-text);
+    --t-a: var(--cyan-text);
+    --t-b: var(--pin-text);
+    --s-a: var(--cyan-soft);
+    --s-b: var(--pin-soft);
+    padding: 22px;
+  }
+
+  .dv-head {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+  }
+
+  .dv-label,
+  .dv-step {
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .dv-fid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 13px;
+  }
+
+  .dv-hex {
+    --hc: var(--c-a);
+    --ht: var(--t-a);
+    --hs: var(--s-a);
+    padding: 6px 10px;
+    border: 1px solid color-mix(in srgb, var(--hc) 30%, var(--border));
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text-2);
+    transition:
+      background-color var(--dur-4) var(--ease-out),
+      color var(--dur-4) var(--ease-out);
+  }
+
+  .dv-hex--b {
+    --hc: var(--c-b);
+    --ht: var(--t-b);
+    --hs: var(--s-b);
+  }
+
+  .derive.is-s1 .dv-hex {
+    background: var(--hs);
+    color: var(--ht);
+    font-weight: 600;
+  }
+
+  .dv-colon {
+    color: var(--text-3);
+  }
+
+  .dv-paths {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 18px;
+    margin-top: 6px;
+  }
+
+  .dv-path {
+    display: grid;
+    justify-items: center;
+    align-content: start;
+  }
+
+  /* 连接线 + 箭头：.dv-line 是裁剪框，里面加长的虚线整体平移一个虚线周期（8px），走合成线程 */
+  .dv-step {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    padding: 32px 0;
+    text-align: center;
+  }
+
+  .dv-line {
+    position: absolute;
+    top: 0;
+    bottom: 6px;
+    left: calc(50% - 1px);
+    width: 2px;
+    overflow: hidden;
+  }
+
+  .dv-line::before {
+    position: absolute;
+    inset: -16px 0 0;
+    background: repeating-linear-gradient(180deg, var(--border-2) 0 4px, transparent 4px 8px);
+    content: '';
+  }
+
+  .dv-step::after {
+    position: absolute;
+    bottom: 4px;
+    left: calc(50% - 4px);
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--border-2);
+    border-bottom: 2px solid var(--border-2);
+    transform: rotate(45deg);
+    content: '';
+  }
+
+  .dv-step span {
+    position: relative;
+    padding: 2px 8px;
+    border-radius: var(--r-full);
+    background: var(--surface);
+  }
+
+  /* 虚线匀速流动是连续动画，按合同用 linear；离屏由区块 data-inview 暂停 */
+  .dv-step.is-on .dv-line::before {
+    background: repeating-linear-gradient(180deg, var(--sc, var(--primary)) 0 4px, transparent 4px 8px);
+    animation: dv-flow var(--dur-4) linear infinite;
+  }
+
+  .dv-step.is-on::after {
+    border-color: var(--sc, var(--primary));
+  }
+
+  .dv-step.is-on span {
+    color: var(--st, var(--t-place));
+  }
+
+  .dv-path--cid .dv-step {
+    --sc: var(--c-b);
+    --st: var(--t-b);
+  }
+
+  @keyframes dv-flow {
+    to {
+      transform: translateY(8px);
+    }
+  }
+
+  .dv-bytes {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+  }
+
+  .dv-byte {
+    --bc: var(--text-3);
+    --bt: var(--text-3);
+    --bs: var(--surface-2);
+    display: grid;
+    place-items: center;
+    height: 26px;
+    border: 1px solid color-mix(in srgb, var(--bc) 30%, var(--border));
+    border-radius: var(--r-xs);
+    background: var(--bs);
+    color: var(--bt);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.85);
+    transition:
+      opacity var(--dur-3) var(--ease-out),
+      transform var(--dur-3) var(--ease-spring);
+    transition-delay: calc(var(--k) * 32ms);
+  }
+
+  .dv-byte.is-a {
+    --bc: var(--c-a);
+    --bt: var(--t-a);
+    --bs: var(--s-a);
+  }
+
+  .dv-byte.is-b {
+    --bc: var(--c-b);
+    --bt: var(--t-b);
+    --bs: var(--s-b);
+  }
+
+  .derive.is-s2 .dv-byte {
+    opacity: 1;
+    transform: none;
+  }
+
+  .dv-hexbox code {
+    display: inline-block;
+    padding: 6px 10px;
+    border: 1px solid color-mix(in srgb, var(--c-b) 30%, var(--border));
+    border-radius: var(--r-sm);
+    background: var(--s-b);
+    color: var(--t-b);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    opacity: 0.35;
+    transition: opacity var(--dur-4);
+  }
+
+  .derive.is-s2 .dv-hexbox code {
+    opacity: 1;
+  }
+
+  .dv-out {
+    --oc: var(--c-place);
+    --ot: var(--t-place);
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 12px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    transition:
+      border-color var(--dur-4),
+      box-shadow var(--dur-4);
+  }
+
+  .dv-out--cid {
+    --oc: var(--c-b);
+    --ot: var(--t-b);
+  }
+
+  .dv-out small {
+    color: var(--ot);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .dv-out code {
+    max-width: 100%;
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    word-break: break-all;
+  }
+
+  .derive.is-s3 .dv-out {
+    border-color: color-mix(in srgb, var(--oc) 40%, var(--border));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .derive.is-s3 .dv-out code {
+    color: var(--text);
+  }
+
+  .pid-local {
+    margin-top: clamp(48px, 7vw, 80px);
+  }
+
+  @media (max-width: 960px) {
+    .pid-steps {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .dv-paths {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* 单列时 CID 支线接在 Place ID 之后，用虚线隔开，避免读成“由 Place ID 推出” */
+    .dv-path--cid {
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-2);
+    }
+
+    .pid-keys li {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
+    }
+  }
+
+  /* 减弱动效：循环只跑一帧后回到基础样式（卡片、选区、提示都已在终态），只有光标要停到选区末端 */
+  @media (prefers-reduced-motion: reduce) {
+    .pv-copy :global(.pv-cursor) {
+      transform: translate3d(150px, 0, 0);
+    }
+  }
+</style>

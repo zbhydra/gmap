@@ -1,0 +1,287 @@
+/* =========================================================================
+   工具面板（全局，tool- 命名空间）：面板放在 ToolShell 的插槽里，标记由各工具页输出，
+   scoped 样式命中不到，统一在这里。表单控件复用站级 .field / .input / .textarea / .btn。
+   ========================================================================= */
+
+.tool-panel {
+  position: relative;
+  padding: 24px 24px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: var(--shadow-lg), var(--hairline-hl);
+  text-align: left;
+  backdrop-filter: blur(14px);
+}
+
+.tool-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.tool-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* 等宽输入：链接、坐标、关键词列表与结果、CSV 预览 */
+.tool-mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 13.5px;
+}
+
+.tool-preview {
+  min-height: 200px;
+}
+
+.tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.tool-error {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent);
+  border-radius: var(--r-md);
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.55;
+  animation: fade-up var(--dur-4) var(--ease-out) backwards;
+}
+
+/* ---------------------------------------------------------------------------
+   结果区
+   --------------------------------------------------------------------------- */
+.tool-result {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--border-2);
+  animation: fade-up var(--dur-4) var(--ease-out) backwards;
+}
+
+.tool-result-label {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.tool-output {
+  display: grid;
+  gap: 8px;
+}
+
+.tool-output-label {
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.tool-output-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tool-output-value {
+  flex: 1 1 260px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.tool-summary {
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Email Checker：结论标题 + 逐条问题 */
+.tool-result h2[data-outcome] {
+  --outcome: var(--ok);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--outcome);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.tool-result h2[data-outcome='invalid'] {
+  --outcome: var(--bad);
+}
+
+.tool-result h2[data-outcome]::before {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--outcome);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--outcome) 18%, transparent);
+  content: '';
+}
+
+.tool-issue-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 22px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.tool-issue-list:empty {
+  display: none;
+}
+
+.tool-issue-list li::marker {
+  color: var(--bad);
+}
+
+/* DMS → DD：纬度 / 经度两组，每组度 / 分 / 秒 + 半球 */
+.tool-fieldset {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.tool-fieldset legend {
+  padding: 0 6px;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.tool-field-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Merge CSV：文件选择、逐文件译名行选项与行数摘要（选项与摘要由脚本渲染） */
+/* 文件框有固有最小宽度，必须允许收缩，否则窄屏会撑破面板 */
+.tool-file-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px;
+  border: 1px dashed var(--border-2);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.tool-file-input::file-selector-button {
+  min-height: 32px;
+  margin-right: 12px;
+  padding: 0 16px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--dur-2);
+}
+
+.tool-file-input::file-selector-button:hover {
+  background: var(--surface-3);
+}
+
+.tool-file-options,
+.tool-file-summaries {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tool-file-options:empty,
+.tool-file-summaries:empty {
+  display: none;
+}
+
+.tool-file-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.tool-file-options input {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+}
+
+.tool-file-summaries li {
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 12.5px;
+}
+
+/* 面板底部的隐私说明：图标随首行文字居中，窄屏折行时不与文字分开 */
+.tool-panel-note {
+  margin-top: 16px;
+  color: var(--text-3);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.tool-panel-note .icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+
+@media (max-width: 640px) {
+  .tool-panel {
+    padding: 18px 16px 14px;
+    border-radius: var(--r-lg);
+  }
+
+  .tool-form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tool-field-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

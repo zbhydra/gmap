@@ -80,17 +80,17 @@ const copy = status === 'success' ? successCopy.waiting : cancelCopy
     display: grid;
     min-height: 68vh;
     place-items: center;
-    padding: 120px 24px 72px;
+    padding: calc(var(--nav-h) + var(--s-32)) 24px var(--s-20);
     background: var(--bg);
   }
 
   .clink-return-card {
     width: min(620px, 100%);
-    padding: 34px;
+    padding: var(--s-8);
     border: 1px solid var(--border);
-    border-radius: var(--rounded-lg);
+    border-radius: var(--r-lg);
     background: var(--surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
     text-align: center;
   }
 
@@ -113,9 +113,9 @@ const copy = status === 'success' ? successCopy.waiting : cancelCopy
 
   .clink-return-eyebrow {
     margin: 0 0 12px;
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: 13px;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
@@ -137,11 +137,11 @@ const copy = status === 'success' ? successCopy.waiting : cancelCopy
 
   @media (max-width: 560px) {
     .clink-return-card {
-      padding: 28px 20px;
+      padding: var(--s-8) 20px;
     }
 
     .clink-return-card h1 {
-      font-size: 32px;
+      font-size: var(--fs-h2);
     }
   }
 </style>

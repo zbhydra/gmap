@@ -8,7 +8,7 @@
 
 - **插件全量开发已完成(2026-08-30,执行计划 `plans/001.插件全量实施.md` U1–U11 全部 done)**:A1–A13 全部 13 项功能落地,三渠道构建产物(chrome/edge/firefox)。验证:extension unit 313 passed、e2e 17 passed(全自动零外网)、backend maps 范围 pytest 全绿。
 - 竞品逆向调研 13 项完成,逐功能细节见 `references/A1~A13` 与 `references/竞品逆向/`(11 篇逆向文档 + 黄金样本,入 git)。
-- 遗留待办:真实 Google 登录态冒烟(real smoke:usage 真实链路/U9 真实 OAuth 凭证/U10 真实采集校准);占位凭证(Google OAuth client_id、gecko id)待 hydra 定稿。进度大盘见根 `@../../ROADMAP.md`。
+- 遗留待办:真实 Google 登录态冒烟(real smoke:usage 真实链路/U10 真实采集校准);gecko id 待 hydra 定稿。A10 的现行范围见下方“待确定”。进度大盘见根 `@../../ROADMAP.md`。
 
 ## 已拍板差异(对齐竞品时的例外)
 
@@ -26,7 +26,11 @@
 
 - A1 地图搜索抓取、A2 评论抓取、A3 照片抓取、A4 Email/社媒补全、A5 36 列字段
 - A6 批量任务面板、A7 保存/列表抓取、A8 导出、A9 设置项
-- A10 Drive/HubSpot 集成、A11 账号与配额、A12 远端运营通道、A13 骨架与上架
+- A11 账号与配额、A12 远端运营通道、A13 骨架与上架
+
+### 待确定
+
+- A10 Drive/HubSpot 集成是否提供尚未确定，现有代码不构成产品交付承诺。此类集成由 MapsGrab 作为 OAuth 客户端向第三方服务申请授权，与 MCP OAuth 授权服务端是独立功能。
 
 ### 不包含
 
@@ -110,7 +114,7 @@ Reviews & Photos 标签页含:Start Extracting Reviews 按钮、Start Extracting
 
 ### 设置页(options)
 
-滚动/采集间隔五档(5/6/8/9/10 秒,默认 8)、导出格式三选、36 列字段勾选(Pro 列免费用户可勾选,导出时被剔除——与竞品一致)、auto_download、Drive/HubSpot 自动保存开关、批量卡死重试次数(默认 1)。`@references/A9-设置项.md`
+滚动/采集间隔五档(5/6/8/9/10 秒,默认 8)、导出格式三选、36 列字段勾选(Pro 列免费用户可勾选,导出时被剔除——与竞品一致)、auto_download、批量卡死重试次数(默认 1)。Drive/HubSpot 自动保存开关归上方待确定的 A10 范围。`@references/A9-设置项.md`
 
 ## 非功能性需求
 
@@ -142,7 +146,7 @@ Reviews & Photos 标签页含:Start Extracting Reviews 按钮、Start Extracting
 2. 真实 Maps 搜索→导出 CSV 全链路通过;评论/照片两条子流程各自通过。
 3. 批量任务在 SW 被杀、页面全关后可恢复并完成。
 4. 远程配置下发后刷新页面即生效(不发版)。
-5. 全部 13 项功能对照竞品 v2.5.1 行为一致(已拍板差异除外)。
+5. 已确认纳入产品范围的功能对照竞品 v2.5.1 行为一致(已拍板差异除外)。
 6. build / lint / 单测全绿。
 
 ## 功能索引(references)
@@ -172,7 +176,7 @@ Reviews & Photos 标签页含:Start Extracting Reviews 按钮、Start Extracting
 5. A9 / A12 打磨
 6. A11 账号配额(扩展 007/003)
 7. A4 服务端自研 + 接入
-8. A10 → A7 → A13 上架
+8. A7 → A13 上架
 
 ## 待决
 

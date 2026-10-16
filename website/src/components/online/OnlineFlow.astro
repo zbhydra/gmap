@@ -1,0 +1,505 @@
+---
+/**
+ * 云端页「怎么用」五步流程（设计稿 online-scraper.html ③）：首页预览 → 登录 → 创建任务 → 并行执行 → 下载。
+ * 各步迷你画面是插画（aria-hidden）；脚本依次高亮当前步，离屏 / 后台暂停，减弱动效下不轮播。
+ * 轨道光点只动 transform（README §11 把原型 background-position 的 of-travel 列为待改项）。
+ */
+import type { Locale } from '../../i18n/content'
+import type { DashboardContent, OnlineScraperPageContent } from '../../i18n/schema'
+import { localePaths } from '../../i18n/ui'
+import Icon from '../site/Icon.astro'
+import ProductSectionHead from '../product/ProductSectionHead.astro'
+import { FLOW_CODE, FLOW_KEYWORDS, FLOW_PREVIEW_ROWS } from './online-samples'
+
+interface Props {
+  locale: Locale
+  flow: OnlineScraperPageContent['flow']
+  dashboard: DashboardContent
+  /** 整任务 ZIP 的文件类型标签。 */
+  zip: string
+}
+
+const { locale, flow, dashboard, zip } = Astro.props
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+/** 五步各自的迷你画面，顺序与 flow.steps 一一对应。 */
+const MINIS = ['preview', 'signin', 'create', 'run', 'files'] as const
+if (flow.steps.length !== MINIS.length) {
+  throw new Error(`[online-flow] Expected ${MINIS.length} flow steps, got ${flow.steps.length}.`)
+}
+const steps = flow.steps.map((step, index) => ({ ...step, mini: MINIS[index], number: String(index + 1).padStart(2, '0') }))
+---
+
+<section class="section of band" id="flow" data-inview>
+  <div class="container">
+    <ProductSectionHead head={flow.head} />
+
+    <div class="of-wrap">
+      <span class="of-track" aria-hidden="true"><i></i></span>
+      <ol class="of-rail" data-of data-stagger="90">
+        {steps.map(step => (
+          <li class="of-step card" data-reveal>
+            <div class:list={['of-mini', `of-mini--${step.mini}`]} aria-hidden="true">
+              {step.mini === 'preview' && (
+                <>
+                  {FLOW_PREVIEW_ROWS.map(([name, rating]) => <span class="of-row"><i></i><b>{name}</b><em>{rating}</em></span>)}
+                  <span class="of-row is-locked"><i></i><b></b><em></em></span>
+                  <span class="of-lock"><Icon name="lock" />{flow.lock}</span>
+                </>
+              )}
+              {step.mini === 'signin' && (
+                <>
+                  <span class="of-field"><Icon name="mail" />{flow.email}</span>
+                  <span class="of-code">{FLOW_CODE.map(digit => <i>{digit}</i>)}</span>
+                </>
+              )}
+              {step.mini === 'create' && (
+                <>
+                  <span class="of-lines mono">{FLOW_KEYWORDS.map(keyword => <span>{keyword}</span>)}</span>
+                  <span class="of-go">{dashboard.create.submit}</span>
+                </>
+              )}
+              {step.mini === 'run' && (
+                <>
+                  <span class="badge">{dashboard.history.status.processing}</span>
+                  <span class="of-job is-done"><Icon name="check" /><i></i></span>
+                  <span class="of-job"><span class="spinner"></span><i class="skel"></i></span>
+                  <span class="of-job"><span class="spinner"></span><i class="skel"></i></span>
+                </>
+              )}
+              {step.mini === 'files' && (
+                <>
+                  <span class="of-file"><Icon name="file-sheet" />{dashboard.history.detail.downloadCsv}</span>
+                  <span class="of-file"><Icon name="file-sheet" />{dashboard.history.detail.downloadCsv}</span>
+                  <span class="of-file of-file--zip"><Icon name="archive" />{zip}</span>
+                </>
+              )}
+            </div>
+            <span class="of-num">{step.number}</span>
+            <h3>{step.title}</h3>
+            <p>{step.description}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+
+    <div class="of-links" data-reveal>
+      <a class="link-arrow" href={`${prefix}/`} data-cta="online-flow-preview">{flow.links.preview}<Icon name="arrow-right" /></a>
+      <a class="link-arrow" href={`${prefix}/dashboard/`} data-cta="online-flow-dashboard">{flow.links.dashboard}<Icon name="arrow-right" /></a>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { reducedMotion, visibilityGate } from '../../scripts/site/motion'
+
+  // 五步依次高亮；减弱动效下保持静态
+  const rail = document.querySelector<HTMLElement>('[data-of]')
+  if (rail && !reducedMotion()) {
+    const steps = Array.from(rail.querySelectorAll<HTMLElement>('.of-step'))
+    const gate = visibilityGate(rail, 0.3)
+    void (async () => {
+      for (let index = 0; ; index = (index + 1) % steps.length) {
+        await gate.wait()
+        steps.forEach((step, stepIndex) => step.classList.toggle('is-active', stepIndex === index))
+        await gate.nap(2400)
+      }
+    })()
+  }
+</script>
+
+<style>
+  .of-wrap {
+    position: relative;
+    margin-top: clamp(40px, 5vw, 64px);
+  }
+
+  .of-rail {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* 轨道虚线穿过各步编号；光点匀速滑过（只动 transform） */
+  .of-track {
+    position: absolute;
+    top: 158px;
+    right: 6%;
+    left: 6%;
+    height: 2px;
+    overflow: hidden;
+    background: linear-gradient(90deg, var(--border-2) 55%, transparent 0) 0 0 / 10px 2px;
+  }
+
+  .of-track i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 18%;
+    background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+    transform: translateX(-100%);
+    animation: of-travel 11s linear infinite;
+  }
+
+  /* 光点宽为轨道的 18%：平移 100% / 18% ≈ 556% 走完全程 */
+  @keyframes of-travel {
+    to {
+      transform: translateX(556%);
+    }
+  }
+
+  /* 卡片不裁切：当前步的投影层要画到卡片外 */
+  .of-step {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px 22px;
+    overflow: visible;
+    transition: transform var(--dur-4) var(--ease-out);
+  }
+
+  /* 当前步：上浮，描边与投影层淡入（只动 transform / opacity） */
+  .of-step::after {
+    position: absolute;
+    inset: -1px;
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, var(--border));
+    border-radius: inherit;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transition: opacity var(--dur-4) var(--ease-out);
+    pointer-events: none;
+    content: '';
+  }
+
+  .of-step.is-active {
+    transform: translateY(-6px);
+  }
+
+  .of-step.is-active::after {
+    opacity: 1;
+  }
+
+  .of-step h3 {
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .of-step p {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .of-num {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 24px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .of-step.is-active .of-num {
+    border-color: transparent;
+    background: var(--grad-brand);
+    color: var(--primary-fg);
+  }
+
+  .of-mini {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    height: 118px;
+    margin-bottom: 4px;
+    padding: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background-color: var(--bg-2);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  /* 当前步的迷你画面错峰入场 */
+  .of-step.is-active .of-mini > * {
+    animation: fade-up var(--dur-4) var(--ease-out) both;
+  }
+
+  .of-step.is-active .of-mini > :nth-child(2) {
+    animation-delay: 80ms;
+  }
+
+  .of-step.is-active .of-mini > :nth-child(3) {
+    animation-delay: 160ms;
+  }
+
+  .of-step.is-active .of-mini > :nth-child(4) {
+    animation-delay: 240ms;
+  }
+
+  .of-step.is-active .of-mini > :nth-child(5) {
+    animation-delay: 320ms;
+  }
+
+  /* 01 预览：3 行可见 + 锁定行 */
+  .of-row {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    height: 18px;
+    font-size: 10.5px;
+  }
+
+  .of-row i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--pin);
+  }
+
+  .of-row b {
+    overflow: hidden;
+    color: var(--text);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .of-row em {
+    color: var(--text-3);
+    font-style: normal;
+  }
+
+  .of-row.is-locked b {
+    height: 8px;
+    border-radius: var(--r-xs);
+    background: var(--border-2);
+    filter: blur(1.5px);
+  }
+
+  .of-row.is-locked i {
+    background: var(--border-2);
+  }
+
+  .of-lock {
+    position: absolute;
+    right: 10px;
+    bottom: 9px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 24px;
+    border-radius: var(--r-full);
+    background: var(--primary);
+    color: var(--primary-fg);
+    font-size: 10.5px;
+    font-weight: 650;
+  }
+
+  .of-lock :global(.icon) {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* 02 登录：邮箱 + 验证码 */
+  .of-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text-2);
+    font-size: 11px;
+  }
+
+  .of-field :global(.icon) {
+    width: 13px;
+    height: 13px;
+    color: var(--text-3);
+  }
+
+  .of-code {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .of-code i {
+    display: grid;
+    place-items: center;
+    height: 32px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-xs);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 650;
+  }
+
+  .of-code i:empty {
+    border-style: dashed;
+  }
+
+  .of-step.is-active .of-code i:nth-child(5) {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-soft);
+  }
+
+  /* 03 创建 */
+  .of-lines {
+    display: grid;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 10.5px;
+  }
+
+  .of-lines span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .of-go {
+    justify-self: end;
+    padding: 4px 10px;
+    border-radius: var(--r-full);
+    background: var(--primary);
+    color: var(--primary-fg);
+    font-size: 10.5px;
+    font-weight: 650;
+  }
+
+  /* 04 并行执行 */
+  .of-mini--run .badge {
+    justify-self: start;
+  }
+
+  .of-job {
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    height: 20px;
+  }
+
+  .of-job .spinner {
+    width: 12px;
+    height: 12px;
+  }
+
+  .of-job :global(.icon) {
+    width: 13px;
+    height: 13px;
+    color: var(--ok);
+  }
+
+  .of-job i {
+    height: 5px;
+    border-radius: var(--r-full);
+    background: var(--ok);
+  }
+
+  .of-job .skel {
+    background: var(--border);
+  }
+
+  .of-job .skel::after {
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  }
+
+  /* 05 下载 */
+  .of-mini--files {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: center;
+    gap: 8px;
+  }
+
+  .of-file {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 12px 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 10.5px;
+    font-weight: 650;
+  }
+
+  .of-file :global(.icon) {
+    width: 22px;
+    height: 22px;
+    color: var(--ok);
+  }
+
+  .of-file--zip {
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+    background: var(--primary-soft);
+    color: var(--primary-text);
+  }
+
+  .of-file--zip :global(.icon) {
+    color: var(--primary-text);
+  }
+
+  .of-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 32px;
+    margin-top: 32px;
+  }
+
+  @media (max-width: 1080px) {
+    .of-rail {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .of-track {
+      display: none;
+    }
+  }
+
+  @media (max-width: 960px) {
+    .of-rail {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .of-rail {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

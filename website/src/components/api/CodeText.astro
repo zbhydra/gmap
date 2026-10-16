@@ -1,0 +1,25 @@
+---
+/** 文案里反引号包住的片段渲染为行内代码（i18n 字典不写 HTML）；明暗主题与暗色岛都随语义 token 翻转。 */
+interface Props {
+  text: string
+}
+
+const { text } = Astro.props
+const parts = text.split('`')
+---
+
+{parts.map((part, index) => (index % 2 ? <code>{part}</code> : part))}
+
+<style>
+  code {
+    padding: 0.08em 0.4em;
+    border: 1px solid var(--border);
+    border-radius: var(--r-xs);
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 0.86em;
+    overflow-wrap: anywhere;
+  }
+</style>

@@ -1,0 +1,264 @@
+---
+/**
+ * 插件页「本地优先」区（设计稿 extension.html ⑥）：浏览器内 Maps 标签页 → 面板 → 本地存储 → 导出，
+ * 服务端只负责远程配置、账号与额度状态、补全。连线上的流动点只播三轮后静止（README §11：
+ * stroke-dashoffset 属重绘属性，不做常驻循环）。
+ */
+import type { ExtensionPageContent } from '../../i18n/schema'
+import Icon from '../site/Icon.astro'
+import AccentHeading from '../product/AccentHeading.astro'
+
+interface Props {
+  privacy: ExtensionPageContent['privacy']
+}
+
+const { privacy } = Astro.props
+const { diagram } = privacy
+const LOCAL_PATHS = ['M196 114V150', 'M196 194V230', 'M196 274V310']
+const REMOTE_PATHS = ['M438 116C352 116 330 166 278 166', 'M278 172C344 172 372 204 438 204', 'M278 178C330 178 366 292 438 292']
+---
+
+<section class="section xl" id="privacy" data-inview>
+  <div class="container split">
+    <div class="split-copy" data-stagger="80">
+      <span class="kicker" data-reveal>{privacy.head.kicker}</span>
+      <h2 class="h2" data-split><AccentHeading title={privacy.head.title} /></h2>
+      <p class="lead" data-reveal>{privacy.head.lead}</p>
+      <ul class="check-list" role="list" data-reveal>
+        {privacy.checks.map(item => <li>{item}</li>)}
+      </ul>
+    </div>
+
+    <div class="split-visual xl-diagram" data-reveal="zoom" aria-hidden="true">
+      <div class="xl-zone xl-zone--browser"><span class="xl-zone-label mono">{diagram.browser}</span></div>
+      <div class="xl-zone xl-zone--server"><span class="xl-zone-label mono">{diagram.servers}</span></div>
+
+      <svg class="xl-lines" viewBox="0 0 560 440">
+        {LOCAL_PATHS.map(path => <path class="xl-path xl-base" d={path}></path>)}
+        {REMOTE_PATHS.map(path => <path class="xl-path xl-base xl-base--remote" d={path}></path>)}
+        {LOCAL_PATHS.map(path => <path class="xl-path xl-flow xl-flow--local" d={path}></path>)}
+        {REMOTE_PATHS.map(path => <path class="xl-path xl-flow xl-flow--remote" d={path}></path>)}
+      </svg>
+
+      <div class="xl-node" style="--x: 35%; --y: 20.9%">
+        <span class="xl-ic xl-ic--map"><Icon name="map" /></span><b>{diagram.nodes.mapsTab}</b>
+      </div>
+      <div class="xl-node xl-node--brand" style="--x: 35%; --y: 39.1%">
+        <span class="xl-ic xl-ic--brand"><Icon name="puzzle" /></span><b>{diagram.nodes.panel}</b>
+      </div>
+      <div class="xl-node" style="--x: 35%; --y: 57.3%">
+        <span class="xl-ic"><Icon name="database" /></span><b>{diagram.nodes.storage}</b>
+      </div>
+      <div class="xl-node" style="--x: 35%; --y: 75.5%">
+        <span class="xl-ic xl-ic--ok"><Icon name="file-sheet" /></span><b>{diagram.nodes.exports}</b>
+      </div>
+
+      <div class="xl-node xl-node--sm" style="--x: 87.1%; --y: 26.4%">
+        <span class="xl-ic"><Icon name="settings" /></span><b>{diagram.nodes.config}</b>
+      </div>
+      <div class="xl-node xl-node--sm" style="--x: 87.1%; --y: 46.4%">
+        <span class="xl-ic"><Icon name="gauge" /></span><b>{diagram.nodes.quota}</b>
+      </div>
+      <div class="xl-node xl-node--sm" style="--x: 87.1%; --y: 66.4%">
+        <span class="xl-ic"><Icon name="mail" /></span><b>{diagram.nodes.enrichment}</b>
+      </div>
+
+      <span class="xl-tag mono" style="--x: 47.5%; --y: 30%">{diagram.flows.rows}</span>
+      <span class="xl-tag mono" style="--x: 67%; --y: 28.4%">{diagram.flows.rules}</span>
+      <span class="xl-tag mono" style="--x: 66%; --y: 43.6%">{diagram.flows.usage}</span>
+      <span class="xl-tag mono xl-tag--wide" style="--x: 63%; --y: 60%">{diagram.flows.websites}</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .xl-diagram {
+    container-type: inline-size;
+    position: relative;
+    aspect-ratio: 560 / 440;
+  }
+
+  .xl-lines {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .xl-path {
+    fill: none;
+    stroke-linecap: round;
+  }
+
+  .xl-base {
+    stroke: var(--border-2);
+    stroke-width: 2;
+  }
+
+  .xl-base--remote {
+    stroke-dasharray: 4 6;
+  }
+
+  /* 流动点：方向即数据流向；匀速三轮后停住 */
+  .xl-flow {
+    stroke-width: 6;
+    stroke-dasharray: 0 16;
+    animation: dash-flow 1.8s linear 3;
+  }
+
+  .xl-flow--local {
+    stroke: var(--primary);
+  }
+
+  .xl-flow--remote {
+    stroke: var(--cyan);
+    stroke-width: 5;
+    animation-duration: 2.6s;
+  }
+
+  .xl-zone {
+    position: absolute;
+    border-radius: var(--r-lg);
+  }
+
+  .xl-zone--browser {
+    top: 8.2%;
+    left: 1.4%;
+    width: 67.1%;
+    height: 83.6%;
+    border: 1px solid var(--border);
+    background:
+      radial-gradient(70% 60% at 40% 30%, var(--primary-soft), transparent 70%),
+      var(--surface);
+    box-shadow: var(--shadow-md), var(--hairline-hl);
+  }
+
+  .xl-zone--server {
+    top: 14.5%;
+    left: 75.7%;
+    width: 22.9%;
+    height: 63.6%;
+    border: 1.5px dashed var(--border-2);
+    background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  }
+
+  .xl-zone-label {
+    position: absolute;
+    top: 0;
+    left: clamp(12px, 3.4cqi, 20px);
+    z-index: 1;
+    padding: 2px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    color: var(--text-3);
+    font-size: clamp(8.5px, 1.9cqi, 11px);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translateY(-50%);
+  }
+
+  .xl-zone--server .xl-zone-label {
+    left: 50%;
+    letter-spacing: 0.02em;
+    transform: translate(-50%, -50%);
+  }
+
+  .xl-node {
+    position: absolute;
+    top: var(--y);
+    left: var(--x);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 1.6cqi, 10px);
+    padding: clamp(4px, 1.3cqi, 8px) clamp(10px, 2.2cqi, 14px) clamp(4px, 1.3cqi, 8px) clamp(4px, 1.3cqi, 8px);
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+    color: var(--text);
+    font-size: clamp(9.5px, 2.25cqi, 13px);
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+  }
+
+  .xl-node b {
+    font-weight: 650;
+  }
+
+  .xl-node--brand {
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+    box-shadow: 0 0 0 5px var(--primary-soft), var(--shadow-md);
+  }
+
+  .xl-node--sm {
+    flex-direction: column;
+    gap: 4px;
+    padding: clamp(6px, 1.4cqi, 10px);
+    border-radius: var(--r-sm);
+    font-size: clamp(8.5px, 1.9cqi, 11.5px);
+    text-align: center;
+  }
+
+  .xl-ic {
+    display: grid;
+    place-items: center;
+    width: clamp(22px, 5.6cqi, 32px);
+    height: clamp(22px, 5.6cqi, 32px);
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--surface-2);
+    color: var(--text-2);
+  }
+
+  .xl-ic :global(.icon) {
+    width: 55%;
+    height: 55%;
+  }
+
+  .xl-ic--map {
+    background: var(--pin-soft);
+    color: var(--pin);
+  }
+
+  .xl-ic--brand {
+    background: var(--grad-brand);
+    color: var(--primary-fg);
+  }
+
+  .xl-ic--ok {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .xl-tag {
+    position: absolute;
+    top: var(--y);
+    left: var(--x);
+    z-index: 2;
+    padding: 2px 8px;
+    border-radius: var(--r-xs);
+    background: var(--bg);
+    color: var(--text-3);
+    font-size: clamp(8px, 1.75cqi, 10.5px);
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+  }
+
+  .xl-tag--wide {
+    max-width: 34cqi;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 560px) {
+    .xl-tag--wide {
+      display: none;
+    }
+  }
+</style>

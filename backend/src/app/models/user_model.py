@@ -6,7 +6,7 @@ from typing import Optional
 
 from app.constants.auth import UserAccountStatus, UserLoginStatus
 from app.schemas.client_user_schema import UserInfo
-from sqlalchemy import BigInteger, Boolean, Integer, String
+from sqlalchemy import BigInteger, Boolean, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseDBModel
@@ -17,6 +17,21 @@ class UserModel(BaseDBModel):
     """业务用户表"""
 
     __tablename__ = "users"
+    __table_args__ = (
+        Index(
+            "uk_users_api_key_hash", "api_key_hash", unique=True
+        ),  # 用户 API Key 按摘要精确鉴权。
+    )
+
+    api_key_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, comment="用户 API Key 的 SHA-256 摘要"
+    )
+    api_key_prefix: Mapped[str | None] = mapped_column(
+        String(16), nullable=True, comment="用户 API Key 展示前缀"
+    )
+    api_key_created_at: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True, comment="API Key 生成时间（毫秒时间戳）"
+    )
 
     user_id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, autoincrement=True, comment="用户ID"

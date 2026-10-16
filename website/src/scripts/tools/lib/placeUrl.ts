@@ -17,13 +17,23 @@ const HEX_ID_REGEX = /0x[0-9a-fA-F]+/g
 const HEX_MAX_LENGTH = 20
 
 /** base64url 字符表（RFC 4648 §5，无 padding）。 */
-const BASE64URL_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+export const BASE64URL_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 
 /** Google Maps 主域后缀（其余域一律视为非 Maps 地点页）。 */
 const MAPS_HOST_SUFFIXES = ['google.com', 'google.co', 'maps.google.com']
 
 /** 地点 URL 解析失败的稳定原因码（文案映射在页面层）。 */
 export type PlaceUrlErrorCode = 'short-link' | 'invalid-url' | 'no-ids'
+
+/** 标识在补全协议后的 URL 中的位置（工具页 URL 解剖高亮用，不影响解析结果）。 */
+export interface PlaceUrlMark {
+  /** 起始下标（含）。 */
+  start: number
+  /** 结束下标（不含）。 */
+  end: number
+  /** fid 前半段 / 后半段，或 URL 内建的 Place ID。 */
+  part: 'fid-high' | 'fid-low' | 'place-id'
+}
 
 /** 地点 URL 解析结果。 */
 export type PlaceUrlResult =
@@ -36,6 +46,10 @@ export type PlaceUrlResult =
       cid: string
       /** `ChIJ…` 形态的 Place ID（URL 内建时用原值，否则由 fid 换算）。 */
       placeId: string
+      /** 补全协议后的 URL。 */
+      url: string
+      /** 各标识在 url 中的位置，按出现顺序。 */
+      marks: readonly PlaceUrlMark[]
     }
   | {
       /** 解析失败。 */
@@ -78,22 +92,34 @@ export function parsePlaceUrl(input: string): PlaceUrlResult {
 
   // URL 中直接内建 Place ID 的形态（`!1sChIJ…`）：优先采用原值。
   const directPlaceId = /!1s(ChIJ[A-Za-z0-9_-]+)/.exec(url)
-  const hexIds = [...url.matchAll(HEX_ID_REGEX)].map(match => match[0]).filter(hex => hex.length <= HEX_MAX_LENGTH)
+  const hexIds = [...url.matchAll(HEX_ID_REGEX)].filter(match => match[0].length <= HEX_MAX_LENGTH)
   const secondLast = hexIds[hexIds.length - 2]
   const last = hexIds[hexIds.length - 1]
+  const marks: PlaceUrlMark[] = []
+  if (directPlaceId) {
+    const start = directPlaceId.index + 3
+    marks.push({ start, end: start + directPlaceId[1].length, part: 'place-id' })
+  }
   if (!secondLast || !last) {
     if (directPlaceId) {
-      return { ok: true, fid: '', cid: '', placeId: directPlaceId[1] }
+      return { ok: true, fid: '', cid: '', placeId: directPlaceId[1], url, marks }
     }
     return { ok: false, error: 'no-ids' }
   }
 
-  const fid = `${secondLast}:${last}`
+  marks.push(
+    { start: secondLast.index, end: secondLast.index + secondLast[0].length, part: 'fid-high' },
+    { start: last.index, end: last.index + last[0].length, part: 'fid-low' }
+  )
+  marks.sort((a, b) => a.start - b.start)
+  const fid = `${secondLast[0]}:${last[0]}`
   return {
     ok: true,
     fid,
-    cid: deriveCidFromLrd(last),
-    placeId: directPlaceId ? directPlaceId[1] : derivePlaceIdFromFid(fid)
+    cid: deriveCidFromLrd(last[0]),
+    placeId: directPlaceId ? directPlaceId[1] : derivePlaceIdFromFid(fid),
+    url,
+    marks
   }
 }
 
@@ -129,15 +155,19 @@ export function deriveCidFromLrd(lrd: string): string {
  * 是 fid 第一/第二段的小端字节序；整体 base64url 去掉 padding 后即为 Place ID。
  */
 export function derivePlaceIdFromFid(fid: string): string {
+  const bytes = placeIdBytes(fid)
+  return bytes === null ? '' : base64UrlEncode(bytes)
+}
+
+/** fid → Place ID 的 20 字节 protobuf 有效载荷（推导图逐字节展示同一份数据）；fid 非法返回 null。 */
+export function placeIdBytes(fid: string): number[] | null {
   const [first = '', second = ''] = fid.split(':').map(part => part.trim())
   const firstValue = parseHexLiteral(first)
   const secondValue = parseHexLiteral(second)
   if (firstValue === null || secondValue === null) {
-    return ''
+    return null
   }
-
-  const bytes = [0x0a, 0x12, 0x09, ...toUint64LittleEndian(firstValue), 0x11, ...toUint64LittleEndian(secondValue)]
-  return base64UrlEncode(bytes)
+  return [0x0a, 0x12, 0x09, ...toUint64LittleEndian(firstValue), 0x11, ...toUint64LittleEndian(secondValue)]
 }
 
 /** 解析 `0x…` / 裸 hex 字面量为 BigInt；非法返回 null。 */

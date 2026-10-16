@@ -372,3 +372,7 @@ extension 登录(v3 浏览器身份,2026-09-01 起)不修改通用 `LoginRespons
 - 错误信息带 `user_id` / `email` / `ip` 等可定位字段;抛 `AppCommonException` 必须带详细 msg(哪里的错误/错什么/请求哪个接口)。
 - token 注册表事务写入失败采用 fail-closed 并保留原始堆栈;写入成功后的过期 member 清理失败只记录日志。IP 登录、Google OAuth 和插件签发限流及 IP 封禁继续采用 fail-open；邮箱验证码相关 Redis 操作采用 fail-closed。
 - 修改 users 表后执行 `@backend/src/app/init/sync_database_schema.py`。
+
+## Maps API 凭证与 MCP 授权
+
+用户 API Key 在 `users` 保存摘要、展示前缀和生成时间；每个账号仅一个，轮换覆盖旧值，完整 Key 仅在生成时返回。Key 管理与 OAuth 官网确认复用严格 `get_current_user`。MCP 的访问令牌及刷新授权由独立 OAuth owner 管理，登录 JWT 签发和刷新保持原有合同。接口、存储和撤销规则统一见 [014 API 与 MCP](../014.Maps云端/tech-API与MCP.md)。

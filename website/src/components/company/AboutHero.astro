@@ -1,0 +1,323 @@
+---
+/**
+ * About 首屏（设计稿 about.html ①）：定位文案 + 经纬网地球（pin 被「抓取」，数据光束汇入 MapsGrab 节点）。
+ *
+ * 主按钮去 Contact 页（沿用原 GA / CTA 标记）；插件介绍页照常可达，插件尚未开放安装时带 Coming soon。
+ * 地球由 about-globe.ts 绘制，地球外的三张浮卡与节点是普通 DOM。
+ */
+import type { AboutPageContent } from '../../company/companyContent'
+import { COMPANY_PAGES_DATE_MODIFIED_ISO } from '../../company/companyContent'
+import { getContent, type Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import { capabilities } from '../../lib/capabilities'
+import BrandMark from '../site/BrandMark.astro'
+import Icon from '../site/Icon.astro'
+import SoonBadge from '../site/SoonBadge.astro'
+import SplitWords from '../site/SplitWords.astro'
+
+interface Props {
+  locale: Locale
+  hero: AboutPageContent['hero']
+}
+
+const { locale, hero } = Astro.props
+const t = getContent(locale)
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const [publicChip, localChip, exportChip] = hero.chips
+---
+
+<section class="page-hero about-hero has-deco" data-inview>
+  <div class="deco" aria-hidden="true">
+    <div class="aurora"><i></i><i></i><i></i><i></i></div>
+    <div class="bg-contours"></div>
+    <div class="bg-grid"></div>
+    <div class="noise"></div>
+  </div>
+
+  <div class="container page-hero-grid about-hero-grid">
+    <div class="page-hero-copy">
+      <span class="kicker" data-enter>{hero.eyebrow}</span>
+      <h1 class="h1" data-split="static" style="--split-delay: 90ms">
+        <SplitWords parts={[hero.title.lead, { text: hero.title.accent, class: 'accent text-grad is-animated' }, hero.title.tail]} />
+      </h1>
+      <p class="lead" data-enter style="--enter-delay: 180ms">{hero.intro}</p>
+      <div class="page-hero-actions" data-enter style="--enter-delay: 270ms">
+        <a
+          class="btn btn-primary btn-lg"
+          href={`${prefix}/contact/`}
+          data-magnetic="0.2"
+          data-ga-event="internal_workflow_click"
+          data-ga-source="contact"
+          data-ga-target="email"
+          data-cta="about-primary"
+        ><Icon name="mail" />{hero.contactLabel}</a>
+        <a
+          class:list={['btn btn-secondary btn-lg', { 'is-unavailable': !capabilities.extensionInstall }]}
+          href={`${prefix}/extension/`}
+          data-cta="about-extension"
+        >
+          {hero.extensionLabel}{!capabilities.extensionInstall && <SoonBadge locale={locale} />}<Icon name="arrow-right" class="icon-arrow" />
+        </a>
+      </div>
+      <div class="page-hero-meta about-meta" data-enter style="--enter-delay: 360ms">
+        <span><span class="dot dot--live" aria-hidden="true"></span>{hero.stageLabel}</span>
+        <span><Icon name="calendar" />{hero.updatedLabel} <time datetime={COMPANY_PAGES_DATE_MODIFIED_ISO}>{hero.updatedAt}</time></span>
+      </div>
+    </div>
+
+    <div class="page-hero-visual about-visual" data-reveal="zoom" data-reveal-delay="220">
+      <div class="globe" data-globe aria-hidden="true">
+        <canvas class="globe-canvas" data-globe-canvas></canvas>
+        <span class="globe-node" data-globe-node>
+          <span class="globe-node-label mono">{t.layout.nav.brand}</span>
+          <span class="globe-mark" data-globe-mark><BrandMark /></span>
+        </span>
+        <span class="float-chip globe-chip gc-public floaty">
+          <span class="icon-tile icon-tile--ok"><Icon name="eye" /></span>
+          <span><small>{publicChip.label}</small>{publicChip.value}</span>
+        </span>
+        <span class="float-chip globe-chip gc-local floaty" style="--float-d: -2.4s">
+          <span class="icon-tile icon-tile--brand"><Icon name="lock" /></span>
+          <span><small>{localChip.label}</small>{localChip.value}</span>
+        </span>
+        <span class="float-chip globe-chip gc-export floaty" style="--float-d: -4.2s">
+          <span class="icon-tile"><Icon name="file-sheet" /></span>
+          <span><small>{exportChip.label}</small>{exportChip.value}</span>
+        </span>
+      </div>
+      <p class="globe-hint mono" data-globe-hint aria-hidden="true"><Icon name="cursor" />{hero.dragHint}</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { setupGlobe } from './about-globe'
+
+  const globe = document.querySelector<HTMLElement>('[data-globe]')
+  if (globe) setupGlobe(globe)
+</script>
+
+<style>
+  .about-hero {
+    padding-bottom: clamp(48px, 6vw, 96px);
+  }
+
+  .about-hero .deco {
+    -webkit-mask-image: linear-gradient(180deg, var(--mask-solid) 60%, transparent);
+    mask-image: linear-gradient(180deg, var(--mask-solid) 60%, transparent);
+  }
+
+  .about-hero-grid {
+    --hero-cols: minmax(0, 1.08fr) minmax(0, 0.96fr);
+  }
+
+  .about-meta {
+    gap: 10px 24px;
+  }
+
+  .about-meta .dot {
+    color: var(--ok);
+  }
+
+  .about-meta :global(.icon) {
+    color: var(--text-3);
+    stroke-width: 1.9;
+  }
+
+  .about-meta time {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .about-visual {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+  }
+
+  .globe {
+    position: relative;
+    width: min(100%, 560px);
+    aspect-ratio: 1;
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 球体下方的柔光 */
+  .globe::before {
+    position: absolute;
+    inset: 26% 10% 0;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--primary) 20%, transparent), transparent);
+    content: '';
+  }
+
+  .globe-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+
+  .globe-canvas:active {
+    cursor: grabbing;
+  }
+
+  /* 顶部的 MapsGrab 节点：标签在上、品牌标在下，光束自下而上汇入品牌标 */
+  .globe-node {
+    position: absolute;
+    top: 2%;
+    left: 50%;
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    translate: -50% 0;
+    pointer-events: none;
+  }
+
+  .globe-node-label {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+    color: var(--text-2);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .globe-mark {
+    position: relative;
+    display: grid;
+  }
+
+  /* 品牌标外圈光晕：收到光束时与品牌标一起轻弹（只动 transform / opacity） */
+  .globe-mark::before {
+    position: absolute;
+    inset: -8px;
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--primary) 13%, transparent);
+    content: '';
+  }
+
+  .globe-mark :global(.brand-mark) {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--r-md);
+    box-shadow: var(--glow-primary);
+  }
+
+  .globe-node.is-receiving .globe-mark :global(.brand-mark) {
+    animation: node-receive var(--dur-4) var(--ease-out);
+  }
+
+  .globe-node.is-receiving .globe-mark::before {
+    animation: node-halo var(--dur-4) var(--ease-out);
+  }
+
+  @keyframes node-receive {
+    40% {
+      transform: scale(1.1);
+    }
+  }
+
+  @keyframes node-halo {
+    40% {
+      opacity: 0.6;
+      transform: scale(1.22);
+    }
+  }
+
+  .globe-chip {
+    z-index: 3;
+  }
+
+  .gc-public {
+    top: 37%;
+    left: -6%;
+  }
+
+  .gc-local {
+    top: 54%;
+    right: -7%;
+  }
+
+  .gc-export {
+    bottom: 4%;
+    left: 10%;
+  }
+
+  .globe-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-3);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: opacity var(--dur-3);
+  }
+
+  .globe-hint.is-used {
+    opacity: 0;
+  }
+
+  .globe-hint :global(.icon) {
+    width: 14px;
+    height: 14px;
+  }
+
+  @media (hover: none) {
+    .globe-hint {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1240px) {
+    .gc-public {
+      left: -2%;
+    }
+
+    .gc-local {
+      right: -2%;
+    }
+  }
+
+  @media (max-width: 960px) {
+    .about-visual {
+      margin-top: 8px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .globe-chip {
+      padding: 6px 10px 6px 6px;
+      font-size: 12px;
+    }
+
+    .globe-chip .icon-tile {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--r-sm);
+    }
+
+    .gc-public {
+      top: 30%;
+      left: -1%;
+    }
+
+    .gc-local {
+      top: 62%;
+      right: -1%;
+    }
+
+    .gc-export {
+      bottom: 0;
+      left: 6%;
+    }
+  }
+</style>

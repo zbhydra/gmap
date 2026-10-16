@@ -1,0 +1,500 @@
+---
+/**
+ * 云端页计量暗色岛（设计稿 online-scraper.html ⑦）：用 Online Free 档演示计量规则——
+ * 提交不预扣；运行中已交付的行只显示为条纹占位；任务完成后才按实际交付行计入本月用量；
+ * 运行中的任务可以越过剩余额度跑完，额度用完后不能再提交新任务。
+ * 卡片是插画（aria-hidden）。服务端直接输出第二阶段（越过额度）的终态，即减弱动效与无 JS 的画面；
+ * 脚本从第一阶段开始循环，离屏 / 后台暂停。
+ */
+import type { Locale } from '../../i18n/content'
+import type { DashboardContent, OnlineScraperPageContent } from '../../i18n/schema'
+import Icon from '../site/Icon.astro'
+import AccentHeading from '../product/AccentHeading.astro'
+import { splitCopy } from '../product/copy'
+import { USAGE_PHASES, USAGE_TOTAL } from './online-samples'
+
+interface Props {
+  locale: Locale
+  usage: OnlineScraperPageContent['usage']
+  dashboard: DashboardContent
+  /** 演示所用档位名（pricing.ts 的 Online Free）。 */
+  planName: string
+}
+
+const { locale, usage, dashboard, planName } = Astro.props
+const { mock } = usage
+const { create, history } = dashboard
+const format = new Intl.NumberFormat(locale)
+const settled = USAGE_PHASES[USAGE_PHASES.length - 1]
+const delivered = settled.items.reduce((sum, [, rows]) => sum + rows, 0)
+const settledUsed = settled.used + delivered
+const [leftBefore, leftAfter] = splitCopy(mock.left, 'count')
+const [taskBefore, taskAfter] = splitCopy(mock.task, 'id')
+const [rowsBefore, rowsAfter] = splitCopy(mock.rows, 'count')
+const [deltaBefore, deltaAfter] = splitCopy(mock.delta, 'count')
+const meterStyle = `--p: ${Math.min(1, settledUsed / USAGE_TOTAL)}; --g: ${Math.min(1, settledUsed / USAGE_TOTAL)}`
+---
+
+<section class="section ou scheme-dark has-deco" id="usage" data-inview>
+  <div class="deco" aria-hidden="true">
+    <div class="bg-grid ou-grid"></div>
+    <div class="ou-glow"></div>
+    <div class="noise"></div>
+  </div>
+
+  <div class="container ou-layout">
+    <div class="ou-copy" data-stagger="80">
+      <span class="kicker" data-reveal>{usage.head.kicker}</span>
+      <h2 class="h2" data-split><AccentHeading title={usage.head.title} accentClass="text-grad" /></h2>
+      <p class="lead" data-reveal>{usage.head.lead}</p>
+      <ul class="check-list" role="list" data-reveal>
+        {usage.checks.map(item => <li>{item}</li>)}
+      </ul>
+    </div>
+
+    <div class="ou-visual" data-reveal="right" data-ou aria-hidden="true">
+      <div class="ou-card is-over is-exhausted" data-state="done">
+        <div class="ou-head">
+          <span>
+            <small>{mock.recordsLabel}</small>
+            <b><span class="mono" data-ou-used>{format.format(settledUsed)}</span> <em>/ {format.format(USAGE_TOTAL)}</em></b>
+          </span>
+          <span class="badge">{planName}</span>
+        </div>
+
+        <!-- 计量条：实色为已计量；条纹为运行中已交付、尚未计量（由 .ou-rest 盖住其后的部分） -->
+        <div class="ou-meter" data-ou-meter style={meterStyle}>
+          <i class="ou-ghost"></i><i class="ou-rest"></i><i class="ou-fill"></i>
+        </div>
+        <div class="ou-scale mono">
+          <span>0</span>
+          <span class="ou-left">{leftBefore}<span data-ou-left>{format.format(Math.max(0, USAGE_TOTAL - settledUsed))}</span>{leftAfter}</span>
+          <span class="ou-left-out">{mock.exhausted}</span>
+        </div>
+
+        <div class="ou-ticket">
+          <div class="ou-ticket-head">
+            <span class="mono">{taskBefore}<span data-ou-task>{settled.no}</span>{taskAfter}</span>
+            <span class="badge ou-run-only">{history.status.processing}</span>
+            <span class="badge badge--ok ou-done-only">{history.status.completed}</span>
+          </div>
+          <div class="ou-items" data-ou-items>
+            {settled.items.map(([keyword, rows]) => (
+              <div class="ou-item is-done">
+                <span class="ou-item-kw mono">{keyword}</span>
+                <b class="mono">
+                  <span class="ou-item-run"><span class="spinner"></span>{mock.running}</span>
+                  <span class="ou-item-done"><Icon name="check" />{rowsBefore}<span>{format.format(rows)}</span>{rowsAfter}</span>
+                </b>
+              </div>
+            ))}
+          </div>
+          <div class="ou-ticket-foot">
+            <span class="ou-run-only">{mock.pending}</span>
+            <span class="ou-done-only">{mock.counted}</span>
+            <b class="mono" data-ou-sum>{format.format(delivered)}</b>
+          </div>
+        </div>
+
+        <div class="ou-submit">
+          <span class="ou-start">{create.submit}</span>
+          <span class="ou-msg ou-msg--reset">{create.reset}</span>
+          <span class="ou-msg ou-msg--exhausted">{create.exhausted}</span>
+        </div>
+      </div>
+
+      <div class="ou-delta mono" data-ou-delta>{deltaBefore}<span data-ou-delta-count>{format.format(delivered)}</span>{deltaAfter}</div>
+
+      <template data-ou-item-template>
+        <div class="ou-item">
+          <span class="ou-item-kw mono" data-keyword></span>
+          <b class="mono">
+            <span class="ou-item-run"><span class="spinner"></span>{mock.running}</span>
+            <span class="ou-item-done"><Icon name="check" />{rowsBefore}<span data-rows></span>{rowsAfter}</span>
+          </b>
+        </div>
+      </template>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { countTo, formatNumber, reducedMotion, visibilityGate } from '../../scripts/site/motion'
+  import { part, stamp } from '../../scripts/pages/product-page'
+  import { USAGE_PHASES, USAGE_TOTAL, type UsagePhase } from './online-samples'
+
+  function initUsage(root: HTMLElement): void {
+    const gate = visibilityGate(root, 0.3)
+    const card = part(root, '.ou-card', HTMLElement)
+    const used = part(root, '[data-ou-used]', HTMLElement)
+    const meter = part(root, '[data-ou-meter]', HTMLElement)
+    const left = part(root, '[data-ou-left]', HTMLElement)
+    const task = part(root, '[data-ou-task]', HTMLElement)
+    const items = part(root, '[data-ou-items]', HTMLElement)
+    const sum = part(root, '[data-ou-sum]', HTMLElement)
+    const delta = part(root, '[data-ou-delta]', HTMLElement)
+    const deltaCount = part(root, '[data-ou-delta-count]', HTMLElement)
+
+    const setMeter = (usedRecords: number, delivered: number) => {
+      meter.style.setProperty('--p', Math.min(1, usedRecords / USAGE_TOTAL).toFixed(4))
+      meter.style.setProperty('--g', Math.min(1, (usedRecords + delivered) / USAGE_TOTAL).toFixed(4))
+      left.textContent = formatNumber(Math.max(0, USAGE_TOTAL - usedRecords))
+      card.classList.toggle('is-over', usedRecords >= USAGE_TOTAL)
+    }
+
+    const setup = (phase: UsagePhase) => {
+      card.classList.remove('is-exhausted')
+      card.dataset.state = 'run'
+      used.textContent = formatNumber(phase.used)
+      setMeter(phase.used, 0)
+      task.textContent = phase.no
+      sum.textContent = '0'
+      const rows = phase.items.map(([keyword]) => {
+        const row = stamp(root, '[data-ou-item-template]', HTMLElement)
+        part(row, '[data-keyword]', HTMLElement).textContent = keyword
+        return row
+      })
+      items.replaceChildren(...rows)
+      return rows
+    }
+
+    void (async () => {
+      for (let index = 0; ; index = (index + 1) % USAGE_PHASES.length) {
+        await gate.wait()
+        const phase = USAGE_PHASES[index]
+        const rows = setup(phase)
+        await gate.nap(900)
+        // 运行中：已交付的行只显示为条纹占位，不计入本月用量
+        let delivered = 0
+        await Promise.all(
+          phase.items.map(async ([, rowCount, duration], rowIndex) => {
+            await gate.nap(duration)
+            rows[rowIndex].classList.add('is-done')
+            part(rows[rowIndex], '[data-rows]', HTMLElement).textContent = formatNumber(rowCount)
+            const before = delivered
+            delivered += rowCount
+            void countTo(sum, before, delivered, 500)
+            setMeter(phase.used, delivered)
+          })
+        )
+        await gate.nap(900)
+        // 完成后才按实际交付行计量；越过额度后不能再提交新任务
+        const after = phase.used + delivered
+        card.dataset.state = 'done'
+        setMeter(after, 0)
+        void countTo(used, phase.used, after, 900)
+        deltaCount.textContent = formatNumber(delivered)
+        delta.classList.add('is-on')
+        card.classList.toggle('is-exhausted', after >= USAGE_TOTAL)
+        await gate.nap(1600)
+        delta.classList.remove('is-on')
+        await gate.nap(index === USAGE_PHASES.length - 1 ? 2600 : 1400)
+      }
+    })()
+  }
+
+  // 减弱动效下保留服务端输出的终态
+  const root = document.querySelector<HTMLElement>('[data-ou]')
+  if (root && !reducedMotion()) initUsage(root)
+</script>
+
+<style>
+  .ou {
+    overflow: hidden;
+  }
+
+  .ou-grid {
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 70% 50%, var(--mask-solid) 15%, transparent 75%);
+    mask-image: radial-gradient(ellipse 80% 70% at 70% 50%, var(--mask-solid) 15%, transparent 75%);
+  }
+
+  .ou-glow {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(40% 50% at 76% 42%, color-mix(in srgb, var(--primary) 26%, transparent), transparent 70%),
+      radial-gradient(30% 40% at 8% 90%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+  }
+
+  .ou-layout {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    align-items: center;
+    gap: clamp(40px, 6vw, 96px);
+  }
+
+  .ou-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .ou-visual {
+    position: relative;
+  }
+
+  .ou-card {
+    display: grid;
+    gap: 16px;
+    padding: clamp(18px, 2.2vw, 24px);
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg), var(--hairline-hl);
+  }
+
+  .ou-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .ou-head small {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .ou-head b {
+    font-size: var(--fs-h3);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .ou-head em {
+    color: var(--text-3);
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  .ou-meter {
+    position: relative;
+    height: 12px;
+    overflow: hidden;
+    border-radius: var(--r-full);
+    background: var(--surface-3);
+  }
+
+  .ou-meter i {
+    position: absolute;
+    inset: 0;
+    transform-origin: 0 50%;
+  }
+
+  .ou-ghost {
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--primary) 60%, transparent) 0 4px,
+      transparent 4px 8px
+    );
+  }
+
+  .ou-rest {
+    background: var(--surface-3);
+    transform: translateX(calc(var(--g, 0) * 100%));
+    transition: transform var(--dur-3) var(--ease-out);
+  }
+
+  .ou-fill {
+    border-radius: inherit;
+    background: var(--grad-brand);
+    transform: scaleX(var(--p, 0));
+    transition: transform var(--dur-5) var(--ease-out);
+  }
+
+  .ou-card.is-over .ou-fill {
+    background: linear-gradient(90deg, var(--warn), var(--bad));
+  }
+
+  .ou-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -8px;
+    color: var(--text-3);
+    font-size: 11px;
+  }
+
+  .ou-left-out {
+    display: none;
+  }
+
+  .ou-card.is-over .ou-left {
+    display: none;
+  }
+
+  .ou-card.is-over .ou-left-out {
+    display: inline;
+    color: var(--warn);
+  }
+
+  .ou-ticket {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border: 1px dashed var(--border-2);
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+  }
+
+  .ou-ticket-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--text-2);
+    font-size: 12.5px;
+  }
+
+  .ou-card[data-state='run'] .ou-done-only,
+  .ou-card[data-state='done'] .ou-run-only {
+    display: none;
+  }
+
+  .ou-items {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ou-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    font-size: 12px;
+  }
+
+  .ou-item-kw {
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ou-item b {
+    color: var(--text-2);
+    font-weight: 600;
+  }
+
+  .ou-item-run,
+  .ou-item-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ou-item .spinner {
+    width: 12px;
+    height: 12px;
+  }
+
+  .ou-item-done :global(.icon) {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ou-item.is-done b {
+    color: var(--ok);
+  }
+
+  .ou-item.is-done .ou-item-run,
+  .ou-item:not(.is-done) .ou-item-done {
+    display: none;
+  }
+
+  .ou-ticket-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .ou-ticket-foot b {
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .ou-submit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+  }
+
+  /* mock 的提交按钮（插画里的样子，不是站点按钮） */
+  .ou-start {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: var(--r-full);
+    background: var(--primary);
+    color: var(--primary-fg);
+    font-size: 12.5px;
+    font-weight: 650;
+    transition:
+      opacity var(--dur-3),
+      filter var(--dur-3);
+  }
+
+  .ou-card.is-exhausted .ou-start {
+    filter: grayscale(0.6);
+    opacity: 0.45;
+  }
+
+  .ou-msg {
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .ou-msg--exhausted,
+  .ou-card.is-exhausted .ou-msg--reset {
+    display: none;
+  }
+
+  .ou-card.is-exhausted .ou-msg--exhausted {
+    display: inline;
+    color: var(--warn);
+    font-weight: 600;
+  }
+
+  .ou-delta {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    padding: 6px 12px;
+    border-radius: var(--r-full);
+    background: var(--ok);
+    color: var(--ok-fg);
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.9);
+    transition:
+      opacity var(--dur-3) var(--ease-out),
+      transform var(--dur-3) var(--ease-out);
+    pointer-events: none;
+  }
+
+  .ou-delta.is-on {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (max-width: 1080px) {
+    .ou-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

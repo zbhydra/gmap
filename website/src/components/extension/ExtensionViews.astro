@@ -1,0 +1,449 @@
+---
+/**
+ * 插件页三种 Maps 视图（设计稿 extension.html ③）：搜索结果、商家页 Reviews & Photos、保存列表。
+ * 卡片顶部的微型演示：结果列表匀速滚动、计数从 0 涨到样例值、保存列表逐项打开打勾；离屏暂停，
+ * 减弱动效下停在计数终值与全部打勾。
+ */
+import type { ExtensionPageContent } from '../../i18n/schema'
+import Icon from '../site/Icon.astro'
+import { fillCopy, splitCopy } from '../product/copy'
+import ProductSectionHead from '../product/ProductSectionHead.astro'
+import { VIEW_SAMPLES } from './extension-samples'
+
+interface Props {
+  views: ExtensionPageContent['views']
+  /** 「Extracting {count}…」，与首屏面板同一条文案。 */
+  extracting: string
+}
+
+const { views, extracting } = Astro.props
+const [extractingBefore, extractingAfter] = splitCopy(extracting, 'count')
+const [reviewsBefore, reviewsAfter] = splitCopy(views.place.reviewsCount, 'count')
+const [photosBefore, photosAfter] = splitCopy(views.place.photosCount, 'count')
+// 两遍相同的行，滚动半程即无缝回到起点
+const searchRows = [...VIEW_SAMPLES.searchRatings, ...VIEW_SAMPLES.searchRatings]
+const savedRows = Array.from({ length: VIEW_SAMPLES.savedRows }, (_, index) => index)
+---
+
+<section class="section xv band" id="views" data-inview>
+  <div class="container">
+    <ProductSectionHead head={views.head} />
+
+    <div class="feature-grid" data-spotlight-group data-stagger="110" data-xv>
+      <article class="feature card xv-card" data-spotlight data-reveal>
+        <div class="xv-visual" aria-hidden="true">
+          <div class="xv-win">
+            <div class="xv-winbar"><span class="xv-q"><Icon name="search" />{VIEW_SAMPLES.searchQuery}</span></div>
+            <div class="xv-scroll">
+              <div class="xv-scroll-track">
+                {searchRows.map(rating => <div class="xv-row"><i class="xv-pin"></i><span class="skel"></span><b>{rating.toFixed(1)}</b></div>)}
+              </div>
+              <span class="xv-thumb"></span>
+            </div>
+          </div>
+          <span class="xv-badge"><span class="spinner"></span>{extractingBefore}<b data-xv-count={VIEW_SAMPLES.searchCount}>{VIEW_SAMPLES.searchCount}</b>{extractingAfter}</span>
+        </div>
+        <span class="icon-tile"><Icon name="search" /></span>
+        <h3>{views.search.title}</h3>
+        <p>{views.search.description}</p>
+      </article>
+
+      <article class="feature card xv-card" data-spotlight data-reveal>
+        <div class="xv-visual" aria-hidden="true">
+          <div class="xv-win">
+            <div class="xv-cover"><i style="--tone: var(--star)"></i><i style="--tone: var(--primary)"></i><i style="--tone: var(--accent)"></i></div>
+            <div class="xv-place-body">
+              <span class="skel xv-place-name"></span>
+              <div class="xv-tabs"><span>{views.place.tabs[0]}</span><span class="is-on">{views.place.tabs[1]}</span></div>
+              <div class="xv-act">
+                <span class="xv-act-btn">{views.place.reviewsCta}</span>
+                <span class="xv-act-count mono">{reviewsBefore}<b data-xv-count={VIEW_SAMPLES.reviewsCount}>{VIEW_SAMPLES.reviewsCount}</b>{reviewsAfter}</span>
+              </div>
+              <div class="xv-act">
+                <span class="xv-act-btn xv-act-btn--alt">{views.place.photosCta}</span>
+                <span class="xv-act-count mono">{photosBefore}<b data-xv-count={VIEW_SAMPLES.photosCount}>{VIEW_SAMPLES.photosCount}</b>{photosAfter}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="icon-tile icon-tile--pin"><Icon name="building" /></span>
+        <h3>{views.place.title}</h3>
+        <p>{views.place.description}</p>
+      </article>
+
+      <article class="feature card xv-card" data-spotlight data-reveal>
+        <div class="xv-visual xv-saved" aria-hidden="true" data-xv-saved>
+          <div class="xv-win">
+            <div class="xv-winbar"><span class="xv-q"><Icon name="star" class="icon--fill" />{fillCopy(views.saved.listName, { count: VIEW_SAMPLES.savedCount })}</span></div>
+            <div class="xv-saved-list">
+              <span class="xv-saved-hl" data-xv-highlight></span>
+              {savedRows.map(index => <div class="xv-srow" style={`--i: ${index}`}><span class="skel"></span><i class="xv-check"></i></div>)}
+            </div>
+          </div>
+        </div>
+        <span class="icon-tile icon-tile--ok"><Icon name="list" /></span>
+        <h3>{views.saved.title}</h3>
+        <p>{views.saved.description}</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { ease, reducedMotion, tween, visibilityGate } from '../../scripts/site/motion'
+  import { part } from '../../scripts/pages/product-page'
+
+  function initViews(grid: HTMLElement): void {
+    const saved = part(grid, '[data-xv-saved]', HTMLElement)
+    const rows = Array.from(saved.querySelectorAll('.xv-srow'))
+    if (reducedMotion()) {
+      rows.forEach(row => row.classList.add('is-done'))
+      return
+    }
+    const gate = visibilityGate(grid, 0.2)
+
+    // 计数：从 0 涨到样例值后停留，再归零循环
+    grid.querySelectorAll<HTMLElement>('[data-xv-count]').forEach((counter, order) => {
+      const target = Number(counter.dataset.xvCount)
+      counter.textContent = '0'
+      void (async () => {
+        for (;;) {
+          await gate.wait()
+          await tween(4200 + order * 600, progress => {
+            counter.textContent = String(Math.round(target * progress))
+          }, ease.inOutCubic)
+          await gate.nap(2200)
+          counter.textContent = '0'
+          await gate.nap(400)
+        }
+      })()
+    })
+
+    // 保存列表：高亮逐行下移，打开过的行打勾
+    const highlight = part(saved, '[data-xv-highlight]', HTMLElement)
+    void (async () => {
+      for (;;) {
+        await gate.wait()
+        saved.classList.add('is-walking')
+        for (const [index, row] of rows.entries()) {
+          highlight.style.setProperty('--row', String(index))
+          await gate.nap(650)
+          row.classList.add('is-done')
+          await gate.nap(350)
+        }
+        saved.classList.remove('is-walking')
+        await gate.nap(1800)
+        rows.forEach(row => row.classList.remove('is-done'))
+        highlight.style.setProperty('--row', '0')
+        await gate.nap(500)
+      }
+    })()
+  }
+
+  const grid = document.querySelector<HTMLElement>('[data-xv]')
+  if (grid) initViews(grid)
+</script>
+
+<style>
+  .xv-card {
+    padding-top: 14px;
+  }
+
+  .xv-visual {
+    position: relative;
+    height: 198px;
+    margin: 0 -14px 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background-color: var(--bg-2);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .xv-win {
+    position: absolute;
+    inset: 18px 20px -1px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: var(--r-sm) var(--r-sm) 0 0;
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  .xv-winbar {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .xv-q {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 26px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    color: var(--text);
+    font-size: 11.5px;
+    font-weight: 500;
+  }
+
+  .xv-q :global(.icon) {
+    width: 12px;
+    height: 12px;
+    color: var(--text-3);
+  }
+
+  .xv-saved .xv-q :global(.icon) {
+    color: var(--star);
+  }
+
+  /* 结果列表匀速滚动（T4 常驻循环，只动 transform） */
+  .xv-scroll {
+    position: relative;
+    height: calc(100% - 40px);
+    overflow: hidden;
+  }
+
+  .xv-scroll-track {
+    animation: xv-scroll 10s linear infinite;
+  }
+
+  @keyframes xv-scroll {
+    to {
+      transform: translateY(-50%);
+    }
+  }
+
+  .xv-row {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr) 28px;
+    align-items: center;
+    gap: 10px;
+    height: 34px;
+    padding: 0 14px 0 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .xv-row b {
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    text-align: right;
+  }
+
+  /* 静态占位条：不要骨架扫光 */
+  .xv-row .skel,
+  .xv-srow .skel {
+    height: 8px;
+  }
+
+  .xv-row .skel::after,
+  .xv-srow .skel::after,
+  .xv-place-name::after {
+    content: none;
+  }
+
+  .xv-row:nth-child(3n + 2) .skel {
+    width: 78%;
+  }
+
+  .xv-row:nth-child(3n) .skel {
+    width: 64%;
+  }
+
+  .xv-pin {
+    width: 10px;
+    height: 10px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--pin);
+    transform: rotate(-45deg);
+  }
+
+  .xv-thumb {
+    position: absolute;
+    top: 6px;
+    right: 3px;
+    width: 4px;
+    height: 34px;
+    border-radius: var(--r-full);
+    background: var(--border-2);
+    animation: xv-thumb 10s linear infinite;
+  }
+
+  @keyframes xv-thumb {
+    to {
+      transform: translateY(70px);
+    }
+  }
+
+  .xv-badge {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+  }
+
+  .xv-badge b,
+  .xv-act-count b {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .xv-badge .spinner {
+    width: 12px;
+    height: 12px;
+    border-width: 1.5px;
+    color: var(--primary);
+  }
+
+  /* 商家页：封面 + Reviews & Photos 标签 */
+  .xv-cover {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 2px;
+    height: 52px;
+  }
+
+  .xv-cover i {
+    background: linear-gradient(160deg, color-mix(in srgb, var(--tone) 40%, var(--surface)), var(--tone));
+  }
+
+  .xv-place-body {
+    display: grid;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .xv-place-name {
+    width: 56%;
+    height: 9px;
+  }
+
+  .xv-tabs {
+    display: flex;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .xv-tabs span {
+    padding-bottom: 6px;
+    color: var(--text-3);
+  }
+
+  .xv-tabs .is-on {
+    box-shadow: inset 0 -2px 0 var(--primary);
+    color: var(--primary-text);
+  }
+
+  .xv-act {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .xv-act-btn {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: var(--r-full);
+    background: var(--primary);
+    color: var(--primary-fg);
+    font-size: 10.5px;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+
+  .xv-act-btn--alt {
+    background: var(--primary-soft);
+    color: var(--primary-text);
+  }
+
+  .xv-act-count {
+    color: var(--text-3);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* 保存列表：高亮逐行下移，打开过的行打勾 */
+  .xv-saved-list {
+    position: relative;
+  }
+
+  .xv-saved-hl {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 30px;
+    background: var(--primary-soft);
+    box-shadow: inset 3px 0 0 var(--primary);
+    opacity: 0;
+    transform: translateY(calc(var(--row, 0) * 30px));
+    transition:
+      transform var(--dur-3) var(--ease-out),
+      opacity var(--dur-3) var(--ease-out);
+  }
+
+  .xv-saved.is-walking .xv-saved-hl {
+    opacity: 1;
+  }
+
+  .xv-srow {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 16px;
+    align-items: center;
+    gap: 10px;
+    height: 30px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .xv-srow .skel {
+    width: calc(78% - var(--i) * 7%);
+  }
+
+  .xv-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--check-mark) center / 10px no-repeat, var(--accent);
+    opacity: 0;
+    transform: scale(0.4);
+    transition:
+      opacity var(--dur-2) var(--ease-out),
+      transform var(--dur-3) var(--ease-spring);
+  }
+
+  .xv-srow.is-done .xv-check {
+    opacity: 1;
+    transform: none;
+  }
+</style>

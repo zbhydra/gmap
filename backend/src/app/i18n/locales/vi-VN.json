@@ -43,6 +43,8 @@
         "proxy_url": "Sai định dạng proxies tại mục {index}: dùng http://tên:mật_khẩu@IP:cổng (bỏ thông tin đăng nhập nếu không cần). Hỗ trợ http, https, socks5, socks5h; không hỗ trợ IP:cổng:tên:mật_khẩu."
     },
     "resp_code": {
+    "MAPS_API_QUOTA_EXHAUSTED": "Đã hết hạn mức yêu cầu API tháng này. Hãy đợi đặt lại hoặc nâng cấp gói.",
+    "MCP_OAUTH_REQUEST_INVALID": "Yêu cầu ủy quyền không hợp lệ hoặc đã hết hạn. Hãy kết nối lại ứng dụng.",
         "INTERNAL_SERVER_ERROR": "Lỗi máy chủ nội bộ",
         "INVALID_REQUEST": "Yêu cầu không hợp lệ",
         "EXTERNAL_API_KEY_INVALID": "Khóa API bên ngoài không hợp lệ",
@@ -122,5 +124,11 @@
         "brand_name": "MapsGrab",
         "brand_slogan": "An toàn · Nhanh chóng · Tiện lợi",
         "subject": "Đăng Nhập Bằng Mã Xác Minh"
+    },
+  "mcp": {
+    "tools": {
+      "search_places": "Tìm địa điểm Google Maps. Mỗi lệnh gọi thành công dùng một yêu cầu API. page: số trang (1–10); ll: @lat,lng,zoom.",
+      "list_reviews": "Đọc đánh giá Google Maps bằng fid và cursor tùy chọn. Mỗi lệnh gọi thành công dùng một yêu cầu API."
     }
+  }
 }

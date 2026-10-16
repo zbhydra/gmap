@@ -1,597 +1,650 @@
 ---
 /**
- * Pricing 页面 DOM 壳（三产品类别 tab 版）。
+ * Pricing 页面主体（设计稿 pricing.html，README §7「定价」①–⑦）。
  *
- * Online / Extension / API 三条产品类别各一个 tab；SSR 静态渲染全部档位卡，
- * 付费卡购买按钮由 pricing-page-controller.ts 接支付配置后启用。tab 切换与
- * 升级资格派生在 controller 内完成；账户摘要、退出与渠道管理已迁 Dashboard
- * 订阅页，本页只负责套餐比较、购买与升级（匿名购买在原页打开 Layout 装配的
- * 站级登录弹窗）。支付流程交给公共 OrderCheckoutModal，避免本页维护第二套
- * 支付弹窗和订单轮询。
+ * - 产品切换是站级 [data-tabs]：tab 选中态是当前产品线的唯一状态源。URL（hash / product_kind）
+ *   同步与购买在 pricing-page-controller.ts，对比表跟随、价格滚动、估算条与用量动画在 pricing-page.ts。
+ * - 方案卡与对比表逐字取自 pricing 文案；付费卡购买交给公共 OrderCheckoutModal。插件与 API 的
+ *   购买、插件安装与 API 免费档入口按 lib/capabilities.ts 灰化（不输出 data-pricing-buy 与链接），
+ *   Online 购买链路照常可用。
+ * - 用量动画的样例商户与请求日志虚构（pricing-samples.ts），在 <template> 里构建期输出，
+ *   脚本按 data-preset 克隆预置行并循环插入、计数。
  */
 import OrderCheckoutModal from '../order-checkout/OrderCheckoutModal.astro'
-import type { AccountContent, PricingPageContent, PricingTabId } from '../../i18n/schema'
+import CapabilityAction from '../site/CapabilityAction.astro'
+import Icon from '../site/Icon.astro'
+import SoonBadge from '../site/SoonBadge.astro'
+import SplitWords from '../site/SplitWords.astro'
+import type { Locale } from '../../i18n/content'
+import type {
+  AccountContent,
+  PricingBillingFactId,
+  PricingCompareCell,
+  PricingPageContent,
+  PricingTabContent,
+  PricingTabId
+} from '../../i18n/schema'
+import { localePaths } from '../../i18n/ui'
+import { capabilities, type Capability } from '../../lib/capabilities'
+import { finderMatch, finderPosition, finderScale, finderVolume, quotaValue } from './pricing-finder'
+import {
+  RESET_AXIS_DATES,
+  USAGE_BUSINESSES,
+  USAGE_BUSINESS_PRESET,
+  USAGE_CALLS,
+  USAGE_CALL_PRESET,
+  USAGE_USED,
+  type UsageCall
+} from './pricing-samples'
+import './pricing.css'
 
 interface Props {
+  locale: Locale
   copy: PricingPageContent
   accountCopy: AccountContent
-  faqLabel: string
-  /** 各 tab Free 卡引导落地页路径（键为 PricingTabId）。 */
-  freeCtaPaths: Record<PricingTabId, string>
 }
 
-const { copy, accountCopy, faqLabel, freeCtaPaths } = Astro.props as Props
-const tabIds: PricingTabId[] = ['online', 'extension', 'api']
+const { locale, copy, accountCopy } = Astro.props
+const { hero, plansSection, compare, usage, billing, faq, cta } = copy
+
+const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const paths = {
+  online: `${localePrefix}/online-scraper/`,
+  api: `${localePrefix}/google-maps-scraper-api/`,
+  contact: `${localePrefix}/contact/`
+}
+const installHref = (medium: string) =>
+  `${localePrefix}/extension/?utm_source=website&utm_medium=pricing-${medium}&utm_campaign=install#install`
+
+/** 产品线的展示与能力开关；能力为 null 表示已交付。 */
+interface LineView {
+  icon: string
+  quotaIcon: string
+  billingIcons: readonly [string, string, string]
+  free: { href: string; capability: Capability | null }
+  buyCapability: Capability | null
+}
+
+const TAB_IDS: readonly PricingTabId[] = ['online', 'extension', 'api']
+const LINES: Record<PricingTabId, LineView> = {
+  online: {
+    icon: 'cloud',
+    quotaIcon: 'database',
+    billingIcons: ['calendar', 'clock', 'refresh'],
+    free: { href: paths.online, capability: null },
+    buyCapability: null
+  },
+  extension: {
+    icon: 'puzzle',
+    quotaIcon: 'database',
+    billingIcons: ['refresh', 'calendar', 'settings'],
+    free: { href: installHref('free'), capability: 'extensionInstall' },
+    buyCapability: 'extensionPurchase'
+  },
+  api: {
+    icon: 'code',
+    quotaIcon: 'zap',
+    billingIcons: ['calendar', 'clock', 'refresh'],
+    free: { href: paths.api, capability: 'scraperApi' },
+    buyCapability: 'scraperApi'
+  }
+}
+const BILLING_FACTS: ReadonlyArray<readonly [PricingBillingFactId, string]> = [
+  ['channels', 'credit-card'],
+  ['cadence', 'calendar'],
+  ['upgrade', 'trend'],
+  ['independent', 'layers']
+]
+const RECORD_ATTACHMENT_ICONS = ['phone', 'clock', 'mail'] as const
+
+const numberFormat = new Intl.NumberFormat(locale)
+// 估算条刻度标签用紧凑写法（1K / 20K），完整数字在卡面与读屏取值里
+const compactFormat = new Intl.NumberFormat(locale, { notation: 'compact' })
+const axisFormat = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', timeZone: 'UTC' })
+const fill = (template: string, values: Record<string, string>) =>
+  template.replace(/\{(\w+)\}/g, (_, key: string) => values[key] ?? '')
+
+/** 卡面价拆成币种符号与整数金额（价格滚动只动金额）。 */
+function splitPrice(price: string): { symbol: string; amount: number } {
+  const match = /^(\D+)(\d+)$/.exec(price)
+  if (!match) throw new Error(`[pricing] Unsupported price format "${price}".`)
+  return { symbol: match[1], amount: Number(match[2]) }
+}
+
+/** 本线首个付费档（产品切换的起价）。 */
+function firstPaidCard(tab: PricingTabContent) {
+  const card = tab.cards.find(item => item.status === 'buyable')
+  if (!card) throw new Error(`[pricing] Tab "${tab.name}" has no buyable plan.`)
+  return card
+}
+
+/** 估算条：刻度、刻度点（与前一点距离过近时标签错到第二行）与初值（推荐档额度）。 */
+function finderView(tab: PricingTabContent) {
+  const quotas = tab.cards.map(card => quotaValue(card.quota))
+  const scale = finderScale(quotas)
+  let lastX = -1
+  let low = false
+  const ticks = tab.cards.map((card, index) => {
+    const x = finderPosition(scale, quotas[index])
+    low = x - lastX < 0.12 && !low
+    lastX = x
+    return { name: card.name, quota: quotas[index], x, low }
+  })
+  const featured = Math.max(0, tab.cards.findIndex(card => card.featured))
+  const position = Math.round(finderPosition(scale, quotas[featured]) * 1000) / 1000
+  const volume = finderVolume(scale, position)
+  const match = finderMatch(quotas, volume)
+  return { ticks, position, volume, match, hasLow: ticks.some(tick => tick.low) }
+}
+// 估算结果按 {value} 拆成前后两段，中间的用量由脚本更新
+const [resultBefore, resultAfter = ''] = plansSection.finder.result.split('{value}')
+
+/** 对比表一行的单元格。 */
+type CompareCellView = { kind: 'yes' } | { kind: 'no' } | { kind: 'text'; text: string } | { kind: 'mono'; text: string }
+type CompareRowView = { kind: 'group'; label: string } | { kind: 'row'; label: string; cells: readonly CompareCellView[] }
+
+const compareCell = (cell: PricingCompareCell): CompareCellView =>
+  cell === true ? { kind: 'yes' } : cell === false ? { kind: 'no' } : { kind: 'text', text: cell }
+
+/** 对比表行：额度与计费两行取卡面 quota / periodLabel，其余按文案分组展开。 */
+function compareRows(tab: PricingTabContent): CompareRowView[] {
+  const rows: CompareRowView[] = [
+    { kind: 'group', label: compare.volumeGroup },
+    { kind: 'row', label: tab.compare.volume, cells: tab.cards.map(card => ({ kind: 'mono', text: numberFormat.format(quotaValue(card.quota)) })) },
+    { kind: 'row', label: compare.billing, cells: tab.cards.map(card => ({ kind: 'text', text: card.periodLabel })) }
+  ]
+  for (const group of tab.compare.groups) {
+    rows.push({ kind: 'group', label: group.label })
+    for (const row of group.rows) {
+      if (row.cells.length !== tab.cards.length) {
+        throw new Error(`[pricing] Compare row "${row.label}" has ${row.cells.length} cells for ${tab.cards.length} plans.`)
+      }
+      rows.push({ kind: 'row', label: row.label, cells: row.cells.map(compareCell) })
+    }
+  }
+  return rows
+}
+
+const meters = {
+  records: { used: USAGE_USED.records, limit: quotaValue(firstPaidCard(copy.tabs.online).quota) },
+  requests: { used: USAGE_USED.requests, limit: quotaValue(firstPaidCard(copy.tabs.api).quota) }
+}
+const callOk = (call: UsageCall) => call.status === 200
+
+// controller 只消费购买链路文案；popupBlocked 与 checkout 弹窗共用 AccountContent 的单键
+const controllerCopy = {
+  tabs: Object.fromEntries(TAB_IDS.map(tabId => [tabId, { checkout: copy.tabs[tabId].checkout }])),
+  plans: copy.plans,
+  upgrade: copy.upgrade,
+  popupBlocked: accountCopy.creditPurchase.popupBlocked
+}
 ---
 
-<section
-  class="pricing-page"
-  data-pricing-page
->
-  {/* popupBlocked 单键复用：checkout 支付窗口被拦截时共用 AccountContent 的文案 */}
-  <script
-    is:inline
-    type="application/json"
-    data-pricing-copy
-    set:html={JSON.stringify({ ...copy, popupBlocked: accountCopy.creditPurchase.popupBlocked })}
-  />
+<div class="pricing" data-pricing-page>
+  <script is:inline type="application/json" data-pricing-copy set:html={JSON.stringify(controllerCopy)} />
 
-  <div class="container pricing-container">
-    <header class="pricing-hero">
-      <p class="pricing-hero-eyebrow">{copy.hero.eyebrow}</p>
-      <h1 class="pricing-hero-title" data-pricing-hero-title>{copy.hero.title}</h1>
-      <p class="pricing-hero-description" data-pricing-hero-description>{copy.hero.description}</p>
-    </header>
+  <!-- ① Hero + 产品切换（与 URL hash / product_kind 同步） -->
+  <section class="page-hero page-hero--center page-hero--compact pricing-hero has-deco" data-inview>
+    <div class="deco" aria-hidden="true">
+      <div class="aurora"><i></i><i></i><i></i></div>
+      <div class="bg-contours"></div>
+      <div class="bg-grid"></div>
+      <div class="noise"></div>
+    </div>
 
-    <section class="pricing-plans" aria-labelledby="pricing-plans-title">
-      <h2 id="pricing-plans-title" class="visually-hidden">{copy.hero.title}</h2>
-
-      <div class="pricing-tabs" role="tablist" aria-label={copy.hero.eyebrow}>
-        {
-          tabIds.map((tabId, index) => (
-            <button
-              type="button"
-              class="pricing-tab"
-              role="tab"
-              id={`pricing-tab-${tabId}`}
-              data-pricing-tab={tabId}
-              aria-selected={index === 0 ? 'true' : 'false'}
-              aria-controls={`pricing-panel-${tabId}`}
-            >
-              {copy.tabLabels[tabId]}
-            </button>
-          ))
-        }
+    <div class="container">
+      <div class="page-hero-copy">
+        <span class="kicker" data-enter>{hero.kicker}</span>
+        <h1 class="h1 pricing-title" data-split="static" style="--split-delay: 90ms">
+          <SplitWords parts={[hero.title.lead, { text: hero.title.accent, class: 'accent text-grad is-animated' }, hero.title.tail]} />
+        </h1>
+        <p class="lead" data-enter style="--enter-delay: 180ms">{hero.lead}</p>
+        <div class="page-hero-meta" data-enter style="--enter-delay: 270ms">
+          {hero.meta.map(item => <span><Icon name="check" />{item}</span>)}
+        </div>
       </div>
 
-      {
-        tabIds.map((tabId, index) => {
-          const tab = copy.tabs[tabId]
-          return (
+      <div class="plan-switch-wrap" data-tabs data-pricing-tabs data-reveal="rise" data-reveal-onload="520">
+        <div class="plan-switch" role="tablist" aria-label={hero.switchLabel}>
+          <span class="seg-thumb plan-switch-thumb" aria-hidden="true"></span>
+          {TAB_IDS.map((tabId, index) => {
+            const tab = copy.tabs[tabId]
+            return (
+              <button
+                class="plan-switch-btn"
+                type="button"
+                role="tab"
+                id={`pricing-tab-${tabId}`}
+                data-tab={tabId}
+                data-pricing-tab={tabId}
+                aria-controls={`pricing-panel-${tabId}`}
+                aria-selected={index === 0 ? 'true' : 'false'}
+              >
+                <span class="ps-icon"><Icon name={LINES[tabId].icon} /></span>
+                <span class="ps-copy">
+                  <span class="ps-name">{tab.name}</span>
+                  <span class="ps-meta">{fill(tab.switchMeta, { price: firstPaidCard(tab).price })}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 方案面板：表头 / 计费方式 / 用量估算条 / 方案卡 / 额度注记 -->
+  <section class="plans" id="plans" aria-label={plansSection.label}>
+    <div class="container-wide">
+      {TAB_IDS.map((tabId, panelIndex) => {
+        const tab = copy.tabs[tabId]
+        const line = LINES[tabId]
+        const finder = finderView(tab)
+        const buyAvailable = line.buyCapability === null || capabilities[line.buyCapability]
+        return (
+          <div
+            class="plan-panel"
+            role="tabpanel"
+            id={`pricing-panel-${tabId}`}
+            aria-labelledby={`pricing-tab-${tabId}`}
+            data-pricing-panel={tabId}
+            hidden={panelIndex !== 0}
+          >
+            <header class="plan-head">
+              <span class="kicker">{tab.eyebrow}</span>
+              <h2 class="h3 plan-title">{tab.title}</h2>
+              <p class="plan-desc">{tab.description}</p>
+              <div class="plan-billing">
+                {tab.billingChips.map((chip, index) => <span class="chip"><Icon name={line.billingIcons[index]} />{chip}</span>)}
+              </div>
+            </header>
+
             <div
-              class="pricing-panel"
-              role="tabpanel"
-              id={`pricing-panel-${tabId}`}
-              data-pricing-panel={tabId}
-              aria-labelledby={`pricing-tab-${tabId}`}
-              hidden={index !== 0}
+              class:list={['finder', { 'has-low': finder.hasLow }]}
+              data-finder
+              data-value-text={fill(plansSection.finder.valueText, { unit: tab.unit, value: '{value}', plan: '{plan}' })}
             >
-              <header class="pricing-panel-header">
-                <p class="eyebrow">{tab.eyebrow}</p>
-                <h3>{tab.title}</h3>
-                <p class="section-description">{tab.description}</p>
-              </header>
-              <div class="plans-grid">
-                {tab.cards.map(card => (
-                  <article
-                    class:list={['plan-card', { 'plan-card-featured': card.featured }]}
-                    data-plan-card={card.productId ?? card.id}
+              <div class="finder-top">
+                <label class="finder-label" for={`finder-${tabId}`}>{fill(plansSection.finder.label, { unit: tab.unit })}</label>
+                <output class="finder-out" for={`finder-${tabId}`}>
+                  {fill(resultBefore, { unit: tab.unit })}<b data-finder-value>{numberFormat.format(finder.volume)}</b>{fill(resultAfter, { unit: tab.unit })}
+                  <Icon name="arrow-right" class="finder-arrow" />
+                  <span class="finder-plan"><Icon name="check" /><span data-finder-plan>{tab.cards[finder.match].name}</span></span>
+                </output>
+              </div>
+              <div class="finder-track" style={`--p: ${finder.position}`}>
+                <span class="finder-rail"></span>
+                <span class="finder-fill"></span>
+                {finder.ticks.map((tick, index) => (
+                  <span
+                    class:list={['finder-tick', { 'is-low': tick.low, 'is-reached': tick.x <= finder.position + 0.0005, 'is-match': index === finder.match }]}
+                    data-tick
+                    data-quota={tick.quota}
+                    style={`--x: ${tick.x.toFixed(4)}`}
                   >
-                    {card.featured && <p class="plan-badge">{copy.popularLabel}</p>}
-                    <h4 class="plan-name">{card.name}</h4>
-                    <p class="plan-tagline">{card.tagline}</p>
-                    <p class="plan-price-row">
-                      <span class="plan-price">{card.price}</span>
-                      <span class="plan-period">{card.periodLabel}</span>
-                    </p>
-                    <p class="plan-quota">{card.quota}</p>
-                    {card.status === 'free' || !card.productId ? (
-                      <a
-                        class="plan-button plan-button-secondary"
-                        href={freeCtaPaths[tabId]}
-                        data-cta={`pricing-free-${tabId}`}
-                      >
-                        {card.ctaLabel}
-                      </a>
-                    ) : (
-                      <button
-                        type="button"
-                        class="plan-button plan-button-primary"
-                        data-pricing-buy={card.productId}
-                        data-ga-event="upgrade_cta_click"
-                        data-ga-source="pricing"
-                        data-ga-location="plan_card"
-                        data-ga-plan={card.productId}
-                        disabled
-                      >
-                        {card.ctaLabel}
-                      </button>
-                    )}
-                    <p class="pricing-inline-error" data-plan-error={card.productId ?? card.id} hidden />
-                    <ul class="plan-features">
-                      {card.features.map(feature => (
-                        <li>
-                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                            <path d="M4.5 12.5 9.8 17.8 19.5 6.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                          </svg>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
+                    <i></i>
+                    <span class="tick-label"><b>{tick.name}</b><small>{compactFormat.format(tick.quota)}</small></span>
+                  </span>
+                ))}
+                <input
+                  class="finder-range"
+                  id={`finder-${tabId}`}
+                  type="range"
+                  min="0"
+                  max="1000"
+                  step="1"
+                  value={Math.round(finder.position * 1000)}
+                  aria-valuetext={fill(plansSection.finder.valueText, {
+                    value: numberFormat.format(finder.volume),
+                    unit: tab.unit,
+                    plan: tab.cards[finder.match].name
+                  })}
+                />
+              </div>
+            </div>
+
+            <div class={`plan-grid plan-grid--${tab.cards.length}`} data-plan-grid>
+              {tab.cards.map((card, index) => {
+                const price = splitPrice(card.price)
+                const isFree = card.status === 'free' || !card.productId
+                return (
+                  <article
+                    class:list={['price-card plan-card', { 'is-featured': card.featured, 'is-match': index === finder.match }]}
+                    data-plan-card={card.productId ?? card.id}
+                    style={`--i: ${index}`}
+                  >
+                    {card.featured && <span class="badge badge--solid price-flag">{copy.popularLabel}</span>}
+                    <span class="plan-match" aria-hidden="true"><Icon name="check" />{plansSection.finder.fits}</span>
+                    <div>
+                      <h3 class="price-name">{card.name}</h3>
+                      <p class="price-tagline">{card.tagline}</p>
+                    </div>
+                    <div class="plan-price">
+                      <span class="plan-cur">{price.symbol}</span>
+                      <b data-price={price.amount}>{price.amount}</b>
+                      <span class="price-period">{card.periodLabel}</span>
+                    </div>
+                    <div class="price-quota"><Icon name={line.quotaIcon} />{card.quota}</div>
+                    <div class="plan-cta">
+                      {isFree ? (
+                        line.free.capability ? (
+                          <CapabilityAction
+                            capability={line.free.capability}
+                            locale={locale}
+                            href={line.free.href}
+                            class="btn btn-secondary btn-block"
+                            data-cta={`pricing-free-${tabId}`}
+                          >
+                            {card.ctaLabel}
+                          </CapabilityAction>
+                        ) : (
+                          <a class="btn btn-secondary btn-block" href={line.free.href} data-cta={`pricing-free-${tabId}`}>{card.ctaLabel}</a>
+                        )
+                      ) : buyAvailable ? (
+                        <button
+                          type="button"
+                          class:list={['btn btn-block', card.featured ? 'btn-primary' : 'btn-secondary']}
+                          data-pricing-buy={card.productId}
+                          data-ga-event="upgrade_cta_click"
+                          data-ga-source="pricing"
+                          data-ga-location="plan_card"
+                          data-ga-plan={card.productId}
+                          disabled
+                        >
+                          {card.ctaLabel}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          class:list={['btn btn-block is-unavailable', card.featured ? 'btn-primary' : 'btn-secondary']}
+                          aria-disabled="true"
+                          data-capability={line.buyCapability}
+                        >
+                          {card.ctaLabel}<SoonBadge locale={locale} />
+                        </button>
+                      )}
+                      {!isFree && buyAvailable && <p class="plan-error" data-plan-error={card.productId} hidden />}
+                    </div>
+                    <ul class="check-list check-list--sm" role="list">
+                      {card.features.map(feature => <li>{feature}</li>)}
                     </ul>
                   </article>
-                ))}
-              </div>
-              <p class="plan-quota-note">{tab.quotaNote}</p>
+                )
+              })}
+            </div>
+
+            <p class="plan-note"><Icon name="info" /><span>{tab.quotaNote}</span></p>
+          </div>
+        )
+      })}
+
+      <p class="plan-status" data-pricing-plans-status>{copy.plans.loading}</p>
+    </div>
+  </section>
+
+  <!-- ③ 对比表（跟随当前产品线） -->
+  <section class="section compare band" id="compare">
+    <div class="container">
+      <header class="section-head" data-stagger="80">
+        <span class="kicker" data-reveal>{compare.kicker}</span>
+        <h2 class="h2" data-split>{compare.title.lead}<span class="accent">{compare.title.accent}</span>{compare.title.tail}</h2>
+        <p class="lead" data-reveal>
+          {TAB_IDS.map((tabId, index) => <span data-compare-lead={tabId} hidden={index !== 0}>{copy.tabs[tabId].compare.lead}</span>)}
+        </p>
+      </header>
+
+      <div class="compare-bar" data-reveal>
+        <div class="seg compare-seg" role="group" aria-label={hero.switchLabel} data-compare-seg>
+          <span class="seg-thumb" aria-hidden="true"></span>
+          {TAB_IDS.map((tabId, index) => (
+            <button class="seg-btn" type="button" data-compare-key={tabId} aria-pressed={index === 0 ? 'true' : 'false'}>
+              <Icon name={LINES[tabId].icon} />{copy.tabs[tabId].shortName}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="compare-stage" data-reveal>
+        {TAB_IDS.map((tabId, index) => {
+          const tab = copy.tabs[tabId]
+          let rowIndex = 0
+          return (
+            <div class="dtable-wrap compare-wrap" data-compare-table={tabId} hidden={index !== 0}>
+              <table class="dtable compare-table">
+                <caption class="sr-only">{tab.eyebrow}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" class="cmp-feature">{compare.plan}</th>
+                    {tab.cards.map(card => (
+                      <th scope="col" class:list={['cmp-plan', { 'is-featured': card.featured }]}>
+                        {card.featured && <span class="badge badge--solid">{copy.popularLabel}</span>}
+                        <span class="cmp-name">{card.name}</span>
+                        <span class="cmp-price">{card.price} <small>{card.periodLabel}</small></span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {compareRows(tab).map(row => row.kind === 'group' ? (
+                    <tr class="cmp-group" style={`--r: ${rowIndex++}`}>
+                      <th scope="colgroup" colspan={tab.cards.length + 1}>{row.label}</th>
+                    </tr>
+                  ) : (
+                    <tr style={`--r: ${rowIndex++}`}>
+                      <th scope="row">{row.label}</th>
+                      {row.cells.map((cell, cellIndex) => (
+                        <td class:list={{ 'is-featured': tab.cards[cellIndex].featured }}>
+                          {cell.kind === 'yes' && <span class="cmp-yes"><Icon name="check" /><span class="sr-only">{compare.included}</span></span>}
+                          {cell.kind === 'no' && <span class="cmp-no"><span aria-hidden="true">—</span><span class="sr-only">{compare.notIncluded}</span></span>}
+                          {cell.kind === 'text' && <span class="cmp-text">{cell.text}</span>}
+                          {cell.kind === 'mono' && <span class="cmp-mono">{cell.text}</span>}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )
-        })
-      }
+        })}
+      </div>
+    </div>
+  </section>
 
-      <p class="pricing-inline-status" data-pricing-plans-status>{copy.plans.loading}</p>
-    </section>
-
-    <section class="pricing-faq" data-pricing-faq aria-labelledby="pricing-faq-title">
-      <header class="section-header">
-        <p class="eyebrow">{faqLabel}</p>
-        <h2 id="pricing-faq-title">{copy.faq.title}</h2>
-        {copy.faq.description && <p class="section-description">{copy.faq.description}</p>}
+  <!-- ④ 额度单位：record / request 动画卡 + 每月 1 日重置曲线 -->
+  <section class="section usage" id="usage" data-inview>
+    <div class="container">
+      <header class="section-head" data-stagger="80">
+        <span class="kicker" data-reveal>{usage.head.kicker}</span>
+        <h2 class="h2" data-split>{usage.head.title.lead}<span class="accent">{usage.head.title.accent}</span>{usage.head.title.tail}</h2>
+        <p class="lead" data-reveal>{usage.head.lead}</p>
       </header>
-      <div class="pricing-faq-list">
-        {copy.faq.items.map(item => (
-          <details class="pricing-faq-item" data-pricing-faq-item>
-            <summary class="pricing-faq-question">
-              <span>{item.question}</span>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M6 9.5 12 15.5 18 9.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </summary>
-            <p class="pricing-faq-answer">{item.answer}</p>
+
+      <div class="usage-grid" data-stagger="120">
+        <article class="card usage-card" data-reveal>
+          <div class="usage-visual" aria-hidden="true" data-usage-records>
+            <div class="meter" data-meter data-used={meters.records.used} data-limit={meters.records.limit}>
+              <div class="meter-top">
+                <span class="meter-label">{usage.records.meter}</span>
+                <span class="meter-num"><b data-meter-value>{numberFormat.format(meters.records.used)}</b><span>/ {numberFormat.format(meters.records.limit)}</span></span>
+              </div>
+              <div class="meter-bar"><i data-meter-bar style={`--p: ${meters.records.used / meters.records.limit}`}></i></div>
+            </div>
+            <div class="ur-list" data-ur-list data-preset={USAGE_BUSINESS_PRESET.join(',')}></div>
+            <template data-ur-samples>
+              {USAGE_BUSINESSES.map(business => (
+                <div class="ur-row">
+                  <span class="ur-pin"></span>
+                  <div class="ur-main"><b>{business.name}</b><small>{business.phone} · ★ {business.rating}</small></div>
+                  <span class="ur-count">{usage.records.count}</span>
+                  <div class="ur-attach">
+                    {usage.records.attachments.map((label, index) => (
+                      <span class="ur-chip"><Icon name={RECORD_ATTACHMENT_ICONS[index]} /><span>{label}</span><em>+0</em></span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </template>
+          </div>
+          <div class="usage-copy">
+            <span class="badge">{usage.records.badge}</span>
+            <h3 class="h4">{usage.records.title}</h3>
+            <p>{usage.records.body}</p>
+          </div>
+        </article>
+
+        <article class="card usage-card" data-reveal>
+          <div class="usage-visual" aria-hidden="true" data-usage-requests>
+            <div class="meter" data-meter data-used={meters.requests.used} data-limit={meters.requests.limit}>
+              <div class="meter-top">
+                <span class="meter-label">{usage.requests.meter}</span>
+                <span class="meter-num"><b data-meter-value>{numberFormat.format(meters.requests.used)}</b><span>/ {numberFormat.format(meters.requests.limit)}</span></span>
+              </div>
+              <div class="meter-bar"><i data-meter-bar style={`--p: ${meters.requests.used / meters.requests.limit}`}></i></div>
+            </div>
+            <div class="ul-list" data-ul-list data-preset={USAGE_CALL_PRESET.join(',')}></div>
+            <template data-ul-samples>
+              {USAGE_CALLS.map(call => (
+                <div class:list={['ul-line', { 'is-bad': !callOk(call) }]} data-counted={callOk(call) ? 'true' : 'false'} title={callOk(call) ? usage.requests.counted : usage.requests.notCounted}>
+                  <span class="ul-verb">POST</span>
+                  <span class="ul-path">{call.path} <em>{call.param}</em></span>
+                  <span class="ul-status">{call.status}</span>
+                  <span class="ul-delta">{callOk(call) ? '+1' : '+0'}</span>
+                </div>
+              ))}
+            </template>
+          </div>
+          <div class="usage-copy">
+            <span class="badge badge--ai">{usage.requests.badge}</span>
+            <h3 class="h4">{usage.requests.title}</h3>
+            <p>{usage.requests.body}</p>
+          </div>
+        </article>
+      </div>
+
+      <!-- 每月 1 日重置：用量曲线逐日推进，月初归零，未用额度不结转 -->
+      <div class="card reset" data-reveal>
+        <div class="reset-copy">
+          <span class="icon-tile icon-tile--brand"><Icon name="refresh" /></span>
+          <h3 class="h4">{usage.reset.title}</h3>
+          <p>{usage.reset.body}</p>
+        </div>
+        <div class="reset-chart" aria-hidden="true">
+          <div class="reset-plot">
+            <svg class="reset-svg" viewBox="0 0 600 200" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="reset-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop class="reset-stop" offset="0" stop-opacity="0.32" />
+                  <stop class="reset-stop" offset="1" stop-opacity="0" />
+                </linearGradient>
+                <pattern id="reset-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <rect width="3" height="8" fill="currentColor" />
+                </pattern>
+              </defs>
+              <rect x="268" y="40" width="32" height="48" fill="url(#reset-hatch)" />
+              <path
+                d="M0 190 L40 182 L70 176 L90 176 L130 160 L160 151 L180 151 L220 130 L250 118 L270 118 L300 88 L300 190 L330 184 L360 172 L380 172 L420 160 L450 150 L470 150 L510 138 L540 130 L560 130 L600 122 L600 190 Z"
+                fill="url(#reset-fill)"
+              />
+              <path
+                class="reset-line"
+                d="M0 190 L40 182 L70 176 L90 176 L130 160 L160 151 L180 151 L220 130 L250 118 L270 118 L300 88 L300 190 L330 184 L360 172 L380 172 L420 160 L450 150 L470 150 L510 138 L540 130 L560 130 L600 122"
+                fill="none"
+                vector-effect="non-scaling-stroke"
+              />
+            </svg>
+            <span class="reset-cover"></span>
+            <span class="reset-limit"><span>{usage.reset.limit}</span></span>
+            <span class="reset-unused-label">{usage.reset.unused}</span>
+            <span class="reset-flag"><Icon name="refresh" />{usage.reset.flag}</span>
+            <span class="reset-marker"></span>
+          </div>
+          <div class="reset-axis">
+            {RESET_AXIS_DATES.map(date => <span>{axisFormat.format(date)}</span>)}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ 计费说明 -->
+  <section class="section billing band" id="billing">
+    <div class="container">
+      <header class="section-head" data-stagger="80">
+        <span class="kicker" data-reveal>{billing.head.kicker}</span>
+        <h2 class="h2" data-split>{billing.head.title.lead}<span class="accent">{billing.head.title.accent}</span>{billing.head.title.tail}</h2>
+        <p class="lead" data-reveal>{billing.head.lead}</p>
+      </header>
+
+      <div class="feature-grid feature-grid--4" data-stagger="90" data-spotlight-group>
+        {BILLING_FACTS.map(([id, icon]) => (
+          <article class="card feature" data-spotlight data-reveal>
+            <span class="icon-tile"><Icon name={icon} /></span>
+            <h3>{billing.items[id].title}</h3>
+            <p>{billing.items[id].body}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑥ FAQ（同时输出 FAQPage 结构化数据） -->
+  <section class="section faq" id="faq">
+    <div class="container faq-layout">
+      <div class="faq-aside" data-stagger="80">
+        <span class="kicker" data-reveal>{faq.kicker}</span>
+        <h2 class="h2" data-split>{faq.title.lead}<span class="accent">{faq.title.accent}</span>{faq.title.tail}</h2>
+        <p class="lead" data-reveal>{faq.lead}</p>
+        <a class="btn btn-secondary" href={paths.contact} data-reveal data-cta="pricing-faq-contact"><Icon name="mail" />{faq.contact}</a>
+      </div>
+      <div class="faq-list" data-stagger="60">
+        {faq.items.map(item => (
+          <details class="acc" data-reveal>
+            <summary>{item.question}<span class="acc-icon"><Icon name="plus" /></span></summary>
+            <div class="acc-body"><p>{item.answer}</p></div>
           </details>
         ))}
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
+
+  <!-- ⑦ 收尾 CTA -->
+  <section class="section final-cta">
+    <div class="container">
+      <div class="cta-panel has-deco" data-inview data-reveal="zoom">
+        <div class="deco" aria-hidden="true">
+          <div class="aurora"><i></i><i></i><i></i></div>
+          <div class="bg-contours"></div>
+          <div class="bg-grid cta-grid"></div>
+          <div class="cta-pins" data-cta-pins></div>
+          <div class="noise"></div>
+        </div>
+        <span class="kicker" data-reveal>{cta.kicker}</span>
+        <h2 class="display cta-title" data-split>{cta.title.lead}<span class="accent text-grad is-animated">{cta.title.accent}</span>{cta.title.tail}</h2>
+        <p class="lead cta-lead" data-reveal>{cta.lead}</p>
+        <div class="cta-actions" data-reveal>
+          <CapabilityAction
+            capability="extensionInstall"
+            locale={locale}
+            href={installHref('cta')}
+            class="btn btn-primary btn-lg"
+            data-cta="pricing-band-install"
+            data-magnetic="0.22"
+          >
+            <Icon name="puzzle" />{cta.primary}
+          </CapabilityAction>
+          <a class="btn btn-secondary btn-lg" href={paths.online} data-cta="pricing-band-online">{cta.secondary}</a>
+        </div>
+        <p class="cta-note" data-reveal>{cta.note}</p>
+      </div>
+    </div>
+  </section>
 
   <OrderCheckoutModal copy={accountCopy} />
-</section>
+</div>
 
 <script>
+  // 控制器先求值：URL 指定的产品线要在视觉脚本读取当前选中态之前预选
   import './pricing-page-controller'
+  import './pricing-page'
 </script>
-
-<style>
-  .pricing-page {
-    padding: clamp(28px, 4vw, var(--space-10)) 0 var(--space-8);
-  }
-
-  .pricing-container {
-    display: grid;
-    gap: var(--space-10);
-  }
-
-  .pricing-container,
-  .pricing-plans,
-  .plans-grid,
-  .plan-card {
-    min-width: 0;
-  }
-
-  /* ---------- Hero ---------- */
-  .pricing-hero {
-    display: grid;
-    justify-items: center;
-    gap: var(--space-3);
-    text-align: center;
-  }
-
-  .pricing-hero-eyebrow {
-    color: var(--text-3);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-  }
-
-  .pricing-hero-title {
-    max-width: 720px;
-    font-size: clamp(32px, 5vw, 44px);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    text-wrap: balance;
-  }
-
-  .pricing-hero-description {
-    max-width: 620px;
-    color: var(--text-2);
-    font-size: 16px;
-    line-height: 1.65;
-    text-wrap: balance;
-  }
-
-  .section-header {
-    display: grid;
-    justify-items: center;
-    gap: var(--space-3);
-    text-align: center;
-  }
-
-  .section-header .eyebrow {
-    color: var(--text-3);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-  }
-
-  .section-header h2 {
-    font-size: clamp(24px, 3.4vw, 32px);
-    letter-spacing: -0.01em;
-    line-height: 1.2;
-  }
-
-  .section-description {
-    max-width: 620px;
-    color: var(--text-2);
-    font-size: 15px;
-    line-height: 1.65;
-  }
-
-  /* ---------- 产品类别 Tab ---------- */
-  .pricing-plans {
-    display: grid;
-    justify-items: center;
-    gap: var(--space-6);
-    width: 100%;
-  }
-
-  .visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .pricing-tabs {
-    display: inline-flex;
-    gap: var(--space-1);
-    padding: 4px;
-    border: 1px solid var(--border);
-    border-radius: var(--rounded-full);
-    background: var(--surface-2);
-  }
-
-  .pricing-tab {
-    min-height: 40px;
-    padding: 0 var(--space-6);
-    border-radius: var(--rounded-full);
-    color: var(--text-2);
-    font-size: 14px;
-    font-weight: 800;
-    transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
-  }
-
-  .pricing-tab:hover {
-    color: var(--text);
-  }
-
-  .pricing-tab[aria-selected='true'] {
-    background: var(--primary);
-    color: var(--primary-fg);
-    box-shadow: var(--shadow-card);
-  }
-
-  .pricing-tab:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-  }
-
-  .pricing-panel {
-    display: grid;
-    justify-items: center;
-    gap: var(--space-6);
-    width: 100%;
-    min-width: 0;
-  }
-
-  .pricing-panel-header {
-    display: grid;
-    justify-items: center;
-    gap: var(--space-2);
-    text-align: center;
-  }
-
-  .pricing-panel-header .eyebrow {
-    color: var(--text-3);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-  }
-
-  .pricing-panel-header h3 {
-    font-size: clamp(20px, 2.6vw, 26px);
-    letter-spacing: -0.01em;
-    line-height: 1.2;
-  }
-
-  .plans-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-4);
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .plan-card {
-    position: relative;
-    display: grid;
-    align-content: start;
-    gap: var(--space-3);
-    padding: var(--space-6);
-    border: 1px solid var(--border);
-    border-radius: var(--rounded-md);
-    background: var(--surface);
-    box-shadow: var(--shadow-card);
-  }
-
-  .plan-card-featured {
-    border: 2px solid var(--primary);
-    box-shadow: var(--shadow-pop);
-  }
-
-  .plan-badge {
-    position: absolute;
-    top: -13px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 4px 14px;
-    border-radius: var(--rounded-full);
-    background: var(--primary);
-    color: var(--primary-fg);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    line-height: 18px;
-    white-space: nowrap;
-  }
-
-  .plan-name {
-    font-size: 16px;
-    font-weight: 800;
-    line-height: 1.3;
-  }
-
-  .plan-tagline {
-    color: var(--text-2);
-    font-size: 13.5px;
-    line-height: 1.5;
-  }
-
-  .plan-price-row {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-  }
-
-  .plan-price {
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
-
-  .plan-period {
-    color: var(--text-3);
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .plan-quota {
-    padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--border);
-    border-radius: var(--rounded-sm);
-    background: var(--surface-2);
-    font-family: var(--font-mono);
-    font-size: 12.5px;
-    font-weight: 600;
-  }
-
-  .plan-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 48px;
-    padding: 0 var(--space-4);
-    border-radius: var(--rounded-full);
-    font-size: 14px;
-    font-weight: 700;
-    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
-  }
-
-  .plan-button-primary {
-    color: var(--primary-fg);
-    background: var(--primary);
-  }
-
-  .plan-button-primary:hover:not(:disabled) {
-    background: var(--primary-hover);
-  }
-
-  .plan-button-primary:disabled {
-    cursor: not-allowed;
-    color: var(--text-3);
-    background: var(--surface-2);
-  }
-
-  .plan-button-secondary {
-    color: var(--text);
-    background: var(--surface);
-    border: 1px solid var(--border-strong);
-  }
-
-  .plan-button-secondary:hover {
-    background: var(--surface-2);
-  }
-
-  .plan-button:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 3px;
-  }
-
-  .plan-features {
-    display: grid;
-    gap: var(--space-2);
-    margin: 0;
-    padding: var(--space-4) 0 0;
-    border-top: 1px solid var(--border);
-    list-style: none;
-  }
-
-  .plan-features li {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-2);
-    color: var(--text-2);
-    font-size: 13.5px;
-    line-height: 1.5;
-  }
-
-  .plan-features svg {
-    width: 16px;
-    height: 16px;
-    margin-top: var(--space-1);
-    stroke: var(--primary);
-    stroke-width: 2.4;
-    flex: 0 0 auto;
-  }
-
-  .plan-quota-note {
-    max-width: 620px;
-    color: var(--text-3);
-    font-size: 13px;
-    line-height: 1.6;
-    text-align: center;
-  }
-
-  /* ---------- 状态与错误 ---------- */
-  .pricing-inline-status {
-    color: var(--text-2);
-    font-size: 14px;
-    line-height: 1.6;
-    text-align: center;
-  }
-
-  .pricing-inline-status[data-pricing-plans-status]:empty {
-    display: none;
-  }
-
-  .pricing-inline-error {
-    padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--bad);
-    border-radius: var(--rounded-sm);
-    background: var(--bad-soft);
-    color: var(--bad);
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.5;
-  }
-
-  /* ---------- FAQ ---------- */
-  .pricing-faq {
-    display: grid;
-    justify-items: center;
-    gap: var(--space-8);
-    max-width: 720px;
-    margin-inline: auto;
-    width: 100%;
-  }
-
-  .pricing-faq-list {
-    display: grid;
-    gap: var(--space-3);
-    width: 100%;
-  }
-
-  .pricing-faq-item {
-    border: 1px solid var(--border);
-    border-radius: var(--rounded-md);
-    background: var(--surface);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  }
-
-  .pricing-faq-item[open] {
-    border-color: var(--primary);
-    box-shadow: var(--shadow-card);
-  }
-
-  .pricing-faq-question {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    padding: var(--space-4) var(--space-6);
-    cursor: pointer;
-    color: var(--text);
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.5;
-    list-style: none;
-  }
-
-  .pricing-faq-question::-webkit-details-marker {
-    display: none;
-  }
-
-  .pricing-faq-question svg {
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    stroke: var(--text-3);
-    stroke-width: 2;
-    transition: transform var(--transition-fast);
-  }
-
-  .pricing-faq-item[open] .pricing-faq-question svg {
-    transform: rotate(180deg);
-    stroke: var(--primary);
-  }
-
-  .pricing-faq-answer {
-    padding: 0 var(--space-6) var(--space-4);
-    color: var(--text-2);
-    font-size: 14px;
-    line-height: 1.7;
-  }
-
-  @media (max-width: 960px) {
-    .plans-grid {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .pricing-tabs {
-      width: 100%;
-      justify-content: stretch;
-    }
-
-    .pricing-tab {
-      flex: 1 1 0;
-      padding: 0 var(--space-2);
-    }
-  }
-</style>

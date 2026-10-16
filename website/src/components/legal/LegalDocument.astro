@@ -1,0 +1,642 @@
+---
+/**
+ * 法务页正文（设计稿 privacy.html ②）：左侧吸顶目录 + 求助卡，右侧要点速览、编号小节、覆盖范围提示（正文未覆盖全部产品的文档才有）与下一篇。
+ *
+ * 法务正文只用基础层：列表点、编号与「下一篇」不用品牌渐变和辉光。
+ * 小节标题旁的 # 是指向本节的链接，点击跳转的同时由 [data-copy] 复制带锚点的完整地址。
+ * 960px 以下目录变为吸顶横向胶囊条，滚动时当前项自动居中。
+ */
+import type { Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import type { LegalContent, LegalPageKind } from '../../legal/legalContent'
+import { DEVELOPER_EMAIL } from '../../lib/contact'
+import { fillCopy } from '../product/copy'
+import Icon from '../site/Icon.astro'
+
+interface Props {
+  locale: Locale
+  kind: LegalPageKind
+  content: LegalContent
+  /** 本页规范地址，小节链接在其后拼锚点。 */
+  pageUrl: string
+}
+
+const { locale, kind, content, pageUrl } = Astro.props
+const copy = content.page
+const doc = content[kind]
+const other = content[kind === 'privacy' ? 'terms' : 'privacy']
+const otherKind: LegalPageKind = kind === 'privacy' ? 'terms' : 'privacy'
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const sectionIds = new Set(doc.sections.map(section => section.id))
+const missing = doc.glance.find(item => !sectionIds.has(item.section))
+if (missing) throw new Error(`[legal] Glance card "${missing.title}" points to unknown section "${missing.section}".`)
+const rowNumber = (index: number) => String(index + 1).padStart(2, '0')
+/** 正文里的支持邮箱渲染成 mailto 链接，文字不变。 */
+const emailChunks = (text: string) => text.split(DEVELOPER_EMAIL)
+---
+
+<section class="legal-body" aria-label={doc.title}>
+  <div class="container">
+    <div class="doc-layout legal-layout">
+      <aside class="legal-aside">
+        <nav class="toc legal-toc" data-legal-toc aria-label={fillCopy(copy.tocLabel, { title: doc.title })}>
+          <span class="toc-title">{copy.tocTitle}</span>
+          {doc.sections.map((section, index) => (
+            <a href={`#${section.id}`}><span class="toc-num" aria-hidden="true">{rowNumber(index)}</span>{section.title}</a>
+          ))}
+        </nav>
+        <div class="legal-help">
+          <span class="legal-help-label">{doc.helpTitle}</span>
+          <button class="legal-email" type="button" data-copy={DEVELOPER_EMAIL} aria-label={fillCopy(copy.copyEmail, { email: DEVELOPER_EMAIL })}>
+            <Icon name="mail" />
+            <span class="mono">{DEVELOPER_EMAIL}</span>
+            <Icon name="copy" class="icon-copy" />
+          </button>
+          <a class="link-arrow" href={`${prefix}/contact/`}>{copy.contactSupport}<Icon name="arrow-right" /></a>
+        </div>
+      </aside>
+
+      <div class="legal-main">
+        <div class="legal-glance" data-stagger="70" data-spotlight-group>
+          <div class="glance-head" data-reveal>
+            <span class="kicker">{copy.glanceKicker}</span>
+            <span class="glance-note">{copy.glanceNote}</span>
+          </div>
+          {doc.glance.map(item => (
+            <div class="glance-cell" data-reveal>
+              <a class="glance-card card card-link" href={`#${item.section}`} data-spotlight>
+                <span class:list={['icon-tile', item.tone && `icon-tile--${item.tone}`]}><Icon name={item.icon} /></span>
+                <span class="glance-text"><b>{item.title}</b><span>{item.text}</span></span>
+                <Icon name="arrow-down" class="glance-go" />
+              </a>
+            </div>
+          ))}
+        </div>
+
+        <article class="prose legal-prose">
+          {doc.sections.map((section, index) => (
+            <section class="legal-section" id={section.id} aria-labelledby={`${section.id}-h`}>
+              <header class="legal-head">
+                <span class="legal-num" aria-hidden="true">{rowNumber(index)}</span>
+                <h2 id={`${section.id}-h`}>{section.title}</h2>
+                <a
+                  class="h-anchor"
+                  href={`#${section.id}`}
+                  data-copy={`${pageUrl}#${section.id}`}
+                  aria-label={fillCopy(copy.anchorLabel, { title: section.title })}
+                >#</a>
+              </header>
+              {section.paragraphs.map(paragraph => (
+                <p>
+                  {emailChunks(paragraph).map((chunk, chunkIndex) =>
+                    chunkIndex === 0 ? chunk : [<a href={`mailto:${DEVELOPER_EMAIL}`}>{DEVELOPER_EMAIL}</a>, chunk]
+                  )}
+                </p>
+              ))}
+              {section.items && (
+                <ul class:list={['legal-list', { 'legal-list--x': section.prohibitions }]}>
+                  {section.items.map(item => (
+                    <li>{section.prohibitions && <span class="legal-x"><Icon name="x" /></span>}{item}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ))}
+        </article>
+
+        {doc.coverage && (
+          <aside class="legal-tbd" aria-label={doc.coverage.label}>
+            <span class="badge badge--warn">{doc.coverage.badge}</span>
+            <p><b>{doc.coverage.lead}</b> {doc.coverage.text}</p>
+          </aside>
+        )}
+
+        <a class="legal-next card card-link" href={`${prefix}/${otherKind}/`}>
+          <span class="legal-next-label mono">{copy.nextLabel}</span>
+          <span class="legal-next-title">{other.title}</span>
+          <span class="legal-next-desc">{other.summary}</span>
+          <span class="legal-next-go"><Icon name="arrow-right" /></span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { reducedMotion } from '../../scripts/site/motion'
+
+  // 目录高亮视口 30% 高度线以上的最后一节；窄屏胶囊条可横向滚动时，把当前项滚到中间
+  const toc = document.querySelector<HTMLElement>('[data-legal-toc]')
+  if (toc) {
+    const entries = Array.from(toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')).flatMap(link => {
+      const target = document.getElementById(link.hash.slice(1))
+      return target ? [{ link, target }] : []
+    })
+    let active: HTMLAnchorElement | undefined
+    const update = () => {
+      const line = window.innerHeight * 0.3
+      let current = entries[0]
+      for (const entry of entries) if (entry.target.getBoundingClientRect().top <= line) current = entry
+      if (current.link === active) return
+      active?.classList.remove('is-active')
+      active?.removeAttribute('aria-current')
+      active = current.link
+      active.classList.add('is-active')
+      active.setAttribute('aria-current', 'true')
+      if (toc.scrollWidth > toc.clientWidth) {
+        const pill = active.getBoundingClientRect()
+        const bar = toc.getBoundingClientRect()
+        toc.scrollBy({ left: pill.left + pill.width / 2 - (bar.left + bar.width / 2), behavior: reducedMotion() ? 'auto' : 'smooth' })
+      }
+    }
+    let ticking = false
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (ticking) return
+        ticking = true
+        requestAnimationFrame(() => {
+          update()
+          ticking = false
+        })
+      },
+      { passive: true }
+    )
+    update()
+  }
+</script>
+
+<style>
+  .legal-body {
+    padding-block: clamp(8px, 2vw, 24px) var(--section-y);
+  }
+
+  .legal-layout {
+    grid-template-columns: 250px minmax(0, 1fr);
+  }
+
+  .legal-aside {
+    position: sticky;
+    top: calc(var(--nav-h) + 32px);
+    display: grid;
+    gap: 24px;
+  }
+
+  .legal-aside .toc {
+    position: static;
+  }
+
+  /* 桌面目录：编号悬挂缩进，长标题折行与文字对齐 */
+  .legal-toc a {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr);
+    align-items: baseline;
+  }
+
+  .toc-num {
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11px;
+    font-weight: 500;
+    transition: color var(--dur-2);
+  }
+
+  .legal-toc a.is-active .toc-num {
+    color: var(--primary-text);
+  }
+
+  .legal-help {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+  }
+
+  .legal-help-label {
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  .legal-email {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    text-align: left;
+    transition:
+      border-color var(--dur-2),
+      transform var(--dur-2);
+  }
+
+  .legal-email :global(.icon) {
+    width: 15px;
+    height: 15px;
+    color: var(--text-3);
+  }
+
+  .legal-email :global(.icon-copy) {
+    margin-left: auto;
+  }
+
+  .legal-email:hover {
+    border-color: var(--text-3);
+  }
+
+  .legal-email:hover :global(.icon-copy) {
+    color: var(--primary-text);
+  }
+
+  .legal-email:active {
+    transform: scale(0.98);
+  }
+
+  .legal-help .link-arrow {
+    font-size: 13.5px;
+  }
+
+  .legal-main {
+    min-width: 0;
+    max-width: 780px;
+  }
+
+  /* 要点速览 */
+  .legal-glance {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: clamp(48px, 6vw, 80px);
+  }
+
+  .glance-head {
+    display: flex;
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-bottom: 6px;
+  }
+
+  /* 法务正文只用基础层：小节标签的菱形点用实色，不用品牌渐变 */
+  .glance-head .kicker::before {
+    background: var(--primary);
+  }
+
+  .glance-note {
+    color: var(--text-3);
+    font-size: 13px;
+  }
+
+  /* 显现动效放在外层格子上，卡片自己的 hover 过渡不与 data-reveal 的过渡互相覆盖 */
+  .glance-cell {
+    display: grid;
+  }
+
+  .glance-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 14px;
+    padding: 18px 18px 20px;
+    transition:
+      border-color var(--dur-3),
+      transform var(--dur-3) var(--ease-out),
+      box-shadow var(--dur-3) var(--ease-out);
+  }
+
+  .glance-card:hover {
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-md), var(--hairline-hl);
+    transform: translateY(-2px);
+  }
+
+  .glance-card .icon-tile {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--r-sm);
+  }
+
+  .glance-card .icon-tile :global(.icon) {
+    width: 18px;
+    height: 18px;
+  }
+
+  .glance-text b {
+    display: block;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .glance-text > span {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-2);
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+
+  .glance-card :global(.glance-go) {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    color: var(--text-3);
+    transition:
+      transform var(--dur-3) var(--ease-out),
+      color var(--dur-2);
+  }
+
+  .glance-card:hover :global(.glance-go) {
+    color: var(--primary-text);
+    transform: translateY(3px);
+  }
+
+  /* 正文：小节分隔 + 编号徽标 + 悬停出现的小节链接 */
+  .legal-prose > .legal-section + .legal-section {
+    margin-top: 48px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* html 已有 scroll-padding-top（导航高度），这里只补一点呼吸距离 */
+  .legal-section {
+    scroll-margin-top: 12px;
+  }
+
+  .legal-section > * + * {
+    margin-top: 1em;
+  }
+
+  .legal-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .legal-prose .legal-head h2 {
+    margin-top: 0;
+  }
+
+  .legal-num {
+    display: grid;
+    place-items: center;
+    height: 26px;
+    flex-shrink: 0;
+    padding: 0 8px;
+    border-radius: var(--r-xs);
+    background: var(--primary-soft);
+    color: var(--primary-text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .legal-prose .h-anchor {
+    padding: 2px 8px;
+    border-radius: var(--r-xs);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 15px;
+    text-decoration: none;
+    opacity: 0;
+    transition:
+      opacity var(--dur-2),
+      background-color var(--dur-2),
+      color var(--dur-2);
+  }
+
+  .legal-head:hover .h-anchor,
+  .legal-prose .h-anchor:focus-visible {
+    opacity: 1;
+  }
+
+  .legal-prose .h-anchor:hover {
+    background: var(--surface-2);
+    color: var(--primary-text);
+  }
+
+  @media (hover: none) {
+    .legal-prose .h-anchor {
+      opacity: 0.55;
+    }
+  }
+
+  /* 列表：菱形点；禁止 / 绝不类清单用叉号 */
+  .legal-prose .legal-list {
+    display: grid;
+    gap: 12px;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .legal-prose .legal-list li {
+    position: relative;
+    margin-top: 0;
+    padding-left: 24px;
+  }
+
+  .legal-list li::before {
+    position: absolute;
+    top: 0.68em;
+    left: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--r-2xs);
+    background: var(--primary);
+    transform: rotate(45deg);
+    content: '';
+  }
+
+  .legal-list--x li::before {
+    content: none;
+  }
+
+  .legal-x {
+    position: absolute;
+    top: 0.32em;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bad-soft);
+    color: var(--bad);
+  }
+
+  .legal-x :global(.icon) {
+    width: 10px;
+    height: 10px;
+    stroke-width: 3.5;
+  }
+
+  /* 覆盖范围待补：现行条款尚未覆盖的产品，法务补稿前如实标注 */
+  .legal-tbd {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 64px;
+    padding: 18px 20px;
+    border: 1.5px dashed color-mix(in srgb, var(--warn) 50%, var(--border));
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--warn-soft) 45%, transparent);
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .legal-tbd .badge {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .legal-tbd b {
+    color: var(--text);
+  }
+
+  /* 下一篇文档 */
+  .legal-next {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 24px;
+    margin-top: 20px;
+    padding: 24px;
+    transition:
+      border-color var(--dur-3),
+      transform var(--dur-3) var(--ease-out),
+      box-shadow var(--dur-3) var(--ease-out);
+  }
+
+  .legal-next:hover {
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-md), var(--hairline-hl);
+    transform: translateY(-3px);
+  }
+
+  .legal-next-label {
+    color: var(--text-3);
+    font-size: 11px;
+    letter-spacing: var(--tracking-kicker);
+    text-transform: uppercase;
+  }
+
+  .legal-next-title {
+    color: var(--text);
+    font-size: var(--fs-h4);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+
+  .legal-next-desc {
+    color: var(--text-2);
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+
+  .legal-next-go {
+    display: grid;
+    grid-row: 1 / 4;
+    grid-column: 2;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: var(--shadow-sm);
+    color: var(--primary-fg);
+    transition: transform var(--dur-3) var(--ease-out);
+  }
+
+  .legal-next:hover .legal-next-go {
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 960px) {
+    /* 本页覆盖过列定义，需在断点内重新收为单列 */
+    .legal-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* 手机 / 平板：目录变成吸顶的横向胶囊条，随阅读位置自动滚动（法务正文不用玻璃，实底） */
+    .legal-aside {
+      top: calc(var(--nav-h) + 8px);
+      z-index: 5;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .legal-aside .toc {
+      display: flex;
+      gap: 6px;
+      padding-inline: var(--gutter);
+      overflow-x: auto;
+      scroll-padding-inline: var(--gutter);
+      scrollbar-width: none;
+    }
+
+    .legal-aside .toc::-webkit-scrollbar {
+      display: none;
+    }
+
+    .legal-aside .toc a {
+      display: inline-flex;
+      flex: none;
+      gap: 6px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-full);
+      background: var(--surface);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .legal-aside .toc a.is-active {
+      border-color: transparent;
+      background: var(--primary-soft);
+    }
+
+    .legal-aside .toc-title,
+    .legal-help {
+      display: none;
+    }
+
+    .legal-main {
+      max-width: none;
+    }
+
+    .legal-section {
+      scroll-margin-top: 60px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .legal-glance {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .legal-head {
+      gap: 10px;
+    }
+
+    .legal-next {
+      padding: 20px;
+    }
+  }
+</style>

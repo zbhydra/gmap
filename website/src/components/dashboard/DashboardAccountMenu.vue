@@ -104,11 +104,11 @@ onBeforeUnmount(() => {
 .account-button {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--s-3);
   width: 100%;
   min-width: 0;
-  padding: var(--space-2);
-  border-radius: var(--rounded-sm);
+  padding: var(--s-2);
+  border-radius: var(--r-sm);
   text-align: left;
 }
 
@@ -128,7 +128,7 @@ onBeforeUnmount(() => {
   height: 40px;
   flex: 0 0 40px;
   overflow: hidden;
-  border-radius: var(--rounded-full);
+  border-radius: var(--r-full);
   background: var(--primary);
   color: var(--primary-fg);
   font-size: 16px;
@@ -166,15 +166,15 @@ onBeforeUnmount(() => {
 
 .account-menu {
   position: absolute;
-  bottom: calc(100% + var(--space-1));
+  bottom: calc(100% + var(--s-1));
   left: 0;
   z-index: 30;
   width: min(240px, calc(100vw - 64px));
-  padding: var(--space-2);
+  padding: var(--s-2);
   border: 1px solid var(--border);
-  border-radius: var(--rounded-md);
+  border-radius: var(--r-md);
   background: var(--surface);
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--shadow-md);
 }
 
 .account-logout {
@@ -183,7 +183,7 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: 40px;
   padding: 0 14px;
-  border-radius: var(--rounded-sm);
+  border-radius: var(--r-sm);
   color: var(--bad);
   font-size: 14px;
   font-weight: 600;

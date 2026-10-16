@@ -1,0 +1,29 @@
+---
+/**
+ * 受能力表控制的动作入口（安装、购买、获取 Key、连接）。
+ *
+ * 可用时渲染为链接，透传 data-cta / data-ga-* 等属性；未交付时渲染为可聚焦但没有任何动作的
+ * aria-disabled 按钮并附 SoonBadge：不带 href 与埋点属性，鼠标点击、键盘回车 / 空格都不会
+ * 触发跳转、checkout 或上报。读屏仍能读到入口与 Coming soon。
+ */
+import type { HTMLAttributes } from 'astro/types'
+import type { Locale } from '../../i18n/content'
+import { capabilities, type Capability } from '../../lib/capabilities'
+import SoonBadge from './SoonBadge.astro'
+
+interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
+  capability: Capability
+  locale: Locale
+  href: string
+}
+
+const { capability, locale, href, class: className, ...rest } = Astro.props
+---
+
+{capabilities[capability] ? (
+  <a href={href} class={className} {...rest}><slot /></a>
+) : (
+  <button type="button" class:list={[className, 'is-unavailable']} aria-disabled="true" data-capability={capability}>
+    <slot /><SoonBadge locale={locale} />
+  </button>
+)}

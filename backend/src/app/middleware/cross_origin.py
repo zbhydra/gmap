@@ -7,6 +7,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 class CrossOriginMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        if request.url.path in {"/mcp", "/mcp/"}:
+            return await call_next(request)
         if request.method.lower() == "options":
             response = Response()
         else:

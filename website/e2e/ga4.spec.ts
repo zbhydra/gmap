@@ -181,16 +181,17 @@ test.describe('GA4 configured state (mock gtag)', () => {
   test('cta click dispatches cta_click with data-cta value and link utm', async ({ page }) => {
     await installMockGtag(page)
     await page.goto('/tools/place-id-finder/')
-    await page.locator('.tool-cta a[data-cta="tool-place-id-finder-install"]').click()
-    await expect(page).toHaveURL(/\/extension\//)
+    // 插件安装未交付时收尾 CTA 的安装入口是灰化按钮（无 data-cta），用套餐链接验证漏斗归因
+    await page.locator('.final-cta a[data-cta="tool-place-id-finder-pricing"]').click()
+    await expect(page).toHaveURL(/\/pricing\//)
     const calls = await readGa4Calls(page)
     const ctaClick = calls.find(call => call[1] === 'cta_click')
     expect(ctaClick, 'expected cta_click to be dispatched').toBeTruthy()
     expect(ctaClick?.[2]).toMatchObject({
-      cta_id: 'tool-place-id-finder-install',
+      cta_id: 'tool-place-id-finder-pricing',
       utm_source: 'website',
       utm_medium: 'tool-place-id-finder',
-      utm_campaign: 'install'
+      utm_campaign: 'pricing'
     })
   })
 

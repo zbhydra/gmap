@@ -9,7 +9,7 @@
 - HTTP Search、HTTP Reviews 与 gosom submit/get Provider 已完成，合同见 `@tech-引擎Provider层.md`。
 - Online 的任务、结果存储、进度、恢复和下载合同见 `@tech-Online任务与结果.md`，实施清单见 `@plans/002.Online任务与结果基建.md`。
 - R2 / AliOSS 多套配置与启用切换纳入 Online 实施计划，配置合同见 `@../008.管理后台/tech-系统设置.md` 的“对象存储配置”。
-- API 竞品合同已确认；Search 与 Reviews 后续按同步 REST 实现，Photos 待实现。
+- Search 与 Reviews 的同步 API、MCP 与授权合同见 [API 与 MCP](tech-API与MCP.md)，Photos 待实现。
 - 云端正式上线仍需完成 ROADMAP B5 的长期封锁率、代理流量与 gosom Postgres 内网化 Gate。
 
 ## 产品范围
@@ -35,8 +35,8 @@
 ### API
 
 - Search 与 Reviews 是独立的同步 REST 接口，不创建 Online 任务，也不写对象存储。
-- Search 接受查询词、页数、语言和可选坐标偏置；Reviews 接受 fid、cursor 和排序方式。
-- API 按成功受理的 HTTP 请求计量，使用 `maps_api` 独立月度额度。
+- Search 接受查询词、累计采集页数、语言和可选坐标偏置，可按 API 权益选择补全 Email 与社媒；Reviews 接受商家标识、翻页游标和排序方式。
+- API 与 MCP 共用独立的请求月额度；通过账号、参数和剩余额度检查后执行采集，成功返回（含零结果与部分补全）计一次请求，采集失败不计量。
 - Photos 保持待实现，不提供占位接口。
 
 ## Online 主流程

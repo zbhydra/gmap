@@ -1,0 +1,259 @@
+---
+/**
+ * 云端采集产品页（设计稿 online-scraper.html，README §7「云端」①–⑩）。
+ *
+ * Online 是已交付能力：开始采集、Free 卡与收尾 CTA 直达 Dashboard（未登录由 Dashboard 引导登录），
+ * 付费卡与定价入口进 Pricing 的 Online tab。方案卡的名称、价格、额度与按钮文案逐字取自 pricing.ts 的 online tab；
+ * 规格行（每任务关键词上限、补全权益）按 014 合同，pricing.ts 里不属于 014 Online 范围的卖点不在本页展示（README §10）。
+ */
+import Layout from '../../layouts/Layout.astro'
+import { getContent, type Locale } from '../../i18n/content'
+import type { OnlineFeatureId } from '../../i18n/schema'
+import { localePaths } from '../../i18n/ui'
+import Icon from '../site/Icon.astro'
+import OnlineFlow from '../online/OnlineFlow.astro'
+import OnlineHero from '../online/OnlineHero.astro'
+import OnlineModes from '../online/OnlineModes.astro'
+import OnlineResults from '../online/OnlineResults.astro'
+import OnlineUsage from '../online/OnlineUsage.astro'
+import { keywordLimitOf } from '../online/online-samples'
+import { faqPageSchema } from '../product/faq-schema'
+import ProductCta from '../product/ProductCta.astro'
+import ProductFacts from '../product/ProductFacts.astro'
+import ProductFaq from '../product/ProductFaq.astro'
+import ProductSectionHead from '../product/ProductSectionHead.astro'
+
+interface Props {
+  locale?: Locale
+}
+
+const { locale = 'en-US' } = Astro.props
+const t = getContent(locale)
+const page = t.pages.online
+const pricing = t.pages.pricing
+const plans = pricing.tabs.online
+const freePlan = plans.cards.find(card => card.status === 'free')
+if (!freePlan) throw new Error('[online-page] pricing.ts online tab has no free plan.')
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const dashboardHref = `${prefix}/dashboard/`
+const pricingHref = `${prefix}/pricing/?product_kind=maps_online`
+const FEATURE_TILES: Record<OnlineFeatureId, { icon: string; tone: string }> = {
+  keywords: { icon: 'list-plus', tone: 'icon-tile--brand' },
+  history: { icon: 'clock', tone: '' },
+  details: { icon: 'building', tone: '' },
+  enrichment: { icon: 'mail', tone: '' },
+  downloads: { icon: 'archive', tone: 'icon-tile--ok' },
+  browser: { icon: 'cloud', tone: 'icon-tile--pin' }
+}
+---
+
+<Layout
+  locale={locale}
+  title={page.seo.title}
+  description={page.seo.description}
+  includeSoftwareApplicationSchema={false}
+  structuredData={[faqPageSchema(page.faq.items)]}
+  preloadAccentFont
+>
+  <div data-online-page>
+    <OnlineHero locale={locale} hero={page.hero} dashboard={t.dashboard} />
+
+    <ProductFacts locale={locale} caption={page.facts.caption} items={page.facts.items} />
+
+    <OnlineFlow locale={locale} flow={page.flow} dashboard={t.dashboard} zip={page.hero.theater.zip} />
+
+    <OnlineModes modes={page.modes} create={t.dashboard.create} plans={plans.cards} />
+
+    <OnlineResults results={page.results} />
+
+    <section class="section" id="features">
+      <div class="container">
+        <ProductSectionHead head={page.features.head} />
+        <div class="feature-grid o-feat" data-spotlight-group data-stagger="90">
+          {page.features.items.map(item => (
+            <article class="feature card" data-spotlight data-reveal>
+              <span class:list={['icon-tile', FEATURE_TILES[item.id].tone]}><Icon name={FEATURE_TILES[item.id].icon} /></span>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+              <span class="o-feat-meta mono">{item.meta}</span>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <OnlineUsage locale={locale} usage={page.usage} dashboard={t.dashboard} planName={freePlan.name} />
+
+    <section class="section op" id="plans">
+      <div class="container">
+        <ProductSectionHead head={page.plans.head} />
+
+        <div class="op-rail" data-stagger="80">
+          {plans.cards.map(card => (
+            <article class:list={['price-card', 'op-card', { 'is-featured': card.featured }]} data-reveal>
+              {card.featured && <span class="badge badge--solid price-flag">{pricing.popularLabel}</span>}
+              <div>
+                <div class="price-name">{card.name}</div>
+                <div class="price-tagline">{card.tagline}</div>
+              </div>
+              <div class="price-amount"><b>{card.price}</b><span class="price-period">{card.periodLabel}</span></div>
+              <div class="price-quota">{card.quota}</div>
+              <dl class="op-specs">
+                <div><dt>{page.plans.specs.keywords}</dt><dd class="mono">{keywordLimitOf(card.id)}</dd></div>
+                <div>
+                  <dt>{page.plans.specs.contacts}</dt>
+                  <dd class:list={{ 'op-off': card.status === 'free' }}>
+                    {card.status === 'free' ? page.plans.specs.excluded : page.plans.specs.included}
+                  </dd>
+                </div>
+              </dl>
+              <a
+                class:list={['btn', 'btn-block', card.featured ? 'btn-primary' : 'btn-secondary']}
+                href={card.status === 'free' ? dashboardHref : pricingHref}
+                data-cta={`online-plan-${card.id}`}
+              >
+                {card.ctaLabel}
+              </a>
+            </article>
+          ))}
+        </div>
+
+        <p class="op-note" data-reveal>{page.plans.note}</p>
+        <p class="op-compare" data-reveal>
+          <a class="link-arrow" href={pricingHref} data-cta="online-plans-compare">{page.plans.compare}<Icon name="arrow-right" /></a>
+        </p>
+      </div>
+    </section>
+
+    <ProductFaq locale={locale} faq={page.faq} />
+
+    <ProductCta cta={page.cta}>
+      <a class="btn btn-primary btn-lg" href={dashboardHref} data-magnetic="0.22" data-cta="online-cta-dashboard">
+        {page.cta.primary}<Icon name="arrow-right" class="icon-arrow" />
+      </a>
+      <a
+        class="btn btn-secondary btn-lg"
+        href={`${pricingHref}&utm_source=website&utm_medium=online-scraper-cta&utm_campaign=pricing`}
+        data-cta="online-scraper-cta-pricing"
+      >
+        {page.cta.secondary}
+      </a>
+    </ProductCta>
+  </div>
+</Layout>
+
+<style>
+  /* 能力卡：底部等宽规格行对齐到卡底 */
+  .o-feat .feature {
+    grid-template-rows: auto auto 1fr auto;
+  }
+
+  .o-feat-meta {
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  /* 五档套餐 */
+  .op-rail {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 14px;
+    margin-top: clamp(48px, 5vw, 64px);
+  }
+
+  .op-card {
+    gap: 18px;
+    padding: 24px 20px;
+  }
+
+  /* 五列卡片较窄：周期统一放在价格下方，额度胶囊不折行 */
+  .op-card .price-amount {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .op-card .price-amount b {
+    font-size: clamp(2rem, 1.5rem + 1.2vw, 2.625rem);
+  }
+
+  /* 标语统一占两行（行高与最小高度同口径），保证五张卡片的价格对齐 */
+  .op-card .price-tagline {
+    min-height: 2.9em;
+    line-height: 1.45;
+  }
+
+  .op-card .price-quota {
+    padding: 10px 12px;
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  .op-specs {
+    display: grid;
+    flex: 1;
+    align-content: start;
+    gap: 10px;
+    margin: 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .op-specs div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .op-specs dt {
+    color: var(--text-3);
+  }
+
+  .op-specs dd {
+    margin: 0;
+    color: var(--text);
+    font-weight: 650;
+    text-align: right;
+  }
+
+  .op-specs dd.op-off {
+    color: var(--text-3);
+    font-weight: 500;
+  }
+
+  .op-note {
+    max-width: 780px;
+    margin: 32px auto 0;
+    color: var(--text-3);
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .op-compare {
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  /* 五档改为横向滑动轨道（顶部留白给 Most Popular 角标） */
+  @media (max-width: 1240px) {
+    .op-rail {
+      grid-template-columns: none;
+      grid-auto-columns: minmax(250px, 1fr);
+      grid-auto-flow: column;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 16px var(--gutter) 8px;
+      overflow-x: auto;
+      scroll-padding-inline: var(--gutter);
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .op-card {
+      scroll-snap-align: start;
+    }
+  }
+</style>

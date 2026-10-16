@@ -2,14 +2,12 @@
 /**
  * Pricing 产品页（三产品线 tab 套餐）。
  *
- * Astro SSG 页面只负责 i18n、SEO 和 shared Pricing shell 装配；
- * 购买/登录交互在 src/components/pricing 的命令式 DOM controller。
+ * Astro SSG 页面只负责 i18n、SEO 和 Pricing 主体装配；页面结构、样式与交互在 src/components/pricing。
  */
-import PricingPageShell from '../pricing/PricingPageShell.astro'
+// Layout 先导入：全局样式在前，页面私有样式（PricingPageShell 引入的 pricing.css）在后覆盖
 import Layout from '../../layouts/Layout.astro'
+import PricingPageShell from '../pricing/PricingPageShell.astro'
 import { getContent, type Locale } from '../../i18n/content'
-import { localePaths } from '../../i18n/ui'
-import type { PricingTabId } from '../../i18n/schema'
 
 interface Props {
   locale?: Locale
@@ -18,14 +16,6 @@ interface Props {
 const { locale = 'en-US' } = Astro.props as Props
 const t = getContent(locale)
 const pricing = t.pages.pricing
-const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
-
-// 各 tab Free 卡的引导落地页（不可购买，只做产品入口）
-const freeCtaPaths: Record<PricingTabId, string> = {
-  online: `${localePrefix}/online-scraper/`,
-  extension: `${localePrefix}/extension/`,
-  api: `${localePrefix}/google-maps-scraper-api/`
-}
 
 // 购买答疑 FAQPage 结构化数据：经 Layout 的 structuredData prop 注入 <head>
 const faqSchema = {
@@ -47,10 +37,10 @@ const plansSchema = {
   name: 'MapsGrab Plans',
   description: pricing.seo.description,
   brand: { '@type': 'Brand', name: 'MapsGrab' },
-  offers: (Object.keys(pricing.tabs) as PricingTabId[]).flatMap(tabId =>
-    pricing.tabs[tabId].cards.map(card => ({
+  offers: Object.values(pricing.tabs).flatMap(tab =>
+    tab.cards.map(card => ({
       '@type': 'Offer',
-      name: `MapsGrab ${pricing.tabLabels[tabId]} ${card.name}`,
+      name: `MapsGrab ${tab.name} ${card.name}`,
       price: card.price.replace('$', ''),
       priceCurrency: 'USD',
       category: card.quota
@@ -66,10 +56,5 @@ const plansSchema = {
   structuredData={[faqSchema, plansSchema]}
   includeSoftwareApplicationSchema={false}
 >
-  <PricingPageShell
-    copy={pricing}
-    accountCopy={t.pages.account}
-    faqLabel={t.common.faqLabel}
-    freeCtaPaths={freeCtaPaths}
-  />
+  <PricingPageShell locale={locale} copy={pricing} accountCopy={t.pages.account} />
 </Layout>

@@ -507,16 +507,16 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.create-form { display: grid; gap: var(--space-3); padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
-.create-form h1 { font-size: 24px; line-height: 32px; letter-spacing: 0; }
-.create-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 420px; border: 1px solid var(--border-strong); border-radius: var(--rounded-sm); overflow: hidden; }
-.create-modes button { min-width: 0; min-height: 40px; padding: var(--space-2); border: 0; border-right: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.create-form { display: grid; gap: var(--s-3); padding-bottom: var(--s-6); border-bottom: 1px solid var(--border); }
+.create-form h1 { font-size: var(--fs-h3); line-height: 32px; letter-spacing: 0; }
+.create-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 420px; border: 1px solid var(--border-2); border-radius: var(--r-sm); overflow: hidden; }
+.create-modes button { min-width: 0; min-height: 40px; padding: var(--s-2); border: 0; border-right: 1px solid var(--border-2); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
 .create-modes button:last-child { border-right: 0; }
-.create-modes button[aria-pressed='true'] { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+.create-modes button[aria-pressed='true'] { background: var(--primary-soft); color: var(--primary-text); font-weight: 600; }
 .create-modes button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-.create-form textarea { width: 100%; min-height: 112px; padding: var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--rounded-sm); background: var(--surface); color: var(--text); font: inherit; resize: vertical; }
+.create-form textarea { width: 100%; min-height: 112px; padding: var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; resize: vertical; }
 .create-form textarea:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.create-contacts { display: flex; gap: var(--space-2); align-items: center; }
+.create-contacts { display: flex; gap: var(--s-2); align-items: center; }
 .create-form button { justify-self: start; }
 .create-form button:disabled { opacity: .55; cursor: not-allowed; }
 .create-error { color: var(--bad); font-size: 14px; }
@@ -524,7 +524,7 @@ onBeforeUnmount(() => {
   display: grid;
   /* minmax(0, 1fr)：阻止 nowrap 表格内容把 grid 列最小宽撑破视口（移动端横滚收进表格容器内） */
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
+  gap: var(--s-4);
   min-width: 0;
 }
 
@@ -532,18 +532,18 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--s-4);
 }
 
 .history-head h2 {
-  font-size: 24px;
+  font-size: var(--fs-h3);
   font-weight: 600;
   letter-spacing: -0.015em;
   line-height: 32px;
 }
 
 .history-description {
-  margin-top: var(--space-1);
+  margin-top: var(--s-1);
   color: var(--text-2);
   font-size: 13.5px;
   line-height: 1.6;
@@ -554,9 +554,9 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   min-height: 40px;
-  padding: 0 var(--space-4);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--rounded-full);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-full);
   background: var(--surface);
   color: var(--text);
   font-size: 14px;
@@ -581,11 +581,11 @@ onBeforeUnmount(() => {
 .history-panel {
   display: grid;
   justify-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-8);
-  padding: var(--space-8) var(--space-6);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--rounded-md);
+  gap: var(--s-3);
+  margin-top: var(--s-8);
+  padding: var(--s-8) var(--s-6);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--r-md);
   background: var(--surface);
   text-align: center;
 }
@@ -601,8 +601,8 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   min-height: 40px;
-  padding: 0 var(--space-6);
-  border-radius: var(--rounded-full);
+  padding: 0 var(--s-6);
+  border-radius: var(--r-full);
   background: var(--primary);
   color: var(--primary-fg);
   font-size: 14px;
@@ -623,9 +623,9 @@ onBeforeUnmount(() => {
   position: relative;
   overflow-x: auto;
   border: 1px solid var(--border);
-  border-radius: var(--rounded-md);
+  border-radius: var(--r-md);
   background: var(--surface);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-sm);
 }
 
 .history-table {
@@ -634,11 +634,13 @@ onBeforeUnmount(() => {
 }
 
 .history-table th {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--s-3) var(--s-4);
   border-bottom: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text-3);
   font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -648,7 +650,7 @@ onBeforeUnmount(() => {
 }
 
 .history-table td {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--s-3) var(--s-4);
   border-bottom: 1px solid var(--border);
   color: var(--text);
   font-size: 13.5px;
@@ -681,18 +683,20 @@ onBeforeUnmount(() => {
 .history-expand {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   max-width: 100%;
   padding: 0;
   color: var(--text);
   font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-variant-numeric: tabular-nums;
   font-size: 12.5px;
   font-weight: 500;
   text-align: left;
 }
 
 .history-expand:hover {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .history-expand:focus-visible {
@@ -707,7 +711,7 @@ onBeforeUnmount(() => {
   border-top: 4px solid transparent;
   border-right: 5px solid var(--text-3);
   border-bottom: 4px solid transparent;
-  transition: transform var(--transition-fast);
+  transition: transform var(--dur-1);
 }
 
 [aria-expanded='true'] .history-task-caret {
@@ -723,11 +727,13 @@ onBeforeUnmount(() => {
 .history-chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   height: 24px;
-  padding: 0 var(--space-3);
-  border-radius: var(--rounded-full);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-full);
   font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-variant-numeric: tabular-nums;
   font-size: 11.5px;
   font-weight: 600;
   white-space: nowrap;
@@ -737,7 +743,7 @@ onBeforeUnmount(() => {
   content: '';
   width: 6px;
   height: 6px;
-  border-radius: var(--rounded-full);
+  border-radius: var(--r-full);
   background: currentcolor;
 }
 
@@ -760,11 +766,11 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
-  padding: 0 var(--space-3);
+  padding: 0 var(--s-3);
   border: 1px solid var(--border);
-  border-radius: var(--rounded-full);
+  border-radius: var(--r-full);
   background: var(--surface);
-  color: var(--primary);
+  color: var(--primary-text);
   font-size: 13px;
   font-weight: 600;
 }
@@ -795,10 +801,12 @@ onBeforeUnmount(() => {
 }
 
 .history-detail-table th {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--s-2) var(--s-3);
   border-bottom: 1px solid var(--border);
   color: var(--text-3);
   font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -807,7 +815,7 @@ onBeforeUnmount(() => {
 }
 
 .history-detail-table td {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--s-2) var(--s-3);
   border-bottom: 1px solid var(--border);
   font-size: 13px;
 }
@@ -824,12 +832,12 @@ onBeforeUnmount(() => {
 .history-detail-error {
   display: grid;
   justify-items: start;
-  gap: var(--space-2);
+  gap: var(--s-2);
 }
 
 .history-download-message {
   display: block;
-  margin-top: var(--space-1);
+  margin-top: var(--s-1);
   color: var(--bad);
   font-size: 12.5px;
   font-weight: 600;
@@ -841,16 +849,16 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-3);
+  gap: var(--s-3);
 }
 
 .history-page-button {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
-  padding: 0 var(--space-4);
+  padding: 0 var(--s-4);
   border: 1px solid var(--border);
-  border-radius: var(--rounded-full);
+  border-radius: var(--r-full);
   background: var(--surface);
   color: var(--text);
   font-size: 13px;

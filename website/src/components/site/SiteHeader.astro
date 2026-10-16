@@ -1,0 +1,144 @@
+---
+/**
+ * 全站导航（营销外壳）：滚动后收拢为悬浮胶囊、hover 胶囊跟随、API 下拉、语言 / 主题下拉与移动菜单，
+ * 行为在 scripts/site/chrome.ts。未交付能力的介绍页入口照常可达，灰化并带 Coming soon；
+ * 安装动作走 CapabilityAction（能力表见 lib/capabilities.ts）。
+ */
+import { getContent, type Locale } from '../../i18n/content'
+import { localeNames, localePaths, locales } from '../../i18n/ui'
+import { capabilities } from '../../lib/capabilities'
+import CapabilityAction from './CapabilityAction.astro'
+import Icon from './Icon.astro'
+import SiteBrand from './SiteBrand.astro'
+import SoonBadge from './SoonBadge.astro'
+
+interface Props {
+  locale: Locale
+  includeSiteAuth: boolean
+  includeLanguageSwitcher: boolean
+}
+
+const { locale, includeSiteAuth, includeLanguageSwitcher } = Astro.props
+const t = getContent(locale)
+const nav = t.layout.nav
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const home = `${prefix}/`
+const pagePath = Astro.url.pathname.replace(/\/$/, '') || '/'
+const current = (path: string) => (pagePath === `${home}${path}`.replace(/\/$/, '') ? 'page' : undefined)
+const products = [
+  { id: 'extension', path: 'extension/', label: nav.extension, available: capabilities.extensionInstall },
+  { id: 'online', path: 'online-scraper/', label: nav.online, available: true }
+]
+const apis = [
+  { id: 'api-scraper', path: 'google-maps-scraper-api/', label: nav.apiScraper, desc: nav.apiScraperDesc, icon: 'database', ai: false, available: capabilities.scraperApi },
+  { id: 'api-reviews', path: 'google-maps-reviews-scraper-api/', label: nav.apiReviews, desc: nav.apiReviewsDesc, icon: 'review', ai: false, available: capabilities.scraperApi },
+  { id: 'api-photos', path: 'google-maps-photos-api/', label: nav.apiPhotos, desc: nav.apiPhotosDesc, icon: 'image', ai: false, available: capabilities.photosApi },
+  { id: 'api-mcp', path: 'google-maps-scraper-mcp/', label: nav.apiMcp, desc: nav.apiMcpDesc, icon: 'bot', ai: true, available: capabilities.mcp }
+]
+const themes = [
+  { id: 'light', label: t.common.themeLight },
+  { id: 'dark', label: t.common.themeDark },
+  { id: 'system', label: t.common.themeSystem }
+]
+const pathInLocale = (localePath: string) =>
+  `${localePath ? `/${localePath}` : ''}${prefix ? Astro.url.pathname.slice(prefix.length) : Astro.url.pathname}`
+---
+
+<div class="scroll-progress" data-scroll-progress aria-hidden="true"></div>
+<header class="site-nav" data-nav>
+  <div class="nav-inner">
+    <SiteBrand href={home} label={nav.brand} />
+    <nav class="nav-links" aria-label={nav.primaryLabel} data-nav-links>
+      <span class="nav-pill" aria-hidden="true"></span>
+      {products.map(item => (
+        <a class:list={['nav-link', { 'is-unavailable': !item.available }]} href={`${home}${item.path}`} aria-current={current(item.path)} data-cta={`nav-${item.id}`}>
+          {item.label}{!item.available && <SoonBadge locale={locale} />}
+        </a>
+      ))}
+      <div class="dd" data-dropdown>
+        <button class="nav-link" type="button" aria-expanded="false" aria-controls="nav-api-panel" aria-current={apis.some(item => current(item.path)) ? 'page' : undefined} data-dropdown-trigger>
+          {nav.api}<Icon name="chevron-down" />
+        </button>
+        <div class="dd-panel" id="nav-api-panel" data-dropdown-panel>
+          {apis.map(item => (
+            <a class:list={['dd-item', { 'is-unavailable': !item.available }]} href={`${home}${item.path}`} aria-current={current(item.path)} data-cta={`nav-${item.id}`}>
+              <span class:list={['dd-icon', { 'dd-icon--ai': item.ai }]}><Icon name={item.icon} /></span>
+              <span>
+                <span class="dd-title">{item.label}{!item.available && <SoonBadge locale={locale} />}</span>
+                <span class="dd-desc">{item.desc}</span>
+              </span>
+            </a>
+          ))}
+          <div class="dd-foot">
+            <span>{nav.apiFootNote}</span>
+            <a href={`${home}pricing/?product_kind=maps_api`} data-ga-event="internal_workflow_click" data-ga-source="nav" data-ga-target="pricing_api">
+              {nav.apiPricing}<Icon name="arrow-right" class="icon--sm" />
+            </a>
+          </div>
+        </div>
+      </div>
+      <a class="nav-link" href={`${home}pricing/`} aria-current={current('pricing/')} data-ga-event="internal_workflow_click" data-ga-source="nav" data-ga-target="pricing">{nav.pricing}</a>
+    </nav>
+    <div class="nav-actions">
+      {includeLanguageSwitcher && (
+        <div class="dd hide-sm" data-dropdown>
+          <button class="icon-btn" type="button" aria-label={t.common.languageSwitcherLabel} aria-expanded="false" aria-controls="nav-language-panel" data-dropdown-trigger>
+            <Icon name="globe" />
+          </button>
+          <div class="dd-panel dd-panel--compact" id="nav-language-panel" data-dropdown-panel>
+            {locales.map(key => (
+              <button type="button" class="dd-item" data-locale={key} data-path={pathInLocale(localePaths[key])} aria-pressed={key === locale} data-ga-event="language_switch" data-ga-locale={key} data-ga-from={locale}>
+                {localeNames[key]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div class="dd" data-dropdown>
+        <button class="icon-btn theme-toggle" type="button" aria-label={t.common.themeLabel} aria-expanded="false" aria-controls="nav-theme-panel" data-dropdown-trigger>
+          <Icon name="sun" class="i-sun" />
+          <Icon name="moon" class="i-moon" />
+        </button>
+        <div class="dd-panel dd-panel--compact" id="nav-theme-panel" data-dropdown-panel>
+          {themes.map(theme => (
+            <button type="button" class="dd-item" data-theme-choice={theme.id} aria-pressed={theme.id === 'system'}>{theme.label}</button>
+          ))}
+        </div>
+      </div>
+      {includeSiteAuth && (
+        <>
+          <button type="button" class="btn btn-ghost btn-sm hide-sm" data-site-auth-entry hidden>{nav.signIn}</button>
+          <a class="btn btn-secondary btn-sm hide-sm" href={`${home}dashboard/`} data-site-dashboard-link hidden>{nav.dashboard}</a>
+        </>
+      )}
+      <CapabilityAction locale={locale} capability="extensionInstall" href={`${home}extension/#install`} class="btn btn-primary btn-sm hide-sm" data-cta="nav-install" data-ga-event="internal_workflow_click" data-ga-source="nav" data-ga-target="extension">
+        {t.common.installCta}<Icon name="arrow-right" class="icon-arrow" />
+      </CapabilityAction>
+      <button class="icon-btn nav-burger" type="button" aria-label={t.common.mobileMenuLabel} aria-expanded="false" aria-controls="site-mobile-menu" data-menu-toggle>
+        <Icon name="menu" />
+      </button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-menu" id="site-mobile-menu" aria-label={nav.mobileLabel} data-mobile-menu inert>
+  {[...products, ...apis].map((item, index) => (
+    <a class:list={{ sub: index >= products.length, 'is-unavailable': !item.available }} href={`${home}${item.path}`} aria-current={current(item.path)} data-cta={`nav-${item.id}`} style={`--i: ${index}`}>
+      <span>{item.label}{!item.available && <SoonBadge locale={locale} />}</span><Icon name="arrow-up-right" />
+    </a>
+  ))}
+  <a href={`${home}pricing/`} aria-current={current('pricing/')} style={`--i: ${products.length + apis.length}`} data-ga-event="internal_workflow_click" data-ga-source="mobile_nav" data-ga-target="pricing">
+    <span>{nav.pricing}</span><Icon name="arrow-up-right" />
+  </a>
+  <a href={`${home}tools/place-id-finder/`} aria-current={current('tools/place-id-finder/')} style={`--i: ${products.length + apis.length + 1}`} data-ga-event="internal_workflow_click" data-ga-source="mobile_nav" data-ga-target="tool_place_id_finder">
+    <span>{nav.freeTools}</span><Icon name="arrow-up-right" />
+  </a>
+  {includeSiteAuth && (
+    <>
+      <button type="button" class="btn btn-secondary btn-lg" data-site-auth-entry hidden>{nav.signIn}</button>
+      <a class="btn btn-secondary btn-lg" href={`${home}dashboard/`} data-site-dashboard-link hidden>{nav.dashboard}</a>
+    </>
+  )}
+  <CapabilityAction locale={locale} capability="extensionInstall" href={`${home}extension/#install`} class="btn btn-primary btn-lg" data-cta="mobile-install" data-ga-event="internal_workflow_click" data-ga-source="mobile_nav" data-ga-target="extension">
+    {t.common.installCta}
+  </CapabilityAction>
+</nav>

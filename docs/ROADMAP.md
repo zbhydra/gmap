@@ -25,7 +25,7 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 | A7 | 保存列表(saved lists)抓取 | 官网 FAQ 提及 | 🔍浅 | ✅ (2026-08-30) |
 | A8 | 导出 CSV / JSON / XLSX + 字段勾选 + 命名规则 | 逆向 07 | 🔍 | ✅ (2026-08-30) |
 | A9 | 设置项(采集间隔 / 格式 / 重试) | 逆向 09 | 🔍 | ✅ (2026-08-30) |
-| A10 | Google Drive / HubSpot 集成 | 逆向 06/07 | 🔍 | ✅ (2026-08-30) |
+| A10 | Google Drive / HubSpot 集成 | 逆向 06/07 | 🔍 | 是否提供待确认（已有代码） |
 | A11 | 插件侧账号登录 + 配额展示(对应 007/003;登录 2026-09-01 迁 v3 浏览器身份) | 逆向 06 | 🔍 | ✅ (2026-08-30;2026-09-01 额度基建 MySQL 化——统一 usage 服务三线门面,见 `feat/000.架构/tech-额度基建.md`) |
 | A12 | 远端公告 / 版本提示 / GA4 埋点 | 逆向 06/09 | 🔍 | ✅ (2026-08-30) |
 | A13 | 插件工程骨架(MV3 + Vue3 + RPC,复用 extension/) | 本仓库 extension/ | ♻️ | ✅ (2026-08-30) |
@@ -35,8 +35,8 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 | # | 功能 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- |
 | B1 | Online Scraper(关键词批量任务,云端执行；合同见 `feat/014.Maps云端/tech-Online任务与结果.md`) | 官网 pricing tab=online | 🔍 | ✅ (首页预览与 Dashboard 创建、历史下载闭环已交付；验收与限制见 [实施清单](feat/014.Maps云端/plans/004.首页预览与Dashboard创建.md)) |
-| B2 | 同步 Search / Reviews API；Photos 待实现 | 官方 Postman 文档(v2 三端点契约) | 🔍 | ⬜ |
-| B3 | MCP Server(Claude/Cursor/VSCode/Codex 接入) | 官网落地页 | 🔍 | ⬜ |
+| B2 | 同步 Search / Reviews API；Photos 待实现 | 官方 Postman 文档(v2 三端点契约) | 🔍 | ✅ (2026-10-16 Search / Reviews 实现与本地必要验收完成；Photos 保持未开放，见 [首发清单](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md)) |
+| B3 | MCP Server(Claude/Cursor/VSCode/Codex 接入) | 官网落地页 | 🔍 | ✅ (2026-10-16 MCP / OAuth 服务端与 Dashboard 连续链通过；尚未正式上线，见 [首发清单](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md)) |
 | B4 | 抓取引擎(自研 RPC fetcher 为主、gosom 可选 + 代理池；无状态 Provider 合同见 `feat/014.Maps云端/tech-引擎Provider层.md`，执行计划见 `feat/014.Maps云端/plans/001.Provider采集基建.md`) | research 方案调研 §12.30–§13 | 🚧 | ✅ (2026-09-06 Google HTTP 真实搜索及评论翻页通过；gosom 网络冒烟未执行) |
 | B5 | 云端 POC:HTTP 长周期封锁率 / 代理流量爬坡 + gosom Postgres 内网化(单机部署 + 1,500 词压测已入 research §12,正式 Gate 判定未做) | research 方案调研 §9/§12.34 | 🔍 | ⬜ |
 
@@ -45,8 +45,8 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 | # | 功能 | 归属域 | 竞品证据 | 调研 | 实施 |
 | --- | --- | --- | --- | --- | --- |
 | C1 | 用户体系(含竞品 license key 辅轨的取舍;辅轨取舍未决) | ♻️ `007.用户系统` | 逆向 06 | 🔍 | ✅ (2026-09-01,复用 007 全套 + 插件 v3 浏览器身份,Maps/Bing 双插件已接) |
-| C2 | 订阅套餐(三类产品:maps_extension / maps_online / maps_api) | ♻️ `006.订阅系统` | 官网 pricing 三 tab | 🔍 | ✅ (2026-09-05 全端统一 product_kind,移除 TG 现役商品和默认回退;本地跨端验收通过,详见 006 changelog;Online 消费已接线,API 待 014) |
-| C3 | 积分 / 用量计量(服务端计数、免费月度额度) | ♻️ `003.积分系统` / `005.计数器系统` | 逆向 06 | 🔍 | 🚧 (统一 usage 三门面 + 月度免费额度已落地，maps_extension 已生效；2026-09-05 maps_online 实际计量接线完成，API 待 014) |
+| C2 | 订阅套餐(三类产品:maps_extension / maps_online / maps_api) | ♻️ `006.订阅系统` | 官网 pricing 三 tab | 🔍 | ✅ (2026-09-05 全端统一 product_kind,移除 TG 现役商品和默认回退;本地跨端验收通过,详见 006 changelog;Online 消费已接线，API 消费于 2026-10-16 完成) |
+| C3 | 积分 / 用量计量(服务端计数、免费月度额度) | ♻️ `003.积分系统` / `005.计数器系统` | 逆向 06 | 🔍 | ✅ (统一 usage 三门面与三类产品月额度已接线；2026-10-16 API / MCP 同账号真实调用、用量增加及撤销连续链通过) |
 | C4 | 订单与支付(Stripe / Paddle) | ♻️ `004.订单系统` | 逆向 06 | ♻️ | 🚧 (2026-09-05 支付模型同步落地，005 升级已实施，本地收尾与检查完成；真实渠道及特定宿主验收待办,见 `feat/006.订阅系统/`;maps_extension 自动续费真实渠道 SKU 与 Clink 公网 webhook 首笔人工验收待办;Stripe/Paddle 未立项) |
 | C5 | Pricing 页(三产品形态分 tab 展示) | ♻️ `011.Pricing页` | 官网 /pricing | 🔍浅 | ✅ (2026-08-31,Online / Extension / API 三 tab 已实现,10 个付费 SKU;2026-09-05 起按单一计费模式购买,maps_extension 两档待真实渠道 SKU——TODO 占位 enabled=0 暂不可售) |
 | C6 | 管理后台扩展 | ♻️ `008.管理后台` | — | ♻️ | ✅ (2026-09-02,用户管理页只读列表 + 用户弹窗多线订阅/用量契约 + Dashboard 图表落地;RBAC / 订单写操作 / 订阅额度管理 UI / API key 多条按裁决不做) |
@@ -59,7 +59,7 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 | D2 | 竞品对比页(约 10 篇:vs Outscraper / Apify 等) | 官网 /articles | ⬜ | ⬜ |
 | D3 | Guides 博客 | 官网 /guides | ⬜ | ⬜ |
 | D4 | Affiliates 联盟计划(25% 循环佣金) | 官网 /affiliates 营销页 | 🔍(门户内部需注册) | ⏸ 暂不做 |
-| D5 | 营销站(Astro 模板复用,多语言) | ♻️ `010.多语言` 基建 + website/ 模板 | ♻️ | ✅ (2026-08-31 交付 22 页,持续迭代;多语言为 en-US 单语脚手架) |
+| D5 | 营销站(Astro 模板复用,多语言) | ♻️ `010.多语言` 基建 + website/ 模板 | ♻️ | ✅ (2026-10-16 Atlas 官网与 API Dashboard 本地交付完成；发布待办见 [首发清单](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md)；多语言为 en-US 单语脚手架) |
 | D6 | SEO 基建(sitemap / llms.txt;GSC/GA4 后台采集已退役,改用官方控制台) | ♻️ `009.SEO与增长` | ♻️ | 🚧 (sitemap/robots/llms.txt/GA4 通道/hreflang 已落地;域名 / GA4 ID / GSC 验证待后配) |
 
 ### E · Bing 插件(`016.Bing插件`,2026-08-30 立项)
@@ -75,6 +75,14 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 | E7 | 打点(search/export/install 等,自有 SLS 通道) | 竞品 sdfvaohi 日志 | ♻️ | ✅ |
 
 ## 3 · 阶段计划
+
+### 当前首发范围（2026-10-16）
+
+- Search / Reviews API、MCP（含本项目 OAuth 授权服务端）、官网与用户 Dashboard 的代码实现及本地必要验收完成，单元与整体审查通过；尚未正式上线，发布待办集中见首发实施清单。
+- 本轮启用 API / MCP 官网入口，复用现有 Online 能力；插件安装、插件购买与 Photos 动作保持灰化并提示“即将上线”，介绍页仍可阅读。
+- MCP、API 接入与 OAuth 参考本机 `cas/` 的现成实现，其余业务沿用本项目合同；参考范围内的任何实现差异必须先经 hydra 同意，不擅自增加防御措施。参考边界与实施顺序见 [首发实施清单](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md)。
+
+下表为历史阶段规划；当前功能范围以上方功能全景及首发范围为准。
 
 | 阶段 | 内容 | 前置 | 估时 |
 | --- | --- | --- | --- |
@@ -94,6 +102,8 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 - 估时假设:单人 + AI 助手;插件全量(阶段 1)约 7–9 周,加云端与增长完整对标约 3–4 个月。
 
 ## 5 · 变更记录
+
+- 2026-10-16 **官网首发本地交付完成（014 plans/006）**：Search / Reviews API、MCP OAuth、API Dashboard 与 Atlas 官网完成单元及整体审查；同账号授权→SDK 调用→用量增加→撤销→旧凭证拒绝连续链通过。未正式部署或真实下单；验收命令、证据与发布待办见 [首发实施清单](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md)。
 
 - 2026-09-05 **三类产品合同统一**:全端改用 `product_kind`,双插件共享 `maps_extension`;移除 TG 下载商品、默认回退和 Admin 第四类订阅,保留 TG 存量数据与 Telegram Stars 支付基建,好评活动仍关闭。三表三索引原地改名,独立单元及整体审查通过,真实 API + Pricing + Admin 组合验证通过;未做真实付款、商店发布或插件采集分档改造。验收与环境限制见 [006 变更记录](feat/006.订阅系统/changelog.md)。
 
@@ -131,3 +141,4 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 - 2026-08-30 UI token 选型拍板:全项目采用 **Material You**(06 亮 / 06D 暗,曾短暂选型 Aurora Glass 后弃用);旧 Geist 规范整体替换为 Material You token 合同(`design.md` 亮色 / `design.dark.md` 暗色,暗色主题为本次新增),状态实底色引入 `*-fg` 深字配对合同;12 皮肤全组件探索稿在 `scratch/design-explore/`(不入 git)。
 - 2026-08-31 **TG 主站退役,website-mapsgrab/ 更名 website/**:删除 `website/`(TG 站,telegramdownloadmedia.com 生产站点不再由本仓维护),`website-mapsgrab/` 改名 `website/` 并接管主站端口 7620(mapsgrab 7630 端口撤销)。Bing 插件登录桥接页 `/extension-login-bing`(页面 + i18n + `BING_*` auth 常量)随迁新站;TG 专用桥接页 `/extension-login`、`/extension-login-v2` 与两插件 `EXTENSION_LOGIN_PATH` 死常量一并删除,Maps 插件官网登录桥按原 TODO(maps) 决策时再设计统一登录页。同步:tasks.json(删 7630 任务)、ui_token_lint、spec-website.md 重写、design.md、015 plan、AGENTS 仓库地图不变(website/ 描述仍成立)。
 - 2026-08-31 **占位入口基线推翻(hydra)**:营销站菜单对标竞品全量补齐——新增 Online Scraper + Scraper/Reviews/Photos API + MCP 落地页 ×5,导航 Online 改真链接 + 新增 API 下拉,首页 Online/API 占位卡改链接;页面全部可打开,页内未落地功能按钮点击无效(无跳转/无请求/不埋点),云端功能本体仍归 014。替代 2026-08-30「Online 入口留空点击无效」裁决。需求落 `015.工具与增长/feat.md` D5 附,计划 `015.工具与增长/plans/002.营销站Online与API落地页.md`(U1 pending)。
+- 2026-10-15 **website UI 合同改为 Atlas**:定稿设计稿 `docs/design/website/` 升为 website 合同 `references/specs/design-website.md`(基础层全站、营销表达层仅营销页);`design.md` / `design.dark.md`(Material You)收窄为插件两端与 Admin。`ui_token_lint.py` 按端分 `material` / `atlas` 两套合同,website 在 Atlas 落地(014 plans/006 官网单元)前列为 pending;2026-10-16 U3 落地后移入 enforced(违规即失败)。

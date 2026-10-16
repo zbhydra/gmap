@@ -1,26 +1,37 @@
 import type { SiteContent } from './schema'
 
 /**
- * 免费工具矩阵内容（en-US 基线，W4）。
+ * 免费工具矩阵内容（en-US 基线）。
  *
- * 7 个工具页（D1 清单全做）：每页 = 表单 + 纯前端逻辑 + SEO 正文
- * （what is / how to use / FAQ）+ CTA 漏斗（安装插件 / 查看套餐）。
+ * 7 个工具页（D1 清单全做）：每页 = 表单 + 纯前端逻辑 + SEO 正文 + FAQ + CTA 漏斗（安装插件 / 查看套餐）。
+ * SEO 正文：Place ID Finder 为三步用法 + 标识讲解（steps / identifiers），其余工具为 howTo 三节。
  * 交互形态在 plans §1 W4 钉死：短链不支持、Email 纯格式校验、CSV 纯前端并集合并。
+ * 工具名与一句话描述在 layout.footer.tools 与 pages.home.tools.descriptions，外壳直接复用。
  */
 export const toolsContent: SiteContent['pages']['tools'] = {
   common: {
-    relatedHeading: 'Related tools',
-    relatedTools: [
-      { id: 'place-id-finder', label: 'Place ID Finder', path: '/tools/place-id-finder/' },
-      { id: 'review-link-generator', label: 'Review Link Generator', path: '/tools/review-link-generator/' },
-      { id: 'email-checker', label: 'Email Checker', path: '/tools/email-checker/' },
-      { id: 'lat-long-to-dms', label: 'Lat Long to DMS Converter', path: '/tools/lat-long-to-dms/' },
-      { id: 'dms-to-dd', label: 'DMS to Decimal Converter', path: '/tools/dms-to-dd/' },
-      { id: 'bulk-keywords-generator', label: 'Bulk Keywords Generator', path: '/tools/bulk-keywords-generator/' },
-      { id: 'merge-csv', label: 'Merge CSV Files Online', path: '/tools/merge-csv-files-online/' }
-    ],
-    eyebrowLabel: 'Free tool',
-    aboutHeading: 'About this tool',
+    crumbRoot: 'Free tools',
+    guide: {
+      kicker: 'About this tool',
+      title: { lead: 'What it does and ', accent: 'how to use it', tail: '' },
+      lead: 'Everything runs in your browser — nothing you paste or upload leaves your device.'
+    },
+    related: {
+      kicker: 'Related tools',
+      title: { lead: 'More free tools for ', accent: 'Maps data', tail: '' },
+      lead: 'Small utilities that run entirely in your browser — what you paste never leaves your device.'
+    },
+    faq: {
+      kicker: 'FAQ',
+      lead: 'The short answers. Anything else, support is one email away.',
+      contact: 'Contact support'
+    },
+    cta: {
+      kicker: 'Bulk extraction',
+      primary: 'Install MapsGrab',
+      secondary: 'View pricing',
+      note: 'Free monthly quota included. No credit card.'
+    },
     resultHeading: 'Result',
     copy: 'Copy',
     copied: 'Copied to clipboard.',
@@ -34,7 +45,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
         'Paste a Google Maps place URL and get its Place ID, CID, and FID instantly. Free browser-based Place ID finder — no sign-in, your URL never leaves your device.'
     },
     hero: {
-      title: 'Place ID Finder',
+      title: { lead: 'Place ID ', accent: 'Finder', tail: '' },
       description:
         'Paste a full Google Maps place URL and read out its Place ID, CID, and FID in one click. Everything is decoded in your browser — the URL is never uploaded.'
     },
@@ -44,29 +55,93 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       submit: 'Find Place ID',
       errorShortLink: 'Short links (maps.app.goo.gl) are not supported. Open the link in your browser and paste the full URL from the address bar.',
       errorInvalidUrl: 'This does not look like a Google Maps place URL. Open a place in Google Maps and copy the full URL (it should contain "/maps/place/" and "@" or "data=").',
-      errorNoIds: 'No place identifiers were found in this URL. Make sure you copied the URL of a place page, not a search results page.'
+      errorNoIds: 'No place identifiers were found in this URL. Make sure you copied the URL of a place page, not a search results page.',
+      examplesLabel: 'Try',
+      examples: {
+        city: 'San Francisco',
+        business: 'Coffee shop · Portland',
+        shortLink: 'Short link'
+      }
     },
     result: {
       placeId: 'Place ID',
       cid: 'CID',
-      fid: 'FID'
+      fid: 'FID',
+      placeIdNote: 'base64url of the two FID halves',
+      cidNote: 'FID 2nd half, hex → decimal',
+      fidNote: 'last two 0x… segments in the URL',
+      anatomy: {
+        fidHigh: 'FID · 1st half',
+        fidLow: 'FID · 2nd half',
+        empty: 'Paste a place URL — the identifiers it carries light up here.'
+      },
+      missing: 'Not in this link',
+      copyLabel: 'Copy {label}',
+      privacy: 'Decoded in your browser — the URL is never uploaded.'
     },
-    howTo: [
-      {
-        heading: 'What is a Google Place ID?',
-        body: 'A Place ID is Google\'s stable identifier for a location — a string starting with "ChIJ" that stays valid even if the business renames or moves. Developers need it for the Google Places API, review widgets, booking systems, and any tool that has to remember one specific place. Alongside the Place ID, Google Maps also carries two legacy identifiers: the FID (a pair of hexadecimal values that identify the same feature internally) and the CID (the decimal form of the FID\'s second half, used by older Maps URLs and ads tooling).'
-      },
-      {
-        heading: 'How to find a Place ID with this tool',
-        body: 'Open Google Maps, search for the business, and click its listing so the place page opens. Copy the URL from the address bar — a long URL containing the business name, an "@" coordinate segment, and a "data=" parameter. Paste it above and press "Find Place ID". The tool decodes the identifiers locally and shows the Place ID, CID, and FID, each with a copy button. Short links like maps.app.goo.gl cannot be decoded without following them across domains, so open the link first and paste the full address.'
-      },
-      {
-        heading: 'Why decode locally?',
-        body: 'The conversion from a Maps URL to a Place ID is deterministic: the "ChIJ" prefix is simply a base64 encoding of a small binary structure built from the two FID halves. Because no lookup service is involved, this tool works without an API key, adds no rate limits, and never sends the URL you paste to any server — the entire computation runs in your browser tab.'
-      }
+    chips: [
+      { label: 'Google API key', value: 'Not needed' },
+      { label: 'Your URL', value: 'Never uploaded' }
     ],
+    steps: {
+      head: {
+        kicker: 'How it works',
+        title: { lead: 'From a Maps link to a ', accent: 'Place ID', tail: '' },
+        lead: 'No API key and no sign-in — the identifiers are already inside the place URL you copy.'
+      },
+      items: [
+        {
+          heading: 'Open the place in Google Maps',
+          body: 'Search for the business and click its listing so the place page opens.'
+        },
+        {
+          heading: 'Copy the full URL',
+          body: 'Copy the long URL from the address bar — it contains the business name, an "@" coordinate segment, and a "data=" parameter.'
+        },
+        {
+          heading: 'Paste and decode',
+          body: 'Paste it above and press "Find Place ID". The Place ID, CID, and FID appear, each with a copy button.'
+        }
+      ],
+      copiedBadge: 'Copied',
+      note: 'Short links like maps.app.goo.gl cannot be decoded without following them across domains, so open the link first and paste the full address.'
+    },
+    identifiers: {
+      head: {
+        kicker: 'The identifiers',
+        title: { lead: 'Three IDs, ', accent: 'one place', tail: '' },
+        lead: 'A Place ID is Google\'s stable identifier for a location — a string starting with "ChIJ" that stays valid even if the business renames or moves.'
+      },
+      keys: {
+        placeId: 'The "ChIJ…" string consumed by the Places API, review widgets, and booking systems.',
+        fid: 'A pair of hexadecimal values that identify the same feature internally.',
+        cid: 'The decimal form of the FID\'s second half, used by older Maps URLs and ads tooling.'
+      },
+      derive: {
+        label: 'How the Place ID and CID are derived from the FID',
+        source: 'FID from the URL',
+        protobuf: 'protobuf · little-endian',
+        base64: 'base64url',
+        secondHalf: '2nd half',
+        hexToDecimal: 'hex → decimal'
+      },
+      features: [
+        {
+          heading: 'No API key',
+          body: 'The Place ID is already encoded inside the place URL you paste, so the tool can decode it offline.'
+        },
+        {
+          heading: 'No rate limits',
+          body: 'No lookup service is involved — the conversion from a Maps URL to a Place ID is deterministic.'
+        },
+        {
+          heading: 'Never uploaded',
+          body: 'The entire computation runs in your browser tab — the URL you paste is never sent to any server.'
+        }
+      ]
+    },
     faq: {
-      title: 'Place ID questions',
+      title: { lead: 'Place ID ', accent: 'questions', tail: '' },
       items: [
         {
           question: 'Does a Place ID ever change?',
@@ -91,11 +166,8 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       ]
     },
     cta: {
-      title: 'Need Place IDs at scale?',
-      description:
-        'MapsGrab extracts the Place ID, CID, and FID for every business it collects — alongside 33 other columns — and exports straight to CSV or JSON.',
-      installButton: 'Install MapsGrab',
-      pricingButton: 'View pricing'
+      title: { lead: 'Need Place IDs ', accent: 'at scale?', tail: '' },
+      lead: 'MapsGrab extracts the Place ID, CID, and FID for every business it collects — alongside 33 other columns — and exports straight to CSV or JSON.'
     }
   },
   reviewLinkGenerator: {
@@ -105,7 +177,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
         'Turn a Google Maps place URL into a direct Google review link you can share with customers. Free, browser-based, and nothing is uploaded.'
     },
     hero: {
-      title: 'Google Review Link Generator',
+      title: { lead: 'Google Review Link ', accent: 'Generator', tail: '' },
       description:
         'Paste a Google Maps place URL and get the direct "write a review" link for that business — the shortest path from a happy customer to a Google review.'
     },
@@ -136,7 +208,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       }
     ],
     faq: {
-      title: 'Review link questions',
+      title: { lead: 'Review link ', accent: 'questions', tail: '' },
       items: [
         {
           question: 'Do review links expire?',
@@ -161,11 +233,8 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       ]
     },
     cta: {
-      title: 'Track every review you earn',
-      description:
-        'MapsGrab pulls the reviews of any business page — rating, text, date, and owner replies — so you can watch feedback land and answer it faster.',
-      installButton: 'Install MapsGrab',
-      pricingButton: 'View pricing'
+      title: { lead: 'Track every review you ', accent: 'earn', tail: '' },
+      lead: 'MapsGrab pulls the reviews of any business page — rating, text, date, and owner replies — so you can watch feedback land and answer it faster.'
     }
   },
   emailChecker: {
@@ -175,7 +244,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
         'Check an email address for syntax errors and common typos instantly. Free format validation that runs in your browser — no SMTP probing, nothing is sent anywhere.'
     },
     hero: {
-      title: 'Email Checker',
+      title: { lead: 'Email ', accent: 'Checker', tail: '' },
       description:
         'Type an email address and instantly see whether its format is valid — plus hints for the most common typos. Everything runs in your browser.'
     },
@@ -217,7 +286,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       }
     ],
     faq: {
-      title: 'Email checking questions',
+      title: { lead: 'Email checking ', accent: 'questions', tail: '' },
       items: [
         {
           question: 'Does this tool check whether the mailbox really exists?',
@@ -242,11 +311,8 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       ]
     },
     cta: {
-      title: 'Collect emails that are worth verifying',
-      description:
-        'MapsGrab finds the email addresses and social profiles behind every business it extracts — straight from each business\'s own website.',
-      installButton: 'Install MapsGrab',
-      pricingButton: 'View pricing'
+      title: { lead: 'Collect emails that are worth ', accent: 'verifying', tail: '' },
+      lead: 'MapsGrab finds the email addresses and social profiles behind every business it extracts — straight from each business\'s own website.'
     }
   },
   latLongToDms: {
@@ -256,7 +322,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
         'Convert decimal latitude and longitude to degrees, minutes, seconds (DMS) format instantly. Free browser-based coordinate converter, nothing uploaded.'
     },
     hero: {
-      title: 'Convert Lat Long to DMS',
+      title: { lead: 'Convert Lat Long to ', accent: 'DMS', tail: '' },
       description:
         'Enter decimal latitude and longitude and read the same coordinates in degrees, minutes, seconds — with hemisphere letters, ready to copy.'
     },
@@ -286,7 +352,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       }
     ],
     faq: {
-      title: 'Coordinate conversion questions',
+      title: { lead: 'Coordinate conversion ', accent: 'questions', tail: '' },
       items: [
         {
           question: 'How precise is the DMS result?',
@@ -311,11 +377,8 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       ]
     },
     cta: {
-      title: 'Coordinates for every business, already extracted',
-      description:
-        'MapsGrab writes latitude and longitude into each row it exports — no manual coordinate lookup for your next routing or territory project.',
-      installButton: 'Install MapsGrab',
-      pricingButton: 'View pricing'
+      title: { lead: 'Coordinates for every business, already ', accent: 'extracted', tail: '' },
+      lead: 'MapsGrab writes latitude and longitude into each row it exports — no manual coordinate lookup for your next routing or territory project.'
     }
   },
   dmsToDd: {
@@ -325,7 +388,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
         'Convert degrees, minutes, seconds coordinates to decimal degrees instantly. Free browser-based DMS to DD converter, nothing uploaded.'
     },
     hero: {
-      title: 'Convert DMS to DD (Lat, Long)',
+      title: { lead: 'Convert DMS to DD ', accent: '(Lat, Long)', tail: '' },
       description:
         'Enter degrees, minutes, and seconds for both axes and get clean decimal degrees — the format Google Maps, spreadsheets, and MapsGrab understand.'
     },
@@ -335,8 +398,10 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       degreesLabel: 'Degrees',
       minutesLabel: 'Minutes',
       secondsLabel: 'Seconds',
+      latitudeHemisphereLabel: 'N / S',
+      longitudeHemisphereLabel: 'E / W',
       submit: 'Convert to decimal',
-      errorValues: 'Degrees must be zero or a positive whole number, minutes and seconds must be between 0 and 60.',
+      errorValues: 'Degrees must be zero or a positive whole number, minutes and seconds must be between 0 and 60.'
     },
     result: {
       dd: 'Coordinates in decimal degrees'
@@ -356,7 +421,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       }
     ],
     faq: {
-      title: 'DMS to decimal questions',
+      title: { lead: 'DMS to decimal ', accent: 'questions', tail: '' },
       items: [
         {
           question: 'How many decimal places do I need?',
@@ -381,11 +446,8 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       ]
     },
     cta: {
-      title: 'Skip manual coordinate work at scale',
-      description:
-        'MapsGrab exports decimal latitude and longitude for every business it collects, next to the address, phone, and Place ID columns.',
-      installButton: 'Install MapsGrab',
-      pricingButton: 'View pricing'
+      title: { lead: 'Skip manual coordinate work ', accent: 'at scale', tail: '' },
+      lead: 'MapsGrab exports decimal latitude and longitude for every business it collects, next to the address, phone, and Place ID columns.'
     }
   },
   bulkKeywords: {
@@ -395,7 +457,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
         'Generate keyword and location combinations in bulk for local SEO and maps scraping tasks. Paste two lists, get every combination, download as CSV. Free.'
     },
     hero: {
-      title: 'Bulk Keywords Generator',
+      title: { lead: 'Bulk Keywords ', accent: 'Generator', tail: '' },
       description:
         'Paste your keywords and your locations, and get every "keyword + location" combination as a ready-to-paste list or CSV — the fastest way to seed a local search campaign.'
     },
@@ -427,7 +489,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       }
     ],
     faq: {
-      title: 'Bulk keyword questions',
+      title: { lead: 'Bulk keyword ', accent: 'questions', tail: '' },
       items: [
         {
           question: 'How many combinations can I generate?',
@@ -452,11 +514,8 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       ]
     },
     cta: {
-      title: 'Turn the keyword list into results',
-      description:
-        'MapsGrab batch tasks run every keyword as a Maps search and export the businesses behind them — CSV or JSON, with reviews, photos, and contact enrichment.',
-      installButton: 'Install MapsGrab',
-      pricingButton: 'View pricing'
+      title: { lead: 'Turn the keyword list into ', accent: 'results', tail: '' },
+      lead: 'MapsGrab batch tasks run every keyword as a Maps search and export the businesses behind them — CSV or JSON, with reviews, photos, and contact enrichment.'
     }
   },
   mergeCsv: {
@@ -466,7 +525,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
         'Merge multiple CSV files online into one file. Column headers are aligned automatically by union — free, private, and entirely browser-based.'
     },
     hero: {
-      title: 'Merge CSV Files Online',
+      title: { lead: 'Merge CSV Files ', accent: 'Online', tail: '' },
       description:
         'Upload two or more CSV files and download a single merged file. Columns are aligned by header — missing fields are left empty. Files never leave your browser.'
     },
@@ -474,7 +533,6 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       filesLabel: 'CSV files',
       filesHint: 'Select two or more .csv files. Check each file with translated labels on row 2 to skip that row. The merged CSV keeps one field-name header row. Files stay in your browser.',
       translationRow: 'Skip row 2 (translated labels) in {name}',
-      browse: 'Choose files',
       submit: 'Merge files',
       errorNoFiles: 'Select at least two CSV files to merge.',
       errorEmptyFile: 'One of the files is empty or has no header row: {name}',
@@ -497,7 +555,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       }
     ],
     faq: {
-      title: 'CSV merging questions',
+      title: { lead: 'CSV merging ', accent: 'questions', tail: '' },
       items: [
         {
           question: 'What happens when files have different columns?',
@@ -522,11 +580,8 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       ]
     },
     cta: {
-      title: 'One export per run — or one dataset',
-      description:
-        'MapsGrab exports clean CSV/JSON per session with field selection and Place ID deduplication, so multi-run datasets start almost merged already.',
-      installButton: 'Install MapsGrab',
-      pricingButton: 'View pricing'
+      title: { lead: 'One export per run — or ', accent: 'one dataset', tail: '' },
+      lead: 'MapsGrab exports clean CSV/JSON per session with field selection and Place ID deduplication, so multi-run datasets start almost merged already.'
     }
   }
 }

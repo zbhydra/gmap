@@ -1,0 +1,17 @@
+---
+/**
+ * 营销页标题文本：lead + 强调词（.accent，可叠加渐变类）+ tail。外层标题元素与 data-split 由使用方写；
+ * 运行时拆词把 .accent 整体当作一个词。
+ */
+import type { AccentHeadingMessage } from '../../i18n/schema'
+
+interface Props {
+  title: AccentHeadingMessage
+  /** 叠加在强调词上的类，如 text-grad is-animated。 */
+  accentClass?: string
+}
+
+const { title, accentClass } = Astro.props
+---
+
+{title.lead}<span class:list={['accent', accentClass]}>{title.accent}</span>{title.tail}

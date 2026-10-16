@@ -181,8 +181,8 @@ export default defineConfig({
 | --- | --- |
 | `/`、`/{lang}/` | `src/pages/index.astro` + `src/pages/[lang]/index.astro` + `src/components/pages/HomePage.astro` |
 | `/changelog/`、`/{lang}/changelog/` | changelog.astro + [lang]/ + `src/i18n/content.ts` |
-| `/terms/`、`/privacy/`、`/{lang}/terms|privacy/` | `LegalPage.astro` + `legalContent.ts` |
-| `/about/`、`/contact/`、`/{lang}/about|contact/` | `CompanyPage.astro` + `companyContent.ts` |
+| `/terms/`、`/privacy/`、`/{lang}/terms|privacy/` | `LegalPage.astro` + `components/legal/`（`LegalHero`、`LegalDocument`）+ `legalContent.ts` |
+| `/about/`、`/contact/`、`/{lang}/about|contact/` | `CompanyPage.astro` + `companyContent.ts`；About 加 `components/company/` 的 `About*` 区块与 `about-globe` / `about-wires`，Contact 加 `ContactSection.astro` |
 | `/telegram-download-disabled-channel-workaround/`、`/{lang}/...` | 该页 + [lang]/ + `TelegramDownloadDisabledGuidePage.astro` + `i18n/downloadDisabledChannelWorkaround.ts` |
 | `/*-downloader/`、`/{lang}/*-downloader/` | 对应 page + [lang]/ + `PlatformDownloaderPage.astro` |
 

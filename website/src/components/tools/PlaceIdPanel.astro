@@ -1,0 +1,550 @@
+---
+/**
+ * Place ID Finder 工具面板（设计稿 place-id-finder ①）：链接输入 + 示例、URL 解剖与 Place ID / CID / FID 三行结果，
+ * 两侧浮动说明卡。交互与解码动画见 scripts/tools/placeIdFinder.ts，脚本要用的文案放在面板根节点的 data-* 上。
+ * ID 配色约定：Place ID = 主色；FID 前半 = 青；FID 后半与由它换算的 CID = 珊瑚。
+ */
+import { getContent, type Locale } from '../../i18n/content'
+import { fillCopy } from '../product/copy'
+import Icon from '../site/Icon.astro'
+import { PLACE_EXAMPLES } from './place-id-samples'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+const t = getContent(locale)
+const common = t.pages.tools.common
+const tool = t.pages.tools.placeIdFinder
+const [keyChip, urlChip] = tool.chips
+if (!keyChip || !urlChip) throw new Error('[place-id-panel] placeIdFinder.chips needs two entries.')
+
+const examples = [
+  { key: 'city', icon: 'pin', label: tool.form.examples.city, url: PLACE_EXAMPLES.city },
+  { key: 'business', icon: 'coffee', label: tool.form.examples.business, url: PLACE_EXAMPLES.business },
+  { key: 'short-link', icon: 'link', label: tool.form.examples.shortLink, url: PLACE_EXAMPLES.shortLink }
+]
+// 推导顺序自下而上：FID → CID → Place ID；data-* 钩子与 e2e、脚本约定一致。
+const rows = [
+  { key: 'place', id: 'result-place-id', label: tool.result.placeId, note: tool.result.placeIdNote, hook: { 'data-place-id': '' } },
+  { key: 'cid', id: 'result-cid', label: tool.result.cid, note: tool.result.cidNote, hook: { 'data-cid': '' } },
+  { key: 'fid', id: 'result-fid', label: tool.result.fid, note: tool.result.fidNote, hook: { 'data-fid': '' } }
+]
+---
+
+<div class="float-chip pid-float pid-float--l floaty" style="--float-t: 7s" aria-hidden="true">
+  <span class="icon-tile icon-tile--ok"><Icon name="key" /></span>
+  <span><small>{keyChip.label}</small>{keyChip.value}</span>
+</div>
+<div class="float-chip pid-float pid-float--r floaty" style="--float-t: 8s; --float-d: -3s" aria-hidden="true">
+  <span class="icon-tile"><Icon name="lock" /></span>
+  <span><small>{urlChip.label}</small>{urlChip.value}</span>
+</div>
+
+<div
+  class="tool-panel pid"
+  data-pid
+  data-error-short-link={tool.form.errorShortLink}
+  data-error-invalid-url={tool.form.errorInvalidUrl}
+  data-error-no-ids={tool.form.errorNoIds}
+  data-missing={tool.result.missing}
+  data-copied={common.copied}
+>
+  <form class="pid-form" data-tool-form autocomplete="off" novalidate>
+    <label class="pid-label" for="place-url">{tool.form.urlLabel}</label>
+    <div class="searchbar pid-bar" data-pid-bar>
+      <Icon name="link" />
+      <input
+        id="place-url"
+        name="place-url"
+        type="text"
+        spellcheck="false"
+        autocomplete="off"
+        placeholder={tool.form.urlPlaceholder}
+        data-tool-input
+      />
+      <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="place-id-finder">
+        <span class="pid-submit-label">{tool.form.submit}</span><Icon name="arrow-right" class="icon-arrow" />
+      </button>
+    </div>
+    <div class="pid-examples">
+      <span class="subtle">{tool.form.examplesLabel}</span>
+      {examples.map(example => (
+        <button class="chip" type="button" data-pid-example={example.url} data-pid-example-key={example.key}>
+          <Icon name={example.icon} />{example.label}
+        </button>
+      ))}
+    </div>
+    <p class="tool-error pid-error" role="alert" data-tool-error hidden><Icon name="info" /><span data-pid-error-text></span></p>
+  </form>
+
+  <div class="pid-result" data-pid-result>
+    <div class="pid-anatomy-head">
+      <span class="tool-result-label">{common.resultHeading}</span>
+      <span class="pid-legend" aria-hidden="true">
+        <span class="lg-a">{tool.result.anatomy.fidHigh}</span><span class="lg-b">{tool.result.anatomy.fidLow}</span>
+      </span>
+    </div>
+    <div class="pid-url-box" data-pid-scan>
+      <p class="pid-url-empty" data-pid-url-empty>{tool.result.anatomy.empty}</p>
+      <code class="pid-url" data-pid-url hidden></code>
+    </div>
+
+    <dl class="pid-rows">
+      {rows.map(row => (
+        <div class={`pid-row pid-row--${row.key}`} data-pid-row={row.key}>
+          <dt><span class="pid-dot"></span>{row.label}<small>{row.note}</small></dt>
+          <dd>
+            <output id={row.id} class="pid-val" {...row.hook}>—</output>
+            <button
+              class="icon-btn pid-copy"
+              type="button"
+              data-copy-target={row.id}
+              data-ga-event="tool_copy"
+              data-ga-tool-id="place-id-finder"
+              aria-label={fillCopy(tool.result.copyLabel, { label: row.label })}
+              disabled
+            >
+              <Icon name="copy" class="i-copy" /><Icon name="check" class="i-done" />
+            </button>
+          </dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+
+  <p class="tool-panel-note"><Icon name="lock" />{tool.result.privacy}</p>
+</div>
+
+<style>
+  /* --c-* 画色条、圆点与描边；URL 标记里的文字用 --t-*，底色用 --s-* */
+  .pid {
+    --c-place: var(--primary);
+    --c-a: var(--cyan);
+    --c-b: var(--pin);
+    --t-place: var(--primary-text);
+    --t-a: var(--cyan-text);
+    --t-b: var(--pin-text);
+    --s-place: var(--primary-soft);
+    --s-a: var(--cyan-soft);
+    --s-b: var(--pin-soft);
+  }
+
+  .pid-label {
+    display: block;
+    margin: 0 0 10px 4px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .pid-bar {
+    height: 62px;
+    padding-left: 18px;
+  }
+
+  /* Azeret Mono 的 calt 会把数字间的 x 渲染成 ×（0x8085 → 0×8085），十六进制 ID 处一律关掉连字 */
+  .pid-bar input {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .pid-bar .btn {
+    height: 46px;
+  }
+
+  .pid-bar.is-shake {
+    animation: pid-shake var(--dur-3) var(--ease-out);
+  }
+
+  @keyframes pid-shake {
+    20%,
+    60% {
+      transform: translateX(-6px);
+    }
+
+    40%,
+    80% {
+      transform: translateX(6px);
+    }
+  }
+
+  .pid-examples {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 13px;
+  }
+
+  .pid-examples .chip.is-active {
+    border-color: transparent;
+    background: var(--primary-soft);
+    color: var(--primary-text);
+  }
+
+  .pid-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .pid-error :global(.icon) {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* 结果区：源 URL 解剖 + 三行结果 */
+  .pid-result {
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--border-2);
+  }
+
+  .pid-result[aria-busy='true'] .pid-copy {
+    pointer-events: none;
+  }
+
+  .pid-anatomy-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .pid-legend {
+    display: inline-flex;
+    gap: 14px;
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .pid-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .pid-legend span::before {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--r-2xs);
+    content: '';
+  }
+
+  .pid-legend .lg-a::before {
+    background: var(--c-a);
+  }
+
+  .pid-legend .lg-b::before {
+    background: var(--c-b);
+  }
+
+  /* 扫描光带用 transform 平移，放在外框上，不给滚动容器制造横向溢出 */
+  .pid-url-box {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+  }
+
+  .pid-url-box.is-scanning::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      color-mix(in srgb, var(--primary) 16%, transparent) 50%,
+      transparent 80%
+    );
+    transform: translateX(120%);
+    animation: sweep var(--dur-5) var(--ease-in-out) backwards;
+    pointer-events: none;
+    content: '';
+  }
+
+  .pid-url {
+    display: block;
+    max-height: calc(1.75em * 4 + 24px);
+    padding: 12px 14px;
+    overflow: auto;
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 12.5px;
+    line-height: 1.75;
+    word-break: break-all;
+  }
+
+  .pid-url-empty {
+    padding: 12px 14px;
+    color: var(--text-3);
+    font-size: 13.5px;
+    line-height: 1.75;
+  }
+
+  .pid-url :global(.pid-mark) {
+    --mc: var(--c-a);
+    --mt: var(--t-a);
+    --ms: var(--s-a);
+    margin: 0 -2px;
+    padding: 2px;
+    border-radius: var(--r-xs);
+    background: transparent;
+    color: var(--text-2);
+    transition:
+      background-color var(--dur-3) var(--ease-out),
+      color var(--dur-3) var(--ease-out),
+      box-shadow var(--dur-3) var(--ease-out);
+  }
+
+  .pid-url :global(.pid-mark.is-b) {
+    --mc: var(--c-b);
+    --mt: var(--t-b);
+    --ms: var(--s-b);
+  }
+
+  .pid-url :global(.pid-mark.is-place) {
+    --mc: var(--c-place);
+    --mt: var(--t-place);
+    --ms: var(--s-place);
+  }
+
+  .pid-url :global(.pid-mark.is-lit) {
+    background: var(--ms);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mc) 45%, transparent);
+    color: var(--mt);
+    font-weight: 600;
+  }
+
+  .pid-rows {
+    display: grid;
+    gap: 10px;
+    margin: 14px 0 0;
+  }
+
+  .pid-row {
+    --rc: var(--c-place);
+    position: relative;
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 12px 10px 12px 18px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    transition:
+      border-color var(--dur-3),
+      box-shadow var(--dur-3);
+  }
+
+  .pid-row--cid {
+    --rc: var(--c-b);
+  }
+
+  .pid-row--fid {
+    --rc: var(--c-a);
+  }
+
+  .pid-row::before {
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 0;
+    width: 3px;
+    border-radius: 0 var(--r-2xs) var(--r-2xs) 0;
+    background: var(--rc);
+    opacity: 0.35;
+    transition: opacity var(--dur-3);
+    content: '';
+  }
+
+  /* FID 行的色条：前青后珊瑚，对应两段 hex */
+  .pid-row--fid::before {
+    background: linear-gradient(var(--c-a) 50%, var(--c-b) 50%);
+  }
+
+  .pid-row dt {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 10px;
+    color: var(--text);
+    font-size: 14.5px;
+    font-weight: 650;
+  }
+
+  .pid-row dt small {
+    grid-column: 2;
+    color: var(--text-3);
+    font-size: 11.5px;
+    font-weight: 500;
+  }
+
+  .pid-dot {
+    grid-row: span 2;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--rc);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--rc) 18%, transparent);
+  }
+
+  .pid-row--fid .pid-dot {
+    background: linear-gradient(90deg, var(--c-a) 50%, var(--c-b) 50%);
+  }
+
+  .pid-row dd {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .pid-val {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 14.5px;
+    font-weight: 500;
+    word-break: break-all;
+  }
+
+  .pid-row.is-decoding .pid-val {
+    color: var(--rc);
+  }
+
+  .pid-row.is-done {
+    border-color: color-mix(in srgb, var(--rc) 35%, var(--border));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .pid-row.is-done::before {
+    opacity: 1;
+  }
+
+  .pid-row.is-done .pid-val {
+    color: var(--text);
+  }
+
+  .pid-row.is-done .pid-dot {
+    animation: pid-ping var(--dur-4) var(--ease-out);
+  }
+
+  @keyframes pid-ping {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--rc) 55%, transparent);
+    }
+
+    100% {
+      box-shadow: 0 0 0 12px color-mix(in srgb, var(--rc) 0%, transparent);
+    }
+  }
+
+  .pid-copy {
+    display: grid;
+    flex-shrink: 0;
+  }
+
+  .pid-copy :global(.icon) {
+    grid-area: 1 / 1;
+    width: 18px;
+    height: 18px;
+    transition:
+      opacity var(--dur-2),
+      transform var(--dur-3) var(--ease-spring);
+  }
+
+  .pid-copy :global(.i-done) {
+    color: var(--ok);
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .pid-copy.is-copied :global(.i-copy) {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .pid-copy.is-copied :global(.i-done) {
+    opacity: 1;
+    transform: none;
+  }
+
+  .pid-copy[disabled] {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  /* 两侧浮动说明卡：宽屏才有位置 */
+  .pid-float--l {
+    top: 88px;
+    left: -168px;
+  }
+
+  .pid-float--r {
+    right: -164px;
+    bottom: 120px;
+  }
+
+  .pid-float span:last-child {
+    font-size: 13px;
+  }
+
+  @media (max-width: 1240px) {
+    .pid-float {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .pid-bar {
+      height: 56px;
+      padding-left: 14px;
+    }
+
+    .pid-bar .btn {
+      width: 44px;
+      padding: 0;
+    }
+
+    /* 窄屏只留箭头：标签视觉隐藏，仍是按钮的可读名称 */
+    .pid-submit-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .pid-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    /* 27 位的 Place ID 在 393 宽度下保持一行 */
+    .pid-val {
+      font-size: 13.5px;
+    }
+
+    .pid-legend {
+      display: none;
+    }
+  }
+</style>

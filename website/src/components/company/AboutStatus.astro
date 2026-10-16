@@ -1,0 +1,147 @@
+---
+/**
+ * About「Status」（设计稿 about.html ⑤）：早期访问、免费额度、付费方案三张卡。
+ *
+ * 插件安装尚未开放（能力表 extensionInstall），安装教程入口照常链到插件页 #install，灰化并带 Coming soon；
+ * 早期访问卡不写「现可直接安装」。
+ */
+import type { AboutPageContent } from '../../company/companyContent'
+import type { Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import { capabilities } from '../../lib/capabilities'
+import AccentHeading from '../product/AccentHeading.astro'
+import Icon from '../site/Icon.astro'
+import SoonBadge from '../site/SoonBadge.astro'
+
+interface Props {
+  locale: Locale
+  status: AboutPageContent['status']
+}
+
+const { locale, status } = Astro.props
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const cards = [
+  { id: 'access', copy: status.access, icon: '', href: `${prefix}/extension/#install`, available: capabilities.extensionInstall },
+  { id: 'quota', copy: status.quota, icon: 'gauge', href: `${prefix}/pricing/#extension`, available: true },
+  { id: 'paid', copy: status.paid, icon: 'trend', href: `${prefix}/pricing/`, available: true }
+]
+---
+
+<section class="section section--tight about-status" id="status">
+  <div class="container status-grid" data-stagger="90">
+    <div class="status-head" data-reveal>
+      <span class="kicker">{status.kicker}</span>
+      <h2 class="h3"><AccentHeading title={status.title} /></h2>
+    </div>
+    {cards.map(card => (
+      <article class="status-card card card-pad" data-reveal>
+        {card.icon ? (
+          <span class="status-icon"><Icon name={card.icon} /></span>
+        ) : (
+          <span class="status-icon status-icon--live"><span class="dot dot--live"></span></span>
+        )}
+        <h3>{card.copy.title}</h3>
+        <p>{card.copy.text}</p>
+        <a class:list={['link-arrow', { 'is-unavailable': !card.available }]} href={card.href} data-cta={`about-status-${card.id}`}>
+          {card.copy.link}{!card.available && <SoonBadge locale={locale} />}<Icon name="arrow-right" />
+        </a>
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .status-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .status-head {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    padding-right: 12px;
+  }
+
+  .status-head .h3 {
+    font-size: clamp(24px, 1.2vw + 18px, 32px);
+    line-height: 1.15;
+  }
+
+  .status-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .status-card h3 {
+    margin-top: 4px;
+    font-size: clamp(16px, 0.2vw + 14.5px, 17px);
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .status-card p {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .status-card .link-arrow {
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: 4px;
+    font-size: 14px;
+  }
+
+  .status-card .link-arrow :global(.soon-badge) {
+    margin-left: 2px;
+  }
+
+  .status-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    color: var(--primary-text);
+  }
+
+  .status-icon :global(.icon) {
+    width: 19px;
+    height: 19px;
+  }
+
+  .status-icon--live {
+    border-color: transparent;
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+
+  .status-icon--live .dot {
+    width: 9px;
+    height: 9px;
+  }
+
+  @media (max-width: 1080px) {
+    .status-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .status-head {
+      grid-column: 1 / -1;
+      padding: 0 0 8px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .status-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

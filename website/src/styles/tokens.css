@@ -1,0 +1,307 @@
+/* =========================================================================
+   MapsGrab Website · Design Tokens — design language "Atlas"
+   -------------------------------------------------------------------------
+   唯一 token 来源。组件与页面只消费下方语义变量，禁止写死色值 / 圆角 / 投影。
+
+   主题机制：颜色统一用 light-dark()，随元素的 color-scheme 求值：
+     - 默认跟随系统（:root color-scheme: light dark）
+     - <html data-theme="light|dark"> 手动覆盖（Layout 首帧内联脚本恢复，scripts/site/chrome.ts 切换）
+     - .scheme-dark / .scheme-light 让某个区块固定为暗 / 亮（“主题岛”），
+       岛内所有 token 自动翻转，无需第二套变量。
+   非颜色的主题差异（噪点强度等）在文件末尾用选择器单独覆盖。
+   ========================================================================= */
+
+:root {
+  color-scheme: light dark;
+
+  /* ---------------------------------------------------------------------
+     1. 品牌原色（primitive）——只在本文件与插画内部使用
+     --------------------------------------------------------------------- */
+  --blue-300: #8ab4f8;
+  --blue-400: #4d94ff;
+  --blue-500: #1a73e8; /* 品牌蓝，与插件 / Admin 的 Material You primary 同值 */
+  --blue-600: #1765cc;
+  --blue-700: #1452b0;
+  --cyan-400: #22d3ee;
+  --cyan-500: #0aa5d6;
+  --green-400: #34d399;
+  --green-500: #14b37d;
+  --coral-400: #ff7a6b;
+  --coral-500: #f2554a;
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --violet-400: #a78bfa;
+  --violet-600: #7c3aed;
+
+  /* ---------------------------------------------------------------------
+     2. 语义颜色
+     --------------------------------------------------------------------- */
+  /* 页面与面 */
+  --bg: light-dark(#ffffff, #070b14);
+  --bg-2: light-dark(#f6f8fc, #0a0f1b);          /* 交替区块底 */
+  --surface: light-dark(#ffffff, #0e1424);        /* 卡片 / 浮层实底 */
+  --surface-2: light-dark(#f4f7fb, #131b2d);      /* 二级面：hover、表头、输入底 */
+  --surface-3: light-dark(#e9eef6, #1a2438);      /* 三级面：分段控件槽、骨架 */
+  --border: light-dark(#e6ebf2, #1c2639);
+  --border-2: light-dark(#d3dbe6, #2a3650);       /* 输入框、强分隔 */
+
+  /* 文字 */
+  --text: light-dark(#0b1324, #eaeff7);
+  --text-2: light-dark(#475467, #a6b1c4);
+  --text-3: light-dark(#667083, #79859c);          /* 辅助信息与标签，字号 ≥10.5px；在 --surface / --surface-2 上 ≥4.5:1 */
+  --text-inverse: light-dark(#ffffff, #0b1324);
+
+  /* 主色：fill 两主题同值（白字 4.5:1）；作文字用 --primary-text（亮色加深、暗色提亮），
+     在 --surface / --surface-2 / --bg-2 / --primary-soft 上 ≥4.5:1 */
+  --primary: var(--blue-500);
+  --primary-hover: var(--blue-600);
+  --primary-fg: #ffffff;
+  --primary-text: light-dark(#1568d6, #7cb0ff);    /* 链接、kicker、图标 */
+  --primary-soft: light-dark(#e8f0fe, rgba(77, 148, 255, 0.14));
+  --primary-soft-2: light-dark(#d2e3fc, rgba(77, 148, 255, 0.24));
+
+  /* 叙事色：只用于插画与数据语义，不做行动色。作文字时 --accent 直接用，--cyan / --pin 改用对应 -text；
+     这三个文字色在 --surface / --surface-2 / --bg-2 / 对应 -soft 上 ≥4.5:1 */
+  --cyan: light-dark(#0891b2, #22d3ee);
+  --cyan-soft: light-dark(#e1f2f6, rgba(34, 211, 238, 0.13));
+  --cyan-text: light-dark(#067590, #22d3ee);
+  --accent: light-dark(#0e7c56, #4ade9b);          /* 成功 / 已采集 */
+  --accent-soft: light-dark(#e3f6ee, rgba(52, 211, 153, 0.13));
+  --pin: light-dark(#f2554a, #ff6b5e);             /* 地图 pin（插画色） */
+  --pin-soft: light-dark(#fdeae8, rgba(255, 107, 94, 0.15));
+  --pin-text: light-dark(#d21c0f, #ff6b5e);
+  --star: light-dark(#f59e0b, #fbbf24);            /* 评分星 */
+  --ai: light-dark(#7c3aed, #a78bfa);              /* MCP / AI 语境 */
+  --ai-soft: light-dark(#f1ebfe, rgba(167, 139, 250, 0.14));
+
+  /* 状态：作文字时在 --surface / --surface-2 / 对应 -soft 上 ≥4.5:1；实底时文字用 -fg */
+  --ok: light-dark(#117e39, #4ade80);
+  --ok-soft: light-dark(#e7f6ec, rgba(74, 222, 128, 0.13));
+  --ok-fg: light-dark(#ffffff, #052e16);
+  --warn: light-dark(#b45309, #fbbf24);
+  --warn-soft: light-dark(#fef5e2, rgba(251, 191, 36, 0.13));
+  --warn-fg: light-dark(#ffffff, #2d2000);
+  --bad: light-dark(#d22222, #f87171);
+  --bad-soft: light-dark(#fdecec, rgba(248, 113, 113, 0.13));
+  --bad-fg: light-dark(#ffffff, #2c1210);
+
+  /* 交互 / 浮层 */
+  --ring: light-dark(rgba(26, 115, 232, 0.45), rgba(124, 176, 255, 0.55));
+  --overlay: light-dark(rgba(11, 19, 36, 0.46), rgba(0, 0, 0, 0.62));
+  --nav-bg: light-dark(rgba(255, 255, 255, 0.84), rgba(12, 17, 30, 0.72));
+  --nav-border: light-dark(rgba(15, 23, 42, 0.08), rgba(148, 163, 184, 0.14));
+  --selection: light-dark(rgba(26, 115, 232, 0.18), rgba(124, 176, 255, 0.28));
+
+  /* 风格化地图（插画专用） */
+  --map-land: light-dark(#f1f4f8, #0b1220);
+  --map-block: light-dark(#e8edf4, #0f182a);
+  --map-water: light-dark(#cde2fb, #0c2442);
+  --map-park: light-dark(#d5f0e1, #0d281f);
+  --map-road: light-dark(#ffffff, #1a2640);
+  --map-road-casing: light-dark(#d9e0ea, #070c17);
+  --map-road-major: light-dark(#ffffff, #23324f);
+  --map-label: light-dark(#7d8899, #5f6d87);
+
+  /* 代码窗（暗色恒定，不随主题翻转） */
+  --code-bg: #0a0f1d;
+  --code-surface: #0f1628;
+  --code-border: #1d2740;
+  --code-text: #d9e2f2;
+  --code-muted: #6f7d99;
+  --syn-key: #7cb0ff;
+  --syn-str: #7ee0b0;
+  --syn-num: #ffb86b;
+  --syn-bool: #ff8fa3;
+  --syn-punc: #8794b0;
+  --syn-fn: #c4a7ff;
+  --syn-comment: #56637f;
+  --code-hover: rgba(255, 255, 255, 0.07);         /* 代码窗 tab / 按钮的选中与 hover 底 */
+
+  /* 与主题无关的常量（合同 §1：光影、遮罩、两种主题下都为白色的元素、窗口三色点） */
+  --mask-solid: #000;                              /* mask 只取 alpha，颜色本身无意义 */
+  --pin-dot: #ffffff;                              /* 地图 pin 中心点 */
+  --window-close: #ff5f57;
+  --window-minimize: #febc2e;
+  --window-maximize: #28c840;
+  --highlight-clear: rgba(255, 255, 255, 0);
+  --highlight-faint: rgba(255, 255, 255, 0.05);
+  --highlight-soft: rgba(255, 255, 255, 0.16);
+  --highlight-sheen: rgba(255, 255, 255, 0.38);
+  --highlight-strong: rgba(255, 255, 255, 0.55);
+  /* 勾选列表的白色对勾（叠在 --accent 圆底上） */
+  --check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+
+  /* ---------------------------------------------------------------------
+     3. 营销表达层（仅 website 营销页使用，App 面板 / Dashboard 不用）
+     --------------------------------------------------------------------- */
+  /* 品牌渐变「水域 → 绿地」：蓝 → 青 → 绿，来自地图本身的配色 */
+  --grad-brand: linear-gradient(
+    105deg,
+    light-dark(#1a73e8, #4d94ff) 0%,
+    light-dark(#0aa5d6, #22d3ee) 52%,
+    light-dark(#14b37d, #34d399) 100%
+  );
+  --grad-brand-text: linear-gradient(
+    100deg,
+    light-dark(#1a73e8, #6aa8ff) 0%,
+    light-dark(#0a9fd0, #2fd8ef) 48%,
+    light-dark(#12a874, #4ee0a6) 100%
+  );
+  --grad-warm: linear-gradient(105deg, #ff8a5b 0%, #ff4d6d 100%);
+  --grad-ai: linear-gradient(105deg, #7c3aed 0%, #4d6bff 100%);
+  --grad-ai-text: linear-gradient(
+    100deg,
+    light-dark(#7c3aed, #a78bfa) 0%,
+    light-dark(#4d6bff, #818cf8) 50%,
+    light-dark(#0891b2, #22d3ee) 100%
+  );
+  --glow-primary: 0 10px 36px -10px light-dark(rgba(26, 115, 232, 0.6), rgba(77, 148, 255, 0.7));
+  --glow-soft: 0 0 0 1px light-dark(rgba(26, 115, 232, 0.12), rgba(124, 176, 255, 0.16)),
+    0 20px 60px -20px light-dark(rgba(26, 115, 232, 0.35), rgba(77, 148, 255, 0.45));
+  /* 营销页主按钮：顶部白高光 + 底部暗边 + 蓝色辉光 */
+  --glow-button: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(16, 24, 40, 0.14), 0 8px 22px -8px rgba(26, 115, 232, 0.65);
+  --glow-button-hover: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 2px 4px rgba(16, 24, 40, 0.12), 0 14px 34px -10px rgba(26, 115, 232, 0.8);
+  --grid-line: light-dark(rgba(15, 23, 42, 0.06), rgba(148, 163, 184, 0.08));
+  --contour: light-dark(rgba(26, 115, 232, 0.17), rgba(124, 176, 255, 0.15));
+  --aurora-1: light-dark(rgba(26, 115, 232, 0.2), rgba(26, 115, 232, 0.42));
+  --aurora-2: light-dark(rgba(10, 165, 214, 0.18), rgba(10, 165, 214, 0.3));
+  --aurora-3: light-dark(rgba(20, 179, 125, 0.14), rgba(20, 179, 125, 0.2));
+  --aurora-4: light-dark(rgba(242, 85, 74, 0.1), rgba(242, 85, 74, 0.14));
+
+  /* ---------------------------------------------------------------------
+     4. 字体
+     --------------------------------------------------------------------- */
+  --font-sans: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+  --font-serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif; /* 仅标题强调词 */
+  --font-mono: 'Azeret Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --fs-display: clamp(2.75rem, 1.2rem + 5.2vw, 5.375rem); /* 44 → 86 首页 H1 */
+  --fs-h1: clamp(2.5rem, 1.45rem + 3.9vw, 4.375rem);       /* 40 → 70 内页 H1 */
+  --fs-h2: clamp(2rem, 1.35rem + 2.5vw, 3.5rem);           /* 32 → 56 */
+  --fs-h3: clamp(1.375rem, 1.15rem + 0.75vw, 1.75rem);     /* 22 → 28 */
+  --fs-h4: 1.25rem;
+  --fs-lead: clamp(1.0625rem, 0.98rem + 0.36vw, 1.25rem);  /* 17 → 20 */
+  --fs-body: 1rem;
+  --fs-sm: 0.875rem;
+  --fs-xs: 0.78125rem;
+  --fs-kicker: 0.75rem;
+
+  --lh-display: 1;
+  --lh-heading: 1.08;
+  --lh-snug: 1.3;
+  --lh-body: 1.65;
+  --tracking-display: -0.045em;
+  --tracking-h2: -0.035em;
+  --tracking-h3: -0.02em;
+  --tracking-kicker: 0.14em;
+
+  /* ---------------------------------------------------------------------
+     5. 间距（4px 基准）与布局
+     --------------------------------------------------------------------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+  --s-20: 80px;
+  --s-24: 96px;
+  --s-32: 128px;
+
+  --container: 1200px;
+  --container-wide: 1360px;
+  --container-narrow: 820px;
+  --gutter: clamp(16px, 4vw, 32px);
+  --section-y: clamp(80px, 9vw, 136px);
+  --nav-h: 68px;
+
+  /* 渐变描边宽度：padding + mask 镂空写法的环宽，不是布局间距 */
+  --edge: 1px;
+  --edge-strong: 1.5px;
+
+  /* ---------------------------------------------------------------------
+     6. 圆角
+     --------------------------------------------------------------------- */
+  --r-2xs: 2px; /* 只用于 ≤ 8px 的小标记（kicker 菱形等） */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --r-full: 999px;
+
+  /* ---------------------------------------------------------------------
+     7. 投影（暗色下投影弱化，层级主要靠面亮度 + 1px 内高光）
+     --------------------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px light-dark(rgba(16, 24, 40, 0.06), rgba(0, 0, 0, 0.4));
+  --shadow-sm: 0 1px 2px light-dark(rgba(16, 24, 40, 0.05), rgba(0, 0, 0, 0.35)),
+    0 4px 14px -4px light-dark(rgba(16, 24, 40, 0.08), rgba(0, 0, 0, 0.45));
+  --shadow-md: 0 2px 6px light-dark(rgba(16, 24, 40, 0.05), rgba(0, 0, 0, 0.3)),
+    0 18px 44px -12px light-dark(rgba(16, 24, 40, 0.16), rgba(0, 0, 0, 0.6));
+  --shadow-lg: 0 4px 14px light-dark(rgba(16, 24, 40, 0.06), rgba(0, 0, 0, 0.35)),
+    0 40px 90px -24px light-dark(rgba(16, 24, 40, 0.26), rgba(0, 0, 0, 0.75));
+  --hairline-hl: inset 0 1px 0 light-dark(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.06));
+  /* 地图 pin（插画）：白色内描边 + 左下投影，两种主题相同 */
+  --shadow-pin: inset 0 0 0 1.5px rgba(255, 255, 255, 0.28), -3px 5px 10px -3px rgba(0, 0, 0, 0.35);
+
+  /* ---------------------------------------------------------------------
+     8. 动效（分级见 README §动效系统）
+     --------------------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);        /* 入场 / 展开：快出慢收 */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);    /* 往返 / 循环 */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* pin 落点、弹性反馈 */
+  --dur-1: 120ms;  /* T1 微交互：press */
+  --dur-2: 200ms;  /* T1 微交互：hover / focus */
+  --dur-3: 360ms;  /* T2 过渡：菜单、tab、手风琴、弹窗 */
+  --dur-4: 720ms;  /* T3 入场：滚动显现 */
+  --dur-5: 1100ms; /* T3 入场：大块视觉、数字滚动 */
+  --stagger: 70ms;
+
+  /* ---------------------------------------------------------------------
+     9. 层级
+     --------------------------------------------------------------------- */
+  --z-raised: 2;
+  --z-nav: 50;
+  --z-dropdown: 60;
+  --z-modal: 100;
+  --z-toast: 110;
+
+  /* 非颜色主题量（暗色覆盖见下） */
+  --noise-opacity: 0.035;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* 非颜色量的暗色覆盖：手动暗色 + 系统暗色（未手动选亮色）+ 暗色岛 */
+:root[data-theme='dark'],
+.scheme-dark {
+  --noise-opacity: 0.06;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --noise-opacity: 0.06;
+  }
+}
+
+.scheme-dark {
+  color-scheme: dark;
+}
+
+.scheme-light {
+  color-scheme: light;
+  --noise-opacity: 0.035;
+}

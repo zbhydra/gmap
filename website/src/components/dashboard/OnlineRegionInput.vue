@@ -169,24 +169,24 @@ onMounted(() => { void fetchCountries() })
 </template>
 
 <style scoped>
-.region-input { display: grid; gap: var(--space-3); min-width: 0; }
-.region-input textarea, .region-input input[type='search'], .region-input select { width: 100%; min-width: 0; padding: var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--rounded-sm); background: var(--surface); color: var(--text); font: inherit; }
+.region-input { display: grid; gap: var(--s-3); min-width: 0; }
+.region-input textarea, .region-input input[type='search'], .region-input select { width: 100%; min-width: 0; padding: var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; }
 .region-input textarea:focus-visible, .region-input input:focus-visible, .region-input select:focus-visible, .region-input button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.region-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
-.region-fields label { display: grid; gap: var(--space-2); min-width: 0; }
-.region-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.region-command, .region-generate { min-height: 36px; padding: 0 var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--rounded-sm); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
-.region-generate { justify-self: start; border-color: var(--primary); color: var(--primary); }
+.region-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+.region-fields label { display: grid; gap: var(--s-2); min-width: 0; }
+.region-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.region-command, .region-generate { min-height: 36px; padding: 0 var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.region-generate { justify-self: start; border-color: var(--primary); color: var(--primary-text); }
 .region-command:disabled, .region-generate:disabled { opacity: .5; cursor: not-allowed; }
-.region-selected { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.region-selected li { display: inline-flex; align-items: center; gap: var(--space-2); max-width: 100%; padding: 2px var(--space-2); border: 1px solid var(--border); border-radius: var(--rounded-sm); }
+.region-selected { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
+.region-selected li { display: inline-flex; align-items: center; gap: var(--s-2); max-width: 100%; padding: 2px var(--s-2); border: 1px solid var(--border); border-radius: var(--r-sm); }
 .region-selected li span { overflow-wrap: anywhere; }
-.region-selected li button { border: 0; background: none; color: var(--text-2); font-size: 20px; cursor: pointer; }
-.region-mode { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: 0; padding: 0; border: 0; }
-.region-mode legend { margin-bottom: var(--space-2); }
-.region-mode label { display: inline-flex; align-items: center; gap: var(--space-2); }
+.region-selected li button { border: 0; background: none; color: var(--text-2); font-size: var(--fs-h4); cursor: pointer; }
+.region-mode { display: flex; flex-wrap: wrap; gap: var(--s-4); margin: 0; padding: 0; border: 0; }
+.region-mode legend { margin-bottom: var(--s-2); }
+.region-mode label { display: inline-flex; align-items: center; gap: var(--s-2); }
 .region-note { margin: 0; color: var(--text-2); font-size: 13px; }
-.region-note a { color: var(--link); }
+.region-note a { color: var(--primary-text); }
 .region-error { margin: 0; color: var(--bad); }
 @media (max-width: 960px) { .region-fields { grid-template-columns: minmax(0, 1fr); } }
 </style>

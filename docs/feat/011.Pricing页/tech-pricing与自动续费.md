@@ -6,7 +6,8 @@
 ## 实现结论
 
 - 页面按三产品线 tab 展示(online / extension / api),档位卡 SSR 静态渲染;购买走全站统一 OrderCheckout 弹窗,不自建第二套支付弹窗。
-- 入口查询参数 `product_kind` 经 `pricing-page-controller.ts` 的 `PRICING_LINE_CONFIG` 映射到初始 tab,例如 `/pricing/?product_kind=maps_extension`;缺省或未知值为 Online。正常 tab 切换保持内存状态,不改 URL。插件与网站共用这条购买、升级及管理路径。
+- 动作入口按站级能力可用性表灰化(见 `@../../references/specs/spec-website.md`):插件安装 / 购买未交付时,对应卡片渲染 aria-disabled 按钮,不输出购买钩子与链接,控制器只处理带购买钩子的卡片;Online 与 API(2026-10-16 开放)购买不受影响。灰化期间插件档不显示 Current Plan 与升级态,已有订阅在 Dashboard 订阅页查看。
+- 初始 tab 先读 hash `#online` / `#extension` / `#api`,再读查询参数 `product_kind`(经 `pricing-page-controller.ts` 的 `PRICING_LINE_CONFIG` 映射,例如 `/pricing/?product_kind=maps_extension`),缺省或未知值为 Online。切换 tab(含对比表的产品分段)用 `history.replaceState` 把 hash 写回当前线,不新增历史记录、不改查询参数;hash 变为产品线时切到对应 tab,页内锚点 hash 不影响 tab。插件与网站共用这条购买、升级及管理路径。
 - checkout 配置按商品单一计费模式消费:商品的 `auto_renew` 与 `period` 是商品级字段,支付选项文案据此展示 `Auto-renews until canceled` 或 `One-time payment`。
 - 下单请求携带 `auto_renew + period`,与商品配置不一致时后端按价格已更新拒绝,页面重载配置。
 - 支付渠道为 PayPal 与 ClinkBill;页面不实现 Telegram Stars 渠道。
@@ -50,7 +51,7 @@ Pricing 订阅下单调用 `POST /api/client/order/create`,请求核心字段:
 - PayPal 自动续费升级由服务端报价拒绝,页面展示渠道不可升级提示;一次性 PayPal 补差保留。升级交互与文案不按渠道写两份流程。
 - `upgrade_quote_shown` 在当前 tab 的可升级卡片曝光时上报;`upgrade_confirmed` 在共享 checkout 确认履约或新档生效时上报,提交按钮点击不算成功。
 
-验证入口为 `website/e2e/website.spec.ts` 的 `Pricing full purchase path`。route mock 证明网站交互与协议,不证明真实渠道扣款或 webhook;真实 SKU、公网 webhook 的验收归 004/006。
+验证入口为 `website/e2e/website.spec.ts` 的 `Pricing Online purchase path` 与 `Pricing extension subscription`(后者在 `extensionPurchase` 未放开时跳过)。route mock 证明网站交互与协议,不证明真实渠道扣款或 webhook;真实 SKU、公网 webhook 的验收归 004/006。
 
 ## 支付渠道与回跳
 

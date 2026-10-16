@@ -1,0 +1,20 @@
+---
+import Layout from '../../../layouts/Layout.astro'
+import McpOAuthConsent from '../../../components/auth/McpOAuthConsent.vue'
+import { getMcpOAuthContent } from '../../../i18n/mcp-oauth'
+
+const locale = 'en-US'
+const copy = getMcpOAuthContent(locale)
+---
+
+<Layout
+  locale={locale}
+  title={copy.seoTitle}
+  description={copy.intro}
+  robots="noindex, nofollow"
+  analytics={false}
+  includeSoftwareApplicationSchema={false}
+  includeAlternateLanguageLinks={false}
+>
+  <McpOAuthConsent client:load copy={copy} />
+</Layout>

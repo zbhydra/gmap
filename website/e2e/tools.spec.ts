@@ -2,8 +2,8 @@
  * 工具矩阵 + Pricing 页 e2e（W4/W5 交付版）。
  *
  * mock 跑（PUBLIC_API_BASE_URL 指向假地址）：工具为纯前端逻辑，闭环不依赖
- * 后端；Pricing 只断言 SSR 展示结构（三档卡/占位卡/FAQ），支付配置加载在
- * mock 下进入失败态（按钮禁用），购买交互链路由 OrderCheckout 底座承载。
+ * 后端；Pricing 断言展示结构（三线套餐卡 / 能力灰化 / URL 选线 / 结构化数据），支付配置
+ * 加载在 mock 下进入失败态（按钮禁用），购买交互链路见 website.spec.ts。
  */
 import { expect, test } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
@@ -66,16 +66,23 @@ test.describe('Tool Matrix', () => {
       const response = await page.goto(route)
       expect(response?.status(), `expected ${route} to be 200`).toBe(200)
       await expect(page.locator('h1')).toBeVisible()
-      // SEO 正文：How-to 小节 + FAQ 至少一问
-      await expect(page.locator('.tool-prose-section')).toHaveCount(3)
-      await expect(page.locator('.tool-faq-item').first()).toBeVisible()
-      // CTA 漏斗：安装 + 套餐，带 utm 与 data-cta（作用域限定 CTA 区，避免命中导航 Install）
-      const ctaBand = page.locator('.tool-cta')
-      await expect(ctaBand.locator('a[data-cta$="-install"]')).toBeVisible()
-      await expect(ctaBand.locator('a[data-cta$="-pricing"]')).toBeVisible()
-      const installHref = await ctaBand.locator('a[data-cta$="-install"]').getAttribute('href')
-      expect(installHref).toContain('/extension/')
-      expect(installHref).toContain('utm_medium=tool-')
+      // SEO 正文：三节用法（Place ID Finder 为三步用法卡）+ FAQ 至少一问
+      await expect(page.locator('#guide .guide-card, #how .pid-step')).toHaveCount(3)
+      await expect(page.locator('#faq details.acc').first()).toBeVisible()
+      // CTA 漏斗（作用域限定收尾 CTA，避免命中导航 Install）：插件安装未交付 → 灰化按钮，无链接与 data-cta；
+      // 套餐链接带 utm 与 data-cta
+      const cta = page.locator('.final-cta')
+      const install = cta.locator('button[data-capability="extensionInstall"]')
+      await expect(install).toBeVisible()
+      await expect(install).toHaveAttribute('aria-disabled', 'true')
+      await expect(install).not.toHaveAttribute('href')
+      await expect(install).not.toHaveAttribute('data-cta')
+      const pricing = cta.locator('a[data-cta$="-pricing"]')
+      await expect(pricing).toBeVisible()
+      const pricingHref = await pricing.getAttribute('href')
+      expect(pricingHref).toContain('/pricing/')
+      expect(pricingHref).toContain('utm_medium=tool-')
+      expect(pricingHref).toContain('utm_campaign=pricing')
     }
   })
 
@@ -250,7 +257,7 @@ test.describe('Pricing Page', () => {
   test('renders hero, three MapsGrab tier cards and quota facts', async ({ page }) => {
     const response = await page.goto('/pricing/')
     expect(response?.status()).toBe(200)
-    await expect(page.locator('h1')).toContainText('One data engine, three ways to buy it')
+    await expect(page.locator('h1')).toContainText('Plans for three ways to grab Maps data')
 
     // 默认 Online tab：五档卡（Free/Lite/Basic/Growth/Professional），主推 Basic
     const onlinePanel = page.locator('[data-pricing-panel="online"]')
@@ -259,42 +266,63 @@ test.describe('Pricing Page', () => {
     for (const cardId of ['free', 'online_lite', 'online_basic', 'online_growth', 'online_pro']) {
       await expect(onlinePanel.locator(`[data-plan-card="${cardId}"]`)).toBeVisible()
     }
-    await expect(onlinePanel.locator('[data-plan-card="online_basic"] .plan-badge')).toContainText('Most Popular')
+    await expect(onlinePanel.locator('[data-plan-card="online_basic"] .price-flag')).toContainText('Most Popular')
 
-    // Extension tab：MapsGrab 三档 Free / Pro / Business（C2 口径）
+    // Extension tab：MapsGrab 三档 Free / Pro / Business（C2 口径）；价格数字切换时滚动到终值
     await page.locator('[data-pricing-tab="extension"]').click()
     const extensionPanel = page.locator('[data-pricing-panel="extension"]')
     await expect(extensionPanel).toBeVisible()
-    await expect(extensionPanel.locator('[data-plan-card="free"] .plan-quota')).toContainText('1,000 records / month')
-    await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] .plan-price')).toHaveText('$39')
-    await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] .plan-quota')).toContainText('100,000 records / month')
-    await expect(extensionPanel.locator('[data-plan-card="maps_extension_business"] .plan-price')).toHaveText('$99')
-    await expect(extensionPanel.locator('[data-plan-card="maps_extension_business"] .plan-quota')).toContainText('500,000 records / month')
+    await expect(extensionPanel.locator('[data-plan-card="free"] .price-quota')).toContainText('1,000 records / month')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] [data-price]')).toHaveText('39')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] .price-quota')).toContainText('100,000 records / month')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_business"] [data-price]')).toHaveText('99')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_business"] .price-quota')).toContainText('500,000 records / month')
     // 主推徽章在 Pro 卡
-    await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] .plan-badge')).toContainText('Most Popular')
+    await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] .price-flag')).toContainText('Most Popular')
   })
 
-  test('free tier links to the extension page while buyable buttons need payment config', async ({ page }) => {
+  test('online and API buy buttons wait for payment config while extension plans stay gated', async ({ page }) => {
     await page.goto('/pricing/')
-    // Extension tab Free 卡：安装引导链接（带 data-cta 归因；tab 未激活时隐藏，href 仍可断言）
-    const freeCta = page.locator('a[data-cta="pricing-free-extension"]')
-    await expect(freeCta).toHaveAttribute('href', '/extension/')
-    // 可购买按钮：mock 环境无支付配置 → 禁用态
-    await expect(page.locator('[data-pricing-buy="maps_extension_pro"]')).toBeDisabled()
-    await expect(page.locator('[data-pricing-buy="maps_extension_business"]')).toBeDisabled()
-  })
-
-  test('online and api plans render configured cards with disabled buy buttons', async ({ page }) => {
-    await page.goto('/pricing/')
-    // mock 环境无支付配置：online / api tab 的可购买按钮均为禁用态（三线占位先行，不误购）
-    for (const tabId of ['online', 'api']) {
-      const buyButtons = page.locator(`[data-pricing-panel="${tabId}"] [data-pricing-buy]`)
-      const count = await buyButtons.count()
-      expect(count, `${tabId} tab should render buyable plan buttons`).toBeGreaterThan(0)
-      for (let i = 0; i < count; i++) {
-        await expect(buyButtons.nth(i)).toBeDisabled()
+    // mock 环境无支付配置：Online 与 API 各四个付费档的购买按钮保持禁用态，不误购；
+    // Free 卡分别直达 Online Scraper 与 Scraper API 介绍页
+    for (const line of ['online', 'api'] as const) {
+      const buy = page.locator(`[data-pricing-panel="${line}"] [data-pricing-buy]`)
+      await expect(buy).toHaveCount(4)
+      for (let i = 0; i < 4; i++) {
+        await expect(buy.nth(i)).toBeDisabled()
       }
     }
+    await expect(page.locator('a[data-cta="pricing-free-online"]')).toHaveAttribute('href', '/online-scraper/')
+    await expect(page.locator('a[data-cta="pricing-free-api"]')).toHaveAttribute('href', '/google-maps-scraper-api/')
+    await expect(page.locator('[data-pricing-panel="api"] [data-capability]')).toHaveCount(0)
+
+    // 插件安装 / 购买未交付（lib/capabilities.ts）：aria-disabled 按钮，无链接、无购买入口
+    for (const [line, capability, count] of [
+      ['extension', 'extensionInstall', 1],
+      ['extension', 'extensionPurchase', 2]
+    ] as const) {
+      const gated = page.locator(`[data-pricing-panel="${line}"] button[data-capability="${capability}"]`)
+      await expect(gated).toHaveCount(count)
+      for (let i = 0; i < count; i++) {
+        await expect(gated.nth(i)).toHaveAttribute('aria-disabled', 'true')
+        await expect(gated.nth(i)).not.toHaveAttribute('href')
+      }
+      await expect(page.locator(`[data-pricing-panel="${line}"] [data-pricing-buy]`)).toHaveCount(0)
+    }
+  })
+
+  test('URL picks the product line and tab clicks write it back', async ({ page }) => {
+    // Dashboard / 插件 / 落地页沿用 product_kind 直达，导航 API pricing 走 #api
+    await page.goto('/pricing/?product_kind=maps_extension')
+    await expect(page.locator('[data-pricing-tab="extension"]')).toHaveAttribute('aria-selected', 'true')
+    await expect(page.locator('[data-pricing-panel="extension"]')).toBeVisible()
+    await page.goto('/pricing/#api')
+    await expect(page.locator('[data-pricing-tab="api"]')).toHaveAttribute('aria-selected', 'true')
+    await expect(page.locator('[data-compare-table="api"]')).toBeVisible()
+    // 产品切换写回 hash，对比表分段跟随
+    await page.locator('[data-pricing-tab="online"]').click()
+    await expect(page).toHaveURL(/#online$/)
+    await expect(page.locator('[data-compare-key="online"]')).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('exposes FAQ and plan offer structured data', async ({ page }) => {

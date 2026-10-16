@@ -217,9 +217,9 @@ const checkoutCopy: OrderCheckoutCopy = {
     max-height: min(680px, calc(100vh - 48px));
     overflow: hidden;
     border: 1px solid var(--border);
-    border-radius: var(--rounded-lg);
+    border-radius: var(--r-lg);
     background: var(--surface);
-    box-shadow: var(--shadow-modal);
+    box-shadow: var(--shadow-lg);
   }
 
   .order-checkout-payment-header,
@@ -229,8 +229,8 @@ const checkoutCopy: OrderCheckoutCopy = {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-4);
-    padding: 0 28px;
+    gap: var(--s-4);
+    padding: 0 var(--s-8);
     border-color: var(--border);
     background: var(--surface);
   }
@@ -249,16 +249,16 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-payment-header h2 {
     margin: 0;
     color: var(--text);
-    font-size: 32px;
+    font-size: var(--fs-h3);
     line-height: 1;
     letter-spacing: 0;
   }
 
   .order-checkout-payment-kicker {
     margin: 0 0 6px;
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: 13px;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0;
   }
 
@@ -268,22 +268,22 @@ const checkoutCopy: OrderCheckoutCopy = {
     width: 40px;
     height: 40px;
     border: 1px solid var(--border);
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     background: var(--surface-2);
     color: var(--text-2);
     cursor: pointer;
-    font-size: 24px;
+    font-size: var(--fs-h3);
     line-height: 1;
     transition:
-      background 160ms ease,
-      border-color 160ms ease,
-      color 160ms ease;
+      background var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out),
+      color var(--dur-2) var(--ease-out);
   }
 
   .order-checkout-close:hover {
-    border-color: var(--border-strong);
+    border-color: var(--border-2);
     background: var(--primary-soft);
-    color: var(--primary);
+    color: var(--primary-text);
   }
 
   .order-checkout-payment-middle {
@@ -292,7 +292,7 @@ const checkoutCopy: OrderCheckoutCopy = {
     gap: 16px;
     min-height: 0;
     overflow-y: auto;
-    padding: 24px 28px;
+    padding: 24px var(--s-8);
   }
 
   .order-checkout-error,
@@ -308,7 +308,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-order-error {
     padding: 12px 14px;
     border: 1px solid var(--bad);
-    border-radius: var(--rounded-md);
+    border-radius: var(--r-md);
     background: var(--bad-soft);
     color: var(--bad);
   }
@@ -320,10 +320,10 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-selected-summary {
     display: grid;
-    gap: var(--space-2);
-    padding: var(--space-4);
+    gap: var(--s-2);
+    padding: var(--s-4);
     border: 1px solid var(--border);
-    border-radius: var(--rounded-lg);
+    border-radius: var(--r-lg);
     background: var(--surface);
   }
 
@@ -335,34 +335,34 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-selected-label {
     color: var(--text-3);
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   .order-checkout-selected-values {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: var(--space-2) 14px;
+    gap: var(--s-2) 14px;
   }
 
   .order-checkout-selected-values p:first-child {
     color: var(--text);
-    font-size: 24px;
-    font-weight: 950;
+    font-size: var(--fs-h3);
+    font-weight: 700;
     letter-spacing: 0;
   }
 
   .order-checkout-selected-values p:last-child {
     color: var(--text-2);
     font-size: 16px;
-    font-weight: 900;
+    font-weight: 700;
   }
 
   .order-checkout-selected-usage {
     margin: 0;
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: 14px;
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1.35;
   }
 
@@ -377,26 +377,26 @@ const checkoutCopy: OrderCheckoutCopy = {
     justify-content: flex-start;
     gap: 12px;
     min-height: 64px;
-    padding: 0 var(--space-4);
+    padding: 0 var(--s-4);
     border: 1px solid var(--border);
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     background: var(--surface);
     color: var(--text-2);
     cursor: pointer;
     font-size: 13px;
-    font-weight: 900;
+    font-weight: 700;
     transition:
-      border-color 160ms ease,
-      background 160ms ease,
-      color 160ms ease,
-      transform 160ms ease;
+      border-color var(--dur-2) var(--ease-out),
+      background var(--dur-2) var(--ease-out),
+      color var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out);
   }
 
   .order-checkout-channel-button.is-selected,
   .order-checkout-channel-button:hover {
-    border-color: var(--border-strong);
+    border-color: var(--border-2);
     background: var(--primary-soft);
-    color: var(--primary);
+    color: var(--primary-text);
     transform: translateY(-1px);
   }
 
@@ -422,7 +422,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-agreement {
     display: flex;
     align-items: flex-start;
-    gap: var(--space-2);
+    gap: var(--s-2);
     min-width: 0;
     color: var(--text-2);
     font-size: 13px;
@@ -433,14 +433,14 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-agreement input {
     width: 18px;
     height: 18px;
-    margin-top: var(--space-1);
+    margin-top: var(--s-1);
     accent-color: var(--primary);
     flex: 0 0 auto;
   }
 
   .order-checkout-agreement a,
   .order-checkout-order-support a {
-    color: var(--primary);
+    color: var(--primary-text);
     text-decoration: none;
   }
 
@@ -451,7 +451,7 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-payment-actions {
     display: flex;
-    gap: var(--space-2);
+    gap: var(--s-2);
     flex: 0 0 auto;
   }
 
@@ -459,21 +459,21 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-submit,
   .order-checkout-order-cancel {
     min-height: 52px;
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     cursor: pointer;
     font-size: 15px;
-    font-weight: 900;
+    font-weight: 700;
     transition:
-      border-color 160ms ease,
-      background 160ms ease,
-      box-shadow 160ms ease,
-      opacity 160ms ease,
-      transform 160ms ease;
+      border-color var(--dur-2) var(--ease-out),
+      background var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out),
+      opacity var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out);
   }
 
   .order-checkout-back,
   .order-checkout-order-cancel {
-    padding: 0 var(--space-4);
+    padding: 0 var(--s-4);
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text);
@@ -481,8 +481,8 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-back:hover,
   .order-checkout-order-cancel:hover {
-    border-color: var(--border-strong);
-    color: var(--primary);
+    border-color: var(--border-2);
+    color: var(--primary-text);
     transform: translateY(-1px);
   }
 
@@ -492,12 +492,12 @@ const checkoutCopy: OrderCheckoutCopy = {
     border: 0;
     background: var(--primary);
     color: var(--primary-fg);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 
   .order-checkout-submit:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 
   .order-checkout-submit:disabled {
@@ -514,13 +514,13 @@ const checkoutCopy: OrderCheckoutCopy = {
     max-height: min(540px, calc(100vh - 48px));
     overflow: hidden;
     border: 1px solid var(--border);
-    border-radius: var(--rounded-lg);
+    border-radius: var(--r-lg);
     background: var(--surface);
-    box-shadow: var(--shadow-modal);
+    box-shadow: var(--shadow-lg);
   }
 
   .order-checkout-order-header {
-    padding: 28px 32px 22px;
+    padding: var(--s-8) 32px 22px;
     border-bottom: 1px solid var(--border);
   }
 
@@ -546,7 +546,7 @@ const checkoutCopy: OrderCheckoutCopy = {
     place-items: center;
     gap: 16px;
     min-height: 0;
-    padding: 28px 32px;
+    padding: var(--s-8) 32px;
   }
 
   .order-checkout-order-spinner {
@@ -554,10 +554,10 @@ const checkoutCopy: OrderCheckoutCopy = {
     height: 64px;
     border: 6px solid var(--primary-soft);
     border-top-color: var(--primary);
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     transform-origin: 50% 50%;
     will-change: transform;
-    animation: orderCheckoutSpin 800ms linear infinite;
+    animation: spin var(--dur-4) linear infinite;
   }
 
   .order-checkout-success {
@@ -566,11 +566,11 @@ const checkoutCopy: OrderCheckoutCopy = {
     align-items: center;
     gap: 14px;
     width: min(430px, 100%);
-    padding: 16px var(--space-4);
+    padding: 16px var(--s-4);
     border: 1px solid var(--ok);
-    border-radius: var(--rounded-lg);
+    border-radius: var(--r-lg);
     background: var(--ok-soft);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 
   .order-checkout-success-mark {
@@ -578,10 +578,10 @@ const checkoutCopy: OrderCheckoutCopy = {
     place-items: center;
     width: 44px;
     height: 44px;
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     background: var(--ok);
     color: var(--ok-fg);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 
   .order-checkout-success-mark svg {
@@ -604,12 +604,12 @@ const checkoutCopy: OrderCheckoutCopy = {
 
   .order-checkout-success-primary {
     font-size: 16px;
-    font-weight: 900;
+    font-weight: 700;
   }
 
   .order-checkout-success-secondary {
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 700;
     opacity: 0.78;
   }
 
@@ -622,7 +622,7 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-order-footer {
     display: flex;
     justify-content: center;
-    padding: 0 32px var(--space-8);
+    padding: 0 32px var(--s-8);
   }
 
   .order-checkout-order-cancel {
@@ -640,16 +640,6 @@ const checkoutCopy: OrderCheckoutCopy = {
   .order-checkout-order-support a:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 3px;
-  }
-
-  @keyframes orderCheckoutSpin {
-    from {
-      transform: rotate(0deg);
-    }
-
-    to {
-      transform: rotate(360deg);
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -670,16 +660,16 @@ const checkoutCopy: OrderCheckoutCopy = {
     .order-checkout-payment-dialog {
       width: calc(100vw - 24px);
       max-height: calc(100vh - 24px);
-      border-radius: var(--rounded-lg);
+      border-radius: var(--r-lg);
     }
 
     .order-checkout-payment-header,
     .order-checkout-payment-footer {
-      padding: 0 var(--space-4);
+      padding: 0 var(--s-4);
     }
 
     .order-checkout-payment-header h2 {
-      font-size: 24px;
+      font-size: var(--fs-h3);
     }
 
     .order-checkout-channel-button,
@@ -689,14 +679,14 @@ const checkoutCopy: OrderCheckoutCopy = {
     }
 
     .order-checkout-payment-middle {
-      padding: 22px var(--space-4);
+      padding: 22px var(--s-4);
     }
 
     .order-checkout-payment-footer {
       align-items: stretch;
       flex-direction: column;
       justify-content: center;
-      padding: var(--space-4);
+      padding: var(--s-4);
     }
 
     .order-checkout-payment-actions {
@@ -705,12 +695,12 @@ const checkoutCopy: OrderCheckoutCopy = {
     }
 
     .order-checkout-order-header {
-      padding: 28px 22px 22px;
+      padding: var(--s-8) 22px 22px;
     }
 
     .order-checkout-order-middle {
       min-height: 170px;
-      padding: 28px 22px;
+      padding: var(--s-8) 22px;
     }
 
     .order-checkout-order-footer {

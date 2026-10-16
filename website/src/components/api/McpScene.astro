@@ -1,0 +1,292 @@
+---
+/**
+ * MCP 首屏示例会话的一个场景：用户提问 → 工具调用（参数 + 结果预览）→ 回答。
+ * 首个场景直接渲染在会话窗里（无 JS 与减弱动效的终态），全部场景另放进 <template> 供 scripts/pages/mcp-page.ts 轮播。
+ * 带 data-step 的块在会话窗进入 is-armed 后才按顺序显现；思考提示只在播放时出现。
+ */
+import type { McpSceneMessage } from '../../i18n/schema'
+import Icon from '../site/Icon.astro'
+import JsonLine from './JsonLine.astro'
+
+interface Props {
+  scene: McpSceneMessage
+  /** 思考中提示。 */
+  thinking: string
+  /** 工具运行中标签。 */
+  running: string
+}
+
+const { scene, thinking, running } = Astro.props
+---
+
+<div class="scene">
+  <p class="msg-user" data-step="prompt">{scene.prompt}</p>
+  <p class="thinking" data-thinking><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>{thinking}</p>
+  {scene.calls.map(call => (
+    <div class="call" data-step="call">
+      <div class="call-head">
+        <span class="call-icon"><Icon name="wrench" /></span>
+        <code class="call-tool">{call.tool}</code>
+        <span class="call-run"><span class="spinner" aria-hidden="true"></span>{running}</span>
+        <span class="call-done"><Icon name="check" />{call.state}</span>
+      </div>
+      <div class="call-body">
+        <code class="call-args"><JsonLine source={call.args} /></code>
+        {call.out.map(line => <code class="call-line" data-step="out"><JsonLine source={line} /></code>)}
+        {call.more && <span class="call-more" data-step="out">{call.more}</span>}
+      </div>
+    </div>
+  ))}
+  <div class="msg-agent" data-step="answer">
+    <p>{scene.answer.map(part => (typeof part === 'string' ? part : <strong>{part.strong}</strong>))}</p>
+    {scene.rows.length > 0 && (
+      <div class="rows">
+        {scene.rows.map(([name, rating, phone]) => (
+          <div class="row">
+            <span class="row-name">{name}</span>
+            <span class="row-rating"><Icon name="star" class="icon--fill" />{rating}</span>
+            <span class="row-phone">{phone}</span>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
+<style>
+  .scene {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* 播放态：未到的步骤不占位，到达时上浮淡入 */
+  :global(.mcp-agent.is-armed) [data-step]:not(.is-shown) {
+    display: none;
+  }
+
+  :global(.mcp-agent.is-armed) [data-step].is-shown {
+    animation: fade-up var(--dur-4) var(--ease-out) both;
+  }
+
+  .msg-user {
+    align-self: flex-end;
+    max-width: 88%;
+    padding: 10px 14px;
+    border-radius: var(--r-lg) var(--r-lg) var(--r-2xs) var(--r-lg);
+    background: var(--primary);
+    color: var(--primary-fg);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .thinking {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-3);
+    font-size: 13px;
+  }
+
+  .thinking.is-active {
+    display: flex;
+  }
+
+  .thinking-dots {
+    display: inline-flex;
+    gap: 4px;
+  }
+
+  .thinking-dots i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ai);
+    animation: blink-soft var(--dur-5) var(--ease-in-out) infinite;
+  }
+
+  .thinking-dots i:nth-child(2) {
+    animation-delay: calc(var(--stagger) * 2);
+  }
+
+  .thinking-dots i:nth-child(3) {
+    animation-delay: calc(var(--stagger) * 4);
+  }
+
+  .call {
+    display: grid;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+  }
+
+  .call-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 8px 12px;
+    font-size: 12.5px;
+  }
+
+  .call-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    flex: none;
+    border-radius: var(--r-xs);
+    background: var(--ai-soft);
+    color: var(--ai);
+  }
+
+  .call-icon :global(.icon) {
+    width: 13px;
+    height: 13px;
+  }
+
+  .call-tool {
+    color: var(--ai);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-weight: 600;
+  }
+
+  .call-run,
+  .call-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  .call-run {
+    color: var(--text-3);
+  }
+
+  .call-run .spinner {
+    width: 12px;
+    height: 12px;
+    border-width: 1.5px;
+  }
+
+  .call-done {
+    color: var(--ok);
+  }
+
+  .call-done :global(.icon) {
+    width: 13px;
+    height: 13px;
+  }
+
+  .call.is-running .call-done,
+  .call:not(.is-running) .call-run {
+    display: none;
+  }
+
+  /* 参数与结果预览走恒暗代码底色，与 .tok-* 配色一致 */
+  .call-body {
+    display: grid;
+    gap: 2px;
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--code-border);
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+    line-height: 1.6;
+  }
+
+  .call-args,
+  .call-line {
+    overflow: hidden;
+    font: inherit;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .call-args {
+    margin-bottom: 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--code-border);
+  }
+
+  .call-more {
+    color: var(--code-muted);
+  }
+
+  .msg-agent {
+    display: grid;
+    gap: 10px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .msg-agent strong {
+    font-weight: 650;
+  }
+
+  .rows {
+    display: grid;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+  }
+
+  .row + .row {
+    border-top: 1px solid var(--border);
+  }
+
+  .row-name {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .row-rating :global(.icon) {
+    width: 12px;
+    height: 12px;
+    color: var(--star);
+  }
+
+  .row-phone {
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-size: 11.5px;
+  }
+
+  @media (max-width: 560px) {
+    .row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .row-phone {
+      display: none;
+    }
+  }
+</style>

@@ -47,46 +47,22 @@ cd docs/design/website && python3 -m http.server 7690 --bind 127.0.0.1
 
 **品牌连续性**：品牌蓝 `#1a73e8` 与插件 / Admin 的 Material You `primary` 同值；无衬线与等宽字体（Plus Jakarta Sans / Azeret Mono）与 `design.md` 同族。新增的只有一套衬线斜体，用于标题强调词。
 
-## 2 · 与 `design.md`（Material You）的关系
+## 2 · UI 合同
 
-> **落地前必须先裁决本节。** 当前 `design.md` / `design.dark.md` 是四端统一的 UI token 合同，`scripts/ui_token_lint.py` 对 `website/src` 强制执行。Atlas 是专为营销页设计的「表达层」，**有意突破**了其中若干条款。本次只产出设计稿，未改动 `design.md` 与 lint。
+本稿已升为 website 的 UI 合同：[`design-website.md`](../../references/specs/design-website.md)（2026-10-15）。插件与 Admin 仍按 `design.md` / `design.dark.md`（Material You）。分层、刻度与表达层的允许位置以合同为准，本 README 只保留实现参考。
 
-### 偏离清单
-
-| 条款 | `design.md` 合同 | Atlas 做法 | 理由 |
-| --- | --- | --- | --- |
-| 渐变 | 只允许顶部 `bg-image` 带与骨架屏 shimmer；禁止渐变文字、渐变按钮、彩色投影 | 品牌渐变用于标题强调词与大数字（`.text-grad`）、实心徽章、图标块 hover、进度条；主按钮带蓝色辉光；区块背景有极光光斑 | 营销页需要视觉记忆点；渐变取自地图配色（水域 → 绿地），不引入新色相 |
-| 玻璃 | 禁止 `backdrop-filter` | 滚动后的悬浮导航胶囊与弹窗遮罩使用模糊 | 导航悬浮在内容上方时保持可读 |
-| 动效 | 150 / 200 / 300ms + 指定缓动；入场 ≤ 0.45s；禁止呼吸类循环、滚动视差、渐变层动效 | T1–T4 四级（§5）：入场 720–1100ms；首屏剧场、扫描光束、极光与等高线漂移、渐变流动、旋转渐变描边、live 点脉冲、视差 | 「动效多」是本次改版的明确目标；全部遵守离屏暂停 + 减弱动效 |
-| 字体 | 单视图字重 ≤ 2 档；标题 600 | 400 / 500 / 600 / 650 / 700；display 700；Instrument Serif 斜体做强调词 | 大标题需要更强对比；衬线只作点缀，每个标题最多一处 |
-| 字号 | `display-hero` 36 → 58px | display 44 → 86px，h1 40 → 70px，h2 32 → 56px（流式 `clamp`） | 营销首屏的视觉层级 |
-| 布局 | 内容列 1120px + 两侧 28px | 1200 / 1360（宽）/ 820（窄）+ 流式 gutter 16 → 32px | 产品剧场与 bento 需要更宽画布 |
-| 圆角 | sm 10 / md 16 / lg 24 / full；卡片用 md | 增加 xs 6 / xl 32；卡片用 lg 24 | 大卡片与大面板的柔和感 |
-| 投影 | card / pop / modal 三档 | xs / sm / md / lg + `--glow-primary` / `--glow-soft` | 暗色下降低投影，层级改由面亮度表达 |
-| Tabs | 下划线式 | 营销页用分段胶囊 + 滑块（`.seg`） | 产品 / 语言切换是营销页的主要交互 |
-| Toast | 右上角堆叠 | 右下角堆叠 | 不遮挡悬浮导航 |
-| token 命名 | `border-strong`、`head-bg`、`link`、`bg-image` | `--border-2`、`--nav-bg`、`--primary-text`；另增 `--surface-3`、叙事色、地图色、代码色、表达层 | 语义按营销页需要扩展 |
-| 色值 | 例：`text #1f1f1f`、`surface-2 #f0f4f9`、`border #dde3ea`、`accent #188038` | 例：`--text #0b1324`、`--surface-2 #f4f7fb`、`--border #e6ebf2`、`--accent #0f8a5f` | 更冷的墨色底，与暗色主题一体设计 |
-
-### lint 现状
-
-用 `scripts/ui_token_lint.py` 的同一套规则（`scan_end`）扫描 `assets/css/` 的 13 个文件，共 **1,568** 处违规：间距不在刻度 630、圆角未用 token 286、裸色值 280、渐变 / 遮罩字面量 204、投影未用 token 85、字号不在刻度 82、行高 1。设计稿按 lint 跑不通是预期内的，但**照搬进 `website/src` 会直接卡在执行门上**。复现（仓库根目录执行）：
+`scripts/ui_token_lint.py` 的 `atlas` 合同按新刻度扫描。本稿 CSS 仍有 1,027 处待落地时收口：间距不在刻度 346、裸色值 280、圆角未用 token 268、投影未用 token 76、字号 56、行高 1。复现（仓库根目录执行）：
 
 ```bash
-python3 -c "import importlib.util as u; s=u.spec_from_file_location('l','scripts/ui_token_lint.py'); m=u.module_from_spec(s); s.loader.exec_module(m); print(len(m.scan_end('design','docs/design/website/assets/css')[0]))"
+python3 -c "import importlib.util as u; s=u.spec_from_file_location('l','scripts/ui_token_lint.py'); m=u.module_from_spec(s); s.loader.exec_module(m); print(len(m.scan_end('design','docs/design/website/assets/css','atlas')[0]))"
 ```
-
-### 待裁决（二选一）
-
-- **A. 扩展合同（推荐）**：在 `design.md` / `design.dark.md` 增加「营销表达层」一节，明确它只适用于 website 营销页；把所有渐变、遮罩、辉光、极光收进 token 定义（lint 本就放行 token 定义行），把扩展刻度（字号、间距、圆角）补进合同与 lint 白名单；Dashboard、插件、Admin 继续只用 Material You 基础层。
-- **B. 回收偏离**：落地时把 Atlas 数值吸附回 Material You 刻度，放弃渐变文字、辉光、玻璃与大部分循环动效。改动最小，但会损失本次改版的主要视觉特征。
 
 ## 3 · Token
 
 唯一来源：`assets/css/tokens.css`。
 
 - **语义色只用 token**：文字、底、边框、状态、品牌、叙事色一律用 `var(--…)`，否则主题切换会失效。
-- **原型阶段允许的字面量**（仅限以下几类，均与主题无关）：光影常量（白色高光 `rgba(255,255,255,x)`、黑色投影与遮罩、mask 里的 `#000`）；在两种主题下都应为白色的元素（pin 中心点、开关滑块、品牌底上的白字）；恒暗区块里的终端配色；窗口三色点。按 §2 方案 A 落地时，这些都收进表达层 token。
+- **原型阶段允许的字面量**（仅限以下几类，均与主题无关）：光影常量（白色高光 `rgba(255,255,255,x)`、黑色投影与遮罩、mask 里的 `#000`）；在两种主题下都应为白色的元素（pin 中心点、开关滑块、品牌底上的白字）；恒暗区块里的终端配色；窗口三色点。落地时按合同 §1 全部收成 token。
 
 - **三层**：品牌原色（`--blue-500` 等，只在 token 文件和插画内用）→ 语义色（`--bg`、`--surface`、`--text`、`--primary`……）→ 营销表达层（`--grad-*`、`--glow-*`、`--aurora-*`、`--contour`）。
 - **双主题机制**：每个语义色用 `light-dark(亮, 暗)` 一次写完两套值，随元素的 `color-scheme` 求值。
@@ -122,7 +98,8 @@ python3 -c "import importlib.util as u; s=u.spec_from_file_location('l','scripts
 | T1 微交互 | ≤ 200ms | `--dur-1` / `--dur-2` | hover、press、focus |
 | T2 过渡 | 200–400ms | `--dur-3` | 菜单、tab、手风琴、弹窗 |
 | T3 入场 | 600–1100ms | `--dur-4` / `--dur-5` | 滚动显现、标题逐词、数字滚动 |
-| T4 叙事循环 | 3–12s | `data-inview` | 首屏剧场、扫描光束、跑马灯、极光——离屏暂停，减弱动效下停用 |
+| T4 叙事循环 | 3–12s | `data-inview` | 首屏剧场、扫描光束——离屏暂停，减弱动效下停用 |
+| 环境装饰循环 | 20–90s | `data-inview` | 极光、等高线、跑马灯——离屏暂停、只动 transform / opacity，减弱动效下停用 |
 
 缓动：`--ease-out`（入场 / 展开）、`--ease-in-out`（往返 / 循环）、`--ease-spring`（pin 落点、弹性反馈）。
 
@@ -361,7 +338,7 @@ docs/design/website/
 | `chrome.js` 注入的导航 / 页脚 / 弹窗 | `Layout.astro` 内的服务端组件；导航当前态由路由决定，不再读 `data-page` |
 | 页面 HTML 区块 | `src/components/pages/*Page.astro` 与可复用区块组件 |
 | 英文硬编码文案 | 全部走 i18n（`src/i18n/lang/*.ts`）；价格与方案只读 `src/i18n/pricing.ts` |
-| `tokens.css` / `base.css` / `motion.css` / `components.css` | 全局样式（受 §2 裁决约束） |
+| `tokens.css` / `base.css` / `motion.css` / `components.css` | 全局样式（落地时按 §2 合同收口） |
 | `motion.js` / `site.js` | 保持零依赖、声明式 `data-*` API，作为站点脚本打包；页面脚本按页拆分 |
 | 首屏 `data-split="static"` / `data-enter` | 标题在构建期拆词（组件输出 `.w > .wi` 与 `--i`），错峰延迟写成内联变量；不依赖运行时脚本 |
 | `theme-boot.js` | `<head>` 内联脚本，首帧前执行 |
@@ -387,7 +364,7 @@ docs/design/website/
   - 插件设置页支持 XLSX 导出（`extension/src/options/App.vue`），但站点文案只写 CSV / JSON；原型按文案。
   - 导出中的 Plus Code 列位已锁但当前恒为空；字段浏览器如实标注为保留列。
   - `contact.ts` 的 `support@mapsgrab.com` 仍是占位邮箱；真实 `/contact` 只有 mailto，原型里的联系表单是设计提案，要么接后端，要么去掉。
-  - 法务正文只覆盖插件、网站与免费工具，没有覆盖 Online Scraper / API / MCP；原型在隐私页标了 TBD，需法务补稿。
+  - 隐私政策已补 Online / API / MCP 数据流最小事实（I2a）；服务条款仍只覆盖插件、网站与免费工具，条款页保留 TBD，待法务补稿。
   - **现网 API 文案与合同不符**（`en-US.ts`）：740 / 924 / 1006 行写 API 额度是「quota of records」，实际按 requests 计量；822 / 914 行说 Reviews / Photos 用 Place ID 或 Maps URL 定位商家，合同用 `fid`；272 / 795 / 827 行宣传评论 likes 与 review URL，Provider DTO 没有这两个字段。原型 API 页按合同与 DTO 写。
   - **Online 方案卖点**：`pricing.ts` 的 Online 卖点（评论与照片 URL、评论 URL 任务、JSON 下载、跨次去重）是 2026-08-31「三产品线占位先行」时写的，不在 014 的 Online 范围内（014 只有关键词 / 地图 / 地区任务、单关键词 CSV + 整任务 ZIP、付费档补全、每任务关键词上限 2 / 5 / 10 / 20 / 50）。原型定价页与云端页都按 014 写，价格、额度、方案名仍逐字；`pricing.ts` 需要同步修订。
   - Online CSV 第二行的字段译名随创建任务时的界面语言变化，后端已支持 14 种语言，但站点目前只有 en-US，云端页的语言切换演示要等 010 i18n 上线才真正可用。
@@ -405,4 +382,4 @@ docs/design/website/
 - Search 的 `pages`（抓取页数）是按 Provider `max_depth` 推导的对外命名，公开 API 合同落地时需确认。
 - **性能基线**（Lighthouse 13 移动端模拟，干净浏览器配置，首页 / 云端页）：本地 `http.server` 下 87–89 分；同一套文件开启 gzip 与长缓存后 99 分，FCP 1.5 s、LCP 2.1 s、TBT ≈ 0、CLS 0。差距全部来自托管方式（无压缩、无缓存头、CSS / JS 未合并与压缩），落地到 Astro 构建 + CDN 后自然消失。在装有扩展的日常浏览器里跑，扩展注入的脚本会被计入「未使用的 JavaScript」和主线程时间，请用无痕窗口或独立配置。
 - **首屏以下仍有 17 个装饰性常驻循环使用重绘属性**，不符合 §5：关于页 `wire-pulse` / `pvl-save` / `pvf-light` / `pva-track`，首页 `hs-type` / `hx-fill` / `ev-pin` / `q-fill` / `ul-check`，插件页 `xp-wire` / `.xl-flow`（`dash-flow`），云端页 `of-travel`，API 页 `chain-track`，MCP 页 `mcp-auth` / `mcp-dash-y`，工具页 `pv-select`，定价页 `reset-reveal`。它们都在 `data-inview` 内、离屏暂停，但进入视口时主线程要逐帧工作；落地时改为 `transform` / `opacity` 实现，或限次。
-- §2 的合同裁决未做之前，不应把本稿样式直接搬进 `website/src`。
+- 落地进 `website/src` 时按 §2 合同收口 lint 违规；完成后把 website 移入 lint 的 enforced。

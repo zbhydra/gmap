@@ -64,10 +64,10 @@ const copy = getContent(locale).common
     </div>
 
     <div class="site-confirm-actions">
-      <button type="button" class="btn-secondary site-confirm-action" data-site-confirm-cancel>
+      <button type="button" class="btn btn-secondary site-confirm-action" data-site-confirm-cancel>
         {copy.cancel}
       </button>
-      <button type="button" class="btn-primary site-confirm-action" data-site-confirm-submit>
+      <button type="button" class="btn btn-primary site-confirm-action" data-site-confirm-submit>
         {copy.continue}
       </button>
     </div>
@@ -102,14 +102,14 @@ const copy = getContent(locale).common
     position: relative;
     display: grid;
     grid-template-columns: 48px minmax(0, 1fr);
-    gap: var(--space-4);
+    gap: var(--s-4);
     width: min(520px, 100%);
-    padding: var(--space-6);
+    padding: var(--s-6);
     border: 1px solid var(--border);
-    border-radius: var(--rounded-lg);
+    border-radius: var(--r-lg);
     background: var(--surface);
     color: var(--text);
-    box-shadow: var(--shadow-modal);
+    box-shadow: var(--shadow-lg);
   }
 
   .site-confirm-close {
@@ -118,10 +118,10 @@ const copy = getContent(locale).common
     right: 14px;
     width: 38px;
     height: 38px;
-    border-radius: var(--rounded-full);
+    border-radius: var(--r-full);
     background: var(--surface-2);
     color: var(--text);
-    font-size: 20px;
+    font-size: var(--fs-h4);
     line-height: 1;
   }
 
@@ -140,7 +140,7 @@ const copy = getContent(locale).common
     place-items: center;
     width: 48px;
     height: 48px;
-    border-radius: var(--rounded-sm);
+    border-radius: var(--r-sm);
     background: var(--warn-soft);
     color: var(--warn);
   }
@@ -152,7 +152,7 @@ const copy = getContent(locale).common
 
   .site-confirm-copy {
     min-width: 0;
-    padding-right: var(--space-8);
+    padding-right: var(--s-8);
   }
 
   .site-confirm-copy h2 {
@@ -163,7 +163,7 @@ const copy = getContent(locale).common
   }
 
   .site-confirm-copy p {
-    margin-top: var(--space-2);
+    margin-top: var(--s-2);
     color: var(--text-2);
     font-size: 15px;
     font-weight: 600;
@@ -171,34 +171,32 @@ const copy = getContent(locale).common
   }
 
   :global(.site-confirm-copy p a) {
-    color: var(--primary);
-    font-weight: 800;
+    color: var(--primary-text);
+    font-weight: 700;
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 
   :global(.site-confirm-copy p a:hover) {
-    color: var(--primary);
+    color: var(--primary-text);
   }
 
   :global(.site-confirm-copy p a:focus-visible) {
     outline: 2px solid var(--ring);
     outline-offset: 3px;
-    border-radius: var(--rounded-sm);
+    border-radius: var(--r-sm);
   }
 
   .site-confirm-actions {
     grid-column: 1 / -1;
     display: flex;
     justify-content: flex-end;
-    gap: var(--space-2);
+    gap: var(--s-2);
     margin-top: 4px;
   }
 
   .site-confirm-action {
     min-width: 120px;
-    min-height: 46px;
-    border-radius: var(--rounded-full);
   }
 
   @media (max-width: 560px) {

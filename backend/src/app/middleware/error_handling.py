@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 
+from app.constants.mcp_oauth import MCP_OAUTH_PROTOCOL_PATHS
 from app.i18n import translator
 from app.i18n.common_code import CommonCode
 from app.utils.common import get_locale
@@ -41,6 +42,11 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        if (
+            request.url.path in {"/mcp", "/mcp/"}
+            or request.url.path in MCP_OAUTH_PROTOCOL_PATHS
+        ):
+            return await call_next(request)
         # 获取语言上下文（在异常发生前获取，避免重复）
         locale = get_locale(request)
 

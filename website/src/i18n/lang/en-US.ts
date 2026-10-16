@@ -2,6 +2,10 @@ import type { SiteContent } from '../schema'
 import { pricingContent } from '../pricing'
 import { dashboardContent } from '../dashboard'
 import { toolsContent } from '../tools'
+import { apiPageContent, photosApiContent, reviewsApiContent, scraperApiContent } from '../api'
+import { scraperMcpContent } from '../mcp'
+import { extensionContent } from '../extension'
+import { onlineScraperContent } from '../online-scraper'
 
 /**
  * en-US 站点文案字典（当前唯一 locale，EN 首批基线）。
@@ -20,7 +24,8 @@ export const enUS: SiteContent = {
   layout: {
     nav: {
       brand: 'MapsGrab',
-      home: 'Home',
+      primaryLabel: 'Primary navigation',
+      mobileLabel: 'Mobile navigation',
       extension: 'Extension',
       online: 'Online',
       api: 'API',
@@ -28,12 +33,20 @@ export const enUS: SiteContent = {
       apiReviews: 'Reviews API',
       apiPhotos: 'Photos API',
       apiMcp: 'Scraper MCP',
+      apiScraperDesc: 'Business data for any keyword and location, as JSON.',
+      apiReviewsDesc: 'Full review threads with ratings and owner replies.',
+      apiPhotosDesc: 'Public photo galleries as ready-to-use URL lists.',
+      apiMcpDesc: 'Live Maps data for Claude Code, Cursor and VS Code.',
+      apiFootNote: 'API and MCP share one monthly request quota.',
+      apiPricing: 'API pricing',
       pricing: 'Pricing',
+      freeTools: 'Free tools',
       signIn: 'Sign in',
       dashboard: 'Dashboard'
     },
     footer: {
-      resources: 'Resources',
+      legalLabel: 'Legal',
+      resources: 'Free tools',
       product: 'Product',
       rights: '© 2026 MapsGrab. All rights reserved.',
       tools: [
@@ -49,10 +62,16 @@ export const enUS: SiteContent = {
   },
   common: {
     installCta: 'Install Now',
+    comingSoon: 'Coming soon',
+    themeLabel: 'Color theme',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    themeSystem: 'System',
     faqLabel: 'FAQ',
     breadcrumbLabel: 'Breadcrumb',
     languageSwitcherLabel: 'Language switcher',
     mobileMenuLabel: 'Toggle menu',
+    copied: 'Copied to clipboard',
     cancel: 'Cancel',
     continue: 'Continue'
   },
@@ -65,113 +84,299 @@ export const enUS: SiteContent = {
           'MapsGrab is a browser extension and web toolkit that collects publicly available business information from Google Maps — names, phones, reviews, photos, emails — and exports it to CSV or JSON.'
       },
       hero: {
-        eyebrow: 'Maps data toolkit',
-        title: 'Grab Google Maps business data in one click',
-        description:
-          'MapsGrab collects publicly available business information as you browse Google Maps — names, phones, reviews, photos, emails and more — and exports everything to clean CSV or JSON files.',
-        highlights: [
-          'No credit card required',
-          '1,000 free records / month',
-          'CSV & JSON export'
-        ],
-        scraperCard: {
-          label: 'Search Google Maps',
-          hint: 'Business type and location',
-          textareaLabel: 'Search keyword',
-          sampleKeywords: ['coffee shop in Portland'],
-          submitLabel: 'Preview results',
-          note: 'Preview up to 3 rows from the first results page. Sign in to run a full task and export CSV.',
-          loading: 'Searching...',
-          failed: 'Could not load the preview. Please try again.',
-          empty: 'No businesses found on the first results page.',
-          count: '{count} businesses on the first results page',
-          signIn: 'Sign in to start a full task',
-          dashboard: 'Open Online Scraper',
-          locked: 'Sign in and submit your keywords in Online Scraper to collect and export results.',
-          columns: { name: 'Name', address: 'Address', category: 'Category', rating: 'Rating', review_count: 'Reviews', phone: 'Phone' }
+        announce: { badge: 'New', text: 'MCP server for AI agents' },
+        title: { firstLine: 'Grab Google Maps data', secondLine: 'in', accent: 'one click', end: '.' },
+        lead:
+          'Collect public business data from Google Maps — names, phones, websites, reviews, photos and emails — and export clean CSV or JSON in seconds.',
+        search: {
+          label: 'Search keyword',
+          typing: [
+            'coffee shop in Portland',
+            'dentist in Austin, TX',
+            'plumber near Chicago',
+            'yoga studio in Brooklyn',
+            'hotels in Miami Beach'
+          ],
+          submit: 'Preview results',
+          loading: 'Searching…',
+          suggestLabel: 'Try',
+          suggestions: ['coffee shop in Portland', 'dentist in Austin, TX', 'plumber near Chicago']
         },
-        primaryCta: 'Install MapsGrab',
-        secondaryCta: 'See what it grabs'
+        trust: ['No credit card required', '{records} free records / month', 'CSV & JSON export'],
+        dashboard: 'Open Online Scraper',
+        theater: {
+          panelLabel: 'MapsGrab panel preview',
+          extensionActive: 'MapsGrab extension active',
+          mapFilters: ['Open now', 'Top rated', 'Price'],
+          live: 'Live',
+          done: 'Done',
+          start: 'Start Extracting',
+          pause: 'Pause',
+          extracting: 'Extracting {count}…',
+          finished: 'Done · {count} places',
+          kpis: { phones: 'phones', emails: 'emails', websites: 'websites' },
+          export: 'Export Detailed List - {count} (.CSV)',
+          exportSaved: 'Export saved',
+          emailFound: 'Email found',
+          averageRating: 'Average rating',
+          placeId: 'Place ID',
+          ratingValue: '{rating} · {reviews} reviews'
+        },
+        preview: {
+          badge: 'Preview',
+          state: 'Preview · first results page',
+          count: '{count} businesses on the first results page',
+          reviews: '{count} reviews',
+          locked: 'Sign in and submit your keywords in Online Scraper to collect and export results.',
+          signIn: 'Sign in to start a full task',
+          openOnline: 'Open Online Scraper',
+          failed: 'Could not load the preview. Please try again.',
+          empty: 'No businesses found on the first results page.'
+        }
+      },
+      facts: {
+        caption: 'MapsGrab by the numbers',
+        items: [
+          { value: 36, label: 'data columns per business' },
+          { value: 11, label: 'review fields, owner replies included' },
+          { value: 6, label: 'social networks matched per website' },
+          { value: 'freeRecords', label: 'free records, every month' },
+          { value: 3, plus: 1, label: 'ways to run it: Extension, Online, API — plus MCP' }
+        ]
+      },
+      how: {
+        head: {
+          kicker: 'How it works',
+          title: { lead: 'From a map search to a ', accent: 'spreadsheet', tail: ' in three steps' },
+          lead: 'No code and no copy-paste. MapsGrab reads what Google Maps already shows you and turns it into structured rows.'
+        },
+        steps: [
+          {
+            title: 'Search Google Maps',
+            body: 'Open Google Maps and search any business type and location — exactly like you normally would.'
+          },
+          {
+            title: 'Start extracting',
+            body: 'Click {action}. MapsGrab scrolls the results, collects the listings and, when enabled, enriches contacts.',
+            action: 'Start Extracting'
+          },
+          {
+            title: 'Export anywhere',
+            body: 'Download CSV or JSON with the columns you choose — reviews and photos land in their own files, ready for Excel or your CRM.'
+          }
+        ],
+        searchSample: 'bakery in Seattle',
+        columnsUnit: 'columns',
+        reviewsFile: 'reviews'
       },
       products: {
-        eyebrow: 'Products',
-        title: 'One toolkit, three ways to grab',
-        description:
-          'Pick the browser extension, the cloud-based Online Scraper, or the API — the same extraction engine behind all three.',
-        availableLabel: 'Available now',
-        items: [
-          {
-            id: 'extension',
-            name: 'Browser Extension',
-            tagline: 'Grab data while you browse Google Maps',
-            description:
-              'The MapsGrab extension for Edge and Firefox extracts business data, reviews, and photos from the Google Maps pages you open, then exports everything locally.',
-            bullets: [
-              '36-column business data extraction',
-              'Reviews and photo URL scraping',
-              'Email and social media enrichment',
-              'Batch keyword and review-URL tasks',
-              'CSV / JSON export with field selection'
-            ],
-            ctaLabel: 'Explore the extension',
-            href: '/extension/'
+        head: {
+          kicker: 'Products',
+          title: { lead: 'Three ways to ', accent: 'grab', tail: ' Maps data.' },
+          lead: 'Pick the browser extension, the cloud-based Online Scraper, or the API. The extension works inside your own browser; the Online Scraper and the API share one cloud engine.'
+        },
+        cards: {
+          extension: {
+            badge: 'Browser extension',
+            title: 'Grab data while you browse Google Maps',
+            body: 'Extract business data, reviews and photos from the Maps pages you open, then export everything locally. Edge, Firefox and Chromium.',
+            link: 'Explore the extension'
           },
-          {
-            id: 'online',
-            name: 'Online Scraper',
-            tagline: 'Cloud runs without installing anything',
-            description:
-              'A hosted version of the same extraction engine. Paste keywords, get results — no browser required.',
-            bullets: [
-              'Batch keyword tasks in the cloud',
-              'Business details with optional contact enrichment',
-              'Per-keyword CSV and task ZIP downloads'
-            ],
-            ctaLabel: 'Explore the Online Scraper',
-            href: '/online-scraper/'
+          online: {
+            badge: 'Online Scraper',
+            title: 'Cloud runs. Nothing to install.',
+            body: 'Paste keywords, collect business details in the cloud and download CSV files or a ZIP bundle.',
+            link: 'Explore Online Scraper'
           },
-          {
-            id: 'api',
-            name: 'MapsGrab API',
-            tagline: 'Programmatic access to the same data',
-            description:
-              'Query business data, reviews, and photos from your own applications with a simple HTTP API.',
-            bullets: [
-              'Business data, reviews, and photos endpoints',
-              'Clean JSON responses',
-              'Same extraction engine as the extension'
-            ],
-            ctaLabel: 'Explore the API',
-            href: '/google-maps-scraper-api/'
+          api: {
+            badge: 'API',
+            title: 'Clean JSON over HTTP',
+            body: 'Business data and reviews for your own applications — one API key.',
+            link: 'Explore the API'
+          },
+          mcp: {
+            badge: 'MCP server',
+            title: 'Live Maps data for your AI agents',
+            body: 'Search and reviews as MCP tools for Claude Code, Cursor, VS Code and Codex.',
+            link: 'Explore the MCP server'
           }
+        },
+        extracting: 'Extracting {count}…',
+        queue: { rows: '{count} rows', processing: 'Processing' },
+        chat: {
+          prompt: 'Find dentists in Austin rated 4.5+ with a website',
+          answer: 'Found {count} matches. Top three:'
+        }
+      },
+      fields: {
+        head: {
+          kicker: 'The data',
+          title: { lead: '36 columns. ', accent: 'Every one', tail: ' useful.' },
+          lead: 'The extension exports one schema from search results and business pages — contact details, location, profile, ratings and every identifier you need to match records later.'
+        },
+        filtersLabel: 'Field groups',
+        all: 'All',
+        groups: {
+          contact: { filter: 'Contact', label: 'Contact' },
+          location: { filter: 'Location', label: 'Location' },
+          profile: { filter: 'Profile', label: 'Business profile' },
+          reviews: { filter: 'Ratings', label: 'Ratings & reviews' },
+          ids: { filter: 'IDs & links', label: 'IDs & links' }
+        },
+        sampleLabel: 'Sample value',
+        emptySample: '(empty)',
+        descriptions: {
+          Name: 'Business name exactly as shown on the listing.',
+          Description: 'Short description from the business profile.',
+          Fulladdress: 'Complete, formatted street address.',
+          Street: 'Street line of the address.',
+          Municipality: 'City or locality.',
+          Categories: 'Every category assigned to the business.',
+          About: 'Attributes from the About tab.',
+          'Plus Code': 'Column reserved for the Open Location Code — exported empty for now.',
+          'Time Zone': 'IANA time zone of the location.',
+          Price: 'Price level shown on the listing.',
+          Note: 'Merchant note or highlight.',
+          Amenities: 'Amenities and service options.',
+          'Hotel Class': 'Star class for lodging listings.',
+          Phone: 'Primary phone number shown on the listing.',
+          Phones: 'Every phone number found for the business.',
+          Claimed: 'Whether the owner has claimed the profile.',
+          Owner: 'Owner name on the profile.',
+          'Owner Id': 'Contributor ID of the owner account.',
+          'Owner Link': 'Link to the owner’s contributor page.',
+          Email: 'Email addresses found on the business website.',
+          'Social Medias': 'Social profiles linked from the website.',
+          'Review Count': 'Total number of reviews.',
+          'Average Rating': 'Average star rating.',
+          'Review URL': 'Direct link to the reviews panel.',
+          'Google Maps URL': 'Stable short link built from the CID.',
+          'Google Knowledge URL': 'Knowledge panel search link.',
+          Latitude: 'Latitude in decimal degrees.',
+          Longitude: 'Longitude in decimal degrees.',
+          Website: 'Official website from the listing.',
+          Domain: 'Registrable domain of the website.',
+          'Opening Hours': 'Weekly hours, closed days marked.',
+          'Featured Image': 'Cover photo URL of the listing.',
+          Cid: 'Customer ID — the decimal form of the FID.',
+          Fid: 'Feature ID made of two hexadecimal halves.',
+          'Place Id': 'Stable Google Place ID.',
+          Kgmid: 'Knowledge Graph machine ID.'
+        },
+        reviews: {
+          title: '+ 11 review columns',
+          body: 'Exported separately, paginated up to your plan limit.'
+        },
+        photos: {
+          title: '+ photo URL lists',
+          body: 'Public album photo URLs per business, Street View filtered out.'
+        },
+        sampleCsv: 'Download sample CSV'
+      },
+      enrichment: {
+        head: {
+          kicker: 'Enrichment',
+          title: { lead: 'From a pin to a person you can ', accent: 'email', tail: '' },
+          lead: 'When enrichment is on, MapsGrab checks the official website of each business and fills in direct contact channels while it extracts.'
+        },
+        points: [
+          'Email addresses found on the business website',
+          'Social profiles: Facebook, Instagram, LinkedIn, X, YouTube, TikTok',
+          'On by default on paid Online plans, one setting in the extension',
+          'Included in API search responses with one flag — no separate enrichment step'
         ]
       },
-      testimonials: {
-        eyebrow: 'Early access',
-        title: 'What early users build with MapsGrab',
-        note:
-          'MapsGrab is in early access. These are the workflows we hear about most — verified customer stories will be published here as the program grows.',
-        items: [
-          {
-            quote:
-              'Building a local lead list used to mean copying rows out of Maps by hand. Now the whole search page lands in a spreadsheet with phones and websites included.',
-            role: 'Local lead generation'
-          },
-          {
-            quote:
-              'Review counts and ratings for hundreds of competitors, exported in one pass — that is the report my clients actually ask for.',
-            role: 'Local SEO consulting'
-          },
-          {
-            quote:
-              'Place IDs and coordinates for every branch location, ready to feed straight into our routing tools.',
-            role: 'Market research'
-          }
+      developers: {
+        head: {
+          kicker: 'For developers',
+          title: { lead: 'Plug Maps data into ', accent: 'anything', tail: ' you build' },
+          lead: 'The cloud engine behind the Online Scraper, exposed as an HTTP API and an MCP server. Structured JSON, one key, no HTML to parse.'
+        },
+        listLabel: 'Developer products',
+        items: {
+          search: { title: 'Scraper API', description: 'Businesses for any keyword and location' },
+          reviews: { title: 'Reviews API', description: 'Ratings, text and owner replies' },
+          photos: { title: 'Photos API', description: 'Public photo URLs per business' },
+          mcp: { title: 'MCP server', description: 'Search and reviews tools for any MCP client' }
+        },
+        langLabel: 'Language',
+        copyLabel: 'Copy request',
+        sending: 'Sending request…',
+        response: 'Response · 200 OK · {ms} ms',
+        toolCall: 'Tool call · {tool} · 200 OK',
+        exploreApi: 'Explore the API',
+        apiPricing: 'API pricing',
+        worksWith: 'Works with the tools you already use',
+        integrations: [
+          'Claude Code',
+          'Cursor',
+          'VS Code',
+          'Codex',
+          'MCP Inspector',
+          'Microsoft Excel',
+          'CSV',
+          'JSON',
+          'ZIP bundles'
         ]
+      },
+      useCases: {
+        head: {
+          kicker: 'Use cases',
+          title: { lead: 'Made for the work ', accent: 'after', tail: ' the search' }
+        },
+        cards: [
+          {
+            label: 'Lead generation',
+            title: 'Local lead lists',
+            body: 'Search a category and a city, then export the whole results page — phones, websites and emails included — into one spreadsheet.'
+          },
+          {
+            label: 'Local SEO',
+            title: 'Competitor benchmarks',
+            body: 'Pull ratings and review counts for every competitor in an area in one pass, and build the report straight from the export.'
+          },
+          {
+            label: 'Market research',
+            title: 'Location datasets',
+            body: 'Collect Place IDs and coordinates for every branch or competitor location, ready for your mapping and routing tools.'
+          }
+        ],
+        leadTags: ['email', 'phone', 'email', 'site']
+      },
+      pricingTeaser: {
+        head: {
+          kicker: 'Pricing',
+          title: { lead: 'Start free. ', accent: 'Scale', tail: ' when it pays off.' },
+          lead: 'Every product has a free tier with no time limit. Upgrade only the surface you actually use.'
+        },
+        lines: {
+          extension: { title: 'Browser Extension', billing: 'Monthly', link: 'See extension plans' },
+          online: { title: 'Online Scraper', billing: 'One-time', link: 'See Online plans' },
+          api: { title: 'API & MCP', billing: 'One-time', link: 'See API plans' }
+        }
+      },
+      tools: {
+        head: {
+          kicker: 'Free tools',
+          title: { lead: 'Small tools for Maps ', accent: 'power users', tail: '' },
+          lead: 'Seven utilities that run entirely in your browser — what you paste never leaves your device.'
+        },
+        descriptions: {
+          'place-id-finder': 'Paste a Maps place URL and read out its Place ID, CID and FID.',
+          'review-link-generator': 'Get the direct “write a review” link for any business.',
+          'email-checker': 'See instantly whether an email format is valid — with typo hints.',
+          'lat-long-to-dms': 'Decimal coordinates to degrees, minutes and seconds.',
+          'dms-to-dd': 'DMS coordinates back to clean decimal degrees.',
+          'bulk-keywords-generator': 'Every “keyword + location” combination, ready to paste.',
+          'merge-csv': 'Merge CSV exports into one file, aligned by header.'
+        },
+        more: 'More tools on the way'
       },
       faq: {
-        title: 'Frequently asked questions',
-        description: 'The short answers. Anything else, support is one email away.',
+        kicker: 'FAQ',
+        title: { lead: 'Frequently asked ', accent: 'questions', tail: '' },
+        lead: 'The short answers. Anything else, support is one email away.',
+        contact: 'Contact support',
         items: [
           {
             question: 'Is MapsGrab free to use?',
@@ -181,7 +386,7 @@ export const enUS: SiteContent = {
           {
             question: 'Which browsers are supported?',
             answer:
-              'MapsGrab targets Microsoft Edge (Edge Add-ons) and Firefox (Firefox Add-ons). Chromium-based browsers can also load the extension directly from the release zip — see the Download page.'
+              'MapsGrab targets Microsoft Edge (Edge Add-ons) and Firefox (Firefox Add-ons). Chromium-based browsers can also load the extension directly from the release zip — see the install guide on the Extension page.'
           },
           {
             question: 'Where does the data come from, and is it legal to collect?',
@@ -196,7 +401,7 @@ export const enUS: SiteContent = {
           {
             question: 'What formats can I export to?',
             answer:
-              'Exports come as CSV or JSON with the field selection you choose, deduplicated by Place ID. Results can also be delivered to your own Google Drive or HubSpot account if you connect them.'
+              'Exports come as CSV or JSON with the field selection you choose, deduplicated by Place ID.'
           },
           {
             question: 'Does MapsGrab see the data I collect?',
@@ -206,249 +411,15 @@ export const enUS: SiteContent = {
         ]
       },
       cta: {
-        title: 'Start grabbing in minutes',
-        description:
-          'Install the extension, open Google Maps, search, and export your first list — no account required.',
-        button: 'Get MapsGrab',
+        kicker: 'Get started',
+        title: { lead: 'Start grabbing in ', accent: 'minutes', tail: '' },
+        lead: 'Install the extension, open Google Maps, search, and export your first list — no account required.',
+        install: 'Install MapsGrab free',
+        online: 'Try the Online Scraper',
         note: 'Free monthly quota included. No credit card.'
       }
     },
-    extension: {
-      seo: {
-        title: 'MapsGrab for Edge & Firefox — Google Maps Extractor Extension',
-        description:
-          'Extract 36 columns of business data, reviews, and photos from Google Maps, enrich records with emails and social links, run batch tasks, and export to CSV or JSON.'
-      },
-      hero: {
-        eyebrow: 'Browser extension',
-        title: 'The Google Maps extractor for Edge and Firefox',
-        description:
-          'Open any Google Maps search or business page and grab what is publicly shown there: business data, reviews, photos, contact details. Everything exports to CSV or JSON, right from your browser.',
-        edgeCta: 'Install for Edge',
-        chromeCta: 'Install for Chrome',
-        visualLabel:
-          'The MapsGrab panel running on a Google Maps search — screenshot coming soon'
-      },
-      showcase: {
-        eyebrow: 'See it in action',
-        title: 'From Google Maps to a clean spreadsheet',
-        description:
-          'Open a Google Maps search, run the panel, and export every result with all 36 columns. Reviews and photos land in their own files, ready for Excel or your CRM.',
-        panelLabel:
-          'MapsGrab panel collecting a Google Maps search — screenshot coming soon',
-        exportLabel:
-          'Exported business data opened in a spreadsheet — screenshot coming soon',
-        demoCta: 'Download demo data',
-        demoNote:
-          'A sample export of a real search, so you can see the exact columns before installing.'
-      },
-      features: {
-        eyebrow: 'Features',
-        title: 'What MapsGrab extracts',
-        description:
-          'One extraction schema across search results and business pages, tuned against the current Google Maps interface and updated remotely when Google changes.',
-        groups: [
-          {
-            icon: 'business',
-            title: 'Business data',
-            description:
-              'A 36-column schema per business, captured from search results with automatic scrolling to load every result.',
-            items: [
-              'Name, description, categories, and full address',
-              'Phone numbers, website, and domain',
-              'Review count and average rating',
-              'Opening hours, time zone, and amenities',
-              'Latitude / longitude and claimed status',
-              'Place ID, CID, FID, and stable Google Maps URL'
-            ]
-          },
-          {
-            icon: 'reviews',
-            title: 'Reviews',
-            description:
-              'Grab the reviews of any business page, paginated automatically up to your plan limit.',
-            items: [
-              'Author, rating, text, and review date',
-              'Review photos and likes',
-              'Owner replies with dates',
-              'Author profile and direct review URL',
-              '11 review columns per row, exported separately'
-            ]
-          },
-          {
-            icon: 'photos',
-            title: 'Photos',
-            description: 'Collect the photo galleries of business pages as ready-to-use URL lists.',
-            items: [
-              'All album photo URLs per business',
-              'Street View imagery filtered out',
-              'Exports alongside reviews or on its own'
-            ]
-          },
-          {
-            icon: 'enrichment',
-            title: 'Email & social media enrichment',
-            description:
-              'For every collected business, MapsGrab looks up its official website and fills in direct contact channels.',
-            items: [
-              'Email addresses found on the business website',
-              'Social profiles: Facebook, Instagram, LinkedIn, X, YouTube, TikTok',
-              'Runs automatically during extraction — no extra clicks'
-            ]
-          },
-          {
-            icon: 'batch',
-            title: 'Batch tasks',
-            description:
-              'Queue up work and let MapsGrab walk through it item by item with live progress.',
-            items: [
-              'Keyword-list tasks: one Maps search per keyword',
-              'Review-URL tasks: per-business review collection',
-              'Per-item try / stuck / complete counters with auto-skip on stalls',
-              'Finished tasks export automatically'
-            ]
-          },
-          {
-            icon: 'export',
-            title: 'Export',
-            description:
-              'Everything lands in clean files on your machine — or in your own cloud, if you connect it.',
-            items: [
-              'CSV and JSON export formats',
-              'Field selection: export exactly the columns you need',
-              'Deduplication by Place ID across runs',
-              'Auto-download on completion',
-              'Optional delivery to your Google Drive or HubSpot account'
-            ]
-          }
-        ]
-      },
-      demo: {
-        eyebrow: 'Demo',
-        title: 'Watch the full workflow',
-        description:
-          'A short walkthrough of the whole loop: install, search on Google Maps, collect, enrich, and export.',
-        videoLabel: 'Product demo video — coming soon'
-      },
-      versionNotes: {
-        eyebrow: 'Release notes',
-        title: 'Version notes',
-        description:
-          'MapsGrab ships through Edge Add-ons and Firefox Add-ons, with pre-release builds attached to the public release. This section tracks what changed in each release.',
-        releases: [
-          {
-            version: '0.1.0 (pre-release)',
-            date: 'August 2026',
-            changes: [
-              'First public pre-release of the MapsGrab extension.',
-              'Google Maps search extraction with automatic scrolling and the 36-column schema.',
-              'Review and photo extraction from business pages.',
-              'Email and social media enrichment per business.',
-              'Batch keyword and review-URL tasks with on-disk task state.',
-              'CSV / JSON export with field selection and Place ID deduplication.',
-              'Builds for Microsoft Edge and Firefox.'
-            ]
-          }
-        ]
-      },
-      install: {
-        eyebrow: 'Install',
-        title: 'Install MapsGrab',
-        description:
-          'Edge installs straight from Edge Add-ons. Chrome and other Chromium browsers install from the release zip below — the identical package submitted to the stores. Firefox follows the temporary add-on steps.',
-        zip: {
-          title: 'Direct install (release zip)',
-          description:
-            'The release zip is the identical package submitted to both stores. Load it manually while store listings are in review.',
-          button: 'Download release zip',
-          note: 'Release asset link is being prepared — it will attach to the public release of version 0.1.0.',
-          visualLabel: 'The MapsGrab release zip file — screenshot coming soon'
-        },
-        channels: [
-          {
-            id: 'edge',
-            name: 'Microsoft Edge',
-            storeName: 'Edge Add-ons',
-            storeStatus: 'Listing in review — the store link goes live here as soon as Edge Add-ons approves it.',
-            storeCta: 'Open Edge Add-ons',
-            manualTitle: 'Direct install for Edge and Chromium browsers',
-            steps: [
-              {
-                title: 'Download and unzip',
-                details: ['Download the release zip above and unzip it to a folder you keep.'],
-                mediaLabel:
-                  'The release zip in the browser downloads bar — screenshot coming soon'
-              },
-              {
-                title: 'Open the extensions page',
-                details: ['In Edge, Chromium, or Brave, open the extensions management page.'],
-                mediaLabel:
-                  'The Edge extensions management page — screenshot coming soon'
-              },
-              {
-                title: 'Enable Developer mode',
-                details: ['Toggle Developer mode in the extensions page sidebar.'],
-                mediaLabel:
-                  'Developer mode toggled on in the extensions page sidebar — screenshot coming soon'
-              },
-              {
-                title: 'Load the unpacked folder',
-                details: [
-                  'Click "Load unpacked" and select the unzipped folder.',
-                  'The MapsGrab panel appears on Google Maps search pages.'
-                ],
-                mediaLabel:
-                  'Load unpacked with the MapsGrab card added — screenshot coming soon'
-              }
-            ]
-          },
-          {
-            id: 'firefox',
-            name: 'Mozilla Firefox',
-            storeName: 'Firefox Add-ons (AMO)',
-            storeStatus: 'Listing in review — the store link goes live here as soon as Firefox Add-ons approves it.',
-            storeCta: 'Open Firefox Add-ons',
-            manualTitle: 'Direct install for Firefox',
-            steps: [
-              {
-                title: 'Download and unzip',
-                details: ['Download the release zip above and unzip it to a folder you keep.'],
-                mediaLabel:
-                  'The release zip in the browser downloads bar — screenshot coming soon'
-              },
-              {
-                title: 'Open the debugging page',
-                details: ['Navigate to about:debugging, then choose "This Firefox".'],
-                mediaLabel:
-                  'The about:debugging page with "This Firefox" selected — screenshot coming soon'
-              },
-              {
-                title: 'Load the add-on',
-                details: [
-                  'Click "Load Temporary Add-on…" and pick manifest.json inside the unzipped folder.',
-                  'A temporary add-on reloads when Firefox restarts — the AMO listing above makes it permanent once live.'
-                ],
-                mediaLabel:
-                  'Load Temporary Add-on picking manifest.json — screenshot coming soon'
-              }
-            ]
-          }
-        ],
-        help: {
-          title: 'Installation trouble?',
-          description:
-            'If a step does not work in your browser version, send us the browser name and what you saw — we will get you unblocked.',
-          contactCta: 'Contact support'
-        }
-      },
-      cta: {
-        title: 'Grab your first list today',
-        description:
-          'Install the extension, search Google Maps, and export a clean spreadsheet in minutes — no account required.',
-        button: 'Install MapsGrab',
-        note: 'Free monthly quota included. No credit card.'
-      }
-    },
+    extension: extensionContent,
     account: {
       auth: {
         eyebrow: 'Website Access',
@@ -585,441 +556,12 @@ export const enUS: SiteContent = {
       googleSignInFailedPrefix: 'Google sign-in failed',
       googleCompletionFailedPrefix: 'Google sign-in could not complete',
     },
-    onlineScraper: {
-      seo: {
-        title: 'Online Google Maps Scraper — Run Extraction in the Cloud | MapsGrab',
-        description:
-          'Run Google Maps keyword searches in the cloud, collect business data, and download CSV files or a ZIP bundle.'
-      },
-      hero: {
-        eyebrow: 'Online scraper',
-        title: 'Google Maps extraction in the cloud, no install',
-        description:
-          'Submit keywords, collect business details in the cloud, and download CSV files or a ZIP bundle from your dashboard.',
-        primaryCta: 'Start scraping',
-        secondaryCta: 'View pricing',
-        visualLabel:
-          'The MapsGrab Online Scraper dashboard running keyword tasks — screenshot coming soon'
-      },
-      features: {
-        eyebrow: 'Capabilities',
-        title: 'What the Online Scraper does',
-        description:
-          'Business details collected in the cloud, with optional emails and social profiles on paid plans.',
-        items: [
-          {
-            title: 'Keyword tasks',
-            description:
-              'Submit business types and locations as separate keywords. Your plan determines the keyword limit and monthly record quota.'
-          },
-          {
-            title: 'Task history',
-            description:
-              'Follow task progress and view the record count for each keyword in your dashboard.'
-          },
-          {
-            title: 'Business details',
-            description:
-              'Collect names, addresses, phone numbers, websites, ratings, hours, coordinates, and place identifiers when available.'
-          },
-          {
-            title: 'Email and social enrichment',
-            description:
-              'With a paid Online plan, business websites are checked for email addresses and social profiles by default. You can turn this off for each task.'
-          },
-          {
-            title: 'CSV and ZIP downloads',
-            description:
-              'Download a CSV for each keyword or all available files as one ZIP bundle.'
-          },
-          {
-            title: 'Nothing to install',
-            description:
-              'Runs in the cloud from any browser — Edge, Firefox, or anything else. Results stay downloadable from your account.'
-          }
-        ]
-      },
-      faq: {
-        title: 'Online Scraper questions',
-        items: [
-          {
-            question: 'How is the Online Scraper different from the extension?',
-            answer:
-              'The extension collects data in your browser. Online Scraper runs keyword tasks in the cloud and keeps the results in your dashboard.'
-          },
-          {
-            question: 'Where does the data come from, and is it legal to collect?',
-            answer:
-              'MapsGrab only collects information that is publicly displayed on Google Maps — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.'
-          },
-          {
-            question: 'What formats can I export to?',
-            answer:
-              'Each keyword produces a CSV file. Download individual files or a ZIP bundle from the task history.'
-          },
-          {
-            question: 'How much does it cost?',
-            answer:
-              'The Online Scraper follows the MapsGrab plans on the Pricing page, including the free monthly quota of records. Paid plans raise the limits when you need more.'
-          }
-        ]
-      },
-      cta: {
-        title: 'Queue your first cloud task',
-        description:
-          'Submit keywords, follow your task progress, and download business data from your dashboard.',
-        button: 'Start scraping',
-        note: 'Free monthly quota included. No credit card.'
-      }
-    },
-    scraperApi: {
-      seo: {
-        title: 'Google Maps Scraper API — Business Data in JSON | MapsGrab',
-        description:
-          'The MapsGrab Scraper API returns Google Maps business data as clean JSON: names, phones, ratings, hours, coordinates, Place IDs, emails, and social profiles — powered by the same engine as the extension.'
-      },
-      hero: {
-        eyebrow: 'Scraper API',
-        title: 'Google Maps Scraper API',
-        description:
-          'Query Google Maps business data over a simple HTTP API and get clean JSON back: name, address, phone, website, rating, opening hours, coordinates, Place ID, plus email and social enrichment.',
-        primaryCta: 'Get API key',
-        secondaryCta: 'View pricing',
-        visualLabel:
-          'A MapsGrab API request and its JSON response in an API client — screenshot coming soon'
-      },
-      features: {
-        eyebrow: 'Capabilities',
-        title: 'What the Scraper API returns',
-        description:
-          'One request per keyword and location, answered with the same structured fields the extension exports — built for your own applications.',
-        items: [
-          {
-            title: 'Search by keyword and location',
-            description:
-              'Send a keyword with an optional location parameter and receive the businesses a Google Maps search would show.'
-          },
-          {
-            title: 'The 36-column business schema',
-            description:
-              'Name, categories, full address, phone, website, rating and review count, opening hours, latitude / longitude, Place ID, CID, and more.'
-          },
-          {
-            title: 'Email and social enrichment',
-            description:
-              'Responses include email addresses and social profiles found on each business website — no separate enrichment step.'
-          },
-          {
-            title: 'Clean JSON responses',
-            description:
-              'Structured, predictable field names ready for your CRM, spreadsheet pipeline, or backend — no HTML to parse.'
-          },
-          {
-            title: 'Public data only',
-            description:
-              'The API returns only what is publicly displayed on Google Maps — the same details any visitor can read.'
-          },
-          {
-            title: 'Same engine as the extension',
-            description:
-              'The API is backed by the MapsGrab extraction engine, tuned against the current Google Maps interface and updated remotely when Google changes.'
-          }
-        ]
-      },
-      faq: {
-        title: 'Scraper API questions',
-        items: [
-          {
-            question: 'What does the Scraper API return?',
-            answer:
-              'Structured JSON with the MapsGrab 36-column business schema: name, address, phone, website, rating, review count, opening hours, coordinates, Place ID, and email / social enrichment where available.'
-          },
-          {
-            question: 'How do I authenticate?',
-            answer:
-              'Requests are authorized with a MapsGrab API key. Keys are issued per account and follow the plans on the Pricing page, including the free monthly quota of records.'
-          },
-          {
-            question: 'Is the data legal to collect?',
-            answer:
-              'The API only returns information that is publicly displayed on Google Maps — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.'
-          },
-          {
-            question: 'Can I also get reviews and photos?',
-            answer:
-              'Yes — the Reviews API and Photos API cover those datasets as dedicated endpoints, using the same API key.'
-          }
-        ]
-      },
-      cta: {
-        title: 'Put Maps data in your application',
-        description:
-          'One HTTP request per search, structured JSON in the response — the same extraction quality the extension delivers.',
-        button: 'Get API key',
-        note: 'Free monthly quota included. No credit card.'
-      }
-    },
-    reviewsApi: {
-      seo: {
-        title: 'Google Maps Reviews Scraper API — Reviews in JSON | MapsGrab',
-        description:
-          'The MapsGrab Reviews API returns the reviews of any Google Maps business as clean JSON: reviewer names, ratings, review text, dates, photos, and owner replies.'
-      },
-      hero: {
-        eyebrow: 'Reviews API',
-        title: 'Google Maps Reviews Scraper API',
-        description:
-          'Request the reviews of any Google Maps business and get structured JSON back: author, rating, review text, date, review photos, and owner replies — paginated up to your plan limit.',
-        primaryCta: 'Get API key',
-        secondaryCta: 'View pricing',
-        visualLabel:
-          'A MapsGrab Reviews API request and its JSON response in an API client — screenshot coming soon'
-      },
-      features: {
-        eyebrow: 'Capabilities',
-        title: 'What the Reviews API returns',
-        description:
-          'The same review dataset the extension exports — 11 review columns per row, delivered over HTTP as JSON.',
-        items: [
-          {
-            title: 'Reviews by business',
-            description:
-              'Address the API with a Google Maps business identifier and collect its reviews, paginated automatically up to your plan limit.'
-          },
-          {
-            title: 'Full review fields',
-            description:
-              'Author, rating, review text, and review date for every entry — the same 11-column schema the extension exports.'
-          },
-          {
-            title: 'Review photos and likes',
-            description:
-              'Photo URLs attached to reviews come back in the response, ready for download or analysis.'
-          },
-          {
-            title: 'Owner replies',
-            description:
-              'Business owner replies are included with their dates, so your monitoring sees the full conversation.'
-          },
-          {
-            title: 'Clean JSON responses',
-            description:
-              'Structured field names ready for review monitoring, local SEO research, or reputation reporting workflows.'
-          },
-          {
-            title: 'Public data only',
-            description:
-              'The API returns only reviews that are publicly displayed on Google Maps — the same content any visitor can read.'
-          }
-        ]
-      },
-      faq: {
-        title: 'Reviews API questions',
-        items: [
-          {
-            question: 'How do I address a specific business?',
-            answer:
-              'Requests target a Google Maps business identifier (such as the Place ID from a Scraper API response or any Maps place URL), so you can chain the two endpoints.'
-          },
-          {
-            question: 'What fields does a review include?',
-            answer:
-              'Author, rating, review text, and review date, plus review photos, likes, owner replies with dates, and the direct review URL.'
-          },
-          {
-            question: 'How many reviews can I collect?',
-            answer:
-              'Collection is paginated up to your plan limit. The plans on the Pricing page include a free monthly quota of records.'
-          },
-          {
-            question: 'Is the data legal to collect?',
-            answer:
-              'The API only returns reviews that are publicly displayed on Google Maps — the same content any visitor can read. We do not access private accounts, gated content, or non-public data.'
-          }
-        ]
-      },
-      cta: {
-        title: 'Monitor reviews at scale',
-        description:
-          'One request per business, full review threads in the response — built for monitoring, research, and reporting.',
-        button: 'Get API key',
-        note: 'Free monthly quota included. No credit card.'
-      }
-    },
-    photosApi: {
-      seo: {
-        title: 'Google Maps Photos API — Business Photos as URLs | MapsGrab',
-        description:
-          'The MapsGrab Photos API returns the public photo galleries of Google Maps businesses as ready-to-use URL lists, with Street View imagery filtered out.'
-      },
-      hero: {
-        eyebrow: 'Photos API',
-        title: 'Google Maps Photos API',
-        description:
-          'Request the photo gallery of any Google Maps business and get a clean list of image URLs back — public album photos only, with Street View imagery filtered out.',
-        primaryCta: 'Get API key',
-        secondaryCta: 'View pricing',
-        visualLabel:
-          'A MapsGrab Photos API request and its URL list response in an API client — screenshot coming soon'
-      },
-      features: {
-        eyebrow: 'Capabilities',
-        title: 'What the Photos API returns',
-        description:
-          'The same photo dataset the extension collects, delivered over HTTP as ready-to-use URL lists.',
-        items: [
-          {
-            title: 'Photos by business',
-            description:
-              'Address the API with a Google Maps business identifier and receive its public album photo URLs.'
-          },
-          {
-            title: 'Ready-to-use URL lists',
-            description:
-              'Responses are plain image URL lists — feed them straight into downloaders, audits, or enrichment pipelines.'
-          },
-          {
-            title: 'Street View filtered out',
-            description:
-              'Street View imagery is excluded automatically, so you only get photos of the business itself.'
-          },
-          {
-            title: 'Pairs with the other APIs',
-            description:
-              'Combine with the Scraper API and Reviews API using the same API key to get the full picture per business.'
-          },
-          {
-            title: 'Clean JSON responses',
-            description:
-              'Structured field names, no HTML to parse — the same export quality the extension delivers.'
-          },
-          {
-            title: 'Public data only',
-            description:
-              'The API returns only photos that are publicly displayed on Google Maps — the same images any visitor can see.'
-          }
-        ]
-      },
-      faq: {
-        title: 'Photos API questions',
-        items: [
-          {
-            question: 'What exactly do I get back?',
-            answer:
-              'A list of public photo URLs for the requested Google Maps business — album photos only, with Street View imagery filtered out.'
-          },
-          {
-            question: 'How do I address a specific business?',
-            answer:
-              'Requests target a Google Maps business identifier (such as the Place ID from a Scraper API response or any Maps place URL).'
-          },
-          {
-            question: 'Does it download the images for me?',
-            answer:
-              'No — the API returns URLs; you download or process the images on your side. That keeps responses fast and keeps you in control of storage.'
-          },
-          {
-            question: 'How much does it cost?',
-            answer:
-              'The Photos API follows the MapsGrab plans on the Pricing page, including the free monthly quota of records.'
-          }
-        ]
-      },
-      cta: {
-        title: 'Enrich records with real photos',
-        description:
-          'One request per business, public photo URLs in the response — ready for audits, listings, and enrichment.',
-        button: 'Get API key',
-        note: 'Free monthly quota included. No credit card.'
-      }
-    },
-    scraperMcp: {
-      seo: {
-        title: 'Google Maps Scraper MCP Server | MapsGrab',
-        description:
-          'Connect AI agents to live Google Maps data with the MapsGrab MCP server: search businesses, collect reviews, and retrieve photos over one secure MCP connection.'
-      },
-      hero: {
-        eyebrow: 'MCP server',
-        title: 'Google Maps Scraper MCP Server',
-        description:
-          'The MapsGrab MCP server exposes Google Maps search, reviews, and photos to AI agents over one secure MCP connection — live, structured data for Claude Code, Cursor, VS Code, and any MCP client.',
-        primaryCta: 'Get API key',
-        secondaryCta: 'View pricing',
-        visualLabel:
-          'An MCP client querying the MapsGrab MCP server — screenshot coming soon'
-      },
-      features: {
-        eyebrow: 'Capabilities',
-        title: 'What the MCP server exposes',
-        description:
-          'Three tools over one endpoint, backed by the same extraction engine as the extension and the APIs.',
-        items: [
-          {
-            title: 'Search businesses',
-            description:
-              'Keyword and location searches that return the listing details a Google Maps search would show — names, phones, ratings, hours, coordinates, Place IDs.'
-          },
-          {
-            title: 'Collect reviews',
-            description:
-              'Ratings, review text, reviewer details, dates, and owner replies for any business your agent is investigating.'
-          },
-          {
-            title: 'Retrieve photos',
-            description:
-              'Public photo URLs per business, with Street View imagery filtered out — useful for enrichment and audits.'
-          },
-          {
-            title: 'One endpoint, one auth header',
-            description:
-              'A single MCP endpoint authorized with your MapsGrab API key — no per-client plumbing beyond the standard config block.'
-          },
-          {
-            title: 'Works with your MCP client',
-            description:
-              'Standard streamable HTTP transport, so Claude Code, Cursor, VS Code, Codex, MCP Inspector, and any MCP-compatible client can connect.'
-          },
-          {
-            title: 'Public data only',
-            description:
-              'The server returns only information publicly displayed on Google Maps — the same details any visitor can read.'
-          }
-        ]
-      },
-      faq: {
-        title: 'MCP server questions',
-        items: [
-          {
-            question: 'What is the MapsGrab MCP server?',
-            answer:
-              'It is an MCP (Model Context Protocol) server that lets AI agents query live Google Maps data — business search, reviews, and photos — through the same MapsGrab extraction engine used by the extension and the APIs.'
-          },
-          {
-            question: 'Which clients can connect?',
-            answer:
-              'Any MCP-compatible client: Claude Code, Cursor, VS Code, Codex, MCP Inspector, and others. Connection is a standard config block pointing at the MapsGrab MCP endpoint with your API key.'
-          },
-          {
-            question: 'How is it authenticated?',
-            answer:
-              'With a MapsGrab API key passed as a bearer token — the same key plans on the Pricing page cover, including the free monthly quota of records.'
-          },
-          {
-            question: 'What data can my agent retrieve?',
-            answer:
-              'Business search results with the 36-column schema, review threads with ratings and owner replies, and public photo URL lists per business.'
-          }
-        ]
-      },
-      cta: {
-        title: 'Give your agent live Maps data',
-        description:
-          'One MCP connection, three tools, structured results — search, reviews, and photos for data-aware AI workflows.',
-        button: 'Get API key',
-        note: 'Free monthly quota included. No credit card.'
-      }
-    },
+    online: onlineScraperContent,
+    apiPage: apiPageContent,
+    scraperApi: scraperApiContent,
+    reviewsApi: reviewsApiContent,
+    photosApi: photosApiContent,
+    scraperMcp: scraperMcpContent,
     tools: toolsContent,
   }
 }

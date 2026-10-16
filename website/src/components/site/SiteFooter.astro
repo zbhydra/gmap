@@ -1,0 +1,88 @@
+---
+/**
+ * 全站页脚：品牌 + 产品 / API / 免费工具 / 公司四组链接、字标与法务底栏。
+ * 未交付能力的介绍页入口照常可达，灰化并带 Coming soon（能力表见 lib/capabilities.ts）。
+ * 不加滚动显现：短页面（登录、支付回调）里页脚就在首屏，首屏内容不能等 JS。
+ */
+import { getCompanyContent } from '../../company/companyContent'
+import { getContent, type Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import { getLegalContent } from '../../legal/legalContent'
+import { capabilities } from '../../lib/capabilities'
+import SiteBrand from './SiteBrand.astro'
+import SoonBadge from './SoonBadge.astro'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+const t = getContent(locale)
+const nav = t.layout.nav
+const footer = t.layout.footer
+const company = getCompanyContent(locale)
+const legal = getLegalContent(locale)
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const groups = [
+  {
+    label: footer.product,
+    links: [
+      { id: 'extension', label: nav.extension, path: '/extension/', available: capabilities.extensionInstall },
+      { id: 'online', label: nav.online, path: '/online-scraper/', available: true },
+      { id: 'pricing', label: nav.pricing, path: '/pricing/', available: true },
+      { id: 'dashboard', label: nav.dashboard, path: '/dashboard/', available: true }
+    ]
+  },
+  {
+    label: nav.api,
+    links: [
+      { id: 'api-scraper', label: nav.apiScraper, path: '/google-maps-scraper-api/', available: capabilities.scraperApi },
+      { id: 'api-reviews', label: nav.apiReviews, path: '/google-maps-reviews-scraper-api/', available: capabilities.scraperApi },
+      { id: 'api-photos', label: nav.apiPhotos, path: '/google-maps-photos-api/', available: capabilities.photosApi },
+      { id: 'api-mcp', label: nav.apiMcp, path: '/google-maps-scraper-mcp/', available: capabilities.mcp }
+    ]
+  },
+  {
+    label: footer.resources,
+    tools: true,
+    links: footer.tools.map(tool => ({ id: `tool-${tool.id}`, label: tool.label, path: tool.path, available: true }))
+  },
+  {
+    label: company.footerGroupLabel,
+    links: [
+      { id: 'about', label: company.about.navLabel, path: '/about/', available: true },
+      { id: 'contact', label: company.contact.navLabel, path: '/contact/', available: true },
+      { id: 'privacy', label: legal.privacy.navLabel, path: '/privacy/', available: true },
+      { id: 'terms', label: legal.terms.navLabel, path: '/terms/', available: true }
+    ]
+  }
+]
+---
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <SiteBrand href={`${prefix}/`} label={nav.brand} footer />
+      <p>{t.site.description}</p>
+    </div>
+    {groups.map(group => (
+      <nav class="footer-col" aria-label={group.label} data-footer-resources={group.tools || undefined}>
+        <h4>{group.label}</h4>
+        {group.links.map(link => (
+          <a class:list={{ 'is-unavailable': !link.available }} href={`${prefix}${link.path}`} data-cta={`footer-${link.id}`} data-ga-event="internal_workflow_click" data-ga-source="footer" data-ga-target={link.id.replaceAll('-', '_')}>
+            {link.label}{!link.available && <SoonBadge locale={locale} />}
+          </a>
+        ))}
+      </nav>
+    ))}
+  </div>
+  <div class="footer-wordmark" aria-hidden="true">{nav.brand}</div>
+  <div class="container footer-bottom">
+    <span>{footer.rights}</span>
+    <nav aria-label={footer.legalLabel}>
+      <a href={`${prefix}/terms/`}>{legal.terms.navLabel}</a>
+      <a href={`${prefix}/privacy/`}>{legal.privacy.navLabel}</a>
+      <a href={`${prefix}/contact/`}>{company.contact.navLabel}</a>
+    </nav>
+  </div>
+</footer>
