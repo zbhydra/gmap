@@ -17,10 +17,14 @@ import type {
   BackgroundGetMapsUsageResponse,
   BackgroundGetRuntimeConfigResponse,
   BackgroundGetStateResponse,
+  BackgroundOpenBulkDashboardRequest,
+  BackgroundOpenBulkDashboardResponse,
   BackgroundOpenExtensionLoginResponse,
   BackgroundOpenPricingPageRequest,
   BackgroundOpenPricingPageResponse,
   BackgroundPingResponse,
+  BackgroundPhotosWorkPageRequest,
+  BackgroundPhotosWorkPageResponse,
   BackgroundRecordMarkRequest,
   BackgroundRecordMarkResponse
 } from './types'
@@ -92,6 +96,20 @@ export const Handler = {
     return declarationOnly('background.openPricingPage')
   },
 
+  /** 由 background 打开现有批量页，避开宿主到扩展页面的导航限制。 */
+  openBulkDashboard(
+    _params: BackgroundOpenBulkDashboardRequest
+  ): Promise<BackgroundOpenBulkDashboardResponse> {
+    return declarationOnly('background.openBulkDashboard')
+  },
+
+  /** 打开照片工作标签页，或由该标签页一次领取跨重定向采集意图。 */
+  photosWorkPage(
+    _params: BackgroundPhotosWorkPageRequest
+  ): Promise<BackgroundPhotosWorkPageResponse> {
+    return declarationOnly('background.photosWorkPage')
+  },
+
   /** 读取批量任务队列状态（013 A6，dashboard 页渲染入口）。 */
   getBulkState(): Promise<BackgroundGetBulkStateResponse> {
     return declarationOnly('background.getBulkState')
@@ -129,8 +147,8 @@ export const METHOD_TARGETS = {
   getState: ['popup'],
   /** getRuntimeConfig 允许 popup 调用。 */
   getRuntimeConfig: ['popup'],
-  /** getMapsConfig 允许 content script 调用。 */
-  getMapsConfig: ['content'],
+  /** 面板与 Popup 共用远程运营配置。 */
+  getMapsConfig: ['content', 'popup'],
   /** recordMark 允许 popup 调用，统一由 background 写 SLS。 */
   recordMark: ['popup'],
   /** openExtensionLogin 仅允许 popup 调用（账号区 Sign in 入口）。 */
@@ -141,6 +159,8 @@ export const METHOD_TARGETS = {
   enrichMapsBusinesses: ['content'],
   /** openPricingPage 仅允许 content 调用（面板订阅引导按钮）。 */
   openPricingPage: ['content'],
+  openBulkDashboard: ['content'],
+  photosWorkPage: ['content'],
   /** 批量状态/命令允许扩展页调用（dashboard 页按 sender 推导为 popup 通道）。 */
   getBulkState: ['popup'],
   createBulkTask: ['popup'],
@@ -169,6 +189,8 @@ export const METHOD_TRANSPORTS = {
   enrichMapsBusinesses: ['chrome'],
   /** openPricingPage 使用 Chrome message。 */
   openPricingPage: ['chrome'],
+  openBulkDashboard: ['chrome'],
+  photosWorkPage: ['chrome'],
   /** 批量方法使用 Chrome message。 */
   getBulkState: ['chrome'],
   createBulkTask: ['chrome'],
@@ -197,6 +219,8 @@ export const METHOD_REQUEST_LIMITS = {
   enrichMapsBusinesses: 131072,
   /** openPricingPage：单个完整 URL（浏览器对 URL 长度有 ~2MB 上限，此处取宽松 8KB）。 */
   openPricingPage: 8192,
+  openBulkDashboard: 1024,
+  photosWorkPage: 1024,
   /** 批量状态无入参。 */
   getBulkState: 1024,
   /** 创建任务：500 条目（关键词/URL 原文）最坏形态上界。 */
@@ -227,6 +251,8 @@ export const METHOD_RESPONSE_LIMITS = {
   enrichMapsBusinesses: 262144,
   /** openPricingPage 返回是否已创建标签页。 */
   openPricingPage: 1024,
+  openBulkDashboard: 1024,
+  photosWorkPage: 1024,
   /** 批量状态响应：150 任务 × 500 条目的理论上界放宽到 8MB。 */
   getBulkState: 8_388_608,
   /** 批量命令响应携带命令后的全量状态，上限对齐 getBulkState。 */

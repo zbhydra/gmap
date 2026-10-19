@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bulk tasks · MapsGrab Extension</title>
+    <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+    <!-- Phase B 页面统一头部：theme.js 同步执行（首帧主题），其余脚本 defer，页面私有文件按 body[data-page] 命名 -->
+    <script src="assets/js/theme.js"></script>
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/proto.css" />
+    <link rel="stylesheet" href="assets/css/pages/dashboard.css" />
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/ui.js" defer></script>
+    <script src="assets/js/proto.js" defer></script>
+    <!-- 页面脚本拆成两件：dashboard-sim.js = 数据 + 调度状态机模拟（对齐 background/batch/machine.ts），dashboard.js = 渲染与交互 -->
+    <script src="assets/js/pages/dashboard-sim.js" defer></script>
+    <script src="assets/js/pages/dashboard.js" defer></script>
+  </head>
+  <body data-page="dashboard">
+    <!-- 页头：品牌 | 页面名 · 运行中任务胶囊（Back 不暂停，L8：任务在后台继续，随时点回详情）· Settings · Help -->
+    <header class="appbar db-appbar" data-db-appbar>
+      <span class="brand"><img class="brand-mark" src="assets/img/logo.svg" alt="" />MapsGrab</span>
+      <span class="db-appbar-sep" aria-hidden="true"></span>
+      <span class="appbar-title">Bulk tasks</span>
+      <div class="appbar-actions">
+        <button class="db-runpill" type="button" data-db-runpill hidden>
+          <span class="dot dot--live" aria-hidden="true"></span>
+          <span class="db-runpill-label">Running</span>
+          <span class="db-runpill-name" data-db-runpill-name></span>
+          <span class="db-runpill-count mono"><span class="roller" data-db-runpill-done data-roll="0">0</span><span class="db-runpill-of" data-db-runpill-of> / 0</span></span>
+          <svg class="icon icon--xs db-runpill-go" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-right" /></svg>
+        </button>
+        <a class="btn btn-ghost btn-sm db-hdr-link" href="options.html" target="_blank" rel="noreferrer"><svg class="icon icon-gear" aria-hidden="true"><use href="assets/img/icons.svg#i-gear" /></svg><span class="db-hdr-label">Settings</span></a>
+        <a class="btn btn-ghost btn-sm db-hdr-link" href="#" target="_blank" rel="noreferrer" data-db-help><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-help" /></svg><span class="db-hdr-label">Help</span></a>
+      </div>
+    </header>
+
+    <main class="page db" id="main" data-db>
+      <!-- 工具标题 + 工具切换（关键词 / 评论 URL）：哪个工具有运行中任务，按钮上就有一颗 live 点 -->
+      <div class="db-head enter">
+        <div class="db-title">
+          <h1 class="h1" data-db-h1>Bulk keywords</h1>
+          <p class="db-lede" data-db-lede>Run up to 500 Google Maps searches per task. Each keyword opens in its own tab and downloads its own file when it finishes.</p>
+        </div>
+        <div class="seg db-tool" role="radiogroup" aria-label="Tool" data-seg data-db-tool>
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button class="seg-btn" type="button" role="radio" aria-checked="true" data-value="keywords"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-plus" /></svg>Keywords<span class="db-tool-live" data-db-tool-live="keywords" hidden><span class="dot dot--live" aria-hidden="true"></span><span class="sr-only">, task running</span></span></button>
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="reviews"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg>Review URLs<span class="db-tool-live" data-db-tool-live="reviews" hidden><span class="dot dot--live" aria-hidden="true"></span><span class="sr-only">, task running</span></span></button>
+        </div>
+      </div>
+
+      <!-- 视图标签：详情是 Task history 的下一层，进入详情时仍选中 History；右侧是两类合计的任务位（n / 150） -->
+      <div class="db-viewbar enter" style="--enter-delay: 60ms">
+        <div class="tabs db-tabs" role="tablist" aria-label="Bulk task views" data-tabs data-db-tabs>
+          <button class="tab" type="button" role="tab" id="db-tab-new" aria-controls="db-panel-new" aria-selected="false" tabindex="-1" data-value="new"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg>New task</button>
+          <button class="tab" type="button" role="tab" id="db-tab-history" aria-controls="db-panel-history" aria-selected="true" data-value="history"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-history" /></svg>Task history<span class="badge badge--count"><span class="roller" data-db-count data-roll="0">0</span></span></button>
+          <span class="tab-ink" aria-hidden="true"></span>
+        </div>
+        <div class="db-slots" data-db-slots>
+          <span class="db-slots-text"><span class="db-slots-num mono"><span class="roller" data-db-slots-used data-roll="0">0</span><span class="db-slots-of"> / 150</span></span><span>tasks saved on this device<span class="db-slots-both"> · both tools</span></span></span>
+          <span class="progress progress--sm db-slots-bar" aria-hidden="true"><span class="progress-fill"></span></span>
+        </div>
+      </div>
+
+      <!-- 错误条 / 4 秒成功提示（logic.md §5.1）：吸顶在页头下，长列表里点了操作也看得见 -->
+      <div class="db-alerts" data-db-alerts></div>
+
+      <!-- ============================================================ New task -->
+      <section class="db-panel" id="db-panel-new" role="tabpanel" aria-labelledby="db-tab-new" data-db-panel="new" hidden>
+        <form class="db-new" novalidate data-db-form>
+          <div class="card db-form-card">
+            <header class="db-card-head">
+              <span class="icon-tile icon-tile--soft"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-plus" data-db-form-icon /></svg></span>
+              <div class="db-card-text">
+                <h2 class="h3" data-db-form-title>New keyword task</h2>
+                <p class="db-card-desc" data-db-form-desc>Each line is one Google Maps search. Searches run one at a time, in order.</p>
+              </div>
+            </header>
+
+            <div class="db-form-body">
+              <div class="field" data-db-field="name">
+                <label class="field-label" for="db-name">Task name</label>
+                <input class="input" id="db-name" name="name" type="text" autocomplete="off" spellcheck="false" maxlength="80" placeholder="e.g. Coffee shops · Brooklyn" aria-describedby="db-name-error" data-db-name />
+                <p class="field-error" id="db-name-error" data-db-error="name" hidden><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert-circle" /></svg><span>Enter a task name.</span></p>
+              </div>
+
+              <div class="field" data-db-field="items">
+                <label class="field-label" for="db-items"><span data-db-items-label>Keywords</span><span class="field-aside" data-db-items-aside>One per line · up to 500 per task</span></label>
+                <div class="textarea-wrap">
+                  <textarea class="textarea textarea--mono db-textarea" id="db-items" name="items" rows="12" wrap="off" spellcheck="false" aria-describedby="db-items-sum db-items-error" data-db-items></textarea>
+                  <span class="counter db-counter" aria-hidden="true" data-db-counter><b>0</b> / 500</span>
+                </div>
+                <div class="db-cleanup" id="db-items-sum" data-db-cleanup></div>
+                <p class="field-error" id="db-items-error" data-db-error="items" hidden><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert-circle" /></svg><span data-db-items-error-text>Paste at least one keyword.</span></p>
+              </div>
+
+              <!-- 只有评论任务有：每店评论数 100–2500，步长 100，默认 300（logic.md §5.2） -->
+              <div class="field db-perplace" data-show="tool:reviews" hidden>
+                <label class="field-label" for="db-perplace">Reviews per place</label>
+                <div class="db-perplace-row">
+                  <span class="select-wrap">
+                    <select class="select" id="db-perplace" aria-describedby="db-perplace-hint" data-db-perplace>
+                      <option value="100">100</option>
+                      <option value="200">200</option>
+                      <option value="300" selected>300</option>
+                      <option value="400">400</option>
+                      <option value="500">500</option>
+                      <option value="600">600</option>
+                      <option value="700">700</option>
+                      <option value="800">800</option>
+                      <option value="900">900</option>
+                      <option value="1000">1,000</option>
+                      <option value="1100">1,100</option>
+                      <option value="1200">1,200</option>
+                      <option value="1300">1,300</option>
+                      <option value="1400">1,400</option>
+                      <option value="1500">1,500</option>
+                      <option value="1600">1,600</option>
+                      <option value="1700">1,700</option>
+                      <option value="1800">1,800</option>
+                      <option value="1900">1,900</option>
+                      <option value="2000">2,000</option>
+                      <option value="2100">2,100</option>
+                      <option value="2200">2,200</option>
+                      <option value="2300">2,300</option>
+                      <option value="2400">2,400</option>
+                      <option value="2500">2,500</option>
+                    </select>
+                  </span>
+                  <p class="field-hint" id="db-perplace-hint">Stops collecting a place after this many reviews, newest first.</p>
+                </div>
+              </div>
+
+              <!-- 卡死重试（L9）：只读展示全局设置，改动只在设置页 -->
+              <div class="db-retry" role="group" aria-labelledby="db-retry-label" data-db-retry>
+                <span class="icon-tile icon-tile--sm db-retry-icon" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-refresh" /></svg></span>
+                <div class="db-retry-text">
+                  <p class="db-retry-head"><span class="db-retry-label" id="db-retry-label">Stuck retry</span><span class="badge badge--outline db-retry-badge"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>Set in Settings</span></p>
+                  <p class="db-retry-value" data-db-retry-text>1 retry — up to 2 attempts per keyword, then it’s skipped.</p>
+                </div>
+                <p class="db-retry-hint">An item counts as stuck after 90 seconds without progress, or when its tab is closed.</p>
+                <ol class="db-pips" role="list" aria-hidden="true" data-db-pips></ol>
+                <a class="link-arrow db-retry-link" href="options.html#automation" target="_blank" rel="noreferrer">Change in Settings<svg class="icon icon-out" aria-hidden="true"><use href="assets/img/icons.svg#i-external" /></svg></a>
+              </div>
+            </div>
+
+            <footer class="db-form-foot">
+              <button class="btn btn-ghost" type="button" data-db-clear><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg>Clear</button>
+              <p class="db-foot-hint" data-db-foot-hint data-tone="run" hidden><span class="dot dot--live" aria-hidden="true"></span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert-circle" /></svg><span data-db-foot-hint-text></span></p>
+              <span class="spacer"></span>
+              <button class="btn btn-secondary" type="button" data-db-create>
+                <span class="spinner" aria-hidden="true"></span>
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-plus" /></svg>
+                <span class="morph" data-db-create-label><span class="is-active" data-key="one">Create task</span><span data-key="split" aria-hidden="true" data-db-create-split>Create 3 tasks</span></span>
+              </button>
+              <button class="btn btn-primary" type="submit" data-db-start>
+                <span class="spinner" aria-hidden="true"></span>
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-play" /></svg>
+                <span class="morph" data-db-start-label><span class="is-active" data-key="one">Start extracting</span><span data-key="split" aria-hidden="true">Start first task</span></span>
+              </button>
+            </footer>
+          </div>
+
+          <!-- 摘要栏：去重后的条数 → 任务数（> 500 拆分预览）· 额度检查（关键词 ×10、评论 × 每店上限，对比本月剩余） -->
+          <aside class="db-rail" aria-label="Task summary">
+            <section class="card db-sum" aria-labelledby="db-sum-title" data-db-sum>
+              <header class="db-sum-head">
+                <h3 class="kicker" id="db-sum-title">Summary</h3>
+              </header>
+              <div class="db-sum-main">
+                <span class="db-sum-num mono"><span class="roller" data-db-sum-count data-roll="0">0</span></span>
+                <span class="db-sum-unit" data-db-sum-unit>keywords</span>
+                <span class="db-sum-arrow" aria-hidden="true"><svg class="icon icon--sm"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+                <span class="db-sum-tasks" data-db-sum-tasks>1 task</span>
+              </div>
+              <p class="db-sum-desc" data-db-sum-desc>Paste a list to see how it will be saved.</p>
+
+              <div class="db-split" data-db-split hidden>
+                <ol class="db-split-bar" role="list" aria-hidden="true" data-db-split-bar></ol>
+                <ul class="db-split-list" role="list" data-db-split-list></ul>
+                <p class="db-split-note"><svg class="icon icon--xs" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg><span data-db-split-note>Start first task runs task 1 now. Start the others from Task history when it finishes.</span></p>
+              </div>
+
+              <div class="db-quota" data-db-quota data-state="idle">
+                <div class="db-quota-head">
+                  <h3 class="kicker">Quota check</h3>
+                  <span class="db-quota-rule mono" data-db-quota-rule>10 per keyword</span>
+                </div>
+                <p class="db-quota-need"><span class="db-quota-need-num mono"><span class="roller" data-db-quota-need data-roll="0">0</span></span><span class="db-quota-need-unit">records needed</span></p>
+                <div class="db-qbar" aria-hidden="true" data-db-qbar>
+                  <span class="db-qbar-used" data-db-qbar-used></span>
+                  <span class="db-qbar-task" data-db-qbar-task></span>
+                </div>
+                <dl class="db-quota-legend">
+                  <div><dt><i class="db-key db-key--used"></i>Used this month</dt><dd class="mono" data-db-quota-used>41,280</dd></div>
+                  <div><dt><i class="db-key db-key--task"></i>This task</dt><dd class="mono" data-db-quota-task>0</dd></div>
+                  <div><dt><i class="db-key db-key--left"></i>Left after</dt><dd class="mono" data-db-quota-after>58,720</dd></div>
+                </dl>
+                <p class="db-quota-note" data-db-quota-note>58,720 of 100,000 records left this month · resets Nov 1</p>
+                <div class="db-quota-warn" role="status" data-db-quota-warn hidden>
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert-circle" /></svg>
+                  <div>
+                    <p class="db-quota-warn-title" data-db-quota-warn-title>Not enough records left this month</p>
+                    <p class="db-quota-warn-desc" data-db-quota-warn-desc></p>
+                    <a class="link db-plans" href="#" data-db-plans>View plans</a>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </form>
+      </section>
+
+      <!-- ============================================================ Task history（列表 / 详情） -->
+      <section class="db-panel" id="db-panel-history" role="tabpanel" aria-labelledby="db-tab-history" data-db-panel="history">
+        <div class="db-stage" data-db-stage></div>
+      </section>
+    </main>
+
+    <!-- 任务行 / 详情共用的 More 菜单（L6）：打开前按触发它的任务刷新可用项与条数 -->
+    <div class="menu db-menu" id="db-task-menu" role="menu" aria-label="Task actions">
+      <button class="menu-item" type="button" role="menuitem" data-value="copy-completed"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>Copy completed<span class="menu-item-meta" data-meta="completed"></span></button>
+      <button class="menu-item" type="button" role="menuitem" data-value="copy-pending"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>Copy pending<span class="menu-item-meta" data-meta="pending"></span></button>
+      <button class="menu-item" type="button" role="menuitem" data-value="copy-all"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>Copy all<span class="menu-item-meta" data-meta="all"></span></button>
+      <div class="menu-sep" role="separator"></div>
+      <button class="menu-item menu-item--danger" type="button" role="menuitem" data-value="delete"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-trash" /></svg>Delete task…</button>
+    </div>
+
+    <div class="toast-stack" data-toast-stack></div>
+    <div class="sr-only" role="status" aria-live="polite" data-db-sr></div>
+  </body>
+</html>

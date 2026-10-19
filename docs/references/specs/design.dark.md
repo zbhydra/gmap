@@ -2,7 +2,7 @@
 version: 1.0
 name: Material You
 theme: dark
-description: 插件（extension / extension-bing）与 Admin 的 UI token 合同之暗色主题；website 见 design-website.md；交互与组件规则见 design.md（亮色），本文件只记录 token 取值与暗色差异。
+description: extension-bing 与 Admin 的 UI token 合同之暗色主题；各端合同入口与交互规则见 design.md §0，本文件只记录 Material You 暗色取值与差异。
 source: 风格选型探索稿 scratch/design-explore/gmap-ui-styles.html（不入 git），方案 06D；token 合同以本文件为准。
 colors:
   bg: "#15171c"
@@ -104,7 +104,7 @@ elevation:
 
 ## 0 · 总览
 
-与亮色主题（`design.md`）共用同一套 token 名与全部交互/组件规则，本文只记录取值与暗色特有差异。字体、布局、圆角、动效、组件规格与亮色完全一致。
+适用端见 [design.md §0](design.md#0--总览)。与其 Material You 亮色主题共用同一套 token 名与全部交互/组件规则，本文只记录取值与暗色特有差异。字体、布局、圆角、动效、组件规格与亮色完全一致。
 
 ## 1 · 与亮色的差异（实现时最容易踩的点）
 

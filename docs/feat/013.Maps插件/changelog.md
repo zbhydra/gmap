@@ -1,5 +1,9 @@
 # 013 · Maps 插件 changelog
 
+## 2026-10-19
+
+- 评论工作页迁到 Maps 地点页，手动入口与两类批量输入统一使用完整 fid；翻页、Reset 与批量回报复用初始 URL 上下文。删除旧评论页注入与 RPC 地址，验收记录见 [006](plans/006.评论工作页迁移.md)。
+
 ## 2026-09-02
 
 - e2e 切真实界面单层(2026-09-02 hydra 拍板,与 extension-bing 同口径):删除全部离线 fixture 页 / route mock / 本地 mock 服务层(12 个 mock e2e spec、`tests/e2e/mock/server.mjs`、`scripts/build-e2e.mjs`),主验收改为真实 `www.google.com/maps` 采集真实数据。新增 `harness.ts`(stealth 启动:去 `--enable-automation` + `--disable-blink-features=AutomationControlled` + 身份兜底 init script;token 直注经 SW 写 chrome.storage auth 三键;用户设置直注 5s 采集档;Google 同意页自动接受;人机验证/落地域偏离/DOM 改版 skipSmoke 条件降级)与构建变体 `dist-real`(API 指本地 backend、SLS 构建期禁用)。`real-maps.spec.ts` 匿名全链路(采集 → 免费档 10 行截断完成 → RFC4180 引号感知解析断言 36 列 CSV → Reset);`real-maps-signed-in.spec.ts` Pro 登录态(登录流程不做 e2e,`e2e_seed_user.py` 新增 `maps-extension-pro` 场景签发 exchange 同构 token 对;完成边沿 usage/report 200 + enrich 到达真实 backend + 导出)。面板宿主为零尺寸元素,挂载断言用 `toHaveCount(1)`。

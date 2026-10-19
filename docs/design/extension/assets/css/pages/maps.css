@@ -1,0 +1,475 @@
+/* =========================================================================
+   panel.html（data-page="maps"）私有样式：舞台布置、宿主页面叙事层、状态矩阵。类名前缀 mp-。
+   面板本体样式全部在 assets/css/panel.css（Shadow DOM 内），这里不碰面板。
+   宿主叙事层（pin 点亮、结果行标记、扫描带）只为讲清一次采集；真实插件不改 Google 页面样式。
+   共享基础文件只做加法，规则见 README §9。
+   ========================================================================= */
+
+:root {
+  /* 宿主叙事层：宿主页面恒亮（与 proto.css 的 --host-* 一致），不随扩展主题翻转 */
+  --mp-scan: #1a73e8;
+  --mp-scan-row: rgba(26, 115, 232, 0.07);
+  --mp-sweep: rgba(26, 115, 232, 0.08);
+  --mp-sweep-edge: rgba(26, 115, 232, 0.38);
+  --mp-ping: rgba(26, 115, 232, 0.6);
+  --mp-done: #14b37d;
+  --mp-done-fg: #ffffff;
+  --mp-badge-ring: 0 0 0 2px #ffffff, 0 1px 3px rgba(60, 64, 67, 0.4);
+  --mp-pin-idle: 0.42;
+  --mp-dur-sweep: 3600ms;
+
+  /* 舞台：状态坞展开时给它让出的左栏（坞宽 300 + 左距 16 + 间隙 24） */
+  --mp-dock-gutter: 340px;
+}
+
+/* ===========================================================================
+   舞台：两个浏览器框 + 矩阵；宽屏下状态坞展开时整体右移，避免坞挡住面板
+   =========================================================================== */
+.mp-browser {
+  --page-h: 760px;
+}
+
+.mp-browser--work {
+  --page-h: 620px;
+}
+
+@media (min-width: 1200px) {
+  body:has(.proto-dock:not(.is-collapsed)) .mp-stage {
+    padding-left: var(--mp-dock-gutter);
+  }
+}
+
+.proto-note b {
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.mp-jump-link {
+  margin-left: 4px;
+  color: var(--primary-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mp-jump-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ===========================================================================
+   宿主叙事层：结果流平移、正在读取的行、已采集徽标、pin 点亮 + 一次性波纹、扫描带
+   只动 transform / opacity；减弱动效由 motion.css 的全局规则收成终态
+   =========================================================================== */
+
+/* 真实插件会滚动结果列表；原型用 transform 平移代替滚动 */
+.mp-feed {
+  transition: transform var(--dur-5) var(--ease-out);
+}
+
+.mp-feed .gmap-card {
+  position: relative;
+  transition: background-color var(--dur-3);
+}
+
+.gmap-card.mp-reading {
+  background: var(--mp-scan-row);
+  box-shadow: inset 3px 0 0 var(--mp-scan);
+}
+
+/* 已采集：缩略图右上角的勾（结果卡片 / 评论行共用） */
+.mp-badge {
+  position: absolute;
+  top: 10px;
+  right: 18px;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--mp-done);
+  box-shadow: var(--mp-badge-ring);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity var(--dur-2),
+    transform var(--dur-4) var(--ease-spring);
+}
+
+.mp-badge::after {
+  position: absolute;
+  inset: 4px;
+  background: var(--mp-done-fg);
+  -webkit-mask: var(--mask-check) center / contain no-repeat;
+  mask: var(--mask-check) center / contain no-repeat;
+  content: '';
+}
+
+.mp-done > .mp-badge {
+  opacity: 1;
+  transform: none;
+}
+
+/* pin：采集中未读到的 pin 先压暗，读到即点亮 + 一次波纹 + 角标 */
+.gmap-pin {
+  transition: opacity var(--dur-4) var(--ease-out);
+}
+
+.gmap.mp-run .gmap-pin:not(.mp-pin-done) {
+  opacity: var(--mp-pin-idle);
+}
+
+.mp-ping {
+  position: absolute;
+  inset: -3px;
+  border: 2px solid var(--mp-ping);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gmap-pin.mp-pin-done .mp-ping {
+  animation: mp-ping var(--dur-5) var(--ease-out);
+}
+
+@keyframes mp-ping {
+  from {
+    opacity: 1;
+    transform: scale(0.6);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+.mp-pin-badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--mp-done);
+  box-shadow: var(--mp-badge-ring);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity var(--dur-2),
+    transform var(--dur-4) var(--ease-spring);
+}
+
+.mp-pin-badge::after {
+  position: absolute;
+  inset: 3px;
+  background: var(--mp-done-fg);
+  -webkit-mask: var(--mask-check) center / contain no-repeat;
+  mask: var(--mask-check) center / contain no-repeat;
+  content: '';
+}
+
+.gmap-pin.mp-pin-done .mp-pin-badge {
+  opacity: 1;
+  transform: none;
+}
+
+/* 扫描带：只在采集中存在的一条低透明度光带，transform 平移（合成线程） */
+.mp-sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-4) var(--ease-out);
+}
+
+/* 一条 2px 扫描线 + 身后渐隐的淡光 */
+.mp-sweep::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30%;
+  background:
+    linear-gradient(var(--mp-sweep-edge), var(--mp-sweep-edge)) right / 2px 100% no-repeat,
+    linear-gradient(90deg, transparent, var(--mp-sweep));
+  transform: translateX(-100%);
+  content: '';
+}
+
+.mp-sweep.is-on {
+  opacity: 1;
+}
+
+.mp-sweep.is-on::before {
+  animation: mp-sweep var(--mp-dur-sweep) linear infinite;
+}
+
+@keyframes mp-sweep {
+  to {
+    transform: translateX(340%);
+  }
+}
+
+/* 未搜索（L2 not-searched）：Maps 首页没有结果列表，只有浮在地图上的搜索框 */
+.gmap.mp-blank {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gmap.mp-blank .gmap-side {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 408px;
+  background: none;
+  box-shadow: none;
+}
+
+.gmap.mp-blank .gmap-chips,
+.gmap.mp-blank .gmap-results,
+.gmap.mp-blank .gmap-pin {
+  display: none;
+}
+
+.gmap.mp-blank .gmap-search span {
+  color: var(--host-text-3);
+}
+
+/* 评论工作页：评论行逐页标记 */
+.mp-sheet {
+  position: relative;
+  overflow: hidden;
+}
+
+.mp-sheet .gmap-review {
+  position: relative;
+  transition: background-color var(--dur-3);
+}
+
+.gmap-review.mp-reading {
+  background: var(--mp-scan-row);
+  box-shadow: inset 3px 0 0 var(--mp-scan);
+}
+
+.mp-sheet .mp-badge {
+  top: 16px;
+  right: 24px;
+}
+
+/* 照片图库：大图随读取交替淡入另一张（叙事），缩略栏逐张打勾 */
+.mp-gallery .gmap-photo {
+  position: relative;
+  overflow: hidden;
+}
+
+.mp-photo-alt {
+  position: absolute;
+  inset: 0;
+  background: var(--host-photo-2);
+  opacity: 0;
+  transition: opacity var(--dur-5) var(--ease-out);
+}
+
+.gmap-photo.mp-flip .mp-photo-alt {
+  opacity: 1;
+}
+
+.mp-gallery .gmap-strip i {
+  position: relative;
+}
+
+.mp-gallery .gmap-strip .mp-badge {
+  top: 6px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+}
+
+.mp-gallery .gmap-strip .mp-badge::after {
+  inset: 3px;
+}
+
+/* ===========================================================================
+   状态矩阵
+   =========================================================================== */
+.mp-matrix {
+  display: grid;
+  gap: var(--s-12);
+  width: min(1392px, 100%);
+  scroll-margin-top: var(--s-6);
+}
+
+.mp-matrix-head {
+  display: grid;
+  justify-items: start;
+  gap: var(--s-3);
+}
+
+.mp-lead {
+  max-width: 72ch;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+.mp-lead b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.mp-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-1);
+}
+
+.mp-jump a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border-2);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  transition:
+    background-color var(--dur-2),
+    color var(--dur-2);
+}
+
+.mp-jump a:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.mp-jump a span {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+}
+
+.mp-groups {
+  display: grid;
+  gap: var(--s-16);
+}
+
+.mp-group {
+  display: grid;
+  gap: var(--s-5);
+  scroll-margin-top: var(--s-6);
+}
+
+.mp-group-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--s-1) var(--s-4);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.mp-group-head .kicker {
+  grid-row: span 2;
+}
+
+.mp-group-title {
+  color: var(--text);
+  font-size: var(--fs-md);
+  font-weight: 650;
+  letter-spacing: var(--tracking-tight);
+}
+
+.mp-group-desc {
+  max-width: 88ch;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
+
+.mp-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--s-8) var(--s-4);
+}
+
+/* 同一行的瓦片等高：多出的高度给舞台（1fr），标题行不被撑开 */
+.mp-tile {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--s-3);
+  min-width: 0;
+  margin: 0;
+}
+
+.mp-tile figcaption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px var(--s-2);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-snug);
+}
+
+.mp-tile figcaption b {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+
+.mp-tile-class {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  white-space: nowrap;
+}
+
+.mp-tile-note {
+  grid-column: 1 / -1;
+}
+
+.mp-tile-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+  color: var(--primary-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mp-tile-live .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.mp-tile-live:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* 每块舞台都是独立的「视口」：contain 让面板的 position: fixed 以舞台为参照；高度由脚本按面板实测 */
+.mp-stage-tile {
+  position: relative;
+  min-height: 300px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--host-land);
+  contain: layout paint;
+}
+
+.mp-stage-tile > .proto-panel-host {
+  --panel-top: 16px;
+  --panel-inset: 16px;
+}
+
+/* 工作页瓦片：评论页只留页面底色（白卡片在 336 宽的舞台里只会露出一条边，像渲染错误） */
+.mp-stage-tile > .gmap--page .gmap-sheet {
+  display: none;
+}

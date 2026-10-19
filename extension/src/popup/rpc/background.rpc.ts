@@ -52,6 +52,17 @@ export class BackgroundChannel {
     )
   }
 
+  /** 调用 getMapsConfig 能力。 */
+  getMapsConfig(
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'getMapsConfig'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'getMapsConfig'>>(
+      'getMapsConfig',
+      undefined,
+      options
+    )
+  }
+
   /** 调用 recordMark 能力。 */
   recordMark(
     params: RpcMethodParams<BackgroundHandler, 'recordMark'>,

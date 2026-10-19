@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings · MapsGrab Extension</title>
+    <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+    <!-- Phase B 页面统一头部：theme.js 同步执行（首帧主题），其余脚本 defer，页面私有文件按 body[data-page] 命名 -->
+    <script src="assets/js/theme.js"></script>
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/proto.css" />
+    <link rel="stylesheet" href="assets/css/pages/options.css" />
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/ui.js" defer></script>
+    <script src="assets/js/proto.js" defer></script>
+    <script src="assets/js/pages/options.js" defer></script>
+  </head>
+  <body data-page="options">
+    <!-- 页头：品牌 + 页面标题 + 全局保存状态（即改即存的总回执；失败时变红并配合顶部提示条） -->
+    <header class="appbar op-appbar" data-op-appbar>
+      <span class="brand"><img class="brand-mark" src="assets/img/logo.svg" alt="" />MapsGrab</span>
+      <span class="op-appbar-sep" aria-hidden="true"></span>
+      <h1 class="appbar-title">Settings</h1>
+      <div class="appbar-actions">
+        <span class="op-save" data-op-save data-state="idle" role="status" aria-live="polite">
+          <span class="op-save-icon" aria-hidden="true">
+            <span class="spinner"></span>
+            <svg class="icon op-save-ok"><use href="assets/img/icons.svg#i-check-circle" /></svg>
+            <svg class="icon op-save-bad"><use href="assets/img/icons.svg#i-alert-circle" /></svg>
+          </span>
+          <span class="op-save-text" data-op-save-text>All changes saved</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="op-shell">
+      <!-- 分区导航：滚动定位（scroll-spy）+ 每区一行当前取值读数；窄屏变为吸顶横条 -->
+      <nav class="op-nav" aria-label="Settings sections" data-op-nav>
+        <span class="op-nav-ink" aria-hidden="true" data-op-ink></span>
+        <ul class="op-nav-list enter-group" role="list">
+          <li>
+            <a class="op-nav-link" href="#extraction" data-sec="extraction">
+              <span class="op-nav-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-scan" /></svg></span>
+              <span class="op-nav-text"><span class="op-nav-label">Extraction</span><span class="op-nav-sum mono" data-sum="extraction">8s interval</span></span>
+            </a>
+          </li>
+          <li>
+            <a class="op-nav-link" href="#export" data-sec="export">
+              <span class="op-nav-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-export" /></svg></span>
+              <span class="op-nav-text"><span class="op-nav-label">Export</span><span class="op-nav-sum mono" data-sum="export">CSV · 36 / 36</span></span>
+            </a>
+          </li>
+          <li>
+            <a class="op-nav-link" href="#automation" data-sec="automation">
+              <span class="op-nav-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg></span>
+              <span class="op-nav-text"><span class="op-nav-label">Automation</span><span class="op-nav-sum mono" data-sum="automation">Download off · 1 retry</span></span>
+            </a>
+          </li>
+          <li>
+            <a class="op-nav-link" href="#appearance" data-sec="appearance">
+              <span class="op-nav-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-eye" /></svg></span>
+              <span class="op-nav-text"><span class="op-nav-label">Appearance</span><span class="op-nav-sum mono" data-sum="appearance">System · English</span></span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <main class="op-main" data-stagger="70">
+        <!-- 保存失败（L2：原因 + 下一步）；吸顶在页头下，滚到哪里都看得见 -->
+        <div class="op-alert" data-op-alert hidden>
+          <div class="notice notice--banner tone-bad" role="alert">
+            <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert-circle" /></svg>
+            <div>
+              <p class="notice-title" data-op-alert-title>Couldn’t save “Scroll interval”</p>
+              <p class="notice-desc" data-op-alert-desc>The browser didn’t accept the change, so Scroll interval is still 8s. Try again — if it keeps failing, reload this page.</p>
+              <div class="notice-actions">
+                <button class="btn btn-secondary btn-sm" type="button" data-op-retry-save><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Try again</button>
+                <button class="link link--quiet" type="button" data-op-reload>Reload page</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================ Extraction -->
+        <section class="op-section" id="extraction" aria-labelledby="op-h-extraction" data-reveal>
+          <header class="op-section-head">
+            <h2 class="op-section-title" id="op-h-extraction">Extraction</h2>
+            <p class="op-section-desc">How the Maps panel scrolls results and what it adds to each place.</p>
+          </header>
+          <div class="card op-card">
+            <div class="setting" data-row="interval">
+              <div class="setting-text">
+                <span class="setting-label" id="op-interval-label">Scroll interval</span>
+                <span class="setting-hint" id="op-interval-hint">Wait time between scroll rounds while extracting.</span>
+              </div>
+              <div class="op-ctl">
+                <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                <div class="seg seg--sm" role="radiogroup" aria-labelledby="op-interval-label" aria-describedby="op-interval-hint" data-seg data-op="interval">
+                  <span class="seg-thumb" aria-hidden="true"></span>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="5">5s</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="6">6s</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="true" data-value="8">8s</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="9">9s</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="10">10s</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting" data-row="email">
+              <div class="setting-text">
+                <span class="setting-label"><span id="op-email-label">Extract email address</span><span class="badge badge--pro op-pro"><svg class="icon op-ico-crown" aria-hidden="true"><use href="assets/img/icons.svg#i-crown" /></svg><svg class="icon op-ico-lock" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>Pro</span></span>
+                <span class="setting-hint" id="op-email-hint">Finds email addresses on each business website when an extraction completes.</span>
+                <span class="op-plan-note" data-show="plan:free"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkle" /></svg>Pro feature — free for now.</span>
+                <span class="op-plan-note op-plan-note--ok" data-show="plan:pro" hidden><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check-circle" /></svg>Included in your Pro plan.</span>
+                <span class="op-plan-note op-plan-note--lock" data-show="plan:gated" hidden><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>Requires Pro. <a class="link" href="#" data-op-plans>View plans</a></span>
+              </div>
+              <div class="op-ctl">
+                <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                <button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="op-email-label" aria-describedby="op-email-hint" data-op="email"><span class="switch-knob"></span></button>
+              </div>
+            </div>
+
+            <div class="setting" data-row="social">
+              <div class="setting-text">
+                <span class="setting-label"><span id="op-social-label">Extract social media links</span><span class="badge badge--pro op-pro"><svg class="icon op-ico-crown" aria-hidden="true"><use href="assets/img/icons.svg#i-crown" /></svg><svg class="icon op-ico-lock" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>Pro</span></span>
+                <span class="setting-hint" id="op-social-hint">Finds Facebook, Instagram, YouTube, TikTok, LinkedIn and X links on each business website when an extraction completes.</span>
+                <span class="op-social" aria-hidden="true">
+                  <svg class="icon"><use href="assets/img/icons.svg#i-facebook" /></svg>
+                  <svg class="icon"><use href="assets/img/icons.svg#i-instagram" /></svg>
+                  <svg class="icon"><use href="assets/img/icons.svg#i-youtube" /></svg>
+                  <svg class="icon"><use href="assets/img/icons.svg#i-tiktok" /></svg>
+                  <svg class="icon"><use href="assets/img/icons.svg#i-linkedin" /></svg>
+                  <svg class="icon"><use href="assets/img/icons.svg#i-x-social" /></svg>
+                </span>
+                <span class="op-plan-note" data-show="plan:free"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkle" /></svg>Pro feature — free for now.</span>
+                <span class="op-plan-note op-plan-note--ok" data-show="plan:pro" hidden><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check-circle" /></svg>Included in your Pro plan.</span>
+                <span class="op-plan-note op-plan-note--lock" data-show="plan:gated" hidden><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>Requires Pro. <a class="link" href="#" data-op-plans>View plans</a></span>
+              </div>
+              <div class="op-ctl">
+                <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                <button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="op-social-label" aria-describedby="op-social-hint" data-op="social"><span class="switch-knob"></span></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================ Export -->
+        <section class="op-section" id="export" aria-labelledby="op-h-export" data-reveal>
+          <header class="op-section-head">
+            <h2 class="op-section-title" id="op-h-export">Export</h2>
+            <p class="op-section-desc">Used by the panel’s Export button, auto-download and bulk tasks.</p>
+          </header>
+          <div class="card op-card">
+            <div class="setting" data-row="format">
+              <div class="setting-text">
+                <span class="setting-label" id="op-format-label">Export format</span>
+                <span class="setting-hint" id="op-format-hint">CSV opens anywhere. XLSX keeps long IDs as text in Excel. JSON keeps numbers as numbers.</span>
+              </div>
+              <div class="op-ctl">
+                <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                <div class="seg seg--sm op-format" role="radiogroup" aria-labelledby="op-format-label" aria-describedby="op-format-hint" data-seg data-op="format">
+                  <span class="seg-thumb" aria-hidden="true"></span>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="true" data-value="csv"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-csv" /></svg>CSV</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="json"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-json" /></svg>JSON</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="xlsx"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-xlsx" /></svg>XLSX</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 导出预览：吸顶托盘（只会盖住已经滚过的字段），随格式与字段实时变化，列 / 键滑入滑出 -->
+          <figure class="op-pv" data-op-preview aria-labelledby="op-pv-title">
+            <figcaption class="op-pv-head">
+              <span class="op-pv-file" aria-hidden="true" data-op-pv-icon></span>
+              <span class="op-pv-titles">
+                <span class="op-pv-title" id="op-pv-title">Export preview</span>
+                <span class="op-pv-name mono" data-op-pv-name><span class="op-pv-base">MapsGrab-Extractor-8-coffee+near+Manhattan-2026-10-18</span><span class="op-pv-ext">.csv</span></span>
+              </span>
+              <span class="op-pv-meta mono" data-op-pv-meta>Sample · 3 of 8 rows</span>
+              <span class="sr-only" data-op-pv-sr></span>
+            </figcaption>
+            <div class="op-pv-stage" data-op-pv-stage aria-hidden="true"></div>
+            <div class="op-pv-notes" data-op-pv-notes></div>
+          </figure>
+
+          <div class="card op-card">
+            <div class="setting setting--stack op-fields" data-row="fields">
+              <div class="op-row-head">
+                <div class="setting-text">
+                  <span class="setting-label" id="op-fields-label">Export fields</span>
+                  <span class="setting-hint" id="op-fields-hint">Choose which columns to include in exports. Column order stays fixed.</span>
+                </div>
+                <div class="op-ctl op-ctl--top">
+                  <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                  <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                  <span class="op-count" data-op-count-wrap>
+                    <span class="op-count-num roller" data-op-count data-roll="36"></span><span class="op-count-total">/ 36</span>
+                  </span>
+                </div>
+              </div>
+              <div class="op-fields-bar">
+                <span class="op-legend">
+                  <span class="op-pro-mini op-pro" aria-hidden="true"><svg class="icon op-ico-crown"><use href="assets/img/icons.svg#i-crown" /></svg><svg class="icon op-ico-lock"><use href="assets/img/icons.svg#i-lock" /></svg></span>
+                  <span data-show="plan:free">Pro field — all 12 are free for now.</span>
+                  <span data-show="plan:pro" hidden>Pro field — all 12 are included in your plan.</span>
+                  <span data-show="plan:gated" hidden>Pro field — Free exports leave these 12 out. <a class="link" href="#" data-op-plans>View plans</a></span>
+                </span>
+                <span class="op-fields-actions">
+                  <button class="btn btn-ghost btn-sm" type="button" data-op-fields-all><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-checks" /></svg>Select all</button>
+                  <button class="btn btn-ghost btn-sm" type="button" data-op-fields-none><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg>Clear</button>
+                </span>
+              </div>
+              <div class="op-groups" data-op-groups></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ Automation -->
+        <section class="op-section" id="automation" aria-labelledby="op-h-automation" data-reveal>
+          <header class="op-section-head">
+            <h2 class="op-section-title" id="op-h-automation">Automation</h2>
+            <p class="op-section-desc">What happens when an extraction or a bulk task finishes.</p>
+          </header>
+          <div class="card op-card">
+            <div class="setting" data-row="download">
+              <div class="setting-text">
+                <span class="setting-label" id="op-download-label">Auto download on completion</span>
+                <span class="setting-hint" id="op-download-hint">Saves the file as soon as an extraction finishes. Bulk tasks always download.</span>
+              </div>
+              <div class="op-ctl">
+                <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                <button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="op-download-label" aria-describedby="op-download-hint" data-op="download"><span class="switch-knob"></span></button>
+              </div>
+              <div class="op-reveal" data-op-download-detail>
+                <div class="op-reveal-inner">
+                  <div class="op-detail">
+                    <span class="icon-tile icon-tile--sm icon-tile--soft"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg></span>
+                    <div class="op-detail-text">
+                      <p class="op-detail-desc">Files are saved to your browser’s download folder. You can change it in the browser download settings.</p>
+                      <p class="op-path mono"><span class="op-path-dir">Downloads</span><span class="op-path-sep" aria-hidden="true">/</span><span class="op-path-file" data-op-download-file><span class="op-path-base">MapsGrab-Extractor-48-coffee+near+Manhattan-2026-10-18</span><span class="op-path-ext">.csv</span></span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting" data-row="retry">
+              <div class="setting-text">
+                <span class="setting-label" id="op-retry-label">Stuck retry count</span>
+                <span class="setting-hint" id="op-retry-hint">How many times a bulk task reopens a stuck item before skipping it. An item is stuck after 90 seconds without progress or when its tab closes.</span>
+              </div>
+              <div class="op-ctl">
+                <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                <div class="stepper" role="group" aria-labelledby="op-retry-label" data-op="retry">
+                  <button type="button" data-step="-1" aria-label="Fewer retries"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-minus" /></svg></button>
+                  <input type="number" min="0" max="9" step="1" value="1" aria-labelledby="op-retry-label" aria-describedby="op-retry-hint op-attempts-text" />
+                  <button type="button" data-step="1" aria-label="More retries"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></button>
+                </div>
+              </div>
+              <div class="op-attempts">
+                <ol class="op-pips" role="list" aria-hidden="true" data-op-pips></ol>
+                <span class="op-attempts-text" id="op-attempts-text" data-op-attempts-text>Up to 2 attempts per item, then it’s skipped.</span>
+                <span class="op-attempts-note">The bulk dashboard shows this value read-only.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 集成（A10 未决）：未配置凭据时禁用占位；未来态 未连接 / 连接中 / 已连接 / 授权失败 -->
+          <div class="card op-card op-ints">
+            <div class="op-ints-head">
+              <span class="kicker">Integrations</span>
+            </div>
+            <div class="setting op-int" data-row="drive" data-int="drive">
+              <span class="icon-tile op-int-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud-upload" /></svg></span>
+              <div class="setting-text">
+                <span class="setting-label" id="op-drive-label">Auto save to Google Drive</span>
+                <span class="setting-hint" id="op-drive-hint">Uploads the exported file to Google Drive when an extraction completes.</span>
+                <span class="op-int-state" data-int-state="unavailable"><span class="op-int-note">This integration is not available yet.</span></span>
+                <span class="op-int-state" data-int-state="not-connected"><span class="status status--pending">Not connected</span><span class="op-int-note">Turning this on asks you to sign in with Google.</span></span>
+                <span class="op-int-state" data-int-state="connecting"><span class="status status--running">Connecting…</span><span class="op-int-note">Finish signing in with Google in the window that opened.</span></span>
+                <span class="op-int-state" data-int-state="connected"><span class="status status--completed">Connected</span><button class="link link--quiet op-int-action" type="button" data-int-disconnect>Disconnect</button></span>
+                <span class="op-int-state op-int-state--error" data-int-state="failed"><span class="status status--skipped">Connection failed</span><span class="op-int-note op-int-note--error">Google didn’t grant access. Turn the switch on to try again.</span></span>
+              </div>
+              <div class="op-ctl">
+                <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                <button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="op-drive-label" aria-describedby="op-drive-hint" data-int-switch disabled><span class="switch-knob"></span></button>
+              </div>
+            </div>
+            <div class="setting op-int" data-row="hubspot" data-int="hubspot">
+              <span class="icon-tile op-int-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-building" /></svg></span>
+              <div class="setting-text">
+                <span class="setting-label" id="op-hubspot-label">Auto save to HubSpot</span>
+                <span class="setting-hint" id="op-hubspot-hint">Syncs extracted businesses to HubSpot when an extraction completes.</span>
+                <span class="op-int-state" data-int-state="unavailable"><span class="op-int-note">This integration is not available yet.</span></span>
+                <span class="op-int-state" data-int-state="not-connected"><span class="status status--pending">Not connected</span><span class="op-int-note">Turning this on asks you to sign in to HubSpot.</span></span>
+                <span class="op-int-state" data-int-state="connecting"><span class="status status--running">Connecting…</span><span class="op-int-note">Finish signing in to HubSpot in the window that opened.</span></span>
+                <span class="op-int-state" data-int-state="connected"><span class="status status--completed">Connected</span><button class="link link--quiet op-int-action" type="button" data-int-disconnect>Disconnect</button></span>
+                <span class="op-int-state op-int-state--error" data-int-state="failed"><span class="status status--skipped">Connection failed</span><span class="op-int-note op-int-note--error">HubSpot didn’t grant access. Turn the switch on to try again.</span></span>
+              </div>
+              <div class="op-ctl">
+                <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                <button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="op-hubspot-label" aria-describedby="op-hubspot-hint" data-int-switch disabled><span class="switch-knob"></span></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ Appearance -->
+        <section class="op-section" id="appearance" aria-labelledby="op-h-appearance" data-reveal>
+          <header class="op-section-head">
+            <h2 class="op-section-title" id="op-h-appearance">Appearance</h2>
+            <p class="op-section-desc">Shared by the popup, the bulk dashboard, this page and the Maps panel.</p>
+          </header>
+          <div class="card op-card">
+            <div class="setting setting--stack" data-row="theme">
+              <div class="op-row-head">
+                <div class="setting-text">
+                  <span class="setting-label" id="op-theme-label">Theme</span>
+                  <span class="setting-hint">System follows your device’s light or dark setting.</span>
+                </div>
+                <div class="op-ctl op-ctl--top">
+                  <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                </div>
+              </div>
+              <!-- 与 [data-theme-switch] 分段同一绑定：ui.js 管 aria-checked / 方向键，切换走 MG.theme（圆形揭示） -->
+              <div class="op-themes" role="radiogroup" aria-labelledby="op-theme-label" data-seg data-theme-switch data-op-themes>
+                <button class="op-theme" type="button" role="radio" aria-checked="true" data-value="system">
+                  <span class="op-theme-art" aria-hidden="true">
+                    <span class="op-theme-half scheme-light"><span class="op-mini"><span class="op-mini-bar"><i class="op-mini-logo"></i><i class="op-mini-line"></i><i class="op-mini-dot"></i></span><span class="op-mini-body"><i class="op-mini-line op-mini-line--lg"></i><i class="op-mini-meter"><i></i></i><i class="op-mini-btn"></i></span></span></span>
+                    <span class="op-theme-half op-theme-half--dark scheme-dark"><span class="op-mini"><span class="op-mini-bar"><i class="op-mini-logo"></i><i class="op-mini-line"></i><i class="op-mini-dot"></i></span><span class="op-mini-body"><i class="op-mini-line op-mini-line--lg"></i><i class="op-mini-meter"><i></i></i><i class="op-mini-btn"></i></span></span></span>
+                  </span>
+                  <span class="op-theme-foot">
+                    <span class="op-theme-radio" aria-hidden="true"></span>
+                    <span class="op-theme-name">System</span>
+                    <span class="op-theme-now morph" data-op-theme-now>
+                      <span class="is-active" data-key="light">Now light</span>
+                      <span data-key="dark" aria-hidden="true">Now dark</span>
+                    </span>
+                  </span>
+                </button>
+                <button class="op-theme" type="button" role="radio" aria-checked="false" data-value="light">
+                  <span class="op-theme-art" aria-hidden="true">
+                    <span class="op-theme-half scheme-light"><span class="op-mini"><span class="op-mini-bar"><i class="op-mini-logo"></i><i class="op-mini-line"></i><i class="op-mini-dot"></i></span><span class="op-mini-body"><i class="op-mini-line op-mini-line--lg"></i><i class="op-mini-meter"><i></i></i><i class="op-mini-btn"></i></span></span></span>
+                  </span>
+                  <span class="op-theme-foot">
+                    <span class="op-theme-radio" aria-hidden="true"></span>
+                    <span class="op-theme-name">Light</span>
+                    <svg class="icon op-theme-glyph" aria-hidden="true"><use href="assets/img/icons.svg#i-sun" /></svg>
+                  </span>
+                </button>
+                <button class="op-theme" type="button" role="radio" aria-checked="false" data-value="dark">
+                  <span class="op-theme-art" aria-hidden="true">
+                    <span class="op-theme-half scheme-dark"><span class="op-mini"><span class="op-mini-bar"><i class="op-mini-logo"></i><i class="op-mini-line"></i><i class="op-mini-dot"></i></span><span class="op-mini-body"><i class="op-mini-line op-mini-line--lg"></i><i class="op-mini-meter"><i></i></i><i class="op-mini-btn"></i></span></span></span>
+                  </span>
+                  <span class="op-theme-foot">
+                    <span class="op-theme-radio" aria-hidden="true"></span>
+                    <span class="op-theme-name">Dark</span>
+                    <svg class="icon op-theme-glyph" aria-hidden="true"><use href="assets/img/icons.svg#i-moon" /></svg>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div class="setting" data-row="language">
+              <div class="setting-text">
+                <label class="setting-label" id="op-lang-label" for="op-lang">Language</label>
+                <span class="setting-hint" id="op-lang-hint">The popup, dashboard and settings switch right away. Reload Google Maps to update the panel.</span>
+              </div>
+              <div class="op-ctl">
+                <span class="saved-tick" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+                <span class="op-unsaved" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-x" /></svg>Not saved</span>
+                <span class="select-wrap op-lang">
+                  <select class="select" id="op-lang" aria-describedby="op-lang-hint" data-op="language">
+                    <option value="en-US" lang="en" selected>English</option>
+                    <option value="zh-CN" lang="zh-CN">简体中文</option>
+                    <option value="zh-TW" lang="zh-TW">繁體中文</option>
+                    <option value="ja-JP" lang="ja">日本語</option>
+                    <option value="ko-KR" lang="ko">한국어</option>
+                    <option value="es-ES" lang="es">Español</option>
+                    <option value="pt-BR" lang="pt-BR">Português (Brasil)</option>
+                    <option value="de-DE" lang="de">Deutsch</option>
+                    <option value="fr-FR" lang="fr">Français</option>
+                    <option value="ru-RU" lang="ru">Русский</option>
+                    <option value="it-IT" lang="it">Italiano</option>
+                    <option value="vi-VN" lang="vi">Tiếng Việt</option>
+                    <option value="th-TH" lang="th">ภาษาไทย</option>
+                    <option value="id-ID" lang="id">Bahasa Indonesia</option>
+                  </select>
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="op-foot">
+          <span class="op-foot-brand"><img class="op-foot-mark" src="assets/img/logo.svg" alt="" />MapsGrab<span class="op-foot-ver mono">v0.1.0</span></span>
+          <a class="link link--quiet op-foot-link" href="#" target="_blank" rel="noreferrer" data-op-privacy><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-shield" /></svg>Privacy Policy<svg class="icon icon-out" aria-hidden="true"><use href="assets/img/icons.svg#i-external" /></svg></a>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

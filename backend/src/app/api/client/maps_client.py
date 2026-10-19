@@ -22,12 +22,19 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from app.api.user_dependencies import UserContext, get_current_user_optional
+from app.constants.subscription import (
+    FREE_SUBSCRIPTION_PRODUCT_ID,
+    MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
+    MAPS_EXTENSION_PRODUCT_KIND,
+    MAPS_EXTENSION_PRO_PRODUCT_ID,
+)
 from app.schemas.maps_enrich_schema import MapsEnrichRequest
 from app.schemas.maps_hubspot_schema import MapsHubspotSyncRequest
 from app.schemas.maps_usage_schema import MapsUsageReportRequest
 from app.provider.maps_enrich import maps_enrich_provider
 from app.constants.maps_enrich import ENRICH_BATCH_BUDGET_SECONDS
 from app.services.maps_hubspot_service import maps_hubspot_service
+from app.services.subscription_service import subscription_service
 from app.services.usage_service import (
     extension_usage_service,
     usage_identity,
@@ -81,6 +88,29 @@ MAPS_OPERATIONS_CONFIG: dict[str, str] = {
     "minPluginVersion": "",
     "pricingUrl": "https://mapsgrab.com/pricing/",
 }
+
+# 单次采集权益归 Maps 插件所有，月度计量仍由共享 usage 服务负责。
+MAPS_ENTITLEMENTS: dict[str, dict[str, object]] = {
+    FREE_SUBSCRIPTION_PRODUCT_ID: {
+        "plan_name": "Free",
+        "run_limits": {"search": 10, "reviews": 20, "photos": 10},
+    },
+    MAPS_EXTENSION_PRO_PRODUCT_ID: {
+        "plan_name": "Pro",
+        "run_limits": {"search": 99999, "reviews": 250, "photos": 100},
+    },
+    MAPS_EXTENSION_BUSINESS_PRODUCT_ID: {
+        "plan_name": "Business",
+        "run_limits": {"search": 99999, "reviews": 2500, "photos": 1000},
+    },
+}
+
+
+async def _maps_entitlements(user_id: int) -> dict[str, object]:
+    _, product = await subscription_service.get_user_subscription_config(
+        user_id, MAPS_EXTENSION_PRODUCT_KIND
+    )
+    return MAPS_ENTITLEMENTS[product.product_id]
 
 
 @router.get("/config")
@@ -141,7 +171,12 @@ async def get_maps_usage(
         usage_identity(current_user.user_id, current_user.device_id),
         user_id=current_user.user_id,
     )
-    return ResponseUtils.ok(usage_payload(snapshot))
+    return ResponseUtils.ok(
+        {
+            **usage_payload(snapshot),
+            **await _maps_entitlements(current_user.user_id),
+        }
+    )
 
 
 @router.post("/usage/report")
@@ -162,4 +197,10 @@ async def report_maps_usage(
         records=request.records,
         request_id=request.request_id,
     )
-    return ResponseUtils.ok({**usage_payload(result), "deducted": result.deducted})
+    return ResponseUtils.ok(
+        {
+            **usage_payload(result),
+            **await _maps_entitlements(current_user.user_id),
+            "deducted": result.deducted,
+        }
+    )

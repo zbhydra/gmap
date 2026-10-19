@@ -6,8 +6,16 @@
  * 只影响服务端计数归属，不影响功能可用（基线 #1 不强制登录）。
  */
 
-/** 服务端 usage 快照（竞品云函数 quota 同构形状：used/total/period/exhausted）。 */
+/** 服务端按有效订阅解析的单次采集权益。 */
+export interface MapsRunLimits {
+  search: number
+  reviews: number
+  photos: number
+}
+
+/** 服务端 usage 快照，查询与完成上报返回同形权益。 */
 export interface MapsUsageSnapshot {
+  plan_name: 'Free' | 'Pro' | 'Business'
   /** 当月已用记录数。 */
   used: number
   /** 月度配额总量（免费默认 1000，服务端远程可调）。 */
@@ -16,6 +24,7 @@ export interface MapsUsageSnapshot {
   period: string
   /** 已用量达到总量（面板 Start 门控依据）。 */
   exhausted: boolean
+  run_limits: MapsRunLimits
 }
 
 /** 采集会话来源（上报观测与日志定位用）。 */

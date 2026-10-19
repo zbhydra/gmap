@@ -8,14 +8,16 @@
  */
 
 import { createApp } from 'vue'
-import '@/styles/tokens.css'
+import '@/styles/index.css'
 import { createI18nInstance } from '@/core/bootstrap'
 import { I18nService } from '@/locales'
 import { I18N_KEYS } from '@/core/constants/i18n'
 import { logger } from '@/core/utils/logger'
 import App from './App.vue'
+import { initializePageTheme } from '@/sites/maps/settings/theme'
 
 async function init() {
+  await initializePageTheme()
   const app = createApp(App)
 
   const i18n = await createI18nInstance()

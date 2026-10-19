@@ -3,8 +3,7 @@
  *
  * 覆盖面：
  * - 批量工作页 URL 参数解析（gme_bulk 契约：task/item 匹配键 + 评论上限）；
- * - ReviewsScraper 的 maxReviews 覆盖（批量每店上限，默认 300 可配）：
- *   达覆盖上限截断完成，优先于远程配置的 reviewsPageLimit。
+ * - ReviewsScraper 按开始入口传入的本次目标截断完成。
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
@@ -44,13 +43,13 @@ describe('批量工作页 URL 参数解析', () => {
   }
 
   it('完整参数：返回 task/item 匹配键', () => {
-    const params = readBulkWorkParams(parse('gme_bulk=1&gme_bulk_task=t1&gme_bulk_item=3'))
-    expect(params).toEqual({ taskId: 't1', itemIndex: 3 })
+    const params = readBulkWorkParams(parse('gme_bulk=1&gme_bulk_task=t1&gme_bulk_item=3&gme_bulk_total=4'))
+    expect(params).toEqual({ taskId: 't1', itemIndex: 3, itemCount: 4 })
   })
 
   it('非批量页 / 参数残缺 / 下标非法 → null（按普通页面处理）', () => {
-    expect(readBulkWorkParams(parse('gme_bulk_task=t1&gme_bulk_item=3'))).toBeNull()
-    expect(readBulkWorkParams(parse('gme_bulk=0&gme_bulk_task=t1&gme_bulk_item=3'))).toBeNull()
+    expect(readBulkWorkParams(parse('gme_bulk_task=t1&gme_bulk_item=3&gme_bulk_total=4'))).toBeNull()
+    expect(readBulkWorkParams(parse('gme_bulk=0&gme_bulk_task=t1&gme_bulk_item=3&gme_bulk_total=4'))).toBeNull()
     expect(readBulkWorkParams(parse('gme_bulk=1&gme_bulk_item=3'))).toBeNull()
     expect(readBulkWorkParams(parse('gme_bulk=1&gme_bulk_task=t1'))).toBeNull()
     expect(readBulkWorkParams(parse('gme_bulk=1&gme_bulk_task=t1&gme_bulk_item=-1'))).toBeNull()
@@ -66,7 +65,7 @@ describe('批量工作页 URL 参数解析', () => {
   })
 })
 
-describe('ReviewsScraper：批量每店上限覆盖', () => {
+describe('ReviewsScraper：批量每店请求目标', () => {
   /** 构造评论响应（构造样本，与 maps-reviews.spec 同构）。 */
   function buildReviewsResponse(reviews: JsonValue[], token: string | null): string {
     const d: JsonValue[] = []
@@ -95,33 +94,16 @@ describe('ReviewsScraper：批量每店上限覆盖', () => {
     return { calls: () => count }
   }
 
-  function buildScraper(maxReviews?: number): ReviewsScraper {
+  function buildScraper(): ReviewsScraper {
     const emit = vi.fn()
     return new ReviewsScraper(
-      '0xa0acdb1716592b4d',
+      { fid: '0x89c2597ca044ec9b:0xa0acdb1716592b4d', hl: 'en', gl: 'us' },
       { emit } as never as ChromeEventEmitter<ExtensionEvents>,
-      { onStateChanged: () => undefined, onError: () => undefined },
-      maxReviews === undefined ? {} : { maxReviews }
+      { onStateChanged: () => undefined, onError: () => undefined }
     )
   }
 
-  it('maxReviews=15：两页 10+10 → 达 15 截断完成（优先于远程配置 20）', async () => {
-    getMapsConfig().scrape.reviewsPageDelayMs = 0
-    const page = Array.from({ length: 10 }, (_, i) => makeReview(i))
-    const fetcher = stubFetch([
-      { reviews: page, token: 't1' },
-      { reviews: page, token: null }
-    ])
-
-    const scraper = buildScraper(15)
-    await scraper.start()
-
-    expect(scraper.getCount()).toBe(15)
-    expect(scraper.getStatus()).toBe('complete')
-    expect(fetcher.calls()).toBe(2)
-  })
-
-  it('缺省不传 maxReviews：保持远程配置上限（既有行为不回归）', async () => {
+  it('本次目标 15：两页 10+10 → 达 15 截断完成', async () => {
     getMapsConfig().scrape.reviewsPageDelayMs = 0
     const page = Array.from({ length: 10 }, (_, i) => makeReview(i))
     const fetcher = stubFetch([
@@ -130,7 +112,23 @@ describe('ReviewsScraper：批量每店上限覆盖', () => {
     ])
 
     const scraper = buildScraper()
-    await scraper.start()
+    await scraper.start(15)
+
+    expect(scraper.getCount()).toBe(15)
+    expect(scraper.getStatus()).toBe('complete')
+    expect(fetcher.calls()).toBe(2)
+  })
+
+  it('传入离线默认目标时按该目标停止', async () => {
+    getMapsConfig().scrape.reviewsPageDelayMs = 0
+    const page = Array.from({ length: 10 }, (_, i) => makeReview(i))
+    const fetcher = stubFetch([
+      { reviews: page, token: 't1' },
+      { reviews: page, token: null }
+    ])
+
+    const scraper = buildScraper()
+    await scraper.start(getMapsConfig().scrape.reviewsPageLimit)
 
     expect(scraper.getCount()).toBe(getMapsConfig().scrape.reviewsPageLimit)
     expect(scraper.getStatus()).toBe('complete')
@@ -186,13 +184,12 @@ describe('采集器进展回报（F1：批量卡死时钟重置的内容侧发�
     const onProgress = vi.fn()
     const fetcher = buildReviewsResponse([{ count: 10, token: 't1' }, { count: 4, token: null }])
     const scraper = new ReviewsScraper(
-      '0xa0acdb1716592b4d',
+      { fid: '0x89c2597ca044ec9b:0xa0acdb1716592b4d', hl: 'en', gl: 'us' },
       { emit: vi.fn() } as never as ChromeEventEmitter<ExtensionEvents>,
-      { onStateChanged: () => undefined, onError: () => undefined, onProgress },
-      {}
+      { onStateChanged: () => undefined, onError: () => undefined, onProgress }
     )
 
-    await scraper.start()
+    await scraper.start(getMapsConfig().scrape.reviewsPageLimit)
 
     expect(fetcher.calls()).toBe(2)
     expect(onProgress).toHaveBeenCalledTimes(2)
@@ -205,7 +202,7 @@ describe('采集器进展回报（F1：批量卡死时钟重置的内容侧发�
       { emit: vi.fn() } as never as ChromeEventEmitter<ExtensionEvents>,
       { onStateChanged: () => undefined, onError: () => undefined, onProgress }
     )
-    scraper.start()
+    scraper.start(getMapsConfig().scrape.freeExportRowLimit)
 
     // 批 1：3 条新数据 → 1 次进展
     scraper.handleRpcResponse(buildSearchResponse(['A', 'B', 'C']))

@@ -1,0 +1,70 @@
+import type { MapsPlaceRow } from '@/sites/maps/content/parser/types'
+
+// 导出预览使用虚构商家；取值、JSON 类型与列序都交由生产导出列定义处理。
+const first: MapsPlaceRow = {
+  name: 'Ember & Oak Coffee',
+  categories: ['Coffee shop', 'Espresso bar'],
+  fullAddress: '123 W 23rd St, New York, NY 10011',
+  street: '123 W 23rd St',
+  municipality: 'New York',
+  description: 'House-roasted espresso and fresh pastries.',
+  about: 'Service options: [Dine-in, Takeout]',
+  timeZone: 'America/New_York',
+  price: '$$',
+  note: '',
+  amenities: 'Wi-Fi, Restroom',
+  hotelClass: '',
+  phone: '(212) 555-0143',
+  phones: '',
+  claimed: 'YES',
+  owner: 'Ember & Oak Coffee',
+  ownerId: '104857392018465730281',
+  reviewUrl: 'https://search.google.com/local/reviews?placeid=ChIJ8f3kqZBZwokR7xq1Lm2pTQA',
+  rating: '4.8',
+  reviewCount: '312',
+  latitude: '40.7449',
+  longitude: '-73.9963',
+  website: 'https://emberandoak.example/',
+  domain: 'emberandoak.example',
+  openingHours: 'Saturday: [07:00-19:00]',
+  featuredImage: 'https://lh5.googleusercontent.com/p/sample-ember',
+  cid: '4925860921760709914',
+  fid: '0x89c259b4f1e8a1d3:0x445c2e1f9a3b7d1a',
+  placeId: 'ChIJ8f3kqZBZwokR7xq1Lm2pTQA',
+  kgmid: '/g/11c4kq7v2r',
+  email: 'hello@emberandoak.example',
+  socialMedias: 'Instagram: https://instagram.com/emberandoak'
+}
+export const PREVIEW_ROWS: readonly MapsPlaceRow[] = [
+  first,
+  {
+    ...first,
+    name: 'Half Moon Roasters',
+    owner: 'Half Moon Roasters',
+    fullAddress: '48 Orchard St, New York, NY 10002',
+    street: '48 Orchard St',
+    phone: '(212) 555-0128',
+    website: 'https://halfmoonroasters.example/',
+    domain: 'halfmoonroasters.example',
+    email: 'hello@halfmoonroasters.example',
+    socialMedias: 'Instagram: https://instagram.com/halfmoonroasters',
+    rating: '4.6',
+    reviewCount: '186',
+    placeId: 'ChIJ2Wq0yXRZwokRmT8bQe5vC1M'
+  },
+  {
+    ...first,
+    name: 'Copper Kettle Cafe',
+    owner: 'Copper Kettle Cafe',
+    fullAddress: '76 Spring St, New York, NY 10013',
+    street: '76 Spring St',
+    phone: '(212) 555-0196',
+    website: 'https://copperkettle.example/',
+    domain: 'copperkettle.example',
+    email: 'hi@copperkettle.example',
+    socialMedias: 'Facebook: https://facebook.com/copperkettlecafe',
+    rating: '4.7',
+    reviewCount: '241',
+    placeId: 'ChIJy4N7a1pZwokRk2Hq9fT3s0E'
+  }
+]

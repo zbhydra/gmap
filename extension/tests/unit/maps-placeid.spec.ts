@@ -14,6 +14,7 @@ import {
   deriveCidFromLrd,
   deriveLrdFromFid,
   derivePlaceIdFromFid,
+  deriveFidFromPlaceId,
   extractPlaceUrlIds
 } from '@/sites/maps/content/parser/placeId'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
@@ -80,6 +81,19 @@ describe('fid → Place ID 本地换算', () => {
       expect(row.fid).toMatch(/^0x[0-9a-f]+:0x[0-9a-f]+$/)
       expect(row.placeId).toMatch(/^ChIJ[0-9A-Za-z_-]{23}$/)
       expect(derivePlaceIdFromFid(row.fid)).toBe(row.placeId)
+      expect(deriveFidFromPlaceId(row.placeId)).toBe(row.fid)
+    }
+  })
+
+  it('反解拒绝长度、字符或 protobuf 布局不符的 Place ID', () => {
+    for (const placeId of [
+      '',
+      'ChIJfoo',
+      'ChIJm-xEoHxZwokRTStZFhfbrK!',
+      'AhIJm-xEoHxZwokRTStZFhfbrKA',
+      'ChIJm-xEoHxZwokSTStZFhfbrKA'
+    ]) {
+      expect(deriveFidFromPlaceId(placeId)).toBe('')
     }
   })
 })

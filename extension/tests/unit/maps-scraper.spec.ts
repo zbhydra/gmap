@@ -55,7 +55,7 @@ describe('MapsSearchScraper 状态机与截断', () => {
 
   it('结果 <2 条直接完成；暂停/完成态丢弃响应', () => {
     const scraper = buildScraper()
-    scraper.start()
+    scraper.start(getMapsConfig().scrape.freeExportRowLimit)
     expect(scraper.getStatus()).toBe('extracting')
 
     scraper.handleRpcResponse(buildResponse(['Only One']))
@@ -74,15 +74,15 @@ describe('MapsSearchScraper 状态机与截断', () => {
     expect(scraper.getStatus()).toBe('idle')
   })
 
-  it('达到免费行数上限时截断并完成（配置驱动）', () => {
+  it('使用本次有效上限截断，付费采集可超过离线默认值', () => {
     getMapsConfig().scrape.freeExportRowLimit = 3
     const scraper = buildScraper()
-    scraper.start()
+    scraper.start(13)
 
-    scraper.handleRpcResponse(buildResponse(['A', 'B', 'C', 'D', 'E']))
+    scraper.handleRpcResponse(buildResponse(Array.from({ length: 15 }, (_, i) => `Place ${i}`)))
     expect(scraper.getStatus()).toBe('complete')
-    expect(scraper.getCount()).toBe(3)
-    expect(scraper.getRows().map(row => row.name)).toEqual(['A', 'B', 'C'])
+    expect(scraper.getCount()).toBe(13)
+    expect(scraper.getRows().at(-1)?.name).toBe('Place 12')
   })
 
   it('重复批去重后计数不涨；search 埋点只发一次', () => {
@@ -92,7 +92,7 @@ describe('MapsSearchScraper 状态机与截断', () => {
       onStateChanged: () => undefined,
       onError: () => undefined
     })
-    scraper.start()
+    scraper.start(getMapsConfig().scrape.freeExportRowLimit)
 
     scraper.handleRpcResponse(buildResponse(['A', 'B']))
     scraper.handleRpcResponse(buildResponse(['A', 'B', 'C']))
@@ -116,7 +116,7 @@ describe('MapsSearchScraper 状态机与截断', () => {
       onStateChanged: () => undefined,
       onError: message => errors.push(message)
     })
-    scraper.start()
+    scraper.start(getMapsConfig().scrape.freeExportRowLimit)
 
     scraper.handleRpcResponse('not-a-maps-response')
     expect(errors).toHaveLength(1)
@@ -135,10 +135,10 @@ describe('MapsSearchScraper 状态机与截断', () => {
     // 是幂等 no-op，故重入须经 pause）。
     const scraper = buildScraper()
     const initial = scraper.getLoopGenerationForTests()
-    scraper.start()
+    scraper.start(getMapsConfig().scrape.freeExportRowLimit)
     const afterStart = scraper.getLoopGenerationForTests()
     scraper.pause()
-    scraper.start()
+    scraper.start(getMapsConfig().scrape.freeExportRowLimit)
     const afterRestart = scraper.getLoopGenerationForTests()
     scraper.pause()
     scraper.resume()
@@ -146,21 +146,24 @@ describe('MapsSearchScraper 状态机与截断', () => {
     expect(afterStart).toBe(initial + 1)
     expect(afterRestart).toBe(afterStart + 1)
     expect(afterResume).toBe(afterRestart + 1)
+    scraper.pause()
 
     // 行为兜底：推进 fake timers，仅最新代循环存活并走 noGrowth 兜底完成，
     // 全程恰好一次 complete（若旧代复活会提前触发多次终态回写）
     vi.useFakeTimers()
     try {
       statusHistory.length = 0
+      document.body.innerHTML = '<div role="feed"></div>'
       const restarted = buildScraper()
-      restarted.start()
+      restarted.start(getMapsConfig().scrape.freeExportRowLimit)
       restarted.pause()
-      restarted.start()
+      restarted.start(getMapsConfig().scrape.freeExportRowLimit)
       await vi.advanceTimersByTimeAsync(30_000)
       expect(restarted.getStatus()).toBe('complete')
       expect(statusHistory.filter(status => status === 'complete')).toHaveLength(1)
     } finally {
       vi.useRealTimers()
+      document.body.innerHTML = ''
     }
   })
 })

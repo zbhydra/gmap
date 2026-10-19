@@ -1,0 +1,337 @@
+/* =========================================================================
+   MapsGrab Extension · Motion —— 关键帧、入场编排、滚动显现、离屏暂停、减弱动效
+   分级（时长 token 见 tokens.css §9，规则见 README §5）：
+     T1 微交互 ≤ 180ms：hover / press / focus
+     T2 过渡 280ms：菜单、tab、弹窗、按钮状态形变
+     T3 入场 560–900ms：入场编排、列表错峰、数字滚动、进度推进
+     状态绑定循环（--dur-live / --dur-beam）：只在「采集中 / 运行中」存续，只动 transform / opacity
+   页内面板不加载本文件，它的动效写在 panel.css 内（同一套关键帧语义，预算更紧）。
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   Keyframes（全部只动 transform / opacity；重绘属性的例外在用处注明）
+   --------------------------------------------------------------------------- */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* live 圆点的扩散环 */
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+/* 骨架屏 / 进度光束：平移的伪元素（合成线程），不动 background-position */
+@keyframes sweep {
+  from {
+    transform: translateX(-120%);
+  }
+
+  to {
+    transform: translateX(120%);
+  }
+}
+
+/* 不确定进度：一段滑块在轨道内往返穿行 */
+@keyframes indeterminate {
+  from {
+    transform: translateX(-100%) scaleX(0.6);
+  }
+
+  to {
+    transform: translateX(250%) scaleX(1);
+  }
+}
+
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 表格新行 / 列表项入列 */
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* pin 落点：Map in 的第一个动作 */
+@keyframes pin-drop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0) scale(0.8);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translate3d(0, 1px, 0) scale(1.06, 0.94);
+  }
+
+  78% {
+    transform: translate3d(0, -2px, 0) scale(0.98, 1.03);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 下载 / 导出：箭头落入托盘（Data out 的最后一个动作） */
+@keyframes drop-in-tray {
+  0% {
+    transform: translate3d(0, -4px, 0);
+    opacity: 0;
+  }
+
+  60% {
+    transform: translate3d(0, 1px, 0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+/* 校验失败的轻摇（输入框、表单提交） */
+@keyframes nudge {
+  0%,
+  100% {
+    transform: none;
+  }
+
+  25% {
+    transform: translateX(-3px);
+  }
+
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes blink-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@property --enter-i {
+  syntax: '<integer>';
+  inherits: false;
+  initial-value: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   入场编排（首帧即开始，不等 JS）
+   .enter              单个元素：上浮淡入，延迟写内联 --enter-delay
+   .enter-group > *    子元素按序错峰（nth-child 提供 --enter-i，最多 12 个；更多用 data-stagger）
+   --enter-i 注册为不继承，嵌套的 .enter 不会叠加外层序号
+   Popup 每次打开都会播放：总时长控制在 ~0.7s 内，不阻塞交互
+   --------------------------------------------------------------------------- */
+.enter,
+.enter-group > * {
+  animation: enter-up var(--dur-4) var(--ease-out) backwards;
+  animation-delay: calc(var(--enter-delay, 0ms) + var(--enter-i) * var(--stagger));
+}
+
+.enter-group > :nth-child(2) {
+  --enter-i: 1;
+}
+
+.enter-group > :nth-child(3) {
+  --enter-i: 2;
+}
+
+.enter-group > :nth-child(4) {
+  --enter-i: 3;
+}
+
+.enter-group > :nth-child(5) {
+  --enter-i: 4;
+}
+
+.enter-group > :nth-child(6) {
+  --enter-i: 5;
+}
+
+.enter-group > :nth-child(7) {
+  --enter-i: 6;
+}
+
+.enter-group > :nth-child(8) {
+  --enter-i: 7;
+}
+
+.enter-group > :nth-child(9) {
+  --enter-i: 8;
+}
+
+.enter-group > :nth-child(10) {
+  --enter-i: 9;
+}
+
+.enter-group > :nth-child(11) {
+  --enter-i: 10;
+}
+
+.enter-group > :nth-child(12) {
+  --enter-i: 11;
+}
+
+/* ---------------------------------------------------------------------------
+   滚动显现（长页面：Dashboard 历史、Options 分组、文档页）
+   仅在 JS 可用（html.js）时初始隐藏；data-reveal = fade-up(默认) | fade | zoom | left | right
+   --------------------------------------------------------------------------- */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+  transition:
+    opacity var(--dur-4) var(--ease-out),
+    transform var(--dur-5) var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.js [data-reveal='fade'] {
+  transform: none;
+}
+
+.js [data-reveal='zoom'] {
+  transform: scale(0.96);
+}
+
+.js [data-reveal='left'] {
+  transform: translate3d(-24px, 0, 0);
+}
+
+.js [data-reveal='right'] {
+  transform: translate3d(24px, 0, 0);
+}
+
+.js [data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------------------------------------------------------------------------
+   离屏暂停：data-inview 容器不在视口时，子树动画全部暂停（文档页的演示循环）
+   --------------------------------------------------------------------------- */
+[data-inview]:not(.is-inview),
+[data-inview]:not(.is-inview)::before,
+[data-inview]:not(.is-inview)::after,
+[data-inview]:not(.is-inview) *,
+[data-inview]:not(.is-inview) *::before,
+[data-inview]:not(.is-inview) *::after {
+  animation-play-state: paused !important;
+}
+
+/* ---------------------------------------------------------------------------
+   View Transitions：页间淡入淡出 + 页内共享元素（MG.transition 包裹 DOM 更新）
+   共享元素在 HTML 上写 style="view-transition-name: task-42"，名字页面内唯一
+   --------------------------------------------------------------------------- */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation-duration: var(--dur-2);
+}
+
+::view-transition-new(root) {
+  animation-duration: var(--dur-3);
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--dur-3);
+  animation-timing-function: var(--ease-emph);
+}
+
+/* 主题切换的圆形揭示（theme.js 在切换期间加 .theme-switching，揭示动画由脚本驱动） */
+html.theme-switching::view-transition-old(root),
+html.theme-switching::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* ---------------------------------------------------------------------------
+   减弱动效：系统设置或原型状态坞模拟（<html data-motion="reduce">）
+   循环停止、过渡瞬时完成、显现类直接呈现终态；数字滚动与进度推进由 JS 直接给终值
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  .js [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .ring-scan {
+    display: none;
+  }
+}
+
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+}
+
+:root[data-motion='reduce'] .ring-scan {
+  display: none;
+}
+
+:root[data-motion='reduce'].js [data-reveal] {
+  opacity: 1 !important;
+  transform: none !important;
+}

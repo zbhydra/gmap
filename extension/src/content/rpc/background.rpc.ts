@@ -67,6 +67,28 @@ export class BackgroundChannel {
     >('openPricingPage', params, options)
   }
 
+  /** 调用 openBulkDashboard 能力。 */
+  openBulkDashboard(
+    params: RpcMethodParams<BackgroundHandler, 'openBulkDashboard'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'openBulkDashboard'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'openBulkDashboard'>,
+      RpcMethodParams<BackgroundHandler, 'openBulkDashboard'>
+    >('openBulkDashboard', params, options)
+  }
+
+  /** 调用 photosWorkPage 能力。 */
+  photosWorkPage(
+    params: RpcMethodParams<BackgroundHandler, 'photosWorkPage'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'photosWorkPage'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'photosWorkPage'>,
+      RpcMethodParams<BackgroundHandler, 'photosWorkPage'>
+    >('photosWorkPage', params, options)
+  }
+
   /** 销毁 RPC transport。 */
   destroy(): void {
     this.transport.destroy()

@@ -1,0 +1,1429 @@
+/* =========================================================================
+   design-system.html 私有样式（文档页外壳 + 示例舞台）
+   组件本身全部来自 components.css / panel.css；这里只有文档排版与演示用的布置。
+   ========================================================================= */
+
+:root {
+  /* 代码块：恒暗（与 Atlas 文档页一致） */
+  --ds-code-bg: #0b1222;
+  --ds-code-line: rgba(148, 163, 184, 0.14);
+  --ds-code-text: #d6deeb;
+  --ds-code-dim: #7f8aa3;
+  --ds-syn-key: #7cb0ff;
+  --ds-syn-str: #a5e3c4;
+  --ds-syn-fn: #f5c97a;
+}
+
+body[data-page='system'] {
+  background: var(--bg);
+}
+
+.ds-skip {
+  position: absolute;
+  top: -48px;
+  left: var(--s-4);
+  z-index: var(--z-tooltip);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-xs);
+  background: var(--primary);
+  color: var(--primary-fg);
+  font-weight: 600;
+}
+
+.ds-skip:focus {
+  top: var(--s-2);
+}
+
+/* ---------------------------------------------------------------------------
+   页头
+   --------------------------------------------------------------------------- */
+.ds-top {
+  border-bottom-color: var(--border);
+}
+
+.ds-top .brand-mark {
+  width: 24px;
+  height: 24px;
+}
+
+.ds-top-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border-2);
+}
+
+.ds-top-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.ds-top .appbar-actions {
+  gap: var(--s-2);
+}
+
+/* ---------------------------------------------------------------------------
+   外壳：左侧目录 + 内容
+   --------------------------------------------------------------------------- */
+.ds-shell {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: var(--s-12);
+  width: min(100% - 2 * var(--page-gutter), 1320px);
+  margin-inline: auto;
+}
+
+.ds-nav {
+  position: sticky;
+  top: 60px;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  max-height: calc(100vh - 60px);
+  padding: var(--s-8) 0 var(--s-12);
+  overflow-y: auto;
+}
+
+.ds-nav-label {
+  padding: var(--s-4) var(--s-3) var(--s-2);
+}
+
+.ds-nav a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-xs);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  transition:
+    background-color var(--dur-2),
+    color var(--dur-2);
+}
+
+.ds-nav a .icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--text-3);
+  transition: color var(--dur-2);
+}
+
+.ds-nav a:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.ds-nav a.is-current {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
+.ds-nav a.is-current .icon {
+  color: var(--primary-text);
+}
+
+.ds-main {
+  min-width: 0;
+  padding: var(--s-8) 0 var(--s-24);
+}
+
+/* ---------------------------------------------------------------------------
+   区块与排版
+   --------------------------------------------------------------------------- */
+.ds-section {
+  padding-top: var(--s-20);
+  scroll-margin-top: 60px;
+}
+
+.ds-section + .ds-section {
+  margin-top: var(--s-8);
+  border-top: 1px solid var(--border);
+}
+
+.ds-section-head {
+  display: grid;
+  gap: var(--s-3);
+  max-width: 760px;
+  margin-bottom: var(--s-8);
+}
+
+.ds-display {
+  font-size: var(--fs-display);
+  font-weight: 750;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.ds-display span {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ds-h2 {
+  font-size: var(--fs-section);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.03em;
+}
+
+.ds-h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-12) 0 var(--s-4);
+  font-size: var(--fs-h2);
+  letter-spacing: -0.016em;
+}
+
+.ds-h3 .badge {
+  font-size: var(--fs-micro);
+}
+
+.ds-lead {
+  max-width: 68ch;
+  color: var(--text-2);
+  font-size: var(--fs-lead);
+  line-height: 1.55;
+}
+
+.ds-p {
+  max-width: 72ch;
+  color: var(--text-2);
+  font-size: var(--fs-body);
+}
+
+.ds-p code,
+.ds-lead code,
+.ds-note code,
+.ds-list code,
+.ds-table code {
+  padding: 0 var(--s-1);
+  border-radius: var(--r-2xs);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.88em;
+}
+
+.ds-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  max-width: 80ch;
+  margin-top: var(--s-4);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+}
+
+.ds-note .icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  margin-top: 2px;
+}
+
+.ds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--s-4);
+}
+
+.ds-grid--2 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+}
+
+.ds-grid--3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+}
+
+.ds-list {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.ds-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.ds-list li::before {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  margin-top: var(--s-2);
+  border-radius: var(--r-2xs);
+  background: var(--tone-solid, var(--primary-solid));
+  transform: rotate(45deg);
+  content: '';
+}
+
+/* ---------------------------------------------------------------------------
+   Overview：系谱 + 原则
+   --------------------------------------------------------------------------- */
+.ds-hero {
+  padding-top: var(--s-12);
+}
+
+.ds-hero-copy {
+  display: grid;
+  justify-items: start;
+  gap: var(--s-5);
+  max-width: 860px;
+}
+
+.ds-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.ds-lineage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--s-4);
+  margin-top: var(--s-12);
+}
+
+.ds-lineage-card {
+  display: grid;
+  align-content: start;
+  gap: var(--s-3);
+  padding: var(--s-5);
+}
+
+.ds-lineage-card .h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.ds-lineage-card--field {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  box-shadow: 0 0 0 4px var(--primary-soft), var(--shadow-sm);
+}
+
+.ds-spine {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--s-2);
+  padding: var(--s-4) 0;
+}
+
+.ds-spine .chip {
+  width: 100%;
+  justify-content: center;
+}
+
+.ds-spine-arrow {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-fg);
+  box-shadow: var(--shadow-primary);
+}
+
+.ds-spine-arrow .icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+.ds-principles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+
+.ds-principle {
+  display: grid;
+  align-content: start;
+  gap: var(--s-2);
+  padding: var(--s-4);
+}
+
+.ds-principle .icon-tile {
+  margin-bottom: var(--s-1);
+}
+
+.ds-principle p {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------------------
+   演示块：标题 + 舞台 + 可折叠标记
+   --------------------------------------------------------------------------- */
+.ds-demo {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.ds-demo + .ds-demo {
+  margin-top: var(--s-4);
+}
+
+.ds-grid > .ds-demo + .ds-demo,
+.ds-grid--2 > .ds-demo + .ds-demo {
+  margin-top: 0;
+}
+
+/* 并排的演示块等高：舞台吃掉剩余高度，不在卡片底部留白 */
+:is(.ds-grid, .ds-grid--2, .ds-grid--3) > .ds-demo {
+  display: flex;
+  flex-direction: column;
+}
+
+:is(.ds-grid, .ds-grid--2, .ds-grid--3) > .ds-demo > .ds-stage {
+  flex: 1 0 auto;
+}
+
+/* 区块内相邻的演示块 / 网格 / 表格之间统一留 16px */
+.ds-section > :is(.ds-demo, .ds-grid, .table-wrap) + :is(.ds-demo, .ds-grid, .table-wrap) {
+  margin-top: var(--s-4);
+}
+
+.ds-table td:first-child {
+  white-space: nowrap;
+}
+
+.ds-demo-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1) var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-demo-title {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+
+.ds-demo-desc {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.ds-demo-head .ds-demo-actions {
+  display: flex;
+  gap: var(--s-1);
+  margin-left: auto;
+}
+
+.ds-stage {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-6);
+  background-color: var(--bg-2);
+  background-image: radial-gradient(var(--grid-line) 1px, transparent 1.5px);
+  background-size: 16px 16px;
+}
+
+.ds-stage--col {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.ds-stage--center {
+  justify-content: center;
+}
+
+.ds-stage--plain {
+  background-image: none;
+}
+
+.ds-stage--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  align-items: start;
+}
+
+.ds-stage--meters {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+}
+
+.ds-stage > .card,
+.ds-stage > .notice,
+.ds-stage > .meter,
+.ds-stage > .table-wrap {
+  min-width: 0;
+}
+
+/* 舞台里的「标注行」：左侧状态名 + 右侧组件 */
+.ds-specimen {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+}
+
+.ds-specimen + .ds-specimen {
+  padding-top: var(--s-3);
+  border-top: 1px dashed var(--border);
+}
+
+.ds-specimen > .caption {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+}
+
+/* 模拟 Popup 宽度的小框（组件在 400px 内的样子） */
+.ds-popframe {
+  width: min(100%, var(--popup-w));
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 标记折叠 */
+.ds-code {
+  border-top: 1px solid var(--border);
+}
+
+.ds-code summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px var(--s-4);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ds-code summary::-webkit-details-marker {
+  display: none;
+}
+
+.ds-code summary:hover {
+  color: var(--text);
+}
+
+.ds-code summary .icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  transition: transform var(--dur-3) var(--ease-emph);
+}
+
+.ds-code[open] summary .icon {
+  transform: rotate(90deg);
+}
+
+.ds-code-body {
+  position: relative;
+  background: var(--ds-code-bg);
+}
+
+.ds-code pre {
+  max-height: 420px;
+  margin: 0;
+  padding: var(--s-4) var(--s-12) var(--s-4) var(--s-4);
+  overflow: auto;
+  color: var(--ds-code-text);
+  font-size: 12px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.ds-code-copy {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+  color: var(--ds-code-dim);
+}
+
+.ds-code-copy:hover:not(:disabled) {
+  background: var(--ds-code-line);
+  color: var(--ds-code-text);
+}
+
+.tok-punc {
+  color: var(--ds-code-dim);
+}
+
+.tok-key {
+  color: var(--ds-syn-key);
+}
+
+.tok-fn {
+  color: var(--ds-syn-fn);
+}
+
+.tok-str {
+  color: var(--ds-syn-str);
+}
+
+/* 独立代码块（Build pages） */
+.ds-codeblock {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--ds-code-line);
+  border-radius: var(--r-card);
+  background: var(--ds-code-bg);
+}
+
+.ds-codeblock-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 36px;
+  padding: 0 var(--s-2) 0 var(--s-4);
+  border-bottom: 1px solid var(--ds-code-line);
+  color: var(--ds-code-dim);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+}
+
+.ds-codeblock-head .icon-btn {
+  margin-left: auto;
+  color: var(--ds-code-dim);
+}
+
+.ds-codeblock-head .icon-btn:hover {
+  background: var(--ds-code-line);
+  color: var(--ds-code-text);
+}
+
+.ds-codeblock pre {
+  margin: 0;
+  padding: var(--s-4);
+  overflow: auto;
+  color: var(--ds-code-text);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+/* ---------------------------------------------------------------------------
+   Color
+   --------------------------------------------------------------------------- */
+.ds-prims {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+/* 每组按色阶数等比分宽：每个色块至少 80px */
+.ds-prim-group {
+  display: grid;
+  flex: var(--n) 1 calc(var(--n) * 80px);
+  gap: 6px;
+}
+
+.ds-prim-group > span {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ds-prim-row {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.ds-prim {
+  display: grid;
+  align-content: end;
+  gap: 2px;
+  height: 72px;
+  padding: var(--s-2);
+  background: var(--c);
+  color: var(--text-inverse);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+}
+
+.ds-prim b {
+  font-weight: 600;
+}
+
+.ds-prim.is-light {
+  color: var(--text);
+}
+
+.ds-prim.is-brand {
+  box-shadow: inset 0 0 0 2px var(--surface);
+}
+
+.ds-tgroup + .ds-tgroup {
+  margin-top: var(--s-6);
+}
+
+.ds-tgroup > .kicker {
+  margin-bottom: var(--s-3);
+}
+
+.ds-tgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 232px), 1fr));
+  gap: var(--s-3);
+}
+
+.ds-token {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.ds-token-swatch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 48px;
+}
+
+.ds-token-swatch i {
+  background: var(--c);
+}
+
+/* 透明度色：棋盘底，避免误读 */
+.ds-token-swatch i:first-child {
+  box-shadow: inset -1px 0 0 var(--border);
+}
+
+.ds-token-meta {
+  display: grid;
+  gap: 2px;
+  padding: 10px var(--s-3) var(--s-3);
+}
+
+.ds-token-meta code {
+  color: var(--text);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.ds-token-hex {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-2);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+}
+
+.ds-token-meta p {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.ds-contrast .ds-pair {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 28px;
+  border-radius: var(--r-xs);
+  box-shadow: inset 0 0 0 1px var(--border);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.ds-contrast td:nth-child(2),
+.ds-contrast td:nth-child(3) {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.ds-tones {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.ds-tone-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.ds-tone-row > code {
+  width: 112px;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+/* ---------------------------------------------------------------------------
+   Type
+   --------------------------------------------------------------------------- */
+.ds-family {
+  display: grid;
+  align-content: start;
+  gap: var(--s-3);
+  padding: var(--s-5);
+}
+
+.ds-family-sample {
+  font-size: var(--fs-stat-lg);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.ds-family-sample--mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  letter-spacing: -0.04em;
+}
+
+.ds-family-sample--system {
+  font-family: var(--font-system);
+}
+
+.ds-family-glyphs {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.ds-family-glyphs--mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+.ds-family-glyphs--system {
+  font-family: var(--font-system);
+}
+
+.ds-scale {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+}
+
+.ds-scale-row {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr) 140px;
+  align-items: center;
+  gap: var(--s-4);
+  min-height: 56px;
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface);
+}
+
+.ds-scale-row + .ds-scale-row {
+  border-top: 1px solid var(--border);
+}
+
+.ds-scale-row > code {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.ds-scale-sample {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-scale-row [data-metrics] {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  text-align: right;
+}
+
+.ds-numbers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-6);
+  width: 100%;
+}
+
+.ds-numbers ol {
+  display: grid;
+  gap: var(--s-1);
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-md);
+  text-align: right;
+}
+
+.ds-numbers .is-proportional {
+  font-variant-numeric: proportional-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   Space & shape
+   --------------------------------------------------------------------------- */
+.ds-space-row {
+  display: grid;
+  grid-template-columns: 64px 48px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-3);
+  height: 28px;
+}
+
+.ds-space-row code {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.ds-space-row span {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+}
+
+.ds-space-row i {
+  width: var(--w);
+  height: 12px;
+  border-radius: var(--r-2xs);
+  background: var(--grad-progress);
+}
+
+.ds-radii,
+.ds-shadows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+}
+
+.ds-radius,
+.ds-shadow {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  text-align: center;
+}
+
+.ds-radius i {
+  width: 72px;
+  height: 72px;
+  border: 1.5px solid var(--primary);
+  border-radius: var(--r);
+  background: var(--primary-soft);
+}
+
+.ds-shadow i {
+  width: 96px;
+  height: 72px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  box-shadow: var(--sh);
+}
+
+.ds-widths {
+  display: grid;
+  gap: var(--s-3);
+  width: 100%;
+}
+
+.ds-width {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.ds-width-track {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* 条宽按 1120 等比；文案放在条外，窄条也不截字 */
+.ds-width-bar {
+  width: calc(var(--w) / 1120 * (100% - 128px));
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: var(--r-xs);
+  background: var(--primary-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.ds-width-label {
+  color: var(--primary-text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion
+   --------------------------------------------------------------------------- */
+.ds-curves {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: var(--s-3);
+}
+
+.ds-curve {
+  display: grid;
+  gap: var(--s-3);
+  padding: var(--s-4);
+}
+
+/* viewBox 顶部留出 64 单位：--ease-spring 的控制点 y = 1.56，越出 0–100 的框 */
+.ds-curve svg {
+  width: 100%;
+  max-width: 168px;
+  height: auto;
+  margin-inline: auto;
+  overflow: visible;
+}
+
+.ds-c-box {
+  fill: none;
+  stroke: var(--border);
+  stroke-dasharray: 3 3;
+}
+
+.ds-c-handle {
+  stroke: var(--border-2);
+  stroke-width: 1;
+}
+
+.ds-c-path {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.ds-c-dot {
+  fill: var(--surface);
+  stroke: var(--primary);
+  stroke-width: 1.5;
+}
+
+/* 曲线下方的跑道：同一缓动往返 */
+.ds-curve-track {
+  position: relative;
+  height: 8px;
+  container-type: inline-size;
+  border-radius: var(--r-full);
+  background: var(--track);
+}
+
+.ds-curve-track i {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: var(--shadow-thumb);
+  animation: ds-run 1.8s var(--ease) infinite alternate;
+}
+
+@keyframes ds-run {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(100cqw - 16px));
+  }
+}
+
+.ds-curve-meta {
+  display: grid;
+  gap: 2px;
+}
+
+.ds-curve-meta code {
+  color: var(--text);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.ds-curve-meta span {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.ds-motion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  gap: var(--s-4);
+}
+
+.ds-motion-grid > .ds-demo + .ds-demo {
+  margin-top: 0;
+}
+
+.ds-motion-grid .ds-stage {
+  min-height: 220px;
+}
+
+/* 入场编排演示：缩小的 Popup 骨架 */
+.ds-mini-pop {
+  display: grid;
+  gap: var(--s-2);
+  width: 240px;
+  padding: var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.ds-mini-pop > * {
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+}
+
+.ds-mini-pop .m-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 24px;
+  background: none;
+}
+
+.ds-mini-pop .m-head i {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-xs);
+  background: var(--grad-brand);
+}
+
+.ds-mini-pop .m-head b {
+  width: 72px;
+  height: 8px;
+  border-radius: var(--r-full);
+  background: var(--text);
+  opacity: 0.8;
+}
+
+.ds-mini-pop .m-btn {
+  height: 32px;
+  border-radius: var(--r-full);
+  background: var(--primary);
+}
+
+.ds-mini-pop .m-row {
+  height: 40px;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.ds-mini-pop .m-meter {
+  height: 56px;
+  background: var(--surface-2);
+}
+
+.ds-roll-big {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-stat-lg);
+  font-weight: 600;
+  letter-spacing: var(--tracking-num);
+}
+
+.ds-roll-unit {
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+/* 叙事条演示：下方数据行逐行入列 */
+.ds-flow-demo {
+  display: grid;
+  gap: var(--s-4);
+  width: 100%;
+}
+
+.ds-flow-rows {
+  display: grid;
+  gap: 6px;
+  min-height: 112px;
+}
+
+.ds-flow-row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-2);
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  animation: row-in var(--dur-4) var(--ease-out) backwards;
+}
+
+.ds-flow-row b {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-flow-row .icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  color: var(--pin);
+}
+
+.ds-flow-row .mono {
+  color: var(--text-3);
+  font-size: var(--fs-micro);
+}
+
+.ds-budget {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--s-4);
+}
+
+.ds-budget .card {
+  display: grid;
+  align-content: start;
+  gap: var(--s-3);
+  padding: var(--s-5);
+}
+
+/* ---------------------------------------------------------------------------
+   页内面板舞台
+   --------------------------------------------------------------------------- */
+.ds-panel-live {
+  --page-h: 640px;
+}
+
+.ds-panel-live .proto-browser {
+  width: 100%;
+}
+
+.ds-panel-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--s-4);
+}
+
+/* 同一行的瓦片被拉到等高：多出的高度给舞台（1fr），标题行不被撑开 */
+.ds-panel-tile {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--s-2);
+}
+
+.ds-panel-tile figcaption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px var(--s-2);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.ds-panel-tile figcaption b {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+
+.ds-panel-tile figcaption .mono {
+  color: var(--text-3);
+  font-size: var(--fs-micro);
+  white-space: nowrap;
+}
+
+.ds-panel-tile figcaption .ds-tile-note {
+  grid-column: 1 / -1;
+}
+
+/* 每块舞台都是独立的「视口」：contain: layout 让面板的 position: fixed 以舞台为参照 */
+.ds-panel-stage {
+  position: relative;
+  min-height: var(--stage-h, 500px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--host-land);
+  contain: layout paint;
+}
+
+.ds-panel-stage .gmap-art {
+  position: absolute;
+  inset: 0;
+}
+
+.ds-panel-stage > .proto-panel-host {
+  --panel-top: 16px;
+  --panel-inset: 16px;
+}
+
+.ds-anatomy td:first-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Icons
+   --------------------------------------------------------------------------- */
+.ds-icon-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+
+.ds-icon-tools .input-wrap {
+  width: min(100%, 280px);
+}
+
+.ds-icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--s-2);
+}
+
+.ds-icon {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-2) var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  transition:
+    border-color var(--dur-2),
+    transform var(--dur-2) var(--ease-out),
+    background-color var(--dur-2);
+}
+
+.ds-icon:hover {
+  border-color: var(--border-2);
+  background: var(--surface-2);
+  transform: translateY(-1px);
+}
+
+.ds-icon:active {
+  transform: scale(0.97);
+}
+
+.ds-icon .icon {
+  width: var(--icon-xl);
+  height: var(--icon-xl);
+}
+
+.ds-icon span {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   响应式：窄屏收起目录
+   --------------------------------------------------------------------------- */
+@media (max-width: 1080px) {
+  .ds-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .ds-nav {
+    display: none;
+  }
+
+  .ds-lineage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ds-spine {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  .ds-spine-arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .ds-top-title,
+  .ds-top-sep,
+  .ds-top .btn-ghost {
+    display: none;
+  }
+
+  .ds-scale-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-1);
+  }
+
+  .ds-scale-row [data-metrics] {
+    text-align: left;
+  }
+
+  .ds-specimen {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ds-numbers {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ds-stage {
+    padding: var(--s-4);
+  }
+}

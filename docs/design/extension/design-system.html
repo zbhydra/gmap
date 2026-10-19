@@ -1,0 +1,1344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atlas Field · Design system</title>
+    <meta name="description" content="Atlas Field: the MapsGrab extension design system — tokens, type, motion, components and the in-page Google Maps panel." />
+    <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+    <script src="assets/js/theme.js"></script>
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/proto.css" />
+    <link rel="stylesheet" href="assets/css/pages/system.css" />
+    <!-- 页面脚本先于 motion.js：抓取示例的原始标记（滚轮等运行时会改写 DOM） -->
+    <script src="assets/js/pages/system.js" defer></script>
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/ui.js" defer></script>
+    <script src="assets/js/proto.js" defer></script>
+  </head>
+  <body data-page="system" data-dock="collapsed">
+    <a class="ds-skip" href="#main">Skip to content</a>
+
+    <header class="appbar ds-top">
+      <a class="brand" href="index.html"><img class="brand-mark" src="assets/img/logo.svg" alt="" />MapsGrab</a>
+      <span class="ds-top-sep" aria-hidden="true"></span>
+      <span class="ds-top-title">Atlas Field <span class="badge badge--outline">v1</span></span>
+      <div class="appbar-actions">
+        <a class="btn btn-ghost btn-sm" href="index.html"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-layers" /></svg>Hub</a>
+        <a class="btn btn-ghost btn-sm" href="logic.md"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-book" /></svg>Logic</a>
+        <div class="seg seg--sm" role="radiogroup" aria-label="Theme" data-seg data-theme-switch>
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button class="seg-btn" type="button" role="radio" aria-checked="true" data-value="system" aria-label="Follow system theme" data-tooltip="Follow system"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-monitor" /></svg></button>
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="light" aria-label="Light theme" data-tooltip="Light"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sun" /></svg></button>
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="dark" aria-label="Dark theme" data-tooltip="Dark"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-moon" /></svg></button>
+        </div>
+      </div>
+    </header>
+
+    <div class="ds-shell">
+      <nav class="ds-nav" aria-label="Sections">
+        <span class="kicker ds-nav-label">Foundations</span>
+        <a href="#overview"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-compass" /></svg>Overview</a>
+        <a href="#color"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkle" /></svg>Color</a>
+        <a href="#type"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-languages" /></svg>Type</a>
+        <a href="#space"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-columns" /></svg>Space &amp; shape</a>
+        <a href="#motion"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg>Motion</a>
+        <span class="kicker ds-nav-label">Components</span>
+        <a href="#actions"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cursor" /></svg>Actions</a>
+        <a href="#status"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-tag" /></svg>Status</a>
+        <a href="#forms"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-checks" /></svg>Forms</a>
+        <a href="#surfaces"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-window" /></svg>Surfaces</a>
+        <a href="#progress"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg>Progress</a>
+        <a href="#data"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-table" /></svg>Data</a>
+        <a href="#feedback"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-megaphone" /></svg>Feedback</a>
+        <span class="kicker ds-nav-label">Surfaces</span>
+        <a href="#panel"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-map" /></svg>In-page panel</a>
+        <a href="#icons"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-puzzle" /></svg>Icons</a>
+        <a href="#build"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-wrench" /></svg>Build pages</a>
+      </nav>
+
+      <main id="main" class="ds-main">
+        <!-- =============================================================== Overview -->
+        <section class="ds-section ds-hero" id="overview" aria-labelledby="overview-title">
+          <div class="ds-hero-copy enter-group">
+            <span class="kicker kicker--mark kicker--primary">MapsGrab extension · design system</span>
+            <h1 class="ds-display" id="overview-title">Atlas <span>Field</span></h1>
+            <p class="ds-lead">
+              The instrument layer of Atlas. Same brand blue, same type families, same semantic tokens and light/dark mechanism as the website — retuned for a 400px popup, a dense bulk dashboard, a settings page and a quiet panel inside Google Maps.
+            </p>
+            <div class="ds-hero-chips">
+              <span class="chip chip--mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-window" /></svg>Popup 400</span>
+              <span class="chip chip--mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-map" /></svg>Maps panel 280</span>
+              <span class="chip chip--mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-table" /></svg>Dashboard 1120</span>
+              <span class="chip chip--mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-settings" /></svg>Options 680</span>
+            </div>
+          </div>
+
+          <div class="ds-lineage" data-reveal>
+            <article class="card ds-lineage-card">
+              <span class="kicker">Parent</span>
+              <h2 class="h3"><img class="brand-mark" src="assets/img/logo.svg" alt="" width="20" height="20" />Atlas · website</h2>
+              <ul class="ds-list">
+                <li>Marketing pages that tell the “map → data” story</li>
+                <li>Body 16–19px, hero type up to 68px</li>
+                <li>Cards on <code>--r-lg</code> (24px), generous sections</li>
+                <li>Hero choreography, scroll-driven map stories</li>
+              </ul>
+            </article>
+            <div class="ds-spine" aria-label="Shared with Atlas">
+              <span class="chip chip--mono">#1a73e8</span>
+              <span class="chip chip--mono">Plus Jakarta Sans</span>
+              <span class="chip chip--mono">Azeret Mono</span>
+              <span class="ds-spine-arrow" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
+              <span class="chip chip--mono">light-dark()</span>
+              <span class="chip chip--mono">semantic names</span>
+              <span class="chip chip--mono">easing curves</span>
+            </div>
+            <article class="card ds-lineage-card ds-lineage-card--field">
+              <span class="kicker kicker--primary">This system</span>
+              <h2 class="h3"><img class="brand-mark" src="assets/img/logo.svg" alt="" width="20" height="20" />Atlas Field · extension</h2>
+              <ul class="ds-list">
+                <li>Tools: popup, Maps panel, dashboard, settings</li>
+                <li>Body 13–14px · controls 28 / 36 / 44</li>
+                <li>Controls on <code>--r-sm</code>, cards on <code>--r-md</code></li>
+                <li>Motion reports state: rings, counters, morphs</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="ds-principles" data-stagger="60">
+            <article class="card ds-principle" data-reveal>
+              <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-route" /></svg></span>
+              <h3 class="h3">Map in, data out</h3>
+              <p>Every surface tells one story: pin → scan → rows → export. Icons, empty states and motion all follow that order.</p>
+            </article>
+            <article class="card ds-principle" data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-gauge" /></svg></span>
+              <h3 class="h3">Instrument, not poster</h3>
+              <p>Dense, calm, tabular. Numbers are monospaced and aligned; gradients only mark the brand and progress.</p>
+            </article>
+            <article class="card ds-principle" data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-eye" /></svg></span>
+              <h3 class="h3">Every state is legible</h3>
+              <p>State never relies on color alone: dots, pause bars, checks and crosses, plus words. Errors say what to do next.</p>
+            </article>
+            <article class="card ds-principle" data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg></span>
+              <h3 class="h3">Motion reports</h3>
+              <p>Things move because something changed: a count rolled, a run started, a file left. Loops live only while work runs.</p>
+            </article>
+            <article class="card ds-principle" data-reveal>
+              <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg></span>
+              <h3 class="h3">A quiet guest</h3>
+              <p>Inside Google Maps the panel uses system fonts, transform-only motion and no blur — it never slows the host page.</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- =============================================================== Color -->
+        <section class="ds-section" id="color" aria-labelledby="color-title">
+          <header class="ds-section-head">
+            <span class="kicker">01 · Color</span>
+            <h2 class="ds-h2" id="color-title">One action color. States you can read without color.</h2>
+            <p class="ds-lead">Values are the website’s landed tokens. Each semantic token resolves through <code>light-dark()</code>; the theme follows the system unless the user picks Light or Dark in Settings (L11).</p>
+          </header>
+
+          <h3 class="ds-h3">Primitives</h3>
+          <div class="ds-prims" data-prims></div>
+
+          <h3 class="ds-h3">Semantic tokens <span class="badge badge--outline">light / dark</span></h3>
+          <div data-tokens></div>
+
+          <h3 class="ds-h3">Contrast, measured</h3>
+          <p class="ds-p">Ratios are computed in the browser from the resolved tokens of both themes (soft fills composited over <code>--surface</code>). Text pairs need 4.5:1; the switch track is a non-text control and needs 3:1.</p>
+          <div class="table-wrap" style="margin-top: var(--s-4)">
+            <table class="table table--compact ds-contrast">
+              <thead>
+                <tr>
+                  <th scope="col">Pair</th>
+                  <th scope="col">Light</th>
+                  <th scope="col">Dark</th>
+                  <th scope="col">Used for</th>
+                </tr>
+              </thead>
+              <tbody data-contrast></tbody>
+            </table>
+          </div>
+          <p class="ds-note"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg><span><code>--text-3</code> passes on <code>--surface</code>, <code>--surface-2</code> and <code>--bg-2</code> only — never place it on <code>--surface-3</code> (the segmented track and skeletons).</span></p>
+
+          <h3 class="ds-h3">Tones</h3>
+          <div class="ds-demo" data-snippet>
+            <div class="ds-demo-head">
+              <span class="ds-demo-title">Tone classes</span>
+              <span class="ds-demo-desc"><code>.tone-*</code> sets <code>--tone</code>, <code>--tone-soft</code>, <code>--tone-solid</code>, <code>--tone-strong</code>, <code>--tone-fg</code> for any component inside</span>
+            </div>
+            <div class="ds-stage ds-stage--col ds-tones">
+              <div class="ds-tone-row tone-primary">
+                <code>.tone-primary</code>
+                <span class="badge">Live</span>
+                <span class="badge badge--solid">New</span>
+                <span class="icon-tile icon-tile--sm icon-tile--soft"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-scan" /></svg></span>
+                <span class="dot dot--live" aria-hidden="true"></span>
+                <span class="progress progress--sm" style="--p: 64; width: 120px" aria-hidden="true"><span class="progress-fill"></span></span>
+              </div>
+              <div class="ds-tone-row tone-ok">
+                <code>.tone-ok</code>
+                <span class="badge">Saved</span>
+                <span class="badge badge--solid">Done</span>
+                <span class="icon-tile icon-tile--sm icon-tile--soft"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></span>
+                <span class="dot" aria-hidden="true"></span>
+                <span class="progress progress--sm" style="--p: 100; width: 120px" aria-hidden="true"><span class="progress-fill"></span></span>
+              </div>
+              <div class="ds-tone-row tone-warn">
+                <code>.tone-warn</code>
+                <span class="badge">86% used</span>
+                <span class="badge badge--solid">Paused</span>
+                <span class="icon-tile icon-tile--sm icon-tile--soft"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert" /></svg></span>
+                <span class="dot" aria-hidden="true"></span>
+                <span class="progress progress--sm" style="--p: 86; width: 120px" aria-hidden="true"><span class="progress-fill"></span></span>
+              </div>
+              <div class="ds-tone-row tone-bad">
+                <code>.tone-bad</code>
+                <span class="badge">Limit</span>
+                <span class="badge badge--solid">Failed</span>
+                <span class="icon-tile icon-tile--sm icon-tile--soft"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg></span>
+                <span class="dot" aria-hidden="true"></span>
+                <span class="progress progress--sm" style="--p: 100; width: 120px" aria-hidden="true"><span class="progress-fill"></span></span>
+              </div>
+              <div class="ds-tone-row tone-neutral">
+                <code>.tone-neutral</code>
+                <span class="badge">Idle</span>
+                <span class="badge badge--solid">Draft</span>
+                <span class="icon-tile icon-tile--sm icon-tile--soft"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-circle-dashed" /></svg></span>
+                <span class="dot" aria-hidden="true"></span>
+                <span class="progress progress--sm" style="--p: 20; width: 120px" aria-hidden="true"><span class="progress-fill"></span></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Type -->
+        <section class="ds-section" id="type" aria-labelledby="type-title">
+          <header class="ds-section-head">
+            <span class="kicker">02 · Type</span>
+            <h2 class="ds-h2" id="type-title">Tool-grade type, tabular numbers.</h2>
+            <p class="ds-lead">Extension pages bundle Plus Jakarta Sans and Azeret Mono (latin, variable, ~150 KB — L10). The in-page panel never loads web fonts: it uses the system stack with tabular numerals.</p>
+          </header>
+
+          <div class="ds-grid ds-grid--3">
+            <article class="card ds-family">
+              <span class="kicker">UI · --font-sans</span>
+              <span class="ds-family-sample">Aa Gg 48</span>
+              <span class="strong">Plus Jakarta Sans</span>
+              <span class="ds-family-glyphs">Labels, body, buttons and headings. 500 / 600 / 650 / 700 weights; ss01 on for the single-story a.</span>
+            </article>
+            <article class="card ds-family">
+              <span class="kicker">Data · --font-mono</span>
+              <span class="ds-family-sample ds-family-sample--mono">0123 / 99</span>
+              <span class="strong">Azeret Mono</span>
+              <span class="ds-family-glyphs ds-family-glyphs--mono">Counts, quotas, IDs, versions, kickers and table heads. Ligatures off: 0x8085 stays 0x8085.</span>
+            </article>
+            <article class="card ds-family">
+              <span class="kicker">Panel only · --font-system</span>
+              <span class="ds-family-sample ds-family-sample--system">Aa 1,284</span>
+              <span class="strong">System UI</span>
+              <span class="ds-family-glyphs ds-family-glyphs--system">The in-page panel inside Google Maps. Nothing is injected into the host page.</span>
+            </article>
+          </div>
+
+          <h3 class="ds-h3">Scale</h3>
+          <div class="ds-scale">
+            <div class="ds-scale-row"><code>.h1 · --fs-h1</code><span class="ds-scale-sample h1">Bulk tasks</span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>.h2 · --fs-h2</code><span class="ds-scale-sample h2">Export fields</span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>.h3 · --fs-md</code><span class="ds-scale-sample h3">Records this month</span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>.body · --fs-body</code><span class="ds-scale-sample body">Search Google Maps, then press Start to collect every place.</span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>.body-sm · --fs-sm</code><span class="ds-scale-sample body-sm">Popup body, table cells and menu items.</span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>.caption · --fs-xs</code><span class="ds-scale-sample caption">Resets on the 1st of every month.</span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>.kicker · --fs-kicker</code><span class="ds-scale-sample"><span class="kicker">Records this month</span></span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>--fs-micro</code><span class="ds-scale-sample badge badge--outline">v0.1.0</span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>--fs-stat-lg · mono</code><span class="ds-scale-sample mono" style="font-size: var(--fs-stat-lg); font-weight: 600; letter-spacing: var(--tracking-num)">1,284</span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>--fs-stat · mono</code><span class="ds-scale-sample mono" style="font-size: var(--fs-stat); font-weight: 600; letter-spacing: var(--tracking-num)">312 / 1,000</span><span data-metrics></span></div>
+            <div class="ds-scale-row"><code>--fs-stat-sm · mono</code><span class="ds-scale-sample mono" style="font-size: var(--fs-stat-sm); font-weight: 600">37 / 120</span><span data-metrics></span></div>
+          </div>
+
+          <h3 class="ds-h3">Numbers are tabular</h3>
+          <div class="ds-demo" data-snippet>
+            <div class="ds-demo-head">
+              <span class="ds-demo-title">.mono / .num</span>
+              <span class="ds-demo-desc">Counts that change in place must not jitter — every readout uses tabular figures</span>
+            </div>
+            <div class="ds-stage">
+              <div class="ds-numbers">
+                <div>
+                  <span class="kicker">Proportional · avoid</span>
+                  <ol class="is-proportional">
+                    <li>1,111</li>
+                    <li>48,090</li>
+                    <li>7,701</li>
+                  </ol>
+                </div>
+                <div>
+                  <span class="kicker kicker--primary">.mono · use</span>
+                  <ol class="mono">
+                    <li>1,111</li>
+                    <li>48,090</li>
+                    <li>7,701</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Space -->
+        <section class="ds-section" id="space" aria-labelledby="space-title">
+          <header class="ds-section-head">
+            <span class="kicker">03 · Space &amp; shape</span>
+            <h2 class="ds-h2" id="space-title">A 4px grid, three control heights, four widths.</h2>
+            <p class="ds-lead">Same spacing ladder as Atlas. Controls are squarer than the website (<code>--r-control</code> 10px) and cards drop one radius step (<code>--r-card</code> 16px). Dark mode separates layers with surface steps and a 1px inner highlight, not heavier shadows.</p>
+          </header>
+
+          <div class="ds-grid ds-grid--2">
+            <div class="ds-demo">
+              <div class="ds-demo-head"><span class="ds-demo-title">Spacing</span><span class="ds-demo-desc">--s-1 … --s-24</span></div>
+              <div class="ds-stage ds-stage--col ds-stage--plain" data-space></div>
+            </div>
+            <div class="ds-demo">
+              <div class="ds-demo-head"><span class="ds-demo-title">Surfaces</span><span class="ds-demo-desc">Widths from logic.md §1 (panel widened, see In-page panel)</span></div>
+              <div class="ds-stage ds-stage--col ds-stage--plain">
+                <div class="ds-widths">
+                  <div class="ds-width"><code class="caption">--page-w</code><span class="ds-width-track"><span class="ds-width-bar" style="--w: 1120"></span><span class="ds-width-label">Dashboard · 1120</span></span></div>
+                  <div class="ds-width"><code class="caption">--page-w-narrow</code><span class="ds-width-track"><span class="ds-width-bar" style="--w: 680"></span><span class="ds-width-label">Options · 680</span></span></div>
+                  <div class="ds-width"><code class="caption">--popup-w</code><span class="ds-width-track"><span class="ds-width-bar" style="--w: 400"></span><span class="ds-width-label">Popup · 400</span></span></div>
+                  <div class="ds-width"><code class="caption">--panel-w</code><span class="ds-width-track"><span class="ds-width-bar" style="--w: 280"></span><span class="ds-width-label">Panel · 280</span></span></div>
+                </div>
+                <div class="ds-specimen">
+                  <span class="caption">Control heights</span>
+                  <div class="cluster">
+                    <button class="btn btn-secondary btn-sm" type="button">28 · sm</button>
+                    <button class="btn btn-secondary" type="button">36 · md</button>
+                    <button class="btn btn-secondary btn-lg" type="button">44 · lg</button>
+                  </div>
+                </div>
+                <div class="ds-specimen">
+                  <span class="caption">Icon sizes</span>
+                  <div class="cluster" style="--cluster-gap: var(--s-4)">
+                    <svg class="icon icon--xs" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>
+                    <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>
+                    <svg class="icon icon--lg" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>
+                    <svg class="icon icon--xl" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>
+                    <span class="caption mono">14 · 16 · 18 · 20 · 24</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ds-demo">
+              <div class="ds-demo-head"><span class="ds-demo-title">Radii</span><span class="ds-demo-desc">Aliases: control → sm, item → xs, card → md, dialog → lg</span></div>
+              <div class="ds-stage ds-stage--plain"><div class="ds-radii" data-radii></div></div>
+            </div>
+            <div class="ds-demo">
+              <div class="ds-demo-head"><span class="ds-demo-title">Elevation</span><span class="ds-demo-desc">Cards xs · hover sm · toast md · dialog lg · menus pop</span></div>
+              <div class="ds-stage ds-stage--plain"><div class="ds-shadows" data-shadows></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Motion -->
+        <section class="ds-section" id="motion" aria-labelledby="motion-title">
+          <header class="ds-section-head">
+            <span class="kicker">04 · Motion</span>
+            <h2 class="ds-h2" id="motion-title">Motion reports what just happened.</h2>
+            <p class="ds-lead">Four tiers, four curves. Rich on the popup, dashboard and settings; restrained inside Google Maps. Every effect has a reduced-motion end state — flip <b>Motion → Reduced</b> in the state dock to check.</p>
+          </header>
+
+          <div class="table-wrap">
+            <table class="table ds-table">
+              <thead>
+                <tr>
+                  <th scope="col">Tier</th>
+                  <th scope="col">Duration</th>
+                  <th scope="col">Curve</th>
+                  <th scope="col">Used for</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cell-strong">T1 · micro</td>
+                  <td class="cell-mono">--dur-1 120 · --dur-2 180</td>
+                  <td class="cell-mono">--ease-out</td>
+                  <td>Press scale, hover fills, focus, color changes</td>
+                </tr>
+                <tr>
+                  <td class="cell-strong">T2 · transition</td>
+                  <td class="cell-mono">--dur-3 280</td>
+                  <td class="cell-mono">--ease-emph · --ease-spring</td>
+                  <td>Menus, tabs, segmented thumb, label morphs, dialogs, toasts</td>
+                </tr>
+                <tr>
+                  <td class="cell-strong">T3 · entrance</td>
+                  <td class="cell-mono">--dur-4 560 · --dur-5 900</td>
+                  <td class="cell-mono">--ease-out</td>
+                  <td>Popup choreography (stagger 40), list rows, count roll, progress advance</td>
+                </tr>
+                <tr>
+                  <td class="cell-strong">Live loop</td>
+                  <td class="cell-mono">--dur-live 1600 · --dur-beam 1800</td>
+                  <td class="cell-mono">linear · --ease-in-out</td>
+                  <td>Pulse dot, ring scan, progress beam — only while a run is active</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="ds-h3">Curves</h3>
+          <div class="ds-curves">
+            <div class="card ds-curve" data-bezier="0.16,1,0.3,1" style="--ease: var(--ease-out)">
+              <svg viewBox="-8 -64 116 180" aria-hidden="true"></svg>
+              <div class="ds-curve-track" aria-hidden="true"><i></i></div>
+              <div class="ds-curve-meta"><code>--ease-out</code><span>Entrances, expands, count roll</span></div>
+            </div>
+            <div class="card ds-curve" data-bezier="0.2,0,0,1" style="--ease: var(--ease-emph)">
+              <svg viewBox="-8 -64 116 180" aria-hidden="true"></svg>
+              <div class="ds-curve-track" aria-hidden="true"><i></i></div>
+              <div class="ds-curve-meta"><code>--ease-emph</code><span>State morphs, thumbs, ink</span></div>
+            </div>
+            <div class="card ds-curve" data-bezier="0.34,1.56,0.64,1" style="--ease: var(--ease-spring)">
+              <svg viewBox="-8 -64 116 180" aria-hidden="true"></svg>
+              <div class="ds-curve-track" aria-hidden="true"><i></i></div>
+              <div class="ds-curve-meta"><code>--ease-spring</code><span>Toasts, dialogs, switch knob, checks</span></div>
+            </div>
+            <div class="card ds-curve" data-bezier="0.65,0,0.35,1" style="--ease: var(--ease-in-out)">
+              <svg viewBox="-8 -64 116 180" aria-hidden="true"></svg>
+              <div class="ds-curve-track" aria-hidden="true"><i></i></div>
+              <div class="ds-curve-meta"><code>--ease-in-out</code><span>Loops and round trips</span></div>
+            </div>
+          </div>
+
+          <h3 class="ds-h3">Live demos</h3>
+          <div class="ds-motion-grid">
+            <div class="ds-demo">
+              <div class="ds-demo-head">
+                <span class="ds-demo-title">Entrance choreography</span>
+                <span class="ds-demo-desc">.enter-group · 40ms stagger · ≤ 0.7s</span>
+                <div class="ds-demo-actions"><button class="btn btn-ghost btn-sm" type="button" data-replay="enter"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Replay</button></div>
+              </div>
+              <div class="ds-stage ds-stage--center" data-replay-target="enter">
+                <div class="ds-mini-pop enter-group" aria-hidden="true">
+                  <div class="m-head"><i></i><b></b></div>
+                  <div class="m-btn"></div>
+                  <div class="m-row"></div>
+                  <div class="m-row"></div>
+                  <div class="m-meter"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-demo">
+              <div class="ds-demo-head">
+                <span class="ds-demo-title">Count roll</span>
+                <span class="ds-demo-desc">MG.roll(el, n) · digits slide on transform</span>
+                <div class="ds-demo-actions">
+                  <button class="btn btn-ghost btn-sm" type="button" data-roll-add="1">+1</button>
+                  <button class="btn btn-ghost btn-sm" type="button" data-roll-add="48">+48</button>
+                  <button class="btn btn-ghost btn-sm" type="button" data-roll-add="jump">Jump</button>
+                </div>
+              </div>
+              <div class="ds-stage ds-stage--center">
+                <div class="stack" style="--stack-gap: var(--s-1); justify-items: center">
+                  <span class="ds-roll-big roller" data-roll="1284" data-roll-demo></span>
+                  <span class="ds-roll-unit">places collected</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-demo">
+              <div class="ds-demo-head">
+                <span class="ds-demo-title">Progress</span>
+                <span class="ds-demo-desc">Fill advances on change · beam and scan only while live</span>
+                <div class="ds-demo-actions">
+                  <button class="btn btn-ghost btn-sm" type="button" data-progress-step>Advance</button>
+                  <button class="btn btn-ghost btn-sm" type="button" data-progress-live aria-pressed="true">Live</button>
+                </div>
+              </div>
+              <div class="ds-stage ds-stage--col" data-progress-demo>
+                <div class="row" style="--row-gap: var(--s-4)">
+                  <div class="ring is-live" style="--p: 30" role="progressbar" aria-label="Run progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="30">
+                    <svg class="ring-svg" viewBox="0 0 48 48" aria-hidden="true"><circle class="ring-track" cx="24" cy="24" r="20" pathLength="100" /><circle class="ring-fill" cx="24" cy="24" r="20" pathLength="100" /></svg>
+                    <span class="ring-scan" aria-hidden="true"></span>
+                    <span class="ring-label" data-progress-label>30%</span>
+                  </div>
+                  <div class="stack" style="flex: 1; --stack-gap: var(--s-2)">
+                    <span class="caption">Collecting reviews · page 3 of 10</span>
+                    <div class="progress is-live" style="--p: 30" aria-hidden="true"><span class="progress-fill"></span></div>
+                    <div class="progress is-indeterminate progress--sm" aria-hidden="true"><span class="progress-fill"></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-demo">
+              <div class="ds-demo-head">
+                <span class="ds-demo-title">State morph</span>
+                <span class="ds-demo-desc">Same button, new label · width never jumps</span>
+                <div class="ds-demo-actions"><button class="btn btn-ghost btn-sm" type="button" data-morph-next>Next state</button></div>
+              </div>
+              <div class="ds-stage ds-stage--col ds-stage--center">
+                <div class="ds-popframe stack" style="--stack-gap: var(--s-2)">
+                  <div class="row">
+                    <span class="status status--idle" data-morph-status>Idle</span>
+                    <span class="spacer"></span>
+                    <span class="caption mono" data-morph-count>0 / 120</span>
+                  </div>
+                  <button class="btn btn-primary btn-block" type="button" data-morph-primary>
+                    <span class="morph">
+                      <span class="is-active" data-key="start"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-play" /></svg>Start</span>
+                      <span data-key="pause" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pause" /></svg>Pause</span>
+                      <span data-key="resume" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-resume" /></svg>Resume</span>
+                      <span data-key="again" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Run again</span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-demo">
+              <div class="ds-demo-head">
+                <span class="ds-demo-title">Map in, data out</span>
+                <span class="ds-demo-desc">.flow · pin → scan → rows → export</span>
+                <div class="ds-demo-actions"><button class="btn btn-ghost btn-sm" type="button" data-flow-replay><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Replay</button></div>
+              </div>
+              <div class="ds-stage">
+                <div class="ds-flow-demo" data-flow-demo>
+                  <ol class="flow">
+                    <li class="flow-step"><span class="flow-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg></span>Pin</li>
+                    <li class="flow-step"><span class="flow-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-scan" /></svg></span>Scan</li>
+                    <li class="flow-step"><span class="flow-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list" /></svg></span>Rows</li>
+                    <li class="flow-step"><span class="flow-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-export" /></svg></span>Export</li>
+                  </ol>
+                  <div class="ds-flow-rows" data-flow-rows aria-hidden="true"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-demo">
+              <div class="ds-demo-head">
+                <span class="ds-demo-title">Overlays &amp; feedback</span>
+                <span class="ds-demo-desc">Spring in, ease out · toast timer pauses on hover</span>
+              </div>
+              <div class="ds-stage ds-stage--center">
+                <button class="btn btn-secondary" type="button" data-toast-demo="ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check-circle" /></svg>Toast</button>
+                <button class="btn btn-secondary" type="button" data-confirm-demo><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-trash" /></svg>Dialog</button>
+                <button class="btn btn-secondary" type="button" data-nudge-demo><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert-circle" /></svg>Nudge</button>
+                <div class="input-wrap" style="width: 100%">
+                  <input class="input" type="text" placeholder="Task name" aria-label="Task name (nudge demo)" data-nudge-target />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="ds-h3">Budgets</h3>
+          <div class="ds-budget">
+            <article class="card">
+              <span class="kicker kicker--primary">Popup · Dashboard · Options</span>
+              <h4 class="h3">Rich</h4>
+              <ul class="ds-list">
+                <li>Entrance choreography on open (≤ 0.7s, never blocks input)</li>
+                <li>Number rolling, progress beams, ring scan while running</li>
+                <li>Label morphs, FLIP / View Transitions for shared elements</li>
+                <li>Skeleton → content, toast and dialog springs, list stagger</li>
+                <li>Hover and press micro-interactions on every control</li>
+              </ul>
+            </article>
+            <article class="card">
+              <span class="kicker">In-page panel · Google Maps</span>
+              <h4 class="h3">Restrained</h4>
+              <ul class="ds-list">
+                <li>Only <code>transform</code> and <code>opacity</code> animate</li>
+                <li>No <code>backdrop-filter</code>, no <code>filter</code>, no shadow animation</li>
+                <li>Loops only while extracting: pulse dot + ring scan (compositor)</li>
+                <li>Ring stroke transitions once per count change</li>
+                <li>Reduced motion: <code>:host([data-motion='reduce'])</code> and the media query</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <!-- =============================================================== Actions -->
+        <section class="ds-section" id="actions" aria-labelledby="actions-title">
+          <header class="ds-section-head">
+            <span class="kicker">05 · Components · Actions</span>
+            <h2 class="ds-h2" id="actions-title">Buttons, links and icon buttons.</h2>
+            <p class="ds-lead">One primary per view. Buttons are pills; loading swaps the leading icon for a spinner and keeps the label, so width never jumps.</p>
+          </header>
+
+          <div class="ds-demo" data-snippet>
+            <div class="ds-demo-head"><span class="ds-demo-title">Variants</span><span class="ds-demo-desc">primary · secondary · ghost · danger (dialogs only)</span></div>
+            <div class="ds-stage">
+              <button class="btn btn-primary" type="button"><svg class="icon icon-pin" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>Open Google Maps</button>
+              <button class="btn btn-secondary" type="button"><svg class="icon icon-export" aria-hidden="true"><use href="assets/img/icons.svg#i-export" /></svg>Export</button>
+              <button class="btn btn-ghost" type="button">Clear</button>
+              <button class="btn btn-danger" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-trash" /></svg>Delete task</button>
+            </div>
+          </div>
+
+          <div class="ds-demo" data-snippet>
+            <div class="ds-demo-head"><span class="ds-demo-title">Sizes &amp; states</span><span class="ds-demo-desc">sm 28 · md 36 · lg 44 · disabled · loading (click Sign in)</span></div>
+            <div class="ds-stage">
+              <button class="btn btn-primary btn-sm" type="button">Start</button>
+              <button class="btn btn-primary" type="button">Create task</button>
+              <button class="btn btn-primary btn-lg" type="button"><svg class="icon icon-pin" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>Open Google Maps</button>
+              <button class="btn btn-primary" type="button" disabled>Start</button>
+              <button class="btn btn-secondary" type="button" data-loading-demo><span class="spinner" aria-hidden="true"></span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-login" /></svg>Sign in</button>
+              <button class="btn btn-secondary btn-sm" type="button">View<svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></button>
+              <a class="btn btn-ghost btn-sm" href="#actions">View plans<svg class="icon icon-out" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-up-right" /></svg></a>
+            </div>
+          </div>
+
+          <div class="ds-grid ds-grid--2">
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Icon buttons</span><span class="ds-demo-desc">Always aria-label + tooltip · pressed / expanded state</span></div>
+              <div class="ds-stage">
+                <button class="icon-btn" type="button" aria-label="Settings" data-tooltip="Settings"><svg class="icon icon-gear" aria-hidden="true"><use href="assets/img/icons.svg#i-gear" /></svg></button>
+                <button class="icon-btn" type="button" aria-label="Language" data-tooltip="Language"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-globe" /></svg></button>
+                <button class="icon-btn" type="button" aria-label="Help &amp; FAQ" data-tooltip="Help &amp; FAQ"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-help" /></svg></button>
+                <button class="icon-btn icon-btn--bordered" type="button" aria-label="More actions" aria-expanded="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-more" /></svg></button>
+                <button class="icon-btn icon-btn--sm" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg></button>
+                <button class="icon-btn" type="button" aria-label="Copy" disabled><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg></button>
+              </div>
+            </div>
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Links</span><span class="ds-demo-desc">.link · .link--quiet · .link-arrow</span></div>
+              <div class="ds-stage">
+                <a class="link" href="#actions">Manage subscription</a>
+                <a class="link link--quiet" href="#actions">Privacy policy</a>
+                <a class="link-arrow" href="#actions">Help &amp; FAQ<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+                <a class="link-arrow" href="#actions">View plans<svg class="icon icon-out" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-up-right" /></svg></a>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-demo" data-snippet>
+            <div class="ds-demo-head"><span class="ds-demo-title">Label morph</span><span class="ds-demo-desc">.morph inside a button · UI.morph(el, key) · click to cycle</span></div>
+            <div class="ds-stage">
+              <div class="ds-popframe">
+                <button class="btn btn-primary btn-lg btn-block" type="button" data-morph-cycle="start,export,done">
+                  <span class="morph">
+                    <span class="is-active" data-key="start"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-play" /></svg>Start extracting</span>
+                    <span data-key="export" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-export" /></svg>Export 48 places</span>
+                    <span data-key="done" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Exported</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Status -->
+        <section class="ds-section" id="status" aria-labelledby="status-title">
+          <header class="ds-section-head">
+            <span class="kicker">06 · Components · Status</span>
+            <h2 class="ds-h2" id="status-title">Badges, status chips and dots.</h2>
+            <p class="ds-lead">The seven status presets map one-to-one to task and item states in logic.md. Each has its own glyph, so state survives grayscale and color blindness.</p>
+          </header>
+
+          <div class="ds-demo" data-snippet>
+            <div class="ds-demo-head"><span class="ds-demo-title">Status chips</span><span class="ds-demo-desc">Task: idle · running · paused · completed — Item: pending · extracting · skipped</span></div>
+            <div class="ds-stage">
+              <span class="status status--idle">Idle</span>
+              <span class="status status--pending">Pending</span>
+              <span class="status status--running">Running</span>
+              <span class="status status--extracting">Extracting</span>
+              <span class="status status--paused">Paused</span>
+              <span class="status status--completed">Completed</span>
+              <span class="status status--skipped">Skipped</span>
+            </div>
+          </div>
+
+          <div class="ds-grid ds-grid--2">
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Badges</span><span class="ds-demo-desc">Mono uppercase marks · Pro · counts</span></div>
+              <div class="ds-stage">
+                <span class="badge">New</span>
+                <span class="badge badge--solid">Live</span>
+                <span class="badge badge--outline">v0.1.0</span>
+                <span class="badge badge--pro"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-crown" /></svg>Pro</span>
+                <span class="badge badge--count">12</span>
+                <span class="badge tone-warn">86% used</span>
+                <span class="badge tone-ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span>
+              </div>
+            </div>
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Chips, dots, keys</span><span class="ds-demo-desc">Toggle chips use aria-pressed</span></div>
+              <div class="ds-stage">
+                <button class="chip" type="button" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Contact</button>
+                <button class="chip" type="button" aria-pressed="false">Social</button>
+                <span class="chip chip--mono">8 / 12</span>
+                <span class="row caption"><span class="dot dot--live" aria-hidden="true"></span>Running</span>
+                <span class="row caption"><span class="dot tone-ok" aria-hidden="true"></span>Synced</span>
+                <span class="caption">Press <kbd class="kbd">Esc</kbd> to close</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Forms -->
+        <section class="ds-section" id="forms" aria-labelledby="forms-title">
+          <header class="ds-section-head">
+            <span class="kicker">07 · Components · Forms</span>
+            <h2 class="ds-h2" id="forms-title">Labels above, hints below, errors that say what to do.</h2>
+            <p class="ds-lead">Native inputs with styled chrome — keyboard and screen-reader behavior stay native. Settings save on change; the field confirms with a quiet “Saved”.</p>
+          </header>
+
+          <div class="ds-grid ds-grid--2">
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Text fields</span><span class="ds-demo-desc">default · icon · invalid · read-only (L9)</span></div>
+              <div class="ds-stage ds-stage--col">
+                <label class="field">
+                  <span class="field-label">Task name</span>
+                  <input class="input" type="text" placeholder="e.g. Coffee shops · Austin" />
+                  <span class="field-hint">Shown in Task History.</span>
+                </label>
+                <label class="field">
+                  <span class="field-label">Filter</span>
+                  <span class="input-wrap">
+                    <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>
+                    <input class="input" type="search" placeholder="Search fields" />
+                  </span>
+                </label>
+                <div class="field">
+                  <label class="field-label" for="ds-invalid">Task name</label>
+                  <input class="input" id="ds-invalid" type="text" aria-invalid="true" aria-describedby="ds-invalid-msg" />
+                  <span class="field-error" id="ds-invalid-msg"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert-circle" /></svg>Add a task name to save this task.</span>
+                </div>
+                <div class="field">
+                  <span class="field-label">Retries on stuck items<span class="field-aside"><a class="link" href="#forms">Change in Settings</a></span></span>
+                  <input class="input input--mono" type="text" value="1" readonly aria-label="Retries on stuck items" />
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Multi-line input &amp; counter</span><span class="ds-demo-desc">One per line · blank lines and duplicates are not counted</span></div>
+              <div class="ds-stage ds-stage--col">
+                <label class="field">
+                  <span class="field-label">Keywords<span class="field-aside">Max 500 per task</span></span>
+                  <span class="textarea-wrap">
+                    <textarea class="textarea textarea--mono" rows="5" data-counter="lines" data-max="500" spellcheck="false">coffee shops in Austin
+dentists in Denver
+coffee shops in Austin
+hotels in Lisbon</textarea>
+                    <span class="counter" aria-live="polite"></span>
+                  </span>
+                  <span class="field-hint">Over 500 lines splits into several tasks automatically.</span>
+                </label>
+                <div class="row" style="--row-gap: var(--s-4); flex-wrap: wrap">
+                  <div class="field">
+                    <span class="field-label" id="ds-step-label">Reviews per place</span>
+                    <div class="stepper" role="group" aria-labelledby="ds-step-label">
+                      <button type="button" data-step="-1" aria-label="Decrease"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-minus" /></svg></button>
+                      <input type="number" min="100" max="2500" step="100" value="300" aria-labelledby="ds-step-label" />
+                      <button type="button" data-step="1" aria-label="Increase"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></button>
+                    </div>
+                  </div>
+                  <label class="field" style="flex: 1; min-width: 160px">
+                    <span class="field-label">Scroll interval</span>
+                    <span class="select-wrap">
+                      <select class="select">
+                        <option>5 seconds</option>
+                        <option>6 seconds</option>
+                        <option selected>8 seconds</option>
+                        <option>9 seconds</option>
+                        <option>10 seconds</option>
+                      </select>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Checkboxes</span><span class="ds-demo-desc">unchecked · checked · indeterminate (group) · disabled</span></div>
+              <div class="ds-stage ds-stage--col">
+                <label class="check-row"><input class="check" type="checkbox" data-indeterminate />Contact · 8 of 12 fields</label>
+                <label class="check-row"><input class="check" type="checkbox" checked />Name</label>
+                <label class="check-row"><input class="check" type="checkbox" />Phone</label>
+                <label class="check-row"><input class="check" type="checkbox" disabled />Owner name <span class="badge badge--pro">Pro</span></label>
+              </div>
+            </div>
+
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Switches</span><span class="ds-demo-desc">role=switch · spring knob · disabled</span></div>
+              <div class="ds-stage ds-stage--col">
+                <div class="row"><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="ds-sw-1"><span class="switch-knob"></span></button><span class="body-sm" id="ds-sw-1">Auto-download when done</span></div>
+                <div class="row"><button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="ds-sw-2"><span class="switch-knob"></span></button><span class="body-sm" id="ds-sw-2">Extract emails</span></div>
+                <div class="row"><button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="ds-sw-3" disabled><span class="switch-knob"></span></button><span class="body-sm subtle" id="ds-sw-3">Save to Google Drive</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-grid ds-grid--2" style="margin-top: var(--s-4)">
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Segmented</span><span class="ds-demo-desc">Theme (L11) · export format · tool switch</span></div>
+              <div class="ds-stage ds-stage--col">
+                <div class="seg" role="radiogroup" aria-label="Theme" data-seg>
+                  <span class="seg-thumb" aria-hidden="true"></span>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="true" data-value="system"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-monitor" /></svg>System</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="light"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sun" /></svg>Light</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="dark"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-moon" /></svg>Dark</button>
+                </div>
+                <div class="seg seg--sm" role="radiogroup" aria-label="Export format" data-seg>
+                  <span class="seg-thumb" aria-hidden="true"></span>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="true" data-value="csv">CSV</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="json">JSON</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="xlsx">XLSX</button>
+                </div>
+                <div class="seg seg--block" role="radiogroup" aria-label="Task type" data-seg>
+                  <span class="seg-thumb" aria-hidden="true"></span>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="true" data-value="keywords"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>Keywords</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="reviews"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg>Review URLs</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Tabs</span><span class="ds-demo-desc">Sliding ink · arrow keys · panels fade in</span></div>
+              <div class="ds-stage ds-stage--col">
+                <div class="tabs" role="tablist" aria-label="Dashboard view" data-tabs>
+                  <button class="tab" type="button" role="tab" id="ds-tab-new" aria-controls="ds-panel-new" aria-selected="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg>New task</button>
+                  <button class="tab" type="button" role="tab" id="ds-tab-history" aria-controls="ds-panel-history" aria-selected="false"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-history" /></svg>Task history<span class="badge badge--count">12</span></button>
+                  <span class="tab-ink" aria-hidden="true"></span>
+                </div>
+                <div role="tabpanel" id="ds-panel-new" aria-labelledby="ds-tab-new"><p class="body-sm muted">Name the task and paste one keyword per line.</p></div>
+                <div role="tabpanel" id="ds-panel-history" aria-labelledby="ds-tab-history" hidden><p class="body-sm muted">12 tasks · 2 running across both types (150 max).</p></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Surfaces -->
+        <section class="ds-section" id="surfaces" aria-labelledby="surfaces-title">
+          <header class="ds-section-head">
+            <span class="kicker">08 · Components · Surfaces</span>
+            <h2 class="ds-h2" id="surfaces-title">Cards, lists, settings rows and the app bar.</h2>
+          </header>
+
+          <div class="ds-grid ds-grid--2">
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Popup header &amp; list items</span><span class="ds-demo-desc">.appbar--compact · .list-item (bulk entries)</span></div>
+              <div class="ds-stage ds-stage--center">
+                <div class="ds-popframe" style="padding: 0; overflow: hidden">
+                  <header class="appbar appbar--compact" style="position: static">
+                    <span class="brand"><img class="brand-mark" src="assets/img/logo.svg" alt="" />MapsGrab</span>
+                    <div class="appbar-actions">
+                      <button class="icon-btn icon-btn--sm" type="button" aria-label="Language" data-tooltip="Language"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-globe" /></svg></button>
+                      <button class="icon-btn icon-btn--sm" type="button" aria-label="Settings" data-tooltip="Settings"><svg class="icon icon-gear" aria-hidden="true"><use href="assets/img/icons.svg#i-gear" /></svg></button>
+                    </div>
+                  </header>
+                  <div class="list" style="padding: var(--s-2)">
+                    <a class="list-item" href="#surfaces">
+                      <span class="icon-tile icon-tile--sm"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-plus" /></svg></span>
+                      <span class="list-item-text"><span class="list-item-title">Bulk keyword search</span><span class="list-item-desc">Up to 500 searches per task</span></span>
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-right" /></svg>
+                    </a>
+                    <a class="list-item" href="#surfaces">
+                      <span class="icon-tile icon-tile--sm"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg></span>
+                      <span class="list-item-text"><span class="list-item-title">Bulk reviews</span><span class="list-item-desc">Paste place URLs, collect every review</span></span>
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-right" /></svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Cards &amp; icon tiles</span><span class="ds-demo-desc">.card · --interactive · --inset · .icon-tile variants</span></div>
+              <div class="ds-stage ds-stage--col">
+                <article class="card">
+                  <div class="card-head">
+                    <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-export" /></svg></span>
+                    <div class="stack" style="--stack-gap: 0">
+                      <span class="card-title">Export</span>
+                      <span class="card-desc">CSV · 36 columns in 6 groups</span>
+                    </div>
+                  </div>
+                  <div class="card-pad body-sm muted">Choose the format and the fields every export includes.</div>
+                  <div class="card-foot"><span class="caption">12 columns need Pro</span><span class="spacer"></span><button class="btn btn-secondary btn-sm" type="button">Edit fields</button></div>
+                </article>
+                <div class="cluster">
+                  <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-map" /></svg></span>
+                  <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg></span>
+                  <span class="icon-tile icon-tile--soft tone-ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></span>
+                  <span class="icon-tile icon-tile--soft tone-warn"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pause" /></svg></span>
+                  <span class="icon-tile icon-tile--soft tone-bad"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert" /></svg></span>
+                  <span class="icon-tile icon-tile--sm"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-star" /></svg></span>
+                  <span class="icon-tile icon-tile--lg"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-database" /></svg></span>
+                </div>
+                <a class="card card--interactive card-pad row" href="#surfaces" style="--row-gap: var(--s-3)">
+                  <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-table" /></svg></span>
+                  <span class="stack" style="--stack-gap: 0; flex: 1"><span class="card-title">Hotels · Lisbon</span><span class="card-desc">Completed · 80 of 80</span></span>
+                  <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-right" /></svg>
+                </a>
+                <div class="card card--inset card-pad caption">Inset cards group secondary content without adding elevation.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-demo" data-snippet style="margin-top: var(--s-4)">
+            <div class="ds-demo-head"><span class="ds-demo-title">Settings rows</span><span class="ds-demo-desc">Label + hint left, control right · saves on change · Pro marked, not blocked</span></div>
+            <div class="ds-stage">
+              <div class="card card-pad" style="width: min(100%, var(--page-w-narrow)); padding-block: 0">
+                <div class="setting">
+                  <div class="setting-text">
+                    <span class="setting-label" id="ds-set-email">Extract emails <span class="badge badge--pro">Pro</span></span>
+                    <span class="setting-hint">Visits each website after the run and adds the emails it finds.</span>
+                  </div>
+                  <div class="row"><span class="saved-tick" data-saved aria-live="polite"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Saved</span><button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="ds-set-email" data-save-demo><span class="switch-knob"></span></button></div>
+                </div>
+                <div class="setting">
+                  <div class="setting-text">
+                    <span class="setting-label" id="ds-set-format">Export format</span>
+                    <span class="setting-hint">Used by the panel’s Export button and automatic downloads.</span>
+                  </div>
+                  <div class="seg seg--sm" role="radiogroup" aria-labelledby="ds-set-format" data-seg>
+                    <span class="seg-thumb" aria-hidden="true"></span>
+                    <button class="seg-btn" type="button" role="radio" aria-checked="true" data-value="csv">CSV</button>
+                    <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="json">JSON</button>
+                    <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="xlsx">XLSX</button>
+                  </div>
+                </div>
+                <div class="setting is-disabled">
+                  <div class="setting-text">
+                    <span class="setting-label" id="ds-set-drive">Save to Google Drive</span>
+                    <span class="setting-hint">Not available yet.</span>
+                  </div>
+                  <button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="ds-set-drive" disabled><span class="switch-knob"></span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Progress -->
+        <section class="ds-section" id="progress" aria-labelledby="progress-title">
+          <header class="ds-section-head">
+            <span class="kicker">09 · Components · Progress</span>
+            <h2 class="ds-h2" id="progress-title">Bars, rings, the usage meter and skeletons.</h2>
+            <p class="ds-lead">Usage is the popup’s core information (L5): normal, near the limit (≥ 80%), used up, loading and unavailable are all designed states.</p>
+          </header>
+
+          <div class="ds-grid ds-grid--2">
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Progress bars</span><span class="ds-demo-desc">style="--p: 0–100" · .is-live · .is-indeterminate · tones</span></div>
+              <div class="ds-stage ds-stage--col">
+                <div class="progress" style="--p: 42" role="progressbar" aria-label="Task progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="42"><span class="progress-fill"></span></div>
+                <div class="progress is-live" style="--p: 64" role="progressbar" aria-label="Task progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="64"><span class="progress-fill"></span></div>
+                <div class="progress is-indeterminate" role="progressbar" aria-label="Loading"><span class="progress-fill"></span></div>
+                <div class="progress progress--sm tone-ok" style="--p: 100" aria-hidden="true"><span class="progress-fill"></span></div>
+                <div class="progress progress--sm tone-warn" style="--p: 86" aria-hidden="true"><span class="progress-fill"></span></div>
+                <div class="progress progress--lg tone-bad" style="--p: 100" aria-hidden="true"><span class="progress-fill"></span></div>
+              </div>
+            </div>
+
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Rings</span><span class="ds-demo-desc">idle · live · paused · done · sm / md / lg</span></div>
+              <div class="ds-stage ds-stage--center" style="--cluster-gap: var(--s-5)">
+                <div class="ring is-empty" style="--p: 0" role="progressbar" aria-label="Run progress" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+                  <svg class="ring-svg" viewBox="0 0 48 48" aria-hidden="true"><circle class="ring-track" cx="24" cy="24" r="20" pathLength="100" /><circle class="ring-fill" cx="24" cy="24" r="20" pathLength="100" /></svg>
+                  <span class="ring-scan" aria-hidden="true"></span>
+                  <span class="ring-label"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg></span>
+                </div>
+                <div class="ring is-live" style="--p: 60" role="progressbar" aria-label="Run progress" aria-valuemin="0" aria-valuemax="10" aria-valuenow="6">
+                  <svg class="ring-svg" viewBox="0 0 48 48" aria-hidden="true"><circle class="ring-track" cx="24" cy="24" r="20" pathLength="100" /><circle class="ring-fill" cx="24" cy="24" r="20" pathLength="100" /></svg>
+                  <span class="ring-scan" aria-hidden="true"></span>
+                  <span class="ring-label">6</span>
+                </div>
+                <div class="ring tone-warn" style="--p: 37" role="progressbar" aria-label="Run progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="37">
+                  <svg class="ring-svg" viewBox="0 0 48 48" aria-hidden="true"><circle class="ring-track" cx="24" cy="24" r="20" pathLength="100" /><circle class="ring-fill" cx="24" cy="24" r="20" pathLength="100" /></svg>
+                  <span class="ring-scan" aria-hidden="true"></span>
+                  <span class="ring-label"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pause" /></svg></span>
+                </div>
+                <div class="ring is-done tone-ok" style="--p: 100" role="progressbar" aria-label="Run progress" aria-valuemin="0" aria-valuemax="10" aria-valuenow="10">
+                  <svg class="ring-svg" viewBox="0 0 48 48" aria-hidden="true"><circle class="ring-track" cx="24" cy="24" r="20" pathLength="100" /><circle class="ring-fill" cx="24" cy="24" r="20" pathLength="100" /></svg>
+                  <span class="ring-scan" aria-hidden="true"></span>
+                  <span class="ring-label"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg></span>
+                </div>
+                <div class="ring ring--sm is-live" style="--p: 25" aria-hidden="true">
+                  <svg class="ring-svg" viewBox="0 0 48 48"><circle class="ring-track" cx="24" cy="24" r="20" pathLength="100" /><circle class="ring-fill" cx="24" cy="24" r="20" pathLength="100" /></svg>
+                  <span class="ring-scan"></span>
+                </div>
+                <div class="ring ring--lg is-live" style="--p: 72" role="progressbar" aria-label="Task progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72">
+                  <svg class="ring-svg" viewBox="0 0 48 48" aria-hidden="true"><circle class="ring-track" cx="24" cy="24" r="20" pathLength="100" /><circle class="ring-fill" cx="24" cy="24" r="20" pathLength="100" /></svg>
+                  <span class="ring-scan" aria-hidden="true"></span>
+                  <span class="ring-label">72%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-demo" data-snippet style="margin-top: var(--s-4)">
+            <div class="ds-demo-head"><span class="ds-demo-title">Usage meter</span><span class="ds-demo-desc">normal · near (≥ 80%) · used up · loading · unavailable</span></div>
+            <div class="ds-stage ds-stage--grid ds-stage--meters">
+              <div class="ds-popframe meter">
+                <div class="meter-head"><span class="kicker">Records this month</span><span class="meter-reset">Resets Nov 1</span></div>
+                <div class="meter-value"><span class="meter-used roller" data-roll="312">312</span><span class="meter-total">/ 1,000</span></div>
+                <div class="progress" style="--p: 31.2" role="progressbar" aria-label="Records used this month" aria-valuemin="0" aria-valuemax="1000" aria-valuenow="312"><span class="progress-fill"></span></div>
+              </div>
+              <div class="ds-popframe meter is-near">
+                <div class="meter-head"><span class="kicker">Records this month</span><span class="meter-reset">Resets Nov 1</span></div>
+                <div class="meter-value"><span class="meter-used roller" data-roll="864">864</span><span class="meter-total">/ 1,000</span></div>
+                <div class="progress" style="--p: 86.4" role="progressbar" aria-label="Records used this month" aria-valuemin="0" aria-valuemax="1000" aria-valuenow="864"><span class="progress-fill"></span></div>
+                <p class="meter-note"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert" /></svg><span>86% used. <a class="link" href="#progress">View plans</a> before you run out.</span></p>
+              </div>
+              <div class="ds-popframe meter is-out">
+                <div class="meter-head"><span class="kicker">Records this month</span><span class="meter-reset">Resets Nov 1</span></div>
+                <div class="meter-value"><span class="meter-used roller" data-roll="1000">1,000</span><span class="meter-total">/ 1,000</span></div>
+                <div class="progress" style="--p: 100" role="progressbar" aria-label="Records used this month" aria-valuemin="0" aria-valuemax="1000" aria-valuenow="1000"><span class="progress-fill"></span></div>
+                <p class="meter-note"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg><span>All records used. <a class="link" href="#progress">Upgrade to keep extracting</a>.</span></p>
+              </div>
+              <div class="ds-popframe meter" role="status" aria-busy="true" aria-label="Loading usage">
+                <div class="meter-head"><span class="kicker">Records this month</span></div>
+                <span class="skel skel--num"></span>
+                <span class="skel"></span>
+              </div>
+              <div class="ds-popframe meter tone-neutral">
+                <div class="meter-head"><span class="kicker">Records this month</span></div>
+                <p class="meter-note"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-circle-dashed" /></svg><span>Usage is unavailable right now.</span></p>
+                <div><button class="btn btn-secondary btn-sm" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Retry</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-demo" data-snippet>
+            <div class="ds-demo-head"><span class="ds-demo-title">Skeletons &amp; spinner</span><span class="ds-demo-desc">Sweep is a translating pseudo-element (compositor only)</span></div>
+            <div class="ds-stage">
+              <div class="stack" style="width: 240px">
+                <span class="skel skel--title" style="width: 60%"></span>
+                <span class="skel"></span>
+                <span class="skel" style="width: 82%"></span>
+              </div>
+              <span class="skel skel--circle" style="width: 40px; height: 40px"></span>
+              <span class="skel skel--block" style="width: 160px"></span>
+              <span class="spinner" role="status" aria-label="Loading"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Data -->
+        <section class="ds-section" id="data" aria-labelledby="data-title">
+          <header class="ds-section-head">
+            <span class="kicker">10 · Components · Data</span>
+            <h2 class="ds-h2" id="data-title">Task history: one main action, the rest under More.</h2>
+            <p class="ds-lead">L6 / L7: View plus Start, Resume or Run again; copy actions and Delete live in the More menu. Delete confirms in-page, never with <code>window.confirm</code>.</p>
+          </header>
+
+          <div class="ds-demo" data-snippet>
+            <div class="ds-demo-head"><span class="ds-demo-title">Table</span><span class="ds-demo-desc">.table · .table--stagger · .cell-* · menu in the top layer</span></div>
+            <div class="ds-stage ds-stage--col">
+              <div class="table-wrap">
+                <table class="table table--stagger">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Task</th>
+                      <th scope="col">Status</th>
+                      <th scope="col" class="cell-num">Progress</th>
+                      <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="is-active">
+                      <td class="cell-index">04</td>
+                      <td><span class="cell-strong">Coffee shops · Austin</span><span class="cell-sub">try 38 · complete 36 · stuck 1 · skip 1</span></td>
+                      <td><span class="status status--running">Running</span></td>
+                      <td class="cell-num">37 / 120<div class="progress progress--sm is-live" style="--p: 31; margin-top: var(--s-1)" aria-hidden="true"><span class="progress-fill"></span></div></td>
+                      <td class="cell-actions"><div class="row"><button class="btn btn-ghost btn-sm" type="button">View</button><button class="btn btn-secondary btn-sm" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pause" /></svg>Pause</button><button class="icon-btn icon-btn--sm" type="button" aria-label="More actions for Coffee shops · Austin" data-menu="ds-task-menu"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-more" /></svg></button></div></td>
+                    </tr>
+                    <tr>
+                      <td class="cell-index">03</td>
+                      <td><span class="cell-strong">Dentists · Denver</span><span class="cell-sub">try 12 · complete 12 · stuck 0 · skip 0</span></td>
+                      <td><span class="status status--paused">Paused</span></td>
+                      <td class="cell-num">12 / 40</td>
+                      <td class="cell-actions"><div class="row"><button class="btn btn-ghost btn-sm" type="button">View</button><button class="btn btn-secondary btn-sm" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-resume" /></svg>Resume</button><button class="icon-btn icon-btn--sm" type="button" aria-label="More actions for Dentists · Denver" data-menu="ds-task-menu"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-more" /></svg></button></div></td>
+                    </tr>
+                    <tr>
+                      <td class="cell-index">02</td>
+                      <td><span class="cell-strong">Hotels · Lisbon</span><span class="cell-sub">try 81 · complete 79 · stuck 0 · skip 1</span></td>
+                      <td><span class="status status--completed">Completed</span></td>
+                      <td class="cell-num">80 / 80</td>
+                      <td class="cell-actions"><div class="row"><button class="btn btn-ghost btn-sm" type="button">View</button><button class="btn btn-secondary btn-sm" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Run again</button><button class="icon-btn icon-btn--sm" type="button" aria-label="More actions for Hotels · Lisbon" data-menu="ds-task-menu"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-more" /></svg></button></div></td>
+                    </tr>
+                    <tr>
+                      <td class="cell-index">01</td>
+                      <td><span class="cell-strong">Gyms · Chicago</span><span class="cell-sub">Not started</span></td>
+                      <td><span class="status status--idle">Idle</span></td>
+                      <td class="cell-num">0 / 25</td>
+                      <td class="cell-actions"><div class="row"><button class="btn btn-ghost btn-sm" type="button">View</button><button class="btn btn-secondary btn-sm" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-play" /></svg>Start</button><button class="icon-btn icon-btn--sm" type="button" aria-label="More actions for Gyms · Chicago" data-menu="ds-task-menu"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-more" /></svg></button></div></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="menu" id="ds-task-menu" role="menu" aria-label="Task actions">
+                <button class="menu-item" type="button" role="menuitem" data-value="copy-completed"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>Copy completed</button>
+                <button class="menu-item" type="button" role="menuitem" data-value="copy-pending"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>Copy pending</button>
+                <button class="menu-item" type="button" role="menuitem" data-value="copy-all"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>Copy all</button>
+                <div class="menu-sep" role="separator"></div>
+                <button class="menu-item menu-item--danger" type="button" role="menuitem" data-value="delete"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-trash" /></svg>Delete task…</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-grid ds-grid--2" style="margin-top: var(--s-4)">
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Menu with choices</span><span class="ds-demo-desc">menuitemradio · 14 locales in the real list</span></div>
+              <div class="ds-stage">
+                <button class="btn btn-secondary btn-sm" type="button" data-menu="ds-lang-menu" data-menu-align="start"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-globe" /></svg>English<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-down" /></svg></button>
+                <div class="menu" id="ds-lang-menu" role="menu" aria-label="Language">
+                  <div class="menu-label">Language</div>
+                  <button class="menu-item" type="button" role="menuitemradio" aria-checked="true" data-value="en-US">English</button>
+                  <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="de-DE">Deutsch</button>
+                  <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="es-ES">Español</button>
+                  <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="ja-JP">日本語</button>
+                  <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="zh-CN">简体中文</button>
+                </div>
+              </div>
+            </div>
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Tooltip</span><span class="ds-demo-desc">data-tooltip · hover 350ms or keyboard focus · flips below near the top</span></div>
+              <div class="ds-stage">
+                <button class="btn btn-secondary btn-sm" type="button" data-tooltip="Copies every keyword that finished">Copy completed</button>
+                <span class="badge badge--pro" tabindex="0" data-tooltip="Included in Pro and Business"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-crown" /></svg>Pro</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Feedback -->
+        <section class="ds-section" id="feedback" aria-labelledby="feedback-title">
+          <header class="ds-section-head">
+            <span class="kicker">11 · Components · Feedback</span>
+            <h2 class="ds-h2" id="feedback-title">Notices, toasts, dialogs, empty states and the account row.</h2>
+          </header>
+
+          <div class="ds-demo" data-snippet>
+            <div class="ds-demo-head"><span class="ds-demo-title">Notices</span><span class="ds-demo-desc">new version · announcement · running hint · error banner</span></div>
+            <div class="ds-stage ds-stage--col">
+              <div class="notice tone-primary" role="status">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkles" /></svg>
+                <div>
+                  <p class="notice-title">Update MapsGrab to keep extracting</p>
+                  <p class="notice-desc">This version is no longer supported. <a href="#feedback">How to update</a></p>
+                </div>
+              </div>
+              <div class="notice notice--announce" role="status">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-megaphone" /></svg>
+                <div><p class="notice-desc">New: export straight to XLSX — pick it in <a href="#feedback">Settings</a>.</p></div>
+                <button class="icon-btn icon-btn--sm" type="button" aria-label="Dismiss announcement"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg></button>
+              </div>
+              <div class="notice tone-warn" role="status">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>
+                <div>
+                  <p class="notice-title">Keep this browser open</p>
+                  <p class="notice-desc">The task runs in background tabs. Closing Chrome pauses it; it resumes when you return.</p>
+                </div>
+              </div>
+              <div class="notice notice--banner tone-bad" role="alert">
+                <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert-circle" /></svg>
+                <div>
+                  <p class="notice-title">Not enough records for this task</p>
+                  <p class="notice-desc">120 keywords need about 1,200 records; you have 188 left this month.</p>
+                  <div class="notice-actions"><a class="link" href="#feedback">View plans</a><button class="link link--quiet" type="button">Save without starting</button></div>
+                </div>
+                <button class="icon-btn icon-btn--sm" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-x" /></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-grid ds-grid--2" style="margin-top: var(--s-4)">
+            <div class="ds-demo">
+              <div class="ds-demo-head"><span class="ds-demo-title">Toasts</span><span class="ds-demo-desc">UI.toast({ title, desc, tone, action }) · 4s, pauses on hover</span></div>
+              <div class="ds-stage">
+                <button class="btn btn-secondary btn-sm" type="button" data-toast-demo="ok">Success</button>
+                <button class="btn btn-secondary btn-sm" type="button" data-toast-demo="primary">Info</button>
+                <button class="btn btn-secondary btn-sm" type="button" data-toast-demo="warn">Warning</button>
+                <button class="btn btn-secondary btn-sm" type="button" data-toast-demo="bad">Error</button>
+              </div>
+            </div>
+            <div class="ds-demo">
+              <div class="ds-demo-head"><span class="ds-demo-title">Confirm dialog</span><span class="ds-demo-desc">UI.confirm({ danger }) · focus starts on Cancel</span></div>
+              <div class="ds-stage">
+                <button class="btn btn-secondary btn-sm" type="button" data-confirm-demo><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-trash" /></svg>Delete task…</button>
+                <button class="btn btn-secondary btn-sm" type="button" data-confirm-plain><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-layers" /></svg>Split into tasks…</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-grid ds-grid--2" style="margin-top: var(--s-4)">
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Empty state</span><span class="ds-demo-desc">Pin drops, rows arrive — then one clear next step</span></div>
+              <div class="ds-stage ds-stage--col">
+                <div class="empty">
+                  <div class="empty-art" aria-hidden="true">
+                    <span class="empty-map"><span class="empty-drop"><span class="empty-pin"></span></span></span>
+                    <svg class="icon empty-arrow"><use href="assets/img/icons.svg#i-arrow-right" /></svg>
+                    <span class="empty-rows"><i></i><i></i><i></i></span>
+                  </div>
+                  <p class="empty-title">No tasks yet</p>
+                  <p class="empty-desc">Paste keywords like “coffee shops in Austin”, one per line, and MapsGrab runs them one by one.</p>
+                  <button class="btn btn-primary btn-sm" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg>New task</button>
+                </div>
+              </div>
+            </div>
+            <div class="ds-demo" data-snippet>
+              <div class="ds-demo-head"><span class="ds-demo-title">Account</span><span class="ds-demo-desc">guest · signing in (L5) · signed in</span></div>
+              <div class="ds-stage ds-stage--col">
+                <div class="account">
+                  <span class="avatar avatar--guest"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-user" /></svg></span>
+                  <span class="account-text"><span class="account-name">Guest</span><span class="account-meta">Sign in to use your plan on this browser</span></span>
+                  <button class="btn btn-primary btn-sm" type="button"><span class="spinner" aria-hidden="true"></span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-login" /></svg>Sign in</button>
+                </div>
+                <div class="account">
+                  <span class="avatar avatar--guest"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-user" /></svg></span>
+                  <span class="account-text"><span class="account-name">Guest</span><span class="account-meta">Finish signing in on mapsgrab.com…</span></span>
+                  <button class="btn btn-primary btn-sm is-loading" type="button" aria-busy="true"><span class="spinner" aria-hidden="true"></span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-login" /></svg>Sign in</button>
+                </div>
+                <div class="account">
+                  <span class="avatar">JR</span>
+                  <span class="account-text"><span class="account-name">jordan@example.com</span><span class="account-meta">Pro · renews Nov 1</span></span>
+                  <button class="btn btn-ghost btn-sm" type="button"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-logout" /></svg>Sign out</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Panel -->
+        <section class="ds-section" id="panel" aria-labelledby="panel-title">
+          <header class="ds-section-head">
+            <span class="kicker">12 · Surfaces · In-page panel</span>
+            <h2 class="ds-h2" id="panel-title">A quiet guest inside Google Maps.</h2>
+            <p class="ds-lead">
+              <code>panel.css</code> is self-contained: <code>:host { all: initial }</code>, its own copy of the color tokens, system fonts, transform/opacity motion only. Width grows from 236 to <b>280px</b> so the progress ring, the two-line readout and a one-line “Export 48 places · CSV” fit without wrapping.
+            </p>
+          </header>
+
+          <div class="ds-demo ds-panel-live">
+            <div class="ds-demo-head">
+              <span class="ds-demo-title">Live panel</span>
+              <span class="ds-demo-desc">Real Shadow DOM · press Start, Pause, dock left/right · mode, quota and errors in the state dock</span>
+            </div>
+            <div class="ds-stage ds-stage--plain" style="padding: var(--s-4)">
+              <div class="proto-browser">
+                <div class="proto-browser-bar">
+                  <span class="proto-browser-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="proto-browser-url"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg><span data-live-url>google.com/maps/search/<b>coffee+near+Manhattan</b></span></span>
+                  <span class="proto-browser-ext" aria-hidden="true"><img src="assets/img/logo.svg" alt="" /></span>
+                </div>
+                <div class="proto-browser-page">
+                  <div data-live-host-page></div>
+                  <div class="proto-panel-host" data-live-panel></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="ds-h3">States</h3>
+          <div class="ds-panel-tiles" data-panel-tiles></div>
+
+          <h3 class="ds-h3">Vocabulary</h3>
+          <div class="table-wrap">
+            <table class="table table--compact ds-anatomy">
+              <thead>
+                <tr>
+                  <th scope="col">Class</th>
+                  <th scope="col">Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="cell-mono">.mgp · --left / --right / --work</td><td>Fixed shell, 280px. Search &amp; list dock left, place docks right, work pages pin left (no toggle).</td></tr>
+                <tr><td class="cell-mono">.mgp-head · .mgp-mark · .mgp-title · .mgp-mode · .mgp-icon-btn</td><td>Header: brand mark, name, mode tag (Search / List / Place / Reviews / Photos) and the dock toggle.</td></tr>
+                <tr><td class="cell-mono">.mgp-notice · --announce</td><td>Remote “update required” and announcement rows; hidden if the remote config fails.</td></tr>
+                <tr><td class="cell-mono">.mgp-status[data-state]</td><td>idle · extracting · paused · complete · blocked. Drives tone, ring, dot and copy.</td></tr>
+                <tr><td class="cell-mono">.mgp-ring · -fill · -scan · -core</td><td>N / run limit (L1). Stroke transitions once per change; scan arc rotates only while extracting.</td></tr>
+                <tr><td class="cell-mono">.mgp-readout · .mgp-state · .mgp-count · .mgp-roll · .mgp-caption</td><td>State line with dot glyph, rolling count, one-line caption. “Paused · 37 places” (L1).</td></tr>
+                <tr><td class="cell-mono">.mgp-btn · --primary / --secondary / --ghost / --sm / --icon · .mgp-morph · .mgp-btn-tag</td><td>Start → Export N (format tag) in one button; Pause → Resume → Reset in the other. --icon is the square row action.</td></tr>
+                <tr><td class="cell-mono">.mgp-msg[data-tone]</td><td>Reason-specific message with the next step (L2); cleared by the next successful action.</td></tr>
+                <tr><td class="cell-mono">.mgp-upgrade</td><td>Always shown when the monthly quota is used up; links to Pricing (L3). Start re-checks the quota.</td></tr>
+                <tr><td class="cell-mono">.mgp-section · .mgp-row[data-state] · .mgp-row-timer</td><td>Place page Reviews / Photos: ready · opened (“Collecting in a new tab”, square Reopen button, 4s reset — L4) · blocked · unknown.</td></tr>
+                <tr><td class="cell-mono">.mgp-foot</td><td>Plan and run limit, Help link.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="ds-h3">Markup</h3>
+          <div class="ds-demo">
+            <div class="ds-demo-head"><span class="ds-demo-title">Extracting · list mode</span><span class="ds-demo-desc">Mount into a shadow root with panel.css; the host element carries data-theme / data-motion</span></div>
+            <div data-panel-markup></div>
+          </div>
+        </section>
+
+        <!-- =============================================================== Icons -->
+        <section class="ds-section" id="icons" aria-labelledby="icons-title">
+          <header class="ds-section-head">
+            <span class="kicker">13 · Icons</span>
+            <h2 class="ds-h2" id="icons-title">One sprite, one stroke.</h2>
+            <p class="ds-lead">24px grid, 1.75 stroke, round caps — the website set plus capture controls, dock toggles, file types and states. Click an icon to copy its markup. Inside the panel, inline the symbols you use.</p>
+          </header>
+          <div class="ds-icon-tools">
+            <span class="input-wrap">
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg>
+              <input class="input" type="search" placeholder="Filter icons" aria-label="Filter icons" data-icon-filter />
+            </span>
+            <span class="caption mono" data-icon-count aria-live="polite"></span>
+          </div>
+          <div class="ds-icons" data-icons></div>
+        </section>
+
+        <!-- =============================================================== Build -->
+        <section class="ds-section" id="build" aria-labelledby="build-title">
+          <header class="ds-section-head">
+            <span class="kicker">14 · Build pages</span>
+            <h2 class="ds-h2" id="build-title">Phase B conventions.</h2>
+            <p class="ds-lead">Every prototype page uses the same head, a <code>body[data-page]</code> key for its private CSS/JS, and declares its states to the dock. Full details in <code>README.md</code>.</p>
+          </header>
+          <div class="ds-grid ds-grid--2">
+            <div class="ds-codeblock">
+              <div class="ds-codeblock-head">popup.html · head<button class="icon-btn icon-btn--sm" type="button" aria-label="Copy head" data-copy-from="ds-code-head"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg></button></div>
+              <pre id="ds-code-head">&lt;script src="assets/js/theme.js"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="assets/css/tokens.css" /&gt;
+&lt;link rel="stylesheet" href="assets/css/base.css" /&gt;
+&lt;link rel="stylesheet" href="assets/css/components.css" /&gt;
+&lt;link rel="stylesheet" href="assets/css/motion.css" /&gt;
+&lt;link rel="stylesheet" href="assets/css/proto.css" /&gt;
+&lt;link rel="stylesheet" href="assets/css/pages/popup.css" /&gt;
+&lt;script src="assets/js/motion.js" defer&gt;&lt;/script&gt;
+&lt;script src="assets/js/ui.js" defer&gt;&lt;/script&gt;
+&lt;script src="assets/js/proto.js" defer&gt;&lt;/script&gt;
+&lt;script src="assets/js/pages/popup.js" defer&gt;&lt;/script&gt;</pre>
+            </div>
+            <div class="ds-codeblock">
+              <div class="ds-codeblock-head">pages/popup.js · states<button class="icon-btn icon-btn--sm" type="button" aria-label="Copy states example" data-copy-from="ds-code-states"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg></button></div>
+              <pre id="ds-code-states">Proto.states({
+  group: 'usage',
+  label: 'Usage',
+  options: ['loading', 'normal', 'near', 'out', 'error'],
+  value: 'normal',
+  onChange: function (value) {
+    render(value) // or rely on [data-show="usage:near|out"]
+  }
+})
+
+Proto.flow('Sign in', async function (p) {
+  p.set('account', 'signing-in'); await p.wait(1600)
+  p.set('account', 'signed-in')
+})</pre>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

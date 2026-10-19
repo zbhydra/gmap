@@ -592,13 +592,13 @@ describe('状态机：评论 URL 任务', () => {
   const PLACE_URL =
     'https://www.google.com/maps/place/Gold+coffee/@40.745,-73.978,17z/data=!4m2!3m1!1s0x89c2597ca044ec9b:0xa0acdb1716592b4d!8m2!3d40.745!4d-73.978'
   const EXPECTED_PLACE_ID = 'ChIJm-xEoHxZwokRTStZFhfbrKA'
-  const LRD = '0xa0acdb1716592b4d'
+  const FID = '0x89c2597ca044ec9b:0xa0acdb1716592b4d'
 
   function createReviews(values: string[], limit: number | null): BulkMachineEvent {
     return { kind: 'create-task', name: 'r', type: 'review-urls', values, reviewsPerStoreLimit: limit }
   }
 
-  it('启动评论任务：换算 place URL → 评论工作页（placeid/lrd/每店上限）', () => {
+  it('启动评论任务：换算 place URL → Maps 工作页（Place ID/fid/每店上限）', () => {
     const created = reduceBulkEvent(
       freshState(),
       createReviews([PLACE_URL], BULK_LIMITS.defaultReviewsPerStoreLimit),
@@ -612,10 +612,10 @@ describe('状态机：评论 URL 任务', () => {
 
     expect(started.error).toBeNull()
     const url = new URL(started.effects.launches[0]?.url ?? '')
-    expect(url.hostname).toBe('search.google.com')
-    expect(url.pathname).toBe('/local/reviews')
-    expect(url.searchParams.get('placeid')).toBe(EXPECTED_PLACE_ID)
-    expect(url.searchParams.get('gme_lrd')).toBe(LRD)
+    expect(url.hostname).toBe('www.google.com')
+    expect(url.pathname).toBe('/maps/place/')
+    expect(url.searchParams.get('q')).toBe(`place_id:${EXPECTED_PLACE_ID}`)
+    expect(url.searchParams.get('gme_fid')).toBe(FID)
     expect(url.searchParams.get('gme_bulk_max')).toBe('300')
     expect(started.state.tasks[0]?.reviewsPerStoreLimit).toBe(300)
   })

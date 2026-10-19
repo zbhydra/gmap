@@ -12,8 +12,8 @@
  *   判定——逐项采集每项单行是常态，完成由列表结束提示/无增长兜底驱动。
  *
  * 采集闭环：injected 捕获的响应经 handleRpcResponse 进入解析 → 去重 →
- * 计数 → 完成判定。完成判定：结果 <2 条直接完成（仅搜索形态）、达到免费
- * 行数上限截断完成、末项结束提示或连续无增长轮数达限完成。
+ * 计数 → 完成判定。完成判定：结果 <2 条直接完成（仅搜索形态）、达到本次
+ * 有效行数上限截断完成、末项结束提示或连续无增长轮数达限完成。
  */
 
 import { logger } from '@/core/utils/logger'
@@ -40,12 +40,14 @@ const LIST_SCROLL_STEP_PX = 500
 /** 采集状态。 */
 export type MapsScraperStatus = 'idle' | 'extracting' | 'paused' | 'complete'
 
+export type MapsScraperError = 'parse' | 'google'
+
 /** 采集器对外回调（面板渲染与错误可见性）。 */
 export interface MapsScraperCallbacks {
   /** 任一状态/计数变化后触发（面板据此重渲染）。 */
   onStateChanged: (status: MapsScraperStatus, count: number) => void
   /** 解析/选择器失败等需要用户可见的错误（面板错误行）。 */
-  onError: (message: string) => void
+  onError: (message: string, reason: MapsScraperError) => void
   /**
    * 每批新数据入库后触发（013 A6 批量模式：调度器据此重置卡死时钟——
    * 90s 判定 = 自上次进展以来）。缺省不回报（非批量页）。
@@ -66,6 +68,8 @@ export class MapsSearchScraper {
   private seenKeys: Set<string> = new Set()
 
   private keyword = ''
+
+  private rowLimit = 0
 
   /**
    * 本会话是否为列表形态（A7）：start 时按 URL 判定并锁定（SPA 打开详情后
@@ -99,7 +103,7 @@ export class MapsSearchScraper {
     return this.keyword
   }
 
-  /** 已采集行（导出用；完成前调用方不消费）。 */
+  /** 已采集行（采集中也可导出当前结果）。 */
   getRows(): readonly MapsPlaceRow[] {
     return this.rows
   }
@@ -110,13 +114,14 @@ export class MapsSearchScraper {
   }
 
   /** 进入采集中：清空会话、按 URL 形态分支（列表不重放搜索）、启动滚动循环。 */
-  start(): void {
+  start(rowLimit: number): void {
     if (this.status === 'extracting') {
       return
     }
     this.rows = []
     this.seenKeys = new Set()
     this.keyword = ''
+    this.rowLimit = rowLimit
     // 列表会话锁定：start 时刻的 URL 形态决定本会话的循环与完成语义
     const { dom } = getMapsConfig()
     this.listSession = detectMapsListMode(location.href, dom.listModeUrlMark)
@@ -176,7 +181,7 @@ export class MapsSearchScraper {
       parsedRows = filterNewRows(parsed.rows, this.seenKeys)
     } catch (error) {
       logger.error('[MapsScraper] 响应解析失败（等待下一批）:', error)
-      this.callbacks.onError(error instanceof Error ? error.message : String(error))
+      this.callbacks.onError(error instanceof Error ? error.message : String(error), 'parse')
       return
     }
 
@@ -191,7 +196,7 @@ export class MapsSearchScraper {
       })
     }
 
-    this.rows.push(...parsedRows)
+    this.rows.push(...parsedRows.slice(0, this.rowLimit - this.rows.length))
     this.callbacks.onStateChanged(this.status, this.rows.length)
     // 新数据入库 = 进展：批量模式由调用方回报调度器重置卡死时钟
     if (parsedRows.length > 0) {
@@ -205,10 +210,8 @@ export class MapsSearchScraper {
       return
     }
 
-    // 完成判定二：达到免费行数上限，截断并完成（配额门控归 U7）
-    const limit = getMapsConfig().scrape.freeExportRowLimit
-    if (this.rows.length >= limit) {
-      this.rows = this.rows.slice(0, limit)
+    // 有效行数上限由开始入口按订阅权益和月余额共同确定。
+    if (this.rows.length >= this.rowLimit) {
       this.complete()
     }
   }
@@ -253,10 +256,18 @@ export class MapsSearchScraper {
         return
       }
 
-      // 增长检查：连续无增长（含 feed 缺失）达限即完成（防死滚兜底）
+      // 连续无增长达限：结果容器仍缺失时暂停报错，其余视为到底。
       if (this.rows.length === lastCount) {
         noGrowthRounds += 1
         if (noGrowthRounds >= scrape.noGrowthRetryLimit) {
+          if (!feed) {
+            this.pause()
+            this.callbacks.onError(
+              `[MapsScraper] Google 结果容器持续不可用: selector=${dom.feed}`,
+              'google'
+            )
+            return
+          }
           this.complete()
           return
         }
@@ -355,7 +366,7 @@ export class MapsSearchScraper {
     }
     const message = `[MapsScraper] 搜索重放按钮未找到: selector=${selector}，等待页面自身请求`
     logger.error(message)
-    this.callbacks.onError(message)
+    this.callbacks.onError(message, 'parse')
   }
 
   private complete(): void {

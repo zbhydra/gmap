@@ -1,245 +1,151 @@
-/**
- * 照片解析器与采集控制器单元测试（013 A3）。
- *
- * 诚实标注：照片 batchexecute 响应没有实录黄金样本，本 spec 的响应
- * fixture 按 03 号协议文档 §3.3 的剥壳/字段结构手工构造（构造样本，
- * 非实录）：格式 B 包裹（尾哨兵 + d 字段 + XSSI 前缀）、chunk[1] 为
- * payload 字符串、end 布尔在第 10 位（文档依据）；photoUrl/videoUrl
- * 按键名收集。实录下标校准走远程配置覆盖。
- */
+/** 照片协议以当前 Google wTe8We 实录为基线；翻页边界用同协议构造响应覆盖。 */
 
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ChromeEventEmitter } from '@/core/rpc/ChromeEventBus'
-import type { ExtensionEvents } from '@/core/events/types'
-import type { JsonObject, JsonValue } from '@/core/rpc/types'
+import * as XLSX from 'xlsx'
+import type { JsonValue } from '@/core/rpc/types'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
 import { getMapsConfig, resetMapsConfigForTests } from '@/sites/maps/config/loader'
 import { parsePhotosRpcResponse } from '@/sites/maps/content/parser/photosParser'
-import {
-  PhotosScraper,
-  extractSnlM0e
-} from '@/sites/maps/content/photos/photosScraper'
-import {
-  buildPhotosCsv,
-  buildPhotosExportFilename
-} from '@/sites/maps/content/export/photosCsv'
+import { PhotosScraper, waitForPhotosGallery } from '@/sites/maps/content/photos/photosScraper'
+import { buildPhotosExport } from '@/sites/maps/content/export/photosCsv'
 
-/** 构造照片 batchexecute 响应（构造样本，非实录）。 */
-function buildPhotosResponse(
-  entries: JsonObject[],
-  next: string | null,
-  end: boolean
-): string {
-  // payload 根：照片项递归按键名收集；end 在第 10 位；next 在第 11 位
-  const payload: JsonValue[] = new Array(12)
-  payload[0] = entries
-  payload[10] = end
-  payload[11] = next
-  const chunk = ['wte8We', JSON.stringify(payload), null, 'generic']
-  // d 内部形态对齐真实格式 B（U2 黄金样本同构）：XSSI 前缀 + JSON 数组，无长度行
-  const inner = [")]}'", JSON.stringify([chunk])].join('\n')
-  return `${JSON.stringify({ c: 3, d: inner })}/*""*/`
+function photo(id: string, videoUrl: string | null = null): JsonValue[] {
+  return [[`https://lh3.example/p/${id}=w800-h600`], null, videoUrl]
 }
 
-/** 构造一个照片项（对象带 photoUrl/videoUrl 键）。 */
-function makePhoto(id: string, extra: JsonObject = {}): JsonObject {
-  return { photoUrl: `https://lh3.example/p/${id}=w800-h600`, ...extra }
+function response(entries: JsonValue[], next: string | null): string {
+  const block = JSON.stringify([['wrb.fr', 'wTe8We', JSON.stringify([null, next, entries])]])
+  return `)]}'\n\n${block.length}\n${block}\n`
 }
 
 beforeEach(() => {
   resetMapsConfigForTests()
 })
 
-describe('照片解析（构造样本，非实录）', () => {
-  it('格式 B 剥壳 + photoUrl/videoUrl 键名收集 + streetview 过滤', () => {
-    const result = parsePhotosRpcResponse(
-      buildPhotosResponse(
-        [
-          makePhoto('A'),
-          makePhoto('B'),
-          { photoUrl: 'https://www.google.com/maps/uv/streetview?x=1' },
-          { videoUrl: 'https://lh3.example/v/vid1' }
-        ],
-        'photo-token-1',
-        false
-      ),
-      DEFAULT_MAPS_CONFIG.parseSchema
+describe('照片 wTe8We 协议', () => {
+  it('当前 Google 实录：20 条媒体保留 4 个视频与下一页 token', () => {
+    const raw = readFileSync(
+      resolve(process.cwd(), 'tests/fixtures/golden-samples/photos-wTe8We-response.txt'),
+      'utf-8'
     )
-
-    expect(result.urls).toEqual([
-      'https://lh3.example/p/A=w800-h600',
-      'https://lh3.example/p/B=w800-h600',
-      'https://lh3.example/v/vid1'
-    ])
-    expect(result.nextToken).toBe('photo-token-1')
+    const result = parsePhotosRpcResponse(raw, DEFAULT_MAPS_CONFIG.parseSchema)
+    expect(result.rows).toHaveLength(20)
+    expect(result.rows.filter(row => row.videoUrl)).toHaveLength(4)
+    expect(result.rows.every(row => row.photoUrl.startsWith('https://'))).toBe(true)
+    expect(result.rows.every(row => !row.photoUrl.includes('='))).toBe(true)
+    expect(result.nextToken).toBeTruthy()
     expect(result.end).toBe(false)
   })
 
-  it('嵌套结构中的 photoUrl 键同样被收集（键名驱动，抗下标漂移）', () => {
-    const nested: JsonObject = {
-      wrapper: [[makePhoto('N1'), makePhoto('N2')]],
-      label: 'deep'
-    }
+  it('街景整行剔除，协议相对 URL 补 https，照片和视频计为同一条', () => {
     const result = parsePhotosRpcResponse(
-      buildPhotosResponse([nested], null, true),
+      response(
+        [photo('A', 'https://video.example/a'), [['//lh3.example/p/B=w100']], photo('streetview/1')],
+        null
+      ),
       DEFAULT_MAPS_CONFIG.parseSchema
     )
-
-    expect(result.urls).toEqual([
-      'https://lh3.example/p/N1=w800-h600',
-      'https://lh3.example/p/N2=w800-h600'
+    expect(result.rows).toEqual([
+      { photoUrl: 'https://lh3.example/p/A', videoUrl: 'https://video.example/a' },
+      { photoUrl: 'https://lh3.example/p/B', videoUrl: '' }
     ])
     expect(result.end).toBe(true)
-    expect(result.nextToken).toBeNull()
   })
 
-  it('多 chunk 逐个解析（多响应块场景）', () => {
-    const chunkPayload = (id: string): JsonValue => {
-      const payload: JsonValue[] = new Array(12)
-      payload[0] = [makePhoto(id)]
-      payload[10] = false
-      payload[11] = `token-${id}`
-      return payload
-    }
-    const inner = [")]}'", JSON.stringify([
-      ['wte8We', JSON.stringify(chunkPayload('C1')), null, 'generic'],
-      ['wte8We', JSON.stringify(chunkPayload('C2')), null, 'generic']
-    ])].join('\n')
-    const raw = `${JSON.stringify({ c: 3, d: inner })}/*""*/`
-
-    const result = parsePhotosRpcResponse(raw, DEFAULT_MAPS_CONFIG.parseSchema)
-    expect(result.urls).toHaveLength(2)
-    expect(result.nextToken).toBe('token-C2')
-  })
-})
-
-describe('照片 CSV 导出', () => {
-  it('单列 URL 列表，文件名按 Photos 规则', () => {
-    const csv = buildPhotosCsv(['https://lh3.example/p/A=w800-h600'])
-    expect(csv.startsWith('\uFEFFPhoto URL\r\n')).toBe(true)
-    expect(csv).toContain('https://lh3.example/p/A=w800-h600')
-
-    const filename = buildPhotosExportFilename(10, 'Gold coffee', new Date(2026, 7, 30), 'csv')
-    expect(filename).toBe('MapsGrab-Extractor-Photos-Gold coffee-10-2026-08-30.csv')
-  })
-})
-
-describe('照片采集控制器：翻页/过滤/截断', () => {
-  function buildScraper(): PhotosScraper {
-    return new PhotosScraper('0xa0acdb1716592b4d', {
-      onStateChanged: () => undefined,
-      onError: () => undefined
-    })
-  }
-
-  /** 构造 fetch mock：按调用序返回批次（含过滤前的原始项），记录请求元数据。 */
-  function stubFetch(
-    batches: Array<{ entries: JsonObject[]; next: string | null; end: boolean }>
-  ): { requests: Array<{ url: string; body: string }> } {
-    const requests: Array<{ url: string; body: string }> = []
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-        const batch = batches[requests.length]
-        if (!batch) {
-          throw new Error('测试用例未预期的额外请求')
-        }
-        requests.push({ url: String(input), body: String(init?.body ?? '') })
-        return {
-          ok: true,
-          status: 200,
-          text: async () => buildPhotosResponse(batch.entries, batch.next, batch.end)
-        }
-      })
+  it('缺失当前方法或媒体字段时抛错，不把协议漂移当作空相册', () => {
+    expect(() => parsePhotosRpcResponse(")]}'\n[]", DEFAULT_MAPS_CONFIG.parseSchema)).toThrow(
+      'wTe8We'
     )
-    return { requests }
-  }
+    expect(() =>
+      parsePhotosRpcResponse(response([[null]], null), DEFAULT_MAPS_CONFIG.parseSchema)
+    ).toThrow('照片项缺少 URL')
+  })
+})
 
-  it('抠不到 SNlM0e 时给出可见错误并 0 张完成', async () => {
-    const errors: string[] = []
-    const scraper = new PhotosScraper('0xa0acdb1716592b4d', {
-      onStateChanged: () => undefined,
-      onError: message => errors.push(message)
-    })
-    const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+describe('照片导出两列', () => {
+  const rows = [
+    { photoUrl: 'https://photo.example/a', videoUrl: 'https://video.example/a' },
+    { photoUrl: 'https://photo.example/b', videoUrl: '' }
+  ]
+  const now = new Date(2026, 7, 30)
 
-    await scraper.start()
+  it('CSV 保留 Photo URL、Video URL 与媒体行数', () => {
+    const artifact = buildPhotosExport(rows, 'Gold coffee', now, 'csv')
+    expect(artifact.content).toBe(
+      '\uFEFFPhoto URL,Video URL\r\nhttps://photo.example/a,https://video.example/a\r\nhttps://photo.example/b,\r\n'
+    )
+    expect(artifact.filename).toBe('MapsGrab-Extractor-Photos-Gold coffee-2-2026-08-30.csv')
+  })
 
-    expect(fetchMock).not.toHaveBeenCalled()
-    expect(scraper.getCount()).toBe(0)
+  it('JSON 与 XLSX 保持同一组媒体字段', () => {
+    const json = buildPhotosExport(rows, 'Gold coffee', now, 'json')
+    expect(typeof json.content).toBe('string')
+    expect(JSON.parse(String(json.content))).toEqual([
+      { photoURL: 'https://photo.example/a', videoURL: 'https://video.example/a' },
+      { photoURL: 'https://photo.example/b', videoURL: '' }
+    ])
+
+    const xlsx = buildPhotosExport(rows, 'Gold coffee', now, 'xlsx')
+    const workbook = XLSX.read(xlsx.content, { type: 'array' })
+    const sheet = workbook.Sheets[workbook.SheetNames[0] ?? '']
+    expect(sheet && XLSX.utils.sheet_to_json(sheet, { header: 1 })).toEqual([
+      ['Photo URL', 'Video URL'],
+      ['https://photo.example/a', 'https://video.example/a'],
+      ['https://photo.example/b', '']
+    ])
+  })
+})
+
+describe('照片采集边界', () => {
+  it('图库网格与地点元数据分属不同 dialog 时，仍只接受意图绑定的 fid', async () => {
+    const fid = '0x89c2597ca044ec9b:0xa0acdb1716592b4d'
+    document.body.innerHTML = `
+      <div role="dialog"><div data-feature-id="0xa:0xb"></div></div>
+      <div role="dialog"><div data-feature-id="${fid}"></div></div>
+      <div role="dialog"><div role="grid"></div></div>
+    `
+    await expect(waitForPhotosGallery(fid)).resolves.toBe(true)
+    vi.useFakeTimers()
+    try {
+      const missingPlace = waitForPhotosGallery('0xc:0xd')
+      await vi.advanceTimersByTimeAsync(10_000)
+      await expect(missingPlace).resolves.toBe(false)
+    } finally {
+      vi.useRealTimers()
+      document.body.innerHTML = ''
+    }
+  })
+  it('缺少页面 AT token 时可见报错并结束，不发请求', async () => {
+    const onError = vi.fn()
+    const scraper = new PhotosScraper('0xa:0xb', { onStateChanged: vi.fn(), onError })
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    await scraper.start(getMapsConfig().scrape.photosPageLimit)
+    expect(fetch).not.toHaveBeenCalled()
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('SNlM0e'))
+    expect(scraper.getStatus()).toBe('stopped')
+  })
+
+  it('完整 fid 进入请求，按媒体条数翻页并截断上限', async () => {
+    getMapsConfig().scrape.photosPageDelayMs = 0
+    document.body.innerHTML = '<script>window.WIZ_global_data={"SNlM0e":"test-at"};</script>'
+    const fetch = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >()
+      .mockResolvedValueOnce(new Response(response(
+        Array.from({ length: 10 }, (_, i) => photo(String(i), 'https://video.example/a')),
+        'next'
+      )))
+      .mockResolvedValueOnce(new Response(response([photo('11'), photo('12'), photo('13')], null)))
+    vi.stubGlobal('fetch', fetch)
+    const scraper = new PhotosScraper('0xa:0xb', { onStateChanged: vi.fn(), onError: vi.fn() })
+    await scraper.start(12)
+    expect(scraper.getCount()).toBe(12)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    const requestBody = fetch.mock.calls[0]?.[1]?.body
+    expect(decodeURIComponent(String(requestBody))).toContain('0xa:0xb')
     expect(scraper.getStatus()).toBe('complete')
-    expect(errors[0]).toContain('SNlM0e')
-  })
-
-  it('streetview 过滤 + 有 token 翻页 + end 到底完成', async () => {
-    getMapsConfig().scrape.photosPageDelayMs = 0
-    // 上限提到 15：让第一批（10 张）不触发截断，走翻页路径
-    getMapsConfig().scrape.photosPageLimit = 15
-    document.body.innerHTML = `<script>window.WIZ_global_data = {"SNlM0e": "AT-token-x"}; window.IJ_values = [];</script>`
-    try {
-      const batch1 = {
-        entries: [
-          ...Array.from({ length: 10 }, (_, i) => makePhoto(`P${i}`)),
-          { photoUrl: 'https://maps.example/streetview/1' }
-        ],
-        next: 'p1',
-        end: false
-      }
-      const batch2 = {
-        entries: [makePhoto('C')],
-        next: null,
-        end: true
-      }
-      const { requests } = stubFetch([batch1, batch2])
-      const scraper = buildScraper()
-
-      await scraper.start()
-
-      // streetview 项不计入（第一批 10 有效 + 第二批 1）；end 命中即到底
-      expect(scraper.getCount()).toBe(11)
-      expect(scraper.getStatus()).toBe('complete')
-      expect(requests).toHaveLength(2)
-      expect(requests[0]?.url).toContain('/wizrpcui/_/WizRpcUi/data/batchexecute')
-      expect(requests[0]?.url).toContain('rpcids=wTe8We')
-      expect(requests[0]?.url).toContain('_reqid=172138')
-      expect(requests[1]?.url).toContain('_reqid=272138')
-      // AT token 与固定常量进入请求体
-      expect(requests[0]?.body).toContain('AT-token-x')
-      expect(decodeURIComponent(requests[0]?.body ?? '')).toContain('LU_PHOTO_GALLERY')
-      expect(decodeURIComponent(requests[0]?.body ?? '')).toContain('CgIgAQ==')
-      expect(decodeURIComponent(requests[0]?.body ?? '')).toContain('0xa0acdb1716592b4d')
-    } finally {
-      document.body.innerHTML = ''
-    }
-  })
-
-  it('不足一页（过滤后 <photosPageSize）完成；达上限截断并停止翻页', async () => {
-    getMapsConfig().scrape.photosPageDelayMs = 0
-    getMapsConfig().scrape.photosPageLimit = 12
-    document.body.innerHTML = `<script>window.WIZ_global_data = {"SNlM0e": "AT-token-x"};</script>`
-    try {
-      const bigBatch = {
-        entries: Array.from({ length: 12 }, (_, i) => makePhoto(`P${i}`)),
-        next: 'go-on',
-        end: false
-      }
-      const { requests } = stubFetch([bigBatch, bigBatch])
-      const scraper = buildScraper()
-
-      await scraper.start()
-
-      // 第一批 12 张即达上限截断，不再请求第二页
-      expect(scraper.getCount()).toBe(12)
-      expect(scraper.getStatus()).toBe('complete')
-      expect(requests).toHaveLength(1)
-    } finally {
-      document.body.innerHTML = ''
-    }
-  })
-
-  it('页面无 WIZ_global_data script 时 extractSnlM0e 返回 null', () => {
-    document.body.innerHTML = '<script>var other = 1;</script>'
-    expect(extractSnlM0e()).toBeNull()
   })
 })

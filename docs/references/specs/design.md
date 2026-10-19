@@ -2,7 +2,7 @@
 version: 1.0
 name: Material You
 theme: light
-description: 插件（extension / extension-bing）与 Admin 的 UI token 合同之亮色主题；website 见 design-website.md；暗色主题同名 token 见 design.dark.md，交互与组件规则以本文件为唯一来源。
+description: extension-bing 与 Admin 的 UI token 合同之亮色主题；extension 见本文 §0 的 Atlas Field 入口，website 见 design-website.md；暗色主题同名 token 见 design.dark.md。
 source: 风格选型探索稿 scratch/design-explore/gmap-ui-styles.html（不入 git），方案 06 / 06D；token 合同以本文件为准。
 colors:
   bg: "#ffffff"
@@ -104,11 +104,13 @@ elevation:
 
 ## 0 · 总览
 
-Material You 是插件两端（extension / extension-bing）与 Admin 的 UI token 合同；website 走 [Atlas](design-website.md)。核心语言：**Google Material 3 近亲——白底、顶部蓝调渐变带、Google 蓝主色、胶囊（pill）按钮与 chip 生态**。选它的理由：用户在 Google Maps 环境中使用产品，Material 语言带来最高信任度与零违和感，且组件规范成熟、四端落地最快。
+`extension/` 使用 **Atlas Field**：实现参考 [插件设计稿 README §2–§10](../../design/extension/README.md)，token 取值以 [`extension/src/styles/tokens.css`](../../../extension/src/styles/tokens.css) 为准；共享样式入口是 `extension/src/styles/index.css`，静态执行门为 `scripts/ui_token_lint.py` 的 `atlas` 合同。
+
+Material You 是 `extension-bing/` 与 Admin 的 UI token 合同；website 走 [Atlas](design-website.md)。核心语言：**Google Material 3 近亲——白底、顶部蓝调渐变带、Google 蓝主色、胶囊（pill）按钮与 chip 生态**。
 
 - 本文 = 亮色主题全量合同；暗色主题同名 token 换值，见 `design.dark.md`；交互与组件规则只在本文维护，暗色文件只写差异。
-- **实现层只允许消费语义 token（CSS 自定义属性），禁止硬编码色值、圆角、投影。** 变量名 = 本文 YAML 键；Admin token 集中定义在 `admin/src/styles/global.css`；插件两端（extension / extension-bing）运行在宿主页面或多入口环境，统一加 `gme-` 中缀（`--gme-surface`）防宿主 CSS 变量渗透，取值集中定义在 `extension*/src/styles/tokens.css`（页面入口引入）与 `sites/*/content/panel/panel.css`（Shadow DOM 自含）。Canvas 等不能直接消费 CSS 变量的运行时样式从对应 token owner 读取当前计算值。
-- 执行门：`scripts/ui_token_lint.py` 的 `material` 合同，样式改动后运行；admin / extension / extension-bing 均为 enforced，违规即失败；Admin Dashboard 的 Canvas 运行时样式 owner 同步纳入扫描。
+- **实现层只允许消费语义 token（CSS 自定义属性），禁止硬编码色值、圆角、投影。** 变量名 = 本文 YAML 键；Admin token 集中定义在 `admin/src/styles/global.css`；`extension-bing/` 运行在宿主页面或多入口环境，统一加 `gme-` 中缀（`--gme-surface`）防宿主 CSS 变量渗透，取值集中定义在 `extension-bing/src/styles/tokens.css`（页面入口引入）与 `sites/*/content/panel/panel.css`（Shadow DOM 自含）。Canvas 等不能直接消费 CSS 变量的运行时样式从对应 token owner 读取当前计算值。
+- 执行门：`scripts/ui_token_lint.py` 的 `material` 合同，样式改动后运行；admin / extension-bing 均为 enforced，违规即失败；Admin Dashboard 的 Canvas 运行时样式 owner 同步纳入扫描。
 - token 全集的参考实现（全组件换肤验证）在探索稿 `scratch/design-explore/gmap-ui-styles.html`（不入 git）；该文件与本合同冲突时，以本文件为准并回改探索稿。
 
 ## 1 · 颜色

@@ -1,14 +1,4 @@
-/*
- * Popup 壳层尺寸变量（弹窗最小宽高）。
- *
- * 色彩/圆角/投影/字体等语义 token 已统一收敛到 src/styles/tokens.css
- * （--gme-*，design.md / design.dark.md 合同），本文件不再承载任何色值。
- */
-
-:root {
-  --popup-min-width: 600px;
-  --popup-min-height: 400px;
-}
+/* Popup 壳层尺寸；共享样式由 styles/index.css 提供。 */
 
 html,
 body {
@@ -17,6 +7,6 @@ body {
 }
 
 body {
-  min-width: var(--popup-min-width);
-  min-height: var(--popup-min-height);
+  width: var(--popup-w);
+  max-width: 100vw;
 }

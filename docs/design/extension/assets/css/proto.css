@@ -1,0 +1,999 @@
+/* =========================================================================
+   原型工具层（只存在于设计稿，不进产品代码）
+   状态坞 · 舞台 · 浏览器框 · Popup 框 · Google Maps 宿主模拟
+   -------------------------------------------------------------------------
+   - 字面量写在本文件自己的 token 块里，不进 tokens.css（tokens.css 是落地合同）。
+   - 状态坞恒为深色开发者工具条（两种主题一致），避免被误读为产品界面。
+   - Google Maps 宿主模拟恒亮：宿主页面不随扩展主题翻转；风格化外观，不含任何 Google 标识。
+   ========================================================================= */
+
+:root {
+  /* 状态坞 */
+  --proto-bg: #0c111d;
+  --proto-bg-2: #161e2e;
+  --proto-bg-3: #222c40;
+  --proto-line: rgba(148, 163, 184, 0.16);
+  --proto-text: #e8edf5;
+  --proto-text-2: #94a0b6;
+  --proto-tape-a: #f5b301;
+  --proto-tape-b: #16120a;
+  --proto-play: #1a73e8;
+  --proto-play-fg: #ffffff;
+  --proto-ring: rgba(124, 176, 255, 0.75);
+  --proto-shadow: 0 2px 6px rgba(0, 0, 0, 0.28), 0 18px 48px -12px rgba(0, 0, 0, 0.55);
+  --proto-tape: repeating-linear-gradient(-45deg, var(--proto-tape-a) 0 5px, var(--proto-tape-b) 5px 10px);
+
+  /* 浏览器框（风格化 Chrome 外壳，跟随主题） */
+  --chrome-frame: light-dark(#dde2ea, #1a202e);
+  --chrome-toolbar: light-dark(#f3f5f8, #222a3a);
+  --chrome-omnibox: light-dark(#ffffff, #121826);
+  --chrome-text: light-dark(#3c4350, #c3cad6);
+  --chrome-text-2: light-dark(#6b7383, #8a94a8);
+  --chrome-dot-1: #ff5f57;
+  --chrome-dot-2: #febc2e;
+  --chrome-dot-3: #28c840;
+  --chrome-shadow: 0 2px 6px light-dark(rgba(16, 24, 40, 0.08), rgba(0, 0, 0, 0.4)),
+    0 32px 80px -24px light-dark(rgba(16, 24, 40, 0.3), rgba(0, 0, 0, 0.8));
+  --chrome-ext-active: light-dark(rgba(26, 115, 232, 0.12), rgba(124, 176, 255, 0.18));
+
+  /* Google Maps 宿主模拟（恒亮） */
+  --host-font: Roboto, Arial, system-ui, sans-serif;
+  --host-bg: #ffffff;
+  --host-line: #e3e5e8;
+  --host-text: #202124;
+  --host-text-2: #5f6368;
+  --host-text-3: #80868b;
+  --host-blue: #1a73e8;
+  --host-green: #188038;
+  --host-star: #f9ab00;
+  --host-star-off: #dadce0;
+  --host-chip: #f1f3f4;
+  --host-land: #f6f4ef;
+  --host-block: #ebe7df;
+  --host-water: #aad3f2;
+  --host-park: #cdeac0;
+  --host-road: #ffffff;
+  --host-road-casing: #e0dbd2;
+  --host-highway: #fde7a6;
+  --host-highway-casing: #f2c95c;
+  --host-label: #7b8089;
+  --host-water-label: #4f7fa6;
+  --host-pin: #ea4335;
+  --host-pin-dot: #8f1d16;
+  --host-pin-shadow: 0 2px 4px rgba(60, 64, 67, 0.35);
+  --host-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 2px 6px 2px rgba(60, 64, 67, 0.15);
+  --host-photo-1: linear-gradient(135deg, #c9a27a, #5b3d27);
+  --host-photo-2: linear-gradient(135deg, #b6cbbd, #46604f);
+  --host-photo-3: linear-gradient(140deg, #e2cfb0, #8d6b47);
+  --host-gallery-bg: #0f0f10;
+  --host-gallery-text: #e8eaed;
+  --host-fs-title: 22px;
+  --host-fs-zoom: 20px;
+  --mask-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.6l2.83 5.73 6.32.92-4.57 4.46 1.08 6.3L12 17.03l-5.66 2.98 1.08-6.3L2.85 9.25l6.32-.92z'/%3E%3C/svg%3E");
+}
+
+/* ===========================================================================
+   状态坞
+   =========================================================================== */
+.proto-dock {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  overflow: hidden;
+  border: 1px solid var(--proto-line);
+  border-radius: var(--r-md);
+  background: var(--proto-bg);
+  box-shadow: var(--proto-shadow);
+  color: var(--proto-text);
+  color-scheme: dark;
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  line-height: 1.4;
+  animation: enter-up var(--dur-4) var(--ease-out) backwards;
+}
+
+.proto-dock :focus-visible {
+  outline: 2px solid var(--proto-ring);
+  outline-offset: 1px;
+}
+
+.proto-dock-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 36px;
+  padding: 0 6px 0 10px;
+}
+
+.proto-dock:not(.is-collapsed) .proto-dock-head {
+  border-bottom: 1px solid var(--proto-line);
+}
+
+.proto-tape {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--r-2xs);
+  background: var(--proto-tape);
+}
+
+.proto-tape b {
+  padding: 0 4px;
+  background: var(--proto-tape-a);
+  color: var(--proto-tape-b);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.proto-dock-title {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.proto-dock-meta {
+  margin-left: auto;
+  color: var(--proto-text-2);
+}
+
+.proto-dock-toggle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-xs);
+  color: var(--proto-text-2);
+}
+
+.proto-dock-toggle:hover {
+  background: var(--proto-bg-3);
+  color: var(--proto-text);
+}
+
+.proto-dock-toggle svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--dur-3) var(--ease-emph);
+}
+
+.proto-dock.is-collapsed {
+  width: auto;
+}
+
+.proto-dock.is-collapsed .proto-dock-toggle svg {
+  transform: rotate(180deg);
+}
+
+.proto-dock.is-collapsed .proto-dock-body {
+  display: none;
+}
+
+.proto-dock-body {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.proto-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.proto-groups:empty {
+  display: none;
+}
+
+.proto-group {
+  display: grid;
+  gap: 4px;
+}
+
+.proto-group-label {
+  color: var(--proto-text-2);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.proto-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-xs);
+  background: var(--proto-bg-2);
+}
+
+.proto-seg button {
+  flex: 1 0 auto;
+  height: 24px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-xs);
+  color: var(--proto-text-2);
+  font-size: 11px;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-2),
+    color var(--dur-2);
+}
+
+.proto-seg button:hover {
+  background: var(--proto-bg-3);
+  color: var(--proto-text);
+}
+
+.proto-seg button[aria-checked='true'] {
+  background: var(--proto-text);
+  color: var(--proto-bg);
+  font-weight: 600;
+}
+
+.proto-select {
+  width: 100%;
+  height: 28px;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--proto-line);
+  border-radius: var(--r-xs);
+  background: var(--proto-bg-2);
+  color: var(--proto-text);
+  font-size: 11px;
+}
+
+.proto-sep {
+  height: 1px;
+  background: var(--proto-line);
+}
+
+.proto-flows {
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--proto-line);
+}
+
+.proto-flow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.proto-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px 0 var(--s-2);
+  border-radius: var(--r-full);
+  background: var(--proto-play);
+  color: var(--proto-play-fg);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.proto-play svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+.proto-play.is-playing {
+  background: var(--proto-tape-a);
+  color: var(--proto-tape-b);
+}
+
+.proto-step {
+  overflow: hidden;
+  color: var(--proto-text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===========================================================================
+   舞台：原型页的点阵画布。内容居中，底部给状态坞让位
+   <main class="proto-stage"> <section class="proto-scene"> … </section> </main>
+   =========================================================================== */
+.proto-stage {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: var(--s-12);
+  min-height: 100vh;
+  padding: var(--s-12) var(--s-6) var(--s-24);
+  background-color: var(--bg-2);
+  background-image: radial-gradient(var(--grid-line) 1px, transparent 1.5px);
+  background-size: 20px 20px;
+}
+
+.is-embed .proto-stage {
+  padding-bottom: var(--s-12);
+}
+
+/* 一个场景：标签行 + 画面 + 注释 */
+.proto-scene {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-4);
+  width: 100%;
+}
+
+.proto-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-kicker);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.proto-label b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* 设计注释（交互说明 / 对应 logic.md 条目）：嵌入缩略图时隐藏 */
+.proto-note {
+  max-width: 64ch;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+  text-align: center;
+}
+
+.proto-note code {
+  color: var(--text-2);
+  font-size: 11px;
+}
+
+.is-embed .proto-note,
+.is-embed .proto-label {
+  display: none;
+}
+
+/* ===========================================================================
+   Popup 框：真实 Popup 的视口（宽 400，高随内容，Chrome 上限 600）
+   子元素是 Popup 根节点，滚动由它自己负责；容器内弹窗 / Toast 以此为定位参照
+   =========================================================================== */
+.proto-popup {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: var(--popup-w);
+  max-height: 600px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  box-shadow: var(--shadow-lg);
+  contain: layout paint;
+}
+
+/* ===========================================================================
+   浏览器框：Popup 挂在工具栏图标下；页内面板挂在页面区域里
+   页面区域 contain: layout → 面板的 position: fixed 以页面区域为参照（等同真实视口）
+   =========================================================================== */
+.proto-browser {
+  --page-h: 720px;
+  width: min(1280px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--chrome-frame);
+  box-shadow: var(--chrome-shadow);
+}
+
+.proto-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  height: 44px;
+  padding: 0 var(--s-3);
+  background: var(--chrome-toolbar);
+  color: var(--chrome-text);
+}
+
+.proto-browser-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.proto-browser-dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--chrome-dot-1);
+}
+
+.proto-browser-dots i:nth-child(2) {
+  background: var(--chrome-dot-2);
+}
+
+.proto-browser-dots i:nth-child(3) {
+  background: var(--chrome-dot-3);
+}
+
+.proto-browser-url {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  height: 30px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-full);
+  background: var(--chrome-omnibox);
+  color: var(--chrome-text-2);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.proto-browser-url span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.proto-browser-url b {
+  color: var(--chrome-text);
+  font-weight: 500;
+}
+
+.proto-browser-url .icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* 工具栏扩展图标：.is-active 表示 Popup 已打开 */
+.proto-browser-ext {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-full);
+}
+
+.proto-browser-ext.is-active {
+  background: var(--chrome-ext-active);
+}
+
+.proto-browser-ext img {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-2xs);
+}
+
+.proto-browser-page {
+  position: relative;
+  height: var(--page-h);
+  overflow: hidden;
+  background: var(--host-bg);
+  contain: layout paint;
+}
+
+/* Popup 在浏览器框里：贴工具栏右上，从扩展图标下方展开 */
+.proto-browser-page > .proto-popup {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-3);
+  transform-origin: top right;
+  animation: popup-open var(--dur-3) var(--ease-out) backwards;
+}
+
+@keyframes popup-open {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0) scale(0.98);
+  }
+}
+
+/* ===========================================================================
+   Google Maps 宿主模拟：Proto.gmap(el, { mode }) 渲染；mode = search | list | place | reviews | photos
+   =========================================================================== */
+.gmap {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 408px minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--host-bg);
+  color: var(--host-text);
+  color-scheme: light;
+  font-family: var(--host-font);
+  font-size: 14px;
+  line-height: 1.43;
+  -webkit-font-smoothing: antialiased;
+}
+
+.gmap-side {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--host-bg);
+  box-shadow: var(--host-shadow);
+}
+
+.gmap-search {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  height: 48px;
+  margin: var(--s-3) var(--s-4);
+  padding: 0 var(--s-4) 0 var(--s-5);
+  border-radius: var(--r-full);
+  background: var(--host-bg);
+  box-shadow: var(--host-shadow);
+  color: var(--host-text);
+  font-size: 15px;
+}
+
+.gmap-search span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gmap-search svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--host-text-2);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.gmap-chips {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--s-2);
+  padding: 0 var(--s-4) var(--s-3);
+  overflow: hidden;
+}
+
+.gmap-chips span {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--host-line);
+  border-radius: var(--r-full);
+  color: var(--host-text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.gmap-list-head {
+  display: grid;
+  gap: 2px;
+  padding: var(--s-2) var(--s-6) var(--s-4);
+  border-bottom: 1px solid var(--host-line);
+}
+
+.gmap-list-head b {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.gmap-list-head span {
+  color: var(--host-text-2);
+  font-size: 13px;
+}
+
+.gmap-results {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--host-line);
+}
+
+.gmap-card {
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-6);
+  border-bottom: 1px solid var(--host-line);
+}
+
+.gmap-card.is-active {
+  background: var(--host-chip);
+}
+
+.gmap-card-text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+  color: var(--host-text-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.gmap-card-text b {
+  overflow: hidden;
+  color: var(--host-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gmap-card-text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gmap-rate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--host-text);
+}
+
+.gmap-rate > span {
+  color: var(--host-text-2);
+}
+
+.gmap-stars {
+  width: 60px;
+  height: 12px;
+  background: linear-gradient(90deg, var(--host-star) calc(var(--r, 5) * 20%), var(--host-star-off) 0);
+  -webkit-mask: var(--mask-star) 0 0 / 12px 12px repeat-x;
+  mask: var(--mask-star) 0 0 / 12px 12px repeat-x;
+}
+
+.gmap-open {
+  color: var(--host-green);
+  font-style: normal;
+}
+
+.gmap-thumb {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  border-radius: var(--r-xs);
+  background: var(--host-photo-1);
+}
+
+.gmap-card:nth-child(3n + 2) .gmap-thumb {
+  background: var(--host-photo-2);
+}
+
+.gmap-card:nth-child(3n) .gmap-thumb {
+  background: var(--host-photo-3);
+}
+
+/* 详情 */
+.gmap-place {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 详情页搜索框浮在头图上 */
+.gmap-side--place .gmap-search {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.gmap-hero {
+  height: 220px;
+  flex-shrink: 0;
+  background: var(--host-photo-1);
+}
+
+.gmap-place-head {
+  display: grid;
+  gap: 4px;
+  padding: var(--s-4) var(--s-6) var(--s-3);
+  color: var(--host-text-2);
+  font-size: 14px;
+}
+
+.gmap-place-head h2 {
+  color: var(--host-text);
+  font-size: var(--host-fs-title);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.gmap-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--host-line);
+}
+
+.gmap-tabs span {
+  flex: 1;
+  padding: var(--s-3) 0;
+  color: var(--host-text-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.gmap-tabs .is-on {
+  box-shadow: inset 0 -3px 0 var(--host-blue);
+  color: var(--host-blue);
+}
+
+.gmap-info {
+  display: grid;
+  margin: 0;
+  padding: var(--s-2) 0;
+  list-style: none;
+}
+
+.gmap-info li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  padding: var(--s-3) var(--s-6);
+  color: var(--host-text);
+  font-size: 14px;
+}
+
+.gmap-info i {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 2px solid var(--host-blue);
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+/* 地图 */
+.gmap-map {
+  position: relative;
+  overflow: hidden;
+  background: var(--host-land);
+}
+
+.gmap-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+.gm-land {
+  fill: var(--host-land);
+}
+
+.gm-blocks rect {
+  fill: var(--host-block);
+}
+
+.gm-park {
+  fill: var(--host-park);
+}
+
+.gm-water {
+  fill: var(--host-water);
+}
+
+.gm-roads-casing,
+.gm-roads,
+.gm-highway-casing,
+.gm-highway {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.gm-roads-casing {
+  stroke: var(--host-road-casing);
+  stroke-width: 15;
+}
+
+.gm-roads {
+  stroke: var(--host-road);
+  stroke-width: 11;
+}
+
+.gm-highway-casing {
+  stroke: var(--host-highway-casing);
+  stroke-width: 19;
+}
+
+.gm-highway {
+  stroke: var(--host-highway);
+  stroke-width: 14;
+}
+
+.gm-labels text {
+  fill: var(--host-label);
+  font-family: var(--host-font);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.gm-labels .gm-water-label {
+  fill: var(--host-water-label);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/* 结果 pin：外层定位 + 落点动画，::before 画旋转的 pin 头，::after 画中心点 */
+.gmap-pin {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  width: 22px;
+  height: 22px;
+  margin: -24px 0 0 -12px;
+  animation: pin-drop var(--dur-4) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms + 200ms);
+}
+
+.gmap-pin::before {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 50% 0;
+  background: var(--host-pin);
+  box-shadow: var(--host-pin-shadow);
+  transform: rotate(-45deg);
+  content: '';
+}
+
+.gmap-pin::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--host-pin-dot);
+  content: '';
+}
+
+.gmap-pin.is-selected {
+  width: 32px;
+  height: 32px;
+  margin: -32px 0 0 -16px;
+}
+
+.gmap-pin.is-selected::after {
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+}
+
+.gmap-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 24px;
+  display: grid;
+  overflow: hidden;
+  border-radius: var(--r-xs);
+  background: var(--host-bg);
+  box-shadow: var(--host-shadow);
+}
+
+.gmap-zoom span {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--host-text-2);
+  font-size: var(--host-fs-zoom);
+}
+
+.gmap-zoom span + span {
+  border-top: 1px solid var(--host-line);
+}
+
+/* 评论工作页（search.google.com/local/reviews）：单列评论流 */
+.gmap--page {
+  display: block;
+  overflow: hidden;
+  background: var(--host-chip);
+}
+
+.gmap-sheet {
+  width: min(640px, calc(100% - 48px));
+  margin: var(--s-6) auto;
+  border-radius: var(--r-sm);
+  background: var(--host-bg);
+  box-shadow: var(--host-shadow);
+}
+
+.gmap-sheet-head {
+  display: grid;
+  gap: 4px;
+  padding: var(--s-5) var(--s-6);
+  border-bottom: 1px solid var(--host-line);
+  color: var(--host-text-2);
+}
+
+.gmap-sheet-head h2 {
+  color: var(--host-text);
+  font-size: var(--host-fs-title);
+  font-weight: 400;
+}
+
+.gmap-review {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 4px var(--s-3);
+  padding: var(--s-4) var(--s-6);
+  border-bottom: 1px solid var(--host-line);
+  color: var(--host-text);
+  font-size: 14px;
+}
+
+.gmap-review > i {
+  grid-row: span 3;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--host-photo-2);
+}
+
+.gmap-review b {
+  font-weight: 500;
+}
+
+.gmap-review p {
+  color: var(--host-text-2);
+}
+
+/* 照片图库（/maps/uv）：深色大图 + 左侧缩略栏 */
+.gmap--gallery {
+  grid-template-columns: 120px minmax(0, 1fr);
+  background: var(--host-gallery-bg);
+  color: var(--host-gallery-text);
+}
+
+.gmap-strip {
+  display: grid;
+  align-content: start;
+  gap: var(--s-2);
+  padding: var(--s-16) var(--s-3) var(--s-3);
+}
+
+.gmap-strip i {
+  height: 72px;
+  border-radius: var(--r-xs);
+  background: var(--host-photo-1);
+  opacity: 0.85;
+}
+
+.gmap-strip i:nth-child(3n + 2) {
+  background: var(--host-photo-2);
+}
+
+.gmap-strip i:nth-child(3n) {
+  background: var(--host-photo-3);
+}
+
+.gmap-photo {
+  margin: var(--s-16) var(--s-12) var(--s-12);
+  border-radius: var(--r-xs);
+  background: var(--host-photo-3);
+}

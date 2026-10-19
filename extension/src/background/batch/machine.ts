@@ -95,13 +95,14 @@ function launchFrom(task: BulkTask, fromIndex: number, now: number, effects: Bul
 
     let url: string | null = null
     if (task.type === 'keywords') {
-      url = buildKeywordWorkUrl(item.value, task.id, index)
+      url = buildKeywordWorkUrl(item.value, task.id, index, task.items.length)
     } else {
       url = buildReviewWorkUrl(
         item.value,
         task.id,
         index,
-        task.reviewsPerStoreLimit ?? BULK_LIMITS.defaultReviewsPerStoreLimit
+        task.reviewsPerStoreLimit ?? BULK_LIMITS.defaultReviewsPerStoreLimit,
+        task.items.length
       )
       if (url === null) {
         item.status = 'skipped'
@@ -252,6 +253,7 @@ export function reduceBulkEvent(
       const current = nextTask.items[nextTask.cursor]
       if (current && current.status === 'running') {
         current.status = 'pending'
+        current.tries -= 1
       }
       nextTask.status = 'paused'
       nextTask.activeTabId = null
@@ -417,13 +419,14 @@ function buildWorkUrlForItem(task: BulkTask, itemIndex: number): string | null {
     return null
   }
   if (task.type === 'keywords') {
-    return buildKeywordWorkUrl(item.value, task.id, itemIndex)
+    return buildKeywordWorkUrl(item.value, task.id, itemIndex, task.items.length)
   }
   return buildReviewWorkUrl(
     item.value,
     task.id,
     itemIndex,
-    task.reviewsPerStoreLimit ?? BULK_LIMITS.defaultReviewsPerStoreLimit
+    task.reviewsPerStoreLimit ?? BULK_LIMITS.defaultReviewsPerStoreLimit,
+    task.items.length
   )
 }
 

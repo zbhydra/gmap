@@ -29,6 +29,8 @@ import { enrichMapsBusinesses } from '@/sites/maps/enrich/enrichApi'
 import { openExtensionLogin } from '../services/extensionLogin'
 import { bulkScheduler } from '../batch/controller'
 import type { BulkCreateTaskParams } from '../batch/types'
+import { photosWorkPage } from '../photosWorkPage'
+import { openBulkDashboard } from '@/core/utils/navigation'
 
 const MARK_TYPE_VALUES: readonly string[] = Object.values(MARK_TYPE)
 
@@ -65,6 +67,10 @@ export class BackgroundMessageRouter {
       // 订阅落地页代开（U7 遗留接线，W7）：content 无 tabs 能力，校验后
       // chrome.tabs.create 新标签打开；失败返回 opened=false 不抛 RPC 错误
       openPricingPage: params => this.openPricingPage(parseOpenPricingPageUrl(params)),
+      openBulkDashboard: async params => ({
+        opened: await openBulkDashboard(parseBulkDashboardType(params))
+      }),
+      photosWorkPage,
       getBulkState: () => bulkScheduler.getState(),
       createBulkTask: params => bulkScheduler.createTask(parseCreateBulkTaskRequest(params)),
       startBulkTask: params => bulkScheduler.startTask(parseBulkTaskIdRequest(params)),
@@ -208,6 +214,13 @@ function requireEnrichString(source: JsonObject, field: string): string {
     throw new Error(`[BackgroundMessageRouter] enrichMapsBusinesses 商家项 ${field} 必须是字符串`)
   }
   return value
+}
+
+function parseBulkDashboardType(params: JsonValue | undefined): '0' | '1' {
+  if (!isJsonObject(params) || (params.type !== '0' && params.type !== '1')) {
+    throw new Error('[BackgroundMessageRouter] openBulkDashboard type 必须为 0 或 1')
+  }
+  return params.type
 }
 
 /**

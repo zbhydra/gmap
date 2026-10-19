@@ -7,15 +7,16 @@
  * 扩展 service worker 直写 chrome.storage 三键注入——usage 查询/上报与
  * /maps/enrich 补全全部走本地真实 backend 的真实验证链。
  *
- * 断言链:登录态 Start 可用(Pro 配额不门控)→ 首批解析 → 免费档 10 行截断
- * 完成(截断当前对所有账号态生效,Pro 差异在月度配额与 enrich,非行数)→
- * 完成边沿 POST /maps/usage/report 200(真实配额扣减链)→ Email/社媒补全
+ * 断言链:登录态 Start 可用 → 真实采集超过 Free 上限并在有效上限内完成 →
+ * 完成边沿 POST /maps/usage/report 业务成功且用量增加 → Email/社媒补全
  * 请求到达本地真实 backend(行无官网时不发,容错)→ CSV 导出(36 列,行数与
  * 文件名计数一致)。gmap 面板无订阅徽标,登录态生效以配额链 200 为实证。
  */
 
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { expect, test, type Response } from '@playwright/test'
+import type { MapsUsageSnapshot } from '../../src/sites/maps/usage/types'
+import type { MapsUsageReportResponse } from '../../src/sites/maps/usage/usageApi'
 import {
   EXPECTED_HEADERS,
   FREE_ROW_LIMIT,
@@ -24,11 +25,13 @@ import {
   describeLandingHost,
   dismissConsent,
   exportButton,
+  extensionIdFromServiceWorker,
   injectExtensionAuth,
   launchRealMapsContext,
   panelHost,
   parseCsv,
   readDownload,
+  readCollectedCount,
   skipSmoke,
   startButton,
   waitForExtensionServiceWorker,
@@ -40,8 +43,7 @@ const rawAuth = process.env.E2E_MAPS_AUTH
 const auth: MapsE2eAuth | null = rawAuth ? (JSON.parse(rawAuth) as MapsE2eAuth) : null
 
 test.describe('真实 Google Maps 登录态采集(Pro,token 直注)', () => {
-  test('token 注入 → 截断完成 → 用量上报 200 → enrich 到达真实 backend → 导出', async () => {
-    // 采集(首批 RPC)+ 服务端 enrich(逐官网代抓,10 行单批)+ 导出,有界
+  test('token 注入 → 采集超过 Free 上限 → 真实用量增加 → 导出', async () => {
     test.setTimeout(420_000)
     if (!auth) {
       skipSmoke('无登录态可注入:本地 backend 未运行或 seed 失败(见 globalSetup 输出)')
@@ -54,9 +56,19 @@ test.describe('真实 Google Maps 登录态采集(Pro,token 直注)', () => {
 
     try {
       const serviceWorker = await waitForExtensionServiceWorker(context)
+      const livePopup = await context.newPage()
+      await livePopup.goto(
+        `chrome-extension://${extensionIdFromServiceWorker(serviceWorker)}/src/popup.html`
+      )
+      await expect(livePopup.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
       // 先注入再导航:content script 随文档启动时读到的即登录态;设置直注
       // 5s 档 + Email/社媒补全开关(真实用户可设的同一通道)
       await injectExtensionAuth(serviceWorker, auth)
+      await expect(livePopup.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible()
+      await livePopup.locator('#app').screenshot({
+        path: test.info().outputPath('maps-pro-popup-live-auth.png')
+      })
+      await livePopup.close()
       await serviceWorker.evaluate(() => {
         return chrome.storage.local.set({
           maps_user_settings: { requestIntervalSec: 5, extractEmail: true, extractSocialMedias: true }
@@ -74,6 +86,10 @@ test.describe('真实 Google Maps 登录态采集(Pro,token 直注)', () => {
       if (challengeOnLoad) {
         skipSmoke(`人机验证拦截: ${challengeOnLoad}`)
       }
+
+      await expect(page.locator('[role="feed"] a[href*="/maps/place/"]').first()).toBeVisible({
+        timeout: 30_000
+      })
 
       try {
         await expect(panelHost(page)).toHaveCount(1, { timeout: 30_000 })
@@ -93,11 +109,18 @@ test.describe('真实 Google Maps 登录态采集(Pro,token 直注)', () => {
 
       // 完成边沿信号(先于 Start 注册,防错过):用量上报与 enrich 首响应。
       // enrich 行全无官网时不发请求,超时兜底后照常导出(补全失败已收敛为空)。
+      const usageBeforeSettled = context.waitForEvent('response', {
+        predicate: (response: Response) =>
+          response.request().method() === 'GET' &&
+          response.url().endsWith('/api/client/maps/usage'),
+        timeout: 30_000
+      })
       const usageReportSettled = context
         .waitForEvent('response', {
           predicate: (response: Response) =>
+            response.request().method() === 'POST' &&
             response.url().includes('/api/client/maps/usage/report'),
-          timeout: 120_000
+          timeout: 240_000
         })
         .catch(() => null)
       const enrichSettled = context
@@ -108,23 +131,44 @@ test.describe('真实 Google Maps 登录态采集(Pro,token 直注)', () => {
         .catch(() => null)
 
       await start.click()
+      const usageBefore = await usageBeforeSettled
+      const before: { code: number; data: MapsUsageSnapshot } = await usageBefore.json()
+      expect(usageBefore.status()).toBe(200)
+      expect(before.code).toBe(10000)
+      expect(Boolean(usageBefore.request().headers()['authorization'])).toBe(true)
+      expect(before.data.run_limits.search, 'Start 应取得有效 Pro 权益').toBe(99999)
 
-      try {
-        await expect(exportButton(page)).toBeVisible({ timeout: 90_000 })
-      } catch {
-        skipSmoke('90s 内未达完成态:首批 RPC 未达或解析未命中(疑似协议改版,需人工归因)')
-      }
-      const buttonText = (await exportButton(page).innerText()).replace(/\s+/g, ' ').trim()
-      const buttonCount = Number(
-        buttonText.match(/^Export Detailed List - (\d+) \(\.CSV\)$/)?.[1] ?? 0
+      await expect(page.getByRole('button', { name: 'Reset', exact: true })).toBeVisible({
+        timeout: 180_000
+      })
+      const buttonCount = await readCollectedCount(page)
+      expect(buttonCount).toBeGreaterThan(FREE_ROW_LIMIT)
+      expect(buttonCount).toBeLessThanOrEqual(
+        Math.min(before.data.run_limits.search, before.data.total - before.data.used)
       )
-      expect(buttonCount).toBe(FREE_ROW_LIMIT)
+      await page.screenshot({
+        path: test.info().outputPath('maps-pro-complete.png'),
+        fullPage: true
+      })
 
       // 真实配额扣减链:完成边沿 usage/report 到达本地 backend 且 200
       const usageReport = await usageReportSettled
       expect(usageReport, '完成边沿未发出 /maps/usage/report').not.toBeNull()
       expect(await usageReport?.status(), `usage/report 状态码异常: ${usageReport?.url()}`).toBe(
         200
+      )
+      if (usageReport === null) {
+        throw new Error('完成边沿未发出 /maps/usage/report')
+      }
+      const reported: { code: number; data: MapsUsageReportResponse } = await usageReport.json()
+      expect(reported.code).toBe(10000)
+      expect(Boolean(usageReport.request().headers()['authorization'])).toBe(true)
+      expect(reported.data.deducted).toBe(true)
+      expect(reported.data.used).toBe(before.data.used + buttonCount)
+      expect(reported.data.run_limits).toEqual(before.data.run_limits)
+      writeFileSync(
+        test.info().outputPath('maps-pro-usage.json'),
+        JSON.stringify({ before, reported, collected: buttonCount, authorized: true }, null, 2)
       )
 
       // 等补全信号到达(响应后写回在 content 内执行,1s 跨进程时序缓冲);
@@ -139,11 +183,37 @@ test.describe('真实 Google Maps 登录态采集(Pro,token 直注)', () => {
         .match(/^MapsGrab-Extractor-(\d+)-.+-\d{4}-\d{2}-\d{2}\.csv$/)
       expect(filenameMatch, `导出文件名形态不符: ${download.suggestedFilename()}`).toBeTruthy()
       const exportCount = Number(filenameMatch?.[1] ?? 0)
-      expect(exportCount).toBe(FREE_ROW_LIMIT)
+      expect(exportCount).toBe(buttonCount)
 
       const rows = parseCsv(readFileSync((await download.path()) ?? '', 'utf-8'))
       expect(rows[0]).toEqual(EXPECTED_HEADERS)
-      expect(rows).toHaveLength(1 + FREE_ROW_LIMIT)
+      expect(rows).toHaveLength(1 + buttonCount)
+      await download.saveAs(test.info().outputPath(download.suggestedFilename()))
+
+      for (const format of ['json', 'xlsx'] as const) {
+        await serviceWorker.evaluate(exportFormat => {
+          return chrome.storage.local.set({ maps_user_settings: { exportFormat } })
+        }, format)
+        const button = page.getByRole('button', {
+          name: new RegExp(`^Export ${buttonCount.toLocaleString('en-US')} places\\s*${format.toUpperCase()}$`),
+          exact: true
+        })
+        await expect(button).toBeVisible()
+        const artifact = await readDownload(page, () => button.click())
+        expect(artifact.suggestedFilename().endsWith(`.${format}`)).toBe(true)
+        await artifact.saveAs(test.info().outputPath(artifact.suggestedFilename()))
+      }
+
+      const popup = await context.newPage()
+      await popup.goto(
+        `chrome-extension://${extensionIdFromServiceWorker(serviceWorker)}/src/popup.html`
+      )
+      await expect(popup.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible()
+      await expect(popup.getByText('Usage is unavailable. Try again.')).toHaveCount(0)
+      await popup.locator('#app').screenshot({
+        path: test.info().outputPath('maps-pro-popup.png')
+      })
+      await popup.close()
     } finally {
       await context.close()
     }

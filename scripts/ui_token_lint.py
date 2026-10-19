@@ -2,8 +2,8 @@
 """ui-token 合同静态扫描器（docs/references/specs/ 下 UI 设计合同的执行门）。
 
 两套合同按端分配：
-  material  design.md / design.dark.md（Material You）——extension / extension-bing / admin
-  atlas     design-website.md（Atlas）——website
+  material  design.md / design.dark.md（Material You）——extension-bing / admin
+  atlas     design-website.md（Atlas）/ docs/design/extension/README.md（Atlas Field）——website / extension
 
 每次改动 UI 样式后运行：
     python3 scripts/ui_token_lint.py        # enforced 端存在违规则退出码 1
@@ -38,7 +38,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # enforced：(端, 目录, 合同)，违规即退出码 1
 ENFORCED = [
-    ("extension", "extension/src", "material"),
+    ("extension", "extension/src", "atlas"),
     ("extension-bing", "extension-bing/src", "material"),
     ("admin", "admin/src", "material"),
     ("website", "website/src", "atlas"),
@@ -120,6 +120,10 @@ def check_block(block: str, profile: dict) -> tuple[list[str], int]:
     raw_px = 0
     in_comment = False
     in_vardef = False
+    shadow_values = {
+        block[: match.start()].count("\n") + 1: match.group(1)
+        for match in SHADOW.finditer(block)
+    }
 
     for offset, raw in enumerate(block.splitlines(), start=1):
         line = raw
@@ -172,8 +176,10 @@ def check_block(block: str, profile: dict) -> tuple[list[str], int]:
         keyword = value.strip(" ;")
         if prop == "border-radius" and "var(" not in value and "50%" not in value and keyword != "inherit":
             issues.append(f"L{offset} 圆角: {value.strip()[:110]}")
-        if prop in ("box-shadow", "text-shadow") and "var(" not in value and keyword not in ("none", "inherit"):
-            issues.append(f"L{offset} 投影: {value.strip()[:110]}")
+        if prop in ("box-shadow", "text-shadow"):
+            shadow_value = shadow_values.get(offset, value)
+            if "var(" not in shadow_value and shadow_value.strip() not in ("none", "inherit"):
+                issues.append(f"L{offset} 投影: {shadow_value.strip()[:110]}")
 
         if prop in SPACING_PROPS or SPACING_SUB.match(prop):
             for token in value.split():

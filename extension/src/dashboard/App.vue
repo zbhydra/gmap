@@ -1,893 +1,1529 @@
 <template>
-  <div class="dashboard-page">
-    <header class="dashboard-header">
-      <div class="dashboard-header-inner">
-        <h1 class="dashboard-title">{{ t(I18N_KEYS.DASHBOARD.TITLE) }}</h1>
-        <span class="dashboard-brand">{{ t(I18N_KEYS.MAPS_PANEL.TITLE) }}</span>
+  <div class="db-page">
+    <header class="appbar db-appbar">
+      <span class="brand"
+        ><img class="brand-mark" :src="brandIconUrl" alt="" />{{ t(I18N_KEYS.APP.TITLE) }}</span
+      >
+      <span class="db-appbar-sep" aria-hidden="true"></span>
+      <span class="appbar-title">{{ t(D.TITLE) }}</span>
+      <div class="appbar-actions">
+        <button
+          v-if="runningTask && selectedTaskId !== runningTask.id"
+          class="db-runpill"
+          type="button"
+          @click="openTask(runningTask)"
+        >
+          <span class="dot dot--live" aria-hidden="true"></span
+          ><span class="db-runpill-label">{{ t(D.STATUS_RUNNING) }}</span>
+          <span class="db-runpill-name truncate">{{ runningTask.name }}</span>
+          <span class="mono"
+            ><span v-roll="stats(runningTask).done"></span> /
+            {{ format(runningTask.items.length) }}</span
+          ><Icon :name="IconName.CHEVRON_RIGHT" :size="IconSize.XS" />
+        </button>
+        <a
+          class="btn btn-ghost btn-sm db-hdr-link"
+          :href="optionsUrl"
+          target="_blank"
+          rel="noreferrer"
+          :aria-label="t(I18N_KEYS.OPTIONS.TITLE)"
+          ><Icon :name="IconName.GEAR" /><span>{{ t(I18N_KEYS.OPTIONS.TITLE) }}</span></a
+        >
+        <a
+          class="btn btn-ghost btn-sm db-hdr-link"
+          :href="helpUrl"
+          target="_blank"
+          rel="noreferrer"
+          :aria-label="t(I18N_KEYS.APP.HELP)"
+          ><Icon :name="IconName.HELP" /><span>{{ t(I18N_KEYS.APP.HELP) }}</span></a
+        >
       </div>
     </header>
-
-    <main class="dashboard-main">
-      <!-- 新建任务 -->
-      <section class="dashboard-card">
-        <h2 class="dashboard-section-title">{{ t(I18N_KEYS.DASHBOARD.SECTION_CREATE) }}</h2>
-
-        <div class="dashboard-field">
-          <div
-            class="dashboard-segmented"
-            role="radiogroup"
-            :aria-label="t(I18N_KEYS.DASHBOARD.SECTION_CREATE)"
-          >
-            <button
-              type="button"
-              class="dashboard-segment"
-              role="radio"
-              :aria-checked="taskType === 'keywords'"
-              :class="{ 'dashboard-segment-active': taskType === 'keywords' }"
-              @click="taskType = 'keywords'"
-            >
-              {{ t(I18N_KEYS.DASHBOARD.TYPE_KEYWORDS) }}
-            </button>
-            <button
-              type="button"
-              class="dashboard-segment"
-              role="radio"
-              :aria-checked="taskType === 'review-urls'"
-              :class="{ 'dashboard-segment-active': taskType === 'review-urls' }"
-              @click="taskType = 'review-urls'"
-            >
-              {{ t(I18N_KEYS.DASHBOARD.TYPE_REVIEW_URLS) }}
-            </button>
-          </div>
+    <main class="page db">
+      <div class="db-head">
+        <div class="db-title">
+          <h1 class="h1">
+            {{
+              t(taskType === 'keywords' ? I18N_KEYS.APP.BULK_KEYWORDS : I18N_KEYS.APP.BULK_REVIEWS)
+            }}
+          </h1>
+          <p class="db-lede">{{ t(taskType === 'keywords' ? D.LEDE_KEYWORDS : D.LEDE_REVIEWS) }}</p>
         </div>
-
-        <div class="dashboard-field">
-          <label class="dashboard-label" for="dashboard-task-name">
-            {{ t(I18N_KEYS.DASHBOARD.TASK_NAME) }}
-          </label>
-          <input
-            id="dashboard-task-name"
-            v-model="taskName"
-            class="dashboard-input"
-            type="text"
-            :placeholder="t(I18N_KEYS.DASHBOARD.TASK_NAME_PLACEHOLDER)"
-          />
-        </div>
-
-        <div class="dashboard-field">
-          <label class="dashboard-label" for="dashboard-items">
-            {{ itemsLabel }}
-          </label>
-          <textarea
-            id="dashboard-items"
-            v-model="itemsText"
-            class="dashboard-textarea"
-            rows="8"
-            :placeholder="itemsPlaceholder"
-          ></textarea>
-          <p class="dashboard-hint">
-            {{ t(I18N_KEYS.DASHBOARD.ITEM_COUNT, { count: itemCount, max: MAX_ITEMS }) }}
-          </p>
-        </div>
-
-        <div v-if="taskType === 'review-urls'" class="dashboard-field">
-          <label class="dashboard-label" for="dashboard-reviews-limit">
-            {{ t(I18N_KEYS.DASHBOARD.REVIEWS_PER_STORE_LIMIT) }}
-          </label>
-          <p class="dashboard-hint">{{ t(I18N_KEYS.DASHBOARD.REVIEWS_PER_STORE_LIMIT_HINT) }}</p>
-          <input
-            id="dashboard-reviews-limit"
-            class="dashboard-number-input"
-            type="number"
-            min="1"
-            :value="reviewsLimit"
-            @change="onReviewsLimitChange"
-          />
-        </div>
-
-        <p v-if="formError !== null" class="dashboard-alert dashboard-alert-danger" role="alert">
-          {{ formError }}
-        </p>
-        <p v-else-if="copyNotice !== null" class="dashboard-alert dashboard-alert-ok" role="status">
-          {{ copyNotice }}
-        </p>
-
-        <div class="dashboard-actions">
+        <div
+          ref="toolTabs"
+          class="seg db-tool"
+          role="tablist"
+          :aria-label="t(D.TITLE)"
+          @keydown="onTabKey($event, 'tool')"
+        >
+          <span class="seg-thumb" aria-hidden="true" :style="toolIndicator"></span>
           <button
+            v-for="type in toolTypes"
+            :key="type"
             type="button"
-            class="dashboard-button-primary"
-            :disabled="submitting || itemCount === 0"
-            @click="createAndStart"
+            class="seg-btn"
+            role="tab"
+            :aria-selected="taskType === type"
+            :tabindex="taskType === type ? 0 : -1"
+            @click="selectType(type)"
           >
-            {{ t(I18N_KEYS.DASHBOARD.START_EXTRACTING) }}
+            <Icon :name="type === 'keywords' ? IconName.LIST_PLUS : IconName.REVIEW" />{{
+              t(type === 'keywords' ? D.TYPE_KEYWORDS : D.TYPE_REVIEW_URLS)
+            }}<span
+              v-if="runningTask?.type === type"
+              class="dot dot--live"
+              :aria-label="t(D.STATUS_RUNNING)"
+            ></span>
           </button>
         </div>
-      </section>
-
-      <!-- 任务列表 -->
-      <section class="dashboard-card">
-        <h2 class="dashboard-section-title">{{ t(I18N_KEYS.DASHBOARD.SECTION_TASKS) }}</h2>
-
-        <p v-if="tasks.length === 0" class="dashboard-empty">
-          {{ t(I18N_KEYS.DASHBOARD.EMPTY_HINT) }}
-        </p>
-
-        <div v-else class="dashboard-table-wrap">
-          <table class="dashboard-table">
-            <thead>
-              <tr>
-                <th class="dashboard-col-no">{{ t(I18N_KEYS.DASHBOARD.COL_NO) }}</th>
-                <th>{{ t(I18N_KEYS.DASHBOARD.COL_TASK_NAME) }}</th>
-                <th>{{ t(I18N_KEYS.DASHBOARD.COL_STATUS) }}</th>
-                <th class="dashboard-col-actions">{{ t(I18N_KEYS.DASHBOARD.COL_ACTIONS) }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(task, index) in tasks" :key="task.id">
-                <td class="dashboard-col-no dashboard-numeric">{{ index + 1 }}</td>
-                <td>
-                  <span class="dashboard-task-name">{{ task.name }}</span>
-                </td>
-                <td>
-                  <div class="dashboard-status-cell">
-                    <span class="dashboard-status-chip" :class="statusChipClass(task.status)">
-                      <span class="dashboard-status-dot" aria-hidden="true"></span>
-                      {{ statusText(task.status) }}
-                    </span>
-                    <span class="dashboard-progress dashboard-numeric">
+      </div>
+      <div class="db-viewbar">
+        <div
+          ref="viewTabs"
+          class="tabs db-tabs"
+          role="tablist"
+          :aria-label="t(D.TITLE)"
+          @keydown="onTabKey($event, 'view')"
+        >
+          <button
+            id="db-tab-create"
+            class="tab"
+            type="button"
+            role="tab"
+            aria-controls="db-panel"
+            :aria-selected="activeView === 'create'"
+            :tabindex="activeView === 'create' ? 0 : -1"
+            @click="showView('create')"
+          >
+            <Icon :name="IconName.PLUS" />{{ t(D.SECTION_CREATE) }}
+          </button>
+          <button
+            id="db-tab-history"
+            class="tab"
+            type="button"
+            role="tab"
+            aria-controls="db-panel"
+            :aria-selected="activeView === 'history'"
+            :tabindex="activeView === 'history' ? 0 : -1"
+            @click="showView('history')"
+          >
+            <Icon :name="IconName.HISTORY" />{{ t(D.HISTORY)
+            }}<span v-roll="tasks.length" class="badge badge--count"></span>
+          </button>
+          <span class="tab-ink" aria-hidden="true" :style="viewIndicator"></span>
+        </div>
+        <div
+          class="db-slots"
+          :class="{
+            'tone-warn': state.tasks.length >= 140,
+            'tone-bad': state.tasks.length >= BULK_LIMITS.maxTasks
+          }"
+        >
+          <span
+            ><b class="mono"
+              ><span v-roll="state.tasks.length"></span> / {{ BULK_LIMITS.maxTasks }}</b
+            >
+            {{ t(D.SLOTS_HINT) }}</span
+          >
+          <span
+            class="progress progress--sm"
+            :style="{ '--p': (state.tasks.length / BULK_LIMITS.maxTasks) * 100 }"
+            aria-hidden="true"
+            ><span class="progress-fill"></span
+          ></span>
+        </div>
+      </div>
+      <div class="db-alerts">
+        <div
+          v-if="notice"
+          :key="noticeId"
+          class="db-alert"
+          :class="notice.success ? 'tone-ok' : notice.code === 'mutex' ? 'tone-warn' : 'tone-bad'"
+          @mouseenter="pauseNotice"
+          @mouseleave="resumeNotice"
+          @focusin="pauseNotice"
+          @focusout="resumeNotice"
+        >
+          <div class="notice" :role="notice.success ? 'status' : 'alert'">
+            <Icon :name="notice.success ? IconName.CHECK_CIRCLE : IconName.ALERT_CIRCLE" />
+            <div class="db-alert-copy">
+              <p class="notice-title">{{ notice.message }}</p>
+              <div class="notice-actions">
+                <button
+                  v-if="notice.code === 'mutex' && runningTask"
+                  class="btn btn-secondary btn-sm"
+                  type="button"
+                  @click="openTask(runningTask)"
+                >
+                  {{ t(D.VIEW_RUNNING) }}
+                </button>
+                <button
+                  v-if="notice.code === 'limit-tasks' || notice.code === 'mutex'"
+                  class="btn btn-ghost btn-sm"
+                  type="button"
+                  @click="showView('history')"
+                >
+                  {{ t(D.OPEN_HISTORY) }}
+                </button>
+                <a
+                  v-if="notice.code === 'quota-exceeded'"
+                  class="link"
+                  :href="plansUrl"
+                  target="_blank"
+                  rel="noreferrer"
+                  >{{ t(I18N_KEYS.APP.PLANS) }}</a
+                >
+              </div>
+            </div>
+            <button
+              type="button"
+              class="icon-btn icon-btn--sm"
+              :aria-label="t(I18N_KEYS.APP_ERROR.DISMISS)"
+              @click="clearNotice"
+            >
+              <Icon :name="IconName.X" />
+            </button>
+          </div>
+          <span v-if="notice.success" class="db-alert-timer" aria-hidden="true"></span>
+        </div>
+      </div>
+      <section
+        id="db-panel"
+        class="db-panel"
+        role="tabpanel"
+        :aria-labelledby="activeView === 'create' ? 'db-tab-create' : 'db-tab-history'"
+      >
+        <Transition name="db-stage" mode="out-in">
+          <div v-if="selectedTask" :key="selectedTask.id" class="db-detail">
+            <nav class="db-crumbs" :aria-label="t(D.HISTORY)">
+              <button class="btn btn-ghost btn-sm db-back" type="button" @click="leaveTask">
+                <Icon :name="IconName.ARROW_LEFT" />{{ t(D.BACK) }}</button
+              ><span aria-hidden="true">/</span><span>{{ t(D.HISTORY) }}</span
+              ><span aria-hidden="true">/</span
+              ><span class="truncate strong" aria-current="page">{{ selectedTask.name }}</span>
+            </nav>
+            <section class="card db-hero" aria-labelledby="db-task-title">
+              <div class="db-hero-head">
+                <span class="icon-tile icon-tile--lg icon-tile--soft"
+                  ><Icon
+                    :name="selectedTask.type === 'keywords' ? IconName.LIST_PLUS : IconName.REVIEW"
+                /></span>
+                <div class="db-hero-main">
+                  <div class="db-hero-title">
+                    <h2 id="db-task-title" class="h2">{{ selectedTask.name }}</h2>
+                    <span class="status" :class="`status--${selectedTask.status}`"
+                      ><span :key="selectedTask.status" class="db-chip-text">{{
+                        statusText(selectedTask.status)
+                      }}</span></span
+                    >
+                  </div>
+                  <p class="db-meta">{{ taskMeta(selectedTask) }}</p>
+                </div>
+                <div class="db-hero-actions">
+                  <button
+                    type="button"
+                    class="btn btn-primary db-act"
+                    :disabled="submitting"
+                    @click="primaryAction(selectedTask)"
+                  >
+                    <Icon :name="actionIcon(selectedTask)" /><span
+                      :key="selectedTask.status"
+                      class="db-chip-text"
+                      >{{ actionText(selectedTask) }}</span
+                    ></button
+                  ><button
+                    type="button"
+                    class="icon-btn icon-btn--bordered"
+                    :aria-label="t(D.MORE_ACTIONS, { name: selectedTask.name })"
+                    @click="openMenu($event, selectedTask)"
+                  >
+                    <Icon :name="IconName.MORE" />
+                  </button>
+                </div>
+              </div>
+              <div class="db-meter">
+                <div class="db-meter-read">
+                  <span v-roll="stats(selectedTask).done" class="db-big mono"></span
+                  ><span class="db-big-of mono">/ {{ format(selectedTask.items.length) }}</span
+                  ><span class="db-meter-label">{{ t(D.PROCESSED) }}</span
+                  ><span class="db-pct mono"><span v-roll="progress(selectedTask)"></span>%</span>
+                </div>
+                <div
+                  class="progress progress--lg"
+                  :class="{ 'is-live': selectedTask.status === 'running' }"
+                  :style="{ '--p': progress(selectedTask) }"
+                  role="progressbar"
+                  :aria-label="selectedTask.name"
+                  :aria-valuemin="0"
+                  :aria-valuemax="selectedTask.items.length"
+                  :aria-valuenow="stats(selectedTask).done"
+                >
+                  <span class="progress-fill"></span>
+                </div>
+                <div class="db-meter-foot">
+                  <span>{{ stateLine(selectedTask) }}</span
+                  ><span>{{ t(D.DOWNLOAD_HINT) }}</span>
+                </div>
+              </div>
+              <dl class="db-stats">
+                <div class="db-stat">
+                  <dt><Icon :name="IconName.CHECK_CIRCLE" />{{ t(D.STATUS_COMPLETED) }}</dt>
+                  <dd v-roll="stats(selectedTask).complete"></dd>
+                </div>
+                <div class="db-stat">
+                  <dt><Icon :name="IconName.DATABASE" />{{ t(D.COLLECTED) }}</dt>
+                  <dd v-roll="stats(selectedTask).records"></dd>
+                </div>
+                <div class="db-stat" :class="{ 'tone-bad': stats(selectedTask).skipped > 0 }">
+                  <dt><Icon :name="IconName.SKIP" />{{ t(D.SKIPPED) }}</dt>
+                  <dd v-roll="stats(selectedTask).skipped"></dd>
+                  <p class="db-stat-sub">
+                    {{
+                      t(D.SKIP_BREAKDOWN, {
+                        stuck: stats(selectedTask).stuck,
+                        invalid: stats(selectedTask).invalid
+                      })
+                    }}
+                  </p>
+                </div>
+                <div class="db-stat">
+                  <dt><Icon :name="IconName.REFRESH" />{{ t(D.ATTEMPTS) }}</dt>
+                  <dd v-roll="stats(selectedTask).tries"></dd>
+                </div>
+              </dl>
+              <div v-if="selectedTask.status === 'running'" class="notice db-keep">
+                <Icon :name="IconName.INFO" />
+                <p class="notice-desc">{{ t(D.EXECUTION_HINT) }}</p>
+              </div>
+            </section>
+            <section class="db-items" aria-labelledby="db-items-title">
+              <header class="db-items-head">
+                <h3 id="db-items-title" class="h3">{{ itemsLabel }}</h3>
+                <span class="db-meta">{{
+                  t(D.PROGRESS_OF, {
+                    done: stats(selectedTask).done,
+                    total: selectedTask.items.length
+                  })
+                }}</span>
+              </header>
+              <div
+                ref="itemsWrap"
+                class="db-items-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="db-items-title"
+                @wheel.passive="following = false"
+                @touchmove.passive="following = false"
+                @pointerdown="following = false"
+                @keydown="following = false"
+                @scroll.passive="checkCurrentVisible"
+              >
+                <table class="db-table db-items-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="db-col-index">{{ t(D.COL_NO) }}</th>
+                      <th scope="col">{{ itemsLabel }}</th>
+                      <th scope="col" class="db-col-status">{{ t(D.COL_STATUS) }}</th>
+                      <th scope="col" class="db-col-records cell-num">{{ t(D.COLLECTED) }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(row, index) in selectedRows"
+                      :key="index"
+                      :data-index="index"
+                      :class="{
+                        'is-active': row.item.status === 'running',
+                        'is-retry': row.item.status === 'running' && row.item.tries > 1
+                      }"
+                    >
+                      <td class="cell-index mono">{{ index + 1 }}</td>
+                      <td class="db-item-value">
+                        <a
+                          v-if="row.url"
+                          class="db-url"
+                          :href="row.item.value"
+                          target="_blank"
+                          rel="noreferrer"
+                          ><span class="db-url-host">{{ row.url.host }}</span
+                          ><span class="truncate"
+                            >{{ row.url.pathname }}{{ row.url.search }}</span
+                          ></a
+                        ><span v-else class="db-kw" :title="row.item.value">{{
+                          row.item.value
+                        }}</span>
+                      </td>
+                      <td class="db-item-status">
+                        <span
+                          class="status"
+                          :class="
+                            row.item.status === 'running' && row.item.tries > 1
+                              ? 'status--paused db-status-retry'
+                              : `status--${row.item.status === 'complete' ? 'completed' : row.item.status}`
+                          "
+                          ><span :key="itemStatusText(row.item)" class="db-chip-text">{{
+                            itemStatusText(row.item)
+                          }}</span></span
+                        >
+                      </td>
+                      <td class="cell-num mono">
+                        <span
+                          v-if="row.item.status === 'running'"
+                          class="db-dots"
+                          :aria-label="t(D.ITEM_RUNNING)"
+                          ><i></i><i></i><i></i></span
+                        ><span
+                          v-else-if="row.item.status === 'complete'"
+                          v-roll="row.item.collected"
+                        ></span
+                        ><span v-else class="subtle">—</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <button
+                v-if="selectedTask.status === 'running' && !currentVisible"
+                type="button"
+                class="btn btn-secondary btn-sm db-jump"
+                @click="jumpToCurrent"
+              >
+                <Icon :name="IconName.ARROW_DOWN" />{{ t(D.JUMP_CURRENT) }}
+              </button>
+            </section>
+          </div>
+          <form
+            v-else-if="view === 'create'"
+            :key="`create-${taskType}`"
+            class="db-new"
+            novalidate
+            @submit.prevent="createTasks(true)"
+          >
+            <div class="card db-form-card">
+              <header class="db-card-head">
+                <span class="icon-tile icon-tile--soft"
+                  ><Icon :name="taskType === 'keywords' ? IconName.LIST_PLUS : IconName.REVIEW"
+                /></span>
+                <div>
+                  <h2 class="h3">
+                    {{ t(taskType === 'keywords' ? D.NEW_KEYWORDS : D.NEW_REVIEWS) }}
+                  </h2>
+                  <p class="db-card-desc">
+                    {{ t(taskType === 'keywords' ? D.FORM_KEYWORDS : D.FORM_REVIEWS) }}
+                  </p>
+                </div>
+              </header>
+              <div class="db-form-body">
+                <div class="field">
+                  <label class="field-label" for="db-name">{{ t(D.TASK_NAME) }}</label
+                  ><input
+                    id="db-name"
+                    v-model="draft.name"
+                    type="text"
+                    class="input"
+                    autocomplete="off"
+                    :placeholder="t(D.TASK_NAME_PLACEHOLDER)"
+                    :aria-invalid="submitted && !draft.name.trim()"
+                    aria-describedby="db-name-error"
+                    :disabled="submitting"
+                  />
+                  <p v-if="submitted && !draft.name.trim()" id="db-name-error" class="field-error">
+                    {{ t(D.ERROR_NAME_REQUIRED) }}
+                  </p>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="db-input"
+                    ><span>{{ itemsLabel }}</span
+                    ><span class="field-aside">{{
+                      t(D.ITEMS_ASIDE, { max: MAX_ITEMS })
+                    }}</span></label
+                  >
+                  <div class="db-textarea-wrap">
+                    <textarea
+                      id="db-input"
+                      v-model="draft.items"
+                      class="textarea db-textarea mono"
+                      rows="12"
+                      spellcheck="false"
+                      :placeholder="itemsPlaceholder"
+                      :aria-invalid="submitted && values.length === 0"
+                      aria-describedby="db-cleanup db-input-error"
+                      :disabled="submitting"
+                    ></textarea
+                    ><span
+                      :key="values.length"
+                      class="db-counter mono"
+                      :class="{ 'is-split': taskCount > 1 }"
+                      aria-hidden="true"
+                      ><b>{{ format(values.length) }}</b> / {{ MAX_ITEMS
+                      }}<span v-if="taskCount > 1">
+                        · {{ t(D.TASK_COUNT, { count: taskCount }) }}</span
+                      ></span
+                    >
+                  </div>
+                  <div id="db-cleanup" class="db-cleanup">
+                    <TransitionGroup name="db-clean"
+                      ><span v-if="duplicateCount" key="duplicates" class="db-clean"
+                        ><Icon :name="IconName.COPY" :size="IconSize.XS" />{{
+                          t(D.DUPLICATES_REMOVED, { count: duplicateCount })
+                        }}</span
+                      ><span v-if="emptyCount" key="empty" class="db-clean"
+                        ><Icon :name="IconName.MINUS" :size="IconSize.XS" />{{
+                          t(D.EMPTY_REMOVED, { count: emptyCount })
+                        }}</span
+                      ><span v-if="invalidCount" key="invalid" class="db-clean db-clean-warn"
+                        ><Icon :name="IconName.ALERT_CIRCLE" :size="IconSize.XS" />{{
+                          t(D.INVALID_LINKS, { count: invalidCount })
+                        }}</span
+                      ></TransitionGroup
+                    >
+                    <p v-if="!duplicateCount && !emptyCount && !invalidCount" class="field-hint">
+                      {{ t(D.CLEANUP_HINT) }}
+                    </p>
+                  </div>
+                  <p
+                    v-if="submitted && values.length === 0"
+                    id="db-input-error"
+                    class="field-error"
+                  >
+                    {{ t(D.ERROR_EMPTY_INPUT) }}
+                  </p>
+                </div>
+                <div v-if="taskType === 'review-urls'" class="field">
+                  <label class="field-label" for="db-reviews-limit">{{
+                    t(D.REVIEWS_PER_STORE_LIMIT)
+                  }}</label>
+                  <div class="db-perplace-row">
+                    <span class="select-wrap"
+                      ><select
+                        id="db-reviews-limit"
+                        v-model.number="reviewsLimit"
+                        class="select"
+                        :disabled="submitting"
+                        aria-describedby="db-review-hint"
+                      >
+                        <option v-for="limit in reviewLimits" :key="limit" :value="limit">
+                          {{ format(limit) }}
+                        </option>
+                      </select></span
+                    >
+                    <p id="db-review-hint" class="field-hint">
+                      {{ t(D.REVIEWS_PER_STORE_LIMIT_HINT) }}
+                    </p>
+                  </div>
+                </div>
+                <div class="db-retry">
+                  <div class="db-retry-head">
+                    <Icon :name="IconName.REFRESH" /><b>{{
+                      t(I18N_KEYS.OPTIONS.STUCK_MAX_RETRY)
+                    }}</b
+                    ><span class="badge badge--outline"
+                      ><Icon :name="IconName.LOCK" :size="IconSize.XS" />{{
+                        t(D.SET_IN_SETTINGS)
+                      }}</span
+                    >
+                  </div>
+                  <p class="body-sm">
+                    {{
+                      t(
+                        D.RETRY_VALUE,
+                        { retries: retryCount, attempts: retryCount + 1 },
+                        retryCount
+                      )
+                    }}
+                  </p>
+                  <p class="field-hint">{{ t(D.RETRY_HINT) }}</p>
+                  <div class="db-retry-bottom">
+                    <ol class="db-pips" role="list" aria-hidden="true">
+                      <li v-for="attempt in retryCount + 1" :key="attempt">{{ attempt }}</li>
+                      <li class="db-pip-skip">
+                        <Icon :name="IconName.ARROW_RIGHT" :size="IconSize.XS" />{{ t(D.SKIPPED) }}
+                      </li>
+                    </ol>
+                    <a
+                      class="link-arrow"
+                      :href="`${optionsUrl}#automation`"
+                      target="_blank"
+                      rel="noreferrer"
+                      >{{ t(D.CHANGE_SETTINGS)
+                      }}<Icon :name="IconName.EXTERNAL" :size="IconSize.XS"
+                    /></a>
+                  </div>
+                </div>
+              </div>
+              <footer class="db-form-foot">
+                <button
+                  class="btn btn-ghost db-clear"
+                  type="button"
+                  :disabled="submitting || (!draft.items && !draft.name)"
+                  @click="clearForm"
+                >
+                  <Icon :name="IconName.X" />{{ t(D.CLEAR) }}
+                </button>
+                <p
+                  v-if="quotaExceeded || runningTask"
+                  class="db-foot-hint"
+                  :class="{ 'tone-bad': quotaExceeded }"
+                >
+                  {{
+                    quotaExceeded
+                      ? t(D.QUOTA_FOOT_HINT)
+                      : t(D.RUNNING_FOOT_HINT, { name: runningTask?.name })
+                  }}
+                </p>
+                <div class="db-form-actions">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    :class="{ 'is-loading': submitting }"
+                    :disabled="submitting"
+                    @click="createTasks(false)"
+                  >
+                    <span v-if="submitting" class="spinner" aria-hidden="true"></span
+                    ><Icon v-else :name="IconName.LIST_PLUS" />{{
+                      taskCount > 1 ? t(D.CREATE_TASKS, { count: taskCount }) : t(D.CREATE_TASK)
+                    }}</button
+                  ><button
+                    type="submit"
+                    class="btn btn-primary"
+                    :class="{ 'is-loading': submitting }"
+                    :disabled="submitting"
+                  >
+                    <span v-if="submitting" class="spinner" aria-hidden="true"></span
+                    ><Icon v-else :name="IconName.PLAY" />{{
+                      t(taskCount > 1 ? D.START_FIRST_TASK : D.START_EXTRACTING)
+                    }}
+                  </button>
+                </div>
+              </footer>
+            </div>
+            <aside class="db-rail" :aria-label="t(D.SUMMARY)">
+              <section class="card db-sum">
+                <h3 class="kicker">{{ t(D.SUMMARY) }}</h3>
+                <div class="db-sum-main">
+                  <span v-roll="values.length" class="db-sum-num mono"></span
+                  ><span>{{ itemsLabel }}</span
+                  ><Icon :name="IconName.ARROW_RIGHT" :size="IconSize.SM" /><b>{{
+                    t(D.TASK_COUNT, { count: taskCount })
+                  }}</b>
+                </div>
+                <p class="db-card-desc">
+                  {{
+                    values.length === 0
+                      ? t(D.SUMMARY_EMPTY)
+                      : taskCount > 1
+                        ? t(D.SPLIT_HINT, {
+                            count: values.length,
+                            tasks: taskCount,
+                            max: MAX_ITEMS
+                          })
+                        : t(D.SUMMARY_ONE)
+                  }}
+                </p>
+                <div v-if="taskCount > 1" class="db-split">
+                  <ol class="db-split-bar" role="list" aria-hidden="true">
+                    <li
+                      v-for="(size, index) in splitSizes"
+                      :key="index"
+                      :style="{ flexGrow: size }"
+                    ></li>
+                  </ol>
+                  <ul class="db-split-list" role="list">
+                    <li v-for="(size, index) in splitSizes" :key="index">
+                      <span class="truncate"
+                        >{{ draft.name.trim() || t(D.SECTION_CREATE) }}_{{ index + 1 }}</span
+                      ><b class="mono">{{ format(size) }}</b>
+                    </li>
+                  </ul>
+                  <p class="field-hint">{{ t(D.SPLIT_START_HINT) }}</p>
+                </div>
+                <div ref="quotaBox" class="db-quota" :class="{ 'is-over': quotaExceeded }">
+                  <div class="db-quota-head">
+                    <h3 class="kicker">{{ t(D.QUOTA_CHECK) }}</h3>
+                    <span class="mono">{{
+                      t(taskType === 'keywords' ? D.QUOTA_RULE_KEYWORDS : D.QUOTA_RULE_REVIEWS, {
+                        count: perItem
+                      })
+                    }}</span>
+                  </div>
+                  <p class="db-quota-need">
+                    <b v-roll="estimate" class="mono"></b><span>{{ t(D.RECORDS_NEEDED) }}</span>
+                  </p>
+                  <template v-if="usage"
+                    ><div
+                      class="db-qbar"
+                      :style="{
+                        '--used': Math.min(100, (usage.used / usage.total) * 100),
+                        '--task': Math.max(0, (Math.min(estimate, remaining) / usage.total) * 100)
+                      }"
+                      aria-hidden="true"
+                    >
+                      <span></span><span></span>
+                    </div>
+                    <dl class="db-quota-legend">
+                      <div>
+                        <dt>{{ t(D.QUOTA_USED) }}</dt>
+                        <dd v-roll="usage.used" class="mono"></dd>
+                      </div>
+                      <div>
+                        <dt>{{ t(D.QUOTA_TASK) }}</dt>
+                        <dd v-roll="estimate" class="mono"></dd>
+                      </div>
+                      <div>
+                        <dt>{{ t(D.QUOTA_AFTER) }}</dt>
+                        <dd v-roll="remaining - estimate" class="mono"></dd>
+                      </div>
+                    </dl>
+                    <p class="field-hint">
                       {{
-                        t(I18N_KEYS.DASHBOARD.PROGRESS_OF, {
-                          done: doneCount(task),
-                          total: task.items.length
+                        t(D.QUOTA_LEFT, {
+                          remaining: format(remaining),
+                          total: format(usage.total),
+                          period: usage.period
                         })
                       }}
-                    </span>
-                    <span class="dashboard-counts dashboard-numeric">
-                      {{
-                        [
-                          t(I18N_KEYS.DASHBOARD.COUNT_TRY, { n: tryCount(task) }),
-                          t(I18N_KEYS.DASHBOARD.COUNT_COMPLETE, { n: completeCount(task) }),
-                          t(I18N_KEYS.DASHBOARD.COUNT_STUCK, { n: stuckCount(task) }),
-                          t(I18N_KEYS.DASHBOARD.COUNT_SKIP, { n: invalidCount(task) })
-                        ].join(' · ')
-                      }}
-                    </span>
-                  </div>
-                </td>
-                <td class="dashboard-col-actions">
-                  <div class="dashboard-row-actions">
-                    <button
-                      type="button"
-                      class="dashboard-button-small"
-                      :disabled="task.status === 'running'"
-                      @click="startTask(task.id)"
-                    >
-                      {{ t(I18N_KEYS.DASHBOARD.ACTION_START) }}
+                    </p>
+                    <div v-if="quotaExceeded" class="db-quota-warn" role="status">
+                      <Icon :name="IconName.ALERT_CIRCLE" />
+                      <div>
+                        <b>{{ t(D.ERROR_QUOTA_EXCEEDED) }}</b>
+                        <p>
+                          {{
+                            t(D.QUOTA_REDUCE, {
+                              count: values.length - Math.max(0, Math.floor(remaining / perItem))
+                            })
+                          }}
+                        </p>
+                        <p v-if="lowerReviews >= 100 && lowerReviews < reviewsLimit">
+                          {{ t(D.QUOTA_LOWER_REVIEWS, { count: lowerReviews }) }}
+                        </p>
+                        <a class="link" :href="plansUrl" target="_blank" rel="noreferrer">{{
+                          t(I18N_KEYS.APP.PLANS)
+                        }}</a>
+                      </div>
+                    </div></template
+                  >
+                  <p v-else class="field-hint" role="status">
+                    {{ t(D.QUOTA_UNAVAILABLE) }}
+                    <button class="link" type="button" @click="refreshUsage">
+                      {{ t(I18N_KEYS.APP_ERROR.RETRY) }}
                     </button>
-                    <button
-                      type="button"
-                      class="dashboard-button-small"
-                      :disabled="task.status !== 'running'"
-                      @click="stopTask(task.id)"
-                    >
-                      {{ t(I18N_KEYS.DASHBOARD.ACTION_STOP) }}
-                    </button>
-                    <button
-                      type="button"
-                      class="dashboard-button-small"
-                      :disabled="task.items.length === 0"
-                      @click="copyItems(task, 'all')"
-                    >
-                      {{ t(I18N_KEYS.DASHBOARD.ACTION_COPY_ALL) }}
-                    </button>
-                    <button
-                      type="button"
-                      class="dashboard-button-small"
-                      :disabled="completeCount(task) === 0"
-                      @click="copyItems(task, 'completed')"
-                    >
-                      {{ t(I18N_KEYS.DASHBOARD.ACTION_COPY_COMPLETED) }}
-                    </button>
-                    <button
-                      type="button"
-                      class="dashboard-button-small dashboard-button-danger"
-                      @click="deleteTask(task.id)"
-                    >
-                      {{ t(I18N_KEYS.DASHBOARD.ACTION_DELETE) }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                  </p>
+                </div>
+              </section>
+            </aside>
+          </form>
+          <div v-else :key="`history-${taskType}`" class="db-history">
+            <div v-if="tasks.length === 0" class="card empty db-empty">
+              <span class="icon-tile icon-tile--lg icon-tile--soft"
+                ><Icon :name="IconName.LIST_PLUS"
+              /></span>
+              <h2 class="empty-title">{{ t(D.EMPTY_TITLE) }}</h2>
+              <p class="empty-desc">{{ t(D.EMPTY_HINT) }}</p>
+              <button type="button" class="btn btn-primary" @click="showView('create')">
+                <Icon :name="IconName.PLUS" />{{ t(D.SECTION_CREATE) }}
+              </button>
+              <p class="field-hint">
+                {{ t(D.HISTORY_HINT, { count: state.tasks.length, max: BULK_LIMITS.maxTasks }) }}
+              </p>
+            </div>
+            <div v-else class="card db-history-wrap">
+              <table class="db-table db-history-table">
+                <thead>
+                  <tr>
+                    <th scope="col" class="db-col-index">{{ t(D.COL_NO) }}</th>
+                    <th scope="col">{{ t(D.COL_TASK_NAME) }}</th>
+                    <th scope="col">{{ t(D.COL_STATUS) }}</th>
+                    <th scope="col" class="cell-num">{{ t(D.PROCESSED) }}</th>
+                    <th scope="col" class="cell-num">{{ t(D.COL_ACTIONS) }}</th>
+                  </tr>
+                </thead>
+                <TransitionGroup tag="tbody" name="db-row"
+                  ><tr
+                    v-for="(task, index) in tasks"
+                    :key="task.id"
+                    :class="{ 'is-active': task.status === 'running' }"
+                  >
+                    <td class="cell-index mono">{{ index + 1 }}</td>
+                    <td class="db-cell-task">
+                      <button type="button" class="db-task-name" @click="openTask(task)">
+                        {{ task.name }}
+                      </button>
+                      <p class="db-meta">{{ taskMeta(task) }}</p>
+                    </td>
+                    <td class="db-cell-status">
+                      <span class="status" :class="`status--${task.status}`"
+                        ><span :key="task.status" class="db-chip-text">{{
+                          statusText(task.status)
+                        }}</span></span
+                      >
+                    </td>
+                    <td class="db-cell-progress">
+                      <div class="db-prog">
+                        <span class="mono"
+                          ><b v-roll="stats(task).done"></b
+                          ><span class="subtle"> / {{ format(task.items.length) }}</span></span
+                        ><span
+                          class="progress progress--sm"
+                          :class="{ 'is-live': task.status === 'running' }"
+                          :style="{ '--p': progress(task) }"
+                          aria-hidden="true"
+                          ><span class="progress-fill"></span></span
+                        ><span class="db-counts"
+                          >{{ t(D.COUNT_TRY, { n: stats(task).tries }) }} ·
+                          {{ t(D.COUNT_COMPLETE, { n: stats(task).complete }) }} ·
+                          {{ t(D.COUNT_STUCK, { n: stats(task).stuck }) }} ·
+                          {{ t(D.COUNT_SKIP, { n: stats(task).invalid }) }}</span
+                        >
+                      </div>
+                    </td>
+                    <td class="db-cell-actions">
+                      <div class="row">
+                        <button type="button" class="btn btn-ghost btn-sm" @click="openTask(task)">
+                          {{ t(D.ACTION_VIEW) }}</button
+                        ><button
+                          type="button"
+                          class="btn btn-secondary btn-sm db-act"
+                          :disabled="submitting"
+                          @click="primaryAction(task)"
+                        >
+                          <Icon :name="actionIcon(task)" :size="IconSize.XS" /><span
+                            :key="task.status"
+                            class="db-chip-text"
+                            >{{ actionText(task) }}</span
+                          ></button
+                        ><button
+                          type="button"
+                          class="icon-btn icon-btn--sm"
+                          :aria-label="t(D.MORE_ACTIONS, { name: task.name })"
+                          @click="openMenu($event, task)"
+                        >
+                          <Icon :name="IconName.MORE" />
+                        </button>
+                      </div>
+                    </td></tr
+                ></TransitionGroup>
+              </table>
+            </div>
+          </div>
+        </Transition>
       </section>
     </main>
+    <div
+      ref="taskMenu"
+      popover
+      class="menu db-menu"
+      role="menu"
+      :aria-label="t(D.COL_ACTIONS)"
+      @keydown="onMenuKey"
+    >
+      <template v-if="menuTask"
+        ><button
+          v-for="scope in copyScopes"
+          :key="scope"
+          type="button"
+          role="menuitem"
+          class="menu-item"
+          :disabled="copyCount(menuTask, scope) === 0"
+          @click="copyItems(menuTask, scope)"
+        >
+          <Icon :name="IconName.COPY" />{{
+            t(
+              scope === 'completed'
+                ? D.ACTION_COPY_COMPLETED
+                : scope === 'pending'
+                  ? D.ACTION_COPY_PENDING
+                  : D.ACTION_COPY_ALL
+            )
+          }}<span class="menu-item-meta mono">{{ copyCount(menuTask, scope) }}</span>
+        </button>
+        <div class="menu-sep" role="separator"></div>
+        <button
+          type="button"
+          role="menuitem"
+          class="menu-item menu-item--danger"
+          :disabled="submitting"
+          @click="requestDelete(menuTask)"
+        >
+          <Icon :name="IconName.TRASH" />{{ t(D.ACTION_DELETE) }}
+        </button></template
+      >
+    </div>
+    <dialog
+      ref="deleteDialog"
+      class="dialog"
+      aria-labelledby="db-delete-title"
+      aria-describedby="db-delete-desc"
+    >
+      <div class="dialog-body">
+        <span class="icon-tile tone-bad"><Icon :name="IconName.TRASH" /></span>
+        <h2 id="db-delete-title" class="dialog-title">{{ t(D.DELETE_TITLE) }}</h2>
+        <p id="db-delete-desc" class="dialog-desc">
+          {{ t(D.DELETE_CONFIRM, { name: deleteTarget?.name }) }}
+        </p>
+        <p v-if="deleteTarget?.status === 'running'" class="dialog-desc">
+          {{ t(D.DELETE_RUNNING) }}
+        </p>
+      </div>
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          :disabled="submitting"
+          autofocus
+          @click="deleteDialog?.close()"
+        >
+          {{ t(D.CANCEL) }}</button
+        ><button type="button" class="btn btn-danger" :disabled="submitting" @click="confirmDelete">
+          {{ t(D.ACTION_DELETE) }}
+        </button>
+      </div>
+    </dialog>
+    <Toast :show="toastState.show" :message="toastState.message" :type="toastState.type" />
+    <p class="sr-only" role="status" aria-live="polite">{{ progressAnnouncement }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch, type Directive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { I18N_KEYS } from '@/core/constants/i18n'
+import { WEBSITE } from '@/core/api/config'
+import { Icon, IconName, IconSize } from '@/core/components/icons'
+import Toast from '@/core/components/Toast.vue'
+import { useToast } from '@/core/composables/useToast'
 import { logger } from '@/core/utils/logger'
 import { BackgroundChannel } from '@/popup/rpc/background.rpc'
 import { ChromeEventSubscriber } from '@/core/rpc/ChromeEventBus'
 import type { ExtensionEvents } from '@/core/events/types'
+import { MapsUserSettingsManager } from '@/sites/maps/settings/userSettings'
+import type { MapsUsageSnapshot } from '@/sites/maps/usage/types'
+import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
+import { estimateBulkRecords } from '@/background/batch/quota'
+import { buildReviewWorkUrl } from '@/background/batch/workUrl'
 import {
   BULK_LIMITS,
   type BulkErrorCode,
   type BulkState,
   type BulkTask,
+  type BulkTaskItem,
   type BulkTaskStatus,
   type BulkTaskType
 } from '@/background/batch/types'
 
-const { t } = useI18n()
-
-/** 任务条目上限（BULK_LIMITS.maxItemsPerTask 的模板别名）。 */
+const { t, locale } = useI18n()
+const D = I18N_KEYS.DASHBOARD
+const { toastState, showSuccess } = useToast()
 const MAX_ITEMS = BULK_LIMITS.maxItemsPerTask
-
-/**
- * background RPC 客户端：dashboard 是扩展页，serve 侧按 sender 推导为
- * popup 通道（inferChromeCaller），因此复用 popup 生成客户端。
- */
+const toolTypes: BulkTaskType[] = ['keywords', 'review-urls']
+const copyScopes = ['completed', 'pending', 'all'] as const
+type CopyScope = (typeof copyScopes)[number]
 const background = new BackgroundChannel()
-
-/** 批量状态变更订阅（收到通知重读快照；后台每步落盘后广播）。 */
 const stateSubscriber = new ChromeEventSubscriber<ExtensionEvents>()
-
-/** 批量任务状态快照（渲染唯一来源；写操作经 RPC 返回值即时校准）。 */
 const state = ref<BulkState>({ version: 1, tasks: [] })
-
-/** 创建表单：任务类型 / 名称 / 条目文本 / 每店评论上限。 */
-const taskType = ref<BulkTaskType>('keywords')
-const taskName = ref('')
-const itemsText = ref('')
+const taskType = ref<BulkTaskType>(
+  new URLSearchParams(location.search).get('type') === '1' ? 'review-urls' : 'keywords'
+)
+const drafts = ref({ keywords: { name: '', items: '' }, 'review-urls': { name: '', items: '' } })
+const draft = computed(() => drafts.value[taskType.value])
 const reviewsLimit = ref<number>(BULK_LIMITS.defaultReviewsPerStoreLimit)
-
-/** 提交互斥锁与表单错误（danger 提示条）。 */
+const reviewLimits = Array.from({ length: 25 }, (_, index) => (index + 1) * 100)
+const retryCount = ref(1)
+const view = ref<'create' | 'history'>('create')
+const selectedTaskId = ref<string | null>(null)
 const submitting = ref(false)
-const formError = ref<string | null>(null)
-
-/** 复制成功提示（ok 提示条，短暂展示）。 */
-const copyNotice = ref<string | null>(null)
-let copyNoticeTimer: number | null = null
-
-const tasks = computed<readonly BulkTask[]>(() => state.value.tasks)
-
-/** 输入条目数（非空行）。 */
-const itemCount = computed(
-  () => itemsText.value.split('\n').filter(line => line.trim().length > 0).length
+const submitted = ref(false)
+const usage = ref<MapsUsageSnapshot | null>(null)
+const notice = ref<{ message: string; success: boolean; code: BulkErrorCode | null } | null>(null)
+const noticeId = ref(0)
+const progressAnnouncement = ref('')
+const following = ref(true)
+const currentVisible = ref(true)
+const itemsWrap = ref<HTMLDivElement | null>(null)
+const quotaBox = ref<HTMLDivElement | null>(null)
+const taskMenu = ref<HTMLDivElement | null>(null)
+const deleteDialog = ref<HTMLDialogElement | null>(null)
+const menuTaskId = ref<string | null>(null)
+const deleteTargetId = ref<string | null>(null)
+const menuTask = computed(() => state.value.tasks.find(task => task.id === menuTaskId.value))
+const deleteTarget = computed(() =>
+  state.value.tasks.find(task => task.id === deleteTargetId.value)
 )
+const toolTabs = ref<HTMLDivElement | null>(null)
+const viewTabs = ref<HTMLDivElement | null>(null)
+const toolIndicator = ref({ width: '0px', transform: 'translateX(0px)' })
+const viewIndicator = ref({ width: '0px', transform: 'translateX(0px)' })
+const optionsUrl = chrome.runtime.getURL('src/options.html')
+const brandIconUrl = chrome.runtime.getURL('icons/32.png')
+const helpUrl = new URL('/extension/#faq', WEBSITE.BASE_URL).toString()
+const plansUrl = new URL('/pricing', WEBSITE.BASE_URL).toString()
+let noticeTimer: number | null = null
+let noticeRemaining = 4000
+let noticeStarted = 0
+let lastAnnouncedAt = 0
+let removeSettingsListener: (() => void) | null = null
 
+const tasks = computed(() =>
+  state.value.tasks.filter(task => task.type === taskType.value).reverse()
+)
+const selectedTask = computed(
+  () => state.value.tasks.find(task => task.id === selectedTaskId.value) ?? null
+)
+const runningTask = computed(() => state.value.tasks.find(task => task.status === 'running'))
+const activeView = computed(() => (selectedTask.value ? 'history' : view.value))
+const lines = computed(() =>
+  draft.value.items ? draft.value.items.split('\n').map(line => line.trim()) : []
+)
+const nonEmpty = computed(() => lines.value.filter(Boolean))
+const values = computed(() => [...new Set(nonEmpty.value)])
+const emptyCount = computed(() => lines.value.length - nonEmpty.value.length)
+const duplicateCount = computed(() => nonEmpty.value.length - values.value.length)
+const taskCount = computed(() => Math.ceil(values.value.length / MAX_ITEMS))
+const splitSizes = computed(() =>
+  Array.from({ length: taskCount.value }, (_, index) =>
+    Math.min(MAX_ITEMS, values.value.length - index * MAX_ITEMS)
+  )
+)
+const invalidCount = computed(() =>
+  taskType.value === 'review-urls' ? values.value.filter(value => !validReviewUrl(value)).length : 0
+)
+const perItem = computed(() =>
+  taskType.value === 'review-urls'
+    ? reviewsLimit.value
+    : DEFAULT_MAPS_CONFIG.scrape.freeExportRowLimit
+)
+const estimate = computed(() =>
+  estimateBulkRecords(
+    values.value.length,
+    taskType.value,
+    reviewsLimit.value,
+    DEFAULT_MAPS_CONFIG.scrape.freeExportRowLimit
+  )
+)
+const remaining = computed(() =>
+  usage.value ? Math.max(0, usage.value.total - usage.value.used) : 0
+)
+const quotaExceeded = computed(() => usage.value !== null && estimate.value > remaining.value)
+const lowerReviews = computed(() =>
+  values.value.length ? Math.floor(remaining.value / values.value.length / 100) * 100 : 0
+)
 const itemsLabel = computed(() =>
-  taskType.value === 'keywords'
-    ? t(I18N_KEYS.DASHBOARD.TYPE_KEYWORDS)
-    : t(I18N_KEYS.DASHBOARD.TYPE_REVIEW_URLS)
+  t(taskType.value === 'keywords' ? D.TYPE_KEYWORDS : D.TYPE_REVIEW_URLS)
 )
-
 const itemsPlaceholder = computed(() =>
-  taskType.value === 'keywords'
-    ? t(I18N_KEYS.DASHBOARD.ITEMS_PLACEHOLDER_KEYWORDS)
-    : t(I18N_KEYS.DASHBOARD.ITEMS_PLACEHOLDER_REVIEWS)
+  t(taskType.value === 'keywords' ? D.ITEMS_PLACEHOLDER_KEYWORDS : D.ITEMS_PLACEHOLDER_REVIEWS)
 )
-
-/** 读最新状态快照（挂载 / 后台广播 / 页面重新可见）。 */
+const selectedRows = computed(
+  () =>
+    selectedTask.value?.items.map(item => ({
+      item,
+      url:
+        selectedTask.value?.type === 'review-urls' && validReviewUrl(item.value)
+          ? new URL(item.value)
+          : null
+    })) ?? []
+)
+const taskStats = computed(() =>
+  Object.fromEntries(
+    state.value.tasks.map(task => {
+      const counts = {
+        done: 0,
+        complete: 0,
+        skipped: 0,
+        stuck: 0,
+        invalid: 0,
+        tries: 0,
+        records: 0
+      }
+      for (const item of task.items) {
+        counts.tries += item.tries
+        if (item.status === 'complete') {
+          counts.complete++
+          counts.records += item.collected
+        }
+        if (item.status === 'skipped') counts.skipped++
+        if (item.skipReason === 'stuck') counts.stuck++
+        if (item.skipReason === 'invalid-url') counts.invalid++
+      }
+      counts.done = counts.complete + counts.skipped
+      return [task.id, counts]
+    })
+  )
+)
+function stats(task: BulkTask) {
+  return taskStats.value[task.id]!
+}
+function progress(task: BulkTask): number {
+  return task.items.length ? Math.floor((stats(task).done / task.items.length) * 100) : 0
+}
+function format(value: number): string {
+  return new Intl.NumberFormat(locale.value).format(value)
+}
+function reducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+const vRoll: Directive<HTMLElement, number> = {
+  mounted(element, binding) {
+    element.textContent = format(binding.value)
+  },
+  updated(element, binding) {
+    const value = format(binding.value)
+    if (element.textContent === value) return
+    element.textContent = value
+    if (!reducedMotion())
+      element.animate(
+        [
+          { transform: 'translateY(6px)', opacity: 0.3 },
+          { transform: 'none', opacity: 1 }
+        ],
+        { duration: 280, easing: 'ease-out' }
+      )
+  }
+}
+function validReviewUrl(value: string): boolean {
+  return buildReviewWorkUrl(value, '', 0, reviewsLimit.value, 1) !== null
+}
+function taskMeta(task: BulkTask): string {
+  const parts = [t(D.ITEM_COUNT, { count: format(task.items.length) }, task.items.length)]
+  if (task.type === 'review-urls')
+    parts.push(
+      t(D.QUOTA_RULE_REVIEWS, {
+        count: task.reviewsPerStoreLimit ?? BULK_LIMITS.defaultReviewsPerStoreLimit
+      })
+    )
+  parts.push(
+    new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(
+      task.createdAt
+    )
+  )
+  return parts.join(' · ')
+}
+function updateIndicators(): void {
+  for (const [container, indicator] of [
+    [toolTabs.value, toolIndicator],
+    [viewTabs.value, viewIndicator]
+  ] as const) {
+    const active = container?.querySelector<HTMLButtonElement>('[aria-selected="true"]')
+    if (active)
+      indicator.value = {
+        width: `${active.offsetWidth}px`,
+        transform: `translateX(${active.offsetLeft}px)`
+      }
+  }
+}
+function selectType(type: BulkTaskType): void {
+  if (submitting.value) return
+  taskType.value = type
+  selectedTaskId.value = null
+  submitted.value = false
+  clearNotice()
+  const url = new URL(location.href)
+  url.searchParams.set('type', type === 'review-urls' ? '1' : '0')
+  history.replaceState(null, '', url)
+}
+function showView(next: 'create' | 'history'): void {
+  view.value = next
+  selectedTaskId.value = null
+  submitted.value = false
+}
+function openTask(task: BulkTask): void {
+  if (submitting.value) return
+  selectType(task.type)
+  selectedTaskId.value = task.id
+  following.value = true
+  void nextTick(jumpToCurrent)
+}
+function onTabKey(event: KeyboardEvent, group: 'tool' | 'view'): void {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+  event.preventDefault()
+  const index =
+    event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? 1
+        : group === 'tool'
+          ? Number(taskType.value === 'keywords')
+          : Number(activeView.value === 'create')
+  if (group === 'tool') selectType(toolTypes[index]!)
+  else showView(index === 0 ? 'create' : 'history')
+  const container = group === 'tool' ? toolTabs.value : viewTabs.value
+  void nextTick(() =>
+    container?.querySelector<HTMLButtonElement>('[aria-selected="true"]')?.focus()
+  )
+}
 async function refreshState(): Promise<void> {
   try {
     state.value = await background.getBulkState()
   } catch (error) {
     logger.error('[Dashboard] 读取批量状态失败:', error)
+    showError()
   }
 }
-
-/** 业务拒绝码 → danger 文案。 */
-function errorCodeToMessage(code: BulkErrorCode): string {
-  const mapping: Record<BulkErrorCode, string> = {
-    mutex: I18N_KEYS.DASHBOARD.ERROR_MUTEX,
-    'limit-tasks': I18N_KEYS.DASHBOARD.ERROR_LIMIT_TASKS,
-    'limit-items': I18N_KEYS.DASHBOARD.ERROR_LIMIT_ITEMS,
-    'empty-input': I18N_KEYS.DASHBOARD.ERROR_EMPTY_INPUT,
-    'invalid-param': I18N_KEYS.DASHBOARD.ERROR_INVALID_PARAM,
-    'not-found': I18N_KEYS.DASHBOARD.ERROR_NOT_FOUND,
-    'quota-exceeded': I18N_KEYS.DASHBOARD.ERROR_QUOTA_EXCEEDED
-  }
-  return t(mapping[code] ?? I18N_KEYS.DASHBOARD.ERROR_INVALID_PARAM)
-}
-
-/** 创建任务并立即启动（竞品 Start Extracting 语义）。 */
-async function createAndStart(): Promise<void> {
-  formError.value = null
-
-  const values = itemsText.value
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-  if (values.length === 0) {
-    formError.value = t(I18N_KEYS.DASHBOARD.ERROR_EMPTY_INPUT)
-    return
-  }
-  if (values.length > BULK_LIMITS.maxItemsPerTask) {
-    formError.value = t(I18N_KEYS.DASHBOARD.ERROR_LIMIT_ITEMS)
-    return
-  }
-  const reviewsPerStoreLimit = taskType.value === 'review-urls' ? reviewsLimit.value : null
-  if (
-    taskType.value === 'review-urls' &&
-    (reviewsPerStoreLimit === null || reviewsPerStoreLimit < 1)
-  ) {
-    formError.value = t(I18N_KEYS.DASHBOARD.ERROR_INVALID_PARAM)
-    return
-  }
-
-  submitting.value = true
+async function refreshUsage(): Promise<void> {
   try {
-    // transport 失败（RPC 错误）直接抛出；业务拒绝经 ok/code 承载
-    const created = await background.createBulkTask({
-      // 空名由 dashboard 填充默认名（i18n 文案不进 reducer）：Task N 按创建序号
-      name:
-        taskName.value.trim().length > 0
-          ? taskName.value.trim()
-          : t(I18N_KEYS.DASHBOARD.DEFAULT_TASK_NAME, { index: state.value.tasks.length + 1 }),
-      type: taskType.value,
-      values,
-      reviewsPerStoreLimit
-    })
-    state.value = created.state
-    if (!created.ok) {
-      formError.value = created.code === null ? null : errorCodeToMessage(created.code)
+    usage.value = await background.getMapsUsage()
+  } catch (error) {
+    logger.error('[Dashboard] 读取额度失败:', error)
+    usage.value = null
+  }
+}
+function errorMessage(code: BulkErrorCode | null): string {
+  const mapping: Record<BulkErrorCode, string> = {
+    mutex: D.ERROR_MUTEX,
+    'limit-tasks': D.ERROR_LIMIT_TASKS,
+    'limit-items': D.ERROR_LIMIT_ITEMS,
+    'empty-input': D.ERROR_EMPTY_INPUT,
+    'invalid-param': D.ERROR_INVALID_PARAM,
+    'not-found': D.ERROR_NOT_FOUND,
+    'quota-exceeded': D.ERROR_QUOTA_EXCEEDED
+  }
+  return t(code === null ? D.ERROR_ACTION : mapping[code])
+}
+function showError(code: BulkErrorCode | null = null): void {
+  showNotice(errorMessage(code), false, code)
+}
+function clearNotice(): void {
+  if (noticeTimer !== null) window.clearTimeout(noticeTimer)
+  noticeTimer = null
+  notice.value = null
+}
+function showNotice(message: string, success = true, code: BulkErrorCode | null = null): void {
+  clearNotice()
+  notice.value = { message, success, code }
+  noticeId.value++
+  noticeRemaining = 4000
+  if (success) resumeNotice()
+}
+function pauseNotice(): void {
+  if (noticeTimer === null) return
+  window.clearTimeout(noticeTimer)
+  noticeTimer = null
+  noticeRemaining -= performance.now() - noticeStarted
+}
+function resumeNotice(): void {
+  if (!notice.value?.success || noticeTimer !== null) return
+  noticeStarted = performance.now()
+  noticeTimer = window.setTimeout(clearNotice, Math.max(0, noticeRemaining))
+}
+async function createTasks(startNow: boolean): Promise<void> {
+  if (submitting.value) return
+  submitted.value = true
+  clearNotice()
+  const name = draft.value.name.trim()
+  const input = values.value
+  if (!name || input.length === 0) {
+    document.getElementById(!name ? 'db-name' : 'db-input')?.focus()
+    return
+  }
+  if (state.value.tasks.length + taskCount.value > BULK_LIMITS.maxTasks) {
+    showError('limit-tasks')
+    return
+  }
+  submitting.value = true
+  const createdIds: string[] = []
+  const type = taskType.value
+  const chunks = taskCount.value
+  try {
+    await refreshUsage()
+    if (quotaExceeded.value) {
+      quotaBox.value?.scrollIntoView({
+        block: 'center',
+        behavior: reducedMotion() ? 'auto' : 'smooth'
+      })
+      progressAnnouncement.value = t(D.ERROR_QUOTA_EXCEEDED)
       return
     }
-
-    const newTask = created.state.tasks[created.state.tasks.length - 1]
-    if (newTask) {
-      const started = await background.startBulkTask({ taskId: newTask.id })
-      state.value = started.state
-      formError.value =
-        started.ok || started.code === null ? null : errorCodeToMessage(started.code)
+    for (let offset = 0; offset < input.length; offset += MAX_ITEMS) {
+      const result = await background.createBulkTask({
+        name: chunks > 1 ? `${name}_${createdIds.length + 1}` : name,
+        type,
+        values: input.slice(offset, offset + MAX_ITEMS),
+        reviewsPerStoreLimit: type === 'review-urls' ? reviewsLimit.value : null
+      })
+      state.value = result.state
+      if (!result.ok) {
+        showError(result.code)
+        return
+      }
+      const created = result.state.tasks[result.state.tasks.length - 1]!
+      createdIds.push(created.id)
+      // 局部失败只保留未保存的输入，用户重试不会重复创建成功的部分。
+      draft.value.items = input.slice(offset + MAX_ITEMS).join('\n')
     }
-
-    // 创建成功后清空输入（任务名与文本域；失败时保留便于修正）
-    if (formError.value === null) {
-      taskName.value = ''
-      itemsText.value = ''
+    draft.value.name = ''
+    submitted.value = false
+    if (startNow && createdIds[0]) {
+      const started = await startTask(createdIds[0], true)
+      if (started && chunks > 1) showNotice(t(D.SPLIT_START_HINT))
+      if (!started) {
+        view.value = 'history'
+        if (notice.value?.code === 'mutex') showNotice(t(D.SAVED_NOT_STARTED), false, 'mutex')
+      }
+    } else {
+      view.value = 'history'
+      showNotice(t(D.TASK_SAVED, { count: createdIds.length }, createdIds.length))
     }
   } catch (error) {
     logger.error('[Dashboard] 创建任务失败:', error)
-    formError.value = t(I18N_KEYS.DASHBOARD.ERROR_INVALID_PARAM)
+    showError()
   } finally {
     submitting.value = false
   }
 }
-
-/** 行操作：启动（互斥冲突经 danger 提示条展示）。 */
-async function startTask(taskId: string): Promise<void> {
-  formError.value = null
+async function startTask(taskId: string, showDetail = false): Promise<boolean> {
+  clearNotice()
   try {
-    const started = await background.startBulkTask({ taskId })
-    state.value = started.state
-    formError.value = started.ok || started.code === null ? null : errorCodeToMessage(started.code)
+    const result = await background.startBulkTask({ taskId })
+    state.value = result.state
+    if (!result.ok) {
+      showError(result.code)
+      return false
+    }
+    if (showDetail) {
+      selectedTaskId.value = taskId
+      following.value = true
+      void nextTick(jumpToCurrent)
+    }
+    return true
   } catch (error) {
-    logger.error('[Dashboard] 启动任务失败:', error)
+    logger.error(`[Dashboard] 启动任务失败: taskId=${taskId}`, error)
+    showError()
+    return false
   }
 }
-
-/** 行操作：停止。 */
-async function stopTask(taskId: string): Promise<void> {
-  formError.value = null
+async function primaryAction(task: BulkTask): Promise<void> {
+  if (submitting.value) return
+  submitting.value = true
+  clearNotice()
   try {
-    state.value = await background.stopBulkTask({ taskId }).then(result => result.state)
+    if (task.status === 'running') {
+      const result = await background.stopBulkTask({ taskId: task.id })
+      state.value = result.state
+      if (!result.ok) showError(result.code)
+    } else await startTask(task.id)
+    await refreshUsage()
   } catch (error) {
-    logger.error('[Dashboard] 停止任务失败:', error)
+    logger.error(`[Dashboard] 暂停任务失败: taskId=${task.id}`, error)
+    showError()
+  } finally {
+    submitting.value = false
   }
 }
-
-/** 行操作：删除。 */
-async function deleteTask(taskId: string): Promise<void> {
-  formError.value = null
+function leaveTask(): void {
+  if (selectedTask.value?.status === 'running')
+    showSuccess(t(D.KEEPS_RUNNING, { name: selectedTask.value.name }))
+  showView('history')
+}
+async function openMenu(event: MouseEvent, task: BulkTask): Promise<void> {
+  menuTaskId.value = task.id
+  const button = event.currentTarget
+  if (!(button instanceof HTMLElement)) return
+  const rect = button.getBoundingClientRect()
+  await nextTick()
+  const menu = taskMenu.value!
+  menu.showPopover()
+  menu.style.left = `${Math.max(8, Math.min(rect.right - menu.offsetWidth, window.innerWidth - menu.offsetWidth - 8))}px`
+  menu.style.top = `${Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - menu.offsetHeight - 8))}px`
+  menu.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+}
+function onMenuKey(event: KeyboardEvent): void {
+  if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return
+  event.preventDefault()
+  const buttons = [...taskMenu.value!.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]
+  const current = buttons.findIndex(button => button === document.activeElement)
+  const index =
+    event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? buttons.length - 1
+        : (current + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
+  buttons[index]?.focus()
+}
+function requestDelete(task: BulkTask): void {
+  taskMenu.value?.hidePopover()
+  deleteTargetId.value = task.id
+  deleteDialog.value?.showModal()
+}
+async function confirmDelete(): Promise<void> {
+  if (!deleteTarget.value || submitting.value) return
+  submitting.value = true
   try {
-    state.value = await background.deleteBulkTask({ taskId }).then(result => result.state)
+    const result = await background.deleteBulkTask({ taskId: deleteTarget.value.id })
+    state.value = result.state
+    deleteDialog.value?.close()
+    if (!result.ok) showError(result.code)
+    else {
+      if (!selectedTask.value) showView('history')
+      showNotice(t(D.DELETED))
+    }
   } catch (error) {
     logger.error('[Dashboard] 删除任务失败:', error)
+    deleteDialog.value?.close()
+    showError()
+  } finally {
+    submitting.value = false
   }
 }
-
-/** 行操作：复制条目（all = 全部载荷；completed = 已完成条目载荷）。 */
-async function copyItems(task: BulkTask, scope: 'all' | 'completed'): Promise<void> {
-  const values = task.items
-    .filter(item => (scope === 'all' ? true : item.status === 'complete'))
+function copyCount(task: BulkTask, scope: CopyScope): number {
+  return scope === 'all'
+    ? task.items.length
+    : scope === 'completed'
+      ? stats(task).complete
+      : task.items.length - stats(task).complete
+}
+async function copyItems(task: BulkTask, scope: CopyScope): Promise<void> {
+  taskMenu.value?.hidePopover()
+  const copied = task.items
+    .filter(
+      item =>
+        scope === 'all' ||
+        (scope === 'completed' ? item.status === 'complete' : item.status !== 'complete')
+    )
     .map(item => item.value)
   try {
-    await navigator.clipboard.writeText(values.join('\n'))
-    formError.value = null
-    showCopyNotice()
+    await navigator.clipboard.writeText(copied.join('\n'))
+    showNotice(t(D.COPIED))
   } catch (error) {
     logger.error('[Dashboard] 复制条目失败:', error)
-    formError.value = t(I18N_KEYS.DASHBOARD.COPY_FAILED)
+    showNotice(t(D.COPY_FAILED), false)
   }
 }
-
-/** 复制成功提示（短暂展示后自动消失，失败优先展示错误）。 */
-function showCopyNotice(): void {
-  copyNotice.value = t(I18N_KEYS.DASHBOARD.COPIED)
-  if (copyNoticeTimer !== null) {
-    window.clearTimeout(copyNoticeTimer)
-  }
-  copyNoticeTimer = window.setTimeout(() => {
-    copyNotice.value = null
-  }, 2000)
+function clearForm(): void {
+  draft.value.name = ''
+  draft.value.items = ''
+  submitted.value = false
+  clearNotice()
 }
-
-/** 每店评论上限输入：取整并夹到 ≥1（非法回默认 300）。 */
-function onReviewsLimitChange(event: Event): void {
-  const parsed = Number.parseInt((event.target as HTMLInputElement).value, 10)
-  const next = Number.isNaN(parsed) || parsed < 1 ? BULK_LIMITS.defaultReviewsPerStoreLimit : parsed
-  reviewsLimit.value = next
-  ;(event.target as HTMLInputElement).value = String(next)
-}
-
-/** 计数：完成 / 卡死跳过 / 无效跳过 / 尝试次数合计。 */
-function completeCount(task: BulkTask): number {
-  return task.items.filter(item => item.status === 'complete').length
-}
-
-function stuckCount(task: BulkTask): number {
-  return task.items.filter(item => item.skipReason === 'stuck').length
-}
-
-function invalidCount(task: BulkTask): number {
-  return task.items.filter(item => item.skipReason === 'invalid-url').length
-}
-
-function tryCount(task: BulkTask): number {
-  return task.items.reduce((sum, item) => sum + item.tries, 0)
-}
-
-function doneCount(task: BulkTask): number {
-  return task.items.filter(item => item.status === 'complete' || item.status === 'skipped').length
-}
-
-/** 状态 chip 文案与配色类（颜色之外有文字通道，design.md 状态规则）。 */
 function statusText(status: BulkTaskStatus): string {
-  const mapping: Record<BulkTaskStatus, string> = {
-    idle: I18N_KEYS.DASHBOARD.STATUS_IDLE,
-    running: I18N_KEYS.DASHBOARD.STATUS_RUNNING,
-    paused: I18N_KEYS.DASHBOARD.STATUS_PAUSED,
-    completed: I18N_KEYS.DASHBOARD.STATUS_COMPLETED
+  return t(
+    {
+      idle: D.STATUS_IDLE,
+      running: D.STATUS_RUNNING,
+      paused: D.STATUS_PAUSED,
+      completed: D.STATUS_COMPLETED
+    }[status]
+  )
+}
+function actionText(task: BulkTask): string {
+  return t(
+    {
+      idle: D.ACTION_START,
+      running: D.ACTION_STOP,
+      paused: I18N_KEYS.MAPS_PANEL.RESUME,
+      completed: D.RUN_AGAIN
+    }[task.status]
+  )
+}
+function actionIcon(task: BulkTask): IconName {
+  return task.status === 'running'
+    ? IconName.PAUSE
+    : task.status === 'completed'
+      ? IconName.REFRESH
+      : IconName.PLAY
+}
+function itemStatusText(item: BulkTaskItem): string {
+  if (item.skipReason === 'stuck') return t(D.ITEM_STUCK)
+  if (item.skipReason === 'invalid-url') return t(D.ITEM_INVALID)
+  if (item.status === 'running' && item.tries > 1) return t(D.ITEM_RETRYING, { count: item.tries })
+  return t(
+    {
+      pending: D.ITEM_PENDING,
+      running: D.ITEM_RUNNING,
+      complete: D.ITEM_COMPLETE,
+      skipped: D.SKIPPED
+    }[item.status]
+  )
+}
+function stateLine(task: BulkTask): string {
+  return t(
+    task.status === 'running'
+      ? D.WORKING_ITEM
+      : task.status === 'paused'
+        ? D.PAUSED_ITEM
+        : task.status === 'completed'
+          ? D.FINISHED_ITEMS
+          : D.READY_ITEMS,
+    { index: Math.min(task.cursor + 1, task.items.length), total: task.items.length }
+  )
+}
+function checkCurrentVisible(): void {
+  const wrap = itemsWrap.value
+  const row = wrap?.querySelector<HTMLTableRowElement>('tr.is-active')
+  if (!wrap || !row) {
+    currentVisible.value = true
+    return
   }
-  return t(mapping[status])
+  const box = wrap.getBoundingClientRect()
+  const item = row.getBoundingClientRect()
+  currentVisible.value =
+    item.top >= box.top + (wrap.querySelector('thead')?.offsetHeight ?? 0) &&
+    item.bottom <= box.bottom
 }
-
-function statusChipClass(status: BulkTaskStatus): string {
-  return `dashboard-status-${status}`
+function jumpToCurrent(): void {
+  following.value = true
+  const wrap = itemsWrap.value
+  const row = wrap?.querySelector<HTMLTableRowElement>('tr.is-active')
+  if (!wrap || !row) return
+  const delta = row.getBoundingClientRect().top - wrap.getBoundingClientRect().top
+  const head = wrap.querySelector('thead')?.offsetHeight ?? 0
+  wrap.scrollTo({
+    top: wrap.scrollTop + delta - head - (wrap.clientHeight - head) * 0.35,
+    behavior: 'auto'
+  })
+  checkCurrentVisible()
 }
-
-/** 页面重新可见时对齐一次快照（广播丢失的兜底）。 */
 function onVisibilityChange(): void {
   if (document.visibilityState === 'visible') {
     void refreshState()
+    void refreshUsage()
   }
 }
-
-onMounted(() => {
-  void refreshState()
+watch([taskType, activeView, locale, () => tasks.value.length], () => {
+  void nextTick(updateIndicators)
+})
+watch(
+  () => [selectedTask.value?.id, selectedTask.value?.cursor, selectedTask.value?.status],
+  () => {
+    void nextTick(() => {
+      if (following.value) jumpToCurrent()
+      else checkCurrentVisible()
+    })
+    if (selectedTask.value && Date.now() - lastAnnouncedAt >= 8000) {
+      progressAnnouncement.value = t(D.PROGRESS_OF, {
+        done: stats(selectedTask.value).done,
+        total: selectedTask.value.items.length
+      })
+      lastAnnouncedAt = Date.now()
+    }
+  }
+)
+onMounted(async () => {
   stateSubscriber.on('mapsBulkStateChanged', () => {
     void refreshState()
   })
   document.addEventListener('visibilitychange', onVisibilityChange)
+  window.addEventListener('resize', updateIndicators)
+  await Promise.all([refreshState(), refreshUsage()])
+  selectedTaskId.value = tasks.value.find(task => task.status === 'running')?.id ?? null
+  try {
+    retryCount.value = (await MapsUserSettingsManager.getSettings()).stuckMaxRetry
+    removeSettingsListener = MapsUserSettingsManager.onSettingsChanged(settings => {
+      retryCount.value = settings.stuckMaxRetry
+    })
+  } catch (error) {
+    logger.error('[Dashboard] 读取任务设置失败:', error)
+    showError()
+  }
+  await document.fonts.ready
+  updateIndicators()
 })
-
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilityChange)
+  window.removeEventListener('resize', updateIndicators)
   stateSubscriber.destroy()
-  if (copyNoticeTimer !== null) {
-    window.clearTimeout(copyNoticeTimer)
-    copyNoticeTimer = null
-  }
+  background.destroy()
+  removeSettingsListener?.()
+  clearNotice()
 })
 </script>
-
-<style scoped>
-/* 语义 token 由 src/styles/tokens.css 统一提供（--gme-*），此处只做消费。 */
-.dashboard-page {
-  min-height: 100vh;
-  box-sizing: border-box;
-  background-color: var(--gme-bg);
-  background-image: var(--gme-bg-image);
-  color: var(--gme-text);
-  font-family: var(--gme-font-body);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-.dashboard-header {
-  padding: 24px 28px 16px;
-}
-
-.dashboard-header-inner {
-  max-width: 1120px;
-  margin: 0 auto;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.dashboard-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 32px;
-  letter-spacing: -0.015em;
-  color: var(--gme-text);
-}
-
-.dashboard-brand {
-  font-family: var(--gme-font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--gme-text-3);
-}
-
-.dashboard-main {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 28px 64px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.dashboard-card {
-  margin: 0;
-  padding: 24px;
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border);
-  border-radius: var(--gme-rounded-md);
-  box-shadow: var(--gme-shadow-card);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.dashboard-section-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 24px;
-  color: var(--gme-text);
-}
-
-.dashboard-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.dashboard-label {
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 18px;
-  color: var(--gme-text);
-}
-
-.dashboard-hint {
-  margin: 0;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--gme-text-2);
-}
-
-/* 任务类型分段选择：pill 段（design.md 分段控件规则） */
-.dashboard-segmented {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.dashboard-segment {
-  height: 33px;
-  padding: 0 16px;
-  font-family: var(--gme-font-body);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--gme-text);
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border-strong);
-  border-radius: var(--gme-rounded-full);
-  cursor: pointer;
-}
-
-.dashboard-segment:hover {
-  background: var(--gme-surface-2);
-}
-
-.dashboard-segment:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
-}
-
-.dashboard-segment-active,
-.dashboard-segment-active:hover {
-  background: var(--gme-primary);
-  border-color: var(--gme-primary);
-  color: var(--gme-primary-fg);
-}
-
-/* 输入：高 40 + border-strong + sm 圆角；textarea 最小高 86px */
-.dashboard-input,
-.dashboard-number-input {
-  height: 40px;
-  padding: 0 14px;
-  font-family: var(--gme-font-body);
-  font-size: 14px;
-  color: var(--gme-text);
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border-strong);
-  border-radius: var(--gme-rounded-sm);
-}
-
-.dashboard-number-input {
-  width: 120px;
-  font-variant-numeric: tabular-nums;
-}
-
-.dashboard-textarea {
-  min-height: 86px;
-  padding: 8px 12px;
-  font-family: var(--gme-font-body);
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--gme-text);
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border-strong);
-  border-radius: var(--gme-rounded-sm);
-  resize: vertical;
-}
-
-.dashboard-input:focus-visible,
-.dashboard-number-input:focus-visible,
-.dashboard-textarea:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
-  border-color: var(--gme-ring);
-}
-
-.dashboard-input::placeholder,
-.dashboard-textarea::placeholder {
-  color: var(--gme-text-3);
-}
-
-/* danger 提示条（design.md alert：-soft 底 + 状态色 35% 混入边） */
-.dashboard-alert {
-  margin: 0;
-  padding: 8px 12px;
-  font-size: 13px;
-  line-height: 18px;
-  border-radius: var(--gme-rounded-sm);
-}
-
-.dashboard-alert-danger {
-  color: var(--gme-text);
-  background: var(--gme-bad-soft);
-  border: 1px solid color-mix(in srgb, var(--gme-bad) 35%, transparent);
-}
-
-/* ok 提示条（复制成功；状态色 35% 混入做边框，与 danger 同规则） */
-.dashboard-alert-ok {
-  color: var(--gme-text);
-  background: var(--gme-ok-soft);
-  border: 1px solid color-mix(in srgb, var(--gme-ok) 35%, transparent);
-}
-
-/* 主操作（单视图唯一 primary 实底钮） */
-.dashboard-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.dashboard-button-primary {
-  height: 40px;
-  padding: 0 24px;
-  font-family: var(--gme-font-body);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--gme-primary-fg);
-  background: var(--gme-primary);
-  border: none;
-  border-radius: var(--gme-rounded-full);
-  cursor: pointer;
-}
-
-.dashboard-button-primary:hover {
-  background: var(--gme-primary-hover);
-}
-
-.dashboard-button-primary:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
-}
-
-.dashboard-button-primary:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
-}
-
-/* 数据表格（design.md：卡面容器 + mono 表头 + 行分隔 + hover surface-2） */
-.dashboard-table-wrap {
-  border: 1px solid var(--gme-border);
-  border-radius: var(--gme-rounded-sm);
-  overflow-x: auto;
-}
-
-.dashboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.dashboard-table th {
-  padding: 8px 12px;
-  text-align: left;
-  font-family: var(--gme-font-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--gme-text-3);
-  background: var(--gme-surface-2);
-  white-space: nowrap;
-}
-
-.dashboard-table td {
-  padding: 12px;
-  border-top: 1px solid var(--gme-border);
-  vertical-align: top;
-}
-
-.dashboard-table tbody tr:hover {
-  background: var(--gme-surface-2);
-}
-
-.dashboard-numeric {
-  font-variant-numeric: tabular-nums;
-}
-
-.dashboard-col-no {
-  width: 48px;
-  text-align: right;
-}
-
-.dashboard-table td.dashboard-col-no {
-  font-family: var(--gme-font-mono);
-  color: var(--gme-text-2);
-}
-
-.dashboard-col-actions {
-  width: 320px;
-}
-
-.dashboard-task-name {
-  font-weight: 500;
-  color: var(--gme-text);
-  overflow-wrap: anywhere;
-}
-
-.dashboard-status-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-/* 状态徽章 chip：mono 11.5px 胶囊 + -soft 底 + 圆点（颜色外有文字通道） */
-.dashboard-status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 24px;
-  padding: 0 8px;
-  font-family: var(--gme-font-mono);
-  font-size: 11.5px;
-  font-weight: 600;
-  border-radius: var(--gme-rounded-full);
-  white-space: nowrap;
-}
-
-.dashboard-status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--gme-rounded-full);
-  background: currentColor;
-}
-
-.dashboard-status-idle {
-  background: var(--gme-surface-2);
-  color: var(--gme-text-2);
-}
-
-.dashboard-status-running {
-  background: var(--gme-primary-soft);
-  color: var(--gme-primary);
-}
-
-.dashboard-status-paused {
-  background: var(--gme-warn-soft);
-  color: var(--gme-warn);
-}
-
-.dashboard-status-completed {
-  background: var(--gme-ok-soft);
-  color: var(--gme-ok);
-}
-
-.dashboard-progress {
-  font-size: 12px;
-  color: var(--gme-text-2);
-}
-
-.dashboard-counts {
-  font-family: var(--gme-font-mono);
-  font-size: 11px;
-  color: var(--gme-text-3);
-}
-
-/* 行内操作：29px 高 small 钮（33px pill 的紧凑档） */
-.dashboard-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: flex-end;
-}
-
-.dashboard-button-small {
-  height: 29px;
-  padding: 0 12px;
-  font-family: var(--gme-font-body);
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--gme-text);
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border-strong);
-  border-radius: var(--gme-rounded-full);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.dashboard-button-small:hover {
-  background: var(--gme-surface-2);
-}
-
-.dashboard-button-small:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
-}
-
-.dashboard-button-small:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
-}
-
-.dashboard-button-danger {
-  color: var(--gme-bad);
-  border-color: var(--gme-bad);
-}
-
-/* 空态（design.md：虚线边框 + surface 底 + 指向第一个动作的说明） */
-.dashboard-empty {
-  margin: 0;
-  padding: 32px 24px;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--gme-text-2);
-  text-align: center;
-  background: var(--gme-surface);
-  border: 1px dashed var(--gme-border-strong);
-  border-radius: var(--gme-rounded-sm);
-}
-</style>
+<style scoped src="./dashboard.css"></style>

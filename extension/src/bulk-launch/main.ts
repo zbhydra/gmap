@@ -16,7 +16,7 @@ import { I18nService, i18nReady } from '@/locales'
 
 const ALLOWED_TARGETS: readonly { origin: string; pathPrefix: string }[] = [
   { origin: 'https://www.google.com', pathPrefix: '/maps/search/' },
-  { origin: 'https://search.google.com', pathPrefix: '/local/reviews' }
+  { origin: 'https://www.google.com', pathPrefix: '/maps/place/' }
 ]
 
 /** 解析并校验 ?url= 参数，合法则替换导航到目标工作页。 */

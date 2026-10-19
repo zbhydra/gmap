@@ -84,6 +84,8 @@ export interface RpcContext {
   frameId?: number
   /** 调用来源 origin 或 URL。 */
   origin?: string
+  /** Chrome 消息附带的完整来源 URL；不接受调用方业务参数替代。 */
+  senderUrl?: string
 }
 
 /** 单次 RPC 调用选项。 */

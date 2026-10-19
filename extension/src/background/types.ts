@@ -91,6 +91,21 @@ export interface BackgroundOpenPricingPageResponse {
   opened: boolean
 }
 
+export interface BackgroundOpenBulkDashboardRequest {
+  type: '0' | '1'
+}
+
+export interface BackgroundOpenBulkDashboardResponse {
+  opened: boolean
+}
+
+export type BackgroundPhotosWorkPageRequest = { action: 'open'; fid: string } | { action: 'claim' }
+
+export interface BackgroundPhotosWorkPageResponse {
+  opened: boolean
+  fid: string | null
+}
+
 /** background 读取批量任务状态的响应（013 A6，U5）。 */
 export type BackgroundGetBulkStateResponse = BulkState
 

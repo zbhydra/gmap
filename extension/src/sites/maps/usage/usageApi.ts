@@ -18,12 +18,49 @@ export interface MapsUsageReportResponse extends MapsUsageSnapshot {
   deducted: boolean
 }
 
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+}
+
+/** HTTP 边界验证后，采集入口直接信任有效权益，不重复按套餐名推算。 */
+function isMapsUsageSnapshot(value: unknown): value is MapsUsageSnapshot {
+  if (typeof value !== 'object' || value === null || !('run_limits' in value)) {
+    return false
+  }
+  const limits = value.run_limits
+  return (
+    'plan_name' in value &&
+    (value.plan_name === 'Free' || value.plan_name === 'Pro' || value.plan_name === 'Business') &&
+    'used' in value &&
+    typeof value.used === 'number' &&
+    Number.isSafeInteger(value.used) &&
+    value.used >= 0 &&
+    'total' in value &&
+    isPositiveInteger(value.total) &&
+    'period' in value &&
+    typeof value.period === 'string' &&
+    'exhausted' in value &&
+    typeof value.exhausted === 'boolean' &&
+    typeof limits === 'object' &&
+    limits !== null &&
+    'search' in limits &&
+    isPositiveInteger(limits.search) &&
+    'reviews' in limits &&
+    isPositiveInteger(limits.reviews) &&
+    'photos' in limits &&
+    isPositiveInteger(limits.photos)
+  )
+}
+
 /** 拉取当月用量快照。 */
 export async function fetchMapsUsage(): Promise<MapsUsageSnapshot> {
-  return httpClient.get<MapsUsageSnapshot>(API.ENDPOINTS.MAPS_USAGE, {
-    requireAuth: false,
+  const data = await httpClient.get<unknown>(API.ENDPOINTS.MAPS_USAGE, {
     skipErrorToast: true
   })
+  if (!isMapsUsageSnapshot(data)) {
+    throw new Error('[MapsUsage] GET /maps/usage 响应缺少有效用量或采集上限')
+  }
+  return data
 }
 
 /**
@@ -36,15 +73,18 @@ export async function reportMapsUsage(
   records: number,
   requestId: string
 ): Promise<MapsUsageReportResponse> {
-  return httpClient.post<MapsUsageReportResponse>(
+  const data = await httpClient.post<unknown>(
     API.ENDPOINTS.MAPS_USAGE_REPORT,
     {
       records,
-      requestId
+      request_id: requestId
     },
     {
-      requireAuth: false,
       skipErrorToast: true
     }
   )
+  if (!isMapsUsageSnapshot(data) || !('deducted' in data) || typeof data.deducted !== 'boolean') {
+    throw new Error('[MapsUsage] POST /maps/usage/report 响应缺少有效用量或采集上限')
+  }
+  return { ...data, deducted: data.deducted }
 }

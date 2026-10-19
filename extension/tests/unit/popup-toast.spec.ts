@@ -2,22 +2,24 @@
  * Popup 全局 Toast 渲染回归测试。
  *
  * App 必须挂载唯一的 Toast renderer，使拦截器和组件共享的 toastService 能向用户展示错误。
- * 对比度断言不读运行时样式，而是静态解析 Toast.vue 消费的 --gme-* 语义 token，
- * 并从 tokens.css 解析亮 / 暗两组取值分别校验 WCAG AA（双主题合同，design.dark.md）。
+ * 对比度断言不读运行时样式，而是静态解析共享 Toast 样式消费的 Atlas Field 语义 token，
+ * 并从 tokens.css 解析亮 / 暗两组取值分别校验 WCAG AA（light-dark() 双主题合同）。
  */
 
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createI18n } from 'vue-i18n'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from '../../src/popup/App.vue'
-import toastComponentSource from '../../src/core/components/Toast.vue?raw'
 import { toastService } from '../../src/core/composables/useToast'
+import TRANSLATIONS from '../../src/locales/messages'
 
 // vitest 下 .css?raw 会得到空串，token 取值表用 fs 直读源文件（vitest 根即包根）
 const tokensSource = readFileSync(path.resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8')
+const componentsSource = readFileSync(path.resolve(process.cwd(), 'src/styles/components.css'), 'utf8')
 
 const mocks = vi.hoisted(() => ({
   authInitialize: vi.fn(),
@@ -45,43 +47,12 @@ vi.mock('../../src/core/utils/logger', () => ({
   }
 }))
 
-/**
- * 从 tokens.css 源码解析指定主题的 token 取值表。
- *
- * 亮色取顶层 :root 块；暗色取 @media (prefers-color-scheme: dark) 内的 :root 块。
- */
+/** 解析 Toast 文字与卡面的 light-dark() 色值。 */
 function parseTokenMap(theme: 'light' | 'dark'): Map<string, string> {
   const map = new Map<string, string>()
-  const lines = tokensSource.split('\n')
-  let inDarkMedia = false
-  let inRoot = false
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim()
-    if (line.startsWith('@media') && line.includes('prefers-color-scheme: dark')) {
-      inDarkMedia = true
-      continue
-    }
-    if (line === ':root {') {
-      inRoot = true
-      continue
-    }
-    if (inRoot && line === '}') {
-      inRoot = false
-      inDarkMedia = false
-      continue
-    }
-    if (!inRoot || (theme === 'dark') !== inDarkMedia) {
-      continue
-    }
-    const match = /^(--[\w-]+):\s*(.+);$/.exec(line)
-    if (match) {
-      map.set(match[1], match[2])
-    }
-  }
-
-  if (map.size === 0) {
-    throw new Error(`[Popup Toast Test] 无法从 tokens.css 解析 ${theme} 主题 token`)
+  for (const match of tokensSource.matchAll(/^\s*(--[\w-]+):\s*(.+);/gm)) {
+    const pair = /^light-dark\((#[\da-f]+),\s*(#[\da-f]+)\)$/i.exec(match[2])
+    map.set(match[1], pair ? pair[theme === 'light' ? 1 : 2] : match[2])
   }
   return map
 }
@@ -145,18 +116,15 @@ function resolveToken(value: string, tokens: Map<string, string>): string {
   return resolved
 }
 
-/**
- * 从 Toast 组件样式中读取文字色与背景色（组件只允许消费 --gme-* token）。
- */
+/** Toast 标题与卡面必须消费共享语义 token。 */
 function readToastColors(): { foreground: string; background: string } {
-  const styleBlock = /\.toast-container\s*\{([^}]*)\}/.exec(toastComponentSource)?.[1]
-  const foreground = styleBlock?.match(/(?:^|\n)\s*color:\s*(var\(--[\w-]+\))\s*;/)?.[1]
-  const background = styleBlock?.match(/(?:^|\n)\s*background:\s*(var\(--[\w-]+\))\s*;/)?.[1]
-
+  const title = /\.toast-title\s*\{([^}]*)\}/.exec(componentsSource)?.[1]
+  const card = /\.toast\s*\{([^}]*)\}/.exec(componentsSource)?.[1]
+  const foreground = title?.match(/(?:^|\n)\s*color:\s*(var\(--[\w-]+\))\s*;/)?.[1]
+  const background = card?.match(/(?:^|\n)\s*background:\s*(var\(--[\w-]+\))\s*;/)?.[1]
   if (!foreground || !background) {
-    throw new Error('[Popup Toast Test] Toast 文字/背景未消费语义 token（var(--gme-*)）')
+    throw new Error('[Popup Toast Test] Toast 标题或卡面未消费语义 token')
   }
-
   return { foreground, background }
 }
 
@@ -167,6 +135,7 @@ async function mountPopup(): Promise<VueWrapper> {
   const mounted = mount(App, {
     attachTo: document.body,
     global: {
+      plugins: [createI18n({ legacy: false, locale: 'en-US', messages: TRANSLATIONS })],
       stubs: {
         AppHeader: true,
         AppFooter: true
@@ -217,9 +186,9 @@ describe('Popup global Toast', () => {
     toastService.show(message, type, 0)
     await nextTick()
 
-    const toast = document.body.querySelector<HTMLElement>(`[role="${role}"]`)
+    const toast = document.body.querySelector<HTMLElement>(`.toast[role="${role}"]`)
     expect(toast).not.toBeNull()
-    expect(toast?.classList.contains(`toast-${type}`)).toBe(true)
+    expect(toast?.classList.contains(type === 'error' ? 'tone-bad' : 'tone-ok')).toBe(true)
 
     const colors = readToastColors()
     for (const theme of ['light', 'dark'] as const) {

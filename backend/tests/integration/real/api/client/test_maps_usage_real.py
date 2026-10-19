@@ -23,17 +23,23 @@ from httpx import Response
 from sqlalchemy import delete, select
 
 from app.constants.auth import TokenType
-from app.constants.subscription import MAPS_EXTENSION_PRODUCT_KIND
+from app.constants.subscription import (
+    MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
+    MAPS_EXTENSION_PRODUCT_KIND,
+    MAPS_EXTENSION_PRO_PRODUCT_ID,
+)
 from app.constants.usage import build_dedup_key, build_usage_key
 from app.core.database import get_async_session
 from app.core.redis import redis_client
 from app.i18n.common_code import CommonCode
 from app.models.user_model import UserModel
 from app.models.user_usage_log_model import UserUsageLogModel
+from app.models.subscription_model import UserSubscriptionModel
 from app.services.user_service import UserService
 from app.services.user_token_service import user_token_service
 from app.utils.jwt import JwtData, JwtUnit
 from app.utils.redis_key import build_redis_key
+from app.utils.time import timestamp_now
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
@@ -67,6 +73,11 @@ async def _delete_usage_user(user_id: int) -> None:
     async with get_async_session() as db:
         await db.execute(
             delete(UserUsageLogModel).where(UserUsageLogModel.user_id == user_id)
+        )
+        await db.execute(
+            delete(UserSubscriptionModel).where(
+                UserSubscriptionModel.user_id == user_id
+            )
         )
         await db.execute(delete(UserModel).where(UserModel.user_id == user_id))
         await db.commit()
@@ -103,7 +114,7 @@ async def real_usage_api_cleanup(
 
 
 async def test_real_usage_returns_fresh_quota_for_anonymous(
-    real_async_client, real_redis_ready
+    real_async_client, real_mysql_ready, real_redis_ready
 ) -> None:
     """匿名设备首次查询：used=0、total 为本线 free 档、period 形如 YYYY-MM。"""
     response = await real_async_client.get(
@@ -116,6 +127,8 @@ async def test_real_usage_returns_fresh_quota_for_anonymous(
     assert body["exhausted"] is False
     assert len(body["period"]) == 7
     assert body["period"][4] == "-"
+    assert body["run_limits"] == {"search": 10, "reviews": 20, "photos": 10}
+    assert body["plan_name"] == "Free"
 
 
 async def test_real_usage_requires_device_id(
@@ -257,16 +270,67 @@ async def test_real_usage_exhausted_when_used_reaches_total(
     assert reached["exhausted"] is True
 
 
-async def test_real_logged_in_usage_reads_free_quota_and_deducts_via_mysql(
-    real_async_client, real_usage_api_cleanup
+@pytest.mark.parametrize(
+    (
+        "product_id",
+        "expires_delta_ms",
+        "expected_total",
+        "expected_limits",
+        "expected_plan",
+    ),
+    [
+        (None, 0, 1000, {"search": 10, "reviews": 20, "photos": 10}, "Free"),
+        (
+            MAPS_EXTENSION_PRO_PRODUCT_ID,
+            86_400_000,
+            100_000,
+            {"search": 99999, "reviews": 250, "photos": 100},
+            "Pro",
+        ),
+        (
+            MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
+            86_400_000,
+            500_000,
+            {"search": 99999, "reviews": 2500, "photos": 1000},
+            "Business",
+        ),
+        (
+            MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
+            -86_400_000,
+            1000,
+            {"search": 10, "reviews": 20, "photos": 10},
+            "Free",
+        ),
+    ],
+    ids=["free", "pro", "business", "expired-business"],
+)
+async def test_real_logged_in_usage_reads_effective_limits_and_deducts_via_mysql(
+    real_async_client,
+    real_usage_api_cleanup,
+    product_id: str | None,
+    expires_delta_ms: int,
+    expected_total: int,
+    expected_limits: dict[str, int],
+    expected_plan: str,
 ) -> None:
-    """登录用户两路由走 MySQL 流水：free 档 total、扣减、同请求幂等。
+    """两路由按有效权益给出同形上限，扣减仍走真实流水且保持幂等。
 
     额度基建 U5 回归锚：登录路径的 used 来自 user_usage_logs SUM(delta)，
     不再触碰匿名 Redis key（headers 无 device_id，identity = u:{user_id}）。
     """
     email = f"maps-usage-{uuid4().hex}@test.mapsgrab.com"
     user, headers = await _create_user_and_headers(email, real_usage_api_cleanup)
+    if product_id is not None:
+        async with get_async_session() as db:
+            db.add(
+                UserSubscriptionModel(  # type: ignore[call-arg]
+                    user_id=user.user_id,
+                    product_kind=MAPS_EXTENSION_PRODUCT_KIND,
+                    product_id=product_id,
+                    expires_at=timestamp_now() + expires_delta_ms,
+                )
+            )
+            await db.commit()
     request_id = uuid4().hex
 
     initial = _usage_payload(
@@ -291,7 +355,10 @@ async def test_real_logged_in_usage_reads_free_quota_and_deducts_via_mysql(
     )
 
     assert initial["used"] == 0
-    assert initial["total"] == 1000
+    assert initial["total"] == expected_total
+    for payload in (initial, first, replay, after):
+        assert payload["run_limits"] == expected_limits
+        assert payload["plan_name"] == expected_plan
     assert first["deducted"] is True
     assert first["used"] == 15
     assert replay["deducted"] is False

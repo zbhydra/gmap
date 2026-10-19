@@ -1,0 +1,224 @@
+/* 动效只汇报状态；减弱动效保留可见终态。 */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* live 圆点的扩散环 */
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+/* 骨架屏 / 进度光束：平移的伪元素（合成线程），不动 background-position */
+@keyframes sweep {
+  from {
+    transform: translateX(-120%);
+  }
+
+  to {
+    transform: translateX(120%);
+  }
+}
+
+/* 不确定进度：一段滑块在轨道内往返穿行 */
+@keyframes indeterminate {
+  from {
+    transform: translateX(-100%) scaleX(0.6);
+  }
+
+  to {
+    transform: translateX(250%) scaleX(1);
+  }
+}
+
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 表格新行 / 列表项入列 */
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* pin 落点：Map in 的第一个动作 */
+@keyframes pin-drop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0) scale(0.8);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translate3d(0, 1px, 0) scale(1.06, 0.94);
+  }
+
+  78% {
+    transform: translate3d(0, -2px, 0) scale(0.98, 1.03);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 下载 / 导出：箭头落入托盘（Data out 的最后一个动作） */
+@keyframes drop-in-tray {
+  0% {
+    transform: translate3d(0, -4px, 0);
+    opacity: 0;
+  }
+
+  60% {
+    transform: translate3d(0, 1px, 0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+/* 校验失败的轻摇（输入框、表单提交） */
+@keyframes nudge {
+  0%,
+  100% {
+    transform: none;
+  }
+
+  25% {
+    transform: translateX(-3px);
+  }
+
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes blink-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@property --enter-i {
+  syntax: '<integer>';
+  inherits: false;
+  initial-value: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   入场编排（首帧即开始，不等 JS）
+   .enter              单个元素：上浮淡入，延迟写内联 --enter-delay
+   .enter-group > *    子元素按序错峰（nth-child 提供 --enter-i，最多 12 个；更多用 data-stagger）
+   --enter-i 注册为不继承，嵌套的 .enter 不会叠加外层序号
+   Popup 每次打开都会播放：总时长控制在 ~0.7s 内，不阻塞交互
+   --------------------------------------------------------------------------- */
+.enter,
+.enter-group > * {
+  animation: enter-up var(--dur-4) var(--ease-out) backwards;
+  animation-delay: calc(var(--enter-delay, 0ms) + var(--enter-i) * var(--stagger));
+}
+
+.enter-group > :nth-child(2) {
+  --enter-i: 1;
+}
+
+.enter-group > :nth-child(3) {
+  --enter-i: 2;
+}
+
+.enter-group > :nth-child(4) {
+  --enter-i: 3;
+}
+
+.enter-group > :nth-child(5) {
+  --enter-i: 4;
+}
+
+.enter-group > :nth-child(6) {
+  --enter-i: 5;
+}
+
+.enter-group > :nth-child(7) {
+  --enter-i: 6;
+}
+
+.enter-group > :nth-child(8) {
+  --enter-i: 7;
+}
+
+.enter-group > :nth-child(9) {
+  --enter-i: 8;
+}
+
+.enter-group > :nth-child(10) {
+  --enter-i: 9;
+}
+
+.enter-group > :nth-child(11) {
+  --enter-i: 10;
+}
+
+.enter-group > :nth-child(12) {
+  --enter-i: 11;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  .ring-scan {
+    display: none;
+  }
+}

@@ -261,7 +261,8 @@ function inferChromeContext(channel: RpcChannel, sender: chrome.runtime.MessageS
     caller: inferChromeCaller(channel, sender),
     tabId: sender.tab?.id,
     frameId: sender.frameId,
-    origin: sender.origin ?? sender.url
+    origin: sender.origin ?? sender.url,
+    senderUrl: sender.url
   }
 }
 

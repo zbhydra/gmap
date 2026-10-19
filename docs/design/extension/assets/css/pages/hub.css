@@ -1,0 +1,620 @@
+/* =========================================================================
+   index.html（设计中枢）私有样式
+   ========================================================================= */
+
+:root {
+  --hub-code-bg: #0b1222;
+  --hub-code-line: rgba(148, 163, 184, 0.14);
+  --hub-code-text: #d6deeb;
+  --hub-code-dim: #7f8aa3;
+  --hub-code-prompt: #7cb0ff;
+}
+
+body[data-page='hub'] {
+  background: var(--bg);
+}
+
+.hub-top {
+  border-bottom-color: var(--border);
+}
+
+.hub-top .brand-mark {
+  width: 24px;
+  height: 24px;
+}
+
+.hub-top-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border-2);
+}
+
+.hub-top-title {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.hub-top .appbar-actions {
+  gap: var(--s-2);
+}
+
+/* ---------------------------------------------------------------------------
+   Hero：文案 + 地图上的「一次采集」仪表
+   --------------------------------------------------------------------------- */
+.hub-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: center;
+  gap: var(--s-16);
+  padding: var(--s-20) 0 var(--s-16);
+}
+
+.hub-hero-copy {
+  display: grid;
+  justify-items: start;
+  gap: var(--s-6);
+}
+
+.hub-display {
+  font-size: var(--fs-display);
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.hub-display span {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hub-lead {
+  max-width: 52ch;
+  color: var(--text-2);
+  font-size: var(--fs-lead);
+  line-height: 1.55;
+}
+
+.hub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.hub-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-8);
+  margin: var(--s-2) 0 0;
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--border);
+}
+
+.hub-facts div {
+  display: grid;
+  gap: 2px;
+}
+
+.hub-facts dt {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-stat-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-num);
+}
+
+.hub-facts dd {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+/* 地图舞台：主题自适应的插画地图（--map-*），pin 落点后仪表开始「读」 */
+.hub-stage {
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--map-land);
+  box-shadow: var(--shadow-md);
+}
+
+.hub-stage .gmap-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  opacity: 0.9;
+}
+
+.hub-stage .gm-land {
+  fill: var(--map-land);
+}
+
+.hub-stage .gm-blocks rect {
+  fill: var(--map-block);
+}
+
+.hub-stage .gm-park {
+  fill: var(--map-park);
+}
+
+.hub-stage .gm-water {
+  fill: var(--map-water);
+}
+
+.hub-stage .gm-roads-casing,
+.hub-stage .gm-highway-casing {
+  stroke: var(--map-road-casing);
+}
+
+.hub-stage .gm-roads,
+.hub-stage .gm-highway {
+  stroke: var(--map-road);
+}
+
+.hub-stage .gm-labels text,
+.hub-stage .gm-labels .gm-water-label {
+  fill: var(--map-label);
+}
+
+.hub-pin {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  width: 20px;
+  height: 20px;
+  margin: -22px 0 0 -10px;
+  animation: pin-drop var(--dur-4) var(--ease-out) backwards;
+  animation-delay: calc(var(--i) * 90ms + 200ms);
+}
+
+.hub-pin::before {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 50% 0;
+  background: var(--pin);
+  box-shadow: var(--shadow-xs);
+  transform: rotate(-45deg);
+  content: '';
+}
+
+.hub-pin::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--on-solid);
+  content: '';
+}
+
+/* 已被采集的 pin：换成「已采集」色并收一下 */
+.hub-pin.is-collected::before {
+  background: var(--accent);
+  transition: background-color var(--dur-3);
+}
+
+.hub-instrument {
+  position: absolute;
+  top: var(--s-6);
+  right: var(--s-6);
+  bottom: var(--s-6);
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  gap: var(--s-4);
+  width: min(340px, calc(100% - 48px));
+  padding: var(--s-5);
+  box-shadow: var(--shadow-lg), var(--hairline-hl);
+}
+
+.hub-ins-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.hub-ins-head .status {
+  margin-left: auto;
+}
+
+.hub-ins-main {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.hub-ins-readout {
+  display: grid;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.hub-ins-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-stat);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: var(--tracking-num);
+}
+
+.hub-ins-of {
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  letter-spacing: 0;
+}
+
+.hub-ins-rows {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hub-ins-row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-2);
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  animation: row-in var(--dur-4) var(--ease-out) backwards;
+}
+
+.hub-ins-row .icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  color: var(--accent);
+}
+
+.hub-ins-row b {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hub-ins-row .mono {
+  color: var(--text-3);
+  font-size: var(--fs-micro);
+}
+
+.hub-ins-foot {
+  display: grid;
+  gap: var(--s-3);
+}
+
+/* ---------------------------------------------------------------------------
+   区块
+   --------------------------------------------------------------------------- */
+.hub-section {
+  padding: var(--s-16) 0;
+  border-top: 1px solid var(--border);
+}
+
+.hub-section-head {
+  display: grid;
+  gap: var(--s-3);
+  max-width: 720px;
+  margin-bottom: var(--s-8);
+}
+
+.hub-h2 {
+  font-size: var(--fs-section);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.03em;
+}
+
+.hub-section-head p {
+  color: var(--text-2);
+  font-size: var(--fs-body);
+}
+
+.hub-section-head code,
+.hub-surface code,
+.hub-files code {
+  padding: 0 var(--s-1);
+  border-radius: var(--r-2xs);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.88em;
+}
+
+/* 界面卡片：设计系统横跨一整行，其余 2×2 */
+.hub-surfaces {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-5);
+}
+
+.hub-surface {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  transition:
+    transform var(--dur-3) var(--ease-out),
+    box-shadow var(--dur-3) var(--ease-out),
+    border-color var(--dur-2);
+}
+
+.hub-surface:hover {
+  border-color: var(--border-2);
+  box-shadow: var(--shadow-md), var(--hairline-hl);
+  transform: translateY(-2px);
+}
+
+.hub-surface--feature {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-rows: auto;
+}
+
+.hub-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.hub-surface--feature .hub-thumb {
+  border-right: 1px solid var(--border);
+  border-bottom: 0;
+}
+
+/* 实时缩略图：iframe 以 data-vw 宽渲染，按卡片宽度等比缩放（hub.js 写 --s） */
+.hub-thumb iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--vw, 1440px);
+  height: var(--vh, 900px);
+  border: 0;
+  transform: scale(var(--s, 0.4));
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.hub-thumb::after {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 -40px 40px -40px var(--shade-soft);
+  pointer-events: none;
+  content: '';
+}
+
+.hub-surface-body {
+  display: grid;
+  align-content: start;
+  gap: var(--s-3);
+  padding: var(--s-5);
+}
+
+.hub-surface--feature .hub-surface-body {
+  align-content: center;
+  padding: var(--s-8);
+}
+
+.hub-surface-title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.hub-surface-title .badge {
+  margin-left: auto;
+}
+
+.hub-surface p {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+}
+
+.hub-states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hub-states .chip {
+  height: 24px;
+  padding: 0 10px;
+  font-size: var(--fs-xs);
+}
+
+/* 已批准的逻辑调整 L1–L12 */
+.hub-decisions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hub-decision {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px var(--s-3);
+  padding: var(--s-4);
+}
+
+.hub-decision .badge {
+  grid-row: span 3;
+  align-self: start;
+  min-width: 36px;
+  justify-content: center;
+}
+
+.hub-decision b {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+
+.hub-decision span {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.hub-decision .hub-where {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+}
+
+/* 基础文件 + 本地预览 */
+.hub-foundation {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-5);
+}
+
+.hub-files td:first-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.hub-code {
+  overflow: hidden;
+  border: 1px solid var(--hub-code-line);
+  border-radius: var(--r-card);
+  background: var(--hub-code-bg);
+}
+
+.hub-code-head {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--s-2) 0 var(--s-4);
+  border-bottom: 1px solid var(--hub-code-line);
+  color: var(--hub-code-dim);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+}
+
+.hub-code-head .icon-btn {
+  margin-left: auto;
+  color: var(--hub-code-dim);
+}
+
+.hub-code-head .icon-btn:hover {
+  background: var(--hub-code-line);
+  color: var(--hub-code-text);
+}
+
+.hub-code pre {
+  margin: 0;
+  padding: var(--s-4);
+  overflow: auto;
+  color: var(--hub-code-text);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.hub-code pre b {
+  color: var(--hub-code-prompt);
+  font-weight: 500;
+}
+
+.hub-code pre i {
+  color: var(--hub-code-dim);
+  font-style: normal;
+}
+
+.hub-side {
+  display: grid;
+  gap: var(--s-4);
+}
+
+.hub-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-6);
+  padding: var(--s-8) 0 var(--s-16);
+  border-top: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.hub-foot .brand {
+  font-size: var(--fs-sm);
+}
+
+.hub-foot .brand-mark {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------------------------------------------------------------------------
+   响应式
+   --------------------------------------------------------------------------- */
+@media (max-width: 1080px) {
+  .hub-hero,
+  .hub-foundation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hub-surface--feature {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hub-surface--feature .hub-thumb {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 760px) {
+  .hub-surfaces {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hub-top-title,
+  .hub-top-sep,
+  .hub-top .btn-ghost {
+    display: none;
+  }
+
+  .hub-hero {
+    padding-top: var(--s-10);
+  }
+
+  .hub-instrument {
+    position: relative;
+    inset: auto;
+    width: auto;
+    margin: var(--s-24) var(--s-4) var(--s-4);
+  }
+
+  .hub-stage {
+    min-height: 0;
+  }
+}

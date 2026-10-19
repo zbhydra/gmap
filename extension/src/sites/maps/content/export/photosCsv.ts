@@ -1,10 +1,5 @@
 /**
- * 照片导出构建（013 A3，URL 列表；簿记 2 起支持用户设置的三格式）。
- *
- * 竞品只导出过滤 streetview 后的媒体 URL（photoUrl/videoUrl），不下载
- * 二进制；文件名 `MapsGrab-Extractor-Photos-{页面标题}-{条数}-{YYYY-MM-DD}.{扩展名}`
- * （对称评论命名，竞品未给出照片文件名规则，我方声明；前缀规则不随格式
- * 变化）。格式语义与 U4 搜索导出引擎同构。
+ * 照片导出：过滤街景后的媒体按 Photo URL / Video URL 两列输出，支持三种格式。
  */
 
 import { buildCsvText, csvDateSegment, sanitizeFilenamePart } from './csvText'
@@ -12,15 +7,15 @@ import { CSV_FILENAME_PREFIX } from './csv'
 import { buildTabularJsonText } from './json'
 import { buildTabularXlsx } from './xlsx'
 import { searchExportMime, type SearchExportFormat } from './engine'
+import type { PhotoRow } from '../parser/photosParser'
 
-/** 照片导出列名（单列 URL 列表）。 */
-export const PHOTOS_CSV_COLUMNS = ['Photo URL'] as const
+export const PHOTOS_CSV_COLUMNS = ['Photo URL', 'Video URL'] as const
 
 /** 构建完整照片 CSV 文本（BOM + 表头 + URL 行，RFC4180 转义）。 */
-export function buildPhotosCsv(urls: readonly string[]): string {
+export function buildPhotosCsv(rows: readonly PhotoRow[]): string {
   return buildCsvText(
     PHOTOS_CSV_COLUMNS,
-    urls.map(url => [url])
+    rows.map(row => [row.photoUrl, row.videoUrl])
   )
 }
 
@@ -48,24 +43,24 @@ export interface PhotosExportArtifact {
 /**
  * 按用户设置格式构建照片导出产物（013 簿记 2）。
  *
- * @param urls 照片 URL（已过滤 streetview）。
+ * @param rows 媒体行（已过滤 streetview）。
  * @param pageTitle 照片页 document.title（文件名分段）。
  * @param now 导出时刻（文件名日期段）。
  * @param format 用户设置 exportFormat。
  */
 export function buildPhotosExport(
-  urls: readonly string[],
+  rows: readonly PhotoRow[],
   pageTitle: string,
   now: Date,
   format: SearchExportFormat
 ): PhotosExportArtifact {
-  const filename = buildPhotosExportFilename(urls.length, pageTitle, now, format)
+  const filename = buildPhotosExportFilename(rows.length, pageTitle, now, format)
 
   if (format === 'json') {
     return {
       content: buildTabularJsonText(
         PHOTOS_CSV_COLUMNS,
-        urls.map(url => [url])
+        rows.map(row => [row.photoUrl, row.videoUrl])
       ),
       filename,
       mime: searchExportMime(format)
@@ -75,11 +70,11 @@ export function buildPhotosExport(
     return {
       content: buildTabularXlsx(
         PHOTOS_CSV_COLUMNS,
-        urls.map(url => [url])
+        rows.map(row => [row.photoUrl, row.videoUrl])
       ),
       filename,
       mime: searchExportMime(format)
     }
   }
-  return { content: buildPhotosCsv(urls), filename, mime: searchExportMime(format) }
+  return { content: buildPhotosCsv(rows), filename, mime: searchExportMime(format) }
 }

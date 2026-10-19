@@ -1,14 +1,13 @@
 /**
- * 照片采集控制器（013 A3，在 google.com/maps/uv 照片画廊页自治运行）。
+ * 照片采集控制器（013 A3，在 Google 照片图库页自治运行）。
  *
- * 链路：place 页点 Start Extracting Photos → 同步 window.open 打开 uv 页
- * 新标签（URL 携带 gme_lrd + lkt=LocalPoiPhotos）→ uv 页 content script boot
- * 自动开始：
+ * 链路：place 页明确点击 → background 打开 uv 页并记录一次性标签页意图 →
+ * Google 跳转原生图库 → content 核对真实图库 fid 并领取意图后开始：
  * 从页面 `<script>` 的 window.WIZ_global_data 抠 SNlM0e（XSRF AT token，
  * 03 逆向 §3.3 parseScriptToData 语义）→ POST batchexecute(rpcids=wTe8We)
  * → 解析 photoUrl/videoUrl 并过滤 streetview → 翻页。
  *
- * 终止：达上限（scrape.photosPageLimit，免费档默认 10，档位归 U7）截断完成 /
+ * 终止：达本次有效上限截断完成 /
  * end 布尔 / 不足一页（photosPageSize）/ 无 token。
  */
 
@@ -19,7 +18,7 @@ import { I18N_KEYS } from '@/core/constants/i18n'
 import { interruptibleDelay } from '../scraper/feedScroll'
 import { getMapsConfig, loadMapsConfig } from '../../config/loader'
 import { i18nReady } from '@/locales'
-import { parsePhotosRpcResponse } from '../parser/photosParser'
+import { parsePhotosRpcResponse, type PhotoRow } from '../parser/photosParser'
 import { buildPhotosExport } from '../export/photosCsv'
 import {
   getMapsUserSettingsSnapshot,
@@ -27,11 +26,15 @@ import {
 } from '../../settings/userSettings'
 import { downloadFile } from '../export/download'
 import { ExtractionPanel, waitForBody } from '../panel/extractionPanel'
-import { EXTRACTION_HOST_LRD_PARAM } from '../extractionUrl'
-import { createUsageSessionReporter } from '../../usage/usageClient'
+import { BackgroundChannel } from '@/content/rpc/background.rpc'
+import {
+  createUsageSessionReporter,
+  fetchUsageSnapshot,
+  getRunLimit
+} from '../../usage/usageClient'
 
 /** 采集状态。 */
-export type PhotosScraperStatus = 'extracting' | 'complete'
+export type PhotosScraperStatus = 'extracting' | 'complete' | 'stopped' | 'empty'
 
 /** 采集器回调。 */
 export interface PhotosScraperCallbacks {
@@ -42,7 +45,7 @@ export interface PhotosScraperCallbacks {
 }
 
 /** batchexecute 端点路径（同源 POST）。 */
-const PHOTOS_RPC_PATH = 'https://www.google.com/wizrpcui/_/WizRpcUi/data/batchexecute'
+const PHOTOS_RPC_PATH = '/wizrpcui/_/WizRpcUi/data/batchexecute'
 
 /** 照片 RPC 的方法名（03 逆向 §3.3）。 */
 const PHOTOS_RPC_ID = 'wTe8We'
@@ -57,31 +60,31 @@ const PHOTOS_RPC_FIXED_FLAG = 'CgIgAQ=='
 const PHOTOS_RPC_REQID_SUFFIX = '72138'
 
 export class PhotosScraper {
-  private readonly lrd: string
+  private readonly fid: string
 
   private readonly callbacks: PhotosScraperCallbacks
 
   private status: PhotosScraperStatus = 'extracting'
 
-  private urls: string[] = []
+  private rows: PhotoRow[] = []
 
-  constructor(lrd: string, callbacks: PhotosScraperCallbacks) {
-    this.lrd = lrd
+  constructor(fid: string, callbacks: PhotosScraperCallbacks) {
+    this.fid = fid
     this.callbacks = callbacks
   }
 
   /** 开始采集：抠 AT token + 翻页循环。 */
-  async start(): Promise<void> {
+  async start(pageLimit: number): Promise<void> {
     const atToken = extractSnlM0e()
     if (atToken === null) {
       const message = '[PhotosScraper] 页面未找到 WIZ_global_data/SNlM0e token，无法请求照片 RPC'
       logger.error(message)
       this.callbacks.onError(message)
-      this.complete()
+      this.complete('stopped')
       return
     }
 
-    await this.runFetchLoop(atToken)
+    await this.runFetchLoop(atToken, pageLimit)
   }
 
   /** 当前采集状态。 */
@@ -91,13 +94,13 @@ export class PhotosScraper {
 
   /** 当前已采集张数。 */
   getCount(): number {
-    return this.urls.length
+    return this.rows.length
   }
 
   /** 导出当前结果：URL 列表（格式随用户设置 exportFormat，013 簿记 2）。 */
   export(): void {
     const artifact = buildPhotosExport(
-      this.urls,
+      this.rows,
       document.title,
       new Date(),
       getMapsUserSettingsSnapshot().exportFormat
@@ -106,46 +109,45 @@ export class PhotosScraper {
   }
 
   /** 重置并重新开始。 */
-  reset(): void {
-    this.urls = []
+  reset(pageLimit: number): void {
+    this.rows = []
     this.status = 'extracting'
     this.callbacks.onStateChanged(this.status, 0)
-    void this.start()
+    void this.start(pageLimit)
   }
 
   /**
    * 翻页主循环：POST 一页 → 解析过滤 → 终止判定 → 延时翻页。
    * 每轮现读远程配置；`_reqid` = 页码 + 固定后缀（模仿前端规则）。
    */
-  private async runFetchLoop(atToken: string): Promise<void> {
+  private async runFetchLoop(atToken: string, pageLimit: number): Promise<void> {
     let page = 1
     let token: string | null = null
 
     while (this.status === 'extracting') {
       const { scrape, parseSchema } = getMapsConfig()
 
-      let batchUrls: string[]
+      let batchRows: PhotoRow[]
       let nextToken: string | null
       let end: boolean
       try {
-        const raw = await fetchPhotosPage(this.lrd, token, atToken, page)
+        const raw = await fetchPhotosPage(this.fid, token, atToken, page)
         const parsed = parsePhotosRpcResponse(raw, parseSchema)
-        batchUrls = parsed.urls
+        batchRows = parsed.rows
         nextToken = parsed.nextToken
         end = parsed.end
       } catch (error) {
         logger.error('[PhotosScraper] 照片页采集失败（保留已采结果）:', error)
         this.callbacks.onError(error instanceof Error ? error.message : String(error))
-        this.complete()
+        this.complete('stopped')
         return
       }
 
-      this.urls.push(...batchUrls)
-      this.callbacks.onStateChanged(this.status, this.urls.length)
+      this.rows.push(...batchRows.slice(0, pageLimit - this.rows.length))
+      this.callbacks.onStateChanged(this.status, this.rows.length)
 
-      // 终止判定一：达上限截断完成（配额门控归 U7）
-      if (this.urls.length >= scrape.photosPageLimit) {
-        this.urls = this.urls.slice(0, scrape.photosPageLimit)
+      // 终止判定一：达到本次有效上限。
+      if (this.rows.length >= pageLimit) {
         this.complete()
         return
       }
@@ -155,7 +157,7 @@ export class PhotosScraper {
         return
       }
       // 终止判定三：不足一页（过滤 streetview 后计数）
-      if (batchUrls.length < scrape.photosPageSize) {
+      if (batchRows.length < scrape.photosPageSize) {
         this.complete()
         return
       }
@@ -171,9 +173,11 @@ export class PhotosScraper {
     }
   }
 
-  private complete(): void {
-    this.status = 'complete'
-    this.callbacks.onStateChanged(this.status, this.urls.length)
+  private complete(
+    status: PhotosScraperStatus = this.rows.length > 0 ? 'complete' : 'empty'
+  ): void {
+    this.status = status
+    this.callbacks.onStateChanged(this.status, this.rows.length)
   }
 }
 
@@ -181,18 +185,29 @@ export class PhotosScraper {
 export const PHOTOS_PANEL_HOST_ID = 'gmap-extractor-photos-panel-host'
 
 /**
- * 照片页 boot：读取 lrd、挂载面板并自动开始采集。
+ * 照片页 boot：真实图库与一次性标签页意图同时命中后，挂载面板并开始采集。
  *
- * 仅我方打开的 uv 页（URL 携带 gme_lrd）触发；照片采集无独立埋点
+ * 用户手动打开的图库不触发采集；照片采集无独立埋点
  * （MARK_TYPE 契约本单元只新增 SCRAPE_REVIEWS_CONTENT）。完成边沿经
  * `mapsUsageReport` 上报配额（U7，background 幂等扣减，失败不阻断）。
  */
 export async function bootPhotosPage(
   markEmitter: ChromeEventEmitter<ExtensionEvents>
 ): Promise<void> {
-  const lrd = readWorkLrd()
-  if (!lrd) {
-    logger.info('[PhotosScraper] URL 未携带 gme_lrd，跳过自动采集')
+  await waitForBody()
+  const channel = new BackgroundChannel()
+  let fid: string | null
+  try {
+    fid = (await channel.photosWorkPage({ action: 'claim' })).fid
+  } finally {
+    channel.destroy()
+  }
+  if (!fid) {
+    logger.info('[PhotosScraper] 当前标签页没有采集意图，跳过自动采集')
+    return
+  }
+  if (!(await waitForPhotosGallery(fid))) {
+    logger.info('[PhotosScraper] 页面未出现匹配地点的 Google 照片图库，跳过采集')
     return
   }
 
@@ -203,16 +218,13 @@ export async function bootPhotosPage(
 
   const panel = new ExtractionPanel(PHOTOS_PANEL_HOST_ID, I18N_KEYS.MAPS_PANEL.PHOTOS_EXPORT, {
     onExport: () => scraper.export(),
-    onReset: () => {
-      panel.setError(null)
-      scraper.reset()
-    }
+    onReset: () => startExtraction(true)
   })
   await panel.mount()
 
   const usageReporter = createUsageSessionReporter(markEmitter, 'photos')
   let previousStatus: PhotosScraperStatus = 'extracting'
-  const scraper = new PhotosScraper(lrd, {
+  const scraper = new PhotosScraper(fid, {
     onStateChanged: (status, count) => {
       panel.render({
         status,
@@ -220,31 +232,59 @@ export async function bootPhotosPage(
         format: getMapsUserSettingsSnapshot().exportFormat
       })
       // 会话边界（U7）：Reset 重启 = 新会话；完成边沿上报本会话记录数
-      if (status === 'extracting' && previousStatus === 'complete') {
+      if (status === 'extracting' && previousStatus !== 'extracting') {
         usageReporter.beginSession()
       }
-      if (status === 'complete' && previousStatus !== 'complete') {
+      if (status !== 'extracting' && previousStatus === 'extracting') {
         usageReporter.completeSession(count)
         // 用户开启 auto_download 时完成边沿自动导出（013 A9，U11 接线；
         // 与搜索面板/评论工作页同语义，复用用户设置快照）
-        if (getMapsUserSettingsSnapshot().autoDownload) {
+        if (count > 0 && getMapsUserSettingsSnapshot().autoDownload) {
           scraper.export()
+          panel.showExported()
         }
       }
       previousStatus = status
     },
-    onError: message => panel.setError(message)
+    onError: () => undefined
   })
-  void scraper.start()
-  logger.info(
-    `[PhotosScraper] 照片采集已开始: lrd=${lrd}, limit=${getMapsConfig().scrape.photosPageLimit}`
-  )
+  const startExtraction = async (reset = false): Promise<void> => {
+    panel.setChecking(true)
+    try {
+      const snapshot = await fetchUsageSnapshot()
+      const pageLimit = getRunLimit(snapshot, 'photos')
+      panel.setUsage(snapshot, pageLimit)
+      if (pageLimit === 0) {
+        panel.setError('quota')
+        return
+      }
+      panel.setError(null)
+      if (reset) {
+        scraper.reset(pageLimit)
+      } else {
+        void scraper.start(pageLimit)
+      }
+      logger.info(`[PhotosScraper] 照片采集已开始: fid=${fid}, limit=${pageLimit}`)
+    } finally {
+      panel.setChecking(false)
+    }
+  }
+  await startExtraction()
 }
 
-/** 从当前页面 URL 读工作参数 lrd（仅 gme_lrd 查询参数）。 */
-function readWorkLrd(): string | null {
-  const explicit = new URLSearchParams(location.search).get(EXTRACTION_HOST_LRD_PARAM)
-  return explicit && explicit.length > 0 ? explicit : null
+/** Google 将媒体网格与地点元数据放在不同 dialog，按已领取的 fid 核对整个图库页。 */
+export async function waitForPhotosGallery(fid: string): Promise<boolean> {
+  const deadline = Date.now() + 10_000
+  while (Date.now() < deadline) {
+    if (
+      document.querySelector('[role="dialog"] [role="grid"]') &&
+      document.querySelector(`[data-feature-id="${fid}"]`)
+    ) {
+      return true
+    }
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+  return false
 }
 
 /**
@@ -288,11 +328,11 @@ export function extractSnlM0e(): string | null {
 /**
  * 构造并请求一页照片 batchexecute（同源 POST，协议见 03 逆向 §3.3）。
  *
- * 请求 payload：`["{lrd}",null,{next或null},"CgIgAQ==",…,"LU_PHOTO_GALLERY",…,0]`；
+ * 请求 payload 的首项为完整 fid。
  * body 尾部 `&` 为竞品形态残留，无语义，我方不附加（声明）。
  */
 async function fetchPhotosPage(
-  lrd: string,
+  fid: string,
   token: string | null,
   atToken: string,
   page: number
@@ -301,7 +341,7 @@ async function fetchPhotosPage(
   const hl = params.get('hl') ?? 'en'
 
   const rpcPayload = JSON.stringify([
-    lrd,
+    fid,
     null,
     token,
     PHOTOS_RPC_FIXED_FLAG,

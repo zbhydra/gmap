@@ -55,3 +55,23 @@ export async function openPricingPage(source: PricingSource): Promise<boolean> {
   const url = buildPricingUrl(source)
   return openExternalPage(url, `pricing:${source}`)
 }
+
+/** 同类型批量页复用已有标签，避免重复创建任务工作区。 */
+export async function openBulkDashboard(type: '0' | '1'): Promise<boolean> {
+  const url = `${chrome.runtime.getURL('src/dashboard.html')}?type=${type}`
+  try {
+    const [existing] = await chrome.runtime.getContexts({
+      contextTypes: ['TAB'],
+      documentUrls: [url]
+    })
+    if (existing) {
+      await chrome.tabs.update(existing.tabId, { active: true })
+      await chrome.windows.update(existing.windowId, { focused: true })
+      return true
+    }
+    return openExternalPage(url, `bulk:${type}`)
+  } catch (error) {
+    logger.error(`[Navigation] 打开批量任务页失败: type=${type}`, error)
+    return false
+  }
+}

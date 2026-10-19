@@ -99,6 +99,7 @@ describe('Maps 用户设置（默认值与回退）', () => {
     const settings = await MapsUserSettingsManager.getSettings()
 
     expect(settings).toEqual({
+      theme: 'system',
       requestIntervalSec: 8,
       exportFormat: 'csv',
       exportFieldHeaders: SEARCH_EXPORT_COLUMNS.map(column => column.header),
@@ -114,12 +115,14 @@ describe('Maps 用户设置（默认值与回退）', () => {
 
   it('读写 roundtrip：更新字段落 storage 且其余字段保持', async () => {
     await MapsUserSettingsManager.updateSettings({
+      theme: 'dark',
       requestIntervalSec: 5,
       exportFormat: 'xlsx',
       autoDownload: true
     })
 
     const settings = await MapsUserSettingsManager.getSettings()
+    expect(settings.theme).toBe('dark')
     expect(settings.requestIntervalSec).toBe(5)
     expect(settings.exportFormat).toBe('xlsx')
     expect(settings.autoDownload).toBe(true)
@@ -130,6 +133,7 @@ describe('Maps 用户设置（默认值与回退）', () => {
 
   it('默认回退：间隔不在档位、格式非法、字段表非数组、重试为负各自回默认', async () => {
     storageData[STORAGE_KEYS.MAPS_USER_SETTINGS] = {
+      theme: 'sepia',
       requestIntervalSec: 7,
       exportFormat: 'yaml',
       exportFieldHeaders: 'Name,Cid',
@@ -139,6 +143,7 @@ describe('Maps 用户设置（默认值与回退）', () => {
 
     const settings = await MapsUserSettingsManager.getSettings()
 
+    expect(settings.theme).toBe('system')
     expect(settings.requestIntervalSec).toBe(8)
     expect(settings.exportFormat).toBe('csv')
     expect(settings.exportFieldHeaders).toEqual(

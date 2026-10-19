@@ -32,7 +32,15 @@ const mockGetSnapshot = vi.mocked(mapsUsageService.getSnapshot)
 
 /** 快照工厂。 */
 function snapshot(overrides: Partial<MapsUsageSnapshot>): MapsUsageSnapshot {
-  return { used: 0, total: 1000, period: '2026-09', exhausted: false, ...overrides }
+  return {
+    plan_name: 'Free',
+    used: 0,
+    total: 1000,
+    period: '2026-09',
+    exhausted: false,
+    run_limits: { search: 10, reviews: 20, photos: 10 },
+    ...overrides
+  }
 }
 
 beforeEach(() => {
@@ -59,13 +67,17 @@ describe('批量前置配额校验（controller 接线）', () => {
   })
 
   it('额度充足时正常创建（校验不误伤）', async () => {
-    mockGetSnapshot.mockResolvedValueOnce(snapshot({ used: 5, total: 1000, exhausted: false }))
+    mockGetSnapshot.mockResolvedValueOnce(snapshot({
+      used: 5,
+      total: 100_000,
+      run_limits: { search: 99999, reviews: 250, photos: 100 }
+    }))
 
     const controller = new BulkSchedulerController()
     const result = await controller.createTask({
       name: 't',
       type: 'keywords',
-      values: ['a'],
+      values: ['a', 'b'],
       reviewsPerStoreLimit: null
     })
 

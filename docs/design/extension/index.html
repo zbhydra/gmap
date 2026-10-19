@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MapsGrab Extension · Design hub</title>
+    <meta name="description" content="Design hub for the MapsGrab Chrome extension redesign: design system, popup, in-page Maps panel, bulk dashboard and settings." />
+    <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+    <script src="assets/js/theme.js"></script>
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/proto.css" />
+    <link rel="stylesheet" href="assets/css/pages/hub.css" />
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/ui.js" defer></script>
+    <script src="assets/js/proto.js" defer></script>
+    <script src="assets/js/pages/hub.js" defer></script>
+  </head>
+  <body data-page="hub" data-dock="collapsed">
+    <header class="appbar hub-top">
+      <a class="brand" href="index.html"><img class="brand-mark" src="assets/img/logo.svg" alt="" />MapsGrab</a>
+      <span class="hub-top-sep" aria-hidden="true"></span>
+      <span class="hub-top-title">Extension design</span>
+      <div class="appbar-actions">
+        <a class="btn btn-ghost btn-sm" href="design-system.html"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-layers" /></svg>Design system</a>
+        <a class="btn btn-ghost btn-sm" href="logic.md"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-book" /></svg>Logic</a>
+        <div class="seg seg--sm" role="radiogroup" aria-label="Theme" data-seg data-theme-switch>
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button class="seg-btn" type="button" role="radio" aria-checked="true" data-value="system" aria-label="Follow system theme" data-tooltip="Follow system"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-monitor" /></svg></button>
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="light" aria-label="Light theme" data-tooltip="Light"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sun" /></svg></button>
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-value="dark" aria-label="Dark theme" data-tooltip="Dark"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-moon" /></svg></button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- ================================================================ Hero -->
+      <section class="page hub-hero" aria-labelledby="hub-title">
+        <div class="hub-hero-copy enter-group">
+          <span class="kicker kicker--mark kicker--primary">Atlas Field · MapsGrab for Chrome</span>
+          <h1 class="hub-display" id="hub-title">Map in,<br /><span>data out.</span></h1>
+          <p class="hub-lead">The design hub for the MapsGrab extension redesign — one design language across the toolbar popup, the panel inside Google Maps, the bulk dashboard and settings.</p>
+          <div class="hub-actions">
+            <a class="btn btn-primary btn-lg" href="design-system.html">Open the design system<svg class="icon icon-arrow" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            <a class="btn btn-secondary btn-lg" href="logic.md"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-book" /></svg>Read the logic</a>
+          </div>
+          <dl class="hub-facts">
+            <div><dt>4</dt><dd>product surfaces</dd></div>
+            <div><dt>12</dt><dd>approved logic changes</dd></div>
+            <div><dt data-icon-total>121</dt><dd>icons, one stroke</dd></div>
+            <div><dt>2</dt><dd>themes + system</dd></div>
+          </dl>
+        </div>
+
+        <div class="hub-stage enter" style="--enter-delay: 120ms" data-hub-stage>
+          <div data-hub-map aria-hidden="true"></div>
+          <div class="card hub-instrument" role="group" aria-label="Example run: extracting coffee shops near Manhattan" data-instrument>
+            <div class="hub-ins-head">
+              <span class="kicker">Live run</span>
+              <span class="status status--idle" data-ins-status>Ready</span>
+            </div>
+            <div class="hub-ins-main">
+              <div class="ring ring--lg is-empty" style="--p: 0" aria-hidden="true" data-ins-ring>
+                <svg class="ring-svg" viewBox="0 0 48 48"><circle class="ring-track" cx="24" cy="24" r="20" pathLength="100" /><circle class="ring-fill" cx="24" cy="24" r="20" pathLength="100" /></svg>
+                <span class="ring-scan"></span>
+                <span class="ring-label" data-ins-ring-label><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg></span>
+              </div>
+              <div class="hub-ins-readout">
+                <span class="hub-ins-count"><span class="roller" data-ins-count data-roll="0">0</span><span class="hub-ins-of">/ 48</span></span>
+                <span class="caption">places · coffee near Manhattan</span>
+              </div>
+            </div>
+            <ol class="flow" aria-hidden="true" data-ins-flow>
+              <li class="flow-step"><span class="flow-icon"><svg class="icon"><use href="assets/img/icons.svg#i-pin" /></svg></span>Pin</li>
+              <li class="flow-step"><span class="flow-icon"><svg class="icon"><use href="assets/img/icons.svg#i-scan" /></svg></span>Scan</li>
+              <li class="flow-step"><span class="flow-icon"><svg class="icon"><use href="assets/img/icons.svg#i-list" /></svg></span>Rows</li>
+              <li class="flow-step"><span class="flow-icon"><svg class="icon"><use href="assets/img/icons.svg#i-export" /></svg></span>Export</li>
+            </ol>
+            <div class="hub-ins-rows" aria-hidden="true" data-ins-rows></div>
+            <div class="hub-ins-foot">
+              <div class="progress" style="--p: 0" aria-hidden="true" data-ins-progress><span class="progress-fill"></span></div>
+              <button class="btn btn-primary btn-block" type="button" tabindex="-1" aria-hidden="true" data-ins-btn>
+                <span class="morph">
+                  <span class="is-active" data-key="start"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-play" /></svg>Start extracting</span>
+                  <span data-key="run" aria-hidden="true"><span class="spinner" aria-hidden="true"></span>Extracting…</span>
+                  <span data-key="export" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-download" /></svg>Export 48 places</span>
+                  <span data-key="done" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Saved as CSV</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ Surfaces -->
+      <section class="page hub-section" id="surfaces" aria-labelledby="surfaces-title">
+        <header class="hub-section-head">
+          <span class="kicker">Surfaces</span>
+          <h2 class="hub-h2" id="surfaces-title">Five pages, one foundation.</h2>
+          <p>Thumbnails are the live pages. Each page declares its states to the prototype dock, so every state in <code>logic.md</code> is one click away.</p>
+        </header>
+
+        <div class="hub-surfaces" data-stagger="60">
+          <article class="card hub-surface hub-surface--feature" data-reveal>
+            <a class="hub-thumb" href="design-system.html" tabindex="-1" aria-hidden="true"><iframe src="design-system.html?embed=1" title="Design system preview" loading="lazy" inert data-vw="1440" data-vh="900"></iframe></a>
+            <div class="hub-surface-body">
+              <div class="hub-surface-title">
+                <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-layers" /></svg></span>
+                <h3 class="h2">Design system</h3>
+                <span class="badge tone-ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Ready</span>
+              </div>
+              <p>Atlas Field — color in both themes with measured contrast, tool-grade type, the motion system with live demos, every shared component in every state, the in-page panel vocabulary on a Maps backdrop, and the icon set.</p>
+              <div class="hub-states">
+                <span class="chip">Tokens</span>
+                <span class="chip">Motion</span>
+                <span class="chip">Components</span>
+                <span class="chip">In-page panel</span>
+                <span class="chip">Icons</span>
+              </div>
+              <a class="link-arrow" href="design-system.html">Open design-system.html<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            </div>
+          </article>
+
+          <article class="card hub-surface" data-reveal>
+            <a class="hub-thumb" href="popup.html" tabindex="-1" aria-hidden="true"><iframe src="popup.html?embed=1" title="Popup preview" loading="lazy" inert data-vw="1200" data-vh="750"></iframe></a>
+            <div class="hub-surface-body">
+              <div class="hub-surface-title">
+                <span class="icon-tile icon-tile--sm"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-window" /></svg></span>
+                <h3 class="h3">Popup</h3>
+                <span class="badge tone-ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Ready</span>
+              </div>
+              <p>Toolbar popup, 400 wide. Open Google Maps, two bulk entries, account and the usage meter — the popup’s core information.</p>
+              <div class="hub-states">
+                <span class="chip chip--mono">Guest · signing in · signed in</span>
+                <span class="chip chip--mono">Usage ×5 (L5)</span>
+              </div>
+              <a class="link-arrow" href="popup.html">Open popup.html<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            </div>
+          </article>
+
+          <article class="card hub-surface" data-reveal>
+            <a class="hub-thumb" href="panel.html" tabindex="-1" aria-hidden="true"><iframe src="panel.html?embed=1" title="Maps panel preview" loading="lazy" inert data-vw="1440" data-vh="900"></iframe></a>
+            <div class="hub-surface-body">
+              <div class="hub-surface-title">
+                <span class="icon-tile icon-tile--sm"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-map" /></svg></span>
+                <h3 class="h3">Maps panel</h3>
+                <span class="badge tone-ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Ready</span>
+              </div>
+              <p>Shadow DOM panel inside Google Maps, 280 wide. Search, list and place modes plus the reviews and photos work pages.</p>
+              <div class="hub-states">
+                <span class="chip chip--mono">Idle → extracting → paused → complete</span>
+                <span class="chip chip--mono">L1–L4</span>
+              </div>
+              <a class="link-arrow" href="panel.html">Open panel.html<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            </div>
+          </article>
+
+          <article class="card hub-surface" data-reveal>
+            <a class="hub-thumb" href="dashboard.html" tabindex="-1" aria-hidden="true"><iframe src="dashboard.html?embed=1" title="Dashboard preview" loading="lazy" inert data-vw="1440" data-vh="900"></iframe></a>
+            <div class="hub-surface-body">
+              <div class="hub-surface-title">
+                <span class="icon-tile icon-tile--sm"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-table" /></svg></span>
+                <h3 class="h3">Bulk dashboard</h3>
+                <span class="badge tone-ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Ready</span>
+              </div>
+              <p>Keyword and review-URL tasks, 1120 wide. New task form with live counter, task history, task detail and the scheduler states.</p>
+              <div class="hub-states">
+                <span class="chip chip--mono">Idle · running · paused · completed</span>
+                <span class="chip chip--mono">L6–L9</span>
+              </div>
+              <a class="link-arrow" href="dashboard.html">Open dashboard.html<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            </div>
+          </article>
+
+          <article class="card hub-surface" data-reveal>
+            <a class="hub-thumb" href="options.html" tabindex="-1" aria-hidden="true"><iframe src="options.html?embed=1" title="Settings preview" loading="lazy" inert data-vw="1440" data-vh="900"></iframe></a>
+            <div class="hub-surface-body">
+              <div class="hub-surface-title">
+                <span class="icon-tile icon-tile--sm"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-settings" /></svg></span>
+                <h3 class="h3">Settings</h3>
+                <span class="badge tone-ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Ready</span>
+              </div>
+              <p>Options page, 680 wide. Extraction, export fields (36 in 6 groups), automation and the new theme setting — every change saves on its own.</p>
+              <div class="hub-states">
+                <span class="chip chip--mono">Saved · failed</span>
+                <span class="chip chip--mono">Theme (L11)</span>
+              </div>
+              <a class="link-arrow" href="options.html">Open options.html<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- =========================================================== Decisions -->
+      <section class="page hub-section" id="decisions" aria-labelledby="decisions-title">
+        <header class="hub-section-head">
+          <span class="kicker">Logic · approved 2026-10-18</span>
+          <h2 class="hub-h2" id="decisions-title">Twelve changes the designs follow.</h2>
+          <p>From <a class="link" href="logic.md">logic.md §9</a>. They are drawn into the prototypes now and synced back to the 013 feat when implemented.</p>
+        </header>
+        <ol class="hub-decisions" data-stagger="30">
+          <li class="card hub-decision" data-reveal><span class="badge">L1</span><b>Run progress, N / limit</b><span>Progress ring in the panel; paused reads “Paused · N places”.</span><span class="hub-where">Panel</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L2</span><b>Errors by reason</b><span>Not searched, parse failed, no reviews, Google error, place not identified — each with a next step.</span><span class="hub-where">Panel</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L3</span><b>Upgrade entry when out</b><span>Always shown at the limit; Start re-checks the quota every time.</span><span class="hub-where">Panel</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L4</span><b>Reviews & photos entries</b><span>“Collecting in a new tab”, reopen, then reset after a few seconds.</span><span class="hub-where">Panel · place</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L5</span><b>Near-limit usage, sign-in loading</b><span>≥ 80% gets its own state; signing in shows a spinner.</span><span class="hub-where">Popup</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L6</span><b>One main action per task</b><span>View + Start / Resume; copies and Delete in More; in-page confirm.</span><span class="hub-where">Dashboard</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L7</span><b>Start · Resume · Run again</b><span>One verb per state, and completed tasks can run again.</span><span class="hub-where">Dashboard</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L8</span><b>Back doesn’t pause</b><span>Tasks keep running in the background; detail can be reopened anytime.</span><span class="hub-where">Dashboard</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L9</span><b>Retries live in Settings</b><span>The form shows the current value read-only with a link.</span><span class="hub-where">Dashboard · Settings</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L10</span><b>Bundled fonts, system panel</b><span>Plus Jakarta Sans + Azeret Mono in extension pages; system fonts in the panel.</span><span class="hub-where">All</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L11</span><b>Theme setting</b><span>System, light or dark — shared by every surface, the panel follows.</span><span class="hub-where">Settings · All</span></li>
+          <li class="card hub-decision" data-reveal><span class="badge">L12</span><b>Docs follow the design</b><span>Unbuilt feat items are removed; the new design is the contract.</span><span class="hub-where">Docs</span></li>
+        </ol>
+      </section>
+
+      <!-- ========================================================== Foundation -->
+      <section class="page hub-section" id="foundation" aria-labelledby="foundation-title">
+        <header class="hub-section-head">
+          <span class="kicker">Foundation · phase A</span>
+          <h2 class="hub-h2" id="foundation-title">Shared files every page builds on.</h2>
+          <p>Plain HTML, native CSS and JS — no build, no CDN. Pages keep their private styles in <code>assets/css/pages/</code> and scripts in <code>assets/js/pages/</code>.</p>
+        </header>
+        <div class="hub-foundation">
+          <div class="table-wrap">
+            <table class="table table--compact hub-files">
+              <thead>
+                <tr>
+                  <th scope="col">File</th>
+                  <th scope="col">Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="cell-mono">css/tokens.css</td><td>Atlas Field tokens: color (light-dark), type, space, radii, shadow, motion</td></tr>
+                <tr><td class="cell-mono">css/base.css</td><td>Fonts, reset, type utilities, layout primitives, icons</td></tr>
+                <tr><td class="cell-mono">css/components.css</td><td>Shared components for popup, dashboard and settings</td></tr>
+                <tr><td class="cell-mono">css/motion.css</td><td>Keyframes, entrance choreography, reveal, reduced motion</td></tr>
+                <tr><td class="cell-mono">css/panel.css</td><td>Self-contained Shadow DOM stylesheet for the Maps panel</td></tr>
+                <tr><td class="cell-mono">css/proto.css</td><td>Prototype only: state dock, stage, browser frame, Maps mock</td></tr>
+                <tr><td class="cell-mono">js/theme.js · motion.js · ui.js</td><td>Theme boot + API, motion runtime, component behaviors</td></tr>
+                <tr><td class="cell-mono">js/proto.js</td><td>Prototype only: <code>Proto.states</code>, flows, Maps host mock</td></tr>
+                <tr><td class="cell-mono">img/icons.svg · logo.svg</td><td>One-stroke icon sprite and the brand mark</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="hub-side">
+            <div class="hub-code">
+              <div class="hub-code-head">Preview locally<button class="icon-btn icon-btn--sm" type="button" aria-label="Copy command" data-copy-cmd><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg></button></div>
+              <pre><b>$</b> cd docs/design/extension
+<b>$</b> python3 -m http.server 7691 --bind 127.0.0.1
+<i># open http://127.0.0.1:7691/</i></pre>
+            </div>
+            <div class="notice notice--announce">
+              <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-info" /></svg>
+              <div>
+                <p class="notice-title">Prototype, not product code</p>
+                <p class="notice-desc">Copy is en-US and maps to i18n keys. The state dock, stage and Maps mock exist only here; tokens, components and panel.css are what lands.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="page hub-foot">
+        <span class="brand"><img class="brand-mark" src="assets/img/logo.svg" alt="" />MapsGrab</span>
+        <span>Atlas Field · extension design</span>
+        <span class="spacer"></span>
+        <a class="link link--quiet" href="design-system.html">Design system</a>
+        <a class="link link--quiet" href="README.md">README</a>
+        <a class="link link--quiet" href="logic.md">logic.md</a>
+      </footer>
+    </main>
+  </body>
+</html>

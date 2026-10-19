@@ -50,6 +50,17 @@ const HUBSPOT_SCOPES = 'crm.objects.companies.write'
 const HUBSPOT_CLIENT_ID = 'placeholder-hubspot-client-id'
 const HUBSPOT_CLIENT_SECRET = 'placeholder-hubspot-client-secret'
 
+/** 占位凭据不能发起授权；已配置部署从同一边界判断可用性。 */
+export function getMapsIntegrationAvailability(): { drive: boolean; hubspot: boolean } {
+  const driveClientId = chrome.runtime.getManifest().oauth2?.client_id?.trim()
+  return {
+    drive: Boolean(driveClientId && !driveClientId.startsWith('placeholder-')),
+    hubspot:
+      !HUBSPOT_CLIENT_ID.startsWith('placeholder-') &&
+      !HUBSPOT_CLIENT_SECRET.startsWith('placeholder-')
+  }
+}
+
 /** Drive multipart 上传端点（竞品同构，supportsAllDrives 兼容共享盘）。 */
 const DRIVE_UPLOAD_URL =
   'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true'

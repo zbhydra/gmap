@@ -1,194 +1,117 @@
 <template>
-  <div class="language-switcher">
-    <button class="language-btn" :title="currentLanguageLabel" @click="toggleDropdown">
-      <span class="current-language">{{ currentLanguageLabel }}</span>
+  <div class="pp-language">
+    <button
+      ref="trigger"
+      class="btn btn-ghost btn-sm pp-lang"
+      type="button"
+      popovertarget="popup-languages"
+      :aria-label="t(I18N_KEYS.OPTIONS.LANGUAGE)"
+      :title="currentLabel"
+      :aria-expanded="open"
+      @click="positionMenu"
+    >
+      <Icon :name="IconName.GLOBE" /><span class="pp-lang-code mono">{{ currentCode }}</span
+      ><Icon :name="IconName.CHEVRON_DOWN" class="pp-lang-chevron" />
     </button>
-
-    <!-- 下拉菜单 -->
-    <div v-if="showDropdown" class="language-dropdown">
-      <button
-        v-for="lang in LANGUAGES"
-        :key="lang.value"
-        class="language-option"
-        :class="{ active: lang.value === currentLanguage }"
-        @click="selectLanguage(lang.value)"
-      >
-        {{ lang.label }}
-      </button>
+    <div
+      id="popup-languages"
+      ref="menu"
+      popover
+      class="menu pp-lang-menu"
+      :style="menuPosition"
+      :aria-label="t(I18N_KEYS.OPTIONS.LANGUAGE)"
+      @toggle="onToggle"
+    >
+      <div class="menu-label">{{ t(I18N_KEYS.OPTIONS.LANGUAGE) }}</div>
+      <div class="pp-lang-grid" role="group">
+        <button
+          v-for="lang in LANGUAGES"
+          :key="lang.value"
+          class="menu-item"
+          type="button"
+          :lang="lang.value"
+          :aria-pressed="locale === lang.value"
+          @click="selectLanguage(lang.value)"
+        >
+          {{ lang.label }}<Icon v-if="locale === lang.value" :name="IconName.CHECK" />
+        </button>
+      </div>
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { I18nService } from '@/locales'
 import { LANGUAGES, type Language } from '@/core/services/languageService'
-import { SettingsManager } from '@/core/storage/settings'
+import { I18N_KEYS } from '@/core/constants/i18n'
+import { Icon, IconName } from '@/core/components/icons'
 import { logger } from '@/core/utils/logger'
-
-// 当前语言
-const currentLanguage = ref<Language>(I18nService.getCurrentLanguage() as Language)
-
-// 下拉菜单显示状态
-const showDropdown = ref(false)
-
-// 当前语言标签
-const currentLanguageLabel = computed(() => {
-  const config = LANGUAGES.find(l => l.value === currentLanguage.value)
-  return config?.label || 'Language'
-})
-
-/**
- * 切换下拉菜单
- */
-function toggleDropdown(): void {
-  showDropdown.value = !showDropdown.value
-}
-
-/**
- * 关闭下拉菜单
- */
-function closeDropdown(): void {
-  showDropdown.value = false
-}
-
-/**
- * 选择语言
- */
-async function selectLanguage(langValue: Language): Promise<void> {
-  if (langValue === currentLanguage.value) {
-    closeDropdown()
-    return
+import { useToast } from '@/core/composables/useToast'
+const { locale, t } = useI18n()
+const { showError } = useToast()
+const trigger = ref<HTMLButtonElement | null>(null)
+const menu = ref<HTMLDivElement | null>(null)
+const open = ref(false)
+const menuPosition = ref({ top: '0px', left: '0px' })
+const currentLabel = computed(() => LANGUAGES.find(lang => lang.value === locale.value)?.label)
+const currentCode = computed(() =>
+  locale.value === 'zh-TW' ? 'ZH-TW' : locale.value.split('-')[0].toUpperCase()
+)
+function positionMenu(): void {
+  const bounds = trigger.value!.getBoundingClientRect()
+  menuPosition.value = {
+    top: `${bounds.bottom + 6}px`,
+    left: `${Math.max(8, Math.min(bounds.right - 292, window.innerWidth - 300))}px`
   }
-
+}
+function onToggle(event: Event): void {
+  if (event instanceof ToggleEvent) open.value = event.newState === 'open'
+}
+async function selectLanguage(language: Language): Promise<void> {
   try {
-    // 更新 I18nService 语言
-    I18nService.setLanguage(langValue)
-
-    // 更新设置
-    await SettingsManager.updateSettings({ language: langValue })
-
-    // 更新当前语言
-    currentLanguage.value = langValue
-
-    logger.info(`[LanguageSwitcher] Language changed to ${langValue}`)
+    await I18nService.setLanguage(language)
+    menu.value!.hidePopover()
   } catch (error) {
-    logger.error('[LanguageSwitcher] Failed to change language:', error)
-  }
-
-  closeDropdown()
-}
-
-// 点击外部关闭菜单
-function handleClickOutside(event: MouseEvent): void {
-  const target = event.target as Node
-  const container = document.querySelector('.language-switcher')
-  if (container && !container.contains(target)) {
-    closeDropdown()
+    logger.error('[Popup] 语言保存失败:', error)
+    showError(t(I18N_KEYS.OPTIONS.LANGUAGE_FAILED))
   }
 }
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>
-
 <style scoped>
-/* 色值一律消费 --gme-* 语义 token（src/styles/tokens.css）；菜单规格见 design.md §7。 */
-.language-switcher {
-  position: relative;
-  display: flex;
-  align-items: center;
+.pp-lang {
+  --btn-px: 10px;
+  gap: 6px;
 }
-
-.language-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border: none;
-  border-radius: var(--gme-rounded-full);
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+.pp-lang-code {
+  font-size: var(--fs-xs);
+  font-weight: 600;
 }
-
-.language-btn:hover {
-  background: var(--gme-surface-2);
+.btn .pp-lang-chevron {
+  width: 12px;
+  height: 12px;
+  transition: transform var(--dur-3) var(--ease-emph);
 }
-
-.language-btn:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
+.pp-lang[aria-expanded='true'] .pp-lang-chevron {
+  transform: rotate(180deg);
 }
-
-.current-language {
-  font-size: 12px;
-  color: var(--gme-text-2);
+.pp-lang-menu {
+  position: fixed;
+  inset: auto;
+  width: 292px;
+  min-width: 0;
+  margin: 0;
 }
-
-/* 下拉菜单：surface + border + shadow-pop，内边距 6px，项为胶囊（design.md §7） */
-.language-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  min-width: 120px;
-  padding: 6px;
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border);
-  border-radius: var(--gme-rounded-md);
-  box-shadow: var(--gme-shadow-pop);
-  z-index: 1000;
-  animation: dropdownFadeIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+.pp-lang-grid {
+  display: grid;
+  grid-template-rows: repeat(7, auto);
+  grid-auto-flow: column;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-
-@keyframes dropdownFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.pp-lang-grid .menu-item {
+  min-width: 0;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .language-dropdown {
-    animation: none;
-  }
-}
-
-.language-option {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  border: none;
-  border-radius: var(--gme-rounded-full);
-  background: transparent;
-  font-size: 13px;
-  color: var(--gme-text);
-  cursor: pointer;
-  transition: background 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-  text-align: left;
-}
-
-.language-option:hover {
-  background: var(--gme-surface-2);
-}
-
-.language-option:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: -2px;
-}
-
-.language-option.active {
-  background: var(--gme-primary-soft);
-  color: var(--gme-primary);
-  font-weight: 500;
+.pp-lang-grid .icon {
+  margin-left: auto;
 }
 </style>

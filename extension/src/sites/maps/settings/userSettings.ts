@@ -37,8 +37,11 @@ const EXPORT_FORMATS: readonly SearchExportFormat[] = ['csv', 'json', 'xlsx']
 /** 全选时的导出列集合（36 列 header，从唯一事实来源 SEARCH_EXPORT_COLUMNS 派生）。 */
 const ALL_EXPORT_HEADERS: readonly string[] = SEARCH_EXPORT_COLUMNS.map(column => column.header)
 
+export type ThemeMode = 'system' | 'light' | 'dark'
+
 /** Maps 用户设置（个人偏好）。 */
 export interface MapsUserSettings {
+  theme: ThemeMode
   /** 滚动/采集轮询间隔（秒），只能取远程档位内的值（默认 8）。 */
   requestIntervalSec: number
   /** 导出格式（默认 csv）。 */
@@ -61,6 +64,7 @@ export interface MapsUserSettings {
 
 /** 编译期完整默认值（与竞品 onInstalled 写入的默认语义一致）。 */
 export const DEFAULT_MAPS_USER_SETTINGS: Readonly<MapsUserSettings> = Object.freeze({
+  theme: 'system',
   requestIntervalSec: DEFAULT_REQUEST_INTERVAL_SEC,
   exportFormat: 'csv',
   exportFieldHeaders: [...ALL_EXPORT_HEADERS],
@@ -149,13 +153,10 @@ export class MapsUserSettingsManager {
     if (this.unsubscribe) {
       return
     }
-    this.unsubscribe = storageManager.onChanged<StoredMapsUserSettings>(
+    this.unsubscribe = storageManager.onChanged<StoredMapsUserSettings | undefined>(
       STORAGE_KEYS.MAPS_USER_SETTINGS,
       stored => {
-        if (!stored) {
-          return
-        }
-        const normalized = normalizeStored(stored)
+        const normalized = normalizeStored(stored ?? null)
         for (const callback of this.callbacks) {
           try {
             callback(normalized)
@@ -180,6 +181,10 @@ function normalizeStored(stored: StoredMapsUserSettings | null): MapsUserSetting
 
   const options = DEFAULT_MAPS_CONFIG.scrape.scrollIntervalOptionsSec
   return {
+    theme:
+      stored.theme === 'light' || stored.theme === 'dark' || stored.theme === 'system'
+        ? stored.theme
+        : defaults.theme,
     requestIntervalSec:
       typeof stored.requestIntervalSec === 'number' && options.includes(stored.requestIntervalSec)
         ? stored.requestIntervalSec

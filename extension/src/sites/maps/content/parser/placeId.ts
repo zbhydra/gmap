@@ -1,5 +1,5 @@
 /**
- * place URL 的 hex 标识解析与 fid → Place ID 本地换算（013 A2 入口）。
+ * place URL 的 hex 标识解析与 fid ↔ Place ID 本地换算（013 A2 入口）。
  *
  * 入口解析（03 逆向 §3.2 getReviewsURL）：正则提取 URL 中全部 `0x…` 十六进制
  * 段（长度超上限的丢弃），最后两段拼 fid、最后一段即 lrd，cid 由 lrd 转十进制。
@@ -20,7 +20,7 @@ const BASE64URL_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
 export interface PlaceUrlIds {
   /** `0x…:0x…` 形态的 fid（倒数第二段:最后一段）。 */
   fid: string
-  /** lrd（最后一段 hex，评论/照片 RPC 的定位参数）。 */
+  /** lrd（fid 的最后一段 hex）。 */
   lrd: string
 }
 
@@ -95,6 +95,21 @@ export function derivePlaceIdFromFid(fid: string): string {
     ...toUint64LittleEndian(secondValue)
   ]
   return base64UrlEncode(bytes)
+}
+
+/** 仅接受现有编码的 20 字节 protobuf 布局，其他 Place ID 返回空串。 */
+export function deriveFidFromPlaceId(placeId: string): string {
+  if (!/^[A-Za-z0-9_-]{27}$/.test(placeId)) {
+    return ''
+  }
+  const bytes = Uint8Array.from(atob(placeId.replace(/-/g, '+').replace(/_/g, '/') + '='), char =>
+    char.charCodeAt(0)
+  )
+  if (bytes[0] !== 0x0a || bytes[1] !== 0x12 || bytes[2] !== 0x09 || bytes[11] !== 0x11) {
+    return ''
+  }
+  const view = new DataView(bytes.buffer)
+  return `0x${view.getBigUint64(3, true).toString(16)}:0x${view.getBigUint64(12, true).toString(16)}`
 }
 
 /** 解析 `0x…` / 裸 hex 字面量为 BigInt；非法返回 null。 */

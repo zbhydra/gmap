@@ -1,252 +1,537 @@
 <template>
-  <div class="options-page">
-    <header class="options-header">
-      <div class="options-header-inner">
-        <h1 class="options-title">{{ t(I18N_KEYS.OPTIONS.TITLE) }}</h1>
-        <span class="options-brand">{{ t(I18N_KEYS.MAPS_PANEL.TITLE) }}</span>
+  <div class="op-page">
+    <header class="appbar op-appbar" :class="{ 'is-scrolled': scrolled }">
+      <span class="brand"
+        ><img class="brand-mark" :src="brandIconUrl" alt="" />{{ t(I18N_KEYS.APP.TITLE) }}</span
+      >
+      <span class="op-appbar-sep" aria-hidden="true"></span>
+      <h1 class="appbar-title">{{ t(K.TITLE) }}</h1>
+      <div class="appbar-actions">
+        <span class="op-save" :data-state="saveState" role="status" aria-live="polite"
+          ><span v-if="saveState === 'saving'" class="spinner"></span
+          ><Icon
+            v-else
+            :name="saveState === 'failed' ? IconName.ALERT_CIRCLE : IconName.CHECK_CIRCLE"
+          /><span>{{ t(saveLabels[saveState]) }}</span></span
+        >
       </div>
     </header>
-
-    <main class="options-main">
-      <!-- 采集 -->
-      <section class="options-card">
-        <h2 class="options-section-title">{{ t(I18N_KEYS.OPTIONS.SECTION_EXTRACTION) }}</h2>
-
-        <div class="options-field">
-          <span class="options-label">{{ t(I18N_KEYS.OPTIONS.REQUEST_INTERVAL) }}</span>
-          <p class="options-hint">{{ t(I18N_KEYS.OPTIONS.REQUEST_INTERVAL_HINT) }}</p>
-          <div
-            class="options-segmented"
-            role="radiogroup"
-            :aria-label="t(I18N_KEYS.OPTIONS.REQUEST_INTERVAL)"
+    <div class="op-shell">
+      <nav class="op-nav" :aria-label="t(K.NAV_LABEL)">
+        <span
+          class="op-nav-ink"
+          aria-hidden="true"
+          :style="{ '--nav-index': sections.findIndex(section => section.id === activeSection) }"
+        ></span>
+        <a
+          v-for="section in sections"
+          :key="section.id"
+          class="op-nav-link"
+          :href="`#${section.id}`"
+          :aria-current="activeSection === section.id ? 'location' : undefined"
+          @click.prevent="goTo(section.id)"
+        >
+          <span class="op-nav-icon"><Icon :name="section.icon" /></span
+          ><span class="op-nav-text"
+            ><span class="op-nav-label">{{ t(section.label) }}</span
+            ><span class="op-nav-sum mono">{{ sectionSummary(section.id) }}</span></span
           >
-            <button
-              v-for="seconds in intervalOptions"
-              :key="seconds"
-              type="button"
-              class="options-segment"
-              role="radio"
-              :aria-checked="settings.requestIntervalSec === seconds"
-              :class="{ 'options-segment-active': settings.requestIntervalSec === seconds }"
-              @click="patch({ requestIntervalSec: seconds })"
-            >
-              {{ t(I18N_KEYS.OPTIONS.INTERVAL_SECONDS, { seconds }) }}
-            </button>
-          </div>
-        </div>
-
-        <div class="options-toggle-row">
-          <div class="options-toggle-text">
-            <span class="options-label options-label-with-badge">
-              {{ t(I18N_KEYS.OPTIONS.EXTRACT_EMAIL) }}
-              <span class="options-pro-badge">{{ t(I18N_KEYS.OPTIONS.PRO_BADGE) }}</span>
-            </span>
-            <p class="options-hint">{{ t(I18N_KEYS.OPTIONS.EXTRACT_EMAIL_HINT) }}</p>
-          </div>
-          <label class="options-switch">
-            <input
-              type="checkbox"
-              :checked="settings.extractEmail"
-              @change="patch({ extractEmail: ($event.target as HTMLInputElement).checked })"
-            />
-            <span class="options-switch-track" aria-hidden="true"></span>
-          </label>
-        </div>
-
-        <div class="options-toggle-row">
-          <div class="options-toggle-text">
-            <span class="options-label options-label-with-badge">
-              {{ t(I18N_KEYS.OPTIONS.EXTRACT_SOCIAL_MEDIAS) }}
-              <span class="options-pro-badge">{{ t(I18N_KEYS.OPTIONS.PRO_BADGE) }}</span>
-            </span>
-            <p class="options-hint">{{ t(I18N_KEYS.OPTIONS.EXTRACT_SOCIAL_MEDIAS_HINT) }}</p>
-          </div>
-          <label class="options-switch">
-            <input
-              type="checkbox"
-              :checked="settings.extractSocialMedias"
-              @change="patch({ extractSocialMedias: ($event.target as HTMLInputElement).checked })"
-            />
-            <span class="options-switch-track" aria-hidden="true"></span>
-          </label>
-        </div>
-      </section>
-
-      <!-- 导出 -->
-      <section class="options-card">
-        <h2 class="options-section-title">{{ t(I18N_KEYS.OPTIONS.SECTION_EXPORT) }}</h2>
-
-        <div class="options-field">
-          <span class="options-label">{{ t(I18N_KEYS.OPTIONS.EXPORT_FORMAT) }}</span>
-          <div
-            class="options-segmented"
-            role="radiogroup"
-            :aria-label="t(I18N_KEYS.OPTIONS.EXPORT_FORMAT)"
-          >
-            <button
-              v-for="option in formatOptions"
-              :key="option.value"
-              type="button"
-              class="options-segment"
-              role="radio"
-              :aria-checked="settings.exportFormat === option.value"
-              :class="{ 'options-segment-active': settings.exportFormat === option.value }"
-              @click="patch({ exportFormat: option.value })"
-            >
-              {{ t(option.labelKey) }}
-            </button>
-          </div>
-        </div>
-
-        <div class="options-field">
-          <span class="options-label">{{ t(I18N_KEYS.OPTIONS.EXPORT_FIELDS) }}</span>
-          <p class="options-hint">{{ t(I18N_KEYS.OPTIONS.EXPORT_FIELDS_HINT) }}</p>
-          <div class="options-field-groups">
-            <fieldset v-for="group in columnGroups" :key="group.key" class="options-field-group">
-              <legend class="options-field-group-legend">{{ t(group.labelKey) }}</legend>
-              <label v-for="column in group.columns" :key="column.header" class="options-checkbox">
-                <input
-                  type="checkbox"
-                  :checked="settings.exportFieldHeaders.includes(column.header)"
-                  @change="toggleColumn(column.header, ($event.target as HTMLInputElement).checked)"
-                />
-                <span class="options-checkbox-label">{{ t(column.labelKey) }}</span>
-                <span v-if="column.pro" class="options-pro-badge">
-                  {{ t(I18N_KEYS.OPTIONS.PRO_BADGE) }}
-                </span>
-              </label>
-            </fieldset>
-          </div>
-        </div>
-      </section>
-
-      <!-- 自动化 -->
-      <section class="options-card">
-        <h2 class="options-section-title">{{ t(I18N_KEYS.OPTIONS.SECTION_AUTOMATION) }}</h2>
-
-        <div class="options-toggle-row">
-          <div class="options-toggle-text">
-            <span class="options-label">{{ t(I18N_KEYS.OPTIONS.AUTO_DOWNLOAD) }}</span>
-          </div>
-          <label class="options-switch">
-            <input
-              type="checkbox"
-              :checked="settings.autoDownload"
-              @change="patch({ autoDownload: ($event.target as HTMLInputElement).checked })"
-            />
-            <span class="options-switch-track" aria-hidden="true"></span>
-          </label>
-        </div>
-
-        <div class="options-toggle-row">
-          <div class="options-toggle-text">
-            <span class="options-label">{{ t(I18N_KEYS.OPTIONS.DRIVE_AUTO_SAVE) }}</span>
-            <p class="options-hint">{{ t(I18N_KEYS.OPTIONS.INTEGRATION_HINT_DRIVE) }}</p>
-            <p class="options-hint options-integration-status">
-              {{
-                driveConnected
-                  ? t(I18N_KEYS.OPTIONS.INTEGRATION_STATUS_CONNECTED)
-                  : t(I18N_KEYS.OPTIONS.INTEGRATION_STATUS_NOT_CONNECTED)
-              }}
+        </a>
+      </nav>
+      <main class="op-main">
+        <div v-if="failedRow" class="op-alert notice notice--banner tone-bad" role="alert">
+          <Icon :name="IconName.ALERT_CIRCLE" />
+          <div>
+            <p class="notice-title">{{ t(K.SAVE_FAILED, { setting: t(rowLabels[failedRow]) }) }}</p>
+            <p class="notice-desc">
+              {{ t(K.SAVE_FAILED_HINT, { value: currentValue(failedRow) }) }}
             </p>
-            <p v-if="driveAuthError" class="options-error">
-              {{ t(I18N_KEYS.OPTIONS.INTEGRATION_AUTH_FAILED) }}
-            </p>
-          </div>
-          <div class="options-toggle-controls">
-            <button
-              v-if="driveConnected"
-              type="button"
-              class="options-link-button"
-              @click="disconnectDrive"
-            >
-              {{ t(I18N_KEYS.OPTIONS.INTEGRATION_DISCONNECT) }}
-            </button>
-            <label class="options-switch">
-              <input
-                type="checkbox"
-                :checked="settings.autoSaveToGoogleDrive"
-                @change="onDriveToggle($event)"
-              />
-              <span class="options-switch-track" aria-hidden="true"></span>
-            </label>
+            <div class="notice-actions">
+              <button type="button" class="btn btn-secondary btn-sm" @click="reloadPage">
+                <Icon :name="IconName.REFRESH" />{{ t(K.RELOAD) }}
+              </button>
+            </div>
           </div>
         </div>
-
-        <div class="options-toggle-row">
-          <div class="options-toggle-text">
-            <span class="options-label">{{ t(I18N_KEYS.OPTIONS.HUBSPOT_AUTO_SAVE) }}</span>
-            <p class="options-hint">{{ t(I18N_KEYS.OPTIONS.INTEGRATION_HINT_HUBSPOT) }}</p>
-            <p class="options-hint options-integration-status">
-              {{
-                hubspotConnected
-                  ? t(I18N_KEYS.OPTIONS.INTEGRATION_STATUS_CONNECTED)
-                  : t(I18N_KEYS.OPTIONS.INTEGRATION_STATUS_NOT_CONNECTED)
-              }}
-            </p>
-            <p v-if="hubspotAuthError" class="options-error">
-              {{ t(I18N_KEYS.OPTIONS.INTEGRATION_AUTH_FAILED) }}
-            </p>
-          </div>
-          <div class="options-toggle-controls">
-            <button
-              v-if="hubspotConnected"
-              type="button"
-              class="options-link-button"
-              @click="disconnectHubspot"
-            >
-              {{ t(I18N_KEYS.OPTIONS.INTEGRATION_DISCONNECT) }}
-            </button>
-            <label class="options-switch">
-              <input
-                type="checkbox"
-                :checked="settings.autoSaveToHubspot"
-                @change="onHubspotToggle($event)"
-              />
-              <span class="options-switch-track" aria-hidden="true"></span>
-            </label>
-          </div>
+        <div class="op-form">
+          <section id="extraction" class="op-section enter" aria-labelledby="heading-extraction">
+            <header class="op-section-head">
+              <h2 id="heading-extraction" class="op-section-title" tabindex="-1">
+                {{ t(K.SECTION_EXTRACTION) }}
+              </h2>
+              <p class="op-section-desc">{{ t(K.EXTRACTION_DESC) }}</p>
+            </header>
+            <div class="card op-card">
+              <div class="op-setting">
+                <div class="op-setting-text">
+                  <span id="interval-label" class="op-setting-label">{{
+                    t(K.REQUEST_INTERVAL)
+                  }}</span
+                  ><span id="interval-hint" class="op-setting-hint">{{
+                    t(K.REQUEST_INTERVAL_HINT)
+                  }}</span>
+                </div>
+                <div class="op-ctl">
+                  <SaveFeedback :state="feedback('requestIntervalSec')" />
+                  <div
+                    class="seg seg--sm op-interval"
+                    role="radiogroup"
+                    aria-labelledby="interval-label"
+                    aria-describedby="interval-hint"
+                  >
+                    <span
+                      class="seg-thumb"
+                      :style="
+                        segmentStyle(
+                          intervalOptions.indexOf(settings.requestIntervalSec),
+                          intervalOptions.length
+                        )
+                      "
+                      aria-hidden="true"
+                    ></span
+                    ><button
+                      v-for="seconds in intervalOptions"
+                      :key="seconds"
+                      class="seg-btn"
+                      type="button"
+                      role="radio"
+                      :aria-checked="settings.requestIntervalSec === seconds"
+                      @click="patch({ requestIntervalSec: seconds }, 'requestIntervalSec')"
+                    >
+                      {{ t(K.INTERVAL_SECONDS, { seconds }) }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div
+                v-for="option in enrichOptions"
+                :id="option.key"
+                :key="option.key"
+                class="op-setting"
+              >
+                <div class="op-setting-text">
+                  <span :id="`${option.key}-label`" class="op-setting-label"
+                    >{{ t(option.label)
+                    }}<span class="badge badge--pro"
+                      ><Icon :name="IconName.CROWN" />{{ t(K.PRO_BADGE) }}</span
+                    ></span
+                  ><span :id="`${option.key}-hint`" class="op-setting-hint">{{
+                    t(option.hint)
+                  }}</span
+                  ><span
+                    v-if="option.key === 'extractSocialMedias'"
+                    class="op-social"
+                    aria-hidden="true"
+                    ><Icon v-for="icon in socialIcons" :key="icon" :name="icon" /></span
+                  ><span class="op-plan-note"
+                    ><Icon :name="IconName.SPARKLE" />{{ t(K.PRO_FREE) }}</span
+                  >
+                </div>
+                <div class="op-ctl">
+                  <SaveFeedback :state="feedback(option.key)" /><button
+                    type="button"
+                    class="switch"
+                    role="switch"
+                    :aria-checked="settings[option.key]"
+                    :aria-labelledby="`${option.key}-label`"
+                    :aria-describedby="`${option.key}-hint`"
+                    @click="patch({ [option.key]: !settings[option.key] }, option.key)"
+                  >
+                    <span class="switch-knob"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="export" class="op-section enter" aria-labelledby="heading-export">
+            <header class="op-section-head">
+              <h2 id="heading-export" class="op-section-title" tabindex="-1">
+                {{ t(K.SECTION_EXPORT) }}
+              </h2>
+              <p class="op-section-desc">{{ t(K.EXPORT_DESC) }}</p>
+            </header>
+            <div class="card op-card">
+              <div class="op-setting">
+                <div class="op-setting-text">
+                  <span id="format-label" class="op-setting-label">{{ t(K.EXPORT_FORMAT) }}</span
+                  ><span id="format-hint" class="op-setting-hint">{{
+                    t(K.EXPORT_FORMAT_HINT)
+                  }}</span>
+                </div>
+                <div class="op-ctl">
+                  <SaveFeedback :state="feedback('exportFormat')" />
+                  <div
+                    class="seg seg--sm op-format"
+                    role="radiogroup"
+                    aria-labelledby="format-label"
+                    aria-describedby="format-hint"
+                  >
+                    <span
+                      class="seg-thumb"
+                      :style="
+                        segmentStyle(
+                          formatOptions.findIndex(option => option.value === settings.exportFormat),
+                          formatOptions.length
+                        )
+                      "
+                      aria-hidden="true"
+                    ></span
+                    ><button
+                      v-for="option in formatOptions"
+                      :key="option.value"
+                      class="seg-btn"
+                      type="button"
+                      role="radio"
+                      :aria-checked="settings.exportFormat === option.value"
+                      @click="patch({ exportFormat: option.value }, 'exportFormat')"
+                    >
+                      <Icon :name="option.icon" />{{ t(option.label) }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <ExportPreview :settings="settings" @jump="jumpToSetting" />
+            <div class="card op-card op-fields">
+              <div class="op-row-head">
+                <div class="op-setting-text">
+                  <span id="fields-label" class="op-setting-label">{{ t(K.EXPORT_FIELDS) }}</span
+                  ><span class="op-setting-hint">{{ t(K.EXPORT_FIELDS_HINT) }}</span>
+                </div>
+                <div class="op-ctl">
+                  <SaveFeedback :state="feedback('exportFieldHeaders')" /><span
+                    class="op-count mono"
+                    ><Transition name="count" mode="out-in"
+                      ><span :key="settings.exportFieldHeaders.length" class="op-count-num">{{
+                        settings.exportFieldHeaders.length
+                      }}</span></Transition
+                    ><span class="muted">/ {{ SEARCH_EXPORT_COLUMNS.length }}</span></span
+                  >
+                </div>
+              </div>
+              <div class="op-fields-bar">
+                <span class="op-legend"
+                  ><span class="op-pro-mini"><Icon :name="IconName.CROWN" /></span
+                  >{{ t(K.PRO_FIELDS) }}</span
+                ><span class="cluster"
+                  ><button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    @click="
+                      patch(
+                        { exportFieldHeaders: SEARCH_EXPORT_COLUMNS.map(column => column.header) },
+                        'exportFieldHeaders'
+                      )
+                    "
+                  >
+                    <Icon :name="IconName.LIST_CHECKS" />{{ t(K.SELECT_ALL) }}</button
+                  ><button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    @click="patch({ exportFieldHeaders: [] }, 'exportFieldHeaders')"
+                  >
+                    <Icon :name="IconName.X" />{{ t(K.CLEAR_FIELDS) }}
+                  </button></span
+                >
+              </div>
+              <div class="op-groups">
+                <fieldset v-for="group in columnGroups" :key="group.key" class="op-group">
+                  <legend class="sr-only">{{ t(group.labelKey) }}</legend>
+                  <div class="op-group-head">
+                    <label class="check-row op-group-toggle"
+                      ><input
+                        class="check"
+                        type="checkbox"
+                        :checked="selectedInGroup(group) === group.columns.length"
+                        :indeterminate="
+                          selectedInGroup(group) > 0 &&
+                          selectedInGroup(group) < group.columns.length
+                        "
+                        @change="toggleGroup(group, $event)"
+                      /><span class="op-group-name">{{ t(group.labelKey) }}</span></label
+                    ><span
+                      class="badge badge--count mono"
+                      :class="{ 'tone-primary': selectedInGroup(group) === group.columns.length }"
+                      >{{ selectedInGroup(group) }} / {{ group.columns.length }}</span
+                    >
+                  </div>
+                  <div class="op-field-grid">
+                    <label
+                      v-for="column in group.columns"
+                      :key="column.header"
+                      class="check-row op-field"
+                      ><input
+                        class="check"
+                        type="checkbox"
+                        :checked="settings.exportFieldHeaders.includes(column.header)"
+                        @change="toggleColumn(column.header, $event)" /><span
+                        class="op-field-name"
+                        >{{ t(column.labelKey) }}</span
+                      ><span v-if="column.pro" class="op-pro-mini" :title="t(K.PRO_BADGE)"
+                        ><Icon :name="IconName.CROWN" /></span
+                    ></label>
+                  </div>
+                </fieldset>
+              </div>
+            </div>
+          </section>
+          <section id="automation" class="op-section enter" aria-labelledby="heading-automation">
+            <header class="op-section-head">
+              <h2 id="heading-automation" class="op-section-title" tabindex="-1">
+                {{ t(K.SECTION_AUTOMATION) }}
+              </h2>
+              <p class="op-section-desc">{{ t(K.AUTOMATION_DESC) }}</p>
+            </header>
+            <div class="card op-card">
+              <div class="op-setting op-setting--download">
+                <div class="op-setting-text">
+                  <span id="download-label" class="op-setting-label">{{ t(K.AUTO_DOWNLOAD) }}</span>
+                </div>
+                <div class="op-ctl">
+                  <SaveFeedback :state="feedback('autoDownload')" /><button
+                    class="switch"
+                    type="button"
+                    role="switch"
+                    :aria-checked="settings.autoDownload"
+                    aria-labelledby="download-label"
+                    @click="patch({ autoDownload: !settings.autoDownload }, 'autoDownload')"
+                  >
+                    <span class="switch-knob"></span>
+                  </button>
+                </div>
+                <Transition name="download"
+                  ><div v-if="settings.autoDownload" class="op-download">
+                    <Icon :name="IconName.DOWNLOAD" />
+                    <div>
+                      <p>{{ t(K.AUTO_DOWNLOAD_HINT) }}</p>
+                      <span class="op-download-file mono">{{ downloadFilename }}</span>
+                    </div>
+                  </div></Transition
+                >
+              </div>
+              <div class="op-setting">
+                <div class="op-setting-text">
+                  <label for="options-retry" class="op-setting-label">{{
+                    t(K.STUCK_MAX_RETRY)
+                  }}</label
+                  ><span class="op-setting-hint">{{ t(K.STUCK_MAX_RETRY_HINT) }}</span>
+                </div>
+                <div class="op-ctl">
+                  <SaveFeedback :state="feedback('stuckMaxRetry')" />
+                  <div class="op-stepper">
+                    <button
+                      type="button"
+                      class="icon-btn icon-btn--sm"
+                      :disabled="settings.stuckMaxRetry <= 0"
+                      :aria-label="t(K.DECREASE_RETRY)"
+                      @click="patch({ stuckMaxRetry: settings.stuckMaxRetry - 1 }, 'stuckMaxRetry')"
+                    >
+                      <Icon :name="IconName.MINUS" /></button
+                    ><input
+                      id="options-retry"
+                      type="number"
+                      min="0"
+                      :max="MAX_STUCK_RETRY"
+                      :value="settings.stuckMaxRetry"
+                      @change="onStuckMaxRetryChange"
+                    /><button
+                      type="button"
+                      class="icon-btn icon-btn--sm"
+                      :disabled="settings.stuckMaxRetry >= MAX_STUCK_RETRY"
+                      :aria-label="t(K.INCREASE_RETRY)"
+                      @click="patch({ stuckMaxRetry: settings.stuckMaxRetry + 1 }, 'stuckMaxRetry')"
+                    >
+                      <Icon :name="IconName.PLUS" />
+                    </button>
+                  </div>
+                </div>
+                <div class="op-attempts">
+                  <TransitionGroup name="attempt" tag="span" class="op-pips"
+                    ><span
+                      v-for="attempt in settings.stuckMaxRetry + 1"
+                      :key="attempt"
+                      class="op-pip"
+                      :class="{ 'op-pip--first': attempt === 1 }"
+                      >{{ attempt }}</span
+                    ></TransitionGroup
+                  ><Icon :name="IconName.ARROW_RIGHT" /><span class="badge tone-bad"
+                    ><Icon :name="IconName.SKIP" />{{ t(K.SKIPPED) }}</span
+                  ><span class="op-attempts-text">{{
+                    t(K.ATTEMPTS, { count: settings.stuckMaxRetry + 1 })
+                  }}</span
+                  ><span class="op-setting-hint">{{ t(K.RETRY_SETTINGS_ONLY) }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="card op-card">
+              <h3 class="op-integrations-title">
+                <Icon :name="IconName.PUZZLE" />{{ t(K.INTEGRATIONS) }}
+              </h3>
+              <div
+                v-for="integration in integrationOptions"
+                :key="integration.side"
+                class="op-setting op-integration"
+              >
+                <span class="icon-tile icon-tile--sm"><Icon :name="integration.icon" /></span>
+                <div class="op-setting-text">
+                  <span :id="`${integration.side}-label`" class="op-setting-label">{{
+                    t(integration.label)
+                  }}</span
+                  ><span class="op-setting-hint">{{ t(integration.hint) }}</span
+                  ><span
+                    v-if="!integrationAvailability[integration.side]"
+                    class="op-setting-hint"
+                    >{{ t(K.INTEGRATION_UNAVAILABLE) }}</span
+                  ><template v-else
+                    ><span class="op-setting-hint">{{
+                      t(
+                        connected[integration.side]
+                          ? K.INTEGRATION_STATUS_CONNECTED
+                          : K.INTEGRATION_STATUS_NOT_CONNECTED
+                      )
+                    }}</span
+                    ><span v-if="integrationErrors[integration.side]" class="field-error">{{
+                      t(K.INTEGRATION_AUTH_FAILED)
+                    }}</span
+                    ><button
+                      v-if="connected[integration.side]"
+                      type="button"
+                      class="link"
+                      @click="disconnectIntegration(integration.side)"
+                    >
+                      {{ t(K.INTEGRATION_DISCONNECT) }}
+                    </button></template
+                  >
+                </div>
+                <div class="op-ctl">
+                  <SaveFeedback :state="feedback(integration.key)" /><button
+                    type="button"
+                    class="switch"
+                    role="switch"
+                    :disabled="!integrationAvailability[integration.side] || authorizing !== null"
+                    :aria-checked="settings[integration.key]"
+                    :aria-labelledby="`${integration.side}-label`"
+                    @click="toggleIntegration(integration.side)"
+                  >
+                    <span class="switch-knob"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="appearance" class="op-section enter" aria-labelledby="heading-appearance">
+            <header class="op-section-head">
+              <h2 id="heading-appearance" class="op-section-title" tabindex="-1">
+                {{ t(K.SECTION_APPEARANCE) }}
+              </h2>
+              <p class="op-section-desc">{{ t(K.APPEARANCE_DESC) }}</p>
+            </header>
+            <div class="card op-card">
+              <div class="op-setting op-setting--stack">
+                <div class="op-row-head">
+                  <div class="op-setting-text">
+                    <span id="theme-label" class="op-setting-label">{{ t(K.THEME) }}</span
+                    ><span class="op-setting-hint">{{ t(K.THEME_HINT) }}</span>
+                  </div>
+                  <SaveFeedback :state="feedback('theme')" />
+                </div>
+                <div class="op-themes" role="radiogroup" aria-labelledby="theme-label">
+                  <button
+                    v-for="theme in themeOptions"
+                    :key="theme.value"
+                    type="button"
+                    class="op-theme"
+                    role="radio"
+                    :aria-checked="settings.theme === theme.value"
+                    @click="changeTheme(theme.value, $event)"
+                  >
+                    <span class="op-theme-art" aria-hidden="true"
+                      ><span
+                        class="op-theme-half"
+                        :data-theme="theme.value === 'system' ? 'light' : theme.value"
+                        ><span class="op-mini"
+                          ><i class="op-mini-logo"></i><i class="op-mini-line"></i
+                          ><i class="op-mini-line op-mini-line--short"></i
+                          ><i class="op-mini-meter"></i><i class="op-mini-button"></i></span></span
+                      ><span
+                        v-if="theme.value === 'system'"
+                        class="op-theme-half op-theme-half--dark"
+                        data-theme="dark"
+                        ><span class="op-mini"
+                          ><i class="op-mini-logo"></i><i class="op-mini-line"></i
+                          ><i class="op-mini-line op-mini-line--short"></i
+                          ><i class="op-mini-meter"></i
+                          ><i class="op-mini-button"></i></span></span></span
+                    ><span class="op-theme-foot"
+                      ><span class="op-theme-radio"></span><span>{{ t(theme.label) }}</span
+                      ><Icon :name="theme.icon" /></span
+                    ><span v-if="theme.value === 'system'" class="op-theme-now">{{
+                      t(systemDark ? K.NOW_DARK : K.NOW_LIGHT)
+                    }}</span>
+                  </button>
+                </div>
+              </div>
+              <div class="op-setting">
+                <div class="op-setting-text">
+                  <label class="op-setting-label" for="options-language">{{ t(K.LANGUAGE) }}</label
+                  ><span class="op-setting-hint">{{ t(K.LANGUAGE_HINT) }}</span>
+                </div>
+                <div class="op-ctl">
+                  <SaveFeedback :state="feedback('language')" />
+                  <div class="select-wrap op-lang">
+                    <select
+                      id="options-language"
+                      class="select"
+                      :value="locale"
+                      @change="changeLanguage"
+                    >
+                      <option
+                        v-for="lang in LANGUAGES"
+                        :key="lang.value"
+                        :value="lang.value"
+                        :lang="lang.value"
+                      >
+                        {{ lang.label }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
-
-        <div class="options-field">
-          <span class="options-label">{{ t(I18N_KEYS.OPTIONS.STUCK_MAX_RETRY) }}</span>
-          <p class="options-hint">{{ t(I18N_KEYS.OPTIONS.STUCK_MAX_RETRY_HINT) }}</p>
-          <input
-            class="options-number-input"
-            type="number"
-            min="0"
-            :max="MAX_STUCK_RETRY"
-            :value="settings.stuckMaxRetry"
-            @change="onStuckMaxRetryChange($event)"
-          />
-        </div>
-      </section>
-    </main>
-
-    <!-- 隐私政策入口（013 A13，U11）：独立扩展页，商店上架与审核可见性要求 -->
-    <footer class="options-footer">
-      <a class="options-privacy-link" :href="privacyUrl" target="_blank" rel="noreferrer">
-        {{ t(I18N_KEYS.OPTIONS.PRIVACY_POLICY) }}
-      </a>
-    </footer>
+        <footer class="op-foot">
+          <span class="op-foot-brand"
+            ><img :src="brandIconUrl" alt="" width="18" height="18" />{{ t(I18N_KEYS.APP.TITLE)
+            }}<span class="mono">v{{ version }}</span></span
+          ><a class="link link--quiet" :href="privacyUrl" target="_blank" rel="noreferrer"
+            >{{ t(K.PRIVACY_POLICY) }}<Icon :name="IconName.EXTERNAL_LINK"
+          /></a>
+        </footer>
+      </main>
+    </div>
   </div>
 </template>
-
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { I18N_KEYS } from '@/core/constants/i18n'
+import { WEBSITE } from '@/core/api/config'
+import { Icon, IconName } from '@/core/components/icons'
 import { logger } from '@/core/utils/logger'
+import { LANGUAGES } from '@/core/services/languageService'
+import { I18nService } from '@/locales'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
 import {
-  DEFAULT_MAPS_USER_SETTINGS,
   MapsUserSettingsManager,
-  type MapsUserSettings
+  type MapsUserSettings,
+  type ThemeMode
 } from '@/sites/maps/settings/userSettings'
 import {
   MapsIntegrationAuthManager,
   authorizeDrive,
   authorizeHubspot,
+  getMapsIntegrationAvailability,
   revokeDriveAuth
 } from '@/sites/maps/settings/integrations'
 import {
@@ -254,530 +539,350 @@ import {
   SEARCH_EXPORT_COLUMNS,
   type SearchExportColumn
 } from '@/sites/maps/content/export/columns'
-import type { SearchExportFormat } from '@/sites/maps/content/export/engine'
+import { buildSearchExportFilename } from '@/sites/maps/content/export/csv'
+import ExportPreview from './ExportPreview.vue'
+import SaveFeedback from './SaveFeedback.vue'
 
-const { t } = useI18n()
-
-/** 隐私政策扩展页地址（产物根 privacy.html，013 A13，U11）。 */
-const privacyUrl = chrome.runtime.getURL('privacy.html')
-
-/** 批量卡死重试次数上限（防误输入；默认 1，竞品语义）。 */
+const { t, locale } = useI18n()
+const K = I18N_KEYS.OPTIONS
+const privacyUrl = new URL('/privacy/', WEBSITE.BASE_URL).toString()
+const brandIconUrl = chrome.runtime.getURL('icons/32.png')
+const version = chrome.runtime.getManifest().version
 const MAX_STUCK_RETRY = 9
-
-/** 设置响应态：挂载时读 storage，变更即时写回（即时保存，竞品同语义）。 */
 const settings = ref<MapsUserSettings>(MapsUserSettingsManager.getDefaultSettings())
-
-/** 双集成的授权状态（挂载时读 storage，授权/断开后即时更新）。 */
-const driveConnected = ref(false)
-const hubspotConnected = ref(false)
-
-/** 授权失败提示（一次性；用户重试或改设置后仍在，直到成功或刷新）。 */
-const driveAuthError = ref(false)
-const hubspotAuthError = ref(false)
-
-/** 授权进行中标志（防重复弹窗：授权中忽略再次切换）。 */
-let authorizing: 'drive' | 'hubspot' | null = null
-
-onMounted(async () => {
-  settings.value = await MapsUserSettingsManager.getSettings()
-  const auth = await MapsIntegrationAuthManager.getAuth()
-  driveConnected.value = auth.drive !== null
-  hubspotConnected.value = auth.hubspot !== null
-})
-
-/**
- * Drive 开关切换（013 A10 授权联动）：
- * - 开且未授权 → 先走授权，成功才落开关；失败提示错误并回弹开关；
- * - 已授权 → 直接写开关（关开关不断开授权，授权由 Disconnect 管理）。
- */
-async function onDriveToggle(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement
-  const checked = input.checked
-  driveAuthError.value = false
-  if (checked && !driveConnected.value) {
-    if (authorizing !== null) {
-      input.checked = false
-      return
-    }
-    authorizing = 'drive'
-    try {
-      await authorizeDrive()
-      driveConnected.value = true
-      await patch({ autoSaveToGoogleDrive: true })
-    } catch (error) {
-      logger.error('[Options] Drive 授权失败:', error)
-      driveAuthError.value = true
-      input.checked = false
-    } finally {
-      authorizing = null
-    }
-    return
-  }
-  await patch({ autoSaveToGoogleDrive: checked })
+type Row = keyof MapsUserSettings | 'language'
+type SaveState = 'idle' | 'saving' | 'saved' | 'failed'
+const saveState = ref<SaveState>('idle')
+const savedRow = ref<Row | null>(null)
+const failedRow = ref<Row | null>(null)
+const saveLabels = { idle: K.ALL_SAVED, saving: K.SAVING, saved: K.SAVED, failed: K.NOT_SAVED }
+const rowLabels: Record<Row, string> = {
+  requestIntervalSec: K.REQUEST_INTERVAL,
+  exportFormat: K.EXPORT_FORMAT,
+  exportFieldHeaders: K.EXPORT_FIELDS,
+  extractEmail: K.EXTRACT_EMAIL,
+  extractSocialMedias: K.EXTRACT_SOCIAL_MEDIAS,
+  autoDownload: K.AUTO_DOWNLOAD,
+  autoSaveToGoogleDrive: K.DRIVE_AUTO_SAVE,
+  autoSaveToHubspot: K.HUBSPOT_AUTO_SAVE,
+  stuckMaxRetry: K.STUCK_MAX_RETRY,
+  theme: K.THEME,
+  language: K.LANGUAGE
 }
-
-/** HubSpot 开关切换（与 Drive 同构：开 + 未授权 → 先授权）。 */
-async function onHubspotToggle(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement
-  const checked = input.checked
-  hubspotAuthError.value = false
-  if (checked && !hubspotConnected.value) {
-    if (authorizing !== null) {
-      input.checked = false
-      return
-    }
-    authorizing = 'hubspot'
-    try {
-      await authorizeHubspot()
-      hubspotConnected.value = true
-      await patch({ autoSaveToHubspot: true })
-    } catch (error) {
-      logger.error('[Options] HubSpot 授权失败:', error)
-      hubspotAuthError.value = true
-      input.checked = false
-    } finally {
-      authorizing = null
-    }
-    return
-  }
-  await patch({ autoSaveToHubspot: checked })
-}
-
-/** 断开 Drive：吊销授权 + 清 storage + 关闭开关。 */
-async function disconnectDrive(): Promise<void> {
-  await revokeDriveAuth()
-  driveConnected.value = false
-  await patch({ autoSaveToGoogleDrive: false })
-}
-
-/** 断开 HubSpot：清本地授权（HubSpot 无用户侧吊销端点）+ 关闭开关。 */
-async function disconnectHubspot(): Promise<void> {
-  await MapsIntegrationAuthManager.clearHubspotAuth()
-  hubspotConnected.value = false
-  await patch({ autoSaveToHubspot: false })
-}
-
-/** 间隔档位（包内默认档；远程档位收窄时由覆盖层按生效档位校验回退）。 */
 const intervalOptions = DEFAULT_MAPS_CONFIG.scrape.scrollIntervalOptionsSec
-
-/** 导出格式选项（格式名跨语言一致）。 */
-const formatOptions: readonly { value: SearchExportFormat; labelKey: string }[] = [
-  { value: 'csv', labelKey: I18N_KEYS.OPTIONS.FORMAT_CSV },
-  { value: 'json', labelKey: I18N_KEYS.OPTIONS.FORMAT_JSON },
-  { value: 'xlsx', labelKey: I18N_KEYS.OPTIONS.FORMAT_XLSX }
+const enrichOptions = [
+  { key: 'extractEmail', label: K.EXTRACT_EMAIL, hint: K.EXTRACT_EMAIL_HINT },
+  { key: 'extractSocialMedias', label: K.EXTRACT_SOCIAL_MEDIAS, hint: K.EXTRACT_SOCIAL_MEDIAS_HINT }
+] as const
+const socialIcons = [
+  IconName.FACEBOOK,
+  IconName.INSTAGRAM,
+  IconName.YOUTUBE,
+  IconName.TIKTOK,
+  IconName.LINKEDIN,
+  IconName.X_SOCIAL
 ]
-
-/** 分组 key → i18n 标题。 */
-const GROUP_LABEL_KEYS: Record<string, string> = {
-  basic: I18N_KEYS.OPTIONS.GROUP_BASIC,
-  address: I18N_KEYS.OPTIONS.GROUP_ADDRESS,
-  contact: I18N_KEYS.OPTIONS.GROUP_CONTACT,
-  business: I18N_KEYS.OPTIONS.GROUP_BUSINESS,
-  reviews: I18N_KEYS.OPTIONS.GROUP_REVIEWS,
-  identifiers: I18N_KEYS.OPTIONS.GROUP_IDENTIFIERS
+const formatOptions = [
+  { value: 'csv', label: K.FORMAT_CSV, icon: IconName.FILE_CSV },
+  { value: 'json', label: K.FORMAT_JSON, icon: IconName.FILE_JSON },
+  { value: 'xlsx', label: K.FORMAT_XLSX, icon: IconName.FILE_XLSX }
+] as const
+const themeOptions = [
+  { value: 'system', label: K.THEME_SYSTEM, icon: IconName.GLOBE },
+  { value: 'light', label: K.THEME_LIGHT, icon: IconName.SUN },
+  { value: 'dark', label: K.THEME_DARK, icon: IconName.MOON }
+] as const
+const sections = [
+  { id: 'extraction', label: K.SECTION_EXTRACTION, icon: IconName.SCAN },
+  { id: 'export', label: K.SECTION_EXPORT, icon: IconName.EXPORT },
+  { id: 'automation', label: K.SECTION_AUTOMATION, icon: IconName.ZAP },
+  { id: 'appearance', label: K.SECTION_APPEARANCE, icon: IconName.EYE }
+] as const
+type Section = (typeof sections)[number]['id']
+const activeSection = ref<Section>('extraction')
+const scrolled = ref(false)
+const systemMedia = window.matchMedia('(prefers-color-scheme: dark)')
+const systemDark = ref(systemMedia.matches)
+function onSystemChange(event: MediaQueryListEvent): void {
+  systemDark.value = event.matches
 }
-
-/** 勾选 UI 的分组视图（列定义以 SEARCH_EXPORT_COLUMNS 为唯一事实来源）。 */
+const downloadFilename = computed(() =>
+  buildSearchExportFilename(48, 'coffee near Manhattan', new Date(), settings.value.exportFormat)
+)
+const groupLabels: Record<string, string> = {
+  basic: K.GROUP_BASIC,
+  address: K.GROUP_ADDRESS,
+  contact: K.GROUP_CONTACT,
+  business: K.GROUP_BUSINESS,
+  reviews: K.GROUP_REVIEWS,
+  identifiers: K.GROUP_IDENTIFIERS
+}
 interface UiColumnGroup {
   key: string
   labelKey: string
   columns: readonly SearchExportColumn[]
 }
-
-const columnByHeader = new Map(SEARCH_EXPORT_COLUMNS.map(column => [column.header, column]))
 const columnGroups: readonly UiColumnGroup[] = SEARCH_EXPORT_COLUMN_GROUPS.map(group => ({
   key: group.key,
-  labelKey: GROUP_LABEL_KEYS[group.key] ?? I18N_KEYS.OPTIONS.GROUP_BASIC,
-  columns: group.headers
-    .map(header => columnByHeader.get(header))
-    .filter((column): column is SearchExportColumn => column !== undefined)
+  labelKey: groupLabels[group.key],
+  columns: group.headers.map(
+    header => SEARCH_EXPORT_COLUMNS.find(column => column.header === header)!
+  )
 }))
-
-/** 合并写回设置（normalize 在 manager 内兜底，响应态用返回值校准）。 */
-async function patch(updates: Partial<MapsUserSettings>): Promise<void> {
-  settings.value = await MapsUserSettingsManager.updateSettings(updates)
+function selectedInGroup(group: UiColumnGroup): number {
+  return group.columns.filter(column => settings.value.exportFieldHeaders.includes(column.header))
+    .length
 }
-
-/** 勾选/取消单列（保持 schema 列序由导出层保证，此处只存 header 集合）。 */
-function toggleColumn(header: string, checked: boolean): void {
-  const selected = new Set(settings.value.exportFieldHeaders)
-  if (checked) {
-    selected.add(header)
-  } else {
-    selected.delete(header)
+function feedback(row: Row): SaveState {
+  return savedRow.value === row ? saveState.value : 'idle'
+}
+let savedTimer: ReturnType<typeof setTimeout> | undefined
+function startSave(row: Row): void {
+  clearTimeout(savedTimer)
+  savedRow.value = row
+  failedRow.value = null
+  saveState.value = 'saving'
+}
+function finishSave(): void {
+  saveState.value = 'saved'
+  savedTimer = setTimeout(() => {
+    saveState.value = 'idle'
+    savedRow.value = null
+  }, 2400)
+}
+async function patch(
+  updates: Partial<MapsUserSettings>,
+  row: keyof MapsUserSettings
+): Promise<void> {
+  const previous = settings.value
+  startSave(row)
+  settings.value = { ...previous, ...updates }
+  try {
+    settings.value = await MapsUserSettingsManager.updateSettings(updates)
+    finishSave()
+  } catch (error) {
+    settings.value = previous
+    saveState.value = 'failed'
+    failedRow.value = row
+    logger.error(`[Options] 设置 ${row} 保存失败:`, error)
   }
-  void patch({ exportFieldHeaders: [...selected] })
 }
-
-/** 重试次数输入：取整并夹到 [0, MAX]，非法回默认 1（normalize 兜底）。 */
+async function changeTheme(theme: ThemeMode, event: MouseEvent): Promise<void> {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    await patch({ theme }, 'theme')
+    return
+  }
+  const x = event.clientX
+  const y = event.clientY
+  const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+  const transition = document.startViewTransition(async () => {
+    await patch({ theme }, 'theme')
+    document.documentElement.dataset.theme = settings.value.theme
+  })
+  await transition.ready
+  const style = getComputedStyle(document.documentElement)
+  document.documentElement.animate(
+    { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+    {
+      duration: Number.parseFloat(style.getPropertyValue('--dur-4')),
+      easing: style.getPropertyValue('--ease-out').trim(),
+      pseudoElement: '::view-transition-new(root)'
+    }
+  )
+}
+async function changeLanguage(event: Event): Promise<void> {
+  if (!(event.target instanceof HTMLSelectElement)) return
+  const input = event.target
+  const language = LANGUAGES.find(lang => lang.value === input.value)?.value
+  if (!language) return
+  const previous = locale.value
+  startSave('language')
+  try {
+    await I18nService.setLanguage(language)
+    finishSave()
+  } catch (error) {
+    input.value = previous
+    saveState.value = 'failed'
+    failedRow.value = 'language'
+    logger.error('[Options] 语言保存失败:', error)
+  }
+}
+function currentValue(row: Row): string {
+  if (row === 'language')
+    return LANGUAGES.find(lang => lang.value === locale.value)?.label ?? locale.value
+  const value = settings.value[row]
+  if (row === 'theme') return t(themeOptions.find(option => option.value === value)!.label)
+  if (row === 'requestIntervalSec')
+    return t(K.INTERVAL_SECONDS, { seconds: settings.value.requestIntervalSec })
+  if (Array.isArray(value))
+    return t(K.FIELD_COUNT, { count: value.length, total: SEARCH_EXPORT_COLUMNS.length })
+  if (typeof value === 'boolean') return t(value ? K.ON : K.OFF)
+  return String(value)
+}
+function sectionSummary(section: Section): string {
+  if (section === 'extraction')
+    return t(K.INTERVAL_SUMMARY, { seconds: settings.value.requestIntervalSec })
+  if (section === 'export')
+    return t(K.EXPORT_SUMMARY, {
+      format: settings.value.exportFormat.toUpperCase(),
+      count: settings.value.exportFieldHeaders.length,
+      total: SEARCH_EXPORT_COLUMNS.length
+    })
+  if (section === 'automation')
+    return t(K.AUTOMATION_SUMMARY, {
+      download: t(settings.value.autoDownload ? K.ON : K.OFF),
+      count: settings.value.stuckMaxRetry
+    })
+  return t(K.APPEARANCE_SUMMARY, {
+    theme: t(themeOptions.find(option => option.value === settings.value.theme)!.label),
+    language: LANGUAGES.find(lang => lang.value === locale.value)?.label ?? locale.value
+  })
+}
+function segmentStyle(index: number, count: number): Record<string, string> {
+  return {
+    width: `calc((100% - 8px - ${(count - 1) * 2}px) / ${count})`,
+    transform: `translateX(calc(${index} * (100% + 2px)))`
+  }
+}
+function toggleColumn(header: string, event: Event): void {
+  if (!(event.target instanceof HTMLInputElement)) return
+  const selected = new Set(settings.value.exportFieldHeaders)
+  if (event.target.checked) selected.add(header)
+  else selected.delete(header)
+  void patch({ exportFieldHeaders: [...selected] }, 'exportFieldHeaders')
+}
+function toggleGroup(group: UiColumnGroup, event: Event): void {
+  if (!(event.target instanceof HTMLInputElement)) return
+  const selected = new Set(settings.value.exportFieldHeaders)
+  for (const column of group.columns) {
+    if (event.target.checked) selected.add(column.header)
+    else selected.delete(column.header)
+  }
+  void patch({ exportFieldHeaders: [...selected] }, 'exportFieldHeaders')
+}
 function onStuckMaxRetryChange(event: Event): void {
-  const parsed = Number.parseInt((event.target as HTMLInputElement).value, 10)
-  const clamped = Number.isNaN(parsed)
-    ? DEFAULT_MAPS_USER_SETTINGS.stuckMaxRetry
-    : Math.min(Math.max(parsed, 0), MAX_STUCK_RETRY)
-  void patch({ stuckMaxRetry: clamped })
+  if (!(event.target instanceof HTMLInputElement)) return
+  const parsed = Number.parseInt(event.target.value, 10)
+  const value = Number.isNaN(parsed)
+    ? settings.value.stuckMaxRetry
+    : Math.min(MAX_STUCK_RETRY, Math.max(0, parsed))
+  event.target.value = String(value)
+  void patch({ stuckMaxRetry: value }, 'stuckMaxRetry')
 }
+function goTo(section: Section): void {
+  const heading = document.getElementById(`heading-${section}`)!
+  history.replaceState(null, '', `#${section}`)
+  activeSection.value = section
+  heading.focus({ preventScroll: true })
+  document.getElementById(section)!.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
+  })
+}
+async function jumpToSetting(row: 'extractEmail' | 'extractSocialMedias'): Promise<void> {
+  goTo('extraction')
+  await nextTick()
+  document.getElementById(row)!.querySelector('button')!.focus({ preventScroll: true })
+  document
+    .getElementById(row)!
+    .animate([{ backgroundColor: 'var(--primary-soft)' }, { backgroundColor: 'transparent' }], {
+      duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 900
+    })
+}
+function onScroll(): void {
+  scrolled.value = window.scrollY > 0
+  if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2) {
+    activeSection.value = 'appearance'
+    return
+  }
+  const threshold = window.innerWidth <= 1040 ? 150 : 100
+  activeSection.value =
+    [...sections]
+      .reverse()
+      .find(
+        section => document.getElementById(section.id)!.getBoundingClientRect().top <= threshold
+      )?.id ?? 'extraction'
+}
+function reloadPage(): void {
+  window.location.reload()
+}
+const integrationAvailability = getMapsIntegrationAvailability()
+const integrationOptions = [
+  {
+    side: 'drive',
+    key: 'autoSaveToGoogleDrive',
+    label: K.DRIVE_AUTO_SAVE,
+    hint: K.INTEGRATION_HINT_DRIVE,
+    icon: IconName.CLOUD_UPLOAD
+  },
+  {
+    side: 'hubspot',
+    key: 'autoSaveToHubspot',
+    label: K.HUBSPOT_AUTO_SAVE,
+    hint: K.INTEGRATION_HINT_HUBSPOT,
+    icon: IconName.BUILDING
+  }
+] as const
+const connected = ref({ drive: false, hubspot: false })
+const integrationErrors = ref({ drive: false, hubspot: false })
+const authorizing = ref<'drive' | 'hubspot' | null>(null)
+async function toggleIntegration(side: 'drive' | 'hubspot'): Promise<void> {
+  const key = side === 'drive' ? 'autoSaveToGoogleDrive' : 'autoSaveToHubspot'
+  const checked = !settings.value[key]
+  integrationErrors.value[side] = false
+  if (checked && !connected.value[side]) {
+    authorizing.value = side
+    try {
+      if (side === 'drive') await authorizeDrive()
+      else await authorizeHubspot()
+      connected.value[side] = true
+    } catch (error) {
+      logger.error(`[Options] ${side} 授权失败:`, error)
+      integrationErrors.value[side] = true
+      return
+    } finally {
+      authorizing.value = null
+    }
+  }
+  await patch({ [key]: checked }, key)
+}
+async function disconnectIntegration(side: 'drive' | 'hubspot'): Promise<void> {
+  try {
+    if (side === 'drive') await revokeDriveAuth()
+    else await MapsIntegrationAuthManager.clearHubspotAuth()
+    connected.value[side] = false
+    const key = side === 'drive' ? 'autoSaveToGoogleDrive' : 'autoSaveToHubspot'
+    await patch({ [key]: false }, key)
+  } catch (error) {
+    logger.error(`[Options] ${side} 断开授权失败:`, error)
+    integrationErrors.value[side] = true
+  }
+}
+let unsubscribeSettings: (() => void) | undefined
+let unsubscribeLanguage: (() => void) | undefined
+onMounted(async () => {
+  settings.value = await MapsUserSettingsManager.getSettings()
+  const auth = await MapsIntegrationAuthManager.getAuth()
+  connected.value = { drive: auth.drive !== null, hubspot: auth.hubspot !== null }
+  unsubscribeSettings = MapsUserSettingsManager.onSettingsChanged(value => {
+    settings.value = value
+  })
+  unsubscribeLanguage = I18nService.onLanguageChange(() => {
+    document.documentElement.lang = I18nService.getCurrentLanguage()
+    document.title = t(K.TITLE)
+  })
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onScroll)
+  systemMedia.addEventListener('change', onSystemChange)
+  const section = sections.find(item => `#${item.id}` === window.location.hash)
+  if (section) goTo(section.id)
+})
+onUnmounted(() => {
+  clearTimeout(savedTimer)
+  unsubscribeSettings?.()
+  unsubscribeLanguage?.()
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('resize', onScroll)
+  systemMedia.removeEventListener('change', onSystemChange)
+})
 </script>
-
-<style scoped>
-/* 语义 token 由 src/styles/tokens.css 统一提供（--gme-*），此处只做消费。 */
-.options-page {
-  min-height: 100vh;
-  box-sizing: border-box;
-  background-color: var(--gme-bg);
-  background-image: var(--gme-bg-image);
-  color: var(--gme-text);
-  font-family: var(--gme-font-body);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-.options-header {
-  padding: 24px 28px 16px;
-}
-
-.options-header-inner {
-  max-width: 680px;
-  margin: 0 auto;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.options-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 32px;
-  letter-spacing: -0.015em;
-  color: var(--gme-text);
-}
-
-.options-brand {
-  font-family: var(--gme-font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--gme-text-3);
-}
-
-.options-main {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 0 28px 64px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.options-card {
-  margin: 0;
-  padding: 24px;
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border);
-  border-radius: var(--gme-rounded-md);
-  box-shadow: var(--gme-shadow-card);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.options-section-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 24px;
-  color: var(--gme-text);
-}
-
-.options-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.options-label {
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 18px;
-  color: var(--gme-text);
-}
-
-/* 标签行内联 Pro 徽章时的对齐（徽章 baseline 随文字） */
-.options-label-with-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.options-hint {
-  margin: 0;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--gme-text-2);
-}
-
-/* 集成授权状态行：比 hint 更弱化，mono 强调连接态 */
-.options-integration-status {
-  font-family: var(--gme-font-mono);
-  font-size: 11.5px;
-  letter-spacing: 0.02em;
-  color: var(--gme-text-3);
-}
-
-/* 授权失败提示（失败不静默：UI 可见） */
-.options-error {
-  margin: 0;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--gme-bad);
-}
-
-/* 开关行右侧控件组（Disconnect 文字按钮 + 开关） */
-.options-toggle-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-/* 文字按钮（Disconnect）：文本按钮规则，无底色 */
-.options-link-button {
-  padding: 0;
-  font-family: var(--gme-font-body);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gme-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.options-link-button:hover {
-  color: var(--gme-primary-hover);
-  text-decoration: underline;
-}
-
-.options-link-button:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 2px;
-}
-
-/* 隐私政策页脚（013 A13，U11）：弱化居中链接 */
-.options-footer {
-  display: flex;
-  justify-content: center;
-  padding: 4px 0 20px;
-}
-
-.options-privacy-link {
-  font-family: var(--gme-font-body);
-  font-size: 13px;
-  color: var(--gme-text-3);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.options-privacy-link:hover {
-  color: var(--gme-primary);
-}
-
-.options-privacy-link:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 2px;
-}
-
-/* 分段选择（间隔档位 / 导出格式）：pill 段，激活 = primary 实底 + -fg 字 */
-.options-segmented {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.options-segment {
-  height: 33px;
-  padding: 0 16px;
-  font-family: var(--gme-font-body);
-  font-size: 14px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: var(--gme-text);
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border-strong);
-  border-radius: var(--gme-rounded-full);
-  cursor: pointer;
-}
-
-.options-segment:hover {
-  background: var(--gme-surface-2);
-}
-
-.options-segment:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
-}
-
-.options-segment-active,
-.options-segment-active:hover {
-  background: var(--gme-primary);
-  border-color: var(--gme-primary);
-  color: var(--gme-primary-fg);
-}
-
-/* 36 列分组勾选 */
-.options-field-groups {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.options-field-group {
-  margin: 0;
-  padding: 12px;
-  border: 1px solid var(--gme-border);
-  border-radius: var(--gme-rounded-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.options-field-group-legend {
-  padding: 0 4px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--gme-text-3);
-}
-
-.options-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 24px;
-  cursor: pointer;
-}
-
-.options-checkbox input {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--gme-primary);
-  cursor: pointer;
-}
-
-.options-checkbox input:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
-}
-
-.options-checkbox-label {
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--gme-text);
-}
-
-/* Pro 列标注：mono chip（-soft 底 + 同色文字，design.md 徽章规则） */
-.options-pro-badge {
-  padding: 4px 8px;
-  font-family: var(--gme-font-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  line-height: 1;
-  border-radius: var(--gme-rounded-full);
-  background: var(--gme-primary-soft);
-  color: var(--gme-primary);
-}
-
-/* 开关行 */
-.options-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.options-toggle-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.options-switch {
-  position: relative;
-  flex-shrink: 0;
-  display: inline-flex;
-  cursor: pointer;
-}
-
-.options-switch input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: 0;
-  opacity: 0;
-}
-
-.options-switch-track {
-  width: 40px;
-  height: 22px;
-  border-radius: var(--gme-rounded-full);
-  background: var(--gme-surface-2);
-  border: 1px solid var(--gme-border-strong);
-  transition: background 150ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
-}
-
-.options-switch-track::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: var(--gme-rounded-full);
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border-strong);
-  transition: transform 150ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
-}
-
-.options-switch input:checked + .options-switch-track {
-  background: var(--gme-primary);
-  border-color: var(--gme-primary);
-}
-
-.options-switch input:checked + .options-switch-track::after {
-  transform: translateX(18px);
-  background: var(--gme-primary-fg);
-  border-color: var(--gme-primary);
-}
-
-.options-switch input:focus-visible + .options-switch-track {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
-}
-
-/* 数字输入（重试次数）：高 40 + border-strong + sm 圆角，design.md 输入规则 */
-.options-number-input {
-  width: 96px;
-  height: 40px;
-  padding: 0 14px;
-  font-family: var(--gme-font-body);
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-  color: var(--gme-text);
-  background: var(--gme-surface);
-  border: 1px solid var(--gme-border-strong);
-  border-radius: var(--gme-rounded-sm);
-}
-
-.options-number-input:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
-  border-color: var(--gme-ring);
-}
-</style>
+<style scoped src="./options.css"></style>

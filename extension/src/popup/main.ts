@@ -18,14 +18,16 @@ import { I18N_KEYS } from '@/core/constants/i18n'
 import { logger } from '@/core/utils/logger'
 import App from './App.vue'
 import { BackgroundChannel } from './rpc/background.rpc'
+import { initializePageTheme } from '@/sites/maps/settings/theme'
 
-// 引入全局样式：语义 token（--gme-*）+ popup 壳层尺寸变量
-import '@/styles/tokens.css'
+import '@/styles/index.css'
 import '../style.css'
 
 const backgroundClient = new BackgroundChannel()
 
 async function init() {
+  await initializePageTheme()
+
   try {
     logger.applyRuntimeConfig(await backgroundClient.getRuntimeConfig())
   } catch (error) {

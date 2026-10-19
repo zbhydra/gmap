@@ -254,11 +254,13 @@ export interface MapsParseSchemaConfig {
   openingHoursClosedFlagValue: number
   /** 未认领标记子串：claimed 源 URL 含该子串即输出 NO，否则 YES。 */
   claimedUnclaimedMarker: string
-  /** 照片 batchexecute chunk 内 payload 字符串的下标（chunk[1]）。 */
+  /** 照片 batchexecute chunk 内 payload 字符串的下标。 */
   photosChunkPayloadIndex: number
-  /** 照片 end 布尔在 payload 根的下标（03 逆向 §3.3「第 10 位」）。 */
-  photosEndIndex: number
-  /** 照片翻页 token 在 payload 根的下标（构造样本约定，实录校准走远程覆盖）。 */
+  /** 照片列表及媒体字段的下标路径。 */
+  photosListPath: string
+  photosPhotoUrlPath: string
+  photosVideoUrlPath: string
+  /** 照片翻页 token 在 payload 根的下标；null 表示相册末尾。 */
   photosNextIndex: number
   /** place URL 十六进制段的最大长度（超出视为误匹配丢弃，09 参数总表 §6）。 */
   placeIdHexMaxLength: number
@@ -291,7 +293,7 @@ export interface MapsScrapeConfig {
   scrollAnimMaxMs: number
   /** 连续无新增数据的滚动轮数上限，达到即判定采集完成（防死滚兜底）。 */
   noGrowthRetryLimit: number
-  /** 免费档单次导出行数上限（超出截断并提前完成；配额门控归 U7，此处只做截断）。 */
+  /** usage 不可得时的搜索上限；批量启动预检也使用该包内默认值估算。 */
   freeExportRowLimit: number
   /** Maps 预取模式单批响应的参考条数（实测初始批 20 条）。 */
   listPageRows: number
@@ -299,13 +301,13 @@ export interface MapsScrapeConfig {
   requestTimeoutMs: number
   /** 协议请求失败重试次数。 */
   requestRetryCount: number
-  /** 评论单地点采集上限（免费档默认，档位分档归 U7；09 表 free 20）。 */
+  /** usage 不可得时的单店评论上限。 */
   reviewsPageLimit: number
   /** 评论每页条数（reqpld 参数 + 不足一页判定，09 表 10 条/请求）。 */
   reviewsPageSize: number
   /** 评论翻页间隔（毫秒，09 表固定 2 秒）。 */
   reviewsPageDelayMs: number
-  /** 照片单地点采集上限（免费档默认，档位分档归 U7；09 表 free 10）。 */
+  /** usage 不可得时的单店照片上限。 */
   photosPageLimit: number
   /** 照片每页参考条数（不足一页判定基准，09 表 10 张）。 */
   photosPageSize: number
@@ -502,9 +504,11 @@ export const DEFAULT_MAPS_CONFIG: MapsRemoteConfig = {
     openingHoursClosedFlagValue: 2,
     claimedUnclaimedMarker: 'create?fp=',
     // 照片 payload 下标按 03 逆向 §3.3 构造样本约定（end=第 10 位有文档依据）
-    photosChunkPayloadIndex: 1,
-    photosEndIndex: 10,
-    photosNextIndex: 11,
+    photosChunkPayloadIndex: 2,
+    photosListPath: '[2]',
+    photosPhotoUrlPath: '[0][0]',
+    photosVideoUrlPath: '[2]',
+    photosNextIndex: 1,
     placeIdHexMaxLength: 20
   },
   // 当前无账号体系，Pro 门控默认全开（剔除逻辑由导出引擎实现，单测覆盖）

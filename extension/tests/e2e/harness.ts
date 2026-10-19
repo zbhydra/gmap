@@ -34,16 +34,10 @@ import {
 /** 真实 e2e 构建产物目录(由 test:e2e 的构建前置 pnpm build:real 产出)。 */
 export const PATH_TO_EXTENSION = resolve(process.cwd(), 'dist-real')
 
-/**
- * 演示搜索词 URL(真实出网)。freeExportRowLimit 截断使完成时长与结果总量
- * 无关(首批判析 ≥10 即截断完成),选稳定有结果的常用词即可。
- */
+/** 真实搜索词：供匿名截断与付费完整采集共同验收。 */
 export const MAPS_URL = 'https://www.google.com/maps/search/coffee+roasters+in+greenwich+village'
 
-/**
- * 免费档单次导出行数上限(contract scrape.freeExportRowLimit,首批判析达限
- * 即截断并完成——当前对所有账号态无条件生效,Pro 差异在月度配额与 enrich)。
- */
+/** 免费档单次采集行数上限。 */
 export const FREE_ROW_LIMIT = 10
 
 /** 面板宿主(light DOM 唯一锚点,面板本体在其 open shadow DOM 内)。 */
@@ -138,18 +132,17 @@ export function panelHost(page: Page): Locator {
 
 /** Start Extracting 按钮(idle 态)。 */
 export function startButton(page: Page): Locator {
-  return page.getByRole('button', { name: 'Start Extracting' })
+  return page.getByRole('button', { name: 'Start extracting' })
 }
 
-/** 完成态导出按钮(名称含实时计数,如 `Export Detailed List - 32 (.CSV)`)。 */
+/** 完成态导出按钮(名称含实时计数,如 `Export 32 places CSV`)。 */
 export function exportButton(page: Page): Locator {
-  return page.getByRole('button', { name: /^Export Detailed List - \d+ \(\.CSV\)$/ })
+  return page.getByRole('button', { name: /^Export [\d,]+ places\s*CSV$/ })
 }
 
-/** 从完成态导出按钮名称解析采集计数。 */
+/** 读取进度环公开的已采集数，避免按钮回执或格式切换影响计数。 */
 export async function readCollectedCount(page: Page): Promise<number> {
-  const name = (await exportButton(page).innerText()).trim()
-  return Number(name.match(/^Export Detailed List - (\d+) \(\.CSV\)$/)?.[1] ?? 0)
+  return Number(await panelHost(page).locator('.mgp-ring').getAttribute('aria-valuenow'))
 }
 
 /**

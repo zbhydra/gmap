@@ -1,0 +1,782 @@
+/* =========================================================================
+   popup.html（Phase B）私有样式
+   - Popup 根 .pp：品牌头 → 运营提示 → 引导 + 主操作 → 批量入口 → 账号与用量 → 页脚（logic.md §2）
+   - 原型舞台：浏览器框里的地图壁纸、状态矩阵（同一 Popup 的静态缩略图）
+   本页专属类名一律 pp- 前缀；共享组件只组合、不改写（README §9）。
+   状态写在根元素的 data-account / data-usage / data-tier 上，组件状态类（.is-near / .is-out /
+   .is-loading / .morph）由 popup.js 的 apply() 写入，Vue 落地直接绑定同名状态。
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   舞台 1：浏览器框。页面区是随主题变化的插画地图（--map-*），Popup 从工具栏图标下展开
+   --------------------------------------------------------------------------- */
+.pp-browser {
+  --page-h: 640px;
+}
+
+.pp-page {
+  background: var(--map-land);
+}
+
+.pp-wall {
+  position: absolute;
+  inset: 0;
+  opacity: 0.92;
+}
+
+.pp-wall .gm-land {
+  fill: var(--map-land);
+}
+
+.pp-wall .gm-blocks rect {
+  fill: var(--map-block);
+}
+
+.pp-wall .gm-park {
+  fill: var(--map-park);
+}
+
+.pp-wall .gm-water {
+  fill: var(--map-water);
+}
+
+.pp-wall .gm-roads-casing,
+.pp-wall .gm-highway-casing {
+  stroke: var(--map-road-casing);
+}
+
+.pp-wall .gm-roads,
+.pp-wall .gm-highway {
+  stroke: var(--map-road);
+}
+
+.pp-wall .gm-labels text,
+.pp-wall .gm-labels .gm-water-label {
+  fill: var(--map-label);
+}
+
+/* 壁纸上的 pin：加载时依次落点（Map in） */
+.pp-pin {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  width: 20px;
+  height: 20px;
+  margin: -22px 0 0 -10px;
+  animation: pin-drop var(--dur-4) var(--ease-out) backwards;
+  animation-delay: calc(var(--i) * 90ms + 360ms);
+}
+
+.pp-pin::before {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 50% 0;
+  background: var(--pin);
+  box-shadow: var(--shadow-xs);
+  transform: rotate(-45deg);
+  content: '';
+}
+
+.pp-pin::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--on-solid);
+  content: '';
+}
+
+/* 已采集的 pin：换成「已采集」色 */
+.pp-pin.is-collected::before {
+  background: var(--accent);
+}
+
+.pp-frame {
+  z-index: var(--z-raised);
+}
+
+/* ---------------------------------------------------------------------------
+   Popup 根：flex 列，页头 / 页脚固定，中段滚动（Chrome Popup 高上限 600）
+   --------------------------------------------------------------------------- */
+.pp {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+/* 页头：滚动后才出现分隔线（.appbar.is-scrolled） */
+.pp-head {
+  flex-shrink: 0;
+  height: 48px;
+}
+
+.pp-brand {
+  gap: 10px;
+}
+
+.pp-brand .brand-mark {
+  width: 24px;
+  height: 24px;
+}
+
+/* 套餐徽章（已登录才出现）：跟在品牌名后，读作「MapsGrab Pro」；登录成功时弹出 */
+.pp-plan {
+  margin-left: -2px;
+  transform-origin: left center;
+}
+
+.pp-plan.is-pop {
+  animation: pop-in var(--dur-4) var(--ease-spring);
+}
+
+.pp-head .appbar-actions {
+  gap: var(--s-1);
+}
+
+/* 语言触发器：地球 + 当前语言代码（等宽）+ 展开箭头 */
+.pp-lang {
+  --btn-px: 10px;
+  gap: 6px;
+}
+
+.pp-lang-code {
+  min-width: 2ch;
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.pp-lang-code.is-bump {
+  animation: pop-in var(--dur-3) var(--ease-spring);
+}
+
+.btn .pp-lang-chev {
+  width: 12px;
+  height: 12px;
+  margin-right: -2px;
+  transition: transform var(--dur-3) var(--ease-emph);
+}
+
+.pp-lang[aria-expanded='true'] {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.pp-lang[aria-expanded='true'] .pp-lang-chev {
+  transform: rotate(180deg);
+}
+
+/* 中段：滚动容器；打开编排由 .enter-group 错峰（README §5） */
+.pp-body {
+  --enter-delay: var(--stagger);
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: var(--s-1) var(--s-4) var(--s-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pp-foot {
+  --enter-delay: calc(var(--stagger) * 5);
+}
+
+/* ---------------------------------------------------------------------------
+   运营提示槽：收起时 0 高且抵消一个 gap；出现时高度展开 + 提示自上滑入
+   --------------------------------------------------------------------------- */
+.pp-notices {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-bottom: -14px;
+  transition:
+    grid-template-rows var(--dur-4) var(--ease-out),
+    margin-bottom var(--dur-4) var(--ease-out);
+}
+
+.pp-notices.is-open {
+  grid-template-rows: 1fr;
+  margin-bottom: 0;
+}
+
+.pp-notices-inner {
+  display: grid;
+  gap: var(--s-2);
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   引导 + 主操作
+   --------------------------------------------------------------------------- */
+.pp-start {
+  display: grid;
+  gap: 10px;
+}
+
+.pp-lead {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+/* ---------------------------------------------------------------------------
+   批量入口：并排两块（窄宽下描述可换两行，容得下德语 / 俄语伸长）
+   --------------------------------------------------------------------------- */
+.pp-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+/* 首行：图标 + 标题；次行：说明占满整宽；新标签箭头浮在右上角 */
+.pp-tool {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'icon title'
+    'desc desc';
+  align-content: start;
+  align-items: center;
+  gap: var(--s-2) 10px;
+  padding: 10px var(--s-3) var(--s-3);
+  color: var(--text);
+}
+
+.pp-tool > .icon-tile {
+  grid-area: icon;
+}
+
+.pp-tool-title {
+  grid-area: title;
+  min-width: 0;
+  padding-right: var(--s-3);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  letter-spacing: -0.006em;
+  line-height: 1.3;
+}
+
+.pp-tool-desc {
+  grid-area: desc;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.pp-tool-go {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  color: var(--text-3);
+  transition:
+    transform var(--dur-3) var(--ease-out),
+    color var(--dur-2);
+}
+
+.pp-tool:hover .pp-tool-go {
+  color: var(--text);
+  transform: translate(2px, -2px);
+}
+
+/* ---------------------------------------------------------------------------
+   账号与用量卡：账号行 / 用量（加载 · 不可用 · 读数）/ 套餐链接
+   --------------------------------------------------------------------------- */
+.pp-account {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+}
+
+/* 头像：访客图标 ↔ 首字母两层叠放；登录中外圈一段扫描弧，登录成功外扩一圈 */
+.pp-avatar {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.pp-avatar > .avatar {
+  --size: 36px;
+  grid-area: 1 / 1;
+  transition:
+    opacity var(--dur-2) var(--ease-out),
+    transform var(--dur-4) var(--ease-spring);
+}
+
+.pp-avatar-user {
+  opacity: 0;
+  transform: scale(0.4) rotate(-24deg);
+}
+
+.pp[data-account='signed-in'] .pp-avatar-user {
+  opacity: 1;
+  transform: none;
+}
+
+.pp[data-account='signed-in'] .pp-avatar-guest {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.pp-avatar-orbit {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 58%, var(--primary-solid) 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), var(--mask-solid) calc(100% - 1.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), var(--mask-solid) calc(100% - 1.5px));
+  opacity: 0;
+  transition: opacity var(--dur-3) var(--ease-out);
+  pointer-events: none;
+}
+
+.pp[data-account='signing-in'] .pp-avatar-orbit {
+  opacity: 1;
+  animation: spin var(--dur-live) linear infinite;
+}
+
+.pp-avatar::after {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--primary-solid);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  content: '';
+}
+
+.pp-avatar.is-ping::after {
+  animation: pp-ping var(--dur-5) var(--ease-out);
+}
+
+@keyframes pp-ping {
+  from {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+}
+
+.pp-who {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* 文案形变（名字 / 说明）：上下滚动换词，裁切在行内 */
+.pp-mtext {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pp-mtext > * {
+  display: block;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pp-name {
+  color: var(--text);
+  font-size: var(--fs-body);
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.pp-meta {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+/* 访客 / 登录中的说明是句子：长语言里换到第二行而不是被省略；邮箱仍单行省略 */
+.pp-meta > [data-key='guest'],
+.pp-meta > [data-key='pending'] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+}
+
+.pp-auth {
+  flex-shrink: 0;
+}
+
+/* 登录中：加载圈替换图标、文案不变（L5） */
+.pp-auth.is-loading .morph .icon {
+  display: none;
+}
+
+.pp-auth.is-loading {
+  color: var(--text-2);
+}
+
+.pp-usage {
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--border);
+}
+
+.pp-in {
+  animation: enter-up var(--dur-3) var(--ease-out);
+}
+
+/* 加载骨架：与读数同形（标签行 / 大数字 / 进度轨） */
+.pp-skel-reset {
+  width: 72px;
+  margin: var(--s-1) 0 var(--s-1) auto;
+}
+
+.pp-skel-num {
+  width: 156px;
+  height: 32px;
+}
+
+.pp-skel-bar {
+  height: 6px;
+  border-radius: var(--r-full);
+}
+
+/* 标签在长语言里会换行（DATENSÄTZE DIESEN / MONAT），行高放开到可读 */
+.pp-usage .meter-head .kicker {
+  line-height: 1.35;
+}
+
+/* 读数：大号等宽滚轮 + 总量 + 百分比胶囊 */
+.pp-meter .meter-used {
+  transition: color var(--dur-4) var(--ease-out);
+}
+
+
+.pp-pct {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  height: 22px;
+  margin-left: auto;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-full);
+  background: var(--tone-soft, var(--surface-2));
+  color: var(--tone, var(--text-2));
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--dur-4) var(--ease-out),
+    color var(--dur-4) var(--ease-out);
+}
+
+/* 进度：底层恒为品牌进度渐变，警示色作为叠层淡入（渐变与纯色之间无法直接过渡）；
+   光束只在数值变化时扫过一次（不是循环） */
+.pp-bar .progress-fill {
+  background: var(--grad-progress);
+}
+
+.pp-bar .progress-fill > i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity var(--dur-4) var(--ease-out);
+}
+
+.pp-fill-warn {
+  background: var(--warn-solid);
+}
+
+.pp-fill-bad {
+  background: var(--bad-solid);
+}
+
+.pp-meter.is-near .pp-fill-warn,
+.pp-meter.is-out .pp-fill-bad {
+  opacity: 1;
+}
+
+.pp-bar .progress-fill > .pp-beam {
+  background: linear-gradient(90deg, var(--highlight-clear), var(--highlight-strong), var(--highlight-clear));
+  opacity: 1;
+  transform: translateX(-120%);
+  transition: none;
+}
+
+.pp-bar.is-beaming .pp-beam {
+  animation: sweep var(--dur-5) var(--ease-in-out) var(--dur-3) backwards;
+}
+
+.pp-meter .meter-note .link {
+  white-space: nowrap;
+}
+
+/* 用尽（L3）：说明 + 升级按钮；放不下时按钮换到下一行 */
+.pp-out {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+}
+
+.pp-out .meter-note {
+  flex: 1 1 180px;
+}
+
+.pp-upgrade {
+  flex-shrink: 0;
+}
+
+/* 不可用：原因 + 下一步 + Retry（L2） */
+.pp-uerror-box {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: var(--s-3);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+}
+
+.pp-uerror-box > .icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  margin-top: 2px;
+  color: var(--text-2);
+}
+
+.pp-uerror-title {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.pp-uerror-desc {
+  margin-top: 2px;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.pp-retry {
+  margin-top: 10px;
+}
+
+.pp-retry .icon {
+  transition: transform var(--dur-4) var(--ease-out);
+}
+
+.pp-retry:hover .icon {
+  transform: rotate(-120deg);
+}
+
+/* 套餐链接 */
+.pp-plans {
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  font-size: var(--fs-xs);
+}
+
+.pp-manage {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+/* 小字链接的点击区补到 ≥ 28px（README §9），不改变排版高度；焦点框贴着点击区，不被 Popup 底边裁掉 */
+.pp-plans > a,
+.pp-foot .link {
+  padding-block: 6px;
+  margin-block: -6px;
+  border-radius: var(--r-xs);
+}
+
+.pp-plans > a:focus-visible,
+.pp-foot .link:focus-visible {
+  outline-offset: 0;
+}
+
+.pp-manage .icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+/* ---------------------------------------------------------------------------
+   页脚
+   --------------------------------------------------------------------------- */
+.pp-foot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-2) var(--s-4);
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  font-size: var(--fs-xs);
+}
+
+.pp-foot .link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pp-foot .icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.pp-version {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+}
+
+/* ---------------------------------------------------------------------------
+   语言菜单：14 语两列（纵向流，方向键按列走），打开时回弹 + 项错峰
+   --------------------------------------------------------------------------- */
+.pp-lang-menu {
+  width: 340px;
+  max-width: calc(100vw - 16px);
+  transform: translateY(-6px) scale(0.94);
+  transition:
+    opacity var(--dur-2) var(--ease-out),
+    transform var(--dur-4) var(--ease-spring),
+    overlay var(--dur-3) allow-discrete,
+    display var(--dur-3) allow-discrete;
+}
+
+@starting-style {
+  .pp-lang-menu:popover-open {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.94);
+  }
+}
+
+.pp-lang-grid {
+  display: grid;
+  grid-template-rows: repeat(7, auto);
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 2px;
+}
+
+.pp-lang-menu .menu-item {
+  min-width: 0;
+}
+
+.pp-lang-menu:popover-open .menu-item {
+  animation: pp-item-in var(--dur-3) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 14ms + 60ms);
+}
+
+@keyframes pp-item-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+/* 缩略图里的静态菜单：不进顶层，直接画在触发器下方 */
+.pp-lang-menu--static {
+  position: absolute;
+  top: 46px;
+  right: var(--s-2);
+  left: auto;
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------------------------------------------------------------------------
+   舞台 2：状态矩阵（同一 Popup 的静态缩略图）
+   --------------------------------------------------------------------------- */
+.pp--static,
+.pp--static *,
+.pp--static *::before,
+.pp--static *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+.pp-matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(256px, 1fr));
+  align-items: start;
+  gap: var(--s-10) var(--s-6);
+  width: min(1152px, 100%);
+}
+
+.pp-cell {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-3);
+  margin: 0;
+  cursor: pointer;
+}
+
+.pp-cell-frame {
+  zoom: 0.62;
+  box-shadow: var(--shadow-md);
+  transition:
+    box-shadow var(--dur-3) var(--ease-out),
+    transform var(--dur-3) var(--ease-out);
+}
+
+.pp-cell:hover .pp-cell-frame {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.pp-cell-cap {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  max-width: 260px;
+  text-align: center;
+}
+
+.pp-cell-load {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-xs);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: color var(--dur-2);
+}
+
+.pp-cell:hover .pp-cell-load {
+  color: var(--primary-text);
+}
+
+.pp-cell-sub {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}

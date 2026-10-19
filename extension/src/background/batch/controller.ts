@@ -23,6 +23,7 @@ import type { ExtensionEvents } from '@/core/events/types'
 import { MapsUserSettingsManager } from '@/sites/maps/settings/userSettings'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
 import { mapsUsageService } from '@/sites/maps/usage/usageService'
+import { clearPhotosWorkIntent } from '../photosWorkPage'
 import { checkBulkQuota, estimateBulkRecords } from './quota'
 import { bulkStateStore, emptyBulkState } from './store'
 import { reduceBulkEvent } from './machine'
@@ -97,6 +98,7 @@ export class BulkSchedulerController {
     this.unsubscribeAlarms = () => chrome.alarms.onAlarm.removeListener(onAlarm)
 
     const onRemoved = (tabId: number): void => {
+      clearPhotosWorkIntent(tabId)
       void this.handleTabRemoved(tabId)
     }
     chrome.tabs.onRemoved.addListener(onRemoved)
@@ -149,8 +151,11 @@ export class BulkSchedulerController {
     const state = await this.getState()
     const task = state.tasks.find(candidate => candidate.id === taskId)
     if (task !== undefined) {
-      // 预估按「即将处理的条目」（pending = 首启；paused 续跑 = 剩余）。
-      const pendingCount = task.items.filter(item => item.status === 'pending').length
+      // 完成后重跑会清零全部条目；首次启动和续跑只检查剩余项。
+      const pendingCount =
+        task.status === 'completed'
+          ? task.items.length
+          : task.items.filter(item => item.status === 'pending').length
       const quota = await this.checkQuota(task.type, pendingCount, task.reviewsPerStoreLimit)
       if (quota !== null) {
         return quota

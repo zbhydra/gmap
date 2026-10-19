@@ -1,0 +1,337 @@
+/* =========================================================================
+   MapsGrab Extension · Base —— 字体、重置、排版、布局原语、图标
+   只用于扩展页面（Popup / Dashboard / Options / 文档页）；页内面板见 panel.css。
+   ========================================================================= */
+
+/* 字体：自托管 OFL，latin 子集，可变字重（L10：扩展页面打包，页内面板不用） */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('../fonts/plus-jakarta-sans-latin-var.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Azeret Mono';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/azeret-mono-latin-var.woff2') format('woff2');
+}
+
+/* ---------------------------------------------------------------------------
+   Reset
+   --------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: clip;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-feature-settings: 'ss01' on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+svg {
+  flex-shrink: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 等宽字体一律关闭连字：Azeret Mono 的 calt 会把 0x8085 渲染成 0×8085，liga 会让 fid 像 f1d */
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+ul[role='list'],
+ol[role='list'] {
+  padding: 0;
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--text);
+  font-weight: 650;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+/* 键盘焦点：所有可交互元素统一外描边；组件需要贴合形状时只改 outline-offset / border-radius */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* 扩展页面的细滚动条（Dashboard 表格、Options 字段列表） */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+/* ---------------------------------------------------------------------------
+   Typography（工具级刻度，值见 tokens.css §5）
+   --------------------------------------------------------------------------- */
+.h1 {
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+.h2 {
+  font-size: var(--fs-h2);
+  font-weight: 650;
+  line-height: var(--lh-snug);
+  letter-spacing: -0.016em;
+}
+
+.h3 {
+  font-size: var(--fs-md);
+  font-weight: 650;
+  line-height: var(--lh-snug);
+  letter-spacing: -0.01em;
+}
+
+.body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.body-sm {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+.caption {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.muted {
+  color: var(--text-2);
+}
+
+.subtle {
+  color: var(--text-3);
+}
+
+.strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* 数据：等宽 + 表格数字。所有数字读数（计数、额度、ID、版本号）用它 */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 非等宽场景下的对齐数字（正文里的计数） */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 分组标签：等宽大写。--mark 变体带 Atlas 菱形点，只用于文档页与 Popup 区块头 */
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: var(--fs-kicker);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.kicker--primary {
+  color: var(--primary-text);
+}
+
+.kicker--mark::before {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-2xs);
+  background: var(--grad-brand);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+  transform: rotate(45deg);
+  content: '';
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Layout primitives
+   --------------------------------------------------------------------------- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap, var(--s-3));
+}
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cluster-gap, var(--s-2));
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--row-gap, var(--s-2));
+}
+
+.spacer {
+  flex: 1;
+}
+
+.divider {
+  height: 1px;
+  border: 0;
+  background: var(--border);
+}
+
+/* 扩展页内容列：Dashboard 1120 / Options 680（logic.md §1） */
+.page {
+  width: min(100% - 2 * var(--page-gutter), var(--page-w));
+  margin-inline: auto;
+}
+
+.page--narrow {
+  width: min(100% - 2 * var(--page-gutter), var(--page-w-narrow));
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Icons：<svg class="icon"><use href="assets/img/icons.svg#i-pin"/></svg>
+   24px 网格、1.75 描边、圆角端点；实心图形在 symbol 内自带 fill="currentColor"
+   --------------------------------------------------------------------------- */
+.icon {
+  width: var(--icon);
+  height: var(--icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon--xs {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.icon--sm {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+.icon--lg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+.icon--xl {
+  width: var(--icon-xl);
+  height: var(--icon-xl);
+}
+
+/* 品牌标（logo.svg 的内联形态，渐变 id 由使用处保证唯一） */
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-xs);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}

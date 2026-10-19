@@ -103,6 +103,8 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 
 ## 5 · 变更记录
 
+- 2026-10-18 **013 Maps 插件 Atlas Field UI 已落地到仓库实现**：Popup、设置页、页内面板与批量 Dashboard 完成重设计，L1–L12 和追加批准项已同步产品与技术合同。设计入口见 [Atlas Field](design/extension/README.md)，商店发布仍按 [上架清单](feat/013.Maps插件/plans/002.上架清单.md) 执行。
+
 - 2026-10-16 **官网首发本地交付完成（014 plans/006）**：Search / Reviews API、MCP OAuth、API Dashboard 与 Atlas 官网完成单元及整体审查；同账号授权→SDK 调用→用量增加→撤销→旧凭证拒绝连续链通过。未正式部署或真实下单；验收命令、证据与发布待办见 [首发实施清单](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md)。
 
 - 2026-09-05 **三类产品合同统一**:全端改用 `product_kind`,双插件共享 `maps_extension`;移除 TG 下载商品、默认回退和 Admin 第四类订阅,保留 TG 存量数据与 Telegram Stars 支付基建,好评活动仍关闭。三表三索引原地改名,独立单元及整体审查通过,真实 API + Pricing + Admin 组合验证通过;未做真实付款、商店发布或插件采集分档改造。验收与环境限制见 [006 变更记录](feat/006.订阅系统/changelog.md)。

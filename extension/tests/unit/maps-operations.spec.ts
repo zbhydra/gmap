@@ -78,12 +78,12 @@ describe('面板运营区渲染（renderOperations）', () => {
     // 公告 HTML 注入（竞品同构）且容器可见
     const announcement = shadow!.querySelector('.gme-test-announcement')
     expect(announcement).not.toBeNull()
-    const announcementBox = shadow!.querySelector('.panel-announcement')
-    expect(announcementBox?.classList.contains('visible')).toBe(true)
+    const announcementBox = shadow!.querySelector('[data-announcement]')
+    expect(announcementBox?.hasAttribute('hidden')).toBe(false)
 
     // 版本提示行可见且有文案
-    const notice = shadow!.querySelector('.panel-version-notice')
-    expect(notice?.classList.contains('visible')).toBe(true)
+    const notice = shadow!.querySelector('[data-version]')
+    expect(notice?.hasAttribute('hidden')).toBe(false)
     expect(notice?.textContent?.length).toBeGreaterThan(0)
 
     panel.destroy()
@@ -106,10 +106,10 @@ describe('面板运营区渲染（renderOperations）', () => {
     panel.renderOperations({ announcementHtml: '', newVersionAvailable: false })
 
     const shadow = document.getElementById('gmap-extractor-panel-host')!.shadowRoot!
-    expect(shadow.querySelector('.panel-announcement')?.classList.contains('visible')).toBe(false)
-    expect(shadow.querySelector('.panel-version-notice')?.classList.contains('visible')).toBe(false)
+    expect(shadow.querySelector('[data-announcement]')?.hasAttribute('hidden')).toBe(true)
+    expect(shadow.querySelector('[data-version]')?.hasAttribute('hidden')).toBe(true)
     // 空公告不注入（避免留下空容器内容）
-    expect(shadow.querySelector('.panel-announcement')?.innerHTML).toBe('')
+    expect(shadow.querySelector('[data-announcement]')?.innerHTML).toBe('')
 
     panel.destroy()
   })
@@ -128,17 +128,17 @@ describe('面板运营区渲染（renderOperations）', () => {
     document.body.innerHTML = '<div role="main"></div>'
     await panel.mount('body', 'div[role=main]')
 
-    panel.renderSearch({ status: 'complete', count: 20, format: 'csv' })
+    panel.renderSearch({ status: 'complete', count: 20, limit: 20, format: 'csv' })
     const shadow = document.getElementById('gmap-extractor-panel-host')!.shadowRoot!
-    const exportButton = shadow.querySelector('.panel-actions .panel-button-primary')!
-    expect(exportButton.textContent).toContain('(.CSV)')
+    const exportButton = shadow.querySelector('[data-primary]')!
+    expect(exportButton.textContent).toContain('CSV')
     expect(exportButton.textContent).toContain('20')
 
-    panel.renderSearch({ status: 'complete', count: 20, format: 'json' })
-    expect(exportButton.textContent).toContain('(.JSON)')
+    panel.renderSearch({ status: 'complete', count: 20, limit: 20, format: 'json' })
+    expect(exportButton.textContent).toContain('JSON')
 
-    panel.renderSearch({ status: 'complete', count: 20, format: 'xlsx' })
-    expect(exportButton.textContent).toContain('(.XLSX)')
+    panel.renderSearch({ status: 'complete', count: 20, limit: 20, format: 'xlsx' })
+    expect(exportButton.textContent).toContain('XLSX')
 
     panel.destroy()
   })

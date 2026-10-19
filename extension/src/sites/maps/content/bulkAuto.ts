@@ -3,7 +3,7 @@
  *
  * 调度器（background）打开工作页时在 URL 上携带批量标记：工作页 content
  * script 据此自动开始采集、完成后强制导出并向 background 回报条目完成。
- * 与既有 `gme_lrd` 的「我方打开」判定同构（extractionUrl.ts）——用户手动
+ * 与评论工作页的「我方打开」判定同构（extractionUrl.ts）——用户手动
  * 打开的无参数页面不触发任何自动行为。
  *
  * 参数名常量以本模块为唯一事实来源；background 构造工作页 URL 时从这里导入。
@@ -18,6 +18,8 @@ export const BULK_TASK_PARAM = 'gme_bulk_task'
 /** 批量条目下标传递参数名（与 task id 一起构成防陈旧回报的匹配键）。 */
 export const BULK_ITEM_PARAM = 'gme_bulk_item'
 
+export const BULK_TOTAL_PARAM = 'gme_bulk_total'
+
 /** 批量评论任务每店上限传递参数名（仅评论工作页）。 */
 export const BULK_MAX_PARAM = 'gme_bulk_max'
 
@@ -27,6 +29,7 @@ export interface BulkWorkParams {
   taskId: string
   /** 条目下标（任务队列内）。 */
   itemIndex: number
+  itemCount: number
 }
 
 /**
@@ -39,10 +42,17 @@ export function readBulkWorkParams(url: URL): BulkWorkParams | null {
   const taskId = url.searchParams.get(BULK_TASK_PARAM) ?? ''
   const rawIndex = url.searchParams.get(BULK_ITEM_PARAM) ?? ''
   const itemIndex = Number.parseInt(rawIndex, 10)
-  if (taskId.length === 0 || !Number.isInteger(itemIndex) || itemIndex < 0) {
+  const itemCount = Number(url.searchParams.get(BULK_TOTAL_PARAM))
+  if (
+    taskId.length === 0 ||
+    !Number.isInteger(itemIndex) ||
+    itemIndex < 0 ||
+    !Number.isInteger(itemCount) ||
+    itemCount <= itemIndex
+  ) {
     return null
   }
-  return { taskId, itemIndex }
+  return { taskId, itemIndex, itemCount }
 }
 
 /**

@@ -223,7 +223,7 @@ describe('列表会话行为（MapsSearchScraper 列表分支）', () => {
   it('列表会话豁免「<2 条完成」：单行详情入库后仍在采集中', () => {
     history.pushState(null, '', AGGREGATED_PATH)
     const scraper = buildScraper()
-    scraper.start()
+    scraper.start(getMapsConfig().scrape.freeExportRowLimit)
     expect(scraper.getStatus()).toBe('extracting')
 
     scraper.handleRpcResponse(buildResponse('Only One'))
@@ -235,7 +235,7 @@ describe('列表会话行为（MapsSearchScraper 列表分支）', () => {
       '<div role="main"><div role="search"><button aria-label="Search"></button></div></div>'
     history.pushState(null, '', '/maps/search/coffee')
     const searchScraper = buildScraper()
-    searchScraper.start()
+    searchScraper.start(getMapsConfig().scrape.freeExportRowLimit)
     searchScraper.handleRpcResponse(buildResponse('Only One'))
     expect(searchScraper.getStatus()).toBe('complete')
   })
@@ -247,7 +247,7 @@ describe('列表会话行为（MapsSearchScraper 列表分支）', () => {
     vi.useFakeTimers()
     try {
       const scraper = buildScraper()
-      scraper.start()
+      scraper.start(getMapsConfig().scrape.freeExportRowLimit)
       await vi.advanceTimersByTimeAsync(30_000)
       expect(scraper.getStatus()).toBe('complete')
     } finally {
@@ -267,7 +267,7 @@ describe('列表会话行为（MapsSearchScraper 列表分支）', () => {
     try {
       const scraper = buildScraper()
       // start 同步进入轮 1 顶部（点击 A）后卡在延时；响应在轮间注入模拟详情 RPC 到达
-      scraper.start()
+      scraper.start(getMapsConfig().scrape.freeExportRowLimit)
       scraper.handleRpcResponse(buildResponse('A'))
       for (const name of ['B', 'C']) {
         // 一次步进恰好走完当前轮延时并到达下一轮顶部（该轮点击发生）

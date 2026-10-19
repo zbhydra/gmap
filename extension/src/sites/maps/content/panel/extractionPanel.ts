@@ -1,208 +1,253 @@
-/**
- * 评论/照片工作页的小面板（Shadow DOM，复用 panel.css 的 design token）。
- *
- * 两态渲染（竞品评论区/照片页 UI 语义）：
- * - extracting：Extracting {count}…（实时计数）；
- * - complete：Export Reviews/Photos - {count} (.CSV) + Reset（重采）。
- *
- * 与搜索面板（MapsPanel）分离：本面板无 Pause/Resume——评论/照片采集是
- * 单地点短流程，竞品同形态。文案全部走 i18n。
- */
-
-import panelStyles from './panel.css?inline'
-import { I18nService } from '@/locales/index'
-import { I18N_KEYS } from '@/core/constants/i18n'
+/** 评论与照片工作页固定左侧；保留结果供提前停止或额度不足时导出。 */
+import { I18nService } from '@/locales'
+import { MapsUserSettingsManager } from '../../settings/userSettings'
+import { getRunLimit } from '../../usage/usageClient'
+import { isUsageExhausted, type MapsUsageSnapshot } from '../../usage/types'
+import type { BulkWorkParams } from '../bulkAuto'
 import { searchExportExtLabel, type SearchExportFormat } from '../export/engine'
+import {
+  createPanel,
+  IconName,
+  K,
+  node,
+  number,
+  openPanelPricing,
+  renderButton,
+  renderContext,
+  renderFooter,
+  renderHeader,
+  renderMessage,
+  renderStatus,
+  renderUpgrade
+} from './panelView'
 
-/** 工作面板宿主元素 id 前缀（reviews/photos 各自拼接）。 */
 export const EXTRACTION_PANEL_HOST_PREFIX = 'gmap-extractor-work-panel'
-
-/** 工作面板状态。 */
-export type ExtractionStatus = 'extracting' | 'complete'
-
-/** 面板回调。 */
+export type ExtractionStatus = 'extracting' | 'complete' | 'stopped' | 'empty'
 export interface ExtractionPanelCallbacks {
-  /** 导出当前结果。 */
   onExport: () => void
-  /** 重置并重新开始采集。 */
-  onReset: () => void
+  onReset: () => Promise<void>
 }
-
-/** 面板渲染输入。 */
 export interface ExtractionPanelState {
   status: ExtractionStatus
   count: number
-  /** 导出格式（决定导出按钮后缀文案，来自用户设置）。 */
   format: SearchExportFormat
 }
 
-/**
- * 评论/照片工作页面板。
- *
- * @param hostId 宿主元素 id（reviews/photos 区分，防同页重复挂载）。
- * @param exportLabelKey 导出按钮文案 key（评论/照片各自列数不同）。
- */
 export class ExtractionPanel {
-  private readonly callbacks: ExtractionPanelCallbacks
-
-  private readonly hostId: string
-
-  private readonly exportLabelKey: string
-
   private host: HTMLElement | null = null
+  private panel: HTMLElement | null = null
+  private checking = false
+  private exported = false
+  private exportedTimer: number | null = null
+  private unsubscribeSettings: (() => void) | null = null
+  private unsubscribeLanguage: (() => void) | null = null
+  private error: 'quota' | 'unknown-place' | null = null
+  private quotaRechecked = false
+  private usage: MapsUsageSnapshot | null = null
+  private limit = 0
+  private bulk: BulkWorkParams | null = null
+  private lastState: ExtractionPanelState = { status: 'extracting', count: 0, format: 'csv' }
+  private readonly mode: 'reviews' | 'photos'
 
-  private panelElement: HTMLElement | null = null
-
-  private hintElement: HTMLElement | null = null
-
-  private errorElement: HTMLElement | null = null
-
-  private exportButton: HTMLButtonElement | null = null
-
-  private resetButton: HTMLButtonElement | null = null
-
-  constructor(hostId: string, exportLabelKey: string, callbacks: ExtractionPanelCallbacks) {
-    this.hostId = hostId
-    this.exportLabelKey = exportLabelKey
-    this.callbacks = callbacks
+  constructor(
+    private readonly hostId: string,
+    private readonly exportLabelKey: string,
+    private readonly callbacks: ExtractionPanelCallbacks
+  ) {
+    this.mode = exportLabelKey === K.REVIEWS_EXPORT ? 'reviews' : 'photos'
+    this.limit = getRunLimit(null, this.mode)
   }
 
-  /**
-   * 挂载面板（等待 body 可用即挂；工作页结构简单，无需等业务容器）。
-   */
   async mount(): Promise<void> {
-    if (document.getElementById(this.hostId)) {
-      return
+    if (document.getElementById(this.hostId)) return
+    this.panel = await createPanel(this.hostId, document.body)
+    this.host = document.getElementById(this.hostId)
+    this.panel.className = 'mgp mgp--work'
+    node(this.panel, '[data-dock]').hidden = true
+    node<HTMLButtonElement>(this.panel, '[data-pricing]').onclick = () => {
+      void openPanelPricing()
     }
-
-    const host = document.createElement('div')
-    host.id = this.hostId
-    document.body.appendChild(host)
-
-    const shadow = host.attachShadow({ mode: 'open' })
-    const style = document.createElement('style')
-    style.textContent = panelStyles
-    shadow.appendChild(style)
-
-    const panel = document.createElement('div')
-    panel.className = 'panel panel-side-left'
-    shadow.appendChild(panel)
-
-    this.host = host
-    this.panelElement = panel
-    this.buildStructure()
-    this.render({ status: 'extracting', count: 0, format: 'csv' })
-  }
-
-  /** 按状态渲染两态 UI。 */
-  render(state: ExtractionPanelState): void {
-    if (!this.panelElement || !this.hintElement || !this.exportButton || !this.resetButton) {
-      return
+    node<HTMLButtonElement>(this.panel, '[data-check]').onclick = () => {
+      void this.reset()
     }
-
-    if (state.status === 'extracting') {
-      this.hintElement.textContent = I18nService.t(I18N_KEYS.MAPS_PANEL.EXTRACTING, {
-        count: state.count
-      })
-      this.hintElement.style.display = 'block'
-      this.exportButton.style.display = 'none'
-      this.resetButton.style.display = 'none'
-      return
-    }
-
-    this.hintElement.style.display = 'none'
-    this.exportButton.textContent = I18nService.t(this.exportLabelKey, {
-      count: state.count,
-      ext: searchExportExtLabel(state.format)
+    this.unsubscribeSettings = MapsUserSettingsManager.onSettingsChanged(settings => {
+      if (this.host) this.host.dataset.theme = settings.theme
+      this.lastState.format = settings.exportFormat
+      this.refresh()
     })
-    this.exportButton.style.display = 'block'
-    this.exportButton.onclick = this.callbacks.onExport
-    this.resetButton.textContent = I18nService.t(I18N_KEYS.MAPS_PANEL.RESET)
-    this.resetButton.style.display = 'block'
-    this.resetButton.onclick = this.callbacks.onReset
+    this.unsubscribeLanguage = I18nService.onLanguageChange(() => this.refresh())
+    this.refresh()
   }
 
-  /** 显示/隐藏错误行（失败不静默：UI 可见）。 */
-  setError(message: string | null): void {
-    if (!this.errorElement) {
-      return
-    }
-    if (message === null) {
-      this.errorElement.classList.remove('visible')
-      this.errorElement.textContent = ''
-      return
-    }
-    this.errorElement.textContent = I18nService.t(I18N_KEYS.MAPS_PANEL.PARSE_ERROR)
-    this.errorElement.classList.add('visible')
+  render(state: ExtractionPanelState): void {
+    this.lastState = state
+    this.refresh()
   }
 
-  /** 卸载面板。 */
+  setUsage(usage: MapsUsageSnapshot | null, limit: number): void {
+    this.usage = usage
+    this.limit = limit
+    this.refresh()
+  }
+
+  setBulkContext(bulk: BulkWorkParams | null): void {
+    this.bulk = bulk
+    this.refresh()
+  }
+
+  setChecking(checking: boolean): void {
+    this.checking = checking
+    this.refresh()
+  }
+
+  setError(error: 'quota' | 'unknown-place' | null): void {
+    this.error = error
+    this.quotaRechecked = false
+    this.refresh()
+  }
+
+  showExported(): void {
+    if (this.exportedTimer !== null) window.clearTimeout(this.exportedTimer)
+    this.exported = true
+    this.refresh()
+    this.exportedTimer = window.setTimeout(() => {
+      this.exported = false
+      this.exportedTimer = null
+      this.refresh()
+    }, 1600)
+  }
+
   destroy(): void {
+    if (this.exportedTimer !== null) window.clearTimeout(this.exportedTimer)
+    this.unsubscribeSettings?.()
+    this.unsubscribeLanguage?.()
     this.host?.remove()
     this.host = null
-    this.panelElement = null
+    this.panel = null
   }
 
-  /** 构建 Shadow DOM 内部结构（结构只建一次，render 只改文案/显隐）。 */
-  private buildStructure(): void {
-    const panel = this.panelElement
-    if (!panel) {
-      return
+  private async reset(): Promise<void> {
+    if (this.checking) return
+    this.setChecking(true)
+    try {
+      await this.callbacks.onReset()
+      this.quotaRechecked = this.error === 'quota'
+    } finally {
+      this.setChecking(false)
     }
+  }
 
-    const header = document.createElement('div')
-    header.className = 'panel-header'
-
-    const title = document.createElement('span')
-    title.className = 'panel-title'
-    title.textContent = I18nService.t(I18N_KEYS.MAPS_PANEL.TITLE)
-
-    header.appendChild(title)
-
-    const hint = document.createElement('p')
-    hint.className = 'panel-hint'
-    this.hintElement = hint
-
-    const error = document.createElement('p')
-    error.className = 'panel-error'
-    this.errorElement = error
-
-    const actions = document.createElement('div')
-    actions.className = 'panel-actions'
-
-    const exportButton = document.createElement('button')
-    exportButton.type = 'button'
-    exportButton.className = 'panel-button panel-button-primary'
-    exportButton.style.display = 'none'
-    this.exportButton = exportButton
-
-    const resetButton = document.createElement('button')
-    resetButton.type = 'button'
-    resetButton.className = 'panel-button panel-button-outline'
-    resetButton.style.display = 'none'
-    this.resetButton = resetButton
-
-    actions.appendChild(exportButton)
-    actions.appendChild(resetButton)
-
-    panel.appendChild(header)
-    panel.appendChild(hint)
-    panel.appendChild(error)
-    panel.appendChild(actions)
+  private refresh(): void {
+    const panel = this.panel
+    if (!panel) return
+    const { status, count, format } = this.lastState
+    const blocked = this.error === 'quota'
+    const state = blocked ? 'blocked' : status
+    renderHeader(panel, this.mode)
+    renderContext(panel, this.bulk, this.mode === 'reviews')
+    const labels = {
+      extracting: K.EXTRACTING,
+      complete: K.COMPLETE,
+      stopped: K.STOPPED,
+      empty: this.mode === 'reviews' ? K.NO_REVIEWS : K.NO_PHOTOS,
+      blocked: K.QUOTA_EXHAUSTED
+    }
+    const caption = blocked
+      ? K.QUOTA_HINT
+      : status === 'stopped'
+        ? K.STOPPED_HINT
+        : status === 'empty'
+          ? K.EMPTY_HINT
+          : status === 'extracting'
+            ? this.mode === 'reviews'
+              ? K.REVIEWS_LIVE
+              : K.PHOTOS_LIVE
+            : count >= this.limit
+              ? K.LIMIT_REACHED
+              : K.END_REACHED
+    const cores = {
+      extracting: IconName.SCAN,
+      complete: IconName.CHECK,
+      stopped: IconName.ALERT,
+      empty: IconName.MINUS,
+      blocked: IconName.LOCK
+    }
+    renderStatus(
+      panel,
+      state,
+      blocked && this.usage ? this.usage.used : count,
+      blocked && this.usage ? this.usage.total : this.limit,
+      I18nService.t(labels[state]),
+      I18nService.t(caption, { limit: number(this.limit) }),
+      cores[state]
+    )
+    renderFooter(
+      panel,
+      this.usage,
+      this.bulk === null ? (this.usage?.run_limits[this.mode] ?? this.limit) : this.limit
+    )
+    const message = blocked
+      ? this.quotaRechecked
+        ? K.STILL_OUT
+        : K.QUOTA_HINT
+      : this.error === 'unknown-place'
+        ? K.PLACE_ERROR
+        : status === 'stopped'
+          ? this.mode === 'reviews'
+            ? K.REVIEWS_STOPPED
+            : K.PHOTOS_STOPPED
+          : status === 'empty'
+            ? this.mode === 'reviews'
+              ? K.NO_REVIEWS_HINT
+              : K.NO_PHOTOS_HINT
+            : null
+    renderMessage(panel, message, status === 'stopped' ? 'warn' : 'neutral')
+    renderUpgrade(panel, blocked, this.checking)
+    const primary = node<HTMLButtonElement>(panel, '[data-primary]')
+    renderButton(
+      primary,
+      this.exported ? 'exported' : 'export',
+      I18nService.t(this.exported ? K.EXPORTED : this.exportLabelKey, { count: number(count) }),
+      this.exported ? IconName.CHECK : IconName.DOWNLOAD,
+      false,
+      this.checking || count === 0,
+      this.exported ? '' : searchExportExtLabel(format)
+    )
+    primary.hidden = status === 'empty' || (blocked && count === 0)
+    primary.onclick = () => {
+      if (primary.getAttribute('aria-disabled') === 'true') return
+      this.callbacks.onExport()
+      this.showExported()
+    }
+    const secondary = node<HTMLButtonElement>(panel, '[data-secondary]')
+    renderButton(
+      secondary,
+      this.checking ? 'checking' : 'reset',
+      I18nService.t(this.checking ? K.CHECKING : K.RESET),
+      IconName.RESET,
+      this.checking
+    )
+    secondary.hidden = blocked || status === 'extracting'
+    secondary.onclick = () => {
+      void this.reset()
+    }
+    if (
+      !isUsageExhausted(this.usage) &&
+      !blocked &&
+      status === 'extracting' &&
+      panel.getRootNode() instanceof ShadowRoot
+    ) {
+      const root = panel.getRootNode() as ShadowRoot
+      if (root.activeElement?.hasAttribute('data-check')) primary.focus()
+    }
   }
 }
 
-/**
- * 等待 document.body 就绪（document_start 注入时 body 尚未解析完）。
- */
 export async function waitForBody(timeoutMs = 10_000): Promise<void> {
-  const pollIntervalMs = 100
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
-    if (document.body) {
-      return
-    }
-    await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
+    if (document.body) return
+    await new Promise(resolve => setTimeout(resolve, 100))
   }
   throw new Error('[ExtractionPanel] document.body 等待超时，无法挂载工作面板')
 }

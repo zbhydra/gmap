@@ -30,6 +30,7 @@ import {
   panelHost,
   parseCsv,
   readDownload,
+  readCollectedCount,
   skipSmoke,
   startButton,
   waitForExtensionServiceWorker
@@ -87,18 +88,18 @@ test.describe('真实 Google Maps 匿名采集(免费 10 行截断)', () => {
       await start.click()
 
       // 首批真实 RPC 解析(≥10 行)→ 免费档截断自动完成;解析失败会停在
-      // 采集中态或报 Data parse failed,由完成态超时/计数断言兜底暴露
+      // 采集中态或显示解析错误,由完成态超时/计数断言兜底暴露
       try {
-        await expect(exportButton(page)).toBeVisible({ timeout: 90_000 })
+        await expect(page.getByRole('button', { name: 'Reset', exact: true })).toBeVisible({
+          timeout: 90_000
+        })
       } catch {
         skipSmoke('90s 内未达完成态:首批 RPC 未达或解析未命中(疑似协议改版,需人工归因)')
       }
 
       // 截断语义:完成计数恒等于免费上限
       const buttonText = (await exportButton(page).innerText()).replace(/\s+/g, ' ').trim()
-      const buttonCount = Number(
-        buttonText.match(/^Export Detailed List - (\d+) \(\.CSV\)$/)?.[1] ?? 0
-      )
+      const buttonCount = await readCollectedCount(page)
       expect(buttonCount, `完成计数应为免费上限 ${FREE_ROW_LIMIT}: ${buttonText}`).toBe(
         FREE_ROW_LIMIT
       )

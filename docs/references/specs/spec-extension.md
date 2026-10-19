@@ -34,6 +34,7 @@
 
 - 自研 Vue SFC，无 UI 库；共享组件在 `core/components/`，content 专属 UI 在 `core/content/components/`。
 - 组件命名 PascalCase（文件 + 模板）。
+- `extension/` 的 UI 合同入口见 [design.md §0](design.md#0--总览)。扩展页面加载 `src/styles/index.css` 的打包字体；页内面板只用系统字体。主题偏好并入 `MapsUserSettingsManager`；页面挂载前调用 `initializePageTheme()`，面板经 `getCurrentTheme()` 与设置订阅同步宿主的 `data-theme`（入口：`sites/maps/settings/theme.ts`）。
 - 样式：`<style scoped>` + CSS 变量 + `v-bind('CONST')` 桥接 JS 常量。content 页面级样式走独立 CSS 文件 + `web_accessible_resources` + `chrome.runtime.getURL`；需要隔离宿主页面样式的组件使用 Shadow DOM，组件 CSS 通过 `?inline` 导入并注入 Shadow Root，留在 Light DOM 的锚点/宿主样式仍走页面级通道。
 
 ## 6. 状态管理

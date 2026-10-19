@@ -15,25 +15,19 @@ export const I18N_KEYS = {
   EXTENSION_DESCRIPTION: 'extensionDescription',
   /** 操作标题 */
   ACTION_TITLE: 'actionTitle',
-  /** 弹窗描述 */
-  POPUP_DESCRIPTION: 'popupDescription',
 
   /** App 相关 */
   APP: {
     /** 应用标题 */
     TITLE: 'app.title',
-    /** 刷新按钮 */
-    REFRESH: 'app.refresh',
-    /** 底部支持联系方式 */
-    SUPPORT_CONTACT: 'app.supportContact',
-    /** 复制支持邮箱按钮 */
-    COPY_SUPPORT_EMAIL: 'app.copySupportEmail',
-    /** 支持邮箱复制成功 */
-    SUPPORT_EMAIL_COPIED: 'app.supportEmailCopied',
-    /** 支持邮箱复制失败 */
-    SUPPORT_EMAIL_COPY_FAILED: 'app.supportEmailCopyFailed',
-    /** 打开批量任务 dashboard 按钮 */
-    OPEN_DASHBOARD: 'app.openDashboard'
+    START_HINT: 'app.startHint',
+    OPEN_MAPS: 'app.openMaps',
+    BULK_KEYWORDS: 'app.bulkKeywords',
+    BULK_REVIEWS: 'app.bulkReviews',
+    HELP: 'app.help',
+    CONTACT: 'app.contact',
+    PLANS: 'app.plans',
+    MANAGE_SUBSCRIPTION: 'app.manageSubscription'
   },
 
   /** 应用错误相关 */
@@ -100,50 +94,75 @@ export const I18N_KEYS = {
 
   /** Maps 采集面板（013 A1，content script 注入 Maps 页） */
   MAPS_PANEL: {
-    /** 面板标题（产品名） */
+    RELOAD: 'mapsPanel.reload',
+    OPEN_TAB_ERROR: 'mapsPanel.openTabError',
     TITLE: 'mapsPanel.title',
-    /** 待命说明 */
+    COMPLETE: 'mapsPanel.complete',
+    PLACE_ERROR: 'mapsPanel.placeError',
     IDLE_HINT: 'mapsPanel.idleHint',
-    /** 开始采集按钮（竞品文案 Start Extracting） */
     START: 'mapsPanel.start',
-    /** 采集中文案（Extracting {count}…） */
     EXTRACTING: 'mapsPanel.extracting',
-    /** 暂停按钮 */
     PAUSE: 'mapsPanel.pause',
-    /** 恢复按钮 */
     RESUME: 'mapsPanel.resume',
-    /** 导出按钮（Export Detailed List - {count} (.CSV)） */
     EXPORT: 'mapsPanel.export',
-    /** 重置按钮 */
     RESET: 'mapsPanel.reset',
-    /** 左右位置切换按钮 */
     TOGGLE_POSITION: 'mapsPanel.togglePosition',
-    /** 响应解析失败提示（失败不静默：UI 可见） */
     PARSE_ERROR: 'mapsPanel.parseError',
-    /** place 页 Reviews 区块标签 */
     REVIEWS_SECTION: 'mapsPanel.reviewsSection',
-    /** place 页 Photos 区块标签 */
     PHOTOS_SECTION: 'mapsPanel.photosSection',
-    /** place 页评论采集开始按钮（竞品文案 Start Extracting Reviews） */
     START_REVIEWS: 'mapsPanel.startReviews',
-    /** place 页照片采集开始按钮（竞品文案 Start Extracting Photos） */
     START_PHOTOS: 'mapsPanel.startPhotos',
-    /** place 页区块已发起采集的状态文案 */
     COLLECTING_NEW_TAB: 'mapsPanel.collectingNewTab',
-    /** 评论页导出按钮（Export Reviews - {count} (.CSV)） */
     REVIEWS_EXPORT: 'mapsPanel.reviewsExport',
-    /** 照片页导出按钮（Export Photos - {count} (.CSV)） */
     PHOTOS_EXPORT: 'mapsPanel.photosExport',
-    /** 面板新版本提示（A12：远端最低版本 > 本地版本） */
     NEW_VERSION: 'mapsPanel.newVersionAvailable',
-    /** 列表模式区块标签（A7：URL 命中保存列表/搜索侧栏列表触发标记） */
     LIST_SECTION: 'mapsPanel.listSection',
-    /** 列表模式待命说明 */
     LIST_IDLE_HINT: 'mapsPanel.listIdleHint',
-    /** 配额耗尽提示（A11/U7：月度额度用尽 + 订阅引导） */
     QUOTA_EXHAUSTED: 'mapsPanel.quotaExhausted',
-    /** 订阅引导按钮（W7：额度用尽时打开远程下发的 pricingUrl 落地页；未配置不渲染） */
-    UPGRADE_PLAN: 'mapsPanel.upgradePlan'
+    UPGRADE_PLAN: 'mapsPanel.upgradePlan',
+    READY: 'mapsPanel.ready',
+    MODE_SEARCH: 'mapsPanel.modeSearch',
+    MODE_PLACE: 'mapsPanel.modePlace',
+    PROGRESS: 'mapsPanel.progress',
+    PAUSED: 'mapsPanel.paused',
+    PAUSED_HINT: 'mapsPanel.pausedHint',
+    SEARCH_LIVE: 'mapsPanel.searchLive',
+    LIST_LIVE: 'mapsPanel.listLive',
+    PLACE_HINT: 'mapsPanel.placeHint',
+    LIMIT_REACHED: 'mapsPanel.limitReached',
+    END_REACHED: 'mapsPanel.endReached',
+    NOT_SEARCHED: 'mapsPanel.notSearched',
+    GOOGLE_ERROR: 'mapsPanel.googleError',
+    CHECKING: 'mapsPanel.checking',
+    CHECK_AGAIN: 'mapsPanel.checkAgain',
+    STILL_OUT: 'mapsPanel.stillOut',
+    UNLOCKED: 'mapsPanel.unlocked',
+    EXPORTED: 'mapsPanel.exported',
+    CONTACTS_TITLE: 'mapsPanel.contactsTitle',
+    CONTACTS_PROGRESS: 'mapsPanel.contactsProgress',
+    CONTACTS_WAIT: 'mapsPanel.contactsWait',
+    STOPPED: 'mapsPanel.stopped',
+    STOPPED_HINT: 'mapsPanel.stoppedHint',
+    NO_REVIEWS: 'mapsPanel.noReviews',
+    NO_PHOTOS: 'mapsPanel.noPhotos',
+    EMPTY_HINT: 'mapsPanel.emptyHint',
+    NO_REVIEWS_HINT: 'mapsPanel.noReviewsHint',
+    NO_PHOTOS_HINT: 'mapsPanel.noPhotosHint',
+    REVIEWS_STOPPED: 'mapsPanel.reviewsStopped',
+    PHOTOS_STOPPED: 'mapsPanel.photosStopped',
+    REVIEWS_LIVE: 'mapsPanel.reviewsLive',
+    PHOTOS_LIVE: 'mapsPanel.photosLive',
+    UPGRADE_TITLE: 'mapsPanel.upgradeTitle',
+    UPGRADE_HINT: 'mapsPanel.upgradeHint',
+    QUOTA_HINT: 'mapsPanel.quotaHint',
+    BULK_TASK: 'mapsPanel.bulkTask',
+    DASHBOARD: 'mapsPanel.dashboard',
+    HELP: 'mapsPanel.help',
+    RUN_LIMIT: 'mapsPanel.runLimit',
+    THIS_PLACE: 'mapsPanel.thisPlace',
+    NEW_TAB_HINT: 'mapsPanel.newTabHint',
+    REOPEN: 'mapsPanel.reopen',
+    ROW_START: 'mapsPanel.rowStart'
   },
 
   /** popup 用量展示（013 A11，U7 账号区） */
@@ -152,10 +171,22 @@ export const I18N_KEYS = {
     TITLE: 'popup.usage.title',
     /** 未登录归属标签 */
     GUEST: 'popup.usage.guest',
+    LOADING: 'popupUsage.loading',
+    UNAVAILABLE: 'popupUsage.unavailable',
     /** 用量计数行（{used} / {total}） */
     COUNTER: 'popup.usage.counter',
-    /** 重置时间行（{period} = 当前归属周期） */
-    RESETS: 'popup.usage.resets'
+    /** 重置时间行（{date} = 下个纽约业务月的首日） */
+    RESETS: 'popup.usage.resets',
+    UNAVAILABLE_HINT: 'popupUsage.unavailableHint',
+    SIGN_IN_HINT: 'popupUsage.signInHint',
+    SIGN_IN_PENDING: 'popupUsage.signInPending',
+    KEYWORDS_HINT: 'popupUsage.keywordsHint',
+    REVIEWS_HINT: 'popupUsage.reviewsHint',
+    BULK_TOOLS: 'popupUsage.bulkTools',
+    ACCOUNT: 'popupUsage.account',
+    NEAR_LIMIT: 'popupUsage.nearLimit',
+    EXHAUSTED: 'popupUsage.exhausted',
+    UPGRADE: 'popupUsage.upgrade'
   },
 
   /** 设置页（013 A9，U6 options） */
@@ -192,6 +223,8 @@ export const I18N_KEYS = {
     PRO_BADGE: 'options.proBadge',
     /** 完成后自动下载 */
     AUTO_DOWNLOAD: 'options.autoDownload',
+    AUTO_DOWNLOAD_HINT: 'options.autoDownloadHint',
+    SAVE_FAILED: 'options.saveFailed',
     /** 自动保存到 Google Drive */
     DRIVE_AUTO_SAVE: 'options.driveAutoSave',
     /** 自动保存到 HubSpot */
@@ -206,6 +239,7 @@ export const I18N_KEYS = {
     INTEGRATION_STATUS_NOT_CONNECTED: 'options.integrationStatusNotConnected',
     /** 授权失败提示（弹窗关闭 / 占位 client_id 拒绝等） */
     INTEGRATION_AUTH_FAILED: 'options.integrationAuthFailed',
+    INTEGRATION_UNAVAILABLE: 'options.integrationUnavailable',
     /** 断开连接（revoke 授权并关闭开关） */
     INTEGRATION_DISCONNECT: 'options.integrationDisconnect',
     /** 批量卡死重试次数 */
@@ -270,13 +304,80 @@ export const I18N_KEYS = {
       FID: 'options.column.fid',
       PLACE_ID: 'options.column.placeId',
       KGMID: 'options.column.kgmid'
-    }
+    },
+    SECTION_APPEARANCE: 'options.section.appearance',
+    NAV_LABEL: 'options.navLabel',
+    EXTRACTION_DESC: 'options.extractionDesc',
+    EXPORT_DESC: 'options.exportDesc',
+    AUTOMATION_DESC: 'options.automationDesc',
+    APPEARANCE_DESC: 'options.appearanceDesc',
+    EXPORT_FORMAT_HINT: 'options.exportFormatHint',
+    PRO_FREE: 'options.proFree',
+    PRO_FIELDS: 'options.proFields',
+    SELECT_ALL: 'options.selectAll',
+    CLEAR_FIELDS: 'options.clearFields',
+    ALL_SAVED: 'options.allSaved',
+    SAVING: 'options.saving',
+    SAVED: 'options.saved',
+    NOT_SAVED: 'options.notSaved',
+    SAVE_FAILED_HINT: 'options.saveFailedHint',
+    RELOAD: 'options.reload',
+    FIELD_COUNT: 'options.fieldCount',
+    ON: 'options.on',
+    OFF: 'options.off',
+    INTERVAL_SUMMARY: 'options.intervalSummary',
+    EXPORT_SUMMARY: 'options.exportSummary',
+    AUTOMATION_SUMMARY: 'options.automationSummary',
+    APPEARANCE_SUMMARY: 'options.appearanceSummary',
+    PREVIEW: 'options.preview',
+    PREVIEW_SAMPLE: 'options.previewSample',
+    PREVIEW_EMPTY: 'options.previewEmpty',
+    PREVIEW_EMAIL: 'options.previewEmail',
+    PREVIEW_SOCIAL: 'options.previewSocial',
+    PREVIEW_PLUS_CODE: 'options.previewPlusCode',
+    INCREASE_RETRY: 'options.increaseRetry',
+    DECREASE_RETRY: 'options.decreaseRetry',
+    SKIPPED: 'options.skipped',
+    ATTEMPTS: 'options.attempts',
+    RETRY_SETTINGS_ONLY: 'options.retrySettingsOnly',
+    INTEGRATIONS: 'options.integrations',
+    THEME: 'options.theme',
+    THEME_HINT: 'options.themeHint',
+    THEME_SYSTEM: 'options.themeSystem',
+    THEME_LIGHT: 'options.themeLight',
+    THEME_DARK: 'options.themeDark',
+    NOW_LIGHT: 'options.nowLight',
+    NOW_DARK: 'options.nowDark',
+    LANGUAGE: 'options.language',
+    LANGUAGE_HINT: 'options.languageHint',
+    LANGUAGE_FAILED: 'options.languageFailed'
   },
 
   /** 批量任务 dashboard 页（013 A6，U5） */
   DASHBOARD: {
     /** 页面标题 */
     TITLE: 'dashboard.title',
+    CREATE_TASK: 'dashboard.createTask',
+    CLEAR: 'dashboard.clear',
+    HISTORY: 'dashboard.history',
+    HISTORY_HINT: 'dashboard.historyHint',
+    SPLIT_HINT: 'dashboard.splitHint',
+    START_FIRST_TASK: 'dashboard.startFirstTask',
+    SPLIT_START_HINT: 'dashboard.splitStartHint',
+    ACTION_VIEW: 'dashboard.actionView',
+    ACTION_COPY_PENDING: 'dashboard.actionCopyPending',
+    BACK: 'dashboard.back',
+    DELETE_CONFIRM: 'dashboard.deleteConfirm',
+    ITEM_PENDING: 'dashboard.itemPending',
+    ITEM_RUNNING: 'dashboard.itemRunning',
+    ITEM_COMPLETE: 'dashboard.itemComplete',
+    ITEM_STUCK: 'dashboard.itemStuck',
+    ITEM_INVALID: 'dashboard.itemInvalid',
+    COLLECTED: 'dashboard.collected',
+    TASK_SAVED: 'dashboard.taskSaved',
+    EXECUTION_HINT: 'dashboard.executionHint',
+    ERROR_NAME_REQUIRED: 'dashboard.errorNameRequired',
+    ERROR_ACTION: 'dashboard.errorAction',
     /** 新建任务分组标题 */
     SECTION_CREATE: 'dashboard.sectionCreate',
     /** 任务类型：关键词 */
@@ -295,12 +396,10 @@ export const I18N_KEYS = {
     REVIEWS_PER_STORE_LIMIT: 'dashboard.reviewsPerStoreLimit',
     /** 每店评论上限说明 */
     REVIEWS_PER_STORE_LIMIT_HINT: 'dashboard.reviewsPerStoreLimitHint',
-    /** 条目计数提示（{count}/{max} 条） */
+    /** 条目数量 */
     ITEM_COUNT: 'dashboard.itemCount',
     /** 创建并启动按钮（竞品文案 Start Extracting） */
     START_EXTRACTING: 'dashboard.startExtracting',
-    /** 任务列表分组标题 */
-    SECTION_TASKS: 'dashboard.sectionTasks',
     /** 表头：序号 */
     COL_NO: 'dashboard.colNo',
     /** 表头：任务名称 */
@@ -333,13 +432,13 @@ export const I18N_KEYS = {
     ACTION_COPY_COMPLETED: 'dashboard.actionCopyCompleted',
     /** 行操作：启动 */
     ACTION_START: 'dashboard.actionStart',
-    /** 行操作：停止 */
+    /** 行操作：暂停 */
     ACTION_STOP: 'dashboard.actionStop',
     /** 行操作：删除 */
     ACTION_DELETE: 'dashboard.actionDelete',
     /** 空列表提示 */
     EMPTY_HINT: 'dashboard.emptyHint',
-    /** 错误：已有任务运行（互斥，竞品同构 danger 提示） */
+    /** 错误：已有任务运行 */
     ERROR_MUTEX: 'dashboard.errorMutex',
     /** 错误：任务数达上限（150） */
     ERROR_LIMIT_TASKS: 'dashboard.errorLimitTasks',
@@ -357,8 +456,62 @@ export const I18N_KEYS = {
     COPIED: 'dashboard.copied',
     /** 复制失败 */
     COPY_FAILED: 'dashboard.copyFailed',
-    /** 默认任务名（{index} 序号） */
-    DEFAULT_TASK_NAME: 'dashboard.defaultTaskName'
+    ATTEMPTS: 'dashboard.attempts',
+    CANCEL: 'dashboard.cancel',
+    CHANGE_SETTINGS: 'dashboard.changeSettings',
+    CLEANUP_HINT: 'dashboard.cleanupHint',
+    CREATE_TASKS: 'dashboard.createTasks',
+    DELETED: 'dashboard.deleted',
+    DELETE_RUNNING: 'dashboard.deleteRunning',
+    DELETE_TITLE: 'dashboard.deleteTitle',
+    DOWNLOAD_HINT: 'dashboard.downloadHint',
+    DUPLICATES_REMOVED: 'dashboard.duplicatesRemoved',
+    EMPTY_REMOVED: 'dashboard.emptyRemoved',
+    EMPTY_TITLE: 'dashboard.emptyTitle',
+    FINISHED_ITEMS: 'dashboard.finishedItems',
+    FORM_KEYWORDS: 'dashboard.formKeywords',
+    FORM_REVIEWS: 'dashboard.formReviews',
+    INVALID_LINKS: 'dashboard.invalidLinks',
+    ITEMS_ASIDE: 'dashboard.itemsAside',
+    ITEM_RETRYING: 'dashboard.itemRetrying',
+    JUMP_CURRENT: 'dashboard.jumpCurrent',
+    KEEPS_RUNNING: 'dashboard.keepsRunning',
+    LEDE_KEYWORDS: 'dashboard.ledeKeywords',
+    LEDE_REVIEWS: 'dashboard.ledeReviews',
+    MORE_ACTIONS: 'dashboard.moreActions',
+    NEW_KEYWORDS: 'dashboard.newKeywords',
+    NEW_REVIEWS: 'dashboard.newReviews',
+    OPEN_HISTORY: 'dashboard.openHistory',
+    PAUSED_ITEM: 'dashboard.pausedItem',
+    PROCESSED: 'dashboard.processed',
+    QUOTA_AFTER: 'dashboard.quotaAfter',
+    QUOTA_CHECK: 'dashboard.quotaCheck',
+    QUOTA_FOOT_HINT: 'dashboard.quotaFootHint',
+    QUOTA_LEFT: 'dashboard.quotaLeft',
+    QUOTA_LOWER_REVIEWS: 'dashboard.quotaLowerReviews',
+    QUOTA_REDUCE: 'dashboard.quotaReduce',
+    QUOTA_RULE_KEYWORDS: 'dashboard.quotaRuleKeywords',
+    QUOTA_RULE_REVIEWS: 'dashboard.quotaRuleReviews',
+    QUOTA_TASK: 'dashboard.quotaTask',
+    QUOTA_UNAVAILABLE: 'dashboard.quotaUnavailable',
+    QUOTA_USED: 'dashboard.quotaUsed',
+    READY_ITEMS: 'dashboard.readyItems',
+    RECORDS_NEEDED: 'dashboard.recordsNeeded',
+    RETRY_HINT: 'dashboard.retryHint',
+    RETRY_VALUE: 'dashboard.retryValue',
+    RUNNING_FOOT_HINT: 'dashboard.runningFootHint',
+    RUN_AGAIN: 'dashboard.runAgain',
+    SAVED_NOT_STARTED: 'dashboard.savedNotStarted',
+    SET_IN_SETTINGS: 'dashboard.setInSettings',
+    SKIPPED: 'dashboard.skipped',
+    SKIP_BREAKDOWN: 'dashboard.skipBreakdown',
+    SLOTS_HINT: 'dashboard.slotsHint',
+    SUMMARY: 'dashboard.summary',
+    SUMMARY_EMPTY: 'dashboard.summaryEmpty',
+    SUMMARY_ONE: 'dashboard.summaryOne',
+    TASK_COUNT: 'dashboard.taskCount',
+    VIEW_RUNNING: 'dashboard.viewRunning',
+    WORKING_ITEM: 'dashboard.workingItem'
   }
 } as const
 

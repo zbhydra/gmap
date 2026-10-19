@@ -1,261 +1,1211 @@
-/*
- * Maps 采集面板样式（Shadow DOM 内，全量消费 design.md / design.dark.md 的
- * 语义 token，亮暗双主题响应 prefers-color-scheme；禁止硬编码色值/字体）。
- *
- * token 名与 design.md YAML 键一致（前缀 --）；暗色仅换值，交互规则同亮色。
- */
+/* =========================================================================
+   MapsGrab · 页内面板（注入 Google Maps 的 Shadow DOM，自含样式）
+   -------------------------------------------------------------------------
+   约束（README §8）：
+   - 自含：:host { all: initial } 切断宿主样式继承；只消费本文件 :host 上声明的 token，
+     颜色 token 与 tokens.css 同名同值（改值两边同步，scripts 见 README §11 校验）。
+   - 字体：系统字体栈 + 表格数字（L10：Shadow DOM 内 @font-face 不生效，不向 Google 页面注入字体）。
+     只用 px，不用 rem（rem 取宿主页面根字号）。
+   - 动效预算：只动 transform / opacity；无 backdrop-filter、无 filter、无投影动画；
+     循环只有「采集中」的 live 圆点与扫描弧（合成线程）和短暂的加载圈，
+     环形进度只在数值变化时过渡描边。
+   - 主题（L11）：默认跟随系统；宿主元素 <… data-theme="light|dark"> 跟随扩展主题设置覆盖。
+   - 类名一律 mgp- 前缀（MapsGrab panel），状态写在 data-state 上，Vue 落地时直接绑定。
+   - 参考标记：design-system.html#panel（pages/system.js panelHTML）与 panel.html（pages/maps.js panelHTML）。
+   ========================================================================= */
 
 :host {
-  /* 亮色 token（design.md） */
-  --gme-surface: #ffffff;
-  --gme-surface-2: #f0f4f9;
-  --gme-border: #dde3ea;
-  --gme-border-strong: #b9c2cd;
-  --gme-text: #1f1f1f;
-  --gme-text-2: #5f6368;
-  --gme-text-3: #80868b;
-  --gme-primary: #1a73e8;
-  --gme-primary-hover: #1765cc;
-  --gme-primary-fg: #ffffff;
-  --gme-primary-soft: #e8f0fe;
-  --gme-warn: #b26a00;
-  --gme-warn-soft: #fef7e0;
-  --gme-ring: #1a73e8;
-  --gme-link: #1a73e8;
-  --gme-shadow-pop: 0 4px 10px rgba(60, 64, 67, 0.14), 0 14px 36px rgba(60, 64, 67, 0.14);
-  --gme-rounded-sm: 10px;
-  --gme-rounded-md: 16px;
-  --gme-rounded-full: 999px;
-  --gme-font-body: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --gme-font-mono: 'Azeret Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-
   all: initial;
+  display: block;
+  color-scheme: light dark;
+
+  /* —— 颜色（与 tokens.css 同名同值的子集） —— */
+  --surface: light-dark(#ffffff, #0e1424);
+  --surface-2: light-dark(#f4f7fb, #131b2d);
+  --surface-3: light-dark(#e9eef6, #1a2438);
+  --border: light-dark(#e6ebf2, #1c2639);
+  --border-2: light-dark(#d3dbe6, #2a3650);
+  --text: light-dark(#0b1324, #eaeff7);
+  --text-2: light-dark(#475467, #a6b1c4);
+  --text-3: light-dark(#667083, #79859c);
+  --primary: #1a73e8;
+  --primary-hover: #1765cc;
+  --primary-press: #1452b0;
+  --primary-fg: #ffffff;
+  --primary-text: light-dark(#1568d6, #7cb0ff);
+  --primary-soft: light-dark(#e8f0fe, rgba(77, 148, 255, 0.14));
+  --primary-solid: #1a73e8;
+  --ok: light-dark(#117e39, #4ade80);
+  --ok-soft: light-dark(#e7f6ec, rgba(74, 222, 128, 0.13));
+  --ok-solid: light-dark(#14b37d, #34d399);
+  --warn: light-dark(#b45309, #fbbf24);
+  --warn-soft: light-dark(#fef5e2, rgba(251, 191, 36, 0.13));
+  --warn-solid: light-dark(#f59e0b, #fbbf24);
+  --bad: light-dark(#d22222, #f87171);
+  --bad-soft: light-dark(#fdecec, rgba(248, 113, 113, 0.13));
+  --bad-solid: light-dark(#ef4444, #f87171);
+  --neutral: light-dark(#536077, #a3aec2);
+  --neutral-soft: light-dark(#eef1f6, rgba(148, 163, 184, 0.13));
+  --neutral-solid: light-dark(#9aa4b6, #55627b);
+  --star: light-dark(#f59e0b, #fbbf24);
+  --track: light-dark(#e9eef6, #1a2438);
+  --ring: light-dark(rgba(26, 115, 232, 0.5), rgba(124, 176, 255, 0.6));
+  --on-solid: #ffffff;
+  --mask-solid: #000;
+  --highlight-soft: rgba(255, 255, 255, 0.18);
+  --shade-soft: rgba(0, 0, 0, 0.12);
+  --highlight-clear: rgba(255, 255, 255, 0);
+
+  /* —— 面板专属：悬浮在地图之上，投影比扩展页面重一档；暗色靠描边 + 内高光分层 —— */
+  --shadow-panel:
+    0 1px 2px light-dark(rgba(16, 24, 40, 0.08), rgba(0, 0, 0, 0.5)),
+    0 12px 32px -8px light-dark(rgba(16, 24, 40, 0.24), rgba(0, 0, 0, 0.72));
+  --hairline-hl: inset 0 1px 0 light-dark(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.06));
+  /* 主按钮投影比扩展页面的 --shadow-primary 收一档（面板只有 280 宽），故另起名：同名必须同值 */
+  --shadow-panel-primary:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(16, 24, 40, 0.12),
+    0 4px 12px -4px rgba(26, 115, 232, 0.55);
+  --shadow-xs: 0 1px 2px light-dark(rgba(16, 24, 40, 0.06), rgba(0, 0, 0, 0.4));
+  --grad-top-light: linear-gradient(180deg, var(--highlight-soft), var(--highlight-clear) 60%);
+  --mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+  --mask-pause: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='6' y='5' width='4' height='14' rx='1.2'/%3E%3Crect x='14' y='5' width='4' height='14' rx='1.2'/%3E%3C/svg%3E");
+  --mask-minus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E");
+
+  /* —— 字体（L10 例外：系统字体，与扩展页面的 Plus Jakarta Sans 不同） —— */
+  --font-system:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  --font-system-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  --fs-count: 24px; /* 计数读数；其余字号是 10.5–13.5 的裸值 */
+
+  /* —— 尺寸 / 圆角 —— */
+  --panel-w: 280px; /* 原 236：状态区（环 + 两行读数）与单行导出按钮需要 ≥ 252px 内容宽 */
+  --panel-top: 80px;
+  --panel-inset: 20px;
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-full: 999px;
+
+  /* —— 动效 —— */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-emph: cubic-bezier(0.2, 0, 0, 1);
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 280ms;
+  --dur-4: 560ms;
+  --dur-5: 900ms;
+  --dur-live: 1600ms;
+  --dur-spin: 700ms;
+  --dur-reopen: 4000ms; /* L4：入口「已在新标签采集」几秒后复位 */
+
+  --z-panel: 2147483646;
 }
 
-@media (prefers-color-scheme: dark) {
-  :host {
-    /* 暗色 token（design.dark.md）：实底控件翻转为浅底深字 */
-    --gme-surface: #1d2026;
-    --gme-surface-2: #262a31;
-    --gme-border: #31353d;
-    --gme-border-strong: #4c515b;
-    --gme-text: #e8eaed;
-    --gme-text-2: #9aa0a6;
-    --gme-text-3: #7c828c;
-    --gme-primary: #8ab4f8;
-    --gme-primary-hover: #aecbfa;
-    --gme-primary-fg: #0d2b45;
-    --gme-primary-soft: rgba(138, 180, 248, 0.15);
-    --gme-warn: #fdd663;
-    --gme-warn-soft: rgba(253, 214, 99, 0.13);
-    --gme-ring: #8ab4f8;
-    --gme-link: #8ab4f8;
-    --gme-shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5);
+:host([data-theme='light']) {
+  color-scheme: light;
+}
+
+:host([data-theme='dark']) {
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.mgp-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 读屏专用：计数的节流播报（采集中每 ~3 秒 + 每次状态变化），视觉上隐藏 */
+.mgp-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ===========================================================================
+   外壳：fixed 浮层，左 / 右停靠（搜索 / 列表默认左，详情默认右；换模式时重置）
+   =========================================================================== */
+.mgp {
+  position: fixed;
+  top: var(--panel-top);
+  z-index: var(--z-panel);
+  display: flex;
+  flex-direction: column;
+  width: var(--panel-w);
+  max-height: calc(100vh - var(--panel-top) - var(--panel-inset));
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel), var(--hairline-hl);
+  color: var(--text);
+  font-family: var(--font-system);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  animation: mgp-in var(--dur-4) var(--ease-out) backwards;
+}
+
+/* 同一页面会话内的重绘（换状态 / 换模式）不重播入场：外壳在真实页面里一直都在 */
+.mgp.is-steady {
+  animation: none;
+}
+
+.mgp--left {
+  left: var(--panel-inset);
+}
+
+.mgp--right {
+  right: var(--panel-inset);
+}
+
+/* 评论 / 照片工作页：固定左侧，没有停靠切换 */
+.mgp--work {
+  left: var(--panel-inset);
+}
+
+@keyframes mgp-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.98);
   }
 }
 
-* {
-  box-sizing: border-box;
+/* —— 头部：品牌标 + 名称 + 模式标签 + 停靠切换 —— */
+.mgp-head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 6px 0 12px;
+  border-bottom: 1px solid var(--border);
 }
 
-.panel {
-  position: fixed;
-  top: 80px;
-  z-index: 2147483646;
-  width: 236px;
-  padding: 16px;
+.mgp-mark {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-xs);
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+
+.mgp-title {
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.mgp-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text-3);
+  font-family: var(--font-system-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mgp-mode .mgp-icon {
+  width: 11px;
+  height: 11px;
+  stroke-width: 2.2;
+}
+
+.mgp-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  border-radius: var(--r-full);
+  color: var(--text-2);
+  transition: transform var(--dur-1) var(--ease-out);
+}
+
+.mgp-icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.mgp-icon-btn:active {
+  transform: scale(0.9);
+}
+
+/* ===========================================================================
+   批量任务上下文条（设计提案）：批量调度器打开的页面在头部下方显示「Bulk task · 3 / 40」，
+   整条是去 Dashboard 的链接；底边细线是整个任务的进度（transform: scaleX）
+   =========================================================================== */
+.mgp-context {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.mgp-context:hover {
+  background: var(--surface-3);
+}
+
+.mgp-context:focus-visible {
+  outline-offset: -2px;
+}
+
+.mgp-context > .mgp-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--primary-text);
+}
+
+.mgp-context-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.mgp-context-count {
+  color: var(--text-2);
+  font-family: var(--font-system-mono);
+  font-size: 11.5px;
+}
+
+.mgp-context-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.mgp-context-link .mgp-icon {
+  width: 13px;
+  height: 13px;
+}
+
+.mgp-context-bar {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--primary-solid);
+  transform: scaleX(calc(var(--p, 0) / 100));
+  transform-origin: 0 50%;
+  transition: transform var(--dur-5) var(--ease-out);
+}
+
+/* —— 内容区 —— */
+.mgp-body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--gme-surface);
-  color: var(--gme-text);
-  border: 1px solid var(--gme-border);
-  border-radius: var(--gme-rounded-md);
-  box-shadow: var(--gme-shadow-pop);
-  font-family: var(--gme-font-body);
+  padding: 14px;
+  overflow-y: auto;
 }
 
-.panel-side-left {
-  left: 20px;
+/* ===========================================================================
+   运营提示：新版本 / 公告（远程配置下发，读取失败则不出现）
+   =========================================================================== */
+.mgp-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--primary-soft);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+  animation: mgp-swap var(--dur-3) var(--ease-out) backwards;
 }
 
-.panel-side-right {
-  right: 20px;
+.mgp-notice > .mgp-icon {
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  color: var(--primary-text);
 }
 
-.panel-header {
+.mgp-notice a,
+.mgp-notice-link {
+  color: var(--primary-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mgp-notice--announce {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.mgp-notice--announce > .mgp-icon {
+  color: var(--text-3);
+}
+
+/* ===========================================================================
+   状态区：环形进度（N / 本次上限，L1）+ 读数。
+   data-state = idle | extracting | paused | complete | blocked | stopped | empty
+     stopped：工作页因 Google 出错提前结束（有部分结果）；empty：无可采集（如没有评论）
+   =========================================================================== */
+.mgp-status {
+  --tone: var(--neutral);
+  --tone-solid: var(--neutral-solid);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
 }
 
-.panel-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gme-text);
+.mgp-status[data-state='extracting'] {
+  --tone: var(--primary-text);
+  --tone-solid: var(--primary-solid);
 }
 
-.panel-toggle {
-  width: 24px;
-  height: 24px;
-  padding: 0;
+.mgp-status[data-state='paused'],
+.mgp-status[data-state='stopped'] {
+  --tone: var(--warn);
+  --tone-solid: var(--warn-solid);
+}
+
+.mgp-status[data-state='complete'] {
+  --tone: var(--ok);
+  --tone-solid: var(--ok-solid);
+}
+
+.mgp-status[data-state='blocked'] {
+  --tone: var(--bad);
+  --tone-solid: var(--bad-solid);
+}
+
+.mgp-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.mgp-ring-svg {
+  position: absolute;
+  inset: 0;
+  width: 52px;
+  height: 52px;
+  transform: rotate(-90deg);
+}
+
+.mgp-ring-svg circle {
+  fill: none;
+  stroke-width: 4.5;
+}
+
+.mgp-ring-track {
+  stroke: var(--track);
+}
+
+/* 描边只在 --p 变化时过渡一次（状态绑定，非常驻循环） */
+.mgp-ring-fill {
+  stroke: var(--tone-solid);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: calc(100 - var(--p, 0));
+  transition: stroke-dashoffset var(--dur-5) var(--ease-out);
+}
+
+.mgp-status[data-state='idle'] .mgp-ring-fill,
+.mgp-status[data-state='empty'] .mgp-ring-fill {
+  opacity: 0;
+}
+
+/* 扫描弧：采集中一段渐隐弧绕环旋转，只动 transform（合成线程）。
+   几何与描边对齐：viewBox 48、r = 20、描边 4.5 → 52px 下外缘内缩 1.9px、环带宽 4.9px */
+.mgp-ring-scan {
+  position: absolute;
+  inset: 1.9px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 70%, var(--tone-solid) 100%);
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 4.9px),
+    var(--mask-solid) calc(100% - 4.4px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 4.9px),
+    var(--mask-solid) calc(100% - 4.4px)
+  );
+  opacity: 0;
+  transition: opacity var(--dur-3);
+}
+
+.mgp-status[data-state='extracting'] .mgp-ring-scan {
+  opacity: 0.45;
+  animation: mgp-spin var(--dur-live) linear infinite;
+}
+
+@keyframes mgp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 环心：空闲 pin / 采集中扫描 / 暂停竖条 / 完成对勾 / 用尽锁 / 提前结束叹号 / 无结果 */
+.mgp-ring-core {
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: var(--tone);
+  font-family: var(--font-system-mono);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.mgp-ring-core .mgp-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.mgp-ring-core > * {
+  grid-area: 1 / 1;
+  animation: mgp-pop var(--dur-4) var(--ease-spring) backwards;
+}
+
+@keyframes mgp-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+/* 读数：状态行 + 计数 + 说明 */
+.mgp-readout {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mgp-state {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  background: transparent;
-  color: var(--gme-text-2);
-  border: 1px solid var(--gme-border-strong);
-  border-radius: var(--gme-rounded-full);
-  cursor: pointer;
+  gap: 6px;
+  color: var(--tone);
   font-size: 12px;
-  line-height: 1;
+  font-weight: 650;
+  animation: mgp-swap var(--dur-3) var(--ease-out) backwards;
 }
 
-.panel-toggle:hover {
-  background: var(--gme-surface-2);
+.mgp-dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--tone-solid);
 }
 
-.panel-toggle:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
+.mgp-status[data-state='extracting'] .mgp-dot::after {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  animation: mgp-pulse var(--dur-live) var(--ease-out) infinite;
+  content: '';
 }
 
-.panel-hint {
-  margin: 0;
+.mgp-status[data-state='paused'] .mgp-dot {
+  width: 8px;
+  height: 8px;
+  -webkit-mask: var(--mask-pause) center / contain no-repeat;
+  mask: var(--mask-pause) center / contain no-repeat;
+}
+
+.mgp-status[data-state='complete'] .mgp-dot {
+  width: 9px;
+  height: 9px;
+  background: var(--tone);
+  -webkit-mask: var(--mask-check) center / contain no-repeat;
+  mask: var(--mask-check) center / contain no-repeat;
+}
+
+/* 无结果：短横（不是对勾，避免把「什么都没采到」读成成功） */
+.mgp-status[data-state='empty'] .mgp-dot {
+  width: 9px;
+  height: 9px;
+  background: var(--tone);
+  -webkit-mask: var(--mask-minus) center / contain no-repeat;
+  mask: var(--mask-minus) center / contain no-repeat;
+}
+
+@keyframes mgp-pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@keyframes mgp-swap {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0);
+  }
+}
+
+.mgp-count {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--text);
+  font-size: var(--fs-count);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.mgp-of {
+  color: var(--text-3);
   font-size: 13px;
-  line-height: 1.6;
-  color: var(--gme-text-2);
-}
-
-.panel-error {
-  display: none;
-  margin: 0;
-  padding: 6px 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--gme-warn);
-  background: var(--gme-warn-soft);
-  border-radius: var(--gme-rounded-sm);
-  overflow-wrap: anywhere;
-}
-
-.panel-error.visible {
-  display: block;
-}
-
-.panel-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* 运营区（A12）：新版本提示 + 公告（模式无关，header 与内容区之间） */
-.panel-version-notice {
-  display: none;
-  margin: 0;
-  padding: 6px 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--gme-warn);
-  background: var(--gme-warn-soft);
-  border-radius: var(--gme-rounded-sm);
-  overflow-wrap: anywhere;
-}
-
-.panel-version-notice.visible {
-  display: block;
-}
-
-.panel-announcement {
-  display: none;
-  padding: 8px;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--gme-text-2);
-  background: var(--gme-surface-2);
-  border-radius: var(--gme-rounded-sm);
-  overflow-wrap: anywhere;
-}
-
-/* 服务端下发的公告 HTML 片段内部元素的对齐样式（token 消费，不写死色值） */
-.panel-announcement p {
-  margin: 0;
-}
-
-.panel-announcement a {
-  color: var(--gme-link);
-}
-
-.panel-announcement.visible {
-  display: block;
-}
-
-/* place 模式：Reviews & Photos 区块 */
-.panel-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.panel-section-label {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--gme-text-3);
-}
-
-.panel-button {
-  height: 33px;
-  padding: 0 14px;
-  font-family: var(--gme-font-body);
-  font-size: 14px;
   font-weight: 500;
-  border-radius: var(--gme-rounded-full);
-  cursor: pointer;
-  border: none;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
 }
 
-.panel-button:focus-visible {
-  outline: 2px solid var(--gme-ring);
-  outline-offset: 1px;
+.mgp-caption {
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
-.panel-button:disabled {
-  opacity: 0.42;
+/* 数字滚轮（与扩展页面 .roller 同构）：每位 0–9 竖带，transform 平移 */
+.mgp-roll {
+  --roll-h: 1.12em;
+  display: inline-flex;
+  line-height: var(--roll-h);
+}
+
+.mgp-roll-digit {
+  position: relative;
+  display: inline-block;
+  clip-path: inset(0 -0.1em);
+}
+
+.mgp-roll-ghost {
+  visibility: hidden;
+}
+
+.mgp-roll-strip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(calc(var(--d, 0) * -1 * var(--roll-h)));
+  transition: transform var(--dur-5) var(--ease-out);
+  transition-delay: calc(var(--ri, 0) * 35ms);
+}
+
+.mgp-roll-strip > span {
+  display: block;
+  height: var(--roll-h);
+}
+
+/* ===========================================================================
+   收尾任务（完成后的可选步骤）：Email / 社媒补全进度。只动 transform: scaleX
+   =========================================================================== */
+.mgp-task {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 10px;
+  padding: 10px 12px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+  animation: mgp-swap var(--dur-3) var(--ease-out) backwards;
+}
+
+.mgp-task-icon {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-xs);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
+.mgp-task-icon .mgp-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.mgp-task-title {
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.mgp-task-sub {
+  color: var(--text-2);
+  font-size: 11.5px;
+}
+
+.mgp-task-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--track);
+}
+
+.mgp-task-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary-solid);
+  transform: scaleX(calc(var(--p, 0) / 100));
+  transform-origin: 0 50%;
+  transition: transform var(--dur-5) var(--ease-out);
+}
+
+/* ===========================================================================
+   操作：主按钮（Start / Export / View plans）+ 次按钮（Pause / Resume / Reset），
+   文案在同一按钮内形变（.mgp-morph），宽度恒定
+   =========================================================================== */
+.mgp-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.mgp-btn {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 0 14px;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    opacity var(--dur-2),
+    transform var(--dur-1) var(--ease-out);
+}
+
+.mgp-btn:active:not(:disabled, [aria-disabled='true']) {
+  transform: scale(0.97);
+}
+
+/* 不可用：额度挡住的 Start 是真 disabled；0 条时的 Export 等用 aria-disabled（保留焦点），样子相同 */
+.mgp-btn:disabled,
+.mgp-btn[aria-disabled='true'] {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* primary：实底 + 对应 -fg 字色（暗色为深字，双主题合同） */
-.panel-button-primary {
-  background: var(--gme-primary);
-  color: var(--gme-primary-fg);
+/* 处理中（重查额度 / 收尾）：禁用交互但不淡出，加载圈说明在等什么 */
+.mgp-btn[aria-busy='true'] {
+  opacity: 1;
+  cursor: progress;
 }
 
-.panel-button-primary:hover {
-  background: var(--gme-primary-hover);
+.mgp-btn--primary {
+  background: var(--primary);
+  box-shadow: var(--shadow-panel-primary);
+  color: var(--primary-fg);
 }
 
-/* outline：surface 底 + border-strong 边 */
-.panel-button-outline {
-  background: var(--gme-surface);
-  color: var(--gme-text);
-  border: 1px solid var(--gme-border-strong);
+.mgp-btn--primary::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--grad-top-light);
+  content: '';
 }
 
-.panel-button-outline:hover {
-  background: var(--gme-surface-2);
+.mgp-btn--primary:hover:not(:disabled, [aria-disabled='true']) {
+  background: var(--primary-hover);
 }
 
-/* 订阅引导按钮（W7）：search/list 模式在 actions 容器内随 gap 排布；place
-   模式直接挂在内容区（双区块之后），补一条与区块的间距 */
-.panel-section ~ .panel-upgrade-button {
-  margin-top: 8px;
+.mgp-btn--primary:active:not(:disabled, [aria-disabled='true']) {
+  background: var(--primary-press);
 }
 
-.panel-footer {
+.mgp-btn--primary:is(:disabled, [aria-disabled='true']):not([aria-busy='true']) {
+  box-shadow: none;
+}
+
+.mgp-btn--secondary {
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--border-2),
+    var(--shadow-xs);
+  color: var(--text);
+}
+
+.mgp-btn--secondary:hover:not(:disabled, [aria-disabled='true']) {
+  background: var(--surface-2);
+}
+
+.mgp-btn--ghost {
+  color: var(--text-2);
+}
+
+.mgp-btn--ghost:hover:not(:disabled, [aria-disabled='true']) {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.mgp-btn--sm {
+  width: auto;
+  height: 28px;
+  padding: 0 10px;
+  gap: 4px;
   font-size: 12px;
-  color: var(--gme-text-3);
+}
+
+.mgp-btn .mgp-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.mgp-btn--sm .mgp-icon {
+  width: 13px;
+  height: 13px;
+}
+
+/* 方形图标按钮：行内次要动作（如「再次打开」），文案走 aria-label + title */
+.mgp-btn--icon {
+  width: 28px;
+  padding: 0;
+}
+
+/* 导出格式后缀（.CSV / .JSON / .XLSX）：按钮内的小胶囊 */
+.mgp-btn-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--r-full);
+  background: var(--shade-soft); /* 压暗而不是提亮：白字在主色上保持 ≥ 4.5:1 */
+  font-family: var(--font-system-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.mgp-btn--secondary .mgp-btn-tag {
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+
+/* 文案形变：叠放，.is-active 可见，.is-leaving 上移淡出 */
+.mgp-morph {
+  position: relative;
+  display: inline-grid;
+  align-items: center;
+}
+
+.mgp-morph > * {
+  display: inline-flex;
+  grid-area: 1 / 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    opacity var(--dur-3) var(--ease-emph),
+    transform var(--dur-3) var(--ease-emph);
+}
+
+.mgp-morph > :not(.is-active) {
+  opacity: 0;
+  transform: translate3d(0, 70%, 0);
+}
+
+.mgp-morph > .is-leaving {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(0, -70%, 0);
+}
+
+.mgp-morph > .is-active {
+  animation: mgp-swap var(--dur-3) var(--ease-out) backwards;
+}
+
+/* 加载圈（Start / Check again / 工作页 Reset 重查额度、收尾补全期间） */
+.mgp-spinner {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 2px solid var(--border-2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: mgp-spin var(--dur-spin) linear infinite;
+}
+
+.mgp-btn--primary .mgp-spinner {
+  border-color: var(--highlight-soft);
+  border-top-color: currentColor;
+}
+
+.mgp-btn--sm .mgp-spinner {
+  width: 12px;
+  height: 12px;
+}
+
+/* 形变按钮里没轮到的状态也带着加载圈：只让当前状态的圈转，避免看不见的常驻动画 */
+.mgp-morph > :not(.is-active) .mgp-spinner {
+  animation: none;
+}
+
+/* ===========================================================================
+   消息行（L2：按原因给文案与下一步；下一次成功动作时清除）
+   data-tone = info（缺省）| ok | warn | bad | neutral
+   =========================================================================== */
+.mgp-msg {
+  --tone: var(--primary-text);
+  --tone-soft: var(--primary-soft);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--tone-soft);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+  animation: mgp-swap var(--dur-3) var(--ease-out) backwards;
+}
+
+.mgp-msg[data-tone='ok'] {
+  --tone: var(--ok);
+  --tone-soft: var(--ok-soft);
+}
+
+.mgp-msg[data-tone='warn'] {
+  --tone: var(--warn);
+  --tone-soft: var(--warn-soft);
+}
+
+.mgp-msg[data-tone='bad'] {
+  --tone: var(--bad);
+  --tone-soft: var(--bad-soft);
+}
+
+.mgp-msg[data-tone='neutral'] {
+  --tone: var(--text-3);
+  --tone-soft: var(--surface-2);
+}
+
+.mgp-msg > .mgp-icon {
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  color: var(--tone);
+}
+
+.mgp-msg b {
+  font-weight: 650;
+}
+
+.mgp-msg-action {
+  display: inline;
+  margin-left: 2px;
+  color: var(--tone);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* 中性消息的动作链接不用 --text-3（下限色不做可点文字），用正文色 */
+.mgp-msg[data-tone='neutral'] .mgp-msg-action {
+  color: var(--text);
+}
+
+/* 额度用尽的升级入口（L3：恒显示，默认指向官网 Pricing；Check again 重查额度） */
+.mgp-upgrade {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+  animation: mgp-swap var(--dur-3) var(--ease-out) backwards;
+}
+
+.mgp-upgrade-title {
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.mgp-upgrade-text {
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mgp-upgrade .mgp-btn {
+  justify-self: start;
+}
+
+.mgp-upgrade-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===========================================================================
+   详情页 Reviews & Photos 入口（L4：打开后「已在新标签采集」+ 可再次打开，几秒后复位）
+   行状态 data-state = ready | opened | blocked | error（unknown 为旧名，同 error）
+   =========================================================================== */
+.mgp-section {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.mgp-section-label {
+  color: var(--text-3);
+  font-family: var(--font-system-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mgp-section > .mgp-msg {
+  margin-top: 2px;
+}
+
+.mgp-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+.mgp-row-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text-2);
+}
+
+.mgp-row-icon .mgp-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.mgp-row-icon--star {
+  color: var(--star);
+}
+
+.mgp-row-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.mgp-row-title {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 块级容器才能出省略号（flex 容器里的文字只会被硬裁）；图标内联 */
+.mgp-row-sub {
+  overflow: hidden;
+  color: var(--text-3);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: mgp-swap var(--dur-3) var(--ease-out) backwards;
+}
+
+.mgp-row-sub .mgp-icon {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  vertical-align: -2px;
+  stroke-width: 2.2;
+}
+
+.mgp-row[data-state='opened'] .mgp-row-sub {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.mgp-row[data-state='blocked'] .mgp-row-sub {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+/* 地点无法识别：图标转中性、按钮禁用；文字保持 ≥ 4.5:1（不整行降透明度） */
+.mgp-row[data-state='error'] .mgp-row-icon {
+  color: var(--text-3);
+}
+
+/* 复位倒计时：底部细线从满到空（transform: scaleX，线性） */
+.mgp-row-timer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 40px;
+  height: 2px;
+  border-radius: var(--r-full);
+  background: var(--ok-solid);
+  opacity: 0;
+  transform-origin: 0 50%;
+}
+
+.mgp-row[data-state='opened'] .mgp-row-timer {
+  opacity: 0.6;
+  animation: mgp-timer var(--dur-reopen) linear forwards;
+}
+
+@keyframes mgp-timer {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* ===========================================================================
+   页脚
+   =========================================================================== */
+.mgp-foot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-family: var(--font-system-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+}
+
+.mgp-foot a {
+  border-radius: var(--r-xs);
+}
+
+.mgp-foot a:hover {
+  color: var(--text);
+}
+
+/* ===========================================================================
+   减弱动效：跟随系统设置
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .mgp-ring-scan {
+    display: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
 }

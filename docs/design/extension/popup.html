@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Popup · MapsGrab Extension</title>
+    <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+    <!-- Phase B 页面统一头部：theme.js 同步执行（首帧主题），其余脚本 defer，页面私有文件按 body[data-page] 命名 -->
+    <script src="assets/js/theme.js"></script>
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/proto.css" />
+    <link rel="stylesheet" href="assets/css/pages/popup.css" />
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/ui.js" defer></script>
+    <script src="assets/js/proto.js" defer></script>
+    <script src="assets/js/pages/popup.js" defer></script>
+  </head>
+  <body data-page="popup">
+    <main class="proto-stage pp-stage">
+      <!-- ============================================================ 场景 1：工具栏里打开的 Popup（状态坞驱动） -->
+      <section class="proto-scene" id="popup" aria-label="Popup in a browser window">
+        <span class="proto-label"><b>Popup</b> · 400 × auto · opened from the toolbar</span>
+
+        <div class="proto-browser pp-browser">
+          <div class="proto-browser-bar">
+            <span class="proto-browser-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="proto-browser-url"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg><span>Search or type a web address</span></span>
+            <span class="proto-browser-ext" aria-hidden="true"><svg class="icon"><use href="assets/img/icons.svg#i-puzzle" /></svg></span>
+            <span class="proto-browser-ext is-active" aria-hidden="true"><img src="assets/img/logo.svg" alt="" /></span>
+          </div>
+
+          <div class="proto-browser-page pp-page">
+            <div class="pp-wall" data-pp-wall aria-hidden="true"></div>
+
+            <!-- Popup 视口：400 宽、高随内容、上限 600；子元素 .pp 是 Popup 根 -->
+            <div class="proto-popup pp-frame" data-pp-frame>
+              <div class="pp" data-pp>
+                <!-- 品牌头：MapsGrab · 语言（14 语）· Settings -->
+                <header class="appbar appbar--compact pp-head enter" data-pp-head>
+                  <span class="brand pp-brand"><img class="brand-mark" src="assets/img/logo.svg" alt="" />MapsGrab<span class="badge pp-plan" data-pp-plan hidden></span></span>
+                  <div class="appbar-actions">
+                    <button class="btn btn-ghost btn-sm pp-lang" type="button" data-menu="pp-lang-menu" aria-label="Language: EN (English)" data-pp-lang>
+                      <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-globe" /></svg>
+                      <span class="pp-lang-code" data-pp-lang-code>EN</span>
+                      <svg class="icon pp-lang-chev" aria-hidden="true"><use href="assets/img/icons.svg#i-chevron-down" /></svg>
+                    </button>
+                    <a class="icon-btn icon-btn--sm" href="options.html" target="_blank" aria-label="Settings" data-tooltip="Settings">
+                      <svg class="icon icon-gear" aria-hidden="true"><use href="assets/img/icons.svg#i-gear" /></svg>
+                    </a>
+                  </div>
+                </header>
+
+                <div class="pp-body enter-group" data-pp-body>
+                  <!-- 运营提示：远程配置下发；读取失败则不出现 -->
+                  <div class="pp-notices" data-pp-notices>
+                    <div class="pp-notices-inner">
+                      <div class="notice tone-primary" role="status" data-pp-notice="update" hidden>
+                        <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-sparkles" /></svg>
+                        <div>
+                          <p class="notice-title">Update MapsGrab to keep extracting</p>
+                          <p class="notice-desc">This version is no longer supported. <a href="#" data-pp-link="update">How to update</a></p>
+                        </div>
+                      </div>
+                      <div class="notice notice--announce" role="status" data-pp-notice="announce" hidden>
+                        <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-megaphone" /></svg>
+                        <div><p class="notice-desc"><b>New:</b> export straight to XLSX — choose the format in <a href="options.html" target="_blank">Settings</a>.</p></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 引导 + 主操作（全页唯一 primary；额度用尽时让位给升级，L3） -->
+                  <section class="pp-start" aria-label="Get started">
+                    <p class="pp-lead">Search Google Maps for businesses, then extract and export the results.</p>
+                    <a class="btn btn-primary btn-lg btn-block pp-open" href="panel.html" target="_blank" data-pp-open>
+                      <svg class="icon icon-pin" aria-hidden="true"><use href="assets/img/icons.svg#i-pin" /></svg>Open Google Maps<svg class="icon icon-out pp-open-out" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-up-right" /></svg>
+                    </a>
+                  </section>
+
+                  <!-- 两个批量入口：同类型复用已开的 Dashboard 标签 -->
+                  <nav class="pp-tools" aria-label="Bulk tools">
+                    <a class="card card--interactive pp-tool" href="dashboard.html?s.tool=keywords" target="_blank">
+                      <span class="icon-tile icon-tile--sm icon-tile--soft"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-list-plus" /></svg></span>
+                      <span class="pp-tool-title">Bulk keywords</span>
+                      <svg class="icon pp-tool-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-up-right" /></svg>
+                      <span class="pp-tool-desc">Up to 500 searches per task</span>
+                    </a>
+                    <a class="card card--interactive pp-tool" href="dashboard.html?s.tool=reviews" target="_blank">
+                      <span class="icon-tile icon-tile--sm icon-tile--soft"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-review" /></svg></span>
+                      <span class="pp-tool-title">Bulk reviews</span>
+                      <svg class="icon pp-tool-go" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-up-right" /></svg>
+                      <span class="pp-tool-desc">Reviews from a list of place URLs</span>
+                    </a>
+                  </nav>
+
+                  <!-- 账号与用量（L5）+ 套餐链接 -->
+                  <section class="card pp-card" aria-label="Account and usage">
+                    <div class="pp-account">
+                      <span class="pp-avatar" data-pp-avatar aria-hidden="true">
+                        <span class="avatar avatar--guest pp-avatar-guest"><svg class="icon"><use href="assets/img/icons.svg#i-user" /></svg></span>
+                        <span class="avatar pp-avatar-user">JR</span>
+                        <span class="pp-avatar-orbit"></span>
+                      </span>
+                      <div class="pp-who">
+                        <span class="morph pp-mtext pp-name" data-pp-name>
+                          <span class="is-active" data-key="guest">Guest</span>
+                          <span data-key="user" aria-hidden="true">Jordan Rivera</span>
+                        </span>
+                        <span class="morph pp-mtext pp-meta" data-pp-meta>
+                          <span class="is-active" data-key="guest">Sign in to use your plan</span>
+                          <span data-key="pending" aria-hidden="true">Continue in the new tab</span>
+                          <span data-key="user" aria-hidden="true">jordan@example.com</span>
+                        </span>
+                      </div>
+                      <button class="btn btn-secondary btn-sm pp-auth" type="button" data-pp-auth>
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span class="morph" data-pp-auth-label>
+                          <span class="is-active" data-key="in"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-login" /></svg>Sign in</span>
+                          <span data-key="out" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-logout" /></svg>Sign out</span>
+                        </span>
+                      </button>
+                    </div>
+
+                    <div class="pp-usage">
+                      <!-- 加载中：每次打开都实时拉取 -->
+                      <div class="meter pp-skel" data-pp-u="loading" role="status" aria-busy="true" aria-label="Loading usage" hidden>
+                        <div class="meter-head"><span class="kicker">Records this month</span><span class="skel pp-skel-reset"></span></div>
+                        <span class="skel skel--num pp-skel-num"></span>
+                        <span class="skel pp-skel-bar"></span>
+                      </div>
+
+                      <!-- 不可用：说明原因与下一步（L2），采集不受影响 -->
+                      <div class="meter pp-uerror" data-pp-u="error" hidden>
+                        <div class="meter-head"><span class="kicker">Records this month</span></div>
+                        <div class="pp-uerror-box">
+                          <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-circle-dashed" /></svg>
+                          <div class="pp-uerror-text">
+                            <p class="pp-uerror-title">Usage didn’t load</p>
+                            <p class="pp-uerror-desc">Check your connection and retry. Extraction still works — your limit is checked when you start.</p>
+                            <button class="btn btn-secondary btn-sm pp-retry" type="button" data-pp-retry><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-refresh" /></svg>Retry</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- 正常 / 接近上限 ≥ 80%（L5）/ 用尽（L3） -->
+                      <div class="meter pp-meter" data-pp-u="meter" data-pp-meter>
+                        <div class="meter-head"><span class="kicker">Records this month</span><span class="meter-reset">Resets Nov 1</span></div>
+                        <div class="meter-value">
+                          <span class="meter-used roller" data-pp-used>312</span>
+                          <span class="meter-total" data-pp-total>/ 1,000</span>
+                          <span class="pp-pct"><span class="roller" data-pp-pct>31</span>%</span>
+                        </div>
+                        <div class="progress pp-bar" role="progressbar" aria-label="Records used this month" aria-valuemin="0" aria-valuemax="1000" aria-valuenow="312" aria-valuetext="312 of 1,000 records" style="--p: 31.2" data-pp-bar>
+                          <span class="progress-fill"><i class="pp-fill-warn"></i><i class="pp-fill-bad"></i><i class="pp-beam"></i></span>
+                        </div>
+                        <p class="meter-note" data-pp-note="near" hidden>
+                          <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-alert" /></svg>
+                          <span><span data-pp-left>136 records left until Nov 1.</span> <a class="link" href="#" data-pp-link="pricing">View plans</a></span>
+                        </p>
+                        <div class="pp-out" data-pp-note="out" hidden>
+                          <p class="meter-note">
+                            <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>
+                            <span data-pp-out-text>All 1,000 records used. Extraction resumes Nov 1.</span>
+                          </p>
+                          <a class="btn btn-primary btn-sm pp-upgrade" href="#" data-pp-link="pricing" data-pp-upgrade><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-crown" /></svg><span data-pp-upgrade-label>Upgrade plan</span></a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="card-foot pp-plans">
+                      <a class="link-arrow" href="#" data-pp-link="pricing">View plans<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></a>
+                      <span class="spacer"></span>
+                      <a class="link link--quiet pp-manage" href="#" data-pp-link="subscriptions">Manage subscription<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-external-link" /></svg></a>
+                    </div>
+                  </section>
+                </div>
+
+                <!-- 页脚：Help & FAQ · Contact support · 版本号 -->
+                <footer class="pp-foot enter" data-pp-foot>
+                  <a class="link link--quiet" href="#" data-pp-link="help"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-help" /></svg>Help &amp; FAQ</a>
+                  <a class="link link--quiet" href="#" data-pp-link="contact"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg>Contact support</a>
+                  <span class="spacer"></span>
+                  <span class="pp-version" aria-label="Version 0.1.0">v0.1.0</span>
+                </footer>
+
+                <!-- 读屏播报：账号与用量的状态变化 -->
+                <p class="sr-only" aria-live="polite" data-pp-live></p>
+
+                <!-- 语言菜单：14 语，两列（纵向流），顶层 popover -->
+                <div class="menu pp-lang-menu" id="pp-lang-menu" role="menu" aria-label="Language" data-pp-lang-menu>
+                  <div class="menu-label">Language</div>
+                  <div class="pp-lang-grid">
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="true" data-value="en-US" data-code="EN" lang="en" style="--i: 0">English</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="zh-CN" data-code="ZH" lang="zh-Hans" style="--i: 1">简体中文</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="zh-TW" data-code="ZH-TW" lang="zh-Hant" style="--i: 2">繁體中文</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="ja-JP" data-code="JA" lang="ja" style="--i: 3">日本語</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="ko-KR" data-code="KO" lang="ko" style="--i: 4">한국어</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="es-ES" data-code="ES" lang="es" style="--i: 5">Español</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="pt-BR" data-code="PT" lang="pt-BR" style="--i: 6">Português</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="de-DE" data-code="DE" lang="de" style="--i: 7">Deutsch</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="fr-FR" data-code="FR" lang="fr" style="--i: 8">Français</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="ru-RU" data-code="RU" lang="ru" style="--i: 9">Русский</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="it-IT" data-code="IT" lang="it" style="--i: 10">Italiano</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="vi-VN" data-code="VI" lang="vi" style="--i: 11">Tiếng Việt</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="th-TH" data-code="TH" lang="th" style="--i: 12">ไทย</button>
+                    <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-value="id-ID" data-code="ID" lang="id" style="--i: 13">Bahasa Indonesia</button>
+                  </div>
+                </div>
+              </div>
+              <div class="toast-stack toast-stack--center" data-toast-stack></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="proto-note">The state dock drives this popup; the popup itself is live too — Sign in, Sign out and Retry run their flows. Website links (plans, subscription, help) show where they go instead of leaving the prototype. Theme follows the shared setting (L11) and changes in Settings, not here.</p>
+      </section>
+
+      <!-- ============================================================ 场景 2：全部状态一屏可见 -->
+      <section class="proto-scene" id="states" aria-labelledby="pp-states-title">
+        <span class="proto-label" id="pp-states-title"><b>States</b> · every state at once</span>
+        <div class="pp-matrix" data-pp-matrix></div>
+        <p class="proto-note">Each tile is the same popup rendered in one state. Click a tile to load it into the popup above. Plan names (Free · Pro · Business) are an assumption until account info carries the plan.</p>
+      </section>
+    </main>
+  </body>
+</html>

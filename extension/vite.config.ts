@@ -301,6 +301,7 @@ export default defineConfig({
       skipManifestValidation: true, // 禁用schema验证 ,不然会卡主很多
       manifest: () => ({
         manifest_version: 3,
+        minimum_chrome_version: '123',
         name: '__MSG_extensionName__',
         version: '0.1.0',
         default_locale: 'en',
@@ -330,13 +331,13 @@ export default defineConfig({
         content_scripts: [
           {
             matches: [
-              'https://www.google.com/maps/*',
+              'https://www.google.com/maps*',
               'https://www.google.com/search*',
-              'https://search.google.com/local/reviews*'
+              'https://www.google.com.hk/search*'
             ],
             js: ['src/content/index.ts'],
             // injected hook 必须赶在 Maps 页面脚本发起内部 RPC 之前就位；
-            // 评论工作页（search.google.com）由 bootstrap 按 URL 分流自治 boot
+            // 评论工作页也在首次异步操作前捕获 Maps 初始 URL 的采集参数
             run_at: 'document_start'
           }
         ],

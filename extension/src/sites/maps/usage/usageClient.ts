@@ -16,6 +16,7 @@ import type { ChromeEventEmitter } from '@/core/rpc'
 import type { ExtensionEvents } from '@/core/events/types'
 import type { MapsUsageSnapshot, MapsUsageSource } from './types'
 import { isUsageExhausted } from './types'
+import { getMapsConfig } from '../config/loader'
 
 /** 拉取 usage 快照；任何失败返回 null（fail-open，门控放行）。 */
 export async function fetchUsageSnapshot(): Promise<MapsUsageSnapshot | null> {
@@ -33,6 +34,22 @@ export async function fetchUsageSnapshot(): Promise<MapsUsageSnapshot | null> {
 /** 查询当前是否配额耗尽（快照不可得 = false）。 */
 export async function isQuotaExhausted(): Promise<boolean> {
   return isUsageExhausted(await fetchUsageSnapshot())
+}
+
+/** 批量评论的请求目标独立于单店权益，所有任务仍受可用月余额限制。 */
+export function getRunLimit(
+  snapshot: MapsUsageSnapshot | null,
+  source: MapsUsageSource,
+  requestedLimit?: number
+): number {
+  const { scrape } = getMapsConfig()
+  const offlineLimits = {
+    search: scrape.freeExportRowLimit,
+    reviews: scrape.reviewsPageLimit,
+    photos: scrape.photosPageLimit
+  }
+  const limit = requestedLimit ?? snapshot?.run_limits[source] ?? offlineLimits[source]
+  return snapshot === null ? limit : Math.min(limit, Math.max(0, snapshot.total - snapshot.used))
 }
 
 /** 采集会话上报器：三个采集 boot（搜索/评论/照片）共用同一套会话语义。 */

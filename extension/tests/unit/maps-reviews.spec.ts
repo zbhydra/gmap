@@ -13,9 +13,14 @@ import type { ExtensionEvents } from '@/core/events/types'
 import type { JsonValue } from '@/core/rpc/types'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
 import { getMapsConfig, resetMapsConfigForTests } from '@/sites/maps/config/loader'
+import * as configLoader from '@/sites/maps/config/loader'
+import * as userSettings from '@/sites/maps/settings/userSettings'
+import * as usageClient from '@/sites/maps/usage/usageClient'
+import * as downloads from '@/sites/maps/content/export/download'
 import { parseReviewsRpcResponse } from '@/sites/maps/content/parser/reviewsParser'
 import {
   ReviewsScraper,
+  bootReviewsPage,
   REVIEWS_PANEL_HOST_ID
 } from '@/sites/maps/content/reviews/reviewsScraper'
 import {
@@ -177,7 +182,9 @@ describe('评论 11 列 CSV 导出', () => {
       new Date(2026, 7, 30),
       'csv'
     )
-    expect(filename).toBe('MapsGrab-Extractor-Reviews-Gold coffee - Google Search-20-2026-08-30.csv')
+    expect(filename).toBe(
+      'MapsGrab-Extractor-Reviews-Gold coffee - Google Search-20-2026-08-30.csv'
+    )
   })
 
   it('json 导出（用户设置格式）：键驼峰化、照片换行保留、扩展名随格式', () => {
@@ -212,10 +219,14 @@ describe('评论 11 列 CSV 导出', () => {
 
 describe('评论采集控制器：翻页/截断/终止', () => {
   function buildScraper(emit: ReturnType<typeof vi.fn>): ReviewsScraper {
-    return new ReviewsScraper('0xa0acdb1716592b4d', { emit } as never as ChromeEventEmitter<ExtensionEvents>, {
-      onStateChanged: () => undefined,
-      onError: () => undefined
-    })
+    return new ReviewsScraper(
+      { fid: '0x89c2597ca044ec9b:0xa0acdb1716592b4d', hl: 'en', gl: 'us' },
+      { emit } as never as ChromeEventEmitter<ExtensionEvents>,
+      {
+        onStateChanged: () => undefined,
+        onError: () => undefined
+      }
+    )
   }
 
   /** 构造 fetch mock：按调用序返回页面响应，记录 URL。 */
@@ -231,7 +242,11 @@ describe('评论采集控制器：翻页/截断/终止', () => {
         if (!page) {
           throw new Error('测试用例未预期的额外请求')
         }
-        return { ok: true, status: 200, text: async () => buildReviewsResponse(page.reviews, page.token) }
+        return {
+          ok: true,
+          status: 200,
+          text: async () => buildReviewsResponse(page.reviews, page.token)
+        }
       })
     )
     return { urls }
@@ -240,7 +255,7 @@ describe('评论采集控制器：翻页/截断/终止', () => {
   it('采集开始即上报 scrape_reviews_content 埋点', async () => {
     const emit = vi.fn()
     stubFetch([{ reviews: [makeReview(0)], token: null }])
-    await buildScraper(emit).start()
+    await buildScraper(emit).start(getMapsConfig().scrape.reviewsPageLimit)
 
     const events = emit.mock.calls.map(call => String(call[0]))
     expect(events).toContain('mapsScrapeReviewsContentMark')
@@ -256,18 +271,19 @@ describe('评论采集控制器：翻页/截断/终止', () => {
     ])
     const scraper = buildScraper(vi.fn())
 
-    await scraper.start()
+    await scraper.start(getMapsConfig().scrape.reviewsPageLimit)
 
     expect(urls).toHaveLength(2)
     expect(urls[0]).toContain('/httpservice/web/PrivateLocalSearchUiDataService/GetLocalBoqProxy')
     expect(urls[0]).toContain('opi=89978449')
-    expect(urls[0]).toContain(encodeURIComponent('0xa0acdb1716592b4d'))
+    expect(urls[0]).toMatch(/^\/httpservice\//)
+    expect(urls[0]).toContain(encodeURIComponent('0x89c2597ca044ec9b:0xa0acdb1716592b4d'))
     expect(urls[1]).toContain(encodeURIComponent('t1'))
     expect(scraper.getCount()).toBe(14)
     expect(scraper.getStatus()).toBe('complete')
   })
 
-  it('达到上限截断并停止翻页（配置驱动，免费档默认 20）', async () => {
+  it('本次有效上限可超过离线默认 20，并截断最后一页', async () => {
     getMapsConfig().scrape.reviewsPageDelayMs = 0
     const page = Array.from({ length: 10 }, (_, i) => makeReview(i))
     const { urls } = stubFetch([
@@ -277,49 +293,102 @@ describe('评论采集控制器：翻页/截断/终止', () => {
     ])
     const scraper = buildScraper(vi.fn())
 
-    await scraper.start()
+    await scraper.start(25)
 
-    // 20 条达到上限即截断完成，不再请求第 3 页
-    expect(scraper.getCount()).toBe(20)
+    expect(scraper.getCount()).toBe(25)
     expect(scraper.getStatus()).toBe('complete')
-    expect(urls).toHaveLength(2)
+    expect(urls).toHaveLength(3)
   })
 
-  it('fetch 失败保留已采结果并进入完成态（失败可见）', async () => {
+  it('fetch 失败保留已采结果并提前停止（失败可见）', async () => {
     getMapsConfig().scrape.reviewsPageDelayMs = 0
     const errors: string[] = []
-    const scraper = new ReviewsScraper('0xa0acdb1716592b4d', { emit: vi.fn() } as never as ChromeEventEmitter<ExtensionEvents>, {
-      onStateChanged: () => undefined,
-      onError: message => errors.push(message)
-    })
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500 })))
+    const scraper = new ReviewsScraper(
+      { fid: '0x89c2597ca044ec9b:0xa0acdb1716592b4d', hl: 'en', gl: 'us' },
+      { emit: vi.fn() } as never as ChromeEventEmitter<ExtensionEvents>,
+      {
+        onStateChanged: () => undefined,
+        onError: message => errors.push(message)
+      }
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          text: async () =>
+            buildReviewsResponse(
+              Array.from({ length: 10 }, (_, i) => makeReview(i)),
+              'next'
+            )
+        })
+        .mockResolvedValueOnce({ ok: false, status: 500 })
+    )
 
-    await scraper.start()
+    await scraper.start(getMapsConfig().scrape.reviewsPageLimit)
 
-    expect(scraper.getCount()).toBe(0)
-    expect(scraper.getStatus()).toBe('complete')
+    expect(scraper.getCount()).toBe(10)
+    expect(scraper.getStatus()).toBe('stopped')
     expect(errors[0]).toContain('500')
   })
 })
 
 describe('评论页兜底判定', () => {
-  it('标题含 500 时 0 条完成（依赖 ReviewsScraper 的 DOM 判定）', async () => {
+  it('缺少完整 fid 时给出可见错误并结束，不向 Google 发出猜造请求', async () => {
+    const onError = vi.fn()
+    const emit = vi.fn()
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    const scraper = new ReviewsScraper(
+      { fid: '', hl: 'en', gl: 'us' },
+      { emit } as ChromeEventEmitter<ExtensionEvents>,
+      { onStateChanged: vi.fn(), onError }
+    )
+    await scraper.start(getMapsConfig().scrape.reviewsPageLimit)
+    expect(fetch).not.toHaveBeenCalled()
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('fid'), 'unknown-place')
+    expect(scraper.getStatus()).toBe('stopped')
+  })
+  it('无评论页面为 empty，不发请求且没有完成成功态', async () => {
+    document.body.innerHTML = '<img src="https://example.test/no_reviews.png">'
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    const scraper = new ReviewsScraper(
+      { fid: '0xa:0xb', hl: 'en', gl: 'us' },
+      { emit: vi.fn() } as never as ChromeEventEmitter<ExtensionEvents>,
+      { onStateChanged: vi.fn(), onError: vi.fn() }
+    )
+    try {
+      await scraper.start(20)
+      expect(fetch).not.toHaveBeenCalled()
+      expect(scraper.getStatus()).toBe('empty')
+    } finally {
+      document.body.innerHTML = ''
+    }
+  })
+  it('标题含 500 时 0 条提前停止（依赖 ReviewsScraper 的 DOM 判定）', async () => {
     document.title = '500 Internal Server Error'
     try {
       const errors: string[] = []
-      const scraper = new ReviewsScraper('0xa0acdb1716592b4d', { emit: vi.fn() } as never as ChromeEventEmitter<ExtensionEvents>, {
-        onStateChanged: () => undefined,
-        onError: message => errors.push(message)
-      })
+      const scraper = new ReviewsScraper(
+        { fid: '0x89c2597ca044ec9b:0xa0acdb1716592b4d', hl: 'en', gl: 'us' },
+        { emit: vi.fn() } as never as ChromeEventEmitter<ExtensionEvents>,
+        {
+          onStateChanged: () => undefined,
+          onError: message => errors.push(message)
+        }
+      )
       const fetchMock = vi.fn()
       vi.stubGlobal('fetch', fetchMock)
 
-      await scraper.start()
+      await scraper.start(getMapsConfig().scrape.reviewsPageLimit)
 
       // 兜底命中：不发起任何 RPC，0 条完成并给出可见原因
       expect(fetchMock).not.toHaveBeenCalled()
       expect(scraper.getCount()).toBe(0)
-      expect(scraper.getStatus()).toBe('complete')
+      expect(scraper.getStatus()).toBe('stopped')
       expect(errors[0]).toContain('500')
     } finally {
       document.title = ''
@@ -331,4 +400,69 @@ describe('评论页面板宿主 id', () => {
   it('与照片页面板 id 区分（挂载防重）', () => {
     expect(REVIEWS_PANEL_HOST_ID).not.toContain('photos')
   })
+})
+
+it('配置加载期间 Maps 同文档清参后，翻页、批量完成与 Reset 仍使用初始上下文', async () => {
+  const originalUrl = location.href
+  const fid = '0x89c2597ca044ec9b:0xa0acdb1716592b4d'
+  location.href = `https://www.google.com/maps/place/?gme_fid=${fid}&hl=ja&gl=jp&gme_bulk=1&gme_bulk_task=task-snapshot&gme_bulk_item=2&gme_bulk_total=12&gme_bulk_max=15`
+  let release = () => undefined
+  const pending = new Promise<void>(resolve => {
+    release = resolve
+  })
+  vi.spyOn(configLoader, 'loadMapsConfig').mockReturnValue(pending)
+  vi.spyOn(userSettings, 'initializeMapsUserSettings').mockResolvedValue()
+  vi.spyOn(usageClient, 'fetchUsageSnapshot').mockResolvedValue({
+    plan_name: 'Free',
+    used: 0,
+    total: 1000,
+    period: '2026-10',
+    exhausted: false,
+    run_limits: { search: 10, reviews: 2, photos: 10 }
+  })
+  const download = vi.spyOn(downloads, 'downloadFile').mockImplementation(() => undefined)
+  const fetch = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    text: async () =>
+      buildReviewsResponse(Array.from({ length: 10 }, (_, i) => makeReview(i)), 'next-page')
+  }))
+  vi.stubGlobal('fetch', fetch)
+  getMapsConfig().scrape.reviewsPageDelayMs = 0
+  const emit = vi.fn()
+  try {
+    const boot = bootReviewsPage({ emit } as ChromeEventEmitter<ExtensionEvents>)
+    history.replaceState(null, '', '/maps/place/Gold+coffee?hl=en&gl=us')
+    expect(location.search).toBe('?hl=en&gl=us')
+    release()
+    await boot
+    await vi.waitFor(() => expect(download).toHaveBeenCalledTimes(1))
+    const shadow = document.getElementById(REVIEWS_PANEL_HOST_ID)!.shadowRoot!
+    expect(shadow.querySelector('[data-context]')?.textContent).toContain('3 / 12')
+    expect(shadow.querySelector('.mgp-ring')?.getAttribute('aria-valuenow')).toBe('15')
+    shadow.querySelector<HTMLButtonElement>('[data-secondary]')!.click()
+    await vi.waitFor(() => expect(download).toHaveBeenCalledTimes(2))
+    expect(fetch).toHaveBeenCalledTimes(4)
+    for (const [input] of vi.mocked(globalThis.fetch).mock.calls) {
+      const url = new URL(String(input), location.origin)
+      expect(url.origin).toBe('https://www.google.com')
+      expect(url.pathname).toBe('/httpservice/web/PrivateLocalSearchUiDataService/GetLocalBoqProxy')
+      expect(url.searchParams.get('reqpld')).toContain(fid)
+      expect(url.searchParams.get('hl')).toBe('ja')
+      expect(url.searchParams.get('gl')).toBe('jp')
+    }
+    expect(emit.mock.calls.filter(([event]) => event === 'mapsBulkItemDone')).toEqual([
+      ['mapsBulkItemDone', expect.objectContaining({ taskId: 'task-snapshot', itemIndex: 2, collected: 15 })],
+      ['mapsBulkItemDone', expect.objectContaining({ taskId: 'task-snapshot', itemIndex: 2, collected: 15 })]
+    ])
+    const reports = emit.mock.calls.filter(([event]) => event === 'mapsUsageReport')
+    expect(reports).toHaveLength(2)
+    expect(reports[0]?.[1]).toMatchObject({ records: 15 })
+    expect(reports[1]?.[1]).toMatchObject({ records: 15 })
+    expect(reports[0]?.[1].requestId).not.toBe(reports[1]?.[1].requestId)
+  } finally {
+    location.href = originalUrl
+    document.getElementById(REVIEWS_PANEL_HOST_ID)?.remove()
+    vi.restoreAllMocks()
+  }
 })

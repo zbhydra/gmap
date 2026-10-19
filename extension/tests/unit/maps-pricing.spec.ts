@@ -1,15 +1,9 @@
-/**
- * 订阅引导落地页单元测试（013 U7 遗留接线，W7 验收行为直接覆盖）：
- * - pricingUrl 消费：远程配置组装落地页 URL（追加 utm_source=extension）；
- * - 单一事实源：未配置/纯空白/脏 URL 一律返回空串——面板按钮可见性与点击
- *   打开同源，「按钮可见 ⇔ 点击有效」，脏值降级为纯文案；
- * - 按钮行为：耗尽 + URL 有效 → 按钮出现且点击触发打开；非耗尽/未配置/
- *   脏 URL → 不出现；place 模式共享按钮随区块门控出现/隐藏。
- */
+/** 订阅入口覆盖远程 URL 归因、官网默认落地页与额度解锁。 */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RpcRequest, RpcResponse } from '../../src/core/rpc/types'
+import { openPanelPricing } from '../../src/sites/maps/content/panel/panelView'
 import { MapsPanel } from '../../src/sites/maps/content/panel/mapsPanel'
 import { DEFAULT_MAPS_CONFIG } from '../../src/sites/maps/config/contract'
 import {
@@ -63,117 +57,80 @@ describe('单一事实源判定（未配置/脏数据返回空串）', () => {
     expect(buildMapsPricingUrl('not-a-url')).toBe('')
   })
 
-  it('包内默认值为空串（未配置不渲染按钮的契约基线）', () => {
+  it('包内未指定远程定制链接，面板使用官网默认地址', () => {
     expect(DEFAULT_MAPS_CONFIG.operations.pricingUrl).toBe('')
   })
 })
 
-describe('面板订阅引导按钮行为', () => {
-  /** 构造已挂载面板：onOpenPricing 用 spy 承接，模式为 happy-dom 默认的 search。 */
+describe('面板额度升级入口', () => {
+  const usage = { plan_name: 'Free', used: 1000, total: 1000, period: '2026-10', exhausted: true, run_limits: { search: 10, reviews: 20, photos: 10 } } as const
   async function mountPanel(): Promise<{ panel: MapsPanel; onOpenPricing: () => void }> {
     const onOpenPricing = vi.fn()
     const panel = new MapsPanel({
-      onStart: () => undefined,
-      onPause: () => undefined,
-      onResume: () => undefined,
-      onExport: () => undefined,
-      onReset: () => undefined,
-      onStartReviews: () => undefined,
-      onStartPhotos: () => undefined,
-      onOpenPricing
+      onStart: () => undefined, onPause: () => undefined, onResume: () => undefined,
+      onExport: () => undefined, onReset: () => undefined, onStartReviews: () => undefined,
+      onStartPhotos: () => undefined, onOpenPricing
     })
     document.body.innerHTML = '<div role="main"></div>'
     await panel.mount('body', 'div[role=main]')
     return { panel, onOpenPricing }
   }
 
-  function upgradeButton(): HTMLButtonElement {
+  it('远程未配置时额度用尽仍显示方案入口，解锁后恢复 Start', async () => {
+    const { panel, onOpenPricing } = await mountPanel()
+    try {
+      panel.setUsage(usage)
+      const shadow = document.getElementById('gmap-extractor-panel-host')!.shadowRoot!
+      const upgrade = shadow.querySelector<HTMLElement>('.mgp-upgrade')!
+      expect(upgrade.hidden).toBe(false)
+      shadow.querySelector<HTMLButtonElement>('[data-pricing]')!.click()
+      expect(onOpenPricing).toHaveBeenCalledOnce()
+      expect(shadow.querySelector<HTMLButtonElement>('[data-primary]')!.disabled).toBe(true)
+      panel.setUsage({ ...usage, used: 900, exhausted: false })
+      expect(upgrade.hidden).toBe(true)
+      expect(shadow.querySelector<HTMLButtonElement>('[data-primary]')!.disabled).toBe(false)
+    } finally { panel.destroy() }
+  })
+
+  it('进度、暂停计数、补全等待、导出回执与评论入口复位', async () => {
+    window.location.href = 'https://www.google.com/maps/place/Test/'
+    const { panel } = await mountPanel()
     const shadow = document.getElementById('gmap-extractor-panel-host')!.shadowRoot!
-    return shadow.querySelector('.panel-upgrade-button')!
-  }
-
-  it('耗尽 + 已配置：按钮出现，点击触发 onOpenPricing（消费链路接到打开动作）', async () => {
-    setPricingUrl(CONFIGURED_PRICING_URL)
-    const { panel, onOpenPricing } = await mountPanel()
-
-    panel.setQuotaExhausted(true)
-
-    const button = upgradeButton()
-    expect(button.style.display).toBe('block')
-    expect(button.textContent!.length).toBeGreaterThan(0)
-    button.click()
-    expect(onOpenPricing).toHaveBeenCalledTimes(1)
-
-    panel.destroy()
+    vi.useFakeTimers()
+    try {
+      panel.renderSearch({ status: 'paused', count: 4, limit: 10, format: 'csv' })
+      expect(shadow.querySelector('.mgp-ring')?.getAttribute('aria-valuemax')).toBe('10')
+      expect(shadow.querySelector('.mgp-ring')?.getAttribute('aria-valuenow')).toBe('4')
+      expect(shadow.querySelector('[data-state-label]')?.textContent).toContain('4')
+      const primary = shadow.querySelector<HTMLButtonElement>('[data-primary]')!
+      panel.setFinishing({ done: 0, total: 4 })
+      expect(primary.getAttribute('aria-busy')).toBe('true')
+      primary.click()
+      expect(primary.querySelector('.is-active')?.textContent).not.toContain('Exported')
+      panel.setFinishing(null)
+      primary.click()
+      expect(primary.querySelector('.is-active')?.textContent).toContain('Exported')
+      await vi.advanceTimersByTimeAsync(1600)
+      expect(primary.querySelector('.is-active')?.textContent).toContain('4')
+      panel.setPlaceSectionWorking('reviews', true)
+      const row = shadow.querySelector<HTMLElement>('[data-row="reviews"]')!
+      expect(row.dataset.state).toBe('opened')
+      expect(row.querySelector<HTMLButtonElement>('button')!.disabled).toBe(false)
+      await vi.advanceTimersByTimeAsync(4000)
+      expect(row.dataset.state).toBe('ready')
+    } finally { panel.destroy(); vi.useRealTimers() }
   })
 
-  it('耗尽 + 未配置：按钮不出现，保持纯文案（优雅降级）', async () => {
-    const { panel, onOpenPricing } = await mountPanel()
-
-    panel.setQuotaExhausted(true)
-
-    const button = upgradeButton()
-    expect(button.style.display).toBe('none')
-    // 提示文案仍在：降级为 U7 的纯文案引导
-    const shadow = document.getElementById('gmap-extractor-panel-host')!.shadowRoot!
-    expect(shadow.querySelector('.panel-hint')!.textContent).toContain(
-      'Monthly quota exhausted'
-    )
-    expect(onOpenPricing).not.toHaveBeenCalled()
-
-    panel.destroy()
-  })
-
-  it('耗尽 + 脏 URL：按钮不渲染（可见性与点击有效同源，降级纯文案）', async () => {
-    // 远程值非绝对地址：buildMapsPricingUrl 返回空串 → 可见性判定不通过
-    setPricingUrl('not-a-url')
-    const { panel, onOpenPricing } = await mountPanel()
-
-    panel.setQuotaExhausted(true)
-
-    const shadow = document.getElementById('gmap-extractor-panel-host')!.shadowRoot!
-    expect(upgradeButton().style.display).toBe('none')
-    expect(shadow.querySelector('.panel-hint')!.textContent).toContain(
-      'Monthly quota exhausted'
-    )
-    expect(onOpenPricing).not.toHaveBeenCalled()
-
-    panel.destroy()
-  })
-
-  it('免费额度内（非耗尽）：已配置也不出现按钮', async () => {
-    setPricingUrl(CONFIGURED_PRICING_URL)
-    const { panel, onOpenPricing } = await mountPanel()
-
-    panel.setQuotaExhausted(false)
-
-    expect(upgradeButton().style.display).toBe('none')
-    expect(onOpenPricing).not.toHaveBeenCalled()
-
-    panel.destroy()
-  })
-
-  it('place 模式共享按钮：任一区块待命即出现，双区块均 working 后隐藏', async () => {
-    setPricingUrl(CONFIGURED_PRICING_URL)
-    // place 模式由 URL 形态判定（pathname 含 /place/ 且不命中列表标记）；
-    // happy-dom 支持 location.href 赋值，置于 mount 之前使面板挂载为 place
-    window.location.href = 'https://www.google.com/maps/place/Test/@37.77,-122.41,17z'
-    const { panel, onOpenPricing } = await mountPanel()
-
-    // 门控生效 + 双区块待命 → 共享按钮出现
-    panel.setQuotaExhausted(true)
-    expect(upgradeButton().style.display).toBe('block')
-
-    // reviews 已发起（photos 仍待命，待命区块仍被门控）→ 按钮仍出现
-    panel.setPlaceSectionWorking('reviews', true)
-    expect(upgradeButton().style.display).toBe('block')
-
-    // 双区块均已发起（采集中不受门控）→ 按钮隐藏
-    panel.setPlaceSectionWorking('photos', true)
-    expect(upgradeButton().style.display).toBe('none')
-    expect(onOpenPricing).not.toHaveBeenCalled()
-
-    panel.destroy()
+  it('详情页两个入口按最新额度同步门控', async () => {
+    window.location.href = 'https://www.google.com/maps/place/Test/'
+    const { panel } = await mountPanel()
+    try {
+      const shadow = document.getElementById('gmap-extractor-panel-host')!.shadowRoot!
+      panel.setUsage(usage)
+      for (const button of shadow.querySelectorAll<HTMLButtonElement>('[data-row-action]')) expect(button.disabled).toBe(true)
+      panel.setUsage({ ...usage, used: 900, exhausted: false })
+      for (const button of shadow.querySelectorAll<HTMLButtonElement>('[data-row-action]')) expect(button.disabled).toBe(false)
+    } finally { panel.destroy() }
   })
 })
 
@@ -206,3 +163,18 @@ describe('openMapsPricingPage（打开路径）', () => {
     }
   })
 })
+
+ it('面板默认 Pricing 通过已有 RPC 打开官网', async () => {
+   const sendSpy = vi.spyOn(chrome.runtime, 'sendMessage').mockImplementation(async message => {
+     const request = message as RpcRequest<{ url: string }>
+     return { id: request.id, success: true, data: { opened: true } } satisfies RpcResponse<{ opened: boolean }>
+   })
+   try {
+     setPricingUrl('')
+     await openPanelPricing()
+     const request = sendSpy.mock.calls[0]?.[0] as RpcRequest<{ url: string }>
+     expect(request.method).toBe('openPricingPage')
+     expect(new URL(request.params!.url).pathname).toBe('/pricing/')
+     expect(new URL(request.params!.url).searchParams.get('product_kind')).toBe('maps_extension')
+   } finally { sendSpy.mockRestore() }
+ })

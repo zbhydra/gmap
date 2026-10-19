@@ -1,0 +1,331 @@
+/* =========================================================================
+   MapsGrab Extension · Design Tokens —— 设计语言「Atlas Field」
+   -------------------------------------------------------------------------
+   Atlas（website）的产品 / 工具层：品牌蓝、字体家族、语义色名与 light-dark() 双主题机制
+   与 website/src/styles/tokens.css 同源同值；字号、控件高度、圆角用法、动效时长改为工具级刻度。
+
+   - 本文件是扩展页面（Popup / Dashboard / Options / 文档页）唯一的字面量来源，
+     组件与页面只消费 var(--…)。
+   - 页内面板运行在 Google Maps 的 Shadow DOM 里，不加载本文件：panel.css 在 :host 上
+     自带同名同值的颜色子集 + 系统字体（L10），两边改值必须同步。
+   - 原型工具（状态坞、宿主页面模拟）的字面量在 proto.css 自己的 token 块里，不进本文件。
+
+   主题机制（L11，三个界面共享）：
+     - 默认跟随系统（:root color-scheme: light dark）
+     - <html data-theme="light|dark"> 手动覆盖（theme.js 首帧前恢复，localStorage 'mg-ext-theme'）
+     - .scheme-dark / .scheme-light 把局部固定为暗 / 亮（主题岛，文档页的对照示例用）
+   ========================================================================= */
+
+:root {
+  color-scheme: light dark;
+
+  /* ---------------------------------------------------------------------
+     1. 品牌原色（primitive）——只在本文件与插画内部使用，与 Atlas 同值
+     --------------------------------------------------------------------- */
+  --blue-300: #8ab4f8;
+  --blue-400: #4d94ff;
+  --blue-500: #1a73e8; /* 品牌蓝 */
+  --blue-600: #1765cc;
+  --blue-700: #1452b0;
+  --cyan-400: #22d3ee;
+  --cyan-500: #0aa5d6;
+  --green-400: #34d399;
+  --green-500: #14b37d;
+  --coral-400: #ff7a6b;
+  --coral-500: #f2554a;
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --violet-400: #a78bfa;
+  --violet-600: #7c3aed;
+
+  /* ---------------------------------------------------------------------
+     2. 语义颜色（与 Atlas 同名同值）
+     --------------------------------------------------------------------- */
+  /* 页面与面：暗色是墨蓝阶梯（bg → surface → surface-2 → surface-3），不是亮色的反相 */
+  --bg: light-dark(#ffffff, #070b14);
+  --bg-2: light-dark(#f6f8fc, #0a0f1b);            /* 工作页画布（Dashboard / Options 底） */
+  --surface: light-dark(#ffffff, #0e1424);          /* 卡片 / 浮层实底 */
+  --surface-2: light-dark(#f4f7fb, #131b2d);        /* 二级面：hover、表头、输入槽 */
+  --surface-3: light-dark(#e9eef6, #1a2438);        /* 三级面：分段控件槽、进度轨、骨架 */
+  --border: light-dark(#e6ebf2, #1c2639);
+  --border-2: light-dark(#d3dbe6, #2a3650);         /* 输入框、强分隔 */
+
+  /* 文字：--text-3 字号 ≥ 10.5px，在 --surface / --surface-2 上 ≥ 4.5:1 */
+  --text: light-dark(#0b1324, #eaeff7);
+  --text-2: light-dark(#475467, #a6b1c4);
+  --text-3: light-dark(#667083, #79859c);
+  --text-inverse: light-dark(#ffffff, #0b1324);
+
+  /* 主色：唯一行动色。--primary 是填充（两主题同值，白字 4.5:1）；作文字用 --primary-text */
+  --primary: var(--blue-500);
+  --primary-hover: var(--blue-600);
+  --primary-press: var(--blue-700);
+  --primary-fg: #ffffff;
+  --primary-text: light-dark(#1568d6, #7cb0ff);
+  --primary-soft: light-dark(#e8f0fe, rgba(77, 148, 255, 0.14));
+  --primary-soft-2: light-dark(#d2e3fc, rgba(77, 148, 255, 0.24));
+
+  /* 叙事色：只用于插画与数据语义，不做按钮 / 链接色 */
+  --cyan: light-dark(#0891b2, #22d3ee);
+  --cyan-soft: light-dark(#e1f2f6, rgba(34, 211, 238, 0.13));
+  --cyan-text: light-dark(#067590, #22d3ee);
+  --accent: light-dark(#0e7c56, #4ade9b);           /* 已采集 */
+  --accent-soft: light-dark(#e3f6ee, rgba(52, 211, 153, 0.13));
+  --pin: light-dark(#f2554a, #ff6b5e);              /* 地图 pin（插画色） */
+  --pin-soft: light-dark(#fdeae8, rgba(255, 107, 94, 0.15));
+  --pin-text: light-dark(#d21c0f, #ff6b5e);
+  --star: light-dark(#f59e0b, #fbbf24);             /* 评分星 */
+
+  /* 状态：作文字时在 --surface / --surface-2 / 对应 -soft 上 ≥ 4.5:1；实底时文字用 -fg */
+  --ok: light-dark(#117e39, #4ade80);
+  --ok-soft: light-dark(#e7f6ec, rgba(74, 222, 128, 0.13));
+  --ok-fg: light-dark(#ffffff, #052e16);
+  --warn: light-dark(#b45309, #fbbf24);
+  --warn-soft: light-dark(#fef5e2, rgba(251, 191, 36, 0.13));
+  --warn-fg: light-dark(#ffffff, #2d2000);
+  --bad: light-dark(#d22222, #f87171);
+  --bad-soft: light-dark(#fdecec, rgba(248, 113, 113, 0.13));
+  --bad-fg: light-dark(#ffffff, #2c1210);
+
+  /* 交互 / 浮层 */
+  --ring: light-dark(rgba(26, 115, 232, 0.5), rgba(124, 176, 255, 0.6));
+  --overlay: light-dark(rgba(11, 19, 36, 0.42), rgba(0, 0, 0, 0.62));
+  --selection: light-dark(rgba(26, 115, 232, 0.18), rgba(124, 176, 255, 0.28));
+
+  /* 风格化地图（插画专用：文档页、空态） */
+  --map-land: light-dark(#f1f4f8, #0b1220);
+  --map-block: light-dark(#e8edf4, #0f182a);
+  --map-water: light-dark(#cde2fb, #0c2442);
+  --map-park: light-dark(#d5f0e1, #0d281f);
+  --map-road: light-dark(#ffffff, #1a2640);
+  --map-road-casing: light-dark(#d9e0ea, #070c17);
+  --map-label: light-dark(#7d8899, #5f6d87);
+
+  /* 与主题无关的常量：光影、遮罩、两种主题下都为白色的元素 */
+  --mask-solid: #000;                               /* mask 只取 alpha */
+  --on-solid: #ffffff;                              /* 品牌底 / 实底上的白色图形与文字（pin 中心、开关滑块、Pro 徽章） */
+  --highlight-clear: rgba(255, 255, 255, 0);
+  --highlight-soft: rgba(255, 255, 255, 0.18);
+  --highlight-sheen: rgba(255, 255, 255, 0.34);
+  --highlight-strong: rgba(255, 255, 255, 0.55);
+  --shade-soft: rgba(0, 0, 0, 0.12);
+
+  /* ---------------------------------------------------------------------
+     3. 产品层新增颜色（Atlas 没有的语义）
+     --------------------------------------------------------------------- */
+  /* 中性状态：Idle / Pending 等「没有在发生什么」的状态 */
+  --neutral: light-dark(#536077, #a3aec2);
+  --neutral-soft: light-dark(#eef1f6, rgba(148, 163, 184, 0.13));
+
+  /* 状态实底：只做圆点、进度填充、环形进度等图形，不做文字（文字用 --ok / --warn …） */
+  --primary-solid: var(--blue-500);
+  --ok-solid: light-dark(#14b37d, #34d399);
+  --warn-solid: light-dark(#f59e0b, #fbbf24);
+  --bad-solid: light-dark(#ef4444, #f87171);
+  --neutral-solid: light-dark(#9aa4b6, #55627b);
+
+  /* 进度轨与工具提示（反色） */
+  --track: var(--surface-3);
+  --tooltip-bg: light-dark(#0b1324, #eaeff7);
+  --tooltip-fg: light-dark(#ffffff, #0b1324);
+
+  /* 槽内凸起面：分段滑块等「放在 --surface-3 槽里」的元素。暗色下必须比槽亮才读得出凸起 */
+  --raised: light-dark(#ffffff, #243049);
+
+  /* 焦点 / 校验光晕（输入框 focus 与 invalid 的 3px 外扩） */
+  --focus-glow: light-dark(rgba(26, 115, 232, 0.16), rgba(124, 176, 255, 0.22));
+  --bad-glow: light-dark(rgba(210, 34, 34, 0.14), rgba(248, 113, 113, 0.2));
+
+  /* 开关关闭态轨道：对白 / 墨底 ≥ 3:1（非文本对比度） */
+  --switch-off: light-dark(#8792a6, #56637d);
+
+  /* 骨架屏扫光 */
+  --skel-sheen: light-dark(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.06));
+
+  /* 账号头像：比品牌渐变深一档，保证白色首字母 ≥ 4.5:1 */
+  --grad-avatar: linear-gradient(135deg, #1a73e8 0%, #0b6f99 100%);
+
+  /* 图形遮罩（mask-image 只取形状，颜色由 background 决定） */
+  --mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+  --mask-minus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E");
+  --mask-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M17 7 7 17M7 7l10 10'/%3E%3C/svg%3E");
+  --mask-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+  --mask-pause: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='6' y='5' width='4' height='14' rx='1.2'/%3E%3Crect x='14' y='5' width='4' height='14' rx='1.2'/%3E%3C/svg%3E");
+
+  /* 文档页点阵底（hub / design-system 的示例舞台） */
+  --grid-line: light-dark(rgba(15, 23, 42, 0.07), rgba(148, 163, 184, 0.09));
+
+  /* ---------------------------------------------------------------------
+     4. 表达层（产品层只保留品牌渐变，且只用于下列位置：
+        品牌标、Pro 徽章、进度填充 / 环形进度、账号头像；不做按钮、文字或大面积底）
+     --------------------------------------------------------------------- */
+  --grad-brand: linear-gradient(
+    105deg,
+    light-dark(#1a73e8, #4d94ff) 0%,
+    light-dark(#0aa5d6, #22d3ee) 52%,
+    light-dark(#14b37d, #34d399) 100%
+  );
+  /* 进度填充：蓝 → 青（绿色留给「完成」语义，避免进行中误读为完成） */
+  --grad-progress: linear-gradient(90deg, light-dark(#1a73e8, #4d94ff), light-dark(#0aa5d6, #22d3ee));
+  /* 主按钮 hover 光泽扫过（一次性，不循环） */
+  --grad-sheen: linear-gradient(115deg, var(--highlight-clear) 30%, var(--highlight-sheen) 50%, var(--highlight-clear) 70%);
+  /* 主按钮顶部高光 */
+  --grad-top-light: linear-gradient(180deg, var(--highlight-soft), var(--highlight-clear) 60%);
+
+  /* ---------------------------------------------------------------------
+     5. 字体
+     --------------------------------------------------------------------- */
+  --font-sans: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+  --font-mono: 'Azeret Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* 页内面板的字体栈（L10：Shadow DOM 不加载 web 字体）；此处仅供文档页展示，面板以 panel.css 为准 */
+  --font-system: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  --font-system-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* 工具级字号：Popup 400px 宽，正文 13–14px；> 16px 一律走 token */
+  --fs-micro: 10.5px;  /* 等宽大写：表头、徽章（--text-3 的下限） */
+  --fs-kicker: 11px;   /* 等宽大写：分组标签 */
+  --fs-xs: 12px;       /* 提示、说明、元信息 */
+  --fs-sm: 13px;       /* 次级正文、表格单元、Popup 正文 */
+  --fs-body: 14px;     /* 正文、输入框、中号按钮 */
+  --fs-md: 15px;       /* 卡片标题、大号按钮 */
+  --fs-h2: 18px;       /* 区块标题 */
+  --fs-h1: 24px;       /* 页面标题（Dashboard / Options） */
+  /* 数字读数：等宽 + 表格数字 */
+  --fs-stat-sm: 20px;
+  --fs-stat: 28px;
+  --fs-stat-lg: 40px;
+  /* 文档页专用（hub / design-system），产品界面不用 */
+  --fs-display: clamp(2.5rem, 1.5rem + 3.2vw, 4.25rem);   /* 40 → 68 */
+  --fs-section: clamp(1.75rem, 1.3rem + 1.4vw, 2.5rem);   /* 28 → 40 */
+  --fs-lead: clamp(1rem, 0.94rem + 0.3vw, 1.1875rem);     /* 16 → 19 */
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.35;
+  --lh-body: 1.55;
+  --lh-num: 1;
+  --tracking-tight: -0.022em;  /* 标题 */
+  --tracking-num: -0.04em;     /* 大号读数 */
+  --tracking-kicker: 0.12em;   /* 等宽大写 */
+
+  /* ---------------------------------------------------------------------
+     6. 间距（4px 基准，与 Atlas 同刻度）与尺寸
+     --------------------------------------------------------------------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+  --s-20: 80px;
+  --s-24: 96px;
+
+  /* 控件高度：sm 表格行内操作 / md 表单与常规按钮 / lg Popup 主操作 */
+  --control-h-sm: 28px;
+  --control-h: 36px;
+  --control-h-lg: 44px;
+
+  /* 图标 */
+  --icon-xs: 14px;
+  --icon-sm: 16px;
+  --icon: 18px;
+  --icon-lg: 20px;
+  --icon-xl: 24px;
+
+  /* 界面尺寸（logic.md §1） */
+  --popup-w: 400px;
+  --page-w: 1120px;        /* Dashboard 内容宽 */
+  --page-w-narrow: 680px;  /* Options 内容宽 */
+  --page-gutter: 28px;
+
+  /* ---------------------------------------------------------------------
+     7. 圆角（Atlas 刻度 + 产品层用法别名）
+     --------------------------------------------------------------------- */
+  --r-2xs: 2px;   /* 只用于 ≤ 8px 的小标记 */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --r-full: 999px;
+  /* 工具层：控件比营销页更方正，卡片降一档（Atlas 卡片 lg → 产品卡片 md） */
+  --r-control: var(--r-sm);  /* 输入框、选择框、图标块、菜单 */
+  --r-item: var(--r-xs);     /* 菜单项、复选框、表格内小块 */
+  --r-card: var(--r-md);     /* 卡片、Toast、通知条、页内面板 */
+  --r-dialog: var(--r-lg);   /* 弹窗 */
+
+  /* ---------------------------------------------------------------------
+     8. 投影（暗色下投影弱化，层级主要靠面亮度 + 1px 内高光）
+     --------------------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px light-dark(rgba(16, 24, 40, 0.06), rgba(0, 0, 0, 0.4));
+  --shadow-sm: 0 1px 2px light-dark(rgba(16, 24, 40, 0.05), rgba(0, 0, 0, 0.35)),
+    0 4px 14px -4px light-dark(rgba(16, 24, 40, 0.08), rgba(0, 0, 0, 0.45));
+  --shadow-md: 0 2px 6px light-dark(rgba(16, 24, 40, 0.05), rgba(0, 0, 0, 0.3)),
+    0 18px 44px -12px light-dark(rgba(16, 24, 40, 0.16), rgba(0, 0, 0, 0.6));
+  --shadow-lg: 0 4px 14px light-dark(rgba(16, 24, 40, 0.06), rgba(0, 0, 0, 0.35)),
+    0 40px 90px -24px light-dark(rgba(16, 24, 40, 0.26), rgba(0, 0, 0, 0.75));
+  --hairline-hl: inset 0 1px 0 light-dark(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.06));
+  /* 产品层：菜单 / 工具提示 / 选择浮层 */
+  --shadow-pop: 0 1px 2px light-dark(rgba(16, 24, 40, 0.06), rgba(0, 0, 0, 0.4)),
+    0 12px 32px -10px light-dark(rgba(16, 24, 40, 0.22), rgba(0, 0, 0, 0.7));
+  /* 产品层主按钮：比营销页收敛的品牌色投影 */
+  --shadow-primary: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(16, 24, 40, 0.12), 0 6px 16px -6px rgba(26, 115, 232, 0.55);
+  --shadow-primary-hover: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(16, 24, 40, 0.12), 0 10px 24px -8px rgba(26, 115, 232, 0.7);
+  --shadow-danger: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(16, 24, 40, 0.12),
+    0 6px 16px -6px rgba(210, 34, 34, 0.5);
+  /* 分段控件滑块、开关圆钮 */
+  --shadow-thumb: 0 1px 2px light-dark(rgba(16, 24, 40, 0.08), rgba(0, 0, 0, 0.5)),
+    0 2px 8px -2px light-dark(rgba(16, 24, 40, 0.12), rgba(0, 0, 0, 0.5));
+  --shadow-knob: 0 1px 2px rgba(16, 24, 40, 0.22), 0 2px 6px -1px rgba(16, 24, 40, 0.2);
+
+  /* ---------------------------------------------------------------------
+     9. 动效（分级见 README §5；工具层 T2 比营销页快）
+     --------------------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);         /* 入场 / 展开：快出慢收 */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);     /* 往返 / 循环 */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);  /* 落点、弹窗、开关回弹 */
+  --ease-emph: cubic-bezier(0.2, 0, 0, 1);           /* 产品层：状态形变（按钮文案、指示条、滑块） */
+  --dur-1: 120ms;   /* T1 按下 */
+  --dur-2: 180ms;   /* T1 hover / focus / 颜色 */
+  --dur-3: 280ms;   /* T2 菜单、tab、弹窗、状态形变 */
+  --dur-4: 560ms;   /* T3 入场、列表错峰单项 */
+  --dur-5: 900ms;   /* T3 数字滚动、进度推进 */
+  --stagger: 40ms;  /* 列表 / 入场错峰步长 */
+  --dur-live: 1600ms;  /* 状态绑定循环：live 圆点、扫描弧（只在采集中存续） */
+  --dur-beam: 1800ms;  /* 进度光束扫过 */
+  --dur-spin: 700ms;   /* 加载圈一周 */
+  --dur-toast: 4000ms; /* 成功提示自动消失（logic.md §5.1：4 秒） */
+
+  /* ---------------------------------------------------------------------
+     10. 层级
+     --------------------------------------------------------------------- */
+  --z-raised: 2;
+  --z-sticky: 20;
+  --z-dropdown: 60;
+  --z-modal: 100;
+  --z-toast: 110;
+  --z-tooltip: 120;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+.scheme-dark {
+  color-scheme: dark;
+}
+
+.scheme-light {
+  color-scheme: light;
+}

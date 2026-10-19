@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maps panel · MapsGrab Extension</title>
+    <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+    <!-- Phase B 页面统一头部：theme.js 同步执行（首帧主题），其余脚本 defer，页面私有文件按 body[data-page] 命名 -->
+    <script src="assets/js/theme.js"></script>
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/motion.css" />
+    <link rel="stylesheet" href="assets/css/proto.css" />
+    <link rel="stylesheet" href="assets/css/pages/maps.css" />
+    <script src="assets/js/motion.js" defer></script>
+    <script src="assets/js/ui.js" defer></script>
+    <script src="assets/js/proto.js" defer></script>
+    <script src="assets/js/pages/maps.js" defer></script>
+  </head>
+  <body data-page="maps">
+    <main class="proto-stage mp-stage">
+      <!-- ① 实时演示：Google Maps 页面（search / list / place）+ 真实 Shadow DOM 面板 -->
+      <section class="proto-scene" id="live" aria-labelledby="mp-live-label">
+        <span class="proto-label" id="mp-live-label"><b>Maps panel</b> · Shadow DOM · 280 · fixed top 80 / inset 20</span>
+        <div class="proto-browser mp-browser">
+          <div class="proto-browser-bar">
+            <span class="proto-browser-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="proto-browser-url"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg><span data-url></span></span>
+            <span class="proto-browser-ext" aria-hidden="true"><img src="assets/img/logo.svg" alt="" /></span>
+          </div>
+          <div class="proto-browser-page">
+            <div data-host-page></div>
+            <div class="proto-panel-host" data-panel-host></div>
+          </div>
+        </div>
+        <p class="proto-note">
+          Live: Start, Pause, Export, the dock toggle and the Reviews / Photos entries all work; the state dock jumps to any state and <b>Play</b> runs whole scenarios. Pins, scanned rows and the sweep on the page only narrate the run — the extension scrolls and opens results but never restyles Google’s page.
+          <a class="mp-jump-link" href="#states">All states</a>
+        </p>
+      </section>
+
+      <!-- ② 实时演示：评论 / 照片工作页（固定左侧、无停靠切换） -->
+      <section class="proto-scene" id="work" aria-labelledby="mp-work-label">
+        <span class="proto-label" id="mp-work-label"><b>Work pages</b> · reviews &amp; photos · opened from the place panel · pinned left</span>
+        <div class="proto-browser mp-browser mp-browser--work">
+          <div class="proto-browser-bar">
+            <span class="proto-browser-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="proto-browser-url"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg><span data-work-url></span></span>
+            <span class="proto-browser-ext" aria-hidden="true"><img src="assets/img/logo.svg" alt="" /></span>
+          </div>
+          <div class="proto-browser-page">
+            <div data-work-page></div>
+            <div class="proto-panel-host" data-work-host></div>
+          </div>
+        </div>
+        <p class="proto-note">Work pages start extracting as soon as they mount and have no Pause: Export any time, Reset re-checks the monthly records before running again (logic.md §4).</p>
+      </section>
+
+      <!-- ③ 状态矩阵：全部状态的静态瓦片（每块都是独立的 Shadow DOM + 舞台视口） -->
+      <section class="mp-matrix" id="states" aria-labelledby="mp-states-title">
+        <header class="mp-matrix-head">
+          <span class="kicker kicker--mark">State matrix</span>
+          <h2 class="h1" id="mp-states-title">Every panel state, side by side</h2>
+          <p class="mp-lead">Each tile is the real panel in its own shadow root, so it follows the theme and reduced-motion settings. <b>Open live</b> loads the same state into the demos above.</p>
+          <nav class="mp-jump" aria-label="State groups" data-jump></nav>
+        </header>
+        <div class="mp-groups" data-tiles></div>
+      </section>
+    </main>
+  </body>
+</html>
