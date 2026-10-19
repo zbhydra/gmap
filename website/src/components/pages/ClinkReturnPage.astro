@@ -55,7 +55,7 @@ const copy = status === 'success' ? successCopy.waiting : cancelCopy
   ></span>
   <section class="clink-return-card" aria-live="polite">
     <img src="/payment-icons/clinkbill.png" alt="" aria-hidden="true" width="32" height="32" />
-    <p class="clink-return-eyebrow">ClinkBill</p>
+    <p class="kicker clink-return-eyebrow">ClinkBill</p>
     <h1 data-payment-return-title>{copy.title}</h1>
     <p data-payment-return-description>{copy.description}</p>
   </section>
@@ -113,11 +113,6 @@ const copy = status === 'success' ? successCopy.waiting : cancelCopy
 
   .clink-return-eyebrow {
     margin: 0 0 12px;
-    color: var(--primary-text);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
   }
 
   .clink-return-card h1 {
@@ -131,7 +126,6 @@ const copy = status === 'success' ? successCopy.waiting : cancelCopy
     margin: 16px 0 0;
     color: var(--text-2);
     font-size: 16px;
-    font-weight: 700;
     line-height: 1.6;
   }
 

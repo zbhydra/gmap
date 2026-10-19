@@ -143,7 +143,7 @@ function getToolCopy(root: HTMLElement): ToolCopy {
 
 /** 写入并同步错误框 hidden 态。 */
 function setError(box: HTMLElement, message: string): void {
-  box.textContent = message
+  queryRequired<HTMLElement>(box, '[data-tool-error-text]').textContent = message
   box.hidden = message.length === 0
 }
 

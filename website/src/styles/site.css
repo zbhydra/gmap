@@ -73,15 +73,23 @@
    --------------------------------------------------------------------------- */
 .soon-badge {
   flex-shrink: 0;
-  margin-left: var(--s-2);
   vertical-align: middle;
 }
 
-/* flex 容器（下拉标题、按钮、分段切换）里与文字的间距由 gap 提供 */
-.dd-title .soon-badge,
-.btn .soon-badge,
-.seg-btn .soon-badge {
-  margin-left: 0;
+/* 徽章整体换行时仍与文字左对齐，间距由父级提供。 */
+b:has(> .soon-badge),
+h3:has(> .soon-badge),
+.footer-col a:has(> .soon-badge),
+.mobile-menu a > span:has(> .soon-badge) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1) var(--s-2);
+}
+
+.site-footer .soon-badge {
+  background: var(--surface-3);
+  color: var(--text-2);
 }
 
 a.is-unavailable {

@@ -96,6 +96,11 @@ select {
   color: inherit;
 }
 
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--primary);
+}
+
 /* 等宽字体关闭全部连字：Azeret Mono 的 calt 会把数字间的 x 渲染成 ×（0x8085 → 0×8085），
    liga 会把 fi 合成去点字形（fid 像 f1d）。所有 font-family: var(--font-mono) 的规则都需同时声明
    font-variant-ligatures: none */
@@ -130,6 +135,7 @@ h4,
 h5 {
   color: var(--text);
   font-weight: 650;
+  line-height: var(--lh-heading);
   text-wrap: balance;
 }
 

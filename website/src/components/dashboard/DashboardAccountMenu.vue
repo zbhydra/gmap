@@ -161,7 +161,8 @@ onBeforeUnmount(() => {
   color: var(--text-2);
   font-size: 12.5px;
   line-height: 18px;
-  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .account-menu {

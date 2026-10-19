@@ -40,7 +40,9 @@ function initEmailChecker(root: HTMLElement): void {
     if (result.suggestedDomain.length > 0) {
       // 域名 typo 提示独立于格式合法性：格式合法但域名疑似拼错时同样提示。
       const item = document.createElement('li')
-      item.textContent = `${copy.content.form.issues.typoDomain} ${result.suggestedDomain}`
+      const domain = document.createElement('strong')
+      domain.textContent = result.suggestedDomain
+      item.append(`${copy.content.form.issues.typoDomain} `, domain)
       issueList.append(item)
     }
     resultSection.hidden = false

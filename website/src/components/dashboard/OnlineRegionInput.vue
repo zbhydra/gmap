@@ -116,14 +116,14 @@ onMounted(() => { void fetchCountries() })
     <div class="region-fields">
       <label>
         {{ copy.country }}
-        <select v-model="countryCode" :disabled="disabled || loadingCountries || countriesError">
+        <select v-model="countryCode" class="input" :disabled="disabled || loadingCountries || countriesError">
           <option value="">{{ copy.selectCountry }}</option>
           <option v-for="country in countries" :key="country[0]" :value="country[0]">{{ country[1] }}</option>
         </select>
       </label>
       <label>
         {{ copy.state }}
-        <select v-model="stateCode" :disabled="disabled || !region || regionError">
+        <select v-model="stateCode" class="input" :disabled="disabled || !region || regionError">
           <option value="">{{ copy.allStates }}</option>
           <option v-for="state in region?.s ?? []" :key="state[0]" :value="state[0]">{{ state[1] }}</option>
         </select>
@@ -134,7 +134,7 @@ onMounted(() => { void fetchCountries() })
       </label>
       <label>
         {{ copy.city }}
-        <select v-model="cityChoice" :disabled="disabled || cityChoices.length === 0">
+        <select v-model="cityChoice" class="input" :disabled="disabled || cityChoices.length === 0">
           <option value="">{{ copy.selectCity }}</option>
           <option v-for="[key, city] in cityChoices" :key="key" :value="key">{{ city[0] }}{{ stateNames.get(city[1]) ? `, ${stateNames.get(city[1])}` : '' }}</option>
         </select>
@@ -170,16 +170,16 @@ onMounted(() => { void fetchCountries() })
 
 <style scoped>
 .region-input { display: grid; gap: var(--s-3); min-width: 0; }
-.region-input textarea, .region-input input[type='search'], .region-input select { width: 100%; min-width: 0; padding: var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; }
-.region-input textarea:focus-visible, .region-input input:focus-visible, .region-input select:focus-visible, .region-input button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.region-input textarea, .region-input input[type='search'] { width: 100%; min-width: 0; padding: var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; }
+.region-input textarea:focus-visible, .region-input input:focus-visible, .region-input button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .region-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
 .region-fields label { display: grid; gap: var(--s-2); min-width: 0; }
 .region-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
-.region-command, .region-generate { min-height: 36px; padding: 0 var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.region-command, .region-generate { min-height: 36px; padding: 0 var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-full); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
 .region-generate { justify-self: start; border-color: var(--primary); color: var(--primary-text); }
 .region-command:disabled, .region-generate:disabled { opacity: .5; cursor: not-allowed; }
 .region-selected { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
-.region-selected li { display: inline-flex; align-items: center; gap: var(--s-2); max-width: 100%; padding: 2px var(--s-2); border: 1px solid var(--border); border-radius: var(--r-sm); }
+.region-selected li { display: inline-flex; align-items: center; gap: var(--s-2); max-width: 100%; padding: 2px var(--s-2); border: 1px solid var(--border); border-radius: var(--r-full); }
 .region-selected li span { overflow-wrap: anywhere; }
 .region-selected li button { border: 0; background: none; color: var(--text-2); font-size: var(--fs-h4); cursor: pointer; }
 .region-mode { display: flex; flex-wrap: wrap; gap: var(--s-4); margin: 0; padding: 0; border: 0; }

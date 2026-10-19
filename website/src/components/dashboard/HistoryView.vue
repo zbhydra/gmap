@@ -331,10 +331,11 @@ onBeforeUnmount(() => {
       <template v-if="options">
         <p class="history-status">{{ props.copy.create.usage.replace('{used}', String(options.usage.used)).replace('{total}', String(options.usage.total)) }}</p>
         <p class="history-status">{{ props.copy.create.reset }}</p>
-        <div class="create-modes" role="group" :aria-label="props.copy.create.modeLabel">
-          <button type="button" :aria-pressed="mode === 'keywords'" :disabled="submitting" @click="selectMode('keywords')">{{ props.copy.create.modes.keywords }}</button>
-          <button type="button" :aria-pressed="mode === 'map'" :disabled="submitting" @click="selectMode('map')">{{ props.copy.create.modes.map }}</button>
-          <button type="button" :aria-pressed="mode === 'regions'" :disabled="submitting" @click="selectMode('regions')">{{ props.copy.create.modes.regions }}</button>
+        <div class="seg create-modes" role="group" :aria-label="props.copy.create.modeLabel">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button class="seg-btn" type="button" :aria-pressed="mode === 'keywords'" :disabled="submitting" @click="selectMode('keywords')">{{ props.copy.create.modes.keywords }}</button>
+          <button class="seg-btn" type="button" :aria-pressed="mode === 'map'" :disabled="submitting" @click="selectMode('map')">{{ props.copy.create.modes.map }}</button>
+          <button class="seg-btn" type="button" :aria-pressed="mode === 'regions'" :disabled="submitting" @click="selectMode('regions')">{{ props.copy.create.modes.regions }}</button>
         </div>
         <template v-if="mode !== 'regions'">
           <label for="online-keywords">{{ props.copy.create.keywords }}</label>
@@ -347,7 +348,7 @@ onBeforeUnmount(() => {
         <p v-if="!options.contacts_allowed" class="history-status">{{ props.copy.create.contactsPaid }}</p>
         <p v-if="options.usage.exhausted" class="create-error" role="alert">{{ props.copy.create.exhausted }}</p>
         <p v-else-if="keywordInvalid" class="create-error" role="alert">{{ props.copy.create.invalid.replace('{limit}', String(options.keyword_limit)) }}</p>
-        <button type="submit" class="history-primary" :disabled="submitting || loading || optionsLoading || options.usage.exhausted || invalid">{{ submitting ? props.copy.create.submitting : props.copy.create.submit }}</button>
+        <button type="submit" class="btn btn-primary" :disabled="submitting || loading || optionsLoading || options.usage.exhausted || invalid">{{ submitting ? props.copy.create.submitting : props.copy.create.submit }}</button>
       </template>
       <p v-if="submitError" class="create-error" role="alert">{{ props.copy.create.failed }}</p>
     </form>
@@ -358,7 +359,7 @@ onBeforeUnmount(() => {
       </div>
       <button
         type="button"
-        class="history-refresh"
+        class="btn btn-secondary history-refresh"
         :disabled="loading"
         @click="refresh"
       >
@@ -370,7 +371,7 @@ onBeforeUnmount(() => {
 
     <div v-else-if="loadError" class="history-panel">
       <p class="history-status">{{ props.copy.history.loadFailed }}</p>
-      <button type="button" class="history-primary" @click="refresh">
+      <button type="button" class="btn btn-secondary" @click="refresh">
         {{ props.copy.history.retry }}
       </button>
     </div>
@@ -509,15 +510,16 @@ onBeforeUnmount(() => {
 <style scoped>
 .create-form { display: grid; gap: var(--s-3); padding-bottom: var(--s-6); border-bottom: 1px solid var(--border); }
 .create-form h1 { font-size: var(--fs-h3); line-height: 32px; letter-spacing: 0; }
-.create-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 420px; border: 1px solid var(--border-2); border-radius: var(--r-sm); overflow: hidden; }
-.create-modes button { min-width: 0; min-height: 40px; padding: var(--s-2); border: 0; border-right: 1px solid var(--border-2); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
-.create-modes button:last-child { border-right: 0; }
-.create-modes button[aria-pressed='true'] { background: var(--primary-soft); color: var(--primary-text); font-weight: 600; }
-.create-modes button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.create-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; width: min(420px, 100%); }
+.create-modes .seg-btn { min-width: 0; justify-content: center; padding-inline: var(--s-2); }
+.create-modes .seg-btn[aria-pressed='true'] { color: var(--text); }
+.create-modes .seg-thumb { left: 4px; width: calc((100% - 8px) / 3); }
+.create-modes:has(.seg-btn:nth-of-type(2)[aria-pressed='true']) .seg-thumb { transform: translateX(100%); }
+.create-modes:has(.seg-btn:nth-of-type(3)[aria-pressed='true']) .seg-thumb { transform: translateX(200%); }
 .create-form textarea { width: 100%; min-height: 112px; padding: var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; resize: vertical; }
 .create-form textarea:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .create-contacts { display: flex; gap: var(--s-2); align-items: center; }
-.create-form button { justify-self: start; }
+.create-form > .btn { justify-self: start; }
 .create-form button:disabled { opacity: .55; cursor: not-allowed; }
 .create-error { color: var(--bad); font-size: 14px; }
 .history {
@@ -551,25 +553,6 @@ onBeforeUnmount(() => {
 
 .history-refresh {
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 var(--s-4);
-  border: 1px solid var(--border-2);
-  border-radius: var(--r-full);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.history-refresh:hover:not(:disabled) {
-  background: var(--surface-2);
-}
-
-.history-refresh:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
 }
 
 .history-status {
@@ -595,27 +578,6 @@ onBeforeUnmount(() => {
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
-}
-
-.history-primary {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 var(--s-6);
-  border-radius: var(--r-full);
-  background: var(--primary);
-  color: var(--primary-fg);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.history-primary:hover {
-  background: var(--primary-hover);
-}
-
-.history-primary:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
 }
 
 .history-table-wrap {
@@ -693,6 +655,7 @@ onBeforeUnmount(() => {
   font-size: 12.5px;
   font-weight: 500;
   text-align: left;
+  white-space: nowrap;
 }
 
 .history-expand:hover {
@@ -709,7 +672,7 @@ onBeforeUnmount(() => {
   width: 0;
   height: 0;
   border-top: 4px solid transparent;
-  border-right: 5px solid var(--text-3);
+  border-left: 5px solid var(--text-3);
   border-bottom: 4px solid transparent;
   transition: transform var(--dur-1);
 }

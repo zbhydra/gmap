@@ -172,17 +172,17 @@ async function manageSubscription(lineId: DashboardLineId, productKind: string):
           <button
             v-if="isActive(subscriptionOf(line.subscriptionKey)) && subscriptionOf(line.subscriptionKey)?.auto_renew"
             type="button"
-            class="subs-manage"
+            class="btn btn-secondary"
             :data-subs-manage="line.id"
             :disabled="managingLine === line.id"
             @click="manageSubscription(line.id, line.productKind)"
           >
             {{ managingLine === line.id ? props.copy.subscriptions.managingSubscription : props.copy.subscriptions.manageSubscription }}
           </button>
-          <a v-if="canPurchase(line.purchaseCapability)" class="subs-buy" :data-subs-buy="line.id" :href="pricingUrl(line.productKind)">
+          <a v-if="canPurchase(line.purchaseCapability)" class="btn" :class="line.id === 'online' ? 'btn-primary' : 'btn-secondary'" :data-subs-buy="line.id" :href="pricingUrl(line.productKind)">
             {{ props.copy.subscriptions.subscribeCta }}
           </a>
-          <button v-else type="button" class="subs-buy is-unavailable" :data-subs-buy="line.id" aria-disabled="true">
+          <button v-else type="button" class="btn btn-secondary is-unavailable" :data-subs-buy="line.id" aria-disabled="true">
             {{ props.copy.subscriptions.subscribeCta }}<span class="badge badge--muted soon-badge">{{ props.comingSoon }}</span>
           </button>
         </div>
@@ -233,7 +233,7 @@ async function manageSubscription(lineId: DashboardLineId, productKind: string):
   min-width: 0;
   padding: var(--s-6);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
 }
@@ -293,70 +293,6 @@ async function manageSubscription(lineId: DashboardLineId, productKind: string):
   gap: var(--s-2);
   padding-top: var(--s-2);
   border-top: 1px solid var(--border);
-}
-
-.subs-manage {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 var(--s-4);
-  border: 1px solid var(--border-2);
-  border-radius: var(--r-full);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.subs-manage:hover:not(:disabled) {
-  background: var(--surface-2);
-}
-
-.subs-manage:disabled {
-  cursor: wait;
-  color: var(--text-3);
-  opacity: 0.72;
-}
-
-.subs-manage:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
-}
-
-.subs-buy {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 var(--s-4);
-  border-radius: var(--r-full);
-  background: var(--primary);
-  color: var(--primary-fg);
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.subs-buy:hover {
-  background: var(--primary-hover);
-}
-
-.subs-buy:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
-}
-
-.subs-buy.is-unavailable,
-.subs-buy.is-unavailable:hover {
-  border: 0;
-  background: var(--surface-2);
-  color: var(--text-3);
-  cursor: not-allowed;
-}
-
-.subs-buy.is-unavailable .soon-badge {
-  background: var(--surface);
-  color: var(--text-2);
 }
 
 .subs-action-error {

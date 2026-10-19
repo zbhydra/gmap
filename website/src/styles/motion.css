@@ -327,18 +327,18 @@
 /* ---------------------------------------------------------------------------
    T4 循环的离屏暂停：data-inview 容器不在视口时，子树动画全部暂停
    --------------------------------------------------------------------------- */
-[data-inview]:not(.is-inview),
-[data-inview]:not(.is-inview)::before,
-[data-inview]:not(.is-inview)::after,
-[data-inview]:not(.is-inview) *,
-[data-inview]:not(.is-inview) *::before,
-[data-inview]:not(.is-inview) *::after {
+.js [data-inview]:not(.is-inview),
+.js [data-inview]:not(.is-inview)::before,
+.js [data-inview]:not(.is-inview)::after,
+.js [data-inview]:not(.is-inview) *,
+.js [data-inview]:not(.is-inview) *::before,
+.js [data-inview]:not(.is-inview) *::after {
   animation-play-state: paused !important;
 }
 
 /* 首屏入场（静态拆词、data-enter）是一次性动画，不受离屏暂停约束：.is-inview 由脚本添加，若跟随暂停就又回到了等 JS */
-[data-inview]:not(.is-inview) [data-split='static'] .wi,
-[data-inview]:not(.is-inview) [data-enter] {
+.js [data-inview]:not(.is-inview) [data-split='static'] .wi,
+.js [data-inview]:not(.is-inview) [data-enter] {
   animation-play-state: running !important;
 }
 

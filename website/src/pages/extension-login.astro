@@ -71,15 +71,15 @@ const authCopy = {
   includeLanguageSwitcher={false}
   includeSiteAuth={false}
 >
-  <main class="extension-login-page" data-extension-login>
+  <div class="extension-login-page" data-extension-login>
     <section class="extension-login-panel" aria-labelledby="extension-login-title">
       <div class="extension-login-heading">
-        <p class="extension-login-eyebrow">{pageCopy.eyebrow}</p>
+        <p class="badge extension-login-eyebrow">{pageCopy.eyebrow}</p>
         <h1 id="extension-login-title">{pageCopy.heading}</h1>
       </div>
 
       <div class="extension-login-status" data-extension-login-status>
-        <p class="extension-login-state" data-extension-login-state>{statusCopy.checkingState}</p>
+        <p class="chip chip--soft extension-login-state" data-extension-login-state>{statusCopy.checkingState}</p>
         <h2 data-extension-login-status-title>{statusCopy.preparingTitle}</h2>
         <p data-extension-login-status-text>{statusCopy.preparingText}</p>
         <div class="extension-login-actions">
@@ -128,7 +128,7 @@ const authCopy = {
       set:html={JSON.stringify({ status: statusCopy, auth: authCopy })}
     />
     <AuthModal copy={accountCopy} idPrefix="extension-login" />
-  </main>
+  </div>
 </Layout>
 
 <script>
@@ -934,12 +934,12 @@ const authCopy = {
   }
 
   .extension-login-panel {
-    width: 720px;
+    width: min(720px, 100%);
     display: grid;
     gap: 24px;
     padding: clamp(24px, 4vw, var(--s-8));
     border: 1px solid var(--border);
-    border-radius: var(--r-sm);
+    border-radius: var(--r-lg);
     background: var(--surface);
     box-shadow: var(--shadow-sm);
   }
@@ -951,16 +951,8 @@ const authCopy = {
 
   .extension-login-eyebrow,
   .extension-login-state {
-    width: max-content;
+    justify-self: start;
     margin: 0;
-    padding: var(--s-1) var(--s-2);
-    border: 1px solid var(--border-2);
-    border-radius: var(--r-full);
-    color: var(--primary-text);
-    background: var(--primary-soft);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0;
   }
 
   .extension-login-heading h1,
@@ -968,12 +960,7 @@ const authCopy = {
     margin: 0;
     color: var(--text);
     font-size: clamp(30px, 5vw, 44px);
-    line-height: 1.04;
     letter-spacing: 0;
-  }
-
-  .extension-login-heading h1 {
-    white-space: nowrap;
   }
 
   .extension-login-status h2 {

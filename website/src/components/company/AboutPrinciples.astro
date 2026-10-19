@@ -599,9 +599,8 @@ const rowNumber = (index: number) => String(index + 1).padStart(2, '0')
   }
 
   .pvd-sheet {
-    position: absolute;
-    top: 22px;
-    left: calc(50% - 58px);
+    position: relative;
+    grid-area: 1 / 1;
     display: grid;
     align-content: start;
     gap: 8px;

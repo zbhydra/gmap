@@ -954,10 +954,6 @@
   gap: 8px;
 }
 
-.bento-badges .soon-badge {
-  margin-left: 0;
-}
-
 .bento-copy .badge .icon {
   width: 13px;
   height: 13px;
@@ -1166,6 +1162,7 @@
 /* Online：关键词任务队列 */
 .queue {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 10px;
   margin: 24px;

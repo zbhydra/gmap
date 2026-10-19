@@ -43,11 +43,12 @@ function menuItems(): MenuItem[] {
   <aside class="side-nav" :class="{ 'side-nav-open': props.menuOpen }">
     <div class="side-nav-head">
       <a :href="props.homeUrl" class="side-nav-brand" @click="emit('close-menu')">
-        <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect width="40" height="40" rx="8" fill="var(--primary)"/>
-          <path d="M20 8C15.2 8 11.4 11.8 11.4 16.6C11.4 23 20 32 20 32C20 32 28.6 23 28.6 16.6C28.6 11.8 24.8 8 20 8Z" fill="var(--surface)"/>
-          <circle cx="20" cy="16.4" r="3.2" fill="var(--primary)"/>
-        </svg>
+        <span class="brand-mark">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path class="brand-mark-pin" d="M16 6.2c-4.42 0-8 3.36-8 7.66 0 5.5 6.64 11.04 7.4 11.66.35.28.85.28 1.2 0 .76-.62 7.4-6.16 7.4-11.66 0-4.3-3.58-7.66-8-7.66Z" />
+            <path class="brand-mark-arrow" d="M16 10.1v6.2m-2.9-2.9 2.9 2.9 2.9-2.9" />
+          </svg>
+        </span>
         <span>MapsGrab</span>
       </a>
       <button
@@ -95,7 +96,7 @@ function menuItems(): MenuItem[] {
   flex: 0 0 240px;
   padding: var(--s-4);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
 }
@@ -174,7 +175,7 @@ function menuItems(): MenuItem[] {
     z-index: 120;
     width: min(300px, 84vw);
     flex: none;
-    border-radius: 0 var(--r-md) var(--r-md) 0;
+    border-radius: 0 var(--r-lg) var(--r-lg) 0;
     transform: translateX(-100%);
     visibility: hidden;
     transition: transform var(--dur-2) var(--ease-out), visibility 0s var(--dur-2);

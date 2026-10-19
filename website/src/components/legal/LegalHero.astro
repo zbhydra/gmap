@@ -195,13 +195,13 @@ const rowNumber = (index: number) => String(index + 1).padStart(2, '0')
 
   .doc-stack {
     position: relative;
+    display: grid;
     width: min(100%, 330px);
-    aspect-ratio: 0.8;
   }
 
   .doc-sheet {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    grid-area: 1 / 1;
     z-index: 1;
     display: flex;
     flex-direction: column;
@@ -222,6 +222,11 @@ const rowNumber = (index: number) => String(index + 1).padStart(2, '0')
     box-shadow: var(--shadow-lg), var(--hairline-hl);
     opacity: 1;
     transform: none;
+  }
+
+  /* 后页内容向右收口，避免旋转后在前页边缘露出文字碎片。 */
+  .doc-sheet:not(.is-front) > :not(.sheet-scan) {
+    clip-path: inset(0 var(--s-12) 0 0);
   }
 
   /* 洗牌：只在有 JS 时播放（无 JS 时 data-inview 永不进入视口，动画会停在起始帧） */
@@ -331,12 +336,10 @@ const rowNumber = (index: number) => String(index + 1).padStart(2, '0')
   }
 
   .sheet-toc b {
-    overflow: hidden;
     color: var(--text);
     font-size: 12px;
     font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: var(--lh-snug);
   }
 
   .sheet-toc i {

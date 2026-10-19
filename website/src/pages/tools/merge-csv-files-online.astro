@@ -23,7 +23,7 @@ const copyJson = JSON.stringify({ common, content: tool })
       </div>
       <ul class="tool-file-options" data-file-options></ul>
       <ul class="tool-file-summaries" data-file-summaries></ul>
-      <p class="tool-error" role="alert" data-tool-error hidden></p>
+      <p class="tool-error" role="alert" data-tool-error hidden><Icon name="info" /><span data-tool-error-text></span></p>
       <div class="tool-actions">
         <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="merge-csv">
           {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />

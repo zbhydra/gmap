@@ -338,7 +338,7 @@ docs/design/website/
 | `chrome.js` 注入的导航 / 页脚 / 弹窗 | `Layout.astro` 内的服务端组件；导航当前态由路由决定，不再读 `data-page` |
 | 页面 HTML 区块 | `src/components/pages/*Page.astro` 与可复用区块组件 |
 | 英文硬编码文案 | 全部走 i18n（`src/i18n/lang/*.ts`）；价格与方案只读 `src/i18n/pricing.ts` |
-| `tokens.css` / `base.css` / `motion.css` / `components.css` | 全局样式（落地时按 §2 合同收口） |
+| `tokens.css` / `base.css` / `motion.css` / `components.css` | 落地到 `website/src/styles/`；基础层与营销表达层、标题及共用控件按 [Atlas 合同 §3–§5](../../references/specs/design-website.md) 使用 |
 | `motion.js` / `site.js` | 保持零依赖、声明式 `data-*` API，作为站点脚本打包；页面脚本按页拆分 |
 | 首屏 `data-split="static"` / `data-enter` | 标题在构建期拆词（组件输出 `.w > .wi` 与 `--i`），错峰延迟写成内联变量；不依赖运行时脚本 |
 | `theme-boot.js` | `<head>` 内联脚本，首帧前执行 |

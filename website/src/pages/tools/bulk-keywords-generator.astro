@@ -42,7 +42,7 @@ const copyJson = JSON.stringify({ common, content: tool })
           <option value="location-first">{tool.form.locationFirst}</option>
         </select>
       </div>
-      <p class="tool-error" role="alert" data-tool-error hidden></p>
+      <p class="tool-error" role="alert" data-tool-error hidden><Icon name="info" /><span data-tool-error-text></span></p>
       <div class="tool-actions">
         <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="bulk-keywords">
           {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />

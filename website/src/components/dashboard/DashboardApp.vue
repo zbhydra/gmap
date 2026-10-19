@@ -114,7 +114,7 @@ onBeforeUnmount(() => {
       @click="menuOpen = false"
     ></div>
 
-    <main class="workspace-main">
+    <div class="workspace-main">
       <button
         type="button"
         class="workspace-menu-button"
@@ -131,7 +131,7 @@ onBeforeUnmount(() => {
 
       <div v-else-if="session.status === 'unreachable'" class="workspace-panel">
         <p class="workspace-status">{{ viewCopy().unreachable }}</p>
-        <button type="button" class="workspace-primary-button" @click="restoreSession">
+        <button type="button" class="btn btn-primary" @click="restoreSession">
           {{ props.copy.shell.retry }}
         </button>
       </div>
@@ -141,7 +141,7 @@ onBeforeUnmount(() => {
         class="workspace-panel"
       >
         <p class="workspace-status">{{ viewCopy().signInPrompt }}</p>
-        <button type="button" class="workspace-primary-button" @click="openSignIn">
+        <button type="button" class="btn btn-primary" @click="openSignIn">
           {{ viewCopy().signInCta }}
         </button>
       </div>
@@ -173,7 +173,7 @@ onBeforeUnmount(() => {
           :locale-prefix="props.localePrefix"
         />
       </template>
-    </main>
+    </div>
   </div>
 </template>
 
@@ -181,6 +181,7 @@ onBeforeUnmount(() => {
 .workspace {
   display: flex;
   align-items: stretch;
+  gap: var(--s-6);
   width: min(1200px, calc(100vw - 32px));
   margin: 0 auto;
   padding: var(--s-4) 0 var(--s-8);
@@ -207,32 +208,9 @@ onBeforeUnmount(() => {
   max-width: 420px;
   padding: var(--s-8) var(--s-6);
   border: 1px dashed var(--border-2);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--surface);
   text-align: center;
-}
-
-.workspace-primary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  padding: 0 var(--s-6);
-  border-radius: var(--r-full);
-  background: var(--primary);
-  color: var(--primary-fg);
-  font-size: 14px;
-  font-weight: 600;
-  transition: background-color var(--dur-1);
-}
-
-.workspace-primary-button:hover {
-  background: var(--primary-hover);
-}
-
-.workspace-primary-button:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
 }
 
 /* 窄屏菜单按钮：桌面隐藏 */

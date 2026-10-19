@@ -495,12 +495,12 @@
   letter-spacing: 0.02em;
 }
 
-/* 5 档并排时卡片较窄，额度可换行；同一行的胶囊由 subgrid 拉成等高 */
 .plan-card .price-quota {
   padding: 10px 12px;
   font-family: var(--font-sans);
   font-size: 13.5px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .plan-cta {
@@ -1330,11 +1330,12 @@
 /* ---------------------------------------------------------------------------
    Responsive
    --------------------------------------------------------------------------- */
-/* 5 档在中屏转为横向滑动（吸附居中），仍是同一套 subgrid 行 */
-@media (max-width: 1180px) {
+/* 5 档在中屏转为横向滑动（吸附起始边），仍是同一套 subgrid 行 */
+@media (max-width: 1400px) {
   .plan-grid--5 {
     grid-template-columns: none;
-    grid-auto-columns: min(286px, 78vw);
+    /* 1366px 下需给末档按钮外扩 5px 的焦点环留白。 */
+    grid-auto-columns: min(258px, 78vw);
     grid-auto-flow: column;
     gap: 0 14px;
     margin-inline: calc(var(--gutter) * -1);
@@ -1350,7 +1351,7 @@
   }
 
   .plan-grid--5 .plan-card {
-    scroll-snap-align: center;
+    scroll-snap-align: start;
   }
 }
 

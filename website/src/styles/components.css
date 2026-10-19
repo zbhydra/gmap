@@ -402,14 +402,21 @@
   transform: scale(0.97);
 }
 
-/* 主按钮：实底 + 顶部高光 + hover 光泽扫过 + 蓝色辉光 */
+/* 主按钮默认使用基础层外观；辉光与扫光只由营销区块启用。 */
 .btn-primary {
   background: var(--primary);
   color: var(--primary-fg);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+:where(.hero, .page-hero:not(.legal-hero), .section, .plans) .btn-primary {
   box-shadow: var(--glow-button);
 }
 
-.btn-primary::before {
+:where(.hero, .page-hero:not(.legal-hero), .section, .plans) .btn-primary::before {
   position: absolute;
   inset: 0;
   z-index: -1;
@@ -417,7 +424,7 @@
   content: '';
 }
 
-.btn-primary::after {
+:where(.hero, .page-hero:not(.legal-hero), .section, .plans) .btn-primary::after {
   position: absolute;
   inset: 0;
   background: linear-gradient(115deg, transparent 30%, var(--highlight-sheen) 50%, transparent 70%);
@@ -425,12 +432,11 @@
   content: '';
 }
 
-.btn-primary:hover {
-  background: var(--primary-hover);
+:where(.hero, .page-hero:not(.legal-hero), .section, .plans) .btn-primary:hover {
   box-shadow: var(--glow-button-hover);
 }
 
-.btn-primary:hover::after {
+:where(.hero, .page-hero:not(.legal-hero), .section, .plans) .btn-primary:hover::after {
   transform: translateX(120%);
   transition: transform var(--dur-3) var(--ease-out);
 }
@@ -702,8 +708,8 @@ button.chip:hover {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  height: 36px;
-  padding: 0 14px 0 4px;
+  min-height: 36px;
+  padding: 4px 14px 4px 4px;
   border-radius: var(--r-full);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
@@ -965,6 +971,21 @@ button.chip:hover {
     border-color var(--dur-2),
     box-shadow var(--dur-2),
     background-color var(--dur-2);
+}
+
+select.input {
+  min-width: 0;
+  padding-right: 40px;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 40%, var(--text-3) 40% 60%, transparent 60%),
+    linear-gradient(135deg, transparent 40%, var(--text-3) 40% 60%, transparent 60%);
+  background-position: right 22px center, right 16px center;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .textarea {

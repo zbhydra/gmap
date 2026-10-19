@@ -48,6 +48,7 @@ token：`--grad-*`、`--glow-*`、`--aurora-*`、`--contour`、`--grid-line`。�
 - Instrument Serif 斜体只用于标题强调词 `.accent`，每个标题最多一处，正文不用。
 - 等宽文本一律关闭连字（`font-variant-ligatures: none`），数字开 `tabular-nums`。
 - 标题 `text-wrap: balance`，段落 `text-wrap: pretty`。中文回退字体固定为 PingFang SC / Microsoft YaHei。
+- 原生 `h1`–`h5` 默认使用 `--lh-heading`；`.display`、`.h1`–`.h4` 使用各自的排版规则。共享定义见 [base.css](../../../website/src/styles/base.css)。
 
 **间距与布局**
 
@@ -70,7 +71,7 @@ token：`--grad-*`、`--glow-*`、`--aurora-*`、`--contour`、`--grid-line`。�
 
 缓动只用 `--ease-out` / `--ease-in-out` / `--ease-spring`；匀速连续动画（旋转、跑马灯、扫光）可用 `linear`。T3、T4 与环境装饰循环只用于营销页，Dashboard 只用 T1、T2。环境装饰循环同样遵守下列约束：离屏暂停、只动 `transform` / `opacity`、减弱动效下停用。
 
-- 无限循环必须在 `data-inview` 子树内或由脚本控制启停，离屏与页面后台时暂停。
+- 无限循环必须在 `data-inview` 子树内或由脚本控制启停，离屏与页面后台时暂停。CSS 离屏暂停只在 `.js` 下启用，无 JS 时不阻止一次性入场动画完成。
 - 常驻循环只动 `transform` / `opacity`。会触发重绘的装饰效果只播有限次数后静止；与状态绑定的短时动画只在状态存续期间运行。
 - 每个效果都要有减弱动效下的终态：循环停止，显现类直接呈现终态，视差、倾斜、磁吸关闭。
 - 首屏不等 JS：首屏文案入场由 CSS 首帧启动，起始透明度不能为 0。
@@ -82,6 +83,9 @@ token：`--grad-*`、`--glow-*`、`--aurora-*`、`--contour`、`--grid-line`。�
 - Tabs 用分段胶囊加滑块（`.seg`），不用下划线式。
 - Toast 在右下角堆叠，避免遮挡悬浮导航。
 - 每个视图只有一个 primary 按钮；暗色岛里的主操作用 `.btn-invert`。
+- `.btn-primary` 默认使用基础层外观；辉光、高光与扫光由 [components.css](../../../website/src/styles/components.css) 的营销作用域选择器统一启用。新增营销容器时在共享规则接入，基础页不各自添加抑制规则。
+- 选择框复用 `select.input` 的自定义箭头、文字省略与焦点样式；checkbox / radio 的 `accent-color` 由共享基础样式统一使用 `--primary`。
+- `.soon-badge` 与文字的间距由父级 `gap` 提供，徽章共享样式不附带固定左边距，保证独立或折行时左对齐。
 - 键盘焦点：所有可交互元素 `:focus-visible` 显示 `--ring`，不得移除 outline 而无替代。
 
 ## 6 · 新增与修改 token

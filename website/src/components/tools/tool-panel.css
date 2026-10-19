@@ -45,6 +45,9 @@
 }
 
 .tool-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 12px 14px;
   border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent);
   border-radius: var(--r-md);
@@ -54,6 +57,12 @@
   font-weight: 600;
   line-height: 1.55;
   animation: fade-up var(--dur-4) var(--ease-out) backwards;
+}
+
+.tool-error .icon {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -162,6 +171,10 @@
   color: var(--bad);
 }
 
+.tool-result:has([data-outcome='valid']) .tool-issue-list li::marker {
+  color: var(--warn);
+}
+
 /* DMS → DD：纬度 / 经度两组，每组度 / 分 / 秒 + 半球 */
 .tool-fieldset {
   display: grid;
@@ -246,7 +259,6 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  accent-color: var(--primary);
 }
 
 .tool-file-summaries li {
@@ -256,8 +268,12 @@
   font-size: 12.5px;
 }
 
-/* 面板底部的隐私说明：图标随首行文字居中，窄屏折行时不与文字分开 */
+/* 面板底部的隐私说明：图标与文字作为一组居中，窄屏允许文字折行。 */
 .tool-panel-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin-top: 16px;
   color: var(--text-3);
   font-size: 12.5px;
@@ -267,8 +283,6 @@
 .tool-panel-note .icon {
   width: 14px;
   height: 14px;
-  margin-right: 6px;
-  vertical-align: -2px;
 }
 
 @media (max-width: 640px) {

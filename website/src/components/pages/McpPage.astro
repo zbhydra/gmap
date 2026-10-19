@@ -146,7 +146,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
 
       <div class="container page-hero-grid">
         <div class="page-hero-copy">
-          <span class="kicker kicker--ai" data-enter><Icon name="plug" />{page.hero.kicker}</span>
+          <span class="kicker kicker--ai" data-enter>{page.hero.kicker}</span>
 
           <h1 class="h1 mcp-title" data-split="static" style="--split-delay: 90ms">
             <SplitWords parts={[page.hero.title.lead, { text: page.hero.title.accent, class: 'accent text-grad-ai' }, page.hero.title.tail]} />
@@ -283,9 +283,14 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
             <span class="topo-node topo-node--any"><Icon name="plug" />{page.flow.anyClient}</span>
           </div>
 
-          <div class="topo-wire topo-wire--in">
-            <span class="topo-dash"></span>
-            <span class="topo-rail"><span class="topo-pulse"></span></span>
+          <div class="topo-wire topo-wire--in" aria-hidden="true">
+            <svg viewBox="0 0 100 280" preserveAspectRatio="none">
+              <path d="M0 24 C50 24 50 140 100 140" />
+              <path d="M0 82 C50 82 50 140 100 140" />
+              <path d="M0 140 H100" />
+              <path d="M0 198 C50 198 50 140 100 140" />
+              <path d="M0 256 C50 256 50 140 100 140" />
+            </svg>
           </div>
 
           <div class="topo-hub">
@@ -300,12 +305,15 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
             </span>
           </div>
 
-          <div class="topo-wire topo-wire--out">
-            <span class="topo-dash"></span>
-            <span class="topo-rail"><span class="topo-pulse"></span></span>
+          <div class="topo-wire topo-wire--out" aria-hidden="true">
+            <svg viewBox="0 0 100 280" preserveAspectRatio="none">
+              <path d="M0 140 C50 140 50 82 100 82" />
+              <path d="M0 140 H100" />
+              <path d="M0 140 C50 140 50 198 100 198" />
+            </svg>
           </div>
 
-          <div class="topo-col">
+          <div class="topo-col topo-col--tools">
             <span class="topo-label">{page.flow.toolsLabel}</span>
             {page.tools.items.map((tool, index) => (
               <span class:list={['topo-node topo-node--tool', { 'is-active': index === 0 }]} data-topo-tool={tool.name} data-topo-result={page.flow.results[index]}>
@@ -517,7 +525,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
                   <th scope="row">
                     <span class="ladder-name">
                       {card.name}
-                      {card.featured && <span class="badge badge--ai">{t.pages.pricing.popularLabel}</span>}
+                      {card.featured && <span class="badge badge--solid">{t.pages.pricing.popularLabel}</span>}
                     </span>
                   </th>
                   <td>
@@ -570,11 +578,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
      --------------------------------------------------------------------------- */
   .mcp-hero {
     --hero-cols: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  }
-
-  .mcp-hero .kicker :global(.icon) {
-    width: 14px;
-    height: 14px;
   }
 
   .mcp-title {
@@ -898,12 +901,16 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
   }
 
   .topo-col {
+    position: relative;
     display: grid;
+    grid-auto-rows: 48px;
     gap: 10px;
   }
 
   .topo-label {
-    margin-bottom: 4px;
+    position: absolute;
+    bottom: 100%;
+    margin-bottom: 14px;
     color: var(--text-3);
     font-family: var(--font-mono);
     font-variant-ligatures: none;
@@ -913,6 +920,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
   }
 
   .topo-node {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -969,10 +977,12 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
   }
 
   .topo-foot {
+    position: absolute;
+    top: 100%;
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 14px;
     color: var(--text-3);
     font-size: 12.5px;
   }
@@ -982,84 +992,30 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     height: 14px;
   }
 
-  /* 连线：虚线在裁剪层内匀速平移（只动 transform）；脉冲点随整条导轨平移到终点 */
+  /* shortcut: 曲线绑定当前节点数与 48px 行高，增减节点或改行高时同步更新路径。 */
   .topo-wire {
-    position: relative;
-    height: 2px;
-    margin-inline: 10px;
+    height: 280px;
   }
 
-  .topo-dash {
-    position: absolute;
-    inset: 0;
+  .topo-wire svg {
+    display: block;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
   }
 
-  .topo-dash::before {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -12px;
-    width: calc(100% + 12px);
-    background: repeating-linear-gradient(90deg, var(--border-2) 0 6px, transparent 6px 12px);
-    animation: topo-dash var(--dur-5) linear infinite;
-    content: '';
-  }
-
-  @keyframes topo-dash {
-    to {
-      transform: translateX(12px);
-    }
-  }
-
-  @keyframes topo-dash-y {
-    to {
-      transform: translateY(12px);
-    }
-  }
-
-  .topo-rail {
-    position: absolute;
-    inset: 0;
-  }
-
-  .topo-pulse {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--ai);
-    box-shadow: 0 0 16px color-mix(in srgb, var(--violet-400) 90%, transparent);
-    opacity: 0;
-    translate: -50% -50%;
-  }
-
-  @keyframes topo-travel {
-    from {
-      transform: translateX(0);
-    }
-
-    to {
-      transform: translateX(100%);
-    }
-  }
-
-  @keyframes topo-travel-y {
-    from {
-      transform: translateY(0);
-    }
-
-    to {
-      transform: translateY(100%);
-    }
+  .topo-wire path {
+    fill: none;
+    stroke: var(--border-2);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 6;
+    vector-effect: non-scaling-stroke;
   }
 
   @keyframes topo-blip {
     0%,
     100% {
-      opacity: 0;
+      opacity: 0.4;
     }
 
     15%,
@@ -1068,16 +1024,11 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     }
   }
 
-  .topo.is-pulsing .topo-rail {
-    animation: topo-travel var(--dur-5) var(--ease-in-out) both;
-  }
-
-  .topo.is-pulsing .topo-pulse {
+  .topo.is-pulsing .topo-wire {
     animation: topo-blip var(--dur-5) linear both;
   }
 
-  .topo.is-pulsing .topo-wire--out .topo-rail,
-  .topo.is-pulsing .topo-wire--out .topo-pulse {
+  .topo.is-pulsing .topo-wire--out {
     animation-delay: var(--dur-5);
   }
 
@@ -1227,14 +1178,14 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
 
   .setup-panel {
     display: grid;
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
     width: 100%;
   }
 
   .setup-steps {
     display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     margin: 0;
     padding: 0;
@@ -1242,7 +1193,8 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
   }
 
   .setup-steps li {
-    display: flex;
+    display: grid;
+    align-content: start;
     gap: 14px;
     padding: 18px;
     border: 1px solid var(--border);
@@ -1298,7 +1250,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
 
   .setup-extra {
     display: grid;
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
     margin-top: 24px;
   }
@@ -1327,17 +1279,17 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
   }
 
   .setup-spec {
-    display: grid;
-    gap: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px 32px;
     padding: 22px;
   }
 
   .setup-spec-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
+    display: grid;
+    gap: 4px;
   }
 
   .setup-spec-head span {
@@ -1346,18 +1298,16 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
   }
 
   .setup-spec dl {
-    display: grid;
-    gap: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 32px;
     margin: 0;
   }
 
   .setup-spec dl > div {
     display: grid;
-    grid-template-columns: 96px minmax(0, 1fr);
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-top: 1px solid var(--border);
+    gap: 4px;
+    min-width: 0;
   }
 
   .setup-spec dt {
@@ -1484,15 +1434,24 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     font-size: 11.5px;
   }
 
-  /* 减弱动效：跑马灯改为换行静态墙（站级规则），这里去掉两侧渐隐并居中 */
+  /* 减弱动效下合并两行的布局，提示词墙保持同一网格。 */
   @media (prefers-reduced-motion: reduce) {
-    .prompt-marquee {
-      -webkit-mask-image: none;
-      mask-image: none;
+    .prompt-rows {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+      padding-inline: var(--gutter);
     }
 
+    .prompt-marquee,
     .prompt-marquee .marquee-track {
-      justify-content: center;
+      display: contents;
+    }
+
+    .prompt-marquee .marquee-track[aria-hidden='true'] {
+      display: none;
+    }
+
+    .prompt-rows .prompt-card {
+      width: auto;
     }
   }
 
@@ -1597,7 +1556,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
 
   .ladder-table th,
   .ladder-table td {
-    padding: 14px 0;
+    padding: 14px var(--ladder-inset, 0px);
     border-bottom: 1px solid var(--border);
     text-align: left;
     vertical-align: middle;
@@ -1693,9 +1652,11 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     white-space: nowrap;
   }
 
-  .ladder-table tr.is-featured th,
-  .ladder-table tr.is-featured .ladder-price b {
-    color: var(--ai);
+  .ladder-table tr.is-featured {
+    --ladder-inset: 14px;
+    border-radius: var(--r-md);
+    background: var(--primary-soft);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 32%, transparent);
   }
 
   .ladder-note {
@@ -1737,14 +1698,13 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     }
 
     .mcp-tools,
-    .setup-panel,
-    .setup-extra,
+    .setup-steps,
     .trust,
     .billing {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    /* 拓扑改为纵向：客户端与工具改成可换行的胶囊，连线竖排 */
+    /* 窄屏用侧边总线接入每个节点，再弯向中枢。 */
     .topo {
       grid-template-columns: minmax(0, 1fr);
       max-width: 560px;
@@ -1752,17 +1712,21 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     }
 
     .topo-col {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
+      margin-left: 32px;
     }
 
-    .topo-label,
-    .topo-foot {
-      justify-content: center;
-      width: 100%;
-      text-align: center;
+    .topo-col::before {
+      position: absolute;
+      top: 24px;
+      bottom: 0;
+      left: -24px;
+      border-left: 1px dashed var(--border-2);
+      content: '';
+    }
+
+    .topo-col--tools::before {
+      top: 0;
+      bottom: 24px;
     }
 
     .topo-node {
@@ -1770,30 +1734,39 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
       font-size: 13px;
     }
 
+    .topo-node::before {
+      position: absolute;
+      top: 50%;
+      right: 100%;
+      width: 24px;
+      border-top: 1px dashed var(--border-2);
+      content: '';
+    }
+
     .topo-wire {
-      width: 2px;
-      height: 48px;
-      margin: 12px auto;
+      position: relative;
+      height: 64px;
     }
 
-    .topo-dash::before {
-      top: -12px;
-      right: 0;
-      bottom: auto;
-      left: 0;
-      width: auto;
-      height: calc(100% + 12px);
-      background: repeating-linear-gradient(180deg, var(--border-2) 0 6px, transparent 6px 12px);
-      animation-name: topo-dash-y;
+    .topo-wire svg {
+      display: none;
     }
 
-    .topo-pulse {
-      top: 0;
-      left: 50%;
+    .topo-wire::before {
+      position: absolute;
+      inset: 0 50% 0 8px;
+      border-left: 1px dashed var(--border-2);
+      content: '';
     }
 
-    .topo.is-pulsing .topo-rail {
-      animation-name: topo-travel-y;
+    .topo-wire--in::before {
+      border-bottom: 1px dashed var(--border-2);
+      border-bottom-left-radius: var(--r-lg);
+    }
+
+    .topo-wire--out::before {
+      border-top: 1px dashed var(--border-2);
+      border-top-left-radius: var(--r-lg);
     }
 
     .topo-steps {
@@ -1829,7 +1802,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
         'bar bar';
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 8px 12px;
-      padding: 14px 0;
+      padding: 14px var(--ladder-inset, 0px);
       border-bottom: 1px solid var(--border);
     }
 
@@ -1877,11 +1850,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
 
     .setup-oauth {
       flex-direction: column;
-    }
-
-    .setup-spec dl > div {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 4px;
     }
 
     .trust-items {

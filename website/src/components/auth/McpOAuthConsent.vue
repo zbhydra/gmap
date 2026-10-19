@@ -248,8 +248,6 @@ onBeforeUnmount(() => {
 .consent-error { color: var(--bad); }
 .consent code { font-family: var(--font-mono); font-variant-ligatures: none; }
 .consent .btn { height: auto; min-height: 46px; padding-block: var(--s-2); white-space: normal; }
-.consent .btn-primary { box-shadow: none; }
-.consent .btn-primary::before, .consent .btn-primary::after { content: none; }
 @media (max-width: 960px) {
   .consent { margin-bottom: var(--s-8); }
   .consent-card { padding: var(--s-4); }

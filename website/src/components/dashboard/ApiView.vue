@@ -300,8 +300,6 @@ onBeforeUnmount(() => { grantRequestSeq++ })
 .api-grants li { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding: var(--s-4) 0; border-top: 1px solid var(--border); }
 .api-grants li > div { min-width: 0; }
 .api-grants p { margin-top: var(--s-2); font-size: 13px; overflow-wrap: anywhere; }
-.api .btn-primary { box-shadow: none; }
-.api .btn-primary::before, .api .btn-primary::after { content: none; }
 @media (max-width: 960px) {
   .api-grid { grid-template-columns: 1fr; }
   .api-card { padding: var(--s-4); }
