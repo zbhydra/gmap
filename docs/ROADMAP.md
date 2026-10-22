@@ -80,7 +80,7 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 
 - Online、Search / Reviews API、MCP OAuth、官网与 Dashboard 已有本地交付及必要验收；Photos REST / MCP 后端已完成本地媒体验收，官网介绍和接入动作尚未开放，照片结果仅证实部分交付。
 - 插件使用官网 ZIP 直装，安装及购买入口启用；三产品线只销售 PayPal 单次自然月套餐。交付与限制见 [官网直装与单次购买](feat/015.工具与增长/plans/004.官网直装与PayPal单次购买.md)。
-- 当前只使用测试环境；正式上线仍需核对生产 URL、Google 登录与法务信息，真实 PayPal 付款 / 公网通知及 B5 云端运行验证仍待完成。既有首发证据与发布清单见 [官网首发记录](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md)。
+- 当前只使用测试环境；正式上线仍需核对生产 URL、Google 登录与法务信息，真实 PayPal 付款 / 公网通知及 B5 云端运行验证仍待完成。生产准备统一跟踪 [项目初次发布需要完善内容](项目初次发布需要完善内容.md)，既有交付证据见 [官网首发记录](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md)。
 - Export 后端、统一 Collector 配置/client、Admin 与网站接线均已实现并通过单元独立审查；本端组合验收及整体审查已通过。开发服真实 Export/Google、官网补全及原用量闭环通过；Photos 单样本真实外层及原 usage 复测通过，历史失败原因尚未确定；Collector 本体重启/TTL 未执行，不能据此宣称生产可用，见 [实施记录](feat/014.Maps云端/plans/010.Export服务端实施.md)。
 - 开发环境 Admin 与网站已直连真实后端验证权限和输入边界，并完成真实来源 CSV 的列表、详情和浏览器下载；未部署 Preview 或生产，详见 [开发验证记录](feat/014.Maps云端/plans/010.Export服务端实施.md)。
 
