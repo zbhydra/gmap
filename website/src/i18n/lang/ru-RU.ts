@@ -1962,7 +1962,8 @@ export const site: SiteContent = {
         "volumeGroup": "Объем и биллинг",
         "billing": "Биллинг",
         "included": "Включено",
-        "notIncluded": "Не включено"
+        "notIncluded": "Не включено",
+        "allPlans": "Входит во все тарифы"
       },
       "usage": {
         "head": {

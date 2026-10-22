@@ -1,0 +1,21 @@
+---
+/**
+ * Pricing 对比表的单元格取值，桌面表格与移动端卡片共用同一套呈现。
+ */
+import Icon from '../site/Icon.astro'
+import type { CompareCellView } from './pricing-compare'
+
+interface Props {
+  cell: CompareCellView
+  /** 包含 / 未列出的读屏文案。 */
+  included: string
+  notIncluded: string
+}
+
+const { cell, included, notIncluded } = Astro.props
+---
+
+{cell.kind === 'yes' && <span class="cmp-yes"><Icon name="check" /><span class="sr-only">{included}</span></span>}
+{cell.kind === 'no' && <span class="cmp-no"><span aria-hidden="true">—</span><span class="sr-only">{notIncluded}</span></span>}
+{cell.kind === 'text' && <span class="cmp-text">{cell.text}</span>}
+{cell.kind === 'mono' && <span class="cmp-mono">{cell.text}</span>}

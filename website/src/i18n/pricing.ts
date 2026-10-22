@@ -418,7 +418,8 @@ export const pricingContent: PricingPageContent = {
     volumeGroup: 'Volume & billing',
     billing: 'Billing',
     included: 'Included',
-    notIncluded: 'Not included'
+    notIncluded: 'Not included',
+    allPlans: 'Included in every plan'
   },
   usage: {
     head: {

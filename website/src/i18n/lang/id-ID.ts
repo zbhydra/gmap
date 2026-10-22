@@ -1962,7 +1962,8 @@ export const site: SiteContent = {
         "volumeGroup": "Volume & penagihan",
         "billing": "Penagihan",
         "included": "Termasuk",
-        "notIncluded": "Tidak termasuk"
+        "notIncluded": "Tidak termasuk",
+        "allPlans": "Termasuk di semua paket"
       },
       "usage": {
         "head": {

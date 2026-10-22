@@ -1962,7 +1962,8 @@ export const site: SiteContent = {
         "volumeGroup": "數量和計費",
         "billing": "計費",
         "included": "包括",
-        "notIncluded": "不包括在內"
+        "notIncluded": "不包括在內",
+        "allPlans": "所有方案皆包含"
       },
       "usage": {
         "head": {

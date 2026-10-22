@@ -1962,7 +1962,8 @@ export const site: SiteContent = {
         "volumeGroup": "Khối lượng & thanh toán",
         "billing": "Thanh toán",
         "included": "Bao gồm",
-        "notIncluded": "Không bao gồm"
+        "notIncluded": "Không bao gồm",
+        "allPlans": "Có trong mọi gói"
       },
       "usage": {
         "head": {

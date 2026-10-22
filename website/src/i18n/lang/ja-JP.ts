@@ -1962,7 +1962,8 @@ export const site: SiteContent = {
         "volumeGroup": "ボリュームと請求",
         "billing": "請求する",
         "included": "付属",
-        "notIncluded": "含まれていない"
+        "notIncluded": "含まれていない",
+        "allPlans": "すべてのプランに含まれる"
       },
       "usage": {
         "head": {

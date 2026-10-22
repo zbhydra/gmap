@@ -11,6 +11,7 @@
  *   脚本按 data-preset 克隆预置行并循环插入、计数。
  */
 import OrderCheckoutModal from '../order-checkout/OrderCheckoutModal.astro'
+import CompareCell from './CompareCell.astro'
 import CapabilityAction from '../site/CapabilityAction.astro'
 import Icon from '../site/Icon.astro'
 import SoonBadge from '../site/SoonBadge.astro'
@@ -19,13 +20,13 @@ import type { Locale } from '../../i18n/content'
 import type {
   AccountContent,
   PricingBillingFactId,
-  PricingCompareCell,
   PricingPageContent,
   PricingTabContent,
   PricingTabId
 } from '../../i18n/schema'
 import { localePaths } from '../../i18n/ui'
 import { capabilities, type Capability } from '../../lib/capabilities'
+import { compareCell, compareCellKey, type CompareCellView } from './pricing-compare'
 import { finderMatch, finderPosition, finderScale, finderVolume, quotaValue } from './pricing-finder'
 import {
   RESET_AXIS_DATES,
@@ -139,12 +140,7 @@ function finderView(tab: PricingTabContent) {
 // 估算结果按 {value} 拆成前后两段，中间的用量由脚本更新
 const [resultBefore, resultAfter = ''] = plansSection.finder.result.split('{value}')
 
-/** 对比表一行的单元格。 */
-type CompareCellView = { kind: 'yes' } | { kind: 'no' } | { kind: 'text'; text: string } | { kind: 'mono'; text: string }
 type CompareRowView = { kind: 'group'; label: string } | { kind: 'row'; label: string; cells: readonly CompareCellView[] }
-
-const compareCell = (cell: PricingCompareCell): CompareCellView =>
-  cell === true ? { kind: 'yes' } : cell === false ? { kind: 'no' } : { kind: 'text', text: cell }
 
 /** 对比表行：额度与计费两行取卡面 quota / periodLabel，其余按文案分组展开。 */
 function compareRows(tab: PricingTabContent): CompareRowView[] {
@@ -163,6 +159,23 @@ function compareRows(tab: PricingTabContent): CompareRowView[] {
     }
   }
   return rows
+}
+
+type CompareLineView = { label: string; cell: CompareCellView }
+
+/** 移动端对比：各档取值相同的行并入「所有套餐都包含」，其余行按档拆进各档卡片。 */
+function compareCards(tab: PricingTabContent): { plans: CompareLineView[][]; shared: CompareLineView[] } {
+  const plans: CompareLineView[][] = tab.cards.map(() => [])
+  const shared: CompareLineView[] = []
+  for (const row of compareRows(tab)) {
+    if (row.kind === 'group') continue
+    if (row.cells.every(cell => compareCellKey(cell) === compareCellKey(row.cells[0]))) {
+      shared.push({ label: row.label, cell: row.cells[0] })
+      continue
+    }
+    row.cells.forEach((cell, index) => plans[index].push({ label: row.label, cell }))
+  }
+  return { plans, shared }
 }
 
 const meters = {
@@ -407,43 +420,71 @@ const controllerCopy = {
       <div class="compare-stage" data-reveal>
         {TAB_IDS.map((tabId, index) => {
           const tab = copy.tabs[tabId]
+          const cards = compareCards(tab)
           let rowIndex = 0
           return (
-            <div class="dtable-wrap compare-wrap" data-compare-table={tabId} hidden={index !== 0}>
-              <table class="dtable compare-table">
-                <caption class="sr-only">{tab.eyebrow}</caption>
-                <thead>
-                  <tr>
-                    <th scope="col" class="cmp-feature">{compare.plan}</th>
-                    {tab.cards.map(card => (
-                      <th scope="col" class:list={['cmp-plan', { 'is-featured': card.featured }]}>
-                        {card.featured && <span class="badge badge--solid">{copy.popularLabel}</span>}
-                        <span class="cmp-name">{card.name}</span>
-                        <span class="cmp-price">{card.price} <small>{card.periodLabel}</small></span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {compareRows(tab).map(row => row.kind === 'group' ? (
-                    <tr class="cmp-group" style={`--r: ${rowIndex++}`}>
-                      <th scope="colgroup" colspan={tab.cards.length + 1}>{row.label}</th>
-                    </tr>
-                  ) : (
-                    <tr style={`--r: ${rowIndex++}`}>
-                      <th scope="row">{row.label}</th>
-                      {row.cells.map((cell, cellIndex) => (
-                        <td class:list={{ 'is-featured': tab.cards[cellIndex].featured }}>
-                          {cell.kind === 'yes' && <span class="cmp-yes"><Icon name="check" /><span class="sr-only">{compare.included}</span></span>}
-                          {cell.kind === 'no' && <span class="cmp-no"><span aria-hidden="true">—</span><span class="sr-only">{compare.notIncluded}</span></span>}
-                          {cell.kind === 'text' && <span class="cmp-text">{cell.text}</span>}
-                          {cell.kind === 'mono' && <span class="cmp-mono">{cell.text}</span>}
-                        </td>
+            <div class="compare-panel" data-compare-table={tabId} hidden={index !== 0}>
+              <div class="dtable-wrap compare-wrap">
+                <table class="dtable compare-table">
+                  <caption class="sr-only">{tab.eyebrow}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col" class="cmp-feature">{compare.plan}</th>
+                      {tab.cards.map(card => (
+                        <th scope="col" class:list={['cmp-plan', { 'is-featured': card.featured }]}>
+                          {card.featured && <span class="badge badge--solid">{copy.popularLabel}</span>}
+                          <span class="cmp-name">{card.name}</span>
+                          <span class="cmp-price">{card.price} <small>{card.periodLabel}</small></span>
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {compareRows(tab).map(row => row.kind === 'group' ? (
+                      <tr class="cmp-group" style={`--r: ${rowIndex++}`}>
+                        <th scope="colgroup" colspan={tab.cards.length + 1}>{row.label}</th>
+                      </tr>
+                    ) : (
+                      <tr style={`--r: ${rowIndex++}`}>
+                        <th scope="row">{row.label}</th>
+                        {row.cells.map((cell, cellIndex) => (
+                          <td class:list={{ 'is-featured': tab.cards[cellIndex].featured }}>
+                            <CompareCell cell={cell} included={compare.included} notIncluded={compare.notIncluded} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div class="compare-cards">
+                {tab.cards.map((card, cardIndex) => (
+                  <article class:list={['card cmp-card', { 'cmp-card--featured': card.featured }]} style={`--r: ${cardIndex}`}>
+                    <header class="cmp-card-head">
+                      <span class="cmp-name">{card.name}</span>
+                      {card.featured && <span class="badge badge--solid">{copy.popularLabel}</span>}
+                      <span class="cmp-price">{card.price}</span>
+                    </header>
+                    {cards.plans[cardIndex].length > 0 && (
+                      <ul class="cmp-lines">
+                        {cards.plans[cardIndex].map(line => (
+                          <li><span class="cmp-line-label">{line.label}</span><CompareCell cell={line.cell} included={compare.included} notIncluded={compare.notIncluded} /></li>
+                        ))}
+                      </ul>
+                    )}
+                  </article>
+                ))}
+                {cards.shared.length > 0 && (
+                  <article class="card cmp-card" style={`--r: ${tab.cards.length}`}>
+                    <header class="cmp-card-head"><span class="cmp-name">{compare.allPlans}</span></header>
+                    <ul class="cmp-lines">
+                      {cards.shared.map(line => (
+                        <li><span class="cmp-line-label">{line.label}</span><CompareCell cell={line.cell} included={compare.included} notIncluded={compare.notIncluded} /></li>
+                      ))}
+                    </ul>
+                  </article>
+                )}
+              </div>
             </div>
           )
         })}

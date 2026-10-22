@@ -1962,7 +1962,8 @@ export const site: SiteContent = {
         "volumeGroup": "Volume & facturation",
         "billing": "Facturation",
         "included": "Compris",
-        "notIncluded": "Non inclus"
+        "notIncluded": "Non inclus",
+        "allPlans": "Inclus dans tous les forfaits"
       },
       "usage": {
         "head": {

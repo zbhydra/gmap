@@ -985,6 +985,8 @@ export interface PricingPageContent {
     /** 包含 / 未列出的读屏文案。 */
     included: string
     notIncluded: string
+    /** 移动端对比卡中各档相同项的合并卡标题。 */
+    allPlans: string
   }
   /** ④ 额度单位：records 卡、requests 卡与每月 1 日重置曲线。 */
   usage: {

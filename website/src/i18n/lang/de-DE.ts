@@ -1962,7 +1962,8 @@ export const site: SiteContent = {
         "volumeGroup": "Volumen & Abrechnung",
         "billing": "Abrechnung",
         "included": "Im Lieferumfang enthalten",
-        "notIncluded": "Nicht im Lieferumfang enthalten"
+        "notIncluded": "Nicht im Lieferumfang enthalten",
+        "allPlans": "In jedem Tarif enthalten"
       },
       "usage": {
         "head": {

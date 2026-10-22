@@ -775,8 +775,65 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 切换产品线时表格行依次淡入 */
-.compare-wrap.is-swapping tbody tr {
+/* 移动端对比卡：各档只列有差异的行，各档相同的行并入末尾「所有套餐都包含」卡 */
+.compare-cards {
+  display: none;
+  gap: 12px;
+}
+
+.cmp-card {
+  padding: 18px 18px 6px;
+}
+
+.cmp-card--featured {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: color-mix(in srgb, var(--primary-soft) 55%, var(--surface));
+  box-shadow: inset 0 3px 0 var(--primary), var(--shadow-sm);
+}
+
+.cmp-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding-bottom: 12px;
+}
+
+.cmp-card-head .cmp-price {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+
+.cmp-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cmp-lines li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cmp-line-label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cmp-lines li > :last-child {
+  flex-shrink: 0;
+  max-width: 55%;
+  text-align: right;
+}
+
+/* 切换产品线时表格行 / 对比卡依次淡入 */
+.compare-panel.is-swapping tbody tr,
+.compare-panel.is-swapping .cmp-card {
   animation: fade-up var(--dur-4) var(--ease-out) both;
   animation-delay: calc(var(--r, 0) * 22ms);
 }
@@ -1423,8 +1480,13 @@
     display: none;
   }
 
-  .compare-table tbody th {
-    min-width: 180px;
+  /* 横滑表格在窄屏只能露出一列多，改为按档拆开的对比卡 */
+  .compare-wrap {
+    display: none;
+  }
+
+  .compare-cards {
+    display: grid;
   }
 
   .reset-unused-label {

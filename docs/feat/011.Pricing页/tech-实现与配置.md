@@ -12,6 +12,7 @@ Pricing 页面在 `website` 中拆分:
 - `website/src/components/pages/PricingPage.astro`:读取文案(`src/i18n/pricing.ts`)并装配页面。
 - `website/src/components/pricing/PricingPageShell.astro`:页面 DOM 壳(SSR 静态渲染三 tab、全部档位卡、对比表与用量说明;未交付能力的入口按站级能力表灰化)。
 - `website/src/components/pricing/pricing-page-controller.ts`:登录态恢复、URL 选线与 hash 回写、支付配置与升级报价加载、卡片按钮态、checkout 打开与账号摘要刷新;tab 交互本身由站级 tabs 组件承担。
+- `website/src/components/pricing/CompareCell.astro` / `pricing-compare.ts`:对比单元格呈现与取值比较;桌面表格与移动端对比卡共用,移动端按「各档取值是否相同」拆分行,不另设数据。
 - `website/src/components/pricing/pricing-page.ts`:展示层交互(价格滚动、用量估算条、对比表分段联动、用量动画),不读写购买状态;估算条纯函数与动画样例分别在 `pricing-finder.ts`、`pricing-samples.ts`。
 - `website/src/components/pricing/pricing-checkout.ts`:订阅配置与升级接口 client、产品线常量与支付配置解析。
 - 登录复用站级登录弹窗(`website/src/components/auth/`)与站级会话(`website/src/scripts/site/session.ts`)。

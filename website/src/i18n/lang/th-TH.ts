@@ -1962,7 +1962,8 @@ export const site: SiteContent = {
         "volumeGroup": "ปริมาณและการเรียกเก็บเงิน",
         "billing": "การเรียกเก็บเงิน",
         "included": "รวมอยู่ด้วย",
-        "notIncluded": "ไม่รวม"
+        "notIncluded": "ไม่รวม",
+        "allPlans": "รวมอยู่ในทุกแพ็กเกจ"
       },
       "usage": {
         "head": {

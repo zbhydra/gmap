@@ -1962,7 +1962,8 @@ export const site: SiteContent = {
         "volumeGroup": "볼륨 및 청구",
         "billing": "청구",
         "included": "포함됨",
-        "notIncluded": "포함되지 않음"
+        "notIncluded": "포함되지 않음",
+        "allPlans": "모든 요금제에 포함"
       },
       "usage": {
         "head": {
