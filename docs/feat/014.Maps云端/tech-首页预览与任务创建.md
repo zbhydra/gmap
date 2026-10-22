@@ -25,16 +25,18 @@
 
 ### 匿名首屏接口
 
-公开 `POST /api/client/maps-online/preview`，请求仅含 `keyword`：去首尾空白后 1–500 字符，单行、单关键词；不接受页数、字段模式、联系方式或 Provider 选择。额外字段按项目 Pydantic 默认规则忽略，但不参与执行。
+公开 `POST /api/client/maps-online/preview`，请求头必须携带有效的 `X-Device-Id`，复用 `validate_request_device_id` 校验；IP 取 `get_client_ip`，不可获取时拒绝。请求仅含 `keyword`：去首尾空白后 1–500 字符，单行、单关键词；不接受页数、字段模式、联系方式或 Provider 选择。额外字段按项目 Pydantic 默认规则忽略，但不参与执行。
 
 采集链路：公开入口 → `gmap_collector_config_service` → 共享 client 的同步 `search_item(mode=preview)` → 白名单投影。目标为首屏最多 20 条，Collector 可做一次 browser 补列；不调用官网补全、不创建 Export Job 或文件。同步协议与执行器归 [Collector 合同](tech-Export与Collector重构.md#33-collector-异步调用与恢复)。
 
 - 入口用标准库超时给整个预览采集预算 15 秒，含排队、采集和解析；到期返回可重试错误。该预算是等待上限，不承诺所有网络条件下都能成功。
 - 成功数据为 `count`（本次首屏有效条数）与 `rows`（最多 3 行，不足 3 行按实际返回）。每行仅含 `name`、`address`、`category`、`rating`、`review_count`、`phone`；名称为字符串，其余允许空值，分类用现有映射得到的分类文本。不返回原始 RPC、fid、网站、联系方式补全或剩余行。
 - 统一响应信封、业务错误与 i18n；匿名响应设置 `Cache-Control: no-store`。不写任务或结果文件、不扣 Online/API/插件月度额度；复用现有请求日志，日志不保存商家结果正文。
-- 复用 `RedisFixedLimiter`，独立子前缀 `maps_online_preview`，按 `get_client_ip` 每 IP 每分钟 3 次，在出网前检查，超限使用现有频繁请求业务码。该计数仅为限流，不是任务记录；复用工具的 Redis 故障放行语义。IP 不可获取时拒绝预览，不创建匿名账号或新 token。
+- 每设备每日最多 3 次、每 IP 每日最多 30 次；任一限额用尽后再次预览，返回现有 `RATE_LIMIT_EXCEEDED`（998），不调用 Collector。准入规则由 [maps_online_client.py](../../../backend/src/app/api/client/maps_online_client.py) 的 `_PREVIEW_ADMISSION_SCRIPT` 与 `_admit_preview` 负责。
+- 后端是唯一计数源；Lua 在同一次原子操作中先检查两维，再同时计数，拒绝不消耗任一维预算。只计已准入采集请求，采集失败不退款。独立 Redis 子前缀为 `maps_online_preview`；复用 `get_tomorrow_start_timestamp`，以 `America/New_York` 次日 0 点作为两维分桶与 `PEXPIREAT` 绝对毫秒过期时间，覆盖 DST 日界。
+- Redis 故障时记录日志及堆栈后放行，不创建匿名账号或新 token。
 
-已接受的限制：固定窗口边界可突发，共享 IP 共用预算；现有 IP 工具信任代理头，公网发布需核对可信入口覆盖这些头；Redis 故障放行不提供硬费用上限。不增加验证码、全局费用控制或独立并发池。
+已接受的限制：设备 ID 可被重置，共享 IP 共用每日 IP 预算；现有 IP 工具信任代理头，公网发布需核对可信入口覆盖这些头；Redis 故障放行不提供硬费用上限。不增加验证码、全局费用控制或独立并发池。
 
 ### Dashboard 创建约束
 
@@ -48,7 +50,7 @@
 
 - 首页的状态和结果渲染放在一个 Vue 采集组件，由 `HomePage.astro` 装配；删除被替代的占位计数脚本和操作区样式，静态营销段保留。已有 Astro/Vue 集成与 `client:load` 的核实依据见 [Dashboard 技术合同](../015.工具与增长/tech-用户Dashboard.md#集成依据)，此次不变更框架版本或引入依赖。
 - `DashboardApp.vue` 继续负责会话和工作区外壳；现有 `HistoryView.vue` 承载创建及历史，必要时仅将表单拆为实际有职责的局部组件，不建立新状态管理层。
-- `scripts/dashboard/api.ts` 继续封装登录业务请求并处理 401；匿名预览使用已有 `homepage/api.ts` 请求信封与请求头边界。站级登录通过现有 `open({ redirectTo: '/dashboard/' })` 进入 Dashboard；当前站点仅启用 en-US 且无路径前缀，现有回跳白名单已覆盖，不新增会话或回跳存储机制。
+- `scripts/dashboard/api.ts` 继续封装登录业务请求并处理 401；匿名预览使用已有 `homepage/api.ts` 请求信封与请求头边界，不在前端维护限额次数。`HeroPreview.vue` 捕获 `HomepageApiError.code === 998` 后调用现有 `signIn()`，清空匿名预览并打开站级登录弹窗，登录后按 `props.dashboardUrl` 进入 Dashboard；其他采集失败保留现有失败提示。
 - 响应字段在现有解析边界收窄，禁止新增 `any`、宽泛 `unknown` 或用断言代替校验。所有用户文字走现有 i18n，服务端地点名称等原始数据用文本插值渲染。
 - 视觉使用 [website 设计合同](../../references/specs/design-website.md) 的 token；截图仅参考信息层次。预览面板窄屏不横向溢出，表单标签、加载/结果提示、错误与键盘焦点可访问。
 

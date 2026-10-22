@@ -19,7 +19,6 @@ from botocore.client import BaseClient  # type: ignore[import-untyped]
 from sqlalchemy import delete, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from app.api.client.maps_online_client import _preview_limiter
 from app.constants.export import ExportRunStatus
 from app.constants.gmap_collector import GMAP_COLLECTOR_DATA_KEY
 from app.constants.subscription import ONLINE_LITE_PRODUCT_ID
@@ -56,7 +55,8 @@ from app.services.gmap_collector_config_service import gmap_collector_config_ser
 from app.services.object_storage_config_service import object_storage_config_service
 from app.services.system_data_service import system_data_service
 from app.services.usage_service import online_usage_service
-from app.utils.time import get_current_ym, timestamp_now
+from app.utils.redis_key import build_redis_key
+from app.utils.time import get_current_ym, get_tomorrow_start_timestamp, timestamp_now
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 BASE = "/api/client/export/jobs"
@@ -518,11 +518,16 @@ async def _prove_csv_contacts_permissions_and_single_failed_publish(
         )
         # IP 带本轮唯一标识，限流 key 可精确清理。
         ip = f"2001:db8::{int(test_run_id[:6], 16):x}"
-        state.cache_keys.append(_preview_limiter._build_key(ip, 60))
+        device_id = f"preview-{test_run_id}"
+        reset_at = get_tomorrow_start_timestamp()
+        state.cache_keys.extend(
+            build_redis_key(f"maps_online_preview:{identifier}:{reset_at}")
+            for identifier in (f"device:{device_id}", f"ip:{ip}")
+        )
         preview = _data(
             await real_async_client.post(
                 "/api/client/maps-online/preview",
-                headers={"X-Forwarded-For": ip},
+                headers={"X-Forwarded-For": ip, "X-Device-Id": device_id},
                 json={"keyword": "preview"},
             )
         )

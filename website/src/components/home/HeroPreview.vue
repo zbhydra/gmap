@@ -14,6 +14,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { Locale } from '../../i18n/content'
 import type { HomePageContent } from '../../i18n/schema'
+import { HomepageApiError } from '../../scripts/homepage/api'
 import { previewKeyword, type PreviewResult, type PreviewRow } from '../../scripts/homepage/preview'
 import { getSiteSession } from '../../scripts/site/session'
 import { SITE_AUTH_SUCCESS_EVENT } from '../auth/site-auth-controller'
@@ -313,6 +314,10 @@ async function runPreview(value: string): Promise<void> {
   } catch (error) {
     console.error(new Error('homepage preview: search failed', { cause: error }))
     if (id !== previewId) return
+    if (error instanceof HomepageApiError && error.code === 998) {
+      signIn()
+      return
+    }
     preview.value = { status: 'failed', keyword: value, count: 0, rows: [] }
     loading.value = false
     return
