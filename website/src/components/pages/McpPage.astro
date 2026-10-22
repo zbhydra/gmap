@@ -4,7 +4,8 @@
  *
  * 事实按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）：Streamable HTTP 入口 {PUBLIC_API_BASE_URL}/mcp/（必须带结尾斜杠），
  * 工具 search_places / list_reviews，API Key 或 OAuth access token 以 Authorization: Bearer 携带；照片工具尚无合同，只标 Coming soon。
- * 获取 Key 按钮绑 mcp 能力；额度与价格逐字取自 pricing.ts 的 API tab。
+ * 接入优先引导 OAuth 登录（配置只含端点 URL），API Key 仅作不支持 MCP 授权的客户端兜底。
+ * 连接按钮与兜底取 Key 链接绑 mcp 能力；额度与价格逐字取自 pricing.ts 的 API tab。
  * 会话轮播与拓扑高亮由 scripts/pages/mcp-page.ts 驱动；无 JS 与减弱动效下展示首个场景与静态拓扑。
  */
 import { Code } from 'astro:components'
@@ -48,38 +49,22 @@ const [connectedBefore, connectedAfter = ''] = page.agent.connected.split('{serv
 const CLIENT_IDS: readonly McpClientId[] = ['claude', 'cursor', 'vscode', 'codex']
 const CLIENT_ICONS: Record<McpClientId, string> = { claude: 'sparkles', cursor: 'cursor', vscode: 'code', codex: 'terminal' }
 
-/** 各客户端的接入配置（远程 Streamable HTTP + Bearer 头；VS Code 用安全输入，Codex 从环境变量读 Key）。 */
-const CONFIGS: Record<McpClientId, { lang: 'bash' | 'json' | 'toml'; code: string }> = {
-  claude: {
-    lang: 'bash',
-    code: `claude mcp add --transport http mapsgrab ${MCP_URL} \\\n  --header "Authorization: Bearer YOUR_API_KEY"`
-  },
-  cursor: {
-    lang: 'json',
-    code: JSON.stringify({ mcpServers: { mapsgrab: { url: MCP_URL, headers: { Authorization: 'Bearer YOUR_API_KEY' } } } }, null, 2)
-  },
-  vscode: {
-    lang: 'json',
-    code: JSON.stringify(
-      {
-        inputs: [{ type: 'promptString', id: 'mapsgrab-api-key', description: 'MapsGrab API key', password: true }],
-        servers: { mapsgrab: { type: 'http', url: MCP_URL, headers: { Authorization: 'Bearer ${input:mapsgrab-api-key}' } } }
-      },
-      null,
-      2
-    )
-  },
-  codex: {
-    lang: 'toml',
-    code: `[mcp_servers.mapsgrab]\nurl = "${MCP_URL}"\nbearer_token_env_var = "MAPSGRAB_API_KEY"`
-  }
+/** 各客户端的接入配置（远程 Streamable HTTP，只写端点 URL，由客户端走 MCP 授权完成 OAuth 登录）。 */
+const CONFIGS: Record<McpClientId, { lang: 'bash' | 'json'; code: string }> = {
+  claude: { lang: 'bash', code: `claude mcp add --transport http mapsgrab ${MCP_URL}` },
+  cursor: { lang: 'json', code: JSON.stringify({ mcpServers: { mapsgrab: { url: MCP_URL } } }, null, 2) },
+  vscode: { lang: 'json', code: JSON.stringify({ servers: { mapsgrab: { type: 'http', url: MCP_URL } } }, null, 2) },
+  codex: { lang: 'bash', code: `codex mcp add mapsgrab --url ${MCP_URL}\ncodex mcp login mapsgrab` }
 }
+
+/** API Key 兜底：通用的远程 HTTP + 请求头配置，各客户端按自己的配置格式套用。 */
+const API_KEY_CONFIG = JSON.stringify({ url: MCP_URL, headers: { Authorization: 'Bearer YOUR_API_KEY' } }, null, 2)
 
 /** 认证检视器：一次 tools/call 的请求与响应（响应结构与后端 CallToolResult 序列化一致）。 */
 const INSPECT_REQUEST = [
   'POST /mcp/ HTTP/1.1',
   `Host: ${mcpHost}`,
-  'Authorization: Bearer YOUR_API_KEY',
+  'Authorization: Bearer YOUR_ACCESS_TOKEN',
   'Content-Type: application/json',
   '',
   '{',
@@ -123,7 +108,7 @@ const ladder = apiPlans.cards.map(card => ({
 
 // FAQ 与收尾 CTA：标题、问答与导语按页，kicker、侧栏导语、按钮与说明是 API / MCP 共用文案。
 const faq: ProductFaqMessage = { ...shared.faq, kicker: t.common.faqLabel, title: page.faq.title, items: page.faq.items }
-const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: page.cta.lead, primary: shared.primaryCta, secondary: shared.pricingCta }
+const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: page.cta.lead, primary: page.connectCta, secondary: shared.pricingCta }
 ---
 
 <Layout
@@ -155,8 +140,8 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
           <p class="lead" data-enter style="--enter-delay: 180ms">{page.hero.lead}</p>
 
           <div class="page-hero-actions" data-enter style="--enter-delay: 270ms">
-            <CapabilityAction capability="mcp" locale={locale} href={keyHref} class="btn btn-primary btn-lg" data-magnetic="0.22" data-cta={`${pageId}-hero-api-dashboard`}>
-              <Icon name="key" />{shared.primaryCta}
+            <CapabilityAction capability="mcp" locale={locale} href="#setup" class="btn btn-primary btn-lg" data-magnetic="0.22" data-cta={`${pageId}-hero-setup`}>
+              <Icon name="plug" />{page.connectCta}
             </CapabilityAction>
             <a class="btn btn-secondary btn-lg" href={pricingHref('hero')} data-cta={`${pageId}-hero-pricing`}>{shared.pricingCta}</a>
           </div>
@@ -340,7 +325,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
       </div>
     </section>
 
-    <!-- ④ 接入：每个客户端一段配置 + OAuth 说明 + 通用规格 -->
+    <!-- ④ 接入：每个客户端一段 OAuth 配置 + API Key 兜底 + 通用规格 -->
     <section class="section band" id="setup">
       <div class="container">
         <header class="section-head" data-stagger="80">
@@ -394,11 +379,24 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
         </div>
 
         <div class="setup-extra" data-stagger="90">
-          <article class="setup-oauth card" data-reveal>
-            <span class="icon-tile icon-tile--ai"><Icon name="user" /></span>
+          <article class="setup-key card" data-reveal>
+            <span class="icon-tile"><Icon name="key" /></span>
             <div>
-              <b>{page.setup.oauth.title}</b>
-              <p>{page.setup.oauth.description}</p>
+              <b>{page.setup.apiKey.title}</b>
+              <p><CodeText text={page.setup.apiKey.description} /></p>
+              <CapabilityAction capability="mcp" locale={locale} href={keyHref} class="link-arrow" data-cta={`${pageId}-setup-api-dashboard`}>
+                {page.setup.apiKey.link}<Icon name="arrow-right" />
+              </CapabilityAction>
+            </div>
+            <div class="codewin setup-key-code">
+              <div class="codewin-bar">
+                <div class="win-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                <span class="setup-file">{page.setup.apiKey.snippet}</span>
+                <button class="codewin-copy" type="button" aria-label={page.setup.copy} data-copy={API_KEY_CONFIG}>
+                  <Icon name="copy" class="icon--sm" />
+                </button>
+              </div>
+              <Code code={API_KEY_CONFIG} lang="json" theme="css-variables" />
             </div>
           </article>
           <div class="setup-spec card" data-reveal>
@@ -545,8 +543,8 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     <ProductFaq locale={locale} faq={faq} ai />
 
     <ProductCta cta={cta} ai>
-      <CapabilityAction capability="mcp" locale={locale} href={keyHref} class="btn btn-primary btn-lg" data-magnetic="0.22" data-cta={`${pageId}-cta-api-dashboard`}>
-        <Icon name="key" />{cta.primary}
+      <CapabilityAction capability="mcp" locale={locale} href="#setup" class="btn btn-primary btn-lg" data-magnetic="0.22" data-cta={`${pageId}-cta-setup`}>
+        <Icon name="plug" />{cta.primary}
       </CapabilityAction>
       <a class="btn btn-secondary btn-lg" href={pricingHref('cta')} data-cta={`${pageId}-cta-pricing`}>{cta.secondary}</a>
     </ProductCta>
@@ -1183,6 +1181,16 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     width: 100%;
   }
 
+  /* 站级 tabpanel 整块 fade-up 会让深色代码窗从透明闪现；这里卡片与窗体不动，只淡入文字 */
+  .setup-panel:not([hidden]) {
+    animation: none;
+  }
+
+  .setup-panel:not([hidden]) .setup-steps div,
+  .setup-panel:not([hidden]) .setup-code :global(pre) {
+    animation: fade-in var(--dur-2) var(--ease-out) backwards;
+  }
+
   .setup-steps {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1255,15 +1263,25 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     margin-top: 24px;
   }
 
-  .setup-oauth {
-    display: flex;
-    gap: 16px;
+  /* API Key 只是兜底路径：中性卡面，不抢 OAuth 配置的视觉权重 */
+  .setup-key {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.15fr);
+    align-items: start;
+    gap: 16px 24px;
     padding: 22px;
-    border-color: color-mix(in srgb, var(--ai) 24%, var(--border));
-    background: linear-gradient(120deg, var(--ai-soft), var(--surface) 70%);
   }
 
-  .setup-oauth b,
+  .setup-key-code :global(pre) {
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+
+  .setup-key .link-arrow {
+    margin-top: 10px;
+  }
+
+  .setup-key b,
   .setup-spec-head b {
     display: block;
     margin-bottom: 4px;
@@ -1272,7 +1290,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     font-weight: 650;
   }
 
-  .setup-oauth p {
+  .setup-key p {
     color: var(--text-2);
     font-size: 14px;
     line-height: 1.6;
@@ -1697,6 +1715,14 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
       inset: 10% 0 -6%;
     }
 
+    .setup-key {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .setup-key-code {
+      grid-column: 1 / -1;
+    }
+
     .mcp-tools,
     .setup-steps,
     .trust,
@@ -1843,13 +1869,13 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     }
 
     .mcp-tool,
-    .setup-oauth,
+    .setup-key,
     .setup-spec {
       padding: 20px;
     }
 
-    .setup-oauth {
-      flex-direction: column;
+    .setup-key {
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .trust-items {

@@ -2340,6 +2340,8 @@ export interface McpPageContent {
   }
   /** 客户端名称（会话轮换、拓扑节点与接入 tab 共用）。 */
   clients: Record<McpClientId, string>
+  /** 首屏与收尾的主按钮（跳到接入段，默认走 OAuth 登录）。 */
+  connectCta: string
   /** 首屏。 */
   hero: {
     /** 小标签。 */
@@ -2440,10 +2442,14 @@ export interface McpPageContent {
     copy: string
     /** 各客户端步骤。 */
     clients: Record<McpClientId, McpClientSetupMessage>
-    /** OAuth 登录接入说明。 */
-    oauth: {
+    /** 无法在浏览器完成 OAuth 登录时（客户端不支持 MCP 授权，或运行在服务器 / CI）的 API Key 兜底说明。 */
+    apiKey: {
       title: string
       description: string
+      /** 去 Dashboard → API 取 Key 的链接文字。 */
+      link: string
+      /** 通用请求头配置片段的窗口标签。 */
+      snippet: string
     }
     /** 通用客户端规格条。 */
     spec: {

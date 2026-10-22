@@ -4,14 +4,15 @@ import type { McpPageContent } from './schema'
  * MCP 落地页文案（en-US 基线，W4）。
  *
  * 工具名、参数、端点与鉴权按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）：search_places / list_reviews，
- * 入口 /mcp/，API Key 或 OAuth access token 均以 Authorization: Bearer 携带；照片工具尚无合同，只标 Coming soon。
+ * 入口 /mcp/，API Key 或 OAuth access token 均以 Authorization: Bearer 携带；接入优先引导 OAuth 登录，客户端不支持时才用 API Key。
+ * 照片工具尚无合同，只标 Coming soon。
  * 会话与提示词里的商户、电话（555-01xx）均为虚构；额度与价格逐字取自 pricing.ts。
  */
 export const scraperMcpContent: McpPageContent = {
   seo: {
     title: 'Google Maps Scraper MCP Server | MapsGrab',
     description:
-      'Connect AI agents to live Google Maps data with the MapsGrab MCP server: search places and read reviews from Claude Code, Cursor, VS Code, Codex or any MCP client — sign in with OAuth or use an API key.'
+      'Connect AI agents to live Google Maps data with the MapsGrab MCP server: search places and read reviews from Claude Code, Cursor, VS Code, Codex or any MCP client — just sign in, no API key to paste.'
   },
   clients: {
     claude: 'Claude Code',
@@ -19,11 +20,12 @@ export const scraperMcpContent: McpPageContent = {
     vscode: 'VS Code',
     codex: 'Codex'
   },
+  connectCta: 'Connect your agent',
   hero: {
     kicker: 'MCP server',
     title: { lead: 'Google Maps Scraper ', accent: 'MCP', tail: ' Server' },
     lead: 'The MapsGrab MCP server gives AI agents live Google Maps search and reviews over one Streamable HTTP endpoint — for Claude Code, Cursor, VS Code, Codex and any other MCP client.',
-    meta: ['Streamable HTTP', 'OAuth sign-in or API key', 'Free plan: {quota}'],
+    meta: ['Streamable HTTP', 'Sign in with OAuth', 'Free plan: {quota}'],
     chips: [
       { label: 'Transport', value: 'Streamable HTTP' },
       { label: 'Tool results', value: 'Structured JSON' }
@@ -194,7 +196,7 @@ export const scraperMcpContent: McpPageContent = {
   flow: {
     kicker: 'How it connects',
     title: { lead: 'One endpoint between your agent and ', accent: 'live Maps data', tail: '' },
-    lead: 'Your client connects over Streamable HTTP with one Authorization header. The agent discovers the tools, calls them when a prompt needs Maps data, and reads structured JSON back.',
+    lead: 'Your client connects over Streamable HTTP and signs in through your browser. The agent discovers the tools, calls them when a prompt needs Maps data, and reads structured JSON back.',
     label:
       'Claude Code, Cursor, VS Code, Codex and other MCP clients connect to the MapsGrab MCP endpoint, which serves the search_places and list_reviews tools. A photos tool is marked coming soon.',
     clientsLabel: 'MCP clients',
@@ -208,7 +210,7 @@ export const scraperMcpContent: McpPageContent = {
     steps: [
       {
         title: 'Connect',
-        description: 'Add the endpoint to your client, then sign in through your browser or pass your API key.'
+        description: 'Add the endpoint to your client, then sign in to MapsGrab through your browser.'
       },
       { title: 'Discover', description: 'Your agent lists the MapsGrab tools and their input schemas.' },
       { title: 'Call', description: 'When a prompt needs Maps data, the agent calls a tool and reads the JSON result.' }
@@ -217,62 +219,64 @@ export const scraperMcpContent: McpPageContent = {
   setup: {
     kicker: 'Setup',
     title: { lead: 'One config block ', accent: 'per client', tail: '' },
-    lead: 'Point your client at the MapsGrab endpoint with your API key in the Authorization header — no SDK, no local process to run. Prefer not to handle a key? Sign in instead.',
+    lead: 'Point your client at the MapsGrab endpoint and sign in through your browser — no API key to copy, no SDK, no local process to run.',
     tabsLabel: 'MCP client',
     copy: 'Copy configuration',
     clients: {
       claude: {
         file: 'Terminal',
         steps: [
-          { title: 'Get your API key', description: 'Copy it from Dashboard → API.' },
+          { title: 'Add the server', description: 'Run the command to register `mapsgrab` over HTTP.' },
           {
-            title: 'Add the server',
-            description: 'Run the command. It registers `mapsgrab` over HTTP with your key in the header.'
+            title: 'Sign in',
+            description: 'In Claude Code, run `/mcp`, choose `mapsgrab` and authenticate — MapsGrab opens in your browser for you to approve.'
           },
           {
             title: 'Ask for Maps data',
-            description: 'Start a session — Claude Code lists the MapsGrab tools and calls them when a prompt needs them.'
+            description: 'Claude Code lists the MapsGrab tools and calls them when a prompt needs them.'
           }
         ]
       },
       cursor: {
         file: '~/.cursor/mcp.json',
         steps: [
-          { title: 'Get your API key', description: 'Copy it from Dashboard → API.' },
           {
             title: 'Edit mcp.json',
             description: 'Add the block to `~/.cursor/mcp.json` for every project, or `.cursor/mcp.json` for one.'
           },
-          { title: 'Reload Cursor', description: '`mapsgrab` appears in the MCP server list with its tools.' }
+          {
+            title: 'Sign in',
+            description: 'In Cursor Settings → MCP, click Connect next to `mapsgrab` and approve it in your browser.'
+          },
+          { title: 'Use the tools', description: '`mapsgrab` shows its tools in the MCP server list, ready for the agent.' }
         ]
       },
       vscode: {
         file: '.vscode/mcp.json',
         steps: [
-          { title: 'Get your API key', description: 'Copy it from Dashboard → API.' },
+          { title: 'Add .vscode/mcp.json', description: 'Paste the block — it only holds the endpoint URL, nothing secret.' },
           {
-            title: 'Add .vscode/mcp.json',
-            description: 'VS Code asks for the key once and stores it securely — it never lands in the file.'
+            title: 'Sign in',
+            description: 'Start the server. VS Code asks to authenticate with MapsGrab and opens your browser to approve.'
           },
           { title: 'Use agent mode', description: 'Open Chat in agent mode and enable the MapsGrab tools.' }
         ]
       },
       codex: {
-        file: '~/.codex/config.toml',
+        file: 'Terminal',
         steps: [
-          {
-            title: 'Export your key',
-            description: 'Set `MAPSGRAB_API_KEY` in your shell. Codex reads the bearer token from it.'
-          },
-          { title: 'Add the server', description: 'Paste the block into `~/.codex/config.toml`.' },
+          { title: 'Add the server', description: 'Run `codex mcp add` to register `mapsgrab` by URL.' },
+          { title: 'Sign in', description: 'Run `codex mcp login mapsgrab` and approve MapsGrab in your browser.' },
           { title: 'Start Codex', description: 'New sessions load `mapsgrab` and its tools.' }
         ]
       }
     },
-    oauth: {
-      title: 'Sign in instead of pasting a key',
+    apiKey: {
+      title: 'Can’t sign in from a browser? Use an API key',
       description:
-        'Clients that support MCP authorization only need the endpoint URL: the client opens MapsGrab in your browser, you sign in and approve it, and you can revoke it later in Dashboard → API.'
+        'If your client doesn’t support MCP authorization, or runs on a server or in CI, add your API key as an `Authorization` header instead. Keep the key in an environment variable or your client’s secret input, not a shared config file.',
+      link: 'Get API key',
+      snippet: 'Any HTTP client'
     },
     spec: {
       title: 'Any other MCP client',
@@ -282,7 +286,7 @@ export const scraperMcpContent: McpPageContent = {
       endpoint: 'Endpoint',
       copyEndpoint: 'Copy endpoint',
       auth: 'Auth',
-      authValue: 'OAuth sign-in, or Authorization: Bearer YOUR_API_KEY'
+      authValue: 'OAuth sign-in (fallback: Authorization: Bearer YOUR_API_KEY)'
     }
   },
   prompts: {
@@ -389,8 +393,8 @@ export const scraperMcpContent: McpPageContent = {
   },
   trust: {
     kicker: 'Auth & data',
-    title: { lead: 'Your key or your sign-in. ', accent: 'Public data only.', tail: '' },
-    lead: 'Every call to the MCP endpoint carries a bearer credential — your MapsGrab API key or an OAuth token from signing in — and every result comes from what Google Maps shows publicly.',
+    title: { lead: 'Sign in once. ', accent: 'Public data only.', tail: '' },
+    lead: 'Every call to the MCP endpoint carries a bearer credential — an OAuth token from signing in, or your API key if your client can’t sign in — and every result comes from what Google Maps shows publicly.',
     inspector: {
       label: 'Example MCP request with a bearer Authorization header, and its JSON-RPC response with structured content',
       request: 'Request',
@@ -400,9 +404,9 @@ export const scraperMcpContent: McpPageContent = {
     items: [
       {
         icon: 'key',
-        title: 'Two ways to authorize',
+        title: 'Sign in, or fall back to a key',
         description:
-          'Pass your API key as a bearer token, or sign in through your browser and approve the client. Both reach the same Search and Reviews tools.'
+          'Sign in through your browser and approve the client. Clients without MCP authorization can pass your API key as a bearer token instead — both reach the same tools.'
       },
       {
         icon: 'eye',
@@ -411,9 +415,9 @@ export const scraperMcpContent: McpPageContent = {
       },
       {
         icon: 'lock',
-        title: 'Keep keys out of repos',
+        title: 'No secrets in config files',
         description:
-          'Use VS Code’s secure input or an environment variable for Codex, so the key never sits in a shared config file.'
+          'With sign-in, your config only holds the endpoint URL. If you use an API key, keep it in an environment variable, not a shared file.'
       },
       {
         icon: 'shield',
@@ -451,7 +455,7 @@ export const scraperMcpContent: McpPageContent = {
       {
         question: 'How is it authenticated?',
         answer:
-          'Two ways. Clients that support MCP authorization open a MapsGrab sign-in in your browser; you approve the client and can revoke it later in Dashboard → API. Or pass your API key as a bearer token in the Authorization header.'
+          'With OAuth sign-in: Claude Code, Cursor, VS Code, Codex and other clients that support MCP authorization open MapsGrab in your browser; you approve the client and can revoke it later in Dashboard → API. Only if your client can’t sign in, pass your API key as a bearer token in the Authorization header.'
       },
       {
         question: 'How are tool calls counted?',

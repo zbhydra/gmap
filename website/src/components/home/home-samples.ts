@@ -362,15 +362,15 @@ export function developerSamples(apiBase: string): Record<'search' | 'reviews' |
       requests: [
         {
           lang: 'bash',
-          code: `claude mcp add --transport http mapsgrab \\\n  ${mcpUrl} \\\n  --header "Authorization: Bearer $MAPSGRAB_API_KEY"`
+          code: `claude mcp add --transport http mapsgrab \\\n  ${mcpUrl}`
         },
         {
           lang: 'jsonc',
-          code: `// .cursor/mcp.json\n{\n  "mcpServers": {\n    "mapsgrab": {\n      "url": "${mcpUrl}",\n      "headers": { "Authorization": "Bearer YOUR_API_KEY" }\n    }\n  }\n}`
+          code: `// .cursor/mcp.json\n{\n  "mcpServers": {\n    "mapsgrab": {\n      "url": "${mcpUrl}"\n    }\n  }\n}`
         },
         {
           lang: 'jsonc',
-          code: `// .vscode/mcp.json\n{\n  "inputs": [\n    { "type": "promptString", "id": "mapsgrab-key", "description": "MapsGrab API key", "password": true }\n  ],\n  "servers": {\n    "mapsgrab": {\n      "type": "http",\n      "url": "${mcpUrl}",\n      "headers": { "Authorization": "Bearer \${input:mapsgrab-key}" }\n    }\n  }\n}`
+          code: `// .vscode/mcp.json\n{\n  "servers": {\n    "mapsgrab": {\n      "type": "http",\n      "url": "${mcpUrl}"\n    }\n  }\n}`
         }
       ],
       response: {

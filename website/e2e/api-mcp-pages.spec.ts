@@ -21,12 +21,15 @@ const ACTION_REQUEST_TYPES = new Set(['fetch', 'xhr', 'ping', 'eventsource', 'we
  */
 const BACKGROUND_REQUEST = /\/(@vite|@id|@fs)\/|__vite_ping|\/node_modules\/\.vite\/|\/api\/client\/mark\/record/
 
-/** 路由、data-cta 前缀、H1、控制获取 Key 按钮的能力键及其当前是否开放。 */
+/**
+ * 路由、data-cta 前缀、H1、控制主按钮的能力键及其当前是否开放，以及首屏 / 收尾主按钮的 data-cta 后缀与目标。
+ * API 三页主按钮是获取 Key；MCP 页主按钮跳接入段（OAuth 优先），取 Key 只在接入段兜底卡里。
+ */
 const PAGES = [
-  { path: '/google-maps-scraper-api/', id: 'google-maps-scraper-api', h1: /Google Maps Scraper API/i, capability: 'scraperApi', keyOpen: true },
-  { path: '/google-maps-reviews-scraper-api/', id: 'google-maps-reviews-scraper-api', h1: /Google Maps Reviews Scraper API/i, capability: 'scraperApi', keyOpen: true },
-  { path: '/google-maps-photos-api/', id: 'google-maps-photos-api', h1: /Google Maps Photos API/i, capability: 'photosApi', keyOpen: false },
-  { path: '/google-maps-scraper-mcp/', id: 'google-maps-scraper-mcp', h1: /Google Maps Scraper MCP Server/i, capability: 'mcp', keyOpen: true }
+  { path: '/google-maps-scraper-api/', id: 'google-maps-scraper-api', h1: /Google Maps Scraper API/i, capability: 'scraperApi', keyOpen: true, primary: 'api-dashboard', primaryHref: '/dashboard/api/' },
+  { path: '/google-maps-reviews-scraper-api/', id: 'google-maps-reviews-scraper-api', h1: /Google Maps Reviews Scraper API/i, capability: 'scraperApi', keyOpen: true, primary: 'api-dashboard', primaryHref: '/dashboard/api/' },
+  { path: '/google-maps-photos-api/', id: 'google-maps-photos-api', h1: /Google Maps Photos API/i, capability: 'photosApi', keyOpen: false, primary: 'api-dashboard', primaryHref: '/dashboard/api/' },
+  { path: '/google-maps-scraper-mcp/', id: 'google-maps-scraper-mcp', h1: /Google Maps Scraper MCP Server/i, capability: 'mcp', keyOpen: true, primary: 'setup', primaryHref: '#setup' }
 ]
 
 test.describe('API / MCP Landing Pages', () => {
@@ -49,18 +52,21 @@ test.describe('API / MCP Landing Pages', () => {
   test('open key and plan CTAs link to Dashboard / Pricing, unavailable ones are inert buttons', async ({ page }) => {
     for (const landing of PAGES) {
       await page.goto(landing.path, { waitUntil: 'networkidle' })
-      // 首屏获取 Key + 收尾 CTA 获取 Key
-      const keyLinks = page.locator(`main a[data-cta="${landing.id}-hero-api-dashboard"], main a[data-cta="${landing.id}-cta-api-dashboard"]`)
+      // 首屏 + 收尾 CTA 主按钮
+      const keyLinks = page.locator(`main a[data-cta="${landing.id}-hero-${landing.primary}"], main a[data-cta="${landing.id}-cta-${landing.primary}"]`)
       const keyButtons = page.locator(`main button[data-capability="${landing.capability}"]`)
       if (landing.keyOpen) {
         await expect(keyLinks).toHaveCount(2)
-        expect(await keyLinks.evaluateAll(links => links.map(link => link.getAttribute('href')))).toEqual(['/dashboard/api/', '/dashboard/api/'])
+        expect(await keyLinks.evaluateAll(links => links.map(link => link.getAttribute('href')))).toEqual([landing.primaryHref, landing.primaryHref])
         await expect(keyButtons).toHaveCount(0)
       } else {
         await expect(keyLinks).toHaveCount(0)
         expect(await keyButtons.count(), `expected grayed key CTAs on ${landing.path}`).toBeGreaterThanOrEqual(2)
       }
-      if (landing.capability !== 'mcp') {
+      if (landing.capability === 'mcp') {
+        // OAuth 不可用的客户端走 API Key 兜底
+        await expect(page.locator(`#setup a[data-cta="${landing.id}-setup-api-dashboard"]`)).toHaveAttribute('href', '/dashboard/api/')
+      } else {
         // API 三页的套餐卡（五档）绑 scraperApi：免费档进 API 管理页，付费档进 Pricing 的 API tab
         const plans = page.locator(`#pricing a[data-cta^="${landing.id}-plan-"]`)
         await expect(plans).toHaveCount(5)
@@ -109,7 +115,7 @@ test.describe('API / MCP Landing Pages', () => {
   test('MCP setup tabs switch client configs and expose the endpoint', async ({ page }) => {
     await page.goto('/google-maps-scraper-mcp/')
     await expect(page.locator('#mcp-setup-claude')).toBeVisible()
-    await expect(page.locator('#mcp-setup-claude [data-copy]')).toHaveAttribute('data-copy', /^claude mcp add --transport http mapsgrab .*\/mcp\//)
+    await expect(page.locator('#mcp-setup-claude [data-copy]')).toHaveAttribute('data-copy', /^claude mcp add --transport http mapsgrab \S*\/mcp\/$/)
     await page.locator('#mcp-setup-tab-cursor').click()
     await expect(page.locator('#mcp-setup-cursor')).toBeVisible()
     await expect(page.locator('#mcp-setup-claude')).toBeHidden()
