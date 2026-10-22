@@ -7,7 +7,7 @@
   防滥用计量」语义不同，且同样只按 user_id 归属；
 - 登录用户用量改为 MySQL 只插入流水 ``user_usage_logs``：used = 按月
   SUM(delta)，幂等由唯一键 (product_kind, user_id, request_id) 承担，
-  可审计、可退回（云端 014 预扣-结算需要 refund 语义）；
+  可审计；Online 发布使用同 session 与终态共同提交；
 - 匿名设备（user_id=0）维持 Redis 月度计数（013 双窗口拍板：匿名按
   device_id 归属、容忍丢失的防滥用计量），扣减与幂等组成单 Lua 脚本原子执行。
 
@@ -28,6 +28,7 @@ from typing import NamedTuple
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.subscription import (
     MAPS_API_PRODUCT_KIND,
@@ -255,17 +256,11 @@ class _BaseUsageService:
     ) -> bool:
         """插入一条用量流水；唯一键命中（幂等重放）返回 False。"""
 
-        log = UserUsageLogModel(  # type: ignore[call-arg]
-            product_kind=self.product_kind,
-            user_id=user_id,
-            ym=ym,
-            delta=delta,
-            request_id=request_id,
-            created_at=timestamp_now(),
-        )
         try:
             async with get_async_session() as db:
-                db.add(log)
+                self._add_log(
+                    db, user_id=user_id, ym=ym, delta=delta, request_id=request_id
+                )
                 await db.commit()
         except IntegrityError:
             # 唯一键 (product_kind, user_id, request_id) 命中 = 同一请求的
@@ -278,6 +273,33 @@ class _BaseUsageService:
             )
             return False
         return True
+
+    async def consume_in_session(
+        self, db: AsyncSession, *, user_id: int, records: int, request_id: str
+    ) -> None:
+        """由发布者先命中条件终态；流水与产物引用由同一事务提交。"""
+        self._add_log(
+            db,
+            user_id=user_id,
+            ym=get_current_ym(),
+            delta=records,
+            request_id=request_id,
+        )
+        await db.flush()
+
+    def _add_log(
+        self, db: AsyncSession, *, user_id: int, ym: int, delta: int, request_id: str
+    ) -> None:
+        db.add(
+            UserUsageLogModel(  # type: ignore[call-arg]
+                product_kind=self.product_kind,
+                user_id=user_id,
+                ym=ym,
+                delta=delta,
+                request_id=request_id,
+                created_at=timestamp_now(),
+            )
+        )
 
     async def _redis_used(self, usage_subkey: str) -> int:
         """读取匿名月度用量计数；未命中按零处理。"""

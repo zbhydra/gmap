@@ -89,6 +89,37 @@ async def put_object(
         ) from None
 
 
+async def upload_file(config: ObjectStorageItem, key: str, path: Path) -> None:
+    """直接流式上传固定 CSV；不将整个 Job 文件读入内存。"""
+
+    def upload() -> None:
+        with path.open("rb") as body:
+            if isinstance(config, R2StorageConfig):
+                with closing(_r2_client(config)) as client:
+                    client.put_object(
+                        Bucket=config.bucket,
+                        Key=key,
+                        Body=body,
+                        ContentType="text/csv; charset=utf-8",
+                    )
+            else:
+                _ali_oss_client(config).put_object(
+                    oss.PutObjectRequest(
+                        bucket=config.bucket,
+                        key=key,
+                        body=body,
+                        content_type="text/csv; charset=utf-8",
+                    )
+                )
+
+    try:
+        await asyncio.to_thread(upload)
+    except Exception as exc:
+        raise RuntimeError(
+            f"object_storage.upload_file: storage_id={config.id} provider={config.provider} error={type(exc).__name__}"
+        ) from None
+
+
 async def download_file(config: ObjectStorageItem, key: str, destination: Path) -> None:
     def download() -> None:
         if isinstance(config, R2StorageConfig):

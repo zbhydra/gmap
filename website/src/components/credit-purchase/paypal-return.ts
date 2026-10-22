@@ -151,7 +151,11 @@ async function pollSuccessOrderStatus(
       return
     }
 
-    const status = await getOrderStatus(context, orderNo)
+    let status = await getOrderStatus(context, orderNo)
+    if (provider === 'paypal' && classifyOrderStatus(status) === 'pending') {
+      await postJson('/api/client/order/paypal/confirm', context, { order_no: orderNo })
+      status = await getOrderStatus(context, orderNo)
+    }
     const outcome = classifyOrderStatus(status)
     if (outcome === 'paid') {
       stopSuccessPolling()

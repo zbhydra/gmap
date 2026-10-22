@@ -25,7 +25,7 @@
 - D5 附:导航 Online、API 下拉与首页产品卡指向产品介绍页；页内主 CTA 进入相应 Dashboard 工作区，云端业务合同归 014。
 - D5 附:**套餐与法务均参考竞品**(hydra 2026-08-30):Pricing 展示对齐竞品插件档位(Free 1,000 records/月;Pro $39 100,000;Business $99 500,000);法务页(隐私政策/条款)以竞品口径为基准改写为 MapsGrab 事实
 - D5 附:**页面图文密度对齐竞品**(hydra 2026-08-31):产品页/下载页按竞品 gmapsextractor.com 的图文结构补分区;2026-10 Atlas 改版后各页分区以定稿 [README](../../design/website/README.md) §7 为准,首屏为组件搭建的产品演示,不再用截图位;真实截图/录屏素材未产出时用统一占位组件呈现(标注素材内容),素材产出后仅回填;视觉一律用自有 design token。社证数字条不做(无真实数据,不允许虚报)
-- D5 附:**下载页并入插件产品页**(hydra 2026-09-01,对齐竞品「产品介绍在上、安装教程在下」的单页形态):`/download/` 撤销,安装内容(直装 zip 卡、Edge/Firefox 渠道步骤、安装帮助)整体并入 `/extension/` 页内教程区(锚点 `#install`);hero 双按钮「Install for Edge」「Chrome & Firefox」都滚动到页内教程区,由教程区分流 Edge / Firefox 商店与 zip 直装(商店上架前地址占位;产品基线不上 Chrome Web Store,Chrome 走 zip 直装);插件安装开放前,hero、教程区、套餐卡与页底的安装入口统一显示 Coming soon 灰化,不可触发;导航/footer 撤销 Download 入口,首页/工具页/Pricing 的安装 CTA 全部改指 `/extension/`;页底 CTA 改滚动到教程区
+- D5 附:**插件下载与安装**：插件产品页提供官网 ZIP 下载、分浏览器安装步骤、更新说明与帮助；首屏主按钮下载 Chromium 包，次按钮滚动到安装教程。全站安装入口指向插件页，分发规则归 [Maps 插件](../013.Maps插件/feat.md#官网分发)。
 - D5 附:**首页匿名预览**：首页提供单关键词预览和站级登录入口，正式任务在 Dashboard 手动创建。产品规则见 [Maps 云端](../014.Maps云端/feat.md)，详细交互见 [首页预览与任务创建](../014.Maps云端/tech-首页预览与任务创建.md)。
 - D5 附:**用户 Dashboard**：全站导航右侧匿名显示登录、登录后显示 Dashboard；工作区提供 Online 创建与历史、API 管理、订阅管理三页，左侧栏为唯一管理菜单。API 管理提供本人 Key、月用量与套餐、连接信息及 MCP 授权撤销。Pricing 只负责套餐比较、购买与升级；账户摘要、退出与渠道管理归 Dashboard。API 获取 Key 与 MCP 连接类 CTA 统一进入 API 管理页，授权确认复用现有官网登录。入口与消费边界见 [Dashboard 合同](tech-用户Dashboard.md)。
 - D6 SEO 基建(复用 009 域:sitemap / llms.txt / GSC / GA4)

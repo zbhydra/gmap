@@ -8,8 +8,7 @@
 
 - 刷新配置读取缓存。
 - 生成 / 轮换当前管理员的外部 API Key。
-- 维护 gosom 抓取引擎的多条 API 配置(地址 / Key / 权重,存 `system_data`,调用方按权重随机选用)。
-- 维护 Maps 云端的引擎选择、代理 URL 列表与每进程出站并发预算。
+- 维护 Maps 云端 Collector 节点、连接 Key 和代理 URL 列表，支持节点及代理检查。
 - 维护多套 R2 / AliOSS 对象存储配置与当前启用项。
 
 除这些明确入口外,它不是通用配置编辑器。
@@ -58,7 +57,7 @@
 前端:
 
 - `admin/src/api/system-settings.ts` 封装 `refreshConfigCache()`。
-- `admin/src/views/SystemSettingsView.vue`,页面顶部包含"配置表缓存"、"API Key"、"Gosom API"、"Gmap Engine"、"对象存储"五个 tab。
+- `admin/src/views/SystemSettingsView.vue`,页面顶部包含"配置表缓存"、"API Key"、"Collector"、"对象存储"四个 tab。
 - 侧边栏"系统设置"菜单,路由名 `SystemSettings`,路径 `/system-settings`。
 - 文案写入 `admin/src/i18n/zh-CN.json` 与 `admin/src/i18n/en-US.json`。
 
@@ -138,103 +137,25 @@ API Key 生成格式:
 - 管理员停用后,其 API Key 不能继续访问外部 API。
 - 数据库和日志中不出现 API Key 明文。
 
-## Gosom API 配置
+## Collector 配置
 
-系统设置页维护 gosom 抓取引擎(014 云端线 / ROADMAP B4)的多条 API 配置,每条一行「地址 / Key / 权重」,后续抓取调用方按权重加权随机取一条使用。Key 按运维决策(2026-09-01 hydra)明文存储,不加密、不掩码回显。
-
-### 数据模型
-
-`system_data` 单行:
-
-| 字段 | 值 |
-| --- | --- |
-| `data_key` | `gosom_api` |
-| `data_value` | JSON 数组 `[{"base_url": string, "api_key": string, "weight": int}]` |
-
-存储规则:
-
-- 键名常量 `GOSOM_API_DATA_KEY` 收敛在 `app/constants/gosom.py`,消费方禁止散落硬编码。
-- 读写与选取统一走 `gosom_api_service`(`get_items` / `save_items` / `pick`),底层仍是 `system_data_service.get/set`;保存后自动清空 30 分钟读取缓存,本进程立即拿到新值,无需再点「刷新配置缓存」,多进程部署时其他进程受 30 分钟 TTL 约束,与该入口同边界。
-- `base_url` 归一化(剥首尾空白 + 末尾斜杠)由 pydantic schema 完成,消费方直接拼路径不会出现双斜杠。
-- 整表覆盖保存:`items` 为空数组即清空全部配置;行数上限 100,权重取值 1-10000。
-- 2026-09-01 前的旧格式(单对象 `{"base_url", "api_key"}`)在 `get_items` 读取时迁移为权重 1 的单行,下次保存即写回数组格式,无需数据迁移脚本。
-- 不做密钥轮换历史与调用审计。
-
-### 选取规则
-
-抓取调用方统一通过 `gosom_api_service.pick()` 取 API:按各行 `weight` 加权随机选择一条(`random.choices`);未配置时返回 `None`,由调用方自行处理。
-
-### 接口
-
-| 方法 | 路径 | 鉴权 | 说明 |
-| --- | --- | --- | --- |
-| GET | `/api/admin/system-settings/gosom-api` | `get_admin_user` | 查询配置列表;未配置时 `items` 为空数组 |
-| POST | `/api/admin/system-settings/gosom-api` | `get_admin_user` | 整表覆盖保存配置 |
-
-请求与响应 `data` 同构:
-
-| 字段 | 类型 | 必传 | 说明 |
-| --- | --- | --- | --- |
-| `items` | array | 是 | 全部配置行;可为空数组(清空配置),≤100 行 |
-| `items[].base_url` | string | 是 | http(s):// 开头,≤500 字符,末尾斜杠保存前剥掉 |
-| `items[].api_key` | string | 是 | ≤500 字符 |
-| `items[].weight` | int | 是 | 1-10000,加权随机选取的权重 |
-
-校验由 pydantic schema 完成,失败走全局 `VALIDATION_ERROR`,不新增错误码。
+配置 owner、数据规格、规范化、权限、接口和敏感信息边界以 [Export 与 Collector 重构方案 §5](../014.Maps云端/tech-Export与Collector重构.md#5-单一采集配置) 为准。本节只维护 Admin 的交互与验收。
 
 ### 前端
 
-- "Gosom API" tab:配置行列表(地址 / Key / 权重三列 + 行删除按钮)+「添加 API」按钮 + 保存按钮;进入页面即加载回显,tab 顶部说明权重语义。
-- 增删改都在前端行状态上完成,点保存才整表提交;任一行地址 / Key / 权重缺失时前端直接拦截提示,不发请求。
-- 保存成功以后端返回值(归一化后)回填全部行。
+- “Collector”标签提供节点 URL / Key 动态行、添加与删除节点、逐节点连接检查，以及代理列表。Key 使用密码输入框，配置仅保留在当前页面内存，不写入浏览器持久存储。
+- 修改、增删和检查均不自动保存；空节点列表可显式保存以停用采集，代理列表也允许为空。代理按每行一条完整 URL 编辑。
+- 保存提交完整配置，成功后再 GET 重读，以重新读取的规范化配置回填；普通编辑不会清空未修改的 Key。首次加载或保存后重读失败时禁止编辑和保存，点击“刷新”后可重试。
+- 节点检查显示连接结果或本地化失败分类；只验证鉴权与服务连接，不显示为 Google 采集成功。检查期间禁用节点编辑和保存，避免结果对应已修改的输入；修改输入后清除旧结果。
+- 代理校验器初始填入表单代理，可独立编辑和重复校验；按批提交，展示脱敏地址、结果、耗时、进度与可用数量。停止操作等待当前批完成后停止后续批次，已完成结果保留；检查不保存配置。
+- 字段格式错误沿用后端本地化业务消息；代理格式错误保留字段、项号和 URL 格式提示，不回显凭据。配置相关失败不记录原始异常对象。
 
 ### 验收
 
-- 未配置时打开 tab 只有「添加 API」入口;添加两行保存后 `system_data` 的 `gosom_api` 为两行数组,重新打开回显一致且末尾斜杠被剥掉。
-- 存在未填完整的行时无法保存;删除全部行后保存即清空配置,重新打开 `items` 为空。
-- 旧单对象格式存量数据读取时自动按权重 1 的单行回显。
-
-## Gmap 引擎配置
-
-系统设置页提供 "Gmap Engine" tab，维护 HTTP / gosom 引擎选择、HTTP 代理 URL 列表和每个 business 进程的 Google 出站并发预算。代理的选取、重试与脱敏合同以 `@../014.Maps云端/tech-引擎Provider层.md` §5.3 为唯一事实源。
-
-### 数据与接口
-
-`system_data` 以 `gmap_engine` 单行整对象保存：
-
-| 字段 | 类型 | 必传 | 说明 |
-| --- | --- | --- | --- |
-| `provider` | enum | 是 | `http` / `gosom`，新任务使用的引擎 |
-| `proxies` | `string[]` | 是 | 完整代理 URL，不设条数上限，支持万条列表；HTTP 保存时至少 1 条 |
-| `concurrency` | `int` | 是 | 每个 business 进程的 Google 出站并发预算，至少 1 |
-
-| 方法 | 路径 | 鉴权 | 说明 |
-| --- | --- | --- | --- |
-| GET | `/api/admin/system-settings/gmap-engine` | `get_admin_user` | 读取配置；未配置时返回默认视图 |
-| POST | `/api/admin/system-settings/gmap-engine` | `get_admin_user` | 校验并整对象覆盖保存 |
-| POST | `/api/admin/system-settings/gmap-engine/check-proxies` | `get_admin_user` | 接收 `proxies` 数组，逐条校验 Google 连通性，不保存配置 |
-
-保存时将每行首尾空白剔除，忽略空行，按规范化后完整 URL 去重并保留首次出现顺序。URL 只接受 `http`、`https`、`socks5`、`socks5h` scheme，必须有 host 和 port；用户名与密码作为 URL authority 的可选部分。HTTP + 空列表、URL 无效或并发预算小于 1 时返回全局 `VALIDATION_ERROR`，不新增错误码。
-
-代理凭据按运维决策明文存储和回显，但不得进日志或错误文本。旧 `webshare: {endpoint, username, password}` 结构删除，不保留兼容读取或双写。
-
-### 前端
-
-- 引擎用 HTTP / Gosom 分段控件。
-- 代理列表用全宽多行输入，每行一条完整 URL，高度至少 200px；支持一次粘贴一条或多条。
-- 每进程并发预算用整数输入，宽 160px，最小值 1。
-- Gosom 模式下代理列表仍可编辑，允许保存空列表；HTTP 模式下空列表时前端拦截并定位到输入区。
-- 保存和连通性校验前都检查代理格式；后端独立执行同一格式合同。格式错误消息明确 `proxies` 字段、从 1 开始的项号和完整 URL 格式要求，不回显输入。前端展示后端业务 `msg`，请求语言跟随界面语言。
-- 引擎切换控件右侧提供“代理校验器”，弹窗初始填入当前代理列表，可独立修改和重复校验。前端忽略空行，每批最多 20 条；后端逐条经代理请求固定地址 `https://www.google.com/generate_204`，使用引擎同款 Chrome TLS 指纹，单条超时 10 秒，不重试、不跟随重定向。HTTP 204 表示 Google 连通，其他结果区分 HTTP 异常、超时和连接失败；连通不代表 Maps 采集不会触发封锁。
-- 校验返回 `items`，按提交顺序保留重复项；每项包含脱敏 `proxy`、`status`（`ok/http_error/timeout/connection_error`）、可空 `status_code` 和 `duration_ms`。弹窗显示进度、可用数及结果表；停止操作等待当前批结束后停止后续批次，已完成结果保留。
-- 全部文案走 i18n；保存成功以后端返回的归一化对象回填。
-
-### 验收
-
-- HTTP 模式分别保存 1 条和多条代理，重载后顺序与内容一致。
-- 多行粘贴中的空行与重复 URL 被正确归一化；非法 scheme、无 host/port 和 HTTP 空列表无法保存。
-- Gosom 模式可保存空代理列表；系统日志、校验错误与前端通知中均不出现代理凭据。
-- 未认证请求不能触发代理网络校验；格式错误在双端拦截，校验结果和失败日志不含凭据，校验操作不修改引擎配置。
+- 节点和代理可新增、编辑、删除、保存、刷新及重新打开；重读保留未修改的 Key，URL 和代理规范化结果与后端一致。
+- 节点检查使用当前编辑值，成功或失败均不保存；编辑后旧检查结果清除，鉴权失败有明确提示。
+- 加载及保存后重读失败不会用空表单覆盖配置，刷新成功后恢复操作。
+- 空节点和空代理可保存；Key 与代理凭据不进入浏览器持久存储、日志或错误提示，代理检查结果中的地址脱敏。
 
 ## 对象存储配置
 
@@ -320,6 +241,5 @@ GET 响应 `data` 与 POST 请求、响应 `data` 均采用“数据规格”的
 | --- | --- | --- |
 | 系统设置 | `@backend/src/app/api/admin/admin_system_settings.py` | `@backend/src/app/services/admin_system_settings_service.py` |
 | API Key | 同上 | `@backend/src/app/services/admin_api_key_service.py` |
-| Gosom API 配置 | 同上 | `@backend/src/app/services/gosom_api_service.py`(读写 + 加权随机选取);键名常量在 `@backend/src/app/constants/gosom.py` |
-| Gmap 引擎配置 | 同上 | `@backend/src/app/services/maps_engine_service.py`;运行合同见 `@../014.Maps云端/tech-引擎Provider层.md` §5.3 与 §7 |
+| Collector 配置 | 同上 | `@backend/src/app/services/gmap_collector_config_service.py`;共享合同见 [单一采集配置](../014.Maps云端/tech-Export与Collector重构.md#5-单一采集配置) |
 | 对象存储配置 | 同上 | `@backend/src/app/services/object_storage_config_service.py`;键名常量在 `@backend/src/app/constants/object_storage.py` |

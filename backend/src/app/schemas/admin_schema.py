@@ -18,8 +18,6 @@ from pydantic import (
 )
 from pydantic_core import PydanticCustomError
 
-from app.constants.gmap import GMAP_ENGINE_DEFAULT_CONCURRENCY
-
 
 # ========== 认证相关 ==========
 
@@ -122,67 +120,12 @@ def _normalize_url(value: str, *, schemes: frozenset[str], proxy: bool) -> str:
     return urlunsplit((scheme, normalized_authority, path, "", ""))
 
 
-class GosomApiItem(BaseModel):
-    """gosom 引擎单条 API 配置"""
-
-    base_url: str = Field(
-        ...,
-        min_length=1,
-        max_length=500,
-        description="gosom 引擎 API 根地址，http(s):// 开头；末尾斜杠由 schema 统一剥掉",
-    )
-    api_key: str = Field(
-        ...,
-        min_length=1,
-        max_length=500,
-        description="gosom 引擎 API Key，明文保存到 system_data",
-    )
-    weight: int = Field(
-        ...,
-        ge=1,
-        le=10_000,
-        description="选择权重，≥1；多条配置按权重加权随机选用，越大被选中概率越高",
-    )
-
-    @field_validator("api_key", mode="before")
-    @classmethod
-    def _strip_before_validate(cls, value: object) -> object:
-        """先剥首尾空白再进 pattern/长度校验，避免可修剪输入被误拒。"""
-        return value.strip() if isinstance(value, str) else value
-
-    @field_validator("base_url", mode="before")
-    @classmethod
-    def _normalize_base_url(cls, value: object) -> object:
-        """规范化 HTTP(S) 根地址，保证唯一性比较使用同一口径。"""
-        if not isinstance(value, str):
-            return value
-        return _normalize_url(value, schemes=frozenset({"http", "https"}), proxy=False)
-
-
-class GosomApiConfigRequest(BaseModel):
-    """gosom 引擎 API 配置保存请求；整表覆盖保存，items 为空即清空配置"""
-
-    items: list[GosomApiItem] = Field(
-        default_factory=list,
-        max_length=100,
-        description="全部 API 配置行，一行一个 url / key / 权重",
-    )
-
-    @model_validator(mode="after")
-    def _base_urls_must_be_unique(self) -> "GosomApiConfigRequest":
-        """禁止规范化后指向同一 gosom 实例的重复配置。"""
-        base_urls = [item.base_url for item in self.items]
-        if len(base_urls) != len(set(base_urls)):
-            raise ValueError("gosom base_url 不能重复")
-        return self
-
-
 class GmapProxyList(BaseModel):
     """保存配置和连通性校验共用的代理格式边界。"""
 
     proxies: list[str] = Field(
         default_factory=list,
-        description="完整代理 URL 列表；保存 HTTP 配置时至少一条",
+        description="完整代理 URL 列表",
     )
 
     @field_validator("proxies", mode="before")
@@ -219,38 +162,6 @@ class GmapProxyCheckResult(BaseModel):
     status: Literal["ok", "http_error", "timeout", "connection_error"]
     status_code: int | None = None
     duration_ms: int
-
-
-class GmapEngineConfig(GmapProxyList):
-    """gmap 采集引擎配置与未配置时的默认读取视图。"""
-
-    provider: Literal["http", "gosom"] = Field(
-        default="http",
-        description="抓取引擎选择：http=自研直采，gosom=云端引擎",
-    )
-    concurrency: int = Field(
-        default=GMAP_ENGINE_DEFAULT_CONCURRENCY,
-        ge=1,
-        description="每个 business 进程的 Google 出站并发预算",
-    )
-
-    @field_validator("proxies")
-    @classmethod
-    def _deduplicate_proxies(cls, value: list[str]) -> list[str]:
-        return list(dict.fromkeys(value))
-
-
-class GmapEngineConfigRequest(GmapEngineConfig):
-    """gmap 引擎保存请求；HTTP 模式必须配置代理。"""
-
-    @model_validator(mode="after")
-    def _http_requires_proxy(self) -> "GmapEngineConfigRequest":
-        """HTTP Provider 没有代理无法工作，保存时直接拒绝。"""
-        if self.provider == "http" and not self.proxies:
-            raise PydanticCustomError(
-                "proxy_required", "HTTP provider 至少需要一条代理 URL"
-            )
-        return self
 
 
 StorageId = Annotated[

@@ -1,15 +1,11 @@
 /**
  * Dashboard 客户端接口封装（015 U2）。
  *
- * JSON 走 homepage API 薄封装；Online 整包 ZIP 是二进制响应，用同一请求头
- * 边界直接 fetch（token 只进请求头，不进下载链接），区分失败信封与文件成功
- * 响应后触发浏览器下载。
+ * 复用站级 JSON、鉴权与会话失效边界；Export 下载使用后端签名 URL。
  */
 
 import {
   HomepageApiError,
-  buildRequestHeaders,
-  getApiBaseUrl,
   getJson,
   postJson,
   type RequestContext
@@ -87,56 +83,52 @@ export function getOnlineOptions(context: RequestContext): Promise<OnlineOptions
   }))
 }
 
-export function createOnlineTask(context: RequestContext, keywords: string[], includeContacts: boolean, viewports?: OnlineViewport[]): Promise<OnlineTaskSummary> {
-  return withSessionExpiry(postJson<OnlineTaskSummary>('/api/client/maps-online/tasks', context,
-    { keywords, include_contacts: includeContacts,
-      ...(viewports ? { search_viewports: viewports.map(point => ({ lat: point.lat, lng: point.lng, zoom: point.zoom })) } : {}) }))
+export type ExportJobStatus = 'queued' | 'collecting' | 'publishing' | 'completed' | 'partial' | 'failed'
+
+export type ExportItemInput = {
+  keyword: string
+  viewport?: OnlineViewport
 }
 
-/** Online 任务公开摘要（后端 MapsOnlineTaskSummary）。 */
-export interface OnlineTaskSummary {
-  /** 任务编号。 */
-  task_no: string
-  /** 处理状态；后端只公开两态。 */
-  status: 'processing' | 'completed'
-  /** 关键词总数。 */
+export interface ExportJobSummary {
+  job_no: string
+  run_no: string
+  status: ExportJobStatus
+  include_contacts: boolean
   total_count: number
-  /** 已处理关键词数。 */
   processed_count: number
-  /** 已产出结果条数。 */
   record_count: number
-  /** 创建时间；后端可能返回秒或毫秒。 */
+  has_file: boolean
   created_at: number
+  started_at: number | null
+  finished_at: number | null
+  error_code: number | null
 }
 
-/** 历史分页响应。 */
-export interface OnlineTaskListResponse {
-  tasks: OnlineTaskSummary[]
-  /** 全量任务数（分页基准）。 */
+export interface ExportJobItem {
+  item_index: number
+  keyword: string
+  viewport: OnlineViewport | null
+  result_count: number
+  completed: boolean
+  error_code: number | null
+}
+
+export interface ExportJobDetail {
+  job: ExportJobSummary
+  items: ExportJobItem[]
+}
+
+export interface ExportJobList {
+  jobs: ExportJobSummary[]
   total: number
   offset: number
   limit: number
 }
 
-/** 关键词明细项。 */
-export interface OnlineTaskItem {
-  item_id: number
-  sequence: number
-  keyword: string
-  /** 该关键词的结果条数；不代表单项文件一定可下载。 */
-  record_count: number
-}
-
-/** 任务详情响应。 */
-export interface OnlineTaskDetailResponse {
-  task: OnlineTaskSummary
-  items: OnlineTaskItem[]
-}
-
-/** 签名单项下载信息。 */
-export interface OnlineItemDownload {
-  url: string
-  filename: string
+export function createExportJob(context: RequestContext, items: ExportItemInput[], includeContacts: boolean): Promise<ExportJobDetail> {
+  return withSessionExpiry(postJson<ExportJobDetail>('/api/client/export/jobs', context,
+    { items, include_contacts: includeContacts }))
 }
 
 /**
@@ -152,44 +144,17 @@ function withSessionExpiry<T>(request: Promise<T>): Promise<T> {
   })
 }
 
-/** 查询当前用户历史（最新在前，offset 分页）。 */
-export function listOnlineTasks(
-  context: RequestContext,
-  offset: number,
-  limit: number
-): Promise<OnlineTaskListResponse> {
-  return withSessionExpiry(
-    getJson<OnlineTaskListResponse>('/api/client/maps-online/tasks', context, { offset, limit })
-  )
+export function listExportJobs(context: RequestContext, offset: number, limit: number): Promise<ExportJobList> {
+  return withSessionExpiry(getJson<ExportJobList>('/api/client/export/jobs', context, { offset, limit }))
 }
 
-/** 查询单个任务的关键词明细。 */
-export function getOnlineTaskDetail(
-  context: RequestContext,
-  taskNo: string
-): Promise<OnlineTaskDetailResponse> {
-  return withSessionExpiry(
-    getJson<OnlineTaskDetailResponse>(`/api/client/maps-online/tasks/${encodeURIComponent(taskNo)}`, context)
-  )
+export function getExportJob(context: RequestContext, jobNo: string): Promise<ExportJobDetail> {
+  return withSessionExpiry(getJson<ExportJobDetail>(`/api/client/export/jobs/${encodeURIComponent(jobNo)}`, context))
 }
 
-/** 请求单项 CSV 签名下载信息；无文件或已过期时后端返回 404。 */
-export function getOnlineItemDownload(
-  context: RequestContext,
-  taskNo: string,
-  itemId: number
-): Promise<OnlineItemDownload> {
-  return withSessionExpiry(
-    getJson<OnlineItemDownload>(
-      `/api/client/maps-online/tasks/${encodeURIComponent(taskNo)}/items/${itemId}/download`,
-      context
-    )
-  )
-}
-
-/** 判断下载错误是否为无文件 / 已过期（就地提示，不当作通用失败）。 */
-export function isOnlineDownloadUnavailable(error: Error): boolean {
-  return error instanceof HomepageApiError && error.code === 404
+export function getExportDownload(context: RequestContext, jobNo: string): Promise<{ url: string; filename: string }> {
+  return withSessionExpiry(getJson<{ url: string; filename: string }>(
+    `/api/client/export/jobs/${encodeURIComponent(jobNo)}/download`, context))
 }
 
 /** 请求当前产品类别的渠道管理入口；后端按订阅实例选择渠道，URL 可为空。 */
@@ -204,50 +169,4 @@ export function createSubscriptionManagementUrl(
     return url.length > 0 ? url : null
   })
   return withSessionExpiry(request)
-}
-
-/**
- * 下载任务整包 ZIP 并触发浏览器保存。
- *
- * 成功响应是 application/zip 二进制；失败时后端返回 JSON 信封，解析 msg 抛
- * HomepageApiError。下载完成后释放临时对象 URL。
- */
-export function downloadOnlineTaskZip(context: RequestContext, taskNo: string): Promise<void> {
-  return withSessionExpiry(downloadOnlineTaskZipRequest(context, taskNo))
-}
-
-async function downloadOnlineTaskZipRequest(context: RequestContext, taskNo: string): Promise<void> {
-  const url = new URL(
-    `/api/client/maps-online/tasks/${encodeURIComponent(taskNo)}/download`,
-    getApiBaseUrl()
-  )
-  const response = await fetch(url, { method: 'GET', headers: buildRequestHeaders(context) })
-  const contentType = response.headers.get('Content-Type') ?? ''
-  if (!response.ok || !contentType.includes('zip')) {
-    throw await parseZipFailure(response)
-  }
-
-  const blob = await response.blob()
-  const objectUrl = window.URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = objectUrl
-  anchor.download = `${taskNo}.zip`
-  document.body.append(anchor)
-  anchor.click()
-  anchor.remove()
-  window.URL.revokeObjectURL(objectUrl)
-}
-
-/** 解析 ZIP 下载失败响应为带上下文的 HomepageApiError。 */
-async function parseZipFailure(response: Response): Promise<HomepageApiError> {
-  let message = `HTTP ${response.status}`
-  let code: number | string | undefined
-  try {
-    const body = (await response.json()) as { msg?: string; message?: string; code?: number | string }
-    message = body.msg || body.message || message
-    code = body.code
-  } catch {
-    // 响应体不是 JSON（如网关错误页）时保留 HTTP 状态信息。
-  }
-  return new HomepageApiError(`GET /api/client/maps-online/tasks download failed: ${message}`, response.status, code)
 }

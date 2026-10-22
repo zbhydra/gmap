@@ -107,3 +107,10 @@ class CommonCode(IntEnum):
     # Maps 同步 API 与 MCP 授权
     MAPS_API_QUOTA_EXHAUSTED = 31201  # API 自然月请求额度耗尽
     MCP_OAUTH_REQUEST_INVALID = 31202  # 确认票据已过期或被消费
+    MAPS_API_MEDIA_UNAVAILABLE = 31203  # 照片或评论采集暂不可用
+
+    # Google Export
+    EXPORT_TARGET_FAILED = 31301  # 搜索项采集失败
+    EXPORT_PARTIAL_RESULT = 31302  # 部分字段或搜索项未完成
+    EXPORT_REQUEST_RETRY = 31303  # 本节点执行队列暂不可接受新任务
+    EXPORT_PUBLISH_FAILED = 31304  # 结果发布失败

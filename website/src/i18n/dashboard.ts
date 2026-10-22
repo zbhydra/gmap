@@ -94,16 +94,20 @@ export const dashboardContent: DashboardContent = {
     emptyTitle: 'No exports yet',
     emptyHint: 'Run a task on the Online Scraper and it will show up here.',
     columns: {
-      taskNo: 'Task',
+      taskNo: 'Job',
       createdAt: 'Created (ET)',
-      keywords: 'Keywords',
+      samples: 'Searches',
       processed: 'Processed',
       records: 'Records',
       status: 'Status'
     },
     status: {
-      processing: 'Processing',
-      completed: 'Completed'
+      queued: 'Queued',
+      collecting: 'Collecting',
+      publishing: 'Preparing CSV',
+      completed: 'Completed',
+      partial: 'Partial success',
+      failed: 'Failed'
     },
     timezone: 'ET',
     pagination: {
@@ -114,15 +118,31 @@ export const dashboardContent: DashboardContent = {
     detail: {
       show: 'Details',
       hide: 'Hide details',
-      loading: 'Loading keywords...',
-      loadFailed: 'Failed to load keywords for this task.',
+      loading: 'Loading searches...',
+      loadFailed: 'Failed to load searches for this task.',
       keyword: 'Keyword',
       records: 'Records',
-      downloadCsv: 'CSV'
+      runNo: 'Run',
+      startedAt: 'Started (ET)',
+      finishedAt: 'Finished (ET)',
+      contacts: 'Emails and social profiles',
+      contactsEnabled: 'Enabled for this task',
+      contactsDisabled: 'Off for this task',
+      completed: 'Completed',
+      pending: 'Pending',
+      viewport: '{lat}, {lng} · zoom {zoom}'
     },
-    downloadZip: 'Download ZIP',
+    downloadCsv: 'Download CSV',
+    noFile: 'No CSV',
+    errors: {
+      31301: 'Could not collect this search.',
+      31302: 'Some results are unavailable. Delivered rows are retained.',
+      31303: 'The collector is busy. Try again.',
+      31304: 'Could not publish this export.'
+    },
+    errorFailed: 'Could not complete this search.',
     downloading: 'Preparing...',
-    downloadUnavailable: 'No downloadable file for this item. It may have expired.',
+    downloadUnavailable: 'No downloadable CSV. The file may have expired.',
     downloadFailed: 'The download could not be started. Please try again.',
     signInPrompt: 'Sign in to see your Online export history.',
     signInCta: 'Sign in',
@@ -169,7 +189,7 @@ export const dashboardContent: DashboardContent = {
     copyUrl: 'Copy URL',
     grants: {
       title: 'Connected apps',
-      description: 'Apps you have allowed to search businesses and read reviews using your API allowance.',
+      description: 'Apps you have allowed to search businesses and read reviews and public photos using your API allowance.',
       loading: 'Loading connected apps...',
       empty: 'No apps are connected.',
       loadFailed: 'Could not load connected apps. Please try again.',

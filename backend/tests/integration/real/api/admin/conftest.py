@@ -11,7 +11,7 @@ import pytest
 from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.constants.gmap import GMAP_ENGINE_DATA_KEY
+from app.constants.gmap_collector import GMAP_COLLECTOR_DATA_KEY
 from app.constants.object_storage import OBJECT_STORAGE_DATA_KEY
 from app.core.database import get_engine
 from app.models.admin_model import AdminModel
@@ -57,7 +57,10 @@ async def real_admin_system_settings_cleanup(
     real_system_settings_schema_ready,
 ) -> AsyncIterator[_CleanupState]:
     """保存固定配置行，并清理测试管理员后恢复其原始状态。"""
-    config_keys = (GMAP_ENGINE_DATA_KEY, OBJECT_STORAGE_DATA_KEY)
+    config_keys = (
+        OBJECT_STORAGE_DATA_KEY,
+        GMAP_COLLECTOR_DATA_KEY,
+    )
     async with AsyncSession(get_engine()) as session:
         rows = list(
             (

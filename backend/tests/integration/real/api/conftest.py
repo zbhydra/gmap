@@ -13,6 +13,7 @@ import pytest
 from sqlalchemy import delete, text
 
 from app.constants.auth import TokenType
+from app.core.config import settings
 from app.core.database import get_async_session
 from app.core.redis import redis_client
 from app.models.mcp_oauth_client_model import McpOAuthClientModel
@@ -90,6 +91,9 @@ async def real_launch_client(
     base_url = f"http://127.0.0.1:{port}"
     launcher = tmp_path / "launch_backend.py"
     launcher.write_text(
+        "import app.core.config as config_module\n"
+        "from app.core.config_schema import Settings\n"
+        f"config_module.settings = Settings({settings.config_path!r})\n"
         "from app.core.config import settings\n"
         f"settings.app.name = 'launch-api-worker-{test_run_id}'\n"
         f"settings.app.public_api_base_url = '{base_url}'\n"
@@ -115,7 +119,7 @@ async def real_launch_client(
             async with httpx.AsyncClient(
                 base_url=base_url,
                 headers={"X-Forwarded-For": test_ip},
-                timeout=180,
+                timeout=195,
                 trust_env=False,
             ) as client:
                 for _ in range(100):

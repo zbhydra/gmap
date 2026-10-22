@@ -41,3 +41,6 @@ scratch/
 # 构建压缩产物
 dist.zip
 *.store.zip
+
+# 跨发版保留的 Export 工作目录
+backend/data/export-work/

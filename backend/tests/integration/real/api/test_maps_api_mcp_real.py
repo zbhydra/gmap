@@ -2,6 +2,7 @@
 
 import base64
 import hashlib
+import json
 import secrets
 from urllib.parse import parse_qs, urlsplit
 
@@ -12,14 +13,19 @@ from mcp import Client
 from mcp.client.streamable_http import streamable_http_client
 from sqlalchemy import func, select, update
 
+from app.constants.gmap_collector import GMAP_COLLECTOR_DATA_KEY
 from app.core.database import get_async_session
 from app.i18n.common_code import CommonCode
-from app.models.maps_online_task_model import MapsOnlineTaskModel
+from app.models.export_job_model import ExportJobModel
 from app.models.mcp_oauth_grant_model import McpOAuthGrantModel
 from app.models.user_model import UserModel
 from app.models.user_usage_log_model import UserUsageLogModel
+from app.models.system_data_model import SystemDataModel
+from app.provider.gmap.collector_client import gmap_collector_client
 from app.schemas.maps_api_schema import MapsSearchRequest
-from app.services.maps_engine_service import maps_engine_service
+from app.schemas.gmap_collector_schema import GmapCollectorConfig
+from app.services.gmap_collector_config_service import gmap_collector_config_service
+from app.services.system_data_service import system_data_service
 from app.services.mcp_oauth_service import mcp_oauth_grant_service
 from app.services.mcp_oauth_ticket_service import mcp_oauth_ticket_service
 from app.services.usage_service import api_usage_service, usage_identity
@@ -273,7 +279,10 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
     real_launch_state: _CleanupState,
     test_run_id: str,
 ) -> None:
-    if not (await maps_engine_service.get_config()).proxies:
+    config = await gmap_collector_config_service.get_config()
+    if not config.collectors:
+        pytest.skip("REAL_COLLECTOR_UNAVAILABLE: 未配置 Collector URL/Key")
+    if not config.proxies:
         pytest.skip("REAL_GMAP_PROXY_UNAVAILABLE: 未配置 Google Maps 代理")
     client, state = real_launch_client, real_launch_state
     user_id, token = state.users[0]
@@ -292,6 +301,19 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
     fid = next(
         place["fid"] for place in search["places"] if (place["review_count"] or 0) > 20
     )
+    photos = _data(
+        await client.post(
+            API + "/photos",
+            headers=_headers(key),
+            json={"fid": fid.upper().replace("0X", "0x"), "max_results": 2},
+        )
+    )
+    assert 0 < photos["returned_count"] == len(photos["photos"]) <= 2
+    assert photos["status"] == "partial" and photos["reason"] in {
+        "limit_reached",
+        "pagination_unverified",
+        "completeness_unverified",
+    }
     reviews = _data(
         await client.post(
             API + "/reviews", headers=_headers(key), json={"fid": fid, "sort_by": 2}
@@ -300,7 +322,7 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
     assert reviews["reviews"] and reviews["next_cursor"]
     tokens = await _grant(client, state, await _register(client, state, test_run_id))
     async with httpx2.AsyncClient(
-        headers=_headers(tokens["access_token"]), trust_env=False, timeout=180
+        headers=_headers(tokens["access_token"]), trust_env=False, timeout=195
     ) as http:
         async with Client(
             streamable_http_client(
@@ -311,6 +333,7 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
             assert {tool.name for tool in tools.tools} == {
                 "search_places",
                 "list_reviews",
+                "list_photos",
             }
             result = await mcp.call_tool(
                 "list_reviews",
@@ -318,8 +341,26 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
             )
             assert not result.is_error, result.structured_content
             assert result.structured_content and result.structured_content["reviews"]
+            assert not (
+                {review["review_id"] for review in reviews["reviews"]}
+                & {
+                    review["review_id"]
+                    for review in result.structured_content["reviews"]
+                }
+            )
+            photo_result = await mcp.call_tool(
+                "list_photos", {"fid": fid, "max_results": 3}
+            )
+            assert not photo_result.is_error, photo_result.structured_content
+            data = photo_result.structured_content
+            assert data and 0 < data["returned_count"] == len(data["photos"]) <= 3
+            assert data["status"] == "partial"
+            print(
+                f"media-google fid={fid} rest_photos={photos['returned_count']} "
+                f"mcp_photos={data['returned_count']} reviews_cursor_continued=true"
+            )
             usage = _data(await client.get(API + "/usage", headers=headers))
-            assert usage["used"] == 3
+            assert usage["used"] == 5
             assert (
                 _data(
                     await client.get(
@@ -340,13 +381,13 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
                     .scalars()
                     .all()
                 )
-                assert len(logs) == 3 and all(
+                assert len(logs) == 5 and all(
                     log.product_kind == "maps_api" and log.delta == 1 for log in logs
                 )
                 assert not await db.scalar(
                     select(func.count())
-                    .select_from(MapsOnlineTaskModel)
-                    .where(MapsOnlineTaskModel.user_id == user_id)
+                    .select_from(ExportJobModel.model_for_user(user_id))
+                    .where(ExportJobModel.model_for_user(user_id).user_id == user_id)
                 )
             await api_usage_service.consume(
                 usage_identity(user_id, None),
@@ -355,13 +396,13 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
                 request_id=f"exhaust-{test_run_id}",
             )
             exhausted = await client.post(
-                API + "/search", headers=_headers(key), json={"q": "coffee"}
+                API + "/photos", headers=_headers(key), json={"fid": fid}
             )
             assert (
                 exhausted.status_code == 200
                 and exhausted.json()["code"] == CommonCode.MAPS_API_QUOTA_EXHAUSTED
             )
-            limited = await mcp.call_tool("list_reviews", {"fid": fid})
+            limited = await mcp.call_tool("list_photos", {"fid": fid})
             assert (
                 limited.is_error
                 and limited.structured_content
@@ -375,3 +416,91 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
         await client.post(f"{OAUTH}/grants/{grant_id}/revoke", headers=headers)
     )["revoked"]
     assert (await _mcp_response(client, tokens["access_token"])).status_code == 401
+
+
+async def test_real_media_failure_does_not_consume_and_valid_empty_reviews_does(
+    real_async_client: httpx.AsyncClient,
+    real_launch_state: _CleanupState,
+    test_run_id: str,
+) -> None:
+    """真实账号与计量，只替换不可控的 Collector HTTP 出口。"""
+    client, state = real_async_client, real_launch_state
+    headers = _headers(state.users[0][1])
+    key = _data(await client.post(API + "/key/generate", headers=headers))["api_key"]
+    fid = "0x123456789abc:0xabcdef123456"
+    original_row = await system_data_service.system_data_info(GMAP_COLLECTOR_DATA_KEY)
+    original_http = gmap_collector_client._client
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        if json.loads(request.content)["operation"] == "list_reviews":
+            return httpx.Response(
+                200, json={"status": "ok", "reviews": [], "next_cursor": None}
+            )
+        return httpx.Response(
+            200, json={"status": "failed", "photos": [], "reason": "empty_unverified"}
+        )
+
+    try:
+        await gmap_collector_config_service.save_config(
+            GmapCollectorConfig.model_validate(
+                {
+                    "collectors": [
+                        {"url": "http://collector.test", "api_key": test_run_id}
+                    ],
+                    "proxies": ["http://proxy.test:8080"],
+                }
+            )
+        )
+        async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as http:
+            gmap_collector_client._client = http
+            failed = await client.post(
+                API + "/photos", headers=_headers(key), json={"fid": fid}
+            )
+            assert failed.status_code == 200
+            assert failed.json()["code"] == CommonCode.MAPS_API_MEDIA_UNAVAILABLE
+            invalid = await client.post(
+                API + "/photos", headers=_headers(key), json={"fid": "0x1:0x2"}
+            )
+            assert invalid.status_code == 200
+            assert invalid.json()["code"] == CommonCode.VALIDATION_ERROR
+            assert _data(await client.get(API + "/usage", headers=headers))["used"] == 0
+            assert _data(
+                await client.post(
+                    API + "/reviews", headers=_headers(key), json={"fid": fid}
+                )
+            ) == {"reviews": [], "next_cursor": None}
+            assert _data(await client.get(API + "/usage", headers=headers))["used"] == 1
+        async with get_async_session() as db:
+            logs = (
+                await db.scalars(
+                    select(UserUsageLogModel).where(
+                        UserUsageLogModel.user_id == state.users[0][0]
+                    )
+                )
+            ).all()
+            assert len(logs) == 1 and logs[0].product_kind == "maps_api"
+            assert not await db.scalar(
+                select(func.count())
+                .select_from(ExportJobModel.model_for_user(state.users[0][0]))
+                .where(
+                    ExportJobModel.model_for_user(state.users[0][0]).user_id
+                    == state.users[0][0]
+                )
+            )
+    finally:
+        gmap_collector_client._client = original_http
+        if original_row is None:
+            await system_data_service.system_data_del([GMAP_COLLECTOR_DATA_KEY])
+        else:
+            async with get_async_session() as db:
+                await db.execute(
+                    update(SystemDataModel)
+                    .where(SystemDataModel.data_key == GMAP_COLLECTOR_DATA_KEY)
+                    .values(
+                        data_value=original_row.data_value,
+                        created_at=original_row.created_at,
+                        updated_at=original_row.updated_at,
+                    )
+                )
+                await db.commit()
+            system_data_service.clear_cache()

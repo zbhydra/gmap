@@ -8,7 +8,7 @@
 ## 1. 技术栈与构建
 
 - Astro 静态站点（SSG）+ 群岛架构。默认交互逻辑是 `.astro` 组件 `<script>` 块里的**命令式 DOM 操作**；确有重复状态或 DOM 争用的复杂界面（当前为 Dashboard 工作区）用 Vue 单文件组件 `client:load` 装配，公共静态内容仍由 Astro 组件渲染。
-- 校验与构建：`pnpm build` = `astro check && vue-tsc --noEmit && astro build`；`astro check` 走 `@astrojs/check` + tsc，Vue 单文件组件的 props/类型由 `vue-tsc` 单独把门，两者都过才算过。
+- 校验与构建：`pnpm build` / `pnpm build:test` 经 `website/scripts/build.mjs` 读取对应环境文件，执行 Astro / Vue / 插件类型检查、插件分浏览器打包和 Astro 静态构建；网站与官网下载包必须使用同一环境的 API 和网站地址。命令与配置键见 website README 的“环境与官网下载”。
 - 无 ESLint/Prettier；类型安全靠 `tsconfig strict: true`。
 - 测试：`node --test tests/`（模块脚本单测）+ Playwright e2e；e2e 端口必须可用 env 覆盖（供并行工作区隔离）。
 

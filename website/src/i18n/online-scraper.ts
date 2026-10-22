@@ -11,18 +11,18 @@ export const onlineScraperContent: OnlineScraperPageContent = {
   seo: {
     title: 'Online Google Maps Scraper — Run Extraction in the Cloud | MapsGrab',
     description:
-      'Run Google Maps keyword searches in the cloud, collect business data, and download CSV files or a ZIP bundle.'
+      'Run Google Maps keyword searches in the cloud, collect business data, and download one CSV per task.'
   },
   hero: {
     announce: { badge: '3 modes', text: 'Keywords, a map area or whole regions' },
     title: { lead: 'Google Maps extraction ', accent: 'in the cloud,', tail: ' no install' },
-    lead: 'Submit keywords, collect business details in the cloud, and download CSV files or a ZIP bundle from your dashboard.',
+    lead: 'Submit keywords, collect business details in the cloud, and download one CSV per task from your dashboard.',
     primaryCta: 'Start scraping',
     pricingCta: 'View pricing',
-    meta: ['1,000 free records / month', 'Works in any browser', 'One CSV per keyword, plus a ZIP'],
+    meta: ['1,000 free records / month', 'Works in any browser', 'One deduplicated CSV per task'],
     theater: {
-      files: '{count} CSV files · Saved to Downloads',
-      zip: 'ZIP',
+      files: '1 CSV · Saved to Downloads',
+      csv: 'CSV',
       parallelChip: { label: 'Keywords run', value: 'In parallel' },
       billingChip: { label: 'Billed by', value: 'Delivered rows' }
     }
@@ -30,7 +30,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
   facts: {
     caption: 'The Online Scraper at a glance',
     items: [
-      { value: 36, label: 'columns in every CSV, from name to Place ID' },
+      { value: 37, label: 'public columns, including a continuous row number' },
       { value: 6, label: 'social profile columns on paid plans' },
       { value: 50, label: 'search locations per map-mode task' },
       { value: 60, suffix: ' min', label: 'collection window for each task' },
@@ -60,11 +60,11 @@ export const onlineScraperContent: OnlineScraperPageContent = {
       {
         title: 'Keywords run in parallel',
         description:
-          'The task stays Processing until every keyword finishes. Your history refreshes every 5 seconds meanwhile.'
+          'Follow queued, collecting and CSV preparation states, then completed, partial success or failed. Active tasks refresh every 5 seconds.'
       },
       {
         title: 'Download',
-        description: 'Grab a CSV for each keyword from the task details, or every file at once as one ZIP.'
+        description: 'Download one CSV for the whole task when a file is available. Partial success keeps delivered rows; zero results have no file.'
       }
     ],
     lock: 'Sign in for the full list',
@@ -84,7 +84,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
       regions: 'Countries, states and cities from GeoNames'
     },
     keywords: {
-      hint: 'One keyword per line. Blank lines and duplicates are dropped before counting, and every keyword gets its own CSV.',
+      hint: 'One keyword per line. Blank lines and duplicates are dropped before counting, and the whole task produces one deduplicated CSV.',
       blank: 'Blank line · skipped',
       duplicate: 'Duplicate · skipped',
       limitsTitle: 'Keywords per task',
@@ -98,7 +98,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
       facts: [
         'Points are searched from the center outward.',
         'The circle only places search centers — results are not clipped to it.',
-        'A business found at several points is kept once per keyword.'
+        'A business found across keywords or points is kept once in the task.'
       ]
     },
     regions: { hint: 'You can edit the generated queries before submitting. Each one counts as a keyword.' }
@@ -106,16 +106,16 @@ export const onlineScraperContent: OnlineScraperPageContent = {
   results: {
     head: {
       kicker: 'Results',
-      title: { lead: 'One CSV per keyword, ', accent: 'one ZIP', tail: ' per task' },
-      lead: 'Every keyword gets its own CSV with all 36 columns. Download files one by one from the task details, or the whole task as a single ZIP.'
+      title: { lead: 'One task, ', accent: 'one CSV', tail: '' },
+      lead: 'Download 37 public columns in one CSV for the whole task, with continuous row numbers and businesses deduplicated across searches.'
     },
-    zipMeta: 'Task ZIP · {count} CSV files',
+    csvMeta: '1 CSV · {count} delivered rows',
     rows: '{count} rows',
-    headersOnly: 'Headers only',
+    searches: 'Delivered rows by search',
     notes: [
-      'Row 1 keeps the fixed field names, so imports and scripts keep working.',
-      'Row 2 labels each column in the interface language you used when creating the task.',
-      'A keyword that finds nothing still gets a file with both header rows.',
+      'Row 1 contains the fixed English column names, including the continuous # column.',
+      'Row 2 describes each column in the interface language used when creating the task.',
+      'Completed tasks with zero results have no file. Partial success keeps delivered rows.',
       'The label row never counts toward your records.'
     ],
     language: 'Task language: English',
@@ -123,15 +123,16 @@ export const onlineScraperContent: OnlineScraperPageContent = {
     legend: { fields: 'Row 1 · field names', labels: 'Row 2 · task language', data: 'Row 3+ · businesses' },
     more: '+{count} more columns',
     csvLabels: {
-      Name: 'Name',
+      '#': 'Row number',
+      Name: 'Business name',
       Fulladdress: 'Full address',
-      Categories: 'Categories',
-      Phone: 'Phone',
-      'Review Count': 'Review Count',
-      'Average Rating': 'Average Rating',
-      Website: 'Website',
-      Emails: 'Email',
-      'Search Keyword': 'Search Keyword'
+      Categories: 'Business categories',
+      Phone: 'Primary phone',
+      'Review Count': 'Number of reviews',
+      'Average Rating': 'Average review rating',
+      Website: 'Business website',
+      Emails: 'Public website emails',
+      'Search Keyword': 'Search keyword'
     }
   },
   features: {
@@ -152,14 +153,14 @@ export const onlineScraperContent: OnlineScraperPageContent = {
         id: 'history',
         title: 'Task history',
         description: 'Follow task progress and view the record count for each keyword in your dashboard.',
-        meta: 'Processing → Completed'
+        meta: 'Completed · Partial success · Failed'
       },
       {
         id: 'details',
         title: 'Business details',
         description:
           'Collect names, addresses, phone numbers, websites, ratings, hours, coordinates, and place identifiers when available.',
-        meta: '36 columns per business'
+        meta: '37 public columns per business'
       },
       {
         id: 'enrichment',
@@ -170,9 +171,9 @@ export const onlineScraperContent: OnlineScraperPageContent = {
       },
       {
         id: 'downloads',
-        title: 'CSV and ZIP downloads',
-        description: 'Download a CSV for each keyword or all available files as one ZIP bundle.',
-        meta: '{item}_{keyword}.csv · {task}.zip'
+        title: 'One task CSV',
+        description: 'Download the whole task as one CSV when a file is available. No per-search files are needed.',
+        meta: '{job}.csv · 37 columns'
       },
       {
         id: 'browser',
@@ -241,7 +242,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
       {
         question: 'What formats can I export to?',
         answer:
-          'Each keyword produces a CSV file. Download individual files or a ZIP bundle from the task history.'
+          'Tasks with results deliver one UTF-8 CSV with 37 public columns, continuous row numbers and two header rows. Businesses are deduplicated across all searches. Tasks with no results have no file.'
       },
       {
         question: 'How much does it cost?',
@@ -256,7 +257,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
       {
         question: 'How long can a task run?',
         answer:
-          'Each task has a 60-minute collection window. When it closes, keywords that already found businesses still deliver them, along with any emails and social profiles found so far.'
+          'Each task has a 60-minute collection window. Partial success can deliver collected rows and any emails or profiles found. Your history shows whether a CSV is available.'
       },
       {
         question: 'Is my homepage preview saved when I sign in?',

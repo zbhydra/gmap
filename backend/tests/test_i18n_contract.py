@@ -9,7 +9,7 @@ import pytest
 from app.i18n import translator
 from app.i18n.common_code import CommonCode
 from app.i18n.dependencies import SupportedLanguage
-from app.provider.maps_online import CSV_HEADERS
+from app.provider.export.gmap_columns import GMAP_DESCRIPTIONS, GMAP_PUBLIC_COLUMNS
 from app.utils.response import ResponseUtils
 
 
@@ -52,18 +52,11 @@ def test_proxy_url_validation_message_exists_for_every_locale() -> None:
 
 
 def test_online_csv_headers_have_translations_in_every_locale() -> None:
-    locale_dir = Path(__file__).parents[1] / "src/app/i18n/locales"
-    for path in locale_dir.glob("*.json"):
-        labels = json.loads(path.read_text(encoding="utf-8"))["maps_online"][
-            "csv_headers"
-        ]
-        assert list(labels) == CSV_HEADERS, path.name
-        assert all(
-            translator.translate(f"maps_online.csv_headers.{header}", path.stem)
-            == labels[header]
-            and labels[header]
-            for header in CSV_HEADERS
-        )
+    assert set(GMAP_DESCRIPTIONS) == set(get_args(SupportedLanguage))
+    assert all(
+        len(descriptions) == len(GMAP_PUBLIC_COLUMNS) and all(descriptions)
+        for descriptions in GMAP_DESCRIPTIONS.values()
+    )
 
 
 def test_missing_translation_raises_configuration_error() -> None:

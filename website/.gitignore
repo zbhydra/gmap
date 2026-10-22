@@ -12,6 +12,8 @@ dist/
 # Environment
 .env
 .env.*
+!.env.*.example
+/public/downloads/*.zip
 
 # IDE
 .idea/

@@ -15,11 +15,9 @@ interface Props {
   locale: Locale
   flow: OnlineScraperPageContent['flow']
   dashboard: DashboardContent
-  /** 整任务 ZIP 的文件类型标签。 */
-  zip: string
 }
 
-const { locale, flow, dashboard, zip } = Astro.props
+const { locale, flow, dashboard } = Astro.props
 const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
 /** 五步各自的迷你画面，顺序与 flow.steps 一一对应。 */
 const MINIS = ['preview', 'signin', 'create', 'run', 'files'] as const
@@ -60,18 +58,14 @@ const steps = flow.steps.map((step, index) => ({ ...step, mini: MINIS[index], nu
               )}
               {step.mini === 'run' && (
                 <>
-                  <span class="badge">{dashboard.history.status.processing}</span>
+                  <span class="badge">{dashboard.history.status.collecting}</span>
                   <span class="of-job is-done"><Icon name="check" /><i></i></span>
                   <span class="of-job"><span class="spinner"></span><i class="skel"></i></span>
                   <span class="of-job"><span class="spinner"></span><i class="skel"></i></span>
                 </>
               )}
               {step.mini === 'files' && (
-                <>
-                  <span class="of-file"><Icon name="file-sheet" />{dashboard.history.detail.downloadCsv}</span>
-                  <span class="of-file"><Icon name="file-sheet" />{dashboard.history.detail.downloadCsv}</span>
-                  <span class="of-file of-file--zip"><Icon name="archive" />{zip}</span>
-                </>
+                <span class="of-file of-file--csv"><Icon name="file-sheet" />{dashboard.history.downloadCsv}</span>
               )}
             </div>
             <span class="of-num">{step.number}</span>
@@ -463,13 +457,13 @@ const steps = flow.steps.map((step, index) => ({ ...step, mini: MINIS[index], nu
     color: var(--ok);
   }
 
-  .of-file--zip {
+  .of-file--csv {
     border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
     background: var(--primary-soft);
     color: var(--primary-text);
   }
 
-  .of-file--zip :global(.icon) {
+  .of-file--csv :global(.icon) {
     color: var(--primary-text);
   }
 

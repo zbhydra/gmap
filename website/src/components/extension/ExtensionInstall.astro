@@ -2,8 +2,8 @@
 /**
  * 插件页安装区（设计稿 extension.html ⑦，页内锚点 #install）与发布说明（#release-notes，承接 changelog 职能）。
  *
- * 商店按钮与 release zip 下载都受 extensionInstall 开关控制：未交付时灰化为 Coming soon，不带链接与埋点。
- * 分浏览器步骤用站级 [data-tabs] 分段切换，截图未产出前用 .media-slot 占位；帮助入口始终可用。
+ * Chromium 与 Firefox 使用各自 manifest 的官网 ZIP；Firefox 按临时加载合同展示限制。
+ * 分浏览器步骤用站级 [data-tabs] 分段切换，真实截图可打开原图；帮助入口始终可用。
  */
 import type { Locale } from '../../i18n/content'
 import type { ExtensionPageContent } from '../../i18n/schema'
@@ -20,13 +20,6 @@ interface Props {
 
 const { locale, install } = Astro.props
 const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
-// 商店与 release 资产链接：上架 / 发版后回填；开关关闭期间按钮灰化，不会渲染这些链接。
-const EDGE_STORE_URL_PLACEHOLDER = '#'
-const FIREFOX_STORE_URL_PLACEHOLDER = '#'
-const RELEASE_ZIP_URL_PLACEHOLDER = '#'
-const STORE_URLS = { edge: EDGE_STORE_URL_PLACEHOLDER, firefox: FIREFOX_STORE_URL_PLACEHOLDER }
-// 商店品牌标未取官方素材前用通用图标（README §11）
-const STORE_ICONS = { edge: 'window', firefox: 'globe' }
 const CHANNEL_ICONS = { chromium: 'window', firefox: 'globe' }
 const { notes } = install
 ---
@@ -37,28 +30,6 @@ const { notes } = install
 
     <div class="xi-stack">
       <div class="xi-top" data-stagger="90" data-spotlight-group>
-        {install.stores.map(store => (
-          <article class="xi-store card" data-spotlight data-reveal>
-            <span class={`xi-logo xi-logo--${store.id}`} aria-hidden="true"><Icon name={STORE_ICONS[store.id]} /></span>
-            <div class="xi-store-text">
-              <b>{store.name}</b>
-              <span>{store.store}</span>
-            </div>
-            <p>{store.note}</p>
-            <CapabilityAction
-              capability="extensionInstall"
-              locale={locale}
-              href={STORE_URLS[store.id]}
-              class="btn btn-secondary btn-sm"
-              target="_blank"
-              rel="noopener"
-              data-cta={`extension-store-${store.id}`}
-            >
-              {store.cta}<Icon name="external" />
-            </CapabilityAction>
-          </article>
-        ))}
-
         <article class="xi-zip card has-deco" data-spotlight data-reveal>
           <div class="deco" aria-hidden="true"><div class="bg-grid xi-zip-grid"></div></div>
           <span class="icon-tile icon-tile--brand"><Icon name="archive" /></span>
@@ -69,11 +40,22 @@ const { notes } = install
           <CapabilityAction
             capability="extensionInstall"
             locale={locale}
-            href={RELEASE_ZIP_URL_PLACEHOLDER}
+            href="/downloads/mapsgrab.zip"
+            download
             class="btn btn-primary"
             data-cta="extension-install-zip"
           >
             <Icon name="download" />{install.zip.button}
+          </CapabilityAction>
+          <CapabilityAction
+            capability="extensionInstall"
+            locale={locale}
+            href="/downloads/mapsgrab-firefox.zip"
+            download
+            class="btn btn-secondary"
+            data-cta="extension-install-firefox"
+          >
+            <Icon name="download" />{install.zip.firefoxButton}
           </CapabilityAction>
           <span class="xi-zip-meta mono">{fillCopy(install.zip.meta, { version: notes.version })}</span>
         </article>
@@ -106,12 +88,16 @@ const { notes } = install
             <ol class="xi-steps" role="list" style={`--n: ${channel.steps.length}`}>
               {channel.steps.map((step, stepIndex) => (
                 <li class="xi-step">
-                  <div class="media-slot xi-shot" style="--ratio: 16 / 10">
-                    <div class="media-slot-label">
-                      <span class="media-slot-kicker">{install.shotKicker}</span>
-                      <span class="media-slot-text">{step.shot}</span>
-                    </div>
-                  </div>
+                  <a class="xi-shot" href={`/img/install/${channel.id}-${stepIndex + 1}.webp`} target="_blank" rel="noopener">
+                    <img
+                      src={`/img/install/${channel.id}-${stepIndex + 1}.webp`}
+                      alt={step.shot}
+                      width="1000"
+                      height="625"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </a>
                   <span class="xi-num mono">{String(stepIndex + 1).padStart(2, '0')}</span>
                   <div class="xi-step-text">
                     <b>{step.title}</b>
@@ -167,68 +153,8 @@ const { notes } = install
 
   .xi-top {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
-  }
-
-  .xi-store {
-    display: grid;
-    grid-template-columns: 48px minmax(0, 1fr);
-    align-items: center;
-    gap: 14px;
-    padding: 22px;
-  }
-
-  .xi-store p {
-    grid-column: 1 / -1;
-    color: var(--text-2);
-    font-size: 14px;
-    line-height: 1.55;
-  }
-
-  .xi-store :global(.btn) {
-    grid-column: 1 / -1;
-    justify-self: start;
-  }
-
-  .xi-store-text {
-    display: grid;
-    gap: 2px;
-    min-width: 0;
-  }
-
-  .xi-store-text b {
-    color: var(--text);
-    font-size: 16px;
-    font-weight: 650;
-  }
-
-  .xi-store-text span {
-    color: var(--text-3);
-    font-size: 13px;
-  }
-
-  .xi-logo {
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    border-radius: var(--r-sm);
-    box-shadow: var(--shadow-sm);
-    color: var(--primary-fg);
-  }
-
-  .xi-logo :global(.icon) {
-    width: 22px;
-    height: 22px;
-  }
-
-  .xi-logo--edge {
-    background: var(--grad-brand);
-  }
-
-  .xi-logo--firefox {
-    background: var(--grad-warm);
   }
 
   .xi-zip {
@@ -304,17 +230,17 @@ const { notes } = install
   }
 
   .xi-shot {
+    display: block;
     grid-column: 1 / -1;
+    overflow: hidden;
+    border: 1px solid var(--border);
     border-radius: var(--r-md);
   }
 
-  .xi-shot .media-slot-label {
-    gap: 6px;
-    padding: 16px;
-  }
-
-  .xi-shot .media-slot-text {
-    font-size: 12.5px;
+  .xi-shot img {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 
   .xi-num {
@@ -418,26 +344,12 @@ const { notes } = install
     gap: 10px 24px;
   }
 
-  @media (max-width: 1080px) {
-    .xi-top {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .xi-zip {
-      grid-column: 1 / -1;
-    }
-  }
-
   @media (max-width: 960px) {
     .xi-steps {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .xi-notes {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .xi-top {
       grid-template-columns: minmax(0, 1fr);
     }
 
@@ -453,10 +365,6 @@ const { notes } = install
 
     .xi-help .link-arrow {
       margin-left: 0;
-    }
-
-    .xi-shot {
-      aspect-ratio: 2 / 1;
     }
   }
 </style>

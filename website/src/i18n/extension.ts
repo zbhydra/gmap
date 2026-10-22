@@ -11,16 +11,16 @@ import type { ExtensionPageContent } from './schema'
  */
 export const extensionContent: ExtensionPageContent = {
   seo: {
-    title: 'MapsGrab for Edge & Firefox — Google Maps Extractor Extension',
+    title: 'MapsGrab for Chrome, Edge & Firefox — Google Maps Extractor Extension',
     description:
       'Extract 36 columns of business data, reviews, and photos from Google Maps, enrich records with emails and social links, run batch tasks, and export to CSV or JSON.'
   },
   hero: {
-    announce: { badge: 'v{version}', text: 'Pre-release for Edge, Firefox & Chromium' },
-    title: { lead: 'The Google Maps extractor for ', accent: 'Edge & Firefox', tail: '' },
+    announce: { badge: 'v{version}', text: 'Download for Chrome, Edge & Firefox' },
+    title: { lead: 'The Google Maps extractor for ', accent: 'your browser', tail: '' },
     lead: 'Open any Google Maps search or business page and grab what is publicly shown there — business data, reviews, photos and contact details. Everything exports to CSV or JSON, right from your browser.',
-    edgeCta: 'Install for Edge',
-    browsersCta: 'Chrome & Firefox',
+    downloadCta: 'Download for Chrome & Edge',
+    installCta: 'Installation guide',
     meta: ['No account required', '1,000 free records / month', 'Exports stay on your machine'],
     theater: {
       panelLabel: 'MapsGrab panel preview',
@@ -206,57 +206,42 @@ export const extensionContent: ExtensionPageContent = {
     head: {
       kicker: 'Install',
       title: { lead: 'Install ', accent: 'MapsGrab', tail: '' },
-      lead: 'Edge and Firefox install from their official add-on stores. Chrome and other Chromium browsers load the release zip directly — the same build, step by step below.'
+      lead: 'Download the ZIP here and follow the steps for your browser. Chrome, Edge and Brave load the unpacked folder. Firefox uses a separate temporary add-on that must be reloaded after a restart. Click any image to view it full size.'
     },
-    stores: [
-      {
-        id: 'edge',
-        name: 'Microsoft Edge',
-        store: 'Edge Add-ons',
-        note: 'Install from Microsoft’s official add-on store and get updates automatically.',
-        cta: 'Open Edge Add-ons'
-      },
-      {
-        id: 'firefox',
-        name: 'Mozilla Firefox',
-        store: 'Firefox Add-ons (AMO)',
-        note: 'Install from Mozilla’s official add-on store so the extension stays put across restarts.',
-        cta: 'Open Firefox Add-ons'
-      }
-    ],
     zip: {
       title: 'Direct install (release zip)',
       description:
-        'Every release ships a zip you can load by hand — the install route for Chrome, Brave and other Chromium browsers.',
-      button: 'Download release zip',
+        'Choose the ZIP for your browser. Extract it to a folder you keep, then load it using the guide below. To update, download a new ZIP, replace the files in that folder and reload the extension.',
+      button: 'Chrome, Edge & Brave ZIP',
+      firefoxButton: 'Firefox ZIP (temporary add-on)',
       meta: 'Version {version} · pre-release'
     },
     browserLabel: 'Browser',
     channels: [
       {
         id: 'chromium',
-        tab: 'Edge & Chromium',
+        tab: 'Chrome & Edge',
         note: 'Edge, Chrome, Brave and other Chromium browsers',
         steps: [
           {
             title: 'Download and unzip',
-            description: ['Download the release zip and unzip it to a folder you keep.'],
-            shot: 'The release zip in the browser downloads bar'
+            description: ['Download ', { code: 'mapsgrab.zip' }, '. On Windows, right-click it and choose “Extract All”. On macOS, double-click it. Keep the extracted folder.'],
+            shot: 'MapsGrab ZIP downloaded in Chrome'
           },
           {
             title: 'Open the extensions page',
-            description: ['In Edge, Chrome, Chromium or Brave, open the extensions management page.'],
+            description: ['Open ', { code: 'chrome://extensions' }, ' in Chrome, ', { code: 'edge://extensions' }, ' in Edge, or ', { code: 'brave://extensions' }, ' in Brave.'],
             shot: 'The extensions management page'
           },
           {
             title: 'Enable Developer mode',
-            description: ['Toggle Developer mode in the extensions page sidebar.'],
-            shot: 'Developer mode toggled on'
+            description: ['Turn on Developer mode on the extensions page. In Chrome, the switch is at the top right.'],
+            shot: 'Developer mode enabled with the Load unpacked button visible'
           },
           {
             title: 'Load the unpacked folder',
             description: [
-              'Click “Load unpacked” and select the unzipped folder. The MapsGrab panel appears on Google Maps search pages.'
+              'Click “Load unpacked” and select the extracted folder. MapsGrab appears in the extensions list. Open a Google Maps search to use it.'
             ],
             shot: 'Load unpacked with the MapsGrab card added'
           }
@@ -265,31 +250,30 @@ export const extensionContent: ExtensionPageContent = {
       {
         id: 'firefox',
         tab: 'Firefox',
-        note: 'Temporary add-on until the Firefox Add-ons listing is live',
+        note: 'Temporary add-on; reload it after restarting Firefox',
         steps: [
           {
             title: 'Download and unzip',
-            description: ['Download the release zip and unzip it to a folder you keep.'],
-            shot: 'The release zip in the browser downloads bar'
+            description: ['Download ', { code: 'mapsgrab-firefox.zip' }, '. On Windows, right-click it and choose “Extract All”. On macOS, double-click it. Keep the extracted folder.'],
+            shot: 'MapsGrab Firefox ZIP downloaded in Firefox'
           },
           {
             title: 'Open the debugging page',
-            description: ['Navigate to ', { code: 'about:debugging' }, ', then choose “This Firefox”.'],
-            shot: 'about:debugging with “This Firefox” selected'
+            description: ['Navigate to ', { code: 'about:debugging' }, ', then select your browser in the left sidebar.'],
+            shot: 'Firefox debugging page with the temporary add-on controls'
           },
           {
             title: 'Load the add-on',
             description: [
               'Click “Load Temporary Add-on…” and pick ',
               { code: 'manifest.json' },
-              ' inside the unzipped folder. A temporary add-on unloads when Firefox restarts — the Firefox Add-ons listing makes it permanent once live.'
+              ' inside the unzipped folder. A temporary add-on unloads when Firefox restarts; repeat this step to load it again.'
             ],
-            shot: 'Load Temporary Add-on picking manifest.json'
+            shot: 'MapsGrab loaded as a temporary Firefox extension with its background script running'
           }
         ]
       }
     ],
-    shotKicker: 'Screenshot',
     help: {
       title: 'Installation trouble?',
       description: 'Send us the browser name and what you saw — we will get you unblocked.',
@@ -334,7 +318,7 @@ export const extensionContent: ExtensionPageContent = {
       {
         question: 'Which browsers are supported?',
         answer:
-          'MapsGrab is built for Microsoft Edge (Edge Add-ons) and Firefox (Firefox Add-ons). Chrome and other Chromium-based browsers load the extension directly from the release zip — see the install steps above.'
+          'Chrome, Edge, Brave and other Chromium browsers load the unpacked ZIP downloaded here. Firefox has a separate ZIP for temporary loading; reload it after each browser restart. Follow the installation guide above.'
       },
       {
         question: 'Do I need to sign in?',

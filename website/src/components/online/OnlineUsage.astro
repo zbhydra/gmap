@@ -75,7 +75,7 @@ const meterStyle = `--p: ${Math.min(1, settledUsed / USAGE_TOTAL)}; --g: ${Math.
         <div class="ou-ticket">
           <div class="ou-ticket-head">
             <span class="mono">{taskBefore}<span data-ou-task>{settled.no}</span>{taskAfter}</span>
-            <span class="badge ou-run-only">{history.status.processing}</span>
+            <span class="badge ou-run-only">{history.status.collecting}</span>
             <span class="badge badge--ok ou-done-only">{history.status.completed}</span>
           </div>
           <div class="ou-items" data-ou-items>

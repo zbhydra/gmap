@@ -7,7 +7,7 @@ import type { PricingPageContent } from './schema'
  * tab；卡面价格为营销展示事实，真实扣价以下单时的支付配置为准。Online / API
  * 付费档按商品配置的计费模式购买，升级资格与补差以服务端报价为准。
  * Online 卖点按 014 合同（每任务关键词上限 Free 2 / Lite 5 / Basic 10 / Growth 20 / Pro 50、
- * 关键词 / 地图 / 地区模式、单关键词 CSV + 整任务 ZIP、付费档补全默认开启可关闭）。
+ * 关键词 / 地图 / 地区模式、整任务去重的单份 37 列 CSV、付费档补全默认开启可关闭）。
  * 对比表行名逐字取自各档卖点，包含关系按卡面「Everything in X」继承展开。
  */
 export const pricingContent: PricingPageContent = {
@@ -21,7 +21,7 @@ export const pricingContent: PricingPageContent = {
     title: { lead: 'Plans for ', accent: 'three ways', tail: ' to grab Maps data' },
     lead:
       'Pick the surface that fits your workflow — cloud Online Scraper, browser Extension, or HTTP API — then pick the monthly volume. Upgrade or buy from this page in minutes.',
-    meta: ['Free tier on every product', 'Pay with PayPal or ClinkBill', 'Upgrade by paying the difference'],
+    meta: ['Free tier on every product', 'Pay with PayPal', 'Upgrade by paying the difference'],
     switchLabel: 'Product line'
   },
   popularLabel: 'Most Popular',
@@ -46,11 +46,11 @@ export const pricingContent: PricingPageContent = {
           periodLabel: 'forever',
           quota: '1,000 records / month',
           features: [
-            'Business extraction with 36-column CSV export',
+            'Business extraction with 37-column CSV export',
             'Up to 2 keywords per task',
             'Map and region modes for area searches',
             'Email & social enrichment on paid plans',
-            'CSV per keyword, ZIP per task'
+            'One deduplicated CSV per task'
           ],
           ctaLabel: 'Start free',
           status: 'free',
@@ -139,7 +139,7 @@ export const pricingContent: PricingPageContent = {
           {
             label: 'Data',
             rows: [
-              { label: 'Business extraction with 36-column CSV export', cells: [true, true, true, true, true] },
+              { label: 'Business extraction with 37-column CSV export', cells: [true, true, true, true, true] },
               {
                 label: 'Email & social enrichment',
                 cells: [
@@ -157,7 +157,7 @@ export const pricingContent: PricingPageContent = {
             rows: [
               { label: 'Keywords per task', cells: ['2', '5', '10', '20', '50'] },
               { label: 'Map and region modes', cells: [true, true, true, true, true] },
-              { label: 'CSV per keyword, ZIP per task', cells: [true, true, true, true, true] }
+              { label: 'One deduplicated CSV per task', cells: [true, true, true, true, true] }
             ]
           }
         ]
@@ -172,13 +172,13 @@ export const pricingContent: PricingPageContent = {
     extension: {
       name: 'Extension',
       shortName: 'Extension',
-      switchMeta: 'From {price} · per month',
+      switchMeta: 'From {price} · one-time',
       unit: 'records',
       eyebrow: 'Extension plans',
       title: 'Browser extraction, priced by records',
       description:
         'Every row the extension collects — a business, a review or a photo — counts as one record. All plans include reviews, photos and batch tasks; paid plans export all 36 columns, including email and social enrichment.',
-      billingChips: ['Auto-renews until canceled', 'Billed monthly', 'Manage at your payment provider'],
+      billingChips: ['One-time payment', '1 month of access', 'No auto-renewal'],
       cards: [
         {
           id: 'free',
@@ -204,7 +204,7 @@ export const pricingContent: PricingPageContent = {
           name: 'Pro',
           tagline: 'For freelancers and growing lead pipelines',
           price: '$39',
-          periodLabel: 'per month',
+          periodLabel: 'one-time · 1 month',
           quota: '100,000 records / month',
           features: [
             'Everything in Free',
@@ -222,7 +222,7 @@ export const pricingContent: PricingPageContent = {
           name: 'Business',
           tagline: 'For agencies and data-heavy teams',
           price: '$99',
-          periodLabel: 'per month',
+          periodLabel: 'one-time · 1 month',
           quota: '500,000 records / month',
           features: [
             'Everything in Pro',
@@ -264,7 +264,7 @@ export const pricingContent: PricingPageContent = {
         usageNotice: 'Applies to the MapsGrab browser extension monthly quota.',
         successTitle: 'Plan activated',
         successDescription:
-          'Your plan quota is live. The extension picks it up on the next quota refresh.'
+          'Your one-time 1-month plan is live. The extension picks it up on the next quota refresh.'
       }
     },
     api: {
@@ -461,13 +461,13 @@ export const pricingContent: PricingPageContent = {
     },
     items: {
       channels: {
-        title: 'PayPal or ClinkBill',
-        body: 'Pay for any plan through PayPal or ClinkBill. Checkout happens at the payment provider you choose.'
+        title: 'PayPal',
+        body: 'Pay for any plan through PayPal. Complete your payment on PayPal and return here to activate your plan.'
       },
       cadence: {
-        title: 'One-time or monthly',
+        title: 'One-time payment',
         body:
-          'Online and API plans are one-time payments covering one natural month — they never auto-renew. Extension Pro and Business are billed monthly as subscriptions.'
+          'Every paid plan covers one natural month. Pay once with no automatic charges; purchase again when you need another month.'
       },
       upgrade: {
         title: 'Upgrade by paying the difference',
@@ -533,14 +533,14 @@ export const pricingContent: PricingPageContent = {
           'Quota is counted per signed-in account (and per browser device for the extension when you are not signed in). Sign in with the account that owns the plan so the higher ceiling applies. When a plan expires, the account automatically returns to the free tier.'
       },
       {
-        question: 'Are payments one-time or subscriptions?',
+        question: 'Will my plan renew automatically?',
         answer:
-          'Online and API plans are one-time payments through PayPal or ClinkBill covering one natural month — they never auto-renew. Extension Pro and Business are billed monthly as subscriptions; use "Manage subscription" in your account area to manage auto-renewal at the payment provider.'
+          'No. All plans are one-time PayPal payments covering one natural month. When your plan expires, you return to the free tier. Purchase again to continue with a paid plan.'
       },
       {
         question: 'Can I switch between tiers?',
         answer:
-          'You can upgrade an active plan to an eligible higher tier by paying the difference through your current payment provider. Your expiry date and usage so far stay unchanged. Auto-renewing PayPal subscriptions cannot be upgraded; wait until expiry to change plans. Plans on different tabs are independent.'
+          'You can upgrade an active plan to an eligible higher tier by paying the difference through PayPal. Your expiry date and usage so far stay unchanged. Plans on different tabs are independent.'
       }
     ]
   },

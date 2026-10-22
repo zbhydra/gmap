@@ -16,11 +16,11 @@
 ### Online Scraper
 
 - 历史列表是唯一历史管理页面，默认最新在前，按现有接口分页，每页 20 条，支持手动刷新。
-- 展示任务编号、创建时间、关键词总数、已处理数、结果条数及处理中或已完成状态。时间按后端业务时区 America/New_York 展示并标明时区。
-- 点击任务在本页展开关键词明细，展示关键词和记录数。完成不代表每个关键词都成功，不显示接口没有提供的成功或失败结论。
-- 已完成任务提供 ZIP 下载；明细提供单项 CSV 下载。接口没有逐项可下载标识，不按记录数猜测是否有文件；点击后由后端判定，无文件或已过期时就地提示。处理中任务不提供整包下载。
+- 展示真实 Job 编号、创建时间、采样总数、已收口采样数、整 Job 去重交付行数及六种状态。时间戳直接按毫秒读取，按 America/New_York 展示并标明时区；未开始或未结束的时间留空。
+- 点击任务在本页展开明细，展示真实 Run 编号、开始及结束时间、联系方式开关快照，以及每个 item 的关键词、可选视口、去重交付行数、收口和错误事实。item 已收口不等于采集成功；有错误时显示本地化原因。
+- 仅按后端 `has_file` 展示整 Job CSV 下载按钮；合法零结果完成且没有文件，局部结果保留已交付行。无逐 item 下载或任务 ZIP；文件不可用时就地提示。
 - 列表加载、无历史、请求失败可重试均为真实状态；不显示演示记录。展开详情失败只影响该任务，下载失败只影响该操作。
-- 创建表单由 `HistoryView.vue` 承载，位于唯一历史列表上方；创建约束、提交与轮询、首页登录后丢弃预览规则统一见 [首页预览与任务创建](../014.Maps云端/tech-首页预览与任务创建.md)。不增加删除、取消或重跑操作。
+- 创建表单由 `HistoryView.vue` 承载，位于唯一历史列表上方；关键词与地区生成的查询各对应一个 item，地图按关键词与视口的笛卡尔积提交。创建权益和首页预览规则归 [首页预览与任务创建](../014.Maps云端/tech-首页预览与任务创建.md)。queued、collecting、publishing 沿现有 5 秒机制轮询；completed、partial、failed 停止。创建后及观察到终态时刷新用量，不自动重投；失败由用户重新提交。
 
 ### API 管理
 
@@ -61,7 +61,7 @@
 - 导航登录、工作区登录、Pricing 待购分别按触发上下文决定登录后位置；保留既有 Google 回跳换票及待购恢复。只使用本站确定的路由作为目的地，不增加任意外部回跳参数。
 - `/extension-login/` 保留其独立插件授权确认流程，不装配第二个站级登录控制器，也不在登录后转 Dashboard；它继续复用底层认证能力。
 - 用户资料和三线订阅直接复用 `GET /api/client/auth/me`；导航和当前页面共用一次会话恢复结果（`scripts/site/session.ts`：无 token 匿名不发请求，401 清 token 回匿名，网络失败返回 unreachable 且不缓存——重试真正重新请求）。业务请求 401 由 `scripts/dashboard/api.ts` 边界统一汇入站级会话失效（清 token + `site-session:expired` 事件），工作区回到登录面板走同一登录流程；普通网络错误就地提示不误判退出。退出调用现有 logout 并清除本地 token，跳当前语言主页；不改变后端仅撤销当前 token 的合同。
-- 历史列表、详情、下载复用 [Online 任务与结果合同](../014.Maps云端/tech-Online任务与结果.md) 的客户端接口。JSON 请求使用现有 API 封装；整包 ZIP 是二进制响应，使用同一请求头构建与认证规则发起 fetch，区分失败信封和文件成功响应，下载后释放临时对象 URL。禁止把 token 放入下载链接或用 JSON 封装读取 ZIP。
+- 创建、历史分页、详情和本人整 Job CSV 下载消费 [Online Export 接口](../014.Maps云端/tech-Online任务与结果.md)，稳定业务口径归 [Export 与 Collector](../014.Maps云端/tech-Export与Collector重构.md)。全部 JSON 请求使用现有鉴权与会话封装；下载时先取得新签名，再以浏览器链接下载，不把 Bearer token 放入链接。不保留旧任务 DTO、逐项文件和 ZIP 解析路径。
 - 用户已允许按实际需求引入 Vue 和组件化；实施时同步修订 `spec-website.md` 的纯 Astro/命令式 DOM 限制，明确 Astro 内容与 Vue 交互边界、状态及类型检查规则。全局样式归 `styles/`、由 `Layout.astro` 统一引入，Vue 组件消费现有 token，不复制第二套设计系统。
 
 ## 集成依据
@@ -73,8 +73,8 @@
 ## 证据与限制
 
 - 落地文件：`src/components/dashboard/`（Vue 工作区组件）、`src/scripts/dashboard/api.ts`、`src/scripts/site/{session,account-entry}.ts`、`src/components/auth/{SiteAuthModal.astro,site-auth-controller.ts}`、`src/pages/dashboard/` 与 `src/pages/[lang]/dashboard/` 路由；Pricing 侧删去 `PricingAuthModal.astro`、`pricing-auth-controller.ts`、`PricingCancellationGuideModal.astro`（渠道指引改 Vue 版）。
-- `backend/src/app/api/client/maps_online_client.py` 提供按当前用户查询历史、详情、签名 CSV 与 ZIP 下载；`schemas/maps_online_schema.py` 只公开任务两态和关键词记录数。整包 ZIP 为二进制响应，前端用同一请求头边界 fetch 并区分失败信封。
+- `backend/src/app/api/client/export_client.py` 提供本人 Job 创建、历史、详情与签名 CSV 下载；`maps_online_client.py` 保留创建选项和匿名预览。网站不读取内部工作文件，不为旧任务或下载协议提供兼容层。
 - 客户 Key、连接与用量由 `scripts/dashboard/api.ts` 消费 014 接口；OAuth 票据、确认与本人授权接口由 `scripts/mcp-oauth/client.ts` 持有。管理员 Key 仍属于独立的后台外部接入。
-- 首页预览与正式创建的真实采集、下载及审查证据见 [Online 界面实施清单](../014.Maps云端/plans/004.首页预览与Dashboard创建.md)。工作区认证与支付验证范围仍见下方工作区实施清单。
+- Export 网站接线及当前验收范围见 [实施记录](../014.Maps云端/plans/010.Export服务端实施.md)；构造 CSV 的真实后端与对象存储验证不代表 Collector/Google 采集联调。旧界面实施记录保留为历史，不能替代现行合同验收。工作区认证与支付验证范围仍见下方实施清单。
 
 执行与验证见 [实施清单](plans/003.用户Dashboard.md)。

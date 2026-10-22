@@ -12,7 +12,7 @@ Pricing 页按三条产品线分 tab 出售订阅套餐:
 2. Extension tab(`maps_extension` 线):浏览器插件月度 records 套餐,2 个付费档 + Free 卡。
 3. API tab(`maps_api` 线):Scraper API 月度 requests 套餐,4 个付费档 + Free 卡。
 
-购买边界:全部商品支持 PayPal / ClinkBill;Online 与 API 各档为一次性自然月权益(不自动续费),Extension 两档为按月自动续费订阅。配额与权益语义归 `@../006.订阅系统/feat.md`,本页只负责展示与购买。
+购买边界：三条产品线均为 PayPal 单次自然月权益，不自动续费。配额与权益语义归 `@../006.订阅系统/feat.md`,本页只负责展示与购买。
 
 ## 套餐定义(卡面展示事实,真实扣价以下单时支付配置为准)
 
@@ -24,8 +24,8 @@ Pricing 页按三条产品线分 tab 出售订阅套餐:
 | Online | Growth | `online_growth` | $99 | 250,000 records/月 | 一次性 · 自然月 |
 | Online | Professional | `online_pro` | $149 | 500,000 records/月 | 一次性 · 自然月 |
 | Extension | Free | —(不可购买) | $0 | 1,000 records/月 | 默认档 |
-| Extension | Pro | `maps_extension_pro` | $39 | 100,000 records/月 | 按月订阅(本 tab Most Popular) |
-| Extension | Business | `maps_extension_business` | $99 | 500,000 records/月 | 按月订阅 |
+| Extension | Pro | `maps_extension_pro` | $39 | 100,000 records/月 | 一次性 · 自然月(本 tab Most Popular) |
+| Extension | Business | `maps_extension_business` | $99 | 500,000 records/月 | 一次性 · 自然月 |
 | API | Free | —(不可购买) | $0 | 20 requests/月 | 默认档 |
 | API | Basic | `api_basic` | $15 | 1,000 requests/月 | 一次性 · 自然月 |
 | API | Professional | `api_professional` | $65 | 5,000 requests/月 | 一次性 · 自然月(本 tab Most Popular) |
@@ -64,7 +64,7 @@ Online 与 API 的 Free 月额度已接入 Online 采集与 API / MCP 调用，�
 1. 页面默认展示 Online tab;带产品线的入口直达对应 tab,未知产品线沿用默认;点击 tab 或对比表的产品分段切换产品线,地址栏同步当前产品线,复制链接可直达同一 tab。
 2. 每个面板展示:线说明、用量估算条(拖动每月用量,高亮够用的最低档)、档位卡(名称/标语/价格/额度/功能列表/CTA)、额度口径注记(records 或 requests 的计量与每月 1 日重置、不滚存说明)。面板之后依次是逐档对比表、计量口径说明、计费说明、FAQ 与底部行动区。
 3. Free 卡 CTA 为引导动作(Online/API「Start free」、Extension「Install the extension」),不进入购买。
-4. 未交付的能力(插件安装与购买)入口照常展示但灰化并标注 Coming soon,鼠标与键盘都不能触发;能力交付后恢复对应安装与购买路径。Online 与 API 套餐照常购买(API 2026-10-16 开放)。
+4. 入口可用性统一由站点能力表控制；关闭的动作入口灰化并标注 Coming soon，鼠标与键盘都不能触发。
 
 ### 购买付费档
 
@@ -79,7 +79,7 @@ Online 与 API 的 Free 月额度已接入 Online 采集与 API / MCP 调用，�
 
 1. 当前线有有效订阅时,当前档按钮标记"Current Plan",可升级的更高档卡片展示后端补差报价。PayPal 自动续费订阅的升级按钮灰化并说明当前渠道不可升级;PayPal 一次性订阅可补差升级。
 2. 点击升级:未登录先登录;报价显示不可升级(已是最高档/补差不为正)时按钮灰化并展示原因文案。
-3. 升级固定沿用当前订阅渠道。一次性支付线(Online / API)打开统一 checkout 弹窗确认补差金额,不再选择渠道;支付成功轮询确认后,当前档标记切到新档,额度上限按新档展示。
+3. 升级固定沿用当前订阅渠道。单次支付套餐(Online / Extension / API)打开统一 checkout 弹窗确认补差金额,不再选择渠道;支付成功轮询确认后,当前档标记切到新档,额度上限按新档展示。
 4. 自动续费升级复用统一弹窗,展示补差、立即扣款与到期日不变说明。确认结果成功时重新读取订阅状态并刷新按钮态;仍待渠道生效时展示等待状态,按渠道要求等待或打开支付页,只在确认新档生效后展示成功。
 5. 失败时提示刷新检查当前套餐后重试;等待期间保留原档展示,不会重复发起扣款确认。
 
@@ -145,7 +145,7 @@ Online 与 API 的 Free 月额度已接入 Online 采集与 API / MCP 调用，�
 - Free 卡不产生购买请求;CTA 为引导动作。
 - 未登录点击购买先登录;登录成功后重新加载配置与订阅状态。
 - 同产品线有效订阅时当前档与低档按钮灰化,更高档进入升级流程;跨产品线购买不受影响。
-- Online 档与 API 档可经 PayPal / ClinkBill 一次性支付;能力交付后,Extension 档经 PayPal / ClinkBill 订阅支付,未交付期间入口灰化并标注 Coming soon,不产生购买请求。
+- 三条产品线的付费档均可经 PayPal 单次购买；订单与到账确认按统一支付合同执行。
 - PayPal / ClinkBill 回跳页按订单类型正确分发文案。
 - 支付成功后重新读取订阅状态，套餐卡按钮态刷新。
 - 升级沿用当前订阅渠道并展示服务端报价;PayPal 自动续费升级不可用,一次性 PayPal 补差可用。

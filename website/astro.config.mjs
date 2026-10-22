@@ -4,14 +4,11 @@ import { defineConfig } from 'astro/config'
 import vue from '@astrojs/vue'
 import languageSitemap from './src/sitemap/languageSitemap.mjs'
 
-// 域名后配：MapsGrab 生产域名确定后替换此占位常量（同步 public/robots.txt、deploy/、cloudflare/）。
-const SITE_PLACEHOLDER = 'https://mapsgrab.com'
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const basePath = '/'
 // https://astro.build/config
 export default defineConfig({
-  site: process.env.NODE_ENV === 'production' ? SITE_PLACEHOLDER : 'http://localhost:7620',
+  site: process.env.PUBLIC_SITE_URL || 'http://localhost:7620',
   base: basePath,
   trailingSlash: 'ignore',
   server: {

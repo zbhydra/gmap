@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && vue-tsc --noEmit && astro build",
+    "build": "node scripts/build.mjs production",
+    "build:test": "node scripts/build.mjs test",
     "preview": "astro preview",
     "astro": "astro",
     "type-check:tests": "tsc --project tsconfig.tests.json",

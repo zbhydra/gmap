@@ -3,8 +3,8 @@
  * 云端页首屏（设计稿 online-scraper.html ①）。
  *
  * 左侧：模式胶囊（指向页内 #modes）、标题、开始采集（直达 Dashboard）与定价入口、信任行。
- * 右侧 Dashboard 剧场循环三组虚构任务：逐行输入关键词 → Start scraping → 历史列表出现 Processing 任务，
- * 各关键词并行完成并显示行数与 CSV → Completed 后本月用量才增加（提交不预扣）→ 下载整任务 ZIP。
+ * 右侧 Dashboard 剧场循环三组虚构任务：逐行输入关键词 → Start scraping → 历史列表出现 Collecting 任务，
+ * 各采样完成并显示交付行数 → 发布后按整 Job 去重行数计量 → 下载单份 CSV。
  * 表单、历史列表与状态文案直接取 Dashboard 文案段。剧场离屏 / 后台暂停，减弱动效下呈现第一组的完成态。
  */
 import type { Locale } from '../../i18n/content'
@@ -124,7 +124,7 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
               </div>
               <div class="oh-th">
                 <span>{history.columns.taskNo}</span>
-                <span>{history.columns.keywords}</span>
+                <span>{history.columns.samples}</span>
                 <span>{history.columns.processed}</span>
                 <span>{history.columns.records}</span>
                 <span>{history.columns.status}</span>
@@ -139,7 +139,7 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
                       <span class="mono">{format.format(task.records)}</span>
                       <span class="oh-status">
                         <span class="badge badge--ok">{history.status.completed}</span>
-                        <span class="oh-zip"><Icon name="archive" />{hero.theater.zip}</span>
+                        <span class="oh-download"><Icon name="file-sheet" />{hero.theater.csv}</span>
                       </span>
                     </div>
                   </div>
@@ -151,10 +151,10 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
       </div>
 
       <div class="dl-pop" data-oh-dlpop aria-hidden="true">
-        <span class="dl-pop-ic"><Icon name="archive" /></span>
+        <span class="dl-pop-ic"><Icon name="file-sheet" /></span>
         <span class="dl-pop-text">
-          <b class="mono" data-oh-file>{firstRun.no}.zip</b>
-          <small data-oh-files>{fillCopy(hero.theater.files, { count: firstRun.items.length })}</small>
+          <b class="mono" data-oh-file>{firstRun.no}.csv</b>
+          <small data-oh-files>{hero.theater.files}</small>
         </span>
         <Icon name="check-circle" class="dl-pop-ok" />
       </div>
@@ -176,7 +176,7 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
             <span class="mono" data-keywords></span>
             <span class="mono" data-processed></span>
             <span class="mono" data-records>0</span>
-            <span class="oh-status" data-status><span class="badge">{history.status.processing}</span></span>
+            <span class="oh-status" data-status><span class="badge">{history.status.collecting}</span></span>
           </div>
           <div class="oh-detail" data-detail></div>
         </div>
@@ -188,13 +188,13 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
             <span class="skel oh-bar"></span>
             <span class="oh-item-rec mono"><Icon name="check" /><span data-rows>0</span></span>
           </span>
-          <span class="oh-csv">{history.detail.downloadCsv}</span>
+          <span class="oh-item-complete">{history.detail.completed}</span>
         </div>
       </template>
       <template data-oh-done-template>
         <span class="oh-status">
           <span class="badge badge--ok">{history.status.completed}</span>
-          <span class="oh-zip"><Icon name="archive" />{hero.theater.zip}</span>
+          <span class="oh-download"><Icon name="file-sheet" />{hero.theater.csv}</span>
         </span>
       </template>
     </div>
@@ -204,7 +204,6 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
 <script>
   import { countTo, formatNumber, reducedMotion, visibilityGate } from '../../scripts/site/motion'
   import { copyOf, part, stamp } from '../../scripts/pages/product-page'
-  import { fillCopy } from '../product/copy'
   import { DEMO_PLAN, THEATER_RUNS, THEATER_USED, shortTaskNo, type TheaterRun } from './online-samples'
 
   /** 历史列表最多保留的任务数（与剧场高度匹配）。 */
@@ -316,14 +315,14 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
       void countTo(used, before, usedRecords, 900)
       await gate.nap(1000)
 
-      const zip = part(task, '.oh-zip', HTMLElement)
-      zip.classList.add('is-ready')
+      const csv = part(task, '.oh-download', HTMLElement)
+      csv.classList.add('is-ready')
       await gate.nap(1200)
-      zip.classList.replace('is-ready', 'is-pressed')
+      csv.classList.replace('is-ready', 'is-pressed')
       await gate.nap(160)
-      zip.classList.remove('is-pressed')
-      file.textContent = `${run.no}.zip`
-      files.textContent = fillCopy(filesCopy, { count: run.items.length })
+      csv.classList.remove('is-pressed')
+      file.textContent = `${run.no}.csv`
+      files.textContent = filesCopy
       download.classList.add('is-on')
       await gate.nap(60)
       download.classList.add('is-done')
@@ -710,7 +709,7 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
     gap: 6px;
   }
 
-  .oh-zip {
+  .oh-download {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -727,20 +726,20 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
       color var(--dur-3);
   }
 
-  .oh-zip :global(.icon) {
+  .oh-download :global(.icon) {
     width: 12px;
     height: 12px;
   }
 
   /* 下载就绪：按钮轻微放大两次提示可点击（只动 transform，限次） */
-  .oh-zip.is-ready {
+  .oh-download.is-ready {
     border-color: transparent;
     background: var(--primary);
     color: var(--primary-fg);
     animation: oh-ready var(--dur-4) var(--ease-in-out) 2 alternate;
   }
 
-  .oh-zip.is-pressed {
+  .oh-download.is-pressed {
     transform: scale(0.92);
   }
 
@@ -817,7 +816,7 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
     animation: pop-in var(--dur-3) var(--ease-spring);
   }
 
-  .oh-csv {
+  .oh-item-complete {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -834,13 +833,13 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
       border-color var(--dur-3);
   }
 
-  .oh-item.is-done .oh-csv {
+  .oh-item.is-done .oh-item-complete {
     border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
     color: var(--primary-text);
     opacity: 1;
   }
 
-  /* 本页下载的是整任务 ZIP，气泡图标用主色 */
+  /* 本页下载的是整 Job CSV，气泡图标用主色 */
   .dl-pop-ic {
     background: var(--primary-soft);
     color: var(--primary-text);

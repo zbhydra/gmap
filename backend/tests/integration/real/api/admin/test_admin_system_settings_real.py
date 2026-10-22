@@ -1,7 +1,7 @@
 """Admin 系统配置 API real 集成测试。
 
 真实资源依赖：MySQL 的 admins / system_data 表。测试结束后精确恢复固定
-gmap_engine 与 object_storage 行；这些配置键不可并发写入。
+gmap_collector 与 object_storage 行；这些配置键不可并发写入。
 """
 
 from __future__ import annotations
@@ -11,29 +11,34 @@ from typing import TypedDict
 from uuid import uuid4
 
 import pytest
+import httpx
 from curl_cffi.requests import AsyncSession as CurlSession, Response
-from curl_cffi.requests.exceptions import Timeout
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.constants.gmap import GMAP_ENGINE_DATA_KEY
+from app.constants.gmap_collector import GMAP_COLLECTOR_DATA_KEY
 from app.constants.object_storage import OBJECT_STORAGE_DATA_KEY
 from app.core.database import get_engine
 from app.i18n.common_code import CommonCode
 from app.models.system_data_model import JsonValue, SystemDataModel
+from app.provider.gmap.collector_client import gmap_collector_client
 from app.services.object_storage_config_service import object_storage_config_service
 from app.services.system_data_service import system_data_service
 
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
-_GMAP_ENDPOINT = "/api/admin/system-settings/gmap-engine"
 _OBJECT_STORAGE_ENDPOINT = "/api/admin/system-settings/object-storage"
 
 
 class _StoragePayload(TypedDict):
     active_id: str | None
     items: list[dict[str, str]]
+
+
+class _CollectorPayload(TypedDict):
+    collectors: list[dict[str, str]]
+    proxies: list[str]
 
 
 async def _read_stored_config(data_key: str) -> JsonValue | None:
@@ -46,113 +51,126 @@ async def _read_stored_config(data_key: str) -> JsonValue | None:
         )
 
 
-async def test_real_save_gmap_engine_persists_and_reads_config(
-    real_async_client,
+async def test_real_collector_admin_config_auth_persistence_and_unsaved_stats_check(
+    real_async_client: httpx.AsyncClient,
     real_admin_token_for_system_settings: str,
     test_run_id: str,
-) -> None:
-    """认证管理员保存万条代理后，GET 与 system_data 均完整返回新值。"""
-    headers = {"Authorization": f"Bearer {real_admin_token_for_system_settings}"}
-    payload = {
-        "provider": "http",
-        "proxies": [
-            f"http://user-{test_run_id}:password@proxy-{index}.example:8080"
-            for index in range(10_001)
-        ],
-        "concurrency": 7,
-    }
-
-    save_response = await real_async_client.post(
-        _GMAP_ENDPOINT, json=payload, headers=headers
-    )
-    assert save_response.status_code == 200
-    assert save_response.json()["code"] == CommonCode.SUCCESS
-    assert save_response.json()["data"] == payload
-
-    get_response = await real_async_client.get(_GMAP_ENDPOINT, headers=headers)
-    assert get_response.status_code == 200
-    assert get_response.json()["code"] == CommonCode.SUCCESS
-    assert get_response.json()["data"] == payload
-    assert await _read_stored_config(GMAP_ENGINE_DATA_KEY) == payload
-
-
-async def test_real_proxy_check_validation_and_connectivity(
-    real_async_client,
-    real_admin_token_for_system_settings: str,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """真实管理员入口校验字段；仅 Google 网络出口用确定结果替换。"""
-    endpoint = f"{_GMAP_ENDPOINT}/check-proxies"
-    headers = {
-        "Authorization": f"Bearer {real_admin_token_for_system_settings}",
-        "Accept-Language": "zh-CN",
+    endpoint = "/api/admin/system-settings/gmap-collector"
+    headers = {"Authorization": f"Bearer {real_admin_token_for_system_settings}"}
+    secret = f"COLLECTOR_SECRET_{test_run_id}"
+    payload: _CollectorPayload = {
+        "collectors": [{"url": "HTTP://Collector.Test:80/", "api_key": secret}],
+        "proxies": [f"http://user:{secret}@proxy.test:8080"],
     }
-    proxies = ["http://user:TEST_PROXY_SECRET@127.0.0.1:1"]
-    unauthenticated = await real_async_client.post(endpoint, json={"proxies": proxies})
-    assert unauthenticated.status_code == 401
-    assert unauthenticated.json()["code"] == CommonCode.AUTH_MISSING_CREDENTIALS
-    empty = await real_async_client.post(
-        _GMAP_ENDPOINT, headers=headers, json={"proxies": []}
-    )
-    assert empty.status_code == 200
-    assert empty.json()["code"] == CommonCode.VALIDATION_ERROR
-    assert "body.proxies" in empty.json()["msg"]
-    for path in (_GMAP_ENDPOINT, endpoint):
-        invalid = await real_async_client.post(
-            path,
-            headers=headers,
-            json={"proxies": [proxies[0], "127.0.0.1:8080:user:TEST_PROXY_SECRET"]},
-        )
-        assert invalid.status_code == 200
-        assert invalid.json()["code"] == CommonCode.VALIDATION_ERROR
-        assert "proxies 字段第 2 项格式错误" in invalid.json()["msg"]
-        assert "http://用户名:密码@IP:端口" in invalid.json()["msg"]
-        assert "TEST_PROXY_SECRET" not in invalid.text
+    expected = {
+        **payload,
+        "collectors": [{"url": "http://collector.test", "api_key": secret}],
+    }
+    for method, path in (
+        ("GET", endpoint),
+        ("POST", endpoint),
+        ("POST", endpoint + "/test"),
+        ("POST", endpoint + "/check-proxies"),
+    ):
+        response = await real_async_client.request(method, path, json={})
+        assert response.status_code == 401
+        assert response.json()["code"] == CommonCode.AUTH_MISSING_CREDENTIALS
 
-    disconnected = await real_async_client.post(
-        endpoint, headers=headers, json={"proxies": proxies}
+    response = await real_async_client.post(endpoint, headers=headers, json=payload)
+    assert response.status_code == 200 and response.json()["code"] == CommonCode.SUCCESS
+    assert response.json()["data"] == expected
+    assert response.headers["Cache-Control"] == "no-store"
+    response = await real_async_client.get(endpoint, headers=headers)
+    assert response.status_code == 200 and response.json()["code"] == CommonCode.SUCCESS
+    assert response.json()["data"] == expected
+    assert response.headers["Cache-Control"] == "no-store"
+    assert await _read_stored_config(GMAP_COLLECTOR_DATA_KEY) == expected
+
+    calls: list[str] = []
+    upstream_status = 200
+
+    async def stats(request: httpx.Request) -> httpx.Response:
+        assert request.method == "GET"
+        assert request.headers["X-API-Key"] == secret
+        calls.append(str(request.url))
+        return httpx.Response(upstream_status, json={"queues": {}})
+
+    original_http = gmap_collector_client._client
+    try:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(stats)) as http:
+            # 仅替换不可控的外部 HTTP 出口，配置、权限和 DB 保持真实。
+            monkeypatch.setattr(gmap_collector_client, "_client", http)
+            for upstream_status, expected_data in (
+                (200, {"ok": True}),
+                (401, {"ok": False, "reason": "unauthorized"}),
+            ):
+                response = await real_async_client.post(
+                    endpoint + "/test",
+                    headers=headers,
+                    json={"url": "http://unsaved.test/", "api_key": secret},
+                )
+                assert response.status_code == 200
+                assert response.json()["code"] == CommonCode.SUCCESS
+                assert response.json()["data"] == expected_data
+                assert response.headers["Cache-Control"] == "no-store"
+                assert secret not in response.text
+        assert calls == ["http://unsaved.test/stats"] * 2
+    finally:
+        monkeypatch.setattr(gmap_collector_client, "_client", original_http)
+
+    for invalid in (
+        {**payload, "collectors": payload["collectors"] * 2},
+        {
+            **payload,
+            "collectors": [
+                {"url": f"http://user:{secret}@collector.test", "api_key": secret}
+            ],
+        },
+        {
+            **payload,
+            "collectors": [
+                {"url": "http://collector.test", "api_key": secret + "\nkey"}
+            ],
+        },
+    ):
+        response = await real_async_client.post(endpoint, headers=headers, json=invalid)
+        assert response.status_code == 200
+        assert response.json()["code"] == CommonCode.VALIDATION_ERROR
+        assert secret not in response.text
+    assert await _read_stored_config(GMAP_COLLECTOR_DATA_KEY) == expected
+    proxy_endpoint = endpoint + "/check-proxies"
+    invalid_proxy = await real_async_client.post(
+        proxy_endpoint,
+        headers=headers,
+        json={"proxies": [payload["proxies"][0], "bad-proxy"]},
     )
-    assert disconnected.status_code == 200
-    assert disconnected.json()["code"] == CommonCode.SUCCESS
-    assert disconnected.json()["data"]["items"][0]["status"] == "connection_error"
+    assert invalid_proxy.status_code == 200
+    assert invalid_proxy.json()["code"] == CommonCode.VALIDATION_ERROR
 
     async def google_response(
         self: CurlSession, url: str, *, proxy: str, timeout: int, allow_redirects: bool
     ) -> Response:
         assert url == "https://www.google.com/generate_204"
-        assert timeout == 10
-        assert not allow_redirects
-        if "timeout.example" in proxy:
-            raise Timeout("TEST_PROXY_SECRET")
+        assert proxy == payload["proxies"][0]
+        assert timeout == 10 and not allow_redirects
         response = Response()
-        response.status_code = 403 if "blocked.example" in proxy else 204
+        response.status_code = 204
         return response
 
     monkeypatch.setattr(CurlSession, "get", google_response)
-    response = await real_async_client.post(
-        endpoint,
-        headers=headers,
-        json={
-            "proxies": [
-                f"http://user:TEST_PROXY_SECRET@{host}:8080"
-                for host in (
-                    "ok.example",
-                    "blocked.example",
-                    "timeout.example",
-                    "ok.example",
-                )
-            ]
-        },
+    proxy_response = await real_async_client.post(
+        proxy_endpoint, headers=headers, json={"proxies": payload["proxies"]}
     )
-    assert response.status_code == 200
-    assert response.json()["code"] == CommonCode.SUCCESS
-    items = response.json()["data"]["items"]
-    assert [item["status"] for item in items] == ["ok", "http_error", "timeout", "ok"]
-    assert [item["status_code"] for item in items] == [204, 403, None, 204]
-    assert all(item["duration_ms"] >= 0 for item in items)
-    assert "TEST_PROXY_SECRET" not in response.text
-    assert "TEST_PROXY_SECRET" not in caplog.text
+    assert proxy_response.status_code == 200
+    assert proxy_response.json()["code"] == CommonCode.SUCCESS
+    item = proxy_response.json()["data"]["items"][0]
+    assert item["proxy"] == "http://proxy.test:8080" and item["status"] == "ok"
+    assert item["status_code"] == 204 and item["duration_ms"] >= 0
+    assert secret not in proxy_response.text
+    assert secret not in caplog.text
 
 
 async def test_real_object_storage_multiple_locations_switch_and_preserve_ids(

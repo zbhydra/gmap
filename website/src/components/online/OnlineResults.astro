@@ -1,23 +1,18 @@
 ---
-/**
- * 云端页结果文件（设计稿 online-scraper.html ⑤）：整任务 ZIP 目录树 + 单关键词 CSV 表格。
- * CSV 第 1 行是固定字段名（backend maps_online.CSV_HEADERS），第 2 行是创建任务时界面语言的字段译名，
- * 第 3 行起是数据；零结果关键词的文件保留两行表头。站点目前只有 en-US，第 2 行按 en-US 译名展示，
- * 原型的多语言切换演示等站点多语言上线后再做（README §10）。
- */
+/** 单 Job CSV 与各采样交付行数；示例只展示公开投影列。 */
 import type { OnlineScraperPageContent } from '../../i18n/schema'
 import Icon from '../site/Icon.astro'
 import ProductSectionHead from '../product/ProductSectionHead.astro'
 import { fillCopy } from '../product/copy'
-import { CSV_ROWS, CSV_SHOWN_COLUMNS, CSV_TOTAL_COLUMNS, RESULT_FILES, RESULT_TASK_NO } from './online-samples'
+import { CSV_ROWS, CSV_SHOWN_COLUMNS, CSV_TOTAL_COLUMNS, RESULT_ITEMS, RESULT_JOB_NO } from './online-samples'
 
 interface Props {
   results: OnlineScraperPageContent['results']
 }
 
 const { results } = Astro.props
-const fileName = (file: (typeof RESULT_FILES)[number]) => `${file.item}_${file.keyword}.csv`
-const sheetName = fileName(RESULT_FILES[0])
+const sheetName = `${RESULT_JOB_NO}.csv`
+const rowCount = RESULT_ITEMS.reduce((total, item) => total + item.rows, 0)
 ---
 
 <section class="section oc band" id="results" data-inview>
@@ -26,20 +21,21 @@ const sheetName = fileName(RESULT_FILES[0])
 
     <div class="oc-layout">
       <div class="oc-side" data-stagger="90">
-        <div class="oc-zip card" data-reveal="left">
-          <div class="oc-zip-head">
-            <span class="icon-tile icon-tile--brand"><Icon name="archive" /></span>
-            <span class="oc-zip-name">
-              <b class="mono">{RESULT_TASK_NO}.zip</b>
-              <small>{fillCopy(results.zipMeta, { count: RESULT_FILES.length })}</small>
+        <div class="oc-file-summary card" data-reveal="left">
+          <div class="oc-file-head">
+            <span class="icon-tile icon-tile--brand"><Icon name="file-sheet" /></span>
+            <span class="oc-file-name">
+              <b class="mono">{sheetName}</b>
+              <small>{fillCopy(results.csvMeta, { count: rowCount })}</small>
             </span>
           </div>
-          <ul class="oc-files" role="list">
-            {RESULT_FILES.map((file, index) => (
+          <p class="oc-search-heading">{results.searches}</p>
+          <ul class="oc-searches" role="list">
+            {RESULT_ITEMS.map((file, index) => (
               <li class:list={{ 'is-empty': file.rows === 0 }} style={`--i: ${index}`}>
-                <Icon name="file-sheet" />
-                <span class="mono">{fileName(file)}</span>
-                <em>{file.rows ? fillCopy(results.rows, { count: file.rows }) : results.headersOnly}</em>
+                <Icon name="search" />
+                <span>{file.keyword}</span>
+                <em>{fillCopy(results.rows, { count: file.rows })}</em>
               </li>
             ))}
           </ul>
@@ -108,22 +104,23 @@ const sheetName = fileName(RESULT_FILES[0])
     min-width: 0;
   }
 
-  .oc-zip {
+  .oc-file-summary {
     padding: 18px;
   }
 
-  .oc-zip-head {
+  .oc-file-head {
     display: flex;
     align-items: center;
     gap: 12px;
   }
 
-  .oc-zip-name {
+  .oc-file-name {
     display: grid;
     min-width: 0;
   }
 
-  .oc-zip-name b {
+  .oc-file-name b {
+    overflow-wrap: anywhere;
     overflow: hidden;
     color: var(--text);
     font-size: 12.5px;
@@ -131,12 +128,19 @@ const sheetName = fileName(RESULT_FILES[0])
     white-space: nowrap;
   }
 
-  .oc-zip-name small {
+  .oc-file-name small {
     color: var(--text-3);
     font-size: 12px;
   }
 
-  .oc-files {
+  .oc-search-heading {
+    margin: 0;
+    padding: var(--s-4) var(--s-5) 0;
+    color: var(--text-2);
+    font-size: var(--fs-xs);
+  }
+
+  .oc-searches {
     position: relative;
     display: grid;
     gap: 8px;
@@ -146,7 +150,7 @@ const sheetName = fileName(RESULT_FILES[0])
   }
 
   /* 目录树竖线 */
-  .oc-files::before {
+  .oc-searches::before {
     position: absolute;
     top: -8px;
     bottom: 22px;
@@ -155,7 +159,7 @@ const sheetName = fileName(RESULT_FILES[0])
     content: '';
   }
 
-  .oc-files li {
+  .oc-searches li {
     position: relative;
     display: grid;
     grid-template-columns: 16px minmax(0, 1fr) auto;
@@ -168,7 +172,7 @@ const sheetName = fileName(RESULT_FILES[0])
     font-size: 12px;
   }
 
-  .oc-files li::before {
+  .oc-searches li::before {
     position: absolute;
     top: 50%;
     left: -20px;
@@ -177,37 +181,37 @@ const sheetName = fileName(RESULT_FILES[0])
     content: '';
   }
 
-  .oc-files li :global(.icon) {
+  .oc-searches li :global(.icon) {
     width: 16px;
     height: 16px;
     color: var(--ok);
   }
 
-  .oc-files li span {
+  .oc-searches li span {
     overflow: hidden;
     color: var(--text);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .oc-files li em {
+  .oc-searches li em {
     color: var(--text-3);
     font-size: 11.5px;
     font-style: normal;
     white-space: nowrap;
   }
 
-  .oc-files li.is-empty :global(.icon),
-  .oc-files li.is-empty em {
+  .oc-searches li.is-empty :global(.icon),
+  .oc-searches li.is-empty em {
     color: var(--warn);
   }
 
-  /* 目录树里的文件在 ZIP 卡片显现后逐个落位（无 JS 时直接显示） */
-  :global(.js) .oc-zip .oc-files li {
+  /* 采样行数在 CSV 卡片显现后逐个展示（无 JS 时直接显示） */
+  :global(.js) .oc-file-summary .oc-searches li {
     opacity: 0;
   }
 
-  .oc-zip.is-revealed .oc-files li {
+  .oc-file-summary.is-revealed .oc-searches li {
     animation: fade-up var(--dur-4) var(--ease-out) both;
     animation-delay: calc(380ms + var(--i, 0) * 130ms);
   }

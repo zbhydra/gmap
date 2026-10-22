@@ -15,10 +15,10 @@
 
 ## 系统定性
 
-订阅系统按产品类别隔离权益:Maps 浏览器插件、Online Scraper 与 Scraper API。同一账号可同时持有三类产品的订阅,不同类别互不续期、互不影响重复购买判断。Google Maps 与 Bing 插件共享同一类插件订阅。Online 与 API 套餐为 PayPal / ClinkBill 一次性自然月权益,无自动续费。
+订阅系统按产品类别隔离权益:Maps 浏览器插件、Online Scraper 与 Scraper API。同一账号可同时持有三类产品的订阅,不同类别互不续期、互不影响重复购买判断。Google Maps 与 Bing 插件共享同一类插件订阅。三条产品线均通过 PayPal 单次购买一个自然月的权益，到期后由用户手动再次购买。
 
 - 每类产品都有独立 Free 档与月度额度。
-- Maps 插件付费档按月自动续费;套餐额度与实际采集计量合同分别由本域与额度基建维护。
+- 付费档均不自动续费；套餐额度与实际采集计量合同分别由本域与额度基建维护。
 - 购买入口只在 website pricing 页,见 `@../011.Pricing页/feat.md`。
 - extension 不再承载订阅套餐购买页;旧 options 订阅卡和订阅提示弹窗已删除。
 - Telegram Stars 保留为共享支付基建;具体商品是否可用该渠道由渠道价配置决定。
@@ -30,7 +30,7 @@
 1. 免费用户有明确的月度额度。
 2. 付费用户按所购类别与档位获得订阅权益。
 3. 订阅状态可由双插件与已登录账号摘要读取。
-4. 自动续费成功时延长订阅有效期,到期未续费时回到 Free。
+4. 付费权益到期后回到 Free，用户可再次单次购买。
 
 ## 功能范围
 
@@ -68,16 +68,16 @@
 | 档位 | 产品线 | 价格 | 购买方式 | 权益 |
 | --- | --- | --- | --- | --- |
 | Maps Free | `maps_extension` | `$0` | 默认档位,不可购买 | 1,000 records/月 |
-| Maps Pro | `maps_extension` | `$39 / month` | PayPal / ClinkBill;自动续费 | 100,000 records/月 |
-| Maps Business | `maps_extension` | `$99 / month` | PayPal / ClinkBill;自动续费 | 500,000 records/月 |
-| Online Lite | `maps_online` | `$19 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 20,000 records/月 |
-| Online Basic | `maps_online` | `$49 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 80,000 records/月 |
-| Online Growth | `maps_online` | `$99 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 250,000 records/月 |
-| Online Pro | `maps_online` | `$149 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 500,000 records/月 |
-| API Basic | `maps_api` | `$15 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 1,000 requests/月 |
-| API Professional | `maps_api` | `$65 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 5,000 requests/月 |
-| API Business | `maps_api` | `$115 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 10,000 requests/月 |
-| API Scale | `maps_api` | `$365 / month` | PayPal / ClinkBill 一次性支付,自然月,无自动续费 | 50,000 requests/月 |
+| Maps Pro | `maps_extension` | `$39 / month` | PayPal 单次购买，自然月 | 100,000 records/月 |
+| Maps Business | `maps_extension` | `$99 / month` | PayPal 单次购买，自然月 | 500,000 records/月 |
+| Online Lite | `maps_online` | `$19 / month` | PayPal 单次购买，自然月 | 20,000 records/月 |
+| Online Basic | `maps_online` | `$49 / month` | PayPal 单次购买，自然月 | 80,000 records/月 |
+| Online Growth | `maps_online` | `$99 / month` | PayPal 单次购买，自然月 | 250,000 records/月 |
+| Online Pro | `maps_online` | `$149 / month` | PayPal 单次购买，自然月 | 500,000 records/月 |
+| API Basic | `maps_api` | `$15 / month` | PayPal 单次购买，自然月 | 1,000 requests/月 |
+| API Professional | `maps_api` | `$65 / month` | PayPal 单次购买，自然月 | 5,000 requests/月 |
+| API Business | `maps_api` | `$115 / month` | PayPal 单次购买，自然月 | 10,000 requests/月 |
+| API Scale | `maps_api` | `$365 / month` | PayPal 单次购买，自然月 | 50,000 requests/月 |
 
 购买成功后,登录账号对应产品的月度额度总量切到所购档位,到期自动回退免费档;匿名设备恒为免费档。额度消费合同见 `@../000.架构/tech-额度基建.md`,云端消费入口进度见 `@../../ROADMAP.md`。
 
@@ -93,13 +93,15 @@
 
 1. 用户在 website pricing 页选择产品类别与档位。
 2. 如用户在该产品线上已有未过期订阅,pricing 页订阅按钮灰化;点击后提示存在有效订阅,不可重复购买(重复购买校验按产品线隔离,适用于包括 `maps_online`/`maps_api` 在内的全部产品线,互不影响另一产品线的购买)。
-3. 该产品类别无有效付费订阅时,pricing 页按商品配置和可用渠道创建一次性支付或自动续费订阅。
+3. 该产品类别无有效付费订阅时，用户通过 PayPal 单次购买。
 4. 支付渠道付款成功后,系统按商品周期发放自然月订阅权益。
 5. 用户刷新订阅状态后,对应产品显示新档位与权益。
 
 购买页面、支付确认、轮询和异常见 `@../011.Pricing页/feat.md`。
 
-### 自动续费
+### 存量自动续费协议
+
+新销售商品不创建自动续费协议。以下机制仅用于维护既有协议。
 
 1. 支付渠道在每个周期自动扣款。
 2. 扣款成功后,系统延长订阅有效期。

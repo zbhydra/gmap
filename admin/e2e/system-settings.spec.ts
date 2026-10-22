@@ -7,11 +7,11 @@
  * - 生成成功后完整 API Key 只在一次性弹窗展示，关闭即消失。
  * - 完整 API Key 不写入 localStorage。
  * - 刷新配置缓存命中正确 POST，并展示刷新结果。
- * - Gosom API 配置回显、必填拦截、动态增删行与保存归一化。
+ * - Collector 节点检查、敏感 Key 往返、保存重读及加载失败拦截。
  * - 对象存储多配置新增、启用切换、刷新、删除及已有定位只读。
  */
 import { expect, test, type Page } from "@playwright/test";
-import type { ObjectStorageConfig } from "../src/api/system-settings";
+import type { GmapCollectorConfig, GmapCollectorTestResult, ObjectStorageConfig } from "../src/api/system-settings";
 import { registerE2eBrowserIdentity } from "../scripts/playwright-browser-identity.mjs";
 
 registerE2eBrowserIdentity(test);
@@ -54,37 +54,14 @@ interface ConfigCacheRefreshMockData {
   refreshed_at: number;
 }
 
-/** gosom 引擎单条 API 配置 mock。 */
-interface GosomApiItemMockData {
-  /** gosom 引擎 API 根地址。 */
-  base_url: string;
-  /** gosom 引擎 API Key。 */
-  api_key: string;
-  /** 选择权重。 */
-  weight: number;
-}
-
-/** gosom 引擎 API 配置 mock。 */
-interface GosomApiConfigMockData {
-  /** 全部 API 配置行。 */
-  items: GosomApiItemMockData[];
-}
-
-/** Gmap 引擎配置 mock。 */
-interface GmapEngineConfigMockData {
-  provider: "http" | "gosom";
-  proxies: string[];
-  concurrency: number;
-}
-
 /** 本文件 route.fulfill 可返回的数据联合。 */
 type MockResponseData =
   | DashboardMockData
   | ApiKeyMetaMockData
   | GeneratedApiKeyMockData
   | ConfigCacheRefreshMockData
-  | GosomApiConfigMockData
-  | GmapEngineConfigMockData
+  | GmapCollectorConfig
+  | GmapCollectorTestResult
   | ObjectStorageConfig;
 
 /** 后端统一成功响应。 */
@@ -128,10 +105,10 @@ async function loginAsAdmin(page: Page) {
 }
 
 /** 切换系统设置顶部 tab。 */
-async function openSettingsTab(page: Page, tab: "api-key" | "gosom-api" | "object-storage") {
+async function openSettingsTab(page: Page, tab: "api-key" | "gmap-collector" | "object-storage") {
   const tabText = {
     "api-key": "API Key",
-    "gosom-api": "Gosom API",
+    "gmap-collector": "Collector",
     "object-storage": "对象存储",
   }[tab];
   await page.locator(".n-tabs-nav").getByText(tabText, { exact: true }).click();
@@ -147,20 +124,42 @@ async function mockSystemSettingsApi(page: Page) {
   };
   let generateCallCount = 0;
   let refreshCacheCallCount = 0;
-  let gosomConfig: GosomApiConfigMockData = {
-    items: [
-      { base_url: "https://gosom.example.com", api_key: "gosom_key_old", weight: 1 },
-      { base_url: "https://backup.example.com", api_key: "gosom_key_backup", weight: 3 },
+  let collectorConfig: GmapCollectorConfig = {
+    collectors: [
+      { url: "http://collector.example.com", api_key: "collector_key_old" },
+      { url: "https://backup.example.com", api_key: "collector_key_backup" },
     ],
+    proxies: [],
   };
-  let gosomSaveCallCount = 0;
-  let gosomLastPayload: GosomApiConfigMockData | null = null;
+  let collectorReadCallCount = 0;
+  let collectorSaveCallCount = 0;
+  let collectorLastPayload: GmapCollectorConfig | null = null;
+  let collectorTestResult: GmapCollectorTestResult = { ok: true };
+  let collectorTestPayload: { url: string; api_key: string } | null = null;
   let objectStorageConfig: ObjectStorageConfig = { active_id: null, items: [] };
   let objectStorageSaveCallCount = 0;
   let objectStorageLastPayload: ObjectStorageConfig | null = null;
 
-  await page.route("**/api/admin/system-settings/gmap-engine", async (route) => {
-    await route.fulfill(successResponse({ provider: "http", proxies: [], concurrency: 1 }));
+  await page.route("**/api/admin/system-settings/gmap-collector", async (route) => {
+    if (route.request().method() === "GET") {
+      collectorReadCallCount += 1;
+      await route.fulfill(successResponse(collectorConfig));
+      return;
+    }
+    expect(route.request().method()).toBe("POST");
+    collectorSaveCallCount += 1;
+    const payload: GmapCollectorConfig = route.request().postDataJSON();
+    collectorLastPayload = payload;
+    collectorConfig = {
+      collectors: payload.collectors.map(({ url, api_key }) => ({ url: new URL(url).origin, api_key })),
+      proxies: payload.proxies,
+    };
+    await route.fulfill(successResponse(collectorConfig));
+  });
+  await page.route("**/api/admin/system-settings/gmap-collector/test", async (route) => {
+    expect(route.request().method()).toBe("POST");
+    collectorTestPayload = route.request().postDataJSON();
+    await route.fulfill(successResponse(collectorTestResult));
   });
 
   await page.route("**/api/admin/system-settings/object-storage", async (route) => {
@@ -185,25 +184,6 @@ async function mockSystemSettingsApi(page: Page) {
       ),
     };
     await route.fulfill(successResponse(objectStorageConfig));
-  });
-
-  await page.route("**/api/admin/system-settings/gosom-api", async (route) => {
-    if (route.request().method() === "GET") {
-      await route.fulfill(successResponse(gosomConfig));
-      return;
-    }
-
-    expect(route.request().method()).toBe("POST");
-    gosomSaveCallCount += 1;
-    gosomLastPayload = JSON.parse(route.request().postData() ?? "{}") as GosomApiConfigMockData;
-    // 镜像后端契约：保存前剥掉每行 base_url 末尾斜杠，并在响应中回显归一化结果。
-    gosomConfig = {
-      items: gosomLastPayload.items.map((item) => ({
-        ...item,
-        base_url: item.base_url.replace(/\/+$/, ""),
-      })),
-    };
-    await route.fulfill(successResponse(gosomConfig));
   });
 
   await page.route("**/api/admin/system-settings/api-key", async (route) => {
@@ -246,10 +226,12 @@ async function mockSystemSettingsApi(page: Page) {
     generateCallCount: () => generateCallCount,
     /** 当前刷新缓存接口调用次数。 */
     refreshCacheCallCount: () => refreshCacheCallCount,
-    /** 当前 gosom 保存接口调用次数。 */
-    gosomSaveCallCount: () => gosomSaveCallCount,
-    /** 最近一次 gosom 保存请求体。 */
-    gosomLastPayload: () => gosomLastPayload,
+    collectorReadCallCount: () => collectorReadCallCount,
+    collectorSaveCallCount: () => collectorSaveCallCount,
+    collectorLastPayload: () => collectorLastPayload,
+    collectorTestPayload: () => collectorTestPayload,
+    collectorConfig: () => collectorConfig,
+    setCollectorTestResult: (result: GmapCollectorTestResult) => { collectorTestResult = result; },
     /** 当前对象存储保存接口调用次数。 */
     objectStorageSaveCallCount: () => objectStorageSaveCallCount,
     /** 最近一次对象存储保存请求体。 */
@@ -303,16 +285,16 @@ test("代理双端校验提示与批量连通性结果", async ({ page }, testIn
   let saveCalls = 0;
   let checkCalls = 0;
   const backendMessage = "proxies 字段第 2 项格式错误：请使用完整代理 URL";
-  await page.route("**/api/admin/system-settings/gmap-engine", async (route) => {
+  await page.route("**/api/admin/system-settings/gmap-collector", async (route) => {
     if (route.request().method() === "GET") {
-      await route.fulfill(successResponse({ provider: "http", proxies: [], concurrency: 2048 }));
+      await route.fulfill(successResponse({ collectors: [], proxies: [] }));
     } else {
       saveCalls += 1;
       expect(route.request().headers()["accept-language"]).toBe("zh-CN");
       await route.fulfill({ json: { code: 999, data: {}, msg: backendMessage } });
     }
   });
-  await page.route("**/api/admin/system-settings/gmap-engine/check-proxies", async (route) => {
+  await page.route("**/api/admin/system-settings/gmap-collector/check-proxies", async (route) => {
     checkCalls += 1;
     const body: { proxies: string[] } = route.request().postDataJSON();
     expect(body.proxies.length).toBeLessThanOrEqual(20);
@@ -332,8 +314,8 @@ test("代理双端校验提示与批量连通性结果", async ({ page }, testIn
     });
   });
   await page.goto("/system-settings");
-  await page.locator(".n-tabs-nav").getByText("Gmap 引擎", { exact: true }).click();
-  const input = page.locator(".gmap-engine-proxies textarea");
+  await page.locator(".n-tabs-nav").getByText("Collector", { exact: true }).click();
+  const input = page.locator(".collector-proxies textarea");
   await input.fill("127.0.0.1:8080:user:secret");
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(page.getByText(/proxies 字段第 1 项格式错误/)).toBeVisible();
@@ -380,59 +362,96 @@ test("刷新配置缓存命中 POST 并展示成功结果", async ({ page }) => 
   expect(api.refreshCacheCallCount()).toBe(1);
 });
 
-test("Gosom API 配置回显、必填拦截、动态增删行与保存归一化", async ({ page }) => {
+test("Collector 节点检查不保存，Key 编辑后保存重读且支持清空", async ({ page }) => {
   await loginAsAdmin(page);
   const api = await mockSystemSettingsApi(page);
-
   await page.goto("/system-settings");
-  await openSettingsTab(page, "gosom-api");
+  await openSettingsTab(page, "gmap-collector");
+  const urls = page.getByLabel("节点 URL", { exact: true });
+  const keys = page.getByLabel("节点 Key", { exact: true });
+  const proxies = page.getByLabel("代理 URL", { exact: true });
+  await expect(urls).toHaveCount(2);
+  await expect(keys.nth(0)).toHaveAttribute("type", "password");
+  await urls.nth(0).fill("http://edited.example.com/");
+  await keys.nth(0).fill("rotated_key");
+  await page.getByRole("button", { name: "检查连接", exact: true }).first().click();
+  await expect(page.getByText("节点连接正常", { exact: true })).toBeVisible();
+  expect(api.collectorTestPayload()).toEqual({ url: "http://edited.example.com/", api_key: "rotated_key" });
+  expect(api.collectorSaveCallCount()).toBe(0);
+  expect(api.collectorConfig().collectors[0]?.api_key).toBe("collector_key_old");
+  await urls.nth(0).fill("http://edited.example.com:80/");
+  await expect(page.getByText("节点连接正常", { exact: true })).toHaveCount(0);
+  api.setCollectorTestResult({ ok: false, reason: "unauthorized" });
+  await page.getByRole("button", { name: "检查连接", exact: true }).first().click();
+  await expect(page.getByText("节点拒绝鉴权，请检查 Key", { exact: true })).toBeVisible();
+  expect(api.collectorSaveCallCount()).toBe(0);
+  await keys.nth(0).fill("");
+  await page.getByRole("button", { name: "保存", exact: true }).click();
+  await expect(page.getByText("每个节点的 URL 和 Key 均不能为空", { exact: true })).toBeVisible();
+  expect(api.collectorSaveCallCount()).toBe(0);
+  await keys.nth(0).fill("rotated_key");
+  await page.getByRole("button", { name: "添加节点", exact: true }).click();
+  await urls.nth(2).fill(" http://new.example.com:80/ ");
+  await keys.nth(2).fill(" new_key ");
+  await proxies.fill("http://user:secret@proxy.example:8080\n\nhttp://user:secret@proxy.example:8080");
+  const reads = api.collectorReadCallCount();
+  await page.getByRole("button", { name: "保存", exact: true }).click();
+  await expect(page.getByText("Collector 配置已保存并重读", { exact: true })).toBeVisible();
+  expect(api.collectorReadCallCount()).toBe(reads + 1);
+  expect(api.collectorLastPayload()?.collectors).toEqual([
+    { url: "http://edited.example.com:80/", api_key: "rotated_key" },
+    { url: "https://backup.example.com", api_key: "collector_key_backup" },
+    { url: "http://new.example.com:80/", api_key: "new_key" },
+  ]);
+  await expect(urls.nth(0)).toHaveValue("http://edited.example.com");
+  await expect(keys.nth(1)).toHaveValue("collector_key_backup");
+  await expect(proxies).toHaveValue("http://user:secret@proxy.example:8080\nhttp://user:secret@proxy.example:8080");
+  await page.reload();
+  await openSettingsTab(page, "gmap-collector");
+  await expect(keys.nth(0)).toHaveValue("rotated_key");
+  await expect(keys.nth(1)).toHaveValue("collector_key_backup");
+  const storage = await page.evaluate(() => Object.values(localStorage).join("\n"));
+  expect(storage).not.toContain("rotated_key");
+  expect(storage).not.toContain("collector_key_backup");
+  expect(storage).not.toContain("user:secret");
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByRole("button", { name: "删除节点", exact: true }).first().click();
+  }
+  await proxies.fill("");
+  await page.getByRole("button", { name: "保存", exact: true }).click();
+  await expect(urls).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "保存", exact: true })).toBeEnabled();
+  expect(api.collectorLastPayload()).toEqual({ collectors: [], proxies: [] });
+});
 
-  const baseUrlInputs = page.getByPlaceholder("如 https://gosom.example.com");
-  const apiKeyInputs = page.getByPlaceholder("gosom 引擎 API Key");
-  const weightInputs = page.getByPlaceholder("1-10000");
-  await expect(baseUrlInputs.nth(0)).toHaveValue("https://gosom.example.com");
-  await expect(baseUrlInputs.nth(1)).toHaveValue("https://backup.example.com");
-  await expect(apiKeyInputs.nth(1)).toHaveValue("gosom_key_backup");
-  await expect(weightInputs.nth(1)).toHaveValue("3");
-
-  // 任一行字段为空白时前端直接拦截，不发保存请求。
-  await apiKeyInputs.nth(0).fill("");
-  await page.getByRole("button", { name: "保存" }).click();
-  await expect(
-    page.locator(".n-message__content", {
-      hasText: "每行的 API 地址、API Key 和权重均不能为空",
-    }),
-  ).toBeVisible();
-  expect(api.gosomSaveCallCount()).toBe(0);
-  await apiKeyInputs.nth(0).fill("gosom_key_old");
-
-  // 动态增删行：新增第三行并填写，删除原第二行。
-  await page.getByRole("button", { name: "添加 API" }).click();
-  await expect(baseUrlInputs).toHaveCount(3);
-  await baseUrlInputs.nth(2).fill("https://new.example.com");
-  await apiKeyInputs.nth(2).fill("gosom_key_new");
-  await weightInputs.nth(2).fill("10");
-  await page.getByRole("button", { name: "删除" }).nth(1).click();
-  await expect(baseUrlInputs).toHaveCount(2);
-
-  // 保存命中 POST；请求体原样携带输入值，输入框回填后端归一化(剥末尾斜杠)结果。
-  await baseUrlInputs.nth(0).fill("https://gosom.internal:8080/");
-  await page.getByRole("button", { name: "保存" }).click();
-  await expect(
-    page.locator(".n-message__content", { hasText: "Gosom API 配置已保存" }),
-  ).toBeVisible();
-  expect(api.gosomSaveCallCount()).toBe(1);
-  expect(api.gosomLastPayload()).toEqual({
-    items: [
-      {
-        base_url: "https://gosom.internal:8080/",
-        api_key: "gosom_key_old",
-        weight: 1,
-      },
-      { base_url: "https://new.example.com", api_key: "gosom_key_new", weight: 10 },
-    ],
+test("Collector 加载或保存后重读失败时禁止覆盖配置，刷新后恢复", async ({ page }) => {
+  await loginAsAdmin(page);
+  const api = await mockSystemSettingsApi(page);
+  let failRead = true;
+  await page.route("**/api/admin/system-settings/gmap-collector", async route => {
+    if (route.request().method() === "GET" && failRead) {
+      await route.fulfill({ json: { code: 999, msg: "read failed", data: null } });
+      return;
+    }
+    await route.fallback();
   });
-  await expect(baseUrlInputs.nth(0)).toHaveValue("https://gosom.internal:8080");
+  await page.goto("/system-settings");
+  await openSettingsTab(page, "gmap-collector");
+  const save = page.getByRole("button", { name: "保存", exact: true });
+  await expect(save).toBeDisabled();
+  await expect(page.getByRole("button", { name: "添加节点", exact: true })).toBeDisabled();
+  failRead = false;
+  await page.getByRole("button", { name: "刷新", exact: true }).click();
+  await expect(save).toBeEnabled();
+  failRead = true;
+  await save.click();
+  await expect(save).toBeDisabled();
+  await expect(page.locator(".n-alert").getByText("Collector 配置加载失败，请点击刷新重试", { exact: true })).toBeVisible();
+  expect(api.collectorSaveCallCount()).toBe(1);
+  failRead = false;
+  await page.getByRole("button", { name: "刷新", exact: true }).click();
+  await expect(save).toBeEnabled();
+  await expect(page.getByLabel("节点 Key", { exact: true }).nth(1)).toHaveValue("collector_key_backup");
 });
 
 test("对象存储四配置新增、切换、刷新、删除与已有定位只读", async ({ page }, testInfo) => {

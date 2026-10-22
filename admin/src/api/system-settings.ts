@@ -1,7 +1,7 @@
 /**
  * 系统设置 API。
  *
- * 提供配置缓存刷新、管理员外部 API Key 与采集引擎配置操作。
+ * 提供配置缓存刷新、管理员外部 API Key 与 Collector 配置操作。
  */
 import request from "./request";
 
@@ -42,28 +42,22 @@ export interface ConfigCacheRefreshResult {
   refreshed_at: number;
 }
 
-/** gosom 引擎单条 API 配置；weight 参与按权重随机选择。 */
-export interface GosomApiItem {
-  /** gosom 引擎 API 根地址，http(s):// 开头，无末尾斜杠。 */
-  base_url: string;
-  /** gosom 引擎 API Key，明文保存。 */
+export interface GmapCollectorInstance {
+  url: string;
   api_key: string;
-  /** 选择权重，1-10000；多条配置按权重加权随机选用。 */
-  weight: number;
 }
 
-/** gosom 引擎 API 配置；整表覆盖保存，items 为空即清空配置。 */
-export interface GosomApiConfig {
-  /** 全部 API 配置行。 */
-  items: GosomApiItem[];
-}
-
-/** Gmap 采集引擎配置；代理按列表顺序使用，concurrency 为每进程预算。 */
-export interface GmapEngineConfig {
-  provider: "http" | "gosom";
+export interface GmapCollectorConfig {
+  collectors: GmapCollectorInstance[];
   proxies: string[];
-  concurrency: number;
 }
+
+export type GmapCollectorTestResult =
+  | { ok: true }
+  | {
+      ok: false;
+      reason: "timeout" | "transport" | "unauthorized" | "http_error" | "invalid_response";
+    };
 
 /** Cloudflare R2 对象存储配置。 */
 export interface R2StorageConfig {
@@ -110,19 +104,16 @@ export function refreshConfigCache() {
   return request.post<never, ConfigCacheRefreshResult>("/system-settings/config-cache/refresh");
 }
 
-/** 查询 gosom 引擎 API 配置。 */
-export function getGosomApiConfig() {
-  return request.get<never, GosomApiConfig>("/system-settings/gosom-api");
+export function getGmapCollectorConfig() {
+  return request.get<never, GmapCollectorConfig>("/system-settings/gmap-collector");
 }
 
-/** 保存 gosom 引擎 API 配置。 */
-export function saveGosomApiConfig(config: GosomApiConfig) {
-  return request.post<never, GosomApiConfig>("/system-settings/gosom-api", config);
+export function saveGmapCollectorConfig(config: GmapCollectorConfig) {
+  return request.post<never, GmapCollectorConfig>("/system-settings/gmap-collector", config);
 }
 
-/** 查询 Gmap 采集引擎配置。 */
-export function getGmapEngineConfig() {
-  return request.get<never, GmapEngineConfig>("/system-settings/gmap-engine");
+export function testGmapCollector(collector: GmapCollectorInstance) {
+  return request.post<never, GmapCollectorTestResult>("/system-settings/gmap-collector/test", collector);
 }
 
 export interface GmapProxyCheckResult {
@@ -134,14 +125,9 @@ export interface GmapProxyCheckResult {
 
 export function checkGmapProxies(proxies: string[]) {
   return request.post<never, { items: GmapProxyCheckResult[] }>(
-    "/system-settings/gmap-engine/check-proxies",
+    "/system-settings/gmap-collector/check-proxies",
     { proxies },
   );
-}
-
-/** 保存 Gmap 采集引擎配置，并返回后端归一化结果。 */
-export function saveGmapEngineConfig(config: GmapEngineConfig) {
-  return request.post<never, GmapEngineConfig>("/system-settings/gmap-engine", config);
 }
 
 /** 查询对象存储配置。 */

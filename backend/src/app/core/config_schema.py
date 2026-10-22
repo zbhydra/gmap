@@ -9,7 +9,13 @@ from typing import Annotated, Any
 from urllib.parse import quote, urlsplit
 
 import yaml  # type: ignore
-from pydantic import BaseModel, Field, TypeAdapter, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    TypeAdapter,
+    ValidationError,
+    field_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -88,6 +94,8 @@ class AppSettings(BaseSettings):
     debug: bool = Field(default=False)
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=9660)
+    export_run_concurrency: int = Field(default=8, ge=1)
+    export_queue_limit: int = Field(default=1000, ge=1)
     public_api_base_url: str = Field(
         default="",
         description="对外 API 根地址，用于生成返回给浏览器的绝对 URL",

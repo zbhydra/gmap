@@ -4,33 +4,13 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 
-class GmapProviderError(RuntimeError):
-    """Gmap 上游配置、请求或响应不满足技术合同时抛出。"""
-
-
-class GmapConfigurationError(GmapProviderError):
-    """Gmap Provider 缺少可用运行配置。"""
-
-
-class GmapRequestError(GmapProviderError):
-    """Google 请求在批准的重试次数内未成功。"""
-
-
-class GmapParseError(GmapProviderError):
-    """Google 响应不符合已验证协议结构。"""
-
-
-class GmapSoftDegradationError(GmapProviderError):
-    """Google 返回成功响应但静默忽略指定视口。"""
-
-
 @dataclass(frozen=True, slots=True)
 class GmapViewport:
     """Google Maps 搜索视口；zoom 使用 Web Mercator 层级。"""
 
     lat: float
     lng: float
-    zoom: float
+    zoom: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,7 +23,7 @@ class GmapNamedValues:
 
 @dataclass(frozen=True, slots=True)
 class GmapPlaceEntry:
-    """Search 与 gosom 共用的 29 列核心地点 DTO。"""
+    """Collector Search 的地点 DTO。"""
 
     name: str
     fid: str
@@ -74,6 +54,8 @@ class GmapPlaceEntry:
     kgmid: str | None = None
     google_maps_url: str | None = None
     place_id: str | None = None
+    emails: list[str] = field(default_factory=list)
+    medias: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,6 +65,20 @@ class GmapSearchResult:
     entries: list[GmapPlaceEntry]
     partial: bool = False
     warnings: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True, slots=True)
+class CollectorSearchResponse:
+    status: Literal["ok", "partial", "failed"]
+    result: GmapSearchResult
+
+
+@dataclass(frozen=True, slots=True)
+class CollectorSiteContacts:
+    """以 Collector 返回的规范化完整 URL 为键合并，不能按数组位置套用。"""
+
+    emails: list[str]
+    medias: dict[str, str]
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,17 +111,29 @@ class GmapReviewPage:
 
 
 @dataclass(frozen=True, slots=True)
-class GosomJobHandle:
-    """gosom job 标识；查询配置由调用方持有。"""
+class GmapPhoto:
+    url: str
 
-    job_id: str
+
+GmapPhotosReason = Literal[
+    "limit_reached",
+    "pagination_unverified",
+    "completeness_unverified",
+    "pagination_stalled",
+    "budget_exhausted",
+    "upstream_failed",
+    "parse_failed",
+    "route_unverified",
+    "request_template_invalid",
+]
 
 
 @dataclass(frozen=True, slots=True)
-class GosomJobSnapshot:
-    """gosom job 的归一化状态快照。"""
+class GmapPhotosResult:
+    """照片交付数量与完整性状态；reported_total 仅是上游报告值。"""
 
-    status: Literal["pending", "running", "completed", "failed"]
-    result_count: int
-    entries: list[GmapPlaceEntry] | None
-    error: str | None
+    photos: list[GmapPhoto]
+    returned_count: int
+    reported_total: int | None
+    status: Literal["partial"]
+    reason: GmapPhotosReason

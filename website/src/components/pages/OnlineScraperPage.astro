@@ -42,7 +42,7 @@ const FEATURE_TILES: Record<OnlineFeatureId, { icon: string; tone: string }> = {
   history: { icon: 'clock', tone: '' },
   details: { icon: 'building', tone: '' },
   enrichment: { icon: 'mail', tone: '' },
-  downloads: { icon: 'archive', tone: 'icon-tile--ok' },
+  downloads: { icon: 'file-sheet', tone: 'icon-tile--ok' },
   browser: { icon: 'cloud', tone: 'icon-tile--pin' }
 }
 ---
@@ -60,7 +60,7 @@ const FEATURE_TILES: Record<OnlineFeatureId, { icon: string; tone: string }> = {
 
     <ProductFacts locale={locale} caption={page.facts.caption} items={page.facts.items} />
 
-    <OnlineFlow locale={locale} flow={page.flow} dashboard={t.dashboard} zip={page.hero.theater.zip} />
+    <OnlineFlow locale={locale} flow={page.flow} dashboard={t.dashboard} />
 
     <OnlineModes modes={page.modes} create={t.dashboard.create} plans={plans.cards} />
 

@@ -15,12 +15,12 @@ export type Capability = 'extensionInstall' | 'extensionPurchase' | 'scraperApi'
 
 export const capabilities: Readonly<Record<Capability, boolean>> = {
   /** 插件安装：导航 Install、插件页 #install、各页安装 CTA。 */
-  extensionInstall: false,
+  extensionInstall: true,
   /** 插件套餐购买：Pricing 插件档、Dashboard 插件线选购。 */
-  extensionPurchase: false,
+  extensionPurchase: true,
   /** REST API 的 Search 与 Reviews 端点（同一 Key、同一套餐）：获取 Key、购买、连接。 */
   scraperApi: true,
-  /** Photos 端点：014 合同尚未实现，独立于 scraperApi 放开。 */
+  /** Photos 后端已接入；营销页合同与文案完成后独立开放。 */
   photosApi: false,
   /** MCP 服务：连接、获取 Key。 */
   mcp: true

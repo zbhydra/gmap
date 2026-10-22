@@ -11,31 +11,8 @@ ARCHIVE_NAME="dist.tar.gz"
 ARCHIVE_PATH="$SCRIPT_DIR/$ARCHIVE_NAME"
 RELEASE_NAME="v$(date +%Y%m%d_%H%M%S)"
 
-# 环境配置（占位：MapsGrab 正式服务器/域名确定后回填；
-# 同步 astro.config 的 SITE_PLACEHOLDER、public/robots.txt 与 deploy/*-test.conf）
-PROD_SERVER_HOST="mapsgrab-prod.example.com"
-PROD_SERVER_PORT="22"
-PROD_SERVER_USER="root"
-PROD_SERVER_DEPLOY_ROOT="/data/mapsgrab-web"
-PROD_NGINX_CONF="$SCRIPT_DIR/mapsgrab.conf"
-PROD_NGINX_REMOTE_CONF_PATH="/usr/local/nginx/vhost/mapsgrab.conf"
-
-# 测试环境先使用硬编码占位值，正式测试服务器确定后改这里即可
-TEST_SERVER_HOST="mapsgrab-test.example.com"
-TEST_SERVER_PORT="22"
-TEST_SERVER_USER="root"
-TEST_SERVER_DEPLOY_ROOT="/data/mapsgrab-web-test"
-TEST_NGINX_CONF="$SCRIPT_DIR/mapsgrab-test.conf"
-TEST_NGINX_REMOTE_CONF_PATH="/usr/local/nginx/vhost/mapsgrab-test.conf"
-
-PROD_DOMAIN="mapsgrab.com"
-TEST_DOMAIN="test-mapsgrab-web.example.com"
-PROD_PUBLIC_API_BASE_URL="https://api-mapsgrab.example.com"
-TEST_PUBLIC_API_BASE_URL="https://test-api-mapsgrab.example.com"
-PROD_PUBLIC_SHARED_COOKIE_DOMAIN="mapsgrab.com"
-TEST_PUBLIC_SHARED_COOKIE_DOMAIN="mapsgrab.com"
-
 DEPLOY_ENV=""
+BUILD_MODE=""
 SERVER_HOST=""
 SERVER_PORT=""
 SERVER_USER=""
@@ -46,11 +23,6 @@ SERVER_CURRENT_LINK=""
 SERVER_RELEASE_DIR=""
 DEPLOY_DOMAIN=""
 TEMP_ARCHIVE_PATH=""
-BUILD_PUBLIC_API_BASE_URL=""
-BUILD_PUBLIC_SHARED_COOKIE_DOMAIN=""
-
-# IndexNow key 占位：与正式域名在 IndexNow 的注册绑定，域名确定后重新生成回填
-INDEXNOW_KEY=
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -82,33 +54,34 @@ apply_environment() {
     case "$env_name" in
         prod)
             DEPLOY_ENV="prod"
-            SERVER_HOST="$PROD_SERVER_HOST"
-            SERVER_PORT="$PROD_SERVER_PORT"
-            SERVER_USER="$PROD_SERVER_USER"
-            SERVER_DEPLOY_ROOT="$PROD_SERVER_DEPLOY_ROOT"
-            NGINX_CONF_PATH="$PROD_NGINX_CONF"
-            NGINX_REMOTE_CONF_PATH="$PROD_NGINX_REMOTE_CONF_PATH"
-            DEPLOY_DOMAIN="$PROD_DOMAIN"
-            BUILD_PUBLIC_API_BASE_URL="$PROD_PUBLIC_API_BASE_URL"
-            BUILD_PUBLIC_SHARED_COOKIE_DOMAIN="$PROD_PUBLIC_SHARED_COOKIE_DOMAIN"
+            BUILD_MODE="production"
+            NGINX_CONF_PATH="$SCRIPT_DIR/mapsgrab.conf"
             ;;
         test)
             DEPLOY_ENV="test"
-            SERVER_HOST="$TEST_SERVER_HOST"
-            SERVER_PORT="$TEST_SERVER_PORT"
-            SERVER_USER="$TEST_SERVER_USER"
-            SERVER_DEPLOY_ROOT="$TEST_SERVER_DEPLOY_ROOT"
-            NGINX_CONF_PATH="$TEST_NGINX_CONF"
-            NGINX_REMOTE_CONF_PATH="$TEST_NGINX_REMOTE_CONF_PATH"
-            DEPLOY_DOMAIN="$TEST_DOMAIN"
-            BUILD_PUBLIC_API_BASE_URL="$TEST_PUBLIC_API_BASE_URL"
-            BUILD_PUBLIC_SHARED_COOKIE_DOMAIN="$TEST_PUBLIC_SHARED_COOKIE_DOMAIN"
+            BUILD_MODE="test"
+            NGINX_CONF_PATH="$SCRIPT_DIR/mapsgrab-test.conf"
             ;;
         *)
             echo "错误: 不支持的部署环境: $env_name"
             exit 1
             ;;
     esac
+
+    local env_file="$WEBSITE_DIR/.env.$BUILD_MODE"
+    if [ ! -f "$env_file" ]; then
+        echo "错误: 缺少 $env_file，请复制同名 .example 并配置"
+        exit 1
+    fi
+    set -a
+    source "$env_file"
+    set +a
+    SERVER_HOST="${DEPLOY_SERVER_HOST:?请配置 DEPLOY_SERVER_HOST}"
+    SERVER_PORT="${DEPLOY_SERVER_PORT:-22}"
+    SERVER_USER="${DEPLOY_SERVER_USER:-root}"
+    SERVER_DEPLOY_ROOT="${DEPLOY_SERVER_ROOT:?请配置 DEPLOY_SERVER_ROOT}"
+    NGINX_REMOTE_CONF_PATH="${DEPLOY_NGINX_REMOTE_CONF:?请配置 DEPLOY_NGINX_REMOTE_CONF}"
+    DEPLOY_DOMAIN=$(node -p 'new URL(process.env.PUBLIC_SITE_URL).host')
 
     SERVER_CURRENT_LINK="$SERVER_DEPLOY_ROOT/current"
     SERVER_RELEASE_DIR="$SERVER_DEPLOY_ROOT/$RELEASE_NAME"
@@ -211,19 +184,14 @@ log_info "源目录: $DIST_DIR"
 log_info "目标服务器: ${SERVER_USER}@${SERVER_HOST}:${SERVER_PORT}:${SERVER_DEPLOY_ROOT}/"
 log_info "本次版本目录: $SERVER_RELEASE_DIR"
 log_info "Nginx 配置: $NGINX_CONF_PATH -> $NGINX_REMOTE_CONF_PATH"
-log_info "前端 API 地址: $BUILD_PUBLIC_API_BASE_URL"
-log_info "共享 Cookie Domain: $BUILD_PUBLIC_SHARED_COOKIE_DOMAIN"
-if [ "$DEPLOY_ENV" = "test" ]; then
-    log_warn "测试环境当前使用脚本内硬编码占位配置，请按需修改 deploy.sh 与 mapsgrab-test.conf"
-fi
+log_info "前端 API 地址: $PUBLIC_API_BASE_URL"
+log_info "共享 Cookie Domain: $PUBLIC_SHARED_COOKIE_DOMAIN"
 echo ""
 
 # 步骤 1: 构建网站
 log_step "步骤 1/7: 构建网站..."
 cd "$WEBSITE_DIR"
-PUBLIC_API_BASE_URL="$BUILD_PUBLIC_API_BASE_URL" \
-PUBLIC_SHARED_COOKIE_DOMAIN="$BUILD_PUBLIC_SHARED_COOKIE_DOMAIN" \
-pnpm build
+node scripts/build.mjs "$BUILD_MODE"
 
 if [ ! -d "$DIST_DIR" ]; then
     echo "错误: 构建后找不到 dist 目录: $DIST_DIR"

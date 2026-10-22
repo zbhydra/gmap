@@ -4,9 +4,8 @@
   功能：
   1. 刷新当前业务进程内配置读取缓存，并展示刷新时间和服务列表。
   2. 查询、生成和重新生成当前管理员外部 API Key；完整 key 仅在弹窗中一次性展示。
-  3. 维护 gosom 引擎多条 API 配置（地址 / Key / 权重，动态增删行，整表保存）。
-  4. 维护 Gmap HTTP / gosom Provider、代理 URL 列表与每进程并发预算。
-  5. 维护 Cloudflare R2 与阿里云 OSS 对象存储配置。
+  3. 维护 Collector 节点、Key 与代理列表，支持检查、保存和重读。
+  4. 维护 Cloudflare R2 与阿里云 OSS 对象存储配置。
 -->
 <template>
   <div class="system-settings-view">
@@ -118,145 +117,88 @@
           </section>
         </NTabPane>
 
-        <NTabPane
-          name="gosom-api"
-          :tab="t('systemSettings.tabGosomApi')"
-        >
+        <NTabPane name="gmap-collector" :tab="t('systemSettings.tabGmapCollector')">
           <section>
-            <NText class="gosom-hint" depth="3">
-              {{ t("systemSettings.gosomWeightHint") }}
-            </NText>
-            <NSpin :show="gosomLoading">
-              <div class="gosom-rows">
-                <div
-                  v-if="gosomRows.length > 0"
-                  class="gosom-row gosom-row-head"
-                >
-                  <NText>{{ t("systemSettings.gosomBaseUrl") }}</NText>
-                  <NText>{{ t("systemSettings.gosomApiKey") }}</NText>
-                  <NText>{{ t("systemSettings.gosomWeight") }}</NText>
-                  <span class="gosom-row-op" />
-                </div>
-                <div
-                  v-for="(row, index) in gosomRows"
-                  :key="index"
-                  class="gosom-row"
-                >
-                  <NInput
-                    v-model:value="row.base_url"
-                    :placeholder="t('systemSettings.gosomBaseUrlPlaceholder')"
-                    :disabled="gosomLoading"
-                  />
-                  <NInput
-                    v-model:value="row.api_key"
-                    :placeholder="t('systemSettings.gosomApiKeyPlaceholder')"
-                    :disabled="gosomLoading"
-                  />
-                  <NInputNumber
-                    v-model:value="row.weight"
-                    class="gosom-weight-input"
-                    :min="1"
-                    :max="10000"
-                    :precision="0"
-                    :placeholder="t('systemSettings.gosomWeightPlaceholder')"
-                    :disabled="gosomLoading"
-                  />
-                  <NButton
-                    class="gosom-row-op"
-                    quaternary
-                    type="error"
-                    size="small"
-                    :disabled="gosomLoading"
-                    @click="removeGosomRow(index)"
+            <NText class="collector-hint" depth="3">{{ t("systemSettings.collectorHint") }}</NText>
+            <NAlert v-if="!collectorLoaded && !collectorLoading" type="warning" class="unknown-alert">
+              {{ t("systemSettings.collectorLoadFailed") }}
+            </NAlert>
+            <NSpin :show="collectorLoading">
+              <div class="collector-rows">
+                <div v-for="(row, index) in collectorRows" :key="index" class="collector-row">
+                  <NFormItem
+                    :label="t('systemSettings.collectorUrl')"
+                    :label-props="{ for: `collector-url-${index}` }"
+                    label-placement="top"
+                    :show-feedback="false"
                   >
-                    {{ t("systemSettings.gosomRemoveRow") }}
-                  </NButton>
+                    <NInput
+                      v-model:value="row.url"
+                      :input-props="{ id: `collector-url-${index}`, autocomplete: 'off' }"
+                      :placeholder="t('systemSettings.collectorUrlPlaceholder')"
+                      :disabled="collectorDisabled"
+                      @update:value="row.result = null"
+                    />
+                  </NFormItem>
+                  <NFormItem
+                    :label="t('systemSettings.collectorApiKey')"
+                    :label-props="{ for: `collector-key-${index}` }"
+                    label-placement="top"
+                    :show-feedback="false"
+                  >
+                    <NInput
+                      v-model:value="row.api_key"
+                      type="password"
+                      show-password-on="click"
+                      :input-props="{ id: `collector-key-${index}`, autocomplete: 'off' }"
+                      :disabled="collectorDisabled"
+                      @update:value="row.result = null"
+                    />
+                  </NFormItem>
+                  <NSpace align="center">
+                    <NButton
+                      :loading="row.checking"
+                      :disabled="collectorDisabled || !row.url.trim() || !row.api_key.trim()"
+                      @click="handleTestCollector(row)"
+                    >{{ t("systemSettings.collectorTest") }}</NButton>
+                    <NButton quaternary type="error" :disabled="collectorDisabled" @click="collectorRows.splice(index, 1)">
+                      {{ t("systemSettings.collectorRemove") }}
+                    </NButton>
+                    <NText v-if="row.result" :type="row.result.ok ? 'success' : 'error'" role="status">
+                      {{ row.result.ok
+                        ? t("systemSettings.collectorTestOk")
+                        : t(`systemSettings.collectorTestReason.${row.result.reason}`) }}
+                    </NText>
+                  </NSpace>
                 </div>
               </div>
+              <div class="collector-actions">
+                <NButton dashed :disabled="collectorDisabled || collectorRows.length >= 16" @click="addCollector">
+                  {{ t("systemSettings.collectorAdd") }}
+                </NButton>
+                <NButton :disabled="collectorDisabled" @click="openProxyChecker">
+                  <template #icon><NIcon :component="CheckCircleOutlined" /></template>
+                  {{ t("systemSettings.proxyChecker") }}
+                </NButton>
+              </div>
+              <NFormItem :label="t('systemSettings.collectorProxies')" :label-props="{ for: 'collector-proxies' }" :show-feedback="false">
+                <NInput
+                  ref="collectorProxiesInput"
+                  v-model:value="collectorProxies"
+                  class="collector-proxies"
+                  type="textarea"
+                  :input-props="{ id: 'collector-proxies' }"
+                  :placeholder="t('systemSettings.collectorProxiesPlaceholder')"
+                  :disabled="collectorDisabled"
+                />
+              </NFormItem>
             </NSpin>
-            <NButton
-              class="gosom-add"
-              dashed
-              :disabled="gosomLoading"
-              @click="addGosomRow"
-            >
-              {{ t("systemSettings.gosomAddRow") }}
-            </NButton>
-            <div class="tab-actions">
-              <NButton
-                type="primary"
-                :loading="gosomSaving"
-                :disabled="gosomLoading"
-                @click="handleSaveGosomConfig"
-              >
-                {{ t("systemSettings.gosomSave") }}
+            <div class="tab-actions collector-actions">
+              <NButton :loading="collectorLoading" :disabled="collectorBusy" @click="loadCollectorConfig">
+                {{ t("common.refresh") }}
               </NButton>
-            </div>
-          </section>
-        </NTabPane>
-
-        <NTabPane
-          name="gmap-engine"
-          :tab="t('systemSettings.tabGmapEngine')"
-        >
-          <section>
-            <NSpin :show="gmapEngineLoading">
-              <div class="gmap-engine-form">
-                <div class="gmap-engine-toolbar">
-                  <div class="gmap-engine-field">
-                    <NText>{{ t("systemSettings.gmapEngineProvider") }}</NText>
-                    <NRadioGroup
-                      v-model:value="gmapEngineProvider"
-                      name="gmap-engine-provider"
-                      :disabled="gmapEngineLoading"
-                    >
-                      <NRadioButton value="http">
-                        {{ t("systemSettings.gmapEngineProviderHttp") }}
-                      </NRadioButton>
-                      <NRadioButton value="gosom">
-                        {{ t("systemSettings.gmapEngineProviderGosom") }}
-                      </NRadioButton>
-                    </NRadioGroup>
-                  </div>
-                  <NButton @click="openProxyChecker">
-                    <template #icon><NIcon :component="CheckCircleOutlined" /></template>
-                    {{ t("systemSettings.proxyChecker") }}
-                  </NButton>
-                </div>
-
-                <div class="gmap-engine-field">
-                  <NText>{{ t("systemSettings.gmapEngineProxies") }}</NText>
-                  <NInput
-                    ref="gmapEngineProxiesInput"
-                    v-model:value="gmapEngineProxies"
-                    class="gmap-engine-proxies"
-                    type="textarea"
-                    :placeholder="t('systemSettings.gmapEngineProxiesPlaceholder')"
-                    :disabled="gmapEngineLoading"
-                  />
-                </div>
-
-                <div class="gmap-engine-field">
-                  <NText>{{ t("systemSettings.gmapEngineConcurrency") }}</NText>
-                  <NInputNumber
-                    v-model:value="gmapEngineConcurrency"
-                    class="gmap-engine-concurrency"
-                    :min="1"
-                    :precision="0"
-                    :disabled="gmapEngineLoading"
-                  />
-                </div>
-              </div>
-            </NSpin>
-
-            <div class="tab-actions">
-              <NButton
-                type="primary"
-                :loading="gmapEngineSaving"
-                :disabled="gmapEngineLoading"
-                @click="handleSaveGmapEngineConfig"
-              >
-                {{ t("systemSettings.gmapEngineSave") }}
+              <NButton type="primary" :loading="collectorSaving" :disabled="collectorDisabled" @click="handleSaveCollectorConfig">
+                {{ t("systemSettings.collectorSave") }}
               </NButton>
             </div>
           </section>
@@ -478,8 +420,8 @@
         type="textarea"
         :rows="6"
         :disabled="proxyChecking"
-        :aria-label="t('systemSettings.gmapEngineProxies')"
-        :placeholder="t('systemSettings.gmapEngineProxiesPlaceholder')"
+        :aria-label="t('systemSettings.collectorProxies')"
+        :placeholder="t('systemSettings.collectorProxiesPlaceholder')"
       />
       <NSpace align="center" justify="space-between">
         <NText aria-live="polite">
@@ -547,7 +489,6 @@ import {
   NFormItem,
   NIcon,
   NInput,
-  NInputNumber,
   NList,
   NListItem,
   NModal,
@@ -569,17 +510,16 @@ import {
   checkGmapProxies,
   generateAdminApiKey,
   getAdminApiKeyMeta,
-  getGmapEngineConfig,
-  getGosomApiConfig,
+  getGmapCollectorConfig,
   getObjectStorageConfig,
   refreshConfigCache,
-  saveGosomApiConfig,
-  saveGmapEngineConfig,
+  saveGmapCollectorConfig,
+  testGmapCollector,
   saveObjectStorageConfig,
   type AdminApiKeyMeta,
   type ConfigCacheRefreshResult,
-  type GosomApiItem,
-  type GmapEngineConfig,
+  type GmapCollectorInstance,
+  type GmapCollectorTestResult,
   type GmapProxyCheckResult,
   type ObjectStorageConfig,
   type ObjectStorageItem,
@@ -587,11 +527,9 @@ import {
 import { formatAdminTimeMs } from "@/utils/time";
 import { BusinessError } from "@/api/request";
 
-/** gosom 配置编辑行；weight 在数字输入框被清空时为 null，保存前统一拦截。 */
-interface GosomApiRow {
-  base_url: string;
-  api_key: string;
-  weight: number | null;
+interface CollectorRow extends GmapCollectorInstance {
+  checking: boolean;
+  result: GmapCollectorTestResult | null;
 }
 
 const { t } = useI18n();
@@ -601,10 +539,16 @@ const message = useMessage();
 const refreshingCache = ref(false);
 const apiKeyLoading = ref(false);
 const generatingApiKey = ref(false);
-const gosomLoading = ref(false);
-const gosomSaving = ref(false);
-const gmapEngineLoading = ref(false);
-const gmapEngineSaving = ref(false);
+const collectorLoading = ref(false);
+const collectorSaving = ref(false);
+const collectorLoaded = ref(false);
+const collectorRows = ref<CollectorRow[]>([]);
+const collectorProxies = ref("");
+const collectorProxiesInput = ref<InputInst | null>(null);
+const collectorBusy = computed(
+  () => collectorLoading.value || collectorSaving.value || collectorRows.value.some(row => row.checking),
+);
+const collectorDisabled = computed(() => collectorBusy.value || !collectorLoaded.value);
 const proxyCheckerVisible = ref(false);
 const proxyCheckInput = ref("");
 const proxyChecking = ref(false);
@@ -613,7 +557,7 @@ const proxyCheckTotal = ref(0);
 const proxyCheckResults = ref<GmapProxyCheckResult[]>([]);
 
 function openProxyChecker() {
-  proxyCheckInput.value = gmapEngineProxies.value;
+  proxyCheckInput.value = collectorProxies.value;
   proxyCheckResults.value = [];
   proxyCheckTotal.value = 0;
   proxyCheckerVisible.value = true;
@@ -630,7 +574,7 @@ async function handleCheckProxies() {
   }
   const invalidIndex = proxies.findIndex((proxy) => !isValidProxyUrl(proxy));
   if (invalidIndex !== -1) {
-    message.warning(t("systemSettings.gmapEngineProxyInvalid", { index: invalidIndex + 1 }));
+    message.warning(t("systemSettings.proxyInvalid", { index: invalidIndex + 1 }));
     return;
   }
   proxyChecking.value = true;
@@ -657,11 +601,6 @@ const cacheRefreshResult = ref<ConfigCacheRefreshResult | null>(null);
 const apiKeyMeta = ref<AdminApiKeyMeta | null>(null);
 const generatedApiKey = ref("");
 const showGeneratedApiKeyModal = ref(false);
-const gosomRows = ref<GosomApiRow[]>([]);
-const gmapEngineProvider = ref<GmapEngineConfig["provider"]>("http");
-const gmapEngineProxies = ref("");
-const gmapEngineConcurrency = ref<number | null>(1);
-const gmapEngineProxiesInput = ref<InputInst | null>(null);
 const objectStorageConfig = ref<ObjectStorageConfig>({
   active_id: null,
   items: [],
@@ -807,84 +746,37 @@ async function handleCopyGeneratedApiKey() {
   }
 }
 
-/** 加载 gosom 引擎 API 配置为可编辑行。 */
-async function loadGosomConfig() {
-  gosomLoading.value = true;
+async function loadCollectorConfig() {
+  collectorLoading.value = true;
+  collectorLoaded.value = false;
   try {
-    const data = await getGosomApiConfig();
-    gosomRows.value = data.items.map((item) => ({ ...item }));
-  } catch (error) {
-    console.error("SystemSettingsView.loadGosomConfig() 加载失败:", error);
-    message.error(
-      getErrorMessage(
-        error instanceof Error ? error : null,
-        t("systemSettings.gosomLoadFailed"),
-      ),
-    );
-  } finally {
-    gosomLoading.value = false;
-  }
-}
-
-/** 新增一行空 gosom API 配置。 */
-function addGosomRow() {
-  gosomRows.value.push({ base_url: "", api_key: "", weight: 1 });
-}
-
-/** 删除指定行的 gosom API 配置。 */
-function removeGosomRow(index: number) {
-  gosomRows.value.splice(index, 1);
-}
-
-/** 保存 gosom 引擎 API 配置；任一行地址 / Key / 权重缺失时前端拦截不发请求。 */
-async function handleSaveGosomConfig() {
-  const items: GosomApiItem[] = [];
-  for (const row of gosomRows.value) {
-    const base_url = row.base_url.trim();
-    const api_key = row.api_key.trim();
-    if (!base_url || !api_key || row.weight === null) {
-      message.warning(t("systemSettings.gosomRequired"));
-      return;
-    }
-    items.push({ base_url, api_key, weight: row.weight });
-  }
-
-  gosomSaving.value = true;
-  try {
-    const data = await saveGosomApiConfig({ items });
-    gosomRows.value = data.items.map((item) => ({ ...item }));
-    message.success(t("systemSettings.gosomSaveSuccess"));
-  } catch (error) {
-    console.error("SystemSettingsView.handleSaveGosomConfig() 保存失败:", error);
-    message.error(
-      getErrorMessage(
-        error instanceof Error ? error : null,
-        t("systemSettings.gosomSaveFailed"),
-      ),
-    );
-  } finally {
-    gosomSaving.value = false;
-  }
-}
-
-/** 用后端归一化对象覆盖表单，确保重载前后的展示口径一致。 */
-function fillGmapEngineForm(config: GmapEngineConfig) {
-  gmapEngineProvider.value = config.provider;
-  gmapEngineProxies.value = config.proxies.join("\n");
-  gmapEngineConcurrency.value = config.concurrency;
-}
-
-/** 加载 Gmap Provider、代理列表和每进程并发预算。 */
-async function loadGmapEngineConfig() {
-  gmapEngineLoading.value = true;
-  try {
-    fillGmapEngineForm(await getGmapEngineConfig());
+    const config = await getGmapCollectorConfig();
+    collectorRows.value = config.collectors.map(collector => ({ ...collector, checking: false, result: null }));
+    collectorProxies.value = config.proxies.join("\n");
+    collectorLoaded.value = true;
   } catch {
-    // 异常响应可能携带配置回显，禁止把明文代理凭据写入日志。
-    console.error("SystemSettingsView.loadGmapEngineConfig() 加载失败");
-    message.error(t("systemSettings.gmapEngineLoadFailed"));
+    // 配置响应可能包含凭据，不能记录原始异常。
+    console.error("SystemSettingsView.loadCollectorConfig() 加载 Collector 配置失败");
+    message.error(t("systemSettings.collectorLoadFailed"));
   } finally {
-    gmapEngineLoading.value = false;
+    collectorLoading.value = false;
+  }
+}
+
+function addCollector() {
+  collectorRows.value.push({ url: "", api_key: "", checking: false, result: null });
+}
+
+async function handleTestCollector(row: CollectorRow) {
+  row.checking = true;
+  row.result = null;
+  try {
+    row.result = await testGmapCollector({ url: row.url.trim(), api_key: row.api_key.trim() });
+  } catch (error) {
+    console.error("SystemSettingsView.handleTestCollector() 检查 Collector 节点失败");
+    message.error(error instanceof BusinessError ? error.message : t("systemSettings.collectorTestFailed"));
+  } finally {
+    row.checking = false;
   }
 }
 
@@ -919,48 +811,29 @@ function isValidProxyUrl(value: string): boolean {
   }
 }
 
-/** 保存前校验代理列表，错误项号与发送给后端的数组一致。 */
-async function handleSaveGmapEngineConfig() {
-  const proxies = gmapEngineProxies.value
-    .split("\n")
-    .map((proxy) => proxy.trim())
-    .filter(Boolean);
-  if (gmapEngineProvider.value === "http" && proxies.length === 0) {
-    message.warning(t("systemSettings.gmapEngineHttpProxyRequired"));
-    gmapEngineProxiesInput.value?.focus();
+async function handleSaveCollectorConfig() {
+  const collectors = collectorRows.value.map(({ url, api_key }) => ({ url: url.trim(), api_key: api_key.trim() }));
+  if (collectors.some(collector => !collector.url || !collector.api_key)) {
+    message.warning(t("systemSettings.collectorRequired"));
     return;
   }
-  const invalidProxyIndex = proxies.findIndex((proxy) => !isValidProxyUrl(proxy));
+  const proxies = collectorProxies.value.split("\n").map(proxy => proxy.trim()).filter(Boolean);
+  const invalidProxyIndex = proxies.findIndex(proxy => !isValidProxyUrl(proxy));
   if (invalidProxyIndex !== -1) {
-    message.warning(t("systemSettings.gmapEngineProxyInvalid", { index: invalidProxyIndex + 1 }));
-    gmapEngineProxiesInput.value?.focus();
+    message.warning(t("systemSettings.proxyInvalid", { index: invalidProxyIndex + 1 }));
+    collectorProxiesInput.value?.focus();
     return;
   }
-  if (gmapEngineConcurrency.value === null || gmapEngineConcurrency.value < 1) {
-    message.warning(t("systemSettings.gmapEngineConcurrencyRequired"));
-    return;
-  }
-
-  gmapEngineSaving.value = true;
+  collectorSaving.value = true;
   try {
-    fillGmapEngineForm(
-      await saveGmapEngineConfig({
-        provider: gmapEngineProvider.value,
-        proxies,
-        concurrency: gmapEngineConcurrency.value,
-      }),
-    );
-    message.success(t("systemSettings.gmapEngineSaveSuccess"));
+    await saveGmapCollectorConfig({ collectors, proxies });
+    await loadCollectorConfig();
+    if (collectorLoaded.value) message.success(t("systemSettings.collectorSaveSuccess"));
   } catch (error) {
-    // 仅展示后端业务消息，网络异常可能携带含凭据的请求体。
-    console.error("SystemSettingsView.handleSaveGmapEngineConfig() 保存失败");
-    if (error instanceof BusinessError) {
-      message.warning(error.message);
-    } else {
-      message.error(t("systemSettings.gmapEngineSaveFailed"));
-    }
+    console.error("SystemSettingsView.handleSaveCollectorConfig() 保存 Collector 配置失败");
+    message.error(error instanceof BusinessError ? error.message : t("systemSettings.collectorSaveFailed"));
   } finally {
-    gmapEngineSaving.value = false;
+    collectorSaving.value = false;
   }
 }
 
@@ -1089,8 +962,7 @@ function isValidAliOssEndpoint(value: string) {
 
 onMounted(() => {
   void loadApiKeyMeta();
-  void loadGosomConfig();
-  void loadGmapEngineConfig();
+  void loadCollectorConfig();
   void loadObjectStorageConfig();
 });
 </script>
@@ -1114,53 +986,35 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
-.gosom-hint {
+.collector-hint {
   display: block;
-  margin-bottom: 12px;
-}
-
-.gosom-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.gosom-row {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) 140px auto;
-  gap: 12px;
-  align-items: center;
-}
-
-.gosom-weight-input {
-  width: 100%;
-}
-
-.gosom-row-op {
-  justify-self: end;
-}
-
-.gosom-add {
-  margin-top: 12px;
-}
-
-.gmap-engine-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   margin-bottom: 16px;
 }
 
-.gmap-engine-toolbar {
+.collector-rows {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 16px;
-  flex-wrap: wrap;
 }
 
-.gmap-engine-toolbar .gmap-engine-field {
-  width: auto;
+.collector-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(160px, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.collector-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.collector-proxies {
+  width: 100%;
+  min-height: 200px;
 }
 
 .proxy-check-results {
@@ -1171,23 +1025,6 @@ onMounted(() => {
 .proxy-check-address {
   overflow-wrap: anywhere;
   min-width: 140px;
-}
-
-.gmap-engine-field {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-}
-
-.gmap-engine-proxies {
-  width: 100%;
-  min-height: 200px;
-}
-
-.gmap-engine-concurrency {
-  width: 160px;
 }
 
 .object-storage-list {
@@ -1252,16 +1089,9 @@ onMounted(() => {
     justify-content: stretch;
   }
 
-  .gosom-row {
+  .collector-row {
     grid-template-columns: 100%;
   }
 
-  .gosom-row-head {
-    display: none;
-  }
-
-  .gosom-row-op {
-    justify-self: start;
-  }
 }
 </style>

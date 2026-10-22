@@ -1,4 +1,4 @@
-"""官方 MCP SDK 协议边界；Search / Reviews 与 REST 共用业务入口。"""
+"""官方 MCP SDK 协议边界；工具与 REST 共用业务入口。"""
 
 import json
 from contextvars import ContextVar
@@ -28,7 +28,11 @@ from app.core.config import settings
 from app.exceptions.common_exception import AppCommonException
 from app.i18n import translator
 from app.i18n.common_code import CommonCode
-from app.schemas.maps_api_schema import McpSearchRequest, McpReviewsRequest
+from app.schemas.maps_api_schema import (
+    McpPhotosRequest,
+    McpReviewsRequest,
+    McpSearchRequest,
+)
 from app.utils.common import get_locale
 from app.utils.logger import logger
 
@@ -43,6 +47,7 @@ _METERED_READ = types.ToolAnnotations(
 _TOOLS: dict[str, type[BaseModel]] = {
     "search_places": McpSearchRequest,
     "list_reviews": McpReviewsRequest,
+    "list_photos": McpPhotosRequest,
 }
 
 
@@ -100,13 +105,20 @@ async def call_tool(
         args = model.model_validate(params.arguments or {})
         if isinstance(args, McpSearchRequest):
             data = await maps_api_operations.search(args, user)
-        else:
-            assert isinstance(args, McpReviewsRequest)
+        elif isinstance(args, McpReviewsRequest):
             data = await maps_api_operations.reviews(args, user)
+        else:
+            assert isinstance(args, McpPhotosRequest)
+            data = await maps_api_operations.photos(args, user)
     except ValidationError:
         data, is_error = _error(CommonCode.VALIDATION_ERROR, user.language), True
     except AppCommonException as exc:
-        logger.warning("mcp_tool_failed: tool=%s code=%s", params.name, exc.code.value)
+        logger.warning(
+            "mcp_tool_failed: tool=%s code=%s context=%s",
+            params.name,
+            exc.code.value,
+            exc.ext_msg,
+        )
         data, is_error = _error(exc.code, user.language), True
     except Exception:
         logger.error("mcp_tool_failed: tool=%s", params.name, exc_info=True)

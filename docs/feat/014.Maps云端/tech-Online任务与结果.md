@@ -1,277 +1,43 @@
-# tech · Online 任务与结果
+# Online Export 接口
 
-> 014 B1 的后端稳定合同。Provider 取数合同见 `@tech-引擎Provider层.md`；对象存储配置见 `@../008.管理后台/tech-系统设置.md` 的“对象存储配置”；额度原语见 `@../000.架构/tech-额度基建.md`。
+执行、恢复、CSV 与用量事务的唯一合同归 [Export 与 Collector](tech-Export与Collector重构.md#3-export-领域与执行)。本页只定义网站调用边界；本期状态与延期联调归 [010](plans/010.Export服务端实施.md)。
 
-## 1. 范围
+## 身份与响应
 
-本模块负责 Online 关键词任务的持久化、异步执行、进度、对象结果、启动恢复、实际用量计量和下载。
+前缀 `/api/client/export`，全部使用本人登录 Bearer Token。成功响应为 `{code:10000,data,msg}`；认证失败 HTTP 401，其余业务错误 HTTP 200。不存在与他人 Job 均返回 `NOT_FOUND`，不支持匿名下载。
 
-用户状态固定为 `processing / completed`；内部错误只用于诊断。Search / Reviews API 使用独立同步接口。
+| 方法与路径                    | 请求                                                   | 成功 data                                                      |
+| ----------------------------- | ------------------------------------------------------ | -------------------------------------------------------------- |
+| POST `/jobs`                  | `{items:[{keyword,viewport?}],include_contacts?:boolean}` | `{job,items}`                                                  |
+| GET `/jobs`                   | `offset=0`、`limit=20`（1–100）                        | `{jobs:[job],total,offset,limit}`，按创建倒序                  |
+| GET `/jobs/{job_no}`          | 本人编号                                               | `{job,items}`                                                  |
+| GET `/jobs/{job_no}/download` | 本人且已发布的编号                                     | `{url,filename}`，整 Job CSV，签名有效期 300 秒，响应 no-store |
 
-## 2. 架构
+`include_contacts` 为可选 boolean，省略默认 true；关闭时必须显式传 false。
 
-```text
-Online 创建入口
-  -> 同一事务写父任务与 item 分表
-  -> service 为每个 item 启动协程
-  -> HTTP Search 或 gosom submit/get
-  -> R2 / AliOSS item CSV
-  -> report_item 首次完成事务
-  -> Online 实际 records 计量
-  -> task completed
-```
+创建输入由 `ExportCreateRequest` 拥有：最多 50 个逻辑采样，每项关键词规范空白后 1–500 字符；相同关键词与视口组合拒绝。视口是有限 `lat/lng` 与严格整数 `zoom=1..21`，省略表示普通或地区关键词。不同关键词数按当前套餐校验，地图点数不占关键词档位；每 item 采用 CAS 默认 200 条目标。服务端忽略未知字段，不接收 Provider、用户、节点、存储或自定 Run 参数。
 
-MySQL 是任务事实源。创建事务提交后直接启动 item 协程并返回任务信息；business 启动时按 `APP_NAME` 恢复一次未完成任务。
+## 公开字段
 
-## 3. 实现入口
+`job` 包含 `job_no`、`run_no`、`status`、`include_contacts`、`total_count`、`processed_count`、`record_count`、`has_file`、`created_at`、`started_at`、`finished_at`、`error_code`。
 
-- `@backend/src/app/api/client/maps_online_client.py`：创建、查询与下载边界；请求和响应由 `@backend/src/app/schemas/maps_online_schema.py` 定义。
-- `@backend/src/app/services/maps_online_task_service.py` 的 `maps_online_task_service`：创建事务、item 执行、报告、计量与恢复；生命周期接入 `@backend/src/app/main.py`。
-- `@backend/src/app/models/maps_online_task_model.py` 与 `@backend/src/app/models/maps_online_task_item_model.py`：父任务及分表；后者的路由入口统一决定 item 物理表。
-- `@backend/src/app/provider/maps_online.py` 的 `MapsOnlineProvider`：采集编排、CSV 与下载；`@backend/src/app/provider/maps_enrich.py` 的 `maps_enrich_provider` 为 Online 与插件接口共用的补全入口。
-- `@backend/src/app/utils/object_storage.py`：官方 SDK 读写与签名边界；固定参数归 `@backend/src/app/constants/maps_online.py`。
+- 编号均为 JSON string，34 位小写十六进制文本（UUID hex 与两位 owner 槽号）。Job/Run 各 10 张同构表，按 `user_id % 10` 路由，一 Job 一 Run。
+- 状态为 `queued/collecting/publishing/completed/partial/failed`；后三种为终态。列表与详情不将失败统一显示为完成。
+- `total_count` 为采样数，`processed_count` 为已收口采样数，`record_count` 为整 Job 去重后的交付行数；三者均为非负整数。`has_file` 表示已成功提交的本人下载引用。
+- `created_at` 为非空毫秒 Unix 时间戳；`started_at/finished_at` 为同单位整数或 null。首次开始时间在恢复时不刷新。
+- `include_contacts` 是创建时按当前有效 Online 订阅和用户开关确定的 boolean 快照；详情不重新按当前套餐改变既有任务。
+- `error_code` 为本地化业务码或 null；网站通过自身 i18n 展示状态与错误。
 
-改动范围与验收记录见 `@plans/002.Online任务与结果基建.md`。
+详情 `items` 每项包含 `item_index`（0 起）、`keyword`、`viewport`（对象或 null）、`result_count`、`completed`、`error_code`。completed 表示已提交收口事实，不能单独作为采集成功依据；result_count 是去重后归属于该项的行数。
 
-可选联系方式补全与独立采集库见 [官网联系方式采集](tech-官网联系方式采集.md)；该项方案与实施状态见 [003 实施清单](plans/003.可选联系方式与独立采集库.md)。
+`EXPORT_TARGET_FAILED=31301`、`EXPORT_PARTIAL_RESULT=31302`、`EXPORT_REQUEST_RETRY=31303`、`EXPORT_PUBLISH_FAILED=31304`；普通校验使用 999，额度耗尽使用 400，配置不可用使用 500。无文件、未成功发布、对象已移除或非本人下载使用 404 业务码。
 
-依赖方向固定为 `service -> provider -> utils`。service 读取运行配置并在初始化 Online Provider 时传入；Provider 不读取或引用 service。R2 通过官方 S3 兼容接口，AliOSS 使用官方 Python SDK，同步 I/O 由对象存储工具放入 `asyncio.to_thread`。
+## CSV 与权益
 
-## 4. 数据模型
+整 Job 仅一份 UTF-8 BOM CSV；第一行固定英文列名，第二行为创建请求语言的字段说明，第三行起为数据。共 37 个公开列，连续行号为 `#`，来源列为 `Search Keyword`。精确顺序由 `provider/export/gmap_columns.py` 拥有；内部 record_id、item_index 与搜索视口来源列不全部对外投影。跨关键词重复商家只保留首次提交行及其关键词。
 
-### 4.1 `maps_online_tasks`
+关闭联系方式时不查询补全缓存或调用补全；Emails 与六类社媒列保留为空，不改变列数。启用时尽力补全，失败保留基础行。合法零结果为 completed，无文件且不扣量；partial 按已发布且去重后的行数消费。
 
-| 字段 | 类型 | 约束 | 语义 |
-| --- | --- | --- | --- |
-| `id` | `BIGINT` | PK, AUTO_INCREMENT | 分表路由源 |
-| `task_no` | `VARCHAR(32)` | NOT NULL, UNIQUE | 对外任务编号与计量幂等键 |
-| `user_id` | `BIGINT` | NOT NULL | 任务所属登录用户 |
-| `app_name` | `VARCHAR(100)` | NOT NULL | 创建任务的 business 标识 |
-| `provider` | `VARCHAR(16)` | NOT NULL | `http / gosom` 创建时快照 |
-| `storage_id` | `VARCHAR(36)` | NOT NULL | 创建时启用的对象存储配置 ID，任务存续期间不变 |
-| `include_contacts` | `BOOLEAN` | NOT NULL | 创建入口按 Online 权益与请求选项确定的有效值；执行及恢复直接使用 |
-| `csv_language` | `VARCHAR(5)` | NOT NULL, DEFAULT `en-US` | 创建时固定的 Online CSV 译名语言；旧任务行按默认英语读取 |
-| `search_viewports` | `JSON` | NULL | 地图模式实际采样视口快照；NULL 为普通或地区关键词 |
-| `total_count` | `INT` | NOT NULL | item 总数 |
-| `processed_count` | `INT` | NOT NULL, DEFAULT 0 | 已收口 item 数 |
-| `record_count` | `INT` | NOT NULL, DEFAULT 0 | 已保存结果记录总数 |
-| `error_item_count` | `INT` | NOT NULL, DEFAULT 0 | 供运维直接查询的错误 item 数，不对客户端返回 |
-| `completed_at` | `BIGINT` | NOT NULL, DEFAULT 0 | `0` 为处理中；正数为终态时间 |
-| `created_at` | `BIGINT` | NOT NULL | 创建时间，毫秒时间戳 |
+`GET /api/client/maps-online/options` 保留 `{keyword_limit,logical_sample_limit,contacts_allowed,usage}`。usage 沿原 `{used,total,period,exhausted}`，period 为纽约自然月 `YYYY-MM`，Online 计量单位为 records；运行中的任务允许超过剩余额度，耗尽后拒绝新建。原商品、账户和账本归 [额度基建](../000.架构/tech-额度基建.md)。
 
-索引合同：
-
-- PK `(id)`。
-- UK `uk_maps_online_tasks_task_no(task_no)`：任务详情、下载和用量幂等定位。
-- INDEX `idx_maps_online_tasks_user_id(user_id)`：用户任务列表按 `id DESC` 读取。
-- INDEX `idx_maps_online_tasks_completed_at(completed_at)`：启动时定位少量 `completed_at = 0` 的任务，再过滤 `app_name`。
-
-实现索引时按 `spec-index.md` 补齐实际查询与 `EXPLAIN`，不添加其他索引。
-
-### 4.2 `maps_online_task_items_00` 至 `_19`
-
-20 张表使用同一字段合同，路由固定为 `task_id % 20`。同一任务的全部 item 在同一张表，查询先取得父任务 `id`，不跨分表查询或聚合。
-
-| 字段 | 类型 | 约束 | 语义 |
-| --- | --- | --- | --- |
-| `id` | `BIGINT` | PK, AUTO_INCREMENT | 分表内 item ID |
-| `task_id` | `BIGINT` | NOT NULL | 父任务 ID |
-| `sequence` | `INT` | NOT NULL | 关键词原始顺序，从 1 开始 |
-| `keyword` | `VARCHAR(500)` | NOT NULL | 规范化后的关键词 |
-| `object_key` | `VARCHAR(1000)` | NULL | 首次完成者的 CSV key |
-| `record_count` | `INT` | NOT NULL, DEFAULT 0 | 本 item 实际保存记录数 |
-| `error` | `TEXT` | NULL | 内部错误或 partial warning，禁止对客户端返回 |
-| `completed_at` | `BIGINT` | NOT NULL, DEFAULT 0 | `0` 可再次执行；正数已经收口 |
-
-每张表只有 PK `(id)` 与 UK `(task_id, sequence)`。按 `task_id` 命中后最多读取单任务 50 行。
-
-item 模型模块用一个抽象模型定义字段，一次生成 20 个物理模型，并暴露 `task_id -> model` 的唯一路由函数。service 直接路由到单表；`models/__init__.py` 导入分表集合，使 20 张表注册到 `Base.metadata`。
-
-## 5. 创建与查询接口
-
-所有接口要求登录用户，只使用 GET / POST。
-
-### 5.1 创建任务
-
-`POST /api/client/maps-online/tasks`
-
-| 字段 | 类型 | 必传 | 说明 |
-| --- | --- | --- | --- |
-| `keywords` | `string[]` | 是 | 逐项 trim、删除空项并按首次出现顺序去重 |
-| `include_contacts` | `boolean` | 否 | 省略按开启请求处理；入口按有效 Online 订阅约束，免费用户的有效值始终为 false |
-| `search_viewports` | `{lat: number, lng: number, zoom: integer}[] \| null` | 否 | 地图模式实际点位；空数组拒绝，重复视口保序去重；细则见 [地图采样合同](tech-地图采样与地区批量搜索.md) |
-
-关键词上限由 `constants/maps_online.py` 按当前 `product_id` 固定映射：`free=2 / online_lite=5 / online_basic=10 / online_growth=20 / online_pro=50`。入口读取当前用量；已经 exhausted 时拒绝新任务，本次任务不预留额度。
-
-Online 固定使用 `max_depth=3`、`hl/lang=en`、无 `gl`；地图模式每次搜索使用父任务快照中的视口，普通/地区模式无视口。深度取值依据调研 §12.3 的批量甜点位。入口读取 `gmap_engine` 与 `object_storage`，把采集 Provider 和当前启用项的 `storage_id` 写入父任务；没有启用的完整对象存储配置时拒绝创建。
-
-创建入口复用已读取的 `get_user_subscription_config(user_id, MAPS_ONLINE_PRODUCT_KIND)` 判定有效 Online 权益，将请求与权益合并为明确的 `include_contacts` 布尔值并存入父任务；免费用户即使显式传 true 也保存 false。官网补全直连优先，不因补全代理池为空拒绝创建；Google Maps 引擎自身所需的配置校验保持不变。补全出站规则见 [官网联系方式采集](tech-官网联系方式采集.md)。内部执行、重启恢复不重新判断用户权益，也不允许中途修改任务选项。
-
-创建入口按现有 `Accept-Language` 解析规则取得规范语言码，写入父任务 `csv_language`；未传或不支持的语言为 `en-US`。网站请求头取创建时页面的 `<html lang>`，当前网站只开放 `en-US`，后端沿用现有 14 种语言。异步执行及启动恢复都显式传父任务快照，不根据下载请求或进程全局语言重新选译名。
-
-service 提交创建事务后，用当前引擎与对象存储配置初始化 Online Provider，并立即按 item 启动协程。响应返回 `task_no / status / total_count / processed_count / record_count / created_at`。
-
-### 5.2 查询与下载合同
-
-任务摘要固定为 `task_no / status / total_count / processed_count / record_count / created_at`；item 摘要固定为 `item_id / sequence / keyword / record_count`。响应不包含 `app_name / error_item_count / error / storage_id / object_key`。
-
-| 方法与路径 | 入参 | 成功 `data` |
-| --- | --- | --- |
-| `POST /api/client/maps-online/tasks` | `{keywords: string[], include_contacts?: boolean, search_viewports?: viewport[] \| null}` | 任务摘要 |
-| `GET /api/client/maps-online/tasks` | `offset: int = 0 / limit: int = 20` | `{tasks: 任务摘要[], total, offset, limit}`，按 `id DESC` |
-| `GET /api/client/maps-online/tasks/{task_no}` | path `task_no` | `{task: 任务摘要, items: item 摘要[]}` |
-| `GET /api/client/maps-online/tasks/{task_no}/items/{item_id}/download` | path `task_no / item_id` | `{url, filename}` |
-| `GET /api/client/maps-online/tasks/{task_no}/download` | path `task_no` | ZIP 文件响应 |
-
-统一复用现有错误码：未登录沿用认证错误；请求格式错误使用 `VALIDATION_ERROR`；额度耗尽使用 `INVALID_REQUEST`；任务、item 或可下载文件不属于当前用户或不存在时使用 `NOT_FOUND`；额度或对象存储不可用时使用现有 `EXTENSION_USAGE_UNAVAILABLE / INTERNAL_SERVER_ERROR`。
-
-## 6. 对象存储与 CSV
-
-Online 对象 key 固定为：
-
-```text
-online/{Ymd}/{task_no}/{item_id}/{attempt_id}.csv
-```
-
-- `Ymd` 从父任务 `created_at` 按业务时区 `America/New_York` 推导为 `yyyyMMdd`。
-- `attempt_id` 每次执行重新生成，重复执行不会覆盖其他 attempt。
-- CSV 的完整 36 列列名与顺序以已验证脚本 `@backend/tests/fixtures/gmap/scripts/stress_test.py` 的 `CSV_HEADERS` 为准：Emails 与 6 个社媒列位于 `Search Keyword` 前，`Search Keyword` 为最后一列。按表头列名从 Provider 的 29 个核心字段与 enrichment 结果中取值；未产出时保持空值。字段来源见调研 §12.30。
-- CSV 使用标准库 `csv`，采用 RFC 4180、CRLF、UTF-8 BOM。第一行沿用 `CSV_HEADERS` 的固定字段名与顺序，第二行按父任务语言从后端现有 locale 资源读取同名键的译名，第三行起是商家数据；空结果也保留两行表头。翻译行不参与 `record_count` 与额度；ZIP 直接打包已保存的同源 CSV，已有对象文件不批量改写。
-- 对象保留期由运维在 R2 / AliOSS 配置生命周期规则，按功能前缀自动清理；保留天数不写死在应用中。
-- R2 与 AliOSS bucket 为私有；Client 下载通过鉴权后的短期签名 URL 或后端 ZIP 响应。
-
-父任务只保存 `storage_id`；服务类型、endpoint、bucket 和凭据统一归对应配置项。创建时绑定当前启用项，执行、启动恢复和下载始终按该 ID 取配置，切换启用项只影响新任务。后台多配置与读取合同见 `@../008.管理后台/tech-系统设置.md` 的“对象存储配置”。
-
-切换存储时新增一套配置并设为启用项，保留旧配置、凭据和 bucket 权限；旧任务继续写入和下载原存储，旧对象按保留期自然清理后，由管理员删除旧配置。退役时间以旧存储最后写入的对象完成过期清理为准，不从切换启用项时直接起算。应用不复制对象、不改绑历史任务，也不自动删除配置。
-
-Online Provider 接收 service 按 `storage_id` 取得的配置。历史任务对应配置已删除时，下载按文件不可用返回 `NOT_FOUND`，不改用当前启用项。
-
-## 7. Item 执行与恢复
-
-### 7.1 执行
-
-阶段耗时直接写入现有应用日志：`maps_online.*` 按任务编号与 item ID 记录创建、准备、采集、补全、CSV、上传、报告及计量；`gmap_http.search` 按关键词记录 NID、常规分页、浏览器补列与 L2。`duration_ms` 使用单调时钟计算；采集总耗时包含 Google 子阶段，不重复累加。用户端等待与文件传输耗时须从客户端计时，不能用后台完成时间代替。
-
-每个 Online item 建立独立的进程内日志 scope，异步子任务共享该 item 的计数对象。中立包只持有不解析的 `scope_id` 与计数；service 用本地任务编号和 item ID 组装该标识，并在汇总日志中同时写本地任务字段与标识。Google 与官网请求日志只读取 `scope_id`、各自请求 ID；地图模式的 Google RPC 请求号另含采样序号，官网库的逐跳请求号独立生成。未由 Online 发起的独立采集标记为 `unscoped`。scope 在采集与交付结束或外部取消时汇总并清理，汇总先于 `report_item` 及最终计量重试。仅写应用日志，不保存流量表，也不记录正文、凭据或完整代理 URL。
-
-代理传输观测按来源分别解释，不合并为账单字节：
-
-| 来源 | 尝试与字节口径 | 不完整观测 |
-| --- | --- | --- |
-| HTTP Google RPC | 取得并发名额、真正进入 curl `get` 后计一次传输尝试；分别累计 `curl_request_bytes`、`curl_header_bytes`、`curl_download_bytes` | 自动重定向不拆成物理 HTTP 请求；有响应异常记可用字节与 partial，无响应或取消记 unmeasured；排队时取消不计尝试 |
-| 官网代理抓取 | 只有实际使用代理的逐跳 `get` 计入；分别累计 `curl_request_bytes`、`curl_header_bytes`、`decoded_body_consumed_bytes`；直连仍保留关联日志 | 重定向、非 2xx 未读正文，截断、读取异常或取消记 partial；无响应记 unmeasured。正文先按完整 chunk 长度计已消费量，再按 HTML 上限截断保存 |
-| gosom | submit/get 仅记本地请求号、可选 `scope_id` 与响应状态或错误 | gosom 远端 Google 代理流量不可观测，Online 汇总标记 `unobservable_remote`，不把控制接口流量计作 Google |
-
-上述 curl 头大小按 libcurl 的 HTTP/1 表示口径，可能包含 CONNECT 头；官网正文是解压后实际消费量，未消费的正文不能视为零网络流量。汇总中无可用字节时记 `None`，attempt、partial、unmeasured 分列；即使字节可用，压缩、重定向、截断及无响应错误也使其不能代表代理商精确账单。scope 只汇总应用已收尾的子任务，不推断 curl 内部不可观测任务的状态。
-
-- `maps_online_task_service` 读取配置、初始化 Online Provider，并持有本进程创建的后台 task（item 执行与启动恢复时的任务完成操作）；task 结束后从集合移除，business 关闭时取消剩余 task。
-- 每个 item task 调用 Online Provider，并把返回结果或异常转换为一次 `report_item`。
-- 普通/地区 item 调用一次搜索；地图 item 按父任务实际视口顺序采样，在同一关键词内按 `fid` 保序去重。Google 出站并发使用 Provider 已有的进程级限制。
-- gosom 每个逻辑采样提交一次单关键词 job，并在同一协程中每 5 秒按返回的 handle 查询；pending/running 继续等待，completed 进入聚合，failed 视为该点失败。坐标和 zoom 的透传见 [地图采样合同](tech-地图采样与地区批量搜索.md)。
-- Online Provider 在 Maps 结果就绪后按父任务的 `include_contacts` 决定是否调用官网补全，再合并 CSV、上传对象、报告 item 完成。关闭时直接序列化 Maps 结果，Emails 与 6 个社媒列留空，不访问补全缓存。补全编排、代理与采集库合同见 [官网联系方式采集](tech-官网联系方式采集.md)。
-- 所有 item 共用父任务 `created_at + 60 分钟` 的采集截止时间，覆盖 HTTP 并发等待、取数、gosom 轮询和 enrichment；启动恢复沿用原截止时间。service 将剩余时间换算为事件循环的单调截止时间传入 `MapsOnlineProvider.execute(deadline=...)`，Provider 只对基础取数使用该超时边界，补全使用剩余批预算。文件序列化、CSV 生成与上传共用独立交付预算，由 `constants/maps_online.py:DELIVERY_TIMEOUT_SECONDS` 定义；不能因补全耗尽采集期限而丢弃基础结果。
-- 达到期限时取消本地未完成采集；尚未取得基础商家结果的 item 按 0 条错误收口。已取得基础结果的 item 在补全失败或超时时仍交付基础结果，保留已完成的邮箱和社媒补全。文件上传成功后才报告交付记录数并计量；上传失败仍按失败收口。已经完成的 item 及其 CSV、记录数保持不变；进程关闭等外部取消继续传播，`report_item` 与最终计量不受采集期限限制。
-- HTTP partial 保存已有结果，并把 warning 写入内部状态文本。
-- 地图模式单点失败记内部 warning 并继续；总采集期限耗尽停止新采样。至少一处成功（含成功空结果）时交付已取得基础商家；所有采样均失败时零条、无 CSV。外部取消继续传播。
-- CSV 生成与存储 SDK 均在线程中执行，交付期限到期或外部取消时停止等待，不报告成功、不计量。Python 不能强停已运行的线程，晚到的对象写入可能留下未引用 attempt，仍由存储生命周期清理；不自动重试交付。
-
-### 7.2 `report_item`
-
-`MapsOnlineTaskService.report_item` 是 service 内部静态方法，只接收 item 终态：
-
-```text
-report_item(task_id, item_id, status, record_count, object_key, status_text)
-status = success | failed
-```
-
-| 状态 | `record_count` | `object_key` | `status_text` |
-| --- | --- | --- | --- |
-| success | 实际数量，可为 0 | CSV key | 空字符串或 partial warning |
-| failed | 0 | NULL | 内部错误 |
-
-成功结果先写独立 attempt object，再执行 item 条件更新：
-
-```text
-UPDATE item
-SET object_key, record_count, error, completed_at
-WHERE id = item_id AND completed_at = 0
-```
-
-只有更新影响一行的首次报告者，才在同一事务增加父任务 `processed_count / record_count / error_item_count`。`error_item_count` 只在 `status = failed` 时增加；重复报告不增加计数，未引用对象交给同一生命周期规则清理。
-
-报告事务发生数据库异常时，原 item 协程间隔 5 秒重试，总共尝试 3 次（含首次）。每次使用新的事务，复用相同终态参数和已写入的 CSV key，不重新采集或上传；CAS 更新 0 行属于正常幂等结果，不算失败。
-
-三次均失败时记录异常，并直接调用 `@backend/src/app/utils/feishu_utils.py` 的 `send_feishu_alarm` 发送一次告警，随后结束该 item 协程。告警包含任务编号、item ID、尝试次数与脱敏错误摘要，使用协程已有上下文，不为组装告警查询数据库；按 `task_id / item_id` 复用工具的去重能力，应用名由工具统一追加。告警文案走现有 i18n；工具未启用或发送失败时沿用其只记日志的行为。任务保留数据库已有状态，交给后续启动恢复。
-
-报告事务成功或幂等命中后，原协程都调用 service 的任务完成方法，覆盖提交已生效但响应丢失后的重放：读取父任务，已完成或 item 尚未全部收口时返回；全部 item 收口时，`record_count = 0` 跳过计量，正数时调用 `online_usage_service.consume(usage_identity(user_id, None), user_id=user_id, records=record_count, request_id=task_no)`，成功或幂等命中后更新父任务：
-
-```text
-UPDATE maps_online_tasks
-SET completed_at = now
-WHERE id = task_id AND completed_at = 0 AND processed_count = total_count
-```
-
-任务完成方法中的父任务读取、计量或终态提交失败时，原协程等待 5 秒后重试该方法，直到任务完成或协程被取消。重试沿用 `task_no` 幂等键，只执行任务完成操作，不重新采集、写 CSV 或报告 item。采集期限不终止最终计量重试；取消信号直接向外传播，由 business 关闭流程回收协程。
-
-### 7.3 启动恢复
-
-business 启动时查询一次 `completed_at = 0 AND app_name = settings.app.name` 的父任务：
-
-- `processed_count < total_count`：读取对应分表中 `completed_at = 0` 的 items，并重新启动协程；地图模式读取父任务的实际点位快照，不重新生成网格。已过采集期限的 item 直接按 0 条报告，不再读取存储配置或调用 Provider。
-- `processed_count = total_count`：启动后台协程调用 §7.2 的同一任务完成方法，按相同规则重试。
-
-同一 item 可能被多个进程重复执行，`report_item` 保证父任务计数、对象引用和实际用量只生效一次。gosom 协程中断后重新 submit。
-
-迁移 business 实例时，停止旧实例，把该 `APP_NAME` 下 `completed_at = 0` 的父任务更新为目标 `APP_NAME`，再启动目标实例。
-
-## 8. 进度、终态与额度
-
-- `progress = processed_count / total_count`。
-- item 保存 CSV 或按错误收口后增加 `processed_count`。
-- `completed_at = 0` 为 processing；正数为 completed。
-- 商家结果仅在单关键词内去重；同一商家命中不同关键词时，各关键词独立结果中分别保留，不做全任务去重。实际记录数按各项交付行数累加，跨关键词重复商家分别计量。
-- 实际计量不预扣、不退款、不截断已运行任务，used 可以超过 total；后续创建入口按 exhausted 拒绝。
-- item 错误不产生用户可见状态。Completed 只表示全部 item 已收口，不承诺每个关键词都有结果文件。
-
-## 9. 下载
-
-### 9.1 单 item CSV
-
-`GET /api/client/maps-online/tasks/{task_no}/items/{item_id}/download`
-
-入口先按当前用户读取父任务，再在对应分表使用 `id = item_id AND task_id = parent.id` 查询有 `object_key` 的 item，随后由 Online Provider 返回短期签名下载 URL。文件名为 `{item_id}_{关键字}.csv`。
-
-签名前通过对应官方 SDK 执行 HEAD，确认对象存在。HEAD 或下载返回明确缺对象错误时，对象存储工具统一抛出 `FileNotFoundError`，CSV 与 ZIP 的 API 边界映射为 `NOT_FOUND`；其他 SDK 错误不伪装成缺对象。工具在 `except` 块外抛出只含存储 ID、类型和异常类型的安全异常，断开原 SDK 异常上下文，避免凭据或签名 query 随框架日志泄漏。
-
-文件名在下载边界清理路径分隔符、控制字符和文件系统保留字符，保留关键词原语言；完整文件名按 Unicode 边界截断到 200 个 UTF-8 字节。清理后关键词为空时使用 `{item_id}.csv`。
-
-### 9.2 整任务 ZIP
-
-`GET /api/client/maps-online/tasks/{task_no}/download`
-
-入口校验任务属于当前用户、已经 completed 且至少有一个 `object_key`。Online Provider 按 item 顺序将 CSV 下载到独立临时目录，同步 `zipfile` 压缩放入 `asyncio.to_thread`；ZIP 内文件名与单 item 合同一致。响应文件名为 `{task_no}.zip`，发送完成后删除临时目录。
-
-## 10. 容量
-
-设计输入：1,000 个 Business 用户每月最多 500,000 records，100,000 个 Free 用户每月最多 1,000 records，平均每关键词 50 records。
-
-- 结果约 6 亿 records/月，全部进入对象存储。
-- item 约 1,200 万行/月；20 表后约 60 万行/表/月、720 万行/表/年。
-- 父任务约 120 万–300 万行/月，保持单表；`completed_at` 索引定位少量运行中任务，`user_id` 索引支持用户列表。
-
-## 11. 最少验证
-
-- 一条 service real 主流程覆盖分表路由、`report_item` 幂等与有限重试、启动恢复、采集期限和实际用量计量，包含报告重试耗尽后发送一次飞书告警，以及一次计量失败后无需重启即可自动完成且只计量一次；仅替换飞书外部发送出口，不实际发送测试告警。
-- 一条 Client API real 主流程覆盖创建、列表、详情、单 item、ZIP、跨用户拒绝，以及切换启用配置后新旧任务各自使用绑定存储。
-- 一条 Online Provider real 主流程覆盖 HTTP、enrichment、CSV 与对象写入组合，并核对 §6 的完整 36 列表头顺序，不重复底层 Provider 解析测试。
-- R2 与 AliOSS 分别执行真实最小写入、下载、签名及私有 bucket 冒烟；无凭据时按 real 规范 skip。
-- 修改 Model 后执行 `sync_database_schema`，核对 21 张表、列、注释和索引，再执行受影响范围的 black、ruff、mypy、real 测试与 business 启动。
-- 最终消融审查逐项删除不影响上述真实路径的字段、索引、service、helper、分支和测试，独立 reviewer 复验后交付。
-
-## 12. 外部合同
-
-- Cloudflare R2 S3 API：<https://developers.cloudflare.com/r2/api/s3/api/>
-- Cloudflare R2 boto3：<https://developers.cloudflare.com/r2/examples/aws/boto3/>
-- AliOSS Python SDK V2：<https://github.com/aliyun/alibabacloud-oss-python-sdk-v2>
-- AliOSS 使用 SDK 原生 V1 签名，按配置 endpoint 访问；服务端签名合同见 <https://www.alibabacloud.com/help/en/oss/developer-reference/include-signatures-in-the-authorization-header>，上传接口见 <https://www.alibabacloud.com/help/en/oss/developer-reference/putobject>。SDK 版本由 `@backend/uv.lock` 锁定。
-- gosom SaaS API：<https://github.com/gosom/google-maps-scraper/blob/v1.17.4/docs/saas.md>
+稳定实现入口为 `api/client/export_client.py`、`services/export_job_service.py`、`runtime/export_job_runtime.py` 与 `services/export_file_service.py`。旧 tasks、逐关键词下载、ZIP 和追加执行不提供适配。

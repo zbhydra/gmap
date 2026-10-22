@@ -10,7 +10,7 @@
 - 初始 tab 先读 hash `#online` / `#extension` / `#api`,再读查询参数 `product_kind`(经 `pricing-page-controller.ts` 的 `PRICING_LINE_CONFIG` 映射,例如 `/pricing/?product_kind=maps_extension`),缺省或未知值为 Online。切换 tab(含对比表的产品分段)用 `history.replaceState` 把 hash 写回当前线,不新增历史记录、不改查询参数;hash 变为产品线时切到对应 tab,页内锚点 hash 不影响 tab。插件与网站共用这条购买、升级及管理路径。
 - checkout 配置按商品单一计费模式消费:商品的 `auto_renew` 与 `period` 是商品级字段,支付选项文案据此展示 `Auto-renews until canceled` 或 `One-time payment`。
 - 下单请求携带 `auto_renew + period`,与商品配置不一致时后端按价格已更新拒绝,页面重载配置。
-- 支付渠道为 PayPal 与 ClinkBill;页面不实现 Telegram Stars 渠道。
+- 新销售的三条产品线统一为 PayPal 单次自然月商品；展示与下单读取后端配置，播种入口见 006 的商品配置合同。历史渠道订单与协议保留原处理能力。
 - 已登录账号各产品线订阅摘要来自 `/api/client/auth/me` 的 `maps_online_subscription` / `maps_extension_subscription` / `maps_api_subscription`(六字段合同,见 006 状态 tech),经站级会话恢复与 Pricing 页共享一次请求。
 - 渠道管理入口(Manage subscription)已迁用户 Dashboard 订阅管理页,交互合同见 `@../015.工具与增长/tech-用户Dashboard.md`;Pricing 页只消费订阅摘要做同线重复购买拦截与升级报价定档。
 
@@ -22,7 +22,8 @@
 | `GET /api/client/subscription/checkout-configs` | 全部启用订阅商品、商品级 `auto_renew`/`period`、渠道价(响应含好评赠送合同字段,页面不消费) |
 | `POST /api/client/order/create` | 创建订阅订单(请求含 `auto_renew + period`) |
 | `GET /api/client/order/status/{order_no}` | 支付后轮询订单状态 |
-| `POST /api/client/order/cancel` | Clink cancel 回跳页把用户取消落到本地订单 |
+| `POST /api/client/order/cancel` | cancel 回跳页把用户取消落到本地订单 |
+| `POST /api/client/order/paypal/confirm` | 登录用户回跳后确认本人单次付款；合同见 004 支付与履约 §1.7 |
 | `POST /api/client/subscription/management` | 请求只含 `product_kind`,返回当前线自动续费订阅的渠道管理 URL(可空);Dashboard 订阅页消费,Pricing 不调用 |
 
 `/api/client/subscription/status` 继续保留给插件兼容,Pricing 不使用。`POST /api/client/subscription/review-reward/claim` 为 006 域合同(入口已下线),现役页面不调用。

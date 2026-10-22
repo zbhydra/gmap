@@ -57,21 +57,22 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
         <CapabilityAction
           capability="extensionInstall"
           locale={locale}
-          href="#install"
+          href="/downloads/mapsgrab.zip"
+          download
           class="btn btn-primary btn-lg"
           data-magnetic="0.2"
-          data-cta="extension-hero-edge-install"
+          data-cta="extension-hero-download"
         >
-          <Icon name="puzzle" />{hero.edgeCta}
+          <Icon name="download" />{hero.downloadCta}
         </CapabilityAction>
         <CapabilityAction
           capability="extensionInstall"
           locale={locale}
           href="#install"
           class="btn btn-secondary btn-lg"
-          data-cta="extension-hero-browsers-install"
+          data-cta="extension-hero-install-guide"
         >
-          {hero.browsersCta}
+          {hero.installCta}
         </CapabilityAction>
       </div>
 

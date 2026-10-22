@@ -2,23 +2,22 @@
 /**
  * Online 创建与历史：复用实时权益，串行刷新处理中任务及展开明细。
  *
- * 展开失败只影响该任务，下载失败只影响该操作；后端只公开任务两态，不
- * 展示接口没有提供的成功或失败结论。
+ * 展开和下载失败就地提示；状态、采样收口和文件可用性分别沿用后端事实。
  */
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
 import type { OnlineViewport } from '../../scripts/dashboard/map-grid'
+import { HomepageApiError } from '../../scripts/homepage/api'
 import {
-  downloadOnlineTaskZip,
-  getOnlineItemDownload,
-  getOnlineTaskDetail,
-  isOnlineDownloadUnavailable,
-  listOnlineTasks,
-  createOnlineTask,
+  getExportDownload,
+  getExportJob,
+  listExportJobs,
+  createExportJob,
   getOnlineOptions,
   type OnlineOptions,
-  type OnlineTaskDetailResponse,
-  type OnlineTaskSummary
+  type ExportJobDetail,
+  type ExportJobSummary,
+  type ExportItemInput
 } from '../../scripts/dashboard/api'
 
 export interface Props {
@@ -51,7 +50,7 @@ function createdAtFormatter(): Intl.DateTimeFormat {
   return businessTimezoneFormatter
 }
 
-const tasks = ref<OnlineTaskSummary[]>([])
+const jobs = ref<ExportJobSummary[]>([])
 const total = ref(0)
 const offset = ref(0)
 const loading = ref(false)
@@ -68,13 +67,16 @@ const regionQueries = ref<string[]>([])
 const regionResetKey = ref(0)
 const includeContacts = ref(true)
 const submitting = ref(false)
-const submitError = ref(false)
-const keywords = computed(() => [...new Set(keywordsText.value.split(/\r?\n/).map(word => word.trim()).filter(Boolean))])
-const activeKeywords = computed(() => mode.value === 'regions' ? regionQueries.value : keywords.value)
+const submitError = ref('')
+const activeKeywords = computed(() => [...new Set(
+  (mode.value === 'regions' ? regionQueries.value : keywordsText.value.split(/\r?\n/))
+    .map(word => word.trim().replace(/\s+/g, ' ')).filter(Boolean)
+)])
+const items = computed<ExportItemInput[]>(() => activeKeywords.value.flatMap(keyword =>
+  mode.value === 'map' ? mapViewports.value.map(viewport => ({ keyword, viewport })) : [{ keyword }]))
 const keywordInvalid = computed(() => !!options.value && (activeKeywords.value.length > options.value.keyword_limit || activeKeywords.value.some(word => word.length > 500)))
-const logicalSamples = computed(() => activeKeywords.value.length * (mode.value === 'map' ? mapViewports.value.length : 1))
-const invalid = computed(() => !options.value || !activeKeywords.value.length || keywordInvalid.value
-  || (mode.value === 'map' && (!mapViewports.value.length || logicalSamples.value > options.value.logical_sample_limit)))
+const invalid = computed(() => !options.value || !items.value.length || keywordInvalid.value
+  || items.value.length > options.value.logical_sample_limit)
 let pollTimer: ReturnType<typeof setTimeout> | undefined
 let disposed = false
 
@@ -100,15 +102,14 @@ async function loadOptions(): Promise<void> {
   }
 }
 
-async function submitTask(): Promise<void> {
+async function submitJob(): Promise<void> {
   if (submitting.value || loading.value || invalid.value || options.value?.usage.exhausted) return
   submitting.value = true
   clearTimeout(pollTimer)
-  submitError.value = false
+  submitError.value = ''
   let nextOffset = offset.value
   try {
-    await createOnlineTask(context(), activeKeywords.value, includeContacts.value && !!options.value?.contacts_allowed,
-      mode.value === 'map' ? mapViewports.value : undefined)
+    await createExportJob(context(), items.value, includeContacts.value && !!options.value?.contacts_allowed)
     if (mode.value === 'regions') {
       regionQueries.value = []
       regionResetKey.value += 1
@@ -118,36 +119,37 @@ async function submitTask(): Promise<void> {
     nextOffset = 0
   } catch (error) {
     console.error(new Error('dashboard creation: submission failed', { cause: error }))
-    submitError.value = true
+    submitError.value = error instanceof HomepageApiError && typeof error.code === 'number'
+      ? error.message : props.copy.create.failed
   } finally {
     submitting.value = false
     await loadPage(nextOffset)
+    if (!submitError.value) await loadOptions()
   }
 }
 
 /** 展开中的任务明细（按任务号独立加载，互不影响）。 */
-const details = ref<Map<string, OnlineTaskDetailResponse>>(new Map())
+const details = ref<Map<string, ExportJobDetail>>(new Map())
 const detailLoading = ref<Set<string>>(new Set())
 const detailErrors = ref<Set<string>>(new Set())
 const expanded = ref<Set<string>>(new Set())
 
-/** 进行中的下载操作（ZIP 按任务号、CSV 按条目 ID）。 */
-const zipDownloading = ref<Set<string>>(new Set())
-const csvDownloading = ref<Set<number>>(new Set())
-/** 就地提示（ZIP 按任务号、CSV 按条目 ID；null 表示该槽位无提示）。 */
-const zipMessages = ref<Map<string, string>>(new Map())
-const csvMessages = ref<Map<number, string>>(new Map())
+const downloading = ref<Set<string>>(new Set())
+const downloadMessages = ref<Map<string, string>>(new Map())
 
 const context = () => ({ deviceId: props.deviceId, token: props.token })
 
-/** 后端可能返回秒或毫秒，展示统一按业务时区格式化。 */
-function formatCreatedAt(value: number): string {
-  const ms = value < 10_000_000_000 ? value * 1000 : value
-  return createdAtFormatter().format(new Date(ms))
+function formatTime(value: number | null): string {
+  return value === null ? '—' : createdAtFormatter().format(new Date(value))
 }
 
-function statusLabel(task: OnlineTaskSummary): string {
-  return task.status === 'completed' ? props.copy.history.status.completed : props.copy.history.status.processing
+function isRunning(job: ExportJobSummary): boolean {
+  return job.status === 'queued' || job.status === 'collecting' || job.status === 'publishing'
+}
+
+function errorLabel(code: number): string {
+  return code === 31301 || code === 31302 || code === 31303 || code === 31304
+    ? props.copy.history.errors[code] : props.copy.history.errorFailed
 }
 
 function paginationSummary(): string {
@@ -155,7 +157,7 @@ function paginationSummary(): string {
     return ''
   }
   const from = offset.value + 1
-  const to = Math.min(offset.value + tasks.value.length, total.value)
+  const to = Math.min(offset.value + jobs.value.length, total.value)
   return props.copy.history.pagination.summary
     .replace('{from}', String(from))
     .replace('{to}', String(to))
@@ -168,24 +170,24 @@ async function loadPage(nextOffset: number): Promise<void> {
   loading.value = true
   loadError.value = false
   try {
-    const data = await listOnlineTasks(context(), nextOffset, PAGE_SIZE)
+    const data = await listExportJobs(context(), nextOffset, PAGE_SIZE)
     if (disposed) return
-    const processing = new Set(tasks.value.filter(task => task.status === 'processing').map(task => task.task_no))
-    tasks.value = data.tasks
+    const processing = new Set(jobs.value.filter(isRunning).map(job => job.job_no))
+    jobs.value = data.jobs
     total.value = data.total
     offset.value = data.offset
-    for (const task of data.tasks) {
-      if (expanded.value.has(task.task_no) && (task.status === 'processing' || processing.has(task.task_no))) {
-        if (!await loadDetail(task.task_no)) throw new Error(`dashboard polling: detail failed task_no=${task.task_no}`)
+    for (const job of data.jobs) {
+      if (expanded.value.has(job.job_no) && (isRunning(job) || processing.has(job.job_no))) {
+        await loadDetail(job.job_no)
       }
     }
-    if (data.tasks.some(task => task.status === 'completed' && processing.has(task.task_no))) await loadOptions()
+    if (data.jobs.some(job => !isRunning(job) && processing.has(job.job_no))) await loadOptions()
   } catch (error) {
-    console.error(new Error('[dashboard-history] load tasks failed.', { cause: error }))
+    console.error(new Error('[dashboard-history] load jobs failed.', { cause: error }))
     loadError.value = true
   } finally {
     loading.value = false
-    if (!disposed && !loadError.value && tasks.value.some(task => task.status === 'processing')) {
+    if (!disposed && !loadError.value && jobs.value.some(isRunning)) {
       pollTimer = setTimeout(() => { void loadPage(offset.value) }, 5000)
     }
   }
@@ -193,109 +195,59 @@ async function loadPage(nextOffset: number): Promise<void> {
 
 function refresh(): void {
   void loadPage(offset.value)
+  void loadOptions()
 }
 
-async function toggleDetail(taskNo: string): Promise<void> {
-  if (expanded.value.has(taskNo)) {
-    expanded.value = new Set([...expanded.value].filter(item => item !== taskNo))
+async function toggleDetail(jobNo: string): Promise<void> {
+  if (expanded.value.has(jobNo)) {
+    expanded.value = new Set([...expanded.value].filter(item => item !== jobNo))
     return
   }
-  expanded.value = new Set(expanded.value).add(taskNo)
-  await loadDetail(taskNo)
+  expanded.value = new Set(expanded.value).add(jobNo)
+  await loadDetail(jobNo)
 }
 
 /** 明细加载失败只影响该任务；重试直接重新请求。 */
-async function retryDetail(taskNo: string): Promise<void> {
-  detailErrors.value = new Set([...detailErrors.value].filter(item => item !== taskNo))
-  await loadDetail(taskNo)
+async function retryDetail(jobNo: string): Promise<void> {
+  detailErrors.value = new Set([...detailErrors.value].filter(item => item !== jobNo))
+  await loadDetail(jobNo)
 }
 
-async function loadDetail(taskNo: string): Promise<boolean> {
-  detailLoading.value = new Set(detailLoading.value).add(taskNo)
+async function loadDetail(jobNo: string): Promise<void> {
+  detailLoading.value = new Set(detailLoading.value).add(jobNo)
   try {
-    const detail = await getOnlineTaskDetail(context(), taskNo)
+    const detail = await getExportJob(context(), jobNo)
     const next = new Map(details.value)
-    next.set(taskNo, detail)
+    next.set(jobNo, detail)
     details.value = next
-    detailErrors.value = new Set([...detailErrors.value].filter(item => item !== taskNo))
-    return true
+    detailErrors.value = new Set([...detailErrors.value].filter(item => item !== jobNo))
   } catch (error) {
-    console.error(new Error(`[dashboard-history] load task detail failed: task_no=${taskNo}`, { cause: error }))
-    detailErrors.value = new Set(detailErrors.value).add(taskNo)
-    return false
+    console.error(new Error(`[dashboard-history] load job detail failed: job_no=${jobNo}`, { cause: error }))
+    detailErrors.value = new Set(detailErrors.value).add(jobNo)
   } finally {
     const nextLoading = new Set(detailLoading.value)
-    nextLoading.delete(taskNo)
+    nextLoading.delete(jobNo)
     detailLoading.value = nextLoading
   }
 }
 
-/** 单项 CSV：先请求签名信息，再用临时锚点触发下载。 */
-async function downloadCsv(taskNo: string, itemId: number): Promise<void> {
-  if (csvDownloading.value.has(itemId)) {
-    return
-  }
-  csvDownloading.value = new Set(csvDownloading.value).add(itemId)
-  setCsvMessage(itemId, '')
+async function downloadCsv(job: ExportJobSummary): Promise<void> {
+  if (downloading.value.has(job.job_no)) return
+  downloading.value.add(job.job_no)
+  downloadMessages.value.delete(job.job_no)
   try {
-    const download = await getOnlineItemDownload(context(), taskNo, itemId)
+    const download = await getExportDownload(context(), job.job_no)
     triggerAnchorDownload(download.url, download.filename)
   } catch (error) {
-    console.error(new Error(`[dashboard-history] CSV download failed: task_no=${taskNo} item_id=${itemId}`, { cause: error }))
-    setCsvMessage(
-      itemId,
-      isOnlineDownloadUnavailable(error as Error)
+    console.error(new Error(`[dashboard-history] CSV 下载失败: job_no=${job.job_no}`, { cause: error }))
+    downloadMessages.value.set(job.job_no,
+      error instanceof HomepageApiError && error.code === 404
         ? props.copy.history.downloadUnavailable
-        : props.copy.history.downloadFailed
-    )
+        : error instanceof HomepageApiError && typeof error.code === 'number'
+          ? error.message : props.copy.history.downloadFailed)
   } finally {
-    const next = new Set(csvDownloading.value)
-    next.delete(itemId)
-    csvDownloading.value = next
+    downloading.value.delete(job.job_no)
   }
-}
-
-async function downloadZip(task: OnlineTaskSummary): Promise<void> {
-  if (zipDownloading.value.has(task.task_no)) {
-    return
-  }
-  zipDownloading.value = new Set(zipDownloading.value).add(task.task_no)
-  setZipMessage(task.task_no, '')
-  try {
-    await downloadOnlineTaskZip(context(), task.task_no)
-  } catch (error) {
-    console.error(new Error(`[dashboard-history] ZIP download failed: task_no=${task.task_no}`, { cause: error }))
-    setZipMessage(
-      task.task_no,
-      isOnlineDownloadUnavailable(error as Error)
-        ? props.copy.history.downloadUnavailable
-        : props.copy.history.downloadFailed
-    )
-  } finally {
-    const next = new Set(zipDownloading.value)
-    next.delete(task.task_no)
-    zipDownloading.value = next
-  }
-}
-
-function setCsvMessage(itemId: number, message: string): void {
-  const next = new Map(csvMessages.value)
-  if (message) {
-    next.set(itemId, message)
-  } else {
-    next.delete(itemId)
-  }
-  csvMessages.value = next
-}
-
-function setZipMessage(taskNo: string, message: string): void {
-  const next = new Map(zipMessages.value)
-  if (message) {
-    next.set(taskNo, message)
-  } else {
-    next.delete(taskNo)
-  }
-  zipMessages.value = next
 }
 
 /** 签名 URL 由后端携带 attachment 头；download 属性只是本地命名兜底。 */
@@ -321,7 +273,7 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="history" aria-labelledby="dashboard-history-title">
-    <form class="create-form" @submit.prevent="submitTask">
+    <form class="create-form" @submit.prevent="submitJob">
       <h1>{{ props.copy.create.title }}</h1>
       <p v-if="optionsLoading" role="status">{{ props.copy.create.loading }}</p>
       <div v-else-if="optionsError" role="alert">
@@ -341,7 +293,7 @@ onBeforeUnmount(() => {
           <label for="online-keywords">{{ props.copy.create.keywords }}</label>
           <textarea id="online-keywords" v-model="keywordsText" rows="4" required :placeholder="props.copy.create.placeholder" :disabled="submitting" />
         </template>
-        <OnlineMapInput v-if="mapOpened" v-show="mode === 'map'" :copy="props.copy.create.map" :active="mode === 'map'" :disabled="submitting" :keyword-count="keywords.length" :logical-sample-limit="options.logical_sample_limit" @viewports="mapViewports = $event" />
+        <OnlineMapInput v-if="mapOpened" v-show="mode === 'map'" :copy="props.copy.create.map" :active="mode === 'map'" :disabled="submitting" :keyword-count="activeKeywords.length" :logical-sample-limit="options.logical_sample_limit" @viewports="mapViewports = $event" />
         <OnlineRegionInput v-if="regionsOpened" v-show="mode === 'regions'" :copy="props.copy.create.region" :disabled="submitting || mode !== 'regions'" :reset-key="regionResetKey" @queries="regionQueries = $event" />
         <p class="history-status" aria-live="polite">{{ props.copy.create.count.replace('{count}', String(activeKeywords.length)).replace('{limit}', String(options.keyword_limit)) }}</p>
         <label class="create-contacts"><input v-model="includeContacts" type="checkbox" :disabled="!options.contacts_allowed || submitting" />{{ props.copy.create.contacts }}</label>
@@ -350,7 +302,7 @@ onBeforeUnmount(() => {
         <p v-else-if="keywordInvalid" class="create-error" role="alert">{{ props.copy.create.invalid.replace('{limit}', String(options.keyword_limit)) }}</p>
         <button type="submit" class="btn btn-primary" :disabled="submitting || loading || optionsLoading || options.usage.exhausted || invalid">{{ submitting ? props.copy.create.submitting : props.copy.create.submit }}</button>
       </template>
-      <p v-if="submitError" class="create-error" role="alert">{{ props.copy.create.failed }}</p>
+      <p v-if="submitError" class="create-error" role="alert">{{ submitError }}</p>
     </form>
     <header class="history-head">
       <div>
@@ -376,7 +328,7 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <div v-else-if="tasks.length === 0" class="history-panel">
+    <div v-else-if="jobs.length === 0" class="history-panel">
       <p class="history-empty-title">{{ props.copy.history.emptyTitle }}</p>
       <p class="history-status">{{ props.copy.history.emptyHint }}</p>
     </div>
@@ -388,7 +340,7 @@ onBeforeUnmount(() => {
             <tr>
               <th scope="col">{{ props.copy.history.columns.taskNo }}</th>
               <th scope="col">{{ props.copy.history.columns.createdAt }}</th>
-              <th scope="col" class="history-num">{{ props.copy.history.columns.keywords }}</th>
+              <th scope="col" class="history-num">{{ props.copy.history.columns.samples }}</th>
               <th scope="col" class="history-num">{{ props.copy.history.columns.processed }}</th>
               <th scope="col" class="history-num">{{ props.copy.history.columns.records }}</th>
               <th scope="col">{{ props.copy.history.columns.status }}</th>
@@ -396,84 +348,80 @@ onBeforeUnmount(() => {
             </tr>
           </thead>
           <tbody>
-            <template v-for="task in tasks" :key="task.task_no">
-              <tr class="history-row" :class="{ 'history-row-open': expanded.has(task.task_no) }">
-                <td class="history-task-no">
+            <template v-for="job in jobs" :key="job.job_no">
+              <tr class="history-row" :class="{ 'history-row-open': expanded.has(job.job_no) }">
+                <td class="history-job-no">
                   <button
                     type="button"
                     class="history-expand"
-                    :data-history-expand="task.task_no"
-                    :aria-expanded="expanded.has(task.task_no) ? 'true' : 'false'"
-                    @click="toggleDetail(task.task_no)"
+                    :data-history-expand="job.job_no"
+                    :aria-expanded="expanded.has(job.job_no) ? 'true' : 'false'"
+                    @click="toggleDetail(job.job_no)"
                   >
-                    <span class="history-task-caret" aria-hidden="true"></span>
-                    {{ task.task_no }}
+                    <span class="history-job-caret" aria-hidden="true"></span>
+                    {{ job.job_no }}
                   </button>
                 </td>
-                <td class="history-time">{{ formatCreatedAt(task.created_at) }} {{ props.copy.history.timezone }}</td>
-                <td class="history-num">{{ task.total_count }}</td>
-                <td class="history-num">{{ task.processed_count }}</td>
-                <td class="history-num">{{ task.record_count }}</td>
+                <td class="history-time">{{ formatTime(job.created_at) }} {{ props.copy.history.timezone }}</td>
+                <td class="history-num">{{ job.total_count }}</td>
+                <td class="history-num">{{ job.processed_count }}</td>
+                <td class="history-num">{{ job.record_count }}</td>
                 <td>
-                  <span class="history-chip" :data-status="task.status">{{ statusLabel(task) }}</span>
+                  <span class="history-chip" :data-status="job.status">{{ props.copy.history.status[job.status] }}</span>
+                  <p v-if="job.error_code !== null" class="history-download-message">{{ errorLabel(job.error_code) }}</p>
                 </td>
                 <td class="history-actions">
                   <button
-                    v-if="task.status === 'completed'"
+                    v-if="job.has_file"
                     type="button"
                     class="history-download"
-                    :data-history-zip="task.task_no"
-                    :disabled="zipDownloading.has(task.task_no)"
-                    @click="downloadZip(task)"
+                    :data-history-download="job.job_no"
+                    :disabled="downloading.has(job.job_no)"
+                    @click="downloadCsv(job)"
                   >
-                    {{ zipDownloading.has(task.task_no) ? props.copy.history.downloading : props.copy.history.downloadZip }}
+                    {{ downloading.has(job.job_no) ? props.copy.history.downloading : props.copy.history.downloadCsv }}
                   </button>
+                  <span v-else-if="!isRunning(job)" class="history-status">{{ props.copy.history.noFile }}</span>
+                  <p v-if="downloadMessages.get(job.job_no)" class="history-download-message" role="alert">{{ downloadMessages.get(job.job_no) }}</p>
                 </td>
               </tr>
-              <tr v-if="expanded.has(task.task_no)" :key="`${task.task_no}-detail`" class="history-detail-row">
+              <tr v-if="expanded.has(job.job_no)" :key="`${job.job_no}-detail`" class="history-detail-row">
                 <td :colspan="7">
-                  <p v-if="detailLoading.has(task.task_no)" class="history-status">
+                  <p v-if="detailLoading.has(job.job_no)" class="history-status">
                     {{ props.copy.history.detail.loading }}
                   </p>
-                  <div v-else-if="detailErrors.has(task.task_no)" class="history-detail-error">
+                  <div v-else-if="detailErrors.has(job.job_no)" class="history-detail-error">
                     <p class="history-status">{{ props.copy.history.detail.loadFailed }}</p>
-                    <button type="button" class="history-download" @click="retryDetail(task.task_no)">
+                    <button type="button" class="history-download" @click="retryDetail(job.job_no)">
                       {{ props.copy.history.retry }}
                     </button>
                   </div>
-                  <template v-else-if="details.get(task.task_no)">
+                  <template v-else-if="details.get(job.job_no)">
+                    <dl class="history-job-meta">
+                      <div><dt>{{ props.copy.history.detail.runNo }}</dt><dd><code>{{ details.get(job.job_no)!.job.run_no }}</code></dd></div>
+                      <div><dt>{{ props.copy.history.detail.startedAt }}</dt><dd>{{ formatTime(details.get(job.job_no)!.job.started_at) }}</dd></div>
+                      <div><dt>{{ props.copy.history.detail.finishedAt }}</dt><dd>{{ formatTime(details.get(job.job_no)!.job.finished_at) }}</dd></div>
+                      <div><dt>{{ props.copy.history.detail.contacts }}</dt><dd>{{ details.get(job.job_no)!.job.include_contacts ? props.copy.history.detail.contactsEnabled : props.copy.history.detail.contactsDisabled }}</dd></div>
+                    </dl>
                     <table class="history-detail-table">
                       <thead>
                         <tr>
                           <th scope="col">{{ props.copy.history.detail.keyword }}</th>
                           <th scope="col" class="history-num">{{ props.copy.history.detail.records }}</th>
-                          <th scope="col"><span class="visually-hidden">{{ props.copy.history.detail.downloadCsv }}</span></th>
+                          <th scope="col">{{ props.copy.history.columns.status }}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="item in details.get(task.task_no)!.items" :key="item.item_id">
-                          <td class="history-detail-keyword">{{ item.keyword }}</td>
-                          <td class="history-num">{{ item.record_count }}</td>
-                          <td class="history-actions">
-                            <button
-                              type="button"
-                              class="history-download"
-                              :data-history-csv="item.item_id"
-                              :disabled="csvDownloading.has(item.item_id)"
-                              @click="downloadCsv(task.task_no, item.item_id)"
-                            >
-                              {{ csvDownloading.has(item.item_id) ? props.copy.history.downloading : props.copy.history.detail.downloadCsv }}
-                            </button>
-                            <p v-if="csvMessages.get(item.item_id)" class="history-download-message" role="alert">
-                              {{ csvMessages.get(item.item_id) }}
-                            </p>
+                        <tr v-for="item in details.get(job.job_no)!.items" :key="item.item_index">
+                          <td class="history-detail-keyword">
+                            {{ item.keyword }}
+                            <small v-if="item.viewport" class="history-viewport">{{ props.copy.history.detail.viewport.replace('{lat}', String(item.viewport.lat)).replace('{lng}', String(item.viewport.lng)).replace('{zoom}', String(item.viewport.zoom)) }}</small>
                           </td>
+                          <td class="history-num">{{ item.result_count }}</td>
+                          <td>{{ item.error_code !== null ? errorLabel(item.error_code) : item.completed ? props.copy.history.detail.completed : props.copy.history.detail.pending }}</td>
                         </tr>
                       </tbody>
                     </table>
-                    <p v-if="zipMessages.get(task.task_no)" class="history-download-message" role="alert">
-                      {{ zipMessages.get(task.task_no) }}
-                    </p>
                   </template>
                 </td>
               </tr>
@@ -638,7 +586,7 @@ onBeforeUnmount(() => {
   text-align: right;
 }
 
-.history-task-no {
+.history-job-no {
   min-width: 0;
 }
 
@@ -667,7 +615,7 @@ onBeforeUnmount(() => {
   outline-offset: 2px;
 }
 
-.history-task-caret {
+.history-job-caret {
   flex: 0 0 auto;
   width: 0;
   height: 0;
@@ -677,7 +625,7 @@ onBeforeUnmount(() => {
   transition: transform var(--dur-1);
 }
 
-[aria-expanded='true'] .history-task-caret {
+[aria-expanded='true'] .history-job-caret {
   transform: rotate(90deg);
 }
 
@@ -710,7 +658,10 @@ onBeforeUnmount(() => {
   background: currentcolor;
 }
 
-.history-chip[data-status='processing'] {
+.history-chip[data-status='queued'],
+.history-chip[data-status='collecting'],
+.history-chip[data-status='publishing'],
+.history-chip[data-status='partial'] {
   background: var(--warn-soft);
   color: var(--warn);
 }
@@ -796,6 +747,37 @@ onBeforeUnmount(() => {
   display: grid;
   justify-items: start;
   gap: var(--s-2);
+}
+
+.history-chip[data-status="failed"] {
+  color: var(--bad);
+  background: var(--bad-soft);
+}
+
+.history-job-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  margin: 0 0 var(--s-4);
+}
+
+.history-job-meta div {
+  min-width: 0;
+}
+
+.history-job-meta dt,
+.history-viewport {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.history-job-meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.history-viewport {
+  display: block;
 }
 
 .history-download-message {

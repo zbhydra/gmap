@@ -4,19 +4,13 @@
  * 云端页：Online 已交付，开始采集、Free 卡与收尾 CTA 直达 Dashboard，付费卡与定价入口进 Pricing 的 Online tab，
  * 输出 FAQPage 结构化数据；搜索模式演示按 Dashboard 的规则计数（地图采样位置超过 50 时提示并阻止提交，
  * 地区生成的查询超过套餐关键词上限时提示）。
- * 插件页：安装与插件购买未交付（lib/capabilities.ts），安装区、套餐卡与收尾 CTA 的入口都是 aria-disabled 按钮
- * （无 href、无埋点属性），点击 / 回车 / 空格都不跳转、不发请求。
+ * 插件页：官网 ZIP 按浏览器下载，安装教程与单次套餐入口可达。
  */
-import { expect, test, type Request } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 import { registerE2eBrowserIdentity } from '../scripts/playwright-browser-identity.mjs'
 
 registerE2eBrowserIdentity(test)
-
-/** 点击后不应出现的请求类型（接口调用、埋点信标、长连接）。 */
-const ACTION_REQUEST_TYPES = new Set(['fetch', 'xhr', 'ping', 'eventsource', 'websocket'])
-/** 与按钮无关的后台请求：Vite dev server 的 HMR / 依赖预构建通道，以及站级首次访问打点。 */
-const BACKGROUND_REQUEST = /\/(@vite|@id|@fs)\/|__vite_ping|\/node_modules\/\.vite\/|\/api\/client\/mark\/record/
 
 /** Online 套餐卡 id（pricing.ts 的 online tab）。 */
 const ONLINE_PLAN_IDS = ['free', 'lite', 'basic', 'growth', 'professional']
@@ -26,6 +20,11 @@ test.describe('Online Scraper page', () => {
     const response = await page.goto('/online-scraper/')
     expect(response?.status()).toBe(200)
     await expect(page.locator('main h1')).toContainText('Google Maps extraction')
+    await expect(page.locator('#results')).toContainText('37 public columns')
+    await expect(page.locator('#results .oc-file-name')).toContainText('1 CSV')
+    await expect(page.locator('#results .oc-r1')).toContainText('Search Keyword')
+    await expect(page.locator('#results .oc-r2')).toContainText('Primary phone')
+    await expect(page.locator('#results')).not.toContainText('ZIP')
     await expect(page.locator('a[data-cta="online-hero-dashboard"]')).toHaveAttribute('href', '/dashboard/')
     await expect(page.locator('a[data-cta="online-scraper-hero-pricing"]')).toHaveAttribute(
       'href',
@@ -100,40 +99,38 @@ test.describe('Online Scraper page', () => {
 })
 
 test.describe('Extension page', () => {
-  test('install and purchase entries are greyed out and inert', async ({ page }) => {
-    await page.goto('/extension/', { waitUntil: 'networkidle' })
-    expect(await page.locator('#install button[data-capability="extensionInstall"]').count()).toBeGreaterThan(0)
-    // 每张套餐卡的按钮都灰化：Free 绑安装，付费档绑插件购买
-    const planCount = await page.locator('#plans .price-card').count()
-    expect(planCount).toBeGreaterThan(1)
-    await expect(page.locator('#plans button[data-capability="extensionInstall"]')).toHaveCount(1)
-    await expect(page.locator('#plans button[data-capability="extensionPurchase"]')).toHaveCount(planCount - 1)
-    await expect(page.locator('.final-cta button[data-capability="extensionInstall"]')).toHaveCount(1)
-
-    const inert = page.locator('main button[data-capability]')
-    const urlBefore = page.url()
-    // 只记跳转与数据 / 埋点类请求；浏览器自行补取的静态资源与后台请求都和按钮无关。
-    const requests: string[] = []
-    const onRequest = (request: Request) => {
-      if (BACKGROUND_REQUEST.test(request.url())) return
-      if (request.isNavigationRequest() || ACTION_REQUEST_TYPES.has(request.resourceType())) requests.push(request.url())
+  test('downloads browser-specific ZIPs and links to installation and one-time plans', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/extension/')
+    for (const [cta, href] of [
+      ['extension-install-zip', '/downloads/mapsgrab.zip'],
+      ['extension-install-firefox', '/downloads/mapsgrab-firefox.zip']
+    ]) {
+      const download = page.locator(`a[data-cta="${cta}"]`)
+      await expect(download).toHaveAttribute('href', href)
+      await expect(download).toHaveAttribute('download', '')
+      const fitsCard = await download.evaluate(element =>
+        element.getBoundingClientRect().right <= element.closest('article')!.getBoundingClientRect().right
+      )
+      expect(fitsCard).toBe(true)
+      const archive = await page.request.get(href)
+      expect(archive.status()).toBe(200)
+      expect((await archive.body()).subarray(0, 2).toString()).toBe('PK')
     }
-    page.on('request', onRequest)
-    for (let i = 0; i < (await inert.count()); i += 1) {
-      const button = inert.nth(i)
-      await expect(button).toHaveAttribute('aria-disabled', 'true')
-      await expect(button).not.toHaveAttribute('href')
-      await expect(button).not.toHaveAttribute('data-cta')
-      // aria-disabled 会被 Playwright 视为不可操作，用 force 触发真实 pointer 事件（点击仍应无任何效果）
-      await button.click({ force: true })
-      await button.focus()
-      await page.keyboard.press('Enter')
-      await page.keyboard.press('Space')
+    await expect(page.locator('a[data-cta="extension-hero-install-guide"]')).toHaveAttribute('href', '#install')
+    await expect(page.locator('#plans a[data-cta="extension-plan-pro"]')).toHaveAttribute('href', '/pricing/?product_kind=maps_extension')
+    await expect(page.locator('#plans .price-period').nth(1)).toContainText('one-time')
+    for (const [channel, count] of [['chromium', 4], ['firefox', 3]] as const) {
+      await page.locator(`#xi-tab-${channel}`).click()
+      const shots = page.locator(`#xi-${channel} .xi-shot img`)
+      await expect(shots).toHaveCount(count)
+      for (const shot of await shots.all()) {
+        await shot.scrollIntoViewIfNeeded()
+        await expect.poll(() => shot.evaluate(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0)).toBe(true)
+        await expect(shot).toHaveAttribute('alt', /\S/)
+        await expect(shot.locator('..')).toHaveAttribute('href', await shot.getAttribute('src') ?? '')
+      }
     }
-    // 事件循环同步点（不是固定等待）：最后一次按键排进页面的同步、微任务与 0 延时任务都跑完后再停止记录请求
-    await page.evaluate(() => new Promise<void>(resolve => setTimeout(() => resolve())))
-    page.off('request', onRequest)
-    expect(page.url()).toBe(urlBefore)
-    expect(requests).toEqual([])
+    await expect(page.locator('#xi-firefox')).toContainText('unloads when Firefox restarts')
   })
 })

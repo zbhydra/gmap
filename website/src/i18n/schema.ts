@@ -500,7 +500,7 @@ export interface ProductCtaMessage {
 /** 行内富文本片段：纯文本或等宽代码（安装步骤里的 about:debugging、manifest.json）。 */
 export type InlineTextPart = string | { code: string }
 
-/** 插件安装教程的一步；截图未产出前用 .media-slot 占位，shot 描述该步应配的截图。 */
+/** 插件安装教程的一步；shot 为真实截图的替代文本。 */
 export interface ExtensionInstallStepMessage {
   title: string
   description: readonly InlineTextPart[]
@@ -525,10 +525,8 @@ export interface ExtensionPageContent {
     announce: { badge: string; text: string }
     title: AccentHeadingMessage
     lead: string
-    /** 主安装入口（Edge）。 */
-    edgeCta: string
-    /** 次安装入口（Chromium 与 Firefox 走页内教程）。 */
-    browsersCta: string
+    downloadCta: string
+    installCta: string
     /** 信任行。 */
     meta: readonly string[]
     /** 浏览器剧场：Maps 结果侧栏 + MapsGrab 面板，面板文案与真实插件面板一致。 */
@@ -685,12 +683,11 @@ export interface ExtensionPageContent {
       flows: { rows: string; rules: string; usage: string; websites: string }
     }
   }
-  /** ⑦ 安装（页内锚点 #install）：商店、release zip、分浏览器步骤、帮助与版本说明。 */
+  /** ⑦ 官网 ZIP 下载、分浏览器步骤、帮助与版本说明。 */
   install: {
     head: ProductSectionHeadMessage
-    stores: readonly { id: 'edge' | 'firefox'; name: string; store: string; note: string; cta: string }[]
     /** meta 含 {version}。 */
-    zip: { title: string; description: string; button: string; meta: string }
+    zip: { title: string; description: string; button: string; firefoxButton: string; meta: string }
     /** 浏览器切换的无障碍名称。 */
     browserLabel: string
     channels: readonly {
@@ -700,8 +697,6 @@ export interface ExtensionPageContent {
       note: string
       steps: readonly ExtensionInstallStepMessage[]
     }[]
-    /** 截图位小标签。 */
-    shotKicker: string
     help: { title: string; description: string; cta: string }
     /** 版本说明（锚点 #release-notes，承接 changelog 职能）；version 同时供胶囊与 zip 卡使用。 */
     notes: { kicker: string; version: string; status: string; date: string; items: readonly string[] }
@@ -712,8 +707,9 @@ export interface ExtensionPageContent {
   cta: ProductCtaMessage
 }
 
-/** 云端页 CSV 演示展示的列：backend maps_online.CSV_HEADERS 的子集，第一行固定字段名不翻译。 */
+/** 云端页展示的公开列子集；精确顺序由 provider/export/gmap_columns.py 拥有。 */
 export type OnlineCsvField =
+  | '#'
   | 'Name'
   | 'Fulladdress'
   | 'Categories'
@@ -746,10 +742,10 @@ export interface OnlineScraperPageContent {
     pricingCta: string
     meta: readonly string[]
     theater: {
-      /** 含 {count} 的下载气泡说明。 */
+      /** 单份 CSV 的下载气泡说明。 */
       files: string
-      /** 历史行的 ZIP 下载按钮。 */
-      zip: string
+      /** 整个 Job 的 CSV 下载按钮。 */
+      csv: string
       parallelChip: FloatChipMessage
       billingChip: FloatChipMessage
     }
@@ -792,15 +788,15 @@ export interface OnlineScraperPageContent {
     }
     regions: { hint: string }
   }
-  /** ⑤ 结果文件：ZIP 目录树 + CSV 表格（第一行字段名 / 第二行任务语言译名 / 第三行起数据）。 */
+  /** ⑤ 单 Job CSV 与采样行数；第一行字段名、第二行字段说明、第三行起数据。 */
   results: {
     head: ProductSectionHeadMessage
     /** 含 {count}。 */
-    zipMeta: string
+    csvMeta: string
     /** 含 {count}。 */
     rows: string
-    /** 零结果关键词的文件只有两行表头。 */
-    headersOnly: string
+    /** 采样交付行数列表标题。 */
+    searches: string
     notes: readonly string[]
     /** 任务语言即创建时的界面语言；站点仅 en-US，不做语言切换演示（README §10）。 */
     language: string
@@ -809,7 +805,7 @@ export interface OnlineScraperPageContent {
     legend: { fields: string; labels: string; data: string }
     /** 含 {count}。 */
     more: string
-    /** 第二行字段译名，与 backend maps_online.csv_headers 同口径。 */
+    /** 第二行字段说明，与公开列同口径。 */
     csvLabels: Readonly<Record<OnlineCsvField, string>>
   }
   /** ⑥ 能力（meta 为卡底的等宽规格行）。 */
@@ -1213,8 +1209,8 @@ export interface DashboardContent {
       taskNo: string
       /** 创建时间（含时区标注）。 */
       createdAt: string
-      /** 关键词总数。 */
-      keywords: string
+      /** 逻辑采样总数。 */
+      samples: string
       /** 已处理数。 */
       processed: string
       /** 结果条数。 */
@@ -1222,12 +1218,20 @@ export interface DashboardContent {
       /** 状态。 */
       status: string
     }
-    /** 任务两态（后端只公开 processing / completed）。 */
+    /** Job 的六种公开状态。 */
     status: {
-      /** 处理中。 */
-      processing: string
+      /** 排队。 */
+      queued: string
+      /** 采集中。 */
+      collecting: string
+      /** 正在准备 CSV。 */
+      publishing: string
       /** 已完成。 */
       completed: string
+      /** 局部成功。 */
+      partial: string
+      /** 失败。 */
+      failed: string
     }
     /** 创建时间的时区标注（America/New_York）。 */
     timezone: string
@@ -1254,11 +1258,33 @@ export interface DashboardContent {
       keyword: string
       /** 明细记录数列头。 */
       records: string
-      /** 单项 CSV 下载按钮。 */
-      downloadCsv: string
+      /** 真实执行编号。 */
+      runNo: string
+      /** 开始时间，纽约时区。 */
+      startedAt: string
+      /** 结束时间，纽约时区。 */
+      finishedAt: string
+      /** 联系方式选项快照。 */
+      contacts: string
+      /** 本任务启用联系方式。 */
+      contactsEnabled: string
+      /** 本任务关闭联系方式。 */
+      contactsDisabled: string
+      /** 已成功收口。 */
+      completed: string
+      /** 尚未收口。 */
+      pending: string
+      /** 视口来源，含 {lat} {lng} {zoom}。 */
+      viewport: string
     }
-    /** 整包 ZIP 下载按钮。 */
-    downloadZip: string
+    /** 整 Job CSV 下载按钮。 */
+    downloadCsv: string
+    /** 终态没有可下载文件。 */
+    noFile: string
+    /** 采集、局部结果、忙及发布失败业务码文案。 */
+    errors: Readonly<Record<31301 | 31302 | 31303 | 31304, string>>
+    /** 其他已报告错误的通用提示。 */
+    errorFailed: string
     /** 下载请求进行中文案。 */
     downloading: string
     /** 无可下载文件或签名已过期的就地提示。 */

@@ -19,8 +19,8 @@
 | `free` | `maps_extension` | `none` | false | Free | 1,000 records/月 |
 | `free` | `maps_online` | `none` | false | Free | 1,000 records/月 |
 | `free` | `maps_api` | `none` | false | Free | 20 requests/月 |
-| `maps_extension_pro` | `maps_extension` | `month` | true | Maps Pro | 100,000 records/月 |
-| `maps_extension_business` | `maps_extension` | `month` | true | Maps Business | 500,000 records/月 |
+| `maps_extension_pro` | `maps_extension` | `month` | false | Maps Pro | 100,000 records/月 |
+| `maps_extension_business` | `maps_extension` | `month` | false | Maps Business | 500,000 records/月 |
 | `online_lite` | `maps_online` | `month` | false | Online Lite | 20,000 records/月 |
 | `online_basic` | `maps_online` | `month` | false | Online Basic | 80,000 records/月 |
 | `online_growth` | `maps_online` | `month` | false | Online Growth | 250,000 records/月 |
@@ -34,7 +34,7 @@
 
 ## 配置表
 
-订阅商品配置必须直接使用 `backend/src/app/init/sql_executor.py` 执行 SQL 修改,不得新增迁移脚本;结构变更走 `sync_database_schema.py`。
+Maps 商品与渠道价由 `backend/scripts/seed_subscription_products.py` 的 `_SEED_ROWS` 幂等播种；新销售只启用 PayPal 单次价，同批关闭这些商品的其他渠道价，保留历史订单、协议与渠道凭据。结构变更走 `sync_database_schema.py`。
 
 ### config_subscription_product
 

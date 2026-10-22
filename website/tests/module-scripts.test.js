@@ -3397,7 +3397,7 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
   }
 })
 
-test('PayPal success return page polls order status every 3 seconds and switches copy by product line', async () => {
+test('PayPal success return confirms a pending payment and switches copy by product line', async () => {
   const PAYPAL_RETURN_COPY_PAYLOAD = JSON.stringify({
     waitingTitle: 'Payment submitted',
     waitingMessage:
@@ -3430,6 +3430,7 @@ test('PayPal success return page polls order status every 3 seconds and switches
     const intervals = []
     const clearedIntervals = []
     const openerMessages = []
+    let paymentConfirmed = false
 
     globalThis.window = {
       localStorage: {
@@ -3482,8 +3483,16 @@ test('PayPal success return page polls order status every 3 seconds and switches
     globalThis.fetch = async (url, init = {}) => {
       const parsedUrl = new URL(String(url))
       fetchCalls.push({ path: parsedUrl.pathname, method: init.method ?? 'GET' })
+      if (parsedUrl.pathname === '/api/client/order/paypal/confirm') {
+        assert.equal(init.method, 'POST')
+        assert.deepEqual(JSON.parse(init.body), { order_no: 'ORD-PAYPAL-RETURN' })
+        paymentConfirmed = true
+        return new Response(JSON.stringify({ code: 10000, data: {}, msg: '' }), {
+          status: 200, headers: { 'Content-Type': 'application/json' }
+        })
+      }
       assert.equal(parsedUrl.pathname, '/api/client/order/status/ORD-PAYPAL-RETURN')
-      const paid = fetchCalls.length >= 2
+      const paid = paymentConfirmed
       return new Response(
         JSON.stringify({
           code: 10000,
@@ -3517,13 +3526,11 @@ test('PayPal success return page polls order status every 3 seconds and switches
       assert.equal(intervals.length, 1)
       assert.equal(intervals[0].intervalMs, module.PAYPAL_SUCCESS_POLL_INTERVAL_MS)
       assert.equal(module.PAYPAL_SUCCESS_POLL_INTERVAL_MS, 3000)
-      assert.equal(fetchCalls.length, 1)
-      assert.equal(titleElement.textContent, 'Payment submitted')
-
-      intervals[0].callback()
-      await flushBrowserTasks()
-
-      assert.equal(fetchCalls.length, 2)
+      assert.deepEqual(fetchCalls, [
+        { path: '/api/client/order/status/ORD-PAYPAL-RETURN', method: 'GET' },
+        { path: '/api/client/order/paypal/confirm', method: 'POST' },
+        { path: '/api/client/order/status/ORD-PAYPAL-RETURN', method: 'GET' }
+      ])
       assert.equal(titleElement.textContent, expectedTitle)
       assert.equal(messageElement.textContent.includes(expectedMessageFragment), true)
       assert.deepEqual(clearedIntervals, [1])

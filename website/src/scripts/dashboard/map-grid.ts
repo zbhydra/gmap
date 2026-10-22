@@ -1,4 +1,4 @@
-export interface OnlineViewport {
+export type OnlineViewport = {
   lat: number
   lng: number
   zoom: number

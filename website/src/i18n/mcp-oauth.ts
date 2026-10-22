@@ -16,7 +16,7 @@ const content: Record<Locale, McpOAuthContent> = {
     switchAccount: 'Switch account',
     permissionsTitle: 'If you allow it, this app can',
     permissions: [
-      'Search for businesses and read their reviews on Google Maps.',
+      'Search for businesses and read their reviews and public photos on Google Maps.',
       'Use your API plan’s monthly request allowance.'
     ],
     revokeNote: 'You can disconnect it anytime under Connected apps in API management.',

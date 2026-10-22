@@ -2,34 +2,59 @@
 
 ## 业务入口与计量
 
-REST 与 MCP 共用 `backend/src/app/api/maps_api_operations.py` 的 `search` / `reviews`，调用本仓 HTTP Provider。两者均不创建 Online 任务，不写对象存储。
+REST 与 MCP 共用 `backend/src/app/api/maps_api_operations.py` 的 `search` / `reviews` / `photos`。Search、Reviews 与 Photos 全部调用统一 Collector client 和 `gmap_collector` 配置；均不创建 Export Job，不写对象存储。
 
-Search 的 `page` 是累计采集页数，映射 Provider 的 `max_depth`，不是第 N 页。`extra=true` 使用现有 `maps_enrich_provider.enrich` 和 `ENRICH_BATCH_BUDGET_SECONDS`，补全邮箱与社媒；权限归 API 请求额度，不检查 Online 订阅。
+Search 的 `page` 是累计采集页数，按每页 20 条映射 Collector 的 `max_results`，不是第 N 页。`extra=true` 使用 Collector 官网补全、完整 URL 缓存和 `ENRICH_BATCH_BUDGET_SECONDS`，补全邮箱与社媒；权限归 API 请求额度，不检查 Online 订阅。
 
-鉴权、入参及月额度检查通过后执行 Provider；成功返回（含零结果与 partial）才消费一次请求，Provider 抛错不扣量。服务端生成请求编号，调用 `api_usage_service.consume(records=1)`，产品线固定 `maps_api`，自然月及总额度归 [额度基建](../000.架构/tech-额度基建.md)。并行请求允许超过当时剩余额度；计量失败返回错误，客户端重试视为新请求。
+鉴权、入参及月额度检查通过后执行采集；Search 有效结果（含零结果与 partial）、Reviews 有效单页（含合法空页）或 Photos 有效部分结果各消费一次请求，不按照片张数计量。认证、参数、额度或采集失败不扣量。服务端生成请求编号，调用 `api_usage_service.consume(records=1)`，产品线固定 `maps_api`，自然月及总额度归 [额度基建](../000.架构/tech-额度基建.md)。并行请求允许超过当时剩余额度；计量失败返回错误，客户端重试视为新请求。
 
 ## REST 与 Dashboard
 
 客户端接口统一前缀 `/api/client/maps/api`。业务响应使用 `{code,data,msg}`，成功码为 `SUCCESS`；认证无效 HTTP 401，其余业务错误 HTTP 200。
 
 | 方法与路径           | 认证                                   | 请求 / data                                                                                                              |
-| -------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------ |
-| `GET /key`           | 本站用户 JWT，严格 Redis 白名单        | `{has_api_key:boolean,api_key_prefix:string,api_key_created_at:number                                                    | null}` |
+| -------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `GET /key`           | 本站用户 JWT，严格 Redis 白名单        | `{has_api_key:boolean,api_key_prefix:string,api_key_created_at:number \| null}`                                          |
 | `POST /key/generate` | 同上                                   | 无 body；`{api_key:string,api_key_prefix:string,api_key_created_at:number}`                                              |
 | `GET /usage`         | 同上                                   | `{used:number,total:number,period:"YYYY-MM",exhausted:boolean}`                                                          |
 | `GET /connection`    | 同上                                   | `{api_base_url:string,mcp_url:string}`；连接地址读取部署配置                                                             |
 | `POST /search`       | `Authorization: Bearer <用户 API Key>` | `{q:string,page?:1..10,hl?:string,ll?:"@lat,lng,zoom",extra?:boolean}` → `{places:[],partial:boolean,warnings:string[]}` |
-| `POST /reviews`      | 同上                                   | `{fid:string,cursor?:string,sort_by?:1\|2\|3\|4,hl?:string}` → `{reviews:[],next_cursor:string                           | null}` |
+| `POST /reviews`      | 同上                                   | `{fid:string,cursor?:string,sort_by?:1\|2\|3\|4,hl?:string}` → `{reviews:[],next_cursor:string \| null}`                 |
+| `POST /photos`       | 同上                                   | `{fid:string,max_results?:number}` → 照片交付对象，见下方合同                                                            |
 
-`page` 默认 1，`hl` 默认 `en`，`extra` 默认 false，Reviews 排序默认相关性（1；2 最新、3 最高、4 最低）。`ll` 范围与解析由 `MapsSearchRequest.parse_viewport` 定义。Reviews 的 cursor 原样传给下一次调用，不保存页码状态。
+`page` 默认 1，`hl` 默认 `en`，`extra` 默认 false，Reviews 排序默认相关性（1；2 最新、3 最高、4 最低）。`ll` 经度范围 -180–180、纬度 -90–90，zoom 只接受 1–21 的整数文本，小数不舍入；解析由 `MapsSearchRequest.parse_viewport` 拥有。Reviews 的 cursor 原样传给下一次调用，并保持 fid、排序和语言一致，不保存页码状态。Reviews 与 Photos 的 fid 均接受每段 12–20 位大小写十六进制（`0x…:0x…`），入口统一转为小写；其他长度返回参数错误，不补零。
 
-地点及评论字段分别沿用 `GmapPlaceEntry`、`GmapReview` 的 snake_case DTO，定义位于 `backend/src/app/provider/gmap/types.py`。开启 extra 后每条地点增加 `emails:string[]` 与 `medias:Record<string,string>`。Provider 局部补列状态透传为 `partial` / `warnings`。
+地点及评论字段分别沿用 `GmapPlaceEntry`、`GmapReview` 的 snake_case DTO，定义位于 `backend/src/app/provider/gmap/types.py`。开启 extra 后为每条地点补全 `emails:string[]` 与 `medias:Record<string,string>`。Provider 局部补列状态透传为 `partial` / `warnings`。
 
 每个账号仅一个 API Key，`users` 保存 SHA-256 摘要、展示前缀和生成时间；完整 Key 仅生成响应出现，轮换后旧 Key 立即无效。凭证鉴权逐请求检查账号可用状态。额度耗尽返回 `MAPS_API_QUOTA_EXHAUSTED`；存储不可用由现有用量 owner 返回 `EXTENSION_USAGE_UNAVAILABLE`。
 
+## 媒体 Collector
+
+媒体与共享客户端使用同一份后台配置，节点、代理、管理员接口及敏感信息边界归 [单一采集配置](tech-Export与Collector重构.md#5-单一采集配置)。运行时不读取旧媒体 YAML 或旧引擎代理配置；一次媒体调用按配置顺序传递最多三个 Google 代理，没有代理时报业务错误。
+
+`backend/src/app/provider/gmap/collector_client.py` 的模块级 `gmap_collector_client` 复用 HTTPX 连接池，应用退出时关闭。媒体使用 `POST /` 的同步响应；调用 ID、原状态解包、有限实例切换与歧义提交处理归 [Collector 协议](tech-Export与Collector重构.md#33-collector-异步调用与恢复)。请求提供独立 `task_id`，业务关联为临时 `job_no` 与 `item_index=0`，不伪造 `run_no`，不创建 Online Job/Run 或恢复定位文件。Server 取消停止等待，已受理 Collector 调用可能继续到原期限。
+
+完整调用预算唯一来源为 `backend/src/app/constants/gmap.py` 的 `GMAP_MEDIA_BUDGET_SECONDS`。绝对超时约束排队、照片准备、取数及响应解析；HTTPX 阶段超时不能延长完整预算，取消继续传播。`backend/deploy/nginx/nginx.conf` 的媒体 REST 与 `/mcp/` 路径显式覆盖该预算并预留响应时间。
+
+Collector JSON 只在 HTTP 信任边界用 Pydantic 收窄，内部使用 DTO。Reviews 只接受 `ok` 有效页，保留 `reviews` 与 `next_cursor` 的公开结构；`failed`、HTTP 失败与非法响应不能变成空成功。媒体不可用统一返回本地化 `MAPS_API_MEDIA_UNAVAILABLE`，发生在计量前，内部诊断仅记录关联编号和脱敏失败分类。
+
+### Photos 交付
+
+`max_results` 为正整数，默认 200，仅限制本次交付数量；不保证取得该数量。不提供 page／cursor，内部语言固定为 `en`，地点元数据由 Collector 按需取得。
+
+| 字段             | 合同                                                                  |
+| ---------------- | --------------------------------------------------------------------- |
+| `photos`         | `[{url:string}]`，经 Collector 核对商家归属的公开照片                 |
+| `returned_count` | 实际交付数量，等于非空照片数组长度，且不超过本次上限                  |
+| `reported_total` | 上游报告数或 null，不能视为已核实的相册照片总数                       |
+| `status`         | 有效成功状态限定为 `partial`，不承诺完整相册                          |
+| `reason`         | 由 [GmapPhotosReason](../../../backend/src/app/provider/gmap/types.py) 定义，保留 Collector 的上限、完整性或后续分页失败原因 |
+
+Collector 已有有效照片时，后续分页停滞、取数预算耗尽、上游或解析等失败仍交付 `partial`，保留照片及对应原因；有效部分交付仍计一次请求。没有有效照片时，`empty_unverified`、照片准备、上游、解析或归属失败均返回业务错误；空数组与 HTTP 200 不能单独证明成功。照片分页、会话维护和媒体筛选由现成 Collector 负责。
+
 ## MCP 协议
 
-入口为 `/mcp/`，官方 SDK 版本由 `backend/pyproject.toml` / `uv.lock` 固定；无状态 Streamable HTTP，仅 POST JSON，GET 返回 405，`/mcp` 返回 404。工具 `search_places`、`list_reviews` 分别复用 REST 入参，未知字段按严格机器合同拒绝。结果同时提供 text JSON 与 structured content；业务错误返回 `isError` 和本地化 `{code,message}`。
+入口为 `/mcp/`，官方 SDK 版本由 `backend/pyproject.toml` / `uv.lock` 固定；无状态 Streamable HTTP，仅 POST JSON，GET 返回 405，`/mcp` 返回 404。工具 `search_places`、`list_reviews`、`list_photos` 分别复用 REST 入参，未知字段按严格机器合同拒绝。结果同时提供 text JSON 与 structured content；业务错误返回 `isError` 和本地化 `{code,message}`。
 
 MCP 接受用户 API Key 或本服务签发的 OAuth access token。两者均逐请求查询账号，OAuth 另查询授权撤销状态。凭据无效返回 401 Bearer challenge，携带受保护资源元数据 URL；账号不可用返回 403，不循环启动授权。
 
@@ -37,7 +62,7 @@ MCP 接受用户 API Key 或本服务签发的 OAuth access token。两者均逐
 
 用户从 MCP 客户端打开官网，经现有登录后点击允许，返回 MCP 客户端。官网确认复用 `get_current_user`，不改变登录、JWT 或刷新协议。
 
-固定协议 scope 保持 `exports`；它只授予本站 MCP 的 Search / Reviews 能力，计量产品线仍为 `maps_api`。resource 必须匹配配置的 `mcp.public_url`，token 只在 MCP 入口使用。
+固定协议 scope 保持 `exports`；它授予本站 MCP 的 Search / Reviews / Photos 能力，既有有效授权可直接调用 Photos，无须重新授权，计量产品线仍为 `maps_api`。resource 必须匹配配置的 `mcp.public_url`，token 只在 MCP 入口使用。
 
 | 协议端点                                         | 行为                                                                              |
 | ------------------------------------------------ | --------------------------------------------------------------------------------- |
@@ -70,8 +95,8 @@ MCP 接受用户 API Key 或本服务签发的 OAuth access token。两者均逐
 
 索引服务实际查询：客户端主键 `client_id`；授权主键 `grant_id`、唯一 `family_hash`（刷新查询）、普通 `user_id`（本人列表/计数）；用户唯一 `api_key_hash`（Key 鉴权）。用户原有主键和 email 唯一键不能覆盖 Key 摘要查询。
 
-配置入口 `McpSettings`：`public_url`、`allowed_hosts`、`allowed_origins`。公开地址须为规范化的 `/mcp/` URL，Host/Origin 使用精确清单；未配置公开 URL 时不挂 OAuth 端点。部署模板从既有 API/官网地址与 Nginx 域名生成配置。应用 lifespan 启动 SDK session manager；错误中间件不包装协议错误；Nginx 显式透传元数据路径并关闭 MCP 缓冲。
+配置入口 `McpSettings`：`public_url`、`allowed_hosts`、`allowed_origins`。公开地址须为规范化的 `/mcp/` URL，Host/Origin 使用精确清单；未配置公开 URL 时不挂 OAuth 端点。部署模板从既有 API/官网地址与 Nginx 域名生成配置。应用 lifespan 启动 SDK session manager；错误中间件不包装协议错误；Nginx 显式透传元数据路径并关闭 MCP 缓冲；媒体等待边界见上方合同。
 
 ## 验收入口
 
-模型结构使用 `uv run python -m app.init.sync_database_schema --yes` 同步。公开协议和采集验证使用真实 MySQL、Redis 与独立本地后端，执行记录归本次实施单元；仅 Google 外部网络成功后才能证明真实采集闭环。
+公开协议和采集验证入口为 `backend/tests/integration/real/api/test_maps_api_mcp_real.py`，使用真实 MySQL、Redis 与独立本地后端；媒体主流程串联 API Key Photos、OAuth MCP Photos、Reviews cursor 续页和同账号计量。`test_collector_client_real.py` 只证明受控 HTTP 边界，不能替代 Collector → Google 正向证据。执行记录见 [媒体接入清单](plans/008.照片与评论接入.md)；仅真实外部取数成功后才能证明采集闭环。

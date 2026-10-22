@@ -35,6 +35,12 @@ class CreateOrderRequest(BaseModel):
     )
 
 
+class ConfirmPayPalOrderRequest(BaseModel):
+    """确认本人 PayPal 单次订单；渠道订单号从服务端快照读取。"""
+
+    order_no: str = Field(..., min_length=1, max_length=32, description="订单号")
+
+
 class CreateOrderResponse(BaseModel):
     """创建订单响应"""
 

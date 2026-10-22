@@ -181,11 +181,11 @@ const enUS: CompanyContent = {
       lead: 'Pick the browser extension, the cloud-based Online Scraper, or the API. The extension works inside your own browser; the Online Scraper and the API share one cloud engine, and the MCP server brings that API to AI agents.',
       hub: {
         title: 'MapsGrab data toolkit',
-        detail: '36 columns · reviews · photos · email & social enrichment'
+        detail: 'Business data · reviews · photos · email & social enrichment'
       },
       tags: {
         extension: ['36-column extraction', 'Reviews & photos', 'Batch tasks'],
-        online: ['Batch keywords', 'Contact enrichment', 'CSV & ZIP downloads'],
+        online: ['Batch keywords', 'Contact enrichment', 'One 37-column CSV per task'],
         api: ['Business data', 'Reviews', 'Structured JSON'],
         mcp: ['Two tools', 'Streamable HTTP', 'OAuth or API key']
       },

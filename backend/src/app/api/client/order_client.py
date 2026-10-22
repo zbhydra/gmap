@@ -7,16 +7,20 @@
    装配统一响应（与订阅升级差额下单共用）。
 """
 
+import json
+
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
 from app.api.user_dependencies import UserContext, get_current_user
 from app.constants.order import OrderCheckProductParam, OrderStatus
+from app.constants.payment import PAYPAL_PAYMENT_METHOD
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.schemas.order_schema import (
     CancelOrderApiResponse,
     CancelOrderRequest,
+    ConfirmPayPalOrderRequest,
     CreateOrderApiResponse,
     CreateOrderRequest,
     OrderListApiResponse,
@@ -25,6 +29,8 @@ from app.schemas.order_schema import (
 )
 from app.services.order_service import order_service
 from app.services.payment_service import payment_service
+from app.provider.payment.payment_base import PaymentProviderError
+from app.provider.payment.paypal import PayPalPaymentProvider
 from app.utils.response import ResponseUtils
 from app.utils.time import timestamp_now
 
@@ -81,6 +87,45 @@ async def create_order(
     )
     response_data = await order_service.create_order_with_payment(create_param)
     return ResponseUtils.ok(response_data)
+
+
+@router.post("/paypal/confirm")
+async def confirm_paypal_order(
+    data: ConfirmPayPalOrderRequest,
+    current_user: UserContext = Depends(get_current_user),
+) -> JSONResponse:
+    """内网也能在付款回跳后完成收款，支付事实仍以 PayPal 服务端响应为准。"""
+    order = await order_service.get_order_by_no(data.order_no)
+    if order is None or order.user_id != current_user.user_id:
+        return ResponseUtils.error(CommonCode.ORDER_NOT_FOUND)
+    if order.payment_method != PAYPAL_PAYMENT_METHOD:
+        return ResponseUtils.error(CommonCode.PAYMENT_UNSUPPORTED_METHOD)
+    if order.order_status == OrderStatus.PAID.value:
+        return ResponseUtils.ok({"order_no": order.order_no})
+    if order.order_status != OrderStatus.PENDING.value:
+        return ResponseUtils.error(CommonCode.ORDER_INVALID_STATUS)
+
+    payment_data = json.loads(order.payment_data or "{}")
+    paypal_order_id = payment_data.get("paypal_order_id")
+    if not isinstance(paypal_order_id, str) or not paypal_order_id:
+        return ResponseUtils.error(CommonCode.ORDER_INVALID_STATUS)
+    provider = await payment_service.get_provider_for_existing_payment(
+        PAYPAL_PAYMENT_METHOD
+    )
+    assert isinstance(provider, PayPalPaymentProvider)
+    try:
+        verified = await provider.confirm_payment(
+            paypal_order_id, order_no=order.order_no
+        )
+    except PaymentProviderError as exc:
+        raise AppCommonException(
+            CommonCode.PAYMENT_GATEWAY_ERROR,
+            ext_msg=f"order_paypal_confirm: order_no={order.order_no}, error={exc}",
+        ) from exc
+    result = await order_service.handle_payment_callback(
+        payment_method=PAYPAL_PAYMENT_METHOD, callback=verified
+    )
+    return ResponseUtils.ok({"order_no": result.order_no})
 
 
 @router.get("/status/{order_no}", response_model=OrderStatusApiResponse)

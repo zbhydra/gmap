@@ -161,7 +161,8 @@ GET /paypal/cancel/?order_no=<local_order_no>
 
 - success 页展示"支付已提交",通过 `BroadcastChannel` / `postMessage` 通知原购买弹窗立刻查一次订单状态,并在该页按 3 秒间隔轮询 `/api/client/order/status/{order_no}`;只有本地订单达到 `PAID + CALLBACK SUCCESS` 才把回跳页文案更新为到账成功。
 - cancel 页展示取消提示,登录态存在时调用现有 `/api/client/order/cancel` 把本地 `PENDING` 订单置为 `CANCELLED`,再通知原购买弹窗查订单状态。
-- success/cancel 页都不触发发货、不调用 PayPal capture;到账展示只认 `/api/client/order/status/{order_no}` 的本地订单状态。
+- success 页读到待支付订单时，调用 `POST /api/client/order/paypal/confirm`，请求只含 `order_no`；后端校验本人订单与 PayPal 渠道，从支付快照读取渠道订单号并查询 PayPal。已批准订单由后端收款，已收款订单复用查询结果；只有订单与收款状态均为 `COMPLETED`、订单关联与金额校验通过，才进入共享幂等履约。回跳参数本身不作为付款凭证，到账展示仍只认本地订单状态。
+- 确认入口需本站登录态；其他用户访问返回订单不存在。重复回跳或后续 webhook 不重复发放权益。内网环境可沿回跳链完成确认，公网 webhook 继续用于用户未回跳的付款通知。
 - 原购买弹窗轮询到 `PAID + CALLBACK SUCCESS` 才显示到账成功;轮询到 `CANCELLED / EXPIRED / REFUNDED / PAID + CALLBACK FAILED` 显示对应失败或取消态。
 
 ### 1.8 PayPal webhook 回调
@@ -172,7 +173,7 @@ POST /api/callback/paypal/payment
 
 - 无需登录态;靠 PayPal webhook 签名校验。
 - 仅在业务服务器(`app.role=business`)挂载;download role 不挂载。
-- 唯一可信的 PayPal 支付成功入口;处理 `CHECKOUT.ORDER.APPROVED` 时在后端内部 capture,处理 `PAYMENT.CAPTURE.COMPLETED` 时按已完成 capture 兜底。
+- 与登录后的收款确认入口共用订单校验和幂等履约；处理 `CHECKOUT.ORDER.APPROVED` 时在后端内部 capture，处理 `PAYMENT.CAPTURE.COMPLETED` 时按已完成收款通知处理。
 
 ### 1.9 自动续费 webhook 续费订单
 

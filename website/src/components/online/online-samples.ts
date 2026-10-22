@@ -1,7 +1,6 @@
 /**
  * 云端页演示数据。商户、关键词与任务号均为虚构（电话一律 555-01xx 段，任务号为随机十六进制）；
- * 字段格式与后端 CSV 实际产出一致：美国号码为国内格式 (xxx) xxx-xxxx，官网去掉协议（如 example.com/）；
- * 规则类常量取自 014 合同：各档每任务关键词上限、地图模式搜索位置上限、CSV 列顺序。
+ * 只展示已确认的公开列；精确顺序由 provider/export/gmap_columns.py 拥有。
  */
 import type { OnlineCsvField } from '../../i18n/schema'
 import { gridViewports } from '../../scripts/dashboard/map-grid'
@@ -33,7 +32,7 @@ export interface TheaterRun {
 
 export const THEATER_RUNS: readonly TheaterRun[] = [
   {
-    no: '7c41e2d98b0f4a6c9e15d3a27b8f60c4',
+    no: '7c41e2d98b0f4a6c9e15d3a27b8f60c400',
     items: [
       ['coffee shop in Portland', 46, 1500],
       ['bakery in Seattle', 31, 2600],
@@ -41,7 +40,7 @@ export const THEATER_RUNS: readonly TheaterRun[] = [
     ]
   },
   {
-    no: 'e3a90b5f1d2c47e8a6b4f09c8d71e2a5',
+    no: 'e3a90b5f1d2c47e8a6b4f09c8d71e2a500',
     items: [
       ['dentist in Austin, TX', 58, 2300],
       ['plumber in Chicago', 64, 1400],
@@ -50,7 +49,7 @@ export const THEATER_RUNS: readonly TheaterRun[] = [
     ]
   },
   {
-    no: '1f8d6c3b92e04a57b8c1d4e6f0a9b372',
+    no: '1f8d6c3b92e04a57b8c1d4e6f0a9b37200',
     items: [
       ['hotels in Miami Beach', 73, 2400],
       ['bike shop in Boulder', 12, 1300]
@@ -63,8 +62,8 @@ export const THEATER_USED = 12480
 
 /** 历史列表里预置的已完成任务。 */
 export const THEATER_HISTORY = [
-  { no: 'a19f03d7c25b48e1906f3ab4d8e1c720', keywords: 5, records: 212 },
-  { no: '5d2b8e61f0a94c3d8b27e5c19a04f6d3', keywords: 2, records: 87 }
+  { no: 'a19f03d7c25b48e1906f3ab4d8e1c72000', keywords: 5, records: 212 },
+  { no: '5d2b8e61f0a94c3d8b27e5c19a04f6d300', keywords: 2, records: 87 }
 ] as const
 
 /** 历史列表任务号只显示前 6 位。 */
@@ -96,7 +95,7 @@ export type KeywordLineSkip = 'blank' | 'duplicate' | null
 export function judgeKeywordLines(lines: readonly string[]): { text: string; skip: KeywordLineSkip; count: number }[] {
   const seen = new Set<string>()
   return lines.map(text => {
-    const keyword = text.trim()
+    const keyword = text.trim().replace(/\s+/g, ' ')
     const skip: KeywordLineSkip = !keyword ? 'blank' : seen.has(keyword) ? 'duplicate' : null
     if (!skip) seen.add(keyword)
     return { text, skip, count: seen.size }
@@ -152,33 +151,35 @@ export function regionQueries(cities: readonly string[], phrasing: RegionPhrasin
   return REGION_DEMO.bases.flatMap(base => cities.map(city => `${base} ${phrasing} ${regionPlace(city)}`))
 }
 
-/** ⑤ 结果：整任务 ZIP 内的文件（零结果关键词只有两行表头）。 */
-export const RESULT_TASK_NO = THEATER_RUNS[0].no
-export const RESULT_FILES = [
-  { item: 4821, keyword: 'coffee shop in Portland', rows: 46 },
-  { item: 4822, keyword: 'bakery in Seattle', rows: 31 },
-  { item: 4823, keyword: 'ski rental in Key West', rows: 0 }
+/** ⑤ 单 Job CSV 与各采样去重后的交付行数。 */
+export const RESULT_JOB_NO = THEATER_RUNS[0].no
+export const RESULT_ITEMS = [
+  { keyword: 'coffee shop in Portland', rows: 46 },
+  { keyword: 'bakery in Seattle', rows: 31 },
+  { keyword: 'ski rental in Key West', rows: 0 }
 ] as const
 
-/** Online CSV 总列数（backend maps_online.CSV_HEADERS）。 */
-export const CSV_TOTAL_COLUMNS = 36
+/** 公开投影的总列数，含连续行号。 */
+export const CSV_TOTAL_COLUMNS = 37
 
-/** 表格展示的列：列号与 CSV_HEADERS 位置一致，skip 表示与前一列之间有隐藏列。 */
+/** 公开投影的展示子集；skip 表示与前一列之间有未展示列。 */
 export const CSV_SHOWN_COLUMNS: readonly { letter: string; field: OnlineCsvField; skip: boolean; mono?: boolean; strong?: boolean }[] = [
-  { letter: 'A', field: 'Name', skip: false, strong: true },
-  { letter: 'B', field: 'Fulladdress', skip: false },
-  { letter: 'E', field: 'Categories', skip: true },
-  { letter: 'G', field: 'Phone', skip: true, mono: true },
-  { letter: 'M', field: 'Review Count', skip: true, mono: true },
-  { letter: 'N', field: 'Average Rating', skip: false, mono: true },
-  { letter: 'V', field: 'Website', skip: true },
-  { letter: 'AC', field: 'Emails', skip: true },
-  { letter: 'AJ', field: 'Search Keyword', skip: true }
+  { letter: 'A', field: '#', skip: false, mono: true },
+  { letter: 'B', field: 'Name', skip: false, strong: true },
+  { letter: 'C', field: 'Fulladdress', skip: false },
+  { letter: 'F', field: 'Categories', skip: true },
+  { letter: 'H', field: 'Phone', skip: true, mono: true },
+  { letter: 'N', field: 'Review Count', skip: true, mono: true },
+  { letter: 'O', field: 'Average Rating', skip: false, mono: true },
+  { letter: 'W', field: 'Website', skip: true },
+  { letter: 'AD', field: 'Emails', skip: true },
+  { letter: 'AK', field: 'Search Keyword', skip: true }
 ]
 
-/** 第 3 行起的商户数据（第一个文件的前三行；空串表示该商户没有这一列）。 */
+/** 单 Job CSV 第三行起的数据示例；行号是连续的交付序号。 */
 export const CSV_ROWS: readonly Readonly<Record<OnlineCsvField, string>>[] = [
   {
+    '#': '1',
     'Name': 'Ember & Oak Coffee',
     'Fulladdress': '3021 SE Division St, Portland, OR 97202',
     'Categories': 'Coffee shop',
@@ -190,6 +191,7 @@ export const CSV_ROWS: readonly Readonly<Record<OnlineCsvField, string>>[] = [
     'Search Keyword': 'coffee shop in Portland'
   },
   {
+    '#': '2',
     'Name': 'Rose City Espresso Bar',
     'Fulladdress': '415 SE Hawthorne Blvd, Portland, OR 97214',
     'Categories': 'Espresso bar',
@@ -201,6 +203,7 @@ export const CSV_ROWS: readonly Readonly<Record<OnlineCsvField, string>>[] = [
     'Search Keyword': 'coffee shop in Portland'
   },
   {
+    '#': '3',
     'Name': 'Willamette Roasting Co.',
     'Fulladdress': '2130 NE Alberta St, Portland, OR 97211',
     'Categories': 'Coffee roasters',

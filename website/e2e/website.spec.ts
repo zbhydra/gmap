@@ -1,20 +1,6 @@
-/**
- * 网站 e2e（004/U5）。
- *
- * mock 跑：PUBLIC_API_BASE_URL 指向假地址；spec 内 page.route mock 自有
- * /api/client/** 接口，page.context().route mock ClinkBill checkout / portal
- * 外部页（window.open 的新页面不真实出网）。用例：
- *
- * 1. Pricing Online 购买主路径：普通下单与 Clink 回跳、PayPal 固定渠道补差与
- *    回跳刷新及产品类别直达。（渠道管理入口已迁 Dashboard 订阅页，见 dashboard.spec.ts。）
- * 2. Pricing 插件自动续费：下单携带 auto_renew，续费升级确认等待后刷新档位。
- *    插件购买未交付（lib/capabilities.ts 的 extensionPurchase）时跳过，放开后自动恢复。
- * 3. 站点结构路径：主导航 / 桌面 API 下拉 / 移动菜单 / 首页核心产品卡与
- *    FAQPage JSON-LD / Extension 安装链路 / Terms / Privacy 关键事实。
- */
+/** 网站购买与入口 E2E；自有 API 和 PayPal 外部页替身只证明前端交互。 */
 import { expect, test, type Page } from '@playwright/test'
 
-import { capabilities } from '../src/lib/capabilities'
 import { expectE2eBrowserIdentity, registerE2eBrowserIdentity } from '../scripts/playwright-browser-identity.mjs'
 
 registerE2eBrowserIdentity(test)
@@ -80,10 +66,9 @@ interface CapturedUpgradeBody {
 interface PurchaseMockState {
   /** 当前有效的 Online 订阅商品（PayPal 支付）；null 为 Free。 */
   onlineProductId: string | null
-  /** 当前有效的插件订阅商品（ClinkBill 自动续费）；null 为 Free。 */
+  /** 当前有效的插件单次套餐；null 为 Free。 */
   extensionProductId: string | null
-  /** 置为 true 后，下一次插件报价视为续费升级已生效。 */
-  applyRecurringUpgrade: boolean
+  paymentConfirmed: boolean
 }
 
 /** 购买用例捕获的请求体。 */
@@ -91,12 +76,11 @@ interface PurchaseMockRequests {
   createOrders: CapturedCreateOrderBody[]
   cancels: CapturedCancelBody[]
   upgradeCheckouts: CapturedUpgradeBody[]
-  upgradeConfirms: CapturedUpgradeBody[]
 }
 
 const ORDER_SUCCESS_EPOCH = Date.parse('2026-09-05T00:00:00Z')
 
-/** 三产品类别各出一个代表 SKU：Online 一次性 / Extension 自动续费 / API 一次性。 */
+/** 三条产品线均为 PayPal 单次购买。 */
 function buildPlans(): MockPlan[] {
   const channels = (basePriceId: number, amount: number): MockPaymentChannel[] => [
     {
@@ -106,13 +90,6 @@ function buildPlans(): MockPlan[] {
       currency: 'USD',
       amount
     },
-    {
-      payment_method: 'clink',
-      payment_method_name: 'ClinkBill',
-      product_price_id: basePriceId + 1,
-      currency: 'USD',
-      amount
-    }
   ]
 
   const plan = (
@@ -138,7 +115,7 @@ function buildPlans(): MockPlan[] {
 
   return [
     plan('online_basic', 'maps_online', 'Online Basic', 49_000_000, false, 80_000, 301),
-    plan('maps_extension_pro', 'maps_extension', 'Maps Pro', 39_000_000, true, 100_000, 201),
+    plan('maps_extension_pro', 'maps_extension', 'Maps Pro', 39_000_000, false, 100_000, 201),
     plan('api_professional', 'maps_api', 'API Professional', 65_000_000, false, 5_000, 401)
   ]
 }
@@ -146,12 +123,12 @@ function buildPlans(): MockPlan[] {
 /**
  * 安装购买用例共用的登录态与后端 / 支付页 mock。
  *
- * 普通订单号固定 CLINK-E2E-1，状态按最近一次下单的商品返回；PAYPAL-UPGRADE-1 是 Online 补差单，
+ * 普通订单号固定 PAYPAL-E2E-1，状态按最近一次下单的商品返回；PAYPAL-UPGRADE-1 是 Online 补差单，
  * 查询即视为已支付并把 Online 订阅切到 Growth。
  */
 async function mockPurchaseBackend(page: Page): Promise<{ state: PurchaseMockState; requests: PurchaseMockRequests }> {
-  const state: PurchaseMockState = { onlineProductId: null, extensionProductId: null, applyRecurringUpgrade: false }
-  const requests: PurchaseMockRequests = { createOrders: [], cancels: [], upgradeCheckouts: [], upgradeConfirms: [] }
+  const state: PurchaseMockState = { onlineProductId: null, extensionProductId: null, paymentConfirmed: false }
+  const requests: PurchaseMockRequests = { createOrders: [], cancels: [], upgradeCheckouts: [] }
   const expiresAt = Date.now() + 30 * 86_400_000
   const plans = [
     ...buildPlans(),
@@ -176,8 +153,8 @@ async function mockPurchaseBackend(page: Page): Promise<{ state: PurchaseMockSta
               period: 'month',
               display_name: state.extensionProductId === 'maps_extension_pro' ? 'Maps Pro' : 'Maps Business',
               expires_at: expiresAt,
-              auto_renew: true,
-              payment_method: 'clink'
+              auto_renew: false,
+              payment_method: 'paypal'
             }
           : null,
         maps_online_subscription: state.onlineProductId ? {
@@ -200,9 +177,6 @@ async function mockPurchaseBackend(page: Page): Promise<{ state: PurchaseMockSta
     const params = new URL(route.request().url()).searchParams
     const target = params.get('target_product_id')
     const online = params.get('product_kind') === 'maps_online'
-    if (!online && state.applyRecurringUpgrade) {
-      state.extensionProductId = 'maps_extension_business'
-    }
     const current = online ? state.onlineProductId : state.extensionProductId
     const available = online
       ? current === 'online_basic' && target === 'online_growth'
@@ -212,7 +186,7 @@ async function mockPurchaseBackend(page: Page): Promise<{ state: PurchaseMockSta
       reason: available ? null : 'not_higher_tier',
       current_product_id: current,
       target_product_id: target,
-      payment_method: online ? 'paypal' : 'clink',
+      payment_method: 'paypal',
       currency: 'USD',
       amount: available ? 12_500_000 : null,
       expires_at: expiresAt
@@ -231,55 +205,47 @@ async function mockPurchaseBackend(page: Page): Promise<{ state: PurchaseMockSta
     }) })
   })
 
-  await page.route('**/api/client/subscription/upgrade/confirm', route => {
-    requests.upgradeConfirms.push(route.request().postDataJSON() as CapturedUpgradeBody)
-    return route.fulfill({ json: envelope({
-      status: 'requires_action', action: { type: 'wait', url: null }
-    }) })
-  })
-
   await page.route('**/api/client/order/create', route => {
     const body = route.request().postDataJSON() as CapturedCreateOrderBody
     requests.createOrders.push(body)
+    state.paymentConfirmed = false
     return route.fulfill({
       json: envelope({
-        order_no: 'CLINK-E2E-1',
+        order_no: 'PAYPAL-E2E-1',
         amount: body.amount,
         currency: 'USD',
         expired_at: Date.now() + 1_800_000,
         support_mail: '',
         payment_data: {
-          sessionId: 'sess_e2e_1',
-          checkoutUrl: 'https://uat-checkout.clinkbill.com/pay/sess_e2e_1'
+          approval_url: 'https://www.paypal.com/checkoutnow?token=one-time'
         }
       })
     })
   })
 
+  await page.context().route('**/api/client/order/paypal/confirm', route => {
+    state.paymentConfirmed = true
+    return route.fulfill({ json: envelope({ order_no: 'PAYPAL-E2E-1' }) })
+  })
+
   await page.context().route('**/api/client/order/status/**', route => {
     const upgrade = route.request().url().endsWith('PAYPAL-UPGRADE-1')
-    if (upgrade) {
-      state.onlineProductId = 'online_growth'
-    }
-    const productId = upgrade ? 'online_growth' : requests.createOrders.at(-1)?.product_id
+    const productId = upgrade
+      ? requests.upgradeCheckouts.at(-1)?.target_product_id
+      : requests.createOrders.at(-1)?.product_id
     const plan = plans.find(item => item.product_id === productId)
-    return route.fulfill({
-      json: envelope({
-        order_no: upgrade ? 'PAYPAL-UPGRADE-1' : 'CLINK-E2E-1',
-        product_class: 1,
-        product_id: productId,
-        product_kind: plan?.product_kind,
-        product_name: plan?.product_name,
-        amount: upgrade ? 12_500_000 : plan?.display_amount,
-        currency: 'USD',
-        order_status: 2,
-        callback_status: 3,
-        payment_method: upgrade ? 'paypal' : 'clink',
-        paid_at: ORDER_SUCCESS_EPOCH,
-        created_at: ORDER_SUCCESS_EPOCH,
-        expired_at: ORDER_SUCCESS_EPOCH + 1_800_000
-      })
-    })
+    const paid = upgrade || state.paymentConfirmed
+    if (paid && plan?.product_kind === 'maps_online') state.onlineProductId = productId ?? null
+    if (paid && plan?.product_kind === 'maps_extension') state.extensionProductId = productId ?? null
+    return route.fulfill({ json: envelope({
+      order_no: upgrade ? 'PAYPAL-UPGRADE-1' : 'PAYPAL-E2E-1',
+      product_class: 1, product_id: productId,
+      product_kind: plan?.product_kind, product_name: plan?.product_name,
+      amount: upgrade ? 12_500_000 : plan?.display_amount,
+      currency: 'USD', order_status: paid ? 2 : 1, callback_status: paid ? 3 : 1,
+      payment_method: 'paypal', paid_at: paid ? ORDER_SUCCESS_EPOCH : null,
+      created_at: ORDER_SUCCESS_EPOCH, expired_at: Date.now() + 1_800_000
+    }) })
   })
 
   await page.route('**/api/client/order/cancel', route => {
@@ -287,13 +253,6 @@ async function mockPurchaseBackend(page: Page): Promise<{ state: PurchaseMockSta
     return route.fulfill({ json: envelope({}) })
   })
 
-  // Clink 官方域名挂 context.route：window.open 的新页面同样被拦截，不真实出网。
-  await page.context().route('https://uat-checkout.clinkbill.com/**', route =>
-    route.fulfill({ contentType: 'text/html', body: '<html><title>ClinkBill Checkout</title></html>' })
-  )
-  await page.context().route('https://uat-portal.clinkbill.com/**', route =>
-    route.fulfill({ contentType: 'text/html', body: '<html><title>ClinkBill Portal</title></html>' })
-  )
   await page.context().route('https://www.paypal.com/checkoutnow?*', route =>
     route.fulfill({ contentType: 'text/html', body: '<html><title>PayPal Checkout</title></html>' })
   )
@@ -307,30 +266,28 @@ test('Pricing Online purchase path: order, upgrade and payment returns', async (
   await page.goto('/pricing/')
   await expectE2eBrowserIdentity(page, testInfo, expect)
 
-  // 登录态恢复（站级会话）+ 配置加载后 Online 付费卡可点；插件套餐未交付，不输出购买按钮
-  // （灰化断言见 tools.spec.ts）。账户摘要 / 渠道管理已迁 Dashboard。
+  // 登录与配置加载后，三条产品线共用单次结账。
   await expect(page.locator('[data-pricing-buy="online_basic"]')).toBeEnabled()
-  await expect(page.locator('[data-pricing-panel="extension"] [data-pricing-buy]')).toHaveCount(0)
+  await expect(page.locator('[data-pricing-panel="extension"] [data-pricing-buy]')).toHaveCount(2)
 
-  // 普通下单：Online 一次性商品 detail 是 One-time payment；选 Clink 渠道并确认。
+  // 单次结账只展示 PayPal。
   await page.locator('[data-pricing-buy="online_basic"]').click()
   await expect(page.locator('[data-order-checkout-selected-usage]')).toContainText('One-time payment')
-  await page
-    .locator('[data-order-checkout-payment-method="clink"]')
-    .first()
-    .click()
+  await expect(page.locator('[data-order-checkout-payment-method="paypal"]')).toHaveCount(1)
   const checkoutPopupPromise = page.waitForEvent('popup')
   await page.locator('[data-order-checkout-submit]').click()
 
   const checkoutPopup = await checkoutPopupPromise
-  await expect(checkoutPopup).toHaveURL(/uat-checkout\.clinkbill\.com/)
+  await expect(checkoutPopup).toHaveURL(/www\.paypal\.com\/checkoutnow/)
+  await checkoutPopup.goto(`${new URL(page.url()).origin}/paypal/success/?order_no=PAYPAL-E2E-1`)
+  await expect(checkoutPopup.locator('[data-paypal-return-title]')).toHaveText('Subscription activated')
 
   // 下单请求必须携带 auto_renew + period，且与商品单一计费模式一致。
   expect(requests.createOrders).toHaveLength(1)
   expect(requests.createOrders[0]).toMatchObject({
     product_class: 1,
     product_id: 'online_basic',
-    payment_method: 'clink',
+    payment_method: 'paypal',
     currency: 'USD',
     amount: 49_000_000,
     auto_renew: false,
@@ -369,75 +326,31 @@ test('Pricing Online purchase path: order, upgrade and payment returns', async (
   await expect(page.locator('[data-pricing-buy="online_growth"]')).toHaveText('Current Plan')
   await page.locator('[data-order-checkout-order-close]').click()
 
-  // Clink success 回跳：轮询本地订单后按订阅口径确认。
-  await page.goto('/clink/success/?order_no=CLINK-E2E-1')
-  const confirmedRoot = page.locator('[data-payment-return-state="confirmed"]')
-  await expect(confirmedRoot).toBeVisible()
-  await expect(page.locator('[data-payment-return-title]')).toHaveText('Plan activated')
-  await expect(page.locator('[data-payment-return-description]')).toContainText(
-    'ClinkBill payment is confirmed'
-  )
-
-  // Clink cancel 回跳：落到取消态并调用取消订单接口。
-  await page.goto('/clink/cancel/?order_no=CLINK-E2E-1')
-  await expect(page.locator('[data-payment-return-state="cancelled"]')).toBeVisible()
-  await expect(page.locator('[data-payment-return-title]')).toHaveText('Payment canceled')
-  expect(requests.cancels).toEqual([{ order_no: 'CLINK-E2E-1' }])
+  // 取消回跳落到取消态，并通知服务端关闭该订单。
+  await page.goto('/paypal/cancel/?order_no=PAYPAL-CANCEL-1')
+  expect(requests.cancels).toEqual([{ order_no: 'PAYPAL-CANCEL-1' }])
 })
 
-test('Pricing extension subscription: auto-renew order and recurring upgrade', async ({ page }, testInfo) => {
-  test.skip(!capabilities.extensionPurchase, '插件购买未交付（lib/capabilities.ts），放开后自动恢复')
-  const { state, requests } = await mockPurchaseBackend(page)
-
-  // 插件同名 product_kind 参数直达 Extension；自动续费商品 detail 是 Auto-renews until canceled。
+test('Pricing extension purchase uses one-time PayPal and activates after return', async ({ page }) => {
+  const { requests } = await mockPurchaseBackend(page)
   await page.goto('/pricing/?product_kind=maps_extension')
   await expect(page.locator('[data-pricing-tab="extension"]')).toHaveAttribute('aria-selected', 'true')
   await page.locator('[data-pricing-buy="maps_extension_pro"]').click()
-  await expect(page.locator('[data-order-checkout-selected-usage]')).toContainText(
-    'Auto-renews until canceled'
-  )
-
-  // 选 Clink 渠道并确认：下单请求必须携带 auto_renew + period。
-  await page
-    .locator('[data-order-checkout-payment-method="clink"]')
-    .first()
-    .click()
-  const checkoutPopupPromise = page.waitForEvent('popup')
+  await expect(page.locator('[data-order-checkout-selected-usage]')).toContainText('One-time payment')
+  await expect(page.locator('[data-order-checkout-payment-method="paypal"]')).toHaveCount(1)
+  const popupPromise = page.waitForEvent('popup')
   await page.locator('[data-order-checkout-submit]').click()
-  await expect(await checkoutPopupPromise).toHaveURL(/uat-checkout\.clinkbill\.com/)
-  expect(requests.createOrders).toHaveLength(1)
-  expect(requests.createOrders[0]).toMatchObject({
-    product_class: 1,
-    product_id: 'maps_extension_pro',
-    payment_method: 'clink',
-    currency: 'USD',
-    amount: 39_000_000,
-    auto_renew: true,
-    period: 'month'
-  })
-  await expect(page.locator('[data-order-checkout-status="success"]')).toBeVisible()
-  await page.locator('[data-order-checkout-order-close]').click()
-
-  // 续费升级：requires_action 只读 quote，不重复确认；生效后刷新档位。
-  state.extensionProductId = 'maps_extension_pro'
-  await page.goto('/pricing/?product_kind=maps_extension')
-  await expect(page.locator('[data-pricing-buy="maps_extension_pro"]')).toHaveText('Current Plan')
-  await expect(page.locator('[data-pricing-buy="maps_extension_business"]')).toHaveText('Upgrade · $12.50')
-  await page.locator('[data-pricing-buy="maps_extension_business"]').click()
-  await expect(page.locator('[data-order-checkout-selected-usage]')).toContainText('charged immediately via ClinkBill')
-  await page.locator('[data-order-checkout-submit]').click()
-  await expect(page.locator('[data-order-checkout-status="pending_payment"]')).toBeVisible()
-  await expect(page.locator('[data-order-checkout-order-message]')).toContainText('current plan stays active')
-  await expect(page.locator('[data-order-checkout-order-close]')).toHaveText('Close')
-  await page.screenshot({ path: testInfo.outputPath('upgrade-pending.png') })
-  state.applyRecurringUpgrade = true
-  await expect(page.locator('[data-order-checkout-status="success"]')).toBeVisible()
-  await expect(page.locator('[data-pricing-buy="maps_extension_business"]')).toHaveText('Current Plan')
-  expect(requests.upgradeConfirms).toEqual([{
-    product_kind: 'maps_extension', target_product_id: 'maps_extension_business'
+  const popup = await popupPromise
+  await expect(popup).toHaveURL(/www\.paypal\.com\/checkoutnow/)
+  expect(requests.createOrders).toEqual([{
+    product_class: 1, product_id: 'maps_extension_pro', payment_method: 'paypal',
+    currency: 'USD', amount: 39_000_000, auto_renew: false, period: 'month'
   }])
-  expect(requests.createOrders).toHaveLength(1)
+  await popup.goto(`${new URL(page.url()).origin}/paypal/success/?order_no=PAYPAL-E2E-1`)
+  await expect(popup.locator('[data-paypal-return-title]')).toHaveText('Subscription activated')
+  await expect(page.locator('[data-order-checkout-status="success"]')).toBeVisible()
   await page.locator('[data-order-checkout-order-close]').click()
+  await expect(page.locator('[data-pricing-buy="maps_extension_pro"]')).toHaveText('Current Plan')
 })
 
 test('site structure: nav, API dropdown, home cards, extension install and legal pages', async ({ page, isMobile }) => {
@@ -451,18 +364,9 @@ test('site structure: nav, API dropdown, home cards, extension install and legal
   await expect(scope.getByRole('link', { name: 'Pricing', exact: true })).toBeVisible()
   await expect(scope.locator('a[data-cta="nav-online"]')).toHaveAttribute('href', '/online-scraper/')
 
-  // 未交付能力：插件介绍页入口照常可达但带 Coming soon；安装动作是 aria-disabled 按钮，
-  // 没有链接，鼠标与键盘都不跳转。
   await expect(scope.locator('a[data-cta="nav-extension"]')).toHaveAttribute('href', '/extension/')
-  await expect(scope.locator('a[data-cta="nav-extension"]')).toContainText('Coming soon')
-  const install = page.locator(isMobile ? '[data-mobile-menu] [data-capability="extensionInstall"]' : '[data-nav] [data-capability="extensionInstall"]')
-  await expect(install).toHaveAttribute('aria-disabled', 'true')
-  await expect(install).not.toHaveAttribute('href')
-  await expect(install).toContainText('Coming soon')
-  await install.click({ force: true })
-  await install.focus()
-  await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(url => new URL(url).pathname === '/')
+  const install = page.locator(isMobile ? '[data-cta="mobile-install"]' : '[data-cta="nav-install"]')
+  await expect(install).toHaveAttribute('href', '/extension/#install')
 
   if (isMobile) {
     await expect(scope.locator('a[data-cta="nav-api-scraper"]')).toBeVisible()
@@ -490,11 +394,10 @@ test('site structure: nav, API dropdown, home cards, extension install and legal
     .find(item => item['@type'] === 'FAQPage')
   expect(faqSchema, 'expected FAQPage JSON-LD on home').toBeTruthy()
 
-  // —— Extension 产品页：hero 两个安装入口随能力表灰化 + 版本说明 + 页内安装教程区 ——
-  // （页内全部安装 / 购买入口的无动作断言见 landing-pages.spec.ts）
+  // —— Extension 产品页：下载与教程入口、版本说明、安装区 ——
   await page.goto('/extension/')
   await expect(page.locator('h1')).toContainText('Google Maps extractor')
-  await expect(page.locator('main .page-hero-actions button[data-capability="extensionInstall"]')).toHaveCount(2)
+  await expect(page.locator('main .page-hero-actions a')).toHaveCount(2)
   await expect(page.locator('[data-release="0.1.0"]')).toBeVisible()
   await expect(page.locator('section#install')).toBeVisible()
 

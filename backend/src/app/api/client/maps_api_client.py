@@ -7,7 +7,11 @@ from app.api import maps_api_operations
 from app.api.maps_api_dependencies import get_api_key_user
 from app.api.user_dependencies import UserContext, get_current_user
 from app.core.config import settings
-from app.schemas.maps_api_schema import MapsSearchRequest, MapsReviewsRequest
+from app.schemas.maps_api_schema import (
+    MapsPhotosRequest,
+    MapsReviewsRequest,
+    MapsSearchRequest,
+)
 from app.services.user_api_key_service import user_api_key_service
 from app.services.usage_service import api_usage_service, usage_identity, usage_payload
 from app.utils.response import ResponseUtils
@@ -73,3 +77,11 @@ async def reviews(
     current_user: UserContext = Depends(get_api_key_user),
 ) -> JSONResponse:
     return ResponseUtils.ok(await maps_api_operations.reviews(request, current_user))
+
+
+@router.post("/photos")
+async def photos(
+    request: MapsPhotosRequest,
+    current_user: UserContext = Depends(get_api_key_user),
+) -> JSONResponse:
+    return ResponseUtils.ok(await maps_api_operations.photos(request, current_user))

@@ -28,8 +28,6 @@ async def handle_request_validation_error(request: Request, exc: Exception) -> R
         )
     else:
         field = ".".join(str(part) for part in error["loc"])
-        if error["type"] == "proxy_required":
-            field = f"{field}.proxies"
         message = translator.translate("resp_code.VALIDATION_ERROR", locale.language)
         message = f"{field}: {message}"
     return ResponseUtils.json(CommonCode.VALIDATION_ERROR.value, {}, message)

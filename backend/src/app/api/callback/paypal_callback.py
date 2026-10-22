@@ -33,7 +33,7 @@ _SENSITIVE_PAYPAL_HEADERS = {
 
 @router.post("/payment")
 async def paypal_payment_callback(request: Request) -> JSONResponse:
-    """处理 PayPal 支付 webhook，唯一支付成功入口。"""
+    """处理 PayPal 支付 webhook，与付款回跳共用订单履约。"""
 
     callback_start_time = time.perf_counter()
     body = await request.body()

@@ -9,15 +9,14 @@ from app.api.admin_dependencies import AdminContext, get_admin_user
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
 from app.schemas.admin_schema import (
-    GmapEngineConfigRequest,
     GmapProxyCheckRequest,
-    GosomApiConfigRequest,
     ObjectStorageConfig,
 )
+from app.schemas.gmap_collector_schema import GmapCollectorConfig, GmapCollectorInstance
+from app.provider.gmap.collector_client import gmap_collector_client
 from app.services.admin_api_key_service import admin_api_key_service
 from app.services.admin_system_settings_service import admin_system_settings_service
-from app.services.gosom_api_service import gosom_api_service
-from app.services.maps_engine_service import maps_engine_service
+from app.services.gmap_collector_config_service import gmap_collector_config_service
 from app.services.object_storage_config_service import object_storage_config_service
 from app.utils.response import ResponseUtils
 
@@ -51,52 +50,48 @@ async def refresh_config_cache(
     return ResponseUtils.ok(asdict(result))
 
 
-@router.get("/gosom-api")
-async def get_gosom_api_config(
+@router.get("/gmap-collector")
+async def get_gmap_collector_config(
     _admin: AdminContext = Depends(get_admin_user),
 ) -> JSONResponse:
-    """查询 gosom 引擎 API 配置列表；未配置时 items 为空数组。"""
-    items = await gosom_api_service.get_items()
-    return ResponseUtils.ok({"items": [item.model_dump() for item in items]})
+    config = await gmap_collector_config_service.get_config()
+    response = ResponseUtils.ok(config.model_dump())
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
-@router.post("/gosom-api")
-async def save_gosom_api_config(
-    req: GosomApiConfigRequest,
+@router.post("/gmap-collector")
+async def save_gmap_collector_config(
+    req: GmapCollectorConfig,
     _admin: AdminContext = Depends(get_admin_user),
 ) -> JSONResponse:
-    """整表保存 gosom 引擎 API 配置到 system_data；key 按运维决策明文存储，不加密。"""
-    items = await gosom_api_service.save_items(req.items)
-    return ResponseUtils.ok({"items": [item.model_dump() for item in items]})
+    config = await gmap_collector_config_service.save_config(req)
+    response = ResponseUtils.ok(config.model_dump())
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
-@router.get("/gmap-engine")
-async def get_gmap_engine_config(
+@router.post("/gmap-collector/test")
+async def test_gmap_collector_config(
+    req: GmapCollectorInstance,
     _admin: AdminContext = Depends(get_admin_user),
 ) -> JSONResponse:
-    """查询 gmap 引擎配置；未配置时返回 HTTP、空代理与默认并发预算。"""
-    config = await maps_engine_service.get_config()
-    return ResponseUtils.ok(config.model_dump())
+    """只检查节点 /stats，不保存输入或测试 Google 取数。"""
+    ok, reason = await gmap_collector_client.check_stats(req)
+    response = ResponseUtils.ok({"ok": ok, **({"reason": reason} if reason else {})})
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
-@router.post("/gmap-engine/check-proxies")
-async def check_gmap_proxies(
+@router.post("/gmap-collector/check-proxies")
+async def check_collector_proxies(
     req: GmapProxyCheckRequest,
     _admin: AdminContext = Depends(get_admin_user),
 ) -> JSONResponse:
-    """管理员批量测试代理到 Google 的连通性，不保存输入。"""
-    results = await maps_engine_service.check_proxies(req.proxies)
-    return ResponseUtils.ok({"items": [item.model_dump() for item in results]})
-
-
-@router.post("/gmap-engine")
-async def save_gmap_engine_config(
-    req: GmapEngineConfigRequest,
-    _admin: AdminContext = Depends(get_admin_user),
-) -> JSONResponse:
-    """整对象保存 gmap 采集引擎配置到 system_data；代理凭据按运维决策明文存储，不加密。"""
-    config = await maps_engine_service.save_config(req)
-    return ResponseUtils.ok(config.model_dump())
+    results = await gmap_collector_config_service.check_proxies(req.proxies)
+    response = ResponseUtils.ok({"items": [item.model_dump() for item in results]})
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @router.get("/object-storage")

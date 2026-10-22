@@ -6,15 +6,23 @@
  * Pricing 购买主路径分别来自迁移后的订阅页与 website.spec.ts。
  *
  * 1. 匿名入口：登录弹窗打开 / 取消回主页；导航邮箱验证码登录成功进入 Dashboard。
- * 2. 历史视图：列表、分页、明细展开、CSV / ZIP 下载与无文件就地提示。
+ * 2. 历史视图：列表、分页、明细展开、整 Job CSV 下载与无文件就地提示。
  * 3. 订阅视图：三线状态（免费 / 有效 / 不可用）、Pricing tab 跳转、渠道管理 portal。
  * 4. API 接入空态、工作区 noindex、退出回主页与移动视口可达性。
  */
 import { expect, test } from '@playwright/test'
+import type { ExportJobSummary } from '../src/scripts/dashboard/api'
 
 import { expectE2eBrowserIdentity, registerE2eBrowserIdentity } from '../scripts/playwright-browser-identity.mjs'
 
 registerE2eBrowserIdentity(test)
+
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/client/maps-online/options', route => route.fulfill({
+    json: envelope({ keyword_limit: 2, logical_sample_limit: 50, contacts_allowed: false,
+      usage: { used: 0, total: 1000, period: '2026-10', exhausted: false } })
+  }))
+})
 
 /** 后端标准响应信封（成功码 10000）。 */
 function envelope<T extends object>(data: T): { code: number; data: T } {
@@ -82,18 +90,27 @@ function mockAuthMe(page: import('@playwright/test').Page): void {
   )
 }
 
-/** 构造 40 条任务：最新在前，T-0001 最新；T-0030 处理中。每页 20 条，共两页。 */
-function buildTasks(): { task_no: string; status: 'processing' | 'completed'; total_count: number; processed_count: number; record_count: number; created_at: number }[] {
-  const createdBase = Date.parse('2026-09-01T12:00:00Z') / 1000
+/** 两页历史，包含六种状态及合法零结果。 */
+function buildJobs(): ExportJobSummary[] {
+  const createdBase = Date.parse('2026-09-01T12:00:00Z')
   return Array.from({ length: 40 }, (_, index) => {
-    const taskNo = `T-${String(index + 1).padStart(4, '0')}`
+    const status = index === 0 ? 'partial' : index === 2 ? 'failed'
+      : index === 29 ? 'collecting' : index === 30 ? 'queued' : index === 31 ? 'publishing' : 'completed'
+    const running = index >= 29 && index <= 31
+    const hasFile = !running && index !== 1 && index !== 2
     return {
-      task_no: taskNo,
-      status: taskNo === 'T-0030' ? 'processing' : 'completed',
+      job_no: (index + 1).toString(16).padStart(32, '0') + '00',
+      run_no: (index + 101).toString(16).padStart(32, '0') + '00',
+      status,
+      include_contacts: index === 0,
       total_count: 3,
-      processed_count: 3,
-      record_count: 120,
-      created_at: createdBase - index * 3600
+      processed_count: running ? 0 : 3,
+      record_count: hasFile ? 120 : 0,
+      has_file: hasFile,
+      created_at: createdBase - index * 3600000,
+      started_at: status === 'queued' ? null : createdBase - index * 3600000 + 1000,
+      finished_at: running ? null : createdBase - index * 3600000 + 60000,
+      error_code: status === 'partial' ? 31302 : status === 'failed' ? 31304 : null
     }
   })
 }
@@ -113,8 +130,8 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
       })
     })
   )
-  await page.route(/\/api\/client\/maps-online\/tasks\?/, route =>
-    route.fulfill({ json: envelope({ tasks: buildTasks().slice(0, 20), total: 40, offset: 0, limit: 20 }) })
+  await page.route(/\/api\/client\/export\/jobs\?/, route =>
+    route.fulfill({ json: envelope({ jobs: buildJobs().slice(0, 20), total: 40, offset: 0, limit: 20 }) })
   )
 
   // 匿名直达工作区：登录入口，不加载私人数据。
@@ -165,51 +182,44 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
   await expect(page.locator('.side-nav-account')).toContainText('hydra@mapsgrab.test')
 })
 
-test('dashboard history: pagination, detail, CSV and ZIP downloads with unavailable feedback', async ({ page }, testInfo) => {
+test('dashboard history: pagination, item facts and single CSV with unavailable feedback', async ({ page }, testInfo) => {
   mockAuthMe(page)
   await signInByStoredToken(page, 'e2e-history-token')
 
-  const tasks = buildTasks()
-  await page.route(/\/api\/client\/maps-online\/tasks\?/, route => {
+  const jobs = buildJobs()
+  const first = jobs[0]
+  let fileAvailable = true
+  await page.route(/\/api\/client\/export\/jobs\?/, route => {
     const params = new URL(route.request().url()).searchParams
     const offset = Number(params.get('offset') ?? 0)
     const limit = Number(params.get('limit') ?? 20)
     return route.fulfill({
-      json: envelope({ tasks: tasks.slice(offset, offset + limit), total: tasks.length, offset, limit })
+      json: envelope({ jobs: jobs.slice(offset, offset + limit), total: jobs.length, offset, limit })
     })
   })
-  await page.route(/\/api\/client\/maps-online\/tasks\/T-0001$/, route =>
+  await page.route(`**/api/client/export/jobs/${first.job_no}`, route =>
     route.fulfill({
       json: envelope({
-        task: tasks[0],
+        job: first,
         items: [
-          { item_id: 11, sequence: 1, keyword: 'coffee shop nyc', record_count: 120 },
-          { item_id: 12, sequence: 2, keyword: 'bookstore brooklyn', record_count: 64 }
+          { item_index: 0, keyword: 'coffee shop nyc', viewport: { lat: 40, lng: -74, zoom: 15 }, result_count: 120, completed: true, error_code: null },
+          { item_index: 1, keyword: 'bookstore brooklyn', viewport: null, result_count: 0, completed: true, error_code: 31301 },
+          { item_index: 2, keyword: 'cafe brooklyn', viewport: null, result_count: 0, completed: true, error_code: null }
         ]
       })
     })
   )
   await page.route('**/storage.download.example.com/**', route =>
     route.fulfill({
-      status: 200,
       contentType: 'text/csv',
-      headers: { 'Content-Disposition': 'attachment; filename="T-0001-1.csv"' },
-      body: 'keyword,record_count\ncoffee shop nyc,120'
+      headers: { 'Content-Disposition': `attachment; filename="${first.job_no}.csv"` },
+      body: '\ufeff#,Name,Search Keyword\nRow number,Business name,Search keyword\n1,Cafe,coffee shop nyc'
     })
   )
-  await page.route(/\/api\/client\/maps-online\/tasks\/T-0001\/items\/11\/download$/, route =>
-    route.fulfill({
-      json: envelope({ url: 'https://storage.download.example.com/signed-csv?sig=1', filename: 'T-0001-1.csv' })
-    })
-  )
-  await page.route(/\/api\/client\/maps-online\/tasks\/T-0001\/items\/12\/download$/, route =>
-    route.fulfill({ status: 404, json: { code: 404, msg: 'no downloadable file' } })
-  )
-  await page.route(/\/api\/client\/maps-online\/tasks\/T-0001\/download$/, route =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/zip',
-      body: Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00])
+  await page.route(`**/api/client/export/jobs/${first.job_no}/download`, route =>
+    route.fulfill({ json: fileAvailable
+      ? envelope({ url: 'https://storage.download.example.com/signed-csv?sig=1', filename: `${first.job_no}.csv` })
+      : { code: 404, msg: 'No downloadable file.' }
     })
   )
 
@@ -217,34 +227,37 @@ test('dashboard history: pagination, detail, CSV and ZIP downloads with unavaila
   await expectE2eBrowserIdentity(page, testInfo, expect)
   await expect(page.locator('[data-history-expand]')).toHaveCount(20)
   await expect(page.getByText('1–20 of 40')).toBeVisible()
+  await expect(page.locator('.history-time').first()).toContainText('Sep 1, 2026')
+  await expect(page.locator('[data-status="partial"]')).toHaveText('Partial success')
+  await expect(page.locator('[data-status="failed"]')).toHaveText('Failed')
+  await expect(page.locator(`[data-history-download="${jobs[1].job_no}"]`)).toHaveCount(0)
+  await expect(page.locator(`[data-history-expand="${jobs[1].job_no}"]`).locator('xpath=ancestor::tr')).toContainText('No CSV')
 
-  // 处理中任务不提供整包下载。
-  await expect(page.locator('[data-history-zip="T-0001"]')).toBeVisible()
-  await expect(page.locator('[data-history-zip="T-0030"]')).toHaveCount(0)
-
-  // 展开明细：CSV 有文件触发下载，无文件就地提示，ZIP 触发整包下载。
-  await page.locator('[data-history-expand="T-0001"]').click()
-  await expect(page.getByText('coffee shop nyc')).toBeVisible()
+  await page.locator(`[data-history-expand="${first.job_no}"]`).click()
+  await expect(page.locator('.history-job-meta')).toContainText(first.run_no)
+  await expect(page.locator('.history-job-meta')).toContainText('Enabled')
+  await expect(page.locator('.history-detail-table')).toContainText('40, -74 · zoom 15')
+  const failedItem = page.locator('.history-detail-table tbody tr').filter({ hasText: 'bookstore brooklyn' })
+  await expect(failedItem).toContainText('Could not collect this search.')
+  await expect(failedItem).not.toContainText('Completed')
+  await expect(page.locator('.history-detail-table button')).toHaveCount(0)
   const csvDownload = page.waitForEvent('download')
-  await page.locator('[data-history-csv="11"]').click()
-  expect((await csvDownload).suggestedFilename()).toBe('T-0001-1.csv')
+  await page.locator(`[data-history-download="${first.job_no}"]`).click()
+  expect((await csvDownload).suggestedFilename()).toBe(`${first.job_no}.csv`)
+  fileAvailable = false
+  await page.locator(`[data-history-download="${first.job_no}"]`).click()
+  await expect(page.getByText('No downloadable CSV. The file may have expired.')).toBeVisible()
 
-  await page.locator('[data-history-csv="12"]').click()
-  await expect(page.getByText('No downloadable file for this item. It may have expired.')).toBeVisible()
-
-  const zipDownload = page.waitForEvent('download')
-  await page.locator('[data-history-zip="T-0001"]').click()
-  expect((await zipDownload).suggestedFilename()).toBe('T-0001.zip')
-
-  // 分页：下一页到第二页（21 条），上一页回第一页。
   await page.locator('[data-history-next]').click()
   await expect(page.getByText('21–40 of 40')).toBeVisible()
-  await expect(page.locator('[data-history-expand]')).toHaveCount(20)
+  for (const status of ['queued', 'collecting', 'publishing']) {
+    await expect(page.locator(`[data-status="${status}"]`)).toBeVisible()
+  }
+  await expect(page.locator(`[data-history-download="${jobs[29].job_no}"]`)).toHaveCount(0)
   await page.locator('[data-history-prev]').click()
   await expect(page.getByText('1–20 of 40')).toBeVisible()
-
-  // 桌面视口截图：侧栏菜单与个人信息可达。
-  await page.screenshot({ path: testInfo.outputPath('dashboard-history-desktop.png'), fullPage: true })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: testInfo.outputPath('dashboard-history.png'), fullPage: true, animations: 'disabled' })
 })
 
 test('dashboard session edge: unreachable retry recovers and 401 returns to sign-in panel', async ({ page }) => {
@@ -262,8 +275,8 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
       })
     })
   })
-  await page.route(/\/api\/client\/maps-online\/tasks\?/, route =>
-    route.fulfill({ json: envelope({ tasks: buildTasks().slice(0, 1), total: 1, offset: 0, limit: 20 }) })
+  await page.route(/\/api\/client\/export\/jobs\?/, route =>
+    route.fulfill({ json: envelope({ jobs: buildJobs().slice(0, 1), total: 1, offset: 0, limit: 20 }) })
   )
   await signInByStoredToken(page, 'e2e-edge-token')
   await page.goto('/dashboard/')
@@ -274,7 +287,7 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
   await expect(page.locator('[data-history-expand]').first()).toBeVisible()
 
   // 列表请求 401（token 失效）：统一汇入站级会话失效，回到登录面板且本地 token 已清。
-  await page.route(/\/api\/client\/maps-online\/tasks\?/, route =>
+  await page.route(/\/api\/client\/export\/jobs\?/, route =>
     route.fulfill({ status: 401, json: { code: 40100, msg: 'token expired' } })
   )
   await page.getByRole('button', { name: 'Refresh' }).click()
@@ -291,8 +304,8 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
       })
     })
   )
-  await page.route(/\/api\/client\/maps-online\/tasks\?/, route =>
-    route.fulfill({ json: envelope({ tasks: buildTasks().slice(0, 2), total: 2, offset: 0, limit: 20 }) })
+  await page.route(/\/api\/client\/export\/jobs\?/, route =>
+    route.fulfill({ json: envelope({ jobs: buildJobs().slice(0, 2), total: 2, offset: 0, limit: 20 }) })
   )
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page.locator('[data-download-auth-modal]')).toBeVisible()
@@ -324,8 +337,8 @@ test('google same-origin redirect keeps the dashboard destination through exchan
       })
     })
   )
-  await page.route(/\/api\/client\/maps-online\/tasks\?/, route =>
-    route.fulfill({ json: envelope({ tasks: buildTasks().slice(0, 3), total: 3, offset: 0, limit: 20 }) })
+  await page.route(/\/api\/client\/export\/jobs\?/, route =>
+    route.fulfill({ json: envelope({ jobs: buildJobs().slice(0, 3), total: 3, offset: 0, limit: 20 }) })
   )
 
   // 场景 1：导航登录（目的地 Dashboard）→ Google OAuth 回跳同站 → 换票成功后按原目的地进入 Dashboard。

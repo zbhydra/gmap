@@ -185,7 +185,7 @@ export const enUS: SiteContent = {
           online: {
             badge: 'Online Scraper',
             title: 'Cloud runs. Nothing to install.',
-            body: 'Paste keywords, collect business details in the cloud and download CSV files or a ZIP bundle.',
+            body: 'Paste keywords, collect business details in the cloud and download one deduplicated 37-column CSV per task.',
             link: 'Explore Online Scraper'
           },
           api: {
@@ -386,7 +386,7 @@ export const enUS: SiteContent = {
           {
             question: 'Which browsers are supported?',
             answer:
-              'MapsGrab targets Microsoft Edge (Edge Add-ons) and Firefox (Firefox Add-ons). Chromium-based browsers can also load the extension directly from the release zip — see the install guide on the Extension page.'
+              'Download MapsGrab from the Extension page. Chrome, Edge and Brave load the unpacked ZIP; Firefox uses a separate temporary add-on that must be reloaded after a restart. The page includes installation and update instructions.'
           },
           {
             question: 'Where does the data come from, and is it legal to collect?',

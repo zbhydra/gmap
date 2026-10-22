@@ -5,7 +5,7 @@
 为三条 MapsGrab 产品线提供一套共用的月度用量计量基础设施：谁在本月用了多少、扣减是否幂等、多扣能否退回。
 
 - `maps_extension`：插件采集，单位 records/月（`/maps/usage` 两路由在用）。
-- `maps_online`：云端采集，单位 records/月（能力就绪，014 接线路由）。
+- `maps_online`：云端采集，单位为实际交付且整 Job 去重后的 records/月，发布计量边界见 §5。
 - `maps_api`：同步 API 与 MCP 调用，单位 requests/月；成功受理口径见 [014 API 与 MCP](../014.Maps云端/tech-API与MCP.md#业务入口与计量)。
 
 本模块只回答「某归属者在业务时区自然月的 used / total / exhausted，以及一次扣减或退回」。不负责：订阅购买与到期（006 订阅系统）、积分余额（003 积分系统）、价格与订单（004）。
@@ -16,10 +16,10 @@ total 的单一真源是 006 的 `get_user_subscription_config`：所持档位�
 
 存储按归属者身份分派（013 双窗口拍板的延续）：
 
-| 身份 | 存储 | used 来源 | 幂等 |
-| --- | --- | --- | --- |
+| 身份                    | 存储                               | used 来源                             | 幂等                                         |
+| ----------------------- | ---------------------------------- | ------------------------------------- | -------------------------------------------- |
 | 登录用户（user_id > 0） | MySQL 只插入流水 `user_usage_logs` | `SUM(delta)` 按 line + user + ym 聚合 | 唯一键 `(product_kind, user_id, request_id)` |
-| 匿名设备（user_id = 0） | Redis 月度计数 | `GET usage:{line}:{ym}:{identity}` | Lua 脚本内幂等键 |
+| 匿名设备（user_id = 0） | Redis 月度计数                     | `GET usage:{line}:{ym}:{identity}`    | Lua 脚本内幂等键                             |
 
 为什么登录侧从 Redis（013 U7 单轨）改为 MySQL 流水：
 
@@ -39,15 +39,15 @@ total 的单一真源是 006 的 `get_user_subscription_config`：所持档位�
 
 ### 3.1 `user_usage_logs`
 
-| 字段 | 类型 | 约束 | 语义 |
-| --- | --- | --- | --- |
-| `id` | `BIGINT` | PK, AUTO_INCREMENT | 记录 ID |
-| `product_kind` | `VARCHAR(32)` | NOT NULL | 产品线标识（maps_extension / maps_online / maps_api） |
-| `user_id` | `BIGINT` | NOT NULL | 用户 ID（匿名走 Redis 不进表，恒大于 0） |
-| `ym` | `INT` | NOT NULL | 业务时区自然月 `YYYYMM`；**退回行 = 被修正量所属月** |
-| `delta` | `INT` | NOT NULL | 用量变化：正数 = 消费，负数 = 退回 |
-| `request_id` | `VARCHAR(64)` | NOT NULL | 业务幂等键（插件采集会话 UUID / 云端任务批次键） |
-| `created_at` | `BIGINT` | NOT NULL | 创建时间，毫秒时间戳 |
+| 字段           | 类型          | 约束               | 语义                                                  |
+| -------------- | ------------- | ------------------ | ----------------------------------------------------- |
+| `id`           | `BIGINT`      | PK, AUTO_INCREMENT | 记录 ID                                               |
+| `product_kind` | `VARCHAR(32)` | NOT NULL           | 产品线标识（maps_extension / maps_online / maps_api） |
+| `user_id`      | `BIGINT`      | NOT NULL           | 用户 ID（匿名走 Redis 不进表，恒大于 0）              |
+| `ym`           | `INT`         | NOT NULL           | 业务时区自然月 `YYYYMM`；**退回行 = 被修正量所属月**  |
+| `delta`        | `INT`         | NOT NULL           | 用量变化：正数 = 消费，负数 = 退回                    |
+| `request_id`   | `VARCHAR(64)` | NOT NULL           | 业务幂等键（插件采集会话 UUID / 云端 `job_no`）       |
+| `created_at`   | `BIGINT`      | NOT NULL           | 创建时间，毫秒时间戳                                  |
 
 - 唯一键：`uk_user_usage_logs_kind_user_request(product_kind, user_id, request_id)`。
 - 聚合索引：`idx_user_usage_logs_kind_user_ym_delta(product_kind, user_id, ym, delta)`（覆盖 SUM 扫描，免回表）。
@@ -59,7 +59,7 @@ total 的单一真源是 006 的 `get_user_subscription_config`：所持档位�
 
 - 同用户同线同 `request_id` 重放 → 唯一键命中，跳过写入，used 原样返回（`deducted=False`）。
 - 跨用户或跨线携带他人 `request_id` → 唯一键不命中，是合法的新扣减（各归属者各自计量，无全局请求键语义）。
-- Online 使用任务编号作为 `request_id`，同一任务 finalizer 重放时只写入一次消费流水，见 §5。
+- Online 使用 `job_no` 作为 `request_id`，发布终态条件先命中，再与用量共同提交；重放不写第二笔消费，见 §5。
 
 ## 4. Service 合同
 
@@ -83,23 +83,19 @@ total 链：`(await get_user_subscription_config(user_id, line))[1].metadata.mon
 
 失败语义（spec-redis §7，正确性优先 fail-closed）：Redis / MySQL 故障三原语统一抛 `EXTENSION_USAGE_UNAVAILABLE`（31102），错误消息带 product_kind 与上下文字段；配置合同破裂（行缺失 / monthly_quota 空）抛 `PAYMENT_GATEWAY_ERROR`。插件侧对 usage 失败自行 fail-open（采集可用性优先），两侧互补。
 
+跨模块事务使用 `consume_in_session(db, *, user_id, records, request_id)`：沿原流水构造与产品线、业务月份写入，不自行 commit，也不查询套餐或用量快照。持有 session 的调用方统一提交并负责异常收口；Online 接线见 §5。
+
 ### 4.1 接口边界与不可变合同
 
-用量流水遵守「只插入 + 唯一键幂等」合同：一条 UPDATE 即可篡改历史用量，一条 DELETE 即可凭空恢复额度。因此只按真实调用需求提供插入（consume/refund 内部）与聚合读（get_usage/SUM），不提供任意更新或删除接口。
+用量流水遵守「只插入 + 唯一键幂等」合同：一条 UPDATE 即可篡改历史用量，一条 DELETE 即可凭空恢复额度。因此只按真实调用需求提供插入（consume、refund 与 consume_in_session 内部）与聚合读（get_usage/SUM），不提供任意更新或删除接口。
 
 ## 5. Online 完成后计量（014 落地约定）
 
-Online 提交和采集执行期间不消费、不预留额度；创建入口只读当前额度，已 exhausted 时拒绝新任务。全部关键词 item 收口后，以实际保存的记录数计量：
+Online 创建和采集期间不消费、不预留额度；创建入口只读当前额度，已 exhausted 时拒绝新任务。上传成功后按整 Job 实际交付且去重的正数行数计量：先命中发布终态条件，再通过原 `online_usage_service.consume_in_session` 将 `user_usage_logs`、Job/Run 成功终态和本人下载引用在同一短事务提交。合法零结果、采集失败或发布失败不写消费流水。
 
-```text
-record_count = 0  -> 不写消费流水，任务完成
-record_count > 0  -> consume(usage_identity(user_id, None), user_id=user_id,
-                             records=record_count, request_id=task_no)
-                     -> 成功或幂等命中后任务完成
-                     -> 失败时任务保持未完成，由原 finalizer 重试
-```
+上传或结算异常时记录日志，仅在仍处于发布阶段时尝试一次条件失败收口并释放执行名额；不自动重传或重试结算，不覆盖已提交的成功。事务失败时流水与成功状态共同回滚；数据库不可用导致失败收口也无法持久化时，记录后结束。
 
-运行中的任务不预留额度，实际 used 可以超过 total；后续任务创建入口根据 `exhausted` 决定是否接受。`task_no` 是该任务唯一消费键，不使用额外结算或退款键。
+产品线、纽约自然月与原账本保持，`job_no` 为唯一消费键；运行中的任务不预留额度，实际 used 可以超过 total，后续创建仍按 exhausted 判断。Export 执行、恢复与发布的稳定细节归 [014 发布与扣量顺序](../014.Maps云端/tech-Export与Collector重构.md#42-发布与扣量顺序)。
 
 ## 6. Redis key 与生命周期
 
@@ -116,10 +112,10 @@ record_count > 0  -> consume(usage_identity(user_id, None), user_id=user_id,
 
 ### 7.2 实际查询
 
-| 操作 | 实际 WHERE / 冲突检测 | 当前源码位置 |
-| --- | --- | --- |
-| SUM 聚合读 | `product_kind = ? AND user_id = ? AND ym = ?`（SELECT delta 求和） | `backend/src/app/services/usage_service.py:246-249` |
-| 插入幂等 | UK `(product_kind, user_id, request_id)` 冲突检测 | `backend/src/app/services/usage_service.py` `_insert_log`（db.add + commit） |
+| 操作       | 实际 WHERE / 冲突检测                                              | 当前源码位置                                                                 |
+| ---------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| SUM 聚合读 | `product_kind = ? AND user_id = ? AND ym = ?`（SELECT delta 求和） | `backend/src/app/services/usage_service.py:246-249`                          |
+| 插入幂等   | UK `(product_kind, user_id, request_id)` 冲突检测                  | `backend/src/app/services/usage_service.py` `_insert_log`（db.add + commit） |
 
 三件套审查：§7.1 已列出新表完整 PK/UK/INDEX 清单；SUM 的 WHERE + 投影列 delta 被聚合索引完整覆盖（覆盖索引免回表）；UK 承担插入冲突检测。两索引均以 (product_kind, user_id) 为最左前缀但后续列与用途不同（request_id 幂等 / ym+delta 聚合），互不为对方前缀重复；无单列索引需要回收。Model 中两索引行尾已注明服务的查询（`user_usage_log_model.py:19,25`）。
 
@@ -151,8 +147,8 @@ backend/tests/integration/real/api/client/test_maps_usage_real.py
 ## 11. 失败语义
 
 - Redis 故障：三原语抛 `EXTENSION_USAGE_UNAVAILABLE`（fail-closed），插件侧 fail-open 降级放行（013 既有口径）。
-- MySQL 故障：同上 fail-closed；扣减失败由调用方重试，唯一键保证重试幂等。
+- MySQL 故障：自提交的三原语同上 fail-closed，唯一键保持消费幂等；Online 同事务发布按 §5 收口。
 - 配置合同破裂（商品行缺失 / monthly_quota 空）：`PAYMENT_GATEWAY_ERROR`，不静默兜底。
-- 插件上报 consume 失败时由插件按既有可用性口径处理；Online finalizer consume 失败时不写任务终态，由同一 finalizer 重试。
-- Online consume 已成功但父任务终态尚未提交时，重跑使用同一 `task_no`，唯一键命中后继续完成任务，不重复计量。
+- 插件上报 consume 失败时由插件按既有可用性口径处理。
+- Online 用量与成功终态共同提交；提交响应丢失后仍按终态条件判断，不覆盖数据库中已经提交的成功，见 §5。
 - Redis 匿名计数丢失：当月匿名 used 清零 = 免费多给，接受；登录用量在 MySQL，不受影响。

@@ -464,6 +464,37 @@ class PayPalPaymentProvider(PaymentBase):
         )
         return capture_result
 
+    async def confirm_payment(
+        self, paypal_order_id: str, *, order_no: str
+    ) -> CallbackVerificationResult:
+        """回跳后查询并收款；已收款订单复用渠道结果，和 webhook 共用履约入口。"""
+        token = await self._get_access_token()
+        data = await self._get_paypal_json(
+            f"/v2/checkout/orders/{paypal_order_id}",
+            access_token=token,
+            context="paypal.confirm_payment",
+        )
+        if self._string_field(data, "id") != paypal_order_id:
+            raise PaymentProviderError(
+                f"paypal.confirm_payment: 渠道订单不匹配: order_no={order_no}"
+            )
+        unit = self._first_object(data, "purchase_units")
+        if self._string_field(unit, "reference_id") != order_no:
+            raise PaymentProviderError(
+                f"paypal.confirm_payment: 商户订单不匹配: order_no={order_no}"
+            )
+        if self._string_field(data, "status") == "APPROVED":
+            captured = await self.capture_order(paypal_order_id)
+        else:
+            captured = self._capture_result_from_order(data)
+        if captured.paypal_order_id != paypal_order_id or captured.order_no != order_no:
+            raise PaymentProviderError(
+                f"paypal.confirm_payment: 收款订单不匹配: order_no={order_no}"
+            )
+        return self._verification_result_from_capture(
+            PAYPAL_CAPTURE_COMPLETED_EVENT, captured
+        )
+
     def _validate_payment_request(self, request: PaymentRequest) -> None:
         """确认订单快照可用于创建 PayPal Checkout 订单。"""
 
@@ -766,6 +797,13 @@ class PayPalPaymentProvider(PaymentBase):
         order_no = self._string_field(purchase_unit, "reference_id")
         payments = self._object_field(purchase_unit, "payments")
         capture = self._first_object(payments, "captures")
+        if (
+            self._string_field(data, "status") != "COMPLETED"
+            or self._string_field(capture, "status") != "COMPLETED"
+        ):
+            raise PaymentProviderError(
+                f"paypal.capture_result: 渠道收款尚未完成: order_no={order_no}"
+            )
         capture_id = self._string_field(capture, "id")
         amount = self._object_field(capture, "amount")
         currency = self._string_field(amount, "currency_code")

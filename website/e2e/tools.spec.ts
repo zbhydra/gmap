@@ -69,14 +69,10 @@ test.describe('Tool Matrix', () => {
       // SEO 正文：三节用法（Place ID Finder 为三步用法卡）+ FAQ 至少一问
       await expect(page.locator('#guide .guide-card, #how .pid-step')).toHaveCount(3)
       await expect(page.locator('#faq details.acc').first()).toBeVisible()
-      // CTA 漏斗（作用域限定收尾 CTA，避免命中导航 Install）：插件安装未交付 → 灰化按钮，无链接与 data-cta；
-      // 套餐链接带 utm 与 data-cta
       const cta = page.locator('.final-cta')
-      const install = cta.locator('button[data-capability="extensionInstall"]')
+      const install = cta.locator('a[data-cta$="-install"]')
       await expect(install).toBeVisible()
-      await expect(install).toHaveAttribute('aria-disabled', 'true')
-      await expect(install).not.toHaveAttribute('href')
-      await expect(install).not.toHaveAttribute('data-cta')
+      await expect(install).toHaveAttribute('href', /\/extension\//)
       const pricing = cta.locator('a[data-cta$="-pricing"]')
       await expect(pricing).toBeVisible()
       const pricingHref = await pricing.getAttribute('href')
@@ -281,34 +277,16 @@ test.describe('Pricing Page', () => {
     await expect(extensionPanel.locator('[data-plan-card="maps_extension_pro"] .price-flag')).toContainText('Most Popular')
   })
 
-  test('online and API buy buttons wait for payment config while extension plans stay gated', async ({ page }) => {
+  test('all product lines wait for payment config before enabling checkout', async ({ page }) => {
     await page.goto('/pricing/')
-    // mock 环境无支付配置：Online 与 API 各四个付费档的购买按钮保持禁用态，不误购；
-    // Free 卡分别直达 Online Scraper 与 Scraper API 介绍页
-    for (const line of ['online', 'api'] as const) {
+    for (const [line, count] of [['online', 4], ['extension', 2], ['api', 4]] as const) {
       const buy = page.locator(`[data-pricing-panel="${line}"] [data-pricing-buy]`)
-      await expect(buy).toHaveCount(4)
-      for (let i = 0; i < 4; i++) {
-        await expect(buy.nth(i)).toBeDisabled()
-      }
+      await expect(buy).toHaveCount(count)
+      for (let i = 0; i < count; i++) await expect(buy.nth(i)).toBeDisabled()
     }
+    await expect(page.locator('a[data-cta="pricing-free-extension"]')).toHaveAttribute('href', '/extension/?utm_source=website&utm_medium=pricing-free&utm_campaign=install#install')
     await expect(page.locator('a[data-cta="pricing-free-online"]')).toHaveAttribute('href', '/online-scraper/')
     await expect(page.locator('a[data-cta="pricing-free-api"]')).toHaveAttribute('href', '/google-maps-scraper-api/')
-    await expect(page.locator('[data-pricing-panel="api"] [data-capability]')).toHaveCount(0)
-
-    // 插件安装 / 购买未交付（lib/capabilities.ts）：aria-disabled 按钮，无链接、无购买入口
-    for (const [line, capability, count] of [
-      ['extension', 'extensionInstall', 1],
-      ['extension', 'extensionPurchase', 2]
-    ] as const) {
-      const gated = page.locator(`[data-pricing-panel="${line}"] button[data-capability="${capability}"]`)
-      await expect(gated).toHaveCount(count)
-      for (let i = 0; i < count; i++) {
-        await expect(gated.nth(i)).toHaveAttribute('aria-disabled', 'true')
-        await expect(gated.nth(i)).not.toHaveAttribute('href')
-      }
-      await expect(page.locator(`[data-pricing-panel="${line}"] [data-pricing-buy]`)).toHaveCount(0)
-    }
   })
 
   test('URL picks the product line and tab clicks write it back', async ({ page }) => {

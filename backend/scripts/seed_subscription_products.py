@@ -15,14 +15,8 @@ payment_config 的验价链路）。表级约束是复合唯一键
 - 商品单一计费模式：auto_renew 是商品列（不再读 metadata）；free 档
   period='none'，付费档 period=month（自然月履约，不再使用 duration_days）。
 - display_order 只负责展示排序；tier_rank 只表达业务档次（free=0，同线付费档递增）。
-- PayPal 渠道价：一次性商品金额镜像展示价；自动续费商品的 provider_sku
-  必须是渠道后台注册的真实 PayPal Plan ID（P-...，占位 SKU 无法创建订阅）。
-- Clink 渠道价：一次性商品走 priceDataList 模式（无需 Catalog ID），
-  金额镜像 PayPal 价；自动续费商品必须写本仓 Clink `productId:priceId`
-  （冒号约定，禁止复用参考项目其他商品的 Catalog ID）。
-
-provider_sku 占位说明：maps_extension 两档的 PayPal Plan ID 与自动续费
-Clink Catalog ID 需在各自渠道后台创建后回填，占位值仅保证配置链路可运行。
+- 三条产品线均为 PayPal 单次购买；金额镜像展示价，无需注册 Billing Plan。
+- 同批关闭这些商品的其他渠道价，不改历史订单、订阅或渠道凭据。
 """
 
 from __future__ import annotations
@@ -33,7 +27,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
@@ -61,28 +55,10 @@ from app.core.database import get_async_session  # noqa: E402
 # free 档在各线内的展示排序值：小于全部付费档（付费最低 20），free 永远排最前。
 FREE_DISPLAY_ORDER = 10
 
-# 渠道后台尚未创建真实 ID 时的占位 SKU：一眼可识别且按渠道区分；
-# TODO 价格行 enabled=0 不可售（不进入配置快照，不会进入支付请求），
-# 真实 ID 到手后只替换 _SEED_ROWS 里的字符串并重跑本脚本。
-_PAYPAL_TODO_SKU = "TODO_CREATE_PAYPAL_PLAN_ID"
-_CLINK_TODO_SKU = "TODO_CREATE_CLINK_PRODUCT_ID:TODO_CREATE_CLINK_PRICE_ID"
-
-
-def _sku_enabled(provider_sku: str | None) -> bool:
-    """TODO 占位 SKU 的价格行不可售，其余可售。"""
-
-    return not (provider_sku and provider_sku.startswith("TODO"))
-
 
 @dataclass(frozen=True, slots=True)
 class _ProductSeedRow:
-    """订阅商品播种行。
-
-    paypal_amount / clink_amount 为 None 表示不播种该渠道价（free 档无价格行）；
-    paypal_sku / clink_sku 直接存该渠道当前 provider_sku：真实 ID 直接写字符串，
-    渠道后台尚未创建时写 TODO 占位（是否 TODO 决定 enabled）；以后只在
-    _SEED_ROWS 里替换字符串并重跑本脚本，真实 ID 不会被回退。
-    """
+    """订阅商品播种行；free 档无渠道价。"""
 
     product_id: str
     product_kind: str
@@ -95,8 +71,6 @@ class _ProductSeedRow:
     monthly_quota: int | None
     paypal_amount: int | None
     paypal_sku: str | None = None
-    clink_amount: int | None = None
-    clink_sku: str | None = None
 
 
 _SEED_ROWS: list[_ProductSeedRow] = [
@@ -137,9 +111,7 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         20,
         None,
     ),
-    # ---- maps_extension 线：自动续费商品（单一计费模式）。
-    # PayPal Plan ID 与 Clink productId:priceId 尚未在渠道后台创建：
-    # provider_sku 存 TODO 占位（enabled=0 不可售），真实 ID 到手后替换字符串。 ----
+    # ---- maps_extension 线：一次性支付月度套餐。 ----
     _ProductSeedRow(
         MAPS_EXTENSION_PRO_PRODUCT_ID,
         MAPS_EXTENSION_PRODUCT_KIND,
@@ -148,12 +120,10 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         39_000_000,
         30,
         1,
-        True,
+        False,
         100_000,
         39_000_000,
-        paypal_sku=_PAYPAL_TODO_SKU,
-        clink_amount=39_000_000,
-        clink_sku=_CLINK_TODO_SKU,
+        paypal_sku=f"{MAPS_EXTENSION_PRO_PRODUCT_ID}-paypal",
     ),
     _ProductSeedRow(
         MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
@@ -163,12 +133,10 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         99_000_000,
         40,
         2,
-        True,
+        False,
         500_000,
         99_000_000,
-        paypal_sku=_PAYPAL_TODO_SKU,
-        clink_amount=99_000_000,
-        clink_sku=_CLINK_TODO_SKU,
+        paypal_sku=f"{MAPS_EXTENSION_BUSINESS_PRODUCT_ID}-paypal",
     ),
     # ---- maps_online 线：一次性支付月度套餐。 ----
     _ProductSeedRow(
@@ -183,7 +151,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         20_000,
         19_000_000,
         paypal_sku=f"{ONLINE_LITE_PRODUCT_ID}-paypal",
-        clink_amount=19_000_000,
     ),
     _ProductSeedRow(
         ONLINE_BASIC_PRODUCT_ID,
@@ -197,7 +164,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         80_000,
         49_000_000,
         paypal_sku=f"{ONLINE_BASIC_PRODUCT_ID}-paypal",
-        clink_amount=49_000_000,
     ),
     _ProductSeedRow(
         ONLINE_GROWTH_PRODUCT_ID,
@@ -211,7 +177,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         250_000,
         99_000_000,
         paypal_sku=f"{ONLINE_GROWTH_PRODUCT_ID}-paypal",
-        clink_amount=99_000_000,
     ),
     _ProductSeedRow(
         ONLINE_PRO_PRODUCT_ID,
@@ -225,7 +190,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         500_000,
         149_000_000,
         paypal_sku=f"{ONLINE_PRO_PRODUCT_ID}-paypal",
-        clink_amount=149_000_000,
     ),
     # ---- maps_api 线：一次性支付月度套餐。 ----
     _ProductSeedRow(
@@ -240,7 +204,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         1_000,
         15_000_000,
         paypal_sku=f"{API_BASIC_PRODUCT_ID}-paypal",
-        clink_amount=15_000_000,
     ),
     _ProductSeedRow(
         API_PROFESSIONAL_PRODUCT_ID,
@@ -254,7 +217,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         5_000,
         65_000_000,
         paypal_sku=f"{API_PROFESSIONAL_PRODUCT_ID}-paypal",
-        clink_amount=65_000_000,
     ),
     _ProductSeedRow(
         API_BUSINESS_PRODUCT_ID,
@@ -268,7 +230,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         10_000,
         115_000_000,
         paypal_sku=f"{API_BUSINESS_PRODUCT_ID}-paypal",
-        clink_amount=115_000_000,
     ),
     _ProductSeedRow(
         API_SCALE_PRODUCT_ID,
@@ -282,7 +243,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         50_000,
         365_000_000,
         paypal_sku=f"{API_SCALE_PRODUCT_ID}-paypal",
-        clink_amount=365_000_000,
     ),
 ]
 
@@ -386,7 +346,6 @@ async def seed() -> None:
         for row in _SEED_ROWS:
             await _upsert_product(db, row)
             if row.paypal_amount is not None:
-                # provider_sku 即当前渠道 SKU：TODO 占位不可售，真实 ID 直接替换字符串。
                 await _upsert_price(
                     db,
                     product_id=row.product_id,
@@ -394,25 +353,26 @@ async def seed() -> None:
                     amount=row.paypal_amount,
                     provider_sku=row.paypal_sku,
                     auto_renew_supported=row.auto_renew,
-                    enabled=_sku_enabled(row.paypal_sku),
-                )
-            if row.clink_amount is not None:
-                # 一次性商品走 priceDataList（provider_sku=None）；
-                # 自动续费价必须写本仓 productId:priceId，TODO 占位不可售。
-                await _upsert_price(
-                    db,
-                    product_id=row.product_id,
-                    channel_code="clink",
-                    amount=row.clink_amount,
-                    provider_sku=row.clink_sku,
-                    auto_renew_supported=row.auto_renew,
-                    enabled=_sku_enabled(row.clink_sku),
                 )
             print(
                 f"播种完成: product_id={row.product_id}, "
                 f"product_kind={row.product_kind}, period={row.period}, "
                 f"auto_renew={row.auto_renew}"
             )
+        await db.execute(
+            text(
+                "UPDATE config_subscription_product_price "
+                "SET enabled = 0, updated_at = UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000 "
+                "WHERE product_id IN :product_ids AND channel_code != 'paypal'"
+            ).bindparams(bindparam("product_ids", expanding=True)),
+            {
+                "product_ids": [
+                    row.product_id
+                    for row in _SEED_ROWS
+                    if row.paypal_amount is not None
+                ]
+            },
+        )
         await db.commit()
 
 

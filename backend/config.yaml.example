@@ -5,6 +5,8 @@ app:
   port: {BACKEND_PORT_PY}
   debug: false
   env: "dev"
+  export_run_concurrency: 8
+  export_queue_limit: 1000
   public_api_base_url: "{PUBLIC_API_BASE_URL}"
   public_website_base_url: "{PUBLIC_WEBSITE_BASE_URL}"
 
