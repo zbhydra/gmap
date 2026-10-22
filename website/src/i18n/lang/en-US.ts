@@ -123,13 +123,11 @@ export const enUS: SiteContent = {
           ratingValue: '{rating} · {reviews} reviews'
         },
         preview: {
-          badge: 'Preview',
-          state: 'Preview · first results page',
+          title: 'Results',
           count: '{count} businesses on the first results page',
-          reviews: '{count} reviews',
+          columns: { name: 'Name', address: 'Address', category: 'Category', rating: 'Rating', reviews: 'Reviews', phone: 'Phone' },
           locked: 'Sign in and submit your keywords in Online Scraper to collect and export results.',
           signIn: 'Sign in to start a full task',
-          openOnline: 'Open Online Scraper',
           failed: 'Could not load the preview. Please try again.',
           empty: 'No businesses found on the first results page.'
         }

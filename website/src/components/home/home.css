@@ -72,8 +72,65 @@
   font-size: 13px;
 }
 
+.hero-suggest-label {
+  color: var(--primary-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 建议词：品牌色描边 + 错峰轻晃吸引点击；基础样式即终态，悬停 / 加载中停晃 */
 .hero-suggest .chip {
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  height: 34px;
+  padding: 0 14px;
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  background: var(--primary-soft);
+  color: var(--text);
+  font-size: 14px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 8%, transparent);
+  animation: chip-nudge 6s ease-in-out 1.6s infinite;
+}
+
+.hero-suggest .chip:nth-of-type(2) {
+  animation-delay: 1.8s;
+}
+
+.hero-suggest .chip:nth-of-type(3) {
+  animation-delay: 2s;
+}
+
+.hero-suggest .chip .icon {
+  color: var(--primary-text);
+}
+
+.hero-suggest .chip:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--primary-soft-2);
+  animation: none;
+}
+
+.hero-suggest .chip:disabled {
+  animation: none;
+  opacity: 0.6;
+}
+
+@keyframes chip-nudge {
+  0%,
+  10%,
+  100% {
+    transform: none;
+  }
+
+  2.5% {
+    transform: translateY(-2px) rotate(-3deg);
+  }
+
+  5% {
+    transform: translateY(-2px) rotate(3deg);
+  }
+
+  7.5% {
+    transform: rotate(-1.5deg);
+  }
 }
 
 .hero-trust {
@@ -99,6 +156,114 @@
   height: 16px;
   color: var(--accent);
   stroke-width: 2.4;
+}
+
+/* 预览结果表：接在信任条之后、剧场之前 */
+.hero-results {
+  margin-top: clamp(28px, 4vw, 40px);
+  animation: fade-up var(--dur-4) var(--ease-out) backwards;
+}
+
+.hero-results-card {
+  display: grid;
+  gap: 16px;
+  max-width: 1080px;
+  margin-inline: auto;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(12px);
+}
+
+.hero-results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+}
+
+.hero-results-heading {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.hero-results-title {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.hero-results-sub {
+  margin-top: 2px;
+  color: var(--text-2);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.hero-results-keyword {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.hero-results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero-results-table .dtable td {
+  font-size: 14px;
+}
+
+/* 长文本列截断，完整内容走 title */
+.hero-results-table .cell-clip {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-results-table .skel {
+  width: 70%;
+}
+
+/* 锁定行只是占位条，不承载任何结果数据；逐行淡出由模板按序号给 opacity */
+.hero-results-table tr.is-locked:hover {
+  background: none;
+}
+
+.lock-line {
+  display: block;
+  width: 70%;
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+}
+
+.hero-results-message,
+.hero-results-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.hero-results-message {
+  justify-content: center;
+  padding: 20px 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-md);
+}
+
+.hero-results-message .icon,
+.hero-results-note .icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--primary-text);
 }
 
 /* 产品剧场 */
@@ -338,10 +503,6 @@
   color: var(--ok);
 }
 
-.stage-panel.is-preview .panel-state .icon {
-  color: var(--primary-text);
-}
-
 .panel-live {
   margin-left: auto;
   transition: opacity var(--dur-3);
@@ -356,44 +517,12 @@
   min-width: 0;
 }
 
-.mgp-row--preview .mgp-meta + .mgp-meta {
-  margin-top: 2px;
-}
-
 .mgp-row .rating {
   font-size: 12.5px;
 }
 
 .mgp-list .mgp-row {
   transition: background-color var(--dur-5);
-}
-
-.mgp-row.is-skeleton .mgp-avatar,
-.mgp-row.is-locked .mgp-avatar {
-  background: var(--surface-3);
-}
-
-.mgp-row.is-skeleton .skel + .skel,
-.mgp-row.is-locked .lock-line + .lock-line {
-  width: 60%;
-  margin-top: 6px;
-}
-
-.skel-rating,
-.lock-line--rating {
-  width: 28px;
-}
-
-/* 预览锁定行只是占位条，不承载任何结果数据 */
-.mgp-row.is-locked {
-  opacity: 0.55;
-}
-
-.lock-line {
-  display: block;
-  height: 10px;
-  border-radius: var(--r-full);
-  background: var(--surface-3);
 }
 
 .mgp-foot .btn.is-ready {
@@ -445,49 +574,6 @@
 .panel-toast .toast-desc {
   font-size: 11.5px;
   overflow-wrap: anywhere;
-}
-
-.panel-lock {
-  position: absolute;
-  right: 12px;
-  bottom: 72px;
-  left: 12px;
-  z-index: 5;
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  padding: 18px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  box-shadow: var(--shadow-lg);
-  text-align: center;
-  animation: fade-up var(--dur-4) var(--ease-out) backwards;
-}
-
-.panel-lock-count {
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 650;
-}
-
-.panel-lock-text {
-  color: var(--text-2);
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-
-.panel-lock-actions {
-  display: grid;
-  gap: 4px;
-  width: 100%;
-  margin-top: 4px;
-}
-
-.panel-lock-actions .btn {
-  width: 100%;
-  height: 38px;
-  font-size: 13px;
 }
 
 /* 剧场周边浮动卡 */

@@ -1,17 +1,17 @@
 <script setup lang="ts">
 /**
- * 首页首屏交互区：搜索命令条 + 信任条 + 产品剧场，014 首页预览合同里唯一的预览状态 owner。
+ * 首页首屏交互区：搜索命令条 + 信任条 + 预览结果表 + 产品剧场，014 首页预览合同里唯一的预览状态 owner。
  *
  * - 演示：剧场循环「输入关键词 → pin 落点 → 扫描命中 → 行入列 → 导出」，数据是 home-samples.ts 的虚构样例；
- *   离屏 / 后台暂停，减弱动效下停在终态。
- * - 预览：提交或点建议词后剧场切到预览态，请求真实匿名首屏接口；只展示服务端返回的最多 3 行，其余由占位行
- *   表达（不下发、不遮挡未授权数据），数量只称本次首屏条数，并给出登录引导。
+ *   离屏 / 后台暂停，减弱动效下停在终态。预览不接管剧场，演示照常循环。
+ * - 预览：提交或点建议词后在信任条下方展开结果表，请求真实匿名首屏接口；只展示服务端返回的最多 3 行，其余由
+ *   占位行表达（不下发、不遮挡未授权数据），数量只称本次首屏条数，并给出登录引导。
  * - 匿名关键词与结果只在内存：登录、pagehide 时清空，不写存储或 URL；已登录用户首屏改为 Dashboard 入口。
  *
  * 剧场外层 .hero-stage 由站级动效加 is-revealed（data-reveal-onload），用 data-allow-mismatch 放过水合比对；
  * motion.ts 顶层依赖浏览器 API，SSR 渲染时不能静态导入，按需动态加载（与 Layout 共用同一模块实例）。
  */
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { Locale } from '../../i18n/content'
 import type { HomePageContent } from '../../i18n/schema'
 import { previewKeyword, type PreviewResult, type PreviewRow } from '../../scripts/homepage/preview'
@@ -20,7 +20,7 @@ import { SITE_AUTH_SUCCESS_EVENT } from '../auth/site-auth-controller'
 import { PIN_SPOTS, THEATER_DATASETS, theaterRow, type TheaterDataset } from './home-samples'
 
 type Motion = typeof import('../../scripts/site/motion')
-type PanelMode = 'idle' | 'running' | 'done' | 'preview'
+type PanelMode = 'idle' | 'running' | 'done'
 type ChipKey = 'email' | 'rating' | 'id'
 
 interface PanelRow {
@@ -28,11 +28,8 @@ interface PanelRow {
   icon: string
   name: string
   meta: string
-  /** 预览行的第二行信息（电话 · 评论数）；演示行为空。 */
-  detail: string
   rating: string
   fresh: boolean
-  preview: boolean
 }
 
 interface Pin {
@@ -44,7 +41,9 @@ interface Pin {
 
 interface PreviewState {
   status: 'loading' | 'failed' | 'empty' | 'result'
+  keyword: string
   count: number
+  rows: PreviewRow[]
 }
 
 const props = defineProps<{
@@ -52,8 +51,6 @@ const props = defineProps<{
   locale: Locale
   /** 已登录入口与登录后回跳：当前语言的 Dashboard。 */
   dashboardUrl: string
-  /** 匿名用户的 Online Scraper 介绍页。 */
-  onlineUrl: string
 }>()
 
 const SUGGEST_ICONS = ['coffee', 'sparkles', 'wrench']
@@ -90,8 +87,6 @@ const scanOn = ref(false)
 const pins = ref<Pin[]>([])
 const pinsLeaving = ref(false)
 const rows = ref<PanelRow[]>([])
-const skeletons = ref(0)
-const lockedRows = ref(0)
 const preview = ref<PreviewState | null>(null)
 const chips = ref<Record<ChipKey, string>>({
   email: firstRow.email,
@@ -103,16 +98,19 @@ const chipUpdating = ref<Record<ChipKey, boolean>>({ email: false, rating: false
 const stage = ref<HTMLElement | null>(null)
 const map = ref<HTMLElement | null>(null)
 const scan = ref<HTMLElement | null>(null)
+const results = ref<HTMLElement | null>(null)
 
 const typing = JSON.stringify(props.copy.search.typing)
 const extractingParts = computed(() => props.copy.theater.extracting.split('{count}'))
 const panelClass = computed(() => ({
   'is-running': mode.value === 'running',
-  'is-done': mode.value === 'done',
-  'is-preview': mode.value === 'preview'
+  'is-done': mode.value === 'done'
 }))
+const lockedRows = computed(() =>
+  preview.value?.status === 'result' ? Math.min(preview.value.count - preview.value.rows.length, MAX_LOCKED_ROWS) : 0)
 
 let runId = 0
+let previewId = 0
 let rowKey = 0
 let pinKey = 0
 let visible = false
@@ -143,9 +141,6 @@ function resetPanel(keywordText: string): void {
   pins.value = []
   pinsLeaving.value = false
   rows.value = []
-  skeletons.value = 0
-  lockedRows.value = 0
-  preview.value = null
   toastOn.value = false
   exportState.value = ''
   scanOn.value = false
@@ -246,7 +241,7 @@ async function playExtraction(m: Motion, dataset: TheaterDataset, id: number): P
   await sweep(6200, isAlive, (pin, index, count) => {
     pin.active = true
     const row = theaterRow(dataset, index)
-    addRow({ icon: dataset.icon, name: row.name, meta: `${dataset.category} · ${row.phone}`, detail: '', rating: row.rating, preview: false }, false)
+    addRow({ icon: dataset.icon, name: row.name, meta: `${dataset.category} · ${row.phone}`, rating: row.rating }, false)
     const collected = Math.round((dataset.total * (index + 1)) / count)
     runCount.value = collected
     progress.value = (index + 1) / count
@@ -283,7 +278,7 @@ function showStaticDemo(): void {
   pins.value = PIN_SPOTS.map(([x, y], index) => ({ key: ++pinKey, x, y, active: index < 9 }))
   for (let index = 0; index < 7; index++) {
     const row = theaterRow(dataset, index)
-    addRow({ icon: dataset.icon, name: row.name, meta: `${dataset.category} · ${row.phone}`, detail: '', rating: row.rating, preview: false }, true)
+    addRow({ icon: dataset.icon, name: row.name, meta: `${dataset.category} · ${row.phone}`, rating: row.rating }, true)
   }
   mode.value = 'done'
   total.value = dataset.total
@@ -302,67 +297,28 @@ async function startDemo(): Promise<void> {
   }
 }
 
-function previewRow(row: PreviewRow): Omit<PanelRow, 'key' | 'fresh'> {
-  const missing = '—'
-  const reviews = row.review_count === null ? missing : fill(props.copy.preview.reviews, { count: numberFormat.format(row.review_count) })
-  return {
-    icon: 'building',
-    name: row.name,
-    meta: `${row.category ?? missing} · ${row.address ?? missing}`,
-    detail: `${row.phone ?? missing} · ${reviews}`,
-    rating: row.rating === null ? missing : row.rating.toFixed(1),
-    preview: true
-  }
-}
-
 async function runPreview(value: string): Promise<void> {
-  const id = ++runId
-  const isAlive = () => id === runId
-  const m = await loadMotion()
-  if (!isAlive()) return
-  const reduce = m.reducedMotion()
+  const id = ++previewId
   loading.value = true
-  const box = stage.value?.getBoundingClientRect()
-  if (box && box.top > innerHeight * 0.5) stage.value?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' })
-  resetPanel(value)
-  mode.value = 'preview'
-  badge.value = props.copy.preview.badge
-  preview.value = { status: 'loading', count: 0 }
-  skeletons.value = 3
-  const typed = typeQuery(m, value, isAlive, reduce ? 0 : 18)
+  preview.value = { status: 'loading', keyword: value, count: 0, rows: [] }
+  await nextTick()
+  const box = results.value?.getBoundingClientRect()
+  if (box && box.bottom > innerHeight) {
+    const m = await loadMotion()
+    results.value?.scrollIntoView({ behavior: m.reducedMotion() ? 'auto' : 'smooth', block: 'nearest' })
+  }
   let result: PreviewResult
   try {
     result = await previewKeyword(value)
   } catch (error) {
     console.error(new Error('homepage preview: search failed', { cause: error }))
-    await typed
-    if (!isAlive()) return
-    skeletons.value = 0
-    preview.value = { status: 'failed', count: 0 }
+    if (id !== previewId) return
+    preview.value = { status: 'failed', keyword: value, count: 0, rows: [] }
     loading.value = false
     return
   }
-  await typed
-  if (!isAlive()) return
-  skeletons.value = 0
-  if (!result.count) {
-    preview.value = { status: 'empty', count: 0 }
-    loading.value = false
-    return
-  }
-  await dropPins(m, Math.min(result.count, PIN_SPOTS.length), isAlive, reduce ? 0 : 45)
-  if (!isAlive()) return
-  for (const [index, row] of result.rows.entries()) {
-    addRow(previewRow(row), true)
-    const pin = pins.value[index]
-    if (pin) pin.active = true
-    if (!reduce) await m.wait(140)
-    if (!isAlive()) return
-  }
-  lockedRows.value = Math.min(Math.max(result.count - result.rows.length, 0), MAX_LOCKED_ROWS)
-  progress.value = result.rows.length / result.count
-  exportCount.value = result.rows.length
-  preview.value = { status: 'result', count: result.count }
+  if (id !== previewId) return
+  preview.value = { status: result.count ? 'result' : 'empty', keyword: value, count: result.count, rows: result.rows }
   loading.value = false
 }
 
@@ -379,12 +335,12 @@ function suggest(value: string): void {
   void runPreview(value)
 }
 
-/** 清空匿名关键词与结果；预览态（含进行中的请求）回到演示循环。 */
+/** 清空匿名关键词与结果（含进行中的请求）。 */
 function clearPreview(): void {
+  previewId++
   keyword.value = ''
-  if (mode.value !== 'preview' && !loading.value) return
+  preview.value = null
   loading.value = false
-  void startDemo()
 }
 
 function signIn(): void {
@@ -435,8 +391,8 @@ onBeforeUnmount(() => {
             <svg v-if="!loading" class="icon icon-arrow" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right" /></svg>
           </button>
         </div>
-        <div class="hero-suggest">
-          <span class="subtle">{{ copy.search.suggestLabel }}</span>
+        <div class="hero-suggest" data-inview>
+          <span class="hero-suggest-label">{{ copy.search.suggestLabel }}</span>
           <button
             v-for="(suggestion, index) in copy.search.suggestions"
             :key="suggestion"
@@ -463,6 +419,82 @@ onBeforeUnmount(() => {
         </li>
       </ul>
     </div>
+
+    <!-- 预览结果表：服务端最多 3 行 + 占位锁定行（不承载数据）+ 登录引导 -->
+    <section v-if="preview" ref="results" class="container hero-results" :aria-label="copy.preview.title">
+      <div class="hero-results-card">
+        <div class="hero-results-head">
+          <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-table" /></svg></span>
+          <div class="hero-results-heading">
+            <h2 class="hero-results-title">{{ copy.preview.title }}</h2>
+            <p class="hero-results-sub">
+              <span class="hero-results-keyword">{{ preview.keyword }}</span>
+              <template v-if="preview.status === 'result'"> · {{ fill(copy.preview.count, { count: numberFormat.format(preview.count) }) }}</template>
+            </p>
+          </div>
+          <div v-if="preview.status === 'result'" class="hero-results-actions">
+            <button class="btn btn-primary btn-sm" type="button" @click="signIn">
+              {{ copy.preview.signIn }}<svg class="icon icon-arrow" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <p v-if="preview.status === 'failed'" class="hero-results-message" role="alert">
+          <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-info" /></svg>{{ copy.preview.failed }}
+        </p>
+        <p v-else-if="preview.status === 'empty'" class="hero-results-message" role="status">
+          <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-search" /></svg>{{ copy.preview.empty }}
+        </p>
+        <div v-else class="dtable-wrap hero-results-table">
+          <table class="dtable">
+            <thead>
+              <tr>
+                <th scope="col">{{ copy.preview.columns.name }}</th>
+                <th scope="col">{{ copy.preview.columns.address }}</th>
+                <th scope="col">{{ copy.preview.columns.category }}</th>
+                <th scope="col">{{ copy.preview.columns.rating }}</th>
+                <th scope="col" class="cell-num">{{ copy.preview.columns.reviews }}</th>
+                <th scope="col">{{ copy.preview.columns.phone }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-if="preview.status === 'loading'">
+                <tr v-for="index in 3" :key="`skeleton-${index}`" aria-hidden="true">
+                  <td v-for="cell in 6" :key="cell"><span class="skel"></span></td>
+                </tr>
+              </template>
+              <template v-else>
+                <tr v-for="(row, index) in preview.rows" :key="index" data-preview-row>
+                  <td class="cell-strong cell-clip" :title="row.name">{{ row.name }}</td>
+                  <td class="cell-clip" :title="row.address ?? undefined">{{ row.address ?? '—' }}</td>
+                  <td class="cell-clip" :title="row.category ?? undefined">{{ row.category ?? '—' }}</td>
+                  <td>
+                    <span v-if="row.rating !== null" class="rating"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-star" /></svg>{{ row.rating.toFixed(1) }}</span>
+                    <template v-else>—</template>
+                  </td>
+                  <td class="cell-num">{{ row.review_count === null ? '—' : numberFormat.format(row.review_count) }}</td>
+                  <td class="cell-mono">{{ row.phone ?? '—' }}</td>
+                </tr>
+                <tr
+                  v-for="index in lockedRows"
+                  :key="`locked-${index}`"
+                  class="is-locked"
+                  :style="{ opacity: 0.65 - (index - 1) * 0.15 }"
+                  aria-hidden="true"
+                  data-preview-locked
+                >
+                  <td v-for="cell in 6" :key="cell"><span class="lock-line"></span></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <p v-if="preview.status === 'result'" class="hero-results-note">
+          <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-lock" /></svg>{{ copy.preview.locked }}
+        </p>
+      </div>
+    </section>
 
     <div class="container-wide hero-stage-wrap">
       <div ref="stage" class="hero-stage" data-reveal="rise" data-reveal-onload="650" data-allow-mismatch="class">
@@ -560,13 +592,9 @@ onBeforeUnmount(() => {
                       <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-play" /></svg>{{ copy.theater.start }}
                     </span>
                     <span v-else-if="mode === 'running'">{{ extractingParts[0] }}<b>{{ runCount }}</b>{{ extractingParts[1] }}</span>
-                    <template v-else-if="mode === 'done'">
+                    <template v-else>
                       <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-check-circle" /></svg>
                       <span>{{ fill(copy.theater.finished, { count: total }) }}</span>
-                    </template>
-                    <template v-else>
-                      <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-eye" /></svg>
-                      <span>{{ copy.preview.state }}</span>
                     </template>
                   </span>
                   <span class="mgp-pause" aria-hidden="true">
@@ -574,55 +602,20 @@ onBeforeUnmount(() => {
                   </span>
                 </div>
                 <div class="progress"><i :style="{ '--p': `${Math.round(progress * 100)}%` }"></i></div>
-                <div v-show="mode !== 'preview'" class="mgp-kpis">
+                <div class="mgp-kpis">
                   <span><b>{{ kpis.phones }}</b> {{ copy.theater.kpis.phones }}</span>
                   <span><b>{{ kpis.emails }}</b> {{ copy.theater.kpis.emails }}</span>
                   <span><b>{{ kpis.websites }}</b> {{ copy.theater.kpis.websites }}</span>
                 </div>
               </div>
               <div class="mgp-list">
-                <div
-                  v-for="row in rows"
-                  :key="row.key"
-                  class="mgp-row"
-                  :class="{ 'is-new': row.fresh, 'mgp-row--preview': row.preview }"
-                  :data-preview-row="row.preview || undefined"
-                >
+                <div v-for="row in rows" :key="row.key" class="mgp-row" :class="{ 'is-new': row.fresh }">
                   <span class="mgp-avatar"><svg class="icon" aria-hidden="true"><use :href="icon(row.icon)" /></svg></span>
                   <div class="mgp-copy">
                     <div class="mgp-name">{{ row.name }}</div>
                     <div class="mgp-meta">{{ row.meta }}</div>
-                    <div v-if="row.detail" class="mgp-meta">{{ row.detail }}</div>
                   </div>
                   <span class="rating"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-star" /></svg>{{ row.rating }}</span>
-                </div>
-                <div v-for="index in skeletons" :key="`skeleton-${index}`" class="mgp-row is-skeleton" aria-hidden="true">
-                  <span class="mgp-avatar"></span>
-                  <div><span class="skel"></span><span class="skel"></span></div>
-                  <span class="skel skel-rating"></span>
-                </div>
-                <div v-for="index in lockedRows" :key="`locked-${index}`" class="mgp-row is-locked" aria-hidden="true" data-preview-locked>
-                  <span class="mgp-avatar"></span>
-                  <div><span class="lock-line"></span><span class="lock-line"></span></div>
-                  <span class="lock-line lock-line--rating"></span>
-                </div>
-              </div>
-
-              <div v-if="preview && preview.status === 'failed'" class="panel-lock panel-lock--message" role="alert">
-                <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-info" /></svg></span>
-                <p class="panel-lock-text">{{ copy.preview.failed }}</p>
-              </div>
-              <div v-else-if="preview && preview.status === 'empty'" class="panel-lock panel-lock--message" role="status">
-                <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-search" /></svg></span>
-                <p class="panel-lock-text">{{ copy.preview.empty }}</p>
-              </div>
-              <div v-else-if="preview && preview.status === 'result'" class="panel-lock" role="status">
-                <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-lock" /></svg></span>
-                <p class="panel-lock-count">{{ fill(copy.preview.count, { count: numberFormat.format(preview.count) }) }}</p>
-                <p class="panel-lock-text">{{ copy.preview.locked }}</p>
-                <div class="panel-lock-actions">
-                  <button class="btn btn-primary btn-sm" type="button" @click="signIn">{{ copy.preview.signIn }}</button>
-                  <a class="btn btn-ghost btn-sm" :href="onlineUrl">{{ copy.preview.openOnline }}</a>
                 </div>
               </div>
 

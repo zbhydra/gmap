@@ -155,7 +155,7 @@ test('preview and manual dashboard creation', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Preview results', exact: true }).click()
   await expect(page.getByText('No businesses found on the first results page.')).toBeVisible()
   await page.getByRole('button', { name: 'Preview results', exact: true }).click()
-  // 剧场面板：返回的 3 行预览 + 其余结果的锁定行（最多 4 行）
+  // 结果表：返回的 3 行预览 + 其余结果的锁定行（最多 4 行）
   await expect(page.locator('[data-preview-row]')).toHaveCount(3)
   await expect(page.locator('[data-preview-locked]')).toHaveCount(4)
   await expect(page.getByText('20 businesses on the first results page')).toBeVisible()

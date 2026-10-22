@@ -202,7 +202,7 @@ const faqSchema = {
         <p class="lead hero-lead" data-enter style="--enter-delay: 180ms">{hero.lead}</p>
       </div>
 
-      <HeroPreview client:load copy={heroCopy} locale={locale} dashboardUrl={paths.dashboard} onlineUrl={paths.online}>
+      <HeroPreview client:load copy={heroCopy} locale={locale} dashboardUrl={paths.dashboard}>
         <Fragment slot="brand"><BrandMark /></Fragment>
       </HeroPreview>
     </section>

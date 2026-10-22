@@ -288,22 +288,18 @@ export interface HomePageContent {
       /** 评分浮动卡取值，{rating} 与 {reviews}。 */
       ratingValue: string
     }
-    /** 匿名预览态：首屏前 3 行 + 占位锁定行 + 登录引导。 */
+    /** 匿名预览结果表：首屏前 3 行 + 占位锁定行 + 登录引导。 */
     preview: {
-      /** 面板徽章。 */
-      badge: string
-      /** 面板状态行。 */
-      state: string
+      /** 结果表标题。 */
+      title: string
       /** 首屏条数，{count} 只称本次首屏条数。 */
       count: string
-      /** 评论数，{count}。 */
-      reviews: string
+      /** 表头。 */
+      columns: { name: string; address: string; category: string; rating: string; reviews: string; phone: string }
       /** 锁定说明。 */
       locked: string
       /** 登录后进入 Dashboard。 */
       signIn: string
-      /** Online Scraper 介绍页入口。 */
-      openOnline: string
       /** 失败，就地提示重试。 */
       failed: string
       /** 首屏零结果。 */
