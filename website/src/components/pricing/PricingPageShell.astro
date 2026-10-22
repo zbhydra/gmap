@@ -385,6 +385,12 @@ const controllerCopy = {
                 )
               })}
             </div>
+            <!-- 档位指示：仅在方案卡转为横滑时显示，点按滚到对应卡 -->
+            <div class="plan-pager" role="group" aria-label={plansSection.label} data-plan-pager>
+              {tab.cards.map((card, index) => (
+                <button type="button" class="plan-pager-btn" aria-pressed={index === finder.match ? 'true' : 'false'}>{card.name}</button>
+              ))}
+            </div>
 
             <p class="plan-note"><Icon name="info" /><span>{tab.quotaNote}</span></p>
           </div>

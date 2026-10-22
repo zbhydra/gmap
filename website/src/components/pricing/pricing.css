@@ -571,6 +571,37 @@
   transform: translateY(-6px);
 }
 
+/* 档位指示：默认隐藏，方案卡转为横滑时在下方显示 */
+.plan-pager {
+  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.plan-pager-btn {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-2),
+    border-color var(--dur-2),
+    color var(--dur-2);
+}
+
+.plan-pager-btn[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
 .plan-error {
   color: var(--bad);
   font-size: 13px;
@@ -1392,7 +1423,7 @@
   .plan-grid--5 {
     grid-template-columns: none;
     /* 1366px 下需给末档按钮外扩 5px 的焦点环留白。 */
-    grid-auto-columns: min(258px, 78vw);
+    grid-auto-columns: min(258px, 76vw);
     grid-auto-flow: column;
     gap: 0 14px;
     margin-inline: calc(var(--gutter) * -1);
@@ -1408,7 +1439,11 @@
   }
 
   .plan-grid--5 .plan-card {
-    scroll-snap-align: start;
+    scroll-snap-align: center;
+  }
+
+  .plan-grid--5 + .plan-pager {
+    display: flex;
   }
 }
 
@@ -1457,6 +1492,10 @@
 
   .plan-grid--3 .plan-card {
     scroll-snap-align: center;
+  }
+
+  .plan-grid--3 + .plan-pager {
+    display: flex;
   }
 
   .finder {

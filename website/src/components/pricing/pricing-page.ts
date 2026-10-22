@@ -50,16 +50,35 @@ function rollPrices(panel: HTMLElement): void {
   })
 }
 
-/** 5 档在中屏转为横向滑动时，把推荐档滚到中间。 */
-function centerFeatured(panel: HTMLElement): void {
+/**
+ * ② 方案卡横滑（5 档中屏 / 3 档窄屏）：档位指示跟随当前居中的卡，点按滚到对应卡；
+ * 返回把某档滚到中间的函数，未横滑时为空操作。
+ */
+function setupCarousel(panel: HTMLElement): (index: number, smooth: boolean) => void {
   const grid = required(panel, '[data-plan-grid]')
-  const card = grid.querySelector<HTMLElement>('.is-featured')
-  if (!card || grid.scrollWidth <= grid.clientWidth + 2) return
-  grid.scrollLeft = card.offsetLeft - (grid.clientWidth - card.offsetWidth) / 2
+  const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-plan-card]'))
+  const pager = Array.from(required(panel, '[data-plan-pager]').querySelectorAll<HTMLButtonElement>('button'))
+  const scrollTo = (index: number, smooth: boolean) => {
+    if (grid.scrollWidth <= grid.clientWidth + 2) return
+    const card = cards[index]
+    grid.scrollTo({ left: card.offsetLeft - (grid.clientWidth - card.offsetWidth) / 2, behavior: smooth && !reducedMotion() ? 'smooth' : 'instant' })
+  }
+  let frame = 0
+  grid.addEventListener('scroll', () => {
+    cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(() => {
+      const center = grid.scrollLeft + grid.clientWidth / 2
+      const distances = cards.map(card => Math.abs(card.offsetLeft + card.offsetWidth / 2 - center))
+      const current = distances.indexOf(Math.min(...distances))
+      pager.forEach((button, index) => button.setAttribute('aria-pressed', String(index === current)))
+    })
+  }, { passive: true })
+  pager.forEach((button, index) => button.addEventListener('click', () => scrollTo(index, true)))
+  return scrollTo
 }
 
 /** ② 用量估算条：拖动时标出满足月用量的最小档位（刻度与初值由构建期按同一套函数输出）。 */
-function setupFinder(panel: HTMLElement): void {
+function setupFinder(panel: HTMLElement, showCard: (index: number, smooth: boolean) => void): void {
   const finder = required(panel, '[data-finder]')
   const range = required<HTMLInputElement>(finder, '.finder-range')
   const track = required(finder, '.finder-track')
@@ -72,6 +91,7 @@ function setupFinder(panel: HTMLElement): void {
   const scale = finderScale(quotas)
   const positions = quotas.map(quota => finderPosition(scale, quota))
   const valueText = finder.dataset.valueText ?? ''
+  let lastMatch = -1
 
   range.addEventListener('input', () => {
     const position = Number(range.value) / 1000
@@ -86,6 +106,9 @@ function setupFinder(panel: HTMLElement): void {
       tick.classList.toggle('is-match', index === match)
     })
     cards.forEach((card, index) => card.classList.toggle('is-match', index === match))
+    // 横滑时把命中档滚进视口，否则窄屏上拖动滑块看不到变化
+    if (match !== lastMatch) showCard(match, true)
+    lastMatch = match
   })
 }
 
@@ -225,7 +248,17 @@ function setupRequests(visual: HTMLElement): void {
 function initPricingPage(root: HTMLElement): void {
   const tabs = required(root, '[data-pricing-tabs]')
   const panels = new Map(Array.from(root.querySelectorAll<HTMLElement>('[data-pricing-panel]'), panel => [panel.dataset.pricingPanel ?? '', panel]))
-  panels.forEach(setupFinder)
+  const carousels = new Map<HTMLElement, (index: number, smooth: boolean) => void>()
+  panels.forEach(panel => {
+    const showCard = setupCarousel(panel)
+    carousels.set(panel, showCard)
+    setupFinder(panel, showCard)
+  })
+  // 切到某线时把推荐档滚到中间（面板显示后才有布局）
+  const centerFeatured = (panel: HTMLElement) => {
+    const featured = Array.from(panel.querySelectorAll('[data-plan-card]')).findIndex(card => card.classList.contains('is-featured'))
+    if (featured >= 0) carousels.get(panel)?.(featured, false)
+  }
   const showCompare = setupCompare(tabs, required(root, '#compare'))
 
   let current = selectedKey(tabs)
