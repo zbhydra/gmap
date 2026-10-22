@@ -1,0 +1,85 @@
+---
+/**
+ * Convert Lat Long to DMS 工具页：十进制度 → 度分秒。
+ */
+import Icon from '../../site/Icon.astro'
+import ToolGuide from '../../tools/ToolGuide.astro'
+import ToolShell from '../../tools/ToolShell.astro'
+import { getContent, type Locale } from '../../../i18n/content'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+
+const common = getContent(locale).pages.tools.common
+const tool = getContent(locale).pages.tools.latLongToDms
+const copyJson = JSON.stringify({ common, content: tool })
+---
+
+<ToolShell locale={locale} toolId="lat-long-to-dms" content={tool} howToSteps={tool.howTo} copyJson={copyJson}>
+  <div class="tool-panel">
+    <form class="tool-form" data-tool-form autocomplete="off" novalidate>
+      <div class="tool-form-row">
+        <div class="field">
+          <label class="field-label" for="latitude-input">{tool.form.latitudeLabel}</label>
+          <input
+            class="input tool-mono"
+            id="latitude-input"
+            name="latitude"
+            type="text"
+            inputmode="decimal"
+            placeholder={tool.form.placeholder}
+            autocomplete="off"
+            spellcheck="false"
+            data-latitude
+          />
+        </div>
+        <div class="field">
+          <label class="field-label" for="longitude-input">{tool.form.longitudeLabel}</label>
+          <input
+            class="input tool-mono"
+            id="longitude-input"
+            name="longitude"
+            type="text"
+            inputmode="decimal"
+            placeholder="-122.419416"
+            autocomplete="off"
+            spellcheck="false"
+            data-longitude
+          />
+        </div>
+      </div>
+      <p class="tool-error" role="alert" data-tool-error hidden><Icon name="info" /><span data-tool-error-text></span></p>
+      <div class="tool-actions">
+        <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="lat-long-to-dms">
+          {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />
+        </button>
+      </div>
+    </form>
+
+    <section class="tool-result" data-tool-result hidden aria-label={common.resultHeading}>
+      <h2 class="tool-result-label">{common.resultHeading}</h2>
+      <div class="tool-output">
+        <label class="tool-output-label" for="dms-value">{tool.result.dms}</label>
+        <div class="tool-output-row">
+          <output class="tool-output-value" id="dms-value" data-dms-value></output>
+          <button
+            class="btn btn-secondary btn-sm"
+            type="button"
+            data-copy-dms
+            data-ga-event="tool_copy"
+            data-ga-tool-id="lat-long-to-dms"
+          >
+            <Icon name="copy" />{common.copy}
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <ToolGuide slot="guide" head={common.guide} sections={tool.howTo} />
+</ToolShell>
+
+<script src="../../../scripts/tools/latLongToDms.ts"></script>

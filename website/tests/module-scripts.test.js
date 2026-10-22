@@ -5,17 +5,30 @@ import path from 'node:path'
 import test from 'node:test'
 import { promisify } from 'node:util'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { LANGUAGE_SITEMAP_LOCALES } from '../src/sitemap/languageSitemap.mjs'
+import { LANGUAGE_SITEMAP_LOCALES, classifySitemapUrl } from '../src/sitemap/languageSitemap.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const distDir = path.resolve(__dirname, '../dist')
 const repoDir = path.resolve(__dirname, '..')
 const tempRootDir = path.join(repoDir, 'tmp')
 const execFileAsync = promisify(execFile)
+const builtSiteOrigin = new URL(process.env.PUBLIC_SITE_URL || 'https://mapsgrab.com').origin
 const GOOGLE_TEST_REQUEST_CONTEXT = {
   deviceId: 'test-google-device',
   token: null
 }
+const PUBLIC_ROUTE_COUNT = 19
+const NOINDEX_ROUTES = [
+  'paypal/cancel/',
+  'paypal/success/',
+  'clink/cancel/',
+  'clink/success/',
+  'extension-login/',
+  'dashboard/',
+  'dashboard/api/',
+  'dashboard/subscriptions/',
+  'oauth/consent/'
+]
 
 async function createTempDir(prefix) {
   await mkdir(tempRootDir, { recursive: true })
@@ -258,7 +271,7 @@ test('Pricing copy keeps the three product-line tabs and checkout shell fields d
 })
 
 test('language sitemap output matches locale mapping and built canonical pages', async () => {
-  const siteUrl = 'https://mapsgrab.com'
+  const siteUrl = builtSiteOrigin
   const uiSource = await readFile(path.join(repoDir, 'src/i18n/ui.ts'), 'utf8')
   const localePaths = readUiRecord(uiSource, 'localePaths')
   const hreflangMap = readUiRecord(uiSource, 'hreflangMap')
@@ -310,7 +323,7 @@ test('language sitemap output matches locale mapping and built canonical pages',
     const locs = extractTagValues(sitemapXml, 'loc')
     const lastmods = extractTagValues(sitemapXml, 'lastmod')
 
-    assert.ok(locs.length > 0, `Expected ${language.sitemapSlug}-sitemap.xml to contain URLs`)
+    assert.equal(locs.length, PUBLIC_ROUTE_COUNT, `Expected every public route in ${language.sitemapSlug}-sitemap.xml`)
     assert.equal(lastmods.length, locs.length)
     assert.equal(extractTagValues(sitemapXml, 'changefreq').length, 0)
     assert.equal(extractTagValues(sitemapXml, 'priority').length, 0)
@@ -355,17 +368,20 @@ test('language sitemap output matches locale mapping and built canonical pages',
   assert.match(robotsTxt, /^Disallow: \/clink\/success\/$/m)
   assert.match(robotsTxt, /^Disallow: \/paypal\/cancel\/$/m)
   assert.match(robotsTxt, /^Disallow: \/paypal\/success\/$/m)
-  assert.equal(sitemapUrls.has(`${siteUrl}/paypal/cancel/`), false)
-  assert.equal(sitemapUrls.has(`${siteUrl}/paypal/success/`), false)
-  assert.equal(sitemapUrls.has(`${siteUrl}/clink/cancel/`), false)
-  assert.equal(sitemapUrls.has(`${siteUrl}/clink/success/`), false)
+  for (const language of LANGUAGE_SITEMAP_LOCALES) {
+    const prefix = language.pathPrefix ? `/${language.pathPrefix}` : ''
+    for (const route of NOINDEX_ROUTES) {
+      assert.equal(sitemapUrls.has(`${siteUrl}${prefix}/${route}`), false)
+    }
+  }
   assert.equal(
     Array.from(sitemapUrls).some((url) => new URL(url).pathname.endsWith('/pricing/')),
     true
   )
 })
 
-test('About and Contact pages expose localized trust content and structured data', async () => {  const siteUrl = 'https://mapsgrab.com'
+test('About and Contact pages expose localized trust content and structured data', async () => {
+  const siteUrl = builtSiteOrigin
 
   for (const language of LANGUAGE_SITEMAP_LOCALES) {
     const languagePath = language.pathPrefix ? `${language.pathPrefix}/` : ''
@@ -382,8 +398,8 @@ test('About and Contact pages expose localized trust content and structured data
     // dateModified 走独立审校日期常量（companyContent 的 COMPANY_PAGES_DATE_MODIFIED_ISO）
     assert.match(aboutHtml, /"dateModified":"2026-08-31"/)
     assert.match(contactHtml, /"dateModified":"2026-08-31"/)
-    assert.match(aboutHtml, /"@id":"https:\/\/mapsgrab\.com\/#organization"/)
-    assert.match(contactHtml, /"@id":"https:\/\/mapsgrab\.com\/#support"/)
+    assert.ok(aboutHtml.includes(`"@id":"${siteUrl}/#organization"`))
+    assert.ok(contactHtml.includes(`"@id":"${siteUrl}/#support"`))
     assert.equal(aboutHtml.includes(`href="/${languagePath}contact/"`), true)
     assert.equal(contactHtml.includes(`href="/${languagePath}about/"`), true)
     assert.match(contactHtml, /href="mailto:support@mapsgrab\.com\?subject=/)
@@ -394,11 +410,7 @@ test('About and Contact pages expose localized trust content and structured data
 
 test('every built page exposes complete title, description and Open Graph metadata', async () => {
   const htmlFiles = await collectHtmlFiles(distDir)
-  // 19 内容页（含 Online Scraper / API / MCP / Bing 桥接）+ 2 个 PayPal 回跳页
-  // + 2 个 ClinkBill 回跳页 + 1 个插件登录桥接页（noindex）
-  // + 3 个 Dashboard 工作区页（noindex，015 U2）
-  // + 1 个 MCP OAuth 确认页（noindex，014 U2）
-  assert.equal(htmlFiles.length, 28)
+  assert.equal(htmlFiles.length, (PUBLIC_ROUTE_COUNT + NOINDEX_ROUTES.length) * LANGUAGE_SITEMAP_LOCALES.length)
 
   const descriptionsByRoute = new Map()
   for (const filePath of htmlFiles) {
@@ -423,28 +435,52 @@ test('every built page exposes complete title, description and Open Graph metada
     const twitterCard = html.match(/<meta\b[^>]*property="twitter:card"[^>]*content="([^"]*)"/)?.[1] ?? ''
     assert.ok(twitterCard.trim().length > 0, `Expected ${relative} to expose twitter:card`)
 
-    assert.ok(extractCanonicalUrl(html), `Expected ${relative} to include a canonical URL`)
+    const route = relative.split(path.sep).join('/').replace(/index\.html$/, '')
+    const canonicalUrl = extractCanonicalUrl(html)
+    assert.equal(canonicalUrl, `${builtSiteOrigin}/${route}`, `Expected ${relative} canonical URL to match its route`)
+    const { language, routePath } = classifySitemapUrl(canonicalUrl)
+    assert.equal(html.match(/<html\b[^>]*lang="([^"]+)"/)?.[1], language.locale)
+    assert.equal(
+      html.match(/<meta\b[^>]*property="og:locale"[^>]*content="([^"]+)"/)?.[1],
+      language.locale.replace('-', '_')
+    )
+    const alternateLinks = new Map(Array.from(
+      html.matchAll(/<link\b[^>]*rel="alternate"[^>]*hreflang="([^"]+)"[^>]*href="([^"]+)"/g),
+      match => [match[1], match[2]]
+    ))
+    if (extractRobotsMeta(html).includes('noindex')) {
+      assert.equal(alternateLinks.size, 0, `Expected no language alternates for noindex page ${relative}`)
+    } else {
+      assert.equal(alternateLinks.size, LANGUAGE_SITEMAP_LOCALES.length + 1, `Expected complete language alternates for ${relative}`)
+      for (const alternate of LANGUAGE_SITEMAP_LOCALES) {
+        const prefix = alternate.pathPrefix ? `/${alternate.pathPrefix}` : ''
+        assert.equal(alternateLinks.get(alternate.sitemapSlug), `${builtSiteOrigin}${prefix}${routePath}`)
+      }
+      assert.equal(alternateLinks.get('x-default'), `${builtSiteOrigin}${routePath}`)
+    }
 
     descriptionsByRoute.set(relative.split(path.sep).join('/'), description)
   }
 
   // 工具矩阵 7 页各自独立 description（SEO 去重）
-  const toolDescriptions = [...descriptionsByRoute].filter(([route]) => route.startsWith('tools/'))
-  assert.equal(toolDescriptions.length, 7)
-  assert.equal(
-    new Set(toolDescriptions.map(([, description]) => description)).size,
-    7,
-    'Expected each tool page to have its own description'
-  )
-
-  // PayPal 回跳页不进索引（robots meta noindex + sitemap/robots 排除在既有测试覆盖）
-  for (const route of ['paypal/cancel/index.html', 'paypal/success/index.html']) {
-    const html = await readFile(path.join(distDir, route), 'utf8')
-    assert.match(
-      extractRobotsMeta(html),
-      /noindex/i,
-      `Expected ${route} to be noindex`
+  for (const language of LANGUAGE_SITEMAP_LOCALES) {
+    const prefix = language.pathPrefix ? `${language.pathPrefix}/` : ''
+    const toolDescriptions = [...descriptionsByRoute].filter(([route]) => route.startsWith(`${prefix}tools/`))
+    assert.equal(toolDescriptions.length, 7)
+    assert.equal(
+      new Set(toolDescriptions.map(([, description]) => description)).size,
+      7,
+      `Expected each ${language.locale} tool page to have its own description`
     )
+
+    for (const route of NOINDEX_ROUTES) {
+      const html = await readFile(path.join(distDir, prefix, route, 'index.html'), 'utf8')
+      assert.match(
+        extractRobotsMeta(html),
+        /noindex/i,
+        `Expected ${prefix}${route} to be noindex`
+      )
+    }
   }
 
   const cancelHtml = await readFile(path.join(distDir, 'paypal/cancel/index.html'), 'utf8')

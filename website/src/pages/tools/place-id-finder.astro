@@ -1,19 +1,5 @@
 ---
-/**
- * Place ID Finder 工具页：Maps 地点链接 → 纯前端解析 Place ID / CID / FID（lib/placeUrl 移植 013 解析规则）。
- * 面板见 PlaceIdPanel，三步用法与标识讲解见 PlaceIdGuide，交互在 scripts/tools/placeIdFinder.ts。
- */
-import PlaceIdGuide from '../../components/tools/PlaceIdGuide.astro'
-import PlaceIdPanel from '../../components/tools/PlaceIdPanel.astro'
-import ToolShell from '../../components/tools/ToolShell.astro'
-import { getContent } from '../../i18n/content'
-
-const tool = getContent('en-US').pages.tools.placeIdFinder
+import PlaceIdFinderPage from '../../components/pages/tools/PlaceIdFinderPage.astro'
 ---
 
-<ToolShell toolId="place-id-finder" content={tool} howToSteps={tool.steps.items}>
-  <PlaceIdPanel locale="en-US" />
-  <PlaceIdGuide slot="guide" locale="en-US" />
-</ToolShell>
-
-<script src="../../scripts/tools/placeIdFinder.ts"></script>
+<PlaceIdFinderPage locale="en-US" />

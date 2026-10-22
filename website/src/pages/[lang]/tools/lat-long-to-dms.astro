@@ -1,0 +1,18 @@
+---
+import LatLongToDmsPage from '../../../components/pages/tools/LatLongToDmsPage.astro'
+import type { Locale } from '../../../i18n/content'
+import { localePaths } from '../../../i18n/ui'
+
+export function getStaticPaths() {
+  return Object.entries(localePaths)
+    .filter(([locale]) => locale !== 'en-US')
+    .map(([locale, path]) => ({
+      params: { lang: path },
+      props: { locale }
+    }))
+}
+
+const { locale } = Astro.props as { locale: Locale }
+---
+
+<LatLongToDmsPage locale={locale} />

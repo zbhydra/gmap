@@ -2652,3 +2652,22 @@ export interface SiteContent {
     }
   }
 }
+
+/** 支付回跳页中的状态标题与说明。 */
+export interface PaymentReturnMessage {
+  title: string
+  description: string
+}
+
+/** ClinkBill 回跳页及订单轮询状态文案。 */
+export interface ClinkReturnContent {
+  /** 支付成功回跳后的等待、确认与失败状态。 */
+  success: {
+    waiting: PaymentReturnMessage
+    confirmedCredits: PaymentReturnMessage
+    confirmedSubscription: PaymentReturnMessage
+    failed: PaymentReturnMessage
+  }
+  /** 用户取消支付后的说明。 */
+  cancel: PaymentReturnMessage
+}

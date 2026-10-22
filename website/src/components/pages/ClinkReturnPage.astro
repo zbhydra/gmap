@@ -5,18 +5,15 @@
  * SSR 渲染等待态/取消态文案；success 页由 payment return 脚本轮询本地订单
  * 状态后切换确认/失败态（文案经 data-payment-return-copy 钩子注入）。
  */
+import type { ClinkReturnContent } from '../../i18n/schema'
+
 interface Props {
   /** 支付结果。 */
   status: 'success' | 'cancel'
   /** success 页的等待、按订单类别的确认与失败文案。 */
-  successCopy: {
-    waiting: { title: string; description: string }
-    confirmedCredits: { title: string; description: string }
-    confirmedSubscription: { title: string; description: string }
-    failed: { title: string; description: string }
-  }
+  successCopy: ClinkReturnContent['success']
   /** cancel 页文案。 */
-  cancelCopy: { title: string; description: string }
+  cancelCopy: ClinkReturnContent['cancel']
 }
 
 const { status, successCopy, cancelCopy } = Astro.props

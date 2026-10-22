@@ -1,0 +1,1124 @@
+---
+/**
+ * 插件统一登录页（v3 browser identity；Maps 与 Bing 插件共用，noindex）。
+ *
+ * 流程：插件 background 经 chrome.identity.launchWebAuthFlow 打开本页
+ * （query 携带 redirect_uri=<chromiumapp.org 回调> + code_challenge=<PKCE S256>）→
+ * 入口参数校验（只归一化这一次，非法即终止）→ 已登录渲染账号确认卡 / 未登录打开
+ * AuthModal（Google redirect 主路径 + 邮箱验证码）→ 用户显式点 Continue 后
+ * POST /api/client/auth/extension-login/code 换一次性 code →
+ * location.replace(redirect_uri#code=...) 交回插件，浏览器自动关窗。
+ * 页面不持有、不转发任何插件 token；一次性 code 只走 URL fragment。
+ */
+import AuthModal from '../auth/AuthModal.astro'
+import Layout from '../../layouts/Layout.astro'
+import { getContent, type Locale } from '../../i18n/content'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+const content = getContent(locale)
+
+const pageCopy = content.pages.extensionLogin
+const accountCopy = content.pages.account
+const statusCopy = {
+  checkingState: pageCopy.checkingState,
+  signInRequiredState: pageCopy.signInRequiredState,
+  confirmState: pageCopy.confirmState,
+  errorState: pageCopy.errorState,
+  preparingTitle: pageCopy.preparingTitle,
+  preparingText: pageCopy.preparingText,
+  invalidParamsTitle: pageCopy.invalidParamsTitle,
+  invalidParamsText: pageCopy.invalidParamsText,
+  checkingSessionTitle: pageCopy.checkingSessionTitle,
+  checkingSessionText: pageCopy.checkingSessionText,
+  finishingGoogleTitle: pageCopy.finishingGoogleTitle,
+  finishingGoogleText: pageCopy.finishingGoogleText,
+  signInRequiredTitle: pageCopy.signInRequiredTitle,
+  signInRequiredText: pageCopy.signInRequiredText,
+  signInButtonLabel: pageCopy.signInButtonLabel,
+  confirmTitle: pageCopy.confirmTitle,
+  confirmText: pageCopy.confirmText,
+  continueButtonLabel: pageCopy.continueButtonLabel,
+  useAnotherAccountLabel: pageCopy.useAnotherAccountLabel,
+  issuingTitle: pageCopy.issuingTitle,
+  issuingText: pageCopy.issuingText,
+  issueFailedTitle: pageCopy.issueFailedTitle,
+  retryButtonLabel: pageCopy.retryButtonLabel,
+  verificationFailedPrefix: pageCopy.verificationFailedPrefix,
+  issueFailedPrefix: pageCopy.issueFailedPrefix,
+  googleSignInFailedPrefix: pageCopy.googleSignInFailedPrefix,
+  googleCompletionFailedPrefix: pageCopy.googleCompletionFailedPrefix
+}
+const authCopy = {
+  sendingCode: accountCopy.auth.sendingCode,
+  sendCodeSuccess: accountCopy.auth.sendCodeSuccess,
+  sendAgain: accountCopy.auth.sendAgain,
+  continueWithGoogle: accountCopy.auth.continueWithGoogle,
+  googleLoading: accountCopy.auth.googleLoading,
+  enterEmailFirst: accountCopy.auth.enterEmailFirst,
+  enterEmailAndCode: accountCopy.auth.enterEmailAndCode,
+  sendCodeFailed: accountCopy.auth.sendCodeFailed,
+  googleSignInFailed: accountCopy.auth.googleSignInFailed,
+  googleClientMissing: accountCopy.auth.googleClientMissing,
+  signInFailed: accountCopy.auth.signInFailed
+}
+---
+
+{/* 插件授权桥唯一认证 owner（自带弹窗与 Google 回跳消费）：includeSiteAuth={false} 不装配站级登录控制器 */}
+<Layout
+  locale={locale}
+  title={pageCopy.title}
+  description={pageCopy.description}
+  includeSoftwareApplicationSchema={false}
+  robots="noindex, nofollow, noarchive"
+  includeAlternateLanguageLinks={false}
+  includeLanguageSwitcher={false}
+  includeSiteAuth={false}
+>
+  <div class="extension-login-page" data-extension-login>
+    <section class="extension-login-panel" aria-labelledby="extension-login-title">
+      <div class="extension-login-heading">
+        <p class="badge extension-login-eyebrow">{pageCopy.eyebrow}</p>
+        <h1 id="extension-login-title">{pageCopy.heading}</h1>
+      </div>
+
+      <div class="extension-login-status" data-extension-login-status>
+        <p class="chip chip--soft extension-login-state" data-extension-login-state>{statusCopy.checkingState}</p>
+        <h2 data-extension-login-status-title>{statusCopy.preparingTitle}</h2>
+        <p data-extension-login-status-text>{statusCopy.preparingText}</p>
+        <div class="extension-login-actions">
+          <button
+            type="button"
+            class="extension-login-secondary"
+            data-extension-login-retry
+            hidden
+          >
+            {statusCopy.retryButtonLabel}
+          </button>
+        </div>
+      </div>
+
+      <div class="extension-login-confirm" data-extension-login-confirm hidden>
+        <div class="extension-login-account">
+          <img
+            class="extension-login-avatar"
+            data-extension-login-avatar-image
+            alt=""
+            hidden
+          />
+          <span class="extension-login-avatar extension-login-avatar-fallback" data-extension-login-avatar-fallback hidden></span>
+          <span class="extension-login-account-name" data-extension-login-account-name></span>
+          <span class="extension-login-account-email" data-extension-login-account-email></span>
+        </div>
+        <div class="extension-login-actions">
+          <button
+            type="button"
+            class="extension-login-secondary"
+            data-extension-login-use-another-account
+          >
+            {statusCopy.useAnotherAccountLabel}
+          </button>
+          <button type="button" class="extension-login-primary" data-extension-login-continue>
+            {statusCopy.continueButtonLabel}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <script
+      is:inline
+      type="application/json"
+      data-extension-login-auth-copy
+      set:html={JSON.stringify({ status: statusCopy, auth: authCopy })}
+    />
+    <AuthModal locale={locale} copy={accountCopy} idPrefix="extension-login" />
+  </div>
+</Layout>
+
+<script>
+  import {
+    DEFAULT_PUBLIC_GOOGLE_CLIENT_ID,
+    cancelGoogleRedirectPrompt,
+    clearGoogleRedirectResult,
+    clearStoredAccessToken,
+    exchangeGoogleLoginCode,
+    getCurrentUser,
+    getStoredAccessToken,
+    isEmailVerificationRequiredResponse,
+    logGoogleAuthStage,
+    loginWithEmailCode,
+    readGoogleRedirectResult,
+    renderGoogleRedirectButton,
+    requestGoogleRedirectPrompt,
+    sendEmailCode,
+    type GoogleLoginResponse,
+    type GoogleRedirectPromptOptions,
+    type HomepageUserInfo
+  } from '../../scripts/homepage/auth'
+  import { isHomepageAuthFailure, postJson, type RequestContext } from '../../scripts/homepage/api'
+  import { ensureDeviceId } from '../../scripts/homepage/device'
+  import { createSendCodeCooldown } from '../../scripts/homepage/sendCodeCooldown'
+  import { showSiteToast } from '../../scripts/site/toast'
+
+  /** chromiumapp.org 回调 host：32 位小写 a-p，chrome.identity.getRedirectURL 的固定形状。 */
+  const REDIRECT_URI_HOST_PATTERN = /^[a-p]{32}\.chromiumapp\.org$/
+  /** PKCE S256 code_challenge：32 字节 SHA256 摘要的 Base64URL 编码，固定 43 字符。 */
+  const CODE_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]{43}$/
+  /** 插件回调地址固定 pathname（getRedirectURL('extension-login')）。 */
+  const REDIRECT_URI_PATHNAME = '/extension-login'
+  /** v3 issue 端点：website 会话换插件一次性登录 code。 */
+  const EXTENSION_LOGIN_CODE_ENDPOINT = '/api/client/auth/extension-login/code'
+
+  interface ExtensionLoginElements {
+    /** 页面根节点。 */
+    root: HTMLElement
+    /** 状态区（检查中 / 需要登录 / 错误）。 */
+    statusPanel: HTMLElement
+    /** 状态 eyebrow。 */
+    state: HTMLElement
+    /** 状态标题。 */
+    statusTitle: HTMLElement
+    /** 状态正文。 */
+    statusText: HTMLElement
+    /** 重试 / 打开登录弹窗按钮。 */
+    retryButton: HTMLButtonElement
+    /** 账号确认卡。 */
+    confirmPanel: HTMLElement
+    /** 确认卡头像（远程图片）。 */
+    avatarImage: HTMLImageElement
+    /** 确认卡头像（首字母兜底）。 */
+    avatarFallback: HTMLElement
+    /** 确认卡姓名。 */
+    accountName: HTMLElement
+    /** 确认卡邮箱。 */
+    accountEmail: HTMLElement
+    /** Continue 按钮（显式确认后签发一次性 code）。 */
+    continueButton: HTMLButtonElement
+    /** Use another account 按钮。 */
+    useAnotherAccountButton: HTMLButtonElement
+    /** 公共登录弹窗。 */
+    authModal: HTMLElement
+    /** 公共登录弹窗关闭按钮列表。 */
+    authCloseButtons: HTMLButtonElement[]
+    /** 公共登录弹窗错误文案。 */
+    authError: HTMLElement
+    /** 公共登录邮箱表单。 */
+    authForm: HTMLFormElement
+    /** 公共登录邮箱验证码区域。 */
+    emailCodeArea: HTMLElement
+    /** 公共登录邮箱继续按钮。 */
+    emailContinueButton: HTMLButtonElement
+    /** 公共登录邮箱入口容器。 */
+    emailEntry: HTMLElement
+    /** 公共登录邮箱入口按钮。 */
+    emailEntryButton: HTMLButtonElement
+    /** 公共登录 Google 按钮容器。 */
+    googleLoginButton: HTMLElement
+    /** 公共登录邮箱输入框。 */
+    loginEmail: HTMLInputElement
+    /** 公共登录验证码输入框。 */
+    loginCode: HTMLInputElement
+    /** 公共登录验证码发送按钮。 */
+    sendCodeButton: HTMLButtonElement
+    /** 公共登录验证码状态。 */
+    sendCodeStatus: HTMLElement
+    /** 公共登录提交按钮。 */
+    loginSubmit: HTMLButtonElement
+  }
+
+  interface ExtensionLoginStatusCopy {
+    /** 状态 eyebrow：检查中。 */
+    checkingState: string
+    /** 状态 eyebrow：需要登录。 */
+    signInRequiredState: string
+    /** 状态 eyebrow：账号确认。 */
+    confirmState: string
+    /** 状态 eyebrow：失败。 */
+    errorState: string
+    /** 进入页面准备阶段标题。 */
+    preparingTitle: string
+    /** 进入页面准备阶段正文。 */
+    preparingText: string
+    /** 入口参数非法标题。 */
+    invalidParamsTitle: string
+    /** 入口参数非法正文。 */
+    invalidParamsText: string
+    /** 检查已存在 website 登录态标题。 */
+    checkingSessionTitle: string
+    /** 检查已存在 website 登录态正文。 */
+    checkingSessionText: string
+    /** Google 回跳换票中标题。 */
+    finishingGoogleTitle: string
+    /** Google 回跳换票中正文。 */
+    finishingGoogleText: string
+    /** 需要登录标题。 */
+    signInRequiredTitle: string
+    /** 需要登录正文。 */
+    signInRequiredText: string
+    /** 需要登录时的按钮文案。 */
+    signInButtonLabel: string
+    /** 账号确认卡标题。 */
+    confirmTitle: string
+    /** 账号确认卡正文。 */
+    confirmText: string
+    /** 确认并继续按钮文案。 */
+    continueButtonLabel: string
+    /** 切换账号按钮文案。 */
+    useAnotherAccountLabel: string
+    /** 签发一次性 code 中标题。 */
+    issuingTitle: string
+    /** 签发一次性 code 中正文。 */
+    issuingText: string
+    /** 签发失败标题。 */
+    issueFailedTitle: string
+    /** 失败重试按钮文案。 */
+    retryButtonLabel: string
+    /** website 会话验证失败错误前缀（拼接不可翻译的后端原始错误）。 */
+    verificationFailedPrefix: string
+    /** 一次性 code 签发失败错误前缀（拼接不可翻译的后端原始错误）。 */
+    issueFailedPrefix: string
+    /** Google 登录失败错误前缀（拼接原始错误）。 */
+    googleSignInFailedPrefix: string
+    /** Google 登录无法完成错误前缀（拼接原始错误）。 */
+    googleCompletionFailedPrefix: string
+  }
+
+  interface ExtensionLoginAuthCopy {
+    /** 发送验证码中。 */
+    sendingCode: string
+    /** 验证码发送成功。 */
+    sendCodeSuccess: string
+    /** 验证码重发按钮兜底文案。 */
+    sendAgain: string
+    /** Google 按钮文案。 */
+    continueWithGoogle: string
+    /** Google 跳转中文案。 */
+    googleLoading: string
+    /** 邮箱必填错误。 */
+    enterEmailFirst: string
+    /** 邮箱和验证码必填错误。 */
+    enterEmailAndCode: string
+    /** 发送验证码失败。 */
+    sendCodeFailed: string
+    /** Google 登录失败。 */
+    googleSignInFailed: string
+    /** Google Client ID 缺失。 */
+    googleClientMissing: string
+    /** 邮箱登录失败。 */
+    signInFailed: string
+  }
+
+  interface ExtensionLoginCopyPayload {
+    /** 页面状态文案。 */
+    status: ExtensionLoginStatusCopy
+    /** 登录弹窗文案。 */
+    auth: ExtensionLoginAuthCopy
+  }
+
+  /** 入口归一化结果：redirect_uri 与 code_challenge 只在这里校验一次。 */
+  interface ExtensionLoginParams {
+    /** 插件 launchWebAuthFlow 回调地址（chromiumapp.org）。 */
+    redirectUri: string
+    /** PKCE S256 code_challenge。 */
+    codeChallenge: string
+  }
+
+  /** v3 issue 端点响应合同。 */
+  interface ExtensionLoginCodeResponse {
+    /** 一次性登录 code（60 秒有效）。 */
+    code: string
+    /** code 有效期（秒）。 */
+    expires_in: number
+  }
+
+  /**
+   * 解析并归一化入口参数（外部输入只在这里校验一次）。
+   *
+   * redirect_uri 是插件 launchWebAuthFlow 的 chromiumapp.org 回调地址，
+   * 协议 / userinfo / 端口 / host / path / query / hash 逐项锁定防止 open redirect；
+   * code_challenge 锁定 PKCE S256 的 Base64URL 形状。非法返回 null，页面渲染参数错误并终止。
+   */
+  function parseExtensionLoginParams(): ExtensionLoginParams | null {
+    const params = new URLSearchParams(window.location.search)
+    const redirectUris = params.getAll('redirect_uri')
+    if (redirectUris.length !== 1) {
+      return null
+    }
+    const codeChallenge = params.get('code_challenge')?.trim() ?? ''
+    if (!CODE_CHALLENGE_PATTERN.test(codeChallenge)) {
+      return null
+    }
+
+    let redirectUrl: URL
+    try {
+      redirectUrl = new URL(redirectUris[0])
+    } catch {
+      console.error(new Error('[extension-login] Rejected an invalid redirect URL; value redacted.'))
+      return null
+    }
+    if (
+      redirectUrl.protocol !== 'https:' ||
+      redirectUrl.username !== '' ||
+      redirectUrl.password !== '' ||
+      redirectUrl.port !== '' ||
+      !REDIRECT_URI_HOST_PATTERN.test(redirectUrl.hostname) ||
+      redirectUrl.pathname !== REDIRECT_URI_PATHNAME ||
+      redirectUrl.search !== '' ||
+      redirectUrl.hash !== ''
+    ) {
+      return null
+    }
+
+    return { redirectUri: redirectUrl.toString(), codeChallenge }
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-extension-login]')
+
+  if (root) {
+    void initExtensionLogin(root)
+  }
+
+  function queryElement<T extends HTMLElement>(rootElement: HTMLElement, selector: string): T {
+    const element = rootElement.querySelector<T>(selector)
+    if (!element) {
+      throw new Error(`[extension-login] Missing page element: ${selector}`)
+    }
+    return element
+  }
+
+  function getElements(rootElement: HTMLElement): ExtensionLoginElements {
+    return {
+      root: rootElement,
+      statusPanel: queryElement(rootElement, '[data-extension-login-status]'),
+      state: queryElement(rootElement, '[data-extension-login-state]'),
+      statusTitle: queryElement(rootElement, '[data-extension-login-status-title]'),
+      statusText: queryElement(rootElement, '[data-extension-login-status-text]'),
+      retryButton: queryElement(rootElement, '[data-extension-login-retry]'),
+      confirmPanel: queryElement(rootElement, '[data-extension-login-confirm]'),
+      avatarImage: queryElement(rootElement, '[data-extension-login-avatar-image]'),
+      avatarFallback: queryElement(rootElement, '[data-extension-login-avatar-fallback]'),
+      accountName: queryElement(rootElement, '[data-extension-login-account-name]'),
+      accountEmail: queryElement(rootElement, '[data-extension-login-account-email]'),
+      continueButton: queryElement(rootElement, '[data-extension-login-continue]'),
+      useAnotherAccountButton: queryElement(
+        rootElement,
+        '[data-extension-login-use-another-account]'
+      ),
+      authModal: queryElement(rootElement, '[data-download-auth-modal]'),
+      authCloseButtons: Array.from(
+        rootElement.querySelectorAll<HTMLButtonElement>('[data-download-auth-close]')
+      ),
+      authError: queryElement(rootElement, '[data-download-auth-error]'),
+      authForm: queryElement(rootElement, '[data-download-auth-form]'),
+      emailCodeArea: queryElement(rootElement, '[data-download-email-code-area]'),
+      emailContinueButton: queryElement(rootElement, '[data-download-continue-email]'),
+      emailEntry: queryElement(rootElement, '[data-download-email-entry]'),
+      emailEntryButton: queryElement(rootElement, '[data-download-email-entry-button]'),
+      googleLoginButton: queryElement(rootElement, '[data-download-google-login]'),
+      loginEmail: queryElement(rootElement, '[data-download-login-email]'),
+      loginCode: queryElement(rootElement, '[data-download-login-code]'),
+      sendCodeButton: queryElement(rootElement, '[data-download-send-code]'),
+      sendCodeStatus: queryElement(rootElement, '[data-download-send-code-status]'),
+      loginSubmit: queryElement(rootElement, '[data-download-login-submit]')
+    }
+  }
+
+  function getCopy(rootElement: HTMLElement): ExtensionLoginCopyPayload {
+    const element = rootElement.querySelector<HTMLScriptElement>('[data-extension-login-auth-copy]')
+    if (!element?.textContent) {
+      throw new Error('[extension-login] Missing copy payload.')
+    }
+    return JSON.parse(element.textContent) as ExtensionLoginCopyPayload
+  }
+
+  function getGoogleClientId(): string {
+    return import.meta.env.PUBLIC_GOOGLE_CLIENT_ID?.trim() || DEFAULT_PUBLIC_GOOGLE_CLIENT_ID
+  }
+
+  function formatError(prefix: string, error: Error | string): string {
+    const message = error instanceof Error ? error.message : error
+    return `${prefix}: ${message}`
+  }
+
+  function setHidden(element: HTMLElement, hidden: boolean): void {
+    element.hidden = hidden
+  }
+
+  function setMessage(element: HTMLElement, message: string): void {
+    element.textContent = message
+    element.hidden = message.length === 0
+  }
+
+  /** pending 态：只显示状态区，藏起确认卡与操作按钮。 */
+  function renderChecking(
+    elements: ExtensionLoginElements,
+    eyebrow: string,
+    title: string,
+    text: string
+  ): void {
+    elements.statusPanel.dataset.status = 'pending'
+    elements.state.textContent = eyebrow
+    elements.statusTitle.textContent = title
+    elements.statusText.textContent = text
+    elements.retryButton.hidden = true
+    setHidden(elements.confirmPanel, true)
+  }
+
+  function renderInvalidParams(
+    elements: ExtensionLoginElements,
+    copy: ExtensionLoginStatusCopy
+  ): void {
+    elements.statusPanel.dataset.status = 'error'
+    elements.state.textContent = copy.errorState
+    elements.statusTitle.textContent = copy.invalidParamsTitle
+    elements.statusText.textContent = copy.invalidParamsText
+    elements.retryButton.hidden = true
+    setHidden(elements.confirmPanel, true)
+  }
+
+  function renderLoginRequired(
+    elements: ExtensionLoginElements,
+    copy: ExtensionLoginStatusCopy
+  ): void {
+    elements.statusPanel.dataset.status = 'pending'
+    elements.state.textContent = copy.signInRequiredState
+    elements.statusTitle.textContent = copy.signInRequiredTitle
+    elements.statusText.textContent = copy.signInRequiredText
+    elements.retryButton.textContent = copy.signInButtonLabel
+    elements.retryButton.hidden = false
+    setHidden(elements.confirmPanel, true)
+  }
+
+  /** 账号确认卡：头像/首字母 + 姓名 + 邮箱；必须显式 Continue，不自动签发。 */
+  function renderConfirmAccount(
+    elements: ExtensionLoginElements,
+    copy: ExtensionLoginStatusCopy,
+    user: HomepageUserInfo
+  ): void {
+    elements.statusPanel.dataset.status = 'pending'
+    elements.state.textContent = copy.confirmState
+    elements.statusTitle.textContent = copy.confirmTitle
+    elements.statusText.textContent = copy.confirmText
+    elements.retryButton.hidden = true
+
+    const displayName = user.full_name?.trim() || user.email
+    const initial = displayName.charAt(0).toUpperCase()
+    if (user.avatar_url) {
+      elements.avatarImage.src = user.avatar_url
+      elements.avatarImage.alt = displayName
+      setHidden(elements.avatarImage, false)
+      setHidden(elements.avatarFallback, true)
+    } else {
+      elements.avatarImage.removeAttribute('src')
+      elements.avatarFallback.textContent = initial
+      setHidden(elements.avatarImage, true)
+      setHidden(elements.avatarFallback, false)
+    }
+    elements.accountName.textContent = displayName
+    elements.accountEmail.textContent = user.email
+    elements.continueButton.disabled = false
+    setHidden(elements.confirmPanel, false)
+  }
+
+  function renderVerificationError(
+    elements: ExtensionLoginElements,
+    copy: ExtensionLoginStatusCopy,
+    message: string
+  ): void {
+    elements.statusPanel.dataset.status = 'error'
+    elements.state.textContent = copy.errorState
+    elements.statusTitle.textContent = copy.issueFailedTitle
+    elements.statusText.textContent = message
+    elements.retryButton.hidden = false
+    setHidden(elements.confirmPanel, true)
+    showSiteToast(message, { type: 'error' })
+  }
+
+  function resetAuthModalToGoogleFirst(elements: ExtensionLoginElements): void {
+    setMessage(elements.authError, '')
+    setHidden(elements.authForm, true)
+    setHidden(elements.emailEntry, false)
+    setHidden(elements.emailCodeArea, true)
+    setHidden(elements.loginSubmit, true)
+    setHidden(elements.emailContinueButton, false)
+    elements.sendCodeStatus.textContent = ''
+  }
+
+  function openEmailAuthForm(elements: ExtensionLoginElements): void {
+    setHidden(elements.authForm, false)
+    setHidden(elements.emailEntry, true)
+    elements.loginEmail.focus()
+  }
+
+  function openCodeArea(elements: ExtensionLoginElements): void {
+    setHidden(elements.authForm, false)
+    setHidden(elements.emailEntry, true)
+    setHidden(elements.emailCodeArea, false)
+    setHidden(elements.loginSubmit, false)
+    setHidden(elements.emailContinueButton, true)
+  }
+
+  async function initExtensionLogin(rootElement: HTMLElement): Promise<void> {
+    const elements = getElements(rootElement)
+    const copy = getCopy(rootElement)
+    const sendCodeCooldown = createSendCodeCooldown(
+      elements.sendCodeButton,
+      elements.sendCodeButton.textContent?.trim() || copy.auth.sendAgain
+    )
+    let deviceId = ''
+    let token = getStoredAccessToken()
+    let googleRedirectButtonRendered = false
+    let loginParams: ExtensionLoginParams | null = null
+
+    const buildRequestContext = (nextToken: string | null = token): RequestContext => ({
+      deviceId,
+      token: nextToken
+    })
+
+    const closeAuthModal = (): void => {
+      cancelGoogleRedirectPrompt('Extension login auth modal closed.')
+      setHidden(elements.authModal, true)
+    }
+
+    const ensureGoogleRedirectButtonRendered = (): void => {
+      if (googleRedirectButtonRendered) {
+        return
+      }
+
+      const clientId = getGoogleClientId()
+      if (!clientId) {
+        logGoogleAuthStage('error', 'extension_login_google_client_id_missing')
+        setMessage(elements.authError, copy.auth.googleClientMissing)
+        return
+      }
+
+      try {
+        renderGoogleRedirectButton(elements.googleLoginButton, clientId, {
+          source: 'extension_login_google_button',
+          label: copy.auth.continueWithGoogle,
+          loadingLabel: copy.auth.googleLoading
+        })
+        googleRedirectButtonRendered = true
+      } catch (error) {
+        console.error(error)
+        setMessage(
+          elements.authError,
+          error instanceof Error ? error.message : copy.auth.googleSignInFailed
+        )
+      }
+    }
+
+    const completeLoginWithToken = async (nextToken: string): Promise<boolean> => {
+      token = nextToken
+      closeAuthModal()
+      renderChecking(
+        elements,
+        copy.status.checkingState,
+        copy.status.checkingSessionTitle,
+        copy.status.checkingSessionText
+      )
+
+      let user: HomepageUserInfo
+      try {
+        user = await getCurrentUser(buildRequestContext(nextToken))
+      } catch (error) {
+        console.error(error)
+        if (error instanceof Error && isHomepageAuthFailure(error)) {
+          clearStoredAccessToken()
+          token = null
+          openAuthModal()
+          return false
+        }
+        renderVerificationError(
+          elements,
+          copy.status,
+          formatError(
+            copy.status.verificationFailedPrefix,
+            error instanceof Error ? error : String(error)
+          )
+        )
+        return false
+      }
+
+      renderConfirmAccount(elements, copy.status, user)
+      return true
+    }
+
+    const validateStoredToken = async (): Promise<void> => {
+      token = getStoredAccessToken()
+      if (!token) {
+        openAuthModal()
+        return
+      }
+
+      renderChecking(
+        elements,
+        copy.status.checkingState,
+        copy.status.checkingSessionTitle,
+        copy.status.checkingSessionText
+      )
+      await completeLoginWithToken(token)
+    }
+
+    /** 显式确认：website 会话换一次性 code，成功后带 fragment 跳回插件回调地址。 */
+    const handleContinue = async (): Promise<void> => {
+      if (!loginParams) {
+        return
+      }
+      elements.continueButton.disabled = true
+      renderChecking(
+        elements,
+        copy.status.checkingState,
+        copy.status.issuingTitle,
+        copy.status.issuingText
+      )
+
+      try {
+        const response = await postJson<ExtensionLoginCodeResponse>(
+          EXTENSION_LOGIN_CODE_ENDPOINT,
+          buildRequestContext(),
+          { code_challenge: loginParams.codeChallenge }
+        )
+        window.location.replace(`${loginParams.redirectUri}#code=${encodeURIComponent(response.code)}`)
+        return
+      } catch (error) {
+        console.error(error)
+        renderVerificationError(
+          elements,
+          copy.status,
+          formatError(
+            copy.status.issueFailedPrefix,
+            error instanceof Error ? error : String(error)
+          )
+        )
+      } finally {
+        elements.continueButton.disabled = false
+      }
+    }
+
+    const handleUseAnotherAccount = (): void => {
+      clearStoredAccessToken()
+      token = null
+      openAuthModal()
+    }
+
+    const runGoogleLogin = async (options: GoogleRedirectPromptOptions = {}): Promise<void> => {
+      const clientId = getGoogleClientId()
+      if (!clientId) {
+        setMessage(elements.authError, copy.auth.googleClientMissing)
+        return
+      }
+
+      try {
+        await requestGoogleRedirectPrompt(clientId, buildRequestContext(token), {
+          ...options,
+          onCredentialLogin: handleGoogleCredentialLogin
+        })
+      } catch (error) {
+        console.error(
+          '[extension-login] Google Identity prompt failed.',
+          { source: options.source ?? 'extension_login_prompt' },
+          error
+        )
+        if (!options.silentFailure) {
+          setMessage(
+            elements.authError,
+            error instanceof Error ? error.message : copy.auth.googleSignInFailed
+          )
+        }
+      }
+    }
+
+    const openAuthModal = (): void => {
+      renderLoginRequired(elements, copy.status)
+      resetAuthModalToGoogleFirst(elements)
+      setHidden(elements.authModal, false)
+      ensureGoogleRedirectButtonRendered()
+      void runGoogleLogin({ silentFailure: true, source: 'extension_login_auto_prompt' })
+    }
+
+    const handleGoogleCredentialLogin = async (
+      response: GoogleLoginResponse,
+      credentialSource: string
+    ): Promise<void> => {
+      logGoogleAuthStage('info', 'extension_login_google_one_tap_backend_response', {
+        credentialSource,
+        requiresEmailVerification: isEmailVerificationRequiredResponse(response)
+      })
+
+      if (isEmailVerificationRequiredResponse(response)) {
+        openAuthModal()
+        openEmailAuthForm(elements)
+        elements.loginEmail.value = response.email
+        elements.loginCode.value = ''
+        elements.sendCodeStatus.textContent = copy.auth.sendCodeSuccess
+        openCodeArea(elements)
+        sendCodeCooldown.start()
+        return
+      }
+
+      await completeLoginWithToken(response.access_token)
+    }
+
+    const handleGoogleRedirect = async (): Promise<boolean> => {
+      const result = readGoogleRedirectResult()
+      if (!result) {
+        return false
+      }
+
+      clearGoogleRedirectResult()
+      if (result.emailVerificationEmail) {
+        openAuthModal()
+        openEmailAuthForm(elements)
+        elements.loginEmail.value = result.emailVerificationEmail
+        elements.loginCode.value = ''
+        elements.sendCodeStatus.textContent = copy.auth.sendCodeSuccess
+        openCodeArea(elements)
+        sendCodeCooldown.start()
+        return true
+      }
+
+      if (result.error || !result.code) {
+        openAuthModal()
+        setMessage(
+          elements.authError,
+          formatError(copy.status.googleSignInFailedPrefix, result.error || 'missing google_login_code')
+        )
+        return true
+      }
+
+      renderChecking(
+        elements,
+        copy.status.checkingState,
+        copy.status.finishingGoogleTitle,
+        copy.status.finishingGoogleText
+      )
+
+      try {
+        const response = await exchangeGoogleLoginCode(result.code, buildRequestContext(token))
+        await completeLoginWithToken(response.access_token)
+      } catch (error) {
+        console.error(error)
+        if (error instanceof Error && isHomepageAuthFailure(error)) {
+          clearStoredAccessToken()
+          token = null
+        }
+        openAuthModal()
+        setMessage(
+          elements.authError,
+          formatError(
+            copy.status.googleCompletionFailedPrefix,
+            error instanceof Error ? error : String(error)
+          )
+        )
+      }
+
+      return true
+    }
+
+    const handleSendCode = async (): Promise<void> => {
+      const email = elements.loginEmail.value.trim()
+      if (!email) {
+        setMessage(elements.authError, copy.auth.enterEmailFirst)
+        return
+      }
+
+      setMessage(elements.authError, '')
+      elements.sendCodeButton.disabled = true
+      elements.emailContinueButton.disabled = true
+      elements.sendCodeStatus.textContent = copy.auth.sendingCode
+
+      try {
+        await sendEmailCode(email, buildRequestContext(token))
+        elements.sendCodeStatus.textContent = copy.auth.sendCodeSuccess
+        openCodeArea(elements)
+        sendCodeCooldown.start()
+      } catch (error) {
+        console.error(error)
+        setMessage(
+          elements.authError,
+          error instanceof Error ? error.message : copy.auth.sendCodeFailed
+        )
+        elements.sendCodeStatus.textContent = ''
+        sendCodeCooldown.reset()
+      } finally {
+        if (!sendCodeCooldown.isActive()) {
+          elements.sendCodeButton.disabled = false
+        }
+        elements.emailContinueButton.disabled = false
+      }
+    }
+
+    const handleEmailLogin = async (): Promise<void> => {
+      const email = elements.loginEmail.value.trim()
+      const code = elements.loginCode.value.trim()
+      if (!email || !code) {
+        setMessage(elements.authError, copy.auth.enterEmailAndCode)
+        return
+      }
+
+      setMessage(elements.authError, '')
+      elements.loginSubmit.disabled = true
+
+      try {
+        const response = await loginWithEmailCode(email, code, buildRequestContext(token))
+        await completeLoginWithToken(response.access_token)
+      } catch (error) {
+        console.error(error)
+        if (error instanceof Error && isHomepageAuthFailure(error)) {
+          clearStoredAccessToken()
+          token = null
+        }
+        setMessage(elements.authError, error instanceof Error ? error.message : copy.auth.signInFailed)
+      } finally {
+        elements.loginSubmit.disabled = false
+      }
+    }
+
+    elements.retryButton.addEventListener('click', () => {
+      if (!token) {
+        openAuthModal()
+        return
+      }
+      void validateStoredToken()
+    })
+    elements.continueButton.addEventListener('click', () => {
+      void handleContinue()
+    })
+    elements.useAnotherAccountButton.addEventListener('click', handleUseAnotherAccount)
+    elements.authCloseButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        closeAuthModal()
+        renderLoginRequired(elements, copy.status)
+      })
+    })
+    elements.emailEntryButton.addEventListener('click', () => {
+      cancelGoogleRedirectPrompt('Email code login selected in extension login page.')
+      openEmailAuthForm(elements)
+    })
+    elements.emailContinueButton.addEventListener('click', () => {
+      void handleSendCode()
+    })
+    elements.sendCodeButton.addEventListener('click', () => {
+      void handleSendCode()
+    })
+    elements.authForm.addEventListener('submit', event => {
+      event.preventDefault()
+      void handleEmailLogin()
+    })
+
+    // 入口参数非法时尽早终止：不开 AuthModal、不做 Google redirect 收尾、不请求设备 ID。
+    loginParams = parseExtensionLoginParams()
+    if (!loginParams) {
+      renderInvalidParams(elements, copy.status)
+      return
+    }
+
+    renderChecking(
+      elements,
+      copy.status.checkingState,
+      copy.status.preparingTitle,
+      copy.status.preparingText
+    )
+    deviceId = await ensureDeviceId()
+
+    const handledRedirect = await handleGoogleRedirect()
+    if (!handledRedirect) {
+      await validateStoredToken()
+    }
+  }
+</script>
+
+<style>
+  .extension-login-page {
+    min-height: 72vh;
+    display: grid;
+    place-items: center;
+    padding: calc(var(--nav-h) + clamp(var(--s-16), 8vw, var(--s-24))) 24px var(--s-16);
+  }
+
+  .extension-login-panel {
+    width: min(720px, 100%);
+    display: grid;
+    gap: 24px;
+    padding: clamp(24px, 4vw, var(--s-8));
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .extension-login-heading {
+    display: grid;
+    gap: var(--s-2);
+  }
+
+  .extension-login-eyebrow,
+  .extension-login-state {
+    justify-self: start;
+    margin: 0;
+  }
+
+  .extension-login-heading h1,
+  .extension-login-status h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(30px, 5vw, 44px);
+    letter-spacing: 0;
+  }
+
+  .extension-login-status h2 {
+    font-size: clamp(24px, 4vw, 32px);
+  }
+
+  .extension-login-status > p:not(.extension-login-state) {
+    margin: 0;
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .extension-login-status {
+    display: grid;
+    gap: 16px;
+  }
+
+  .extension-login-status[data-status='error'] .extension-login-state {
+    border-color: var(--bad);
+    color: var(--bad);
+    background: var(--bad-soft);
+  }
+
+  .extension-login-confirm {
+    display: grid;
+    gap: var(--s-4);
+  }
+
+  .extension-login-confirm[hidden] {
+    display: none;
+  }
+
+  .extension-login-account {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    padding: 16px var(--s-4);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+  }
+
+  .extension-login-avatar {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-full);
+    object-fit: cover;
+  }
+
+  .extension-login-avatar[hidden] {
+    display: none;
+  }
+
+  .extension-login-avatar-fallback {
+    border: 1px solid var(--border-2);
+    background: var(--primary-soft);
+    color: var(--primary-text);
+    font-size: var(--fs-h4);
+    font-weight: 700;
+  }
+
+  .extension-login-account-name {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  .extension-login-account-email {
+    color: var(--text-2);
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  .extension-login-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+
+  .extension-login-primary,
+  .extension-login-secondary {
+    width: 100%;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-2);
+    padding: 0 14px;
+    border-radius: var(--r-full);
+    font-size: 14px;
+    font-weight: 700;
+    transition:
+      border-color var(--dur-1),
+      background var(--dur-1),
+      color var(--dur-1),
+      box-shadow var(--dur-1);
+  }
+
+  .extension-login-secondary {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .extension-login-secondary:hover {
+    border-color: var(--border-2);
+    color: var(--primary-text);
+  }
+
+  .extension-login-primary {
+    border: 1px solid var(--primary);
+    color: var(--primary-fg);
+    background: var(--primary);
+  }
+
+  .extension-login-primary:hover {
+    background: var(--primary-hover);
+  }
+
+  .extension-login-primary:disabled,
+  .extension-login-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.64;
+  }
+
+  .extension-login-primary:focus-visible,
+  .extension-login-secondary:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 640px) {
+    .extension-login-page {
+      padding: calc(var(--nav-h) + var(--s-8)) 16px var(--s-16);
+      place-items: start center;
+    }
+
+    .extension-login-panel {
+      padding: 22px var(--s-4);
+    }
+
+    .extension-login-actions {
+      display: grid;
+    }
+  }
+</style>

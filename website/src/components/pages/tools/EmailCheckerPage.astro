@@ -1,0 +1,55 @@
+---
+/**
+ * Email Checker 工具页：纯格式校验（SMTP 探测明确不做，SEO 正文说明）。
+ */
+import Icon from '../../site/Icon.astro'
+import ToolGuide from '../../tools/ToolGuide.astro'
+import ToolShell from '../../tools/ToolShell.astro'
+import { getContent, type Locale } from '../../../i18n/content'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+
+const common = getContent(locale).pages.tools.common
+const tool = getContent(locale).pages.tools.emailChecker
+const copyJson = JSON.stringify({ content: tool })
+---
+
+<ToolShell locale={locale} toolId="email-checker" content={tool} howToSteps={tool.howTo} copyJson={copyJson}>
+  <div class="tool-panel">
+    <form class="tool-form" data-tool-form autocomplete="off" novalidate>
+      <div class="field">
+        <label class="field-label" for="email-input">{tool.form.emailLabel}</label>
+        {/* type=text：校验交给本工具的纯前端规则（浏览器原生 email 校验会拦截提交，用户看不到逐条问题说明） */}
+        <input
+          class="input"
+          id="email-input"
+          name="email"
+          type="text"
+          inputmode="email"
+          placeholder={tool.form.emailPlaceholder}
+          autocomplete="off"
+          spellcheck="false"
+          data-tool-input
+        />
+      </div>
+      <div class="tool-actions">
+        <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="email-checker">
+          {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />
+        </button>
+      </div>
+    </form>
+
+    <section class="tool-result" data-tool-result hidden aria-label={common.resultHeading}>
+      <h2 data-result-heading></h2>
+      <ul class="tool-issue-list" data-issue-list></ul>
+    </section>
+  </div>
+
+  <ToolGuide slot="guide" head={common.guide} sections={tool.howTo} />
+</ToolShell>
+
+<script src="../../../scripts/tools/emailChecker.ts"></script>

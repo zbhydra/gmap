@@ -1,0 +1,79 @@
+---
+/**
+ * Review Link Generator 工具页：Maps 链接 → 本地解析 Place ID → search.google.com/local/reviews 评论直链。
+ */
+import Icon from '../../site/Icon.astro'
+import ToolGuide from '../../tools/ToolGuide.astro'
+import ToolShell from '../../tools/ToolShell.astro'
+import { getContent, type Locale } from '../../../i18n/content'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+
+const common = getContent(locale).pages.tools.common
+const tool = getContent(locale).pages.tools.reviewLinkGenerator
+const copyJson = JSON.stringify({ common, content: tool })
+---
+
+<ToolShell locale={locale} toolId="review-link-generator" content={tool} howToSteps={tool.howTo} copyJson={copyJson}>
+  <div class="tool-panel">
+    <form class="tool-form" data-tool-form autocomplete="off" novalidate>
+      <div class="field">
+        <label class="field-label" for="place-url">{tool.form.urlLabel}</label>
+        <input
+          class="input tool-mono"
+          id="place-url"
+          name="place-url"
+          type="text"
+          placeholder={tool.form.urlPlaceholder}
+          autocomplete="off"
+          spellcheck="false"
+          data-tool-input
+        />
+      </div>
+      <p class="tool-error" role="alert" data-tool-error hidden><Icon name="info" /><span data-tool-error-text></span></p>
+      <div class="tool-actions">
+        <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="review-link-generator">
+          {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />
+        </button>
+      </div>
+    </form>
+
+    <section class="tool-result" data-tool-result hidden aria-label={common.resultHeading}>
+      <h2 class="tool-result-label">{common.resultHeading}</h2>
+      <div class="tool-output">
+        <label class="tool-output-label" for="review-link">{tool.result.linkLabel}</label>
+        <div class="tool-output-row">
+          <output class="tool-output-value" id="review-link" data-review-link></output>
+          <button
+            class="btn btn-secondary btn-sm"
+            type="button"
+            data-copy-review-link
+            data-ga-event="tool_copy"
+            data-ga-tool-id="review-link-generator"
+          >
+            <Icon name="copy" />{common.copy}
+          </button>
+          <a
+            class="btn btn-secondary btn-sm"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-review-open
+            data-ga-event="tool_open_link"
+            data-ga-tool-id="review-link-generator"
+          >
+            <Icon name="external" />{tool.result.open}
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <ToolGuide slot="guide" head={common.guide} sections={tool.howTo} />
+</ToolShell>
+
+<script src="../../../scripts/tools/reviewLinkGenerator.ts"></script>

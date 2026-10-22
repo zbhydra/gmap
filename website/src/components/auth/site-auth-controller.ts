@@ -28,14 +28,18 @@ import { ensureDeviceId } from '../../scripts/homepage/device'
 import type { RequestContext } from '../../scripts/homepage/api'
 import { createSendCodeCooldown } from '../../scripts/homepage/sendCodeCooldown'
 import { invalidateSiteSession, setSiteSession } from '../../scripts/site/session'
+import { localePaths } from '../../i18n/ui'
 
 /** 站级登录成功事件。 */
 export const SITE_AUTH_SUCCESS_EVENT = 'site-auth:success'
 /** 用户主动关闭登录弹窗事件。 */
 export const SITE_AUTH_CLOSE_EVENT = 'site-auth:close'
 
-/** 登录后允许跳转的本站路由（当前即 Dashboard 工作区三页）。 */
-const AUTH_REDIRECT_PATHS = ['/dashboard/', '/dashboard/api/', '/dashboard/subscriptions/']
+/** 登录后允许跳转的本站路由：各语言的 Dashboard 工作区三页。 */
+const AUTH_REDIRECT_PATHS = Object.values(localePaths).flatMap(path =>
+  ['/dashboard/', '/dashboard/api/', '/dashboard/subscriptions/']
+    .map(route => `${path ? `/${path}` : ''}${route}`)
+)
 /** 同 tab Google OAuth 回跳后恢复登录后跳转的会话键。 */
 const PENDING_AUTH_REDIRECT_KEY = 'site_auth_pending_redirect'
 
@@ -95,6 +99,8 @@ interface SiteAuthElements {
 
 /** 登录弹窗文案。 */
 interface SiteAuthCopy {
+  /** 再次发送验证码。 */
+  sendAgain: string
   /** 发送验证码中。 */
   sendingCode: string
   /** 验证码发送成功。 */
@@ -125,7 +131,7 @@ export function createSiteAuthController(root: HTMLElement): SiteAuthController 
   const copy = getSiteAuthCopy(root)
   const sendCodeCooldown = createSendCodeCooldown(
     elements.sendCodeButton,
-    elements.sendCodeButton.textContent?.trim() || 'Send again'
+    copy.sendAgain
   )
   let googleRedirectButtonRendered = false
   let token: string | null = null

@@ -7,13 +7,16 @@
  * - 订单等待：外部支付页打开后轮询订单状态
  */
 import type { AccountContent } from '../../i18n/schema'
+import { localePaths, type Locale } from '../../i18n/ui'
 import type { OrderCheckoutCopy } from './order-checkout-types'
 
-const { copy, deferController = false } = Astro.props as {
+const { locale, copy, deferController = false } = Astro.props as {
+  locale: Locale
   copy: AccountContent
   /** 是否由下载工作区渐进加载入口统一加载 controller。 */
   deferController?: boolean
 }
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
 const creditCopy = copy.creditPurchase
 const checkoutCopy: OrderCheckoutCopy = {
   paymentMethodLabel: creditCopy.paymentMethodLabel ?? 'Choose payment method',
@@ -105,11 +108,11 @@ const checkoutCopy: OrderCheckoutCopy = {
         <span>
           {checkoutCopy.agreementText}
           {' '}
-          <a href="/terms" target="_blank" rel="noopener" data-order-checkout-terms>
+          <a href={`${prefix}/terms/`} target="_blank" rel="noopener" data-order-checkout-terms>
             {copy.auth.termsLink}
           </a>
           <span aria-hidden="true"> · </span>
-          <a href="/privacy" target="_blank" rel="noopener" data-order-checkout-privacy>
+          <a href={`${prefix}/privacy/`} target="_blank" rel="noopener" data-order-checkout-privacy>
             {copy.auth.privacyLink}
           </a>
         </span>

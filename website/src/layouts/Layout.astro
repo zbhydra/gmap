@@ -235,7 +235,7 @@ const structuredDataItems = [
 
     <SiteConfirmModal locale={locale} />
     {/* 站级登录弹窗全站唯一装配；插件授权桥页自带认证 owner（含 Google 回跳消费），不重复装配 */}
-    {includeSiteAuth && <SiteAuthModal copy={t.pages.account} />}
+    {includeSiteAuth && <SiteAuthModal locale={locale} copy={t.pages.account} />}
 
     <script>
       import { installFrontendErrorCapture } from '../scripts/homepage/frontend-error-capture'

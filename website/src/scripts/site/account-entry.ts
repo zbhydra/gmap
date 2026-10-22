@@ -9,9 +9,6 @@
 import { SITE_AUTH_SUCCESS_EVENT } from '../../components/auth/site-auth-controller'
 import { getSiteSession } from './session'
 
-/** 导航登录入口声明登录后进入的 Dashboard 页。 */
-const NAV_LOGIN_REDIRECT = '/dashboard/'
-
 /** 初始化导航账户入口。 */
 export function initSiteAccountEntry(): void {
   const authButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-site-auth-entry]'))
@@ -21,10 +18,11 @@ export function initSiteAccountEntry(): void {
   if (authButtons.length === 0 && dashboardLinks.length === 0) {
     return
   }
+  const navLoginRedirect = dashboardLinks[0]?.getAttribute('href') ?? undefined
 
   for (const button of authButtons) {
     button.addEventListener('click', () => {
-      window.siteAuthController?.open({ redirectTo: NAV_LOGIN_REDIRECT })
+      window.siteAuthController?.open({ redirectTo: navLoginRedirect })
     })
   }
 

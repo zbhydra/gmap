@@ -1,13 +1,16 @@
 ---
 import type { AccountContent } from '../../i18n/schema'
+import { localePaths, type Locale } from '../../i18n/ui'
 
-const { copy, skinClass = '', idPrefix = 'download' } = Astro.props as {
+const { locale, copy, skinClass = '', idPrefix = 'download' } = Astro.props as {
+  locale: Locale
   copy: AccountContent
   skinClass?: string
   idPrefix?: string
 }
 const authModalClass = ['download-auth-modal', skinClass].filter(Boolean).join(' ')
 const titleId = `${idPrefix}-auth-title`
+const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
 ---
 
 <div class={authModalClass} data-download-auth-modal hidden>
@@ -104,9 +107,9 @@ const titleId = `${idPrefix}-auth-title`
     <p class="download-auth-terms">
       {copy.auth.termsNotice}
       {' '}
-      <a href="/terms">{copy.auth.termsLink}</a>
+      <a href={`${prefix}/terms/`}>{copy.auth.termsLink}</a>
       <span aria-hidden="true"> · </span>
-      <a href="/privacy">{copy.auth.privacyLink}</a>
+      <a href={`${prefix}/privacy/`}>{copy.auth.privacyLink}</a>
     </p>
     <p class="download-inline-error" data-download-auth-error role="alert" hidden></p>
   </div>

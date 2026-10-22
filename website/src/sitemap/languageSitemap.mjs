@@ -186,9 +186,21 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
  * Sitemap locale mapping. Keep this aligned with src/i18n/ui.ts:
  * locale -> localePaths pathPrefix + hreflangMap sitemapSlug.
  */
-// 与 src/i18n/ui.ts 的 locales 收敛口径一致：EN 首批，后续语言按需追加。
 export const LANGUAGE_SITEMAP_LOCALES = [
-  { locale: 'en-US', pathPrefix: '', sitemapSlug: 'en' }
+  { locale: 'en-US', pathPrefix: '', sitemapSlug: 'en' },
+  { locale: 'zh-CN', pathPrefix: 'zh-cn', sitemapSlug: 'zh-cn' },
+  { locale: 'ja-JP', pathPrefix: 'ja', sitemapSlug: 'ja' },
+  { locale: 'ko-KR', pathPrefix: 'ko', sitemapSlug: 'ko' },
+  { locale: 'zh-TW', pathPrefix: 'zh-tw', sitemapSlug: 'zh-tw' },
+  { locale: 'es-ES', pathPrefix: 'es', sitemapSlug: 'es' },
+  { locale: 'pt-BR', pathPrefix: 'pt', sitemapSlug: 'pt-br' },
+  { locale: 'de-DE', pathPrefix: 'de', sitemapSlug: 'de' },
+  { locale: 'fr-FR', pathPrefix: 'fr', sitemapSlug: 'fr' },
+  { locale: 'ru-RU', pathPrefix: 'ru', sitemapSlug: 'ru' },
+  { locale: 'it-IT', pathPrefix: 'it', sitemapSlug: 'it' },
+  { locale: 'vi-VN', pathPrefix: 'vi', sitemapSlug: 'vi' },
+  { locale: 'th-TH', pathPrefix: 'th', sitemapSlug: 'th' },
+  { locale: 'id-ID', pathPrefix: 'id', sitemapSlug: 'id' }
 ]
 
 const DEFAULT_LANGUAGE = LANGUAGE_SITEMAP_LOCALES.find((language) => language.locale === 'en-US')
@@ -398,7 +410,7 @@ function getRouteSourceFiles(routePath) {
   // /paypal/* 与 /clink/* 回跳页在 SEARCH_BOT_BLOCKED_ROUTE_PATHS 中被提前过滤，
   // 不会进入本映射，因此没有对应的源文件分支。
 
-  // 工具矩阵（D1 七个公开工具）：路由前缀固定 /tools/<slug>/，页面文件位于 src/pages/tools/<slug>.astro。
+  // 工具矩阵（D1 七个公开工具）：root + [lang] 双路由，共用 components/pages/tools/ 装配。
   // 外壳 ToolShell 复用产品页的区块头 / FAQ / CTA；Place ID Finder 另有面板与讲解组件，其余工具共用 ToolGuide。
   const TOOL_SHARED_SOURCES = [
     'src/components/tools/ToolShell.astro',
@@ -414,6 +426,7 @@ function getRouteSourceFiles(routePath) {
   const TOOL_GUIDE = 'src/components/tools/ToolGuide.astro'
   const TOOL_ROUTE_SOURCES = {
     '/tools/place-id-finder/': [
+      'src/components/pages/tools/PlaceIdFinderPage.astro',
       'src/scripts/tools/placeIdFinder.ts',
       'src/scripts/tools/lib/placeUrl.ts',
       'src/components/tools/PlaceIdPanel.astro',
@@ -422,17 +435,22 @@ function getRouteSourceFiles(routePath) {
       'src/components/product/copy.ts',
       'src/scripts/pages/product-page.ts'
     ],
-    '/tools/review-link-generator/': ['src/scripts/tools/reviewLinkGenerator.ts', 'src/scripts/tools/lib/placeUrl.ts', TOOL_GUIDE],
-    '/tools/email-checker/': ['src/scripts/tools/emailChecker.ts', 'src/scripts/tools/lib/emailCheck.ts', TOOL_GUIDE],
-    '/tools/lat-long-to-dms/': ['src/scripts/tools/latLongToDms.ts', 'src/scripts/tools/lib/coordinates.ts', TOOL_GUIDE],
-    '/tools/dms-to-dd/': ['src/scripts/tools/dmsToDd.ts', 'src/scripts/tools/lib/coordinates.ts', TOOL_GUIDE],
-    '/tools/bulk-keywords-generator/': ['src/scripts/tools/bulkKeywords.ts', 'src/scripts/tools/lib/keywords.ts', TOOL_GUIDE],
-    '/tools/merge-csv-files-online/': ['src/scripts/tools/mergeCsv.ts', 'src/scripts/tools/lib/csv.ts', TOOL_GUIDE]
+    '/tools/review-link-generator/': ['src/components/pages/tools/ReviewLinkGeneratorPage.astro', 'src/scripts/tools/reviewLinkGenerator.ts', 'src/scripts/tools/lib/placeUrl.ts', TOOL_GUIDE],
+    '/tools/email-checker/': ['src/components/pages/tools/EmailCheckerPage.astro', 'src/scripts/tools/emailChecker.ts', 'src/scripts/tools/lib/emailCheck.ts', TOOL_GUIDE],
+    '/tools/lat-long-to-dms/': ['src/components/pages/tools/LatLongToDmsPage.astro', 'src/scripts/tools/latLongToDms.ts', 'src/scripts/tools/lib/coordinates.ts', TOOL_GUIDE],
+    '/tools/dms-to-dd/': ['src/components/pages/tools/DmsToDdPage.astro', 'src/scripts/tools/dmsToDd.ts', 'src/scripts/tools/lib/coordinates.ts', TOOL_GUIDE],
+    '/tools/bulk-keywords-generator/': ['src/components/pages/tools/BulkKeywordsGeneratorPage.astro', 'src/scripts/tools/bulkKeywords.ts', 'src/scripts/tools/lib/keywords.ts', TOOL_GUIDE],
+    '/tools/merge-csv-files-online/': ['src/components/pages/tools/MergeCsvPage.astro', 'src/scripts/tools/mergeCsv.ts', 'src/scripts/tools/lib/csv.ts', TOOL_GUIDE]
   }
   const toolSourceFiles = TOOL_ROUTE_SOURCES[normalized]
   if (toolSourceFiles) {
-    const pageFile = `src/pages/tools/${normalized.replace('/tools/', '').slice(0, -1)}.astro`
-    return [pageFile, ...toolSourceFiles, ...TOOL_SHARED_SOURCES]
+    const slug = normalized.slice('/tools/'.length, -1)
+    return [
+      `src/pages/tools/${slug}.astro`,
+      `src/pages/[lang]/tools/${slug}.astro`,
+      ...toolSourceFiles,
+      ...TOOL_SHARED_SOURCES
+    ]
   }
 
   // W4：API 三页共用 ApiPage（按 variant 渲染），MCP 页为 McpPage；root + [lang] 双路由，
@@ -471,8 +489,13 @@ function getRouteSourceFiles(routePath) {
   throw new Error(`languageSitemap: route source files are not mapped for routePath=${normalized}`)
 }
 
-function getUrlSourceFiles(routePath) {
-  return getRouteSourceFiles(routePath)
+function getUrlSourceFiles(routePath, locale) {
+  return [
+    ...getRouteSourceFiles(routePath),
+    'src/i18n/content.ts',
+    'src/i18n/localized-content.ts',
+    `src/i18n/lang/${locale}.ts`
+  ]
 }
 
 async function getGitLastmod(files) {
@@ -514,8 +537,8 @@ async function getMtimeLastmod(url, files, logger) {
   return lastmod
 }
 
-async function resolveLastmod(url, routePath, logger) {
-  const files = getUrlSourceFiles(routePath)
+async function resolveLastmod(url, routePath, locale, logger) {
+  const files = getUrlSourceFiles(routePath, locale)
   const gitLastmod = await getGitLastmod(files)
   if (gitLastmod) {
     return gitLastmod
@@ -536,7 +559,7 @@ export async function buildLanguageSitemapGroups(urls, logger) {
 
   for (const url of urls) {
     const { language, routePath } = classifySitemapUrl(url)
-    const lastmod = await resolveLastmod(url, routePath, logger)
+    const lastmod = await resolveLastmod(url, routePath, language.locale, logger)
     const group = groups.get(language.locale)
     group.entries.push({
       url,

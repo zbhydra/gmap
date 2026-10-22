@@ -1,0 +1,101 @@
+---
+/**
+ * Bulk Keywords Generator 工具页：关键词 × 地点组合批量生成。
+ */
+import Icon from '../../site/Icon.astro'
+import ToolGuide from '../../tools/ToolGuide.astro'
+import ToolShell from '../../tools/ToolShell.astro'
+import { getContent, type Locale } from '../../../i18n/content'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+
+const common = getContent(locale).pages.tools.common
+const tool = getContent(locale).pages.tools.bulkKeywords
+const copyJson = JSON.stringify({ common, content: tool })
+---
+
+<ToolShell locale={locale} toolId="bulk-keywords-generator" content={tool} howToSteps={tool.howTo} copyJson={copyJson}>
+  <div class="tool-panel">
+    <form class="tool-form" data-tool-form autocomplete="off" novalidate>
+      <div class="tool-form-row">
+        <div class="field">
+          <label class="field-label" for="keywords-input">{tool.form.keywordsLabel}</label>
+          <textarea
+            class="textarea tool-mono"
+            id="keywords-input"
+            placeholder={tool.form.keywordsPlaceholder}
+            spellcheck="false"
+            data-keywords></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label" for="locations-input">{tool.form.locationsLabel}</label>
+          <textarea
+            class="textarea tool-mono"
+            id="locations-input"
+            placeholder={tool.form.locationsPlaceholder}
+            spellcheck="false"
+            data-locations></textarea>
+        </div>
+      </div>
+      <div class="field tool-order">
+        <label class="field-label" for="order-input">{tool.form.orderLabel}</label>
+        <select class="input" id="order-input" data-order>
+          <option value="keyword-first" selected>{tool.form.keywordFirst}</option>
+          <option value="location-first">{tool.form.locationFirst}</option>
+        </select>
+      </div>
+      <p class="tool-error" role="alert" data-tool-error hidden><Icon name="info" /><span data-tool-error-text></span></p>
+      <div class="tool-actions">
+        <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="bulk-keywords">
+          {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />
+        </button>
+      </div>
+    </form>
+
+    <section class="tool-result" data-tool-result hidden aria-label={common.resultHeading}>
+      <h2 class="tool-result-label">{common.resultHeading}</h2>
+      <p class="tool-summary" data-count-summary></p>
+      <textarea
+        class="textarea tool-mono tool-preview"
+        readonly
+        spellcheck="false"
+        aria-label={common.resultHeading}
+        data-combinations></textarea>
+      <div class="tool-actions">
+        <button
+          class="btn btn-secondary btn-sm"
+          type="button"
+          data-copy-combinations
+          data-ga-event="tool_copy"
+          data-ga-tool-id="bulk-keywords"
+        >
+          <Icon name="copy" />{common.copy}
+        </button>
+        <button
+          class="btn btn-secondary btn-sm"
+          type="button"
+          data-download-combinations
+          data-ga-event="tool_download"
+          data-ga-tool-id="bulk-keywords"
+        >
+          <Icon name="download" />{common.downloadCsv}
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <ToolGuide slot="guide" head={common.guide} sections={tool.howTo} />
+</ToolShell>
+
+<style>
+  /* 选项带示例（keyword + location (design agency New York)），宽度按最长选项留足 */
+  .tool-order {
+    max-width: 480px;
+  }
+</style>
+
+<script src="../../../scripts/tools/bulkKeywords.ts"></script>

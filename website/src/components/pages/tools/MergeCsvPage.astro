@@ -1,0 +1,67 @@
+---
+/**
+ * Merge CSV Files Online 工具页：多文件纯前端合并（表头并集），文件不离开浏览器。
+ */
+import Icon from '../../site/Icon.astro'
+import ToolGuide from '../../tools/ToolGuide.astro'
+import ToolShell from '../../tools/ToolShell.astro'
+import { getContent, type Locale } from '../../../i18n/content'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+
+const common = getContent(locale).pages.tools.common
+const tool = getContent(locale).pages.tools.mergeCsv
+const copyJson = JSON.stringify({ common, content: tool })
+---
+
+<ToolShell locale={locale} toolId="merge-csv" content={tool} howToSteps={tool.howTo} copyJson={copyJson}>
+  <div class="tool-panel">
+    <form class="tool-form" data-tool-form novalidate>
+      <div class="field">
+        <label class="field-label" for="csv-files">{tool.form.filesLabel}</label>
+        {/* accept 限定 .csv；multiple 允许一次选择全部待合并文件 */}
+        <input class="tool-file-input" id="csv-files" type="file" accept=".csv,text/csv" multiple data-tool-files />
+        <p class="field-hint">{tool.form.filesHint}</p>
+      </div>
+      <ul class="tool-file-options" data-file-options></ul>
+      <ul class="tool-file-summaries" data-file-summaries></ul>
+      <p class="tool-error" role="alert" data-tool-error hidden><Icon name="info" /><span data-tool-error-text></span></p>
+      <div class="tool-actions">
+        <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="merge-csv">
+          {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />
+        </button>
+      </div>
+    </form>
+
+    <section class="tool-result" data-tool-result hidden aria-label={common.resultHeading}>
+      <h2 class="tool-result-label">{common.resultHeading}</h2>
+      <p class="tool-summary" data-result-summary></p>
+      <textarea
+        class="textarea tool-mono tool-preview"
+        readonly
+        spellcheck="false"
+        wrap="off"
+        aria-label={tool.form.previewLabel}
+        data-merged-preview></textarea>
+      <div class="tool-actions">
+        <button
+          class="btn btn-secondary btn-sm"
+          type="button"
+          data-download-merged
+          data-ga-event="tool_download"
+          data-ga-tool-id="merge-csv"
+        >
+          <Icon name="download" />{common.downloadCsv}
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <ToolGuide slot="guide" head={common.guide} sections={tool.howTo} />
+</ToolShell>
+
+<script src="../../../scripts/tools/mergeCsv.ts"></script>

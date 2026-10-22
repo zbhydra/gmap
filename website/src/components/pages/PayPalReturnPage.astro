@@ -1,0 +1,115 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import { getContent, type Locale } from '../../i18n/content'
+
+interface Props {
+  locale: Locale
+  status: 'success' | 'cancel'
+}
+
+const { locale, status } = Astro.props
+const t = getContent(locale)
+const copy = t.pages.account.paypalReturn
+const title = status === 'success' ? copy.waitingTitle : copy.canceledTitle
+const description = status === 'success' ? copy.waitingMessage : copy.canceledMetaDescription
+const message = status === 'success' ? copy.waitingMessage : copy.canceledMessage
+---
+
+<Layout
+  locale={locale}
+  title={`${title} | ${t.site.name}`}
+  description={description}
+  includeSoftwareApplicationSchema={false}
+  robots="noindex, nofollow, noarchive"
+  includeAlternateLanguageLinks={false}
+>
+  <div
+    class="paypal-return-page"
+    data-payment-return
+    data-payment-return-state={status === 'success' ? 'waiting' : 'cancelled'}
+    data-paypal-return-page
+    data-paypal-return-status={status}
+  >
+    <section class="paypal-return-card" aria-live={status === 'success' ? 'polite' : undefined}>
+      <img src="/payment-icons/paypal-monogram.png" alt="" aria-hidden="true" width="32" height="32" />
+      <p class="kicker paypal-return-eyebrow">{copy.providerLabel}</p>
+      <h1 data-paypal-return-title>{title}</h1>
+      <p data-paypal-return-message>{message}</p>
+    </section>
+  </div>
+  {status === 'success' && <script is:inline type="application/json" data-paypal-return-copy set:html={JSON.stringify(copy)} />}
+</Layout>
+
+<script>
+  import { initPayPalReturnPage } from '../credit-purchase/paypal-return'
+
+  const root = document.querySelector<HTMLElement>('[data-paypal-return-page]')
+  const status = root?.dataset.paypalReturnStatus
+  if (root && (status === 'success' || status === 'cancel')) {
+    initPayPalReturnPage({
+      status,
+      orderNo: root.dataset.paypalOrderNo || null
+    })
+  }
+</script>
+
+<style>
+  .paypal-return-page {
+    display: grid;
+    min-height: 68vh;
+    place-items: center;
+    padding: calc(var(--nav-h) + var(--s-32)) 24px var(--s-20);
+    background: var(--bg);
+  }
+
+  .paypal-return-card {
+    width: min(620px, 100%);
+    padding: var(--s-8);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+  }
+
+  .paypal-return-eyebrow {
+    margin: 0 0 12px;
+  }
+
+  .paypal-return-card img {
+    display: block;
+    margin: 0 auto 10px;
+  }
+
+  [data-payment-return-state='confirmed'] .paypal-return-card {
+    border-color: var(--ok);
+  }
+
+  [data-payment-return-state='failed'] .paypal-return-card {
+    border-color: var(--bad);
+  }
+
+  .paypal-return-card h1 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(34px, 5vw, 54px);
+    letter-spacing: -0.05em;
+  }
+
+  .paypal-return-card p:last-child {
+    margin: 16px 0 0;
+    color: var(--text-2);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 560px) {
+    .paypal-return-card {
+      padding: var(--s-8) 20px;
+    }
+
+    .paypal-return-card h1 {
+      font-size: var(--fs-h2);
+    }
+  }
+</style>

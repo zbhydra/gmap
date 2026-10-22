@@ -43,14 +43,23 @@ website/
 ├── tests/             # 模块脚本单测（node --test）
 └── src/
     ├── components/    # auth / pricing / credit-purchase / order-checkout（W5 购买链路基座）
-    ├── i18n/          # 纯 TS 字典（当前仅 en-US；多语言架构保留）
+    ├── i18n/          # 纯 TS 静态字典、语言表与字典注册
     ├── layouts/       # Layout.astro（引入全局样式、首帧主题恢复、外壳装配、GA4 槽位与页级开关）
     ├── lib/           # capabilities.ts 能力可用性表等站级常量
-    ├── pages/         # 文件路由（[lang]/ 多语言路由架构保留）
+    ├── pages/         # 默认英语根路径，其他语言走 [lang]/ 静态路由
     ├── scripts/       # homepage（api/auth/mark/device/ga4/sls）+ site（chrome 外壳 / motion 动效 / components 声明式交互 / toast / confirm）
     ├── sitemap/       # 语言 sitemap 集成（noindex 路由屏蔽清单）
     └── styles/        # 全局样式：tokens（唯一 token 来源）/ base / motion / components / site
 ```
+
+## 语言与路由
+
+英语使用根路径，其他语言使用静态语言前缀。启用语言、名称、路径与 hreflang 由
+[src/i18n/ui.ts](src/i18n/ui.ts) 的 `locales`、`localeNames`、`localePaths`、`hreflangMap` 定义；
+[src/i18n/localized-content.ts](src/i18n/localized-content.ts) 的 `localizedContent` 注册各语言完整字典，
+静态文案存放在 [src/i18n/lang/](src/i18n/lang/) 的同名 locale 文件中。
+
+各语言生成相同的页面集合。桌面与移动导航均可切换语言，切换保留当前查询参数；站内产品、工具、Dashboard、登录与法务链接使用当前语言。插件授权和支付渠道的固定回跳入口使用默认英语，站内语言由 URL 路径确定。
 
 ## 环境与官网下载
 
@@ -91,7 +100,7 @@ website/
 
 ## Layout 页级开关
 
-- `robots`：默认 `index, follow`，noindex 页面传 `noindex, nofollow`，并把路由加入
+- `robots`：默认 `index, follow`，noindex 页面传 `noindex, nofollow`、关闭 `includeAlternateLanguageLinks`，并把路由加入
   `src/sitemap/languageSitemap.mjs` 的屏蔽清单（根路径与各语言前缀版本一并排除）。
 - `analytics`：默认 `true`；不统计的页面（如 MCP 授权确认页）传 `false`，该页不注入 gtag、不做首开打点（`<html data-analytics="off">`），错误上报、device 图标与登录链照常。
 - 其余：`workspaceMode`（工作区，不渲染营销外壳与动效）、`includeSiteAuth`、`includeLanguageSwitcher`、

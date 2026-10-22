@@ -1,0 +1,129 @@
+---
+/**
+ * Convert DMS to DD 工具页：度分秒 + 半球 → 十进制度。
+ */
+import Icon from '../../site/Icon.astro'
+import ToolGuide from '../../tools/ToolGuide.astro'
+import ToolShell from '../../tools/ToolShell.astro'
+import { getContent, type Locale } from '../../../i18n/content'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+
+const common = getContent(locale).pages.tools.common
+const tool = getContent(locale).pages.tools.dmsToDd
+const copyJson = JSON.stringify({ common, content: tool })
+
+// 两轴同构：data-<axis>-degrees / minutes / seconds / hemisphere 是脚本读取的钩子；占位即 San Francisco 的坐标
+const axes = [
+  {
+    key: 'lat',
+    legend: tool.form.latitudeHeading,
+    maxDegrees: 90,
+    placeholders: ['37', '46', '29.74'],
+    hemisphereLabel: tool.form.latitudeHemisphereLabel,
+    hemispheres: ['N', 'S'],
+    selected: 'N'
+  },
+  {
+    key: 'lng',
+    legend: tool.form.longitudeHeading,
+    maxDegrees: 180,
+    placeholders: ['122', '25', '9.90'],
+    hemisphereLabel: tool.form.longitudeHemisphereLabel,
+    hemispheres: ['E', 'W'],
+    selected: 'W'
+  }
+]
+---
+
+<ToolShell locale={locale} toolId="dms-to-dd" content={tool} howToSteps={tool.howTo} copyJson={copyJson}>
+  <div class="tool-panel">
+    <form class="tool-form" data-tool-form autocomplete="off" novalidate>
+      {axes.map(axis => (
+        <fieldset class="tool-fieldset">
+          <legend>{axis.legend}</legend>
+          <div class="tool-field-row">
+            <div class="field">
+              <label class="field-label" for={`${axis.key}-degrees`}>{tool.form.degreesLabel}</label>
+              <input
+                class="input tool-mono"
+                id={`${axis.key}-degrees`}
+                type="number"
+                min="0"
+                max={axis.maxDegrees}
+                step="1"
+                placeholder={axis.placeholders[0]}
+                {...{ [`data-${axis.key}-degrees`]: '' }}
+              />
+            </div>
+            <div class="field">
+              <label class="field-label" for={`${axis.key}-minutes`}>{tool.form.minutesLabel}</label>
+              <input
+                class="input tool-mono"
+                id={`${axis.key}-minutes`}
+                type="number"
+                min="0"
+                max="59.99"
+                step="any"
+                placeholder={axis.placeholders[1]}
+                {...{ [`data-${axis.key}-minutes`]: '' }}
+              />
+            </div>
+            <div class="field">
+              <label class="field-label" for={`${axis.key}-seconds`}>{tool.form.secondsLabel}</label>
+              <input
+                class="input tool-mono"
+                id={`${axis.key}-seconds`}
+                type="number"
+                min="0"
+                max="59.99"
+                step="any"
+                placeholder={axis.placeholders[2]}
+                {...{ [`data-${axis.key}-seconds`]: '' }}
+              />
+            </div>
+            <div class="field">
+              <label class="field-label" for={`${axis.key}-hemisphere`}>{axis.hemisphereLabel}</label>
+              <select class="input" id={`${axis.key}-hemisphere`} {...{ [`data-${axis.key}-hemisphere`]: '' }}>
+                {axis.hemispheres.map(letter => <option value={letter} selected={letter === axis.selected}>{letter}</option>)}
+              </select>
+            </div>
+          </div>
+        </fieldset>
+      ))}
+      <p class="tool-error" role="alert" data-tool-error hidden><Icon name="info" /><span data-tool-error-text></span></p>
+      <div class="tool-actions">
+        <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="dms-to-dd">
+          {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />
+        </button>
+      </div>
+    </form>
+
+    <section class="tool-result" data-tool-result hidden aria-label={common.resultHeading}>
+      <h2 class="tool-result-label">{common.resultHeading}</h2>
+      <div class="tool-output">
+        <label class="tool-output-label" for="dd-value">{tool.result.dd}</label>
+        <div class="tool-output-row">
+          <output class="tool-output-value" id="dd-value" data-dd-value></output>
+          <button
+            class="btn btn-secondary btn-sm"
+            type="button"
+            data-copy-dd
+            data-ga-event="tool_copy"
+            data-ga-tool-id="dms-to-dd"
+          >
+            <Icon name="copy" />{common.copy}
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <ToolGuide slot="guide" head={common.guide} sections={tool.howTo} />
+</ToolShell>
+
+<script src="../../../scripts/tools/dmsToDd.ts"></script>

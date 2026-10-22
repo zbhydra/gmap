@@ -1,0 +1,31 @@
+---
+import ClinkReturnPage from './ClinkReturnPage.astro'
+import { getClinkReturnContent } from '../../i18n/clink-return'
+import { getContent, type Locale } from '../../i18n/content'
+import Layout from '../../layouts/Layout.astro'
+
+interface Props {
+  locale: Locale
+  status: 'success' | 'cancel'
+}
+
+const { locale, status } = Astro.props
+const content = getClinkReturnContent(locale)
+const copy = status === 'success' ? content.success.waiting : content.cancel
+const site = getContent(locale).site
+---
+
+<Layout
+  locale={locale}
+  title={`${copy.title} | ${site.name}`}
+  description={copy.description}
+  includeSoftwareApplicationSchema={false}
+  robots="noindex, nofollow, noarchive"
+  includeAlternateLanguageLinks={false}
+>
+  <ClinkReturnPage
+    status={status}
+    successCopy={content.success}
+    cancelCopy={content.cancel}
+  />
+</Layout>
