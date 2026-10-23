@@ -4,7 +4,7 @@ import type { ApiPageSharedContent, ApiVariantContent } from './schema'
  * API 落地页文案（en-US 基线，W4）：三个路由（Scraper / Reviews / Photos）共用一套版式。
  *
  * 端点、参数、计量与字段一律按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）与 Provider DTO 写；
- * Photos 尚无合同（「待实现，不提供占位接口」），页面只说明状态与其他端点里已有的图片字段。
+ * Photos 仅承诺有效部分交付，数量上限不保证实际交付数量或相册完整性。
  * 示例商户、电话（555-01xx）与 ID 均为虚构；价格、额度与方案名不在这里，逐字取自 pricing.ts。
  */
 
@@ -39,23 +39,23 @@ export const apiPageContent: ApiPageSharedContent = {
   },
   endpoints: {
     kicker: 'Endpoints',
-    title: { lead: 'One key. ', accent: 'Two', tail: ' endpoints.' },
-    lead: 'Search for places, then pass any result’s `fid` to the Reviews API. Both take the same API key and draw from one monthly request quota. A Photos endpoint is coming soon.',
+    title: { lead: 'One key. ', accent: 'Three', tail: ' endpoints.' },
+    lead: 'Search for places, then pass any result’s `fid` to the Reviews or Photos API. All three share one API key and monthly request quota.',
     here: 'You’re here',
     paramsLabel: 'Parameters',
     mcp: {
       title: 'Building with AI agents?',
       description:
-        'The MapsGrab MCP server brings Search and Reviews to Claude Code, Cursor, VS Code, Codex and other MCP clients — connect by signing in or with your API key.',
+        'The MapsGrab MCP server brings Search, Reviews and Photos to Claude Code, Cursor, VS Code, Codex and other MCP clients — connect by signing in or with your API key.',
       link: 'Explore MCP'
     }
   },
   chain: {
     kicker: 'Chain endpoints',
-    title: { lead: 'One ID takes you from search ', accent: 'to reviews', tail: '' },
-    lead: 'Every Search result carries its `fid`. Pass it to the Reviews API to go from a list of places to what people say about each one.',
+    title: { lead: 'One ID takes you from search ', accent: 'to reviews and photos', tail: '' },
+    lead: 'Every Search result carries its `fid`. Pass it to the Reviews or Photos API to read reviews and collect public business photo URLs.',
     label:
-      'A Search request returns places that each carry a fid; a Reviews request reuses the fid of the first place. A Photos step is marked coming soon.',
+      'Search returns places with a fid. Reviews and Photos reuse that fid to return reviews and public business photo URLs.',
     places: [
       { name: 'Ember & Oak Coffee', meta: '4.7 · 1,284 reviews' },
       { name: 'Rose City Roasters', meta: '4.6 · 892 reviews' },
@@ -76,8 +76,7 @@ export const apiPageContent: ApiPageSharedContent = {
       }
     ],
     photos: {
-      title: 'Photos',
-      note: 'A Photos endpoint is in development.'
+      note: 'Public photo URLs with partial delivery; a complete album is not guaranteed.'
     }
   },
   reference: {
@@ -102,7 +101,7 @@ export const apiPageContent: ApiPageSharedContent = {
         icon: 'gauge',
         title: 'One request per successful call',
         description:
-          'A successful call counts once, even with zero results or `partial` data. Calls that fail are not counted.'
+          'Successful Search and Reviews calls count once, including empty results. Photos partial delivery counts once regardless of photo count. Failed calls are not counted.'
       },
       {
         icon: 'key',
@@ -125,7 +124,7 @@ export const apiPageContent: ApiPageSharedContent = {
   plans: {
     kicker: 'API plans',
     title: { lead: 'Programmatic access, ', accent: 'priced by requests', tail: '' },
-    lead: 'Search, Reviews and the MCP server share one monthly request quota. Every successful call counts as one request.'
+    lead: 'Search, Reviews, Photos and the MCP server share one monthly request quota. Every successful call counts as one request.'
   },
   faq: {
     lead: 'The short answers. Anything else, support is one email away.',
@@ -200,7 +199,6 @@ export const scraperApiContent: ApiVariantContent = {
     ]
   },
   reference: {
-    kind: 'endpoint',
     shape: 'data: { places, partial, warnings }',
     params: [
       {
@@ -320,7 +318,7 @@ export const scraperApiContent: ApiVariantContent = {
       {
         question: 'How are requests counted?',
         answer:
-          'Each successful call counts as one request, whatever its page value — including searches that return no places or partial data. Failed calls are not counted. Search, Reviews and the MCP server share one monthly quota.'
+          'Each successful call counts as one request, whatever its page value — including searches that return no places or partial data. Failed calls are not counted. Search, Reviews, Photos and the MCP server share one monthly quota.'
       },
       {
         question: 'What does page do?',
@@ -400,7 +398,6 @@ export const reviewsApiContent: ApiVariantContent = {
     ]
   },
   reference: {
-    kind: 'endpoint',
     shape: 'data: { reviews, next_cursor }',
     params: [
       {
@@ -489,7 +486,7 @@ export const reviewsApiContent: ApiVariantContent = {
       {
         question: 'How are requests counted?',
         answer:
-          'Each successful call counts as one request, including calls that return no reviews. Failed calls are not counted. The quota is shared with the Scraper API and the MCP server.'
+          'Each successful call counts as one request, including calls that return no reviews. Failed calls are not counted. The quota is shared with the Scraper API, Photos API and the MCP server.'
       },
       {
         question: 'Is the data public?',
@@ -506,65 +503,79 @@ export const reviewsApiContent: ApiVariantContent = {
 
 export const photosApiContent: ApiVariantContent = {
   seo: {
-    title: 'Google Maps Photos API — Coming Soon | MapsGrab',
+    title: 'Google Maps Photos API — Business Photo URLs | MapsGrab',
     description:
-      'The MapsGrab Photos API is coming soon. Image URLs are already part of the other MapsGrab APIs: Scraper API places include a featured image, and Reviews API reviews list their attached photos.'
+      'Get public Google Maps business photo URLs by fid. Set a result limit and receive JSON with the delivered count, upstream reported total and partial delivery reason.'
   },
   hero: {
     title: { lead: 'Google Maps ', accent: 'Photos', tail: ' API' },
-    lead: 'A dedicated endpoint for Google Maps business photos is in development. Image URLs already come with the other endpoints: every Scraper API place has a featured image, and every Reviews API review lists its photos.',
-    meta: ['Featured image URL per place', 'Photo URLs per review', 'One key for Search and Reviews'],
+    lead: 'Pass a business’s fid to get public photo URLs as JSON. Set max_results to limit delivery; results are partial and do not guarantee a complete album.',
+    meta: ['Free plan: {quota}', 'Public business photo URLs', 'Shared API request quota'],
     chips: [
-      { label: 'Per place', value: 'featured_image' },
-      { label: 'Per review', value: 'images[]' }
+      { label: 'Delivery', value: 'Partial results' },
+      { label: 'Count', value: 'returned_count' }
     ]
   },
   endpoint: {
     name: 'Photos API',
-    description: 'Business photos over HTTP. Not available yet — the other endpoints already return image URLs.',
-    link: 'About the Photos API'
+    description: 'Public business photo URLs by `fid`, with a `max_results` limit and explicit partial delivery status.',
+    link: 'Explore the Photos API'
   },
   caps: {
-    title: { lead: 'Image URLs in the ', accent: 'other', tail: ' endpoints' },
-    lead: 'The Photos API isn’t available yet. These fields already return image URLs:',
+    title: { lead: 'Business ', accent: 'photos', tail: ' in JSON' },
+    lead: 'Photo URLs and delivery details in one response.',
     items: [
       {
         icon: 'image',
-        title: 'A featured image per place',
+        title: 'Photos by fid',
         description:
-          'Every Scraper API place has `featured_image`: the URL of the photo shown on its Google Maps listing, or `null` when there is none.'
+          'Use the `fid` from Search or the Place ID Finder. Each `photos` item contains a public photo `url`.'
       },
       {
-        icon: 'review',
-        title: 'Photos attached to reviews',
-        description: 'Every Reviews API review has `images`: the URLs of the photos its author attached, or an empty list.'
+        icon: 'filter',
+        title: 'Limit each request',
+        description: '`max_results` is a positive integer, default 200. It caps delivery; fewer photos may be returned. There is no page or cursor.'
       },
       {
-        icon: 'clock',
-        title: 'A Photos endpoint is next',
+        icon: 'list',
+        title: 'Read the delivery status',
         description:
-          'A dedicated endpoint for business photos is in development. Its parameters and response format haven’t been published yet.'
+          '`status` is `partial`; `reason` explains why collection stopped. `reported_total` is an upstream count or `null`, not a verified album size.'
       }
     ]
   },
   reference: {
-    kind: 'pending',
-    statusTitle: 'Photos endpoint',
-    status:
-      'There is no Photos endpoint to call yet, so there are no parameters to document. Until it ships, these fields of the other endpoints carry image URLs.',
-    fieldsTitle: 'Image fields',
-    fields: [
+    shape: '{ photos: [{url}], returned_count, reported_total, status, reason }',
+    params: [
       {
-        name: 'featured_image',
+        name: 'fid',
         type: 'string',
-        example: '"https://lh5.googleusercontent.com/p/AF1Qip…"',
-        badge: 'Scraper API'
+        required: true,
+        description: 'Business FID from Search or the Place ID Finder, in `0x…:0x…` format (12–20 hex digits per segment).'
       },
       {
-        name: 'images',
-        type: 'string[]',
-        example: '["https://lh5.googleusercontent.com/p/AF1QipN…"]',
-        badge: 'Reviews API'
+        name: 'max_results',
+        type: 'integer',
+        required: false,
+        description: 'Positive delivery limit. Default 200; does not guarantee that many photos.'
+      }
+    ],
+    groups: [
+      {
+        label: 'Photos',
+        fields: [
+          { name: 'photos', type: 'photo[]', example: '[{"url": "https://lh5.googleusercontent.com/p/AF1Qip…"}]' },
+          { name: 'url', type: 'string', example: '"https://lh5.googleusercontent.com/p/AF1Qip…"' }
+        ]
+      },
+      {
+        label: 'Delivery',
+        fields: [
+          { name: 'returned_count', type: 'integer', example: '2' },
+          { name: 'reported_total', type: 'integer | null', example: '178' },
+          { name: 'status', type: 'string', example: '"partial"' },
+          { name: 'reason', type: 'string', example: '"limit_reached"' }
+        ]
       }
     ]
   },
@@ -572,14 +583,14 @@ export const photosApiContent: ApiVariantContent = {
     title: { lead: 'Photos API ', accent: 'questions', tail: '' },
     items: [
       {
-        question: 'Is the Photos API available?',
+        question: 'How do I request business photos?',
         answer:
-          'Not yet. A dedicated endpoint for business photos is in development, and its parameters and response format haven’t been published.'
+          'POST to /photos with fid and an optional max_results. Use the same bearer API key as Search and Reviews.'
       },
       {
-        question: 'Which endpoints return image URLs?',
+        question: 'Will I get every photo?',
         answer:
-          'The Scraper API returns featured_image for every place — the URL of the photo shown on its Google Maps listing. The Reviews API returns images for every review — the photos its author attached.'
+          'A complete album is not guaranteed. Successful responses have status partial and a reason such as limit_reached, pagination_unverified or budget_exhausted. returned_count is the delivered count; reported_total is an unverified upstream count or null.'
       },
       {
         question: 'How do I get a business’s fid?',
@@ -589,7 +600,7 @@ export const photosApiContent: ApiVariantContent = {
       {
         question: 'How are requests counted?',
         answer:
-          'Scraper API and Reviews API calls count one request per successful call, image fields included. Failed calls are not counted.'
+          'Each successful partial delivery counts as one request, regardless of photo count. If no valid photos can be delivered, the call fails and is not counted. Search, Reviews, Photos and MCP share one quota.'
       },
       {
         question: 'Is the data public?',
@@ -599,7 +610,7 @@ export const photosApiContent: ApiVariantContent = {
     ]
   },
   cta: {
-    title: { lead: 'Photos are ', accent: 'coming soon', tail: '' },
-    lead: 'Scraper API results already include each place’s featured image, and Reviews API results list the photos attached to each review.'
+    title: { lead: 'Bring business ', accent: 'photos', tail: ' to your app' },
+    lead: 'One fid, public photo URLs and explicit delivery status — with the API key you already use for Search and Reviews.'
   }
 }

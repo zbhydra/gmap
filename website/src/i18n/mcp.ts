@@ -3,16 +3,15 @@ import type { McpPageContent } from './schema'
 /**
  * MCP 落地页文案（en-US 基线，W4）。
  *
- * 工具名、参数、端点与鉴权按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）：search_places / list_reviews，
+ * 工具名、参数、端点与鉴权按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）：search_places / list_reviews / list_photos，
  * 入口 /mcp/，API Key 或 OAuth access token 均以 Authorization: Bearer 携带；接入优先引导 OAuth 登录，客户端不支持时才用 API Key。
- * 照片工具尚无合同，只标 Coming soon。
  * 会话与提示词里的商户、电话（555-01xx）均为虚构；额度与价格逐字取自 pricing.ts。
  */
 export const scraperMcpContent: McpPageContent = {
   seo: {
     title: 'Google Maps Scraper MCP Server | MapsGrab',
     description:
-      'Connect AI agents to live Google Maps data with the MapsGrab MCP server: search places and read reviews from Claude Code, Cursor, VS Code, Codex or any MCP client — just sign in, no API key to paste.'
+      'Connect AI agents to Google Maps data: search places, read reviews and get public business photo URLs from Claude Code, Cursor, VS Code, Codex or any MCP client.'
   },
   clients: {
     claude: 'Claude Code',
@@ -24,7 +23,7 @@ export const scraperMcpContent: McpPageContent = {
   hero: {
     kicker: 'MCP server',
     title: { lead: 'Google Maps Scraper ', accent: 'MCP', tail: ' Server' },
-    lead: 'The MapsGrab MCP server gives AI agents live Google Maps search and reviews over one Streamable HTTP endpoint — for Claude Code, Cursor, VS Code, Codex and any other MCP client.',
+    lead: 'Give AI agents Google Maps search, reviews and public business photo URLs over one Streamable HTTP endpoint — for Claude Code, Cursor, VS Code, Codex and other MCP clients.',
     meta: ['Streamable HTTP', 'Sign in with OAuth', 'Free plan: {quota}'],
     chips: [
       { label: 'Transport', value: 'Streamable HTTP' },
@@ -151,7 +150,7 @@ export const scraperMcpContent: McpPageContent = {
   tools: {
     kicker: 'Tools',
     title: { lead: 'What the MCP server ', accent: 'exposes', tail: '' },
-    lead: 'Two tools over one endpoint, with the same inputs and results as the Scraper API and Reviews API.',
+    lead: 'Three tools over one endpoint, with the same inputs and results as the Search, Reviews and Photos APIs.',
     kind: 'Tool',
     returns: 'Returns',
     items: [
@@ -185,28 +184,34 @@ export const scraperMcpContent: McpPageContent = {
         ],
         returns: 'reviews ≤ 60 · next_cursor',
         link: 'Same data as the Reviews API'
+      },
+      {
+        name: 'list_photos',
+        icon: 'image',
+        title: 'List business photos',
+        description: 'Public photo URLs by fid with partial delivery status. A complete album is not guaranteed.',
+        args: [
+          { name: 'fid', description: 'From Search or the Place ID Finder' },
+          { name: 'max_results', description: 'Positive delivery limit, default 200' }
+        ],
+        returns: 'photos · returned_count · reported_total · status · reason',
+        link: 'Same data as the Photos API'
       }
-    ],
-    photos: {
-      title: 'Business photos',
-      description: 'A photos tool for agents is coming soon, together with the Photos API.',
-      link: 'About the Photos API'
-    }
+    ]
   },
   flow: {
     kicker: 'How it connects',
     title: { lead: 'One endpoint between your agent and ', accent: 'live Maps data', tail: '' },
     lead: 'Your client connects over Streamable HTTP and signs in through your browser. The agent discovers the tools, calls them when a prompt needs Maps data, and reads structured JSON back.',
     label:
-      'Claude Code, Cursor, VS Code, Codex and other MCP clients connect to the MapsGrab MCP endpoint, which serves the search_places and list_reviews tools. A photos tool is marked coming soon.',
+      'MCP clients connect to MapsGrab and call search_places, list_reviews and list_photos for structured Google Maps data.',
     clientsLabel: 'MCP clients',
     anyClient: 'Any MCP client',
     toolsLabel: 'Tools',
     hub: 'MapsGrab MCP',
-    photos: 'Photos',
     publicData: 'Public Google Maps data',
     resultLabel: 'result',
-    results: ['20 places', '60 reviews'],
+    results: ['20 places', '60 reviews', '2 photos'],
     steps: [
       {
         title: 'Connect',
@@ -445,7 +450,7 @@ export const scraperMcpContent: McpPageContent = {
       {
         question: 'What is the MapsGrab MCP server?',
         answer:
-          'An MCP (Model Context Protocol) server that lets AI agents search Google Maps places and read their reviews. It offers two tools, search_places and list_reviews, with the same inputs and results as the Scraper API and Reviews API.'
+          'An MCP server with search_places, list_reviews and list_photos. AI agents get the same structured data as the Search, Reviews and Photos APIs.'
       },
       {
         question: 'Which clients can connect?',
@@ -460,17 +465,17 @@ export const scraperMcpContent: McpPageContent = {
       {
         question: 'How are tool calls counted?',
         answer:
-          'Each successful tool call counts as one request against your monthly API quota — the same quota as the Scraper API and Reviews API. Calls that fail are not counted.'
+          'Each successful tool call counts as one request, including partial photo delivery. Search, Reviews, Photos and MCP share one monthly quota. Failed calls are not counted.'
       },
       {
         question: 'Can my agent get business photos?',
         answer:
-          'Not yet. A photos tool is coming soon, together with the Photos API. Search results already include each place’s featured_image URL.'
+          'Yes. Call list_photos with fid and an optional max_results (default 200). It returns public photo URLs and partial delivery details; a complete album is not guaranteed.'
       }
     ]
   },
   cta: {
     title: { lead: 'Give your agent ', accent: 'live Maps data', tail: '' },
-    lead: 'One MCP connection, two tools, structured results — search and reviews for data-aware AI workflows.'
+    lead: 'One MCP connection, three tools — search, reviews and public business photo URLs in structured results.'
   }
 }

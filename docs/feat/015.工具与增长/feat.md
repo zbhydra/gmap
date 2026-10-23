@@ -84,7 +84,7 @@ H1(= 目标搜索词)、TL;DR 结论框、分步教程(步骤编号 + 截图)、
 
 - 页面 ×5:Online Scraper(`/online-scraper/`)、Scraper API(`/google-maps-scraper-api/`)、Reviews API(`/google-maps-reviews-scraper-api/`)、Photos API(`/google-maps-photos-api/`)、Scraper MCP(`/google-maps-scraper-mcp/`)。Online 产品介绍为独立落地页,套餐在 Pricing 的 Online tab(Pricing 按 Online / Extension / API 三条产品线分 tab)。
 - 导航:桌面依次为 Extension、Online、API 下拉、Pricing;API 下拉 4 子项各带一句说明,底部注明 API 与 MCP 共用月请求额度并链到 API 套餐;移动端菜单平铺(Extension、Online、API 4 子项、Pricing、Free tools)。未开放能力的入口照常进入介绍页,带 Coming soon 标记。
-- Online 开始采集 CTA 进入 Online Scraper 工作区；API 获取 Key 与 MCP 连接类 CTA 进入 API 管理页(Scraper / Reviews API 与 MCP 2026-10-16 开放)；Photos API 单独开放，开放前其获取 Key 入口显示 Coming soon 灰化、不可触发。
+- Online 开始采集 CTA 进入 Online Scraper 工作区；Search / Reviews / Photos API 获取 Key 入口共用 API 管理页；MCP 连接入口跳至接入说明，API Key 兜底入口进入 API 管理页。Photos 页说明部分交付、数量上限与计量边界，MCP 页展示对应的照片工具。
 - 页面结构按 Atlas 定稿([README](../../design/website/README.md) §7),端点、计量与字段等事实以 [Maps 云端](../014.Maps云端/feat.md) 合同为准;最初的竞品口径素材见 `@references/D2-文章矩阵与产品矩阵.md`。
 
 ### 对比页模板(统一)

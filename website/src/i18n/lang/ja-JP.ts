@@ -2555,27 +2555,27 @@ export const site: SiteContent = {
         "kicker": "エンドポイント",
         "title": {
           "lead": "鍵は1つ。 ",
-          "accent": "2 ",
+          "accent": "3つの",
           "tail": " エンドポイント。"
         },
-        "lead": "場所を検索し、結果の `fid` をレビュー API に渡します。どちらも同じ API キーを取得し、毎月 1 つのリクエスト クォータから取得します。写真エンドポイントは近日公開予定です。",
+        "lead": "場所を検索し、結果の `fid` をレビューまたは写真 API に渡します。3つの API は同じ API キーと月間リクエスト枠を共有します。",
         "here": "あなたはここにいます",
         "paramsLabel": "パラメータ",
         "mcp": {
           "title": "AI エージェントを使用して構築しますか?",
-          "description": "MapsGrab MCP サーバーは、Claude Code、Cursor、VS Code、Codex、およびその他の MCP クライアントに検索とレビューを提供します。サインインするか、API キーを使用して接続します。",
+          "description": "1つの MCP 接続で Google Maps の場所を検索し、レビューと公開ビジネス写真の URL を取得できます。",
           "link": "MCP を探索する"
         }
       },
       "chain": {
         "kicker": "チェーンエンドポイント",
         "title": {
-          "lead": "1 つの ID で検索 ",
-          "accent": " からレビュー ",
-          "tail": " まで移動できます"
+          "lead": "",
+          "accent": "スクレイパー → レビュー / 写真",
+          "tail": ""
         },
-        "lead": "すべての検索結果には `fid` が含まれます。それをレビュー API に渡すと、場所のリストから各場所についての人々の意見が表示されます。",
-        "label": "検索リクエストは、それぞれに fid を持つ場所を返します。レビューリクエストは最初の fid を再利用します。写真のステップは近日公開予定とマークされています。",
+        "lead": "場所を検索し、結果の `fid` をレビューまたは写真 API に渡します。3つの API は同じ API キーと月間リクエスト枠を共有します。",
+        "label": "場所を検索し、結果の fid をレビューまたは写真 API に渡します。3つの API は同じ API キーと月間リクエスト枠を共有します。",
         "places": [
           {
             "name": "Ember & Oak Coffee",
@@ -2605,8 +2605,7 @@ export const site: SiteContent = {
           }
         ],
         "photos": {
-          "title": "写真",
-          "note": "写真エンドポイントは開発中です。"
+          "note": "成功時の status は partial で、reason が収集の停止理由を示します。reported_total は上流の報告数または null で、確認済みのアルバム総数ではありません。"
         }
       },
       "reference": {
@@ -2634,7 +2633,7 @@ export const site: SiteContent = {
           {
             "icon": "gauge",
             "title": "成功した呼び出しごとに 1 つのリクエスト",
-            "description": "成功した呼び出しは、結果がゼロまたは `partial` データであっても 1 回カウントされます。失敗した呼び出しはカウントされません。"
+            "description": "写真の部分取得を含め、成功した呼び出しは写真数にかかわらず1リクエストとして数えます。有効な写真を返せない場合はエラーとなり、消費しません。検索、レビュー、写真、MCP は月間枠を共有します。"
           },
           {
             "icon": "key",
@@ -2660,7 +2659,7 @@ export const site: SiteContent = {
           "accent": "リクエストによる価格設定",
           "tail": ""
         },
-        "lead": "検索、レビュー、および MCP サーバーは、1 つの月次リクエスト クォータを共有します。成功したすべての呼び出しは 1 つのリクエストとしてカウントされます。"
+        "lead": "写真の部分取得を含め、成功した呼び出しは写真数にかかわらず1リクエストとして数えます。有効な写真を返せない場合はエラーとなり、消費しません。検索、レビュー、写真、MCP は月間枠を共有します。"
       },
       "faq": {
         "lead": "短い答え。それ以外の場合は、メール 1 通でサポートが受けられます。",
@@ -2745,7 +2744,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { places, partial, warnings }",
         "params": [
           {
@@ -3001,7 +2999,7 @@ export const site: SiteContent = {
           },
           {
             "question": "リクエストはどのようにカウントされますか?",
-            "answer": "成功した各呼び出しは、ページ値に関係なく、場所や部分的なデータを返さない検索も含めて、1 つのリクエストとしてカウントされます。失敗した呼び出しはカウントされません。検索、レビュー、および MCP サーバーは、1 つの月次割り当てを共有します。"
+            "answer": "写真の部分取得を含め、成功した呼び出しは写真数にかかわらず1リクエストとして数えます。有効な写真を返せない場合はエラーとなり、消費しません。検索、レビュー、写真、MCP は月間枠を共有します。"
           },
           {
             "question": "ページって何をするの？",
@@ -3096,7 +3094,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { reviews, next_cursor }",
         "params": [
           {
@@ -3253,7 +3250,7 @@ export const site: SiteContent = {
           },
           {
             "question": "リクエストはどのようにカウントされますか?",
-            "answer": "成功した各呼び出しは、レビューを返さない呼び出しも含め、1 つのリクエストとしてカウントされます。失敗した呼び出しはカウントされません。クォータは、スクレイピング API および MCP サーバーと共有されます。"
+            "answer": "写真の部分取得を含め、成功した呼び出しは写真数にかかわらず1リクエストとして数えます。有効な写真を返せない場合はエラーとなり、消費しません。検索、レビュー、写真、MCP は月間枠を共有します。"
           },
           {
             "question": "データは公開されていますか?",
@@ -3272,8 +3269,8 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "Google Maps 写真 API — 近日公開 | MapsGrab",
-        "description": "MapsGrab 写真 API は近日公開予定です。画像 URLs はすでに他の MapsGrab API の一部です。スクレイピング API の場所には注目の画像が含まれており、レビュー API のレビューには添付された写真がリストされています。"
+        "title": "写真 API — 公開ビジネス写真の URL | MapsGrab",
+        "description": "ビジネスの fid を指定すると、公開写真の URL を JSON で取得できます。max_results は取得数の上限です。結果は部分取得で、アルバム全体は保証されません。"
       },
       "hero": {
         "title": {
@@ -3281,70 +3278,109 @@ export const site: SiteContent = {
           "accent": "写真",
           "tail": " API"
         },
-        "lead": "Google Maps ビジネス写真専用のエンドポイントは開発中です。画像 URLs は他のエンドポイントにすでに付属しています。すべての スクレイピング API 場所には注目の画像があり、すべてのレビュー API レビューにはその写真がリストされています。",
+        "lead": "ビジネスの fid を指定すると、公開写真の URL を JSON で取得できます。max_results は取得数の上限です。結果は部分取得で、アルバム全体は保証されません。",
         "meta": [
-          "1 か所あたりのアイキャッチ画像 URL",
-          "レビューごとに写真 URLs",
-          "検索とレビューのための 1 つのキー"
+          "無料プラン：{quota}",
+          "公開ビジネス写真の URL",
+          "リクエストによる価格設定"
         ],
         "chips": [
           {
-            "label": "場所ごと",
-            "value": "featured_image"
+            "label": "取得状態",
+            "value": "partial"
           },
           {
-            "label": "レビューごと",
-            "value": "images[]"
+            "label": "取得数",
+            "value": "returned_count"
           }
         ]
       },
       "endpoint": {
         "name": "写真 API",
-        "description": "HTTP を超えるビジネス写真。まだ利用できません - 他のエンドポイントはすでにイメージ URLs を返しています。",
-        "link": "写真について API"
+        "description": "ビジネスの fid を指定すると、公開写真の URL を JSON で取得できます。max_results は取得数の上限です。結果は部分取得で、アルバム全体は保証されません。",
+        "link": "写真 API を見る"
       },
       "caps": {
         "title": {
           "lead": "",
-          "accent": "other",
-          "tail": " エンドポイントのイメージ URLs"
+          "accent": "写真 API",
+          "tail": ""
         },
-        "lead": "写真 API はまだ利用できません。これらのフィールドはすでに画像 URLs を返しています。",
+        "lead": "公開ビジネス写真の URL",
         "items": [
           {
             "icon": "image",
-            "title": "場所ごとの注目の画像",
-            "description": "すべての スクレイピング API の場所には `featured_image` があります。つまり、Google Maps リストに表示されている写真の URL、または何もない場合は `null` です。"
+            "title": "fid で写真を取得",
+            "description": "検索結果または Place ID Finder の `fid` を使用します。`photos` の各項目には公開写真の `url` が含まれます。"
           },
           {
-            "icon": "review",
-            "title": "レビューに添付された写真",
-            "description": "すべてのレビュー API レビューには、`images`、つまり作成者が添付した写真の URLs、または空のリストがあります。"
+            "icon": "filter",
+            "title": "リクエストごとに上限を設定",
+            "description": "`max_results` は正の整数で、既定値は200です。上限より少ない写真が返る場合があります。ページ番号やカーソルはありません。"
           },
           {
-            "icon": "clock",
-            "title": "次は写真エンドポイントです",
-            "description": "ビジネス写真専用のエンドポイントは開発中です。そのパラメータと応答形式はまだ公開されていません。"
+            "icon": "list",
+            "title": "取得状態を確認",
+            "description": "成功時の `status` は `partial` で、`reason` が収集の停止理由を示します。`reported_total` は上流の報告数または `null` で、確認済みのアルバム総数ではありません。"
           }
         ]
       },
       "reference": {
-        "kind": "pending",
-        "statusTitle": "写真エンドポイント",
-        "status": "呼び出す Photos エンドポイントがまだないため、文書化するパラメータはありません。出荷されるまで、他のエンドポイントのこれらのフィールドにはイメージ URLs が含まれます。",
-        "fieldsTitle": "画像フィールド",
-        "fields": [
+        "shape": "{ photos: [{url}], returned_count, reported_total, status, reason }",
+        "params": [
           {
-            "name": "featured_image",
+            "name": "fid",
             "type": "string",
-            "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\"",
-            "badge": "スクレイピング API"
+            "required": true,
+            "description": "検索結果または Place ID Finder のビジネス FID。形式は `0x…:0x…` で、各部分は12～20桁の16進数です。"
           },
           {
-            "name": "images",
-            "type": "string[]",
-            "example": "[\"https://lh5.googleusercontent.com/p/AF1QipN…\"]",
-            "badge": "レビュー API"
+            "name": "max_results",
+            "type": "integer",
+            "required": false,
+            "description": "今回の取得上限。正の整数で既定値は200です。その枚数の取得は保証されません。"
+          }
+        ],
+        "groups": [
+          {
+            "label": "写真",
+            "fields": [
+              {
+                "name": "photos",
+                "type": "photo[]",
+                "example": "[{\"url\": \"https://lh5.googleusercontent.com/p/AF1Qip…\"}]"
+              },
+              {
+                "name": "url",
+                "type": "string",
+                "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\""
+              }
+            ]
+          },
+          {
+            "label": "取得状態",
+            "fields": [
+              {
+                "name": "returned_count",
+                "type": "integer",
+                "example": "2"
+              },
+              {
+                "name": "reported_total",
+                "type": "integer | null",
+                "example": "178"
+              },
+              {
+                "name": "status",
+                "type": "string",
+                "example": "\"partial\""
+              },
+              {
+                "name": "reason",
+                "type": "string",
+                "example": "\"limit_reached\""
+              }
+            ]
           }
         ]
       },
@@ -3356,12 +3392,12 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "写真 API は利用可能ですか?",
-            "answer": "まだ。ビジネス写真専用のエンドポイントは開発中ですが、そのパラメーターと応答形式はまだ公開されていません。"
+            "question": "ビジネス写真を取得するには？",
+            "answer": "/photos に fid と任意の max_results を含めて POST します。検索・レビュー API と同じ Bearer API キーを使用します。"
           },
           {
-            "question": "イメージ URLs を返すエンドポイントはどれですか?",
-            "answer": "スクレイパー API は、すべての場所に対して featured_image を返します。つまり、Google Maps リストに表示されている写真の URL です。レビュー API は、すべてのレビューの画像、つまり作成者が添付した写真を返します。"
+            "question": "アルバム全体を取得できますか？",
+            "answer": "成功時の status は partial で、reason が収集の停止理由を示します。reported_total は上流の報告数または null で、確認済みのアルバム総数ではありません。 max_results は正の整数で、既定値は200です。上限より少ない写真が返る場合があります。ページ番号やカーソルはありません。"
           },
           {
             "question": "ビジネスの FID を取得するにはどうすればよいですか?",
@@ -3369,7 +3405,7 @@ export const site: SiteContent = {
           },
           {
             "question": "リクエストはどのようにカウントされますか?",
-            "answer": "スクレイパー API およびレビュー API 呼び出しでは、成功した呼び出しごとに 1 つのリクエストがカウントされます (画像フィールドも含まれます)。失敗した呼び出しはカウントされません。"
+            "answer": "写真の部分取得を含め、成功した呼び出しは写真数にかかわらず1リクエストとして数えます。有効な写真を返せない場合はエラーとなり、消費しません。検索、レビュー、写真、MCP は月間枠を共有します。"
           },
           {
             "question": "データは公開されていますか?",
@@ -3379,17 +3415,17 @@ export const site: SiteContent = {
       },
       "cta": {
         "title": {
-          "lead": "写真は ",
-          "accent": "近日公開予定",
+          "lead": "",
+          "accent": "ビジネス写真をアプリに",
           "tail": ""
         },
-        "lead": "スクレイピング API の結果には、各場所の注目の画像がすでに含まれており、レビュー API の結果には、各レビューに添付された写真がリストされています。"
+        "lead": "既存の API キーで公開写真の URL と取得状態を取得できます。"
       }
     },
     "scraperMcp": {
       "seo": {
         "title": "Google Maps スクレイパー MCP サーバー | MapsGrab",
-        "description": "AI エージェントを MapsGrab MCP サーバーを使用してライブ Google Maps データに接続します。場所を検索し、Claude Code、Cursor、VS Code、Codex、または任意の MCP クライアントからのレビューを読みます。サインインするだけです。 API 貼り付けるキー。"
+        "description": "1つの MCP 接続で Google Maps の場所を検索し、レビューと公開ビジネス写真の URL を取得できます。"
       },
       "clients": {
         "claude": "Claude Code",
@@ -3405,7 +3441,7 @@ export const site: SiteContent = {
           "accent": "MCP",
           "tail": " サーバー"
         },
-        "lead": "MapsGrab MCP サーバーは、Claude Code、Cursor、VS Code、Codex などの 1 つの Streamable HTTP エンドポイント上で AI エージェントにライブ Google Maps 検索とレビューを提供します。 MCP クライアント。",
+        "lead": "1つの MCP 接続で Google Maps の場所を検索し、レビューと公開ビジネス写真の URL を取得できます。",
         "meta": [
           "Streamable HTTP",
           "OAuth でサインインします",
@@ -3592,7 +3628,7 @@ export const site: SiteContent = {
           "accent": "が公開するもの",
           "tail": ""
         },
-        "lead": "1 つのエンドポイント上に 2 つのツールがあり、スクレイピング API および レビュー API と同じ入力と結果が得られます。",
+        "lead": "3つのツール: Search / Reviews / Photos.",
         "kind": "道具",
         "returns": "返品",
         "items": [
@@ -3651,13 +3687,26 @@ export const site: SiteContent = {
             ],
             "returns": "reviews ≤ 60 · next_cursor",
             "link": "レビュー API と同じデータ"
+          },
+          {
+            "name": "list_photos",
+            "icon": "image",
+            "title": "fid で写真を取得",
+            "description": "ビジネスの fid を指定すると、公開写真の URL を JSON で取得できます。max_results は取得数の上限です。結果は部分取得で、アルバム全体は保証されません。",
+            "args": [
+              {
+                "name": "fid",
+                "description": "検索結果または Place ID Finder のビジネス FID。形式は `0x…:0x…` で、各部分は12～20桁の16進数です。"
+              },
+              {
+                "name": "max_results",
+                "description": "今回の取得上限。正の整数で既定値は200です。その枚数の取得は保証されません。"
+              }
+            ],
+            "returns": "photos · returned_count · reported_total · status · reason",
+            "link": "写真 API を見る"
           }
-        ],
-        "photos": {
-          "title": "ビジネス写真",
-          "description": "エージェント向けの写真ツールは、写真 API とともに近日公開される予定です。",
-          "link": "写真について API"
-        }
+        ]
       },
       "flow": {
         "kicker": "接続方法",
@@ -3667,17 +3716,17 @@ export const site: SiteContent = {
           "tail": " の間に 1 つのエンドポイント"
         },
         "lead": "クライアントは Streamable HTTP 経由で接続し、ブラウザ経由でサインインします。エージェントはツールを検出し、プロンプトでマップ データが必要なときにツールを呼び出し、構造化された JSON を読み取ります。",
-        "label": "Claude Code、Cursor、VS Code、Codex およびその他の MCP クライアントは、search_places および list_reviews ツールを提供する MapsGrab MCP エンドポイントに接続します。写真ツールは近日公開予定とマークされています。",
+        "label": "1つの MCP 接続で Google Maps の場所を検索し、レビューと公開ビジネス写真の URL を取得できます。 search_places / list_reviews / list_photos.",
         "clientsLabel": "MCP クライアント",
         "anyClient": "任意の MCP クライアント",
         "toolsLabel": "ツール",
         "hub": "MapsGrab MCP",
-        "photos": "写真",
         "publicData": "公開 Google Maps データ",
         "resultLabel": "結果",
         "results": [
           "20 か所",
-          "60 件のレビュー"
+          "60 件のレビュー",
+          "2 写真"
         ],
         "steps": [
           {
@@ -3988,7 +4037,7 @@ export const site: SiteContent = {
         "items": [
           {
             "question": "MapsGrab MCP サーバーとは何ですか?",
-            "answer": "AI エージェントが Google Maps の場所を検索し、レビューを読めるようにする MCP (モデル コンテキスト プロトコル) サーバー。これは、スクレイピング API および レビュー API と同じ入力と結果を備えた 2 つのツール search_places と list_reviews を提供します。"
+            "answer": "1つの MCP 接続で Google Maps の場所を検索し、レビューと公開ビジネス写真の URL を取得できます。 search_places / list_reviews / list_photos."
           },
           {
             "question": "どのクライアントが接続できますか?",
@@ -4000,11 +4049,11 @@ export const site: SiteContent = {
           },
           {
             "question": "ツール呼び出しはどのようにカウントされますか?",
-            "answer": "成功した各ツール呼び出しは、毎月の API 割り当てに対して 1 つのリクエストとしてカウントされます。これは、スクレイピング API およびレビュー API と同じ割り当てです。失敗した呼び出しはカウントされません。"
+            "answer": "写真の部分取得を含め、成功した呼び出しは写真数にかかわらず1リクエストとして数えます。有効な写真を返せない場合はエラーとなり、消費しません。検索、レビュー、写真、MCP は月間枠を共有します。"
           },
           {
             "question": "エージェントがビジネス写真を入手できますか?",
-            "answer": "まだ。写真ツールは、写真 API とともに近日公開されます。検索結果には、各場所の featured_image URL がすでに含まれています。"
+            "answer": "list_photos(fid, max_results): ビジネスの fid を指定すると、公開写真の URL を JSON で取得できます。max_results は取得数の上限です。結果は部分取得で、アルバム全体は保証されません。 今回の取得上限。正の整数で既定値は200です。その枚数の取得は保証されません。"
           }
         ]
       },
@@ -4014,7 +4063,7 @@ export const site: SiteContent = {
           "accent": "ライブマップデータ",
           "tail": " を提供します"
         },
-        "lead": "1 つの MCP 接続、2 つのツール、構造化された結果 — データ認識 AI ワークフローの検索とレビュー。"
+        "lead": "1つの MCP 接続で Google Maps の場所を検索し、レビューと公開ビジネス写真の URL を取得できます。"
       }
     },
     "tools": {
@@ -4725,7 +4774,7 @@ export const company: CompanyContent = {
           "構造化 JSON"
         ],
         "mcp": [
-          "2 つのツール",
+          "3つのツール",
           "Streamable HTTP",
           "OAuth または API キー"
         ]

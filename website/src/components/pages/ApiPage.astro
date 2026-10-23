@@ -4,7 +4,7 @@
  * variant 决定首屏、代码台、能力、参考区、FAQ 与 CTA；端点卡、fid 串联、要点与方案区三页共用。
  *
  * 事实按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）：REST 前缀 /api/client/maps/api，用户 API Key 以
- * Authorization: Bearer 传入，响应为 {code, data, msg} 信封；Photos 尚无合同，只展示状态与其他端点里已有的图片字段。
+ * Authorization: Bearer 传入，响应为 {code, data, msg} 信封；Photos 仅承诺有效部分交付。
  * 获取 Key 与套餐 CTA 走能力表灰化：Search / Reviews 与 API 套餐绑 scraperApi，Photos 页的获取 Key 绑 photosApi。
  * 代码台打字与串联动画由 scripts/pages/api-page.ts 驱动；无 JS 时代码与示例完整可读。
  */
@@ -40,18 +40,18 @@ const variantContent = { search: t.pages.scraperApi, reviews: t.pages.reviewsApi
 const page = variantContent[variant]
 const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
 
-/** 三个变体的路由、图标、端点与参数（端点与参数名取自 014 合同；Photos 无端点）。 */
+/** 三个变体的路由、图标、端点与参数（取自 014 合同）。 */
 const VARIANTS: ReadonlyArray<{
   key: Variant
   path: string
   icon: string
-  endpoint: string | null
+  endpoint: string
   params: readonly string[]
   capability: Capability
 }> = [
   { key: 'search', path: 'google-maps-scraper-api/', icon: 'database', endpoint: '/search', params: ['q', 'page', 'hl', 'll', 'extra'], capability: 'scraperApi' },
   { key: 'reviews', path: 'google-maps-reviews-scraper-api/', icon: 'review', endpoint: '/reviews', params: ['fid', 'cursor', 'sort_by', 'hl'], capability: 'scraperApi' },
-  { key: 'photos', path: 'google-maps-photos-api/', icon: 'image', endpoint: null, params: [], capability: 'photosApi' }
+  { key: 'photos', path: 'google-maps-photos-api/', icon: 'image', endpoint: '/photos', params: ['fid', 'max_results'], capability: 'photosApi' }
 ]
 const current = VARIANTS.find(item => item.key === variant)
 if (!current) throw new Error(`[api-page] Unknown variant: ${variant}`)
@@ -68,7 +68,7 @@ if (!freePlan) throw new Error('[api-page] pricing.ts API tab has no free plan c
 const heroMeta = page.hero.meta.map(item => item.replace('{quota}', freePlan.quota))
 
 /* ---------------------------------------------------------------------------
-   代码台样例：URL 取部署配置；Photos 页演示 Search 结果里已有的 featured_image。
+   代码台样例：URL 取部署配置。
    --------------------------------------------------------------------------- */
 const LANGS = ['curl', 'python', 'node'] as const
 type Lang = (typeof LANGS)[number]
@@ -76,7 +76,7 @@ const CODE_LANG: Record<Lang, 'bash' | 'python' | 'javascript'> = { curl: 'bash'
 const SAMPLE_FID = '0x54950a2291f60bf1:0xbeb4a5f2c3d1e0ab'
 
 interface RequestSpec {
-  path: '/search' | '/reviews'
+  path: '/search' | '/reviews' | '/photos'
   body: Record<Lang, string>
   result: { python: string; node: string }
   setup?: { python: string; node: string }
@@ -205,40 +205,32 @@ const CONSOLE: Record<Variant, { path: string; request: Record<Lang, string>; re
     ].join('\n')
   },
   photos: {
-    path: '/search',
+    path: '/photos',
     request: requestSamples({
-      path: '/search',
+      path: '/photos',
       body: {
-        curl: '{"q": "coffee shop in Portland, OR"}',
-        python: '{"q": "coffee shop in Portland, OR"}',
-        node: '{ q: "coffee shop in Portland, OR" }'
+        curl: `{"fid": "${SAMPLE_FID}", "max_results": 2}`,
+        python: '{"fid": FID, "max_results": 2}',
+        node: '{ fid, max_results: 2 }'
       },
+      setup: { python: `FID = "${SAMPLE_FID}"`, node: `const fid = "${SAMPLE_FID}";` },
       result: {
-        python: 'images = [place["featured_image"] for place in body["data"]["places"]]',
-        node: 'const images = data.places.map(place => place.featured_image);'
+        python: 'photos = body["data"]["photos"]',
+        node: 'const { photos, status, reason } = data;'
       }
     }),
     response: [
       '{',
       '  "code": 10000,',
       '  "data": {',
-      '    "places": [',
-      '      {',
-      '        "name": "Ember & Oak Coffee",',
-      `        "fid": "${SAMPLE_FID}",`,
-      '        "featured_image": "https://lh5.googleusercontent.com/p/AF1QipM…",',
-      '        …',
-      '      },',
-      '      {',
-      '        "name": "Rose City Roasters",',
-      '        "fid": "0x54950c3f8e1a2b3c:0x6d1f9e2a4b5c8f7a",',
-      '        "featured_image": "https://lh5.googleusercontent.com/p/AF1QipO…",',
-      '        …',
-      '      },',
-      '      …',
+      '    "photos": [',
+      '      {"url": "https://lh5.googleusercontent.com/p/AF1QipM…"},',
+      '      {"url": "https://lh5.googleusercontent.com/p/AF1QipO…"}',
       '    ],',
-      '    "partial": false,',
-      '    "warnings": []',
+      '    "returned_count": 2,',
+      '    "reported_total": 178,',
+      '    "status": "partial",',
+      '    "reason": "limit_reached"',
       '  },',
       '  "msg": ""',
       '}'
@@ -397,7 +389,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
                 {item.key === variant && <span class="badge">{shared.endpoints.here}</span>}
                 {!capabilities[item.capability] && <SoonBadge locale={locale} />}
               </div>
-              {item.endpoint && <code class="api-ep-path"><b>POST</b>{item.endpoint}</code>}
+              <code class="api-ep-path"><b>POST</b>{item.endpoint}</code>
               <h3>{variantContent[item.key].endpoint.name}</h3>
               <p><CodeText text={variantContent[item.key].endpoint.description} /></p>
               {item.params.length > 0 && (
@@ -441,7 +433,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
       </div>
     </section>
 
-    <!-- ④ fid 串联（恒暗主题岛）：Search → Reviews；Photos 步骤标 Coming soon，不写接口 -->
+    <!-- ④ fid 串联（恒暗主题岛）：Search → Reviews / Photos -->
     <section class="section api-chain scheme-dark has-deco" id="chain" data-inview>
       <div class="deco" aria-hidden="true">
         <div class="bg-grid api-chain-grid"></div>
@@ -498,16 +490,17 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
             </ul>
           </article>
 
-          <div class="chain-link chain-link--b is-idle">
+          <div class="chain-link chain-link--b">
             <span class="chain-track"></span>
           </div>
 
-          <article class="chain-step chain-photos" data-reveal>
+          <article class="chain-step" data-reveal>
             <header class="chain-head">
               <span class="chain-num">03</span>
-              <span class="chain-ep">{shared.chain.photos.title}</span>
+              <code class="chain-ep"><b>POST</b>/photos</code>
               {!capabilities.photosApi && <SoonBadge locale={locale} />}
             </header>
+            <div class="chain-req"><JsonLine source={`{"fid": "${SAMPLE_FID}", "max_results": 6}`} /></div>
             <div class="chain-photos-grid">
               {PHOTO_TONES.map(tone => <i style={`--tone: var(${tone})`}></i>)}
             </div>
@@ -517,7 +510,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
       </div>
     </section>
 
-    <!-- ⑤ 参考：请求参数 + 响应字段（Photos 为状态说明 + 已有图片字段） -->
+    <!-- ⑤ 参考：请求参数 + 响应字段 -->
     <section class="section" id="reference">
       <div class="container">
         <header class="section-head section-head--left api-ref-head" data-stagger="80">
@@ -527,121 +520,81 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
         </header>
 
         <div class="api-ref-grid" data-stagger="120">
-          {reference.kind === 'endpoint' ? (
-            <>
-              <div class="api-ref-card card" data-reveal>
-                <div class="api-ref-top">
-                  <span class="icon-tile"><Icon name="send" /></span>
-                  <div>
-                    <h3>{shared.reference.request}</h3>
-                    <code class="api-ep-path"><b>POST</b>{sample.path}</code>
-                  </div>
-                </div>
-                <div class="api-base">
-                  <span>{shared.reference.baseUrl}</span>
-                  <code>{API_BASE_URL}</code>
-                  <button class="api-copy-btn" type="button" aria-label={shared.reference.copyBaseUrl} data-copy={API_BASE_URL}>
-                    <Icon name="copy" class="icon--sm" />
-                  </button>
-                </div>
-                <div class="dtable-wrap">
-                  <table class="dtable api-params">
-                    <thead>
-                      <tr><th>{shared.reference.columns.parameter}</th><th>{shared.reference.columns.type}</th><th>{shared.reference.columns.description}</th></tr>
-                    </thead>
-                    <tbody>
-                      {reference.params.map(param => (
-                        <tr>
-                          <td><code class="api-name">{param.name}</code>{param.required && <span class="badge badge--pin api-tag">{shared.reference.required}</span>}</td>
-                          <td class="cell-mono">{param.type}</td>
-                          <td><CodeText text={param.description} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+          <div class="api-ref-card card" data-reveal>
+            <div class="api-ref-top">
+              <span class="icon-tile"><Icon name="send" /></span>
+              <div>
+                <h3>{shared.reference.request}</h3>
+                <code class="api-ep-path"><b>POST</b>{sample.path}</code>
               </div>
-
-              <div class="api-ref-card card" data-reveal data-tabs>
-                <div class="api-ref-top">
-                  <span class="icon-tile"><Icon name="braces" /></span>
-                  <div>
-                    <h3>{shared.reference.response}</h3>
-                    <code class="api-ep-path api-ep-path--muted">{reference.shape}</code>
-                  </div>
-                </div>
-                <div class="seg api-groups" role="tablist" aria-label={shared.reference.groupsLabel}>
-                  <span class="seg-thumb" aria-hidden="true"></span>
-                  {reference.groups.map((group, index) => (
-                    <button
-                      class="seg-btn"
-                      type="button"
-                      role="tab"
-                      id={`api-group-tab-${index}`}
-                      aria-controls={`api-group-${index}`}
-                      aria-selected={index === 0 ? 'true' : 'false'}
-                    >
-                      {group.label} <small>{group.fields.length}</small>
-                    </button>
+            </div>
+            <div class="api-base">
+              <span>{shared.reference.baseUrl}</span>
+              <code>{API_BASE_URL}</code>
+              <button class="api-copy-btn" type="button" aria-label={shared.reference.copyBaseUrl} data-copy={API_BASE_URL}>
+                <Icon name="copy" class="icon--sm" />
+              </button>
+            </div>
+            <div class="dtable-wrap">
+              <table class="dtable api-params">
+                <thead>
+                  <tr><th>{shared.reference.columns.parameter}</th><th>{shared.reference.columns.type}</th><th>{shared.reference.columns.description}</th></tr>
+                </thead>
+                <tbody>
+                  {reference.params.map(param => (
+                    <tr>
+                      <td><code class="api-name">{param.name}</code>{param.required && <span class="badge badge--pin api-tag">{shared.reference.required}</span>}</td>
+                      <td class="cell-mono">{param.type}</td>
+                      <td><CodeText text={param.description} /></td>
+                    </tr>
                   ))}
-                </div>
-                {reference.groups.map((group, index) => (
-                  <div class="dtable-wrap api-fields-wrap" role="tabpanel" id={`api-group-${index}`} aria-labelledby={`api-group-tab-${index}`} hidden={index !== 0}>
-                    <table class="dtable api-fields">
-                      <thead>
-                        <tr><th>{shared.reference.columns.field}</th><th>{shared.reference.columns.type}</th><th>{shared.reference.columns.example}</th></tr>
-                      </thead>
-                      <tbody>
-                        {group.fields.map((field, row) => (
-                          <tr style={`--i: ${row}`}>
-                            <td><code class="api-name">{field.name}</code>{field.badge && <span class="badge badge--muted api-tag">{field.badge}</span>}</td>
-                            <td class="cell-mono">{field.type}</td>
-                            <td class="cell-mono" title={field.example}>{field.example}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <div class="api-ref-card card" data-reveal>
-                <div class="api-ref-top">
-                  <span class="icon-tile"><Icon name="clock" /></span>
-                  <div>
-                    <h3>{reference.statusTitle}</h3>
-                    {!capabilities.photosApi && <SoonBadge locale={locale} />}
-                  </div>
-                </div>
-                <p class="api-ref-status">{reference.status}</p>
-              </div>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-              <div class="api-ref-card card" data-reveal>
-                <div class="api-ref-top">
-                  <span class="icon-tile"><Icon name="image" /></span>
-                  <div><h3>{reference.fieldsTitle}</h3></div>
-                </div>
-                <div class="dtable-wrap">
-                  <table class="dtable api-fields">
-                    <thead>
-                      <tr><th>{shared.reference.columns.field}</th><th>{shared.reference.columns.type}</th><th>{shared.reference.columns.example}</th></tr>
-                    </thead>
-                    <tbody>
-                      {reference.fields.map((field, row) => (
-                        <tr style={`--i: ${row}`}>
-                          <td><code class="api-name">{field.name}</code>{field.badge && <span class="badge badge--muted api-tag">{field.badge}</span>}</td>
-                          <td class="cell-mono">{field.type}</td>
-                          <td class="cell-mono" title={field.example}>{field.example}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+          <div class="api-ref-card card" data-reveal data-tabs>
+            <div class="api-ref-top">
+              <span class="icon-tile"><Icon name="braces" /></span>
+              <div>
+                <h3>{shared.reference.response}</h3>
+                <code class="api-ep-path api-ep-path--muted">{reference.shape}</code>
               </div>
-            </>
-          )}
+            </div>
+            <div class="seg api-groups" role="tablist" aria-label={shared.reference.groupsLabel}>
+              <span class="seg-thumb" aria-hidden="true"></span>
+              {reference.groups.map((group, index) => (
+                <button
+                  class="seg-btn"
+                  type="button"
+                  role="tab"
+                  id={`api-group-tab-${index}`}
+                  aria-controls={`api-group-${index}`}
+                  aria-selected={index === 0 ? 'true' : 'false'}
+                >
+                  {group.label} <small>{group.fields.length}</small>
+                </button>
+              ))}
+            </div>
+            {reference.groups.map((group, index) => (
+              <div class="dtable-wrap api-fields-wrap" role="tabpanel" id={`api-group-${index}`} aria-labelledby={`api-group-tab-${index}`} hidden={index !== 0}>
+                <table class="dtable api-fields">
+                  <thead>
+                    <tr><th>{shared.reference.columns.field}</th><th>{shared.reference.columns.type}</th><th>{shared.reference.columns.example}</th></tr>
+                  </thead>
+                  <tbody>
+                    {group.fields.map((field, row) => (
+                      <tr style={`--i: ${row}`}>
+                        <td><code class="api-name">{field.name}</code>{field.badge && <span class="badge badge--muted api-tag">{field.badge}</span>}</td>
+                        <td class="cell-mono">{field.type}</td>
+                        <td class="cell-mono" title={field.example}>{field.example}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
         </div>
 
         <ul class="api-notes" role="list" data-stagger="70">
@@ -1327,14 +1280,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     }
   }
 
-  .chain-link.is-idle {
-    opacity: 0.45;
-  }
-
-  .chain-link.is-idle .chain-track::before {
-    animation: none;
-  }
-
   .chain-rail {
     position: absolute;
     inset: 0;
@@ -1435,11 +1380,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     height: 13px;
   }
 
-  /* Photos 步骤：端点未提供，占位图块保持淡色，不参与相位 */
-  .chain-photos {
-    border-style: dashed;
-  }
-
   .chain-photos-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1455,7 +1395,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     background:
       radial-gradient(120% 80% at 30% 18%, color-mix(in srgb, var(--tone) 55%, transparent), transparent 60%),
       linear-gradient(160deg, color-mix(in srgb, var(--tone) 55%, var(--code-bg)), color-mix(in srgb, var(--tone) 18%, var(--code-bg)));
-    opacity: 0.22;
   }
 
   /* 每格一道远山剪影示意照片 */
@@ -1520,12 +1459,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     font-size: var(--fs-lead);
     font-weight: 650;
     letter-spacing: -0.015em;
-  }
-
-  .api-ref-status {
-    color: var(--text-2);
-    font-size: 15px;
-    line-height: 1.65;
   }
 
   .api-base {

@@ -2,34 +2,26 @@
  * API / MCP 落地页 e2e（W4）：Scraper / Reviews / Photos API 与 MCP 四个路由。
  *
  * 验收口径：页面可打开、H1 正确，定价入口是带 API tab 参数的真链接，输出 FAQPage 结构化数据；
- * 获取 Key 与 API 套餐入口受 lib/capabilities.ts 控制：Scraper / Reviews API 与 MCP 已开放，获取 Key 直达
- * Dashboard API 管理页，套餐卡免费档进 API 管理页、付费档进 Pricing 的 API tab；Photos 未交付，其获取 Key
- * 渲染为 aria-disabled 按钮（无 href、无埋点属性，点击 / 回车 / 空格都不跳转、不发请求）；
- * 代码台与接入配置的复制内容跟随所选 tab。
+ * Search / Reviews / Photos 获取 Key 直达 Dashboard API 管理页，MCP 连接跳到接入段；
+ * 套餐卡免费档进 API 管理页、付费档进 Pricing 的 API tab。代码复制内容跟随所选 tab，
+ * Photos 参数、部分交付字段与 MCP 照片工具在各语言中保持一致。
  */
-import { expect, test, type Request } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
+import { localePaths } from '../src/i18n/ui'
 import { registerE2eBrowserIdentity } from '../scripts/playwright-browser-identity.mjs'
 
 registerE2eBrowserIdentity(test)
 
-/** 点击后不应出现的请求类型（接口调用、埋点信标、长连接）。 */
-const ACTION_REQUEST_TYPES = new Set(['fetch', 'xhr', 'ping', 'eventsource', 'websocket'])
 /**
- * 与按钮无关的后台请求：Vite dev server 的 HMR / 依赖预构建通道（构建产物里不存在），
- * 以及站级首次访问打点（ensureDeviceId 完成后异步发出，可能落在交互窗口内）。
- */
-const BACKGROUND_REQUEST = /\/(@vite|@id|@fs)\/|__vite_ping|\/node_modules\/\.vite\/|\/api\/client\/mark\/record/
-
-/**
- * 路由、data-cta 前缀、H1、控制主按钮的能力键及其当前是否开放，以及首屏 / 收尾主按钮的 data-cta 后缀与目标。
+ * 路由、data-cta 前缀、H1，以及首屏 / 收尾主按钮的 data-cta 后缀与目标。
  * API 三页主按钮是获取 Key；MCP 页主按钮跳接入段（OAuth 优先），取 Key 只在接入段兜底卡里。
  */
 const PAGES = [
-  { path: '/google-maps-scraper-api/', id: 'google-maps-scraper-api', h1: /Google Maps Scraper API/i, capability: 'scraperApi', keyOpen: true, primary: 'api-dashboard', primaryHref: '/dashboard/api/' },
-  { path: '/google-maps-reviews-scraper-api/', id: 'google-maps-reviews-scraper-api', h1: /Google Maps Reviews Scraper API/i, capability: 'scraperApi', keyOpen: true, primary: 'api-dashboard', primaryHref: '/dashboard/api/' },
-  { path: '/google-maps-photos-api/', id: 'google-maps-photos-api', h1: /Google Maps Photos API/i, capability: 'photosApi', keyOpen: false, primary: 'api-dashboard', primaryHref: '/dashboard/api/' },
-  { path: '/google-maps-scraper-mcp/', id: 'google-maps-scraper-mcp', h1: /Google Maps Scraper MCP Server/i, capability: 'mcp', keyOpen: true, primary: 'setup', primaryHref: '#setup' }
+  { path: '/google-maps-scraper-api/', id: 'google-maps-scraper-api', h1: /Google Maps Scraper API/i, primary: 'api-dashboard', primaryHref: '/dashboard/api/' },
+  { path: '/google-maps-reviews-scraper-api/', id: 'google-maps-reviews-scraper-api', h1: /Google Maps Reviews Scraper API/i, primary: 'api-dashboard', primaryHref: '/dashboard/api/' },
+  { path: '/google-maps-photos-api/', id: 'google-maps-photos-api', h1: /Google Maps Photos API/i, primary: 'api-dashboard', primaryHref: '/dashboard/api/' },
+  { path: '/google-maps-scraper-mcp/', id: 'google-maps-scraper-mcp', h1: /Google Maps Scraper MCP Server/i, primary: 'setup', primaryHref: '#setup' }
 ]
 
 test.describe('API / MCP Landing Pages', () => {
@@ -49,21 +41,16 @@ test.describe('API / MCP Landing Pages', () => {
     }
   })
 
-  test('open key and plan CTAs link to Dashboard / Pricing, unavailable ones are inert buttons', async ({ page }) => {
+  test('key and plan CTAs link to Dashboard / Pricing', async ({ page }) => {
     for (const landing of PAGES) {
       await page.goto(landing.path, { waitUntil: 'networkidle' })
       // 首屏 + 收尾 CTA 主按钮
       const keyLinks = page.locator(`main a[data-cta="${landing.id}-hero-${landing.primary}"], main a[data-cta="${landing.id}-cta-${landing.primary}"]`)
-      const keyButtons = page.locator(`main button[data-capability="${landing.capability}"]`)
-      if (landing.keyOpen) {
-        await expect(keyLinks).toHaveCount(2)
-        expect(await keyLinks.evaluateAll(links => links.map(link => link.getAttribute('href')))).toEqual([landing.primaryHref, landing.primaryHref])
-        await expect(keyButtons).toHaveCount(0)
-      } else {
-        await expect(keyLinks).toHaveCount(0)
-        expect(await keyButtons.count(), `expected grayed key CTAs on ${landing.path}`).toBeGreaterThanOrEqual(2)
-      }
-      if (landing.capability === 'mcp') {
+      await expect(keyLinks).toHaveCount(2)
+      expect(await keyLinks.evaluateAll(links => links.map(link => link.getAttribute('href')))).toEqual([landing.primaryHref, landing.primaryHref])
+      await expect(page.locator('main button[data-capability]')).toHaveCount(0)
+      await expect(page.locator('a[href$="/google-maps-photos-api/"].is-unavailable')).toHaveCount(0)
+      if (landing.primary === 'setup') {
         // OAuth 不可用的客户端走 API Key 兜底
         await expect(page.locator(`#setup a[data-cta="${landing.id}-setup-api-dashboard"]`)).toHaveAttribute('href', '/dashboard/api/')
       } else {
@@ -74,42 +61,51 @@ test.describe('API / MCP Landing Pages', () => {
         expect(freeHref).toBe('/dashboard/api/')
         for (const href of paidHrefs) expect(href).toMatch(/^\/pricing\/\?product_kind=maps_api&/)
       }
-      const inert = page.locator('main button[data-capability]')
-      const urlBefore = page.url()
-      // 只记跳转与数据 / 埋点类请求；浏览器自行补取的 favicon 等静态资源与后台请求都和按钮无关。
-      const requests: string[] = []
-      const onRequest = (request: Request) => {
-        if (BACKGROUND_REQUEST.test(request.url())) return
-        if (request.isNavigationRequest() || ACTION_REQUEST_TYPES.has(request.resourceType())) requests.push(request.url())
+      if (landing.id === 'google-maps-photos-api') {
+        await keyLinks.first().click()
+        await expect(page).toHaveURL(/\/dashboard\/api\/$/)
       }
-      page.on('request', onRequest)
-      for (let i = 0; i < (await inert.count()); i += 1) {
-        const button = inert.nth(i)
-        await expect(button).toHaveAttribute('aria-disabled', 'true')
-        await expect(button).not.toHaveAttribute('href')
-        await expect(button).not.toHaveAttribute('data-cta')
-        // aria-disabled 会被 Playwright 视为不可操作，用 force 触发真实 pointer 事件（点击仍应无任何效果）
-        await button.click({ force: true })
-        await button.focus()
-        await page.keyboard.press('Enter')
-        await page.keyboard.press('Space')
-      }
-      // 事件循环同步点（不是固定等待）：最后一次按键排进页面的同步、微任务与 0 延时任务都跑完后再停止记录请求
-      await page.evaluate(() => new Promise<void>(resolve => setTimeout(() => resolve())))
-      page.off('request', onRequest)
-      expect(page.url(), `expected URL unchanged on ${landing.path}`).toBe(urlBefore)
-      expect(requests, `expected no requests on ${landing.path}`).toEqual([])
     }
   })
 
   test('console copy button follows the selected request language', async ({ page }) => {
-    await page.goto('/google-maps-scraper-api/')
-    const copy = page.locator('[data-api-copy]')
-    await expect(copy).toHaveAttribute('data-copy', /^curl .*\/api\/client\/maps\/api\/search/)
-    await page.locator('#api-lang-python').click()
-    await expect(copy).toHaveAttribute('data-copy', /^import os\nimport requests/)
-    await page.locator('#api-lang-node').click()
-    await expect(copy).toHaveAttribute('data-copy', /const res = await fetch\(".*\/search"/)
+    for (const landing of PAGES.filter(item => item.primary === 'api-dashboard')) {
+      await page.goto(landing.path)
+      const endpoint = landing.id === 'google-maps-scraper-api' ? 'search' : landing.id === 'google-maps-reviews-scraper-api' ? 'reviews' : 'photos'
+      const copy = page.locator('[data-api-copy]')
+      await expect(copy).toHaveAttribute('data-copy', new RegExp(`^curl .*\\/api\\/client\\/maps\\/api\\/${endpoint}`))
+      await page.locator('#api-lang-python').click()
+      await expect(copy).toHaveAttribute('data-copy', /^import os\nimport requests/)
+      await expect(copy).toHaveAttribute('data-copy', new RegExp(`/${endpoint}"`))
+      await page.locator('#api-lang-node').click()
+      await expect(copy).toHaveAttribute('data-copy', new RegExp(`const res = await fetch\\(".*/${endpoint}"`))
+      if (endpoint === 'photos') await expect(copy).toHaveAttribute('data-copy', /max_results: 2/)
+    }
+  })
+
+  test('Photos API and MCP expose the photos contract in every locale', async ({ page }) => {
+    const pageErrors: string[] = []
+    page.on('pageerror', error => pageErrors.push(error.message))
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    for (const path of Object.values(localePaths)) {
+      const prefix = path ? `/${path}` : ''
+      await page.goto(`${prefix}/google-maps-photos-api/`)
+      await expect(page.locator('main a[data-cta="google-maps-photos-api-hero-api-dashboard"]')).toHaveAttribute('href', `${prefix}/dashboard/api/`)
+      await expect(page.locator('[data-api-copy]')).toHaveAttribute('data-copy', /\/photos[\s\S]*"fid"[\s\S]*"max_results": 2/)
+      expect(await page.locator('#reference .api-params .api-name').allTextContents()).toEqual(['fid', 'max_results'])
+      await page.locator('#api-group-tab-1').click()
+      expect(await page.locator('#api-group-1 .api-name').allTextContents()).toEqual(['returned_count', 'reported_total', 'status', 'reason'])
+      await expect(page.locator('#api-group-1')).toContainText('partial')
+      await expect(page.locator('main .soon-badge')).toHaveCount(0)
+      await page.goto(`${prefix}/google-maps-scraper-mcp/`)
+      const tool = page.locator('#tools .mcp-tool').filter({ has: page.locator('.mcp-tool-name', { hasText: 'list_photos' }) })
+      await expect(tool).toHaveCount(1)
+      await expect(tool.locator('a')).toHaveAttribute('href', `${prefix}/google-maps-photos-api/`)
+      await expect(tool.locator('.mcp-tool-args')).toContainText('max_results')
+      await expect(page.locator('[data-topo-tool="list_photos"]')).toHaveCount(1)
+      await expect(page.locator('main .soon-badge')).toHaveCount(0)
+    }
+    expect(pageErrors).toEqual([])
   })
 
   test('MCP setup tabs switch client configs and expose the endpoint', async ({ page }) => {

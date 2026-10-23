@@ -2555,27 +2555,27 @@ export const site: SiteContent = {
         "kicker": "엔드포인트",
         "title": {
           "lead": "열쇠 하나. ",
-          "accent": "두 개의",
+          "accent": "세 가지",
           "tail": " 끝점."
         },
-        "lead": "장소를 검색한 다음 결과 `fid`를 리뷰 API에 전달하세요. 둘 다 동일한 API 키를 사용하고 하나의 월간 요청 할당량에서 가져옵니다. 포토 엔드포인트가 곧 출시될 예정입니다.",
+        "lead": "장소를 검색한 뒤 결과의 `fid`를 리뷰 또는 사진 API에 전달하세요. 세 API는 동일한 API 키와 월간 요청 한도를 공유합니다.",
         "here": "당신은 여기 있어요",
         "paramsLabel": "매개변수",
         "mcp": {
           "title": "AI 에이전트로 구축하시나요?",
-          "description": "MapsGrab MCP 서버는 Claude Code, Cursor, VS Code, Codex 및 기타 MCP 클라이언트에 검색 및 리뷰 기능을 제공합니다. 로그인하거나 API 키를 사용하여 연결하세요.",
+          "description": "하나의 MCP 연결로 Google Maps 장소를 검색하고 리뷰와 공개 비즈니스 사진 URL을 가져오세요.",
           "link": "탐색 MCP"
         }
       },
       "chain": {
         "kicker": "체인 끝점",
         "title": {
-          "lead": "하나의 ID로 검색 ",
-          "accent": "부터 리뷰",
-          "tail": "까지 이동 가능"
+          "lead": "",
+          "accent": "스크레이퍼 → 리뷰 / 사진",
+          "tail": ""
         },
-        "lead": "모든 검색 결과에는 `fid`이 표시됩니다. 리뷰 API로 전달하여 장소 목록에서 각 장소에 대한 사람들의 평가를 확인하세요.",
-        "label": "검색 요청은 각각 FID가 있는 장소를 반환합니다. 리뷰 요청은 처음의 FID를 재사용합니다. 사진 단계가 곧 출시로 표시됩니다.",
+        "lead": "장소를 검색한 뒤 결과의 `fid`를 리뷰 또는 사진 API에 전달하세요. 세 API는 동일한 API 키와 월간 요청 한도를 공유합니다.",
+        "label": "장소를 검색한 뒤 결과의 fid를 리뷰 또는 사진 API에 전달하세요. 세 API는 동일한 API 키와 월간 요청 한도를 공유합니다.",
         "places": [
           {
             "name": "Ember & Oak Coffee",
@@ -2605,8 +2605,7 @@ export const site: SiteContent = {
           }
         ],
         "photos": {
-          "title": "사진",
-          "note": "Photos 엔드포인트가 개발 중입니다."
+          "note": "성공 응답의 status는 partial이며 reason은 수집이 멈춘 이유를 나타냅니다. reported_total은 상위 서비스가 보고한 수 또는 null이며, 검증된 전체 앨범 수가 아닙니다."
         }
       },
       "reference": {
@@ -2634,7 +2633,7 @@ export const site: SiteContent = {
           {
             "icon": "gauge",
             "title": "성공적인 호출당 하나의 요청",
-            "description": "성공적인 호출은 결과가 없거나 `partial` 데이터가 있어도 한 번 계산됩니다. 실패한 통화는 계산되지 않습니다."
+            "description": "사진 일부 반환을 포함해 성공한 호출은 사진 수와 관계없이 요청 1회로 계산합니다. 유효한 사진을 반환할 수 없으면 오류가 발생하며 차감하지 않습니다. 검색, 리뷰, 사진, MCP는 월간 한도를 공유합니다."
           },
           {
             "icon": "key",
@@ -2660,7 +2659,7 @@ export const site: SiteContent = {
           "accent": "요청에 따라 가격 책정",
           "tail": ""
         },
-        "lead": "검색, 리뷰 및 MCP 서버는 하나의 월별 요청 할당량을 공유합니다. 모든 성공적인 호출은 하나의 요청으로 계산됩니다."
+        "lead": "사진 일부 반환을 포함해 성공한 호출은 사진 수와 관계없이 요청 1회로 계산합니다. 유효한 사진을 반환할 수 없으면 오류가 발생하며 차감하지 않습니다. 검색, 리뷰, 사진, MCP는 월간 한도를 공유합니다."
       },
       "faq": {
         "lead": "짧은 답변. 그 밖의 지원은 이메일 한 번으로 가능합니다.",
@@ -2745,7 +2744,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { places, partial, warnings }",
         "params": [
           {
@@ -3001,7 +2999,7 @@ export const site: SiteContent = {
           },
           {
             "question": "요청은 어떻게 계산되나요?",
-            "answer": "성공적인 각 호출은 페이지 값에 관계없이 하나의 요청으로 계산됩니다. 여기에는 장소를 반환하지 않거나 부분 데이터를 반환하는 검색도 포함됩니다. 실패한 통화는 계산되지 않습니다. 검색, 리뷰 및 MCP 서버는 하나의 월별 할당량을 공유합니다."
+            "answer": "사진 일부 반환을 포함해 성공한 호출은 사진 수와 관계없이 요청 1회로 계산합니다. 유효한 사진을 반환할 수 없으면 오류가 발생하며 차감하지 않습니다. 검색, 리뷰, 사진, MCP는 월간 한도를 공유합니다."
           },
           {
             "question": "페이지는 무엇을 하나요?",
@@ -3096,7 +3094,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { reviews, next_cursor }",
         "params": [
           {
@@ -3253,7 +3250,7 @@ export const site: SiteContent = {
           },
           {
             "question": "요청은 어떻게 계산되나요?",
-            "answer": "리뷰를 반환하지 않는 호출을 포함하여 성공한 각 호출은 하나의 요청으로 계산됩니다. 실패한 통화는 계산되지 않습니다. 할당량은 수집 API 및 MCP 서버와 공유됩니다."
+            "answer": "사진 일부 반환을 포함해 성공한 호출은 사진 수와 관계없이 요청 1회로 계산합니다. 유효한 사진을 반환할 수 없으면 오류가 발생하며 차감하지 않습니다. 검색, 리뷰, 사진, MCP는 월간 한도를 공유합니다."
           },
           {
             "question": "데이터가 공개되나요?",
@@ -3272,8 +3269,8 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "Google Maps 사진 API — 출시 예정 | MapsGrab",
-        "description": "MapsGrab 사진 API이 곧 제공될 예정입니다. 이미지 URLs는 이미 다른 MapsGrab API의 일부입니다. 수집 API 장소에는 주요 이미지가 포함되어 있으며 리뷰 API 리뷰에는 첨부된 사진이 나열됩니다."
+        "title": "사진 API — 공개 비즈니스 사진 URL | MapsGrab",
+        "description": "비즈니스의 fid로 공개 사진 URL을 JSON으로 받으세요. max_results는 반환 수의 상한이며, 결과는 일부 사진이므로 전체 앨범을 보장하지 않습니다."
       },
       "hero": {
         "title": {
@@ -3281,70 +3278,109 @@ export const site: SiteContent = {
           "accent": "사진",
           "tail": " API"
         },
-        "lead": "Google Maps 비즈니스 사진을 위한 전용 엔드포인트가 개발 중입니다. 이미지 URLs에는 이미 다른 엔드포인트가 있습니다. 모든 수집 API 장소에는 추천 이미지가 있고 모든 리뷰 API 리뷰에는 해당 사진이 나열되어 있습니다.",
+        "lead": "비즈니스의 fid로 공개 사진 URL을 JSON으로 받으세요. max_results는 반환 수의 상한이며, 결과는 일부 사진이므로 전체 앨범을 보장하지 않습니다.",
         "meta": [
-          "장소당 추천 이미지 URL",
-          "리뷰당 사진 URLs",
-          "검색 및 리뷰를 위한 하나의 열쇠"
+          "무료 플랜: {quota}",
+          "공개 비즈니스 사진 URL",
+          "요청에 따라 가격 책정"
         ],
         "chips": [
           {
-            "label": "장소당",
-            "value": "featured_image"
+            "label": "반환 상태",
+            "value": "partial"
           },
           {
-            "label": "리뷰당",
-            "value": "images[]"
+            "label": "반환 수",
+            "value": "returned_count"
           }
         ]
       },
       "endpoint": {
         "name": "사진 API",
-        "description": "HTTP 이상의 업체 사진. 아직 사용할 수 없습니다. 다른 엔드포인트는 이미 이미지 URLs를 반환합니다.",
-        "link": "사진 정보 API"
+        "description": "비즈니스의 fid로 공개 사진 URL을 JSON으로 받으세요. max_results는 반환 수의 상한이며, 결과는 일부 사진이므로 전체 앨범을 보장하지 않습니다.",
+        "link": "사진 API 살펴보기"
       },
       "caps": {
         "title": {
           "lead": "",
-          "accent": "other",
-          "tail": " 엔드포인트의 이미지 URLs"
+          "accent": "사진 API",
+          "tail": ""
         },
-        "lead": "사진 API은 아직 사용할 수 없습니다. 이 필드는 이미 이미지 URLs를 반환합니다.",
+        "lead": "공개 비즈니스 사진 URL",
         "items": [
           {
             "icon": "image",
-            "title": "장소별 추천 이미지",
-            "description": "모든 수집 API 장소에는 `featured_image`이 있습니다: Google Maps 목록에 표시된 사진의 URL 또는 목록이 없는 경우 `null`입니다."
+            "title": "fid로 사진 가져오기",
+            "description": "검색 결과 또는 Place ID Finder의 `fid`를 사용하세요. `photos`의 각 항목에는 공개 사진의 `url`이 포함됩니다."
           },
           {
-            "icon": "review",
-            "title": "리뷰에 첨부된 사진",
-            "description": "모든 리뷰 API 리뷰에는 `images`이 있습니다. 작성자가 첨부한 사진의 URLs 또는 빈 목록입니다."
+            "icon": "filter",
+            "title": "요청별 반환 수 제한",
+            "description": "`max_results`는 양의 정수이며 기본값은 200입니다. 실제 반환 수는 더 적을 수 있습니다. 페이지 번호나 커서는 제공하지 않습니다."
           },
           {
-            "icon": "clock",
-            "title": "다음은 Photos 엔드포인트입니다.",
-            "description": "비즈니스 사진 전용 엔드포인트가 개발 중입니다. 매개변수와 응답 형식은 아직 공개되지 않았습니다."
+            "icon": "list",
+            "title": "반환 상태 확인",
+            "description": "성공 응답의 `status`는 `partial`이며 `reason`은 수집이 멈춘 이유를 나타냅니다. `reported_total`은 상위 서비스가 보고한 수 또는 `null`이며, 검증된 전체 앨범 수가 아닙니다."
           }
         ]
       },
       "reference": {
-        "kind": "pending",
-        "statusTitle": "포토 엔드포인트",
-        "status": "아직 호출할 Photos 엔드포인트가 없으므로 문서화할 매개변수가 없습니다. 배송될 때까지 다른 엔드포인트의 이러한 필드에는 이미지 URLs이 포함됩니다.",
-        "fieldsTitle": "이미지 필드",
-        "fields": [
+        "shape": "{ photos: [{url}], returned_count, reported_total, status, reason }",
+        "params": [
           {
-            "name": "featured_image",
+            "name": "fid",
             "type": "string",
-            "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\"",
-            "badge": "수집 API"
+            "required": true,
+            "description": "검색 결과 또는 Place ID Finder의 비즈니스 FID. `0x…:0x…` 형식이며 각 부분은 12~20자리 16진수입니다."
           },
           {
-            "name": "images",
-            "type": "string[]",
-            "example": "[\"https://lh5.googleusercontent.com/p/AF1QipN…\"]",
-            "badge": "리뷰 API"
+            "name": "max_results",
+            "type": "integer",
+            "required": false,
+            "description": "이번 요청의 사진 반환 상한. 양의 정수이며 기본값은 200입니다. 해당 수량을 보장하지 않습니다."
+          }
+        ],
+        "groups": [
+          {
+            "label": "사진",
+            "fields": [
+              {
+                "name": "photos",
+                "type": "photo[]",
+                "example": "[{\"url\": \"https://lh5.googleusercontent.com/p/AF1Qip…\"}]"
+              },
+              {
+                "name": "url",
+                "type": "string",
+                "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\""
+              }
+            ]
+          },
+          {
+            "label": "반환 상태",
+            "fields": [
+              {
+                "name": "returned_count",
+                "type": "integer",
+                "example": "2"
+              },
+              {
+                "name": "reported_total",
+                "type": "integer | null",
+                "example": "178"
+              },
+              {
+                "name": "status",
+                "type": "string",
+                "example": "\"partial\""
+              },
+              {
+                "name": "reason",
+                "type": "string",
+                "example": "\"limit_reached\""
+              }
+            ]
           }
         ]
       },
@@ -3356,12 +3392,12 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "사진 API을 사용할 수 있나요?",
-            "answer": "아직 아님. 비즈니스 사진 전용 엔드포인트는 개발 중이며 해당 매개변수와 응답 형식은 공개되지 않았습니다."
+            "question": "비즈니스 사진은 어떻게 요청하나요?",
+            "answer": "fid와 선택 사항인 max_results를 포함해 /photos에 POST 요청을 보내세요. 검색 및 리뷰 API와 동일한 Bearer API 키를 사용합니다."
           },
           {
-            "question": "어떤 엔드포인트가 이미지 URLs을 반환합니까?",
-            "answer": "수집 API는 모든 장소에 대해 featured_image을 반환합니다. 즉, Google Maps 목록에 표시된 사진의 URL입니다. 리뷰 API는 모든 리뷰에 대해 작성자가 첨부한 사진인 이미지를 반환합니다."
+            "question": "전체 앨범을 가져올 수 있나요?",
+            "answer": "성공 응답의 status는 partial이며 reason은 수집이 멈춘 이유를 나타냅니다. reported_total은 상위 서비스가 보고한 수 또는 null이며, 검증된 전체 앨범 수가 아닙니다. max_results는 양의 정수이며 기본값은 200입니다. 실제 반환 수는 더 적을 수 있습니다. 페이지 번호나 커서는 제공하지 않습니다."
           },
           {
             "question": "기업의 신용 정보를 어떻게 얻을 수 있나요?",
@@ -3369,7 +3405,7 @@ export const site: SiteContent = {
           },
           {
             "question": "요청은 어떻게 계산되나요?",
-            "answer": "스크레이퍼 API 및 리뷰 API 호출은 성공적인 호출당 하나의 요청으로 계산되며 이미지 필드도 포함됩니다. 실패한 통화는 계산되지 않습니다."
+            "answer": "사진 일부 반환을 포함해 성공한 호출은 사진 수와 관계없이 요청 1회로 계산합니다. 유효한 사진을 반환할 수 없으면 오류가 발생하며 차감하지 않습니다. 검색, 리뷰, 사진, MCP는 월간 한도를 공유합니다."
           },
           {
             "question": "데이터가 공개되나요?",
@@ -3379,17 +3415,17 @@ export const site: SiteContent = {
       },
       "cta": {
         "title": {
-          "lead": "사진은 ",
-          "accent": "곧 공개됩니다",
+          "lead": "",
+          "accent": "앱에 비즈니스 사진 연결",
           "tail": ""
         },
-        "lead": "수집 API 결과에는 이미 각 장소의 추천 이미지가 포함되어 있으며 리뷰 API 결과에는 각 리뷰에 첨부된 사진이 나열됩니다."
+        "lead": "기존 API 키로 공개 사진 URL과 반환 상태를 가져오세요."
       }
     },
     "scraperMcp": {
       "seo": {
         "title": "Google Maps 스크레이퍼 MCP 서버 | MapsGrab",
-        "description": "MapsGrab MCP 서버를 사용하여 AI 에이전트를 라이브 Google Maps 데이터에 연결합니다. 장소를 검색하고 Claude Code, Cursor, VS Code, Codex 또는 MCP 클라이언트의 리뷰를 읽습니다. 로그인만 하면 됩니다. 붙여넣을 API 키입니다."
+        "description": "하나의 MCP 연결로 Google Maps 장소를 검색하고 리뷰와 공개 비즈니스 사진 URL을 가져오세요."
       },
       "clients": {
         "claude": "Claude Code",
@@ -3405,7 +3441,7 @@ export const site: SiteContent = {
           "accent": "MCP",
           "tail": " 서버"
         },
-        "lead": "MapsGrab MCP 서버는 AI 에이전트에게 Claude Code, Cursor, VS Code, Codex 및 기타 MCP 클라이언트에 대해 하나의 Streamable HTTP 엔드포인트에 대한 실시간 Google Maps 검색 및 리뷰 기능을 제공합니다.",
+        "lead": "하나의 MCP 연결로 Google Maps 장소를 검색하고 리뷰와 공개 비즈니스 사진 URL을 가져오세요.",
         "meta": [
           "Streamable HTTP",
           "OAuth로 로그인",
@@ -3592,7 +3628,7 @@ export const site: SiteContent = {
           "accent": "가 노출하는 것",
           "tail": ""
         },
-        "lead": "수집 API 및 리뷰 API과 동일한 입력 및 결과를 갖는 하나의 엔드포인트에 대한 두 개의 도구입니다.",
+        "lead": "세 가지 도구: Search / Reviews / Photos.",
         "kind": "도구",
         "returns": "보고",
         "items": [
@@ -3651,13 +3687,26 @@ export const site: SiteContent = {
             ],
             "returns": "reviews ≤ 60 · next_cursor",
             "link": "리뷰와 동일한 데이터 API"
+          },
+          {
+            "name": "list_photos",
+            "icon": "image",
+            "title": "fid로 사진 가져오기",
+            "description": "비즈니스의 fid로 공개 사진 URL을 JSON으로 받으세요. max_results는 반환 수의 상한이며, 결과는 일부 사진이므로 전체 앨범을 보장하지 않습니다.",
+            "args": [
+              {
+                "name": "fid",
+                "description": "검색 결과 또는 Place ID Finder의 비즈니스 FID. `0x…:0x…` 형식이며 각 부분은 12~20자리 16진수입니다."
+              },
+              {
+                "name": "max_results",
+                "description": "이번 요청의 사진 반환 상한. 양의 정수이며 기본값은 200입니다. 해당 수량을 보장하지 않습니다."
+              }
+            ],
+            "returns": "photos · returned_count · reported_total · status · reason",
+            "link": "사진 API 살펴보기"
           }
-        ],
-        "photos": {
-          "title": "비즈니스 사진",
-          "description": "사진 API과 함께 상담원을 위한 사진 도구가 곧 제공될 예정입니다.",
-          "link": "사진 정보 API"
-        }
+        ]
       },
       "flow": {
         "kicker": "연결 방법",
@@ -3667,17 +3716,17 @@ export const site: SiteContent = {
           "tail": " 사이의 하나의 엔드포인트"
         },
         "lead": "클라이언트는 Streamable HTTP를 통해 연결하고 브라우저를 통해 로그인합니다. 에이전트는 도구를 검색하고 프롬프트에 지도 데이터가 필요할 때 도구를 호출하고 구조화된 JSON를 다시 읽습니다.",
-        "label": "Claude Code, Cursor, VS Code, Codex 및 기타 MCP 클라이언트는 search_places 및 list_reviews 도구를 제공하는 MapsGrab MCP 엔드포인트에 연결됩니다. 사진 도구가 곧 제공될 것으로 표시됩니다.",
+        "label": "하나의 MCP 연결로 Google Maps 장소를 검색하고 리뷰와 공개 비즈니스 사진 URL을 가져오세요. search_places / list_reviews / list_photos.",
         "clientsLabel": "MCP 고객",
         "anyClient": "모든 MCP 클라이언트",
         "toolsLabel": "도구",
         "hub": "MapsGrab MCP",
-        "photos": "사진",
         "publicData": "공개 Google Maps 데이터",
         "resultLabel": "결과",
         "results": [
           "20개 장소",
-          "60 리뷰"
+          "60 리뷰",
+          "2 사진"
         ],
         "steps": [
           {
@@ -3988,7 +4037,7 @@ export const site: SiteContent = {
         "items": [
           {
             "question": "MapsGrab MCP 서버란 무엇인가요?",
-            "answer": "AI 에이전트가 Google Maps 장소를 검색하고 리뷰를 읽을 수 있게 해주는 MCP(모델 컨텍스트 프로토콜) 서버입니다. 스크레이퍼 API 및 리뷰 API와 동일한 입력 및 결과를 갖는 search_places 및 list_reviews라는 두 가지 도구를 제공합니다."
+            "answer": "하나의 MCP 연결로 Google Maps 장소를 검색하고 리뷰와 공개 비즈니스 사진 URL을 가져오세요. search_places / list_reviews / list_photos."
           },
           {
             "question": "어떤 클라이언트가 연결할 수 있나요?",
@@ -4000,11 +4049,11 @@ export const site: SiteContent = {
           },
           {
             "question": "도구 호출은 어떻게 계산되나요?",
-            "answer": "성공적인 각 도구 호출은 월별 API 할당량에 대해 하나의 요청으로 계산됩니다. 이는 수집 API 및 리뷰 API와 동일한 할당량입니다. 실패한 통화는 계산되지 않습니다."
+            "answer": "사진 일부 반환을 포함해 성공한 호출은 사진 수와 관계없이 요청 1회로 계산합니다. 유효한 사진을 반환할 수 없으면 오류가 발생하며 차감하지 않습니다. 검색, 리뷰, 사진, MCP는 월간 한도를 공유합니다."
           },
           {
             "question": "내 대리인이 비즈니스 사진을 받을 수 있나요?",
-            "answer": "아직 아님. 사진 API과 함께 사진 도구도 곧 출시될 예정입니다. 검색 결과에는 이미 각 장소의 featured_image URL이 포함되어 있습니다."
+            "answer": "list_photos(fid, max_results): 비즈니스의 fid로 공개 사진 URL을 JSON으로 받으세요. max_results는 반환 수의 상한이며, 결과는 일부 사진이므로 전체 앨범을 보장하지 않습니다. 이번 요청의 사진 반환 상한. 양의 정수이며 기본값은 200입니다. 해당 수량을 보장하지 않습니다."
           }
         ]
       },
@@ -4014,7 +4063,7 @@ export const site: SiteContent = {
           "accent": "실시간 지도 데이터",
           "tail": "를 제공하세요."
         },
-        "lead": "하나의 MCP 연결, 두 개의 도구, 구조화된 결과 — 데이터 인식 AI 워크플로에 대한 검색 및 리뷰."
+        "lead": "하나의 MCP 연결로 Google Maps 장소를 검색하고 리뷰와 공개 비즈니스 사진 URL을 가져오세요."
       }
     },
     "tools": {
@@ -4725,7 +4774,7 @@ export const company: CompanyContent = {
           "구조화됨 JSON"
         ],
         "mcp": [
-          "두 가지 도구",
+          "세 가지 도구",
           "Streamable HTTP",
           "OAuth 또는 API 키"
         ]

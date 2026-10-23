@@ -2555,27 +2555,27 @@ export const site: SiteContent = {
         "kicker": "端点",
         "title": {
           "lead": "一个密钥，",
-          "accent": "两个",
+          "accent": "三个",
           "tail": "接口"
         },
-        "lead": "先搜索地点，再将任一结果的 `fid` 传给评论 API。两者共用同一个 API 密钥和每月请求额度。照片接口即将推出。",
+        "lead": "搜索地点后，将结果中的 `fid` 传给评论或照片 API。三个接口共用同一个 API 密钥和月请求额度。",
         "here": "你在这里",
         "paramsLabel": "参数",
         "mcp": {
           "title": "为 AI 智能体接入数据？",
-          "description": "MapsGrab MCP 服务器为 Claude Code、Cursor、VS Code、Codex 及其他 MCP 客户端提供搜索和评论工具，可通过登录或 API 密钥连接。",
+          "description": "通过一个 MCP 连接搜索 Google Maps 地点、读取评论并获取公开商家照片 URL。",
           "link": "了解 MCP"
         }
       },
       "chain": {
         "kicker": "串联接口",
         "title": {
-          "lead": "一个 ID，从搜索结果直达",
-          "accent": "评论",
+          "lead": "",
+          "accent": "采集器 → 评论 / 照片",
           "tail": ""
         },
-        "lead": "每个搜索结果都带有 `fid`。将其传递到评论 API，从地点列表转到人们对每个地点的评价。",
-        "label": "搜索请求返回各地点及其 fid，评论请求复用首个地点的 fid。照片步骤标记为即将推出。",
+        "lead": "搜索地点后，将结果中的 `fid` 传给评论或照片 API。三个接口共用同一个 API 密钥和月请求额度。",
+        "label": "搜索地点后，将结果中的 fid 传给评论或照片 API。三个接口共用同一个 API 密钥和月请求额度。",
         "places": [
           {
             "name": "Ember & Oak Coffee",
@@ -2605,8 +2605,7 @@ export const site: SiteContent = {
           }
         ],
         "photos": {
-          "title": "照片",
-          "note": "照片端点正在开发中。"
+          "note": "成功响应的 status 为 partial，reason 说明采集停止原因。reported_total 是上游报告数或 null，不代表已核实的完整相册数量。"
         }
       },
       "reference": {
@@ -2634,7 +2633,7 @@ export const site: SiteContent = {
           {
             "icon": "gauge",
             "title": "每次成功调用计为一次请求",
-            "description": "每次成功调用计为一次请求，包括零结果或 `partial` 数据；失败调用不计入用量。"
+            "description": "每次成功调用计为一次请求，包括照片的部分交付，与照片张数无关。无法交付有效照片时返回错误，不扣额度。搜索、评论、照片与 MCP 共用月请求额度。"
           },
           {
             "icon": "key",
@@ -2660,7 +2659,7 @@ export const site: SiteContent = {
           "accent": "按请求定价",
           "tail": ""
         },
-        "lead": "搜索、评论和 MCP 服务器共享一个每月请求配额。每一次成功的调用都算作一次请求。"
+        "lead": "每次成功调用计为一次请求，包括照片的部分交付，与照片张数无关。无法交付有效照片时返回错误，不扣额度。搜索、评论、照片与 MCP 共用月请求额度。"
       },
       "faq": {
         "lead": "常见问题的简要解答。还有其他问题，欢迎邮件联系支持团队。",
@@ -2745,7 +2744,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { places, partial, warnings }",
         "params": [
           {
@@ -3001,7 +2999,7 @@ export const site: SiteContent = {
           },
           {
             "question": "请求是如何计算的？",
-            "answer": "无论 page 参数的值是多少，每次成功调用计为一次请求，包括空结果或部分数据；失败调用不计入用量。搜索、评论和 MCP 服务器共用每月请求额度。"
+            "answer": "每次成功调用计为一次请求，包括照片的部分交付，与照片张数无关。无法交付有效照片时返回错误，不扣额度。搜索、评论、照片与 MCP 共用月请求额度。"
           },
           {
             "question": "page 参数有什么作用？",
@@ -3096,7 +3094,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { reviews, next_cursor }",
         "params": [
           {
@@ -3253,7 +3250,7 @@ export const site: SiteContent = {
           },
           {
             "question": "请求是如何计算的？",
-            "answer": "每次成功调用计为一次请求，包括返回零条评论的情况；失败调用不计入用量。评论 API 与采集 API 和 MCP 服务器共用额度。"
+            "answer": "每次成功调用计为一次请求，包括照片的部分交付，与照片张数无关。无法交付有效照片时返回错误，不扣额度。搜索、评论、照片与 MCP 共用月请求额度。"
           },
           {
             "question": "数据公开吗？",
@@ -3272,8 +3269,8 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "Google Maps 照片 API — 即将推出 | MapsGrab",
-        "description": "MapsGrab 照片 API 即将推出。图像 URLs 已经是其他 MapsGrab API 的一部分：采集 API 位置包含特色图像，评论 API 评论列出了其附加照片。"
+        "title": "照片 API — 公开商家照片 URL | MapsGrab",
+        "description": "通过商家的 fid 获取公开照片 URL，结果以 JSON 返回。max_results 限制本次交付数量；结果为部分交付，不保证完整相册。"
       },
       "hero": {
         "title": {
@@ -3281,70 +3278,109 @@ export const site: SiteContent = {
           "accent": "照片",
           "tail": " API"
         },
-        "lead": "Google Maps 商家照片的专用端点正在开发中。图像 URLs 已随其他端点一起提供：每个 采集 API 地点都有一个特色图像，每个评论 API 评论都会列出其照片。",
+        "lead": "通过商家的 fid 获取公开照片 URL，结果以 JSON 返回。max_results 限制本次交付数量；结果为部分交付，不保证完整相册。",
         "meta": [
-          "每个地点的封面图片 URL",
-          "每条评论的照片 URL",
-          "搜索和评论共用一个密钥"
+          "免费套餐：{quota}",
+          "公开商家照片 URL",
+          "按请求定价"
         ],
         "chips": [
           {
-            "label": "每个地点",
-            "value": "featured_image"
+            "label": "交付状态",
+            "value": "partial"
           },
           {
-            "label": "每条评论",
-            "value": "images[]"
+            "label": "实际数量",
+            "value": "returned_count"
           }
         ]
       },
       "endpoint": {
         "name": "照片 API",
-        "description": "通过 HTTP 获取商家照片。此接口尚未开放，其他接口已可返回图片 URL。",
-        "link": "关于照片 API"
+        "description": "通过商家的 fid 获取公开照片 URL，结果以 JSON 返回。max_results 限制本次交付数量；结果为部分交付，不保证完整相册。",
+        "link": "了解照片 API"
       },
       "caps": {
         "title": {
           "lead": "",
-          "accent": "其他",
-          "tail": "接口中的图片 URL"
+          "accent": "照片 API",
+          "tail": ""
         },
-        "lead": "照片 API 尚不可用。这些字段已经返回图像 URLs：",
+        "lead": "公开商家照片 URL",
         "items": [
           {
             "icon": "image",
-            "title": "每个地点一张特色图片",
-            "description": "采集 API 的每个地点都包含 `featured_image`，即 Google Maps 商家列表所展示照片的 URL；没有照片时返回 `null`。"
+            "title": "按 fid 获取照片",
+            "description": "使用搜索结果或 Place ID 查找器提供的 `fid`。`photos` 中每项包含一个公开照片 `url`。"
           },
           {
-            "icon": "review",
-            "title": "评论中附有照片",
-            "description": "评论 API 的每条评论都包含 `images`，即作者附带照片的 URL 列表；没有照片时返回空列表。"
+            "icon": "filter",
+            "title": "限制每次交付数量",
+            "description": "`max_results` 为正整数，默认 200，只限制交付上限，实际照片可能更少；不提供页码或游标。"
           },
           {
-            "icon": "clock",
-            "title": "接下来是照片端点",
-            "description": "商家照片的专用端点正在开发中。其参数和响应格式尚未公布。"
+            "icon": "list",
+            "title": "查看交付状态",
+            "description": "成功响应的 `status` 为 `partial`，`reason` 说明采集停止原因。`reported_total` 是上游报告数或 `null`，不代表已核实的完整相册数量。"
           }
         ]
       },
       "reference": {
-        "kind": "pending",
-        "statusTitle": "照片端点",
-        "status": "照片接口尚未开放，因此暂无参数说明。上线前，可通过其他接口的以下字段获取图片 URL。",
-        "fieldsTitle": "图像字段",
-        "fields": [
+        "shape": "{ photos: [{url}], returned_count, reported_total, status, reason }",
+        "params": [
           {
-            "name": "featured_image",
+            "name": "fid",
             "type": "string",
-            "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\"",
-            "badge": "采集 API"
+            "required": true,
+            "description": "搜索结果或 Place ID 查找器提供的商家 FID，格式为 `0x…:0x…`，每段含 12–20 位十六进制数字。"
           },
           {
-            "name": "images",
-            "type": "string[]",
-            "example": "[\"https://lh5.googleusercontent.com/p/AF1QipN…\"]",
-            "badge": "评论 API"
+            "name": "max_results",
+            "type": "integer",
+            "required": false,
+            "description": "本次照片交付上限，正整数，默认 200；不保证取得该数量。"
+          }
+        ],
+        "groups": [
+          {
+            "label": "照片",
+            "fields": [
+              {
+                "name": "photos",
+                "type": "photo[]",
+                "example": "[{\"url\": \"https://lh5.googleusercontent.com/p/AF1Qip…\"}]"
+              },
+              {
+                "name": "url",
+                "type": "string",
+                "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\""
+              }
+            ]
+          },
+          {
+            "label": "交付状态",
+            "fields": [
+              {
+                "name": "returned_count",
+                "type": "integer",
+                "example": "2"
+              },
+              {
+                "name": "reported_total",
+                "type": "integer | null",
+                "example": "178"
+              },
+              {
+                "name": "status",
+                "type": "string",
+                "example": "\"partial\""
+              },
+              {
+                "name": "reason",
+                "type": "string",
+                "example": "\"limit_reached\""
+              }
+            ]
           }
         ]
       },
@@ -3356,12 +3392,12 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "照片 API 可用吗？",
-            "answer": "还没有。商家照片专用端点正在开发中，其参数和响应格式尚未发布。"
+            "question": "如何请求商家照片？",
+            "answer": "向 /photos 发送 POST，请求中包含 fid 和可选的 max_results；使用与搜索、评论 API 相同的 Bearer API 密钥。"
           },
           {
-            "question": "哪些接口可以返回图片 URL？",
-            "answer": "采集 API 为每个地点返回 featured_image，即 Google Maps 商家列表展示照片的 URL；评论 API 为每条评论返回 images，即作者附带照片的 URL 列表。"
+            "question": "能获取完整相册吗？",
+            "answer": "成功响应的 status 为 partial，reason 说明采集停止原因。reported_total 是上游报告数或 null，不代表已核实的完整相册数量。 max_results 为正整数，默认 200，只限制交付上限，实际照片可能更少；不提供页码或游标。"
           },
           {
             "question": "如何获取商家的 fid？",
@@ -3369,7 +3405,7 @@ export const site: SiteContent = {
           },
           {
             "question": "请求是如何计算的？",
-            "answer": "采集 API 和评论 API 每次成功调用计为一次请求，图片字段已包含在内；失败调用不计入用量。"
+            "answer": "每次成功调用计为一次请求，包括照片的部分交付，与照片张数无关。无法交付有效照片时返回错误，不扣额度。搜索、评论、照片与 MCP 共用月请求额度。"
           },
           {
             "question": "数据公开吗？",
@@ -3379,17 +3415,17 @@ export const site: SiteContent = {
       },
       "cta": {
         "title": {
-          "lead": "照片功能",
-          "accent": "即将推出",
+          "lead": "",
+          "accent": "将商家照片接入应用",
           "tail": ""
         },
-        "lead": "采集 API 结果已包含每个地点的特色图像，而 评论 API 结果列出了每个评论所附的照片。"
+        "lead": "使用现有 API 密钥获取公开照片 URL 和交付状态。"
       }
     },
     "scraperMcp": {
       "seo": {
         "title": "Google Maps 采集器 MCP 服务器 | MapsGrab",
-        "description": "通过 MapsGrab MCP 服务器，让 Claude Code、Cursor、VS Code、Codex 或其他 MCP 客户端搜索 Google Maps 地点并读取评论。只需登录，无需粘贴 API 密钥。"
+        "description": "通过一个 MCP 连接搜索 Google Maps 地点、读取评论并获取公开商家照片 URL。"
       },
       "clients": {
         "claude": "Claude Code",
@@ -3405,7 +3441,7 @@ export const site: SiteContent = {
           "accent": "MCP",
           "tail": " 服务器"
         },
-        "lead": "MapsGrab MCP 服务器通过一个 Streamable HTTP 端点，为 Claude Code、Cursor、VS Code、Codex 及其他 MCP 客户端提供实时 Google Maps 搜索和评论数据。",
+        "lead": "通过一个 MCP 连接搜索 Google Maps 地点、读取评论并获取公开商家照片 URL。",
         "meta": [
           "Streamable HTTP",
           "使用 OAuth 登录",
@@ -3592,7 +3628,7 @@ export const site: SiteContent = {
           "accent": "工具",
           "tail": ""
         },
-        "lead": "一个端点上的两种工具，具有与 采集 API 和 评论 API 相同的输入和结果。",
+        "lead": "三个工具: Search / Reviews / Photos.",
         "kind": "工具",
         "returns": "返回内容",
         "items": [
@@ -3651,13 +3687,26 @@ export const site: SiteContent = {
             ],
             "returns": "reviews ≤ 60 · next_cursor",
             "link": "与评论 API 相同的数据"
+          },
+          {
+            "name": "list_photos",
+            "icon": "image",
+            "title": "按 fid 获取照片",
+            "description": "通过商家的 fid 获取公开照片 URL，结果以 JSON 返回。max_results 限制本次交付数量；结果为部分交付，不保证完整相册。",
+            "args": [
+              {
+                "name": "fid",
+                "description": "搜索结果或 Place ID 查找器提供的商家 FID，格式为 `0x…:0x…`，每段含 12–20 位十六进制数字。"
+              },
+              {
+                "name": "max_results",
+                "description": "本次照片交付上限，正整数，默认 200；不保证取得该数量。"
+              }
+            ],
+            "returns": "photos · returned_count · reported_total · status · reason",
+            "link": "了解照片 API"
           }
-        ],
-        "photos": {
-          "title": "商家照片",
-          "description": "面向智能体的照片工具将与照片 API 一同推出。",
-          "link": "关于照片 API"
-        }
+        ]
       },
       "flow": {
         "kicker": "如何连接",
@@ -3667,17 +3716,17 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "客户端通过 Streamable HTTP 连接，并在浏览器中登录。智能体发现可用工具，在任务需要地图数据时调用，随后读取结构化 JSON 结果。",
-        "label": "Claude Code、Cursor、VS Code、Codex 和其他 MCP 客户端连接到 MapsGrab MCP 端点，该端点为 search_places 和 list_reviews 工具提供服务。照片工具标记为即将推出。",
+        "label": "通过一个 MCP 连接搜索 Google Maps 地点、读取评论并获取公开商家照片 URL。 search_places / list_reviews / list_photos.",
         "clientsLabel": "MCP 客户端",
         "anyClient": "任何 MCP 客户端",
         "toolsLabel": "工具",
         "hub": "MapsGrab MCP",
-        "photos": "照片",
         "publicData": "公开 Google Maps 数据",
         "resultLabel": "结果",
         "results": [
           "20 个地点",
-          "60 条评论"
+          "60 条评论",
+          "2 照片"
         ],
         "steps": [
           {
@@ -3988,7 +4037,7 @@ export const site: SiteContent = {
         "items": [
           {
             "question": "MapsGrab MCP 服务器是什么？",
-            "answer": "基于 MCP（模型上下文协议）的服务器，让 AI 智能体搜索 Google Maps 地点并读取评论。提供 search_places 和 list_reviews 两个工具，输入与结果均与采集 API 和评论 API 一致。"
+            "answer": "通过一个 MCP 连接搜索 Google Maps 地点、读取评论并获取公开商家照片 URL。 search_places / list_reviews / list_photos."
           },
           {
             "question": "哪些客户端可以连接？",
@@ -4000,11 +4049,11 @@ export const site: SiteContent = {
           },
           {
             "question": "工具调用是如何计数的？",
-            "answer": "每次成功的工具调用消耗一次每月 API 请求额度，与采集 API 和评论 API 共用；失败调用不计入用量。"
+            "answer": "每次成功调用计为一次请求，包括照片的部分交付，与照片张数无关。无法交付有效照片时返回错误，不扣额度。搜索、评论、照片与 MCP 共用月请求额度。"
           },
           {
             "question": "智能体能获取商家照片吗？",
-            "answer": "还没有。照片工具即将与 照片 API 一起推出。搜索结果已包含每个地点的 featured_image URL。"
+            "answer": "list_photos(fid, max_results): 通过商家的 fid 获取公开照片 URL，结果以 JSON 返回。max_results 限制本次交付数量；结果为部分交付，不保证完整相册。 本次照片交付上限，正整数，默认 200；不保证取得该数量。"
           }
         ]
       },
@@ -4014,7 +4063,7 @@ export const site: SiteContent = {
           "accent": "实时地图数据",
           "tail": ""
         },
-        "lead": "一次 MCP 连接，两个工具，返回结构化搜索和评论结果，为 AI 工作流程提供数据。"
+        "lead": "通过一个 MCP 连接搜索 Google Maps 地点、读取评论并获取公开商家照片 URL。"
       }
     },
     "tools": {
@@ -4725,7 +4774,7 @@ export const company: CompanyContent = {
           "结构化 JSON"
         ],
         "mcp": [
-          "两个工具",
+          "三个工具",
           "Streamable HTTP",
           "OAuth 或 API 密钥"
         ]

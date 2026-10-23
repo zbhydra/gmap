@@ -35,7 +35,7 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 | #   | 功能                                                                                                          | 竞品证据                         | 调研 | 实施                                                                                                                                                                                                |
 | --- | ------------------------------------------------------------------------------------------------------------- | -------------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | B1  | Online Scraper（Export 创建、历史、单 CSV 与原用量接线；合同见 `feat/014.Maps云端/tech-Online任务与结果.md`） | 官网 pricing tab=online          | 🔍   | ✅（各单元及本端整体审查已通过；开发服真实 Export/官网补全、CSV、用量与 GMap 恢复验证通过，见 [实施记录](feat/014.Maps云端/plans/010.Export服务端实施.md)）                                         |
-| B2  | 同步 Search / Reviews / Photos API                                                                            | 官方 Postman 文档(v2 三端点契约) | 🔍   | ✅（同步入口已实现并过审；真实 Search / Reviews 通过，Photos 真实外层与用量定向复测通过，历史准备失败保留；官网 Photos 入口仍关闭，见 [实施记录](feat/014.Maps云端/plans/010.Export服务端实施.md)） |
+| B2  | 同步 Search / Reviews / Photos API                                                                            | 官方 Postman 文档(v2 三端点契约) | 🔍   | ✅（同步入口已实现并过审；真实 Search / Reviews 通过，Photos 真实外层与用量定向复测通过，历史准备失败保留，见 [实施记录](feat/014.Maps云端/plans/010.Export服务端实施.md)；官网 Photos 入口与 API / MCP 说明已同步，尚未正式上线） |
 | B3  | MCP Server(Claude/Cursor/VSCode/Codex 接入)                                                                   | 官网落地页                       | 🔍   | ✅ (2026-10-16 MCP / OAuth 服务端与 Dashboard 连续链通过；尚未正式上线，见 [首发清单](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md))                                                  |
 | B4  | 共享 Collector 同步/异步客户端与单一采集配置；入口边界见 `feat/014.Maps云端/tech-引擎Provider层.md`           | CAS 采集与 Export 基线           | 🚧   | ✅（客户端、单一配置及 Admin 已过审，真实异步原调用恢复已验证；Collector 本体重启/TTL 未执行，见 [实施记录](feat/014.Maps云端/plans/010.Export服务端实施.md)）                                      |
 | B5  | 云端 POC：长期封锁率 / 代理流量爬坡 Gate（正式判定未做）                                                      | research 方案调研 §9/§12.34      | 🔍   | ⬜                                                                                                                                                                                                  |
@@ -78,7 +78,7 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 
 ### 当前首发范围（2026-10-20）
 
-- Online、Search / Reviews API、MCP OAuth、官网与 Dashboard 已有本地交付及必要验收；Photos REST / MCP 后端已完成本地媒体验收，官网介绍和接入动作尚未开放，照片结果仅证实部分交付。
+- Online、Search / Reviews / Photos API、MCP OAuth、官网与 Dashboard 已有本地实现；Photos 官网入口、合同示例及 MCP 照片工具说明已同步，照片结果仅证实部分交付。
 - 插件使用官网 ZIP 直装，安装及购买入口启用；三产品线只销售 PayPal 单次自然月套餐。交付与限制见 [官网直装与单次购买](feat/015.工具与增长/plans/004.官网直装与PayPal单次购买.md)。
 - 当前只使用测试环境；正式上线仍需核对生产 URL、Google 登录与法务信息，真实 PayPal 付款 / 公网通知及 B5 云端运行验证仍待完成。生产准备统一跟踪 [项目初次发布需要完善内容](项目初次发布需要完善内容.md)，既有交付证据见 [官网首发记录](feat/014.Maps云端/plans/006.官网首发API与MCP及Dashboard.md)。
 - Export 后端、统一 Collector 配置/client、Admin 与网站接线均已实现并通过单元独立审查；本端组合验收及整体审查已通过。开发服真实 Export/Google、官网补全及原用量闭环通过；Photos 单样本真实外层及原 usage 复测通过，历史失败原因尚未确定；Collector 本体重启/TTL 未执行，不能据此宣称生产可用，见 [实施记录](feat/014.Maps云端/plans/010.Export服务端实施.md)。

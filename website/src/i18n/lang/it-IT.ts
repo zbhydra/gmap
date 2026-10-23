@@ -2555,27 +2555,27 @@ export const site: SiteContent = {
         "kicker": "Endpoint",
         "title": {
           "lead": "Una chiave.  ",
-          "accent": " Due punti finali ",
+          "accent": "Tre",
           "tail": "."
         },
-        "lead": "Cerca i luoghi, quindi passa qualsiasi risultato `fid` alle Recensioni API. Entrambi prendono la stessa chiave API e attingono da una quota di richiesta mensile. Un endpoint Foto sarà presto disponibile.",
+        "lead": "Cerca luoghi e passa il loro `fid` all’API di recensioni o foto. Le tre API condividono una chiave e la quota mensile di richieste.",
         "here": "Sei qui",
         "paramsLabel": "Parametri",
         "mcp": {
           "title": "Costruire con agenti IA?",
-          "description": "Il server MapsGrab MCP porta Ricerca e recensioni a Claude Code, Cursor, VS Code, Codex e altri client MCP: connettiti effettuando l'accesso o con la tua chiave API.",
+          "description": "Cerca luoghi su Google Maps, leggi recensioni e ottieni URL di foto pubbliche delle attività con una connessione MCP.",
           "link": "Esplora MCP"
         }
       },
       "chain": {
         "kicker": "Punti finali della catena",
         "title": {
-          "lead": "Un ID ti porta dalla ricerca ",
-          "accent": " alle recensioni ",
+          "lead": "",
+          "accent": "Estrattore → Recensioni / Foto",
           "tail": ""
         },
-        "lead": "Ogni risultato della ricerca porta il suo `fid`. Passalo alle Recensioni API per passare dall'elenco dei luoghi a cosa dicono di ciascuno di essi.",
-        "label": "Una richiesta di ricerca restituisce luoghi che portano ciascuno un fid; una richiesta di recensioni riutilizza il fid del primo posto. Un passaggio Foto è contrassegnato come disponibile a breve.",
+        "lead": "Cerca luoghi e passa il loro `fid` all’API di recensioni o foto. Le tre API condividono una chiave e la quota mensile di richieste.",
+        "label": "Cerca luoghi e passa il loro fid all’API di recensioni o foto. Le tre API condividono una chiave e la quota mensile di richieste.",
         "places": [
           {
             "name": "Ember & Oak Coffee",
@@ -2605,8 +2605,7 @@ export const site: SiteContent = {
           }
         ],
         "photos": {
-          "title": "Foto",
-          "note": "Un endpoint Foto è in fase di sviluppo."
+          "note": "In caso di successo, status è partial; reason spiega perché la raccolta si è fermata. reported_total è il numero indicato dalla fonte o null, non la dimensione verificata dell’album."
         }
       },
       "reference": {
@@ -2634,7 +2633,7 @@ export const site: SiteContent = {
           {
             "icon": "gauge",
             "title": "Una richiesta per chiamata andata a buon fine",
-            "description": "Una chiamata riuscita conta una volta, anche con zero risultati o dati `partial`. Le chiamate fallite non vengono conteggiate."
+            "description": "Ogni chiamata riuscita conta come una richiesta, anche per una consegna parziale di foto, indipendentemente dal numero. Se non è possibile consegnare foto valide, la chiamata fallisce e non consuma quota. Ricerca, recensioni, foto e MCP condividono la quota mensile."
           },
           {
             "icon": "key",
@@ -2660,7 +2659,7 @@ export const site: SiteContent = {
           "accent": " tariffato in base alle richieste ",
           "tail": ""
         },
-        "lead": "Ricerca, Recensioni e il server MCP condividono una quota di richieste mensili. Ogni chiamata andata a buon fine conta come una richiesta."
+        "lead": "Ogni chiamata riuscita conta come una richiesta, anche per una consegna parziale di foto, indipendentemente dal numero. Se non è possibile consegnare foto valide, la chiamata fallisce e non consuma quota. Ricerca, recensioni, foto e MCP condividono la quota mensile."
       },
       "faq": {
         "lead": "Le risposte brevi. Per il resto, il supporto è a una e-mail di distanza.",
@@ -2745,7 +2744,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { places, partial, warnings }",
         "params": [
           {
@@ -3001,7 +2999,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Come vengono conteggiate le richieste?",
-            "answer": "Ogni chiamata andata a buon fine conta come una richiesta, qualunque sia il valore della pagina, comprese le ricerche che non restituiscono luoghi o dati parziali. Le chiamate fallite non vengono conteggiate. Ricerca, Recensioni e il server MCP condividono una quota mensile."
+            "answer": "Ogni chiamata riuscita conta come una richiesta, anche per una consegna parziale di foto, indipendentemente dal numero. Se non è possibile consegnare foto valide, la chiamata fallisce e non consuma quota. Ricerca, recensioni, foto e MCP condividono la quota mensile."
           },
           {
             "question": "Cosa fa la pagina?",
@@ -3096,7 +3094,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { reviews, next_cursor }",
         "params": [
           {
@@ -3253,7 +3250,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Come vengono conteggiate le richieste?",
-            "answer": "Ogni chiamata andata a buon fine conta come una richiesta, comprese le chiamate che non restituiscono recensioni. Le chiamate fallite non vengono conteggiate. La quota è condivisa con lo API di estrazione e il server MCP."
+            "answer": "Ogni chiamata riuscita conta come una richiesta, anche per una consegna parziale di foto, indipendentemente dal numero. Se non è possibile consegnare foto valide, la chiamata fallisce e non consuma quota. Ricerca, recensioni, foto e MCP condividono la quota mensile."
           },
           {
             "question": "I dati sono pubblici?",
@@ -3272,8 +3269,8 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "Google Maps Foto API — Prossimamente | MapsGrab",
-        "description": "Le MapsGrab Foto API arriveranno presto. L'immagine URLs fa già parte delle altre API MapsGrab: i luoghi di API di estrazione includono un'immagine in primo piano e le recensioni di Recensioni API elencano le foto allegate."
+        "title": "API delle foto — URL di foto pubbliche delle attività | MapsGrab",
+        "description": "Ottieni in JSON gli URL delle foto pubbliche di un’attività tramite il suo fid. max_results limita la consegna; i risultati sono parziali e non garantiscono l’album completo."
       },
       "hero": {
         "title": {
@@ -3281,70 +3278,109 @@ export const site: SiteContent = {
           "accent": " Foto ",
           "tail": " API"
         },
-        "lead": "È in fase di sviluppo un endpoint dedicato per Google Maps foto aziendali. L'immagine URLs è già presente con gli altri endpoint: ogni luogo di API di estrazione ha un'immagine in primo piano e ogni recensione di Recensioni API elenca le sue foto.",
+        "lead": "Ottieni in JSON gli URL delle foto pubbliche di un’attività tramite il suo fid. max_results limita la consegna; i risultati sono parziali e non garantiscono l’album completo.",
         "meta": [
-          "Immagine in primo piano URL per luogo",
-          "Foto URLs per recensione",
-          "Una chiave per la ricerca e le recensioni"
+          "Piano gratuito: {quota}",
+          "URL di foto pubbliche delle attività",
+          " tariffato in base alle richieste "
         ],
         "chips": [
           {
-            "label": "Per posto",
-            "value": "featured_image"
+            "label": "Consegna",
+            "value": "partial"
           },
           {
-            "label": "Per recensione",
-            "value": "images[]"
+            "label": "Quantità",
+            "value": "returned_count"
           }
         ]
       },
       "endpoint": {
         "name": "API delle foto",
-        "description": "Foto aziendali superiori a HTTP. Non ancora disponibile: gli altri endpoint restituiscono già l'immagine URLs.",
-        "link": "Informazioni sulle foto API"
+        "description": "Ottieni in JSON gli URL delle foto pubbliche di un’attività tramite il suo fid. max_results limita la consegna; i risultati sono parziali e non garantiscono l’album completo.",
+        "link": "Esplora l’API di foto"
       },
       "caps": {
         "title": {
-          "lead": "Immagine URLs negli altri endpoint ",
-          "accent": " ",
+          "lead": "",
+          "accent": "API delle foto",
           "tail": ""
         },
-        "lead": "Le foto API non sono ancora disponibili. Questi campi restituiscono già l'immagine URLs:",
+        "lead": "URL di foto pubbliche delle attività",
         "items": [
           {
             "icon": "image",
-            "title": "Un'immagine in evidenza per luogo",
-            "description": "Ogni posto API di estrazione ha `featured_image`: il URL della foto mostrata nella sua lista Google Maps, o `null` quando non ce n'è."
+            "title": "Foto tramite fid",
+            "description": "Usa il `fid` della ricerca o di Place ID Finder. Ogni elemento di `photos` contiene l’`url` di una foto pubblica."
           },
           {
-            "icon": "review",
-            "title": "Foto allegate alle recensioni",
-            "description": "Ogni recensione Recensioni API ha `images`: il URLs delle foto allegate dal suo autore, oppure un elenco vuoto."
+            "icon": "filter",
+            "title": "Limita ogni richiesta",
+            "description": "`max_results` è un intero positivo, con valore predefinito 200. Potrebbero essere restituite meno foto. Non sono disponibili pagine o cursori."
           },
           {
-            "icon": "clock",
-            "title": "Il prossimo punto finale è Foto",
-            "description": "È in fase di sviluppo un endpoint dedicato per le foto aziendali. I suoi parametri e il formato della risposta non sono stati ancora pubblicati."
+            "icon": "list",
+            "title": "Controlla lo stato della consegna",
+            "description": "In caso di successo, `status` è `partial`; `reason` spiega perché la raccolta si è fermata. `reported_total` è il numero indicato dalla fonte o `null`, non la dimensione verificata dell’album."
           }
         ]
       },
       "reference": {
-        "kind": "pending",
-        "statusTitle": "Punto finale delle foto",
-        "status": "Non esiste ancora alcun endpoint Foto da chiamare, quindi non ci sono parametri da documentare. Fino alla spedizione, questi campi degli altri endpoint contengono l'immagine URLs.",
-        "fieldsTitle": "Campi immagine",
-        "fields": [
+        "shape": "{ photos: [{url}], returned_count, reported_total, status, reason }",
+        "params": [
           {
-            "name": "featured_image",
+            "name": "fid",
             "type": "string",
-            "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\"",
-            "badge": "API di estrazione"
+            "required": true,
+            "description": "FID dell’attività dalla ricerca o da Place ID Finder, nel formato `0x…:0x…`, con 12–20 cifre esadecimali per segmento."
           },
           {
-            "name": "images",
-            "type": "string[]",
-            "example": "[\"https://lh5.googleusercontent.com/p/AF1QipN…\"]",
-            "badge": "API delle recensioni"
+            "name": "max_results",
+            "type": "integer",
+            "required": false,
+            "description": "Limite positivo della consegna, predefinito 200. Non garantisce quel numero di foto."
+          }
+        ],
+        "groups": [
+          {
+            "label": "Foto",
+            "fields": [
+              {
+                "name": "photos",
+                "type": "photo[]",
+                "example": "[{\"url\": \"https://lh5.googleusercontent.com/p/AF1Qip…\"}]"
+              },
+              {
+                "name": "url",
+                "type": "string",
+                "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\""
+              }
+            ]
+          },
+          {
+            "label": "Consegna",
+            "fields": [
+              {
+                "name": "returned_count",
+                "type": "integer",
+                "example": "2"
+              },
+              {
+                "name": "reported_total",
+                "type": "integer | null",
+                "example": "178"
+              },
+              {
+                "name": "status",
+                "type": "string",
+                "example": "\"partial\""
+              },
+              {
+                "name": "reason",
+                "type": "string",
+                "example": "\"limit_reached\""
+              }
+            ]
           }
         ]
       },
@@ -3356,12 +3392,12 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "Le foto API sono disponibili?",
-            "answer": "Non ancora. È in fase di sviluppo un endpoint dedicato per le foto aziendali e i suoi parametri e il formato di risposta non sono stati pubblicati."
+            "question": "Come richiedo le foto di un’attività?",
+            "answer": "Invia POST a /photos con fid e, facoltativamente, max_results. Usa la stessa chiave Bearer delle API di ricerca e recensioni."
           },
           {
-            "question": "Quali endpoint restituiscono l'immagine URLs?",
-            "answer": "Lo API di estrazione restituisce featured_image per ogni luogo: il URL della foto mostrata nella sua lista Google Maps. Recensioni API restituisce immagini per ogni recensione: le foto allegate dall'autore."
+            "question": "Riceverò l’album completo?",
+            "answer": "In caso di successo, status è partial; reason spiega perché la raccolta si è fermata. reported_total è il numero indicato dalla fonte o null, non la dimensione verificata dell’album. max_results è un intero positivo, con valore predefinito 200. Potrebbero essere restituite meno foto. Non sono disponibili pagine o cursori."
           },
           {
             "question": "Come posso ottenere la fiducia di un'azienda?",
@@ -3369,7 +3405,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Come vengono conteggiate le richieste?",
-            "answer": "Le chiamate a API di estrazione e Recensioni API contano una richiesta per chiamata andata a buon fine, campi immagine inclusi. Le chiamate fallite non vengono conteggiate."
+            "answer": "Ogni chiamata riuscita conta come una richiesta, anche per una consegna parziale di foto, indipendentemente dal numero. Se non è possibile consegnare foto valide, la chiamata fallisce e non consuma quota. Ricerca, recensioni, foto e MCP condividono la quota mensile."
           },
           {
             "question": "I dati sono pubblici?",
@@ -3379,17 +3415,17 @@ export const site: SiteContent = {
       },
       "cta": {
         "title": {
-          "lead": "Le foto sono ",
-          "accent": " in arrivo ",
+          "lead": "",
+          "accent": "Integra le foto delle attività nella tua app",
           "tail": ""
         },
-        "lead": "I risultati di API di estrazione includono già l'immagine in primo piano di ogni luogo, mentre i risultati di Recensioni API elencano le foto allegate a ciascuna recensione."
+        "lead": "Usa la tua chiave API per ottenere URL di foto pubbliche e lo stato della consegna."
       }
     },
     "scraperMcp": {
       "seo": {
         "title": "Google Maps Estrattore MCP Server | MapsGrab",
-        "description": "Connetti gli agenti AI ai dati Google Maps in tempo reale con il server MapsGrab MCP: cerca luoghi e leggi recensioni da Claude Code, Cursor, VS Code, Codex o qualsiasi client MCP: basta accedere, no API chiave da incollare."
+        "description": "Cerca luoghi su Google Maps, leggi recensioni e ottieni URL di foto pubbliche delle attività con una connessione MCP."
       },
       "clients": {
         "claude": "Claude Code",
@@ -3405,7 +3441,7 @@ export const site: SiteContent = {
           "accent": " MCP ",
           "tail": " Server"
         },
-        "lead": "Il server MapsGrab MCP offre agli agenti AI la ricerca e le revisioni Google Maps in tempo reale su un endpoint Streamable HTTP: per Claude Code, Cursor, VS Code, Codex e qualsiasi altro client MCP.",
+        "lead": "Cerca luoghi su Google Maps, leggi recensioni e ottieni URL di foto pubbliche delle attività con una connessione MCP.",
         "meta": [
           "Streamable HTTP",
           "Accedi con OAuth",
@@ -3592,7 +3628,7 @@ export const site: SiteContent = {
           "accent": " ",
           "tail": ""
         },
-        "lead": "Due strumenti su un endpoint, con gli stessi input e risultati di API di estrazione e API delle recensioni.",
+        "lead": "Tre strumenti: Search / Reviews / Photos.",
         "kind": "Attrezzo",
         "returns": "Ritorni",
         "items": [
@@ -3651,13 +3687,26 @@ export const site: SiteContent = {
             ],
             "returns": "reviews ≤ 60 · next_cursor",
             "link": "Stessi dati delle Recensioni API"
+          },
+          {
+            "name": "list_photos",
+            "icon": "image",
+            "title": "Foto tramite fid",
+            "description": "Ottieni in JSON gli URL delle foto pubbliche di un’attività tramite il suo fid. max_results limita la consegna; i risultati sono parziali e non garantiscono l’album completo.",
+            "args": [
+              {
+                "name": "fid",
+                "description": "FID dell’attività dalla ricerca o da Place ID Finder, nel formato `0x…:0x…`, con 12–20 cifre esadecimali per segmento."
+              },
+              {
+                "name": "max_results",
+                "description": "Limite positivo della consegna, predefinito 200. Non garantisce quel numero di foto."
+              }
+            ],
+            "returns": "photos · returned_count · reported_total · status · reason",
+            "link": "Esplora l’API di foto"
           }
-        ],
-        "photos": {
-          "title": "Foto aziendali",
-          "description": "Presto sarà disponibile uno strumento fotografico per gli agenti, insieme alle Foto API.",
-          "link": "Informazioni sulle foto API"
-        }
+        ]
       },
       "flow": {
         "kicker": "Come si connette",
@@ -3667,17 +3716,17 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "Il tuo client si connette tramite Streamable HTTP e accede tramite il tuo browser. L'agente rileva gli strumenti, li richiama quando un prompt necessita di dati di Maps e rilegge JSON strutturato.",
-        "label": "Claude Code, Cursor, VS Code, Codex e altri client MCP si connettono all'endpoint MapsGrab MCP, che serve gli strumenti search_places e list_reviews. Uno strumento per le foto è contrassegnato come in arrivo.",
+        "label": "Cerca luoghi su Google Maps, leggi recensioni e ottieni URL di foto pubbliche delle attività con una connessione MCP. search_places / list_reviews / list_photos.",
         "clientsLabel": "MCP clienti",
         "anyClient": "Qualsiasi cliente MCP",
         "toolsLabel": "Utensili",
         "hub": "MapsGrab MCP",
-        "photos": "Foto",
         "publicData": "Dati pubblici Google Maps",
         "resultLabel": "risultato",
         "results": [
           "20 posti",
-          "60 recensioni"
+          "60 recensioni",
+          "2 Foto"
         ],
         "steps": [
           {
@@ -3988,7 +4037,7 @@ export const site: SiteContent = {
         "items": [
           {
             "question": "Cos'è il server MapsGrab MCP?",
-            "answer": "Un server MCP (Model Context Protocol) che consente agli agenti AI di cercare luoghi Google Maps e leggere le loro recensioni. Offre due strumenti, search_places e list_reviews, con gli stessi input e risultati di API di estrazione e Recensioni API."
+            "answer": "Cerca luoghi su Google Maps, leggi recensioni e ottieni URL di foto pubbliche delle attività con una connessione MCP. search_places / list_reviews / list_photos."
           },
           {
             "question": "Quali client possono connettersi?",
@@ -4000,11 +4049,11 @@ export const site: SiteContent = {
           },
           {
             "question": "Come vengono conteggiate le chiamate agli strumenti?",
-            "answer": "Ogni chiamata allo strumento riuscita conta come una richiesta rispetto alla tua quota mensile di API, la stessa quota di API di estrazione e Recensioni API. Le chiamate fallite non vengono conteggiate."
+            "answer": "Ogni chiamata riuscita conta come una richiesta, anche per una consegna parziale di foto, indipendentemente dal numero. Se non è possibile consegnare foto valide, la chiamata fallisce e non consuma quota. Ricerca, recensioni, foto e MCP condividono la quota mensile."
           },
           {
             "question": "Il mio agente può ottenere foto aziendali?",
-            "answer": "Non ancora. Presto sarà disponibile uno strumento per le foto, insieme alle Foto API. I risultati della ricerca includono già featured_image URL di ciascun luogo."
+            "answer": "list_photos(fid, max_results): Ottieni in JSON gli URL delle foto pubbliche di un’attività tramite il suo fid. max_results limita la consegna; i risultati sono parziali e non garantiscono l’album completo. Limite positivo della consegna, predefinito 200. Non garantisce quel numero di foto."
           }
         ]
       },
@@ -4014,7 +4063,7 @@ export const site: SiteContent = {
           "accent": " i dati di Maps in tempo reale ",
           "tail": ""
         },
-        "lead": "Una connessione MCP, due strumenti, risultati strutturati: ricerca e revisione per flussi di lavoro AI sensibili ai dati."
+        "lead": "Cerca luoghi su Google Maps, leggi recensioni e ottieni URL di foto pubbliche delle attività con una connessione MCP."
       }
     },
     "tools": {
@@ -4725,7 +4774,7 @@ export const company: CompanyContent = {
           "Strutturato JSON"
         ],
         "mcp": [
-          "Due strumenti",
+          "Tre strumenti",
           "Streamable HTTP",
           "Tasto OAuth o API"
         ]

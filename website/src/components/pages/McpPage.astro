@@ -3,7 +3,7 @@
  * MCP 落地页（W4）：/google-maps-scraper-mcp。
  *
  * 事实按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）：Streamable HTTP 入口 {PUBLIC_API_BASE_URL}/mcp/（必须带结尾斜杠），
- * 工具 search_places / list_reviews，API Key 或 OAuth access token 以 Authorization: Bearer 携带；照片工具尚无合同，只标 Coming soon。
+ * 工具 search_places / list_reviews / list_photos，API Key 或 OAuth access token 以 Authorization: Bearer 携带。
  * 接入优先引导 OAuth 登录（配置只含端点 URL），API Key 仅作不支持 MCP 授权的客户端兜底。
  * 连接按钮与兜底取 Key 链接绑 mcp 能力；额度与价格逐字取自 pricing.ts 的 API tab。
  * 会话轮播与拓扑高亮由 scripts/pages/mcp-page.ts 驱动；无 JS 与减弱动效下展示首个场景与静态拓扑。
@@ -13,10 +13,8 @@ import Layout from '../../layouts/Layout.astro'
 import { getContent, type Locale } from '../../i18n/content'
 import type { McpClientId, ProductCtaMessage, ProductFaqMessage } from '../../i18n/schema'
 import { localePaths } from '../../i18n/ui'
-import { capabilities } from '../../lib/capabilities'
 import CapabilityAction from '../site/CapabilityAction.astro'
 import Icon from '../site/Icon.astro'
-import SoonBadge from '../site/SoonBadge.astro'
 import SplitWords from '../site/SplitWords.astro'
 import CodeText from '../api/CodeText.astro'
 import McpScene from '../api/McpScene.astro'
@@ -36,6 +34,7 @@ const page = t.pages.scraperMcp
 const shared = t.pages.apiPage
 const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
 const pageId = 'google-maps-scraper-mcp'
+const toolPaths = ['google-maps-scraper-api', 'google-maps-reviews-scraper-api', 'google-maps-photos-api']
 const keyHref = `${prefix}/dashboard/api/`
 const pricingHref = (medium: string) =>
   `${prefix}/pricing/?product_kind=maps_api&utm_source=website&utm_medium=${pageId}-${medium}&utm_campaign=pricing`
@@ -188,7 +187,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
       </div>
     </section>
 
-    <!-- ② 工具：search_places / list_reviews + 照片工具 Coming soon -->
+    <!-- ② 工具：search_places / list_reviews / list_photos -->
     <section class="section" id="tools">
       <div class="container">
         <header class="section-head" data-stagger="80">
@@ -219,26 +218,11 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
                 <span>{page.tools.returns}</span>
                 <code>{tool.returns}</code>
               </div>
-              <a class="link-arrow" href={`${prefix}/${index === 0 ? 'google-maps-scraper-api' : 'google-maps-reviews-scraper-api'}/`} data-cta={`${pageId}-tool-${tool.name}`}>
+              <a class="link-arrow" href={`${prefix}/${toolPaths[index]}/`} data-cta={`${pageId}-tool-${tool.name}`}>
                 {tool.link}<Icon name="arrow-right" />
               </a>
             </article>
           ))}
-          <article class="mcp-tool mcp-tool--soon card" data-reveal>
-            <div class="mcp-tool-top">
-              <span class="icon-tile"><Icon name="image" /></span>
-              {!capabilities.photosApi && <SoonBadge locale={locale} />}
-            </div>
-            <h3>{page.tools.photos.title}</h3>
-            <p>{page.tools.photos.description}</p>
-            <a
-              class:list={['link-arrow', { 'is-unavailable': !capabilities.photosApi }]}
-              href={`${prefix}/google-maps-photos-api/`}
-              data-cta={`${pageId}-tool-photos`}
-            >
-              {page.tools.photos.link}<Icon name="arrow-right" />
-            </a>
-          </article>
         </div>
       </div>
     </section>
@@ -305,10 +289,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
                 <Icon name={tool.icon} /><code>{tool.name}</code>
               </span>
             ))}
-            <span class="topo-node topo-node--soon">
-              <Icon name="image" />{page.flow.photos}
-              {!capabilities.photosApi && <SoonBadge locale={locale} />}
-            </span>
             <span class="topo-foot"><Icon name="globe" />{page.flow.publicData}</span>
           </div>
         </div>
@@ -752,7 +732,7 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
      --------------------------------------------------------------------------- */
   .mcp-tools {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.72fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
     margin-top: clamp(40px, 5vw, 64px);
   }
@@ -861,15 +841,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     margin-top: auto;
   }
 
-  .mcp-tool--soon {
-    border-style: dashed;
-    background: var(--bg-2);
-  }
-
-  .mcp-tool--soon .icon-tile {
-    opacity: 0.6;
-  }
-
   /* ---------------------------------------------------------------------------
      ③ 连接拓扑（暗色岛）
      --------------------------------------------------------------------------- */
@@ -963,15 +934,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
   .topo-node--any {
     border-style: dashed;
     color: var(--text-3);
-  }
-
-  .topo-node--soon {
-    border-style: dashed;
-    color: var(--text-3);
-  }
-
-  .topo-node--soon :global(.badge) {
-    margin-left: auto;
   }
 
   .topo-foot {
@@ -1705,9 +1667,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .mcp-tool--soon {
-      grid-column: 1 / -1;
-    }
   }
 
   @media (max-width: 960px) {

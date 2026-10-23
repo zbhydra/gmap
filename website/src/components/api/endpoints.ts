@@ -7,7 +7,7 @@ if (!origin) {
   throw new Error('[api-pages] Missing PUBLIC_API_BASE_URL build env: API and MCP code samples need the public API origin.')
 }
 
-/** REST 基础地址（Search / Reviews 端点挂在其下）。 */
+/** REST 基础地址（Search / Reviews / Photos 端点挂在其下）。 */
 export const API_BASE_URL = `${origin}/api/client/maps/api`
 
 /** MCP Streamable HTTP 入口。 */

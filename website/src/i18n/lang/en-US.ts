@@ -597,7 +597,7 @@ export const company: CompanyContent = {
         extension: ['36-column extraction', 'Reviews & photos', 'Batch tasks'],
         online: ['Batch keywords', 'Contact enrichment', 'One 37-column CSV per task'],
         api: ['Business data', 'Reviews', 'Structured JSON'],
-        mcp: ['Two tools', 'Streamable HTTP', 'OAuth or API key']
+        mcp: ['Three tools', 'Streamable HTTP', 'OAuth or API key']
       },
       toolsLead: 'Plus free web tools.',
       toolsText:

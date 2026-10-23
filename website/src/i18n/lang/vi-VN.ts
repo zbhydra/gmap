@@ -2555,27 +2555,27 @@ export const site: SiteContent = {
         "kicker": "Điểm cuối",
         "title": {
           "lead": "Một chìa khóa.  ",
-          "accent": " Hai điểm cuối ",
+          "accent": "Ba",
           "tail": "."
         },
-        "lead": "Tìm kiếm địa điểm, sau đó chuyển `fid` của bất kỳ kết quả nào tới API Đánh giá. Cả hai đều lấy cùng một khóa API và rút ra từ một hạn ngạch yêu cầu hàng tháng. Điểm cuối Photos sắp ra mắt.",
+        "lead": "Tìm địa điểm rồi truyền `fid` từ kết quả sang API đánh giá hoặc ảnh. Cả ba API dùng chung một khóa và hạn mức yêu cầu hằng tháng.",
         "here": "Bạn đang ở đây",
         "paramsLabel": "Thông số",
         "mcp": {
           "title": "Xây dựng với các tác nhân AI?",
-          "description": "Máy chủ MapsGrab MCP mang Tìm kiếm và Đánh giá đến Claude Code, Cursor, VS Code, Codex và các máy khách MCP khác — kết nối bằng cách đăng nhập hoặc bằng khóa API của bạn.",
+          "description": "Tìm địa điểm Google Maps, đọc đánh giá và lấy URL ảnh công khai của doanh nghiệp qua một kết nối MCP.",
           "link": "Khám phá MCP"
         }
       },
       "chain": {
         "kicker": "Điểm cuối chuỗi",
         "title": {
-          "lead": "Một ID đưa bạn từ tìm kiếm ",
-          "accent": " đến đánh giá ",
+          "lead": "",
+          "accent": "cái cạp → Đánh giá / Ảnh",
           "tail": ""
         },
-        "lead": "Mọi kết quả Tìm kiếm đều mang `fid` của nó. Chuyển nó tới Bài đánh giá API để đi từ danh sách các địa điểm đến những gì mọi người nói về từng địa điểm.",
-        "label": "Yêu cầu Tìm kiếm trả về các địa điểm mà mỗi địa điểm mang một fid; a Yêu cầu đánh giá sử dụng lại fid của vị trí đầu tiên. Bước Ảnh được đánh dấu là sắp ra mắt.",
+        "lead": "Tìm địa điểm rồi truyền `fid` từ kết quả sang API đánh giá hoặc ảnh. Cả ba API dùng chung một khóa và hạn mức yêu cầu hằng tháng.",
+        "label": "Tìm địa điểm rồi truyền fid từ kết quả sang API đánh giá hoặc ảnh. Cả ba API dùng chung một khóa và hạn mức yêu cầu hằng tháng.",
         "places": [
           {
             "name": "Ember & Oak Coffee",
@@ -2605,8 +2605,7 @@ export const site: SiteContent = {
           }
         ],
         "photos": {
-          "title": "Ảnh",
-          "note": "Điểm cuối Photos đang được phát triển."
+          "note": "Khi thành công, status là partial; reason cho biết vì sao quá trình thu thập dừng. reported_total là số do nguồn báo hoặc null, không phải tổng số ảnh album đã xác minh."
         }
       },
       "reference": {
@@ -2634,7 +2633,7 @@ export const site: SiteContent = {
           {
             "icon": "gauge",
             "title": "Một yêu cầu cho mỗi cuộc gọi thành công",
-            "description": "Cuộc gọi thành công được tính một lần, ngay cả khi không có kết quả hoặc dữ liệu `partial`. Những cuộc gọi thất bại sẽ không được tính."
+            "description": "Mỗi lệnh gọi thành công tính là một yêu cầu, kể cả khi chỉ trả một phần ảnh, bất kể số ảnh. Nếu không thể trả ảnh hợp lệ, lệnh gọi báo lỗi và không trừ hạn mức. Tìm kiếm, đánh giá, ảnh và MCP dùng chung hạn mức tháng."
           },
           {
             "icon": "key",
@@ -2660,7 +2659,7 @@ export const site: SiteContent = {
           "accent": " được định giá theo yêu cầu ",
           "tail": ""
         },
-        "lead": "Tìm kiếm, Đánh giá và máy chủ MCP chia sẻ một hạn ngạch yêu cầu hàng tháng. Mỗi cuộc gọi thành công được tính là một yêu cầu."
+        "lead": "Mỗi lệnh gọi thành công tính là một yêu cầu, kể cả khi chỉ trả một phần ảnh, bất kể số ảnh. Nếu không thể trả ảnh hợp lệ, lệnh gọi báo lỗi và không trừ hạn mức. Tìm kiếm, đánh giá, ảnh và MCP dùng chung hạn mức tháng."
       },
       "faq": {
         "lead": "Những câu trả lời ngắn gọn. Bất cứ điều gì khác, hỗ trợ chỉ cần một email.",
@@ -2745,7 +2744,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { places, partial, warnings }",
         "params": [
           {
@@ -3001,7 +2999,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Các yêu cầu được tính như thế nào?",
-            "answer": "Mỗi cuộc gọi thành công được tính là một yêu cầu, bất kể giá trị trang của nó — bao gồm các tìm kiếm không trả về địa điểm hoặc một phần dữ liệu. Cuộc gọi thất bại không được tính. Tìm kiếm, Đánh giá và máy chủ MCP chia sẻ một hạn ngạch hàng tháng."
+            "answer": "Mỗi lệnh gọi thành công tính là một yêu cầu, kể cả khi chỉ trả một phần ảnh, bất kể số ảnh. Nếu không thể trả ảnh hợp lệ, lệnh gọi báo lỗi và không trừ hạn mức. Tìm kiếm, đánh giá, ảnh và MCP dùng chung hạn mức tháng."
           },
           {
             "question": "Trang làm gì?",
@@ -3096,7 +3094,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { reviews, next_cursor }",
         "params": [
           {
@@ -3253,7 +3250,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Các yêu cầu được tính như thế nào?",
-            "answer": "Mỗi cuộc gọi thành công được tính là một yêu cầu, bao gồm cả những cuộc gọi không nhận được đánh giá nào. Cuộc gọi thất bại không được tính. Hạn ngạch được chia sẻ với API thu thập dữ liệu và máy chủ MCP."
+            "answer": "Mỗi lệnh gọi thành công tính là một yêu cầu, kể cả khi chỉ trả một phần ảnh, bất kể số ảnh. Nếu không thể trả ảnh hợp lệ, lệnh gọi báo lỗi và không trừ hạn mức. Tìm kiếm, đánh giá, ảnh và MCP dùng chung hạn mức tháng."
           },
           {
             "question": "Dữ liệu có được công khai không?",
@@ -3272,8 +3269,8 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "Google Maps Ảnh API — Sắp ra mắt | MapsGrab",
-        "description": "Ảnh MapsGrab API sắp ra mắt. Hình ảnh URLs đã là một phần của các API MapsGrab khác: API thu thập dữ liệu các địa điểm bao gồm một hình ảnh nổi bật và các bài đánh giá API liệt kê các ảnh đính kèm của chúng."
+        "title": "API ảnh — URL ảnh công khai của doanh nghiệp | MapsGrab",
+        "description": "Lấy URL ảnh công khai của doanh nghiệp dưới dạng JSON bằng fid. max_results giới hạn số ảnh trả về; kết quả chỉ là một phần và không bảo đảm toàn bộ album."
       },
       "hero": {
         "title": {
@@ -3281,70 +3278,109 @@ export const site: SiteContent = {
           "accent": " Ảnh ",
           "tail": " API"
         },
-        "lead": "Điểm cuối dành riêng cho ảnh doanh nghiệp Google Maps đang được phát triển. Hình ảnh URLs đã đi kèm với các điểm cuối khác: mọi địa điểm API thu thập dữ liệu đều có một hình ảnh nổi bật và mọi bài đánh giá API đều liệt kê các ảnh của nó.",
+        "lead": "Lấy URL ảnh công khai của doanh nghiệp dưới dạng JSON bằng fid. max_results giới hạn số ảnh trả về; kết quả chỉ là một phần và không bảo đảm toàn bộ album.",
         "meta": [
-          "Hình ảnh nổi bật URL mỗi vị trí",
-          "Ảnh URLs mỗi bài đánh giá",
-          "Một chìa khóa cho Tìm kiếm và Đánh giá"
+          "Gói miễn phí: {quota}",
+          "URL ảnh công khai của doanh nghiệp",
+          " được định giá theo yêu cầu "
         ],
         "chips": [
           {
-            "label": "Mỗi nơi",
-            "value": "featured_image"
+            "label": "Trạng thái trả dữ liệu",
+            "value": "partial"
           },
           {
-            "label": "Mỗi đánh giá",
-            "value": "images[]"
+            "label": "Số lượng",
+            "value": "returned_count"
           }
         ]
       },
       "endpoint": {
         "name": "API ảnh",
-        "description": "Hình ảnh doanh nghiệp trên HTTP. Chưa có sẵn - các điểm cuối khác đã trả về hình ảnh URLs.",
-        "link": "Về Hình Ảnh API"
+        "description": "Lấy URL ảnh công khai của doanh nghiệp dưới dạng JSON bằng fid. max_results giới hạn số ảnh trả về; kết quả chỉ là một phần và không bảo đảm toàn bộ album.",
+        "link": "Khám phá API ảnh"
       },
       "caps": {
         "title": {
-          "lead": "Hình ảnh URLs trong ",
-          "accent": " các điểm cuối ",
-          "tail": " khác"
+          "lead": "",
+          "accent": "API ảnh",
+          "tail": ""
         },
-        "lead": "Ảnh API hiện chưa có sẵn. Các trường này đã trả về hình ảnh URLs:",
+        "lead": "URL ảnh công khai của doanh nghiệp",
         "items": [
           {
             "icon": "image",
-            "title": "Một hình ảnh nổi bật cho mỗi địa điểm",
-            "description": "Mỗi địa điểm API thu thập dữ liệu đều có `featured_image`: URL của ảnh hiển thị trên danh sách Google Maps hoặc `null` khi không có."
+            "title": "Lấy ảnh bằng fid",
+            "description": "Dùng `fid` từ tìm kiếm hoặc Place ID Finder. Mỗi mục trong `photos` chứa `url` của một ảnh công khai."
           },
           {
-            "icon": "review",
-            "title": "Hình ảnh đính kèm với đánh giá",
-            "description": "Mỗi bài đánh giá API đều có `images`: URLs của các bức ảnh mà tác giả đính kèm hoặc một danh sách trống."
+            "icon": "filter",
+            "title": "Giới hạn từng yêu cầu",
+            "description": "`max_results` là số nguyên dương, mặc định 200. Số ảnh thực tế có thể ít hơn. Không có số trang hay con trỏ."
           },
           {
-            "icon": "clock",
-            "title": "Tiếp theo là điểm cuối Ảnh",
-            "description": "Một điểm cuối dành riêng cho ảnh doanh nghiệp đang được phát triển. Các thông số và định dạng phản hồi của nó vẫn chưa được công bố."
+            "icon": "list",
+            "title": "Đọc trạng thái trả dữ liệu",
+            "description": "Khi thành công, `status` là `partial`; `reason` cho biết vì sao quá trình thu thập dừng. `reported_total` là số do nguồn báo hoặc `null`, không phải tổng số ảnh album đã xác minh."
           }
         ]
       },
       "reference": {
-        "kind": "pending",
-        "statusTitle": "Điểm cuối của ảnh",
-        "status": "Chưa có điểm cuối Ảnh nào để gọi nên không có tham số nào cần ghi lại. Cho đến khi xuất xưởng, các trường này của các điểm cuối khác mang hình ảnh URLs.",
-        "fieldsTitle": "Trường hình ảnh",
-        "fields": [
+        "shape": "{ photos: [{url}], returned_count, reported_total, status, reason }",
+        "params": [
           {
-            "name": "featured_image",
+            "name": "fid",
             "type": "string",
-            "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\"",
-            "badge": "API thu thập dữ liệu"
+            "required": true,
+            "description": "FID doanh nghiệp từ tìm kiếm hoặc Place ID Finder, dạng `0x…:0x…`, mỗi phần có 12–20 chữ số thập lục phân."
           },
           {
-            "name": "images",
-            "type": "string[]",
-            "example": "[\"https://lh5.googleusercontent.com/p/AF1QipN…\"]",
-            "badge": "API đánh giá"
+            "name": "max_results",
+            "type": "integer",
+            "required": false,
+            "description": "Giới hạn trả ảnh là số nguyên dương, mặc định 200. Không bảo đảm đủ số ảnh này."
+          }
+        ],
+        "groups": [
+          {
+            "label": "Ảnh",
+            "fields": [
+              {
+                "name": "photos",
+                "type": "photo[]",
+                "example": "[{\"url\": \"https://lh5.googleusercontent.com/p/AF1Qip…\"}]"
+              },
+              {
+                "name": "url",
+                "type": "string",
+                "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\""
+              }
+            ]
+          },
+          {
+            "label": "Trạng thái trả dữ liệu",
+            "fields": [
+              {
+                "name": "returned_count",
+                "type": "integer",
+                "example": "2"
+              },
+              {
+                "name": "reported_total",
+                "type": "integer | null",
+                "example": "178"
+              },
+              {
+                "name": "status",
+                "type": "string",
+                "example": "\"partial\""
+              },
+              {
+                "name": "reason",
+                "type": "string",
+                "example": "\"limit_reached\""
+              }
+            ]
           }
         ]
       },
@@ -3356,12 +3392,12 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "Ảnh API có sẵn không?",
-            "answer": "Chưa. Một điểm cuối dành riêng cho ảnh doanh nghiệp đang được phát triển và các thông số cũng như định dạng phản hồi của nó chưa được công bố."
+            "question": "Làm sao để yêu cầu ảnh doanh nghiệp?",
+            "answer": "Gửi POST tới /photos với fid và max_results tùy chọn. Dùng cùng khóa Bearer API như API tìm kiếm và đánh giá."
           },
           {
-            "question": "Điểm cuối nào trả về hình ảnh URLs?",
-            "answer": "API thu thập dữ liệu trả về featured_image cho mọi địa điểm - URL của ảnh hiển thị trên danh sách Google Maps của nó. Bài đánh giá API trả về hình ảnh cho mỗi bài đánh giá — ảnh mà tác giả đính kèm."
+            "question": "Có nhận được toàn bộ album không?",
+            "answer": "Khi thành công, status là partial; reason cho biết vì sao quá trình thu thập dừng. reported_total là số do nguồn báo hoặc null, không phải tổng số ảnh album đã xác minh. max_results là số nguyên dương, mặc định 200. Số ảnh thực tế có thể ít hơn. Không có số trang hay con trỏ."
           },
           {
             "question": "Làm thế nào để tôi có được fior của một doanh nghiệp?",
@@ -3369,7 +3405,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Các yêu cầu được tính như thế nào?",
-            "answer": "API thu thập dữ liệu và Đánh giá cuộc gọi API tính một yêu cầu cho mỗi cuộc gọi thành công, bao gồm cả trường hình ảnh. Cuộc gọi thất bại không được tính."
+            "answer": "Mỗi lệnh gọi thành công tính là một yêu cầu, kể cả khi chỉ trả một phần ảnh, bất kể số ảnh. Nếu không thể trả ảnh hợp lệ, lệnh gọi báo lỗi và không trừ hạn mức. Tìm kiếm, đánh giá, ảnh và MCP dùng chung hạn mức tháng."
           },
           {
             "question": "Dữ liệu có được công khai không?",
@@ -3379,17 +3415,17 @@ export const site: SiteContent = {
       },
       "cta": {
         "title": {
-          "lead": "Hình ảnh là ",
-          "accent": " sắp ra mắt ",
+          "lead": "",
+          "accent": "Đưa ảnh doanh nghiệp vào ứng dụng",
           "tail": ""
         },
-        "lead": "Các kết quả của API thu thập dữ liệu đã bao gồm hình ảnh nổi bật của từng địa điểm và các kết quả Đánh giá API liệt kê các ảnh được đính kèm với mỗi bài đánh giá."
+        "lead": "Dùng khóa API hiện có để lấy URL ảnh công khai và trạng thái trả dữ liệu."
       }
     },
     "scraperMcp": {
       "seo": {
         "title": "Máy cạp Google Maps Máy chủ MCP | MapsGrab",
-        "description": "Kết nối các tác nhân AI với dữ liệu Google Maps trực tiếp với máy chủ MapsGrab MCP: tìm kiếm địa điểm và đọc các bài đánh giá từ Claude Code, Cursor, VS Code, Codex hoặc bất kỳ ứng dụng khách MCP nào — chỉ cần đăng nhập, không cần Phím API để dán."
+        "description": "Tìm địa điểm Google Maps, đọc đánh giá và lấy URL ảnh công khai của doanh nghiệp qua một kết nối MCP."
       },
       "clients": {
         "claude": "Claude Code",
@@ -3405,7 +3441,7 @@ export const site: SiteContent = {
           "accent": "MCP",
           "tail": " thu thập dữ liệu Google Maps"
         },
-        "lead": "Máy chủ MapsGrab MCP cung cấp cho các tác nhân AI khả năng tìm kiếm và đánh giá Google Maps trực tiếp trên một điểm cuối Streamable HTTP — dành cho Claude Code, Cursor, VS Code, Codex và bất kỳ máy khách MCP nào khác.",
+        "lead": "Tìm địa điểm Google Maps, đọc đánh giá và lấy URL ảnh công khai của doanh nghiệp qua một kết nối MCP.",
         "meta": [
           "Streamable HTTP",
           "Đăng nhập bằng OAuth",
@@ -3592,7 +3628,7 @@ export const site: SiteContent = {
           "accent": " tiết lộ những gì ",
           "tail": ""
         },
-        "lead": "Hai công cụ trên một điểm cuối, có cùng đầu vào và kết quả như API thu thập dữ liệu và API đánh giá.",
+        "lead": "Ba công cụ: Search / Reviews / Photos.",
         "kind": "Dụng cụ",
         "returns": "Trả lại",
         "items": [
@@ -3651,13 +3687,26 @@ export const site: SiteContent = {
             ],
             "returns": "reviews ≤ 60 · next_cursor",
             "link": "Dữ liệu tương tự như Đánh giá API"
+          },
+          {
+            "name": "list_photos",
+            "icon": "image",
+            "title": "Lấy ảnh bằng fid",
+            "description": "Lấy URL ảnh công khai của doanh nghiệp dưới dạng JSON bằng fid. max_results giới hạn số ảnh trả về; kết quả chỉ là một phần và không bảo đảm toàn bộ album.",
+            "args": [
+              {
+                "name": "fid",
+                "description": "FID doanh nghiệp từ tìm kiếm hoặc Place ID Finder, dạng `0x…:0x…`, mỗi phần có 12–20 chữ số thập lục phân."
+              },
+              {
+                "name": "max_results",
+                "description": "Giới hạn trả ảnh là số nguyên dương, mặc định 200. Không bảo đảm đủ số ảnh này."
+              }
+            ],
+            "returns": "photos · returned_count · reported_total · status · reason",
+            "link": "Khám phá API ảnh"
           }
-        ],
-        "photos": {
-          "title": "Hình ảnh doanh nghiệp",
-          "description": "Một công cụ ảnh dành cho đại lý sắp ra mắt cùng với API ảnh.",
-          "link": "Về Hình Ảnh API"
-        }
+        ]
       },
       "flow": {
         "kicker": "Nó kết nối như thế nào",
@@ -3667,17 +3716,17 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "Khách hàng của bạn kết nối qua Streamable HTTP và đăng nhập thông qua trình duyệt của bạn. Tác nhân phát hiện ra các công cụ, gọi chúng khi có lời nhắc cần dữ liệu Bản đồ và đọc lại JSON có cấu trúc.",
-        "label": "Claude Code, Cursor, VS Code, Codex và các máy khách MCP khác kết nối với điểm cuối MapsGrab MCP, phục vụ các công cụ search_places và list_reviews. Một công cụ ảnh được đánh dấu là sắp ra mắt.",
+        "label": "Tìm địa điểm Google Maps, đọc đánh giá và lấy URL ảnh công khai của doanh nghiệp qua một kết nối MCP. search_places / list_reviews / list_photos.",
         "clientsLabel": "Khách hàng MCP",
         "anyClient": "Bất kỳ khách hàng MCP nào",
         "toolsLabel": "Công cụ",
         "hub": "MapsGrab MCP",
-        "photos": "Ảnh",
         "publicData": "Dữ liệu Google Maps công khai",
         "resultLabel": "kết quả",
         "results": [
           "Địa điểm 20",
-          "đánh giá 60"
+          "đánh giá 60",
+          "2 Ảnh"
         ],
         "steps": [
           {
@@ -3988,7 +4037,7 @@ export const site: SiteContent = {
         "items": [
           {
             "question": "Máy chủ MapsGrab MCP là gì?",
-            "answer": "Máy chủ MCP (Giao thức bối cảnh mô hình) cho phép các tác nhân AI tìm kiếm các địa điểm Google Maps và đọc các đánh giá của họ. Nó cung cấp hai công cụ, search_places và list_reviews, với cùng đầu vào và kết quả như API thu thập dữ liệu và API đánh giá."
+            "answer": "Tìm địa điểm Google Maps, đọc đánh giá và lấy URL ảnh công khai của doanh nghiệp qua một kết nối MCP. search_places / list_reviews / list_photos."
           },
           {
             "question": "Những khách hàng nào có thể kết nối?",
@@ -4000,11 +4049,11 @@ export const site: SiteContent = {
           },
           {
             "question": "Các cuộc gọi công cụ được tính như thế nào?",
-            "answer": "Mỗi cuộc gọi công cụ thành công được tính là một yêu cầu so với hạn ngạch API hàng tháng của bạn — cùng hạn ngạch với API thu thập dữ liệu và API đánh giá. Những cuộc gọi thất bại sẽ không được tính."
+            "answer": "Mỗi lệnh gọi thành công tính là một yêu cầu, kể cả khi chỉ trả một phần ảnh, bất kể số ảnh. Nếu không thể trả ảnh hợp lệ, lệnh gọi báo lỗi và không trừ hạn mức. Tìm kiếm, đánh giá, ảnh và MCP dùng chung hạn mức tháng."
           },
           {
             "question": "Đại lý của tôi có thể lấy ảnh doanh nghiệp không?",
-            "answer": "Chưa. Sắp có một công cụ ảnh cùng với API ảnh. Kết quả tìm kiếm đã bao gồm featured_image URL của mỗi địa điểm."
+            "answer": "list_photos(fid, max_results): Lấy URL ảnh công khai của doanh nghiệp dưới dạng JSON bằng fid. max_results giới hạn số ảnh trả về; kết quả chỉ là một phần và không bảo đảm toàn bộ album. Giới hạn trả ảnh là số nguyên dương, mặc định 200. Không bảo đảm đủ số ảnh này."
           }
         ]
       },
@@ -4014,7 +4063,7 @@ export const site: SiteContent = {
           "accent": " dữ liệu Bản đồ trực tiếp ",
           "tail": ""
         },
-        "lead": "Một kết nối MCP, hai công cụ, kết quả có cấu trúc — tìm kiếm và đánh giá cho quy trình làm việc AI nhận biết dữ liệu."
+        "lead": "Tìm địa điểm Google Maps, đọc đánh giá và lấy URL ảnh công khai của doanh nghiệp qua một kết nối MCP."
       }
     },
     "tools": {
@@ -4725,7 +4774,7 @@ export const company: CompanyContent = {
           "Cấu trúc JSON"
         ],
         "mcp": [
-          "Hai công cụ",
+          "Ba công cụ",
           "Streamable HTTP",
           "Phím OAuth hoặc API"
         ]

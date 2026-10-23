@@ -2555,27 +2555,27 @@ export const site: SiteContent = {
         "kicker": "Titik akhir",
         "title": {
           "lead": "Satu kunci. ",
-          "accent": "Dua",
+          "accent": "Tiga",
           "tail": " titik akhir."
         },
-        "lead": "Telusuri tempat, lalu berikan hasil apa pun `fid` ke Ulasan API. Keduanya menggunakan kunci API yang sama dan memanfaatkan satu kuota permintaan bulanan. Titik akhir Foto akan segera hadir.",
+        "lead": "Cari tempat, lalu kirim `fid` hasilnya ke API ulasan atau foto. Ketiga API berbagi satu kunci dan kuota permintaan bulanan.",
         "here": "Anda di sini",
         "paramsLabel": "Parameter",
         "mcp": {
           "title": "Membangun dengan agen AI?",
-          "description": "Server MapsGrab MCP menghadirkan Penelusuran dan Ulasan ke Claude Code, Cursor, VS Code, Codex dan klien MCP lainnya — terhubung dengan masuk atau menggunakan kunci API Anda.",
+          "description": "Cari tempat Google Maps, baca ulasan, dan dapatkan URL foto publik bisnis melalui satu koneksi MCP.",
           "link": "Jelajahi MCP"
         }
       },
       "chain": {
         "kicker": "Titik akhir rantai",
         "title": {
-          "lead": "Satu ID membawa Anda dari penelusuran ",
-          "accent": "ke ulasan",
+          "lead": "",
+          "accent": "Pengumpul data → Ulasan / Foto",
           "tail": ""
         },
-        "lead": "Setiap hasil Pencarian mempunyai `fid`. Berikan ke Ulasan API untuk beralih dari daftar tempat ke pendapat orang tentang masing-masing tempat.",
-        "label": "Permintaan Pencarian mengembalikan tempat-tempat yang masing-masing membawa fid; permintaan Ulasan menggunakan kembali fid dari tempat pertama. Langkah Foto ditandai segera hadir.",
+        "lead": "Cari tempat, lalu kirim `fid` hasilnya ke API ulasan atau foto. Ketiga API berbagi satu kunci dan kuota permintaan bulanan.",
+        "label": "Cari tempat, lalu kirim fid hasilnya ke API ulasan atau foto. Ketiga API berbagi satu kunci dan kuota permintaan bulanan.",
         "places": [
           {
             "name": "Ember & Oak Coffee",
@@ -2605,8 +2605,7 @@ export const site: SiteContent = {
           }
         ],
         "photos": {
-          "title": "Foto",
-          "note": "Titik akhir Foto sedang dalam pengembangan."
+          "note": "Saat berhasil, status adalah partial; reason menjelaskan mengapa pengumpulan berhenti. reported_total adalah jumlah yang dilaporkan sumber atau null, bukan ukuran album yang terverifikasi."
         }
       },
       "reference": {
@@ -2634,7 +2633,7 @@ export const site: SiteContent = {
           {
             "icon": "gauge",
             "title": "Satu permintaan per panggilan berhasil",
-            "description": "Panggilan yang berhasil dihitung satu kali, bahkan tanpa hasil atau `partial` data. Panggilan yang gagal tidak dihitung."
+            "description": "Setiap panggilan yang berhasil dihitung satu permintaan, termasuk pengiriman sebagian foto, berapa pun jumlahnya. Jika tidak ada foto valid yang dapat dikirim, panggilan gagal tanpa mengurangi kuota. Pencarian, ulasan, foto, dan MCP berbagi kuota bulanan."
           },
           {
             "icon": "key",
@@ -2660,7 +2659,7 @@ export const site: SiteContent = {
           "accent": "ditentukan berdasarkan permintaan",
           "tail": ""
         },
-        "lead": "Pencarian, Ulasan, dan server MCP berbagi satu kuota permintaan bulanan. Setiap panggilan yang berhasil dihitung sebagai satu permintaan."
+        "lead": "Setiap panggilan yang berhasil dihitung satu permintaan, termasuk pengiriman sebagian foto, berapa pun jumlahnya. Jika tidak ada foto valid yang dapat dikirim, panggilan gagal tanpa mengurangi kuota. Pencarian, ulasan, foto, dan MCP berbagi kuota bulanan."
       },
       "faq": {
         "lead": "Jawaban singkatnya. Yang lainnya, dukungan hanya berjarak satu email.",
@@ -2745,7 +2744,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { places, partial, warnings }",
         "params": [
           {
@@ -3001,7 +2999,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Bagaimana cara menghitung permintaan?",
-            "answer": "Setiap panggilan yang berhasil dihitung sebagai satu permintaan, berapa pun nilai lamannya — termasuk penelusuran yang tidak menghasilkan tempat atau sebagian data. Panggilan yang gagal tidak dihitung. Pencarian, Ulasan, dan server MCP berbagi satu kuota bulanan."
+            "answer": "Setiap panggilan yang berhasil dihitung satu permintaan, termasuk pengiriman sebagian foto, berapa pun jumlahnya. Jika tidak ada foto valid yang dapat dikirim, panggilan gagal tanpa mengurangi kuota. Pencarian, ulasan, foto, dan MCP berbagi kuota bulanan."
           },
           {
             "question": "Apa fungsi halaman?",
@@ -3096,7 +3094,6 @@ export const site: SiteContent = {
         ]
       },
       "reference": {
-        "kind": "endpoint",
         "shape": "data: { reviews, next_cursor }",
         "params": [
           {
@@ -3253,7 +3250,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Bagaimana cara menghitung permintaan?",
-            "answer": "Setiap panggilan yang berhasil dihitung sebagai satu permintaan, termasuk panggilan yang tidak memberikan ulasan. Panggilan yang gagal tidak dihitung. Kuota dibagikan ke API ekstraksi dan server MCP."
+            "answer": "Setiap panggilan yang berhasil dihitung satu permintaan, termasuk pengiriman sebagian foto, berapa pun jumlahnya. Jika tidak ada foto valid yang dapat dikirim, panggilan gagal tanpa mengurangi kuota. Pencarian, ulasan, foto, dan MCP berbagi kuota bulanan."
           },
           {
             "question": "Apakah datanya bersifat publik?",
@@ -3272,8 +3269,8 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "Google Maps Foto API — Segera Hadir | MapsGrab",
-        "description": "MapsGrab Foto API akan segera hadir. Gambar URLs sudah menjadi bagian dari MapsGrab API lainnya: API ekstraksi tempat menyertakan gambar unggulan, dan Ulasan API ulasan mencantumkan foto terlampir."
+        "title": "API foto — URL foto publik bisnis | MapsGrab",
+        "description": "Dapatkan URL foto publik bisnis dalam JSON menggunakan fid. max_results membatasi jumlah yang dikirim; hasilnya sebagian dan tidak menjamin album lengkap."
       },
       "hero": {
         "title": {
@@ -3281,70 +3278,109 @@ export const site: SiteContent = {
           "accent": "Foto",
           "tail": " API"
         },
-        "lead": "Titik akhir khusus untuk Google Maps foto bisnis sedang dalam pengembangan. Gambar URLs telah hadir bersama titik akhir lainnya: setiap tempat API ekstraksi memiliki gambar unggulan, dan setiap ulasan Ulasan API mencantumkan foto-fotonya.",
+        "lead": "Dapatkan URL foto publik bisnis dalam JSON menggunakan fid. max_results membatasi jumlah yang dikirim; hasilnya sebagian dan tidak menjamin album lengkap.",
         "meta": [
-          "Gambar unggulan URL per tempat",
-          "Foto URLs per ulasan",
-          "Satu kunci untuk Pencarian dan Ulasan"
+          "Paket gratis: {quota}",
+          "URL foto publik bisnis",
+          "ditentukan berdasarkan permintaan"
         ],
         "chips": [
           {
-            "label": "Per tempat",
-            "value": "featured_image"
+            "label": "Pengiriman",
+            "value": "partial"
           },
           {
-            "label": "Per ulasan",
-            "value": "images[]"
+            "label": "Jumlah",
+            "value": "returned_count"
           }
         ]
       },
       "endpoint": {
         "name": "API foto",
-        "description": "Foto bisnis lebih dari HTTP. Belum tersedia — titik akhir lainnya sudah mengembalikan gambar URLs.",
-        "link": "Tentang Foto API"
+        "description": "Dapatkan URL foto publik bisnis dalam JSON menggunakan fid. max_results membatasi jumlah yang dikirim; hasilnya sebagian dan tidak menjamin album lengkap.",
+        "link": "Jelajahi API foto"
       },
       "caps": {
         "title": {
-          "lead": "Gambar URLs di endpoint ",
-          "accent": "lainnya",
+          "lead": "",
+          "accent": "API foto",
           "tail": ""
         },
-        "lead": "Foto API belum tersedia. Bidang ini sudah mengembalikan gambar URLs:",
+        "lead": "URL foto publik bisnis",
         "items": [
           {
             "icon": "image",
-            "title": "Gambar unggulan per tempat",
-            "description": "Setiap tempat API ekstraksi memiliki `featured_image`: URL dari foto yang ditampilkan pada daftar Google Maps, atau `null` jika tidak ada."
+            "title": "Foto berdasarkan fid",
+            "description": "Gunakan `fid` dari pencarian atau Place ID Finder. Setiap item `photos` berisi `url` foto publik."
           },
           {
-            "icon": "review",
-            "title": "Foto terlampir pada ulasan",
-            "description": "Setiap Ulasan API ulasan memiliki `images`: URLs dari foto yang dilampirkan penulisnya, atau daftar kosong."
+            "icon": "filter",
+            "title": "Batasi tiap permintaan",
+            "description": "`max_results` adalah bilangan bulat positif, default 200. Foto yang dikirim bisa lebih sedikit. Tidak ada nomor halaman atau kursor."
           },
           {
-            "icon": "clock",
-            "title": "Titik akhir Foto berikutnya",
-            "description": "Titik akhir khusus untuk foto bisnis sedang dalam pengembangan. Parameter dan format responsnya belum dipublikasikan."
+            "icon": "list",
+            "title": "Baca status pengiriman",
+            "description": "Saat berhasil, `status` adalah `partial`; `reason` menjelaskan mengapa pengumpulan berhenti. `reported_total` adalah jumlah yang dilaporkan sumber atau `null`, bukan ukuran album yang terverifikasi."
           }
         ]
       },
       "reference": {
-        "kind": "pending",
-        "statusTitle": "Titik akhir foto",
-        "status": "Belum ada titik akhir Foto untuk dihubungi, jadi tidak ada parameter untuk didokumentasikan. Hingga dikirimkan, bidang titik akhir lainnya ini membawa gambar URLs.",
-        "fieldsTitle": "Bidang gambar",
-        "fields": [
+        "shape": "{ photos: [{url}], returned_count, reported_total, status, reason }",
+        "params": [
           {
-            "name": "featured_image",
+            "name": "fid",
             "type": "string",
-            "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\"",
-            "badge": "API ekstraksi"
+            "required": true,
+            "description": "FID bisnis dari pencarian atau Place ID Finder, dalam format `0x…:0x…` dengan 12–20 digit heksadesimal per bagian."
           },
           {
-            "name": "images",
-            "type": "string[]",
-            "example": "[\"https://lh5.googleusercontent.com/p/AF1QipN…\"]",
-            "badge": "API ulasan"
+            "name": "max_results",
+            "type": "integer",
+            "required": false,
+            "description": "Batas pengiriman positif, default 200. Jumlah foto tersebut tidak dijamin."
+          }
+        ],
+        "groups": [
+          {
+            "label": "Foto",
+            "fields": [
+              {
+                "name": "photos",
+                "type": "photo[]",
+                "example": "[{\"url\": \"https://lh5.googleusercontent.com/p/AF1Qip…\"}]"
+              },
+              {
+                "name": "url",
+                "type": "string",
+                "example": "\"https://lh5.googleusercontent.com/p/AF1Qip…\""
+              }
+            ]
+          },
+          {
+            "label": "Pengiriman",
+            "fields": [
+              {
+                "name": "returned_count",
+                "type": "integer",
+                "example": "2"
+              },
+              {
+                "name": "reported_total",
+                "type": "integer | null",
+                "example": "178"
+              },
+              {
+                "name": "status",
+                "type": "string",
+                "example": "\"partial\""
+              },
+              {
+                "name": "reason",
+                "type": "string",
+                "example": "\"limit_reached\""
+              }
+            ]
           }
         ]
       },
@@ -3356,12 +3392,12 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "Apakah Foto API tersedia?",
-            "answer": "Belum. Titik akhir khusus untuk foto bisnis sedang dalam pengembangan, dan parameter serta format responsnya belum dipublikasikan."
+            "question": "Bagaimana cara meminta foto bisnis?",
+            "answer": "Kirim POST ke /photos dengan fid dan max_results opsional. Gunakan kunci Bearer API yang sama dengan API pencarian dan ulasan."
           },
           {
-            "question": "Titik akhir manakah yang mengembalikan gambar URLs?",
-            "answer": "API ekstraksi mengembalikan featured_image untuk setiap tempat — URL dari foto yang ditampilkan pada daftar Google Maps. Ulasan API mengembalikan gambar untuk setiap ulasan — foto yang dilampirkan penulisnya."
+            "question": "Apakah saya mendapat seluruh album?",
+            "answer": "Saat berhasil, status adalah partial; reason menjelaskan mengapa pengumpulan berhenti. reported_total adalah jumlah yang dilaporkan sumber atau null, bukan ukuran album yang terverifikasi. max_results adalah bilangan bulat positif, default 200. Foto yang dikirim bisa lebih sedikit. Tidak ada nomor halaman atau kursor."
           },
           {
             "question": "Bagaimana cara mendapatkan ide bisnis?",
@@ -3369,7 +3405,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Bagaimana cara menghitung permintaan?",
-            "answer": "Panggilan scraper API dan Ulasan API dihitung satu permintaan per panggilan berhasil, termasuk bidang gambar. Panggilan yang gagal tidak dihitung."
+            "answer": "Setiap panggilan yang berhasil dihitung satu permintaan, termasuk pengiriman sebagian foto, berapa pun jumlahnya. Jika tidak ada foto valid yang dapat dikirim, panggilan gagal tanpa mengurangi kuota. Pencarian, ulasan, foto, dan MCP berbagi kuota bulanan."
           },
           {
             "question": "Apakah datanya bersifat publik?",
@@ -3379,17 +3415,17 @@ export const site: SiteContent = {
       },
       "cta": {
         "title": {
-          "lead": "Foto ",
-          "accent": "segera hadir",
+          "lead": "",
+          "accent": "Tambahkan foto bisnis ke aplikasi Anda",
           "tail": ""
         },
-        "lead": "Hasil scraper API sudah menyertakan gambar unggulan setiap tempat, dan hasil Ulasan API mencantumkan foto-foto yang dilampirkan pada setiap ulasan."
+        "lead": "Gunakan kunci API Anda untuk mendapatkan URL foto publik dan status pengirimannya."
       }
     },
     "scraperMcp": {
       "seo": {
         "title": "Google Maps Pengumpul data MCP Server | MapsGrab",
-        "description": "Hubungkan agen AI ke data Google Maps langsung dengan server MapsGrab MCP: cari tempat dan baca ulasan dari Claude Code, Cursor, VS Code, Codex, atau klien MCP lainnya — cukup masuk, tidak perlu Kunci API untuk ditempel."
+        "description": "Cari tempat Google Maps, baca ulasan, dan dapatkan URL foto publik bisnis melalui satu koneksi MCP."
       },
       "clients": {
         "claude": "Claude Code",
@@ -3405,7 +3441,7 @@ export const site: SiteContent = {
           "accent": "MCP",
           "tail": " Server"
         },
-        "lead": "Server MapsGrab MCP memberi agen AI penelusuran dan peninjauan Google Maps secara langsung melalui satu titik akhir Streamable HTTP — untuk Claude Code, Cursor, VS Code, Codex, dan klien MCP lainnya.",
+        "lead": "Cari tempat Google Maps, baca ulasan, dan dapatkan URL foto publik bisnis melalui satu koneksi MCP.",
         "meta": [
           "Streamable HTTP",
           "Masuk dengan OAuth",
@@ -3592,7 +3628,7 @@ export const site: SiteContent = {
           "accent": "diekspos",
           "tail": " oleh server MCP"
         },
-        "lead": "Dua alat pada satu titik akhir, dengan masukan dan hasil yang sama seperti API ekstraksi dan Ulasan API.",
+        "lead": "Tiga alat: Search / Reviews / Photos.",
         "kind": "Alat",
         "returns": "Kembali",
         "items": [
@@ -3651,13 +3687,26 @@ export const site: SiteContent = {
             ],
             "returns": "reviews ≤ 60 · next_cursor",
             "link": "Data yang sama dengan Ulasan API"
+          },
+          {
+            "name": "list_photos",
+            "icon": "image",
+            "title": "Foto berdasarkan fid",
+            "description": "Dapatkan URL foto publik bisnis dalam JSON menggunakan fid. max_results membatasi jumlah yang dikirim; hasilnya sebagian dan tidak menjamin album lengkap.",
+            "args": [
+              {
+                "name": "fid",
+                "description": "FID bisnis dari pencarian atau Place ID Finder, dalam format `0x…:0x…` dengan 12–20 digit heksadesimal per bagian."
+              },
+              {
+                "name": "max_results",
+                "description": "Batas pengiriman positif, default 200. Jumlah foto tersebut tidak dijamin."
+              }
+            ],
+            "returns": "photos · returned_count · reported_total · status · reason",
+            "link": "Jelajahi API foto"
           }
-        ],
-        "photos": {
-          "title": "Foto bisnis",
-          "description": "Alat foto untuk agen akan segera hadir, bersama dengan Foto API.",
-          "link": "Tentang Foto API"
-        }
+        ]
       },
       "flow": {
         "kicker": "Bagaimana hal itu terhubung",
@@ -3667,17 +3716,17 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "Klien Anda terhubung melalui Streamable HTTP dan masuk melalui browser Anda. Agen menemukan alat tersebut, memanggilnya ketika perintah memerlukan data Maps, dan membaca kembali JSON terstruktur.",
-        "label": "Claude Code, Cursor, VS Code, Codex dan klien MCP lainnya terhubung ke titik akhir MapsGrab MCP, yang melayani alat search_places dan list_reviews. Alat foto ditandai segera hadir.",
+        "label": "Cari tempat Google Maps, baca ulasan, dan dapatkan URL foto publik bisnis melalui satu koneksi MCP. search_places / list_reviews / list_photos.",
         "clientsLabel": "MCP klien",
         "anyClient": "Klien MCP mana pun",
         "toolsLabel": "Peralatan",
         "hub": "MapsGrab MCP",
-        "photos": "Foto",
         "publicData": "Data publik Google Maps",
         "resultLabel": "hasil",
         "results": [
           "20 tempat",
-          "60 ulasan"
+          "60 ulasan",
+          "2 Foto"
         ],
         "steps": [
           {
@@ -3988,7 +4037,7 @@ export const site: SiteContent = {
         "items": [
           {
             "question": "Apa itu server MapsGrab MCP?",
-            "answer": "Server MCP (Model Context Protocol) yang memungkinkan agen AI mencari Google Maps tempat dan membaca ulasan mereka. Ia menawarkan dua alat, search_places dan list_reviews, dengan masukan dan hasil yang sama seperti API ekstraksi dan Ulasan API."
+            "answer": "Cari tempat Google Maps, baca ulasan, dan dapatkan URL foto publik bisnis melalui satu koneksi MCP. search_places / list_reviews / list_photos."
           },
           {
             "question": "Klien mana yang dapat terhubung?",
@@ -4000,11 +4049,11 @@ export const site: SiteContent = {
           },
           {
             "question": "Bagaimana cara penghitungan panggilan alat?",
-            "answer": "Setiap panggilan alat yang berhasil dihitung sebagai satu permintaan terhadap kuota API bulanan Anda — kuota yang sama dengan API ekstraksi dan Ulasan API. Panggilan yang gagal tidak dihitung."
+            "answer": "Setiap panggilan yang berhasil dihitung satu permintaan, termasuk pengiriman sebagian foto, berapa pun jumlahnya. Jika tidak ada foto valid yang dapat dikirim, panggilan gagal tanpa mengurangi kuota. Pencarian, ulasan, foto, dan MCP berbagi kuota bulanan."
           },
           {
             "question": "Bisakah agen saya mendapatkan foto bisnis?",
-            "answer": "Belum. Alat foto akan segera hadir, bersama dengan Foto API. Hasil pencarian sudah menyertakan featured_image URL masing-masing tempat."
+            "answer": "list_photos(fid, max_results): Dapatkan URL foto publik bisnis dalam JSON menggunakan fid. max_results membatasi jumlah yang dikirim; hasilnya sebagian dan tidak menjamin album lengkap. Batas pengiriman positif, default 200. Jumlah foto tersebut tidak dijamin."
           }
         ]
       },
@@ -4014,7 +4063,7 @@ export const site: SiteContent = {
           "accent": "data Maps langsung",
           "tail": " kepada agen Anda"
         },
-        "lead": "Satu koneksi MCP, dua alat, hasil terstruktur — penelusuran dan ulasan untuk alur kerja AI yang peka terhadap data."
+        "lead": "Cari tempat Google Maps, baca ulasan, dan dapatkan URL foto publik bisnis melalui satu koneksi MCP."
       }
     },
     "tools": {
@@ -4725,7 +4774,7 @@ export const company: CompanyContent = {
           "Terstruktur JSON"
         ],
         "mcp": [
-          "Dua alat",
+          "Tiga alat",
           "Streamable HTTP",
           "Kunci OAuth atau API"
         ]

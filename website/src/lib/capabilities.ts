@@ -20,8 +20,8 @@ export const capabilities: Readonly<Record<Capability, boolean>> = {
   extensionPurchase: true,
   /** REST API 的 Search 与 Reviews 端点（同一 Key、同一套餐）：获取 Key、购买、连接。 */
   scraperApi: true,
-  /** Photos 后端已接入；营销页合同与文案完成后独立开放。 */
-  photosApi: false,
+  /** Photos API：获取 Key 与照片采集入口。 */
+  photosApi: true,
   /** MCP 服务：连接、获取 Key。 */
   mcp: true
 }

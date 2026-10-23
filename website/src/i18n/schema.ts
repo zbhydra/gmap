@@ -2183,31 +2183,15 @@ export interface ApiFieldGroupMessage {
   fields: readonly ApiFieldMessage[]
 }
 
-/**
- * API 页参考区：endpoint 为已有合同的端点（参数表 + 响应字段分组）；
- * pending 为尚无合同的端点（Photos），只给状态说明与其他端点里已有的相关字段，不写占位接口。
- */
-export type ApiReferenceMessage =
-  | {
-      kind: 'endpoint'
-      /** 响应 data 的结构示意。 */
-      shape: string
-      /** 请求参数。 */
-      params: readonly ApiParamMessage[]
-      /** 响应字段分组。 */
-      groups: readonly ApiFieldGroupMessage[]
-    }
-  | {
-      kind: 'pending'
-      /** 状态卡标题。 */
-      statusTitle: string
-      /** 状态说明。 */
-      status: string
-      /** 相关字段卡标题。 */
-      fieldsTitle: string
-      /** 其他端点里已有的相关字段。 */
-      fields: readonly ApiFieldMessage[]
-    }
+/** API 页参考区：请求参数与响应字段分组。 */
+export interface ApiReferenceMessage {
+  /** 响应 data 的结构示意。 */
+  shape: string
+  /** 请求参数。 */
+  params: readonly ApiParamMessage[]
+  /** 响应字段分组。 */
+  groups: readonly ApiFieldGroupMessage[]
+}
 
 /** API 落地页单个变体（Scraper / Reviews / Photos 三个路由）的文案（W4）。 */
 export interface ApiVariantContent {
@@ -2358,11 +2342,9 @@ export interface ApiPageSharedContent {
       /** 商家回复；没有则为空串。 */
       reply: string
     }[]
-    /** Photos 步骤（尚未提供，不写接口）。 */
+    /** Photos 步骤。 */
     photos: {
-      /** 步骤名。 */
-      title: string
-      /** 状态说明。 */
+      /** 交付说明。 */
       note: string
     }
   }
@@ -2557,15 +2539,6 @@ export interface McpPageContent {
     returns: string
     /** 工具卡。 */
     items: readonly McpToolMessage[]
-    /** 照片工具（尚未提供，不写工具名）。 */
-    photos: {
-      /** 卡片标题。 */
-      title: string
-      /** 卡片说明。 */
-      description: string
-      /** 指向 Photos API 页的链接文案。 */
-      link: string
-    }
   }
   /** 连接拓扑（暗色岛）。 */
   flow: {
@@ -2585,8 +2558,6 @@ export interface McpPageContent {
     toolsLabel: string
     /** 中枢名称。 */
     hub: string
-    /** 照片节点名称（尚未提供）。 */
-    photos: string
     /** 工具列脚注。 */
     publicData: string
     /** 中枢下方调用标签里结果的前缀词。 */
@@ -2803,7 +2774,7 @@ export interface SiteContent {
     scraperApi: ApiVariantContent
     /** Reviews API 落地页（W4，Reviews 端点）。 */
     reviewsApi: ApiVariantContent
-    /** Photos API 落地页（W4，端点尚未提供）。 */
+    /** Photos API 落地页（W4）。 */
     photosApi: ApiVariantContent
     /** Scraper MCP 落地页（W4）。 */
     scraperMcp: McpPageContent
