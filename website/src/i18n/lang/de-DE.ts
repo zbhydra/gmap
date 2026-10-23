@@ -93,6 +93,7 @@ export const site: SiteContent = {
   "dashboard": {
     "create": {
       "title": "Online Scraper",
+      "newTask": "Neue Aufgabe",
       "modeLabel": "Suchmodus",
       "modes": {
         "keywords": "Schlüsselwörter",
@@ -102,14 +103,16 @@ export const site: SiteContent = {
       "keywords": "Schlüsselwörter",
       "placeholder": "Café in Portland\nRestaurant in Austin",
       "count": "Schlüsselwörter {count} / {limit}",
+      "duplicates": "Doppelte Zeilen ignoriert: {count}",
       "contacts": "Finden Sie E-Mails und soziale Profile",
       "contactsPaid": "Verfügbar mit einem kostenpflichtigen Online-Plan.",
       "usage": "{used} / {total} zeichnet diesen Monat auf",
-      "reset": "Das monatliche Kontingent wird auf dem 1st in der Zeit New York zurückgesetzt.",
+      "reset": "Das Monatskontingent wird am 1. (New Yorker Zeit) zurückgesetzt.",
       "loading": "Laden Sie Ihre Grenzen...",
       "optionsFailed": "Ihre Aufgabenlimits konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
       "submit": "Datenerfassung starten",
       "submitting": "Einreichen...",
+      "submitted": "Aufgabe gesendet",
       "failed": "Die Übermittlung der Aufgabe ist fehlgeschlagen. Aktualisieren Sie den Verlauf, bevor Sie es erneut versuchen.",
       "exhausted": "Ihr monatliches Kontingent ist erschöpft.",
       "invalid": "Geben Sie bis zu {limit}-Schlüsselwörter ein, jedes nicht länger als 500 Zeichen.",
@@ -119,11 +122,12 @@ export const site: SiteContent = {
         "radius": "Radius (km)",
         "spacing": "Rasterabstand (km)",
         "sampleCount": "{count} / {limit} Suchorte",
+        "points": "Rasterpunkte: {points} · Schlüsselwörter: {keywords}",
         "overLimit": "Reduzieren Sie den Radius oder vergrößern Sie den Rasterabstand, um innerhalb der {limit}-Suchpositionen zu bleiben.",
         "chooseCenter": "Wählen Sie einen Mittelpunkt auf der Karte oder geben Sie Koordinaten ein.",
         "mapLabel": "Wählen Sie ein Suchzentrum auf der Karte",
         "tilesUnavailable": "Kartenkacheln konnten nicht geladen werden. Sie können weiterhin Koordinaten eingeben.",
-        "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\"> OpenStreetMap Mitwirkende </a>"
+        "attribution": "OpenStreetMap-Mitwirkende"
       },
       "region": {
         "baseKeywords": "Basisschlüsselwörter",
@@ -135,15 +139,14 @@ export const site: SiteContent = {
         "city": "Stadt",
         "selectCountry": "Wählen Sie ein Land aus",
         "allStates": "Alle Staaten oder Regionen",
-        "selectCity": "Wählen Sie eine Stadt aus",
         "loading": "Standorte werden geladen...",
         "loadFailed": "Standorte konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
         "retry": "Wiederholen",
         "addCountry": "Land hinzufügen",
         "addState": "Staat hinzufügen",
-        "addCity": "Stadt hinzufügen",
         "selectedRegions": "Ausgewählte Standorte",
         "remove": "Entfernen Sie {name}",
+        "noMatch": "Keine Treffer",
         "matchMode": "Suchphrasierung",
         "inMode": "In",
         "nearMode": "Nahe",
@@ -158,33 +161,58 @@ export const site: SiteContent = {
       "description": "Verwalten Sie Ihre MapsGrab-Exporte, API-Zugriffe und Abonnements in einem Arbeitsbereich."
     },
     "shell": {
+      "skipToContent": "Zum Inhalt springen",
+      "sideLabel": "Arbeitsbereich",
+      "homeLabel": "MapsGrab-Startseite",
+      "navLabel": "Menü des Arbeitsbereichs",
       "loading": "Ihr Arbeitsbereich wird geladen...",
       "retry": "Wiederholen",
-      "navHistory": "Online Scraper",
+      "navOnline": "Online Scraper",
+      "navJobHistory": "Verlauf",
       "navApi": "API-Verwaltung",
       "navSubscriptions": "Abonnements",
       "openMenu": "Arbeitsbereichsmenü öffnen",
-      "closeMenu": "Arbeitsbereichsmenü schließen"
+      "closeMenu": "Arbeitsbereichsmenü schließen",
+      "collapseSidebar": "Seitenleiste einklappen",
+      "expandSidebar": "Seitenleiste ausklappen",
+      "back": "Zurück"
     },
     "account": {
       "menuButtonLabel": "Kontomenü öffnen",
       "menuLabel": "Kontomenü",
-      "logout": "Abmelden"
+      "logout": "Abmelden",
+      "upgrade": "Upgraden",
+      "usageShort": "{used} / {total} Datensätze",
+      "planUnavailable": "Nicht verfügbar",
+      "theme": "Design",
+      "themeLight": "Hell",
+      "themeDark": "Dunkel",
+      "themeSystem": "System",
+      "language": "Sprache"
     },
     "history": {
       "title": "Online-Exporthistorie",
       "description": "Aufgaben, die Sie auf dem Online Scraper ausgeführt haben, das Neueste zuerst. Die Zeiten werden in Eastern Time (New York) angezeigt.",
       "refresh": "Aktualisieren",
+      "autoRefresh": "Automatische Aktualisierung an",
       "loading": "Ihre Exporte werden geladen...",
       "loadFailed": "Ihr Exportverlauf konnte nicht geladen werden.",
+      "refreshFailed": "Aktualisierung fehlgeschlagen. Es werden die zuletzt geladenen Ergebnisse angezeigt.",
       "retry": "Wiederholen",
       "emptyTitle": "Noch keine Exporte",
       "emptyHint": "Führen Sie eine Aufgabe im Online Scraper aus und sie wird hier angezeigt.",
+      "emptyCta": "Zum Online Scraper",
+      "recentTitle": "Letzte Aufgaben",
+      "viewAll": "Alle anzeigen",
+      "recentEmptyHint": "Aufgaben, die Sie oben starten, erscheinen hier.",
+      "noMatchTitle": "Keine passenden Aufgaben",
+      "noMatchHint": "Versuchen Sie eine andere Aufgabennummer oder ein anderes Schlüsselwort, oder setzen Sie die Filter zurück.",
+      "moreKeywordsShort": "+{count}",
+      "moreKeywords": "und {count} weitere",
       "columns": {
-        "taskNo": "Arbeit",
+        "taskNo": "Aufgabe",
         "createdAt": "Erstellt (ET)",
         "samples": "Suchen",
-        "processed": "Verarbeitet",
         "records": "Aufzeichnungen",
         "status": "Status"
       },
@@ -197,14 +225,41 @@ export const site: SiteContent = {
         "failed": "Fehlgeschlagen"
       },
       "timezone": "ET",
+      "search": {
+        "label": "Aufgaben durchsuchen",
+        "placeholder": "Nach Aufgabennummer oder Schlüsselwort suchen",
+        "clear": "Suche löschen"
+      },
+      "filters": {
+        "label": "Aufgaben filtern",
+        "button": "Filter",
+        "status": "Status",
+        "all": "Alle",
+        "running": "Laufend",
+        "clear": "Filter zurücksetzen"
+      },
+      "range": {
+        "label": "Zeitraum",
+        "last7": "Letzte 7 Tage",
+        "last30": "Letzte 30 Tage",
+        "all": "Gesamter Zeitraum",
+        "custom": "Benutzerdefinierter Zeitraum",
+        "from": "Von",
+        "to": "Bis",
+        "apply": "Anwenden",
+        "invalid": "Wählen Sie ein Startdatum, das nicht nach dem Enddatum liegt.",
+        "hint": "Datumsangaben in Eastern Time (New York)."
+      },
       "pagination": {
+        "label": "Seitennavigation",
         "previous": "Vorherige",
         "next": "Nächste",
+        "page": "Seite {page}",
+        "pageSize": "Zeilen pro Seite",
         "summary": "{from}–{to} oder {total}"
       },
       "detail": {
         "show": "Details",
-        "hide": "Details ausblenden",
         "loading": "Suchanfragen werden geladen...",
         "loadFailed": "Suchen für diese Aufgabe konnten nicht geladen werden.",
         "keyword": "Stichwort",
@@ -219,6 +274,10 @@ export const site: SiteContent = {
         "pending": "Ausstehend",
         "viewport": "{lat}, {lng} · Zoom {zoom}"
       },
+      "copyJob": "Aufgabennummer kopieren",
+      "dedupeHint": "Datensätze werden gezählt, nachdem Duplikate in der gesamten Aufgabe entfernt wurden.",
+      "finished": "Aufgabe {job}: {status}",
+      "finishedRecords": "{count} Datensätze",
       "downloadCsv": "Laden Sie CSV herunter",
       "noFile": "Nein CSV",
       "errors": {
@@ -232,39 +291,37 @@ export const site: SiteContent = {
       "downloadUnavailable": "Kein herunterladbares CSV. Die Datei ist möglicherweise abgelaufen.",
       "downloadFailed": "Der Download konnte nicht gestartet werden. Bitte versuchen Sie es erneut.",
       "signInPrompt": "Melden Sie sich an, um Ihren Online-Exportverlauf anzuzeigen.",
-      "signInCta": "anmelden",
+      "signInCta": "Anmelden",
       "unreachable": "MapsGrab konnte derzeit nicht erreicht werden."
     },
     "api": {
-      "title": "API-Verwaltung",
       "description": "Verwalten Sie Ihren API-Schlüssel, Ihr monatliches Anforderungskontingent und verbundene KI-Apps.",
       "docsLink": "API-Produkte anzeigen",
       "signInPrompt": "Melden Sie sich an, um Ihren API-Zugriff zu verwalten.",
-      "signInCta": "anmelden",
-      "unreachable": "MapsGrab konnte derzeit nicht erreicht werden.",
       "loading": "Laden Sie Ihren API-Zugang...",
       "loadFailed": "Ihr API-Zugriff konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
       "retry": "Wiederholen",
       "refresh": "Aktualisieren",
       "keyTitle": "API-Schlüssel",
       "keyEmpty": "Sie haben noch keinen API-Schlüssel generiert.",
-      "generateKey": "Generieren Sie den Schlüssel API",
-      "rotateKey": "Ersetzen Sie den Schlüssel API",
+      "generateKey": "API-Schlüssel generieren",
+      "rotateKey": "API-Schlüssel ersetzen",
       "generatingKey": "Generieren...",
       "keyOnce": "Kopieren Sie diesen Schlüssel jetzt. Sie können es nach dem Verlassen oder Aktualisieren dieser Seite nicht mehr anzeigen.",
       "keyCreated": "Erstellt",
       "rotateTitle": "Ersetzen Sie Ihren API-Schlüssel?",
       "rotateMessage": "Ihr aktueller Schlüssel funktioniert sofort nicht mehr. Aktualisieren Sie alle Apps, die ihn verwenden, mit dem neuen Schlüssel.",
       "cancel": "Stornieren",
-      "copyKey": "Kopieren Sie den Schlüssel API",
+      "copyKey": "API-Schlüssel kopieren",
       "copied": "Kopiert",
       "copyFailed": "Konnte nicht kopiert werden. Wählen Sie den Text aus und kopieren Sie ihn manuell.",
       "keyFailed": "Es konnte kein API-Schlüssel generiert werden. Bitte versuchen Sie es erneut.",
       "usageTitle": "Monatliche API-Nutzung",
+      "usageFailed": "Ihre API-Nutzung konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
       "usageValue": "{used} / {total}-Anfragen",
       "usagePeriod": "Zeitraum: {period}",
       "quotaExhausted": "Ihr monatliches Antragskontingent ist ausgeschöpft.",
-      "quotaReset": "Wird am 1st jedes Monats in der Zeit New York zurückgesetzt. API und MCP teilen sich diese Zulage.",
+      "quotaReset": "Reset am 1. (ET) · gemeinsam für API und MCP",
       "planTitle": "API-Plan",
       "managePlan": "Abonnements verwalten",
       "connectionsTitle": "Verbindungsadressen",
@@ -273,6 +330,8 @@ export const site: SiteContent = {
       "mcpHint": "Fügen Sie diesen URL in Ihrem MCP-Client hinzu. Melden Sie sich an und genehmigen Sie die Verbindung, wenn diese Website geöffnet wird.",
       "mcpUnavailable": "Die Verbindungsadresse MCP ist noch nicht verfügbar.",
       "copyUrl": "Kopieren Sie URL",
+      "curlTitle": "Schnellstart",
+      "curlHint": "Ersetzen Sie den Platzhalter durch Ihren vollständigen API-Schlüssel.",
       "grants": {
         "title": "Verbundene Apps",
         "description": "Apps, denen Sie erlaubt haben, mit Ihrem API-Guthaben Unternehmen zu durchsuchen und Bewertungen und öffentliche Fotos zu lesen.",
@@ -294,9 +353,6 @@ export const site: SiteContent = {
     "subscriptions": {
       "title": "Abonnements",
       "description": "Pläne und Erneuerungsstatus für den Online Scraper, die Browser-Erweiterung und den API. Kaufen oder upgraden Sie auf der Preisseite.",
-      "loading": "Ihre Abonnements werden geladen...",
-      "loadFailed": "Das Laden Ihrer Abonnements ist fehlgeschlagen.",
-      "retry": "Wiederholen",
       "lines": {
         "online": "Online Scraper",
         "extension": "Browser-Erweiterung",
@@ -304,17 +360,17 @@ export const site: SiteContent = {
       },
       "planLabel": "Planen",
       "expiresLabel": "Verlängert / läuft ab",
-      "noExpiry": "Kein Ablauf",
       "free": "Frei",
       "unavailable": "Vorübergehend nicht verfügbar",
       "autoRenewOn": "Automatische Verlängerung aktiviert",
       "autoRenewOff": "Automatische Verlängerung deaktiviert",
+      "paidVia": "Bezahlt mit {method}",
       "subscribeCta": "Wählen Sie einen Plan",
+      "pricingLink": "Preise ansehen",
       "manageSubscription": "Abonnement verwalten",
       "managingSubscription": "Öffnung...",
-      "signInPrompt": "Melden Sie sich an, um Ihre Abonnements anzuzeigen.",
-      "signInCta": "anmelden",
-      "unreachable": "MapsGrab konnte derzeit nicht erreicht werden."
+      "manageFailed": "Die Abonnementverwaltung konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.",
+      "signInPrompt": "Melden Sie sich an, um Ihre Abonnements anzuzeigen."
     },
     "cancelGuide": {
       "title": "Verwalten Sie Ihr Abonnement beim Zahlungsanbieter",
@@ -2166,6 +2222,7 @@ export const site: SiteContent = {
         "theater": {
           "files": "1 CSV · Unter „Downloads“ gespeichert",
           "csv": "CSV",
+          "processed": "Verarbeitet",
           "parallelChip": {
             "label": "Schlüsselwörter laufen",
             "value": "Parallel dazu"
@@ -2275,7 +2332,8 @@ export const site: SiteContent = {
           ]
         },
         "regions": {
-          "hint": "Sie können die generierten Abfragen vor dem Absenden bearbeiten. Jeder einzelne zählt als Schlüsselwort."
+          "hint": "Sie können die generierten Abfragen vor dem Absenden bearbeiten. Jeder einzelne zählt als Schlüsselwort.",
+          "addCity": "Stadt hinzufügen"
         }
       },
       "results": {

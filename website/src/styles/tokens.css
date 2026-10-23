@@ -120,6 +120,7 @@
   /* 与主题无关的常量（合同 §1：光影、遮罩、两种主题下都为白色的元素、窗口三色点） */
   --mask-solid: #000;                              /* mask 只取 alpha，颜色本身无意义 */
   --pin-dot: #ffffff;                              /* 地图 pin 中心点 */
+  --switch-knob: #ffffff;                          /* 开关滑块 */
   --window-close: #ff5f57;
   --window-minimize: #febc2e;
   --window-maximize: #28c840;
@@ -270,6 +271,7 @@
   --z-raised: 2;
   --z-nav: 50;
   --z-dropdown: 60;
+  --z-drawer: 80;  /* 窄屏抽屉：高于导航，低于弹窗 */
   --z-modal: 100;
   --z-toast: 110;
 

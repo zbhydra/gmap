@@ -160,7 +160,7 @@
 
 /* 预览结果表：接在信任条之后、剧场之前 */
 .hero-results {
-  margin-top: clamp(28px, 4vw, 40px);
+  margin-top: clamp(var(--s-8), 4vw, var(--s-10));
   animation: fade-up var(--dur-4) var(--ease-out) backwards;
 }
 
@@ -191,7 +191,7 @@
 
 .hero-results-title {
   color: var(--text);
-  font-size: 18px;
+  font-size: var(--fs-h4);
   font-weight: 650;
   line-height: 1.3;
 }

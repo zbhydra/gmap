@@ -93,6 +93,7 @@ export const site: SiteContent = {
   "dashboard": {
     "create": {
       "title": "線上採集器",
+      "newTask": "新增任務",
       "modeLabel": "搜尋模式",
       "modes": {
         "keywords": "關鍵字",
@@ -102,14 +103,16 @@ export const site: SiteContent = {
       "keywords": "關鍵字",
       "placeholder": "波特蘭的咖啡店\n奧斯汀的餐廳",
       "count": "{count} / {limit} 關鍵字",
+      "duplicates": "已忽略重複行：{count}",
       "contacts": "尋找電子郵件和社交資料",
       "contactsPaid": "付費線上方案可使用。",
       "usage": "本月{used} / {total} 紀錄",
-      "reset": "每月配額於紐約時間每月 1 日重設。",
+      "reset": "月度配額於每月 1 日（紐約時間）重設。",
       "loading": "正在加載您的限制...",
       "optionsFailed": "無法載入您的任務限制。請重試。",
       "submit": "開始採集",
       "submitting": "正在提交...",
+      "submitted": "任務已送出",
       "failed": "任務提交失敗。重試之前刷新歷史記錄。",
       "exhausted": "您的每月配額已用完。",
       "invalid": "最多輸入{limit}個關鍵字，每個關鍵字長度不超過500個字元。",
@@ -119,11 +122,12 @@ export const site: SiteContent = {
         "radius": "半徑（公里）",
         "spacing": "網格間距（km）",
         "sampleCount": "{count} / {limit} 搜尋位置",
+        "points": "網格點：{points} · 關鍵字：{keywords}",
         "overLimit": "減少半徑或增加網格間距以保持在 {limit} 搜尋位置內。",
         "chooseCenter": "選擇地圖上的中心或輸入座標。",
         "mapLabel": "在地圖上選擇一個搜尋中心",
         "tilesUnavailable": "無法載入地圖圖塊。您仍然可以輸入座標。",
-        "attribution": "&copy;<a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap貢獻者</a>"
+        "attribution": "OpenStreetMap 貢獻者"
       },
       "region": {
         "baseKeywords": "基礎關鍵字",
@@ -135,15 +139,14 @@ export const site: SiteContent = {
         "city": "城市",
         "selectCountry": "選擇一個國家",
         "allStates": "所有州或地區",
-        "selectCity": "選擇城市",
         "loading": "加載位置...",
         "loadFailed": "無法加載地點。請重試。",
         "retry": "重試",
         "addCountry": "新增國家/地區",
         "addState": "新增州或地區",
-        "addCity": "添加城市",
         "selectedRegions": "選定地點",
         "remove": "刪除{name}",
+        "noMatch": "沒有符合的項目",
         "matchMode": "搜尋字詞",
         "inMode": "在",
         "nearMode": "靠近",
@@ -158,33 +161,58 @@ export const site: SiteContent = {
       "description": "在一個工作區中管理您的 MapsGrab 匯出、API 存取和訂閱。"
     },
     "shell": {
+      "skipToContent": "跳至主要內容",
+      "sideLabel": "工作區",
+      "homeLabel": "MapsGrab 首頁",
+      "navLabel": "工作區選單",
       "loading": "正在加載您的工作區...",
       "retry": "重試",
-      "navHistory": "線上採集器",
+      "navOnline": "線上採集器",
+      "navJobHistory": "歷史紀錄",
       "navApi": "API 管理",
       "navSubscriptions": "訂閱",
       "openMenu": "開啟工作區選單",
-      "closeMenu": "關閉工作區選單"
+      "closeMenu": "關閉工作區選單",
+      "collapseSidebar": "收合側欄",
+      "expandSidebar": "展開側欄",
+      "back": "返回"
     },
     "account": {
       "menuButtonLabel": "開啟帳戶選單",
       "menuLabel": "帳戶選單",
-      "logout": "退出"
+      "logout": "退出",
+      "upgrade": "升級",
+      "usageShort": "{used} / {total} 筆記錄",
+      "planUnavailable": "無法使用",
+      "theme": "主題",
+      "themeLight": "淺色",
+      "themeDark": "深色",
+      "themeSystem": "跟隨系統",
+      "language": "語言"
     },
     "history": {
       "title": "在線匯出歷史記錄",
       "description": "您在 線上採集器 上運行的任務，最新的在前。時間以東部時間 (紐約) 顯示。",
       "refresh": "重新整理",
+      "autoRefresh": "自動重新整理中",
       "loading": "正在加載您的匯出...",
       "loadFailed": "無法載入您的匯出歷史記錄。",
+      "refreshFailed": "無法重新整理，目前顯示上次載入的結果。",
       "retry": "重試",
       "emptyTitle": "還沒匯出",
       "emptyHint": "在 線上採集器 上運行任務，它將顯示在此。",
+      "emptyCta": "前往線上採集器",
+      "recentTitle": "最近任務",
+      "viewAll": "查看全部",
+      "recentEmptyHint": "你在上方建立的任務會顯示在這裡。",
+      "noMatchTitle": "沒有符合的任務",
+      "noMatchHint": "請換個任務編號或關鍵字，或清除篩選條件。",
+      "moreKeywordsShort": "+{count}",
+      "moreKeywords": "另有 {count} 個",
       "columns": {
         "taskNo": "任務",
-        "createdAt": "創建（ET）",
+        "createdAt": "建立時間（ET）",
         "samples": "搜尋次數",
-        "processed": "已處理",
         "records": "記錄",
         "status": "狀態"
       },
@@ -197,21 +225,48 @@ export const site: SiteContent = {
         "failed": "失敗的"
       },
       "timezone": "ET",
+      "search": {
+        "label": "搜尋任務",
+        "placeholder": "依任務編號或關鍵字搜尋",
+        "clear": "清除搜尋"
+      },
+      "filters": {
+        "label": "篩選任務",
+        "button": "篩選",
+        "status": "狀態",
+        "all": "全部",
+        "running": "執行中",
+        "clear": "清除篩選"
+      },
+      "range": {
+        "label": "時間範圍",
+        "last7": "最近 7 天",
+        "last30": "最近 30 天",
+        "all": "所有時間",
+        "custom": "自訂範圍",
+        "from": "開始",
+        "to": "結束",
+        "apply": "套用",
+        "invalid": "開始日期不能晚於結束日期。",
+        "hint": "日期以美國東部時間（紐約）為準。"
+      },
       "pagination": {
+        "label": "分頁",
         "previous": "以前的",
         "next": "下一個",
+        "page": "第 {page} 頁",
+        "pageSize": "每頁列數",
         "summary": "{from}–{to} 共 {total}"
       },
       "detail": {
         "show": "細節",
-        "hide": "隱藏詳細訊息",
         "loading": "正在加載搜尋...",
         "loadFailed": "無法載入此任務的搜尋。",
         "keyword": "關鍵字",
         "records": "記錄",
         "runNo": "執行批次",
-        "startedAt": "開始（東部時間）",
-        "finishedAt": "已完成（東部時間）",
+        "startedAt": "開始時間（ET）",
+        "finishedAt": "結束時間（ET）",
         "contacts": "電子郵件和社交資料",
         "contactsEnabled": "此任務已啟用",
         "contactsDisabled": "此任務未啟用",
@@ -219,6 +274,10 @@ export const site: SiteContent = {
         "pending": "等待中",
         "viewport": "{lat}、{lng}·變焦{zoom}"
       },
+      "copyJob": "複製任務編號",
+      "dedupeHint": "記錄數以整個任務去除重複後計算。",
+      "finished": "任務 {job}：{status}",
+      "finishedRecords": "{count} 筆記錄",
       "downloadCsv": "下載 CSV",
       "noFile": "沒有 CSV",
       "errors": {
@@ -236,12 +295,9 @@ export const site: SiteContent = {
       "unreachable": "目前無法達到 MapsGrab。"
     },
     "api": {
-      "title": "API 管理",
       "description": "管理您的 API 金鑰、每月請求限額和連接的 AI 應用程式。",
       "docsLink": "查看 API 產品",
       "signInPrompt": "登入以管理您的 API 存取權限。",
-      "signInCta": "登入",
-      "unreachable": "目前無法達到 MapsGrab。",
       "loading": "正在載入您的 API 存取權限...",
       "loadFailed": "無法載入您的 API 存取權限。請再試一次。",
       "retry": "重試",
@@ -261,10 +317,11 @@ export const site: SiteContent = {
       "copyFailed": "無法複製。選擇文字並手動複製。",
       "keyFailed": "無法產生 API 金鑰。請再試一次。",
       "usageTitle": "每月 API 使用量",
+      "usageFailed": "無法載入 API 用量。請再試一次。",
       "usageValue": "{used} / {total} 請求",
       "usagePeriod": "期間：{period}",
       "quotaExhausted": "您的每月請求額度已用完。",
-      "quotaReset": "於紐約時間每月 1 日重設。API 和 MCP 共用此額度。",
+      "quotaReset": "每月 1 日重設（美東時間）· API 與 MCP 共用",
       "planTitle": "API 方案",
       "managePlan": "管理訂閱",
       "connectionsTitle": "連接位址",
@@ -273,6 +330,8 @@ export const site: SiteContent = {
       "mcpHint": "將這個URL加入您的 MCP 客戶端。打開此網站時登入並批准連線。",
       "mcpUnavailable": "MCP 連接位址尚不可用。",
       "copyUrl": "複製URL",
+      "curlTitle": "快速上手",
+      "curlHint": "請將預留位置替換為完整的 API 金鑰。",
       "grants": {
         "title": "連接的應用程式",
         "description": "您已允許使用 API 額度搜尋商家、閱讀評論與公開照片的應用程式。",
@@ -294,9 +353,6 @@ export const site: SiteContent = {
     "subscriptions": {
       "title": "訂閱",
       "description": "線上採集器、瀏覽器擴充功能和 API 的計畫和續約狀態。在定價頁面上購買或升級。",
-      "loading": "正在加載您的訂閱...",
-      "loadFailed": "無法加載您的訂閱。",
-      "retry": "重試",
       "lines": {
         "online": "線上採集器",
         "extension": "瀏覽器擴充功能",
@@ -304,17 +360,17 @@ export const site: SiteContent = {
       },
       "planLabel": "方案",
       "expiresLabel": "續訂/過期",
-      "noExpiry": "無有效期限",
       "free": "免費",
       "unavailable": "暫時無法使用",
       "autoRenewOn": "自動續訂開啟",
       "autoRenewOff": "自動續訂關閉",
+      "paidVia": "付款方式：{method}",
       "subscribeCta": "選擇一個方案",
+      "pricingLink": "查看價格",
       "manageSubscription": "管理訂閱",
       "managingSubscription": "開啟中...",
-      "signInPrompt": "登入以查看您的訂閱。",
-      "signInCta": "登入",
-      "unreachable": "目前無法達到 MapsGrab。"
+      "manageFailed": "無法開啟訂閱管理。請再試一次。",
+      "signInPrompt": "登入以查看您的訂閱。"
     },
     "cancelGuide": {
       "title": "管理您在支付提供者處的訂閱",
@@ -2166,6 +2222,7 @@ export const site: SiteContent = {
         "theater": {
           "files": "1 CSV · 已儲存到下載",
           "csv": "CSV",
+          "processed": "已處理",
           "parallelChip": {
             "label": "關鍵字運行",
             "value": "並聯"
@@ -2275,7 +2332,8 @@ export const site: SiteContent = {
           ]
         },
         "regions": {
-          "hint": "您可以在提交之前編輯產生的查詢。每一個都算是一個關鍵字。"
+          "hint": "您可以在提交之前編輯產生的查詢。每一個都算是一個關鍵字。",
+          "addCity": "新增城市"
         }
       },
       "results": {

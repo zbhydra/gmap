@@ -31,3 +31,22 @@ declare module 'node:fs' {
 declare module 'node:fs/promises' {
   export function readFile(path: string, encoding: 'utf8'): Promise<string>
 }
+
+declare module 'node:http' {
+  interface IncomingMessage {
+    url?: string
+  }
+
+  interface ServerResponse {
+    writeHead(statusCode: number, headers: Record<string, string>): ServerResponse
+    end(body: string): void
+  }
+
+  interface Server {
+    listen(port: number, host: string, callback: () => void): Server
+    address(): { port: number } | string | null
+    unref(): Server
+  }
+
+  export function createServer(listener: (request: IncomingMessage, response: ServerResponse) => void): Server
+}

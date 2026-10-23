@@ -5,28 +5,39 @@
 ## 用户行为
 
 - 全站导航右侧：匿名时显示登录，登录后显示 Dashboard。通过导航登录成功后进入 Dashboard；取消登录留在原页。
-- Dashboard 默认打开 Online Scraper，左侧仅三个菜单：Online Scraper、API 管理、订阅管理。菜单具有独立 URL，支持刷新、直接访问和浏览器前进后退。
-- 侧栏底部展示头像、姓名与邮箱；无头像使用姓名或邮箱首字母。点击个人信息展开菜单，点击退出后清除本站登录态并回到当前语言主页。品牌链接也可回到主页。
+- Dashboard 默认打开 Online Scraper，左侧四个菜单：Online Scraper、History、API 管理、订阅管理。每个菜单有独立 URL，支持刷新、直接访问和浏览器前进后退；站内切换不重新加载页面，侧栏与顶栏保持不动，各视图保留离开前的状态与滚动位置。
+- 侧栏底部用户卡展示头像、姓名与邮箱，以及 Online 当前套餐与本月记录用量；订阅读取失败显示不可用，不显示为免费。无头像使用姓名或邮箱首字母。品牌链接也可回到主页。
+- 点击用户卡展开账户菜单（在用户卡上方弹出，图标栏时在侧栏右侧）：
+  - 三条产品线的订阅各一行：有效订阅显示套餐与到期日并进入订阅视图；免费显示升级入口并进入 Pricing 对应产品；读取失败显示不可用，该行不能操作。另有管理订阅入口。
+  - 主题（浅色、深色、跟随系统）点选立即生效，菜单保持打开；与页头共用同一主题偏好。
+  - 语言在同一菜单内展开 14 种语言列表，选中后跳到该语言下的同一视图，保留地址里的筛选。
+  - 退出后清除本站登录态并回到当前语言主页。
 - 未登录直接访问工作区时展示登录入口，不加载私人数据；登录成功回到所访问的工作区页面，取消后回主页。认证失效沿用同一流程；普通网络失败展示重试，不误判为退出。
-- 桌面使用固定侧栏与独立主内容区；窄屏侧栏收起，通过菜单按钮展开，选中页面后关闭。个人信息和退出在窄屏仍可达。
-- 视觉按 [website 设计合同](../../references/specs/design-website.md) 的基础层，以紧凑标题、列表、分隔线和明确选中态承载操作。侧栏以外不叠加营销导航与页脚，不增加统计总览页。所有文字进入现有 i18n，键盘焦点、菜单关闭和焦点返回可用。
+- 宽屏（≥ 960px）使用固定侧栏与独立主内容区，侧栏可收起为图标栏并记住选择；窄屏侧栏收为抽屉，通过菜单按钮展开，选中页面后关闭。个人信息和退出在窄屏仍可达。
+- 视觉按 [website 设计合同](../../references/specs/design-website.md) 的基础层，以紧凑标题、列表、分隔线和明确选中态承载操作；外壳、视图状态与交互细则见 [Dashboard 设计稿](../../design/website/dashboard/README.md)。侧栏以外不叠加营销导航与页脚，不增加统计总览页。所有文字进入现有 i18n，键盘焦点、菜单关闭和焦点返回可用。
 
 ## 功能归属
 
 ### Online Scraper
 
-- 历史列表是唯一历史管理页面，默认最新在前，按现有接口分页，每页 20 条，支持手动刷新。
+- 视图上方为任务创建区，下方为最近任务（最新 5 条，任务名链到 History 中的该任务；每次定位都展开该任务，与 History 当前筛选无关）。创建区有 Keywords、Map、Regions 三种模式；关键词与地区生成的查询各对应一个 item，地图按关键词与视口的笛卡尔积提交。创建权益和首页预览规则归 [首页预览与任务创建](../014.Maps云端/tech-首页预览与任务创建.md)。
+- queued、collecting、publishing 每 5 秒轮询，completed、partial、failed 停止；最近任务的轮询在其他视图继续，页面在后台时暂停、回到前台立即刷新一次。任务进入终态时提示一次（最近任务与 History 共用同一份观察记录）并刷新用量。不自动重投，失败由用户重新提交。
+
+### History
+
+- 唯一的完整历史页面，默认最新在前，按现有接口分页，默认每页 20 条（可选 20 / 50 / 100，改条数回到第一页），支持手动刷新。可按任务号前缀或关键词搜索、按状态与时间范围筛选：时间范围有最近 7 天、最近 30 天（都含今天）、全部和自定义区间，自定义区间是两端都含的纽约日历日，点应用才生效。视图较窄时状态与时间范围收进一个筛选菜单，菜单内可一键清除筛选。筛选、页码与每页条数只把非默认值写进地址，刷新后保持且不占后退记录；工具栏排布与浮层细则见 [Dashboard 设计稿](../../design/website/dashboard/README.md) §3.3。输入完整任务号且命中时自动展开该任务；改筛选或翻页时收起全部展开，手动刷新与轮询不会重新展开用户收起的任务。
 - 展示真实 Job 编号、创建时间、采样总数、已收口采样数、整 Job 去重交付行数及六种状态。时间戳直接按毫秒读取，按 America/New_York 展示并标明时区；未开始或未结束的时间留空。
 - 点击任务在本页展开明细，展示真实 Run 编号、开始及结束时间、联系方式开关快照，以及每个 item 的关键词、可选视口、去重交付行数、收口和错误事实。item 已收口不等于采集成功；有错误时显示本地化原因。
 - 仅按后端 `has_file` 展示整 Job CSV 下载按钮；合法零结果完成且没有文件，局部结果保留已交付行。无逐 item 下载或任务 ZIP；文件不可用时就地提示。
-- 列表加载、无历史、请求失败可重试均为真实状态；不显示演示记录。展开详情失败只影响该任务，下载失败只影响该操作。
-- 创建表单由 `HistoryView.vue` 承载，位于唯一历史列表上方；关键词与地区生成的查询各对应一个 item，地图按关键词与视口的笛卡尔积提交。创建权益和首页预览规则归 [首页预览与任务创建](../014.Maps云端/tech-首页预览与任务创建.md)。queued、collecting、publishing 沿现有 5 秒机制轮询；completed、partial、failed 停止。创建后及观察到终态时刷新用量，不自动重投；失败由用户重新提交。
+- 列表加载、无历史、请求失败可重试均为真实状态；不显示演示记录。首屏、翻页与改筛选失败时列表区换成失败面板，手动刷新与轮询失败保留上次结果并提示。展开详情失败只影响该任务，下载失败只影响该操作。
+- History 是当前视图且当前页有运行中任务时每 5 秒静默刷新当前页；离开后不轮询，回到时若期间提交过任务、有任务结束或当前页有运行中任务则静默刷新一次。已展开的运行中任务随轮询静默刷新明细，进入终态时再刷新一次以展示最终计数。
 
 ### API 管理
 
-- 登录后展示本人 API Key 摘要，支持首次生成及确认后轮换。完整 Key 只在生成响应后保留于当前视图内存，离开或刷新页面后不能再次读取或复制；轮换立即使旧 Key 失效。
+- 登录后展示本人 API Key 摘要，支持首次生成及确认后轮换。完整 Key 只在生成响应后保留于当前视图内存，离开（含生成中离开）或刷新页面后不能再次读取或复制；轮换立即使旧 Key 失效。
 - 展示 API 与 MCP 共用的月请求用量、周期和额度耗尽状态，以及现有账号摘要中的 API 套餐、到期和自动续费状态；计量与订阅合同分别归 [额度基建](../000.架构/tech-额度基建.md) 和 [订阅状态](../006.订阅系统/tech-订阅商品与状态.md)。读取失败明确提示重试，不显示为零用量或免费套餐。
 - API 基础地址和 MCP 地址只使用服务端连接信息；MCP 地址为空时显示不可用。产品介绍保留在营销页，套餐选购及已有订阅管理仍进入订阅工作区。
+- 连接地址下方展示 Search 接口的 curl 快速上手示例，命令沿用营销 API 页的样例：地址取服务端连接信息；有 Key 时以 Key 前缀加省略号占位，没有 Key 时显示 YOUR_API_KEY，并提示换成完整 Key。示例只做展示，不发请求，不提供复制按钮，也从不展示完整 Key。
 - 已连接应用按回调主机、应用自报名称、连接时间和最近刷新时间展示，每页 20 条；无应用和读取失败分别显示。撤销前确认影响，按授权 ID 撤销本人授权并刷新列表。名称与时间不保证唯一，不将自报名称标记为已验证。
 - 接口、凭证和权限边界统一归 [API、MCP 与 OAuth 合同](../014.Maps云端/tech-API与MCP.md)，不使用管理员 API Key。
 
@@ -50,19 +61,20 @@
 ## 技术边界
 
 - 使用 Astro SSG + Vue 3：Astro 负责公开内容与文件路由，Vue 负责 Dashboard 的响应式状态和交互。已引入官方 `@astrojs/vue` 集成与 `vue`，`vue-tsc --noEmit` 已接入 `pnpm build` 门禁（astro check → vue-tsc → astro build）；未增加 UI 库、数据库表或新的会话机制。
-- Dashboard 每个 Astro 路由装配同一个 `DashboardApp.vue`，通过页面标识选择历史、API 或订阅组件；使用 `client:load` 输出公共初始壳并立即激活交互，用户请求只在客户端挂载后执行。Vue 内按侧栏、个人菜单和三个业务视图拆组件，局部状态用 `ref/computed`，组件间用 props/emits，不增加 Pinia、provide/inject 或全局依赖注入。
-- 页面跳转仍使用真实链接与 Astro 文件路由，不新增 Vue Router；切页会重新加载页面，浏览器前进后退与直接访问自然沿用现有部署。后续若明确需要跨页保留编辑状态，再单独评估工作区客户端路由。
+- Dashboard 由 `components/pages/DashboardPage.astro` 装配同一个 `DashboardApp.vue`，四个视图地址由静态 catch-all 路由各产出一份 HTML 并按地址决定初始视图；使用 `client:load` 输出公共初始壳并立即激活交互，用户请求只在客户端挂载后执行。视图首次进入时挂载，此后切换只显示或隐藏，保留各自状态。Vue 内按侧栏、用户卡和四个业务视图拆组件，局部状态用 `ref/computed`，组件间用 props/emits，不增加 Pinia、provide/inject 或全局依赖注入；额度、最近任务与轮询、下载状态按登录 token 建一份工作区数据，由根组件经 props 下发，换号或会话失效时整体重建。
+- 账户菜单、History 时间范围与筛选菜单、每页条数和地区选择都消费共享浮层（`scripts/site/pop.ts` 与 `PopMenu` / `PopListbox` / `PopCombobox`，规范见 [website 规范](../../references/specs/spec-website.md) §4）。订阅行、查询条件和地区候选的过滤排序留在各自使用方；切换视图、换号或退出、收起侧栏时关闭浮层。
+- 视图切换由工作区内最小的 History API 路由承担，不引入 Vue Router：切换视图 `pushState`，History 的筛选与页码 `replaceState`；前进后退按地址恢复视图与滚动位置，切换后焦点移到视图标题。侧栏链接是真实地址，修饰键与中键点击交给浏览器。通用规则见 [website 规范](../../references/specs/spec-website.md) §8。
 - 静态营销区块继续用 Astro 组件；本轮因全站账号入口和工作区外壳产生的导航职责按需抽为站级组件。后续新增复杂交互优先用 Vue，不因组件化重写无关工具、Pricing 支付或插件登录桥。
 - 现有界面也允许按需要迁为 Vue 组件，不受原技术栈限制。迁移以本轮实际改动为依据：当保留命令式 DOM 会造成重复状态、重复渲染或 Vue 与旧控制器争用同一 DOM 时，将该界面的渲染与交互一并迁移，复用底层业务 API，并删除被替代的控制器及样式。静态内容的组件化仍由 Astro 承担；当前已核对的调用链尚不要求整体重写登录、Pricing 或工具页面。
 - 继续由 `website/src/layouts/Layout.astro` 唯一持有 HTML 外壳与全局运行时，并统一引入全局样式（token 唯一来源为 `styles/tokens.css`）；增加工作区展示模式以装配侧栏和正文，避免复制全局外壳。
-- 路由：`/dashboard/` 为 Online 创建与历史，`/dashboard/api/` 为 API，`/dashboard/subscriptions/` 为订阅；遵循现有默认语言根路径与非默认语言前缀规则。
-- 工作区输出 `noindex, nofollow`，从现有 sitemap 生成集合排除；SSG 只产出公共壳，私有数据登录后请求，服务端认证与归属校验仍是权限边界。
+- 路由：`/dashboard/` 为 Online（创建与最近任务），`/dashboard/history/` 为 History，`/dashboard/api/` 为 API，`/dashboard/subscriptions/` 为订阅；遵循现有默认语言根路径与非默认语言前缀规则。
+- 工作区输出 `noindex, nofollow`，四个地址均从现有 sitemap 生成集合排除并列入登录后跳转白名单；SSG 只产出公共壳，私有数据登录后请求，服务端认证与归属校验仍是权限边界。
 - 现有 Pricing 登录弹窗及控制器已迁到 `components/auth/`（`SiteAuthModal.astro` + `site-auth-controller.ts`），由 `Layout.astro` 全站唯一装配；`/extension-login/` 传 `includeSiteAuth=false` 保留插件授权桥独立 owner，不装配站级控制器也不重复消费 Google 回跳。事件为 `site-auth:success` / `site-auth:close`，全局对象为 `window.siteAuthController`。导航登录通过 `open({ redirectTo })` 声明 Dashboard 目的地（sessionStorage 持久化跨 OAuth 回跳，仅白名单本站路由）；Pricing 待购与工作区不带 redirect 留在原页。登录成功结果经 `scripts/site/session.ts` 的 `setSiteSession` 写入共享会话，导航入口、Pricing 与 Vue 工作区消费同一份数据，无第二次 auth/me。
 - 导航登录、工作区登录、Pricing 待购分别按触发上下文决定登录后位置；保留既有 Google 回跳换票及待购恢复。只使用本站确定的路由作为目的地，不增加任意外部回跳参数。
 - `/extension-login/` 保留其独立插件授权确认流程，不装配第二个站级登录控制器，也不在登录后转 Dashboard；它继续复用底层认证能力。
 - 用户资料和三线订阅直接复用 `GET /api/client/auth/me`；导航和当前页面共用一次会话恢复结果（`scripts/site/session.ts`：无 token 匿名不发请求，401 清 token 回匿名，网络失败返回 unreachable 且不缓存——重试真正重新请求）。业务请求 401 由 `scripts/dashboard/api.ts` 边界统一汇入站级会话失效（清 token + `site-session:expired` 事件），工作区回到登录面板走同一登录流程；普通网络错误就地提示不误判退出。退出调用现有 logout 并清除本地 token，跳当前语言主页；不改变后端仅撤销当前 token 的合同。
 - 创建、历史分页、详情和本人整 Job CSV 下载消费 [Online Export 接口](../014.Maps云端/tech-Online任务与结果.md)，稳定业务口径归 [Export 与 Collector](../014.Maps云端/tech-Export与Collector重构.md)。全部 JSON 请求使用现有鉴权与会话封装；下载时先取得新签名，再以浏览器链接下载，不把 Bearer token 放入链接。不保留旧任务 DTO、逐项文件和 ZIP 解析路径。
-- 用户已允许按实际需求引入 Vue 和组件化；实施时同步修订 `spec-website.md` 的纯 Astro/命令式 DOM 限制，明确 Astro 内容与 Vue 交互边界、状态及类型检查规则。全局样式归 `styles/`、由 `Layout.astro` 统一引入，Vue 组件消费现有 token，不复制第二套设计系统。
+- 用户已允许按实际需求引入 Vue 和组件化；Astro 内容与 Vue 交互边界、状态、路由及类型检查规则见 `spec-website.md`。全局样式归 `styles/`、由 `Layout.astro` 统一引入；Dashboard 专属样式放在 `components/dashboard/` 下由页面组件引入，页面组件先引入同一组全局样式再引入专属样式，保证构建产物里专属样式排在全局样式之后（Astro 构建按导入路径排序页面 CSS）。Vue 组件消费现有 token，不复制第二套设计系统。
 
 ## 集成依据
 
@@ -72,7 +84,7 @@
 
 ## 证据与限制
 
-- 落地文件：`src/components/dashboard/`（Vue 工作区组件）、`src/scripts/dashboard/api.ts`、`src/scripts/site/{session,account-entry}.ts`、`src/components/auth/{SiteAuthModal.astro,site-auth-controller.ts}`、`src/pages/dashboard/` 与 `src/pages/[lang]/dashboard/` 路由；Pricing 侧删去 `PricingAuthModal.astro`、`pricing-auth-controller.ts`、`PricingCancellationGuideModal.astro`（渠道指引改 Vue 版）。
+- 落地文件：`src/components/dashboard/`（Vue 工作区组件）、`src/scripts/dashboard/`（接口封装、路由、工作区数据与任务口径）、`src/scripts/site/{session,account-entry}.ts`、`src/components/auth/{SiteAuthModal.astro,site-auth-controller.ts}`、`src/components/pages/DashboardPage.astro` 与 `src/pages/dashboard/[...view].astro`、`src/pages/[lang]/dashboard/[...view].astro` 静态路由；Pricing 侧删去 `PricingAuthModal.astro`、`pricing-auth-controller.ts`、`PricingCancellationGuideModal.astro`（渠道指引改 Vue 版）。
 - `backend/src/app/api/client/export_client.py` 提供本人 Job 创建、历史、详情与签名 CSV 下载；`maps_online_client.py` 保留创建选项和匿名预览。网站不读取内部工作文件，不为旧任务或下载协议提供兼容层。
 - 客户 Key、连接与用量由 `scripts/dashboard/api.ts` 消费 014 接口；OAuth 票据、确认与本人授权接口由 `scripts/mcp-oauth/client.ts` 持有。管理员 Key 仍属于独立的后台外部接入。
 - Export 网站接线及当前验收范围见 [实施记录](../014.Maps云端/plans/010.Export服务端实施.md)；构造 CSV 的真实后端与对象存储验证不代表 Collector/Google 采集联调。旧界面实施记录保留为历史，不能替代现行合同验收。工作区认证与支付验证范围仍见下方实施清单。

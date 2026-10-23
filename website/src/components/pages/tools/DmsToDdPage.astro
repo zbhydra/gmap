@@ -87,10 +87,14 @@ const axes = [
               />
             </div>
             <div class="field">
-              <label class="field-label" for={`${axis.key}-hemisphere`}>{axis.hemisphereLabel}</label>
-              <select class="input" id={`${axis.key}-hemisphere`} {...{ [`data-${axis.key}-hemisphere`]: '' }}>
-                {axis.hemispheres.map(letter => <option value={letter} selected={letter === axis.selected}>{letter}</option>)}
-              </select>
+              <span class="field-label" id={`${axis.key}-hemisphere-label`}>{axis.hemisphereLabel}</span>
+              {/* 两个字母的单选用原生 radio 分段：语义、方向键与取值都是原生的，站级脚本只移动滑块 */}
+              <div class="seg tool-hemisphere" role="radiogroup" aria-labelledby={`${axis.key}-hemisphere-label`} data-seg {...{ [`data-${axis.key}-hemisphere`]: '' }}>
+                <span class="seg-thumb" aria-hidden="true"></span>
+                {axis.hemispheres.map(letter => (
+                  <label class="seg-btn"><input class="sr-only" type="radio" name={`${axis.key}-hemisphere`} value={letter} checked={letter === axis.selected} />{letter}</label>
+                ))}
+              </div>
             </div>
           </div>
         </fieldset>

@@ -23,6 +23,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
     theater: {
       files: '1 CSV · Saved to Downloads',
       csv: 'CSV',
+      processed: 'Processed',
       parallelChip: { label: 'Keywords run', value: 'In parallel' },
       billingChip: { label: 'Billed by', value: 'Delivered rows' }
     }
@@ -101,7 +102,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
         'A business found across keywords or points is kept once in the task.'
       ]
     },
-    regions: { hint: 'You can edit the generated queries before submitting. Each one counts as a keyword.' }
+    regions: { hint: 'You can edit the generated queries before submitting. Each one counts as a keyword.', addCity: 'Add city' }
   },
   results: {
     head: {

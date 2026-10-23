@@ -41,12 +41,10 @@ const copyJson = JSON.stringify({ common, content: tool })
             data-locations></textarea>
         </div>
       </div>
-      <div class="field tool-order">
-        <label class="field-label" for="order-input">{tool.form.orderLabel}</label>
-        <select class="input" id="order-input" data-order>
-          <option value="keyword-first" selected>{tool.form.keywordFirst}</option>
-          <option value="location-first">{tool.form.locationFirst}</option>
-        </select>
+      <div class="field tool-order" role="radiogroup" aria-labelledby="order-label" data-order>
+        <span class="field-label" id="order-label">{tool.form.orderLabel}</span>
+        <label><input type="radio" name="order" value="keyword-first" checked />{tool.form.keywordFirst}</label>
+        <label><input type="radio" name="order" value="location-first" />{tool.form.locationFirst}</label>
       </div>
       <p class="tool-error" role="alert" data-tool-error hidden><Icon name="info" /><span data-tool-error-text></span></p>
       <div class="tool-actions">
@@ -92,9 +90,19 @@ const copyJson = JSON.stringify({ common, content: tool })
 </ToolShell>
 
 <style>
-  /* 选项带示例（keyword + location (design agency New York)），宽度按最长选项留足 */
-  .tool-order {
-    max-width: 480px;
+  /* 组合顺序：选项带示例（keyword + location (design agency New York)），各语言 40–65 字，
+     放不进分段控件，用纵向排列的原生单选，长文案自然换行 */
+  .tool-order label {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-2);
+    color: var(--text-2);
+    font-size: 14.5px;
+    cursor: pointer;
+  }
+
+  .tool-order input {
+    flex: none;
   }
 </style>
 

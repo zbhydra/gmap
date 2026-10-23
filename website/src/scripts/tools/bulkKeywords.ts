@@ -20,7 +20,6 @@ function initBulkKeywords(root: HTMLElement): void {
   const form = queryRequired<HTMLFormElement>(root, '[data-tool-form]')
   const keywordsInput = queryRequired<HTMLTextAreaElement>(root, '[data-keywords]')
   const locationsInput = queryRequired<HTMLTextAreaElement>(root, '[data-locations]')
-  const orderInput = queryRequired<HTMLSelectElement>(root, '[data-order]')
   const errorBox = queryRequired<HTMLElement>(root, '[data-tool-error]')
   const resultSection = queryRequired<HTMLElement>(root, '[data-tool-result]')
   const countSummary = queryRequired<HTMLElement>(root, '[data-count-summary]')
@@ -45,7 +44,7 @@ function initBulkKeywords(root: HTMLElement): void {
       return
     }
 
-    const order = (orderInput.value === 'location-first' ? 'location-first' : 'keyword-first') as KeywordOrder
+    const order: KeywordOrder = queryRequired<HTMLInputElement>(root, '[data-order] input:checked').value === 'location-first' ? 'location-first' : 'keyword-first'
     const combinations = generateKeywordCombinations(keywords, locations, order)
     output.value = combinations.join('\n')
     countSummary.textContent = copy.content.form.resultCount.replace('{count}', String(combinations.length))

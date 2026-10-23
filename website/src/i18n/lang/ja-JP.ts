@@ -93,6 +93,7 @@ export const site: SiteContent = {
   "dashboard": {
     "create": {
       "title": "オンラインスクレイパー",
+      "newTask": "新しいタスク",
       "modeLabel": "検索モード",
       "modes": {
         "keywords": "キーワード",
@@ -102,14 +103,16 @@ export const site: SiteContent = {
       "keywords": "キーワード",
       "placeholder": "ポートランドのコーヒーショップ\nオースティンのレストラン",
       "count": "{count} / {limit} キーワード",
+      "duplicates": "重複行を除外しました：{count}",
       "contacts": "メールやソーシャルプロフィールを検索する",
       "contactsPaid": "有料オンラインプランでご利用いただけます。",
       "usage": "今月の{used} / {total} の記録",
-      "reset": "月間割り当ては、New York 回目の 1 日にリセットされます。",
+      "reset": "月間クォータは毎月1日（ニューヨーク時間）にリセットされます。",
       "loading": "制限を読み込んでいます...",
       "optionsFailed": "タスク制限を読み込めませんでした。再試行してください。",
       "submit": "データ収集を開始",
       "submitting": "送信中...",
+      "submitted": "タスクを送信しました",
       "failed": "タスクの送信に失敗しました。再試行する前に履歴を更新してください。",
       "exhausted": "毎月の割り当てがなくなりました。",
       "invalid": "キーワードを {limit} 文字以内で入力します。各キーワードは 500 文字以内です。",
@@ -119,11 +122,12 @@ export const site: SiteContent = {
         "radius": "半径 (km)",
         "spacing": "グリッド間隔 (km)",
         "sampleCount": "{count} / {limit} 場所を検索",
+        "points": "グリッドポイント：{points} · キーワード：{keywords}",
         "overLimit": "検索位置が {limit} 以内に収まるように、半径を減らすかグリッドの間隔を広げます。",
         "chooseCenter": "地図上の中心を選択するか、座標を入力します。",
         "mapLabel": "地図上で検索センターを選択してください",
         "tilesUnavailable": "マップ タイルを読み込めませんでした。座標を入力することもできます。",
-        "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap 投稿者</a>"
+        "attribution": "OpenStreetMap 投稿者"
       },
       "region": {
         "baseKeywords": "ベースキーワード",
@@ -135,15 +139,14 @@ export const site: SiteContent = {
         "city": "市",
         "selectCountry": "国を選択してください",
         "allStates": "すべての州または地域",
-        "selectCity": "都市を選択してください",
         "loading": "場所を読み込んでいます...",
         "loadFailed": "場所を読み込めませんでした。再試行してください。",
         "retry": "リトライ",
         "addCountry": "国を追加",
         "addState": "状態の追加",
-        "addCity": "都市を追加",
         "selectedRegions": "選択された場所",
         "remove": "{name} を削除",
+        "noMatch": "一致する項目がありません",
         "matchMode": "検索語句",
         "inMode": "で",
         "nearMode": "近く",
@@ -158,33 +161,58 @@ export const site: SiteContent = {
       "description": "MapsGrab エクスポート、API アクセス、サブスクリプションを 1 つのワークスペースで管理します。"
     },
     "shell": {
+      "skipToContent": "メインコンテンツへスキップ",
+      "sideLabel": "ワークスペース",
+      "homeLabel": "MapsGrab ホーム",
+      "navLabel": "ワークスペースメニュー",
       "loading": "ワークスペースを読み込んでいます...",
       "retry": "リトライ",
-      "navHistory": "オンラインスクレイパー",
+      "navOnline": "オンラインスクレイパー",
+      "navJobHistory": "履歴",
       "navApi": "API 管理",
       "navSubscriptions": "定期購入",
       "openMenu": "ワークスペースメニューを開く",
-      "closeMenu": "ワークスペースメニューを閉じる"
+      "closeMenu": "ワークスペースメニューを閉じる",
+      "collapseSidebar": "サイドバーを折りたたむ",
+      "expandSidebar": "サイドバーを展開",
+      "back": "戻る"
     },
     "account": {
       "menuButtonLabel": "アカウントメニューを開く",
       "menuLabel": "アカウントメニュー",
-      "logout": "ログアウト"
+      "logout": "ログアウト",
+      "upgrade": "アップグレード",
+      "usageShort": "{used} / {total} 件のレコード",
+      "planUnavailable": "利用不可",
+      "theme": "テーマ",
+      "themeLight": "ライト",
+      "themeDark": "ダーク",
+      "themeSystem": "システム",
+      "language": "言語"
     },
     "history": {
       "title": "オンラインエクスポート履歴",
       "description": "オンライン スクレイパーで実行したタスク (最新のものから順)。時間は東部時間 (New York) で表示されます。",
       "refresh": "リフレッシュ",
+      "autoRefresh": "自動更新中",
       "loading": "エクスポートをロードしています...",
       "loadFailed": "エクスポート履歴をロードできませんでした。",
+      "refreshFailed": "更新できませんでした。前回読み込んだ結果を表示しています。",
       "retry": "リトライ",
       "emptyTitle": "まだエクスポートはありません",
       "emptyHint": "オンラインスクレイパー でタスクを実行すると、ここに表示されます。",
+      "emptyCta": "オンラインスクレイパーへ移動",
+      "recentTitle": "最近のタスク",
+      "viewAll": "すべて表示",
+      "recentEmptyHint": "上で開始したタスクがここに表示されます。",
+      "noMatchTitle": "一致するタスクはありません",
+      "noMatchHint": "別のタスク番号やキーワードを試すか、フィルターをクリアしてください。",
+      "moreKeywordsShort": "+{count}",
+      "moreKeywords": "ほか {count} 件",
       "columns": {
-        "taskNo": "仕事",
-        "createdAt": "作成済み (ET)",
+        "taskNo": "タスク",
+        "createdAt": "作成日時 (ET)",
         "samples": "検索",
-        "processed": "加工済み",
         "records": "記録",
         "status": "状態"
       },
@@ -197,21 +225,48 @@ export const site: SiteContent = {
         "failed": "失敗した"
       },
       "timezone": "ET",
+      "search": {
+        "label": "タスクを検索",
+        "placeholder": "タスク番号またはキーワードで検索",
+        "clear": "検索をクリア"
+      },
+      "filters": {
+        "label": "タスクを絞り込む",
+        "button": "フィルター",
+        "status": "ステータス",
+        "all": "すべて",
+        "running": "実行中",
+        "clear": "フィルターをクリア"
+      },
+      "range": {
+        "label": "期間",
+        "last7": "過去 7 日間",
+        "last30": "過去 30 日間",
+        "all": "全期間",
+        "custom": "カスタム期間",
+        "from": "開始日",
+        "to": "終了日",
+        "apply": "適用",
+        "invalid": "開始日は終了日以前の日付を選んでください。",
+        "hint": "日付は米国東部時間（ニューヨーク）です。"
+      },
       "pagination": {
+        "label": "ページ送り",
         "previous": "前の",
         "next": "次",
+        "page": "{page} ページ",
+        "pageSize": "1 ページの行数",
         "summary": "{from}–{to}/{total}"
       },
       "detail": {
         "show": "詳細",
-        "hide": "詳細を隠す",
         "loading": "検索を読み込んでいます...",
         "loadFailed": "このタスクの検索をロードできませんでした。",
         "keyword": "キーワード",
         "records": "記録",
         "runNo": "走る",
-        "startedAt": "開始済み (ET)",
-        "finishedAt": "完成(ET)",
+        "startedAt": "開始日時 (ET)",
+        "finishedAt": "終了日時 (ET)",
         "contacts": "メールとソーシャルプロフィール",
         "contactsEnabled": "このタスクに対して有効になっています",
         "contactsDisabled": "このタスクではオフです",
@@ -219,6 +274,10 @@ export const site: SiteContent = {
         "pending": "保留中",
         "viewport": "{lat}、{lng} · ズーム {zoom}"
       },
+      "copyJob": "タスク番号をコピー",
+      "dedupeHint": "レコード数はタスク全体で重複を除いた件数です。",
+      "finished": "タスク {job}：{status}",
+      "finishedRecords": "{count} 件のレコード",
       "downloadCsv": "CSVをダウンロード",
       "noFile": "いいえ CSV",
       "errors": {
@@ -236,12 +295,9 @@ export const site: SiteContent = {
       "unreachable": "現在 MapsGrab に到達できませんでした。"
     },
     "api": {
-      "title": "API 管理",
       "description": "API キー、毎月のリクエスト許容量、接続されている AI アプリを管理します。",
       "docsLink": "API 製品を見る",
       "signInPrompt": "サインインして、API のアクセスを管理します。",
-      "signInCta": "サインイン",
-      "unreachable": "現在 MapsGrab に到達できませんでした。",
       "loading": "API アクセスを読み込んでいます...",
       "loadFailed": "API アクセスを読み込めませんでした。もう一度試してください。",
       "retry": "リトライ",
@@ -261,10 +317,11 @@ export const site: SiteContent = {
       "copyFailed": "コピーできませんでした。テキストを選択して手動でコピーします。",
       "keyFailed": "API キーを生成できませんでした。もう一度試してください。",
       "usageTitle": "月間 API の使用量",
+      "usageFailed": "API の使用状況を読み込めませんでした。もう一度お試しください。",
       "usageValue": "{used} / {total} リクエスト",
       "usagePeriod": "期間: {period}",
       "quotaExhausted": "毎月のリクエスト枠がなくなりました。",
-      "quotaReset": "毎月 1 日の New York 時間にリセットされます。 API と MCP はこの手当を共有します。",
+      "quotaReset": "毎月1日にリセット（ET）· API と MCP で共通",
       "planTitle": "API プラン",
       "managePlan": "サブスクリプションを管理する",
       "connectionsTitle": "接続アドレス",
@@ -273,6 +330,8 @@ export const site: SiteContent = {
       "mcpHint": "この URL を MCP クライアントに追加します。この Web サイトを開いたときにサインインして接続を承認します。",
       "mcpUnavailable": "MCP 接続アドレスはまだ利用できません。",
       "copyUrl": "URLをコピー",
+      "curlTitle": "クイックスタート",
+      "curlHint": "プレースホルダーを完全な API キーに置き換えてください。",
       "grants": {
         "title": "接続されたアプリ",
         "description": "API の許可を使用して、ビジネスを検索したり、レビューや公開写真を読んだりすることを許可したアプリ。",
@@ -294,9 +353,6 @@ export const site: SiteContent = {
     "subscriptions": {
       "title": "定期購入",
       "description": "オンラインスクレイパー、ブラウザ拡張機能、および API の計画と更新ステータス。価格ページで購入またはアップグレードしてください。",
-      "loading": "サブスクリプションを読み込んでいます...",
-      "loadFailed": "サブスクリプションをロードできませんでした。",
-      "retry": "リトライ",
       "lines": {
         "online": "オンラインスクレイパー",
         "extension": "ブラウザ拡張機能",
@@ -304,17 +360,17 @@ export const site: SiteContent = {
       },
       "planLabel": "プラン",
       "expiresLabel": "更新/有効期限切れ",
-      "noExpiry": "有効期限なし",
       "free": "無料",
       "unavailable": "一時的に利用できません",
       "autoRenewOn": "自動更新オン",
       "autoRenewOff": "自動更新オフ",
+      "paidVia": "支払い方法：{method}",
       "subscribeCta": "プランを選択してください",
+      "pricingLink": "料金を見る",
       "manageSubscription": "サブスクリプションの管理",
       "managingSubscription": "オープニング...",
-      "signInPrompt": "サインインしてサブスクリプションを確認します。",
-      "signInCta": "サインイン",
-      "unreachable": "現在 MapsGrab に到達できませんでした。"
+      "manageFailed": "サブスクリプション管理を開けませんでした。もう一度お試しください。",
+      "signInPrompt": "サインインしてサブスクリプションを確認します。"
     },
     "cancelGuide": {
       "title": "支払いプロバイダーでサブスクリプションを管理する",
@@ -2166,6 +2222,7 @@ export const site: SiteContent = {
         "theater": {
           "files": "1 CSV · ダウンロードに保存されました",
           "csv": "CSV",
+          "processed": "処理済み",
           "parallelChip": {
             "label": "キーワード実行",
             "value": "並行して"
@@ -2275,7 +2332,8 @@ export const site: SiteContent = {
           ]
         },
         "regions": {
-          "hint": "生成されたクエリは、送信する前に編集できます。それぞれがキーワードとしてカウントされます。"
+          "hint": "生成されたクエリは、送信する前に編集できます。それぞれがキーワードとしてカウントされます。",
+          "addCity": "都市を追加"
         }
       },
       "results": {

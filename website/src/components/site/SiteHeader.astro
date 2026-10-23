@@ -1,7 +1,8 @@
 ---
 /**
- * 全站导航（营销外壳）：滚动后收拢为悬浮胶囊、hover 胶囊跟随、API 下拉、语言 / 主题下拉与移动菜单，
- * 行为在 scripts/site/chrome.ts。未交付能力的介绍页入口照常可达，灰化并带 Coming soon；
+ * 全站导航（营销外壳）：滚动后收拢为悬浮胶囊、hover 胶囊跟随、API / 语言 / 主题菜单与移动菜单，
+ * 行为在 scripts/site/chrome.ts。三个菜单是共用浮层 .pop 上的 APG 菜单按钮（scripts/site/pop-menu.ts），
+ * 标记按其约定：触发器 `${id}-btn`、浮层 `${id}-pop`、role="menu" 为 `${id}`。未交付能力的介绍页入口照常可达，灰化并带 Coming soon；
  * 安装动作走 CapabilityAction（能力表见 lib/capabilities.ts）。
  */
 import { getContent, type Locale } from '../../i18n/content'
@@ -55,25 +56,28 @@ const pathInLocale = (localePath: string) =>
           {item.label}{!item.available && <SoonBadge locale={locale} />}
         </a>
       ))}
-      <div class="dd" data-dropdown>
-        <button class="nav-link" type="button" aria-expanded="false" aria-controls="nav-api-panel" aria-current={apis.some(item => current(item.path)) ? 'page' : undefined} data-dropdown-trigger>
-          {nav.api}<Icon name="chevron-down" />
-        </button>
-        <div class="dd-panel" id="nav-api-panel" data-dropdown-panel>
-          {apis.map(item => (
-            <a class:list={['dd-item', { 'is-unavailable': !item.available }]} href={`${home}${item.path}`} aria-current={current(item.path)} data-cta={`nav-${item.id}`}>
-              <span class:list={['dd-icon', { 'dd-icon--ai': item.ai }]}><Icon name={item.icon} /></span>
-              <span>
-                <span class="dd-title">{item.label}{!item.available && <SoonBadge locale={locale} />}</span>
-                <span class="dd-desc">{item.desc}</span>
-              </span>
-            </a>
-          ))}
-          <div class="dd-foot">
-            <span>{nav.apiFootNote}</span>
-            <a href={`${home}pricing/?product_kind=maps_api`} data-ga-event="internal_workflow_click" data-ga-source="nav" data-ga-target="pricing_api">
-              {nav.apiPricing}<Icon name="arrow-right" class="icon--sm" />
-            </a>
+      <button class="nav-link" type="button" id="nav-api-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="nav-api" aria-current={apis.some(item => current(item.path)) ? 'page' : undefined}>
+        {nav.api}<Icon name="chevron-down" />
+      </button>
+      <div class="pop nav-pop--api" id="nav-api-pop" popover="manual">
+        <div class="pop-panels">
+          <div class="pop-panel">
+            <div class="pop-body nav-api-menu" id="nav-api" role="menu" aria-labelledby="nav-api-btn">
+              {apis.map(item => (
+                <a class:list={['nav-api-item', { 'is-unavailable': !item.available }]} role="menuitem" tabindex="-1" href={`${home}${item.path}`} aria-current={current(item.path)} data-cta={`nav-${item.id}`}>
+                  <span class:list={['nav-api-icon', { 'nav-api-icon--ai': item.ai }]}><Icon name={item.icon} /></span>
+                  <span>
+                    <span class="nav-api-title">{item.label}{!item.available && <SoonBadge locale={locale} />}</span>
+                    <span class="nav-api-desc">{item.desc}</span>
+                  </span>
+                </a>
+              ))}
+              {/* 说明并入定价这一项：名称取链接文案，说明作描述，菜单里不留非条目内容 */}
+              <a class="nav-api-foot" role="menuitem" tabindex="-1" href={`${home}pricing/?product_kind=maps_api`} aria-labelledby="nav-api-pricing" aria-describedby="nav-api-note" data-ga-event="internal_workflow_click" data-ga-source="nav" data-ga-target="pricing_api">
+                <span id="nav-api-note">{nav.apiFootNote}</span>
+                <span class="nav-api-pricing" id="nav-api-pricing">{nav.apiPricing}<Icon name="arrow-right" class="icon--sm" /></span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -81,28 +85,42 @@ const pathInLocale = (localePath: string) =>
     </nav>
     <div class="nav-actions">
       {includeLanguageSwitcher && (
-        <div class="dd" data-dropdown>
-          <button class="icon-btn" type="button" aria-label={t.common.languageSwitcherLabel} aria-expanded="false" aria-controls="nav-language-panel" data-dropdown-trigger>
+        <>
+          <button class="icon-btn" type="button" id="nav-language-btn" aria-label={t.common.languageSwitcherLabel} aria-haspopup="menu" aria-expanded="false" aria-controls="nav-language">
             <Icon name="globe" />
           </button>
-          <div class="dd-panel dd-panel--compact" id="nav-language-panel" data-dropdown-panel>
-            {locales.map(key => (
-              <button type="button" class="dd-item" data-locale={key} data-path={pathInLocale(localePaths[key])} aria-pressed={key === locale} data-ga-event="language_switch" data-ga-locale={key} data-ga-from={locale}>
-                {localeNames[key]}
-              </button>
-            ))}
+          <div class="pop nav-pop--compact" id="nav-language-pop" popover="manual">
+            <div class="pop-panels">
+              <div class="pop-panel">
+                <div class="pop-body" id="nav-language" role="menu" aria-labelledby="nav-language-btn">
+                  {locales.map(key => (
+                    <button type="button" class="pop-item" role="menuitemradio" tabindex="-1" aria-checked={key === locale ? 'true' : 'false'} data-locale={key} data-path={pathInLocale(localePaths[key])} data-ga-event="language_switch" data-ga-locale={key} data-ga-from={locale}>
+                      <span class="pop-item-label">{localeNames[key]}</span>
+                      <Icon name="check" class="pop-check" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </>
       )}
-      <div class="dd" data-dropdown>
-        <button class="icon-btn theme-toggle" type="button" aria-label={t.common.themeLabel} aria-expanded="false" aria-controls="nav-theme-panel" data-dropdown-trigger>
-          <Icon name="sun" class="i-sun" />
-          <Icon name="moon" class="i-moon" />
-        </button>
-        <div class="dd-panel dd-panel--compact" id="nav-theme-panel" data-dropdown-panel>
-          {themes.map(theme => (
-            <button type="button" class="dd-item" data-theme-choice={theme.id} aria-pressed={theme.id === 'system'}>{theme.label}</button>
-          ))}
+      <button class="icon-btn theme-toggle" type="button" id="nav-theme-btn" aria-label={t.common.themeLabel} aria-haspopup="menu" aria-expanded="false" aria-controls="nav-theme">
+        <Icon name="sun" class="i-sun" />
+        <Icon name="moon" class="i-moon" />
+      </button>
+      <div class="pop nav-pop--compact" id="nav-theme-pop" popover="manual">
+        <div class="pop-panels">
+          <div class="pop-panel">
+            <div class="pop-body" id="nav-theme" role="menu" aria-labelledby="nav-theme-btn">
+              {themes.map(theme => (
+                <button type="button" class="pop-item" role="menuitemradio" tabindex="-1" aria-checked={theme.id === 'system' ? 'true' : 'false'} data-theme-choice={theme.id}>
+                  <span class="pop-item-label">{theme.label}</span>
+                  <Icon name="check" class="pop-check" />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
       {includeSiteAuth && (

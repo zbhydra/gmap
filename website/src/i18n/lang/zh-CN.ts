@@ -93,6 +93,7 @@ export const site: SiteContent = {
   "dashboard": {
     "create": {
       "title": "在线采集器",
+      "newTask": "新建任务",
       "modeLabel": "搜索模式",
       "modes": {
         "keywords": "关键词",
@@ -102,14 +103,16 @@ export const site: SiteContent = {
       "keywords": "关键词",
       "placeholder": "波特兰的咖啡店\n奥斯汀的餐厅",
       "count": "{count} / {limit} 个关键词",
+      "duplicates": "已忽略重复行：{count}",
       "contacts": "查找邮箱和社交账号",
       "contactsPaid": "付费在线采集套餐可用。",
       "usage": "本月已使用 {used} / {total} 条记录",
-      "reset": "每月额度于纽约时间每月 1 日重置。",
+      "reset": "月度额度于每月 1 日（纽约时间）重置。",
       "loading": "正在加载任务限制…",
       "optionsFailed": "无法加载您的任务限制。请重试。",
       "submit": "开始采集",
       "submitting": "正在提交...",
+      "submitted": "任务已提交",
       "failed": "任务提交失败。请先刷新历史记录，再重试。",
       "exhausted": "本月额度已用完。",
       "invalid": "最多输入 {limit} 个关键词，每个不超过 500 个字符。",
@@ -119,11 +122,12 @@ export const site: SiteContent = {
         "radius": "半径（公里）",
         "spacing": "网格间距（公里）",
         "sampleCount": "{count} / {limit} 个搜索点",
+        "points": "网格点：{points} · 关键词：{keywords}",
         "overLimit": "请缩小半径或增大网格间距，将搜索点数量控制在 {limit} 个以内。",
         "chooseCenter": "在地图上选择中心点，或输入坐标。",
         "mapLabel": "在地图上选择搜索中心点",
         "tilesUnavailable": "地图加载失败。你仍可手动输入坐标。",
-        "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap 贡献者</a>"
+        "attribution": "OpenStreetMap 贡献者"
       },
       "region": {
         "baseKeywords": "基础关键词",
@@ -135,15 +139,14 @@ export const site: SiteContent = {
         "city": "城市",
         "selectCountry": "选择一个国家",
         "allStates": "所有州或地区",
-        "selectCity": "选择城市",
         "loading": "正在加载地点…",
         "loadFailed": "无法加载地点。请重试。",
         "retry": "重试",
         "addCountry": "添加国家/地区",
         "addState": "添加州或地区",
-        "addCity": "添加城市",
         "selectedRegions": "已选地点",
         "remove": "删除{name}",
+        "noMatch": "没有匹配项",
         "matchMode": "搜索措辞",
         "inMode": "位于",
         "nearMode": "附近",
@@ -158,33 +161,58 @@ export const site: SiteContent = {
       "description": "在同一工作区管理 MapsGrab 的数据导出、API 访问和订阅。"
     },
     "shell": {
+      "skipToContent": "跳到主要内容",
+      "sideLabel": "工作区",
+      "homeLabel": "MapsGrab 首页",
+      "navLabel": "工作区菜单",
       "loading": "正在加载您的工作区...",
       "retry": "重试",
-      "navHistory": "在线采集器",
+      "navOnline": "在线采集器",
+      "navJobHistory": "历史记录",
       "navApi": "API 管理",
       "navSubscriptions": "订阅",
       "openMenu": "打开工作区菜单",
-      "closeMenu": "关闭工作区菜单"
+      "closeMenu": "关闭工作区菜单",
+      "collapseSidebar": "收起侧栏",
+      "expandSidebar": "展开侧栏",
+      "back": "返回"
     },
     "account": {
       "menuButtonLabel": "打开账号菜单",
       "menuLabel": "账号菜单",
-      "logout": "退出登录"
+      "logout": "退出登录",
+      "upgrade": "升级",
+      "usageShort": "{used} / {total} 条记录",
+      "planUnavailable": "不可用",
+      "theme": "主题",
+      "themeLight": "浅色",
+      "themeDark": "深色",
+      "themeSystem": "跟随系统",
+      "language": "语言"
     },
     "history": {
       "title": "在线采集导出记录",
       "description": "你在在线采集器中运行的任务，按最新时间排序。时间均为美国东部时间（纽约）。",
       "refresh": "刷新",
+      "autoRefresh": "自动刷新中",
       "loading": "正在加载导出记录…",
       "loadFailed": "无法加载导出历史记录。",
+      "refreshFailed": "刷新失败，当前显示上次加载的结果。",
       "retry": "重试",
       "emptyTitle": "暂无导出记录",
       "emptyHint": "在在线采集器中运行任务后，任务会显示在这里。",
+      "emptyCta": "前往在线采集器",
+      "recentTitle": "最近任务",
+      "viewAll": "查看全部",
+      "recentEmptyHint": "在上方新建的任务会显示在这里。",
+      "noMatchTitle": "没有匹配的任务",
+      "noMatchHint": "换个任务号或关键词试试，或清除筛选条件。",
+      "moreKeywordsShort": "+{count}",
+      "moreKeywords": "另有 {count} 个",
       "columns": {
         "taskNo": "任务",
         "createdAt": "创建时间（美东）",
         "samples": "搜索次数",
-        "processed": "已处理",
         "records": "记录",
         "status": "状态"
       },
@@ -197,14 +225,41 @@ export const site: SiteContent = {
         "failed": "失败"
       },
       "timezone": "ET",
+      "search": {
+        "label": "搜索任务",
+        "placeholder": "按任务号或关键词搜索",
+        "clear": "清除搜索"
+      },
+      "filters": {
+        "label": "筛选任务",
+        "button": "筛选",
+        "status": "状态",
+        "all": "全部",
+        "running": "进行中",
+        "clear": "清除筛选"
+      },
+      "range": {
+        "label": "时间范围",
+        "last7": "最近 7 天",
+        "last30": "最近 30 天",
+        "all": "全部时间",
+        "custom": "自定义范围",
+        "from": "开始",
+        "to": "结束",
+        "apply": "应用",
+        "invalid": "开始日期不能晚于结束日期。",
+        "hint": "日期按美国东部时间（纽约）计算。"
+      },
       "pagination": {
+        "label": "分页",
         "previous": "上一页",
         "next": "下一页",
+        "page": "第 {page} 页",
+        "pageSize": "每页行数",
         "summary": "第 {from}–{to} 条，共 {total} 条"
       },
       "detail": {
         "show": "详情",
-        "hide": "隐藏详细信息",
         "loading": "正在加载搜索明细…",
         "loadFailed": "无法加载此任务的搜索明细。",
         "keyword": "关键词",
@@ -219,6 +274,10 @@ export const site: SiteContent = {
         "pending": "待处理",
         "viewport": "{lat}, {lng} · 缩放 {zoom}"
       },
+      "copyJob": "复制任务号",
+      "dedupeHint": "记录数按整个任务去重后计算。",
+      "finished": "任务 {job}：{status}",
+      "finishedRecords": "{count} 条记录",
       "downloadCsv": "下载 CSV",
       "noFile": "无 CSV 文件",
       "errors": {
@@ -236,12 +295,9 @@ export const site: SiteContent = {
       "unreachable": "暂时无法连接 MapsGrab。"
     },
     "api": {
-      "title": "API 管理",
       "description": "管理 API 密钥、每月请求额度及已连接的 AI 应用。",
       "docsLink": "查看 API 产品",
       "signInPrompt": "登录后管理 API 访问权限。",
-      "signInCta": "登录",
-      "unreachable": "暂时无法连接 MapsGrab。",
       "loading": "正在加载 API 访问配置…",
       "loadFailed": "无法加载 API 访问配置，请重试。",
       "retry": "重试",
@@ -261,10 +317,11 @@ export const site: SiteContent = {
       "copyFailed": "无法复制。选择文本并手动复制。",
       "keyFailed": "无法生成 API 密钥。请再试一次。",
       "usageTitle": "每月 API 使用量",
+      "usageFailed": "无法加载 API 用量。请重试。",
       "usageValue": "{used} / {total} 次请求",
       "usagePeriod": "账期：{period}",
       "quotaExhausted": "本月请求额度已用完。",
-      "quotaReset": "额度于纽约时间每月 1 日重置，API 和 MCP 共用此额度。",
+      "quotaReset": "每月 1 日重置（美东时间）· API 与 MCP 共用",
       "planTitle": "API 套餐",
       "managePlan": "管理订阅",
       "connectionsTitle": "连接地址",
@@ -273,6 +330,8 @@ export const site: SiteContent = {
       "mcpHint": "将此 URL 添加到 MCP 客户端。客户端打开本站后，请登录并批准连接。",
       "mcpUnavailable": "MCP 连接地址尚不可用。",
       "copyUrl": "复制 URL",
+      "curlTitle": "快速上手",
+      "curlHint": "请将占位符替换为完整的 API 密钥。",
       "grants": {
         "title": "已连接的应用",
         "description": "你已授权这些应用使用 API 额度搜索商家，并读取评论和公开照片。",
@@ -294,9 +353,6 @@ export const site: SiteContent = {
     "subscriptions": {
       "title": "订阅",
       "description": "查看在线采集器、浏览器扩展程序和 API 的套餐及续费状态。购买或升级请前往定价页。",
-      "loading": "正在加载您的订阅...",
-      "loadFailed": "无法加载您的订阅。",
-      "retry": "重试",
       "lines": {
         "online": "在线采集器",
         "extension": "浏览器扩展程序",
@@ -304,17 +360,17 @@ export const site: SiteContent = {
       },
       "planLabel": "套餐",
       "expiresLabel": "续费／到期时间",
-      "noExpiry": "无到期时间",
       "free": "免费版",
       "unavailable": "暂时不可用",
       "autoRenewOn": "自动续费已开启",
       "autoRenewOff": "自动续费已关闭",
+      "paidVia": "支付方式：{method}",
       "subscribeCta": "选择套餐",
+      "pricingLink": "查看价格",
       "manageSubscription": "管理订阅",
       "managingSubscription": "正在打开…",
-      "signInPrompt": "登录以查看您的订阅。",
-      "signInCta": "登录",
-      "unreachable": "暂时无法连接 MapsGrab。"
+      "manageFailed": "无法打开订阅管理。请重试。",
+      "signInPrompt": "登录以查看您的订阅。"
     },
     "cancelGuide": {
       "title": "在支付服务商处管理订阅",
@@ -2166,6 +2222,7 @@ export const site: SiteContent = {
         "theater": {
           "files": "1 份 CSV · 已保存至“下载”文件夹",
           "csv": "CSV",
+          "processed": "已处理",
           "parallelChip": {
             "label": "关键词执行方式",
             "value": "并行"
@@ -2275,7 +2332,8 @@ export const site: SiteContent = {
           ]
         },
         "regions": {
-          "hint": "您可以在提交之前编辑生成的查询。每一个都算作一个关键词。"
+          "hint": "您可以在提交之前编辑生成的查询。每一个都算作一个关键词。",
+          "addCity": "添加城市"
         }
       },
       "results": {

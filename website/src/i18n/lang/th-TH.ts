@@ -93,6 +93,7 @@ export const site: SiteContent = {
   "dashboard": {
     "create": {
       "title": "เครื่องมือดึงข้อมูลออนไลน์",
+      "newTask": "งานใหม่",
       "modeLabel": "โหมดการค้นหา",
       "modes": {
         "keywords": "คำหลัก",
@@ -102,14 +103,16 @@ export const site: SiteContent = {
       "keywords": "คำหลัก",
       "placeholder": "ร้านกาแฟในพอร์ตแลนด์\nร้านอาหารในออสติน",
       "count": "{count} / {limit} คำหลัก",
+      "duplicates": "ข้ามบรรทัดที่ซ้ำแล้ว: {count}",
       "contacts": "ค้นหาอีเมลและโปรไฟล์โซเชียล",
       "contactsPaid": "ใช้ได้กับแผนออนไลน์แบบชำระเงิน",
       "usage": "{used} / {total} บันทึกในเดือนนี้",
-      "reset": "โควต้ารายเดือนจะรีเซ็ตในวันที่ 1st ในเวลา New York",
+      "reset": "โควตารายเดือนจะรีเซ็ตทุกวันที่ 1 (เวลานิวยอร์ก)",
       "loading": "กำลังโหลดขีดจำกัดของคุณ...",
       "optionsFailed": "ไม่สามารถโหลดขีดจำกัดงานของคุณได้ กรุณาลองอีกครั้ง",
       "submit": "เริ่มดึงข้อมูล",
       "submitting": "กำลังส่ง...",
+      "submitted": "ส่งงานแล้ว",
       "failed": "การส่งงานล้มเหลว รีเฟรชประวัติก่อนลองอีกครั้ง",
       "exhausted": "โควต้ารายเดือนของคุณหมดแล้ว",
       "invalid": "ป้อนคำหลักได้สูงสุด {limit} โดยแต่ละคำมีความยาวไม่เกิน 500 อักขระ",
@@ -119,11 +122,12 @@ export const site: SiteContent = {
         "radius": "รัศมี (กม.)",
         "spacing": "ระยะห่างของตาราง (กม.)",
         "sampleCount": "{count} / {limit} ค้นหาสถานที่",
+        "points": "จุดกริด: {points} · คำหลัก: {keywords}",
         "overLimit": "ลดรัศมีหรือเพิ่มระยะห่างของตารางเพื่อให้อยู่ภายใน {limit} ตำแหน่งการค้นหา",
         "chooseCenter": "เลือกศูนย์กลางบนแผนที่หรือป้อนพิกัด",
         "mapLabel": "เลือกศูนย์ค้นหาบนแผนที่",
         "tilesUnavailable": "ไม่สามารถโหลดชิ้นส่วนแผนที่ได้ คุณยังสามารถป้อนพิกัดได้",
-        "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap ผู้ร่วมให้ข้อมูล</a>"
+        "attribution": "ผู้ร่วมให้ข้อมูล OpenStreetMap"
       },
       "region": {
         "baseKeywords": "คำหลักพื้นฐาน",
@@ -135,15 +139,14 @@ export const site: SiteContent = {
         "city": "เมือง",
         "selectCountry": "เลือกประเทศ",
         "allStates": "ทุกรัฐหรือภูมิภาค",
-        "selectCity": "เลือกเมือง",
         "loading": "กำลังโหลดสถานที่...",
         "loadFailed": "ไม่สามารถโหลดสถานที่ได้ กรุณาลองอีกครั้ง",
         "retry": "ลองอีกครั้ง",
         "addCountry": "เพิ่มประเทศ",
         "addState": "เพิ่มสถานะ",
-        "addCity": "เพิ่มเมือง",
         "selectedRegions": "สถานที่ที่เลือก",
         "remove": "ลบ {name}",
+        "noMatch": "ไม่พบรายการที่ตรงกัน",
         "matchMode": "ข้อความค้นหา",
         "inMode": "ใน",
         "nearMode": "ใกล้",
@@ -158,33 +161,58 @@ export const site: SiteContent = {
       "description": "จัดการการส่งออก MapsGrab การเข้าถึง API และการสมัครรับข้อมูลในพื้นที่ทำงานเดียว"
     },
     "shell": {
+      "skipToContent": "ข้ามไปยังเนื้อหา",
+      "sideLabel": "พื้นที่ทำงาน",
+      "homeLabel": "หน้าแรก MapsGrab",
+      "navLabel": "เมนูพื้นที่ทำงาน",
       "loading": "กำลังโหลดพื้นที่ทำงานของคุณ...",
       "retry": "ลองอีกครั้ง",
-      "navHistory": "เครื่องมือดึงข้อมูลออนไลน์",
+      "navOnline": "เครื่องมือดึงข้อมูลออนไลน์",
+      "navJobHistory": "ประวัติ",
       "navApi": "API การจัดการ",
       "navSubscriptions": "การสมัครรับข้อมูล",
       "openMenu": "เปิดเมนูพื้นที่ทำงาน",
-      "closeMenu": "ปิดเมนูพื้นที่ทำงาน"
+      "closeMenu": "ปิดเมนูพื้นที่ทำงาน",
+      "collapseSidebar": "ยุบแถบด้านข้าง",
+      "expandSidebar": "ขยายแถบด้านข้าง",
+      "back": "ย้อนกลับ"
     },
     "account": {
       "menuButtonLabel": "เปิดเมนูบัญชี",
       "menuLabel": "เมนูบัญชี",
-      "logout": "ออกจากระบบ"
+      "logout": "ออกจากระบบ",
+      "upgrade": "อัปเกรด",
+      "usageShort": "{used} / {total} รายการ",
+      "planUnavailable": "ใช้งานไม่ได้",
+      "theme": "ธีม",
+      "themeLight": "สว่าง",
+      "themeDark": "มืด",
+      "themeSystem": "ตามระบบ",
+      "language": "ภาษา"
     },
     "history": {
       "title": "ประวัติการส่งออกออนไลน์",
       "description": "งานที่คุณใช้งานบน เครื่องมือดึงข้อมูลออนไลน์ ใหม่ล่าสุดก่อน เวลาแสดงเป็นเวลาตะวันออก (New York)",
       "refresh": "รีเฟรช",
+      "autoRefresh": "รีเฟรชอัตโนมัติอยู่",
       "loading": "กำลังโหลดการส่งออกของคุณ...",
       "loadFailed": "โหลดประวัติการส่งออกของคุณไม่สำเร็จ",
+      "refreshFailed": "รีเฟรชไม่สำเร็จ กำลังแสดงผลลัพธ์ที่โหลดล่าสุด",
       "retry": "ลองอีกครั้ง",
       "emptyTitle": "ยังไม่มีการส่งออก",
       "emptyHint": "รันงานบน เครื่องมือดึงข้อมูลออนไลน์ และงานจะปรากฏที่นี่",
+      "emptyCta": "ไปที่เครื่องมือดึงข้อมูลออนไลน์",
+      "recentTitle": "งานล่าสุด",
+      "viewAll": "ดูทั้งหมด",
+      "recentEmptyHint": "งานที่คุณเริ่มด้านบนจะแสดงที่นี่",
+      "noMatchTitle": "ไม่พบงานที่ตรงกัน",
+      "noMatchHint": "ลองใช้หมายเลขงานหรือคำหลักอื่น หรือล้างตัวกรอง",
+      "moreKeywordsShort": "+{count}",
+      "moreKeywords": "และอีก {count} รายการ",
       "columns": {
         "taskNo": "งาน",
-        "createdAt": "สร้างแล้ว (ET)",
+        "createdAt": "เวลาสร้าง (ET)",
         "samples": "ค้นหา",
-        "processed": "ดำเนินการแล้ว",
         "records": "บันทึก",
         "status": "สถานะ"
       },
@@ -197,21 +225,48 @@ export const site: SiteContent = {
         "failed": "ล้มเหลว"
       },
       "timezone": "ET",
+      "search": {
+        "label": "ค้นหางาน",
+        "placeholder": "ค้นหาด้วยหมายเลขงานหรือคำหลัก",
+        "clear": "ล้างการค้นหา"
+      },
+      "filters": {
+        "label": "กรองงาน",
+        "button": "ตัวกรอง",
+        "status": "สถานะ",
+        "all": "ทั้งหมด",
+        "running": "กำลังทำงาน",
+        "clear": "ล้างตัวกรอง"
+      },
+      "range": {
+        "label": "ช่วงเวลา",
+        "last7": "7 วันที่ผ่านมา",
+        "last30": "30 วันที่ผ่านมา",
+        "all": "ตลอดเวลา",
+        "custom": "กำหนดเอง",
+        "from": "ตั้งแต่",
+        "to": "ถึง",
+        "apply": "ใช้",
+        "invalid": "เลือกวันที่เริ่มต้นที่ไม่ช้ากว่าวันที่สิ้นสุด",
+        "hint": "วันที่ใช้เวลาฝั่งตะวันออกของสหรัฐฯ (นิวยอร์ก)"
+      },
       "pagination": {
+        "label": "การแบ่งหน้า",
         "previous": "ก่อนหน้า",
         "next": "ต่อไป",
+        "page": "หน้า {page}",
+        "pageSize": "แถวต่อหน้า",
         "summary": "{from}–{to} จาก {total}"
       },
       "detail": {
         "show": "รายละเอียด",
-        "hide": "ซ่อนรายละเอียด",
         "loading": "กำลังโหลดการค้นหา...",
         "loadFailed": "ไม่สามารถโหลดการค้นหาสำหรับงานนี้",
         "keyword": "คำสำคัญ",
         "records": "บันทึก",
         "runNo": "วิ่ง",
-        "startedAt": "เริ่มต้นแล้ว (ET)",
-        "finishedAt": "เสร็จสิ้น (ET)",
+        "startedAt": "เวลาเริ่ม (ET)",
+        "finishedAt": "เวลาเสร็จสิ้น (ET)",
         "contacts": "อีเมลและโปรไฟล์โซเชียล",
         "contactsEnabled": "เปิดใช้งานสำหรับงานนี้",
         "contactsDisabled": "หมดแล้วสำหรับงานนี้",
@@ -219,6 +274,10 @@ export const site: SiteContent = {
         "pending": "รอดำเนินการ",
         "viewport": "{lat}, {lng} · ซูม {zoom}"
       },
+      "copyJob": "คัดลอกหมายเลขงาน",
+      "dedupeHint": "จำนวนรายการนับหลังจากลบรายการซ้ำของทั้งงานแล้ว",
+      "finished": "งาน {job}: {status}",
+      "finishedRecords": "{count} รายการ",
       "downloadCsv": "ดาวน์โหลด CSV",
       "noFile": "ไม่ CSV",
       "errors": {
@@ -236,17 +295,14 @@ export const site: SiteContent = {
       "unreachable": "ไม่สามารถเข้าถึง MapsGrab ได้ในขณะนี้"
     },
     "api": {
-      "title": "API การจัดการ",
       "description": "จัดการคีย์ API คำขออนุญาตรายเดือน และแอป AI ที่เชื่อมต่อ",
       "docsLink": "ดูผลิตภัณฑ์ API",
       "signInPrompt": "ลงชื่อเข้าใช้เพื่อจัดการการเข้าถึง API ของคุณ",
-      "signInCta": "เข้าสู่ระบบ",
-      "unreachable": "ไม่สามารถเข้าถึง MapsGrab ได้ในขณะนี้",
       "loading": "กำลังโหลดการเข้าถึง API ของคุณ...",
       "loadFailed": "ไม่สามารถโหลดการเข้าถึง API ของคุณ โปรดลองอีกครั้ง",
       "retry": "ลองอีกครั้ง",
       "refresh": "รีเฟรช",
-      "keyTitle": "API คีย์",
+      "keyTitle": "คีย์ API",
       "keyEmpty": "คุณยังไม่ได้สร้างคีย์ API",
       "generateKey": "สร้างคีย์ API",
       "rotateKey": "แทนที่คีย์ API",
@@ -261,10 +317,11 @@ export const site: SiteContent = {
       "copyFailed": "ไม่สามารถคัดลอกได้ เลือกข้อความและคัดลอกด้วยตนเอง",
       "keyFailed": "ไม่สามารถสร้างคีย์ API โปรดลองอีกครั้ง",
       "usageTitle": "การใช้งานรายเดือนAPI",
+      "usageFailed": "โหลดการใช้งาน API ไม่สำเร็จ โปรดลองอีกครั้ง",
       "usageValue": "{used} / {total} คำขอ",
       "usagePeriod": "ระยะเวลา: {period}",
       "quotaExhausted": "เงินช่วยเหลือคำขอรายเดือนของคุณหมดลงแล้ว",
-      "quotaReset": "รีเซ็ตในวันที่ 1st ของแต่ละเดือนในเวลา New York API และ MCP แบ่งปันเบี้ยเลี้ยงนี้",
+      "quotaReset": "รีเซ็ตวันที่ 1 (ET) · API และ MCP ใช้ร่วมกัน",
       "planTitle": "API แผน",
       "managePlan": "จัดการการสมัครสมาชิก",
       "connectionsTitle": "ที่อยู่การเชื่อมต่อ",
@@ -273,6 +330,8 @@ export const site: SiteContent = {
       "mcpHint": "เพิ่ม URL นี้ในไคลเอนต์ MCP ของคุณ ลงชื่อเข้าใช้และอนุมัติการเชื่อมต่อเมื่อเปิดเว็บไซต์นี้",
       "mcpUnavailable": "ที่อยู่การเชื่อมต่อ MCP ยังไม่พร้อมใช้งาน",
       "copyUrl": "คัดลอก URL",
+      "curlTitle": "เริ่มต้นอย่างรวดเร็ว",
+      "curlHint": "แทนที่ตัวยึดตำแหน่งด้วยคีย์ API แบบเต็มของคุณ",
       "grants": {
         "title": "แอพที่เชื่อมต่อ",
         "description": "แอปที่คุณอนุญาตให้ค้นหาธุรกิจและอ่านบทวิจารณ์และรูปภาพสาธารณะโดยใช้ค่าเผื่อ API ของคุณ",
@@ -294,9 +353,6 @@ export const site: SiteContent = {
     "subscriptions": {
       "title": "การสมัครรับข้อมูล",
       "description": "วางแผนและต่ออายุสถานะสำหรับ เครื่องมือดึงข้อมูลออนไลน์ ส่วนขยายเบราว์เซอร์ และ API ซื้อหรืออัพเกรดในหน้าราคา",
-      "loading": "กำลังโหลดการสมัครของคุณ...",
-      "loadFailed": "ไม่สามารถโหลดการสมัครของคุณ",
-      "retry": "ลองอีกครั้ง",
       "lines": {
         "online": "เครื่องมือดึงข้อมูลออนไลน์",
         "extension": "ส่วนขยายเบราว์เซอร์",
@@ -304,17 +360,17 @@ export const site: SiteContent = {
       },
       "planLabel": "วางแผน",
       "expiresLabel": "ต่ออายุ/หมดอายุ",
-      "noExpiry": "ไม่มีวันหมดอายุ",
       "free": "ฟรี",
       "unavailable": "ไม่สามารถใช้งานได้ชั่วคราว",
       "autoRenewOn": "เปิดการต่ออายุอัตโนมัติ",
       "autoRenewOff": "ปิดการต่ออายุอัตโนมัติ",
+      "paidVia": "ชำระผ่าน {method}",
       "subscribeCta": "เลือกแผน",
+      "pricingLink": "ดูราคา",
       "manageSubscription": "จัดการการสมัครสมาชิก",
       "managingSubscription": "กำลังเปิด...",
-      "signInPrompt": "ลงชื่อเข้าใช้เพื่อดูการสมัครของคุณ",
-      "signInCta": "เข้าสู่ระบบ",
-      "unreachable": "ไม่สามารถเข้าถึง MapsGrab ได้ในขณะนี้"
+      "manageFailed": "เปิดหน้าจัดการการสมัครสมาชิกไม่สำเร็จ โปรดลองอีกครั้ง",
+      "signInPrompt": "ลงชื่อเข้าใช้เพื่อดูการสมัครของคุณ"
     },
     "cancelGuide": {
       "title": "จัดการการสมัครของคุณที่ผู้ให้บริการชำระเงิน",
@@ -2166,6 +2222,7 @@ export const site: SiteContent = {
         "theater": {
           "files": "1 CSV · บันทึกไปยังการดาวน์โหลด",
           "csv": "CSV",
+          "processed": "ดำเนินการแล้ว",
           "parallelChip": {
             "label": "คำหลักทำงาน",
             "value": "ในแบบคู่ขนาน"
@@ -2275,7 +2332,8 @@ export const site: SiteContent = {
           ]
         },
         "regions": {
-          "hint": "คุณสามารถแก้ไขแบบสอบถามที่สร้างขึ้นก่อนที่จะส่ง แต่ละรายการนับเป็นคำหลัก"
+          "hint": "คุณสามารถแก้ไขแบบสอบถามที่สร้างขึ้นก่อนที่จะส่ง แต่ละรายการนับเป็นคำหลัก",
+          "addCity": "เพิ่มเมือง"
         }
       },
       "results": {

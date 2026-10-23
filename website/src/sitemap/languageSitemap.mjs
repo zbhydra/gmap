@@ -24,8 +24,9 @@ const SEARCH_BOT_BLOCKED_ROUTE_PATHS = new Set([
   '/paypal/cancel/',
   '/paypal/success/',
   '/extension-login/',
-  // Dashboard 工作区 noindex（015 U2）：私有工作区不进搜索与 sitemap。
+  // Dashboard 工作区 noindex：四个视图地址都是私有工作区，不进搜索与 sitemap。
   '/dashboard/',
+  '/dashboard/history/',
   '/dashboard/api/',
   '/dashboard/subscriptions/',
   // MCP OAuth 确认页 noindex（014 U2）：授权流程中间页，不进 sitemap。

@@ -1,5 +1,5 @@
 /**
- * Dashboard 客户端接口封装（015 U2）。
+ * Dashboard 客户端接口封装。
  *
  * 复用站级 JSON、鉴权与会话失效边界；Export 下载使用后端签名 URL。
  */
@@ -103,6 +103,10 @@ export interface ExportJobSummary {
   started_at: number | null
   finished_at: number | null
   error_code: number | null
+  /** 代表关键词：有搜索词时为首个命中项，否则为首个关键词（规范化去重后）。 */
+  keyword_preview: string
+  /** 规范化去重后的关键词数。 */
+  keyword_count: number
 }
 
 export interface ExportJobItem {
@@ -144,8 +148,25 @@ function withSessionExpiry<T>(request: Promise<T>): Promise<T> {
   })
 }
 
-export function listExportJobs(context: RequestContext, offset: number, limit: number): Promise<ExportJobList> {
-  return withSessionExpiry(getJson<ExportJobList>('/api/client/export/jobs', context, { offset, limit }))
+/** 任务列表查询；时间为纽约日界换算后的毫秒左闭右开区间，状态可多选。 */
+export interface ExportJobQuery {
+  offset: number
+  limit: number
+  q?: string
+  statuses?: readonly ExportJobStatus[]
+  createdFromMs?: number
+  createdToMs?: number
+}
+
+export function listExportJobs(context: RequestContext, query: ExportJobQuery): Promise<ExportJobList> {
+  return withSessionExpiry(getJson<ExportJobList>('/api/client/export/jobs', context, {
+    offset: query.offset,
+    limit: query.limit,
+    q: query.q || undefined,
+    status: query.statuses,
+    created_from_ms: query.createdFromMs,
+    created_to_ms: query.createdToMs
+  }))
 }
 
 export function getExportJob(context: RequestContext, jobNo: string): Promise<ExportJobDetail> {

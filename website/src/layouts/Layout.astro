@@ -30,7 +30,7 @@ interface Props {
   robots?: string;
   includeAlternateLanguageLinks?: boolean;
   includeLanguageSwitcher?: boolean;
-  /** 工作区展示模式（Dashboard）：隐藏营销导航与 footer，主区由页面自管布局。 */
+  /** 工作区展示模式（Dashboard）：隐藏营销导航与 footer，不包 main（页面自带外壳地标），首帧恢复侧栏收起状态。 */
   workspaceMode?: boolean;
   /** 装配站级登录弹窗；插件授权桥（/extension-login/）自带认证 owner 时关闭。 */
   includeSiteAuth?: boolean;
@@ -151,7 +151,7 @@ const structuredDataItems = [
 ---
 
 <!doctype html>
-<html lang={locale} data-analytics={analytics ? undefined : 'off'}>
+<html lang={locale} class:list={{ 'dash-root': workspaceMode }} data-analytics={analytics ? undefined : 'off'}>
   <head>
     <meta charset="UTF-8" />
     <script is:inline>
@@ -163,6 +163,15 @@ const structuredDataItems = [
         // 存储被禁用时按系统主题完成首帧。
       }
     </script>
+    {workspaceMode && (
+      <script is:inline>
+        try {
+          if (localStorage.getItem('mg-dash-side') === 'collapsed') document.documentElement.dataset.side = 'collapsed';
+        } catch {
+          // 存储被禁用时侧栏按展开完成首帧。
+        }
+      </script>
+    )}
     <link rel="preload" href="/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
     {preloadAccentFont && <link rel="preload" href="/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin />}
@@ -227,9 +236,11 @@ const structuredDataItems = [
 
     {!workspaceMode && <SiteHeader locale={locale} includeSiteAuth={includeSiteAuth} includeLanguageSwitcher={includeLanguageSwitcher} />}
 
-    <main class="main">
-      <slot />
-    </main>
+    {workspaceMode ? <slot /> : (
+      <main class="main">
+        <slot />
+      </main>
+    )}
 
     {!workspaceMode && <SiteFooter locale={locale} />}
 

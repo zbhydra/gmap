@@ -93,6 +93,7 @@ export const site: SiteContent = {
   "dashboard": {
     "create": {
       "title": "Extractor online",
+      "newTask": "Nueva tarea",
       "modeLabel": "Modo de búsqueda",
       "modes": {
         "keywords": "Palabras clave",
@@ -102,14 +103,16 @@ export const site: SiteContent = {
       "keywords": "Palabras clave",
       "placeholder": "cafetería en portland\nrestaurante en austin",
       "count": "{count} / {limit} palabras clave",
+      "duplicates": "Líneas duplicadas ignoradas: {count}",
       "contacts": "Encuentra correos electrónicos y perfiles sociales.",
       "contactsPaid": "Disponible con un plan en línea pago.",
       "usage": "{used} / {total} registros este mes",
-      "reset": "La cuota mensual se restablece el 1 del New York tiempo.",
+      "reset": "La cuota mensual se renueva el día 1 (hora de Nueva York).",
       "loading": "Cargando tus límites...",
       "optionsFailed": "No se pudieron cargar los límites de tus tareas. Vuelva a intentarlo.",
       "submit": "Iniciar extracción",
       "submitting": "Sumisión...",
+      "submitted": "Tarea enviada",
       "failed": "Error al enviar la tarea. Actualiza el historial antes de volver a intentarlo.",
       "exhausted": "Tu cuota mensual está agotada.",
       "invalid": "Ingrese hasta {limit} palabras clave, cada una de no más de 500 caracteres.",
@@ -119,11 +122,12 @@ export const site: SiteContent = {
         "radius": "Radio (km)",
         "spacing": "Espaciado de cuadrícula (km)",
         "sampleCount": "{count} / {limit} buscar ubicaciones",
+        "points": "Puntos de la cuadrícula: {points} · Palabras clave: {keywords}",
         "overLimit": "Reduzca el radio o aumente el espacio de la cuadrícula para permanecer dentro de {limit} ubicaciones de búsqueda.",
         "chooseCenter": "Elija un centro en el mapa o ingrese coordenadas.",
         "mapLabel": "Elija un centro de búsqueda en el mapa",
         "tilesUnavailable": "No se pudieron cargar los mosaicos del mapa. Aún puedes ingresar coordenadas.",
-        "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap contribuyentes</a>"
+        "attribution": "colaboradores de OpenStreetMap"
       },
       "region": {
         "baseKeywords": "Palabras clave base",
@@ -135,15 +139,14 @@ export const site: SiteContent = {
         "city": "Ciudad",
         "selectCountry": "Seleccione un país",
         "allStates": "Todos los estados o regiones",
-        "selectCity": "Selecciona una ciudad",
         "loading": "Cargando ubicaciones...",
         "loadFailed": "No se pudieron cargar las ubicaciones. Vuelva a intentarlo.",
         "retry": "Rever",
         "addCountry": "Agregar país",
         "addState": "Agregar estado",
-        "addCity": "Agregar ciudad",
         "selectedRegions": "Ubicaciones seleccionadas",
         "remove": "Eliminar {name}",
+        "noMatch": "Sin coincidencias",
         "matchMode": "Frase de búsqueda",
         "inMode": "En",
         "nearMode": "Cerca",
@@ -158,34 +161,59 @@ export const site: SiteContent = {
       "description": "Administre sus MapsGrab exportaciones, API acceso y suscripciones en un solo espacio de trabajo."
     },
     "shell": {
+      "skipToContent": "Saltar al contenido",
+      "sideLabel": "Espacio de trabajo",
+      "homeLabel": "Inicio de MapsGrab",
+      "navLabel": "Menú del espacio de trabajo",
       "loading": "Cargando tu espacio de trabajo...",
       "retry": "Rever",
-      "navHistory": "Extractor online",
+      "navOnline": "Extractor online",
+      "navJobHistory": "Historial",
       "navApi": "API gestión",
       "navSubscriptions": "Suscripciones",
       "openMenu": "Abrir menú del espacio de trabajo",
-      "closeMenu": "Cerrar el menú del espacio de trabajo"
+      "closeMenu": "Cerrar el menú del espacio de trabajo",
+      "collapseSidebar": "Contraer barra lateral",
+      "expandSidebar": "Expandir barra lateral",
+      "back": "Volver"
     },
     "account": {
       "menuButtonLabel": "Abrir menú de cuenta",
       "menuLabel": "Menú de cuenta",
-      "logout": "Finalizar la sesión"
+      "logout": "Finalizar la sesión",
+      "upgrade": "Mejorar plan",
+      "usageShort": "{used} / {total} registros",
+      "planUnavailable": "No disponible",
+      "theme": "Tema",
+      "themeLight": "Claro",
+      "themeDark": "Oscuro",
+      "themeSystem": "Sistema",
+      "language": "Idioma"
     },
     "history": {
       "title": "Historial de exportaciones en línea",
       "description": "Tareas que ejecutó en Extractor online, las más nuevas primero. Los horarios se muestran en hora del este (New York).",
       "refresh": "Refrescar",
+      "autoRefresh": "Actualización automática activada",
       "loading": "Cargando tus exportaciones...",
       "loadFailed": "No se pudo cargar su historial de exportación.",
+      "refreshFailed": "No se pudo actualizar. Se muestran los últimos resultados cargados.",
       "retry": "Rever",
       "emptyTitle": "Aún no hay exportaciones",
       "emptyHint": "Ejecute una tarea en Extractor online y aparecerá aquí.",
+      "emptyCta": "Ir a Extractor online",
+      "recentTitle": "Tareas recientes",
+      "viewAll": "Ver todas",
+      "recentEmptyHint": "Las tareas que inicies arriba aparecerán aquí.",
+      "noMatchTitle": "No hay tareas que coincidan",
+      "noMatchHint": "Prueba con otro número de tarea o palabra clave, o borra los filtros.",
+      "moreKeywordsShort": "+{count}",
+      "moreKeywords": "y {count} más",
       "columns": {
-        "taskNo": "Trabajo",
+        "taskNo": "Tarea",
         "createdAt": "Creado (ET)",
         "samples": "Búsquedas",
-        "processed": "Procesado",
-        "records": "Archivos",
+        "records": "Registros",
         "status": "Estado"
       },
       "status": {
@@ -197,14 +225,41 @@ export const site: SiteContent = {
         "failed": "Fallido"
       },
       "timezone": "ET",
+      "search": {
+        "label": "Buscar tareas",
+        "placeholder": "Buscar por número de tarea o palabra clave",
+        "clear": "Borrar búsqueda"
+      },
+      "filters": {
+        "label": "Filtrar tareas",
+        "button": "Filtros",
+        "status": "Estado",
+        "all": "Todas",
+        "running": "En curso",
+        "clear": "Borrar filtros"
+      },
+      "range": {
+        "label": "Periodo",
+        "last7": "Últimos 7 días",
+        "last30": "Últimos 30 días",
+        "all": "Todo el tiempo",
+        "custom": "Periodo personalizado",
+        "from": "Desde",
+        "to": "Hasta",
+        "apply": "Aplicar",
+        "invalid": "Elige una fecha de inicio igual o anterior a la fecha de fin.",
+        "hint": "Las fechas usan la hora del Este (Nueva York)."
+      },
       "pagination": {
+        "label": "Paginación",
         "previous": "Anterior",
         "next": "Próximo",
+        "page": "Página {page}",
+        "pageSize": "Filas por página",
         "summary": "{from}–{to} de {total}"
       },
       "detail": {
         "show": "Detalles",
-        "hide": "Ocultar detalles",
         "loading": "Cargando búsquedas...",
         "loadFailed": "No se pudieron cargar las búsquedas para esta tarea.",
         "keyword": "Palabra clave",
@@ -219,6 +274,10 @@ export const site: SiteContent = {
         "pending": "Pendiente",
         "viewport": "{lat}, {lng} · zoom {zoom}"
       },
+      "copyJob": "Copiar número de tarea",
+      "dedupeHint": "Los registros se cuentan después de eliminar los duplicados de toda la tarea.",
+      "finished": "Tarea {job}: {status}",
+      "finishedRecords": "{count} registros",
       "downloadCsv": "Descargar CSV",
       "noFile": "NoCSV",
       "errors": {
@@ -236,17 +295,14 @@ export const site: SiteContent = {
       "unreachable": "No se pudo llegar a MapsGrab en este momento."
     },
     "api": {
-      "title": "API gestión",
       "description": "Administre su clave API, asignación de solicitudes mensuales y aplicaciones de IA conectadas.",
       "docsLink": "Ver API productos",
       "signInPrompt": "Inicia sesión para administrar tu acceso API.",
-      "signInCta": "Iniciar sesión",
-      "unreachable": "No se pudo llegar a MapsGrab en este momento.",
       "loading": "Cargando tu acceso API...",
       "loadFailed": "No se pudo cargar tu acceso API. Por favor inténtalo de nuevo.",
       "retry": "Rever",
       "refresh": "Refrescar",
-      "keyTitle": "API clave",
+      "keyTitle": "Clave de API",
       "keyEmpty": "Aún no has generado una clave API.",
       "generateKey": "Generar clave API",
       "rotateKey": "Reemplazar la clave API",
@@ -261,10 +317,11 @@ export const site: SiteContent = {
       "copyFailed": "No se pudo copiar. Seleccione el texto y cópielo manualmente.",
       "keyFailed": "No se pudo generar una clave API. Por favor inténtalo de nuevo.",
       "usageTitle": "Uso mensual API",
+      "usageFailed": "No se pudo cargar tu uso de la API. Inténtalo de nuevo.",
       "usageValue": "{used} / {total} solicitudes",
       "usagePeriod": "Periodo: {period}",
       "quotaExhausted": "Su asignación mensual de solicitud está agotada.",
-      "quotaReset": "Se reinicia el día 1 de cada mes en el tiempo New York. API y MCP comparten esta asignación.",
+      "quotaReset": "Se renueva el día 1 (ET) · común a API y MCP",
       "planTitle": "API plan",
       "managePlan": "Administrar suscripciones",
       "connectionsTitle": "Direcciones de conexión",
@@ -273,6 +330,8 @@ export const site: SiteContent = {
       "mcpHint": "Agregue este URL en su cliente MCP. Inicia sesión y aprueba la conexión cuando abra este sitio web.",
       "mcpUnavailable": "La dirección de conexión MCP aún no está disponible.",
       "copyUrl": "Copiar URL",
+      "curlTitle": "Inicio rápido",
+      "curlHint": "Sustituya el marcador de posición por su clave de API completa.",
       "grants": {
         "title": "Aplicaciones conectadas",
         "description": "Aplicaciones a las que ha permitido buscar empresas y leer reseñas y fotografías públicas utilizando su asignación API.",
@@ -294,9 +353,6 @@ export const site: SiteContent = {
     "subscriptions": {
       "title": "Suscripciones",
       "description": "Planes y estado de renovación de Extractor online, la extensión del navegador y el API. Compre o actualice en la página de precios.",
-      "loading": "Cargando tus suscripciones...",
-      "loadFailed": "No se pudieron cargar sus suscripciones.",
-      "retry": "Rever",
       "lines": {
         "online": "Extractor online",
         "extension": "Extensión del navegador",
@@ -304,17 +360,17 @@ export const site: SiteContent = {
       },
       "planLabel": "Plan",
       "expiresLabel": "Se renueva/caduca",
-      "noExpiry": "Sin caducidad",
       "free": "Gratis",
       "unavailable": "No disponible temporalmente",
       "autoRenewOn": "Renovación automática activada",
       "autoRenewOff": "Renovación automática desactivada",
+      "paidVia": "Pagado con {method}",
       "subscribeCta": "Elige un plan",
+      "pricingLink": "Ver precios",
       "manageSubscription": "Administrar suscripción",
       "managingSubscription": "Apertura...",
-      "signInPrompt": "Inicia sesión para ver tus suscripciones.",
-      "signInCta": "Iniciar sesión",
-      "unreachable": "No se pudo llegar a MapsGrab en este momento."
+      "manageFailed": "No se pudo abrir la gestión de la suscripción. Inténtalo de nuevo.",
+      "signInPrompt": "Inicia sesión para ver tus suscripciones."
     },
     "cancelGuide": {
       "title": "Gestiona tu suscripción en el proveedor de pagos",
@@ -2166,6 +2222,7 @@ export const site: SiteContent = {
         "theater": {
           "files": "1 CSV · Guardado en Descargas",
           "csv": "CSV",
+          "processed": "Procesado",
           "parallelChip": {
             "label": "Ejecución de palabras clave",
             "value": "En paralelo"
@@ -2275,7 +2332,8 @@ export const site: SiteContent = {
           ]
         },
         "regions": {
-          "hint": "Puede editar las consultas generadas antes de enviarlas. Cada uno cuenta como una palabra clave."
+          "hint": "Puede editar las consultas generadas antes de enviarlas. Cada uno cuenta como una palabra clave.",
+          "addCity": "Agregar ciudad"
         }
       },
       "results": {

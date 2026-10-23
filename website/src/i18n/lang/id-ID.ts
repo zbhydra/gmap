@@ -93,6 +93,7 @@ export const site: SiteContent = {
   "dashboard": {
     "create": {
       "title": "Pengumpul online",
+      "newTask": "Tugas baru",
       "modeLabel": "Modus pencarian",
       "modes": {
         "keywords": "Kata kunci",
@@ -102,14 +103,16 @@ export const site: SiteContent = {
       "keywords": "Kata kunci",
       "placeholder": "kedai kopi di Portland\nrestoran di Austin",
       "count": "{count} / {limit} kata kunci",
+      "duplicates": "Baris duplikat diabaikan: {count}",
       "contacts": "Temukan email dan profil sosial",
       "contactsPaid": "Tersedia dengan paket Online berbayar.",
       "usage": "{used} / {total} catatan bulan ini",
-      "reset": "Kuota bulanan direset pada tanggal 1 dalam waktu New York.",
+      "reset": "Kuota bulanan direset setiap tanggal 1 (waktu New York).",
       "loading": "Memuat batas Anda...",
       "optionsFailed": "Tidak dapat memuat batas tugas Anda. Silakan coba lagi.",
       "submit": "Mulai ekstraksi",
       "submitting": "Mengirimkan...",
+      "submitted": "Tugas terkirim",
       "failed": "Pengiriman tugas gagal. Segarkan riwayat sebelum mencoba lagi.",
       "exhausted": "Kuota bulanan Anda telah habis.",
       "invalid": "Masukkan hingga {limit} kata kunci, masing-masing tidak lebih dari 500 karakter.",
@@ -119,11 +122,12 @@ export const site: SiteContent = {
         "radius": "Radius (km)",
         "spacing": "Jarak grid (km)",
         "sampleCount": "{count} / {limit} mencari lokasi",
+        "points": "Titik grid: {points} · Kata kunci: {keywords}",
         "overLimit": "Kurangi radius atau tingkatkan jarak grid agar tetap berada dalam {limit} lokasi pencarian.",
         "chooseCenter": "Pilih pusat di peta atau masukkan koordinat.",
         "mapLabel": "Pilih pusat pencarian di peta",
         "tilesUnavailable": "Ubin peta tidak dapat dimuat. Anda masih dapat memasukkan koordinat.",
-        "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap kontributor</a>"
+        "attribution": "kontributor OpenStreetMap"
       },
       "region": {
         "baseKeywords": "Kata kunci dasar",
@@ -135,15 +139,14 @@ export const site: SiteContent = {
         "city": "Kota",
         "selectCountry": "Pilih negara",
         "allStates": "Semua negara bagian atau wilayah",
-        "selectCity": "Pilih kota",
         "loading": "Memuat lokasi...",
         "loadFailed": "Lokasi tidak dapat dimuat. Silakan coba lagi.",
         "retry": "Mencoba kembali",
         "addCountry": "Tambahkan negara",
         "addState": "Tambahkan negara bagian",
-        "addCity": "Tambahkan kota",
         "selectedRegions": "Lokasi yang dipilih",
         "remove": "Hapus {name}",
+        "noMatch": "Tidak ada yang cocok",
         "matchMode": "Frasa pencarian",
         "inMode": "Di dalam",
         "nearMode": "Di dekat",
@@ -158,33 +161,58 @@ export const site: SiteContent = {
       "description": "Kelola MapsGrab ekspor, API dan langganan Anda dalam satu ruang kerja."
     },
     "shell": {
+      "skipToContent": "Lewati ke konten",
+      "sideLabel": "Ruang kerja",
+      "homeLabel": "Beranda MapsGrab",
+      "navLabel": "Menu ruang kerja",
       "loading": "Memuat ruang kerja Anda...",
       "retry": "Mencoba kembali",
-      "navHistory": "Pengumpul online",
+      "navOnline": "Pengumpul online",
+      "navJobHistory": "Riwayat",
       "navApi": "API manajemen",
       "navSubscriptions": "Langganan",
       "openMenu": "Buka menu ruang kerja",
-      "closeMenu": "Tutup menu ruang kerja"
+      "closeMenu": "Tutup menu ruang kerja",
+      "collapseSidebar": "Ciutkan bilah samping",
+      "expandSidebar": "Luaskan bilah samping",
+      "back": "Kembali"
     },
     "account": {
       "menuButtonLabel": "Buka menu akun",
       "menuLabel": "Menu akun",
-      "logout": "Keluar"
+      "logout": "Keluar",
+      "upgrade": "Tingkatkan",
+      "usageShort": "{used} / {total} catatan",
+      "planUnavailable": "Tidak tersedia",
+      "theme": "Tema",
+      "themeLight": "Terang",
+      "themeDark": "Gelap",
+      "themeSystem": "Sistem",
+      "language": "Bahasa"
     },
     "history": {
       "title": "Riwayat ekspor online",
       "description": "Tugas yang Anda jalankan di Scraper Online, yang terbaru terlebih dahulu. Waktu ditampilkan dalam Waktu Bagian Timur (New York).",
       "refresh": "Menyegarkan",
+      "autoRefresh": "Penyegaran otomatis aktif",
       "loading": "Memuat ekspor Anda...",
       "loadFailed": "Gagal memuat riwayat ekspor Anda.",
+      "refreshFailed": "Tidak dapat menyegarkan. Menampilkan hasil terakhir yang dimuat.",
       "retry": "Mencoba kembali",
       "emptyTitle": "Belum ada ekspor",
       "emptyHint": "Jalankan tugas di Scraper Online dan tugas itu akan muncul di sini.",
+      "emptyCta": "Buka Pengumpul online",
+      "recentTitle": "Tugas terbaru",
+      "viewAll": "Lihat semua",
+      "recentEmptyHint": "Tugas yang Anda mulai di atas akan muncul di sini.",
+      "noMatchTitle": "Tidak ada tugas yang cocok",
+      "noMatchHint": "Coba nomor tugas atau kata kunci lain, atau hapus filter.",
+      "moreKeywordsShort": "+{count}",
+      "moreKeywords": "dan {count} lainnya",
       "columns": {
-        "taskNo": "Pekerjaan",
+        "taskNo": "Tugas",
         "createdAt": "Dibuat (ET)",
         "samples": "Pencarian",
-        "processed": "Diproses",
         "records": "Catatan",
         "status": "Status"
       },
@@ -197,14 +225,41 @@ export const site: SiteContent = {
         "failed": "Gagal"
       },
       "timezone": "ET",
+      "search": {
+        "label": "Cari tugas",
+        "placeholder": "Cari berdasarkan nomor tugas atau kata kunci",
+        "clear": "Hapus pencarian"
+      },
+      "filters": {
+        "label": "Filter tugas",
+        "button": "Filter",
+        "status": "Status",
+        "all": "Semua",
+        "running": "Berjalan",
+        "clear": "Hapus filter"
+      },
+      "range": {
+        "label": "Rentang waktu",
+        "last7": "7 hari terakhir",
+        "last30": "30 hari terakhir",
+        "all": "Semua waktu",
+        "custom": "Rentang khusus",
+        "from": "Dari",
+        "to": "Sampai",
+        "apply": "Terapkan",
+        "invalid": "Pilih tanggal mulai yang sama dengan atau sebelum tanggal akhir.",
+        "hint": "Tanggal menggunakan Waktu Timur AS (New York)."
+      },
       "pagination": {
+        "label": "Paginasi",
         "previous": "Sebelumnya",
         "next": "Berikutnya",
+        "page": "Halaman {page}",
+        "pageSize": "Baris per halaman",
         "summary": "{from}–{to} dari {total}"
       },
       "detail": {
         "show": "Detail",
-        "hide": "Sembunyikan detailnya",
         "loading": "Memuat penelusuran...",
         "loadFailed": "Gagal memuat penelusuran untuk tugas ini.",
         "keyword": "Kata kunci",
@@ -219,6 +274,10 @@ export const site: SiteContent = {
         "pending": "Tertunda",
         "viewport": "{lat}, {lng} · perbesar {zoom}"
       },
+      "copyJob": "Salin nomor tugas",
+      "dedupeHint": "Jumlah catatan dihitung setelah duplikat di seluruh tugas dihapus.",
+      "finished": "Tugas {job}: {status}",
+      "finishedRecords": "{count} catatan",
       "downloadCsv": "Unduh CSV",
       "noFile": "Tidak CSV",
       "errors": {
@@ -236,12 +295,9 @@ export const site: SiteContent = {
       "unreachable": "Tidak dapat mencapai MapsGrab saat ini."
     },
     "api": {
-      "title": "API manajemen",
       "description": "Kelola kunci API Anda, tunjangan permintaan bulanan, dan aplikasi AI yang terhubung.",
       "docsLink": "Lihat API produk",
       "signInPrompt": "Masuk untuk mengelola akses API Anda.",
-      "signInCta": "Masuk",
-      "unreachable": "Tidak dapat mencapai MapsGrab saat ini.",
       "loading": "Memuat akses API Anda...",
       "loadFailed": "Tidak dapat memuat akses API Anda. Silakan coba lagi.",
       "retry": "Mencoba kembali",
@@ -261,10 +317,11 @@ export const site: SiteContent = {
       "copyFailed": "Tidak dapat menyalin. Pilih teks dan salin secara manual.",
       "keyFailed": "Tidak dapat membuat kunci API. Silakan coba lagi.",
       "usageTitle": "Penggunaan API bulanan",
+      "usageFailed": "Tidak dapat memuat penggunaan API Anda. Silakan coba lagi.",
       "usageValue": "{used} / {total} permintaan",
       "usagePeriod": "Periode: {period}",
       "quotaExhausted": "Tunjangan permintaan bulanan Anda telah habis.",
-      "quotaReset": "Direset pada tanggal 1 setiap bulan dalam waktu New York. API dan MCP berbagi tunjangan ini.",
+      "quotaReset": "Reset tanggal 1 (ET) · dibagi API dan MCP",
       "planTitle": "API rencana",
       "managePlan": "Kelola langganan",
       "connectionsTitle": "Alamat koneksi",
@@ -273,6 +330,8 @@ export const site: SiteContent = {
       "mcpHint": "Tambahkan URL ini di klien MCP Anda. Masuk dan setujui koneksi ketika membuka situs web ini.",
       "mcpUnavailable": "Alamat koneksi MCP belum tersedia.",
       "copyUrl": "Salin URL",
+      "curlTitle": "Mulai cepat",
+      "curlHint": "Ganti placeholder dengan kunci API lengkap Anda.",
       "grants": {
         "title": "Aplikasi yang terhubung",
         "description": "Aplikasi yang Anda izinkan untuk mencari bisnis dan membaca ulasan serta foto publik menggunakan uang saku API Anda.",
@@ -294,9 +353,6 @@ export const site: SiteContent = {
     "subscriptions": {
       "title": "Langganan",
       "description": "Paket dan status pembaruan untuk Scraper Online, ekstensi browser, dan API. Beli atau tingkatkan di halaman Harga.",
-      "loading": "Memuat langganan Anda...",
-      "loadFailed": "Gagal memuat langganan Anda.",
-      "retry": "Mencoba kembali",
       "lines": {
         "online": "Pengumpul online",
         "extension": "Ekstensi Peramban",
@@ -304,17 +360,17 @@ export const site: SiteContent = {
       },
       "planLabel": "Rencana",
       "expiresLabel": "Memperbarui/kedaluwarsa",
-      "noExpiry": "Tidak ada kadaluwarsa",
       "free": "Bebas",
       "unavailable": "Untuk sementara tidak tersedia",
       "autoRenewOn": "Perpanjangan otomatis aktif",
       "autoRenewOff": "Perpanjangan otomatis nonaktif",
+      "paidVia": "Dibayar melalui {method}",
       "subscribeCta": "Pilih rencana",
+      "pricingLink": "Lihat harga",
       "manageSubscription": "Kelola langganan",
       "managingSubscription": "Pembukaan...",
-      "signInPrompt": "Masuk untuk melihat langganan Anda.",
-      "signInCta": "Masuk",
-      "unreachable": "Tidak dapat mencapai MapsGrab saat ini."
+      "manageFailed": "Tidak dapat membuka pengelolaan langganan. Silakan coba lagi.",
+      "signInPrompt": "Masuk untuk melihat langganan Anda."
     },
     "cancelGuide": {
       "title": "Kelola langganan Anda di penyedia pembayaran",
@@ -2166,6 +2222,7 @@ export const site: SiteContent = {
         "theater": {
           "files": "1 CSV · Disimpan ke Unduhan",
           "csv": "CSV",
+          "processed": "Diproses",
           "parallelChip": {
             "label": "Kata kunci dijalankan",
             "value": "Secara paralel"
@@ -2275,7 +2332,8 @@ export const site: SiteContent = {
           ]
         },
         "regions": {
-          "hint": "Anda dapat mengedit kueri yang dihasilkan sebelum mengirimkan. Masing-masing dihitung sebagai kata kunci."
+          "hint": "Anda dapat mengedit kueri yang dihasilkan sebelum mengirimkan. Masing-masing dihitung sebagai kata kunci.",
+          "addCity": "Tambahkan kota"
         }
       },
       "results": {

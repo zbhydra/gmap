@@ -371,10 +371,11 @@ test('site structure: nav, API dropdown, home cards, extension install and legal
   if (isMobile) {
     await expect(scope.locator('a[data-cta="nav-api-scraper"]')).toBeVisible()
   } else {
-    const apiDropdown = scope.locator('[data-dropdown]')
-    await apiDropdown.locator('[data-dropdown-trigger]').click()
-    await expect(apiDropdown).toHaveClass(/is-open/)
-    await apiDropdown.locator('a[data-cta="nav-api-scraper"]').click()
+    // API 菜单是 APG 菜单按钮：点击展开后从菜单项跳转
+    const apiTrigger = scope.getByRole('button', { name: 'API', exact: true })
+    await apiTrigger.click()
+    await expect(apiTrigger).toHaveAttribute('aria-expanded', 'true')
+    await page.getByRole('menu', { name: 'API' }).locator('a[data-cta="nav-api-scraper"]').click()
     await expect(page).toHaveURL(/\/google-maps-scraper-api\//)
   }
 

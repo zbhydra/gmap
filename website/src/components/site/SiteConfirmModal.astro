@@ -1,9 +1,9 @@
 ---
 /**
- * Website 通用确认弹窗。
+ * Website 通用确认弹窗（原生 <dialog class="modal dlg">）。
  *
- * 页面脚本通过 site/confirm.ts 写入标题、正文和按钮文案，组件只负责提供稳定 DOM
- * 与全站一致的视觉样式。
+ * 页面脚本通过 site/confirm.ts 写入标题、正文和按钮文案；组件只提供稳定 DOM，
+ * 版式走组件目录的 .dlg（基础层），模态焦点与 Esc 由原生 dialog 负责。
  */
 import { getContent, type Locale } from '../../i18n/content'
 
@@ -15,213 +15,39 @@ const { locale = 'en-US' } = Astro.props as Props
 const copy = getContent(locale).common
 ---
 
-<div class="site-confirm-modal" data-site-confirm-modal hidden>
-  <button
-    type="button"
-    class="site-confirm-backdrop"
-    data-site-confirm-cancel
-    aria-label={copy.cancel}
-  ></button>
-
-  <div
-    class="site-confirm-dialog"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="site-confirm-title"
-    aria-describedby="site-confirm-message"
-  >
+<dialog
+  class="modal dlg"
+  data-site-confirm-modal
+  aria-labelledby="site-confirm-title"
+  aria-describedby="site-confirm-message"
+>
+  <div class="dlg-body">
     <button
       type="button"
-      class="site-confirm-close"
+      class="icon-btn icon-btn--sm dlg-close"
       data-site-confirm-cancel
       aria-label={copy.cancel}
     >
-      <span aria-hidden="true">×</span>
+      <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-x" /></svg>
     </button>
-
-    <div class="site-confirm-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" focusable="false">
-        <path
-          d="M12 3.2 2.8 19.1c-.6 1.1.1 2.4 1.4 2.4h15.6c1.3 0 2-1.3 1.4-2.4L12 3.2Z"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linejoin="round"
-        />
-        <path
-          d="M12 8.2v5.2M12 17.1h.01"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-        />
-      </svg>
+    <span class="dlg-icon" aria-hidden="true">
+      <svg class="icon"><use href="/img/icons.svg#i-alert" /></svg>
+    </span>
+    <div class="dlg-copy">
+      <h2 class="dlg-title" id="site-confirm-title" data-site-confirm-title></h2>
+      <p class="dlg-msg" id="site-confirm-message" data-site-confirm-message></p>
     </div>
-
-    <div class="site-confirm-copy">
-      <h2 id="site-confirm-title" data-site-confirm-title></h2>
-      <p id="site-confirm-message" data-site-confirm-message></p>
-    </div>
-
-    <div class="site-confirm-actions">
-      <button type="button" class="btn btn-secondary site-confirm-action" data-site-confirm-cancel>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-secondary btn-sm" data-site-confirm-cancel data-site-confirm-dismiss>
         {copy.cancel}
       </button>
-      <button type="button" class="btn btn-primary site-confirm-action" data-site-confirm-submit>
+      <button type="button" class="btn btn-primary btn-sm" data-site-confirm-submit>
         {copy.continue}
       </button>
     </div>
   </div>
-</div>
+</dialog>
 
 <script>
   import '../../scripts/site/confirm'
 </script>
-
-<style>
-  .site-confirm-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 180;
-    display: grid;
-    place-items: center;
-    padding: 24px;
-  }
-
-  .site-confirm-modal[hidden] {
-    display: none;
-  }
-
-  .site-confirm-backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--overlay);
-  }
-
-  .site-confirm-dialog {
-    position: relative;
-    display: grid;
-    grid-template-columns: 48px minmax(0, 1fr);
-    gap: var(--s-4);
-    width: min(520px, 100%);
-    padding: var(--s-6);
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    background: var(--surface);
-    color: var(--text);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .site-confirm-close {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    width: 38px;
-    height: 38px;
-    border-radius: var(--r-full);
-    background: var(--surface-2);
-    color: var(--text);
-    font-size: var(--fs-h4);
-    line-height: 1;
-  }
-
-  .site-confirm-close:hover {
-    background: var(--surface-2);
-  }
-
-  .site-confirm-close:focus-visible,
-  .site-confirm-action:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 3px;
-  }
-
-  .site-confirm-icon {
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    border-radius: var(--r-sm);
-    background: var(--warn-soft);
-    color: var(--warn);
-  }
-
-  .site-confirm-icon svg {
-    width: 26px;
-    height: 26px;
-  }
-
-  .site-confirm-copy {
-    min-width: 0;
-    padding-right: var(--s-8);
-  }
-
-  .site-confirm-copy h2 {
-    margin: 0;
-    font-size: 1.38rem;
-    line-height: 1.18;
-    letter-spacing: 0;
-  }
-
-  .site-confirm-copy p {
-    margin-top: var(--s-2);
-    color: var(--text-2);
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.7;
-  }
-
-  :global(.site-confirm-copy p a) {
-    color: var(--primary-text);
-    font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  :global(.site-confirm-copy p a:hover) {
-    color: var(--primary-text);
-  }
-
-  :global(.site-confirm-copy p a:focus-visible) {
-    outline: 2px solid var(--ring);
-    outline-offset: 3px;
-    border-radius: var(--r-sm);
-  }
-
-  .site-confirm-actions {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--s-2);
-    margin-top: 4px;
-  }
-
-  .site-confirm-action {
-    min-width: 120px;
-  }
-
-  @media (max-width: 560px) {
-    .site-confirm-modal {
-      align-items: end;
-      padding: 16px;
-    }
-
-    .site-confirm-dialog {
-      grid-template-columns: 1fr;
-      gap: 14px;
-      padding: 22px;
-    }
-
-    .site-confirm-copy {
-      padding-right: 0;
-    }
-
-    .site-confirm-actions {
-      display: grid;
-      grid-template-columns: 1fr;
-    }
-
-    .site-confirm-action {
-      width: 100%;
-    }
-  }
-</style>

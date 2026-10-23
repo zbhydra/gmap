@@ -1,11 +1,12 @@
 """CAS owner Job/Run 短事务；本项目原用量账本参与成功发布。"""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
+from string import hexdigits
+from typing import TypeVar, cast
 
-from typing import cast
-
-from sqlalchemy import func, select, update
+from sqlalchemy import Select, false, func, or_, select, update
 from sqlalchemy.engine import CursorResult
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.constants.export import EXPORT_ACTIVE_STATUSES, ExportRunStatus
 from app.core.config import settings
@@ -16,6 +17,8 @@ from app.schemas.export_item_schema import GmapSearchOptions, ExportItemResult
 from app.schemas.export_run_schema import ExportRunCheckpoint, ExportRunResult
 from app.services.usage_service import online_usage_service
 from app.utils.time import timestamp_now
+
+_Row = TypeVar("_Row", bound=tuple[object, ...])
 
 
 class ExportJobService:
@@ -41,6 +44,7 @@ class ExportJobService:
             run_no=run_no,
             user_id=user_id,
             options_json=options.model_dump(mode="json"),
+            keywords_text="\n".join(options.keywords),
             include_contacts=include_contacts,
             storage_id=storage_id,
             status=ExportRunStatus.QUEUED.value,
@@ -63,32 +67,83 @@ class ExportJobService:
         self,
         *,
         user_id: int,
-        job_nos: list[str] | None = None,
+        job_nos: Sequence[str] | None = None,
+        q: str | None = None,
+        statuses: Sequence[ExportRunStatus] | None = None,
+        created_from_ms: int | None = None,
+        created_to_ms: int | None = None,
         offset: int = 0,
         limit: int = 20,
     ) -> list[ExportJobModel]:
         model = ExportJobModel.model_for_user(user_id)
-        stmt = select(model).where(model.user_id == user_id)
-        if job_nos is not None:
-            stmt = stmt.where(model.job_no.in_(job_nos))
+        stmt = self._apply_export_job_filters(
+            select(model),
+            user_id=user_id,
+            job_nos=job_nos,
+            q=q,
+            statuses=statuses,
+            created_from_ms=created_from_ms,
+            created_to_ms=created_to_ms,
+        )
         async with get_async_session() as db:
             rows = await db.execute(
                 stmt.order_by(model.job_id.desc()).offset(offset).limit(limit)
             )
             return list(rows.scalars().all())
 
-    async def count_export_jobs(self, *, user_id: int) -> int:
+    async def count_export_jobs(
+        self,
+        *,
+        user_id: int,
+        q: str | None = None,
+        statuses: Sequence[ExportRunStatus] | None = None,
+        created_from_ms: int | None = None,
+        created_to_ms: int | None = None,
+    ) -> int:
         model = ExportJobModel.model_for_user(user_id)
+        stmt = self._apply_export_job_filters(
+            select(func.count()).select_from(model),
+            user_id=user_id,
+            q=q,
+            statuses=statuses,
+            created_from_ms=created_from_ms,
+            created_to_ms=created_to_ms,
+        )
         async with get_async_session() as db:
-            return int(
-                (
-                    await db.execute(
-                        select(func.count())
-                        .select_from(model)
-                        .where(model.user_id == user_id)
-                    )
-                ).scalar_one()
+            return int((await db.execute(stmt)).scalar_one())
+
+    def _apply_export_job_filters(
+        self,
+        stmt: Select[_Row],
+        *,
+        user_id: int,
+        job_nos: Sequence[str] | None = None,
+        q: str | None = None,
+        statuses: Sequence[ExportRunStatus] | None = None,
+        created_from_ms: int | None = None,
+        created_to_ms: int | None = None,
+    ) -> Select[_Row]:
+        model = ExportJobModel.model_for_user(user_id)
+        stmt = stmt.where(model.user_id == user_id)
+        if job_nos is not None:
+            stmt = stmt.where(model.job_no.in_(job_nos))
+        if q:
+            # 单关键词已归一空白，换行只属于存储分隔符，不能跨关键词命中。
+            matches: ColumnElement[bool] = (
+                false()
+                if "\n" in q
+                else model.keywords_text.contains(q, autoescape=True)
             )
+            if all(char in hexdigits for char in q):
+                matches = or_(model.job_no.startswith(q, autoescape=True), matches)
+            stmt = stmt.where(matches)
+        if statuses is not None:
+            stmt = stmt.where(model.status.in_(statuses))
+        if created_from_ms is not None:
+            stmt = stmt.where(model.created_at >= created_from_ms)
+        if created_to_ms is not None:
+            stmt = stmt.where(model.created_at < created_to_ms)
+        return stmt
 
     async def export_job_info(
         self, *, user_id: int, job_no: str

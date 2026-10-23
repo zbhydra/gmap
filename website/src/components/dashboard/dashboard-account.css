@@ -1,0 +1,498 @@
+/* =========================================================================
+   Dashboard · API 管理与订阅视图
+   只用 Atlas 基础层与 T1 / T2。面板、标签、提示条、可复制值、数值条等共享件由 dashboard.css 与
+   components.css 提供，这里只放两个视图自己的栅格与卡片。断点按视图容器（container: view），
+   --lock（多行文字的锁定行宽）的用法见 dashboard.css。
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   API 管理
+   宽（> 980）：合卡（1.5fr）与 Key 卡（1fr）并排等高，连接地址、已连接应用各占整行；≤ 980 单列。
+   并排的两张卡同高：合卡用量区沉底、Key 卡操作沉底，空白留在卡片中部而不是卡片下方。
+   --------------------------------------------------------------------------- */
+.api-grid {
+  display: grid;
+  grid-template-areas:
+    'plan key'
+    'conn conn'
+    'apps apps';
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--s-5);
+}
+
+.api-grid > [data-area='plan'] {
+  --lock: calc((100cqw - 20px) * 0.6 - 50px);
+
+  grid-area: plan;
+}
+
+.api-grid > [data-area='key'] {
+  --lock: calc((100cqw - 20px) * 0.4 - 50px);
+
+  display: flex;
+  flex-direction: column;
+  grid-area: key;
+}
+
+.api-grid > [data-area='conn'] {
+  grid-area: conn;
+}
+
+.api-grid > [data-area='apps'] {
+  grid-area: apps;
+}
+
+/* 合卡：卡头（会话里的订阅摘要）与用量区（用量接口）分区加载、分区失败 */
+.api-plan {
+  display: flex;
+  flex-direction: column;
+}
+
+.api-plan-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3) var(--s-4);
+  padding: var(--s-5) var(--s-6);
+}
+
+.api-plan-id {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* 续期 / 到期日与自动续费各占一行，与订阅卡一致 */
+.api-plan-status {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin-top: 2px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.api-plan-status > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.api-plan-status .icon {
+  color: var(--text-3);
+}
+
+.api-plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* 用量区连同分隔线贴卡片底部（margin-top: auto）：Key 卡更高时，空白留在卡头与分隔线之间 */
+.api-usage {
+  display: grid;
+  gap: var(--s-3);
+  margin: auto var(--s-6) 0;
+  padding: var(--s-5) 0 var(--s-6);
+  border-top: 1px solid var(--border);
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+
+/* 刷新中保留上次数值并降低不透明度 */
+.api-usage[aria-busy='true'] {
+  opacity: 0.55;
+}
+
+.stat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-2);
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+/* 大号独立数字用比例数字，不用 tabular-nums */
+.stat-big {
+  color: var(--text);
+  font-size: var(--fs-h3);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* 计量周期跟在用量数字后面，与数字组只靠 gap 分隔，窄屏允许自然折到下一行；说明行只留重置时间与共用额度一句 */
+.stat-period {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+/* Key 卡：内容纵向排列，操作按钮沉底；单列整行时改为横排，按钮靠右（见下方 ≤ 980） */
+.key-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6) var(--s-6);
+}
+
+.key-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.key-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 13px;
+}
+
+.key-chip .icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-3);
+}
+
+.key-actions {
+  margin-top: auto;
+}
+
+/* 连接地址：两条地址并排（≤ 720 上下排）；说明文字行宽锁定为列宽：（容器宽 − 边框 2 − 内边距 48 − 列距 24）/ 2 */
+.conn-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--s-4) var(--s-6);
+}
+
+.conn-row {
+  --lock: calc(50cqw - 37px);
+
+  display: grid;
+  gap: var(--s-2);
+}
+
+.conn-label {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* curl 快速上手：通栏接在两条地址下面，代码窗用共享 .codewin，长行只在 pre 内横向滚动 */
+.conn-curl {
+  display: grid;
+  gap: var(--s-2);
+}
+
+/* 已连接应用：回调主机为主信息，自报名称与两个时间为次要信息 */
+.grants {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+
+.grants[aria-busy='true'] {
+  opacity: 0.55;
+}
+
+.grant {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--s-3) var(--s-4);
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--border);
+}
+
+/* 断开成功：行淡出后移除 */
+.grant.is-leaving {
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+
+.grant .icon-tile {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+}
+
+.grant .icon-tile .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.grant-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.grant-host {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.grant-name {
+  color: var(--text-2);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.grant-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.grants-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--border);
+}
+
+/* ---------------------------------------------------------------------------
+   订阅：三张方案卡。三列时等高，操作按钮沉底、上下排并占满卡宽；≤ 860 单列，按钮排在一行
+   --------------------------------------------------------------------------- */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-5);
+}
+
+.plan-card {
+  --lock: calc((100cqw - 40px) / 3 - 50px);
+
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--s-5);
+  padding: var(--s-6);
+}
+
+.plan-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.plan-head .icon-tile {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+}
+
+.plan-head .icon-tile .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.plan-line {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.plan-body {
+  display: grid;
+  align-content: start;
+  gap: var(--s-4);
+}
+
+.plan-name-wrap {
+  display: grid;
+  gap: 2px;
+}
+
+.plan-big {
+  color: var(--text);
+  font-size: var(--fs-h4);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
+.kv {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+}
+
+.kv div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s-1) var(--s-3);
+}
+
+.kv dt {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.kv dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.plan-meta {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-meta li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.plan-meta .icon {
+  color: var(--text-3);
+}
+
+.plan-foot {
+  display: grid;
+  gap: var(--s-2);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--border);
+}
+
+/* 三列时按钮上下排、占满卡宽：不随卡宽在「并排 / 折行」之间切换 */
+.plan-actions {
+  display: grid;
+  gap: var(--s-2);
+}
+
+/* ---------------------------------------------------------------------------
+   响应式：按视图容器宽度
+   --------------------------------------------------------------------------- */
+@container view (max-width: 980px) {
+  .api-grid {
+    grid-template-areas:
+      'plan'
+      'key'
+      'conn'
+      'apps';
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .api-grid > [data-area] {
+    --lock: calc(100cqw - 50px);
+  }
+
+  /* 单列整行：Key 与按钮排在一行，明文提示与行内错误另起整行 */
+  .key-body {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .key-body > .key-line {
+    order: 1;
+  }
+
+  .key-body > .key-actions {
+    order: 2;
+    margin-top: 0;
+  }
+
+  .key-body > :not(.key-line, .key-actions) {
+    flex: 1 0 100%;
+    order: 3;
+  }
+}
+
+@container view (max-width: 860px) {
+  .plans-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plan-card {
+    --lock: calc(100cqw - 50px);
+
+    grid-template-rows: auto;
+  }
+
+  .plan-actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
+@container view (max-width: 720px) {
+  .conn-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .conn-row {
+    --lock: calc(100cqw - 50px);
+  }
+}
+
+@container view (max-width: 680px) {
+  .api-grid > [data-area],
+  .conn-row {
+    --lock: calc(100cqw - 34px);
+  }
+
+  .api-plan-head {
+    flex-wrap: wrap;
+    padding: var(--s-4);
+  }
+
+  .api-usage {
+    margin: auto var(--s-4) 0;
+    padding: var(--s-4) 0;
+  }
+
+  .key-body {
+    padding: var(--s-4);
+  }
+
+  .grant {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .grant > .btn {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  /* 卡片内边距收紧到 20：边框 2 + 内边距 40 */
+  .plan-card {
+    --lock: calc(100cqw - 42px);
+
+    padding: var(--s-5);
+  }
+}

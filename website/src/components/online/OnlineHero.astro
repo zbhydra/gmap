@@ -87,7 +87,7 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
           <!-- 工作区侧栏：Dashboard 三视图（收起态） -->
           <div class="oh-side">
             <BrandMark />
-            <span class="oh-side-item is-on" title={shell.navHistory}><Icon name="cloud" /></span>
+            <span class="oh-side-item is-on" title={shell.navOnline}><Icon name="cloud" /></span>
             <span class="oh-side-item" title={shell.navApi}><Icon name="code" /></span>
             <span class="oh-side-item" title={shell.navSubscriptions}><Icon name="tag" /></span>
           </div>
@@ -125,7 +125,7 @@ const titleParts = [hero.title.lead, { text: hero.title.accent, class: 'accent t
               <div class="oh-th">
                 <span>{history.columns.taskNo}</span>
                 <span>{history.columns.samples}</span>
-                <span>{history.columns.processed}</span>
+                <span>{hero.theater.processed}</span>
                 <span>{history.columns.records}</span>
                 <span>{history.columns.status}</span>
               </div>

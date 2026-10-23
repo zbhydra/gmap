@@ -510,7 +510,7 @@ const controllerCopy = {
       <div class="usage-grid" data-stagger="120">
         <article class="card usage-card" data-reveal>
           <div class="usage-visual" aria-hidden="true" data-usage-records>
-            <div class="meter" data-meter data-used={meters.records.used} data-limit={meters.records.limit}>
+            <div class="usage-meter" data-meter data-used={meters.records.used} data-limit={meters.records.limit}>
               <div class="meter-top">
                 <span class="meter-label">{usage.records.meter}</span>
                 <span class="meter-num"><b data-meter-value>{numberFormat.format(meters.records.used)}</b><span>/ {numberFormat.format(meters.records.limit)}</span></span>
@@ -542,7 +542,7 @@ const controllerCopy = {
 
         <article class="card usage-card" data-reveal>
           <div class="usage-visual" aria-hidden="true" data-usage-requests>
-            <div class="meter" data-meter data-used={meters.requests.used} data-limit={meters.requests.limit}>
+            <div class="usage-meter" data-meter data-used={meters.requests.used} data-limit={meters.requests.limit}>
               <div class="meter-top">
                 <span class="meter-label">{usage.requests.meter}</span>
                 <span class="meter-num"><b data-meter-value>{numberFormat.format(meters.requests.used)}</b><span>/ {numberFormat.format(meters.requests.limit)}</span></span>

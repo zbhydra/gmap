@@ -6,7 +6,7 @@
     <title>Online Google Maps Scraper — Run Extraction in the Cloud | MapsGrab</title>
     <meta
       name="description"
-      content="Run Google Maps keyword searches in the cloud, collect business data, and download CSV files or a ZIP bundle."
+      content="Run Google Maps keyword searches in the cloud, collect business data, and download one CSV per task."
     />
     <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
     <script src="assets/js/theme-boot.js"></script>
@@ -28,7 +28,7 @@
 
     <main>
       <!-- ================================================================
-           ① Hero：左文案 + 右侧 Dashboard 剧场（关键词输入 → 云端并行任务 → CSV / ZIP 下载）
+           ① Hero：左文案 + 右侧 Dashboard 剧场（关键词输入 → 云端并行任务 → 整任务 CSV 下载）
            ================================================================ -->
       <section class="page-hero oh-hero has-deco" data-inview>
         <div class="deco" aria-hidden="true">
@@ -56,8 +56,7 @@
             </h1>
 
             <p class="lead" data-enter style="--enter-delay: 180ms">
-              Submit keywords, collect business details in the cloud, and download CSV files or a ZIP bundle from your
-              dashboard.
+              Submit keywords, collect business details in the cloud, and download one CSV per task from your dashboard.
             </p>
 
             <div class="page-hero-actions" data-enter style="--enter-delay: 270ms">
@@ -70,7 +69,7 @@
             <div class="page-hero-meta" data-enter style="--enter-delay: 360ms">
               <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>1,000 free records / month</span>
               <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>Works in any browser</span>
-              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>One CSV per keyword, plus a ZIP</span>
+              <span><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-check" /></svg>One deduplicated CSV per task</span>
             </div>
           </div>
 
@@ -136,7 +135,7 @@
                           <span class="mono">5</span>
                           <span class="mono">5 / 5</span>
                           <span class="mono">212</span>
-                          <span class="oh-status"><span class="badge badge--ok">Completed</span><span class="oh-zip"><svg class="icon"><use href="assets/img/icons.svg#i-archive" /></svg>ZIP</span></span>
+                          <span class="oh-status"><span class="badge badge--ok">Completed</span><span class="oh-zip"><svg class="icon"><use href="assets/img/icons.svg#i-file-sheet" /></svg>CSV</span></span>
                         </div>
                       </div>
                       <div class="oh-task">
@@ -145,7 +144,7 @@
                           <span class="mono">2</span>
                           <span class="mono">2 / 2</span>
                           <span class="mono">87</span>
-                          <span class="oh-status"><span class="badge badge--ok">Completed</span><span class="oh-zip"><svg class="icon"><use href="assets/img/icons.svg#i-archive" /></svg>ZIP</span></span>
+                          <span class="oh-status"><span class="badge badge--ok">Completed</span><span class="oh-zip"><svg class="icon"><use href="assets/img/icons.svg#i-file-sheet" /></svg>CSV</span></span>
                         </div>
                       </div>
                     </div>
@@ -155,8 +154,8 @@
             </div>
 
             <div class="dl-pop" data-oh-dlpop aria-hidden="true">
-              <span class="dl-pop-ic"><svg class="icon"><use href="assets/img/icons.svg#i-archive" /></svg></span>
-              <span class="dl-pop-text"><b class="mono" data-oh-file>7c41e2d98b0f4a6c9e15d3a27b8f60c4.zip</b><small data-oh-files>3 CSV files · Saved to Downloads</small></span>
+              <span class="dl-pop-ic"><svg class="icon"><use href="assets/img/icons.svg#i-file-sheet" /></svg></span>
+              <span class="dl-pop-text"><b class="mono" data-oh-file>7c41e2d98b0f4a6c9e15d3a27b8f60c400.csv</b><small>1 CSV · Saved to Downloads</small></span>
               <svg class="icon dl-pop-ok"><use href="assets/img/icons.svg#i-check-circle" /></svg>
             </div>
 
@@ -180,8 +179,8 @@
           <p class="facts-caption" data-reveal>The Online Scraper at a glance</p>
           <div class="facts-grid" data-stagger="80">
             <div class="fact" data-reveal>
-              <div class="stat-value text-grad" data-count="36">36</div>
-              <div class="stat-label">columns in every CSV, from name to Place ID</div>
+              <div class="stat-value text-grad" data-count="37">37</div>
+              <div class="stat-label">public columns, including a continuous row number</div>
             </div>
             <div class="fact" data-reveal>
               <div class="stat-value text-grad" data-count="6">6</div>
@@ -261,13 +260,11 @@
             </li>
             <li class="of-step card" data-reveal>
               <div class="of-mini of-mini--files" aria-hidden="true">
-                <span class="of-file"><svg class="icon"><use href="assets/img/icons.svg#i-file-sheet" /></svg>CSV</span>
-                <span class="of-file"><svg class="icon"><use href="assets/img/icons.svg#i-file-sheet" /></svg>CSV</span>
-                <span class="of-file of-file--zip"><svg class="icon"><use href="assets/img/icons.svg#i-archive" /></svg>ZIP</span>
+                <span class="of-file" style="grid-column: 2"><svg class="icon"><use href="assets/img/icons.svg#i-file-sheet" /></svg>CSV</span>
               </div>
               <span class="of-num">05</span>
               <h3>Download</h3>
-              <p>Grab a CSV for each keyword from the task details, or every file at once as one ZIP.</p>
+              <p>Download one CSV for the whole task when a file is available. Partial success keeps delivered rows; zero results have no file.</p>
             </li>
           </ol>
 
@@ -320,7 +317,7 @@
                 <div class="om-label"><b>Keywords</b><span class="mono" data-omk-count>0 / 10 keywords</span></div>
                 <ol class="om-lines mono" data-omk-lines></ol>
                 <p class="om-hint">
-                  One keyword per line. Blank lines and duplicates are dropped before counting, and every keyword gets its own CSV.
+                  One keyword per line. Blank lines and duplicates are dropped before counting, and the whole task produces one deduplicated CSV.
                 </p>
               </div>
               <div class="om-box">
@@ -409,7 +406,7 @@
                 <ul class="om-facts" role="list">
                   <li>Points are searched from the center outward.</li>
                   <li>The circle only places search centers — results are not clipped to it.</li>
-                  <li>A business found at several points is kept once per keyword.</li>
+                  <li>A business found across keywords or points is kept once in the task.</li>
                 </ul>
               </div>
             </div>
@@ -455,16 +452,16 @@
       </section>
 
       <!-- ================================================================
-           ⑤ 结果文件：每关键词一个 CSV（第一行字段名 / 第二行任务语言译名 / 第三行起数据）+ 整任务 ZIP
+           ⑤ 结果文件：整任务一个 CSV，37 列（第一行英文列名 / 第二行创建任务语言的字段说明 / 第三行起数据）
            ================================================================ -->
       <section class="section oc band" id="results" data-inview>
         <div class="container">
           <header class="section-head" data-stagger="80">
             <span class="kicker" data-reveal>Results</span>
-            <h2 class="h2" data-split>One CSV per keyword, <span class="accent">one ZIP</span> per task</h2>
+            <h2 class="h2" data-split>One task, <span class="accent">one CSV</span></h2>
             <p class="lead" data-reveal>
-              Every keyword gets its own CSV with all 36 columns. Download files one by one from the task details, or the whole
-              task as a single ZIP.
+              Download 37 public columns in one CSV for the whole task, with continuous row numbers and businesses
+              deduplicated across searches.
             </p>
           </header>
 
@@ -472,26 +469,26 @@
             <div class="oc-side" data-stagger="90">
               <div class="oc-zip card" data-reveal="left">
                 <div class="oc-zip-head">
-                  <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-archive" /></svg></span>
-                  <span class="oc-zip-name"><b class="mono">7c41e2d98b0f4a6c9e15d3a27b8f60c4.zip</b><small>Task ZIP · 3 CSV files</small></span>
+                  <span class="icon-tile icon-tile--brand"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg></span>
+                  <span class="oc-zip-name"><b class="mono">7c41e2d98b0f4a6c9e15d3a27b8f60c400.csv</b><small>1 CSV · 77 delivered rows</small></span>
                 </div>
                 <ul class="oc-files" role="list">
-                  <li style="--i: 0"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg><span class="mono">4821_coffee shop in Portland.csv</span><em>46 rows</em></li>
-                  <li style="--i: 1"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg><span class="mono">4822_bakery in Seattle.csv</span><em>31 rows</em></li>
-                  <li class="is-empty" style="--i: 2"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg><span class="mono">4823_ski rental in Key West.csv</span><em>Headers only</em></li>
+                  <li style="--i: 0"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg><span>coffee shop in Portland</span><em>46 rows</em></li>
+                  <li style="--i: 1"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg><span>bakery in Seattle</span><em>31 rows</em></li>
+                  <li class="is-empty" style="--i: 2"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-search" /></svg><span>ski rental in Key West</span><em>0 rows</em></li>
                 </ul>
               </div>
               <ul class="check-list oc-notes" role="list" data-reveal>
                 <li>Row 1 keeps the fixed field names, so imports and scripts keep working.</li>
                 <li>Row 2 labels each column in the interface language you used when creating the task.</li>
-                <li>A keyword that finds nothing still gets a file with both header rows.</li>
+                <li>Completed tasks with zero results have no file. Partial success keeps delivered rows.</li>
                 <li>The label row never counts toward your records.</li>
               </ul>
             </div>
 
             <div class="oc-sheet-card card" data-reveal="right" data-oc>
               <div class="oc-sheet-head">
-                <span class="oc-file mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg>4821_coffee shop in Portland.csv</span>
+                <span class="oc-file mono"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg>7c41e2d98b0f4a6c9e15d3a27b8f60c400.csv</span>
                 <div class="oc-langs" role="group" aria-label="Task language" data-oc-langs></div>
               </div>
               <div class="oc-scroll">
@@ -501,18 +498,20 @@
                       <th class="oc-rn" scope="col"><span class="sr-only">Row</span></th>
                       <th scope="col">A</th>
                       <th scope="col">B</th>
-                      <th class="is-skip" scope="col">E</th>
-                      <th class="is-skip" scope="col">G</th>
-                      <th class="is-skip" scope="col">M</th>
-                      <th scope="col">N</th>
-                      <th class="is-skip" scope="col">V</th>
-                      <th class="is-skip" scope="col">AC</th>
-                      <th class="is-skip" scope="col">AJ</th>
+                      <th scope="col">C</th>
+                      <th class="is-skip" scope="col">F</th>
+                      <th class="is-skip" scope="col">H</th>
+                      <th class="is-skip" scope="col">N</th>
+                      <th scope="col">O</th>
+                      <th class="is-skip" scope="col">W</th>
+                      <th class="is-skip" scope="col">AD</th>
+                      <th class="is-skip" scope="col">AK</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr class="oc-r1">
                       <td class="oc-rn">1</td>
+                      <td>#</td>
                       <td>Name</td>
                       <td>Fulladdress</td>
                       <td>Categories</td>
@@ -525,18 +524,20 @@
                     </tr>
                     <tr class="oc-r2" data-oc-labels>
                       <td class="oc-rn">2</td>
-                      <td>Name</td>
+                      <td>Row number</td>
+                      <td>Business name</td>
                       <td>Full address</td>
-                      <td>Categories</td>
-                      <td>Phone</td>
-                      <td>Review Count</td>
-                      <td>Average Rating</td>
-                      <td>Website</td>
-                      <td>Email</td>
-                      <td>Search Keyword</td>
+                      <td>Business categories</td>
+                      <td>Primary phone</td>
+                      <td>Number of reviews</td>
+                      <td>Average review rating</td>
+                      <td>Business website</td>
+                      <td>Public website emails</td>
+                      <td>Search keyword</td>
                     </tr>
                     <tr>
                       <td class="oc-rn">3</td>
+                      <td class="mono">1</td>
                       <td class="oc-strong">Ember &amp; Oak Coffee</td>
                       <td>3021 SE Division St, Portland, OR 97202</td>
                       <td>Coffee shop</td>
@@ -549,6 +550,7 @@
                     </tr>
                     <tr>
                       <td class="oc-rn">4</td>
+                      <td class="mono">2</td>
                       <td class="oc-strong">Rose City Espresso Bar</td>
                       <td>415 SE Hawthorne Blvd, Portland, OR 97214</td>
                       <td>Espresso bar</td>
@@ -561,6 +563,7 @@
                     </tr>
                     <tr>
                       <td class="oc-rn">5</td>
+                      <td class="mono">3</td>
                       <td class="oc-strong">Willamette Roasting Co.</td>
                       <td>2130 NE Alberta St, Portland, OR 97211</td>
                       <td>Coffee roasters</td>
@@ -615,7 +618,7 @@
               <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-building" /></svg></span>
               <h3>Business details</h3>
               <p>Collect names, addresses, phone numbers, websites, ratings, hours, coordinates, and place identifiers when available.</p>
-              <span class="o-feat-meta mono">36 columns per business</span>
+              <span class="o-feat-meta mono">37 public columns per business</span>
             </article>
             <article class="feature card" data-spotlight data-reveal>
               <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-mail" /></svg></span>
@@ -624,10 +627,10 @@
               <span class="o-feat-meta mono">Paid plans · on by default</span>
             </article>
             <article class="feature card" data-spotlight data-reveal>
-              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-archive" /></svg></span>
-              <h3>CSV and ZIP downloads</h3>
-              <p>Download a CSV for each keyword or all available files as one ZIP bundle.</p>
-              <span class="o-feat-meta mono">{item}_{keyword}.csv · {task}.zip</span>
+              <span class="icon-tile icon-tile--ok"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-file-sheet" /></svg></span>
+              <h3>One task CSV</h3>
+              <p>Download the whole task as one CSV when a file is available. No per-search files are needed.</p>
+              <span class="o-feat-meta mono">{job}.csv · 37 columns</span>
             </article>
             <article class="feature card" data-spotlight data-reveal>
               <span class="icon-tile icon-tile--pin"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-cloud" /></svg></span>
@@ -816,7 +819,7 @@
             </details>
             <details class="acc" data-reveal>
               <summary>What formats can I export to?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
-              <div class="acc-body"><p>Each keyword produces a CSV file. Download individual files or a ZIP bundle from the task history.</p></div>
+              <div class="acc-body"><p>Tasks with results deliver one UTF-8 CSV with 37 public columns, continuous row numbers and two header rows. Businesses are deduplicated across all searches. Tasks with no results have no file.</p></div>
             </details>
             <details class="acc" data-reveal>
               <summary>How much does it cost?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>

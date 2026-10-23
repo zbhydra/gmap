@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.constants.export import EXPORT_SHARD_COUNT, ExportRunStatus
@@ -38,6 +39,11 @@ class ExportJobModel(BaseDBModel):
     )
     options_json: Mapped[dict[str, object]] = mapped_column(
         JSON, nullable=False, comment="搜索项与 CSV 语言快照"
+    )
+    keywords_text: Mapped[str] = mapped_column(
+        MEDIUMTEXT,
+        nullable=False,
+        comment="去重关键词按输入顺序换行连接，供本人历史搜索",
     )
     include_contacts: Mapped[bool] = mapped_column(
         Boolean, nullable=False, comment="创建时按套餐固定的补全权益"

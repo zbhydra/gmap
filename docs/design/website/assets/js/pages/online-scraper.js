@@ -1,11 +1,11 @@
 /*
  * Online Scraper 页动画与交互：
  *   ① Hero 剧场：Dashboard 输入关键词 → Start scraping → 历史列表新任务 Processing（关键词并行完成）
- *      → Completed 后按实际交付行数计量 → Download ZIP（三组任务循环）
+ *      → Completed 后按实际交付行数计量 → 下载整任务 CSV（三组任务循环）
  *   ③ 流程轨道：五步依次高亮
  *   ④ 三种创建模式：关键词去空行/去重计数；地图采样（与 website 的 gridViewports 同一算法，
  *      关键词数 × 点数 ≤ 50，超限阻止不截断）；地区批量（`${base} ${in|near} ${place}` 生成查询词）
- *   ⑤ 结果 CSV：第二行译名按任务语言切换（译名取自 backend maps_online.csv_headers）
+ *   ⑤ 结果 CSV：第二行字段说明按创建任务的语言切换（取自 backend provider/export/gmap_columns.py 的 GMAP_DESCRIPTIONS）
  *   ⑦ 计量：提交不预扣，完成后按交付行计量；运行中任务可超额，exhausted 后不能再提交
  * 原型数据均为虚构（任务号为随机十六进制，商户与关键词为示例）。
  */
@@ -76,15 +76,15 @@
      ===================================================================== */
   var RUNS = [
     {
-      no: '7c41e2d98b0f4a6c9e15d3a27b8f60c4',
+      no: '7c41e2d98b0f4a6c9e15d3a27b8f60c400',
       items: [['coffee shop in Portland', 46, 1500], ['bakery in Seattle', 31, 2600], ['florist in Denver', 18, 2000]]
     },
     {
-      no: 'e3a90b5f1d2c47e8a6b4f09c8d71e2a5',
+      no: 'e3a90b5f1d2c47e8a6b4f09c8d71e2a500',
       items: [['dentist in Austin, TX', 58, 2300], ['plumber in Chicago', 64, 1400], ['yoga studio in Brooklyn', 41, 2900], ['car wash in Phoenix', 27, 1900]]
     },
     {
-      no: '1f8d6c3b92e04a57b8c1d4e6f0a9b372',
+      no: '1f8d6c3b92e04a57b8c1d4e6f0a9b37200',
       items: [['hotels in Miami Beach', 73, 2400], ['bike shop in Boulder', 12, 1300]]
     }
   ]
@@ -106,7 +106,6 @@
     var dl = $('[data-oh-dl]')
     var dlpop = $('[data-oh-dlpop]')
     var fileEl = $('[data-oh-file]')
-    var filesEl = $('[data-oh-files]')
     var used = 12480
 
     var setUsage = function (n) {
@@ -132,7 +131,7 @@
         item.innerHTML =
           '<span class="oh-item-kw mono"></span>' +
           '<span class="oh-item-state"><span class="oh-bar"></span><span class="oh-item-rec mono">' + icon('check') + '<span data-n>0</span></span></span>' +
-          '<span class="oh-csv">CSV</span>'
+          '<span class="oh-csv">Completed</span>'
         item.querySelector('.oh-item-kw').textContent = it[0]
         detail.appendChild(item)
       })
@@ -141,7 +140,7 @@
 
     var completeTask = function (task, run) {
       var status = task.querySelector('.oh-status')
-      status.innerHTML = '<span class="badge badge--ok">Completed</span><span class="oh-zip">' + icon('archive') + 'ZIP</span>'
+      status.innerHTML = '<span class="badge badge--ok">Completed</span><span class="oh-zip">' + icon('file-sheet') + 'CSV</span>'
     }
 
     var typeLine = async function (text, alive) {
@@ -235,8 +234,7 @@
       zip.classList.add('is-pressed')
       await hg.nap(160)
       zip.classList.remove('is-pressed')
-      fileEl.textContent = run.no + '.zip'
-      filesEl.textContent = run.items.length + ' CSV files · Saved to Downloads'
+      fileEl.textContent = run.no + '.csv'
       dl.classList.add('is-on')
       await hg.nap(60)
       dl.classList.add('is-done')
@@ -682,17 +680,17 @@
      ===================================================================== */
   var sheet = document.querySelector('[data-oc]')
   if (sheet) {
-    // 译名逐字取自 backend/src/app/i18n/locales/*.json 的 maps_online.csv_headers
-    // 列顺序：Name / Fulladdress / Categories / Phone / Review Count / Average Rating / Website / Emails / Search Keyword
+    // 字段说明逐字取自 backend/src/app/provider/export/gmap_columns.py 的 GMAP_DESCRIPTIONS
+    // 列顺序：# / Name / Fulladdress / Categories / Phone / Review Count / Average Rating / Website / Emails / Search Keyword
     var LANGS = [
-      ['en-US', 'English', ['Name', 'Full address', 'Categories', 'Phone', 'Review Count', 'Average Rating', 'Website', 'Email', 'Search Keyword']],
-      ['es-ES', 'Español', ['Nombre', 'Dirección completa', 'Categorías', 'Teléfono', 'Número de reseñas', 'Valoración media', 'Sitio web', 'Correo electrónico', 'Palabra clave de búsqueda']],
-      ['de-DE', 'Deutsch', ['Name', 'Vollständige Adresse', 'Kategorien', 'Telefon', 'Anzahl Bewertungen', 'Durchschnittsbewertung', 'Website', 'E-Mail', 'Suchbegriff']],
-      ['fr-FR', 'Français', ['Nom', 'Adresse complète', 'Catégories', 'Téléphone', 'Nombre d’avis', 'Note moyenne', 'Site web', 'E-mail', 'Mot-clé de recherche']],
-      ['pt-BR', 'Português', ['Nome', 'Endereço completo', 'Categorias', 'Telefone', 'Número de avaliações', 'Avaliação média', 'Site', 'E-mail', 'Palavra-chave de pesquisa']],
-      ['ja-JP', '日本語', ['名前', '住所（全体）', 'カテゴリ', '電話番号', '口コミ数', '平均評価', 'ウェブサイト', 'メールアドレス', '検索キーワード']],
-      ['ko-KR', '한국어', ['이름', '전체 주소', '카테고리', '전화번호', '리뷰 수', '평균 평점', '웹사이트', '이메일', '검색 키워드']],
-      ['zh-CN', '简体中文', ['名称', '完整地址', '分类', '电话', '评论数', '平均评分', '网站', '邮箱', '搜索关键词']]
+      ['en-US', 'English', ['Row number', 'Business name', 'Full address', 'Business categories', 'Primary phone', 'Number of reviews', 'Average review rating', 'Business website', 'Public website emails', 'Search keyword']],
+      ['es-ES', 'Español', ['Número de fila', 'Nombre del negocio', 'Dirección completa', 'Categorías del negocio', 'Teléfono principal', 'Número de reseñas', 'Valoración media', 'Sitio web del negocio', 'Correos públicos del sitio', 'Palabra clave de búsqueda']],
+      ['de-DE', 'Deutsch', ['Zeilennummer', 'Unternehmensname', 'Vollständige Adresse', 'Unternehmenskategorien', 'Haupttelefonnummer', 'Anzahl der Bewertungen', 'Durchschnittliche Bewertung', 'Unternehmenswebsite', 'Öffentliche Website-E-Mails', 'Suchbegriff']],
+      ['fr-FR', 'Français', ['Numéro de ligne', "Nom de l'établissement", 'Adresse complète', 'Catégories', 'Téléphone principal', "Nombre d'avis", 'Note moyenne', "Site de l'établissement", 'E-mails publics du site', 'Mot-clé recherché']],
+      ['pt-BR', 'Português', ['Número da linha', 'Nome da empresa', 'Endereço completo', 'Categorias', 'Telefone principal', 'Quantidade de avaliações', 'Nota média', 'Site da empresa', 'Emails públicos do site', 'Palavra-chave pesquisada']],
+      ['ja-JP', '日本語', ['行番号', '店舗名', '住所全体', '業種', '代表電話番号', '口コミ件数', '平均評価', '公式サイト', '公式サイトの公開メール', '検索キーワード']],
+      ['ko-KR', '한국어', ['행 번호', '업체명', '전체 주소', '업체 카테고리', '대표 전화', '리뷰 수', '평균 평점', '업체 웹사이트', '사이트 공개 이메일', '검색 키워드']],
+      ['zh-CN', '简体中文', ['行序号', '商家名称', '完整地址', '商家类别', '主要电话', '评论数量', '平均评分', '商家官网', '官网公开邮箱', '搜索关键词']]
     ]
     var langsEl = sheet.querySelector('[data-oc-langs]')
     var labelCells = Array.prototype.slice.call(sheet.querySelectorAll('[data-oc-labels] td:not(.oc-rn)'))

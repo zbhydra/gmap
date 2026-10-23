@@ -4,7 +4,7 @@ MapsGrab 的营销页、用户 Dashboard、插件官网下载与支付回跳页�
 
 ## 技术栈
 
-- **Astro 5**（SSG 静态站）+ 原生 TS + 命令式 DOM；Dashboard 工作区（`/dashboard/*`）用 **Vue 3** 单文件组件（`@astrojs/vue` 官方集成，`client:load`），非 SPA、无客户端路由
+- **Astro 5**（SSG 静态站）+ 原生 TS + 命令式 DOM；Dashboard 工作区（`/dashboard/*`）是独立的 **Vue 3 SPA**（`@astrojs/vue` 官方集成，`client:load`），四个静态地址共用一个入口，视图切换使用 History API；其余页面使用 Astro 文件路由
 - TypeScript `strict`；类型门禁 = `astro check` + `vue-tsc --noEmit`（构建脚本内串联）
 - 测试：`node --test tests/module-scripts.test.js` + Playwright e2e
 

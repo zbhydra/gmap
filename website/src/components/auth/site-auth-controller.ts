@@ -35,9 +35,9 @@ export const SITE_AUTH_SUCCESS_EVENT = 'site-auth:success'
 /** 用户主动关闭登录弹窗事件。 */
 export const SITE_AUTH_CLOSE_EVENT = 'site-auth:close'
 
-/** 登录后允许跳转的本站路由：各语言的 Dashboard 工作区三页。 */
+/** 登录后允许跳转的本站路由：各语言的 Dashboard 工作区四个视图地址。 */
 const AUTH_REDIRECT_PATHS = Object.values(localePaths).flatMap(path =>
-  ['/dashboard/', '/dashboard/api/', '/dashboard/subscriptions/']
+  ['/dashboard/', '/dashboard/history/', '/dashboard/api/', '/dashboard/subscriptions/']
     .map(route => `${path ? `/${path}` : ''}${route}`)
 )
 /** 同 tab Google OAuth 回跳后恢复登录后跳转的会话键。 */

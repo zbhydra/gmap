@@ -821,16 +821,6 @@
   color: var(--ok);
 }
 
-.of-file--zip {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
-  background: var(--primary-soft);
-  color: var(--primary-text);
-}
-
-.of-file--zip .icon {
-  color: var(--primary-text);
-}
-
 .of-links {
   display: flex;
   flex-wrap: wrap;
@@ -2267,7 +2257,7 @@
 /* ---------------------------------------------------------------------------
    响应式
    --------------------------------------------------------------------------- */
-/* 下载提示组件见 components.css（.dl-ring / .dl-pop）；本页下载的是 ZIP 包，图标用主色 */
+/* 下载提示组件见 components.css（.dl-ring / .dl-pop）；本页下载的是整任务 CSV，图标用主色 */
 .dl-pop-ic {
   background: var(--primary-soft);
   color: var(--primary-text);

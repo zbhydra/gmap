@@ -93,6 +93,7 @@ export const site: SiteContent = {
   "dashboard": {
     "create": {
       "title": "온라인 스크레이퍼",
+      "newTask": "새 작업",
       "modeLabel": "검색 모드",
       "modes": {
         "keywords": "키워드",
@@ -102,14 +103,16 @@ export const site: SiteContent = {
       "keywords": "키워드",
       "placeholder": "포틀랜드의 커피숍\n오스틴의 레스토랑",
       "count": "{count} / {limit} 키워드",
+      "duplicates": "중복 줄 제외됨: {count}",
       "contacts": "이메일 및 소셜 프로필 찾기",
       "contactsPaid": "유료 온라인 플랜으로 이용 가능합니다.",
       "usage": "{used} / {total} 이번 달 기록",
-      "reset": "월별 할당량은 New York 시간의 1일에 재설정됩니다.",
+      "reset": "월간 할당량은 매월 1일(뉴욕 시간)에 초기화됩니다.",
       "loading": "한도 로드 중...",
       "optionsFailed": "작업 한도를 로드할 수 없습니다. 다시 시도해 주세요.",
       "submit": "데이터 수집 시작",
       "submitting": "제출 중...",
+      "submitted": "작업이 제출되었습니다",
       "failed": "작업 제출에 실패했습니다. 다시 시도하기 전에 기록을 새로 고치세요.",
       "exhausted": "월별 할당량이 소진되었습니다.",
       "invalid": "최대 {limit}개의 키워드를 입력하세요. 각 키워드는 500자를 초과하지 마세요.",
@@ -119,11 +122,12 @@ export const site: SiteContent = {
         "radius": "반경(km)",
         "spacing": "그리드 간격(km)",
         "sampleCount": "{count} / {limit} 위치 검색",
+        "points": "그리드 지점: {points} · 키워드: {keywords}",
         "overLimit": "{limit} 검색 위치 내에 머물도록 반경을 줄이거나 그리드 간격을 늘립니다.",
         "chooseCenter": "지도에서 중심을 선택하거나 좌표를 입력하세요.",
         "mapLabel": "지도에서 검색센터를 선택하세요",
         "tilesUnavailable": "지도 타일을 로드할 수 없습니다. 여전히 좌표를 입력할 수 있습니다.",
-        "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap 기여자</a>"
+        "attribution": "OpenStreetMap 기여자"
       },
       "region": {
         "baseKeywords": "기본 키워드",
@@ -135,15 +139,14 @@ export const site: SiteContent = {
         "city": "도시",
         "selectCountry": "국가를 선택하세요",
         "allStates": "모든 주 또는 지역",
-        "selectCity": "도시를 선택하세요",
         "loading": "위치 로드 중...",
         "loadFailed": "위치를 로드할 수 없습니다. 다시 시도해 주세요.",
         "retry": "다시 해 보다",
         "addCountry": "국가 추가",
         "addState": "상태 추가",
-        "addCity": "도시 추가",
         "selectedRegions": "선택된 위치",
         "remove": "{name} 제거",
+        "noMatch": "일치하는 항목이 없습니다",
         "matchMode": "구문 검색",
         "inMode": "~ 안에",
         "nearMode": "가까운",
@@ -158,33 +161,58 @@ export const site: SiteContent = {
       "description": "하나의 작업 공간에서 MapsGrab 내보내기, API 액세스 및 구독을 관리하세요."
     },
     "shell": {
+      "skipToContent": "본문으로 건너뛰기",
+      "sideLabel": "작업 공간",
+      "homeLabel": "MapsGrab 홈",
+      "navLabel": "작업 공간 메뉴",
       "loading": "작업공간 로드 중...",
       "retry": "다시 해 보다",
-      "navHistory": "온라인 스크레이퍼",
+      "navOnline": "온라인 스크레이퍼",
+      "navJobHistory": "기록",
       "navApi": "API 관리",
       "navSubscriptions": "구독",
       "openMenu": "작업공간 메뉴 열기",
-      "closeMenu": "작업공간 메뉴 닫기"
+      "closeMenu": "작업공간 메뉴 닫기",
+      "collapseSidebar": "사이드바 접기",
+      "expandSidebar": "사이드바 펼치기",
+      "back": "뒤로"
     },
     "account": {
       "menuButtonLabel": "계정 메뉴 열기",
       "menuLabel": "계정 메뉴",
-      "logout": "로그아웃"
+      "logout": "로그아웃",
+      "upgrade": "업그레이드",
+      "usageShort": "{used} / {total}개 레코드",
+      "planUnavailable": "사용 불가",
+      "theme": "테마",
+      "themeLight": "라이트",
+      "themeDark": "다크",
+      "themeSystem": "시스템",
+      "language": "언어"
     },
     "history": {
       "title": "온라인 내보내기 내역",
       "description": "온라인 스크레이퍼에서 실행한 작업이 최신 항목부터 표시됩니다. 시간은 동부 표준시(New York)로 표시됩니다.",
       "refresh": "새로 고치다",
+      "autoRefresh": "자동 새로고침 중",
       "loading": "내보내기 로드 중...",
       "loadFailed": "내보내기 기록을 로드하지 못했습니다.",
+      "refreshFailed": "새로고침하지 못했습니다. 마지막으로 불러온 결과를 표시합니다.",
       "retry": "다시 해 보다",
       "emptyTitle": "아직 내보내기가 없습니다.",
       "emptyHint": "온라인 스크레이퍼에서 작업을 실행하면 여기에 표시됩니다.",
+      "emptyCta": "온라인 스크레이퍼로 이동",
+      "recentTitle": "최근 작업",
+      "viewAll": "모두 보기",
+      "recentEmptyHint": "위에서 시작한 작업이 여기에 표시됩니다.",
+      "noMatchTitle": "일치하는 작업이 없습니다",
+      "noMatchHint": "다른 작업 번호나 키워드로 검색하거나 필터를 지우세요.",
+      "moreKeywordsShort": "+{count}",
+      "moreKeywords": "외 {count}개",
       "columns": {
-        "taskNo": "직업",
-        "createdAt": "생성됨(ET)",
+        "taskNo": "작업",
+        "createdAt": "생성 시간(ET)",
         "samples": "검색",
-        "processed": "처리됨",
         "records": "기록",
         "status": "상태"
       },
@@ -197,21 +225,48 @@ export const site: SiteContent = {
         "failed": "실패한"
       },
       "timezone": "ET",
+      "search": {
+        "label": "작업 검색",
+        "placeholder": "작업 번호 또는 키워드로 검색",
+        "clear": "검색어 지우기"
+      },
+      "filters": {
+        "label": "작업 필터",
+        "button": "필터",
+        "status": "상태",
+        "all": "전체",
+        "running": "진행 중",
+        "clear": "필터 지우기"
+      },
+      "range": {
+        "label": "기간",
+        "last7": "최근 7일",
+        "last30": "최근 30일",
+        "all": "전체 기간",
+        "custom": "사용자 지정 기간",
+        "from": "시작",
+        "to": "종료",
+        "apply": "적용",
+        "invalid": "시작일은 종료일과 같거나 이전이어야 합니다.",
+        "hint": "날짜는 미국 동부 시간(뉴욕) 기준입니다."
+      },
       "pagination": {
+        "label": "페이지 이동",
         "previous": "이전의",
         "next": "다음",
+        "page": "{page}페이지",
+        "pageSize": "페이지당 행 수",
         "summary": "{from}–{to} 중 {total}"
       },
       "detail": {
         "show": "세부",
-        "hide": "세부정보 숨기기",
         "loading": "검색 로드 중...",
         "loadFailed": "이 작업에 대한 검색을 로드하지 못했습니다.",
         "keyword": "예어",
         "records": "기록",
         "runNo": "달리다",
-        "startedAt": "시작됨(ET)",
-        "finishedAt": "완료(ET)",
+        "startedAt": "시작 시간(ET)",
+        "finishedAt": "종료 시간(ET)",
         "contacts": "이메일 및 소셜 프로필",
         "contactsEnabled": "이 작업에 활성화됨",
         "contactsDisabled": "이 작업을 위해 꺼짐",
@@ -219,6 +274,10 @@ export const site: SiteContent = {
         "pending": "보류 중",
         "viewport": "{lat}, {lng} · 줌 {zoom}"
       },
+      "copyJob": "작업 번호 복사",
+      "dedupeHint": "레코드 수는 작업 전체에서 중복을 제거한 뒤 계산됩니다.",
+      "finished": "작업 {job}: {status}",
+      "finishedRecords": "레코드 {count}개",
       "downloadCsv": "다운로드 CSV",
       "noFile": "아니요 CSV",
       "errors": {
@@ -236,12 +295,9 @@ export const site: SiteContent = {
       "unreachable": "지금은 MapsGrab에 도달할 수 없습니다."
     },
     "api": {
-      "title": "API 관리",
       "description": "API 키, 월별 요청 허용량 및 연결된 AI 앱을 관리하세요.",
       "docsLink": "API 제품 보기",
       "signInPrompt": "API 액세스를 관리하려면 로그인하세요.",
-      "signInCta": "로그인",
-      "unreachable": "지금은 MapsGrab에 도달할 수 없습니다.",
       "loading": "API 액세스 로드 중...",
       "loadFailed": "API 액세스 권한을 로드할 수 없습니다. 다시 시도해 주세요.",
       "retry": "다시 해 보다",
@@ -261,10 +317,11 @@ export const site: SiteContent = {
       "copyFailed": "복사할 수 없습니다. 텍스트를 선택하고 수동으로 복사합니다.",
       "keyFailed": "API 키를 생성할 수 없습니다. 다시 시도해 주세요.",
       "usageTitle": "월별 API 사용량",
+      "usageFailed": "API 사용량을 불러오지 못했습니다. 다시 시도해 주세요.",
       "usageValue": "{used} / {total} 요청",
       "usagePeriod": "기간: {period}",
       "quotaExhausted": "월별 요청 허용량이 소진되었습니다.",
-      "quotaReset": "매월 1일 New York 시간에 재설정됩니다. API와 MCP은 이 수당을 공유합니다.",
+      "quotaReset": "매월 1일 초기화(ET) · API와 MCP 공용",
       "planTitle": "API 계획",
       "managePlan": "구독 관리",
       "connectionsTitle": "연결 주소",
@@ -273,6 +330,8 @@ export const site: SiteContent = {
       "mcpHint": "MCP 클라이언트에 URL을 추가하세요. 이 웹사이트가 열리면 로그인하고 연결을 승인하세요.",
       "mcpUnavailable": "MCP 연결 주소는 아직 사용할 수 없습니다.",
       "copyUrl": "복사 URL",
+      "curlTitle": "빠른 시작",
+      "curlHint": "자리 표시자를 전체 API 키로 바꾸세요.",
       "grants": {
         "title": "연결된 앱",
         "description": "API 허용량을 사용하여 업체를 검색하고 리뷰 및 공개 사진을 읽을 수 있도록 허용한 앱입니다.",
@@ -294,9 +353,6 @@ export const site: SiteContent = {
     "subscriptions": {
       "title": "구독",
       "description": "온라인 스크레이퍼, 브라우저 확장 프로그램 및 API에 대한 계획 및 갱신 상태. 가격 페이지에서 구매하거나 업그레이드하세요.",
-      "loading": "구독정보 로드 중...",
-      "loadFailed": "구독을 로드하지 못했습니다.",
-      "retry": "다시 해 보다",
       "lines": {
         "online": "온라인 스크레이퍼",
         "extension": "브라우저 확장",
@@ -304,17 +360,17 @@ export const site: SiteContent = {
       },
       "planLabel": "계획",
       "expiresLabel": "갱신/만료",
-      "noExpiry": "만료 없음",
       "free": "무료",
       "unavailable": "일시적으로 이용할 수 없습니다",
       "autoRenewOn": "자동 갱신 날짜",
       "autoRenewOff": "자동 갱신 꺼짐",
+      "paidVia": "결제 수단: {method}",
       "subscribeCta": "플랜을 선택하세요",
+      "pricingLink": "요금 보기",
       "manageSubscription": "구독 관리",
       "managingSubscription": "열기...",
-      "signInPrompt": "구독 내용을 보려면 로그인하세요.",
-      "signInCta": "로그인",
-      "unreachable": "지금은 MapsGrab에 도달할 수 없습니다."
+      "manageFailed": "구독 관리를 열지 못했습니다. 다시 시도해 주세요.",
+      "signInPrompt": "구독 내용을 보려면 로그인하세요."
     },
     "cancelGuide": {
       "title": "결제 제공업체에서 구독을 관리하세요",
@@ -2166,6 +2222,7 @@ export const site: SiteContent = {
         "theater": {
           "files": "1 CSV · 다운로드에 저장됨",
           "csv": "CSV",
+          "processed": "처리됨",
           "parallelChip": {
             "label": "키워드 실행",
             "value": "병렬로"
@@ -2275,7 +2332,8 @@ export const site: SiteContent = {
           ]
         },
         "regions": {
-          "hint": "제출하기 전에 생성된 쿼리를 편집할 수 있습니다. 각각은 키워드로 간주됩니다."
+          "hint": "제출하기 전에 생성된 쿼리를 편집할 수 있습니다. 각각은 키워드로 간주됩니다.",
+          "addCity": "도시 추가"
         }
       },
       "results": {

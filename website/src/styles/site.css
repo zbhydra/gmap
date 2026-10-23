@@ -41,29 +41,111 @@
 }
 
 /* ---------------------------------------------------------------------------
-   导航补充：语言 / 主题紧凑下拉（原型只有 API 下拉）
+   头部菜单（SiteHeader.astro）：共用 .pop 与 .pop-item（scripts/site/pop-menu.ts），这里只给尺寸与 API 菜单的富条目
    --------------------------------------------------------------------------- */
-.dd-panel--compact {
-  left: auto;
-  right: 0;
+.nav-pop--api {
+  --pop-w: 580px;
+}
+
+/* 语言、主题：宽度随最长的选项，至少 160px */
+.nav-pop--compact {
   width: max-content;
   min-width: 160px;
-  grid-template-columns: 1fr;
-  transform: translateY(8px);
+  max-width: calc(100vw - 2 * var(--s-4));
 }
 
-.dd.is-open .dd-panel--compact {
-  transform: none;
+/* API 菜单：两列富条目，底部整行是定价入口（说明作为它的描述） */
+.nav-api-menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
 }
 
-.dd-panel--compact .dd-item {
-  text-align: left;
-  font-size: var(--fs-sm);
+.nav-api-item,
+.nav-api-foot {
+  border-radius: var(--r-md);
+  transition: background-color var(--dur-2);
 }
 
-.dd-item[aria-pressed='true'] {
+.nav-api-item {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+}
+
+.nav-api-item:hover {
+  background: var(--surface-2);
+}
+
+/* 键盘位置与共用条目一致：焦点环画在条目内侧 */
+.nav-api-item:focus,
+.nav-api-foot:focus {
+  outline: none;
+}
+
+.nav-api-item:focus-visible,
+.nav-api-foot:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.nav-api-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
   background: var(--primary-soft);
   color: var(--primary-text);
+  transition: transform var(--dur-3) var(--ease-spring);
+}
+
+.nav-api-item:hover .nav-api-icon {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+.nav-api-icon--ai {
+  background: var(--ai-soft);
+  color: var(--ai);
+}
+
+.nav-api-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.nav-api-desc {
+  margin-top: 2px;
+  color: var(--text-3);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.nav-api-foot {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.nav-api-pricing {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary-text);
+  font-weight: 600;
 }
 
 /* ---------------------------------------------------------------------------
@@ -123,13 +205,13 @@ a.is-unavailable:hover {
 }
 
 /* 徽章放不下时整体换到下一行，不拆开名称 */
-.is-unavailable .dd-title {
+.is-unavailable .nav-api-title {
   flex-wrap: wrap;
   row-gap: var(--s-1);
   color: var(--text-2);
 }
 
-.is-unavailable .dd-icon {
+.is-unavailable .nav-api-icon {
   background: var(--surface-2);
   color: var(--text-3);
 }

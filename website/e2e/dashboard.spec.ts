@@ -1,19 +1,20 @@
 /**
- * Dashboard 工作区 e2e（015 U2）。
+ * Dashboard 工作区 e2e。
  *
  * mock 跑：PUBLIC_API_BASE_URL 指向假地址；spec 内 page.route 拦截自有
- * /api/client/** 接口，page.context().route 拦截签名下载域。渠道管理与
- * Pricing 购买主路径分别来自迁移后的订阅页与 website.spec.ts。
+ * /api/client/** 接口，签名下载地址由本机 CSV 服务提供（见 csv-download-server.ts）。
+ * 渠道管理与 Pricing 购买主路径分别来自迁移后的订阅页与 website.spec.ts。
  *
- * 1. 匿名入口：登录弹窗打开 / 取消回主页；导航邮箱验证码登录成功进入 Dashboard。
- * 2. 历史视图：列表、分页、明细展开、整 Job CSV 下载与无文件就地提示。
+ * 1. 匿名入口：登录门槛打开站级登录弹窗 / 取消回主页；导航邮箱验证码登录成功进入 Dashboard（Online 视图）。
+ * 2. History 视图：列表、分页（地址同步）、明细展开、整 Job CSV 下载与无文件就地提示、无匹配时清除筛选。
  * 3. 订阅视图：三线状态（免费 / 有效 / 不可用）、Pricing tab 跳转、渠道管理 portal。
- * 4. API 接入空态、工作区 noindex、退出回主页与移动视口可达性。
+ * 4. API 接入空态、生成中离开视图不留明文、工作区 noindex、退出回主页与移动视口可达性。
  */
 import { expect, test } from '@playwright/test'
 import type { ExportJobSummary } from '../src/scripts/dashboard/api'
 
 import { expectE2eBrowserIdentity, registerE2eBrowserIdentity } from '../scripts/playwright-browser-identity.mjs'
+import { csvDownloadUrl } from './csv-download-server'
 
 registerE2eBrowserIdentity(test)
 
@@ -110,7 +111,9 @@ function buildJobs(): ExportJobSummary[] {
       created_at: createdBase - index * 3600000,
       started_at: status === 'queued' ? null : createdBase - index * 3600000 + 1000,
       finished_at: running ? null : createdBase - index * 3600000 + 60000,
-      error_code: status === 'partial' ? 31302 : status === 'failed' ? 31304 : null
+      error_code: status === 'partial' ? 31302 : status === 'failed' ? 31304 : null,
+      keyword_preview: `keyword ${index + 1}`,
+      keyword_count: 1 + (index % 3)
     }
   })
 }
@@ -141,7 +144,7 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
   await expect(page.getByText('Sign in to see your Online export history.')).toBeVisible()
 
   // 打开站级登录弹窗后取消（Escape）：回当前语言主页。
-  await page.locator('.workspace-primary-button').click()
+  await page.locator('main [data-site-auth-entry]').click()
   const modal = page.locator('[data-download-auth-modal]')
   await expect(modal).toBeVisible()
   await page.keyboard.press('Escape')
@@ -149,8 +152,8 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
 
   // API 工作区同样统一：匿名取消登录回主页。
   await page.goto('/dashboard/api/')
-  await expect(page.locator('.workspace-primary-button')).toBeVisible()
-  await page.locator('.workspace-primary-button').click()
+  await expect(page.locator('main [data-site-auth-entry]')).toBeVisible()
+  await page.locator('main [data-site-auth-entry]').click()
   await expect(modal).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page).toHaveURL(url => new URL(url).pathname === '/')
@@ -174,12 +177,14 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
   // 工作区页不渲染营销导航：唯一菜单是工作区侧栏（窄屏收起，菜单按钮可达）
   await expect(page.locator('[data-nav]')).toHaveCount(0)
   if (isMobile) {
-    await expect(page.locator('.workspace-menu-button')).toBeVisible()
+    await expect(page.locator('.topbar-menu')).toBeVisible()
   } else {
     await expect(page.locator('.side-nav')).toBeVisible()
   }
-  await expect(page.locator('[data-history-expand]').first()).toBeVisible()
-  await expect(page.locator('.side-nav-account')).toContainText('hydra@mapsgrab.test')
+  // 默认视图是 Online：新建任务 + 最近任务（紧凑行，没有展开）
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Online Scraper')
+  await expect(page.locator('.jobs-list [data-job]').first()).toBeVisible()
+  await expect(page.locator('[data-dashboard-account-button]')).toContainText('hydra@mapsgrab.test')
 })
 
 test('dashboard history: pagination, item facts and single CSV with unavailable feedback', async ({ page }, testInfo) => {
@@ -193,8 +198,10 @@ test('dashboard history: pagination, item facts and single CSV with unavailable 
     const params = new URL(route.request().url()).searchParams
     const offset = Number(params.get('offset') ?? 0)
     const limit = Number(params.get('limit') ?? 20)
+    const q = params.get('q') ?? ''
+    const matched = q ? jobs.filter(job => job.job_no.startsWith(q)) : jobs
     return route.fulfill({
-      json: envelope({ jobs: jobs.slice(offset, offset + limit), total: jobs.length, offset, limit })
+      json: envelope({ jobs: matched.slice(offset, offset + limit), total: matched.length, offset, limit })
     })
   })
   await page.route(`**/api/client/export/jobs/${first.job_no}`, route =>
@@ -209,38 +216,34 @@ test('dashboard history: pagination, item facts and single CSV with unavailable 
       })
     })
   )
-  await page.route('**/storage.download.example.com/**', route =>
-    route.fulfill({
-      contentType: 'text/csv',
-      headers: { 'Content-Disposition': `attachment; filename="${first.job_no}.csv"` },
-      body: '\ufeff#,Name,Search Keyword\nRow number,Business name,Search keyword\n1,Cafe,coffee shop nyc'
-    })
-  )
+  const signedCsvUrl = await csvDownloadUrl(`${first.job_no}.csv`)
   await page.route(`**/api/client/export/jobs/${first.job_no}/download`, route =>
     route.fulfill({ json: fileAvailable
-      ? envelope({ url: 'https://storage.download.example.com/signed-csv?sig=1', filename: `${first.job_no}.csv` })
+      ? envelope({ url: signedCsvUrl, filename: `${first.job_no}.csv` })
       : { code: 404, msg: 'No downloadable file.' }
     })
   )
 
-  await page.goto('/dashboard/')
+  await page.goto('/dashboard/history/')
   await expectE2eBrowserIdentity(page, testInfo, expect)
   await expect(page.locator('[data-history-expand]')).toHaveCount(20)
-  await expect(page.getByText('1–20 of 40')).toBeVisible()
-  await expect(page.locator('.history-time').first()).toContainText('Sep 1, 2026')
-  await expect(page.locator('[data-status="partial"]')).toHaveText('Partial success')
-  await expect(page.locator('[data-status="failed"]')).toHaveText('Failed')
+  await expect(page.locator('.jobs-range')).toHaveText('1–20 of 40')
+  // 当年日期省略年份，跨年运行时带年份：只断言月日
+  await expect(page.locator('.job-time').first()).toContainText('Sep 1')
+  await expect(page.locator(`[data-job="${first.job_no}"] .badge`)).toHaveText('Partial success')
+  await expect(page.locator(`[data-job="${jobs[2].job_no}"] .badge`)).toHaveText('Failed')
   await expect(page.locator(`[data-history-download="${jobs[1].job_no}"]`)).toHaveCount(0)
-  await expect(page.locator(`[data-history-expand="${jobs[1].job_no}"]`).locator('xpath=ancestor::tr')).toContainText('No CSV')
+  await expect(page.locator(`[data-job="${jobs[1].job_no}"]`)).toContainText('No CSV')
 
   await page.locator(`[data-history-expand="${first.job_no}"]`).click()
-  await expect(page.locator('.history-job-meta')).toContainText(first.run_no)
-  await expect(page.locator('.history-job-meta')).toContainText('Enabled')
-  await expect(page.locator('.history-detail-table')).toContainText('40, -74 · zoom 15')
-  const failedItem = page.locator('.history-detail-table tbody tr').filter({ hasText: 'bookstore brooklyn' })
+  const detail = page.locator(`#jd-${first.job_no}`)
+  await expect(detail.locator('.detail-meta')).toContainText(first.run_no)
+  await expect(detail.locator('.detail-meta')).toContainText('Enabled')
+  await expect(detail.locator('.items')).toContainText('40.0000, -74.0000 · zoom 15')
+  const failedItem = detail.locator('.items tbody tr').filter({ hasText: 'bookstore brooklyn' })
   await expect(failedItem).toContainText('Could not collect this search.')
   await expect(failedItem).not.toContainText('Completed')
-  await expect(page.locator('.history-detail-table button')).toHaveCount(0)
+  await expect(detail.locator('.items button')).toHaveCount(0)
   const csvDownload = page.waitForEvent('download')
   await page.locator(`[data-history-download="${first.job_no}"]`).click()
   expect((await csvDownload).suggestedFilename()).toBe(`${first.job_no}.csv`)
@@ -248,16 +251,200 @@ test('dashboard history: pagination, item facts and single CSV with unavailable 
   await page.locator(`[data-history-download="${first.job_no}"]`).click()
   await expect(page.getByText('No downloadable CSV. The file may have expired.')).toBeVisible()
 
+  // 翻页只替换当前历史记录：地址带页码，刷新后保持
   await page.locator('[data-history-next]').click()
-  await expect(page.getByText('21–40 of 40')).toBeVisible()
-  for (const status of ['queued', 'collecting', 'publishing']) {
-    await expect(page.locator(`[data-status="${status}"]`)).toBeVisible()
+  await expect(page.locator('.jobs-range')).toHaveText('21–40 of 40')
+  await expect(page).toHaveURL(/\/dashboard\/history\/\?page=2$/)
+  for (const status of ['Queued', 'Collecting', 'Preparing CSV']) {
+    await expect(page.locator('.jobs-list .badge', { hasText: status })).toBeVisible()
   }
   await expect(page.locator(`[data-history-download="${jobs[29].job_no}"]`)).toHaveCount(0)
+  await page.reload()
+  await expect(page.locator('.jobs-range')).toHaveText('21–40 of 40')
   await page.locator('[data-history-prev]').click()
-  await expect(page.getByText('1–20 of 40')).toBeVisible()
+  await expect(page.locator('.jobs-range')).toHaveText('1–20 of 40')
+  await expect(page).toHaveURL(/\/dashboard\/history\/$/)
+
+  // 无匹配时 Clear filters：地址、列表与搜索框一起清空，焦点留在搜索框，回车不会重新应用旧词
+  const search = page.getByRole('searchbox', { name: 'Search tasks' })
+  await search.fill('zzz')
+  await search.press('Enter')
+  await expect(page).toHaveURL(/\/dashboard\/history\/\?q=zzz$/)
+  await page.getByRole('button', { name: 'Clear filters' }).click()
+  await expect(page).toHaveURL(/\/dashboard\/history\/$/)
+  await expect(page.locator('.jobs-range')).toHaveText('1–20 of 40')
+  await expect(search).toHaveValue('')
+  await expect(search).toBeFocused()
+  await expect(page.getByRole('button', { name: 'Clear search' })).toHaveCount(0)
+  await search.press('Enter')
+  await expect(page).toHaveURL(/\/dashboard\/history\/$/)
+  await expect(page.locator('.jobs-range')).toHaveText('1–20 of 40')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath('dashboard-history.png'), fullPage: true, animations: 'disabled' })
+})
+
+test('dashboard popovers: rows per page, history time range or filters, account menu', async ({ page, isMobile }) => {
+  await page.route('**/api/client/auth/me', route => route.fulfill({
+    json: envelope({
+      email: 'hydra@mapsgrab.test',
+      full_name: 'Hydra',
+      credits_balance: 0,
+      created_at: Date.parse('2026-01-01T00:00:00Z'),
+      maps_online_subscription: null,
+      maps_extension_subscription: SUBSCRIPTIONS.extension,
+      maps_api_subscription: SUBSCRIPTIONS.api
+    })
+  }))
+  await signInByStoredToken(page, 'e2e-popover-token')
+  const jobs = buildJobs()
+  await page.route(/\/api\/client\/export\/jobs\?/, route => {
+    const params = new URL(route.request().url()).searchParams
+    const offset = Number(params.get('offset') ?? 0)
+    const limit = Number(params.get('limit') ?? 20)
+    return route.fulfill({ json: envelope({ jobs: jobs.slice(offset, offset + limit), total: jobs.length, offset, limit }) })
+  })
+  await page.goto('/dashboard/history/?page=2')
+  await expect(page.locator('.jobs-range')).toHaveText('21–40 of 40')
+
+  // 每页条数（listbox）：打开即聚焦当前项，↓ + Enter 选中并关闭、焦点回到按钮；改条数回到第 1 页
+  await page.getByRole('button', { name: 'Rows per page 20' }).click()
+  await expect(page.getByRole('option', { name: '20', exact: true })).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/dashboard\/history\/\?size=50$/)
+  await expect(page.locator('.jobs-range')).toHaveText('1–40 of 40')
+  await expect(page.getByRole('button', { name: 'Rows per page 50' })).toBeFocused()
+
+  if (isMobile) {
+    // 视图容器 ≤ 680：状态与时间范围收进 Filters 菜单；两组单选点选后保持打开、就地更新，按钮数字是非默认项个数
+    await expect(page.locator('#hist-range-btn')).toBeHidden()
+    const filters = page.getByRole('button', { name: /^Filters/ })
+    await filters.click()
+    const filterMenu = page.getByRole('menu', { name: 'Filter tasks' })
+    await expect(filterMenu.getByRole('menuitemradio', { name: 'All', exact: true })).toBeFocused()
+    await filterMenu.getByRole('menuitemradio', { name: 'Completed' }).click()
+    await expect(page).toHaveURL(/\?status=completed&size=50$/)
+    await filterMenu.getByRole('menuitemradio', { name: 'Last 30 days' }).click()
+    await expect(page).toHaveURL(/\?status=completed&range=30d&size=50$/)
+    await expect(filterMenu).toBeVisible()
+    await expect(filters.locator('.count-badge')).toHaveText('2')
+    // Clear filters 连同搜索清空（每页条数保留），关闭菜单，焦点回到 Filters 按钮
+    await filterMenu.getByRole('menuitem', { name: 'Clear filters' }).click()
+    await expect(filterMenu).toBeHidden()
+    await expect(page).toHaveURL(/\/dashboard\/history\/\?size=50$/)
+    await expect(filters).toBeFocused()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    return
+  }
+
+  // 时间范围（menu）：打开即聚焦当前项，预设选中即关闭
+  const rangeButton = page.locator('#hist-range-btn')
+  const rangeMenu = page.getByRole('menu', { name: 'Time range' })
+  await rangeButton.click()
+  await expect(rangeMenu.getByRole('menuitemradio', { name: 'All time' })).toBeFocused()
+  await rangeMenu.getByRole('menuitemradio', { name: 'Last 7 days' }).click()
+  await expect(rangeMenu).toBeHidden()
+  await expect(page).toHaveURL(/\?range=7d&size=50$/)
+  await expect(rangeButton).toHaveText('Last 7 days')
+
+  // Custom range：同一浮层横向进入日期子面板，默认最近 7 天（纽约时间）；Esc 先回上一层，根层再关闭
+  await rangeButton.click()
+  await expect(rangeMenu.getByRole('menuitemradio', { name: 'Last 7 days' })).toBeFocused()
+  await page.keyboard.press('End')
+  await page.keyboard.press('ArrowRight')
+  // 两个菜单各有一份日期子面板：只取时间范围浮层里的
+  const rangePop = page.locator('#hist-range-pop')
+  const from = rangePop.getByLabel('From', { exact: true })
+  const to = rangePop.getByLabel('To', { exact: true })
+  await expect(from).toBeFocused()
+  await expect(to).toHaveValue(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date()))
+  await page.keyboard.press('Escape')
+  await expect(rangeMenu.getByRole('menuitem', { name: /^Custom range/ })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(rangeMenu).toBeHidden()
+  await expect(rangeButton).toBeFocused()
+
+  // 开始晚于结束：Apply 不可用并说明原因；合法后 Apply 生效并关闭，焦点回到按钮
+  await rangeButton.click()
+  await rangeMenu.getByRole('menuitem', { name: /^Custom range/ }).click()
+  await from.fill('2026-09-10')
+  await to.fill('2026-09-01')
+  const apply = rangePop.getByRole('button', { name: 'Apply' })
+  await expect(apply).toHaveAttribute('aria-disabled', 'true')
+  await expect(rangePop.getByText('Choose a start date on or before the end date.')).toBeVisible()
+  // Playwright 不点 aria-disabled 的元素：直接派发点击，验证浮层在捕获阶段拦下、查询不变
+  await apply.dispatchEvent('click')
+  await expect(page).toHaveURL(/\?range=7d&size=50$/)
+  await from.fill('2026-09-01')
+  await to.fill('2026-09-10')
+  await apply.click()
+  await expect(page).toHaveURL(/\?range=custom&from=2026-09-01&to=2026-09-10&size=50$/)
+  await expect(rangeMenu).toBeHidden()
+  await expect(rangeButton).toBeFocused()
+  await expect(rangeButton).toContainText('Sep 1')
+
+  // 账户菜单（APG menu button）：身份区在菜单外；订阅三行：Free 去 Pricing、有效订阅进订阅视图、读取失败不可用
+  const account = page.locator('[data-dashboard-account-button]')
+  const accountMenu = page.getByRole('menu', { name: 'Account menu' })
+  await account.focus()
+  await page.keyboard.press('Enter')
+  const onlineRow = accountMenu.getByRole('menuitem', { name: /^Online Scraper/ })
+  await expect(onlineRow).toBeFocused()
+  await expect(onlineRow).toHaveAttribute('href', '/pricing/?product_kind=maps_online')
+  await expect(accountMenu.getByRole('menuitem', { name: /^Browser Extension/ })).toHaveAttribute('href', '/dashboard/subscriptions/')
+  await expect(accountMenu.getByRole('menuitem', { name: /^API/ })).toHaveAttribute('aria-disabled', 'true')
+  await expect(page.locator('#account-menu-pop .menu-id')).toContainText('hydra@mapsgrab.test')
+  await expect(accountMenu.locator('.menu-id')).toHaveCount(0)
+  // 主题横排单选：Space 生效并保持打开，Enter 生效并关闭，焦点回到用户卡
+  for (let step = 0; step < 4; step++) await page.keyboard.press('ArrowDown')
+  await expect(accountMenu.getByRole('menuitemradio', { name: 'Light' })).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press(' ')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await expect(accountMenu.getByRole('menuitemradio', { name: 'Dark' })).toHaveAttribute('aria-checked', 'true')
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('Enter')
+  await expect(accountMenu).toBeHidden()
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme')
+  await expect(account).toBeFocused()
+  // 语言子菜单：↑ 打开聚焦末项；→ 进入并聚焦当前语言，Esc 回到入口项，根层 Esc 关闭
+  await page.keyboard.press('ArrowUp')
+  await expect(accountMenu.getByRole('menuitem', { name: 'Log out' })).toBeFocused()
+  await page.keyboard.press('ArrowUp')
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByRole('menu', { name: 'Language' }).getByRole('menuitemradio', { name: 'English' })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(accountMenu.getByRole('menuitem', { name: /^Language/ })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(accountMenu).toBeHidden()
+  await expect(account).toBeFocused()
+
+  // Manage subscriptions 在页内切到订阅视图：菜单关闭，焦点交给视图标题
+  await account.click()
+  await accountMenu.getByRole('menuitem', { name: 'Manage subscriptions' }).click()
+  await expect(page).toHaveURL(/\/dashboard\/subscriptions\/$/)
+  await expect(accountMenu).toBeHidden()
+  await expect(page.locator('#view-title')).toBeFocused()
+  // 已在订阅视图时再选：停在原视图，焦点回到菜单按钮
+  await account.click()
+  await accountMenu.getByRole('menuitem', { name: 'Manage subscriptions' }).click()
+  await expect(accountMenu).toBeHidden()
+  await expect(account).toBeFocused()
+
+  // 图标栏：账户菜单在侧栏右侧弹出
+  await page.locator('.side-toggle').click()
+  await expect(page.locator('html')).toHaveAttribute('data-side', 'collapsed')
+  await account.click()
+  const accountPop = page.locator('#account-menu-pop')
+  await expect(accountPop).toHaveAttribute('data-side', 'right')
+  const sideBox = await page.locator('.dash-side').boundingBox()
+  const popBox = await accountPop.boundingBox()
+  expect(popBox && sideBox && popBox.x >= sideBox.x + sideBox.width).toBe(true)
+
+  // 选其他语言：跳到该语言前缀下的同一视图
+  await accountMenu.getByRole('menuitem', { name: /^Language/ }).click()
+  await page.getByRole('menu', { name: 'Language' }).getByRole('menuitemradio', { name: '日本語' }).click()
+  await expect(page).toHaveURL(/\/ja\/dashboard\/subscriptions\/$/)
 })
 
 test('dashboard session edge: unreachable retry recovers and 401 returns to sign-in panel', async ({ page }) => {
@@ -279,8 +466,8 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
     route.fulfill({ json: envelope({ jobs: buildJobs().slice(0, 1), total: 1, offset: 0, limit: 20 }) })
   )
   await signInByStoredToken(page, 'e2e-edge-token')
-  await page.goto('/dashboard/')
-  await expect(page.getByText('Could not reach MapsGrab right now.')).toBeVisible()
+  await page.goto('/dashboard/history/')
+  await expect(page.locator('main').getByText('Could not reach MapsGrab right now.')).toBeVisible()
   await expect(page.locator('[data-history-expand]')).toHaveCount(0)
   authMeFail = false
   await page.getByRole('button', { name: 'Retry' }).click()
@@ -307,7 +494,7 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
   await page.route(/\/api\/client\/export\/jobs\?/, route =>
     route.fulfill({ json: envelope({ jobs: buildJobs().slice(0, 2), total: 2, offset: 0, limit: 20 }) })
   )
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.locator('main [data-site-auth-entry]').click()
   await expect(page.locator('[data-download-auth-modal]')).toBeVisible()
   await page.locator('[data-download-email-entry-button]').click()
   await page.locator('[data-download-login-email]').fill('hydra@mapsgrab.test')
@@ -315,7 +502,7 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
   await page.locator('[data-download-login-code]').fill('123456')
   await page.locator('[data-download-login-submit]').click()
   await expect(page.locator('[data-history-expand]').first()).toBeVisible()
-  await expect(page.locator('.side-nav-account')).toContainText('hydra@mapsgrab.test')
+  await expect(page.locator('[data-dashboard-account-button]')).toContainText('hydra@mapsgrab.test')
 })
 
 test('google same-origin redirect keeps the dashboard destination through exchange and email verification', async ({ page, isMobile }) => {
@@ -347,7 +534,7 @@ test('google same-origin redirect keeps the dashboard destination through exchan
   await expect(page.locator('[data-download-auth-modal]')).toBeVisible()
   await page.goto('/?google_login_code=e2e-redirect-code')
   await expect(page).toHaveURL(/\/dashboard\/$/)
-  await expect(page.locator('[data-history-expand]').first()).toBeVisible()
+  await expect(page.locator('.jobs-list [data-job]').first()).toBeVisible()
 
   // 场景 2：非权威邮箱回跳 → 补邮箱验证码分支（弹窗内完成）→ 目的地不丢失，仍进 Dashboard。
   await page.evaluate(() => window.localStorage.removeItem('homepage_access_token'))
@@ -361,7 +548,7 @@ test('google same-origin redirect keeps the dashboard destination through exchan
   await page.locator('[data-download-login-code]').fill('654321')
   await page.locator('[data-download-login-submit]').click()
   await expect(page).toHaveURL(/\/dashboard\/$/)
-  await expect(page.locator('[data-history-expand]').first()).toBeVisible()
+  await expect(page.locator('.jobs-list [data-job]').first()).toBeVisible()
 })
 
 test('dashboard subscriptions: three-line states, pricing tab links and manage subscription portal', async ({ page }, testInfo) => {
@@ -390,18 +577,10 @@ test('dashboard subscriptions: three-line states, pricing tab links and manage s
   const apiCard = page.locator('[data-subscription-line="api"]')
   await expect(apiCard).toContainText('Temporarily unavailable')
 
-  // 选购统一跳 Pricing 对应产品 tab；购买未交付的产品线（插件）灰化为 Coming soon，
-  // 没有链接，鼠标与键盘都不跳转；存量订阅的渠道管理不受影响（见下）。
+  // 选购统一跳 Pricing 对应产品 tab（三条线的购买能力当前均已开放，见 lib/capabilities.ts）
   await expect(onlineCard.locator('[data-subs-buy]')).toHaveAttribute('href', /\/pricing\/\?product_kind=maps_online/)
+  await expect(extensionCard.locator('[data-subs-buy]')).toHaveAttribute('href', /\/pricing\/\?product_kind=maps_extension/)
   await expect(apiCard.locator('[data-subs-buy]')).toHaveAttribute('href', /\/pricing\/\?product_kind=maps_api/)
-  const extensionBuy = extensionCard.locator('[data-subs-buy]')
-  await expect(extensionBuy).toHaveAttribute('aria-disabled', 'true')
-  await expect(extensionBuy).not.toHaveAttribute('href')
-  await expect(extensionBuy).toContainText('Coming soon')
-  await extensionBuy.click({ force: true })
-  await extensionBuy.focus()
-  await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/\/dashboard\/subscriptions\/$/)
 
   // 渠道管理：预开窗口跳支付渠道 portal。
   const portalPopupPromise = page.waitForEvent('popup')
@@ -437,18 +616,62 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
   await expect(page.getByText('No apps are connected.')).toBeVisible()
   await expect(page.getByText('The MCP connection address is not available yet.')).toBeVisible()
   await expect(page.getByRole('link', { name: 'View API products' })).toHaveAttribute('href', '/google-maps-scraper-api/')
+  // curl 快速上手：地址取连接信息；没有 Key 时用 YOUR_API_KEY 占位
+  const curl = page.locator('[data-api-curl]')
+  await expect(curl).toContainText('https://api.mapsgrab.test/api/client/maps/api/search')
+  await expect(curl).toContainText('Bearer YOUR_API_KEY')
 
-  // 移动视口：侧栏收起，菜单按钮展开后个人信息可达（订阅卡在主区）。
+  // 生成中离开视图：响应晚到只更新 Key 前缀（示例同步），回到 API 视图不显示明文；有 Key 后替换按钮为次级。
+  const sideNav = page.locator('.side-nav')
+  const openView = async (name: string) => {
+    if (isMobile) await page.locator('.topbar-menu').click()
+    await sideNav.getByRole('link', { name }).click()
+  }
+  let releaseGenerate: () => void = () => {}
+  const generateGate = new Promise<void>(resolve => { releaseGenerate = resolve })
+  await page.route('**/api/client/maps/api/key/generate', async route => {
+    await generateGate
+    await route.fulfill({ json: envelope({ api_key: 'mg_live_e2e1_plaintext', api_key_prefix: 'mg_live_e2e1', api_key_created_at: Date.now() }) })
+  })
+  await page.getByRole('button', { name: 'Generate API key' }).click()
+  await expect(page.getByRole('button', { name: 'Generating...' })).toBeVisible()
+  await openView('Subscriptions')
+  await expect(page).toHaveURL(/\/dashboard\/subscriptions\/$/)
+  const generated = page.waitForResponse('**/api/client/maps/api/key/generate')
+  releaseGenerate()
+  await generated
+  await openView('API management')
+  await expect(page.locator('[data-api-key-prefix]')).toContainText('mg_live_e2e1')
+  await expect(page.locator('[data-api-key-plaintext]')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Replace API key' })).toHaveClass(/\bbtn-secondary\b/)
+  await expect(curl).toContainText('Bearer mg_live_e2e1…')
+
+  // 留在视图内替换：明文出现时示例只换成新前缀，从不带明文。
+  await page.route('**/api/client/maps/api/key/generate', route => route.fulfill({
+    json: envelope({ api_key: 'mg_live_e2e2_plaintext', api_key_prefix: 'mg_live_e2e2', api_key_created_at: Date.now() })
+  }))
+  await page.getByRole('button', { name: 'Replace API key' }).click()
+  await page.getByRole('dialog', { name: 'Replace your API key?' }).getByRole('button', { name: 'Replace API key' }).click()
+  await expect(page.locator('[data-api-key-plaintext]')).toHaveText('mg_live_e2e2_plaintext')
+  await expect(curl).toContainText('Bearer mg_live_e2e2…')
+  await expect(curl).not.toContainText('mg_live_e2e2_plaintext')
+
+  // 移动视口：侧栏收起，菜单按钮展开抽屉后账户菜单可达（订阅卡在主区）。
   if (isMobile) {
     await page.goto('/dashboard/subscriptions/')
     await expect(page.locator('[data-subs-manage="extension"]')).toBeVisible()
-    const sideNav = page.locator('.side-nav')
     await expect(sideNav).not.toBeInViewport()
-    await page.locator('.workspace-menu-button').click()
+    await page.locator('.topbar-menu').click()
     await expect(sideNav).toBeInViewport()
-    await sideNav.locator('[data-dashboard-account-button]').click()
-    await expect(sideNav.locator('[data-dashboard-logout]')).toBeVisible()
+    const account = page.locator('[data-dashboard-account-button]')
+    await account.click()
+    await expect(page.locator('[data-dashboard-logout]')).toBeVisible()
     await page.screenshot({ path: testInfo.outputPath('dashboard-mobile-menu.png') })
+    // Esc 只关账户菜单：抽屉保持打开，焦点回到账户按钮
+    await page.keyboard.press('Escape')
+    await expect(page.locator('[data-dashboard-logout]')).toBeHidden()
+    await expect(sideNav).toBeInViewport()
+    await expect(account).toBeFocused()
 
     // 选中页面后抽屉收起（点击菜单项导航走）。
     await sideNav.getByRole('link', { name: 'API management' }).click()

@@ -198,6 +198,18 @@
   gap: 12px;
 }
 
+/* 半球分段：两段等分所在列，总高与同排输入框一致（38 + 4 × 2 内边距 + 1 × 2 边框 = 48px） */
+.tool-hemisphere {
+  display: flex;
+}
+
+.tool-hemisphere .seg-btn {
+  flex: 1 1 0;
+  justify-content: center;
+  height: 38px;
+  padding: 0;
+}
+
 /* Merge CSV：文件选择、逐文件译名行选项与行数摘要（选项与摘要由脚本渲染） */
 /* 文件框有固有最小宽度，必须允许收缩，否则窄屏会撑破面板 */
 .tool-file-input {

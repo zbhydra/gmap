@@ -266,16 +266,16 @@ Hero 是 token → 组件 → 页面三层平面的 3D 叠层；正文为左侧�
 
 | # | 区块 | 内容与动效 |
 | --- | --- | --- |
-| ① | Hero + Dashboard 剧场 | 输入关键词 → Submitting → 历史列表出现 Processing 任务，各关键词并行完成并显示行数和 CSV → Completed → 本月用量此时才增加 → Download ZIP 下载气泡 |
-| ② | 事实条 | 36 列 / 6 个社媒列 / 地图模式 50 个搜索位置 / 每任务 60 分钟 / 每月 1,000 条免费 |
+| ① | Hero + Dashboard 剧场 | 输入关键词 → Submitting → 历史列表出现 Processing 任务，各关键词并行完成并显示交付行数 → Completed → 本月用量此时才增加 → 整任务 CSV 下载气泡（文件名 `{job_no}.csv`） |
+| ② | 事实条 | 37 个公开列（含连续行号 `#`）/ 6 个社媒列 / 地图模式 50 个搜索位置 / 每任务 60 分钟 / 每月 1,000 条免费 |
 | ③ | 五步流程 | 首页预览 → 登录 → 创建任务 → 并行执行 → 下载，依次高亮 |
 | ④ | 三种创建模式（可交互） | 关键词（去空行去重计数 + 各档上限）；地图（半径 / 间距滑杆，取点算法同 `map-grid.ts`，由近及远出点，超过 50 个位置时显示真实报错并禁用提交）；地区（添加城市 → In / Near → 生成查询，附 GeoNames 署名） |
-| ⑤ | 结果文件 | ZIP 目录树 + CSV 表格：第 1 行固定字段名、第 2 行字段译名（可在 8 种语言间切换演示）、第 3 行起数据；零结果文件保留两行表头 |
+| ⑤ | 结果文件 | 整任务 CSV 卡（`{job_no}.csv` 与各搜索去重后的交付行数）+ CSV 表格：37 列，第 1 行固定英文列名（含连续行号 `#` 与 `Search Keyword`）、第 2 行为创建任务语言的字段说明（可在 8 种语言间切换演示）、第 3 行起数据；合法零结果的任务完成但没有文件 |
 | ⑥ | 能力 | 6 项（en-US 原文） |
 | ⑦ | 计量（暗色岛） | 用 Free 档演示：提交不扣额度、完成后按实际交付行数计入、运行中任务可超额、用完后禁止提交 |
 | ⑧ | 方案 / FAQ / CTA | 五档方案（价格逐字，规格按 014：每任务关键词数 + 补全）、7 条 FAQ |
 
-数据：`pricing.ts`、`en-US.ts`、`i18n/dashboard.ts`、014 域文档；CSV 列顺序取自 `backend/src/app/provider/maps_online.py` 的 `CSV_HEADERS`，译名取自 `backend/src/app/i18n/locales/`。所有通往 Dashboard 的入口用 `data-proto-note` 或 `data-signin`。
+数据：`pricing.ts`、`en-US.ts`、`i18n/dashboard.ts`、014 域文档；CSV 列顺序与第二行字段说明取自 `backend/src/app/provider/export/gmap_columns.py` 的 `GMAP_PUBLIC_COLUMNS` / `GMAP_DESCRIPTIONS`。所有通往 Dashboard 的入口用 `data-proto-note` 或 `data-signin`。
 
 ### API `google-maps-scraper-api.html`
 
@@ -366,8 +366,8 @@ docs/design/website/
   - `contact.ts` 的 `support@mapsgrab.com` 仍是占位邮箱；真实 `/contact` 只有 mailto，原型里的联系表单是设计提案，要么接后端，要么去掉。
   - 隐私政策已补 Online / API / MCP 数据流最小事实（I2a）；服务条款仍只覆盖插件、网站与免费工具，条款页保留 TBD，待法务补稿。
   - **现网 API 文案与合同不符**（`en-US.ts`）：740 / 924 / 1006 行写 API 额度是「quota of records」，实际按 requests 计量；822 / 914 行说 Reviews / Photos 用 Place ID 或 Maps URL 定位商家，合同用 `fid`；272 / 795 / 827 行宣传评论 likes 与 review URL，Provider DTO 没有这两个字段。原型 API 页按合同与 DTO 写。
-  - **Online 方案卖点**：`pricing.ts` 的 Online 卖点（评论与照片 URL、评论 URL 任务、JSON 下载、跨次去重）是 2026-08-31「三产品线占位先行」时写的，不在 014 的 Online 范围内（014 只有关键词 / 地图 / 地区任务、单关键词 CSV + 整任务 ZIP、付费档补全、每任务关键词上限 2 / 5 / 10 / 20 / 50）。原型定价页与云端页都按 014 写，价格、额度、方案名仍逐字；`pricing.ts` 需要同步修订。
-  - Online CSV 第二行的字段译名随创建任务时的界面语言变化，后端已支持 14 种语言，但站点目前只有 en-US，云端页的语言切换演示要等 010 i18n 上线才真正可用。
+  - Online 方案卖点以 014 合同为准（关键词 / 地图 / 地区任务、整任务去重的单份 37 列 CSV、付费档补全默认开启可关闭、每任务关键词上限 2 / 5 / 10 / 20 / 50）；原型定价页的 Online 卖点与对比行逐字取自 `pricing.ts`。
+  - Online CSV 第二行的字段说明随创建任务时的界面语言变化，说明文字取自 `backend/src/app/provider/export/gmap_columns.py` 的 `GMAP_DESCRIPTIONS`（14 种语言）。
   - 公司页「one engine, four ways in」与「MCP 把同一引擎带给 AI agent」是根据首页和 MCP 文案推导的措辞，现有 About 原文只提到插件与网页工具。
 - 建议在页脚补充「MapsGrab 与 Google 无关联」声明（需法务确认措辞）。
 

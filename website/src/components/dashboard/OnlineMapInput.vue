@@ -1,77 +1,99 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { Circle, CircleMarker, LayerGroup, LeafletMouseEvent, Map as LeafletMap } from 'leaflet'
+/**
+ * 地图模式：在 Leaflet + OSM 瓦片上选中心点（点地图或输入坐标），按半径与网格间距生成搜索视口；
+ * 关键词 × 视口即提交条目，总数受 logical_sample_limit 约束，超限时不画网格点。
+ *
+ * 舞台高度由样式按地图列宽计算；舞台尺寸变化（含从隐藏切回、侧栏收放）后通知 Leaflet 重新计算视口。
+ * 覆盖圈、网格点与中心针的颜色走 CSS（随主题切换），不在脚本里取色。
+ */
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import type { Circle, LayerGroup, LeafletMouseEvent, Map as LeafletMap, Marker } from 'leaflet'
 import type { DashboardContent } from '../../i18n/schema'
+import { reducedMotion, replayClass } from '../../scripts/dashboard/dom'
+import { fill } from '../../scripts/dashboard/format'
 import { gridViewports, type OnlineViewport } from '../../scripts/dashboard/map-grid'
 
 const props = defineProps<{
   copy: DashboardContent['create']['map']
-  active: boolean
   disabled: boolean
   keywordCount: number
   logicalSampleLimit: number
 }>()
+
 const emit = defineEmits<{ viewports: [value: OnlineViewport[]] }>()
 
+/** 连续 4 张瓦片失败才提示，偶发失败不打扰。 */
+const TILE_ERROR_THRESHOLD = 4
+
+// type=number 的 v-model 会把可解析的输入转成数字，清空时仍是空字符串
 const lat = ref<number | string>('')
 const lng = ref<number | string>('')
-const radiusKm = ref<number | string>(5)
-const spacingKm = ref<number | string>(5)
+const radiusKm = ref(5)
+const spacingKm = ref(5)
 const tilesFailed = ref(false)
-const mapElement = ref<HTMLDivElement | null>(null)
+const stageEl = ref<HTMLElement | null>(null)
+const canvasEl = ref<HTMLElement | null>(null)
 let leaflet: typeof import('leaflet') | null = null
 let map: LeafletMap | null = null
-let centerMarker: CircleMarker | null = null
+let pin: Marker | null = null
 let coverage: Circle | null = null
-let gridLayer: LayerGroup | null = null
+let points: LayerGroup | null = null
+let resizeObserver: ResizeObserver | null = null
 
-function inputNumber(value: number | string): number | null {
-  if (typeof value === 'string' && !value.trim()) return null
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
+function coordinate(value: number | string, max: number): number | null {
+  const text = String(value).trim()
+  if (!text) return null
+  const number = Number(text)
+  return Number.isFinite(number) && Math.abs(number) <= max ? number : null
 }
 
-const latitude = computed(() => inputNumber(lat.value))
-const longitude = computed(() => inputNumber(lng.value))
-const radius = computed(() => inputNumber(radiusKm.value))
-const spacing = computed(() => inputNumber(spacingKm.value))
+const latInvalid = computed(() => String(lat.value).trim() !== '' && coordinate(lat.value, 85) === null)
+const lngInvalid = computed(() => String(lng.value).trim() !== '' && coordinate(lng.value, 180) === null)
 const center = computed(() => {
-  if (latitude.value === null || longitude.value === null) return null
-  return Math.abs(latitude.value) <= 85 && Math.abs(longitude.value) <= 180
-    ? { lat: latitude.value, lng: longitude.value } : null
+  const latitude = coordinate(lat.value, 85)
+  const longitude = coordinate(lng.value, 180)
+  return latitude === null || longitude === null ? null : { lat: latitude, lng: longitude }
 })
-const viewports = computed(() => {
-  if (!center.value || radius.value === null || spacing.value === null
-    || radius.value < 0 || radius.value > 50 || spacing.value < 1 || spacing.value > 20) return []
-  return gridViewports(center.value, radius.value, spacing.value)
-})
-const logicalCount = computed(() => props.keywordCount * viewports.value.length)
-const overLimit = computed(() => logicalCount.value > props.logicalSampleLimit)
+const viewports = computed(() => center.value ? gridViewports(center.value, radiusKm.value, spacingKm.value) : [])
+const total = computed(() => props.keywordCount * viewports.value.length)
+const overLimit = computed(() => total.value > props.logicalSampleLimit)
 
-function redraw(): void {
-  if (!leaflet || !map || !gridLayer || !mapElement.value) return
-  gridLayer.clearLayers()
-  if (!center.value || radius.value === null || radius.value < 0 || radius.value > 50) {
-    centerMarker?.remove()
+/** 重画覆盖圈与网格点；中心或半径变化时按覆盖圈取景。 */
+function redraw(reframe: boolean): void {
+  if (!leaflet || !map || !points) return
+  points.clearLayers()
+  if (!center.value) {
+    pin?.remove()
     coverage?.remove()
-    centerMarker = null
+    pin = null
     coverage = null
     return
   }
   const point = leaflet.latLng(center.value.lat, center.value.lng)
-  const styles = getComputedStyle(mapElement.value)
-  const primary = styles.getPropertyValue('--primary').trim()
-  const accent = styles.getPropertyValue('--accent').trim()
-  if (!centerMarker) centerMarker = leaflet.circleMarker(point, { radius: 7, color: accent, fillColor: accent, fillOpacity: 1, interactive: false }).addTo(map)
-  else centerMarker.setLatLng(point)
-  if (!coverage) coverage = leaflet.circle(point, { radius: radius.value * 1000, color: primary, fillColor: primary, fillOpacity: .1, weight: 2, interactive: false }).addTo(map)
-  else coverage.setLatLng(point).setRadius(radius.value * 1000)
+  if (coverage) coverage.setLatLng(point).setRadius(radiusKm.value * 1000)
+  else coverage = leaflet.circle(point, { radius: radiusKm.value * 1000, className: 'map-coverage', interactive: false }).addTo(map)
+  if (pin) pin.setLatLng(point)
+  else {
+    pin = leaflet.marker(point, {
+      icon: leaflet.divIcon({ className: 'map-marker', html: '<i class="map-pin"></i>', iconSize: [0, 0] }),
+      interactive: false,
+      keyboard: false
+    }).addTo(map)
+  }
   if (!overLimit.value) {
     for (const viewport of viewports.value) {
-      leaflet.circleMarker([viewport.lat, viewport.lng], { radius: 3, color: primary, fillColor: primary, fillOpacity: .85, weight: 1, interactive: false }).addTo(gridLayer)
+      leaflet.circleMarker([viewport.lat, viewport.lng], { radius: 4, className: 'map-point', interactive: false }).addTo(points)
     }
   }
-  map.setView(point, Math.max(map.getZoom(), 9))
+  if (!reframe) return
+  const animate = !reducedMotion()
+  if (radiusKm.value < 0.5) map.setView(point, 14, { animate })
+  else map.fitBounds(coverage.getBounds(), { padding: [24, 24], animate })
+}
+
+function placeCenter(latitude: number, longitude: number): void {
+  lat.value = latitude.toFixed(6)
+  lng.value = longitude.toFixed(6)
 }
 
 onMounted(async () => {
@@ -84,56 +106,109 @@ onMounted(async () => {
   }
   const module = await import('leaflet')
   leaflet = module.default ?? module
-  if (!mapElement.value) return
-  map = leaflet.map(mapElement.value, { center: [20, 0], zoom: 2 })
-  const tiles = leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: props.copy.attribution
-  }).addTo(map)
+  if (!canvasEl.value || !stageEl.value) return
+  // 版权说明在舞台下方单独展示（含译文），不用 Leaflet 自带的角标
+  map = leaflet.map(canvasEl.value, { center: [20, 0], zoom: 2, attributionControl: false })
+  const tiles = leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map)
   let tileErrors = 0
-  tiles.on('tileerror', () => { if (++tileErrors >= 4) tilesFailed.value = true })
-  tiles.on('tileload', () => { tilesFailed.value = false })
-  gridLayer = leaflet.layerGroup().addTo(map)
-  map.on('click', (event: LeafletMouseEvent) => {
-    if (props.disabled || !props.active) return
-    lat.value = Number(event.latlng.lat.toFixed(6))
-    lng.value = Number(event.latlng.lng.toFixed(6))
+  tiles.on('tileerror', () => {
+    tileErrors += 1
+    if (tileErrors >= TILE_ERROR_THRESHOLD) tilesFailed.value = true
   })
-  redraw()
-  await nextTick()
-  map.invalidateSize()
+  tiles.on('tileload', () => {
+    tileErrors = 0
+    tilesFailed.value = false
+  })
+  points = leaflet.layerGroup().addTo(map)
+  map.on('click', (event: LeafletMouseEvent) => {
+    if (!props.disabled) placeCenter(event.latlng.lat, event.latlng.lng)
+  })
+  resizeObserver = new ResizeObserver(() => map?.invalidateSize())
+  resizeObserver.observe(stageEl.value)
+  redraw(true)
 })
-onBeforeUnmount(() => { map?.remove() })
-watch([center, radiusKm, spacingKm, overLimit], redraw)
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  map?.remove()
+})
+
+watch(center, (next, previous) => {
+  redraw(true)
+  // 新放下的针落位一次；坐标输入逐字变化时只移动不重播
+  if (next && !previous) {
+    const element = pin?.getElement()?.firstElementChild
+    if (element) replayClass(element, 'is-placed')
+  }
+})
+watch(radiusKm, () => redraw(true))
+watch([spacingKm, overLimit], () => redraw(false))
 watch(viewports, value => emit('viewports', value), { immediate: true })
-watch(() => props.active, async active => { if (active) { await nextTick(); map?.invalidateSize() } })
 </script>
 
 <template>
-  <div class="map-input">
-    <fieldset class="map-fields" :disabled="disabled || !active">
-      <label>{{ copy.latitude }}<input v-model.number="lat" type="number" min="-85" max="85" step="any" /></label>
-      <label>{{ copy.longitude }}<input v-model.number="lng" type="number" min="-180" max="180" step="any" /></label>
-      <label>{{ copy.radius }}<input v-model.number="radiusKm" type="number" min="0" max="50" step="1" /></label>
-      <label>{{ copy.spacing }}<input v-model.number="spacingKm" type="number" min="1" max="20" step="1" /></label>
-    </fieldset>
-    <p class="map-summary" aria-live="polite">{{ copy.sampleCount.replace('{count}', String(logicalCount)).replace('{limit}', String(logicalSampleLimit)) }}</p>
-    <p v-if="overLimit" class="map-error" role="alert">{{ copy.overLimit.replace('{limit}', String(logicalSampleLimit)) }}</p>
-    <p v-else-if="!center" class="map-summary">{{ copy.chooseCenter }}</p>
-    <div ref="mapElement" class="map-surface" :aria-label="copy.mapLabel" />
-    <p v-if="tilesFailed" class="map-error" role="status">{{ copy.tilesUnavailable }}</p>
+  <div class="map-card">
+    <div ref="stageEl" class="map-stage">
+      <div ref="canvasEl" class="map-canvas" :aria-label="props.copy.mapLabel"></div>
+      <span v-if="!center" class="map-hint">
+        <svg class="icon icon--sm" aria-hidden="true"><use href="/img/icons.svg#i-locate" /></svg>{{ props.copy.chooseCenter }}
+      </span>
+    </div>
+    <div v-if="tilesFailed" class="callout callout--warn" role="status">
+      <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-alert" /></svg>
+      <div class="callout-body"><span>{{ props.copy.tilesUnavailable }}</span></div>
+    </div>
+    <!-- 滑杆的 label 里还有显示当前值的 output（也是可标注元素）：用 for 显式指向输入框，值由滑杆自身播报 -->
+    <div class="map-controls">
+      <label class="mini-field" for="map-lat">
+        <span class="mini-label">{{ props.copy.latitude }}</span>
+        <input
+          id="map-lat"
+          v-model="lat"
+          class="input input--sm input--mono"
+          :class="{ 'is-invalid': latInvalid }"
+          type="number"
+          min="-85"
+          max="85"
+          step="any"
+          inputmode="decimal"
+          :disabled="props.disabled"
+        />
+      </label>
+      <label class="mini-field" for="map-lng">
+        <span class="mini-label">{{ props.copy.longitude }}</span>
+        <input
+          id="map-lng"
+          v-model="lng"
+          class="input input--sm input--mono"
+          :class="{ 'is-invalid': lngInvalid }"
+          type="number"
+          min="-180"
+          max="180"
+          step="any"
+          inputmode="decimal"
+          :disabled="props.disabled"
+        />
+      </label>
+      <label class="mini-field" for="map-radius">
+        <span class="mini-label">{{ props.copy.radius }}<output for="map-radius" aria-hidden="true">{{ radiusKm }}</output></span>
+        <input id="map-radius" v-model.number="radiusKm" class="range" type="range" min="0" max="50" step="1" :disabled="props.disabled" />
+      </label>
+      <label class="mini-field" for="map-spacing">
+        <span class="mini-label">{{ props.copy.spacing }}<output for="map-spacing" aria-hidden="true">{{ spacingKm }}</output></span>
+        <input id="map-spacing" v-model.number="spacingKm" class="range" type="range" min="1" max="20" step="1" :disabled="props.disabled" />
+      </label>
+    </div>
+    <div class="map-sum" aria-live="polite">
+      <span class="map-sum-calc">{{
+        center ? fill(props.copy.points, { points: viewports.length, keywords: props.keywordCount }) : props.copy.chooseCenter
+      }}</span>
+      <span class="map-sum-total" :data-state="overLimit ? 'over' : undefined">{{
+        fill(props.copy.sampleCount, { count: total, limit: props.logicalSampleLimit })
+      }}</span>
+    </div>
+    <p class="attribution">
+      &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">{{ props.copy.attribution }}</a>
+    </p>
   </div>
 </template>
-
-<style scoped>
-.map-input { display: grid; gap: var(--s-3); min-width: 0; }
-.map-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-3); margin: 0; padding: 0; border: 0; }
-.map-fields label { display: grid; gap: var(--s-2); min-width: 0; }
-.map-fields input { width: 100%; min-width: 0; padding: var(--s-3); border: 1px solid var(--border-2); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; }
-.map-fields input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.map-surface { width: 100%; min-height: 280px; height: 400px; max-height: 50vh; border: 1px solid var(--border); border-radius: var(--r-sm); z-index: 0; isolation: isolate; }
-.map-summary { margin: 0; color: var(--text-2); font-size: 14px; }
-.map-error { margin: 0; color: var(--bad); font-size: 14px; }
-@media (max-width: 960px) { .map-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } .map-surface { height: 320px; } }
-@media (max-width: 480px) { .map-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
-</style>

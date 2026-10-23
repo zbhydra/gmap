@@ -1,7 +1,7 @@
 /**
  * Website 页头语言切换器。
  *
- * 负责语言偏好 Cookie，以及在语言路由之间导航时保留当前查询参数；下拉开合由 chrome.ts 统一管理。
+ * 负责语言偏好 Cookie，以及在语言路由之间导航时保留当前查询参数；菜单开合由 site/pop-menu 负责（chrome.ts 绑定）。
  */
 
 /** 语言选项选择器。 */
@@ -21,6 +21,12 @@ export function buildLanguageSwitchUrl(targetPath: string, currentHref: string):
   return `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`
 }
 
+/** 记住语言偏好并跳到目标语言路由；页头语言菜单与 Dashboard 账户菜单共用。 */
+export function switchSiteLanguage(locale: string, targetPath: string): void {
+  document.cookie = `user-language=${locale}; path=/; max-age=${LANGUAGE_COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`
+  window.location.href = buildLanguageSwitchUrl(targetPath, window.location.href)
+}
+
 /** 菜单开合由站级外壳管理；此处只负责语言偏好与导航。 */
 export function initializeLanguageSwitcher(): void {
   const languageOptions = document.querySelectorAll<HTMLButtonElement>(LANGUAGE_OPTION_SELECTOR)
@@ -32,8 +38,7 @@ export function initializeLanguageSwitcher(): void {
         return
       }
 
-      document.cookie = `user-language=${locale}; path=/; max-age=${LANGUAGE_COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`
-      window.location.href = buildLanguageSwitchUrl(path, window.location.href)
+      switchSiteLanguage(locale, path)
     })
   })
 }

@@ -19,7 +19,7 @@ function readAxis(root: ParentNode, axis: 'lat' | 'lng'): DmsInput | null {
   const degreesRaw = queryRequired<HTMLInputElement>(root, `[data-${axis}-degrees]`).value.trim()
   const minutesRaw = queryRequired<HTMLInputElement>(root, `[data-${axis}-minutes]`).value.trim()
   const secondsRaw = queryRequired<HTMLInputElement>(root, `[data-${axis}-seconds]`).value.trim()
-  const hemisphere = queryRequired<HTMLSelectElement>(root, `[data-${axis}-hemisphere]`).value as DmsInput['hemisphere']
+  const hemisphere = queryRequired<HTMLInputElement>(root, `[data-${axis}-hemisphere] input:checked`).value as DmsInput['hemisphere']
 
   const degrees = Number(degreesRaw)
   const minutes = minutesRaw.length === 0 ? 0 : Number(minutesRaw)

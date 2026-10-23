@@ -25,6 +25,7 @@ const NOINDEX_ROUTES = [
   'clink/success/',
   'extension-login/',
   'dashboard/',
+  'dashboard/history/',
   'dashboard/api/',
   'dashboard/subscriptions/',
   'oauth/consent/'

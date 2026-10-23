@@ -1,0 +1,16 @@
+---
+import DashboardPage from '../../components/pages/DashboardPage.astro'
+import { DASHBOARD_VIEWS, type DashboardView } from '../../scripts/dashboard/route'
+
+/** 四个视图各一个静态地址：Online 是 /dashboard/ 本身。 */
+export function getStaticPaths() {
+  return DASHBOARD_VIEWS.map(view => ({
+    params: { view: view === 'online' ? undefined : view },
+    props: { view }
+  }))
+}
+
+const { view } = Astro.props as { view: DashboardView }
+---
+
+<DashboardPage locale="en-US" view={view} />

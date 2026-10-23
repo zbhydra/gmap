@@ -959,10 +959,6 @@ const cta: ProductCtaMessage = { ...shared.cta, title: page.cta.title, lead: pag
     mask-image: linear-gradient(180deg, var(--mask-solid) 78%, transparent 100%);
   }
 
-  .api-res :global(pre:focus-visible) {
-    outline-offset: -3px;
-  }
-
   /* 等待响应时的注释占位（文案来自 i18n 的 data-waiting） */
   .api-res.is-waiting::before {
     position: absolute;

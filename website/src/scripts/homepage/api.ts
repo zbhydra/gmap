@@ -49,6 +49,9 @@ interface ApiEnvelope<T> {
   message?: string
 }
 
+/** GET 查询参数：undefined 跳过，数组表示可重复的同名参数。 */
+export type QueryParams = Record<string, string | number | readonly string[] | undefined>
+
 /** API 请求选项。 */
 export interface RequestOptions {
   /** 请求超时时间，毫秒。 */
@@ -240,10 +243,10 @@ export function buildRequestHeaders(context: RequestContext, extraHeaders: Heade
  * 构建完整请求 URL
  *
  * @param path - API 路径，如 "/api/client/auth/me"
- * @param params - 查询参数，undefined 值会被跳过
+ * @param params - 查询参数，undefined 值会被跳过；数组按同名参数重复追加
  * @returns 完整的 URL 字符串
  */
-function buildUrl(path: string, params?: Record<string, string | number | undefined>): string {
+function buildUrl(path: string, params?: QueryParams): string {
   const url = new URL(path, getApiBaseUrl())
 
   if (params) {
@@ -252,7 +255,14 @@ function buildUrl(path: string, params?: Record<string, string | number | undefi
         continue
       }
 
-      url.searchParams.set(key, String(value))
+      if (typeof value === 'string' || typeof value === 'number') {
+        url.searchParams.set(key, String(value))
+        continue
+      }
+
+      for (const item of value) {
+        url.searchParams.append(key, item)
+      }
     }
   }
 
@@ -320,7 +330,7 @@ async function parseEnvelope<T>(response: Response): Promise<T> {
 export async function getJson<T>(
   path: string,
   context: RequestContext,
-  params?: Record<string, string | number | undefined>
+  params?: QueryParams
 ): Promise<T> {
   let response: Response
   try {

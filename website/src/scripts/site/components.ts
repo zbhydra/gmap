@@ -4,6 +4,8 @@
  * - [data-tabs]：分段 tab。容器内 [role=tablist] > [role=tab][aria-controls] 对应 [role=tabpanel]，
  *   可选 .seg-thumb 滑块；方向键切换，切换时在容器上派发 tabchange（detail: { index, key }，
  *   key 取 tab 的 data-tab）。程序化切换直接对 tab 按钮调用 click()。
+ * - [data-seg]：原生 radio 的分段单选（.seg > label.seg-btn > input[type=radio]）。语义、方向键与取值都交给原生 radio，
+ *   这里只把 .seg-thumb 移到选中项下（与 tab 同一套滑块规则）。
  * - details.acc：手风琴（summary + .acc-body）高度动画；减弱动效下走原生开合。
  * - [data-copy]：复制属性值到剪贴板并提示（文案取 toast 容器的 data-copied-label）。
  * - [data-cta-pins]：收尾 CTA 面板背景的 pin 雨，离屏 / 后台 / 减弱动效下不落点。
@@ -29,6 +31,13 @@ function motionToken(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
+/** 分段滑块对齐到选中段；字体加载完成与窗口尺寸变化都会改变段宽，调用方在这两个时机重新对齐。 */
+function moveThumb(thumb: HTMLElement | null, target: HTMLElement | null | undefined): void {
+  if (!thumb || !target) return
+  thumb.style.width = `${target.offsetWidth}px`
+  thumb.style.transform = `translateX(${target.offsetLeft}px)`
+}
+
 function setupTabs(): void {
   document.querySelectorAll<HTMLElement>('[data-tabs]').forEach(tabs => {
     const list = tabs.querySelector<HTMLElement>('[role="tablist"]')
@@ -36,12 +45,7 @@ function setupTabs(): void {
     const buttons = Array.from(list.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
     const thumb = list.querySelector<HTMLElement>('.seg-thumb')
     const selectedIndex = () => Math.max(0, buttons.findIndex(button => button.getAttribute('aria-selected') === 'true'))
-    const placeThumb = () => {
-      const button = buttons[selectedIndex()]
-      if (!thumb || !button) return
-      thumb.style.width = `${button.offsetWidth}px`
-      thumb.style.transform = `translateX(${button.offsetLeft}px)`
-    }
+    const placeThumb = () => moveThumb(thumb, buttons[selectedIndex()])
     const select = (index: number, focus: boolean) => {
       buttons.forEach((button, buttonIndex) => {
         const selected = buttonIndex === index
@@ -64,6 +68,17 @@ function setupTabs(): void {
     })
     if (buttons.length) select(selectedIndex(), false)
     // 字体加载完成与窗口尺寸变化都会改变按钮宽度，滑块重新对齐。
+    void document.fonts.ready.then(placeThumb)
+    window.addEventListener('resize', placeThumb)
+  })
+}
+
+function setupSegRadios(): void {
+  document.querySelectorAll<HTMLElement>('[data-seg]').forEach(seg => {
+    const thumb = seg.querySelector<HTMLElement>('.seg-thumb')
+    const placeThumb = () => moveThumb(thumb, seg.querySelector('input:checked')?.closest<HTMLElement>('.seg-btn'))
+    seg.addEventListener('change', placeThumb)
+    placeThumb()
     void document.fonts.ready.then(placeThumb)
     window.addEventListener('resize', placeThumb)
   })
@@ -139,6 +154,7 @@ function setupCtaPins(): void {
 /** Layout 在每页调用一次；页面没有对应标记时各项都是空操作。 */
 export function initSiteComponents(): void {
   setupTabs()
+  setupSegRadios()
   setupAccordions()
   setupCopy()
   setupCtaPins()

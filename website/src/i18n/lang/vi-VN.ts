@@ -93,6 +93,7 @@ export const site: SiteContent = {
   "dashboard": {
     "create": {
       "title": "Trình thu thập trực tuyến",
+      "newTask": "Tác vụ mới",
       "modeLabel": "Chế độ tìm kiếm",
       "modes": {
         "keywords": "Từ khóa",
@@ -102,14 +103,16 @@ export const site: SiteContent = {
       "keywords": "Từ khóa",
       "placeholder": "quán cà phê ở Portland\nnhà hàng ở Austin",
       "count": "{count} / {limit} từ khóa",
+      "duplicates": "Đã bỏ qua dòng trùng lặp: {count}",
       "contacts": "Tìm email và hồ sơ xã hội",
       "contactsPaid": "Có sẵn với gói trực tuyến trả phí.",
       "usage": "{used} / {total} hồ sơ trong tháng này",
-      "reset": "Đặt lại hạn ngạch hàng tháng vào ngày 1 trong thời gian New York.",
+      "reset": "Hạn mức hằng tháng được đặt lại vào ngày 1 (giờ New York).",
       "loading": "Đang tải giới hạn của bạn...",
       "optionsFailed": "Không thể tải giới hạn nhiệm vụ của bạn. Vui lòng thử lại.",
       "submit": "Bắt đầu thu thập",
       "submitting": "Đang gửi...",
+      "submitted": "Đã gửi tác vụ",
       "failed": "Việc gửi nhiệm vụ không thành công. Hãy làm mới lịch sử trước khi thử lại.",
       "exhausted": "Hạn ngạch hàng tháng của bạn đã hết.",
       "invalid": "Nhập tối đa {limit} từ khóa, mỗi từ khóa không dài quá 500 ký tự.",
@@ -119,11 +122,12 @@ export const site: SiteContent = {
         "radius": "Bán kính (km)",
         "spacing": "Khoảng cách lưới (km)",
         "sampleCount": "{count} / {limit} tìm kiếm địa điểm",
+        "points": "Điểm lưới: {points} · Từ khóa: {keywords}",
         "overLimit": "Giảm bán kính hoặc tăng khoảng cách lưới để ở trong {limit} vị trí tìm kiếm.",
         "chooseCenter": "Chọn một trung tâm trên bản đồ hoặc nhập tọa độ.",
         "mapLabel": "Chọn trung tâm tìm kiếm trên bản đồ",
         "tilesUnavailable": "Không thể tải ô bản đồ. Bạn vẫn có thể nhập tọa độ.",
-        "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap người đóng góp</a>"
+        "attribution": "những người đóng góp OpenStreetMap"
       },
       "region": {
         "baseKeywords": "Từ khóa cơ sở",
@@ -135,15 +139,14 @@ export const site: SiteContent = {
         "city": "Thành phố",
         "selectCountry": "Chọn một quốc gia",
         "allStates": "Tất cả các tiểu bang hoặc khu vực",
-        "selectCity": "Chọn một thành phố",
         "loading": "Đang tải vị trí...",
         "loadFailed": "Không thể tải vị trí. Vui lòng thử lại.",
         "retry": "Thử lại",
         "addCountry": "Thêm quốc gia",
         "addState": "Thêm trạng thái",
-        "addCity": "Thêm thành phố",
         "selectedRegions": "Địa điểm đã chọn",
         "remove": "Xóa {name}",
+        "noMatch": "Không có kết quả phù hợp",
         "matchMode": "Tìm kiếm cụm từ",
         "inMode": "TRONG",
         "nearMode": "Gần",
@@ -158,33 +161,58 @@ export const site: SiteContent = {
       "description": "Quản lý các lần xuất MapsGrab, quyền truy cập và đăng ký API của bạn trong một không gian làm việc."
     },
     "shell": {
+      "skipToContent": "Chuyển đến nội dung chính",
+      "sideLabel": "Không gian làm việc",
+      "homeLabel": "Trang chủ MapsGrab",
+      "navLabel": "Menu không gian làm việc",
       "loading": "Đang tải không gian làm việc của bạn...",
       "retry": "Thử lại",
-      "navHistory": "Trình thu thập trực tuyến",
+      "navOnline": "Trình thu thập trực tuyến",
+      "navJobHistory": "Lịch sử",
       "navApi": "API quản lý",
       "navSubscriptions": "Đăng ký",
       "openMenu": "Mở menu không gian làm việc",
-      "closeMenu": "Đóng menu không gian làm việc"
+      "closeMenu": "Đóng menu không gian làm việc",
+      "collapseSidebar": "Thu gọn thanh bên",
+      "expandSidebar": "Mở rộng thanh bên",
+      "back": "Quay lại"
     },
     "account": {
       "menuButtonLabel": "Mở menu tài khoản",
       "menuLabel": "Trình đơn tài khoản",
-      "logout": "Đăng xuất"
+      "logout": "Đăng xuất",
+      "upgrade": "Nâng cấp",
+      "usageShort": "{used} / {total} bản ghi",
+      "planUnavailable": "Không khả dụng",
+      "theme": "Giao diện",
+      "themeLight": "Sáng",
+      "themeDark": "Tối",
+      "themeSystem": "Theo hệ thống",
+      "language": "Ngôn ngữ"
     },
     "history": {
       "title": "Lịch sử xuất dữ liệu trực tuyến",
       "description": "Các tác vụ bạn đã chạy trên Công cụ quét trực tuyến, mới nhất trước tiên. Thời gian được hiển thị theo Giờ Miền Đông (New York).",
       "refresh": "Làm cho khỏe lại",
+      "autoRefresh": "Đang tự động làm mới",
       "loading": "Đang tải bản xuất của bạn...",
       "loadFailed": "Không tải được lịch sử xuất của bạn.",
+      "refreshFailed": "Không thể làm mới. Đang hiển thị kết quả tải gần nhất.",
       "retry": "Thử lại",
       "emptyTitle": "Chưa có xuất dữ liệu",
       "emptyHint": "Chạy một tác vụ trên Trình thu thập trực tuyến và nó sẽ hiển thị ở đây.",
+      "emptyCta": "Đến Trình thu thập trực tuyến",
+      "recentTitle": "Tác vụ gần đây",
+      "viewAll": "Xem tất cả",
+      "recentEmptyHint": "Các tác vụ bạn bắt đầu ở trên sẽ hiển thị tại đây.",
+      "noMatchTitle": "Không có tác vụ phù hợp",
+      "noMatchHint": "Hãy thử mã tác vụ hoặc từ khóa khác, hoặc xóa bộ lọc.",
+      "moreKeywordsShort": "+{count}",
+      "moreKeywords": "và {count} từ khóa khác",
       "columns": {
-        "taskNo": "Công việc",
-        "createdAt": "Đã tạo (ET)",
+        "taskNo": "Tác vụ",
+        "createdAt": "Tạo lúc (ET)",
         "samples": "Tìm kiếm",
-        "processed": "Đã xử lý",
         "records": "Hồ sơ",
         "status": "Trạng thái"
       },
@@ -197,21 +225,48 @@ export const site: SiteContent = {
         "failed": "Thất bại"
       },
       "timezone": "ET",
+      "search": {
+        "label": "Tìm tác vụ",
+        "placeholder": "Tìm theo mã tác vụ hoặc từ khóa",
+        "clear": "Xóa tìm kiếm"
+      },
+      "filters": {
+        "label": "Lọc tác vụ",
+        "button": "Bộ lọc",
+        "status": "Trạng thái",
+        "all": "Tất cả",
+        "running": "Đang chạy",
+        "clear": "Xóa bộ lọc"
+      },
+      "range": {
+        "label": "Khoảng thời gian",
+        "last7": "7 ngày qua",
+        "last30": "30 ngày qua",
+        "all": "Mọi thời gian",
+        "custom": "Tùy chỉnh",
+        "from": "Từ",
+        "to": "Đến",
+        "apply": "Áp dụng",
+        "invalid": "Chọn ngày bắt đầu không muộn hơn ngày kết thúc.",
+        "hint": "Ngày theo giờ miền Đông Hoa Kỳ (New York)."
+      },
       "pagination": {
+        "label": "Phân trang",
         "previous": "Trước",
         "next": "Kế tiếp",
+        "page": "Trang {page}",
+        "pageSize": "Số dòng mỗi trang",
         "summary": "{from}–{to} trong số {total}"
       },
       "detail": {
         "show": "Chi tiết",
-        "hide": "Ẩn chi tiết",
         "loading": "Đang tải tìm kiếm...",
         "loadFailed": "Không thể tải các tìm kiếm cho tác vụ này.",
         "keyword": "Từ khóa",
         "records": "Hồ sơ",
         "runNo": "Chạy",
-        "startedAt": "Đã bắt đầu (ET)",
-        "finishedAt": "Đã hoàn thành (ET)",
+        "startedAt": "Bắt đầu lúc (ET)",
+        "finishedAt": "Kết thúc lúc (ET)",
         "contacts": "Email và hồ sơ xã hội",
         "contactsEnabled": "Đã bật cho tác vụ này",
         "contactsDisabled": "Tắt cho nhiệm vụ này",
@@ -219,6 +274,10 @@ export const site: SiteContent = {
         "pending": "Chưa giải quyết",
         "viewport": "{lat}, {lng} · thu phóng {zoom}"
       },
+      "copyJob": "Sao chép mã tác vụ",
+      "dedupeHint": "Số bản ghi được tính sau khi loại bỏ trùng lặp trên toàn bộ tác vụ.",
+      "finished": "Tác vụ {job}: {status}",
+      "finishedRecords": "{count} bản ghi",
       "downloadCsv": "Tải xuống CSV",
       "noFile": "Không CSV",
       "errors": {
@@ -236,20 +295,17 @@ export const site: SiteContent = {
       "unreachable": "Không thể đạt tới MapsGrab ngay bây giờ."
     },
     "api": {
-      "title": "API quản lý",
       "description": "Quản lý khóa API, trợ cấp yêu cầu hàng tháng và các ứng dụng AI được kết nối của bạn.",
       "docsLink": "Xem API sản phẩm",
       "signInPrompt": "Đăng nhập để quản lý quyền truy cập API của bạn.",
-      "signInCta": "Đăng nhập",
-      "unreachable": "Không thể đạt tới MapsGrab ngay bây giờ.",
       "loading": "Đang tải quyền truy cập API của bạn...",
       "loadFailed": "Không thể tải quyền truy cập API của bạn. Vui lòng thử lại.",
       "retry": "Thử lại",
       "refresh": "Làm cho khỏe lại",
-      "keyTitle": "phím API",
+      "keyTitle": "Khóa API",
       "keyEmpty": "Bạn chưa tạo khóa API.",
       "generateKey": "Tạo khóa API",
-      "rotateKey": "Thay thế phím API",
+      "rotateKey": "Thay thế khóa API",
       "generatingKey": "Đang tạo...",
       "keyOnce": "Sao chép khóa này ngay bây giờ. Bạn sẽ không thể xem lại sau khi rời khỏi hoặc làm mới trang này.",
       "keyCreated": "Tạo",
@@ -261,10 +317,11 @@ export const site: SiteContent = {
       "copyFailed": "Không thể sao chép. Chọn văn bản và sao chép nó bằng tay.",
       "keyFailed": "Không thể tạo khóa API. Vui lòng thử lại.",
       "usageTitle": "Mức sử dụng API hàng tháng",
+      "usageFailed": "Không thể tải mức sử dụng API. Vui lòng thử lại.",
       "usageValue": "{used} / {total} yêu cầu",
       "usagePeriod": "Thời gian: {period}",
       "quotaExhausted": "Trợ cấp yêu cầu hàng tháng của bạn đã cạn kiệt.",
-      "quotaReset": "Đặt lại vào ngày 1st mỗi tháng trong thời gian New York. API và MCP chia sẻ khoản trợ cấp này.",
+      "quotaReset": "Đặt lại ngày 1 (ET) · API và MCP dùng chung",
       "planTitle": "kế hoạch API",
       "managePlan": "Quản lý đăng ký",
       "connectionsTitle": "Địa chỉ kết nối",
@@ -273,6 +330,8 @@ export const site: SiteContent = {
       "mcpHint": "Thêm URL này vào ứng dụng khách MCP của bạn. Đăng nhập và phê duyệt kết nối khi mở trang web này.",
       "mcpUnavailable": "Địa chỉ kết nối MCP chưa có sẵn.",
       "copyUrl": "Sao chép URL",
+      "curlTitle": "Bắt đầu nhanh",
+      "curlHint": "Thay phần giữ chỗ bằng khóa API đầy đủ của bạn.",
       "grants": {
         "title": "Ứng dụng được kết nối",
         "description": "Các ứng dụng bạn đã cho phép tìm kiếm doanh nghiệp và đọc các bài đánh giá cũng như ảnh công khai bằng cách sử dụng khoản trợ cấp API của bạn.",
@@ -294,9 +353,6 @@ export const site: SiteContent = {
     "subscriptions": {
       "title": "Đăng ký",
       "description": "Các kế hoạch và trạng thái gia hạn cho Công cụ quét trực tuyến, tiện ích mở rộng trình duyệt và API. Mua hoặc nâng cấp trên trang Định giá.",
-      "loading": "Đang tải đăng ký của bạn...",
-      "loadFailed": "Không thể tải đăng ký của bạn.",
-      "retry": "Thử lại",
       "lines": {
         "online": "Trình thu thập trực tuyến",
         "extension": "Tiện ích mở rộng trình duyệt",
@@ -304,17 +360,17 @@ export const site: SiteContent = {
       },
       "planLabel": "Kế hoạch",
       "expiresLabel": "Gia hạn/hết hạn",
-      "noExpiry": "Không hết hạn",
       "free": "Miễn phí",
       "unavailable": "Tạm thời không có",
       "autoRenewOn": "Tự động gia hạn đang bật",
       "autoRenewOff": "Tắt tự động gia hạn",
+      "paidVia": "Thanh toán qua {method}",
       "subscribeCta": "Chọn một kế hoạch",
+      "pricingLink": "Xem bảng giá",
       "manageSubscription": "Quản lý đăng ký",
       "managingSubscription": "Khai mạc...",
-      "signInPrompt": "Đăng nhập để xem đăng ký của bạn.",
-      "signInCta": "Đăng nhập",
-      "unreachable": "Không thể đạt tới MapsGrab ngay bây giờ."
+      "manageFailed": "Không thể mở trang quản lý gói đăng ký. Vui lòng thử lại.",
+      "signInPrompt": "Đăng nhập để xem đăng ký của bạn."
     },
     "cancelGuide": {
       "title": "Quản lý đăng ký của bạn tại nhà cung cấp thanh toán",
@@ -2166,6 +2222,7 @@ export const site: SiteContent = {
         "theater": {
           "files": "1 CSV · Đã lưu vào phần tải xuống",
           "csv": "CSV",
+          "processed": "Đã xử lý",
           "parallelChip": {
             "label": "Từ khóa chạy",
             "value": "Song song"
@@ -2275,7 +2332,8 @@ export const site: SiteContent = {
           ]
         },
         "regions": {
-          "hint": "Bạn có thể chỉnh sửa các truy vấn được tạo trước khi gửi. Mỗi cái được tính là một từ khóa."
+          "hint": "Bạn có thể chỉnh sửa các truy vấn được tạo trước khi gửi. Mỗi cái được tính là một từ khóa.",
+          "addCity": "Thêm thành phố"
         }
       },
       "results": {

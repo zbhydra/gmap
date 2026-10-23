@@ -391,6 +391,11 @@ p {
   stroke-linejoin: round;
 }
 
+.icon--xs {
+  width: 14px;
+  height: 14px;
+}
+
 .icon--sm {
   width: 16px;
   height: 16px;

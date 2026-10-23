@@ -1,7 +1,8 @@
 /**
  * Website 通用确认框运行时。
  *
- * 业务脚本调用 confirmSiteAction，弹窗以 Promise<boolean> 返回用户选择。
+ * 业务脚本调用 confirmSiteAction，弹窗以 Promise<boolean> 返回用户选择。原生 <dialog> 负责模态焦点；
+ * Esc、点遮罩与取消按钮都视为取消。确认多用于破坏性操作，打开时默认聚焦取消按钮。
  */
 
 /** 通用确认框展示选项。 */
@@ -25,14 +26,16 @@ export interface SiteConfirmOptions {
 
 interface SiteConfirmElements {
   /** 弹窗根节点。 */
-  modal: HTMLElement
+  modal: HTMLDialogElement
   /** 标题节点。 */
   title: HTMLElement
   /** 正文节点。 */
   message: HTMLElement
   /** 确认按钮。 */
   submitButton: HTMLButtonElement
-  /** 所有取消入口，包含关闭按钮和遮罩。 */
+  /** 带文字的取消按钮（打开时的默认焦点）。 */
+  dismissButton: HTMLButtonElement
+  /** 所有取消入口：右上角关闭与取消按钮。 */
   cancelButtons: HTMLButtonElement[]
 }
 
@@ -40,82 +43,68 @@ interface PendingConfirmation {
   /** Promise resolver，true 表示确认，false 表示取消。 */
   resolve: (confirmed: boolean) => void
   /** 打开弹窗前的焦点元素，用于关闭后恢复键盘位置。 */
-  previousFocus: FocusableElement | null
+  previousFocus: HTMLElement | null
 }
 
-interface FocusableElement extends Element {
-  /** 恢复键盘焦点。 */
-  focus: () => void
-}
-
-const SITE_CONFIRM_SELECTOR = '[data-site-confirm-modal]'
+const SITE_CONFIRM_SELECTOR = 'dialog[data-site-confirm-modal]'
 
 let pendingConfirmation: PendingConfirmation | null = null
-let keydownBound = false
+let boundModal: HTMLDialogElement | null = null
 
 function getConfirmElements(): SiteConfirmElements {
-  const modal = document.querySelector<HTMLElement>(SITE_CONFIRM_SELECTOR)
+  const modal = document.querySelector<HTMLDialogElement>(SITE_CONFIRM_SELECTOR)
   if (!modal) {
-    throw new Error('Missing site confirm modal host: [data-site-confirm-modal].')
+    throw new Error('Missing site confirm modal host: dialog[data-site-confirm-modal].')
   }
 
   const title = modal.querySelector<HTMLElement>('[data-site-confirm-title]')
   const message = modal.querySelector<HTMLElement>('[data-site-confirm-message]')
   const submitButton = modal.querySelector<HTMLButtonElement>('[data-site-confirm-submit]')
-  const cancelButtons = Array.from(
-    modal.querySelectorAll<HTMLButtonElement>('[data-site-confirm-cancel]')
-  )
+  const dismissButton = modal.querySelector<HTMLButtonElement>('[data-site-confirm-dismiss]')
+  const cancelButtons = Array.from(modal.querySelectorAll<HTMLButtonElement>('[data-site-confirm-cancel]'))
 
-  if (!title || !message || !submitButton || cancelButtons.length === 0) {
+  if (!title || !message || !submitButton || !dismissButton || cancelButtons.length === 0) {
     throw new Error('Missing site confirm modal child elements.')
   }
 
-  return {
-    modal,
-    title,
-    message,
-    submitButton,
-    cancelButtons
-  }
+  return { modal, title, message, submitButton, dismissButton, cancelButtons }
 }
 
-function closeConfirm(elements: SiteConfirmElements, confirmed: boolean): void {
+function settleConfirm(modal: HTMLDialogElement, confirmed: boolean): void {
+  if (modal.open) {
+    modal.close()
+  }
   if (!pendingConfirmation) {
-    elements.modal.hidden = true
     return
   }
 
   const pending = pendingConfirmation
   pendingConfirmation = null
-  elements.modal.hidden = true
   pending.resolve(confirmed)
   pending.previousFocus?.focus()
 }
 
-function handleDocumentKeydown(event: KeyboardEvent): void {
-  if (!pendingConfirmation) {
+/** 事件只绑定一次：确认 / 取消按钮、Esc（cancel 事件）与点遮罩（命中 dialog 自身）。 */
+function bindConfirmEvents(elements: SiteConfirmElements): void {
+  if (boundModal === elements.modal) {
     return
   }
 
-  if (event.key !== 'Escape') {
-    return
+  const { modal } = elements
+  elements.submitButton.addEventListener('click', () => settleConfirm(modal, true))
+  for (const button of elements.cancelButtons) {
+    button.addEventListener('click', () => settleConfirm(modal, false))
   }
-
-  event.preventDefault()
-  closeConfirm(getConfirmElements(), false)
-}
-
-function ensureKeydownHandler(): void {
-  if (keydownBound) {
-    return
-  }
-
-  document.addEventListener('keydown', handleDocumentKeydown)
-  keydownBound = true
-}
-
-function canRestoreFocus(element: Element | null | undefined): element is FocusableElement {
-  return element != null && typeof (element as Partial<FocusableElement>).focus === 'function'
+  modal.addEventListener('cancel', event => {
+    event.preventDefault()
+    settleConfirm(modal, false)
+  })
+  modal.addEventListener('click', event => {
+    if (event.target === modal) {
+      settleConfirm(modal, false)
+    }
+  })
+  boundModal = modal
 }
 
 /** 渲染支持单个安全链接占位符的正文，避免业务方传 HTML。 */
@@ -145,45 +134,26 @@ function renderConfirmMessage(element: HTMLElement, options: SiteConfirmOptions)
   }
 }
 
-/** 打开全站通用确认框，用户确认时返回 true，取消或 Escape 时返回 false。 */
+/** 打开全站通用确认框，用户确认时返回 true，取消、Esc 或点遮罩时返回 false。 */
 export function confirmSiteAction(options: SiteConfirmOptions): Promise<boolean> {
   const elements = getConfirmElements()
-  if (pendingConfirmation) {
-    closeConfirm(elements, false)
-  }
+  bindConfirmEvents(elements)
+  settleConfirm(elements.modal, false)
 
   elements.title.textContent = options.title
   renderConfirmMessage(elements.message, options)
   elements.submitButton.textContent = options.confirmLabel
-
+  elements.dismissButton.textContent = options.cancelLabel
   for (const button of elements.cancelButtons) {
     button.setAttribute('aria-label', options.cancelLabel)
-    if (button.classList.contains('site-confirm-action')) {
-      button.textContent = options.cancelLabel
-    }
   }
 
-  ensureKeydownHandler()
-  elements.submitButton.onclick = () => closeConfirm(elements, true)
-  for (const button of elements.cancelButtons) {
-    button.onclick = () => closeConfirm(elements, false)
-  }
-
-  const previousFocus = canRestoreFocus(document.activeElement) ? document.activeElement : null
-  elements.modal.hidden = false
-  if (typeof window.requestAnimationFrame !== 'function') {
-    elements.submitButton.focus()
-  } else {
-    window.requestAnimationFrame(() => {
-      elements.submitButton.focus()
-    })
-  }
+  const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  elements.modal.showModal()
+  elements.dismissButton.focus()
 
   return new Promise<boolean>(resolve => {
-    pendingConfirmation = {
-      resolve,
-      previousFocus
-    }
+    pendingConfirmation = { resolve, previousFocus }
   })
 }
 

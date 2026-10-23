@@ -1,9 +1,10 @@
 """本人 Google Export 创建、历史、详情与整 Job CSV 下载。"""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 from fastapi.responses import JSONResponse
+from pydantic import StringConstraints
 
 from app.api.user_dependencies import UserContext, get_current_user
 from app.constants.export import EXPORT_PUBLIC_STATUSES, ExportRunStatus
@@ -27,6 +28,10 @@ from app.utils.response import ResponseUtils
 
 router = APIRouter(prefix="/export", tags=["Google Export"])
 JobNo = Annotated[str, Path(pattern=r"^[0-9a-f]{32}0[0-9]$")]
+HistoryQuery = Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)]
+PublicStatus = Literal[
+    "queued", "collecting", "publishing", "completed", "partial", "failed"
+]
 
 
 async def creation_rights(user_id: int) -> tuple[int, bool]:
@@ -39,13 +44,22 @@ async def creation_rights(user_id: int) -> tuple[int, bool]:
     )
 
 
-def _summary(job: ExportJobModel, run: ExportRunModel) -> dict[str, object]:
+def _summary(
+    job: ExportJobModel, run: ExportRunModel, q: str | None = None
+) -> dict[str, object]:
     checkpoint = run.checkpoint
+    keywords = GmapSearchOptions.model_validate(job.options_json).keywords
+    keyword_preview = next(
+        (keyword for keyword in keywords if q and q.casefold() in keyword.casefold()),
+        keywords[0],
+    )
     return {
         "job_no": job.job_no,
         "run_no": run.run_no,
         "status": EXPORT_PUBLIC_STATUSES[run.status],
         "include_contacts": job.include_contacts,
+        "keyword_preview": keyword_preview,
+        "keyword_count": len(keywords),
         "total_count": len(checkpoint.item_results),
         "processed_count": sum(item.completed for item in checkpoint.item_results),
         "record_count": checkpoint.output_count,
@@ -126,10 +140,35 @@ async def create_job(
 async def list_jobs(
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    q: HistoryQuery | None = Query(None),
+    status: list[PublicStatus] | None = Query(None),
+    created_from_ms: int | None = Query(None, ge=0),
+    created_to_ms: int | None = Query(None, ge=0),
     current_user: UserContext = Depends(get_current_user),
 ) -> JSONResponse:
+    if (
+        created_from_ms is not None
+        and created_to_ms is not None
+        and created_from_ms > created_to_ms
+    ):
+        raise AppCommonException(
+            CommonCode.INVALID_REQUEST,
+            ext_msg=(
+                "export.list_jobs: 创建时间范围无效 "
+                f"created_from_ms={created_from_ms} created_to_ms={created_to_ms}"
+            ),
+            data={"field": "created_range"},
+        )
+    q = q or None
+    statuses = [ExportRunStatus[value.upper()] for value in status] if status else None
     jobs = await export_job_service.export_job_lists(
-        user_id=current_user.user_id, offset=offset, limit=limit
+        user_id=current_user.user_id,
+        q=q,
+        statuses=statuses,
+        created_from_ms=created_from_ms,
+        created_to_ms=created_to_ms,
+        offset=offset,
+        limit=limit,
     )
     runs = {
         run.job_no: run
@@ -139,9 +178,13 @@ async def list_jobs(
     }
     return ResponseUtils.ok(
         {
-            "jobs": [_summary(job, runs[job.job_no]) for job in jobs],
+            "jobs": [_summary(job, runs[job.job_no], q) for job in jobs],
             "total": await export_job_service.count_export_jobs(
-                user_id=current_user.user_id
+                user_id=current_user.user_id,
+                q=q,
+                statuses=statuses,
+                created_from_ms=created_from_ms,
+                created_to_ms=created_to_ms,
             ),
             "offset": offset,
             "limit": limit,

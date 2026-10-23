@@ -1,0 +1,21 @@
+---
+import DashboardPage from '../../../components/pages/DashboardPage.astro'
+import type { Locale } from '../../../i18n/content'
+import { localePaths } from '../../../i18n/ui'
+import { DASHBOARD_VIEWS, type DashboardView } from '../../../scripts/dashboard/route'
+
+export function getStaticPaths() {
+  return Object.entries(localePaths)
+    .filter(([locale]) => locale !== 'en-US')
+    .flatMap(([locale, path]) =>
+      DASHBOARD_VIEWS.map(view => ({
+        params: { lang: path, view: view === 'online' ? undefined : view },
+        props: { locale, view }
+      }))
+    )
+}
+
+const { locale, view } = Astro.props as { locale: Locale; view: DashboardView }
+---
+
+<DashboardPage locale={locale} view={view} />

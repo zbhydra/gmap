@@ -158,11 +158,11 @@ test.describe('Tool Matrix', () => {
     await page.locator('[data-lat-degrees]').fill('37')
     await page.locator('[data-lat-minutes]').fill('46')
     await page.locator('[data-lat-seconds]').fill('29.74')
-    await page.locator('[data-lat-hemisphere]').selectOption('N')
+    await page.locator('[data-lat-hemisphere] label:has(input[value="N"])').click()
     await page.locator('[data-lng-degrees]').fill('122')
     await page.locator('[data-lng-minutes]').fill('25')
     await page.locator('[data-lng-seconds]').fill('9.9')
-    await page.locator('[data-lng-hemisphere]').selectOption('W')
+    await page.locator('[data-lng-hemisphere] label:has(input[value="W"])').click()
     await page.locator('[data-tool-form] button[type="submit"]').click()
 
     await expect(page.locator('[data-dd-value]')).toHaveText('37.774928, -122.419417')
@@ -193,7 +193,7 @@ test.describe('Tool Matrix', () => {
     ])
 
     // 地点在前：切换组合顺序后重新生成
-    await page.locator('[data-order]').selectOption('location-first')
+    await page.locator('[data-order] input[value="location-first"]').check()
     await page.locator('[data-tool-form] button[type="submit"]').click()
     await expect(page.locator('[data-combinations]')).toHaveValue(/New York design agency/)
   })

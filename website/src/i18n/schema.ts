@@ -742,6 +742,8 @@ export interface OnlineScraperPageContent {
       files: string
       /** 整个 Job 的 CSV 下载按钮。 */
       csv: string
+      /** 剧场历史表的「已处理」列头（Dashboard 已把它并入 Searches 进度列，剧场仍单列演示）。 */
+      processed: string
       parallelChip: FloatChipMessage
       billingChip: FloatChipMessage
     }
@@ -782,7 +784,11 @@ export interface OnlineScraperPageContent {
       scale: string
       facts: readonly string[]
     }
-    regions: { hint: string }
+    regions: {
+      hint: string
+      /** 演示里把城市加入已选地点的按钮（Dashboard 的城市 combobox 选中即加入，没有这个按钮）。 */
+      addCity: string
+    }
   }
   /** ⑤ 单 Job CSV 与采样行数；第一行字段名、第二行字段说明、第三行起数据。 */
   results: {
@@ -1089,129 +1095,239 @@ export interface PricingPageContent {
   cta: ProductCtaMessage
 }
 
-/** 用户 Dashboard 工作区文案（侧栏 + 历史 / API / 订阅三视图，015 U2）。 */
+/** 用户 Dashboard 工作区文案（单入口 SPA：Online / History / API / 订阅四视图 + 常驻外壳）。 */
 export interface DashboardContent {
-  /** 正式任务创建表单。 */
+  /** Online Scraper 视图的新建任务面板（营销页 Online 组件复用部分键）。 */
   create: {
+    /** 产品名（营销页复用）。 */
     title: string
+    /** 新建任务面板标题。 */
+    newTask: string
+    /** 模式 tab 组的无障碍名称。 */
     modeLabel: string
+    /** 三种输入模式。 */
     modes: { keywords: string; map: string; regions: string }
+    /** 关键词输入框标签。 */
     keywords: string
+    /** 关键词输入框占位示例（换行分隔）。 */
     placeholder: string
+    /** 含 {count} {limit} 的关键词计数。 */
     count: string
+    /** 含 {count} 的去重提示：空行与重复行已忽略。 */
+    duplicates: string
+    /** 邮箱与社媒开关标签。 */
     contacts: string
+    /** Free 档开关禁用说明。 */
     contactsPaid: string
+    /** 含 {used} {total} 的本月额度。 */
     usage: string
+    /** 额度重置说明（纽约时间）。 */
     reset: string
+    /** 读取任务限制时的读屏状态。 */
     loading: string
+    /** 任务限制读取失败。 */
     optionsFailed: string
+    /** 提交按钮。 */
     submit: string
+    /** 提交中按钮文案。 */
     submitting: string
+    /** 提交成功 toast 标题。 */
+    submitted: string
+    /** 提交失败的兜底说明。 */
     failed: string
+    /** 额度用尽。 */
     exhausted: string
+    /** 含 {limit} 的关键词非法说明。 */
     invalid: string
+    /** 地图模式。 */
     map: {
+      /** 纬度输入。 */
       latitude: string
+      /** 经度输入。 */
       longitude: string
+      /** 半径滑杆（km）。 */
       radius: string
+      /** 网格间距滑杆（km）。 */
       spacing: string
+      /** 含 {count} {limit} 的搜索点总数。 */
       sampleCount: string
+      /** 含 {points} {keywords} 的网格点与关键词数。 */
+      points: string
+      /** 含 {limit} 的超限说明。 */
       overLimit: string
+      /** 尚未选择中心点的提示。 */
       chooseCenter: string
+      /** 地图区域的无障碍名称。 */
       mapLabel: string
+      /** 瓦片加载失败说明。 */
       tilesUnavailable: string
+      /** Leaflet 署名控件内容（OSM 署名链接）。 */
       attribution: string
     }
+    /** 地区模式。 */
     region: {
+      /** 基础关键词标签。 */
       baseKeywords: string
+      /** 基础关键词占位示例。 */
       basePlaceholder: string
+      /** 国家下拉。 */
       country: string
+      /** 州 / 地区下拉。 */
       state: string
+      /** 城市搜索框标签。 */
       citySearch: string
+      /** 城市搜索框占位。 */
       cityPlaceholder: string
+      /** 城市候选列表的无障碍名称。 */
       city: string
+      /** 国家下拉的空选项。 */
       selectCountry: string
+      /** 州下拉的全部选项。 */
       allStates: string
-      selectCity: string
+      /** 地点数据加载中。 */
       loading: string
+      /** 地点数据加载失败。 */
       loadFailed: string
+      /** 重试。 */
       retry: string
+      /** 加入当前国家。 */
       addCountry: string
+      /** 加入当前州。 */
       addState: string
-      addCity: string
+      /** 已选地点列表的无障碍名称。 */
       selectedRegions: string
+      /** 含 {name} 的移除地点。 */
       remove: string
+      /** 国家、州、城市 combobox 无匹配。 */
+      noMatch: string
+      /** 措辞单选组标题。 */
       matchMode: string
+      /** 措辞 In。 */
       inMode: string
+      /** 措辞 Near。 */
       nearMode: string
+      /** 生成查询按钮。 */
       generate: string
+      /** 最终查询框标签。 */
       finalQueries: string
+      /** 最终查询框占位。 */
       finalPlaceholder: string
+      /** GeoNames 署名。 */
       attribution: string
     }
   }
   /** 工作区页面 SEO 元信息（noindex 页仅作 title/description 展示）。 */
   seo: {
-    /** HTML title。 */
+    /** HTML title 后缀，完整标题为「{视图} · {title}」。 */
     title: string
     /** meta description。 */
     description: string
   }
-  /** 工作区骨架（侧栏菜单与窄屏开关）。 */
+  /** 工作区外壳（侧栏、顶栏、抽屉）。 */
   shell: {
-    /** 会话恢复中占位文案。 */
+    /** 跳到主内容链接。 */
+    skipToContent: string
+    /** 侧栏 aside 的无障碍名称。 */
+    sideLabel: string
+    /** 品牌链接（回首页）的无障碍名称。 */
+    homeLabel: string
+    /** 侧栏导航的无障碍名称。 */
+    navLabel: string
+    /** 会话恢复中的读屏状态。 */
     loading: string
-    /** 会话恢复失败的重试按钮（工作区级面板）。 */
+    /** 会话恢复失败的重试按钮。 */
     retry: string
-    /** 侧栏菜单：在线导出历史。 */
-    navHistory: string
-    /** 侧栏菜单：API 管理。 */
+    /** 菜单：Online Scraper 视图。 */
+    navOnline: string
+    /** 菜单：History 视图。 */
+    navJobHistory: string
+    /** 菜单：API 管理。 */
     navApi: string
-    /** 侧栏菜单：订阅管理。 */
+    /** 菜单：订阅管理。 */
     navSubscriptions: string
-    /** 窄屏展开侧栏按钮。 */
+    /** 窄屏展开抽屉按钮。 */
     openMenu: string
-    /** 窄屏收起侧栏按钮。 */
+    /** 窄屏收起抽屉按钮。 */
     closeMenu: string
+    /** 宽屏收起侧栏为图标栏。 */
+    collapseSidebar: string
+    /** 宽屏展开侧栏。 */
+    expandSidebar: string
+    /** 浮层子面板（语言、自定义日期）返回上一层按钮的无障碍名称。 */
+    back: string
   }
-  /** 侧栏底部个人信息与退出。 */
+  /** 侧栏底部用户卡与账户菜单。 */
   account: {
-    /** 个人信息按钮无障碍文案。 */
+    /** 用户卡（菜单按钮）的无障碍名称后缀。 */
     menuButtonLabel: string
-    /** 展开菜单无障碍文案。 */
+    /** 账户菜单的无障碍名称。 */
     menuLabel: string
-    /** 退出登录按钮。 */
+    /** 退出登录。 */
     logout: string
+    /** 升级入口（跳 Pricing 对应产品）。 */
+    upgrade: string
+    /** 含 {used} {total} 的用户卡本月额度。 */
+    usageShort: string
+    /** 订阅读取失败时的档位徽章。 */
+    planUnavailable: string
+    /** 主题分组标题。 */
+    theme: string
+    /** 主题：浅色。 */
+    themeLight: string
+    /** 主题：深色。 */
+    themeDark: string
+    /** 主题：跟随系统。 */
+    themeSystem: string
+    /** 语言下拉标题。 */
+    language: string
   }
-  /** 在线导出历史视图。 */
+  /** 任务列表：Online 最近任务与 History 完整列表共用。 */
   history: {
-    /** 视图标题。 */
+    /** History 列表的无障碍名称。 */
     title: string
-    /** 视图说明。 */
+    /** History 视图说明。 */
     description: string
-    /** 手动刷新按钮。 */
+    /** 手动刷新。 */
     refresh: string
-    /** 列表加载中文案。 */
+    /** 有运行中任务时的顶栏自动刷新提示。 */
+    autoRefresh: string
+    /** 列表加载中的读屏状态。 */
     loading: string
-    /** 列表加载失败文案。 */
+    /** 列表加载失败。 */
     loadFailed: string
-    /** 加载失败重试按钮。 */
+    /** 刷新或轮询失败、保留旧数据时的提示。 */
+    refreshFailed: string
+    /** 重试。 */
     retry: string
-    /** 无历史标题。 */
+    /** 还没有任何任务。 */
     emptyTitle: string
-    /** 无历史说明。 */
+    /** History 空态说明。 */
     emptyHint: string
-    /** 列表表头。 */
+    /** History 空态去 Online 的按钮。 */
+    emptyCta: string
+    /** Online 最近任务标题。 */
+    recentTitle: string
+    /** 最近任务去 History 的链接。 */
+    viewAll: string
+    /** 最近任务空态说明。 */
+    recentEmptyHint: string
+    /** 有筛选但无结果。 */
+    noMatchTitle: string
+    /** 无匹配结果说明。 */
+    noMatchHint: string
+    /** 含 {count} 的其余关键词数（视觉）。 */
+    moreKeywordsShort: string
+    /** 含 {count} 的其余关键词数（读屏）。 */
+    moreKeywords: string
+    /** 列表表头与卡片标签。 */
     columns: {
-      /** 任务编号。 */
+      /** 任务号。 */
       taskNo: string
       /** 创建时间（含时区标注）。 */
       createdAt: string
-      /** 逻辑采样总数。 */
+      /** 已收口 / 总搜索数。 */
       samples: string
-      /** 已处理数。 */
-      processed: string
-      /** 结果条数。 */
+      /** 去重后的记录数。 */
       records: string
       /** 状态。 */
       status: string
@@ -1231,26 +1347,77 @@ export interface DashboardContent {
       /** 失败。 */
       failed: string
     }
-    /** 创建时间的时区标注（America/New_York）。 */
+    /** 时间的时区标注（America/New_York）。 */
     timezone: string
-    /** 分页控件。 */
+    /** 搜索框。 */
+    search: {
+      /** 搜索框无障碍名称。 */
+      label: string
+      /** 搜索框占位。 */
+      placeholder: string
+      /** 清空搜索按钮。 */
+      clear: string
+    }
+    /** 状态筛选与窄屏筛选浮层。 */
+    filters: {
+      /** 工具栏 role="search" 的无障碍名称。 */
+      label: string
+      /** 窄屏筛选按钮。 */
+      button: string
+      /** 状态分组标题。 */
+      status: string
+      /** 全部状态。 */
+      all: string
+      /** 运行中（排队、采集中、准备 CSV）。 */
+      running: string
+      /** 清除筛选（连同搜索）。 */
+      clear: string
+    }
+    /** 时间范围（纽约时间日历日）。 */
+    range: {
+      /** 时间范围分组标题。 */
+      label: string
+      /** 最近 7 天（含今天）。 */
+      last7: string
+      /** 最近 30 天（含今天）。 */
+      last30: string
+      /** 全部时间。 */
+      all: string
+      /** 自定义范围。 */
+      custom: string
+      /** 开始日期。 */
+      from: string
+      /** 结束日期。 */
+      to: string
+      /** 应用自定义范围。 */
+      apply: string
+      /** 开始晚于结束的说明。 */
+      invalid: string
+      /** 日期按纽约时间的说明。 */
+      hint: string
+    }
+    /** 分页条。 */
     pagination: {
+      /** 分页导航的无障碍名称。 */
+      label: string
       /** 上一页。 */
       previous: string
       /** 下一页。 */
       next: string
+      /** 含 {page} 的页码按钮无障碍名称。 */
+      page: string
+      /** 每页条数。 */
+      pageSize: string
       /** 区间摘要，含 {from} {to} {total}。 */
       summary: string
     }
-    /** 关键词明细展开区。 */
+    /** 任务展开明细（只在 History）。 */
     detail: {
-      /** 展开明细按钮。 */
+      /** 展开明细按钮与明细区域的名称。 */
       show: string
-      /** 收起明细按钮。 */
-      hide: string
-      /** 明细加载中文案。 */
+      /** 明细加载中的读屏状态。 */
       loading: string
-      /** 明细加载失败文案。 */
+      /** 明细加载失败。 */
       loadFailed: string
       /** 明细关键词列头。 */
       keyword: string
@@ -1275,6 +1442,14 @@ export interface DashboardContent {
       /** 视口来源，含 {lat} {lng} {zoom}。 */
       viewport: string
     }
+    /** 复制完整任务号。 */
+    copyJob: string
+    /** 明细底部说明：记录数按整个任务去重。 */
+    dedupeHint: string
+    /** 含 {job} {status} 的任务结束 toast 标题。 */
+    finished: string
+    /** 含 {count} 的任务结束 toast 说明。 */
+    finishedRecords: string
     /** 整 Job CSV 下载按钮。 */
     downloadCsv: string
     /** 终态没有可下载文件。 */
@@ -1289,34 +1464,28 @@ export interface DashboardContent {
     downloadUnavailable: string
     /** 下载请求失败提示。 */
     downloadFailed: string
-    /** 未登录访问工作区提示。 */
+    /** 未登录访问 Online / History 的提示。 */
     signInPrompt: string
-    /** 未登录访问工作区的登录按钮。 */
+    /** 登录按钮：四个视图的登录门槛与侧栏用户卡共用。 */
     signInCta: string
-    /** 会话恢复网络失败提示（可重试，不误判为退出）。 */
+    /** 会话恢复网络失败提示（四个视图与用户卡共用；可重试，不误判为退出）。 */
     unreachable: string
   }
   /** API 凭证、额度与 MCP 授权管理。 */
   api: {
-    /** 视图标题。 */
-    title: string
-    /** API 与 MCP 接入说明。 */
+    /** 视图说明。 */
     description: string
     /** API 产品营销页链接文案。 */
     docsLink: string
-    /** 未登录访问工作区提示。 */
+    /** 未登录访问的提示。 */
     signInPrompt: string
-    /** 未登录访问工作区的登录按钮。 */
-    signInCta: string
-    /** 会话恢复网络失败提示。 */
-    unreachable: string
-    /** 接入信息加载状态。 */
+    /** 接入信息加载中的读屏状态。 */
     loading: string
     /** 接入信息读取失败。 */
     loadFailed: string
     /** 重新读取。 */
     retry: string
-    /** 刷新当前用量和凭证摘要。 */
+    /** 刷新用量。 */
     refresh: string
     /** 凭证区标题。 */
     keyTitle: string
@@ -1346,19 +1515,21 @@ export interface DashboardContent {
     copyFailed: string
     /** 凭证生成失败。 */
     keyFailed: string
-    /** 月额度区标题。 */
+    /** 合卡用量分区的小标签。 */
     usageTitle: string
+    /** 用量读取失败。 */
+    usageFailed: string
     /** 含 {used} 与 {total}，单位为请求。 */
     usageValue: string
     /** 含 {period} 的计量周期。 */
     usagePeriod: string
     /** 当前额度已耗尽。 */
     quotaExhausted: string
-    /** 额度重置时区说明。 */
+    /** 用量区下方一句：每月 1 日按美东时间重置、API 与 MCP 共用额度。必须单行（390 视口内容宽约 324px），周期已在数字旁，不再重复。 */
     quotaReset: string
-    /** 当前 API 套餐。 */
+    /** 合卡套餐分区的小标签。 */
     planTitle: string
-    /** 前往既有订阅管理。 */
+    /** 去订阅视图。 */
     managePlan: string
     /** 连接信息区标题。 */
     connectionsTitle: string
@@ -1372,13 +1543,17 @@ export interface DashboardContent {
     mcpUnavailable: string
     /** 复制连接地址。 */
     copyUrl: string
+    /** 连接地址下方 curl 快速上手示例的标题。 */
+    curlTitle: string
+    /** 示例下方一句说明：示例里的 Key 是前缀或占位，使用时换成完整 Key。 */
+    curlHint: string
     /** 本人有效 OAuth 授权。 */
     grants: {
       /** 区块标题。 */
       title: string
       /** 授权范围与账号额度说明。 */
       description: string
-      /** 正在读取。 */
+      /** 列表读取中的读屏状态。 */
       loading: string
       /** 尚无授权。 */
       empty: string
@@ -1408,24 +1583,16 @@ export interface DashboardContent {
   }
   /** 订阅管理视图（Online / Extension / API 三线）。 */
   subscriptions: {
-    /** 视图标题。 */
+    /** 视图标题，也是账户菜单的订阅分组标题。 */
     title: string
     /** 视图说明。 */
     description: string
-    /** 加载中文案。 */
-    loading: string
-    /** 加载失败文案。 */
-    loadFailed: string
-    /** 加载失败重试按钮。 */
-    retry: string
     /** 三线展示名（键为 DashboardLineId）。 */
     lines: Record<DashboardLineId, string>
     /** 当前套餐标签。 */
     planLabel: string
     /** 到期时间标签。 */
     expiresLabel: string
-    /** 无到期时间文案。 */
-    noExpiry: string
     /** 无有效付费订阅状态。 */
     free: string
     /** 订阅配置不可用状态（不得伪装成未订阅）。 */
@@ -1434,20 +1601,22 @@ export interface DashboardContent {
     autoRenewOn: string
     /** 自动续费关闭文案。 */
     autoRenewOff: string
-    /** 订阅按钮（跳 Pricing 对应 tab）。 */
+    /** 含 {method} 的支付渠道。 */
+    paidVia: string
+    /** 订阅按钮（跳 Pricing 对应产品）。 */
     subscribeCta: string
+    /** 顶栏去 Pricing 的链接。 */
+    pricingLink: string
     /** 有效自动续费订阅的渠道管理入口按钮。 */
     manageSubscription: string
     /** 管理入口请求期间的加载文案。 */
     managingSubscription: string
-    /** 未登录访问工作区提示。 */
+    /** 管理入口打开失败（卡片内提示）。 */
+    manageFailed: string
+    /** 未登录访问的提示。 */
     signInPrompt: string
-    /** 未登录访问工作区的登录按钮。 */
-    signInCta: string
-    /** 会话恢复网络失败提示。 */
-    unreachable: string
   }
-  /** 渠道内操作指引（管理入口 URL 为空时的兜底展示，自 Pricing 页迁入）。 */
+  /** 渠道内操作指引（管理入口 URL 为空时的兜底展示）。 */
   cancelGuide: {
     /** 操作指引弹窗标题。 */
     title: string

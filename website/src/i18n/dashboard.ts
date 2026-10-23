@@ -1,19 +1,21 @@
 import type { DashboardContent } from './schema'
 
 /**
- * 用户 Dashboard 工作区文案（en-US 基线，015 U2）。
+ * 用户 Dashboard 工作区文案（en-US 基线）。
  *
- * 侧栏三视图：在线导出历史、API / MCP 接入、订阅管理。渠道内操作指引自
- * Pricing 页迁入，随有效自动续费订阅的管理入口展示。
+ * 单入口四视图：Online Scraper（新建任务 + 最近任务）、History、API / MCP 接入、订阅管理；
+ * 侧栏用户卡与账户菜单常驻。渠道内操作指引随有效自动续费订阅的管理入口展示。
  */
 export const dashboardContent: DashboardContent = {
   create: {
     title: 'Online Scraper',
+    newTask: 'New task',
     modeLabel: 'Search mode',
     modes: { keywords: 'Keywords', map: 'Map', regions: 'Regions' },
     keywords: 'Keywords',
     placeholder: 'coffee shop in Portland\nrestaurant in Austin',
     count: '{count} / {limit} keywords',
+    duplicates: 'Duplicate lines ignored: {count}',
     contacts: 'Find emails and social profiles',
     contactsPaid: 'Available with a paid Online plan.',
     usage: '{used} / {total} records this month',
@@ -22,6 +24,7 @@ export const dashboardContent: DashboardContent = {
     optionsFailed: 'Could not load your task limits. Please retry.',
     submit: 'Start scraping',
     submitting: 'Submitting...',
+    submitted: 'Task submitted',
     failed: 'Task submission failed. Refresh the history before trying again.',
     exhausted: 'Your monthly quota is exhausted.',
     invalid: 'Enter up to {limit} keywords, each no longer than 500 characters.',
@@ -31,11 +34,12 @@ export const dashboardContent: DashboardContent = {
       radius: 'Radius (km)',
       spacing: 'Grid spacing (km)',
       sampleCount: '{count} / {limit} search locations',
+      points: 'Grid points: {points} · Keywords: {keywords}',
       overLimit: 'Reduce the radius or increase grid spacing to stay within {limit} search locations.',
       chooseCenter: 'Choose a center on the map or enter coordinates.',
       mapLabel: 'Choose a search center on the map',
       tilesUnavailable: 'Map tiles could not load. You can still enter coordinates.',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+      attribution: 'OpenStreetMap contributors'
     },
     region: {
       baseKeywords: 'Base keywords',
@@ -47,15 +51,14 @@ export const dashboardContent: DashboardContent = {
       city: 'City',
       selectCountry: 'Select a country',
       allStates: 'All states or regions',
-      selectCity: 'Select a city',
       loading: 'Loading locations...',
       loadFailed: 'Locations could not load. Please retry.',
       retry: 'Retry',
       addCountry: 'Add country',
       addState: 'Add state',
-      addCity: 'Add city',
       selectedRegions: 'Selected locations',
       remove: 'Remove {name}',
+      noMatch: 'No matches',
       matchMode: 'Search phrasing',
       inMode: 'In',
       nearMode: 'Near',
@@ -70,34 +73,59 @@ export const dashboardContent: DashboardContent = {
     description: 'Manage your MapsGrab exports, API access and subscriptions in one workspace.'
   },
   shell: {
+    skipToContent: 'Skip to content',
+    sideLabel: 'Workspace',
+    homeLabel: 'MapsGrab home',
+    navLabel: 'Workspace menu',
     loading: 'Loading your workspace...',
     retry: 'Retry',
-    navHistory: 'Online Scraper',
+    navOnline: 'Online Scraper',
+    navJobHistory: 'History',
     navApi: 'API management',
     navSubscriptions: 'Subscriptions',
     openMenu: 'Open workspace menu',
-    closeMenu: 'Close workspace menu'
+    closeMenu: 'Close workspace menu',
+    collapseSidebar: 'Collapse sidebar',
+    expandSidebar: 'Expand sidebar',
+    back: 'Back'
   },
   account: {
     menuButtonLabel: 'Open account menu',
     menuLabel: 'Account menu',
-    logout: 'Log out'
+    logout: 'Log out',
+    upgrade: 'Upgrade',
+    usageShort: '{used} / {total} records',
+    planUnavailable: 'Unavailable',
+    theme: 'Theme',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    themeSystem: 'System',
+    language: 'Language'
   },
   history: {
     title: 'Online export history',
     description:
       'Tasks you ran on the Online Scraper, newest first. Times are shown in Eastern Time (New York).',
     refresh: 'Refresh',
+    autoRefresh: 'Auto-refresh on',
     loading: 'Loading your exports...',
     loadFailed: 'Failed to load your export history.',
+    refreshFailed: 'Could not refresh. Showing the last loaded results.',
     retry: 'Retry',
     emptyTitle: 'No exports yet',
     emptyHint: 'Run a task on the Online Scraper and it will show up here.',
+    emptyCta: 'Go to Online Scraper',
+    recentTitle: 'Recent tasks',
+    viewAll: 'View all',
+    recentEmptyHint: 'Tasks you start above will show up here.',
+    noMatchTitle: 'No matching tasks',
+    noMatchHint: 'Try a different job number or keyword, or clear the filters.',
+    moreKeywordsShort: '+{count}',
+    moreKeywords: 'and {count} more',
     columns: {
       taskNo: 'Job',
       createdAt: 'Created (ET)',
       samples: 'Searches',
-      processed: 'Processed',
       records: 'Records',
       status: 'Status'
     },
@@ -110,14 +138,41 @@ export const dashboardContent: DashboardContent = {
       failed: 'Failed'
     },
     timezone: 'ET',
+    search: {
+      label: 'Search tasks',
+      placeholder: 'Search by job number or keyword',
+      clear: 'Clear search'
+    },
+    filters: {
+      label: 'Filter tasks',
+      button: 'Filters',
+      status: 'Status',
+      all: 'All',
+      running: 'Running',
+      clear: 'Clear filters'
+    },
+    range: {
+      label: 'Time range',
+      last7: 'Last 7 days',
+      last30: 'Last 30 days',
+      all: 'All time',
+      custom: 'Custom range',
+      from: 'From',
+      to: 'To',
+      apply: 'Apply',
+      invalid: 'Choose a start date on or before the end date.',
+      hint: 'Dates use Eastern Time (New York).'
+    },
     pagination: {
+      label: 'Pagination',
       previous: 'Previous',
       next: 'Next',
+      page: 'Page {page}',
+      pageSize: 'Rows per page',
       summary: '{from}–{to} of {total}'
     },
     detail: {
       show: 'Details',
-      hide: 'Hide details',
       loading: 'Loading searches...',
       loadFailed: 'Failed to load searches for this task.',
       keyword: 'Keyword',
@@ -132,6 +187,10 @@ export const dashboardContent: DashboardContent = {
       pending: 'Pending',
       viewport: '{lat}, {lng} · zoom {zoom}'
     },
+    copyJob: 'Copy job number',
+    dedupeHint: 'Records are counted after duplicates are removed across the whole task.',
+    finished: 'Task {job}: {status}',
+    finishedRecords: '{count} records',
     downloadCsv: 'Download CSV',
     noFile: 'No CSV',
     errors: {
@@ -149,13 +208,10 @@ export const dashboardContent: DashboardContent = {
     unreachable: 'Could not reach MapsGrab right now.'
   },
   api: {
-    title: 'API management',
     description:
       'Manage your API key, monthly request allowance and connected AI apps.',
     docsLink: 'View API products',
     signInPrompt: 'Sign in to manage your API access.',
-    signInCta: 'Sign in',
-    unreachable: 'Could not reach MapsGrab right now.',
     loading: 'Loading your API access...',
     loadFailed: 'Could not load your API access. Please try again.',
     retry: 'Retry',
@@ -175,10 +231,11 @@ export const dashboardContent: DashboardContent = {
     copyFailed: 'Could not copy. Select the text and copy it manually.',
     keyFailed: 'Could not generate an API key. Please try again.',
     usageTitle: 'Monthly API usage',
+    usageFailed: 'Could not load your API usage. Please try again.',
     usageValue: '{used} / {total} requests',
     usagePeriod: 'Period: {period}',
     quotaExhausted: 'Your monthly request allowance is exhausted.',
-    quotaReset: 'Resets on the 1st of each month in New York time. API and MCP share this allowance.',
+    quotaReset: 'Resets on the 1st (ET) · Shared by API and MCP',
     planTitle: 'API plan',
     managePlan: 'Manage subscriptions',
     connectionsTitle: 'Connection addresses',
@@ -187,6 +244,8 @@ export const dashboardContent: DashboardContent = {
     mcpHint: 'Add this URL in your MCP client. Sign in and approve the connection when it opens this website.',
     mcpUnavailable: 'The MCP connection address is not available yet.',
     copyUrl: 'Copy URL',
+    curlTitle: 'Quick start',
+    curlHint: 'Replace the placeholder with your full API key.',
     grants: {
       title: 'Connected apps',
       description: 'Apps you have allowed to search businesses and read reviews and public photos using your API allowance.',
@@ -209,9 +268,6 @@ export const dashboardContent: DashboardContent = {
     title: 'Subscriptions',
     description:
       'Plans and renewal status for the Online Scraper, the browser extension and the API. Buy or upgrade on the Pricing page.',
-    loading: 'Loading your subscriptions...',
-    loadFailed: 'Failed to load your subscriptions.',
-    retry: 'Retry',
     lines: {
       online: 'Online Scraper',
       extension: 'Browser Extension',
@@ -219,17 +275,17 @@ export const dashboardContent: DashboardContent = {
     },
     planLabel: 'Plan',
     expiresLabel: 'Renews / expires',
-    noExpiry: 'No expiry',
     free: 'Free',
     unavailable: 'Temporarily unavailable',
     autoRenewOn: 'Auto-renewal on',
     autoRenewOff: 'Auto-renewal off',
+    paidVia: 'Paid via {method}',
     subscribeCta: 'Choose a plan',
+    pricingLink: 'View pricing',
     manageSubscription: 'Manage subscription',
     managingSubscription: 'Opening...',
-    signInPrompt: 'Sign in to see your subscriptions.',
-    signInCta: 'Sign in',
-    unreachable: 'Could not reach MapsGrab right now.'
+    manageFailed: 'Could not open subscription management. Please try again.',
+    signInPrompt: 'Sign in to see your subscriptions.'
   },
   cancelGuide: {
     title: 'Manage your subscription at the payment provider',

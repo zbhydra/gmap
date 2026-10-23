@@ -47,6 +47,10 @@ class GmapSearchOptions(BaseModel):
         return self
 
     @property
+    def keywords(self) -> list[str]:
+        return list(dict.fromkeys(item.keyword for item in self.items))
+
+    @property
     def max_results_per_item(self) -> int:
         return EXPORT_ITEM_LIMIT
 

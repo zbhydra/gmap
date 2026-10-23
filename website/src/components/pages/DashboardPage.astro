@@ -1,0 +1,56 @@
+---
+/**
+ * Dashboard 工作区页（noindex）：四个视图共用一个 Vue 单页，Astro 只按路由给出首屏视图并装配文案。
+ *
+ * 构建期为每个视图地址各产出一份静态 HTML（直接打开、刷新都落到对应视图的骨架），之后的切换在页内完成。
+ */
+// 全局样式在前，Dashboard 样式在后覆盖，API 与订阅视图的专属样式排在最后。
+// 全局样式要在这里显式先导入：构建时 Astro 按导入路径上的序号之和给页面 CSS 排序，
+// 只经 Layout 导入时全局样式的序号更大，会排到 dashboard.css 之后（dev 按导入顺序注入，不受影响）
+import '../../styles/tokens.css'
+import '../../styles/base.css'
+import '../../styles/motion.css'
+import '../../styles/components.css'
+import '../../styles/site.css'
+import Layout from '../../layouts/Layout.astro'
+import BrandMark from '../site/BrandMark.astro'
+import DashboardApp from '../dashboard/DashboardApp.vue'
+import '../dashboard/dashboard.css'
+import '../dashboard/dashboard-account.css'
+import { getContent, type Locale } from '../../i18n/content'
+import { localePaths } from '../../i18n/ui'
+import type { DashboardView } from '../../scripts/dashboard/route'
+
+interface Props {
+  locale?: Locale
+  view: DashboardView
+}
+
+const { locale = 'en-US', view } = Astro.props as Props
+const t = getContent(locale)
+const shell = t.dashboard.shell
+const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
+const viewTitle = { online: shell.navOnline, history: shell.navJobHistory, api: shell.navApi, subscriptions: shell.navSubscriptions }[view]
+---
+
+<Layout
+  locale={locale}
+  title={`${viewTitle} · ${t.dashboard.seo.title}`}
+  description={t.dashboard.seo.description}
+  robots="noindex, nofollow"
+  includeSoftwareApplicationSchema={false}
+  includeAlternateLanguageLinks={false}
+  workspaceMode
+>
+  <DashboardApp
+    client:load
+    initialView={view}
+    copy={t.dashboard}
+    popupBlocked={t.pages.account.creditPurchase.popupBlocked}
+    comingSoon={t.common.comingSoon}
+    localePrefix={localePrefix}
+    locale={locale}
+  >
+    <Fragment slot="brand"><BrandMark /><span class="side-brand-name">{t.layout.nav.brand}</span></Fragment>
+  </DashboardApp>
+</Layout>

@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en" class="dash-root">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Online Scraper · Dashboard | MapsGrab</title>
+    <meta name="description" content="Manage your MapsGrab exports, API access and subscriptions in one workspace." />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml" />
+    <!-- 首帧前恢复手动主题（与全站共用 localStorage['mg-theme']） -->
+    <script src="../assets/js/theme-boot.js"></script>
+    <!-- 首帧前恢复宽屏侧栏收起状态，避免先展开再收起（读写失败时保持展开） -->
+    <script>
+      try {
+        if (localStorage.getItem('mg-dash-side') === 'collapsed') document.documentElement.dataset.side = 'collapsed'
+      } catch (error) {}
+    </script>
+    <link rel="preload" href="../assets/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="../assets/fonts/azeret-mono-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="../assets/css/tokens.css" />
+    <link rel="stylesheet" href="../assets/css/base.css" />
+    <link rel="stylesheet" href="../assets/css/motion.css" />
+    <link rel="stylesheet" href="../assets/css/components.css" />
+    <link rel="stylesheet" href="dashboard.css" />
+    <script src="dashboard.js" defer></script>
+  </head>
+  <!--
+    MapsGrab Dashboard 设计稿（单页）：
+    - 外壳（侧栏 + 顶栏）静态输出，对应落地时 SSG 的公共壳；四个视图常驻 DOM，切换只动主区。
+    - ?view=online|history|api|subscriptions 模拟 /dashboard/、/dashboard/history/、/dashboard/api/、/dashboard/subscriptions/；
+      History 的筛选与页码同步到 q / status / range / from / to / page / size 参数。
+    - 每个视图分 skeleton / gate（未登录、网络失败）/ content 三个部分，由全局状态切换。
+    说明见同目录 README.md。
+  -->
+  <body class="dash-app" data-state="loading">
+    <!-- Dashboard 新增图标（待并入 ../assets/img/icons.svg，同为 24px 网格、1.75 描边） -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8" /><path d="M12 17v4" /></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></symbol>
+      <symbol id="i-selector" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5" /><path d="m7 9 5-5 5 5" /></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></symbol>
+      <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16" /></symbol>
+      <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6" /></symbol>
+    </svg>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <!-- ================================================================
+         侧栏：品牌 / 四个菜单 / 用户卡（固定于视口；宽屏可收起为图标栏，窄屏为抽屉）
+         ================================================================ -->
+    <aside class="dash-side" id="dash-side" aria-label="Workspace">
+      <div class="side-head">
+        <a class="side-brand" href="../index.html" aria-label="MapsGrab home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path class="brand-mark-pin" d="M16 6.2c-4.42 0-8 3.36-8 7.66 0 5.5 6.64 11.04 7.4 11.66.35.28.85.28 1.2 0 .76-.62 7.4-6.16 7.4-11.66 0-4.3-3.58-7.66-8-7.66Z" />
+              <path class="brand-mark-arrow" d="M16 10.1v6.2m-2.9-2.9 2.9 2.9 2.9-2.9" />
+            </svg>
+          </span>
+          <span class="side-brand-name">MapsGrab</span>
+        </a>
+        <!-- 宽屏收起 / 展开：贴品牌行右缘，收起后正好落在图标栏中线（窄屏隐藏，抽屉行为不变） -->
+        <button class="icon-btn side-toggle" type="button" aria-controls="dash-side" aria-expanded="true" aria-label="Collapse sidebar" data-side-toggle>
+          <svg class="icon" aria-hidden="true"><use href="#i-sidebar" /></svg>
+        </button>
+        <button class="icon-btn side-close" type="button" aria-label="Close workspace menu" data-side-close>
+          <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-x" /></svg>
+        </button>
+      </div>
+
+      <nav class="side-nav" aria-label="Workspace menu" data-nav>
+        <span class="side-thumb" aria-hidden="true" data-thumb></span>
+        <a class="side-link" href="?view=online" data-route="online" data-tip="Online Scraper" aria-current="page">
+          <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-cloud" /></svg><span class="side-label">Online Scraper</span>
+        </a>
+        <a class="side-link" href="?view=history" data-route="history" data-tip="History">
+          <svg class="icon" aria-hidden="true"><use href="#i-history" /></svg><span class="side-label">History</span>
+        </a>
+        <a class="side-link" href="?view=api" data-route="api" data-tip="API management">
+          <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-code" /></svg><span class="side-label">API management</span>
+        </a>
+        <a class="side-link" href="?view=subscriptions" data-route="subscriptions" data-tip="Subscriptions">
+          <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-tag" /></svg><span class="side-label">Subscriptions</span>
+        </a>
+      </nav>
+
+      <div class="side-foot" data-user-slot>
+        <!-- 首帧：用户卡骨架（会话恢复后替换，尺寸一致不跳动） -->
+        <div class="user-box" aria-hidden="true">
+          <div class="user-trigger">
+            <span class="avatar-wrap"><span class="skel skel--circle avatar-skel"></span></span>
+            <span class="user-ident skel-stack"><span class="skel" style="width: 70%"></span><span class="skel" style="width: 92%"></span></span>
+          </div>
+          <div class="user-plan-clip">
+            <div class="user-plan">
+              <span class="skel skel--pill" style="width: 96px; height: 22px"></span>
+              <span class="skel" style="width: 74%"></span>
+              <span class="skel skel--pill" style="height: 6px"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <div class="dash-scrim" data-scrim></div>
+
+    <!-- ================================================================
+         主区：吸顶顶栏 + 视图
+         ================================================================ -->
+    <div class="dash-main" data-main>
+      <header class="dash-topbar" data-topbar>
+        <div class="topbar-inner">
+          <button class="icon-btn topbar-menu" type="button" aria-label="Open workspace menu" aria-controls="dash-side" aria-expanded="false" data-menu-btn>
+            <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-menu" /></svg>
+          </button>
+          <h1 class="topbar-title" id="view-title" tabindex="-1">Online Scraper</h1>
+          <div class="topbar-actions" data-topbar-actions></div>
+        </div>
+      </header>
+
+      <main class="dash-content" id="main" tabindex="-1">
+        <p class="sr-only" role="status" data-sr-status>Loading your workspace...</p>
+
+        <!-- ============================================================
+             ① Online Scraper（/dashboard/）
+             ============================================================ -->
+        <section class="dash-view" data-view="online" aria-labelledby="view-title">
+          <div data-part="skeleton">
+            <div class="view-stack" aria-hidden="true">
+              <div class="d-panel">
+                <div class="composer-head">
+                  <span class="skel" style="width: 88px; height: 14px"></span>
+                  <span class="skel skel--pill" style="width: 300px; max-width: 100%; height: 42px"></span>
+                </div>
+                <div class="composer-body"><span class="skel skel--block" style="height: 148px"></span></div>
+                <div class="composer-foot">
+                  <span class="skel" style="width: 260px; max-width: 60%; height: 14px"></span>
+                  <span class="skel skel--pill" style="width: 150px; height: 38px"></span>
+                </div>
+              </div>
+              <div>
+                <div class="d-section-head">
+                  <span class="skel skel--on-bg" style="width: 132px; height: 16px"></span>
+                  <span class="skel skel--on-bg" style="width: 72px"></span>
+                </div>
+                <div class="jobs jobs--compact">
+                  <div class="jobs-head"><span class="skel" style="width: 40px"></span></div>
+                  <div class="jobs-list">
+                    <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 72%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 70%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 96px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                    <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 64%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 60%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 88px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                    <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 80%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 66%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 104px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                    <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 58%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 58%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 92px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                    <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 70%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 62%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 96px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div data-part="gate" hidden></div>
+
+          <div data-part="content" hidden>
+            <div class="view-stack">
+              <!-- 创建面板：关键词 / 地图 / 地区三种输入共用一套额度、联系方式开关与提交 -->
+              <form class="d-panel composer" aria-labelledby="composer-title" novalidate data-composer>
+                <div class="composer-head">
+                  <h2 class="d-panel-title" id="composer-title">New task</h2>
+                  <div class="seg seg--sm" role="tablist" aria-label="Search mode" data-modes>
+                    <span class="seg-thumb" aria-hidden="true"></span>
+                    <button class="seg-btn" type="button" role="tab" id="tab-keywords" aria-selected="true" aria-controls="mode-panel" data-mode="keywords">
+                      <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-list" /></svg>Keywords
+                    </button>
+                    <button class="seg-btn" type="button" role="tab" id="tab-map" aria-selected="false" aria-controls="mode-panel" tabindex="-1" data-mode="map">
+                      <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-map" /></svg>Map
+                    </button>
+                    <button class="seg-btn" type="button" role="tab" id="tab-regions" aria-selected="false" aria-controls="mode-panel" tabindex="-1" data-mode="regions">
+                      <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-globe" /></svg>Regions
+                    </button>
+                  </div>
+                </div>
+
+                <div data-composer-main>
+                  <div class="composer-body" id="mode-panel" role="tabpanel" aria-labelledby="tab-keywords" data-composer-body>
+                    <!-- 关键词与地图模式共用同一组关键词 -->
+                    <div class="composer-grid mode-pane" data-layout="keywords" data-kw-wrap>
+                      <div class="kw-field">
+                        <label class="field-label" for="kw-input">Keywords</label>
+                        <div class="kw-box">
+                          <textarea class="textarea textarea--dash" id="kw-input" rows="6" spellcheck="false" placeholder="coffee shop in Portland&#10;restaurant in Austin" aria-describedby="kw-meta" data-kw></textarea>
+                          <div class="kw-meta" id="kw-meta"><span data-kw-dup></span><span class="kw-count" aria-live="polite" data-kw-count></span></div>
+                        </div>
+                      </div>
+
+                      <div class="map-card" hidden data-map-panel>
+                        <div class="map-stage" data-map-stage>
+                          <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Choose a search center on the map" data-map-svg></svg>
+                          <i class="map-pin" hidden data-map-pin></i>
+                          <span class="map-tag" lang="zh-CN" aria-hidden="true">原型示意地图 · 落地为 Leaflet + OSM 瓦片</span>
+                          <span class="map-hint" data-map-hint>
+                            <svg class="icon icon--sm" aria-hidden="true"><use href="../assets/img/icons.svg#i-locate" /></svg>Choose a center on the map or enter coordinates.
+                          </span>
+                        </div>
+                        <div class="map-controls">
+                          <label class="mini-field">
+                            <span class="mini-label">Latitude</span>
+                            <input class="input input--sm input--mono" type="number" min="-85" max="85" step="any" inputmode="decimal" data-map-lat />
+                          </label>
+                          <label class="mini-field">
+                            <span class="mini-label">Longitude</span>
+                            <input class="input input--sm input--mono" type="number" min="-180" max="180" step="any" inputmode="decimal" data-map-lng />
+                          </label>
+                          <label class="mini-field">
+                            <span class="mini-label">Radius (km)<output data-map-radius-out>5</output></span>
+                            <input class="range" type="range" min="0" max="50" step="1" value="5" data-map-radius />
+                          </label>
+                          <label class="mini-field">
+                            <span class="mini-label">Grid spacing (km)<output data-map-spacing-out>5</output></span>
+                            <input class="range" type="range" min="1" max="20" step="1" value="5" data-map-spacing />
+                          </label>
+                        </div>
+                        <div class="map-sum" aria-live="polite">
+                          <span class="map-sum-calc" data-map-calc></span>
+                          <span class="map-sum-total" data-map-total></span>
+                        </div>
+                        <p class="attribution">&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a></p>
+                      </div>
+                    </div>
+
+                    <!-- 地区模式：基础关键词 × 地点 → 可编辑的最终查询 -->
+                    <div class="region-grid mode-pane" hidden data-region-panel>
+                      <div class="region-build">
+                        <div class="kw-field">
+                          <label class="field-label" for="region-base">Base keywords</label>
+                          <textarea class="textarea textarea--dash" id="region-base" rows="3" spellcheck="false" placeholder="coffee shop&#10;restaurant" data-region-base></textarea>
+                        </div>
+                        <!-- 国家、州 / 省：可输入过滤的 combobox（APG 可编辑 combobox + 列表自动补全），候选列表在 .pop 浮层里 -->
+                        <div class="region-pick">
+                          <div class="mini-field">
+                            <label class="mini-label" for="region-country">Country</label>
+                            <div class="combo-field" data-combo="country">
+                              <input class="input input--sm" id="region-country" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="region-country-list" autocomplete="off" spellcheck="false" placeholder="Select a country" disabled data-region-country />
+                              <button class="combo-toggle" type="button" tabindex="-1" aria-label="Country" aria-expanded="false" aria-controls="region-country-list" disabled data-combo-toggle><svg class="icon pop-caret" aria-hidden="true"><use href="../assets/img/icons.svg#i-chevron-down" /></svg></button>
+                            </div>
+                          </div>
+                          <div class="mini-field">
+                            <label class="mini-label" for="region-state">State or region</label>
+                            <div class="combo-field" data-combo="state">
+                              <input class="input input--sm" id="region-state" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="region-state-list" autocomplete="off" spellcheck="false" placeholder="All states or regions" disabled data-region-state />
+                              <button class="combo-toggle" type="button" tabindex="-1" aria-label="State or region" aria-expanded="false" aria-controls="region-state-list" disabled data-combo-toggle><svg class="icon pop-caret" aria-hidden="true"><use href="../assets/img/icons.svg#i-chevron-down" /></svg></button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="region-adds">
+                          <button class="btn btn-secondary btn-xs" type="button" disabled data-add-country>
+                            <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-plus" /></svg>Add country
+                          </button>
+                          <button class="btn btn-secondary btn-xs" type="button" disabled data-add-state>
+                            <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-plus" /></svg>Add state
+                          </button>
+                        </div>
+                        <div class="mini-field">
+                          <label class="mini-label" for="city-input">Find a city</label>
+                          <input class="input input--sm" id="city-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-list" autocomplete="off" spellcheck="false" placeholder="Type at least two letters" disabled data-city-input />
+                        </div>
+                        <div data-region-note></div>
+                        <ul class="place-chips" aria-label="Selected locations" data-region-chips></ul>
+                        <fieldset class="phrasing">
+                          <legend>Search phrasing</legend>
+                          <label><input type="radio" name="phrasing" value="in" checked />In</label>
+                          <label><input type="radio" name="phrasing" value="near" />Near</label>
+                        </fieldset>
+                      </div>
+                      <div class="region-final">
+                        <div class="kw-field">
+                          <div class="field-head">
+                            <label class="field-label" for="region-final">Final queries</label>
+                            <button class="btn btn-secondary btn-xs" type="button" disabled data-generate>
+                              <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-list-plus" /></svg>Generate queries
+                            </button>
+                          </div>
+                          <div class="kw-box">
+                            <textarea class="textarea textarea--dash" id="region-final" rows="8" spellcheck="false" placeholder="Generated queries appear here. You can edit them." aria-describedby="final-meta" data-region-final></textarea>
+                            <div class="kw-meta" id="final-meta"><span data-final-dup></span><span class="kw-count" aria-live="polite" data-final-count></span></div>
+                          </div>
+                        </div>
+                        <p class="attribution"><a href="https://www.geonames.org/export/" target="_blank" rel="noopener noreferrer">Location data: GeoNames (CC BY)</a></p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="composer-msgs" data-composer-msgs></div>
+
+                  <div class="composer-foot">
+                    <div class="contacts">
+                      <span class="switch">
+                        <input id="contacts" type="checkbox" role="switch" checked aria-describedby="contacts-hint" data-contacts />
+                        <span class="switch-track" aria-hidden="true"></span>
+                      </span>
+                      <span class="contacts-text">
+                        <label class="contacts-label" for="contacts">Find emails and social profiles</label>
+                        <span class="contacts-hint" id="contacts-hint" hidden data-contacts-hint>Available with a paid Online plan. <a class="d-link" href="../pricing.html#online">Upgrade</a></span>
+                      </span>
+                    </div>
+                    <div class="foot-actions">
+                      <div class="usage-mini" data-usage-mini></div>
+                      <button class="btn btn-primary btn-sm" type="submit" data-submit>Start scraping</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="composer-err" hidden data-composer-err></div>
+              </form>
+
+              <!-- 最近任务：最新 5 条，保留进度、状态、下载与完成提示；完整列表、筛选与明细在 History -->
+              <section aria-labelledby="recent-title" data-recent-section>
+                <div class="d-section-head">
+                  <h2 class="d-section-title" id="recent-title">Recent tasks</h2>
+                  <a class="d-link" href="?view=history" data-hist-link="all" data-recent-all hidden>View all<svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-arrow-right" /></svg></a>
+                </div>
+                <div class="jobs jobs--compact" data-recent></div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             ② History（/dashboard/history/）：搜索、筛选、分页的完整任务列表
+             ============================================================ -->
+        <section class="dash-view" data-view="history" aria-labelledby="view-title" hidden>
+          <div data-part="skeleton">
+            <div class="view-stack" aria-hidden="true">
+              <span class="skel skel--on-bg" style="width: 560px; max-width: 85%"></span>
+              <div class="hist-bar">
+                <span class="skel skel--block hist-search" style="height: 40px"></span>
+                <span class="skel skel--pill" style="width: 380px; height: 40px"></span>
+                <span class="skel skel--pill" style="width: 128px; height: 40px"></span>
+              </div>
+              <div class="jobs">
+                <div class="jobs-head"><span class="skel" style="width: 40px"></span></div>
+                <div class="jobs-list">
+                  <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 72%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 70%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 96px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                  <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 64%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 60%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 88px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                  <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 80%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 66%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 104px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                  <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 58%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 58%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 92px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                  <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 70%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 62%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 96px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                  <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 76%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 64%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 100px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                  <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 62%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 56%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 90px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                  <div class="job"><div class="job-row"><span class="skel-stack"><span class="skel" style="width: 68%"></span><span class="skel" style="width: 132px"></span></span><span class="skel" style="width: 68%"></span><span class="skel" style="width: 40px; justify-self: end"></span><span class="skel skel--pill" style="width: 98px; height: 22px"></span><span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div data-part="gate" hidden></div>
+
+          <div data-part="content" hidden>
+            <div class="view-stack">
+              <p class="view-intro">Tasks you ran on the Online Scraper, newest first. Times are shown in Eastern Time (New York).</p>
+              <!-- 工具栏常驻：筛选或翻页时只有列表区换骨架 / 淡入，工具栏与分页条不重绘 -->
+              <div class="hist-bar" role="search" aria-label="Filter tasks" data-hist-bar>
+                <div class="hist-search">
+                  <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-search" /></svg>
+                  <input class="input input--sm" id="hist-q" type="search" maxlength="100" placeholder="Search by job number or keyword" aria-label="Search tasks" autocomplete="off" spellcheck="false" enterkeyhint="search" data-hist-q />
+                  <button class="icon-btn icon-btn--sm hist-clear" type="button" aria-label="Clear search" hidden data-hist-clear>
+                    <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-x" /></svg>
+                  </button>
+                </div>
+                <div class="seg seg--sm hist-status" role="radiogroup" aria-label="Status" data-hist-status>
+                  <span class="seg-thumb" aria-hidden="true"></span>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="true" data-status="all">All</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" tabindex="-1" data-status="running">Running</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" tabindex="-1" data-status="completed">Completed</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" tabindex="-1" data-status="partial">Partial success</button>
+                  <button class="seg-btn" type="button" role="radio" aria-checked="false" tabindex="-1" data-status="failed">Failed</button>
+                </div>
+                <button class="btn btn-secondary btn-xs hist-range-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="hist-range-menu" data-hist-range-btn>
+                  <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-calendar" /></svg><span data-hist-range-label>All time</span><svg class="icon icon--xs" aria-hidden="true"><use href="../assets/img/icons.svg#i-chevron-down" /></svg>
+                </button>
+                <button class="btn btn-secondary btn-xs hist-filter-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="hist-filter-menu" data-hist-filter-btn>
+                  <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-filter" /></svg><span>Filters</span><span class="count-badge" hidden data-hist-filter-count></span>
+                </button>
+                <button class="btn btn-secondary btn-xs hist-refresh" type="button" data-hist-refresh>
+                  <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-refresh" /></svg><span class="hist-refresh-label">Refresh</span>
+                </button>
+              </div>
+              <div class="jobs" data-hist-jobs></div>
+              <!-- 读屏：翻页、改筛选、手动刷新后播报结果区间或空态（轮询不播报） -->
+              <p class="sr-only" role="status" data-hist-announce></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             ③ API 管理（/dashboard/api/）
+             ============================================================ -->
+        <section class="dash-view" data-view="api" aria-labelledby="view-title" hidden>
+          <div data-part="skeleton">
+            <div class="view-stack" aria-hidden="true">
+              <span class="skel skel--on-bg" style="width: 440px; max-width: 80%"></span>
+              <div class="api-grid">
+                <div class="d-panel" data-area="plan"><div class="d-panel-body skel-stack"><span class="skel" style="width: 64px; height: 12px"></span><span class="skel" style="width: 46%; height: 22px"></span><span class="skel" style="width: 58%"></span><span class="skel" style="width: 36%; height: 28px; margin-top: var(--s-2)"></span><span class="skel skel--pill" style="height: 6px"></span><span class="skel" style="width: 80%"></span></div></div>
+                <div class="d-panel" data-area="key"><div class="d-panel-body skel-stack"><span class="skel" style="width: 80px; height: 14px"></span><span class="skel skel--block" style="height: 40px"></span><span class="skel" style="width: 40%"></span></div></div>
+                <div class="d-panel" data-area="conn"><div class="d-panel-body skel-stack"><span class="skel" style="width: 140px; height: 14px"></span><span class="skel skel--block" style="height: 36px"></span><span class="skel skel--block" style="height: 36px"></span></div></div>
+                <div class="d-panel" data-area="apps"><div class="d-panel-body skel-stack"><span class="skel" style="width: 120px; height: 14px"></span><span class="skel" style="width: 66%"></span><span class="skel skel--block" style="height: 56px"></span><span class="skel skel--block" style="height: 56px"></span></div></div>
+              </div>
+            </div>
+          </div>
+          <div data-part="gate" hidden></div>
+          <div data-part="content" hidden></div>
+        </section>
+
+        <!-- ============================================================
+             ④ 订阅（/dashboard/subscriptions/）
+             ============================================================ -->
+        <section class="dash-view" data-view="subscriptions" aria-labelledby="view-title" hidden>
+          <div data-part="skeleton">
+            <div class="view-stack" aria-hidden="true">
+              <span class="skel skel--on-bg" style="width: 520px; max-width: 85%"></span>
+              <div class="plans-grid">
+                <div class="d-panel plan-card"><span class="skel" style="width: 60%; height: 16px"></span><span class="skel-stack"><span class="skel" style="width: 30%"></span><span class="skel" style="width: 70%; height: 20px"></span><span class="skel" style="width: 85%"></span></span><span class="skel skel--pill" style="width: 130px; height: 38px"></span></div>
+                <div class="d-panel plan-card"><span class="skel" style="width: 66%; height: 16px"></span><span class="skel-stack"><span class="skel" style="width: 30%"></span><span class="skel" style="width: 50%; height: 20px"></span><span class="skel" style="width: 80%"></span></span><span class="skel skel--pill" style="width: 130px; height: 38px"></span></div>
+                <div class="d-panel plan-card"><span class="skel" style="width: 40%; height: 16px"></span><span class="skel-stack"><span class="skel" style="width: 30%"></span><span class="skel" style="width: 60%; height: 20px"></span><span class="skel" style="width: 75%"></span></span><span class="skel skel--pill" style="width: 130px; height: 38px"></span></div>
+              </div>
+            </div>
+          </div>
+          <div data-part="gate" hidden></div>
+          <div data-part="content" hidden></div>
+        </section>
+      </main>
+    </div>
+
+    <!--
+      浮层：全部是同一个 .pop 基础组件（README §3.8），popover="manual" 顶层渲染，由脚本定位、开关与管理焦点。
+      菜单（账户 / 时间范围 / Filters）内容在打开时按状态生成；listbox / combobox 只放候选列表。
+    -->
+    <div class="pop account-pop" id="account-menu" popover="manual" data-account-menu></div>
+    <div class="pop range-pop" id="hist-range-pop" popover="manual" data-range-pop></div>
+    <div class="pop filter-pop" id="hist-filter-pop" popover="manual" data-filter-pop></div>
+    <div class="pop pop--list" id="hist-size-pop" popover="manual" data-size-pop>
+      <ul class="pop-body" id="hist-size-list" role="listbox" aria-label="Rows per page"></ul>
+    </div>
+    <div class="pop pop--list" id="region-country-pop" popover="manual" data-pop="country">
+      <ul class="pop-body" id="region-country-list" role="listbox" aria-label="Country"></ul>
+    </div>
+    <div class="pop pop--list" id="region-state-pop" popover="manual" data-pop="state">
+      <ul class="pop-body" id="region-state-list" role="listbox" aria-label="State or region"></ul>
+    </div>
+    <div class="pop pop--list" id="city-pop" popover="manual" data-pop="city">
+      <ul class="pop-body" id="city-list" role="listbox" aria-label="City"></ul>
+    </div>
+
+    <!-- 站级登录弹窗（原型复刻 SiteAuthModal：Google 或邮箱 + 6 位验证码） -->
+    <dialog class="modal" id="signin-dialog" aria-labelledby="signin-title">
+      <div class="modal-body">
+        <button class="icon-btn modal-close" type="button" aria-label="Close" data-signin-close>
+          <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-x" /></svg>
+        </button>
+        <div class="modal-hero">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path class="brand-mark-pin" d="M16 6.2c-4.42 0-8 3.36-8 7.66 0 5.5 6.64 11.04 7.4 11.66.35.28.85.28 1.2 0 .76-.62 7.4-6.16 7.4-11.66 0-4.3-3.58-7.66-8-7.66Z" />
+              <path class="brand-mark-arrow" d="M16 10.1v6.2m-2.9-2.9 2.9 2.9 2.9-2.9" />
+            </svg>
+          </span>
+          <h2 class="modal-title" id="signin-title">Sign in to MapsGrab</h2>
+          <p class="modal-sub">Sync your plan and quota across the extension, Online Scraper and API.</p>
+        </div>
+        <div data-signin-step="1">
+          <button class="btn btn-google btn-sm btn-block" type="button" data-signin-google>
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z" /><path fill="#FBBC05" d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.06H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.94l3.66-2.84z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" /></svg>
+            Continue with Google
+          </button>
+          <div class="divider-or">or</div>
+          <form class="stack" data-signin-email>
+            <label class="field"><span class="field-label">Email</span><input class="input input--sm" type="email" required placeholder="name@example.com" autocomplete="email" /></label>
+            <button class="btn btn-primary btn-sm btn-block" type="submit">Continue with email</button>
+          </form>
+        </div>
+        <div data-signin-step="2" hidden>
+          <form class="stack" data-signin-code>
+            <p class="body-sm muted" data-signin-sent>We sent a 6-digit code to your inbox.</p>
+            <div class="otp" data-otp>
+              <input class="input" inputmode="numeric" maxlength="1" aria-label="Digit 1" />
+              <input class="input" inputmode="numeric" maxlength="1" aria-label="Digit 2" />
+              <input class="input" inputmode="numeric" maxlength="1" aria-label="Digit 3" />
+              <input class="input" inputmode="numeric" maxlength="1" aria-label="Digit 4" />
+              <input class="input" inputmode="numeric" maxlength="1" aria-label="Digit 5" />
+              <input class="input" inputmode="numeric" maxlength="1" aria-label="Digit 6" />
+            </div>
+            <button class="btn btn-primary btn-sm btn-block" type="submit">Sign in</button>
+            <button class="btn btn-ghost btn-xs" type="button" data-signin-back>Use another email</button>
+          </form>
+        </div>
+        <p class="modal-legal">By signing in, you agree to the <a href="../privacy.html?doc=terms">Terms</a> and <a href="../privacy.html">Privacy Policy</a>.</p>
+      </div>
+    </dialog>
+
+    <!-- 通用确认（轮换 Key、断开应用） -->
+    <dialog class="modal dlg" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-msg">
+      <form method="dialog" class="dlg-body">
+        <button class="icon-btn icon-btn--sm dlg-close" value="cancel" aria-label="Cancel">
+          <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-x" /></svg>
+        </button>
+        <span class="dlg-icon" aria-hidden="true"><svg class="icon"><use href="#i-alert" /></svg></span>
+        <div class="dlg-copy">
+          <h2 class="dlg-title" id="confirm-title" data-confirm-title></h2>
+          <p class="dlg-msg" id="confirm-msg" data-confirm-msg></p>
+        </div>
+        <div class="dlg-actions">
+          <button class="btn btn-secondary btn-sm" value="cancel" data-confirm-cancel>Cancel</button>
+          <button class="btn btn-primary btn-sm" value="confirm" data-confirm-ok>Continue</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- 渠道内操作指引（有效自动续费订阅的管理 URL 为空时） -->
+    <dialog class="modal guide" id="guide-dialog" aria-labelledby="guide-title">
+      <form method="dialog" class="guide-body">
+        <button class="icon-btn icon-btn--sm dlg-close" value="close" aria-label="Close">
+          <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-x" /></svg>
+        </button>
+        <h2 class="dlg-title" id="guide-title" style="padding-right: 40px">Manage your subscription at the payment provider</h2>
+        <div class="guide-paths">
+          <section class="guide-provider" aria-labelledby="guide-paypal">
+            <h3 id="guide-paypal">PayPal</h3>
+            <ol class="guide-steps">
+              <li>Sign in to PayPal and open Settings.</li>
+              <li>Go to Payments, then Automatic Payments.</li>
+              <li>Select MapsGrab and choose Cancel.</li>
+            </ol>
+          </section>
+          <section class="guide-provider" aria-labelledby="guide-clink">
+            <h3 id="guide-clink">ClinkBill</h3>
+            <ol class="guide-steps">
+              <li>Open the Customer Portal link from your purchase email.</li>
+              <li>Sign in and select your MapsGrab subscription.</li>
+              <li>Choose Cancel.</li>
+            </ol>
+          </section>
+        </div>
+        <div class="guide-foot"><button class="btn btn-primary btn-sm" value="close">Close</button></div>
+      </form>
+    </dialog>
+
+    <div class="side-tip" aria-hidden="true" data-side-tip></div>
+
+    <div class="toast-stack" aria-live="polite" data-toast-stack></div>
+
+    <!-- ================================================================
+         原型调试面板：只用于设计评审，不属于产品界面
+         ================================================================ -->
+    <aside class="proto" lang="zh-CN" aria-label="原型调试" data-proto>
+      <div class="proto-panel" id="proto-panel" hidden>
+        <div class="proto-head">
+          <b>原型调试</b>
+          <span>只用于设计评审，不属于产品界面。选择会写入地址栏参数，便于分享同一状态。</span>
+        </div>
+        <div class="proto-group" role="group" aria-labelledby="pg-combo">
+          <span class="proto-title" id="pg-combo">订阅组合</span>
+          <div class="proto-opts" data-proto-key="combo">
+            <button type="button" data-v="none">无订阅</button>
+            <button type="button" data-v="online">仅 Online</button>
+            <button type="button" data-v="multi">多产品</button>
+            <button type="button" data-v="unavailable">配置异常（Online + API）</button>
+          </div>
+        </div>
+        <div class="proto-group" role="group" aria-labelledby="pg-state">
+          <span class="proto-title" id="pg-state">视图状态</span>
+          <div class="proto-opts" data-proto-key="state">
+            <button type="button" data-v="ready">正常</button>
+            <button type="button" data-v="loading">首屏骨架</button>
+            <button type="button" data-v="signedout">未登录</button>
+            <button type="button" data-v="offline">网络失败</button>
+            <button type="button" data-v="empty">空数据</button>
+            <button type="button" data-v="errors">局部失败</button>
+          </div>
+        </div>
+        <div class="proto-group" role="group" aria-labelledby="pg-quota">
+          <span class="proto-title" id="pg-quota">Online 月额度</span>
+          <div class="proto-opts" data-proto-key="quota">
+            <button type="button" data-v="normal">正常</button>
+            <button type="button" data-v="near">接近用尽（≥ 80%）</button>
+            <button type="button" data-v="exhausted">已用尽</button>
+          </div>
+        </div>
+        <div class="proto-group" role="group" aria-labelledby="pg-theme">
+          <span class="proto-title" id="pg-theme">主题</span>
+          <div class="proto-opts" data-proto-key="theme">
+            <button type="button" data-v="light">浅色</button>
+            <button type="button" data-v="dark">深色</button>
+            <button type="button" data-v="system">跟随系统</button>
+          </div>
+        </div>
+        <div class="proto-group" role="group" aria-labelledby="pg-motion">
+          <span class="proto-title" id="pg-motion">动效</span>
+          <div class="proto-opts" data-proto-key="motion">
+            <button type="button" data-v="full">完整</button>
+            <button type="button" data-v="reduced">模拟减弱动效</button>
+          </div>
+        </div>
+        <div class="proto-group" role="group" aria-labelledby="pg-sim">
+          <span class="proto-title" id="pg-sim">任务进度模拟（真实为 5 秒轮询，原型加速）</span>
+          <div class="proto-opts" data-proto-key="sim">
+            <button type="button" data-v="on">运行</button>
+            <button type="button" data-v="off">暂停</button>
+          </div>
+        </div>
+        <button class="proto-reset" type="button" data-proto-reset>重置全部状态</button>
+      </div>
+      <button class="proto-toggle" type="button" aria-expanded="false" aria-controls="proto-panel" data-proto-toggle>
+        <svg class="icon" aria-hidden="true"><use href="../assets/img/icons.svg#i-settings" /></svg>原型调试
+      </button>
+    </aside>
+  </body>
+</html>

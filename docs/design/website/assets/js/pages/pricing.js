@@ -18,9 +18,8 @@
 
   /* =====================================================================
      pricing.ts 镜像：价格、额度、方案名、tagline、CTA 逐字。
-     例外：Online 卖点按 014 合同（每任务关键词上限 2/5/10/20/50、地图 / 地区模式、
-     CSV + ZIP）替换了 pricing.ts 里的占位条目（评论 / 照片 / 评论 URL 任务 / JSON / 跨次去重
-     不在 Online 范围内），pricing.ts 需同步修订，见 README §10
+     Online 卖点与对比行同样逐字取自 pricing.ts，范围以 014 合同为准（每任务关键词上限 2/5/10/20/50、
+     关键词 / 地图 / 地区模式、整任务去重的单份 37 列 CSV、付费档补全默认开启可关闭）
      ===================================================================== */
   var PRICING = {
     popularLabel: 'Most Popular',
@@ -48,11 +47,11 @@
             periodLabel: 'forever',
             quota: '1,000 records / month',
             features: [
-              'Business extraction with 36-column CSV export',
+              'Business extraction with 37-column CSV export',
               'Up to 2 keywords per task',
               'Map and region modes for area searches',
               'Email & social enrichment on paid plans',
-              'CSV per keyword, ZIP per task'
+              'One deduplicated CSV per task'
             ],
             ctaLabel: 'Start free',
             featured: false
@@ -322,13 +321,13 @@
   var COMPARE = {
     online: [
       ['Data', [
-        ['Business extraction with 36-column CSV export', [1, 1, 1, 1, 1]],
+        ['Business extraction with 37-column CSV export', [1, 1, 1, 1, 1]],
         ['Email & social enrichment', [0, 'On by default, optional', 'On by default, optional', 'On by default, optional', 'On by default, optional']]
       ]],
       ['Workflow', [
         ['Keywords per task', ['2', '5', '10', '20', '50']],
         ['Map and region modes', [1, 1, 1, 1, 1]],
-        ['CSV per keyword, ZIP per task', [1, 1, 1, 1, 1]]
+        ['One deduplicated CSV per task', [1, 1, 1, 1, 1]]
       ]]
     ],
     extension: [
