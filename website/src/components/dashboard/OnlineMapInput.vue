@@ -1,22 +1,25 @@
 <script setup lang="ts">
 /**
- * 地图模式：在 Leaflet + OSM 瓦片上选中心点（点地图或输入坐标），按半径与网格间距生成搜索视口；
+ * 地图模式：通过区域选择、地图点选或坐标输入设置中心，按半径与网格间距生成搜索视口；
  * 关键词 × 视口即提交条目，总数受 logical_sample_limit 约束，超限时不画网格点。
  *
  * 舞台高度由样式按地图列宽计算；舞台尺寸变化（含从隐藏切回、侧栏收放）后通知 Leaflet 重新计算视口。
  * 覆盖圈、网格点与中心针的颜色走 CSS（随主题切换），不在脚本里取色。
  */
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { Circle, LayerGroup, LeafletMouseEvent, Map as LeafletMap, Marker } from 'leaflet'
 import type { DashboardContent } from '../../i18n/schema'
 import { reducedMotion, replayClass } from '../../scripts/dashboard/dom'
 import { fill } from '../../scripts/dashboard/format'
 import { gridViewports, type OnlineViewport } from '../../scripts/dashboard/map-grid'
+import { loadMapLocations, type MapLocation } from '../../scripts/dashboard/map-locations'
+import { closePop, isPopOpen, openPop } from '../../scripts/site/pop'
 
 const props = defineProps<{
   copy: DashboardContent['create']['map']
+  regionCopy: DashboardContent['create']['region']
   disabled: boolean
-  keywordCount: number
+  hasKeyword: boolean
   logicalSampleLimit: number
 }>()
 
@@ -31,6 +34,16 @@ const lng = ref<number | string>('')
 const radiusKm = ref(5)
 const spacingKm = ref(5)
 const tilesFailed = ref(false)
+const locations = ref<MapLocation[]>([])
+const locationQuery = ref('')
+const locationPath = ref<MapLocation[]>([])
+const locationLevel = ref<0 | 1 | 2>(0)
+const locationsLoading = ref(false)
+const locationsFailed = ref(false)
+const locationExpanded = ref(false)
+const locationTrigger = ref<HTMLElement | null>(null)
+const locationPop = ref<HTMLElement | null>(null)
+const locationSearch = ref<HTMLInputElement | null>(null)
 const stageEl = ref<HTMLElement | null>(null)
 const canvasEl = ref<HTMLElement | null>(null)
 let leaflet: typeof import('leaflet') | null = null
@@ -55,8 +68,89 @@ const center = computed(() => {
   return latitude === null || longitude === null ? null : { lat: latitude, lng: longitude }
 })
 const viewports = computed(() => center.value ? gridViewports(center.value, radiusKm.value, spacingKm.value) : [])
-const total = computed(() => props.keywordCount * viewports.value.length)
+const total = computed(() => props.hasKeyword ? viewports.value.length : 0)
 const overLimit = computed(() => total.value > props.logicalSampleLimit)
+const locationName = computed(() => {
+  const selected = locationPath.value.at(-1)
+  return selected && center.value?.lat === selected.lat && center.value.lng === selected.lng
+    ? locationPath.value.map(location => location.name).join(' / ') : ''
+})
+const locationLevels = computed(() => [
+  { level: 0, label: props.regionCopy.country, disabled: false },
+  { level: 1, label: props.regionCopy.state, disabled: !locationPath.value[0]?.children.length },
+  { level: 2, label: props.regionCopy.city, disabled: !locationPath.value[1]?.children.length }
+] as const)
+const locationOptions = computed(() => {
+  const choices = locationLevel.value === 0 ? locations.value : (locationPath.value[locationLevel.value - 1]?.children ?? [])
+  const query = locationQuery.value.trim().toLowerCase()
+  return choices.filter(location => location.name.toLowerCase().includes(query))
+})
+
+async function fetchLocations(): Promise<void> {
+  if (locations.value.length || locationsLoading.value) return
+  locationsLoading.value = true
+  locationsFailed.value = false
+  try {
+    locations.value = await loadMapLocations()
+  } catch (error) {
+    console.error(new Error('online map: locations load failed', { cause: error }))
+    locationsFailed.value = true
+  } finally {
+    locationsLoading.value = false
+  }
+}
+
+function closeLocations(): void {
+  if (locationPop.value && isPopOpen(locationPop.value)) closePop()
+}
+
+async function toggleLocations(): Promise<void> {
+  const pop = locationPop.value
+  const trigger = locationTrigger.value
+  if (!pop || !trigger) return
+  if (isPopOpen(pop)) {
+    closeLocations()
+    return
+  }
+  if (!locationName.value) locationPath.value = []
+  locationLevel.value = locationPath.value[1]?.children.length ? 2 : locationPath.value[0]?.children.length ? 1 : 0
+  locationQuery.value = ''
+  locationExpanded.value = true
+  void fetchLocations()
+  openPop(pop, {
+    trigger,
+    anchor: () => trigger.getBoundingClientRect(),
+    owns: target => trigger.contains(target),
+    side: 'bottom',
+    align: 'start',
+    matchWidth: 480,
+    gap: 4,
+    onClose: () => { locationExpanded.value = false }
+  })
+  await nextTick()
+  locationSearch.value?.focus()
+}
+
+function changeLocationLevel(level: 0 | 1 | 2): void {
+  locationLevel.value = level
+  locationQuery.value = ''
+}
+
+async function selectLocation(location: MapLocation): Promise<void> {
+  locationPath.value = [...locationPath.value.slice(0, locationLevel.value), location]
+  if (location.lat !== null && location.lng !== null) placeCenter(location.lat, location.lng)
+  else {
+    lat.value = ''
+    lng.value = ''
+  }
+  if (!location.children.length || locationLevel.value === 2) {
+    closeLocations()
+    return
+  }
+  changeLocationLevel(locationLevel.value === 0 ? 1 : 2)
+  await nextTick()
+  locationSearch.value?.focus()
+}
 
 /** 重画覆盖圈与网格点；中心或半径变化时按覆盖圈取景。 */
 function redraw(reframe: boolean): void {
@@ -129,11 +223,14 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  closeLocations()
   resizeObserver?.disconnect()
   map?.remove()
 })
 
 watch(center, (next, previous) => {
+  const selected = locationPath.value.at(-1)
+  if (next && selected && (next.lat !== selected.lat || next.lng !== selected.lng)) locationPath.value = []
   redraw(true)
   // 新放下的针落位一次；坐标输入逐字变化时只移动不重播
   if (next && !previous) {
@@ -148,67 +245,146 @@ watch(viewports, value => emit('viewports', value), { immediate: true })
 
 <template>
   <div class="map-card">
-    <div ref="stageEl" class="map-stage">
-      <div ref="canvasEl" class="map-canvas" :aria-label="props.copy.mapLabel"></div>
-      <span v-if="!center" class="map-hint">
-        <svg class="icon icon--sm" aria-hidden="true"><use href="/img/icons.svg#i-locate" /></svg>{{ props.copy.chooseCenter }}
-      </span>
-    </div>
-    <div v-if="tilesFailed" class="callout callout--warn" role="status">
-      <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-alert" /></svg>
-      <div class="callout-body"><span>{{ props.copy.tilesUnavailable }}</span></div>
-    </div>
-    <!-- 滑杆的 label 里还有显示当前值的 output（也是可标注元素）：用 for 显式指向输入框，值由滑杆自身播报 -->
-    <div class="map-controls">
-      <label class="mini-field" for="map-lat">
-        <span class="mini-label">{{ props.copy.latitude }}</span>
-        <input
-          id="map-lat"
-          v-model="lat"
-          class="input input--sm input--mono"
-          :class="{ 'is-invalid': latInvalid }"
-          type="number"
-          min="-85"
-          max="85"
-          step="any"
-          inputmode="decimal"
+    <div class="map-setup">
+      <div class="kw-field">
+        <label class="field-label" for="map-location">{{ props.copy.locate }}</label>
+        <button
+          id="map-location"
+          ref="locationTrigger"
+          class="input map-location-trigger"
+          type="button"
+          :aria-label="props.copy.locate"
+          aria-describedby="map-location-value"
+          aria-haspopup="dialog"
+          aria-controls="map-location-pop"
+          :aria-expanded="locationExpanded"
           :disabled="props.disabled"
-        />
-      </label>
-      <label class="mini-field" for="map-lng">
-        <span class="mini-label">{{ props.copy.longitude }}</span>
+          @click="toggleLocations"
+        >
+          <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-locate" /></svg>
+          <span id="map-location-value" :class="{ 'is-placeholder': !locationName }">{{ locationName || props.copy.locationPlaceholder }}</span>
+          <svg class="icon icon--sm" aria-hidden="true"><use href="/img/icons.svg#i-chevron-down" /></svg>
+        </button>
+      </div>
+      <!-- output 也是可标注元素，for 显式指向滑杆，避免当前值混入控件名称。 -->
+      <div class="map-controls">
+        <label class="mini-field" for="map-radius">
+          <span class="mini-label">{{ props.copy.radius }}<output for="map-radius" aria-hidden="true">{{ radiusKm }}</output></span>
+          <input id="map-radius" v-model.number="radiusKm" class="range" type="range" min="0" max="50" step="1" :disabled="props.disabled" />
+        </label>
+        <label class="mini-field" for="map-spacing">
+          <span class="mini-label">{{ props.copy.spacing }}<output for="map-spacing" aria-hidden="true">{{ spacingKm }}</output></span>
+          <input id="map-spacing" v-model.number="spacingKm" class="range" type="range" min="1" max="20" step="1" :disabled="props.disabled" />
+        </label>
+      </div>
+      <details class="map-coordinates">
+        <summary>{{ props.copy.coordinates }}</summary>
+        <div class="map-controls">
+          <label class="mini-field" for="map-lat">
+            <span class="mini-label">{{ props.copy.latitude }}</span>
+            <input
+              id="map-lat"
+              v-model="lat"
+              class="input input--sm input--mono"
+              :class="{ 'is-invalid': latInvalid }"
+              type="number"
+              min="-85"
+              max="85"
+              step="any"
+              inputmode="decimal"
+              :disabled="props.disabled"
+            />
+          </label>
+          <label class="mini-field" for="map-lng">
+            <span class="mini-label">{{ props.copy.longitude }}</span>
+            <input
+              id="map-lng"
+              v-model="lng"
+              class="input input--sm input--mono"
+              :class="{ 'is-invalid': lngInvalid }"
+              type="number"
+              min="-180"
+              max="180"
+              step="any"
+              inputmode="decimal"
+              :disabled="props.disabled"
+            />
+          </label>
+        </div>
+      </details>
+    </div>
+    <div class="map-preview">
+      <div ref="stageEl" class="map-stage">
+        <div ref="canvasEl" class="map-canvas" :aria-label="props.copy.mapLabel"></div>
+      </div>
+      <div v-if="tilesFailed" class="callout callout--warn" role="status">
+        <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-alert" /></svg>
+        <div class="callout-body"><span>{{ props.copy.tilesUnavailable }}</span></div>
+      </div>
+      <div class="map-sum" aria-live="polite">
+        <span class="map-sum-calc">{{
+          center ? fill(props.copy.points, { points: viewports.length }) : props.copy.chooseCenter
+        }}</span>
+        <span class="map-sum-total" :data-state="overLimit ? 'over' : undefined">{{
+          fill(props.copy.sampleCount, { count: total, limit: props.logicalSampleLimit })
+        }}</span>
+      </div>
+      <p class="attribution">
+        &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">{{ props.copy.attribution }}</a>
+      </p>
+    </div>
+    <div
+      id="map-location-pop"
+      ref="locationPop"
+      class="pop map-location-pop"
+      popover="manual"
+      role="dialog"
+      :aria-label="props.copy.locate"
+      @keydown.esc.stop.prevent="closeLocations"
+    >
+      <div class="map-location-levels" role="group" :aria-label="props.copy.locate">
+        <button
+          v-for="item in locationLevels"
+          :key="item.level"
+          class="map-location-level"
+          type="button"
+          :aria-pressed="locationLevel === item.level"
+          :disabled="item.disabled"
+          :title="locationPath[item.level]?.name"
+          @click="changeLocationLevel(item.level)"
+        >{{ item.label }}</button>
+      </div>
+      <div class="map-location-search">
         <input
-          id="map-lng"
-          v-model="lng"
-          class="input input--sm input--mono"
-          :class="{ 'is-invalid': lngInvalid }"
-          type="number"
-          min="-180"
-          max="180"
-          step="any"
-          inputmode="decimal"
-          :disabled="props.disabled"
+          ref="locationSearch"
+          v-model="locationQuery"
+          class="input input--sm"
+          type="search"
+          :aria-label="props.copy.locationSearch"
+          :placeholder="props.copy.locationSearch"
+          @keydown.enter.prevent
         />
-      </label>
-      <label class="mini-field" for="map-radius">
-        <span class="mini-label">{{ props.copy.radius }}<output for="map-radius" aria-hidden="true">{{ radiusKm }}</output></span>
-        <input id="map-radius" v-model.number="radiusKm" class="range" type="range" min="0" max="50" step="1" :disabled="props.disabled" />
-      </label>
-      <label class="mini-field" for="map-spacing">
-        <span class="mini-label">{{ props.copy.spacing }}<output for="map-spacing" aria-hidden="true">{{ spacingKm }}</output></span>
-        <input id="map-spacing" v-model.number="spacingKm" class="range" type="range" min="1" max="20" step="1" :disabled="props.disabled" />
-      </label>
+      </div>
+      <p v-if="locationsLoading" class="map-location-status" role="status">{{ props.regionCopy.loading }}</p>
+      <div v-else-if="locationsFailed" class="map-location-status" role="alert">
+        <span>{{ props.regionCopy.loadFailed }}</span>
+        <button class="btn btn-secondary btn-xs" type="button" @click="fetchLocations">{{ props.regionCopy.retry }}</button>
+      </div>
+      <div v-else class="map-location-list">
+        <button
+          v-for="location in locationOptions"
+          :key="location.name"
+          class="pop-item"
+          :class="{ 'is-current': locationPath[locationLevel]?.name === location.name }"
+          type="button"
+          :title="location.name"
+          @click="selectLocation(location)"
+        >
+          <span class="pop-item-label">{{ location.name }}</span>
+          <svg v-if="location.children.length" class="icon icon--sm" aria-hidden="true"><use href="/img/icons.svg#i-chevron-right" /></svg>
+        </button>
+        <p v-if="!locationOptions.length" class="map-location-status">{{ props.regionCopy.noMatch }}</p>
+      </div>
     </div>
-    <div class="map-sum" aria-live="polite">
-      <span class="map-sum-calc">{{
-        center ? fill(props.copy.points, { points: viewports.length, keywords: props.keywordCount }) : props.copy.chooseCenter
-      }}</span>
-      <span class="map-sum-total" :data-state="overLimit ? 'over' : undefined">{{
-        fill(props.copy.sampleCount, { count: total, limit: props.logicalSampleLimit })
-      }}</span>
-    </div>
-    <p class="attribution">
-      &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">{{ props.copy.attribution }}</a>
-    </p>
   </div>
 </template>

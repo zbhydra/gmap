@@ -135,10 +135,12 @@ Dashboard（单入口 SPA，外壳常驻）
   - 每条不超过 500 字符。
   - 上限由 options 的 `keyword_limit` 按套餐下发。
 - **Map**：
-  - 在地图上点选中心，经纬度输入框与地图双向同步。
+  - 左侧为单行单关键词输入、区域选择器和滑杆，右侧为地图；窄屏先表单后地图。
+  - 区域选择器在同一浮层内按国家 → 州/省 → 城市逐级选择，支持过滤当前层级和返回上一级修改。
+  - 选择有坐标的区域、地图点选或展开经纬度输入均可设置中心。
   - 两个滑杆：Radius 0–50 km、Grid spacing 1–20 km。
   - 网格点用与 `scripts/dashboard/map-grid.ts` 相同的算法实时计算。地图上画出覆盖圈和网格点；超过 `logical_sample_limit`（50）时不画点，只提示超限。
-  - 摘要两行：「Grid points: n · Keywords: m」和「x / 50 search locations」。
+  - 摘要：「Grid points: n」和「x / 50 search locations」。
   - 地图舞台的高度在侧栏宽度动画中按起始列宽固定（§2.2），结束后随目标布局更新；宽度变化时只裁边、不留白。
   - 原型里是示意 SVG。落地沿用现有的 `OnlineMapInput`（Leaflet + OSM 瓦片，已经是依赖），并显示 OSM 署名。
 - **Regions**：

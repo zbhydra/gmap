@@ -1049,6 +1049,7 @@ html[data-side-from='collapsed'] .dash-app {
 
 .composer-grid[data-layout='map'] {
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
+  grid-template-rows: auto 1fr;
   align-items: start;
 }
 
@@ -1074,10 +1075,6 @@ html[data-side-from='collapsed'] .dash-app {
 
 .kw-box {
   position: relative;
-}
-
-.composer-grid[data-layout='map'] .textarea--dash {
-  min-height: 260px;
 }
 
 .kw-meta {
@@ -1194,21 +1191,114 @@ html[data-side-from='collapsed'] .dash-app {
   padding: var(--s-4) var(--s-6) var(--s-6);
 }
 
-/* 地图模式：示意地图 + 参数 */
-/* --map-w：展开态地图列宽 =（通栏卡片内宽 100cqw − 50 − 列距 20）× 1.4 / 2.25；
-   舞台高度与提示行宽都按它计算，侧栏收放时地图只变宽、不变高，下方内容不随之移动 */
+/* 地图与左侧单关键词、区域和参数表单共用创建面板的网格。 */
 .map-card {
   --map-w: calc((100cqw - 70px) * 1.4 / 2.25);
 
+  display: contents;
+}
+
+.map-setup,
+.map-preview {
   display: grid;
-  gap: var(--s-3);
   min-width: 0;
+}
+
+.map-setup {
+  grid-column: 1;
+  gap: var(--s-5);
+}
+
+.map-location-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  text-align: start;
+  cursor: pointer;
+}
+
+.map-location-trigger > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-location-trigger .is-placeholder {
+  color: var(--text-3);
+}
+
+.map-location-pop {
+  --pop-cap: 400px;
+}
+
+.map-location-levels {
+  display: flex;
+  flex: none;
+  gap: var(--s-1);
+  padding: var(--s-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.map-location-level {
+  flex: 1;
+  padding: var(--s-2);
+  border: 0;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.map-location-level[aria-pressed='true'] {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
+.map-location-level:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.map-location-search {
+  flex: none;
+  padding: var(--s-3);
+}
+
+.map-location-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-1);
+  min-height: 0;
+  padding: 0 var(--s-3) var(--s-3);
+  overflow-y: auto;
+}
+
+.map-location-list .pop-item {
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.map-location-status {
+  grid-column: 1 / -1;
+  padding: 0 var(--s-3) var(--s-3);
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+
+.map-preview {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  gap: var(--s-3);
 }
 
 /* 地图舞台：Leaflet + OSM 瓦片铺满舞台；舞台高度按展开态地图列宽 --map-w 计算 */
 .map-stage {
   position: relative;
-  height: calc(var(--map-w) * 10 / 16);
+  height: max(320px, calc(var(--map-w) * 10 / 16));
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
@@ -1247,33 +1337,24 @@ html[data-side-from='collapsed'] .dash-app {
   background: var(--surface-2);
 }
 
-/* 左右各贴 0 + fit-content 居中：可用宽度是整块舞台（left: 50% 会只剩半宽、随舞台宽度折行），行宽上限锁定为展开态舞台宽 − 32 */
-.map-hint {
-  position: absolute;
-  right: 0;
-  bottom: var(--s-3);
-  left: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: fit-content;
-  max-width: calc(var(--map-w) - 2 * var(--s-4));
-  margin-inline: auto;
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-full);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  color: var(--text-2);
-  font-size: 12.5px;
-  pointer-events: none;
-  z-index: 1;
-}
-
 .map-controls {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s-3);
+}
+
+.map-coordinates {
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+
+.map-coordinates summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
+.map-coordinates .map-controls {
+  margin-top: var(--s-3);
 }
 
 .mini-field {
@@ -2122,14 +2203,16 @@ html[data-side-from='collapsed'] .dash-app {
 @container view (max-width: 860px) {
   .composer-grid[data-layout='map'] {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
   }
 
   .map-card {
     --map-w: calc(100cqw - 50px);
   }
 
-  .composer-grid[data-layout='map'] .textarea--dash {
-    min-height: 148px;
+  .map-preview {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .region-grid {
@@ -2191,10 +2274,6 @@ html[data-side-from='collapsed'] .dash-app {
 
   .foot-actions .btn {
     width: 100%;
-  }
-
-  .map-controls {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .region-pick {

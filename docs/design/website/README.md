@@ -31,8 +31,9 @@ cd docs/design/website && python3 -m http.server 7690 --bind 127.0.0.1
 | `privacy.html` | `/privacy` | `legal` | 法务模板；`?doc=terms` → `/terms` |
 | `about.html` | `/about` | `company` | 公司页；`#contact` 区块即 `/contact` 的模板 |
 | `design-system.html` | — | `system` | 设计系统（不对应线上路由） |
+| `dashboard/index.html` | `/dashboard/`、`/dashboard/history/`、`/dashboard/api/`、`/dashboard/subscriptions/` | — | Dashboard 单页原型（只用基础层），说明见 [dashboard/README.md](dashboard/README.md) |
 
-真实的 `/extension-login` 页对应原型里的登录弹窗（任何 `[data-signin]` 元素都能打开）。Dashboard、支付回调页（`/paypal/*`、`/clink/*`、`/subscriptions/*`）不在本次改版范围内。
+真实的 `/extension-login` 页对应原型里的登录弹窗（任何 `[data-signin]` 元素都能打开）。支付回调页（`/paypal/*`、`/clink/*`、`/subscriptions/*`）不在本次改版范围内。
 
 ## 1 · 设计语言
 
@@ -375,7 +376,7 @@ docs/design/website/
 
 - 原型只有英文；语言按钮只给出原型提示。
 - 原型用 `.media-slot` 表示截图图位，落地素材由对应的网站组件提供。
-- Dashboard、独立的 `/extension-login` 页、支付回调页未覆盖。
+- 独立的 `/extension-login` 页、支付回调页未覆盖。
 - 浏览器商店徽章与 Edge / Firefox / Google Drive / HubSpot 品牌标未手绘（会不准确），暂用通用图标；落地时从各家官方品牌包取。
 - 地图均为风格化 SVG，不是 OSM 瓦片（真实云端产品用 OSM 瓦片并显示署名）。
 - 云端页三种创建模式、MCP 页 Setup 区切换 tab 时面板高度不同，整块会有轻微跳动。

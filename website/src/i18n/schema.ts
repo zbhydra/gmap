@@ -1141,6 +1141,20 @@ export interface DashboardContent {
     invalid: string
     /** 地图模式。 */
     map: {
+      /** 单关键词输入。 */
+      keyword: string
+      /** 单关键词示例。 */
+      keywordPlaceholder: string
+      /** 单关键词输入不合法的说明。 */
+      invalidKeyword: string
+      /** 区域定位选择器。 */
+      locate: string
+      /** 选择器尚未选中地区时的提示。 */
+      locationPlaceholder: string
+      /** 过滤当前层级的地区。 */
+      locationSearch: string
+      /** 展开手动经纬度输入。 */
+      coordinates: string
       /** 纬度输入。 */
       latitude: string
       /** 经度输入。 */
@@ -1151,7 +1165,7 @@ export interface DashboardContent {
       spacing: string
       /** 含 {count} {limit} 的搜索点总数。 */
       sampleCount: string
-      /** 含 {points} {keywords} 的网格点与关键词数。 */
+      /** 含 {points} 的网格点数。 */
       points: string
       /** 含 {limit} 的超限说明。 */
       overLimit: string
