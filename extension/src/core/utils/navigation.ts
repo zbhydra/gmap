@@ -5,6 +5,8 @@
 
 import { logger } from './logger'
 import { WEBSITE } from '@/core/api/config'
+import { markApi } from '@/core/api/mark'
+import { MARK_TYPE } from '@/core/api/mark/types'
 
 /** Pricing 来源，用于官网埋点区分插件入口。 */
 export type PricingSource =
@@ -50,8 +52,14 @@ export async function openExternalPage(url: string, destination: string): Promis
 
 /**
  * 打开官网 Pricing 页。
+ *
+ * 打点收敛在这里而不是各调用点：popup 有三处入口（额度计数器、升级按钮、底部
+ * plans 链接）都走本函数，且 content 面板后续也会复用，避免逐点接线后漏埋。
  */
 export async function openPricingPage(source: PricingSource): Promise<boolean> {
+  markApi
+    .record(MARK_TYPE.PRICING_OPEN, `source=${source}, plan=maps_extension`)
+    .catch(error => logger.error(`[Navigation] pricing_open 打点失败: source=${source}`, error))
   const url = buildPricingUrl(source)
   return openExternalPage(url, `pricing:${source}`)
 }

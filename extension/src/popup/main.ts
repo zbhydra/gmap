@@ -22,6 +22,9 @@ import { initializePageTheme } from '@/sites/maps/settings/theme'
 
 import '@/styles/index.css'
 import '../style.css'
+import { installUncaughtErrorMark } from '@/core/utils/uncaughtErrorMark'
+
+installUncaughtErrorMark('popup')
 
 const backgroundClient = new BackgroundChannel()
 

@@ -8,12 +8,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  rpcGetGateState: vi.fn()
+  rpcGetGateState: vi.fn(),
+  rpcRecordMark: vi.fn().mockResolvedValue({ recorded: true })
 }))
 
 vi.mock('../../src/content/rpc/background.rpc', () => ({
   BackgroundChannel: class {
     getGateState = mocks.rpcGetGateState
+    recordMark = mocks.rpcRecordMark
     destroy(): void {}
   }
 }))

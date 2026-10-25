@@ -4,10 +4,11 @@ import { MARK_TYPE } from '../../src/core/api/mark/types'
 
 const enabledSlsConfig = {
   enabled: true,
-  endpoint: 'https://tg-download.ap-southeast-1.log.aliyuncs.com',
-  logstore: 'tg-download-mark-log',
+  endpoint: 'https://gmap.ap-northeast-1.log.aliyuncs.com',
+  logstore: 'gmap-mark-logs',
   topic: 'mark-log',
-  source: 'extension'
+  source: 'extension-bing',
+  clientProduct: 'extension-bing'
 }
 
 function stubDeviceId(deviceId: string): void {
@@ -17,9 +18,9 @@ function stubDeviceId(deviceId: string): void {
 }
 
 function stubRuntimeGlobals(slsConfig: typeof enabledSlsConfig): void {
-  vi.stubGlobal('__API_BASE_URL__', 'https://tg-download-api.telegramdownloadmedia.com')
+  vi.stubGlobal('__API_BASE_URL__', 'https://api.example.com')
   vi.stubGlobal('__DEV__', false)
-  vi.stubGlobal('__WEBSITE_BASE_URL__', 'https://telegramdownloadmedia.com')
+  vi.stubGlobal('__WEBSITE_BASE_URL__', 'https://www.example.com')
   vi.stubGlobal('__ALI_SLS_MARK_CONFIG__', slsConfig)
 }
 
@@ -51,7 +52,7 @@ describe('extension SLS mark', () => {
     const result = await markApi.record(
       MARK_TYPE.POPUP_OPEN,
       'url=https://example.com/download/video.mp4?token=secret access_token=abc123',
-      { pageUrl: 'https://web.telegram.org/k/#@chat' }
+      { pageUrl: 'https://www.google.com/maps/search/coffee' }
     )
 
     expect(result).toEqual({ recorded: true })
@@ -61,16 +62,18 @@ describe('extension SLS mark', () => {
     const [requestUrl, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit]
     const url = new URL(requestUrl)
 
-    expect(url.origin).toBe('https://tg-download.ap-southeast-1.log.aliyuncs.com')
-    expect(url.pathname).toBe('/logstores/tg-download-mark-log/track')
+    expect(url.origin).toBe('https://gmap.ap-northeast-1.log.aliyuncs.com')
+    expect(url.pathname).toBe('/logstores/gmap-mark-logs/track')
     expect(url.searchParams.get('APIVersion')).toBe('0.6.0')
     expect(url.searchParams.get('__topic__')).toBe('mark-log')
-    expect(url.searchParams.get('__source__')).toBe('extension')
+    expect(url.searchParams.get('__source__')).toBe('extension-bing')
     expect(url.searchParams.get('site')).toBe('extension')
-    expect(url.searchParams.get('client_product')).toBe('extension')
+    expect(url.searchParams.get('client_product')).toBe('extension-bing')
     expect(url.searchParams.get('mark_type')).toBe(MARK_TYPE.POPUP_OPEN)
     expect(url.searchParams.get('device_id')).toBe('device-123')
-    expect(url.searchParams.get('page_path')).toBe('/k/')
+    expect(url.searchParams.get('page_path')).toBe('/maps/search/coffee')
+    expect(url.searchParams.get('surface')).toBe('content')
+    expect(url.searchParams.get('extension_version')).toBeTruthy()
     expect(url.searchParams.get('first_opened_at')).toBe('0')
     expect(url.searchParams.get('mark_msg')).toContain('https://example.com/download/video.mp4')
     expect(url.searchParams.get('mark_msg')).not.toContain('secret')

@@ -3,6 +3,7 @@
  * 任务明细（只在 History 展开时出现）：元信息（可复制完整任务号）与每个搜索的结果。
  * 第一次展开才加载；失败只影响本任务，可单独重试。
  */
+import { trackDashboardAction } from '../../scripts/homepage/web-mark'
 import { computed, ref } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
 import type { ExportJobDetail, ExportJobItem } from '../../scripts/dashboard/api'

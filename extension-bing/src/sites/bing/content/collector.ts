@@ -355,11 +355,30 @@ export class BingCollector {
     return false
   }
 
-  /** 合并状态快照并广播。 */
+  /** 合并状态快照并广播；采集终态在此统一打点，避免每处 return 各写一遍。 */
   private updateState(partial: Partial<BingCollectState>): void {
+    const previousPhase = this.state.phase
     this.state = { ...this.state, ...partial }
     for (const listener of this.listeners) {
       listener(this.state)
+    }
+    // 只在进入终态的那一次记录；采集中的状态抖动不打点，否则日志会被轮询淹没。
+    if (previousPhase === 'collecting' && this.state.phase === 'completed') {
+      const stopReason = this.state.freeLimitReached
+        ? 'free_limit'
+        : this.state.stoppedManually
+          ? 'manual'
+          : this.state.failureStreak > 0
+            ? 'failure'
+            : 'end'
+      recordContentMark(
+        MARK_TYPE.SEARCH_FINISH,
+        `count=${this.state.foundCount}, stop_reason=${stopReason}, ` +
+          `adapter=${this.state.adapterName ?? 'unknown'}`
+      )
+      if (this.state.freeLimitReached) {
+        recordContentMark(MARK_TYPE.FREE_LIMIT_REACHED, `count=${this.state.foundCount}`)
+      }
     }
   }
 }

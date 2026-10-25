@@ -101,7 +101,10 @@ export class BackgroundMessageRouter {
     context: RpcContext
   ): Promise<{ recorded: boolean }> {
     try {
-      return await markApi.record(markType, markMsg, { pageUrl: context.origin })
+      // 扩展页的 sender.origin 不含路径，用 senderUrl 才能推断 popup/dashboard/options 界面。
+      return await markApi.record(markType, markMsg, {
+        pageUrl: context.senderUrl ?? context.origin
+      })
     } catch (error) {
       logger.error('[BackgroundMessageRouter] 记录 SLS 打点失败:', error)
       return { recorded: false }

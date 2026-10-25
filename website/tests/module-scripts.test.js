@@ -609,13 +609,12 @@ async function patchCompiledBrowserModuleFiles(rootDir) {
       /import\.meta\.env\.PUBLIC_SHARED_COOKIE_DOMAIN/g,
       "'mapsgrab.com'"
     )
-    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_PROJECT/g, "'mapsgrab'")
-    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_HOST/g, "'ap-southeast-1.log.aliyuncs.com'")
+    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_PROJECT/g, "'gmap'")
+    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_HOST/g, "'ap-northeast-1.log.aliyuncs.com'")
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_ENDPOINT/g, "''")
-    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_LOGSTORE/g, "'mapsgrab-mark-log'")
+    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_LOGSTORE/g, "'gmap-mark-logs'")
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_ENABLED/g, "''")
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_TOPIC/g, "'mark-log'")
-    source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_SOURCE/g, "''")
     await writeFile(filePath, source)
   }
 }
@@ -1833,7 +1832,7 @@ test('website first opened mark reports once after first_opened_at is stored', a
     assert.equal(Number.isInteger(firstOpenedAt), true)
     assert.equal(firstOpenedAt > 0, true)
     assert.equal(browser.calls.length, 2)
-    assert.equal(browser.calls[0].path, '/logstores/mapsgrab-mark-log/track')
+    assert.equal(browser.calls[0].path, '/logstores/gmap-mark-logs/track')
     assert.equal(browser.calls[0].method, 'GET')
     assert.equal(browser.calls[0].credentials, 'omit')
     assert.equal(browser.calls[0].keepalive, true)
@@ -2007,8 +2006,8 @@ async function assertSlsMarkBuildsWebTrackingUrl(sourceFile, tempPrefix, expecte
     const url = new URL(module.buildSlsMarkUrl(config, fields))
 
     assert.equal(config.enabled, true)
-    assert.equal(url.origin, 'https://mapsgrab.ap-southeast-1.log.aliyuncs.com')
-    assert.equal(url.pathname, '/logstores/mapsgrab-mark-log/track')
+    assert.equal(url.origin, 'https://gmap.ap-northeast-1.log.aliyuncs.com')
+    assert.equal(url.pathname, '/logstores/gmap-mark-logs/track')
     assert.equal(url.searchParams.get('APIVersion'), '0.6.0')
     assert.equal(url.searchParams.get('__topic__'), 'mark-log')
     assert.equal(url.searchParams.get('__source__'), expectedSite)
@@ -2218,7 +2217,7 @@ test('frontend captured error SLS callback sends uncaught Error to SLS only', as
 
     assert.equal(calls.length, 1)
     const url = new URL(calls[0].url)
-    assert.equal(url.pathname, '/logstores/mapsgrab-mark-log/track')
+    assert.equal(url.pathname, '/logstores/gmap-mark-logs/track')
     assert.equal(url.searchParams.get('mark_type'), 'web_frontend_uncaught_error')
     assert.equal(url.searchParams.get('device_id'), browser.deviceId)
     assert.equal(calls.some(call => new URL(call.url).pathname === '/api/client/mark/record'), false)
@@ -2382,6 +2381,7 @@ test('homepage record mark keeps backend post when SLS fails', async () => {
     const parsedUrl = new URL(String(url))
     calls.push({
       path: parsedUrl.pathname,
+      markType: parsedUrl.searchParams.get('mark_type'),
       method: init.method ?? 'GET',
       credentials: init.credentials,
       keepalive: init.keepalive === true,
@@ -2400,20 +2400,21 @@ test('homepage record mark keeps backend post when SLS fails', async () => {
 
   try {
     await module.recordHomepageMark(
-      module.HOMEPAGE_MARK_TYPE.WEB_CREDIT_PURCHASE_BUY_CLICK,
+      module.HOMEPAGE_MARK_TYPE.WEB_EXTENSION_INSTALL_CLICK,
       { deviceId: 'device-for-sls-failure', token: 'access-token' },
       'sls failure should not block backend'
     )
     await flushBrowserTasks()
 
+    // SLS 返回 500 不影响后端 mark：两条通道各自独立。
     assert.equal(calls.length, 2)
-    assert.equal(calls[0].path, '/logstores/mapsgrab-mark-log/track')
+    assert.equal(calls[0].path, '/logstores/gmap-mark-logs/track')
     assert.equal(calls[0].method, 'GET')
     assert.equal(calls[0].credentials, 'omit')
     assert.equal(calls[0].keepalive, true)
     assert.equal(calls[1].path, '/api/client/mark/record')
     assert.equal(calls[1].method, 'POST')
-    assert.equal(calls[1].body.mark_type, 'web_credit_purchase_buy_click')
+    assert.equal(calls[1].body.mark_type, 'web_extension_install_click')
     assert.equal(calls[1].body.mark_msg, 'sls failure should not block backend')
     assert.equal(Number.isInteger(calls[1].body.first_opened_at), true)
     assert.equal(calls[1].body.first_opened_at > 0, true)
@@ -2457,16 +2458,21 @@ test('homepage record mark sends SLS before backend failure is thrown', async ()
     await assert.rejects(
       () =>
         module.recordHomepageMark(
-          module.HOMEPAGE_MARK_TYPE.WEB_EXTENSION_STORE_REVIEW_CLICK,
+          module.HOMEPAGE_MARK_TYPE.WEB_FIRST_OPENED,
           { deviceId: 'device-for-backend-failure', token: null },
           'backend failure should not cancel SLS'
         ),
       /backend mark failed/
     )
 
+    // 后端 5xx 之后追加一条 web_api_error，主事件顺序不变。
     assert.deepEqual(
       calls.map(call => call.path),
-      ['/logstores/mapsgrab-mark-log/track', '/api/client/mark/record']
+      [
+        '/logstores/gmap-mark-logs/track',
+        '/api/client/mark/record',
+        '/logstores/gmap-mark-logs/track'
+      ]
     )
   } finally {
     restoreBrowser()
@@ -2594,8 +2600,8 @@ test('global install CTA click sends SLS and keepalive mark', async () => {
     await flushBrowserTasks()
 
     assert.equal(fetchCalls.length, 2)
-    assert.equal(new URL(fetchCalls[0].href).hostname, 'mapsgrab.ap-southeast-1.log.aliyuncs.com')
-    assert.equal(fetchCalls[0].path, '/logstores/mapsgrab-mark-log/track')
+    assert.equal(new URL(fetchCalls[0].href).hostname, 'gmap.ap-northeast-1.log.aliyuncs.com')
+    assert.equal(fetchCalls[0].path, '/logstores/gmap-mark-logs/track')
     assert.equal(fetchCalls[0].credentials, 'omit')
     assert.equal(fetchCalls[0].keepalive, true)
     assert.equal(new URL(fetchCalls[0].href).searchParams.get('mark_type'), 'web_extension_install_click')
@@ -2876,8 +2882,14 @@ test('homepage api does not report HTTP failures as backend connect failures', a
       /backend failed/
     )
 
-    assert.equal(calls.length, 1)
-    assert.equal(calls.some(call => new URL(call.url).hostname.includes('log.aliyuncs.com')), false)
+    // HTTP 5xx 仍不算「连不上」：只写 API 业务错误事件，不写连接失败事件。
+    const slsCalls = calls.filter(call => new URL(call.url).hostname.includes('log.aliyuncs.com'))
+    const apiCalls = calls.filter(call => !new URL(call.url).hostname.includes('log.aliyuncs.com'))
+    assert.equal(apiCalls.length, 1)
+    assert.equal(slsCalls.length, 1)
+    const slsMarkType = new URL(slsCalls[0].url).searchParams.get('mark_type')
+    assert.equal(slsMarkType, 'web_api_error')
+    assert.notEqual(slsMarkType, 'web_backend_connect_failed')
   } finally {
     if (previousFetch === undefined) {
       delete globalThis.fetch

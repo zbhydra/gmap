@@ -7,8 +7,17 @@
  */
 
 import { logger } from '@/core/utils/logger'
-import type { MarkType } from '@/core/api/mark/types'
+import { MARK_TYPE, type MarkType } from '@/core/api/mark/types'
 import { BackgroundChannel } from '@/content/rpc/background.rpc'
+
+/** 记录一次 content 界面动作（面板按钮 / 门控拦截等）。 */
+export function recordContentAction(
+  action: string,
+  details: Record<string, string | number | boolean> = {}
+): void {
+  const extra = Object.entries(details).map(([key, value]) => `${key}=${String(value)}`)
+  recordContentMark(MARK_TYPE.UI_ACTION, [`action=${action}`, ...extra].join(', '))
+}
 
 /**
  * 记录一条 content 侧行为打点（fire-and-forget）。

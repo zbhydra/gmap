@@ -4,6 +4,7 @@ import type { McpOAuthContent } from '../../i18n/schema'
 import { HomepageApiError } from '../../scripts/homepage/api'
 import { getStoredAccessToken, logoutCurrentUser } from '../../scripts/homepage/auth'
 import { ensureDeviceId } from '../../scripts/homepage/device'
+import { trackMcpEvent } from '../../scripts/homepage/web-mark'
 import {
   getSiteSession, invalidateSiteSession, notifySessionExpired, SITE_SESSION_EXPIRED_EVENT
 } from '../../scripts/site/session'
@@ -84,6 +85,11 @@ async function load(): Promise<void> {
     detailCredential = context.token
     detail.value = data
     state.value = 'ready'
+    // 授权页曝光：客户端名称与是否回环地址足够定位场景，不记录请求内容。
+    trackMcpEvent('consent_view', {
+      client_name: data.client_name ?? '',
+      is_loopback: data.is_loopback
+    })
   } catch (error) {
     if (seq !== requestSeq) return
     if (error instanceof McpOAuthCredentialChangedError) {
@@ -101,6 +107,7 @@ async function decide(approved: boolean): Promise<void> {
   if (state.value !== 'ready' || deciding.value || switching.value) return
   const seq = ++requestSeq
   deciding.value = approved ? 'approve' : 'deny'
+  trackMcpEvent('consent_decide', { approved, redirect_host: detail.value?.redirect_host ?? '' })
   actionError.value = ''
   try {
     const context = { token: detailCredential, deviceId: await ensureDeviceId() }

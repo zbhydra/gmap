@@ -2,7 +2,7 @@
 /**
  * Online 创建面板：关键词 / 地图 / 地区三种输入共用一套额度、联系方式开关与提交。
  *
- * - 关键词与地图模式共用同一组关键词；地图模式的条目是关键词 × 视口，地区模式提交「最终查询」。
+ * - 地图模式输入单个关键词，按网格视口提交条目；关键词模式逐行输入，地区模式提交「最终查询」。
  * - 关键词逐行规范化去重（与后端口径一致），重复行只提示；数量、长度与地图条目上限都在提交前就地提示。
  * - 额度来自工作区（与侧栏用户卡同一份），用尽时提示并禁止提交；读取失败且没有数据时整块换成失败面板。
  * - 提交成功后清空当前模式的输入，由工作区高亮插入最近任务并刷新额度。
@@ -16,6 +16,7 @@ import { keywordStats } from '../../scripts/dashboard/keywords'
 import type { OnlineViewport } from '../../scripts/dashboard/map-grid'
 import { isSessionExpiry, type DashboardWorkspace } from '../../scripts/dashboard/workspace'
 import { HomepageApiError } from '../../scripts/homepage/api'
+import { trackDashboardAction } from '../../scripts/homepage/web-mark'
 
 const props = defineProps<{
   copy: DashboardContent
@@ -38,6 +39,7 @@ const mode = ref<Mode>('keywords')
 const mapOpened = ref(false)
 const regionOpened = ref(false)
 const keywordsText = ref('')
+const mapKeyword = ref('')
 const finalText = ref('')
 const generated = ref<string[]>([])
 const regionResetKey = ref(0)
@@ -56,13 +58,15 @@ let sizingTimer: ReturnType<typeof setTimeout> | undefined
 const state = computed(() => props.workspace.state)
 const options = computed(() => state.value.options)
 const keywordInfo = computed(() => keywordStats(keywordsText.value))
+const mapKeywordInfo = computed(() => keywordStats(mapKeyword.value))
 const finalInfo = computed(() => keywordStats(finalText.value))
-const stats = computed(() => mode.value === 'regions' ? finalInfo.value : keywordInfo.value)
+const stats = computed(() => mode.value === 'regions' ? finalInfo.value : mode.value === 'map' ? mapKeywordInfo.value : keywordInfo.value)
+const keywordLimit = computed(() => mode.value === 'map' ? 1 : (options.value?.keyword_limit ?? 0))
 const items = computed<ExportItemInput[]>(() => mode.value === 'map'
   ? stats.value.unique.flatMap(keyword => mapViewports.value.map(viewport => ({ keyword, viewport })))
   : stats.value.unique.map(keyword => ({ keyword })))
 const keywordInvalid = computed(() => Boolean(options.value)
-  && (stats.value.unique.length > (options.value?.keyword_limit ?? 0) || stats.value.tooLong))
+  && (stats.value.unique.length > keywordLimit.value || stats.value.tooLong))
 const overLimit = computed(() => Boolean(options.value) && items.value.length > (options.value?.logical_sample_limit ?? 0))
 const exhausted = computed(() => options.value?.usage.exhausted ?? false)
 const blocked = computed(() => !options.value || exhausted.value || !items.value.length || keywordInvalid.value || overLimit.value)
@@ -162,13 +166,24 @@ async function submit(): Promise<void> {
   submitting.value = true
   submitError.value = ''
   try {
+    trackDashboardAction('job_submit', {
+      mode: mode.value,
+      item_count: items.value.length,
+      contacts: includeContacts.value && current.contacts_allowed
+    })
     const detail = await createExportJob(props.workspace.context, items.value, includeContacts.value && current.contacts_allowed)
     if (mode.value === 'regions') {
       finalText.value = ''
       regionResetKey.value += 1
-    } else keywordsText.value = ''
+    } else if (mode.value === 'map') mapKeyword.value = ''
+    else keywordsText.value = ''
     void props.workspace.jobSubmitted(detail.job)
   } catch (error) {
+    trackDashboardAction('job_submit_failed', {
+      mode: mode.value,
+      item_count: items.value.length,
+      code: error instanceof HomepageApiError ? (error.code ?? '') : ''
+    })
     if (!isSessionExpiry(error)) console.error(new Error('[dashboard-composer] create export job failed', { cause: error }))
     submitError.value = error instanceof HomepageApiError && typeof error.code === 'number' ? error.message : props.copy.create.failed
     // 请求可能已在服务端建成任务（如超时）：刷新最近任务，避免用户重复提交
@@ -178,7 +193,7 @@ async function submit(): Promise<void> {
   }
 }
 
-watch([keywordsText, finalText], () => {
+watch([keywordsText, mapKeyword, finalText], () => {
   submitError.value = ''
 })
 
@@ -240,8 +255,21 @@ onBeforeUnmount(() => {
       >
         <div v-show="mode !== 'regions'" ref="keywordsPane" class="composer-grid mode-pane" :data-layout="mode === 'map' ? 'map' : 'keywords'">
           <div class="kw-field">
-            <label class="field-label" for="kw-input">{{ props.copy.create.keywords }}</label>
-            <div class="kw-box">
+            <template v-if="mode === 'map'">
+              <label class="field-label" for="map-keyword">{{ props.copy.create.map.keyword }}</label>
+              <input
+                id="map-keyword"
+                v-model="mapKeyword"
+                class="input"
+                :class="{ 'is-invalid': keywordInvalid }"
+                type="text"
+                spellcheck="false"
+                :placeholder="props.copy.create.map.keywordPlaceholder"
+                :disabled="submitting"
+              />
+            </template>
+            <label v-else class="field-label" for="kw-input">{{ props.copy.create.keywords }}</label>
+            <div v-if="mode !== 'map'" class="kw-box">
               <textarea
                 id="kw-input"
                 v-model="keywordsText"
@@ -263,8 +291,9 @@ onBeforeUnmount(() => {
             v-if="mapOpened"
             v-show="mode === 'map'"
             :copy="props.copy.create.map"
+            :region-copy="props.copy.create.region"
             :disabled="submitting"
-            :keyword-count="keywordInfo.unique.length"
+            :has-keyword="mapKeywordInfo.unique.length > 0"
             :logical-sample-limit="options.logical_sample_limit"
             @viewports="value => mapViewports = value"
           />
@@ -324,7 +353,7 @@ onBeforeUnmount(() => {
         </div>
         <div v-else-if="keywordInvalid" class="callout callout--bad">
           <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-alert" /></svg>
-          <div class="callout-body">{{ fill(props.copy.create.invalid, { limit: options.keyword_limit }) }}</div>
+          <div class="callout-body">{{ mode === 'map' ? props.copy.create.map.invalidKeyword : fill(props.copy.create.invalid, { limit: keywordLimit }) }}</div>
         </div>
         <div v-if="mode === 'map' && overLimit && !exhausted" class="callout callout--bad">
           <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-alert" /></svg>

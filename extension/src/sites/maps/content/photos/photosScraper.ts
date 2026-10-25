@@ -187,9 +187,8 @@ export const PHOTOS_PANEL_HOST_ID = 'gmap-extractor-photos-panel-host'
 /**
  * 照片页 boot：真实图库与一次性标签页意图同时命中后，挂载面板并开始采集。
  *
- * 用户手动打开的图库不触发采集；照片采集无独立埋点
- * （MARK_TYPE 契约本单元只新增 SCRAPE_REVIEWS_CONTENT）。完成边沿经
- * `mapsUsageReport` 上报配额（U7，background 幂等扣减，失败不阻断）。
+ * 用户手动打开的图库不触发采集；完成边沿经 `mapsUsageReport` 上报配额
+ * （U7，background 幂等扣减，失败不阻断）。
  */
 export async function bootPhotosPage(
   markEmitter: ChromeEventEmitter<ExtensionEvents>
@@ -222,6 +221,10 @@ export async function bootPhotosPage(
   })
   await panel.mount()
 
+  markEmitter.emit('mapsScrapePhotosContentMark', {
+    markMsg: `fid=${fid}`,
+    pageUrl: location.href
+  })
   const usageReporter = createUsageSessionReporter(markEmitter, 'photos')
   let previousStatus: PhotosScraperStatus = 'extracting'
   const scraper = new PhotosScraper(fid, {

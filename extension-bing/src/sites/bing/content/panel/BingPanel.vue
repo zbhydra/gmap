@@ -120,6 +120,8 @@ import { getBingConfig } from '@/sites/bing/config/loader'
 import type { BingCollector } from '../collector'
 import { getGateState, refreshGateState, subscribeGateState, type BingGateState } from '../gate'
 import { exportRows, type BingExportFormat } from '../export/engine'
+import { recordContentAction, recordContentMark } from '../marks'
+import { MARK_TYPE } from '@/core/api/mark/types'
 
 const K = I18N_KEYS.BING_PANEL
 
@@ -181,6 +183,7 @@ async function onSignIn(): Promise<void> {
   if (signingIn.value) {
     return
   }
+  recordContentAction('sign_in')
   signingIn.value = true
   const channel = new BackgroundChannel()
   try {
@@ -245,16 +248,19 @@ const howToUseUrl = new URL('/contact', __WEBSITE_BASE_URL__).toString()
 
 // —— 动作 ——
 function onStart(): void {
+  recordContentAction('start')
   props.collector.start().catch(error => {
     logger.error('[BingPanel] 启动采集失败:', error)
   })
 }
 
 function onStop(): void {
+  recordContentAction('stop')
   props.collector.stop()
 }
 
 function onGoBack(): void {
+  recordContentAction('go_back')
   menuOpen.value = false
   props.collector.reset()
 }
@@ -275,6 +281,7 @@ function onDocumentClick(event: MouseEvent): void {
 }
 
 function onExport(format: BingExportFormat): void {
+  recordContentAction('export', { format, count: props.collector.getRows().length })
   menuOpen.value = false
   // 免费档导出末行提示与采集停止条件同源（有行数上限 = 免费档，Pro 无末行）
   exportRows(props.collector.getRows(), format, {
@@ -284,6 +291,7 @@ function onExport(format: BingExportFormat): void {
 
 /** 订阅引导：新标签打开官网订阅页（官网 base URL 集中声明，生产域名未定）。 */
 function onOpenPricingPage(): void {
+  recordContentMark(MARK_TYPE.PRICING_OPEN, 'source=bing_panel')
   void openPricingPage('bing_panel')
 }
 </script>

@@ -61,10 +61,15 @@ const { t } = useI18n()
 const signingIn = ref(false)
 
 // 记录打点（异步，不阻塞业务）
-function recordMark(markType: MarkType): void {
-  markApi.record(markType).catch(error => {
-    logger.error('[Popup] SLS 打点失败:', error)
+function recordMark(markType: MarkType, markMsg = ''): void {
+  markApi.record(markType, markMsg, { surface: 'popup' }).catch(error => {
+    logger.error(`[Popup] ${markType} 打点失败:`, error)
   })
+}
+
+/** popup 界面动作统一走 ui_action。 */
+function recordAction(action: string): void {
+  recordMark(MARK_TYPE.UI_ACTION, `action=${action}`)
 }
 
 // —— 登录 / 登出 ——
@@ -79,6 +84,7 @@ async function onSignIn(): Promise<void> {
   if (signingIn.value) {
     return
   }
+  recordAction('sign_in')
   signingIn.value = true
   const channel = new BackgroundChannel()
   try {
@@ -93,6 +99,7 @@ async function onSignIn(): Promise<void> {
 
 /** 登出（清插件三键 + 撤销服务端当前 access token）；API 失败也已清本地态。 */
 async function onSignOut(): Promise<void> {
+  recordAction('sign_out')
   try {
     await authStore.logout()
   } catch (error) {

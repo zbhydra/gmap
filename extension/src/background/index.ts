@@ -11,6 +11,10 @@ import { bulkScheduler } from './batch/controller'
 import { storageManager } from '@/core/storage'
 import { STORAGE_KEYS } from '@/core/api/config'
 import { initializeRuntimeLogger } from './runtimeConfig'
+import { installUncaughtErrorMark } from '@/core/utils/uncaughtErrorMark'
+
+// 最早安装：初始化阶段（配置/device_id）的异常同样要留痕。
+installUncaughtErrorMark('background')
 
 /**
  * 初始化 device_id
@@ -61,9 +65,16 @@ bulkScheduler.setup()
 // 监听扩展安装事件
 chrome.runtime.onInstalled.addListener(details => {
   logger.info(`Extension installed: reason=${details.reason}`)
-  // 安装时也确保 device_id 已初始化
+  // 安装时也确保 device_id 已初始化；同时落首次安装时间，供后续事件计算
+  // `first_opened_days`（新老用户分层）。只在首次安装写入，升级不覆盖。
   const ensureDeviceId = async () => {
     await initDeviceId()
+    if (
+      details.reason === 'install' ||
+      !(await storageManager.get<number>(STORAGE_KEYS.INSTALLED_AT))
+    ) {
+      await storageManager.set(STORAGE_KEYS.INSTALLED_AT, Date.now())
+    }
   }
   // install 埋点双报（分析通道 + 后端 mark 通道），失败不阻断
   reportInstallMark(details.reason, ensureDeviceId).catch(error => {

@@ -15,6 +15,9 @@ import { I18N_KEYS } from '@/core/constants/i18n'
 import { logger } from '@/core/utils/logger'
 import App from './App.vue'
 import { initializePageTheme } from '@/sites/maps/settings/theme'
+import { installUncaughtErrorMark } from '@/core/utils/uncaughtErrorMark'
+
+installUncaughtErrorMark('dashboard')
 
 async function init() {
   await initializePageTheme()

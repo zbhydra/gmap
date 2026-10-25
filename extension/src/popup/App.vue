@@ -211,6 +211,7 @@ import { logger } from '@/core/utils/logger'
 import { I18N_KEYS } from '@/core/constants/i18n'
 import { Icon, IconName } from '@/core/components/icons'
 import { openBulkDashboard, openExternalPage, openPricingPage } from '@/core/utils/navigation'
+import { recordUiAction } from '@/core/api/mark/actions'
 import { isNewVersionAvailable } from '@/sites/maps/config/operations'
 import { BackgroundChannel } from './rpc/background.rpc'
 import type { MapsUsageSnapshot } from '@/sites/maps/usage/types'
@@ -324,6 +325,7 @@ async function loadOperations(): Promise<void> {
 // 登录完成以存储通知为准；完整官网登录可能长于默认 RPC 窗口。
 async function signIn(): Promise<void> {
   loginInFlight.value = true
+  recordUiAction('sign_in', 'popup', { signed_in: false })
   const channel = new BackgroundChannel()
   try {
     await channel.openExtensionLogin()
@@ -335,6 +337,7 @@ async function signIn(): Promise<void> {
   }
 }
 async function signOut(): Promise<void> {
+  recordUiAction('sign_out', 'popup')
   try {
     await authStore.logout()
   } catch (error) {
@@ -357,14 +360,20 @@ async function refreshAccountState(): Promise<void> {
   await refreshUsage()
 }
 async function openDashboard(type: '0' | '1'): Promise<void> {
+  recordUiAction('open_bulk_dashboard', 'popup', { type: type === '1' ? 'reviews' : 'keywords' })
   if (!(await openBulkDashboard(type))) showError(t(I18N_KEYS.APP_ERROR.TITLE))
 }
 async function openMaps(): Promise<void> {
+  recordUiAction('open_maps', 'popup')
   if (!(await openExternalPage('https://www.google.com/maps', 'maps')))
     showError(t(I18N_KEYS.APP_ERROR.TITLE))
 }
 onMounted(async () => {
-  markApi.record(MARK_TYPE.POPUP_OPEN).catch(error => logger.error('[Popup] SLS 打点失败:', error))
+  // popup_open 是插件侧最主要的日活口径。登录态不做猜测：SLS 字段的
+  // `user_id`（0 = 匿名）由存储实时读取，比在这里提前读 authStore 更准。
+  markApi
+    .record(MARK_TYPE.POPUP_OPEN, '', { surface: 'popup' })
+    .catch(error => logger.error('[Popup] SLS 打点失败:', error))
   void loadOperations()
   removeStorageListeners = [
     storageManager.onChanged<string | undefined>(STORAGE_KEYS.ACCESS_TOKEN, token => {

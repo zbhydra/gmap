@@ -5,6 +5,8 @@
  * 当前仅 Bing Maps 一站：boot = 配置加载 → 采集状态机 → 面板挂载（016 U3）。
  */
 
+import { installUncaughtErrorMark } from '@/core/utils/uncaughtErrorMark'
 import { bootBingSite } from '@/sites/bing/content/bootstrap'
 
+installUncaughtErrorMark('content')
 void bootBingSite()

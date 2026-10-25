@@ -27,6 +27,7 @@ import { ensureDeviceId } from '../../scripts/homepage/device'
 import { closePop } from '../../scripts/site/pop'
 import { getSiteSession, SITE_SESSION_EXPIRED_EVENT, type SiteSession } from '../../scripts/site/session'
 import { SITE_AUTH_CLOSE_EVENT, SITE_AUTH_SUCCESS_EVENT } from '../auth/site-auth-controller'
+import { trackDashboardAction } from '../../scripts/homepage/web-mark'
 import DashboardSideNav from './DashboardSideNav.vue'
 import DashboardSkeleton from './DashboardSkeleton.vue'
 import DashboardUserCard from './DashboardUserCard.vue'
@@ -159,6 +160,7 @@ function handleAuthClose(): void {
 
 /** 业务请求 401（API 边界广播）：回到登录门槛，走同一站级登录流程。 */
 function handleSessionExpired(): void {
+  trackDashboardAction('session_expired', { view: view.value })
   applySession({ status: 'signed-out' })
 }
 
@@ -195,6 +197,7 @@ async function navigate(next: DashboardView, options: { push?: boolean; restore?
     window.scrollTo({ top: 0, behavior: reducedMotion() ? 'instant' : 'smooth' })
     return
   }
+  trackDashboardAction('view_switch', { from: view.value, to: next })
   scrollMemory.set(view.value, window.scrollY)
   view.value = next
   visited.add(next)

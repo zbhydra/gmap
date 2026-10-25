@@ -22,6 +22,7 @@ import {
 } from '../../scripts/homepage/auth'
 import { ensureDeviceId } from '../../scripts/homepage/device'
 import { reportGA4Event } from '../../scripts/homepage/ga4'
+import { trackCheckoutEvent } from '../../scripts/homepage/web-mark'
 import type { PricingPageContent } from '../../i18n/schema'
 import type { JsonObject, JsonValue, RequestContext } from '../../scripts/homepage/api'
 import { getSiteSession } from '../../scripts/site/session'
@@ -184,6 +185,11 @@ interface PendingSubscriptionPurchase {
 
 /** 初始化 Pricing 页面。 */
 async function initPricingPage(root: HTMLElement): Promise<void> {
+  trackCheckoutEvent('pricing_view', {
+    product_kind: new URLSearchParams(window.location.search).get('product_kind') ?? '',
+    source: new URLSearchParams(window.location.search).get('source') ?? '',
+    utm_source: new URLSearchParams(window.location.search).get('utm_source') ?? ''
+  })
   const copy = getPricingCopy(root)
   const elements = getPricingElements(root)
   // 站级 tabs 在 Layout 脚本里按 aria-selected 初始化，预选必须发生在首个 await 之前
@@ -216,6 +222,7 @@ function bindEvents(elements: PricingElements, copy: PricingCopy, state: Pricing
     if (line === state.currentLine) {
       return
     }
+    trackCheckoutEvent('pricing_tab_switch', { from: state.currentLine, to: line })
     state.currentLine = line
     window.history.replaceState(window.history.state, '', `#${line}`)
     reportVisibleUpgradeQuotes(state, elements)
@@ -230,6 +237,7 @@ function bindEvents(elements: PricingElements, copy: PricingCopy, state: Pricing
 
   for (const [sku, card] of elements.buyableCards) {
     card.buy.addEventListener('click', () => {
+      trackCheckoutEvent('plan_click', { line: card.line, sku })
       void openPlanCheckout(elements, copy, state, card.line, sku).catch(error => {
         console.error(error)
         setMessage(card.error, copy.plans.loadFailed)

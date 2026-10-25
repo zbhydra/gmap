@@ -6,6 +6,7 @@
  */
 
 import { collectUtmParams } from './homepage/ga4'
+import { trackCtaClick, trackUiAction } from './homepage/web-mark'
 
 type GA4EventParamValue = string | number | boolean | undefined
 
@@ -130,13 +131,16 @@ function dispatchGAEvent(target: HTMLElement): void {
     return
   }
 
-  const gtag = window.gtag
-  if (typeof gtag !== 'function') {
-    return
-  }
-
   try {
-    gtag('event', eventName, withUtmAttribution(collectParams(target), target))
+    const params = withUtmAttribution(collectParams(target), target)
+    // 同一批业务按钮另写一份 SLS：GA4 可能被拦截或未配置 measurement_id，
+    // SLS 是自有兜底口径，因此在 gtag 缺失时也要上报。
+    trackUiAction('ga_event_click', { event: eventName, ...params })
+
+    const gtag = window.gtag
+    if (typeof gtag === 'function') {
+      gtag('event', eventName, params)
+    }
   } catch (error) {
     console.error('[global-click-events] GA event dispatch failed.', { eventName }, error)
     // 防止埋点异常影响主流程。
@@ -201,6 +205,7 @@ document.addEventListener(
       return
     }
     dispatchCtaClick(target)
+    trackCtaClick(target.getAttribute(CTA_ATTR) ?? '', target)
   },
   { capture: true }
 )

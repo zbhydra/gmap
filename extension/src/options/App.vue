@@ -519,6 +519,7 @@ import { I18N_KEYS } from '@/core/constants/i18n'
 import { WEBSITE } from '@/core/api/config'
 import { Icon, IconName } from '@/core/components/icons'
 import { logger } from '@/core/utils/logger'
+import { markApi, MARK_TYPE } from '@/core/api/mark'
 import { LANGUAGES } from '@/core/services/languageService'
 import { I18nService } from '@/locales'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
@@ -660,6 +661,13 @@ async function patch(
   try {
     settings.value = await MapsUserSettingsManager.updateSettings(updates)
     finishSave()
+    // 设置项决定采集间隔、导出格式与自动化行为，变更趋势是判断功能采纳的直接依据。
+    const changed = Object.entries(updates)
+      .map(([key, value]) => `${key}=${formatSettingValue(value)}`)
+      .join(', ')
+    markApi
+      .record(MARK_TYPE.SETTINGS_CHANGE, changed, { surface: 'options' })
+      .catch(error => logger.error(`[Options] settings_change 打点失败: ${row}`, error))
   } catch (error) {
     settings.value = previous
     saveState.value = 'failed'
@@ -706,6 +714,10 @@ async function changeLanguage(event: Event): Promise<void> {
     failedRow.value = 'language'
     logger.error('[Options] 语言保存失败:', error)
   }
+}
+/** 设置值序列化为 mark_msg 用；数组按长度上报，避免把整份字段列表写进日志。 */
+function formatSettingValue(value: MapsUserSettings[keyof MapsUserSettings]): string {
+  return Array.isArray(value) ? `[${value.length}]` : String(value)
 }
 function currentValue(row: Row): string {
   if (row === 'language')

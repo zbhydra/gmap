@@ -15,6 +15,8 @@
 
 import { logger } from '@/core/utils/logger'
 import { BackgroundChannel } from '@/content/rpc/background.rpc'
+import { recordContentMark } from './marks'
+import { MARK_TYPE } from '@/core/api/mark/types'
 import { getBingConfig } from '../config/loader'
 import type { BingStopPolicy } from './collector'
 
@@ -69,9 +71,18 @@ async function doRefresh(): Promise<void> {
   const channel = new BackgroundChannel()
   try {
     const next = await channel.getGateState()
+    const previous = gateState
     gateState = next
     for (const listener of listeners) {
       listener(gateState)
+    }
+    // 只有真实翻转才打点：getRowLimit 每轮都会触发刷新，全量上报会淹没日志。
+    // 放在通知之后，保证 UI 刷新不受打点通道影响。
+    if (previous.authenticated !== next.authenticated || previous.isPro !== next.isPro) {
+      recordContentMark(
+        MARK_TYPE.GATE_STATE_CHANGE,
+        `authenticated=${next.authenticated}, is_pro=${next.isPro}`
+      )
     }
   } catch (error) {
     logger.error('[BingGate] 门控态刷新失败，保留当前快照:', error)

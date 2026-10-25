@@ -15,8 +15,9 @@ type SlsFieldValue = string | number | boolean | null
 /** SLS WebTracking 日志字段。 */
 export type SlsMarkFields = Record<string, SlsFieldValue>
 
-/** SLS mark 上报所属站点,固定为本站。 */
+/** SLS mark 上报所属站点与产品线，website 只有一条产品线。 */
 const SLS_MARK_SITE = 'website'
+const SLS_CLIENT_PRODUCT = 'web'
 
 /** SLS WebTracking 配置。 */
 export interface SlsMarkConfig {
@@ -93,14 +94,15 @@ export function getSlsMarkConfig(): SlsMarkConfig {
   const host = normalizeSlsHost(readEnvValue(import.meta.env.PUBLIC_ALI_SLS_HOST))
   const endpoint = endpointFromEnv || (project && host ? `https://${project}.${host}` : '')
   const logstore = readEnvValue(import.meta.env.PUBLIC_ALI_SLS_LOGSTORE)
-  const source = readEnvValue(import.meta.env.PUBLIC_ALI_SLS_SOURCE) || SLS_MARK_SITE
 
   return {
     enabled: !isSlsDisabled(import.meta.env.PUBLIC_ALI_SLS_ENABLED) && Boolean(endpoint && logstore),
     endpoint,
     logstore,
     topic: readEnvValue(import.meta.env.PUBLIC_ALI_SLS_TOPIC) || DEFAULT_TOPIC,
-    source
+    // source 与 client_product 同为产品身份，不接受环境变量覆盖：
+    // 允许覆盖会让日志里的产品口径与 client_product 漂移。
+    source: SLS_MARK_SITE
   }
 }
 
@@ -207,22 +209,73 @@ export function buildFrontendCapturedErrorMarkMessage(capturedError: FrontendCap
   })
 }
 
+/**
+ * 从 JWT 载荷读取账号 ID。
+ *
+ * 只为分析关联，不验签、不用于认证；token 本身不入日志。解不出时固定 0，
+ * 让匿名事件与已登录事件在同一字段上可区分。
+ */
+function readMarkUserId(token: string | null | undefined): number {
+  if (!token) {
+    return 0
+  }
+
+  const parts = token.split('.')
+  if (parts.length !== 3) {
+    return 0
+  }
+
+  try {
+    const payload = JSON.parse(
+      new TextDecoder().decode(
+        Uint8Array.from(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')), char =>
+          char.charCodeAt(0)
+        )
+      )
+    ) as { user_id?: unknown }
+    const userId = payload.user_id
+    return typeof userId === 'number' && Number.isSafeInteger(userId) && userId > 0 ? userId : 0
+  } catch (error) {
+    console.error('[SlsMark] 解析当前账号标识失败:', error)
+    return 0
+  }
+}
+
+/**
+ * 首次访问距今天数。
+ *
+ * 新用户分析的核心维度：`0` 表示首访当天。同一设备跨天回来时该值递增，
+ * 因此不用额外建「新/老用户」布尔字段——按 `first_opened_days` 分桶即可
+ * 看到完整的留存曲线。
+ */
+function readFirstOpenedDays(firstOpenedAt: number): number {
+  if (!firstOpenedAt) {
+    return -1
+  }
+
+  const elapsed = Date.now() - firstOpenedAt
+  return elapsed < 0 ? 0 : Math.floor(elapsed / 86_400_000)
+}
+
 /** 构造 SLS mark-log 字段。 */
 export function buildSlsMarkFields(
   markType: string,
   context: RequestContext,
   markMsg: string
 ): SlsMarkFields {
+  const firstOpenedAt = ensureFirstOpenedAt()
   return {
     event: 'mark-log',
     site: SLS_MARK_SITE,
-    client_product: 'web',
+    client_product: SLS_CLIENT_PRODUCT,
     mark_type: truncateText(markType, MAX_TEXT_FIELD_LENGTH),
     mark_msg: buildSlsMarkMessage(markMsg),
     device_id: truncateText(context.deviceId, MAX_TEXT_FIELD_LENGTH),
+    user_id: readMarkUserId(context.token),
     page_path: getCurrentPagePath(),
     mark_time: String(Date.now()),
-    first_opened_at: ensureFirstOpenedAt(),
+    first_opened_at: firstOpenedAt,
+    first_opened_days: readFirstOpenedDays(firstOpenedAt),
     user_agent: getCurrentUserAgent(),
     language: getCurrentLanguage(),
     viewport: getCurrentViewport()

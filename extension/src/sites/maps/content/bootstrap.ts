@@ -52,8 +52,21 @@ export function bootstrapMapsContent(): void {
     return
   }
 
-  // content_open（feat.md 埋点表）：任意命中页初始化即报；失败由广播通道静默
-  markEmitter.emit('contentOpenMark', { markMsg: '', pageUrl: location.href })
+  // content_open（feat.md 埋点表）：任意命中页初始化即报；失败由广播通道静默。
+  // 带上页面形态与列表模式，新用户首次触达的入口类型可直接按此分组。
+  const pageKind = isReviewsPageUrl(url)
+    ? 'reviews'
+    : isPhotosPageUrl(url)
+      ? 'photos'
+      : location.pathname.includes('/search/')
+        ? 'search'
+        : location.pathname.includes('/place/')
+          ? 'place'
+          : 'other'
+  markEmitter.emit('contentOpenMark', {
+    markMsg: `page_kind=${pageKind}, list_mode=${detectMapsListMode(location.href, getMapsConfig().dom.listModeUrlMark)}`,
+    pageUrl: location.href
+  })
 
   // 评论/照片工作页自治运行，不注入 injected hook、不挂搜索面板
   if (isReviewsPageUrl(url)) {
@@ -108,8 +121,16 @@ async function mountMapsExtractionUi(): Promise<void> {
     }
 
     const { dom, operations } = getMapsConfig()
+    // 面板按钮统一走 ui_action：按钮名进 mark_msg，避免每加一个按钮扩一次事件合同。
+    const markPanelAction = (action: string): void => {
+      markEmitter.emit('mapsUiActionMark', {
+        markMsg: `action=${action}, surface=panel`,
+        pageUrl: location.href
+      })
+    }
     const panel = new MapsPanel({
       onStart: () => {
+        markPanelAction('start')
         if (
           !location.pathname.includes('/search/') &&
           !location.pathname.includes('/place/') &&
@@ -123,19 +144,34 @@ async function mountMapsExtractionUi(): Promise<void> {
           scraper.start(lastLimit)
         })
       },
-      onPause: () => scraper.pause(),
-      onResume: () => scraper.resume(),
-      onExport: () => exportRows(scraper),
-      onReset: () => scraper.reset(),
+      onPause: () => {
+        markPanelAction('pause')
+        scraper.pause()
+      },
+      onResume: () => {
+        markPanelAction('resume')
+        scraper.resume()
+      },
+      onExport: () => {
+        markPanelAction('export')
+        exportRows(scraper)
+      },
+      onReset: () => {
+        markPanelAction('reset')
+        scraper.reset()
+      },
       onStartReviews: () => {
-        void guardStartThen(() => startReviewsExtraction(panel))
+        markPanelAction('start_reviews')
+        void guardStartThen(() => startReviewsExtraction(panel), 'reviews')
       },
       onStartPhotos: () => {
-        void guardStartThen(() => startPhotosExtraction(panel))
+        markPanelAction('start_photos')
+        void guardStartThen(() => startPhotosExtraction(panel), 'photos')
       },
       // 订阅引导（U7 遗留接线，W7）：content 无 tabs 能力，经 background
       // chrome.tabs.create 代开（URL 组装与失败吞并在 pricing 模块内）
       onOpenPricing: () => {
+        markPanelAction('open_pricing')
         void openPanelPricing()
       }
     })
@@ -148,12 +184,18 @@ async function mountMapsExtractionUi(): Promise<void> {
     // 配额（U7）：会话上报器（每个 start→complete 会话一个幂等 ID）+ 门控
     const usageReporter = createUsageSessionReporter(markEmitter, 'search')
     const guardStartThen = async (
-      start: (snapshot: MapsUsageSnapshot | null) => void | Promise<void>
+      start: (snapshot: MapsUsageSnapshot | null) => void | Promise<void>,
+      source: 'search' | 'reviews' | 'photos' | 'bulk' = 'search'
     ): Promise<void> => {
       // Start 前现拉最新 usage（竞品「每次 start 前查用量」同构）；查询失败
       // 放行（fail-open），耗尽则禁用 Start 并显示额度用尽提示
       const snapshot = await panel.checkQuota(false)
       if (isUsageExhausted(snapshot)) {
+        // 配额拦截是订阅漏斗的关键节点：用户在这里看到了升级提示但没有进入采集。
+        markEmitter.emit('mapsUiActionMark', {
+          markMsg: `action=quota_blocked, source=${source}`,
+          pageUrl: location.href
+        })
         return
       }
       panel.setSearchError(null)
@@ -191,6 +233,16 @@ async function mountMapsExtractionUi(): Promise<void> {
         }
         if (status === 'complete' && previousStatus !== 'complete') {
           usageReporter.completeSession(count)
+          // 采集终态打点：stop_reason 由终态来源决定，limit 命中说明是免费额度截断，
+          // 这是判断免费→付费转化的直接依据。
+          const stopReason = count >= lastLimit && lastLimit > 0 ? 'limit' : 'end'
+          markEmitter.emit('mapsSearchFinishMark', {
+            markMsg:
+              `count=${count}, stop_reason=${stopReason}, ` +
+              `limit=${lastLimit}, ` +
+              `mode=${detectMapsListMode(location.href, getMapsConfig().dom.listModeUrlMark) ? 'list' : 'search'}`,
+            pageUrl: location.href
+          })
           // 完成边沿收尾（U8 重构为异步 finalize）：补全（若开关开）先行写回
           // Email/社媒 → 自动导出/集成同步/批量回报消费补全后的行。async 收尾
           // 不阻塞状态机（complete 态已稳定，面板渲染不依赖 finalize 时序）
@@ -238,7 +290,7 @@ async function mountMapsExtractionUi(): Promise<void> {
         logger.info(
           `[MapsContent] 批量自动采集已开始: task=${bulkWork.taskId}, item=${bulkWork.itemIndex}`
         )
-      })
+      }, 'bulk')
     }
     logger.info('[MapsContent] 采集面板已挂载')
   } catch (error) {

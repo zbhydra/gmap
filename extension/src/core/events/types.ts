@@ -94,6 +94,12 @@ export interface ExtensionEvents extends EventDefinition {
    * 后广播，background 统一写 SLS（MARK_TYPE.ENRICH_COMPLETE）。
    */
   mapsEnrichCompleteMark: MarkEventPayload
+  /** content 侧界面动作（面板按钮、配额拦截等，background 统一写 ui_action）。 */
+  mapsUiActionMark: MarkEventPayload
+  /** 搜索采集进入终态（mark_msg 带 count / stop_reason / duration_ms）。 */
+  mapsSearchFinishMark: MarkEventPayload
+  /** 照片采集开始（mark_msg 带 fid / count）。 */
+  mapsScrapePhotosContentMark: MarkEventPayload
   /** content script 初始化（feat.md 埋点表 content_open，Maps 页挂载前上报）。 */
   contentOpenMark: MarkEventPayload
 }

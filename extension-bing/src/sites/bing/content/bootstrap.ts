@@ -34,8 +34,9 @@ export function bootBingSite(): Promise<void> {
 
 async function doBoot(): Promise<void> {
   // 埋点表（feat.md）：content_open = content script 初始化（fire-and-forget，
-  // 经 recordMark RPC 由 background 统一写 SLS；失败只记日志不影响主流程）
-  recordContentMark(MARK_TYPE.CONTENT_OPEN)
+  // 经 recordMark RPC 由 background 统一写 SLS；失败只记日志不影响主流程）。
+  // 带页面路径，用于区分新用户首个落地页形态。
+  recordContentMark(MARK_TYPE.CONTENT_OPEN, `path=${location.pathname}`)
 
   try {
     await loadBingConfig()

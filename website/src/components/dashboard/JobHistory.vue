@@ -27,6 +27,7 @@ import {
   type HistoryQuery
 } from '../../scripts/dashboard/route'
 import { isSessionExpiry, type DashboardWorkspace } from '../../scripts/dashboard/workspace'
+import { trackDashboardAction } from '../../scripts/homepage/web-mark'
 import HistoryToolbar from './HistoryToolbar.vue'
 import JobPager from './JobPager.vue'
 import JobRow from './JobRow.vue'
@@ -92,6 +93,13 @@ const panel = computed(() => {
 const skeletonRows = computed(() => Math.min(Math.max(jobs.value.length || 5, 3), props.query.size))
 
 function setQuery(next: Partial<HistoryQuery>, resetPage = true): void {
+  // 筛选动作反映用户在想看什么：状态/时间范围/每页条数/搜索词各自独立可查。
+  trackDashboardAction('history_filter', {
+    status: next.status ?? props.query.status,
+    range: next.range ?? props.query.range,
+    size: next.size ?? props.query.size,
+    has_keyword: Boolean(next.q ?? props.query.q)
+  })
   emit('update:query', { ...props.query, ...next, ...(resetPage ? { page: 1 } : {}) })
 }
 
@@ -229,6 +237,11 @@ function activate(): void {
 
 /* ---------------------------------------------------------------- 明细 */
 
+function retryDetail(jobNo: string): void {
+  trackDashboardAction('history_detail_retry', { job_no: jobNo })
+  void loadDetail(jobNo)
+}
+
 async function loadDetail(jobNo: string, silent = false): Promise<void> {
   if (!silent) detailErrors.delete(jobNo)
   try {
@@ -256,6 +269,7 @@ function revealJob(jobNo: string): void {
 defineExpose({ revealJob })
 
 function toggle(jobNo: string): void {
+  trackDashboardAction('history_job_toggle', { job_no: jobNo })
   if (expanded.delete(jobNo)) return
   expanded.add(jobNo)
   void loadDetail(jobNo)
@@ -368,7 +382,7 @@ onBeforeUnmount(() => {
               :download-message="state.downloadMessages.get(job.job_no)"
               @toggle="toggle(job.job_no)"
               @download="props.workspace.download(job.job_no)"
-              @retry-detail="loadDetail(job.job_no)"
+              @retry-detail="retryDetail(job.job_no)"
             />
           </template>
         </ul>

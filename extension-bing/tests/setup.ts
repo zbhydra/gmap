@@ -14,10 +14,10 @@ vi.stubGlobal('__DEV__', false)
 vi.stubGlobal('__WEBSITE_BASE_URL__', 'https://www.example.com')
 vi.stubGlobal('__ALI_SLS_MARK_CONFIG__', {
   enabled: true,
-  endpoint: 'https://tg-download.ap-southeast-1.log.aliyuncs.com',
-  logstore: 'tg-download-mark-log',
+  endpoint: 'https://gmap.ap-northeast-1.log.aliyuncs.com',
+  logstore: 'gmap-mark-logs',
   topic: 'mark-log',
-  source: 'extension'
+  source: 'extension-bing'
 })
 
 Object.defineProperty(globalThis, 'chrome', { value: chrome, writable: true })

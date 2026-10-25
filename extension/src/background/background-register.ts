@@ -149,8 +149,8 @@ export const METHOD_TARGETS = {
   getRuntimeConfig: ['popup'],
   /** 面板与 Popup 共用远程运营配置。 */
   getMapsConfig: ['content', 'popup'],
-  /** recordMark 允许 popup 调用，统一由 background 写 SLS。 */
-  recordMark: ['popup'],
+  /** recordMark 允许 popup（弹窗/仪表盘/设置页）与 content（面板动作）调用，统一由 background 写 SLS。 */
+  recordMark: ['popup', 'content'],
   /** openExtensionLogin 仅允许 popup 调用（账号区 Sign in 入口）。 */
   openExtensionLogin: ['popup'],
   /** getMapsUsage 允许 content（面板门控）与 popup（账号区）调用。 */

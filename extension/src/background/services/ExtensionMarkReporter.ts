@@ -38,6 +38,15 @@ export class ExtensionMarkReporter {
       this.eventSubscriber.on('mapsEnrichCompleteMark', payload => {
         void this.record(MARK_TYPE.ENRICH_COMPLETE, payload)
       }),
+      this.eventSubscriber.on('mapsUiActionMark', payload => {
+        void this.record(MARK_TYPE.UI_ACTION, payload)
+      }),
+      this.eventSubscriber.on('mapsSearchFinishMark', payload => {
+        void this.record(MARK_TYPE.SEARCH_FINISH, payload)
+      }),
+      this.eventSubscriber.on('mapsScrapePhotosContentMark', payload => {
+        void this.record(MARK_TYPE.SCRAPE_PHOTOS_CONTENT, payload)
+      }),
       this.eventSubscriber.on('contentOpenMark', payload => {
         void this.record(MARK_TYPE.CONTENT_OPEN, payload)
       })

@@ -11,6 +11,7 @@
 import { reactive } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
 import { HomepageApiError, type RequestContext } from '../homepage/api'
+import { trackDashboardAction } from '../homepage/web-mark'
 import {
   getExportDownload,
   getOnlineOptions,
@@ -207,6 +208,7 @@ export function createWorkspace(context: RequestContext, copy: DashboardContent)
     try {
       const file = await getExportDownload(context, jobNo)
       if (disposed) return
+      trackDashboardAction('job_download', { job_no: jobNo, outcome: 'success' })
       // 签名 URL 由后端携带 attachment 头；download 属性只是本地命名兜底
       const anchor = document.createElement('a')
       anchor.href = file.url
@@ -217,6 +219,11 @@ export function createWorkspace(context: RequestContext, copy: DashboardContent)
       anchor.remove()
     } catch (error) {
       if (disposed) return
+      trackDashboardAction('job_download', {
+        job_no: jobNo,
+        outcome: 'failed',
+        code: error instanceof HomepageApiError ? (error.code ?? '') : ''
+      })
       if (!isSessionExpiry(error)) console.error(new Error(`[dashboard-workspace] CSV download failed: job_no=${jobNo}`, { cause: error }))
       state.downloadMessages.set(jobNo,
         error instanceof HomepageApiError && error.code === 404

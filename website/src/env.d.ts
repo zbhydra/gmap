@@ -22,8 +22,6 @@ interface ImportMetaEnv {
   readonly PUBLIC_ALI_SLS_ENABLED?: string
   /** 阿里云 SLS topic。 */
   readonly PUBLIC_ALI_SLS_TOPIC?: string
-  /** 阿里云 SLS source。 */
-  readonly PUBLIC_ALI_SLS_SOURCE?: string
 }
 
 interface ImportMeta {

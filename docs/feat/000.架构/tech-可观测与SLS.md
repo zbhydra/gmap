@@ -1,133 +1,222 @@
-# 000 · 架构 · 前端可观测与 SLS 双写细节
+# 000 · 架构 · 前端可观测与 SLS 打点
 
-> 对应 `feat.033.website前端SLS日志双写` + `feat.033.002.website前端SLS异常捕获`。本文件补 `@tech-website.md` §7 没写全的细节:完整字段表、环境变量、WebTracking URL 协议、脱敏规则、两类异常事件。extension 独立 mark-log 入口见 `@tech-extension.md` §A7。
-> **SLS 在 website / extension 前端写入,后端 Python 不写 SLS**(后端用标准 logging,见 `@tech-backend.md` §7)。规则条文见根 `@../../../AGENTS.md`。本文以代码为准。
+> 本文件是 website / extension / extension-bing 三端行为打点的**唯一事实来源**：SLS 配置、字段表、事件字典、脱敏规则、异常捕获。
+> **SLS 只在前端写入，后端 Python 不写 SLS**（后端用标准 logging，见 `@tech-backend.md` §7）。本文以代码为准。
 
-## 1. 实现文件
+## 1. 通道裁决
 
-| 站点 | 文件 |
-| --- | --- |
-| website | `website/src/scripts/homepage/sls-mark.ts` |
-| extension | `extension/src/core/api/mark/sls.ts`、`extension/src/core/api/mark/api.ts`、`extension/src/core/content/services/ContentMarkReporter.ts`、`extension/src/background/services/ExtensionMarkReporter.ts` |
-| Website 共享实现 | `website/src/scripts/homepage/mark.ts`(`recordHomepageMark` 双写入口)、`website/src/download/scripts/media-api.ts`(下载节点连接失败 → SLS)、`website/src/scripts/homepage/api.ts`(后端连接失败 → SLS) |
-| 异常捕获 | `website/src/scripts/homepage/frontend-error-capture.ts` |
-| 脱敏 | `website/src/scripts/homepage/mark-sanitizer.ts`、`extension/src/core/api/mark/mark-sanitizer.ts` |
+打点共两条通道，**默认只写 SLS**：
+
+| 通道 | 用途 | 写入方 |
+| --- | --- | --- |
+| SLS WebTracking | 全部行为与诊断事件 | 三端前端 |
+| 后端 `mark_logs` | 仅管理后台 Dashboard 聚合必需的转化事件 | 经 `POST /api/client/mark/record` |
+
+**为什么默认只写 SLS**：后端 `MarkType` 是枚举白名单（`backend/src/app/constants/mark.py`），新增事件必须同步改后端才不返回 422；把点击级事件灌进业务库既污染数据，又让每次埋点都要动后端。只有插件安装、首访、订阅漏斗上游这类进入运营报表的事件保留双写。
+
+双写白名单（website）：`web_first_opened`、`web_extension_install_click`、`web_pricing_open_from_extension`、`web_extension_store_review_click`、`web_credit_purchase_modal_open`、`web_credit_purchase_buy_click`。插件端仅 `install` 双写。其余事件一律 SLS-only。
 
 ## 2. 阿里云 SLS 配置
 
+三端**共用一个 project + 一个 logstore**，靠 `client_product` 区分产品线。
+
+**已建索引**（2026-10-25，17 个字段全部开启查询与统计）：`__topic__`、`__source__`、`site`、`client_product`、`mark_type`、`mark_msg`、`device_id`、`user_id`、`page_path`、`mark_time`、`first_opened_at`、`first_opened_days`、`user_agent`、`language`、`viewport`、`surface`、`extension_version`。全文索引开启。新增字段时必须同步补索引，否则只能走全文检索、无法分组统计。
+
 | 项 | 值 |
 | --- | --- |
-| Project | `tg-download` |
-| Region | 新加坡 |
-| 公网 Host | `ap-southeast-1.log.aliyuncs.com` |
-| Logstore | `tg-download-mark-log` |
-| WebTracking | 已开启(匿名 GET 写入) |
+| Project | `gmap` |
+| Region | 日本 |
+| 公网 Host | `ap-northeast-1.log.aliyuncs.com` |
+| Logstore | `gmap-mark-logs` |
+| Topic | `mark-log` |
+| WebTracking | 已开启（匿名 GET 写入） |
+
+**产品线标识**（`client_product` 与 `__source__` 同源，均为构建期常量，不接受环境变量覆盖）：
+
+| 端 | `client_product` / `__source__` | `site` |
+| --- | --- | --- |
+| website | `web` | `website` |
+| Maps 插件 | `extension-maps` | `extension` |
+| Bing 插件 | `extension-bing` | `extension` |
+
+不拆多个 logstore 的理由：三端字段同构、量级相近、同一团队维护；共用后跨端漏斗一条查询即可完成，新增产品线只需增加一个 `client_product` 取值。若将来需要按产品隔离 RAM 权限或保留期，再按 `__topic__` 分流，不为此提前拆库。
 
 ## 3. 环境变量
 
-website 读取 `import.meta.env.PUBLIC_ALI_SLS_*`；extension 运行时代码不读 `import.meta.env`，由 `vite.config.ts` 读取 `EXTENSION_ALI_SLS_*` 并注入 `__ALI_SLS_MARK_CONFIG__`，同时兼容同名 `PUBLIC_ALI_SLS_*`。
+website 读取 `import.meta.env.PUBLIC_ALI_SLS_*`；插件运行时代码不读 `import.meta.env`，由各端 `vite.config.ts` 读取 `EXTENSION_ALI_SLS_*` 并注入 `__ALI_SLS_MARK_CONFIG__`，同时兼容同名 `PUBLIC_ALI_SLS_*`。
 
 | 变量 | 用途 |
 | --- | --- |
-| `PUBLIC_ALI_SLS_PROJECT` | SLS Project 名(`tg-download`) |
-| `PUBLIC_ALI_SLS_HOST` | 公网 host(`ap-southeast-1.log.aliyuncs.com`) |
-| `PUBLIC_ALI_SLS_ENDPOINT` | 完整 endpoint,可替代 `PROJECT`+`HOST`(如 `https://tg-download.ap-southeast-1.log.aliyuncs.com`) |
-| `PUBLIC_ALI_SLS_LOGSTORE` | Logstore(`tg-download-mark-log`) |
-| `PUBLIC_ALI_SLS_TOPIC` | `__topic__` 值,默认 `mark-log` |
-| `PUBLIC_ALI_SLS_SOURCE` | `__source__` 值;未配时回落到固定站点名 `website` |
+| `PUBLIC_ALI_SLS_PROJECT` | SLS Project 名 |
+| `PUBLIC_ALI_SLS_HOST` | 公网 host |
+| `PUBLIC_ALI_SLS_ENDPOINT` | 完整 endpoint，可替代 `PROJECT`+`HOST` |
+| `PUBLIC_ALI_SLS_LOGSTORE` | Logstore 名 |
+| `PUBLIC_ALI_SLS_TOPIC` | `__topic__` 值，默认 `mark-log` |
 | `PUBLIC_ALI_SLS_ENABLED` | `false` 时整体关闭 |
-| `EXTENSION_ALI_SLS_*` | 插件端同字段覆盖；生产构建未配置时默认 project/host/logstore/topic/source 为 `tg-download` / `ap-southeast-1.log.aliyuncs.com` / `tg-download-mark-log` / `mark-log` / `extension`，dev 未配置时关闭 |
+| `EXTENSION_ALI_SLS_*` | 插件端同字段覆盖；生产构建未配置时取 §2 默认值，dev 未配置时关闭 |
+
+`__source__` 无独立环境变量：它是产品身份，由构建常量派生，避免与 `client_product` 漂移。
 
 ## 4. WebTracking URL 协议
 
-阿里云 SLS WebTracking **HTTP GET**(不 POST、不用 `__logs__`、不引入 SDK、不新增 npm 依赖):
+阿里云 SLS WebTracking **HTTP GET**（不 POST、不用 `__logs__`、不引入 SDK、不新增 npm 依赖）：
 
 ```text
 https://{project}.{host}/logstores/{logstore}/track?APIVersion=0.6.0&__topic__=mark-log&__source__={source}&{字段...}
 ```
 
-请求参数:`method: 'GET'`、`credentials: 'omit'`(不带 Cookie)、`keepalive: true`(降低离页取消概率,安装 CTA 跳转场景关键)。WebTracking 响应允许通配 CORS，不为 SLS 申请 `host_permissions`。失败只写 `console.error` / `logger.error` 后吞掉,**不影响**页面解析/下载/安装 CTA/登录/订阅/插件下载。
+请求参数：`method: 'GET'`、`credentials: 'omit'`（不带 Cookie）、`keepalive: true`（降低离页取消概率）。WebTracking 响应允许通配 CORS，不为 SLS 申请 `host_permissions`。失败只写 `console.error` / `logger.error` 后吞掉，**不影响**任何业务操作。
 
-## 5. mark-log 字段表(`buildSlsMarkFields`)
+## 5. 字段表
 
-| 字段 | 必填 | 来源 / 说明 |
-| --- | --- | --- |
-| `event` | 是 | 固定 `mark-log` |
-| `site` | 是 | `website` / `extension` |
-| `client_product` | 是 | website 固定 `web`；extension 固定 `extension` |
-| `mark_type` | 是 | 现有 mark type(如 `web_parse_click`) |
-| `mark_msg` | 是 | 业务 builder 生成的不超过 1000 字符的脱敏内容；website 的结构化内容必须保持完整 JSON |
-| `device_id` | 是 | RequestContext 的 deviceId |
-| `page_path` | 是 | `location.pathname` |
-| `mark_time` | 是 | `Date.now()` 毫秒 |
-| `first_opened_at` | 是 | website 本地首次打开毫秒时间；extension 固定 `0` |
-| `user_agent` | 是 | `navigator.userAgent` 裁剪 |
-| `language` | 是 | `navigator.language` |
-| `viewport` | 是 | `${innerWidth}x${innerHeight}` |
+### 5.1 公共字段
 
-字段长度上限:`mark_msg` 1000、`user_agent` 512、其他文本字段 256。
-
-## 6. 脱敏规则(`mark-sanitizer.ts`)
-
-- website 的结构化 `mark_msg` 先解析 JSON,逐字段脱敏(移除 URL query、token、完整下载直链)后重新序列化并在字段层降级到 1000 字符以内；禁止直接切片。extension 仍按普通文本裁剪。
-- 异常诊断字段额外走 `sanitizeSlsDiagnosticField()`:脱敏后用 `REDACTED_KEY_VALUE_RE` 把敏感 key 的值替换为 `_redacted`,保持 JSON 仍可解析。
-- **不发送**:Cookie、Authorization、访问令牌、完整下载直链、用户输入 URL query、API base URL。
-- API path 预脱敏(只留 path)。
-
-## 7. 只写 SLS 的事件
-
-下列事件**不请求** `/api/client/mark/record`、**不进**后端 `mark_logs`:
-
-| `mark_type` | 触发 | `mark_msg` 口径 |
-| --- | --- | --- |
-| `web_frontend_uncaught_error` | 全局 `error` / `unhandledrejection` 捕获未处理异常 | `error_kind`、`error_name`、`error_message`、`page_path`、`source_file`、`line`、`column` |
-| `web_backend_connect_failed` | `fetch` reject 或 AbortController 超时(连不上/超时) | `method`、`api_path`、`failure_reason`、`error_name`、`error_message`、`timeout_ms` |
-| `upgrade_modal_open` | extension 共享升级弹窗从隐藏进入显示 | 空字符串 |
-| `download_click` | extension 单个资源进入共享下载队列 | `resource_type`、`source_kind` |
-| `download_success` | extension 单个资源完成实际下载 | `resource_type`、`source_kind` |
-| `download_failed` | extension 单个资源下载抛错 | `error_name`、`error_message`、`resource_type`、`source_kind` |
-| `download_quota_insufficient` | extension 单个资源因额度不足未开始下载 | `resource_type`、`source_kind` |
-
-边界:
-- **HTTP 4xx / 5xx 业务错误**不触发 `web_backend_connect_failed`(服务器已返回响应,不属于「连不上或超时」)。
-- 图片/脚本/样式等**资源加载失败**不捕获(噪音高)。
-- 同一页面生命周期内按错误指纹做短窗口去重,避免重复日志。
-- SLS 上报 promise 内部 catch,不产生二次未处理 rejection。
-- `upgrade_modal_open` 不按错误指纹去重;只由弹窗可见状态跃迁控制,关闭后重开会再次记录,不区分触发入口。
-- extension 下载事件以单个资源任务为单位;批量下载 N 个资源产生 N 组事件。额度拒绝记录 `download_click` + `download_quota_insufficient`,不误记成功或失败;失败消息不携带媒体 URL、文件名或消息身份,并继续经过统一脱敏与长度限制。
-- extension 接入行为 mark-log(包含 `upgrade_modal_open`),不接入全局 `error` / `unhandledrejection` 和后端连接失败 SLS-only 事件。
-
-## 8. 覆盖入口
-
-| 站点 | 入口 |
+| 字段 | 来源 / 说明 |
 | --- | --- |
-| website | `website/src/scripts/homepage/mark.ts` 兼容入口；实现为 `website/src/scripts/homepage/mark.ts` 的 `recordHomepageMark()` |
-| website | `website/src/scripts/homepage/first-opened-mark.ts` 首次访问 mark-log |
-| website | `website/src/scripts/globalClickEvents.ts` 安装 CTA mark-log |
-| website | `website/src/components/pricing/pricing-page-controller.ts` 插件升级入口 Pricing 曝光 |
-| website | `website/src/components/pricing/pricing-subscription-confirm-controller.ts` 插件商店评价点击 |
-| website | 全局 `error` / `unhandledrejection` |
-| website | `website/src/scripts/homepage/api.ts` 连接后端失败/超时 |
-| website | `website/src/download/scripts/media-api.ts` 连接解析/下载节点失败/超时 |
-| extension | `extension/src/popup/App.vue` 弹窗打开 |
-| extension | `extension/src/sites/telegram/content/index.ts` content 初始化 |
-| extension | `extension/src/core/content/download/downloadManager.ts` 所有已发布站点及 Popup 的单资源下载点击、成功、失败 |
-| extension | `extension/src/core/content/components/UpgradeModal.vue` 广播升级弹窗打开事件,background 统一写 SLS |
+| `event` | 固定 `mark-log` |
+| `site` | §2 产品线表 |
+| `client_product` | §2 产品线表 |
+| `mark_type` | 事件字典（§6） |
+| `mark_msg` | `key=value, key=value` 或完整 JSON；≤ 1000 字符 |
+| `device_id` | 三端匿名设备标识 |
+| `mark_time` | `Date.now()` 毫秒 |
+| `first_opened_at` | website 本地首访毫秒；插件为首次安装毫秒（`INSTALLED_AT`） |
+| `first_opened_days` | 距首次访问/安装的天数，`0` = 首日，`-1` = 未知。新用户分析的核心维度 |
+| `page_path` | website 为 `location.pathname`；插件为页面 URL 的 pathname |
+| `user_agent` | 裁剪至 512 |
+| `language` | `navigator.language` |
+| `viewport` | `${innerWidth}x${innerHeight}` |
 
-## 9. 业务流程要点
+### 5.2 插件端附加字段
 
-- **下载工作区 mark-log**:用户触发解析/下载/恢复/失败 → `recordHomepageMark()` → 立即 fire-and-forget SLS → 继续请求后端 `/api/client/mark/record`;任一通道失败都不阻断用户操作。
-- **安装 CTA**:`globalClickEvents.ts` 生成 `web_extension_install_click` → SLS(keepalive)→ `postJsonKeepalive()` 请求后端 mark;CTA 跳转不被等待。
-- **插件升级入口 Pricing 曝光**:网页精确检测 `utm_source=extension&source=quota_upgrade_button` → `recordHomepageMark()` 双写 `web_pricing_open_from_extension`;页面刷新重复写入,其他来源不写该类型,失败不阻断 Pricing 初始化。
-- **插件商店评价点击**:Pricing 订阅确认弹窗点击“去好评” → `recordHomepageMark()` 双写 `web_extension_store_review_click`,空 `mark_msg`;每次点击都发起,失败不阻断商店跳转和领取倒计时。
-- **首次打开网站时间**:website 首次运行时把毫秒时间戳写入 `homepage_first_opened_at`;SLS 的 `first_opened_at` 与后端 `mark_logs.first_opened_at` 使用同一口径,旧客户端不传后端字段时默认 `0`。extension 只写 SLS，`first_opened_at` 固定为 `0`。
-- **首次访问事件**:website 确认 `homepage_first_opened_at` 后,若本机没有 `homepage_web_first_opened_submitted_at` 提交标记,异步上报 `web_first_opened`,同时写 SLS 与后端 `mark_logs`,并写入提交标记。`localStorage` 不可用或写入失败时仍上报,`mark_msg` 为 `{"reason":"localStorage_unavailable"}`;这种场景不能跨刷新去重,Dashboard 排查时按 reason 区分。
-- **后端不可用**:后端 mark 失败/超时,业务静默处理;SLS 可达则留客户端侧日志,排障时与后端 `mark_logs` 对照判断丢失窗口。
-- **插件 mark-log**:旧的插件后端 mark 写入已改为只写 SLS；content 事件通过 background 发起，popup 打开事件直接发起。下载生命周期统一由 content 的共享下载队列上报，失败只打 `logger.error`，不影响下载。
-- **插件升级弹窗曝光**:`UpgradeModal` 从隐藏进入显示 → 广播 `upgradeModalOpened` → background 异步写 `upgrade_modal_open`;已显示时不重复,关闭后重开重新记录,来源不进入事件合同。
+| 字段 | 说明 |
+| --- | --- |
+| `user_id` | 已登录为账号 ID（website 从 JWT 载荷读取，不验签），匿名固定 `0` |
+| `extension_version` | `chrome.runtime.getManifest().version` |
+| `surface` | 事件发生的插件界面：`popup` / `content` / `dashboard` / `options` / `background` |
 
-## 10. 与源文档差异
+`surface` 由来源 URL 推断：扩展页按文件名判定（`popup.html` / `dashboard.html` / `options.html`），宿主页面一律视为 `content`，无来源时按 `background`。
 
-- feat.033 字段表、环境变量、URL 协议、脱敏、异常事件名与代码实现一致。
-- feat.033 §3「阿里云侧配置」中的测试 mark_type `manual_test_20260608124539` 是建仓期的一次性验证值,非生产配置,本文不收录。
-- 实现层多了 `inferSlsMarkSite()`(hostname 兜底推断 site)、`frontend-error-capture.ts`(独立异常捕获器)与指纹去重,源文档未单列,本文据此补齐。
+长度上限：`mark_msg` 1000、`user_agent` 512、其他文本字段 256。
+
+## 6. 事件字典
+
+命名口径 `<对象>_<动作>`。高频、易变的界面按钮统一收敛为单个动作事件，按钮名进 `mark_msg` 的 `action` 字段——按钮会随 UI 迭代增删，每加一个就扩一次事件合同会让 SLS 里的事件名失控，而查询按 `action` 分组并不损失粒度。
+
+### 6.1 website
+
+| mark_type | 触发 | mark_msg 关键字段 |
+| --- | --- | --- |
+| `web_first_opened` | 首次访问（双写） | — |
+| `web_page_view` | 每个页面加载 | `path`、`locale`、`ref_host`、`utm_*` |
+| `web_cta_click` | 任意 `data-cta` 元素点击 | `cta_id`、`tag`、`href`、`utm_*` |
+| `web_ui_action` | 带 `data-ga-event` 的按钮、导航、语言切换 | `action`、`event`、`utm_*` |
+| `web_auth_event` | 登录流程各阶段 | `stage`(modal_open/modal_close/send_code/code_login)、`outcome`、`reason` |
+| `web_checkout_event` | Pricing 与下单流程 | `stage`(pricing_view/pricing_tab_switch/plan_click/checkout_submit/checkout_success/checkout_failed)、`product_kind`、`sku`、`payment_method` |
+| `web_dashboard_action` | Dashboard 工作区动作 | `action`(view_switch/job_submit/job_submit_failed/session_expired/api_key_generate/api_value_copy/mcp_grant_revoke) |
+| `web_tool_event` | 免费工具使用 | `action`(view/use/copy/download/open_link)、`tool_id` |
+| `web_mcp_event` | MCP 授权流程 | `action`(consent_view/consent_decide)、`client_name`、`is_loopback` |
+| `web_api_error` | HTTP 4xx/5xx 与业务码 | `method`、`api_path`、`http_status`、`code`、`message` |
+| `web_extension_install_click` | 插件安装 CTA（双写） | 资源摘要 JSON |
+| `web_pricing_open_from_extension` | 插件来源进入 Pricing（双写） | — |
+| `web_extension_store_review_click` | 插件商店评价点击（双写） | — |
+| `web_credit_purchase_modal_open` | 积分购买弹窗打开（双写） | — |
+| `web_credit_purchase_buy_click` | 积分购买按钮点击（双写） | — |
+| `web_backend_connect_failed` | fetch 拒绝或超时 | `method`、`api_path`、`failure_reason`、`timeout_ms` |
+| `web_frontend_uncaught_error` | 全局未捕获异常 | `error_kind`、`error_name`、`error_message`、`page_path`、`file`、`line` |
+
+### 6.2 Maps 插件
+
+| mark_type | 触发 | mark_msg 关键字段 |
+| --- | --- | --- |
+| `install` | 安装/更新（双写） | `reason`、`version` |
+| `popup_open` | 弹窗打开 | — |
+| `content_open` | content 初始化 | — |
+| `ui_action` | popup / 面板动作 | `action`(open_maps/open_bulk_dashboard/sign_in/sign_out/start/pause/resume/export/reset/start_reviews/start_photos/open_pricing/quota_blocked)、`source`、`surface` |
+| `search` | 搜索采集开始 | `kw`、`bulk` |
+| `search_finish` | 采集进入终态 | `count`、`stop_reason`(limit/end)、`limit`、`mode`(search/list) |
+| `scrape_reviews_content` | 评论采集开始 | `fid` |
+| `scrape_photos_content` | 照片采集开始 | `fid` |
+| `export_results` | 导出 | `count`、`format`、`kw` |
+| `pricing_open` | 打开官网订阅页 | `source`、`plan` |
+| `bulk_task_create` | 批量任务创建 | `type`、`count`、`chunks`、`start_now` |
+| `bulk_task_action` | 批量任务状态动作 | `action`(start/pause/delete)、`ok`、`code` |
+| `settings_change` | 设置项变更 | `key=value` 列表 |
+| `sync_to_google_drive` | Drive 同步 | `rows`、`outcome` |
+| `enrich_complete` | Email/社媒补全完成 | `count`、`written`、`partial`、`ok` |
+| `extension_uncaught_error` | 三上下文未捕获异常 | `kind`、`name`、`message`、`file`、`line` |
+
+### 6.3 Bing 插件
+
+| mark_type | 触发 | mark_msg 关键字段 |
+| --- | --- | --- |
+| `install` | 安装/更新（双写） | `reason`、`version` |
+| `popup_open` | 弹窗打开 | — |
+| `content_open` | content 初始化 | — |
+| `ui_action` | popup / 面板动作 | `action`(sign_in/sign_out/start/stop/go_back/export) |
+| `search` | 采集开始 | `version`(适配器名) |
+| `search_finish` | 采集进入终态 | `count`、`stop_reason`(free_limit/manual/failure/end)、`adapter` |
+| `free_limit_reached` | 免费档行数截断 | `count` |
+| `gate_state_change` | 登录/Pro 门控翻转 | `authenticated`、`is_pro` |
+| `export_results` | 导出 | `format`、`count`、`plan` |
+| `pricing_open` | 打开官网订阅页 | `source` |
+| `enrich_complete` | Email/社媒补全完成 | `count`、`written`、`partial`、`ok` |
+| `extension_uncaught_error` | 三上下文未捕获异常 | `kind`、`name`、`message`、`file`、`line` |
+
+## 7. 脱敏规则
+
+- website 的结构化 `mark_msg` 先解析 JSON，逐字段脱敏（移除 URL query、token、完整下载直链）后重新序列化，超长时逐级降级，**禁止直接切片**破坏 JSON 结构。插件按普通文本裁剪。
+- **不发送**：Cookie、Authorization、访问令牌、完整下载直链、用户输入 URL query、API base URL。
+- API path 预脱敏，只保留 path。
+- 异常诊断字段额外走 `sanitizeSlsDiagnosticField()`，用 `REDACTED_KEY_VALUE_RE` 把敏感 key 的值替换为 `_redacted`，保证 JSON 仍可解析。
+
+## 8. 异常捕获
+
+| 端 | 实现 | 覆盖上下文 |
+| --- | --- | --- |
+| website | `website/src/scripts/homepage/frontend-error-capture.ts` | 全局 `error` / `unhandledrejection` |
+| 两个插件 | `core/utils/uncaughtErrorMark.ts` | background / content / popup / options / dashboard |
+
+共同口径：同指纹 30 秒去重；只报 `error_name` / `error_message` / 位置，不报堆栈与页面数据；上报失败不产生二次未处理 rejection。
+
+资源加载失败（图片/脚本/样式）不捕获，噪音过高。
+
+## 9. 覆盖入口
+
+| 端 | 入口 |
+| --- | --- |
+| website | `layouts/Layout.astro`（页面浏览） |
+| website | `scripts/globalClickEvents.ts`（`data-cta` 与 `data-ga-event` 全局委派） |
+| website | `scripts/homepage/web-mark.ts`（事件辅助出口：`trackPageView` / `trackCtaClick` / `trackUiAction` / `trackAuthEvent` / `trackCheckoutEvent` / `trackDashboardAction` / `trackToolEvent` / `trackMcpEvent` / `trackApiError`） |
+| website | `scripts/homepage/api.ts`（连接失败 + 业务错误） |
+| website | `components/auth/site-auth-controller.ts`、`components/pricing/pricing-page-controller.ts`、`components/order-checkout/order-checkout-controller.ts`、`components/dashboard/*`、`components/auth/McpOAuthConsent.vue` |
+| Maps | `background/services/ExtensionMarkReporter.ts`（跨上下文事件统一写 SLS） |
+| Maps | `sites/maps/content/bootstrap.ts`（面板动作）、`photos/photosScraper.ts`、`dashboard/App.vue`、`options/App.vue`、`popup/App.vue` |
+| Bing | `sites/bing/content/marks.ts`（content 打点出口）、`bootstrap.ts`、`collector.ts`、`gate.ts`、`panel/BingPanel.vue`、`popup/App.vue` |
+
+## 10. 业务流程要点
+
+- 所有打点 **fire-and-forget**，任一通道失败都不阻断用户操作。
+- 插件 content 事件经 `ChromeEventEmitter` 广播，background 统一写 SLS；popup / dashboard / options 经 `recordMark` RPC 由 background 代写，`page_path` 取 `senderUrl` 以便区分界面。
+- 后端不可用时，SLS 可达则保留客户端侧日志，排障时与 `mark_logs` 对照判断丢失窗口。
+- `search_finish` / `search` 的 `stop_reason` 是判断免费→付费转化的直接依据：`limit` / `free_limit` 表示被额度截断。
+
+## 11. 看板
+
+project `gmap` 下三份 dashboard，结构与 tg-download 对齐（统计口径 Asia/Shanghai 自然日、设备去重 `approx_distinct(device_id)`、时间范围最近 30 天）：
+
+| 看板 | 过滤 | 图表数 |
+| --- | --- | --- |
+| `gmap-website` | `client_product = 'web'` | 8 |
+| `gmap-extension-maps` | `client_product = 'extension-maps'` | 9 |
+| `gmap-extension-bing` | `client_product = 'extension-bing'` | 9 |
+
+每份看板在 tg-download 原有图表之外，固定追加三张新用户分析图：新用户趋势（`first_opened_days = 0`）、留存曲线（`first_opened_days` 分桶）、新用户首日行为构成（按 `mark_type` 分组）。
+
+完整的图表清单与 SQL 原文见 `docs/scratch/gmap-dashboards.md`（临时调研产物，不入 git）；需要长期留存时把关键 SQL 迁入本文件。
+
+**依赖 `mark_msg` 的图表**：采集终态与额度截断类图表用 `mark_msg LIKE '%stop_reason=limit%'` 之类的条件过滤。如果后续把 `mark_msg` 改成 JSON 格式，这些条件必须同步调整。
+
+## 12. 与旧文档的差异
+
+本文替代此前的 `tg-download` 口径（project `tg-download`、logstore `tg-download-mark-log`、新加坡 region、`__source__` 独立环境变量）。现役配置以 §2 为准；插件端 `client_product` 从共用的 `extension` 拆分为 `extension-maps` / `extension-bing`，修复了两端事件在 SLS 中无法区分的问题。

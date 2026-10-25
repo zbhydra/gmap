@@ -242,13 +242,13 @@ async def test_real_record_mark_persists_extension_store_review_click(
     real_async_client,
     make_real_mark_device_id: Callable[[str], str],
 ) -> None:
-    """插件商店评价点击必须以独立类型写入 MySQL。"""
+    """插件安装点击必须以独立类型写入 MySQL。"""
 
-    device_id = make_real_mark_device_id("extension-store-review-click")
+    device_id = make_real_mark_device_id("extension-install-click")
     response = await real_async_client.post(
         "/api/client/mark/record",
         json={
-            "mark_type": MarkType.WEB_EXTENSION_STORE_REVIEW_CLICK.value,
+            "mark_type": MarkType.WEB_EXTENSION_INSTALL_CLICK.value,
             "mark_msg": "",
             "first_opened_at": 1_762_345_678_901,
         },
@@ -266,7 +266,7 @@ async def test_real_record_mark_persists_extension_store_review_click(
         )
         row = result.scalar_one()
 
-    assert row.mark_type == MarkType.WEB_EXTENSION_STORE_REVIEW_CLICK.value
+    assert row.mark_type == MarkType.WEB_EXTENSION_INSTALL_CLICK.value
     assert row.mark_msg == ""
     assert row.first_opened_at == 1_762_345_678_901
 
@@ -293,7 +293,7 @@ async def test_real_record_mark_persists_literal_special_characters(
     response = await real_async_client.post(
         "/api/client/mark/record",
         json={
-            "mark_type": MarkType.WEB_CREDIT_PURCHASE_MODAL_OPEN.value,
+            "mark_type": MarkType.WEB_FIRST_OPENED.value,
             "mark_msg": owned_mark_msg,
         },
         headers={"X-Device-Id": device_id},
@@ -338,7 +338,7 @@ async def test_real_record_mark_rejects_wrong_message_type_without_database_writ
         real_async_client,
         device_id=device_id,
         payload={
-            "mark_type": MarkType.WEB_CREDIT_PURCHASE_MODAL_OPEN.value,
+            "mark_type": MarkType.WEB_FIRST_OPENED.value,
             "mark_msg": ["not", "a", "string"],
         },
         expected_location=["mark_msg"],

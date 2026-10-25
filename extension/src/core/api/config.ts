@@ -94,7 +94,8 @@ export const ALI_SLS_MARK =
         endpoint: '',
         logstore: '',
         topic: 'mark-log',
-        source: 'extension'
+        source: '',
+        clientProduct: ''
       }
 
 export const API_ENDPOINTS = API.ENDPOINTS
@@ -124,6 +125,8 @@ export const STORAGE_KEYS = {
   USER_INFO: 'auth_user_info',
   /** 设备 ID */
   DEVICE_ID: 'counter_device_id',
+  /** 扩展首次安装时间（毫秒），用于按安装时长区分新老用户 */
+  INSTALLED_AT: 'extension_installed_at',
   /** 生产构建 DEBUG 日志开关 */
   DEBUG_LOGGING: 'debug_logging',
   /** 扩展通用设置 */

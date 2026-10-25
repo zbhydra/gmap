@@ -23,6 +23,8 @@ import type { ExtensionEvents } from '@/core/events/types'
 import { MapsUserSettingsManager } from '@/sites/maps/settings/userSettings'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
 import { mapsUsageService } from '@/sites/maps/usage/usageService'
+import { markApi } from '@/core/api/mark'
+import { MARK_TYPE } from '@/core/api/mark/types'
 import { clearPhotosWorkIntent } from '../photosWorkPage'
 import { checkBulkQuota, estimateBulkRecords } from './quota'
 import { bulkStateStore, emptyBulkState } from './store'
@@ -255,8 +257,39 @@ export class BulkSchedulerController {
     }
 
     await bulkStateStore.save(result.state)
+    this.recordFinishedTasks(state, result.state)
     await this.applyEffects(result.effects)
     return result
+  }
+
+  /**
+   * 批量任务进入终态时打点。
+   *
+   * 在状态机之外做边沿检测：reducer 是纯函数，把打点塞进去会污染可测试性；
+   * 这里对比前后快照即可拿到「本次是谁完成了」，且天然覆盖所有触发路径
+   * （工作页回报、alarm 兜底、标签页关闭）。
+   */
+  private recordFinishedTasks(previous: BulkState, next: BulkState): void {
+    const before = new Map(previous.tasks.map(task => [task.id, task.status]))
+    for (const task of next.tasks) {
+      if (before.get(task.id) === undefined || before.get(task.id) === 'completed') {
+        continue
+      }
+      if (task.status !== 'completed') {
+        continue
+      }
+      const done = task.items.filter(item => item.status === 'complete').length
+      const total = task.items.length
+      const durationMs = task.createdAt > 0 ? Date.now() - task.createdAt : 0
+      markApi
+        .record(
+          MARK_TYPE.BULK_TASK_FINISH,
+          `type=${task.type}, done=${done}, total=${total}, ` +
+            `failed=${total - done}, duration_ms=${durationMs}`,
+          { surface: 'background' }
+        )
+        .catch(error => logger.error('[BulkScheduler] bulk_task_finish 打点失败:', error))
+    }
   }
 
   /** 执行副作用：关页 → 开新工作页 → alarm 开关 → 广播（顺序即依赖序）。 */

@@ -6,6 +6,7 @@
 
 import { ALI_SLS_MARK, STORAGE_KEYS } from '../config'
 import { storageManager } from '../../storage'
+import type { UserInfo } from '../../types'
 import { sanitizeMarkText } from './mark-sanitizer'
 
 /** SLS 字段允许的值类型。 */
@@ -17,7 +18,12 @@ export type SlsMarkFields = Record<string, SlsFieldValue>
 export interface ExtensionMarkRecordOptions {
   /** 调用来源 URL 或 origin，用于填充 page_path。 */
   pageUrl?: string
+  /** 事件所属界面；不传时按 pageUrl 推断。 */
+  surface?: MarkSurface
 }
+
+/** 事件发生的插件界面，用于区分同一 business 事件在何处触发。 */
+export type MarkSurface = 'popup' | 'content' | 'dashboard' | 'options' | 'background'
 
 /** SLS WebTracking 配置。 */
 export interface SlsMarkConfig {
@@ -31,6 +37,8 @@ export interface SlsMarkConfig {
   topic: string
   /** SLS source。 */
   source: string
+  /** 产品线标识（website=`web` / Maps=`extension-maps` / Bing=`extension-bing`）。 */
+  clientProduct: string
 }
 
 const MAX_MARK_MSG_LENGTH = 1000
@@ -40,6 +48,23 @@ const SLS_API_VERSION = '0.6.0'
 
 function truncateText(value: string, maxLength: number): string {
   return value.length > maxLength ? value.slice(0, maxLength) : value
+}
+
+/** 从来源 URL 推断插件界面：扩展页按文件名判定，宿主页一律视为 content。 */
+export function inferMarkSurface(pageUrl: string | undefined): MarkSurface {
+  const source = pageUrl || (typeof location !== 'undefined' ? location.href : '')
+  if (!source) {
+    return 'background'
+  }
+
+  if (source.startsWith('chrome-extension://') || source.startsWith('moz-extension://')) {
+    if (/\/src\/popup\.html/.test(source)) return 'popup'
+    if (/\/src\/dashboard\.html/.test(source)) return 'dashboard'
+    if (/\/src\/options\.html/.test(source)) return 'options'
+    return 'background'
+  }
+
+  return 'content'
 }
 
 function getRuntimePagePath(pageUrl: string | undefined): string {
@@ -86,6 +111,43 @@ async function getDeviceId(): Promise<string> {
   return (await storageManager.get<string>(STORAGE_KEYS.DEVICE_ID)) ?? ''
 }
 
+/** 读取当前账号 ID；未登录固定 0，避免匿名事件被误判为某个用户。 */
+async function getUserId(): Promise<number> {
+  const [accessToken, user] = await Promise.all([
+    storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN),
+    storageManager.get<UserInfo>(STORAGE_KEYS.USER_INFO)
+  ])
+  return accessToken && user?.user_id ? user.user_id : 0
+}
+
+/** 安装时间缺失时回落为 0，避免把未知状态算成首日。 */
+function truncateNumber(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0
+}
+
+/**
+ * 扩展安装距今天数。
+ *
+ * 与 website 的 `first_opened_days` 同口径：`0` = 安装当天，用于按安装时长
+ * 分桶看新用户留存。未记录安装时间（老版本升级）时返回 `-1`。
+ */
+function readInstalledDays(installedAt: number | null | undefined): number {
+  const value = truncateNumber(installedAt)
+  if (value === 0) {
+    return -1
+  }
+  return Math.max(0, Math.floor((Date.now() - value) / 86_400_000))
+}
+
+/** 读取扩展版本；SW 上下文读不到 manifest 时按空串继续，不让打点失败。 */
+function getExtensionVersion(): string {
+  try {
+    return truncateText(chrome.runtime.getManifest().version, MAX_TEXT_FIELD_LENGTH)
+  } catch {
+    return ''
+  }
+}
+
 /** 读取插件端 SLS 配置。 */
 export function getSlsMarkConfig(): SlsMarkConfig {
   return ALI_SLS_MARK
@@ -97,16 +159,25 @@ export async function buildSlsMarkFields(
   markMsg: string,
   options: ExtensionMarkRecordOptions = {}
 ): Promise<SlsMarkFields> {
+  const [deviceId, userId, installedAt] = await Promise.all([
+    getDeviceId(),
+    getUserId(),
+    storageManager.get<number>(STORAGE_KEYS.INSTALLED_AT)
+  ])
   return {
     event: 'mark-log',
     site: 'extension',
-    client_product: 'extension',
+    client_product: getSlsMarkConfig().clientProduct,
+    extension_version: getExtensionVersion(),
     mark_type: truncateText(markType, MAX_TEXT_FIELD_LENGTH),
     mark_msg: buildSlsMarkMessage(markMsg),
-    device_id: truncateText(await getDeviceId(), MAX_TEXT_FIELD_LENGTH),
+    device_id: truncateText(deviceId, MAX_TEXT_FIELD_LENGTH),
+    user_id: userId,
+    surface: options.surface ?? inferMarkSurface(options.pageUrl),
     page_path: getRuntimePagePath(options.pageUrl),
     mark_time: String(Date.now()),
-    first_opened_at: 0,
+    first_opened_at: truncateNumber(installedAt),
+    first_opened_days: readInstalledDays(installedAt),
     user_agent: getCurrentUserAgent(),
     language: getCurrentLanguage(),
     viewport: getCurrentViewport()

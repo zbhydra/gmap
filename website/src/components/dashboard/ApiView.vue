@@ -20,6 +20,7 @@ import {
 import { copyText, reducedMotion } from '../../scripts/dashboard/dom'
 import { fill, formatDate, formatDateTime } from '../../scripts/dashboard/format'
 import { isSessionExpiry } from '../../scripts/dashboard/workspace'
+import { trackDashboardAction } from '../../scripts/homepage/web-mark'
 import { listMcpOAuthGrants, revokeMcpOAuthGrant, type McpOAuthGrant } from '../../scripts/mcp-oauth/client'
 import { confirmSiteAction } from '../../scripts/site/confirm'
 import { notifySessionExpired } from '../../scripts/site/session'
@@ -93,6 +94,7 @@ async function generateKey(): Promise<void> {
     confirmLabel: props.copy.api.rotateKey,
     cancelLabel: props.copy.api.cancel
   })) return
+  trackDashboardAction('api_key_generate')
   generating.value = true
   keyFailed.value = false
   plaintextKey.value = ''
@@ -129,6 +131,7 @@ function curlSample(meta: UserApiKeyMeta, conn: MapsApiConnection): string {
 
 async function copyValue(value: string, target: 'key' | 'api' | 'mcp'): Promise<void> {
   if (!await copyText(value, props.copy.api)) return
+  trackDashboardAction('api_value_copy', { target })
   copied.value = target
   clearTimeout(copiedTimer)
   copiedTimer = setTimeout(() => {
@@ -187,6 +190,7 @@ function confirmRevoke(grant: McpOAuthGrant): Promise<boolean> {
 
 async function revokeGrant(grant: McpOAuthGrant): Promise<void> {
   if (revokingId.value !== null || !await confirmRevoke(grant)) return
+  trackDashboardAction('mcp_grant_revoke', { redirect_host: grant.redirect_host })
   revokingId.value = grant.grant_id
   revokeFailedId.value = null
   try {

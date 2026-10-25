@@ -22,6 +22,9 @@ import { BackgroundChannel } from './rpc/background.rpc'
 // 引入全局样式：语义 token（--gme-*）+ popup 壳层尺寸变量
 import '@/styles/tokens.css'
 import '../style.css'
+import { installUncaughtErrorMark } from '@/core/utils/uncaughtErrorMark'
+
+installUncaughtErrorMark('popup')
 
 const backgroundClient = new BackgroundChannel()
 

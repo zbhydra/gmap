@@ -11,6 +11,8 @@ declare const __ALI_SLS_MARK_CONFIG__: {
   readonly logstore: string
   readonly topic: string
   readonly source: string
+  /** 产品线标识，与 source 同源。 */
+  readonly clientProduct: string
 }
 
 declare module '*.vue' {

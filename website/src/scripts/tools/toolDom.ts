@@ -7,6 +7,7 @@
 
 import { showSiteToast } from '../site/toast'
 import { collectUtmParams, reportGA4Event } from '../homepage/ga4'
+import { trackToolEvent } from '../homepage/web-mark'
 
 /** 查询必需元素；缺失抛可定位错误（模板契约破坏必须显式暴露）。 */
 export function queryRequired<T extends HTMLElement>(root: ParentNode, selector: string): T {
@@ -58,4 +59,5 @@ export async function copyTextWithFeedback(text: string, feedback: string): Prom
 /** 上报工具页进入事件（015 feat 埋点表 tool_view，带页面 utm 归因；gtag 未注入时静默跳过）。 */
 export function reportToolView(toolId: string): void {
   reportGA4Event('tool_view', { tool_id: toolId, ...collectUtmParams(window.location.href) })
+  trackToolEvent('view', toolId, collectUtmParams(window.location.href))
 }

@@ -8,7 +8,8 @@
 import { clearStoredAccessToken, getStoredAccessToken } from '../../scripts/homepage/auth'
 import { ensureDeviceId } from '../../scripts/homepage/device'
 import { HomepageApiError, type RequestContext } from '../../scripts/homepage/api'
-import { reportGA4Event } from '../../scripts/homepage/ga4'
+import { extractFailureReason, reportGA4Event } from '../../scripts/homepage/ga4'
+import { trackCheckoutEvent } from '../../scripts/homepage/web-mark'
 import {
   confirmSubscriptionUpgrade,
   createSubscriptionUpgradeCheckout,
@@ -458,6 +459,11 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
       return
     }
 
+    trackCheckoutEvent('checkout_success', {
+      product_kind: product.productId,
+      order_no: state.orderNo ?? '',
+      amount: status?.amount ?? ''
+    })
     state.lastOrderStatus = status
     state.status = 'success'
     state.error = null
@@ -564,6 +570,11 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
         handleAuthFailure(copy.authExpired)
         return
       }
+      trackCheckoutEvent('checkout_failed', {
+        stage: 'poll',
+        order_no: state.orderNo ?? '',
+        reason: extractFailureReason(error)
+      })
       if (error instanceof Error) {
         stopPolling()
         state.status = 'failed'
@@ -600,6 +611,10 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
 
     const product = getCurrentProduct(state)
     const channel = getSelectedPaymentChannel(state)
+    trackCheckoutEvent('checkout_submit', {
+      product_kind: product?.productId ?? '',
+      payment_method: channel?.payment_method ?? ''
+    })
     if (!product || !channel) {
       state.error = copy.gatewayFailed
       render(elements, copy, state)
@@ -608,6 +623,7 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
 
     const paymentWindow = openPaymentWindow()
     if (!paymentWindow) {
+      trackCheckoutEvent('checkout_failed', { stage: 'popup_blocked' })
       state.error = copy.popupBlocked
       render(elements, copy, state)
       return

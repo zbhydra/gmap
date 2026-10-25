@@ -66,7 +66,7 @@ export function collectUtmParams(url: string): Record<string, string> {
 }
 
 /** 从异常中提取简短原因字符串。 */
-export function extractFailureReason(error: Error | string | null | undefined): string {
+export function extractFailureReason(error: unknown): string {
   if (error instanceof Error) {
     const code = (error as ErrorWithOptionalCode).code
     if (code !== undefined && code !== null && code !== '') {

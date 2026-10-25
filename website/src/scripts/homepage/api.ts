@@ -67,6 +67,9 @@ export type BackendConnectFailureMethod = 'GET' | 'POST'
 /** 后端连接失败 SLS-only 事件名。 */
 const BACKEND_CONNECT_FAILED_MARK_TYPE = 'web_backend_connect_failed'
 
+/** 接口业务错误 SLS-only 事件名（HTTP 4xx/5xx 与业务码，区别于连不上/超时）。 */
+const API_ERROR_MARK_TYPE = 'web_api_error'
+
 /** 后端连接失败排障字段最大长度。 */
 const MAX_BACKEND_CONNECT_FIELD_LENGTH = 256
 
@@ -270,6 +273,32 @@ function buildUrl(path: string, params?: QueryParams): string {
 }
 
 /**
+ * 上报接口业务错误（4xx/5xx 与业务码）。
+ *
+ * 只写 SLS、不写后端：错误本身可能就来自后端不可用或参数被拒，再打一次
+ * mark_logs 只会放大失败面。错误消息在进入日志前裁剪并脱敏。
+ */
+function reportApiBusinessError(
+  method: 'GET' | 'POST',
+  pathOrUrl: string,
+  httpStatus: number,
+  businessCode: string | number | undefined,
+  message: string
+): void {
+  reportHomepageMarkToSls(
+    API_ERROR_MARK_TYPE,
+    { deviceId: '', token: null },
+    JSON.stringify({
+      method,
+      api_path: normalizeTelemetryApiPath(pathOrUrl),
+      http_status: httpStatus,
+      code: businessCode ?? null,
+      message: sanitizeBackendConnectText(message)
+    })
+  )
+}
+
+/**
  * 解析 API 响应信封
  *
  * 处理两种响应格式：
@@ -280,20 +309,23 @@ function buildUrl(path: string, params?: QueryParams): string {
  * @returns 解析后的数据
  * @throws HomepageApiError 当 HTTP 错误或业务错误时抛出
  */
-async function parseEnvelope<T>(response: Response): Promise<T> {
+async function parseEnvelope<T>(response: Response, method: 'GET' | 'POST', path: string): Promise<T> {
   let body: ApiEnvelope<T> | null = null
 
   try {
     body = (await response.json()) as ApiEnvelope<T>
   } catch (error) {
     console.error(error)
+    reportApiBusinessError(method, path, response.status, undefined, 'unparsable response')
     throw new HomepageApiError(`HTTP ${response.status}`, response.status)
   }
 
   // HTTP 层面错误
   if (!response.ok) {
+    const failureMessage = body?.msg || body?.message || `HTTP ${response.status}`
+    reportApiBusinessError(method, path, response.status, body?.code, failureMessage)
     throw new HomepageApiError(
-      body?.msg || body?.message || `HTTP ${response.status}`,
+      failureMessage,
       response.status,
       body?.code,
       normalizeApiErrorData(body?.data)
@@ -307,8 +339,10 @@ async function parseEnvelope<T>(response: Response): Promise<T> {
       return body.data as T
     }
 
+    const failureMessage = body.msg || body.message || 'Request failed'
+    reportApiBusinessError(method, path, response.status, body.code, failureMessage)
     throw new HomepageApiError(
-      body.msg || body.message || 'Request failed',
+      failureMessage,
       response.status,
       body.code,
       normalizeApiErrorData(body.data)
@@ -353,7 +387,7 @@ export async function getJson<T>(
     )
   }
 
-  return parseEnvelope<T>(response)
+  return parseEnvelope<T>(response, 'GET', path)
 }
 
 /**
@@ -412,7 +446,7 @@ export async function postJson<T>(
     }
   }
 
-  return parseEnvelope<T>(response)
+  return parseEnvelope<T>(response, 'POST', path)
 }
 
 /**

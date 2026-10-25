@@ -7,6 +7,8 @@
  * OAuth 回跳）；Pricing 待购与 Dashboard 工作区不带 redirect，登录后留在原页。
  */
 
+import { trackAuthEvent } from '../../scripts/homepage/web-mark'
+import { extractFailureReason } from '../../scripts/homepage/ga4'
 import {
   cancelGoogleRedirectPrompt,
   clearGoogleRedirectResult,
@@ -126,6 +128,30 @@ interface SiteAuthCopy {
 let deviceIdPromise: Promise<string> | null = null
 
 /** 创建站级登录弹窗 controller。 */
+/** 新账号判定窗口：注册后首次登录必然在此窗口内。 */
+const NEW_ACCOUNT_WINDOW_MS = 24 * 60 * 60 * 1000
+
+/** 后端 created_at 可能是秒或毫秒时间戳，统一换算为账号年龄。 */
+function readAccountAgeMs(createdAt: number | null | undefined): number | null {
+  if (typeof createdAt !== 'number' || !Number.isFinite(createdAt) || createdAt <= 0) {
+    return null
+  }
+
+  // 小于 1e12 视为秒级时间戳（2001 年之前的毫秒值不可能出现在用户数据里）。
+  const createdAtMs = createdAt < 1e12 ? createdAt * 1000 : createdAt
+  return Math.max(0, Date.now() - createdAtMs)
+}
+
+/** 当前生效的产品档位摘要，用于把登录与新用户分层关联。 */
+function describePlan(user: HomepageUserInfo): string {
+  const plans = [
+    user.maps_extension_subscription?.display_name,
+    user.maps_online_subscription?.display_name,
+    user.maps_api_subscription?.display_name
+  ].filter((name): name is string => Boolean(name))
+  return plans.length > 0 ? plans.join('|') : 'free'
+}
+
 export function createSiteAuthController(root: HTMLElement): SiteAuthController {
   const elements = getSiteAuthElements(root)
   const copy = getSiteAuthCopy(root)
@@ -171,6 +197,7 @@ export function createSiteAuthController(root: HTMLElement): SiteAuthController 
   }
 
   const close = (): void => {
+    trackAuthEvent('modal_close', { signed_in: token !== null })
     hide()
     clearPendingAuthRedirect()
     window.dispatchEvent(new CustomEvent(SITE_AUTH_CLOSE_EVENT))
@@ -180,6 +207,15 @@ export function createSiteAuthController(root: HTMLElement): SiteAuthController 
     token = accessToken
     invalidateSiteSession()
     const user = await getCurrentUser(await buildRequestContext())
+    // 登录成功是新用户分析的关键节点：账号年龄由 created_at 判定（后端口径），
+    // `is_new` 用 24 小时窗口——注册后首次登录必然落在窗口内，老用户回访不会误判。
+    const accountAgeMs = readAccountAgeMs(user.created_at)
+    trackAuthEvent('login_success', {
+      user_id: user.user_id ?? user.id ?? 0,
+      is_new: accountAgeMs !== null && accountAgeMs <= NEW_ACCOUNT_WINDOW_MS,
+      account_age_days: accountAgeMs === null ? -1 : Math.floor(accountAgeMs / 86_400_000),
+      plan: describePlan(user)
+    })
     // 登录结果直接写入共享会话：导航入口与工作区消费同一份数据，不再二次 auth/me。
     setSiteSession({ status: 'signed-in', token: accessToken, user })
     hide()
@@ -301,6 +337,8 @@ export function createSiteAuthController(root: HTMLElement): SiteAuthController 
 
   const controller: SiteAuthController = {
     open(options: SiteAuthOpenOptions = {}): void {
+      // 登录弹窗打开是转化漏斗第一跳：来源靠 redirectTo 区分（页面/工作区回跳目标）。
+      trackAuthEvent('modal_open', { redirect_to: options.redirectTo ?? '' })
       savePendingAuthRedirect(options.redirectTo)
       resetToGoogleFirst()
       setHidden(elements.modal, false)
@@ -352,11 +390,13 @@ export function createSiteAuthController(root: HTMLElement): SiteAuthController 
 
     try {
       await sendEmailCode(email, await buildRequestContext())
+      trackAuthEvent('send_code', { outcome: 'success' })
       elements.sendCodeStatus.textContent = copy.sendCodeSuccess
       openCodeArea()
       sendCodeCooldown.start()
     } catch (error) {
       console.error(error)
+      trackAuthEvent('send_code', { outcome: 'failed', reason: extractFailureReason(error) })
       setMessage(elements.authError, error instanceof Error ? error.message : copy.sendCodeFailed)
       elements.sendCodeStatus.textContent = ''
       sendCodeCooldown.reset()
@@ -380,9 +420,11 @@ export function createSiteAuthController(root: HTMLElement): SiteAuthController 
     elements.loginSubmit.disabled = true
     try {
       const response = await loginWithEmailCode(email, code, await buildRequestContext())
+      trackAuthEvent('code_login', { outcome: 'success' })
       await finishLogin(response.access_token)
     } catch (error) {
       console.error(error)
+      trackAuthEvent('code_login', { outcome: 'failed', reason: extractFailureReason(error) })
       setMessage(elements.authError, error instanceof Error ? error.message : copy.signInFailed)
     } finally {
       elements.loginSubmit.disabled = false

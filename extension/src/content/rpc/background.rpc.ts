@@ -34,6 +34,17 @@ export class BackgroundChannel {
     )
   }
 
+  /** 调用 recordMark 能力。 */
+  recordMark(
+    params: RpcMethodParams<BackgroundHandler, 'recordMark'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'recordMark'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'recordMark'>,
+      RpcMethodParams<BackgroundHandler, 'recordMark'>
+    >('recordMark', params, options)
+  }
+
   /** 调用 getMapsUsage 能力。 */
   getMapsUsage(
     options?: RpcCallOptions

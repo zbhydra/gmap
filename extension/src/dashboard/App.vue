@@ -894,6 +894,7 @@ import Toast from '@/core/components/Toast.vue'
 import { useToast } from '@/core/composables/useToast'
 import { logger } from '@/core/utils/logger'
 import { BackgroundChannel } from '@/popup/rpc/background.rpc'
+import { markApi, MARK_TYPE } from '@/core/api/mark'
 import { ChromeEventSubscriber } from '@/core/rpc/ChromeEventBus'
 import type { ExtensionEvents } from '@/core/events/types'
 import { MapsUserSettingsManager } from '@/sites/maps/settings/userSettings'
@@ -919,6 +920,12 @@ const toolTypes: BulkTaskType[] = ['keywords', 'review-urls']
 const copyScopes = ['completed', 'pending', 'all'] as const
 type CopyScope = (typeof copyScopes)[number]
 const background = new BackgroundChannel()
+/** 批量任务打点：失败只记日志，绝不阻塞任务操作。 */
+function sendMark(markType: (typeof MARK_TYPE)[keyof typeof MARK_TYPE], markMsg: string): void {
+  markApi
+    .record(markType, markMsg, { surface: 'dashboard' })
+    .catch(error => logger.error(`[Dashboard] ${markType} 打点失败:`, error))
+}
 const stateSubscriber = new ChromeEventSubscriber<ExtensionEvents>()
 const state = ref<BulkState>({ version: 1, tasks: [] })
 const taskType = ref<BulkTaskType>(
@@ -1252,6 +1259,10 @@ async function createTasks(startNow: boolean): Promise<void> {
     }
     draft.value.name = ''
     submitted.value = false
+    sendMark(
+      MARK_TYPE.BULK_TASK_CREATE,
+      `type=${type}, count=${createdIds.length}, chunks=${chunks}, start_now=${startNow}`
+    )
     if (startNow && createdIds[0]) {
       const started = await startTask(createdIds[0], true)
       if (started && chunks > 1) showNotice(t(D.SPLIT_START_HINT))
@@ -1275,6 +1286,10 @@ async function startTask(taskId: string, showDetail = false): Promise<boolean> {
   try {
     const result = await background.startBulkTask({ taskId })
     state.value = result.state
+    sendMark(
+      MARK_TYPE.BULK_TASK_ACTION,
+      `action=start, ok=${result.ok}${result.ok ? '' : `, code=${result.code ?? ''}`}`
+    )
     if (!result.ok) {
       showError(result.code)
       return false
@@ -1299,6 +1314,7 @@ async function primaryAction(task: BulkTask): Promise<void> {
     if (task.status === 'running') {
       const result = await background.stopBulkTask({ taskId: task.id })
       state.value = result.state
+      sendMark(MARK_TYPE.BULK_TASK_ACTION, `action=pause, ok=${result.ok}`)
       if (!result.ok) showError(result.code)
     } else await startTask(task.id)
     await refreshUsage()
@@ -1350,6 +1366,7 @@ async function confirmDelete(): Promise<void> {
   try {
     const result = await background.deleteBulkTask({ taskId: deleteTarget.value.id })
     state.value = result.state
+    sendMark(MARK_TYPE.BULK_TASK_ACTION, `action=delete, ok=${result.ok}`)
     deleteDialog.value?.close()
     if (!result.ok) showError(result.code)
     else {

@@ -41,11 +41,12 @@ const DEFAULT_PROD_WEBSITE_BASE_URL = 'https://www.example.com'
 // 注入（013 A10，U9）。占位值无法通过真实授权（Chrome 会报 OAuth2 client 校验失败），
 // 授权流程与单测/e2e 均按占位口径验证。
 const DEFAULT_GOOGLE_OAUTH_CLIENT_ID = 'placeholder-google-oauth-client-id'
-const DEFAULT_PROD_ALI_SLS_PROJECT = 'gmaps'
-const DEFAULT_PROD_ALI_SLS_HOST = 'ap-southeast-1.log.aliyuncs.com'
-const DEFAULT_PROD_ALI_SLS_LOGSTORE = 'gmaps-mark-log'
+const DEFAULT_PROD_ALI_SLS_PROJECT = 'gmap'
+const DEFAULT_PROD_ALI_SLS_HOST = 'ap-northeast-1.log.aliyuncs.com'
+const DEFAULT_PROD_ALI_SLS_LOGSTORE = 'gmap-mark-logs'
 const DEFAULT_ALI_SLS_TOPIC = 'mark-log'
-const DEFAULT_ALI_SLS_SOURCE = 'extension'
+/** 三端共用同一 logstore，靠 client_product 区分产品线（见 tech-可观测与SLS.md §2）。 */
+const SLS_CLIENT_PRODUCT = 'extension-maps'
 
 interface ExtensionBuildProcessEnv {
   NODE_ENV?: string
@@ -59,14 +60,12 @@ interface ExtensionBuildProcessEnv {
   EXTENSION_ALI_SLS_ENDPOINT?: string
   EXTENSION_ALI_SLS_LOGSTORE?: string
   EXTENSION_ALI_SLS_TOPIC?: string
-  EXTENSION_ALI_SLS_SOURCE?: string
   EXTENSION_ALI_SLS_ENABLED?: string
   PUBLIC_ALI_SLS_PROJECT?: string
   PUBLIC_ALI_SLS_HOST?: string
   PUBLIC_ALI_SLS_ENDPOINT?: string
   PUBLIC_ALI_SLS_LOGSTORE?: string
   PUBLIC_ALI_SLS_TOPIC?: string
-  PUBLIC_ALI_SLS_SOURCE?: string
   PUBLIC_ALI_SLS_ENABLED?: string
 }
 
@@ -94,8 +93,10 @@ export interface ExtensionAliSlsMarkConfig {
   logstore: string
   /** SLS topic。 */
   topic: string
-  /** SLS source。 */
+  /** SLS source；与 client_product 同源，避免两处口径漂移。 */
   source: string
+  /** 产品线标识（website=`web` / Maps=`extension-maps` / Bing=`extension-bing`）。 */
+  clientProduct: string
 }
 
 function normalizeBaseUrl(value: string): string {
@@ -156,9 +157,10 @@ function resolveAliSlsMarkConfig(
     topic:
       readEnvValue(env.EXTENSION_ALI_SLS_TOPIC, env.PUBLIC_ALI_SLS_TOPIC) ||
       DEFAULT_ALI_SLS_TOPIC,
-    source:
-      readEnvValue(env.EXTENSION_ALI_SLS_SOURCE, env.PUBLIC_ALI_SLS_SOURCE) ||
-      DEFAULT_ALI_SLS_SOURCE
+    // 产品身份是构建常量，不接受环境变量覆盖：允许覆盖会让两端再次退化成同一个
+    // client_product，日志里无法区分产品线。
+    source: SLS_CLIENT_PRODUCT,
+    clientProduct: SLS_CLIENT_PRODUCT
   }
 }
 
@@ -202,14 +204,12 @@ const extensionBuildEnv = createExtensionBuildEnv({
   EXTENSION_ALI_SLS_ENDPOINT: process.env.EXTENSION_ALI_SLS_ENDPOINT,
   EXTENSION_ALI_SLS_LOGSTORE: process.env.EXTENSION_ALI_SLS_LOGSTORE,
   EXTENSION_ALI_SLS_TOPIC: process.env.EXTENSION_ALI_SLS_TOPIC,
-  EXTENSION_ALI_SLS_SOURCE: process.env.EXTENSION_ALI_SLS_SOURCE,
   EXTENSION_ALI_SLS_ENABLED: process.env.EXTENSION_ALI_SLS_ENABLED,
   PUBLIC_ALI_SLS_PROJECT: process.env.PUBLIC_ALI_SLS_PROJECT,
   PUBLIC_ALI_SLS_HOST: process.env.PUBLIC_ALI_SLS_HOST,
   PUBLIC_ALI_SLS_ENDPOINT: process.env.PUBLIC_ALI_SLS_ENDPOINT,
   PUBLIC_ALI_SLS_LOGSTORE: process.env.PUBLIC_ALI_SLS_LOGSTORE,
   PUBLIC_ALI_SLS_TOPIC: process.env.PUBLIC_ALI_SLS_TOPIC,
-  PUBLIC_ALI_SLS_SOURCE: process.env.PUBLIC_ALI_SLS_SOURCE,
   PUBLIC_ALI_SLS_ENABLED: process.env.PUBLIC_ALI_SLS_ENABLED
 })
 
