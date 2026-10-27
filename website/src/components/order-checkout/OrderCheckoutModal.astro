@@ -9,6 +9,7 @@
 import type { AccountContent } from '../../i18n/schema'
 import { localePaths, type Locale } from '../../i18n/ui'
 import type { OrderCheckoutCopy } from './order-checkout-types'
+import Icon from '../site/Icon.astro'
 
 const { locale, copy, deferController = false } = Astro.props as {
   locale: Locale
@@ -85,7 +86,7 @@ const checkoutCopy: OrderCheckoutCopy = {
         data-order-checkout-close
         aria-label={checkoutCopy.close}
       >
-        <span aria-hidden="true">×</span>
+        <Icon name="x" />
       </button>
     </header>
 
@@ -275,8 +276,6 @@ const checkoutCopy: OrderCheckoutCopy = {
     background: var(--surface-2);
     color: var(--text-2);
     cursor: pointer;
-    font-size: var(--fs-h3);
-    line-height: 1;
     transition:
       background var(--dur-2) var(--ease-out),
       border-color var(--dur-2) var(--ease-out),

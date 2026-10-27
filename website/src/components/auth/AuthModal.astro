@@ -1,6 +1,7 @@
 ---
 import type { AccountContent } from '../../i18n/schema'
 import { localePaths, type Locale } from '../../i18n/ui'
+import Icon from '../site/Icon.astro'
 
 const { locale, copy, skinClass = '', idPrefix = 'download' } = Astro.props as {
   locale: Locale
@@ -34,7 +35,7 @@ const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
       data-download-auth-close
       aria-label={copy.auth.closeLabel ?? 'Close'}
     >
-      <span aria-hidden="true">×</span>
+      <Icon name="x" />
     </button>
 
     <div
@@ -414,6 +415,8 @@ const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
   }
 
   .download-auth-close {
+    display: inline-grid;
+    place-items: center;
     width: 40px;
     height: 40px;
     position: absolute;
@@ -423,8 +426,6 @@ const prefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
     background: var(--surface);
     border: 1px solid var(--border-2);
     color: var(--text);
-    font-size: var(--fs-h3);
-    line-height: 1;
     box-shadow: var(--shadow-sm);
   }
 
