@@ -6,7 +6,12 @@ body {
   padding: 0;
 }
 
+/*
+ * Popup 视口宽度由内容决定，再用 vw/百分比回夹会形成循环约束（Chrome 会落到
+ * 一个随平台变化的窄宽度），因此宽度只写死设计值；高度也随内容，不继承
+ * base.css 的 min-height: 100vh（Popup 上限由 .pp 的 max-height 控制）。
+ */
 body {
   width: var(--popup-w);
-  max-width: 100vw;
+  min-height: 0;
 }
