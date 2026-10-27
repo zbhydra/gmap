@@ -4,8 +4,8 @@ app:
   host: "0.0.0.0"
   port: {BACKEND_PORT_PY}
   debug: false
-  env: "dev"
-  export_run_concurrency: 8
+  env: "{APP_ENV}"
+  export_run_concurrency: {EXPORT_RUN_CONCURRENCY}
   export_queue_limit: 1000
   public_api_base_url: "{PUBLIC_API_BASE_URL}"
   public_website_base_url: "{PUBLIC_WEBSITE_BASE_URL}"
@@ -16,8 +16,8 @@ database:
   user: "{DB_USER}"
   password: "{DB_PASSWD}"
   database: "{DB_NAME}"
-  pool_size: 50
-  max_overflow: 100
+  pool_size: {DB_POOL_SIZE}
+  max_overflow: {DB_MAX_OVERFLOW}
 
 logging:
   level: "{LOGGER_LEVEL}"
@@ -32,7 +32,7 @@ api:
   redoc_url: "/redoc"
 
 auth:
-  jwt_secret_key: "abcabcss$%^&*()_+"
+  jwt_secret_key: "{JWT_SECRET_KEY}"
   jwt_algorithm: "HS256"
   google_client_id: "{GOOGLE_CLIENT_ID}"
   # 可选：仅新自定义 Google 按钮 OAuth code flow 需要，留空不影响 One Tap 和旧 callback。
@@ -54,7 +54,7 @@ redis:
   port: {REDIS_PORT}
   db: 0
   password: {REDIS_PASSWORD}
-  pool_size: 5000
+  pool_size: {REDIS_POOL_SIZE}
   pool_timeout: 5
   key_prefix: "gmapsexporter"
   socket_timeout: 5
@@ -63,8 +63,10 @@ redis:
   retry_attempts: 3
 
 feishu_alarm:
-  enabled: true
-  webhook_url: "https://open.feishu.cn/open-apis/bot/v2/hook/34cd20d4-3cf4-4358-9757-0617714e3a1e"
+  enabled: {FEISHU_ALARM_ENABLED}
+  # 真实群机器人 webhook 由 .env 的 FEISHU_ALARM_WEBHOOK_URL 注入；远端 config.yaml 每次发布整份覆盖，
+  # 不要在这里写字面量，也不要直接在服务器上改。留空时 send_feishu_alarm 静默跳过。
+  webhook_url: "{FEISHU_ALARM_WEBHOOK_URL}"
   timeout_seconds: 5
 
 {SMTP_CONFIG}

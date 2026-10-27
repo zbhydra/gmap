@@ -35,10 +35,10 @@ bash backend/deploy/health_check.sh backend/deploy/.env.test  # 本地传 .env
 
 - 连接服务器使用服务器登录私钥（`SSH_PRIVATE_KEY_PATH` 在 .env 内或 ~/.ssh/）
 - 拉取 Git 仓库使用 `backend/deploy/key/git_key`（与 .env 解耦；专 key 专用）
-- 每次 `init.sh` / `deploy.sh` 都会基于 `backend/config.yaml.example` + .env 内 DB / SMTP / APP_NAME / LOGGER_LEVEL / PUBLIC_API_BASE_URL / PUBLIC_WEBSITE_BASE_URL / GOOGLE_CLIENT_ID，以及可选的 GOOGLE_CLIENT_SECRET 字段覆盖生成远端 `backend/config.yaml`
+- 每次 `init.sh` / `deploy.sh` 都会基于 `backend/config.yaml.example` + .env 内 DB / SMTP / APP_NAME / APP_ENV / LOGGER_LEVEL / PUBLIC_API_BASE_URL / PUBLIC_WEBSITE_BASE_URL / GOOGLE_CLIENT_ID / JWT_SECRET_KEY / 连接池与并发参数，以及可选的 GOOGLE_CLIENT_SECRET / 飞书告警字段覆盖生成远端 `backend/config.yaml`
 - 每次 `init.sh` / `deploy.sh` 都会基于 .env 内 `DEPLOY_DIR` / `BACKEND_PORT_PY` 渲染 supervisor，并基于 `NGINX_SERVER_NAME` / `BACKEND_PORT_PY` 渲染业务 API Nginx 配置；业务 Nginx 只监听 80，HTTPS 由外层 CL 代理终止
 - Supervisor 停止服务时，Uvicorn 立即停止接收新请求，存量请求最多等待 10 秒；超时后取消存量请求并退出，Supervisor 同样以 10 秒作为进程组强制终止上限
-- 业务 supervisor 与 Nginx 配置文件名使用 `APP_NAME`；部署时会清理旧的 `tg-download.conf` 和旧域名 vhost 文件，避免同机双进程或重复 server_name
+- 业务 supervisor 与 Nginx 配置文件名使用 `APP_NAME`，同机多环境靠这个前缀隔离
 - `backend/config.yaml` 不入 git
 - Telegram Stars bot token 与 webhook secret 只配置到 DB 表 `config_payment_channel.config_json`,不写入 `.env.*` 或 `backend/config.yaml`;webhook 公网地址读取 `app.public_api_base_url`,Bot API 地址为代码常量
 
@@ -136,12 +136,15 @@ backend/deploy/
 
 [`../config.yaml`](../config.yaml)
 
-数据库参数从 .env 内 `DB_HOST` / `DB_USER` / `DB_PASSWD` / `DB_NAME` 读取。
-应用名称从 .env 内 `APP_NAME` 读取。
-Redis 连接从 .env 内 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` 读取；所有节点固定使用 `db: 0`、`key_prefix: gmapsexporter`，测试服和正式服使用不同 Redis 实例隔离。
+数据库参数从 .env 内 `DB_HOST` / `DB_USER` / `DB_PASSWD` / `DB_NAME` 读取，连接池从 `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` 读取。
+应用名称从 .env 内 `APP_NAME` 读取，运行环境标识从 `APP_ENV` 读取，Export 并发从 `EXPORT_RUN_CONCURRENCY` 读取。
+JWT 签名密钥从 .env 内 `JWT_SECRET_KEY` 读取；每个环境必须独立生成，**不能**留在模板或复用其它环境的密钥，否则任一方泄露即可伪造全端会话。
+Redis 连接从 .env 内 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` / `REDIS_POOL_SIZE` 读取；所有节点固定使用 `db: 0`、`key_prefix: gmapsexporter`，测试服和正式服使用不同 Redis 实例隔离。
 同一台机器部署多套环境时，`APP_NAME` 也会作为 supervisor program 名和 Nginx vhost 文件名，必须不同。
-同机部署正式服和测试服时，至少要分别配置不同的 `APP_NAME` / `DEPLOY_DIR` / `BACKUP_DIR` / `BACKEND_PORT_PY` / `NGINX_SERVER_NAME` / `DB_USER` / `DB_NAME`。
+同机部署正式服和测试服时，至少要分别配置不同的 `APP_NAME` / `DEPLOY_DIR` / `BACKUP_DIR` / `BACKEND_PORT_PY` / `NGINX_SERVER_NAME` / `DB_USER` / `DB_NAME` / `REDIS_PORT` / `JWT_SECRET_KEY`。
+`--force` 重建部署目录前会检查 `<DEPLOY_DIR>/redis`：Redis 数据目录若与代码同处一个部署根目录，脚本直接拒绝删除，必须先人工迁移数据。
 后端运行日志级别从 .env 内 `LOGGER_LEVEL` 读取，正式环境建议 `WARNING`，避免普通 `INFO` 请求日志刷 supervisor。
+飞书告警从 `FEISHU_ALARM_ENABLED` / `FEISHU_ALARM_WEBHOOK_URL` 读取；webhook 留空且 disabled 时 `send_feishu_alarm` 静默跳过。
 对外 API 根地址从 .env 内 `PUBLIC_API_BASE_URL` 读取，用于生成后端返回的 API 绝对地址。
 
 MCP 的公开 URL、允许的 Host/Origin 随部署模板从现有 API 地址、Nginx 域名和官网地址生成；协议入口及 OAuth 确认合同见 [014 API 与 MCP](../../docs/feat/014.Maps云端/tech-API与MCP.md)。

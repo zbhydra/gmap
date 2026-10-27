@@ -5,7 +5,7 @@ set -e
 # 远程执行脚本 - 在目标服务器上执行初始化
 #
 # 用法: (由 init.sh 自动调用，无需手动执行)
-#   bash deploy_init.sh <repo_url> <branch> <deploy_dir> <git_key_path> <db_host> <db_user> <db_passwd> <smtp_config_b64> <public_api_base_url> <google_client_id> <google_client_secret_or_empty> <public_website_base_url> <backend_port_py> <nginx_server_name> <app_name> <db_name> <backup_dir> <logger_level> <redis_host> <redis_port> <redis_password_b64_or_empty> [--force]
+#   bash deploy_init.sh <repo_url> <branch> <deploy_dir> <git_key_path> <db_host> <db_user> <db_passwd> <smtp_config_b64> <public_api_base_url> <google_client_id> <google_client_secret_or_empty> <public_website_base_url> <backend_port_py> <nginx_server_name> <app_name> <db_name> <backup_dir> <logger_level> <redis_host> <redis_port> <redis_password_b64_or_empty> <jwt_secret_key> <app_env> <feishu_alarm_enabled> <feishu_alarm_webhook_url_b64_or_empty> [--force]
 #
 # 此脚本将:
 # 1. 安装 uv
@@ -40,6 +40,14 @@ LOGGER_LEVEL="${18}"
 REDIS_HOST="${19}"
 REDIS_PORT="${20}"
 REDIS_PASSWORD_B64="${21}"
+JWT_SECRET_KEY="${22}"
+APP_ENV="${23}"
+FEISHU_ALARM_ENABLED="${24}"
+FEISHU_ALARM_WEBHOOK_URL_B64="${25}"
+EXPORT_RUN_CONCURRENCY="${26}"
+DB_POOL_SIZE="${27}"
+DB_MAX_OVERFLOW="${28}"
+REDIS_POOL_SIZE="${29}"
 FORCE=""
 
 if [ -z "$BRANCH" ]; then
@@ -94,6 +102,24 @@ if [ -z "$REDIS_HOST" ] || [ -z "$REDIS_PORT" ]; then
     echo "ERROR: 缺少 Redis 连接参数: redis_host/redis_port" >&2
     exit 1
 fi
+if [ -z "$JWT_SECRET_KEY" ]; then
+    echo "ERROR: 缺少 JWT 密钥参数: jwt_secret_key" >&2
+    exit 1
+fi
+if [ -z "$APP_ENV" ]; then
+    echo "ERROR: 缺少运行环境标识参数: app_env" >&2
+    exit 1
+fi
+case "$FEISHU_ALARM_ENABLED" in
+    true|false) ;;
+    *) echo "ERROR: feishu_alarm_enabled 只能是 true 或 false: $FEISHU_ALARM_ENABLED" >&2; exit 1 ;;
+esac
+for numeric_param in EXPORT_RUN_CONCURRENCY DB_POOL_SIZE DB_MAX_OVERFLOW REDIS_POOL_SIZE; do
+    if [[ ! "${!numeric_param}" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: 参数必须是正整数: $numeric_param=${!numeric_param}" >&2
+        exit 1
+    fi
+done
 
 # 检查 --force 参数
 for arg in "$@"; do
@@ -144,15 +170,6 @@ validate_logger_level() {
         DEBUG|INFO|WARNING|ERROR|CRITICAL) ;;
         *) error_exit "LOGGER_LEVEL 只能是 DEBUG/INFO/WARNING/ERROR/CRITICAL: $LOGGER_LEVEL" ;;
     esac
-}
-
-legacy_supervisor_belongs_to_current_deploy() {
-    local legacy_conf="$1"
-    local backend_dir="${DEPLOY_DIR%/}/backend"
-
-    [ -f "$legacy_conf" ] || return 1
-    grep -Fq "directory=$backend_dir" "$legacy_conf" \
-        || grep -Fq "$backend_dir/.venv/bin/python" "$legacy_conf"
 }
 
 ensure_git_ssh_key() {
@@ -216,6 +233,9 @@ generate_config_from_example() {
     local redis_port_escaped
     local redis_password_escaped
     local redis_password_yaml_scalar
+    local jwt_secret_key_escaped
+    local app_env_escaped
+    local feishu_alarm_webhook_url_escaped
     local smtp_config
     local tmp_config
 
@@ -235,6 +255,9 @@ generate_config_from_example() {
     redis_port_escaped=$(escape_sed_replacement "$REDIS_PORT")
     redis_password_yaml_scalar=$(decode_b64_value "$REDIS_PASSWORD_B64" | yaml_double_quoted_scalar)
     redis_password_escaped=$(escape_sed_replacement "$redis_password_yaml_scalar")
+    jwt_secret_key_escaped=$(escape_sed_replacement "$JWT_SECRET_KEY")
+    app_env_escaped=$(escape_sed_replacement "$APP_ENV")
+    feishu_alarm_webhook_url_escaped=$(escape_sed_replacement "$(decode_b64_value "$FEISHU_ALARM_WEBHOOK_URL_B64")")
     smtp_config=$(printf '%s' "$SMTP_CONFIG_B64" | base64 -d)
     tmp_config=$(mktemp)
 
@@ -254,6 +277,14 @@ generate_config_from_example() {
         -e "s|{REDIS_HOST}|$redis_host_escaped|g" \
         -e "s|{REDIS_PORT}|$redis_port_escaped|g" \
         -e "s|{REDIS_PASSWORD}|$redis_password_escaped|g" \
+        -e "s|{JWT_SECRET_KEY}|$jwt_secret_key_escaped|g" \
+        -e "s|{APP_ENV}|$app_env_escaped|g" \
+        -e "s|{FEISHU_ALARM_ENABLED}|$FEISHU_ALARM_ENABLED|g" \
+        -e "s|{FEISHU_ALARM_WEBHOOK_URL}|$feishu_alarm_webhook_url_escaped|g" \
+        -e "s|{EXPORT_RUN_CONCURRENCY}|$EXPORT_RUN_CONCURRENCY|g" \
+        -e "s|{DB_POOL_SIZE}|$DB_POOL_SIZE|g" \
+        -e "s|{DB_MAX_OVERFLOW}|$DB_MAX_OVERFLOW|g" \
+        -e "s|{REDIS_POOL_SIZE}|$REDIS_POOL_SIZE|g" \
         config.yaml.example > "$tmp_config"
 
     while IFS= read -r line || [ -n "$line" ]; do
@@ -297,14 +328,15 @@ create_deploy_dir() {
 
     # 强制模式：删除已存在的部署目录
     if [ "$FORCE" = "--force" ] && [ -d "$DEPLOY_DIR" ]; then
+        # 同名 Redis 实例与站点数据可能就放在这个目录下（例如 <DEPLOY_DIR>/redis），
+        # rm -rf 会连数据一起删；此时必须由人工先迁移或确认后再执行。
+        if [ -d "$DEPLOY_DIR/redis" ]; then
+            error_exit "部署目录内存在 Redis 数据目录，拒绝 --force 删除: $DEPLOY_DIR/redis（请先迁移数据）"
+        fi
         log_warn "强制模式：删除已存在的部署目录: $DEPLOY_DIR"
         # 停止服务（如果正在运行）
         if command -v supervisorctl &> /dev/null; then
-            local legacy_conf="/etc/supervisor/conf.d/tg-download.conf"
             supervisorctl stop "$APP_NAME" 2>/dev/null || true
-            if [ "$APP_NAME" != "tg-download" ] && legacy_supervisor_belongs_to_current_deploy "$legacy_conf"; then
-                supervisorctl stop tg-download 2>/dev/null || true
-            fi
         fi
         # 删除部署目录
         rm -rf "$DEPLOY_DIR"
@@ -336,7 +368,7 @@ clone_repository() {
         error_exit "请提供仓库 URL: ./init.sh <repo_url> [branch]"
     fi
 
-    # 强制模式：完全删除目录后重新克隆
+    # 强制模式：完全删除目录后重新克隆（create_deploy_dir 已拦下含 Redis 数据的目录）
     if [ "$FORCE" = "--force" ]; then
         log_info "强制模式：重新克隆仓库..."
         rm -rf "$DEPLOY_DIR"
@@ -389,7 +421,6 @@ install_python_dependencies() {
 
     install_captcha_fonts
     verify_captcha_font
-    install_playwright_chromium
 
     log_info "依赖安装完成"
 }
@@ -429,31 +460,6 @@ PY
     fi
 
     log_info "Admin 验证码字体校验完成"
-}
-
-install_playwright_chromium() {
-    log_info "=== 安装 Playwright Chromium ==="
-    if ! uv run python -m playwright install chromium; then
-        error_exit "Playwright Chromium 安装失败，Threads/Instagram 浏览器解析不可用"
-    fi
-
-    log_info "=== 校验 Playwright Chromium executable ==="
-    if ! uv run python - <<'PY'
-from pathlib import Path
-
-from playwright.sync_api import sync_playwright
-
-with sync_playwright() as playwright:
-    executable = Path(playwright.chromium.executable_path)
-    print(executable)
-    if not executable.exists():
-        raise SystemExit(f"Playwright Chromium executable missing: {executable}")
-PY
-    then
-        error_exit "Playwright Chromium executable 校验失败"
-    fi
-
-    log_info "Playwright Chromium 安装并校验完成"
 }
 
 ###############################################################################
@@ -497,7 +503,6 @@ configure_supervisor() {
 
     local supervisor_conf_dir="/etc/supervisor/conf.d"
     local target_conf="$supervisor_conf_dir/$APP_NAME.conf"
-    local legacy_conf="$supervisor_conf_dir/tg-download.conf"
     local template_conf="$DEPLOY_DIR/backend/deploy/supervisor/gmap-server.conf"
     local backend_dir="${DEPLOY_DIR%/}/backend"
     local app_name_escaped
@@ -515,14 +520,6 @@ configure_supervisor() {
         -e "s|{BACKEND_PORT_PY}|$backend_port_escaped|g" \
         "$template_conf" > "$target_conf"
 
-    if [ "$target_conf" != "$legacy_conf" ] && [ -f "$legacy_conf" ]; then
-        if legacy_supervisor_belongs_to_current_deploy "$legacy_conf"; then
-            supervisorctl stop tg-download 2>/dev/null || true
-            rm -f "$legacy_conf"
-        else
-            log_warn "跳过不属于当前部署目录的旧 supervisor 配置: $legacy_conf"
-        fi
-    fi
     supervisorctl reread
     supervisorctl update
 

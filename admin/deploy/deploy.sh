@@ -9,7 +9,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ADMIN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DIST_DIR="$ADMIN_DIR/dist"
-LOCAL_NGINX_CONF="${LOCAL_NGINX_CONF:-$SCRIPT_DIR/tg-admin.conf}"
+LOCAL_NGINX_CONF="${LOCAL_NGINX_CONF:-$SCRIPT_DIR/mapsgrab-admin.conf}"
 ARCHIVE_NAME="dist.tar.gz"
 ARCHIVE_PATH="$SCRIPT_DIR/$ARCHIVE_NAME"
 RELEASE_NAME="v$(date +%Y%m%d_%H%M%S)"
