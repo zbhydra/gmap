@@ -1,4 +1,4 @@
-# Telegram Download Media 外部 API 接入说明
+# MapsGrab 外部 API 接入说明
 
 > 面向外部系统的接入入口。接口字段、状态枚举和统计口径以 `@tech-外部API.md` 为唯一权威。
 
@@ -6,8 +6,8 @@
 
 | 环境 | Base URL |
 | --- | --- |
-| 生产 | `https://tg-download-api.telegramdownloadmedia.com` |
-| 测试 | `https://test-api.telegramdownloadmedia.com` |
+| 生产 | 待定（生产域名确定后回填） |
+| 测试 | `https://gmap-test-api.hydrai.cc` |
 
 ## 鉴权
 
@@ -33,7 +33,7 @@ Authorization: Bearer <api_key>
 最小调用示例:
 
 ```bash
-curl 'https://tg-download-api.telegramdownloadmedia.com/api/external/system/dashboard' \
+curl 'https://gmap-test-api.hydrai.cc/api/external/system/dashboard' \
   -H 'Authorization: Bearer <api_key>'
 ```
 

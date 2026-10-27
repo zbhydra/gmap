@@ -166,10 +166,11 @@ Body:`{ code(min1/max256) }`。原子消费一次性登录票据 → `user_id` �
 OAuth 2.0 Web Client 的 Authorized redirect URIs 需包含:
 
 ```text
-https://tg-download-api.telegramdownloadmedia.com/api/client/auth/google/oauth/callback
-https://api.telegramvideodownload.pro/api/client/auth/google/oauth/callback
+https://gmap-test-api.hydrai.cc/api/client/auth/google/oauth/callback
 http://localhost:7600/api/client/auth/google/oauth/callback
 ```
+
+生产域名确定后，在同一 OAuth Client 中补充生产回调地址。
 
 新手动按钮只跳后端 OAuth authorize,不接触 `GOOGLE_CLIENT_SECRET`。
 
