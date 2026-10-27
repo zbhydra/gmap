@@ -20,7 +20,7 @@ set -e
 
 # 所有环境配置一律由调用方显式传入，脚本不做任何默认值回退。
 DEPLOY_DIR="$1"
-BACKUP_DIR="$2"
+BACKUP_DIR="${2%/}"
 KEEP_VERSIONS="$3"
 GIT_SSH_KEY_PATH="$4"
 DB_HOST="$5"

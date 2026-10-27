@@ -21,7 +21,7 @@ log/
 # 真实运行配置(密钥/密码不入库,入库的是 .example 模板)
 config.yaml
 # 部署用 Git 私钥（deploy.sh / init.sh 传输到服务器拉代码）
-backend/deploy/key/git_key
+backend/deploy/key/
 **/.env.prod
 **/.env.prod-*
 **/.env.test
