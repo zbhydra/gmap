@@ -6,7 +6,7 @@
  * - 36 列字段样例是插件搜索结果导出：列序、表头与取值格式都按插件实际导出（extension/src/sites/maps/content/
  *   export/columns.ts、content/parser/placeParser.ts）——Website 带协议，About 每组一行，Opening Hours 24 小时制
  *   每天一行，Amenities 逗号无空格拼接，电话为美国国内写法。
- * - 代码台按 014 tech-API与MCP.md：REST `/api/client/maps/api/{search,reviews}` + Bearer 用户 Key，
+ * - 代码台按 014 tech-API与MCP.md：REST `/api/external/maps/{search,reviews}` + Bearer 用户 Key，
  *   业务响应为 `{code,data,msg}` 信封；MCP 入口 `/mcp/`，工具 search_places / list_reviews；
  *   响应字段与取值格式取自 Provider DTO（GmapPlaceEntry / GmapReview，rpc/entry.py：Website 不带协议）。
  *   Photos 未实现，不提供示例。
@@ -264,7 +264,7 @@ function restRequests(url: string, body: { json: string; python: string; js: str
 
 /** 代码台样例；apiBase 为部署注入的 PUBLIC_API_BASE_URL（与 /connection 的 api_base_url、mcp.public_url 同源）。 */
 export function developerSamples(apiBase: string): Record<'search' | 'reviews' | 'mcp', DeveloperSample> {
-  const restBase = `${apiBase}/api/client/maps/api`
+  const restBase = `${apiBase}/api/external/maps`
   const mcpUrl = `${apiBase}/mcp/`
   return {
     search: {
@@ -399,4 +399,4 @@ export function developerSamples(apiBase: string): Record<'search' | 'reviews' |
 }
 
 /** bento API 卡的迷你请求行（与代码台 Search 示例同一端点）。 */
-export const MINI_API_REQUEST = { verb: 'POST', path: '/api/client/maps/api/search' }
+export const MINI_API_REQUEST = { verb: 'POST', path: '/api/external/maps/search' }

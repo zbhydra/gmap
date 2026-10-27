@@ -10,17 +10,24 @@ Search 的 `page` 是累计采集页数，按每页 20 条映射 Collector 的 `
 
 ## REST 与 Dashboard
 
-客户端接口统一前缀 `/api/client/maps/api`。业务响应使用 `{code,data,msg}`，成功码为 `SUCCESS`；认证无效 HTTP 401，其余业务错误 HTTP 200。
+REST 按凭证分两个前缀：外部开发者用用户 API Key 调数据接口，前缀 `/api/external/maps`；Dashboard 用本站登录会话管 Key、用量与连接信息，前缀 `/api/client/maps-api`。两处响应都使用 `{code,data,msg}`，成功码为 `SUCCESS`；认证无效 HTTP 401，其余业务错误 HTTP 200。
 
-| 方法与路径           | 认证                                   | 请求 / data                                                                                                              |
-| -------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `GET /key`           | 本站用户 JWT，严格 Redis 白名单        | `{has_api_key:boolean,api_key_prefix:string,api_key_created_at:number \| null}`                                          |
-| `POST /key/generate` | 同上                                   | 无 body；`{api_key:string,api_key_prefix:string,api_key_created_at:number}`                                              |
-| `GET /usage`         | 同上                                   | `{used:number,total:number,period:"YYYY-MM",exhausted:boolean}`                                                          |
-| `GET /connection`    | 同上                                   | `{api_base_url:string,mcp_url:string}`；两者都由 `app.public_api_base_url` 派生，分别加 `/api/client/maps/api` 与 `/mcp/` |
+| 方法与路径           | 认证                                   | 请求 / data                                                                                                             |
+| -------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `POST /search`       | `Authorization: Bearer <用户 API Key>` | `{q:string,page?:1..10,hl?:string,ll?:"@lat,lng,zoom",extra?:boolean}` → `{places:[],partial:boolean,warnings:string[]}` |
 | `POST /reviews`      | 同上                                   | `{fid:string,cursor?:string,sort_by?:1\|2\|3\|4,hl?:string}` → `{reviews:[],next_cursor:string \| null}`                 |
-| `POST /photos`       | 同上                                   | `{fid:string,max_results?:number}` → 照片交付对象，见下方合同                                                            |
+| `POST /photos`       | 同上                                   | `{fid:string,max_results?:number}` → 照片交付对象，见下方合同                                                           |
+
+以上三条挂在 `/api/external/maps` 下。Dashboard 管理接口与凭证同前缀，挂 `/api/client/maps-api`：
+
+| 方法与路径           | 认证                            | 请求 / data                                                                                                             |
+| -------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `GET /key`           | 本站用户 JWT，严格 Redis 白名单 | `{has_api_key:boolean,api_key_prefix:string,api_key_created_at:number \| null}`                                         |
+| `POST /key/generate` | 同上                            | 无 body；`{api_key:string,api_key_prefix:string,api_key_created_at:number}`                                             |
+| `GET /usage`         | 同上                            | `{used:number,total:number,period:"YYYY-MM",exhausted:boolean}`                                                         |
+| `GET /connection`    | 同上                            | `{api_base_url:string,mcp_url:string}`；两者都由 `app.public_api_base_url` 派生，分别加 `/api/external/maps` 与 `/mcp/` |
+
+外部前缀下按子前缀区分凭证：`/api/external/maps/*` 认用户 API Key，`/api/external/system/*` 认管理员 API Key（见 [008 外部 API](../008.管理后台/tech-外部API.md)）。
 
 `page` 默认 1，`hl` 默认 `en`，`extra` 默认 false，Reviews 排序默认相关性（1；2 最新、3 最高、4 最低）。`ll` 经度范围 -180–180、纬度 -90–90，zoom 只接受 1–21 的整数文本，小数不舍入；解析由 `MapsSearchRequest.parse_viewport` 拥有。Reviews 的 cursor 原样传给下一次调用，并保持 fid、排序和语言一致，不保存页码状态。Reviews 与 Photos 的 fid 均接受每段 12–20 位大小写十六进制（`0x…:0x…`），入口统一转为小写；其他长度返回参数错误，不补零。
 

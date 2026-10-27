@@ -2,7 +2,7 @@
  * Pricing ④ 额度单位动画的样例（虚构，设计稿 README §10）。
  *
  * - records 卡：商户沿用首页剧场的 Portland 咖啡店（名称、评分、555-01xx 电话一致）；
- * - requests 卡：请求日志按 014 tech-API与MCP.md 的 REST 路径（POST /api/client/maps/api/{search,reviews}），
+ * - requests 卡：请求日志按 014 tech-API与MCP.md 的 REST 路径（POST /api/external/maps/{search,reviews}），
  *   关键词沿用首页剧场三组，401 一行演示失败调用不计额度。
  * - 用量表的已用量只是演示数字；上限由页面取 Online / API 首个付费档的卡面额度。
  * 界面文案不在这里，走 i18n 的 pages.pricing.usage。
@@ -24,7 +24,7 @@ export interface UsageCall {
   status: 200 | 401
 }
 
-const REST_PATH = '/api/client/maps/api'
+const REST_PATH = '/api/external/maps'
 
 export const USAGE_CALLS: readonly UsageCall[] = [
   { path: `${REST_PATH}/search`, param: COFFEE.keyword, status: 200 },

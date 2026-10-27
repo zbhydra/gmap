@@ -73,7 +73,7 @@ test.describe('API / MCP Landing Pages', () => {
       await page.goto(landing.path)
       const endpoint = landing.id === 'google-maps-scraper-api' ? 'search' : landing.id === 'google-maps-reviews-scraper-api' ? 'reviews' : 'photos'
       const copy = page.locator('[data-api-copy]')
-      await expect(copy).toHaveAttribute('data-copy', new RegExp(`^curl .*\\/api\\/client\\/maps\\/api\\/${endpoint}`))
+      await expect(copy).toHaveAttribute('data-copy', new RegExp(`^curl .*\\/api\\/external\\/maps\\/${endpoint}`))
       await page.locator('#api-lang-python').click()
       await expect(copy).toHaveAttribute('data-copy', /^import os\nimport requests/)
       await expect(copy).toHaveAttribute('data-copy', new RegExp(`/${endpoint}"`))

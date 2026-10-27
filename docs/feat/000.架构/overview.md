@@ -49,6 +49,7 @@ extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式
  │             ▼
  │      backend (business 角色, FastAPI)
  │        ├─ /api/client/*   Maps 采集/用量/订阅/订单/登录接口
+ │        ├─ /api/external/* 外部开发者与第三方系统接口（按子前缀区分凭证）
  │        ├─ /api/admin/*    admin 后台接口
  │        ├─ /api/system/*   健康检查/看板
  │        ├─ /api/internal/* 节点内部接口 (无业务 DB 依赖)
@@ -65,7 +66,7 @@ extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式
 ```
 
 要点：
-- **website / extension / admin 走同一套后端 HTTP 契约**，客户端前缀 `/api/client/*`、后台前缀 `/api/admin/*`。接口只用 GET 和 POST（见 `@../../../AGENTS.md` §3）。
+- **website / extension / admin 走同一套后端 HTTP 契约**，客户端前缀 `/api/client/*`、后台前缀 `/api/admin/*`；面向外部开发者 / 第三方系统的数据接口走 `/api/external/*`（当前 `maps` 认用户 API Key、`system` 认管理员 API Key）。接口只用 GET 和 POST（见 `@../../../AGENTS.md` §3）。
 - **SLS 日志双写在 website 前端**，不在 backend Python 侧（后端用标准 logging：控制台 + 文件）。见 `@tech-website.md` 与 `feat.033`。
 
 ## 4. 业务域依赖地图

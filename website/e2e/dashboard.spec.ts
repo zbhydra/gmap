@@ -595,14 +595,14 @@ test('dashboard subscriptions: three-line states, pricing tab links and manage s
 test('dashboard api view, logout returns home and mobile workspace reachability', async ({ page, isMobile }, testInfo) => {
   mockAuthMe(page)
   await page.route('**/api/client/auth/logout', route => route.fulfill({ json: envelope({}) }))
-  await page.route('**/api/client/maps/api/key', route => route.fulfill({
+  await page.route('**/api/client/maps-api/key', route => route.fulfill({
     json: envelope({ has_api_key: false, api_key_prefix: '', api_key_created_at: null })
   }))
-  await page.route('**/api/client/maps/api/usage', route => route.fulfill({
+  await page.route('**/api/client/maps-api/usage', route => route.fulfill({
     json: envelope({ used: 0, total: 20, period: '2026-10', exhausted: false })
   }))
-  await page.route('**/api/client/maps/api/connection', route => route.fulfill({
-    json: envelope({ api_base_url: 'https://api.mapsgrab.test/api/client/maps/api', mcp_url: '' })
+  await page.route('**/api/client/maps-api/connection', route => route.fulfill({
+    json: envelope({ api_base_url: 'https://api.mapsgrab.test/api/external/maps', mcp_url: '' })
   }))
   await page.route('**/api/client/mcp-oauth/grants?*', route => route.fulfill({
     json: envelope({ items: [], total: 0 })
@@ -616,7 +616,7 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
   await expect(page.getByRole('link', { name: 'View API products' })).toHaveAttribute('href', '/google-maps-scraper-api/')
   // 默认 API tab 的 curl 快速上手：地址取连接信息；没有 Key 时用 YOUR_API_KEY 占位
   const curl = page.locator('[data-connect-sample]')
-  await expect(curl).toContainText('https://api.mapsgrab.test/api/client/maps/api/search')
+  await expect(curl).toContainText('https://api.mapsgrab.test/api/external/maps/search')
   await expect(curl).toContainText('Bearer YOUR_API_KEY')
   const docs = page.locator('[data-connect-docs]')
   await expect(docs).toHaveAttribute('href', '/google-maps-scraper-api/#reference')
@@ -642,7 +642,7 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
   }
   let releaseGenerate: () => void = () => {}
   const generateGate = new Promise<void>(resolve => { releaseGenerate = resolve })
-  await page.route('**/api/client/maps/api/key/generate', async route => {
+  await page.route('**/api/client/maps-api/key/generate', async route => {
     await generateGate
     await route.fulfill({ json: envelope({ api_key: 'mg_live_e2e1_plaintext', api_key_prefix: 'mg_live_e2e1', api_key_created_at: Date.now() }) })
   })
@@ -650,7 +650,7 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
   await expect(page.getByRole('button', { name: 'Generating...' })).toBeVisible()
   await openView('Subscriptions')
   await expect(page).toHaveURL(/\/dashboard\/subscriptions\/$/)
-  const generated = page.waitForResponse('**/api/client/maps/api/key/generate')
+  const generated = page.waitForResponse('**/api/client/maps-api/key/generate')
   releaseGenerate()
   await generated
   await openView('API management')
@@ -660,7 +660,7 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
   await expect(curl).toContainText('Bearer mg_live_e2e1…')
 
   // 留在视图内替换：明文出现时示例只换成新前缀，从不带明文。
-  await page.route('**/api/client/maps/api/key/generate', route => route.fulfill({
+  await page.route('**/api/client/maps-api/key/generate', route => route.fulfill({
     json: envelope({ api_key: 'mg_live_e2e2_plaintext', api_key_prefix: 'mg_live_e2e2', api_key_created_at: Date.now() })
   }))
   await page.getByRole('button', { name: 'Replace API key' }).click()

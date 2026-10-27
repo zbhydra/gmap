@@ -497,12 +497,12 @@ async def _prove_csv_contacts_permissions_and_single_failed_publish(
         )
         key = _data(
             await real_async_client.post(
-                "/api/client/maps/api/key/generate", headers=headers
+                "/api/client/maps-api/key/generate", headers=headers
             )
         )["api_key"]
         search = _data(
             await real_async_client.post(
-                "/api/client/maps/api/search",
+                "/api/external/maps/search",
                 headers={"Authorization": f"Bearer {key}"},
                 json={"q": "sync", "page": 2, "ll": "@35,120,12", "extra": True},
             )
@@ -511,7 +511,7 @@ async def _prove_csv_contacts_permissions_and_single_failed_publish(
         assert (
             _data(
                 await real_async_client.get(
-                    "/api/client/maps/api/usage", headers=headers
+                    "/api/client/maps-api/usage", headers=headers
                 )
             )["used"]
             == 1

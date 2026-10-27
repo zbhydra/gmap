@@ -1,22 +1,19 @@
-"""Maps 同步 API 与账号接入信息；凭证管理只接受本站登录会话。"""
+"""Maps API 账号接入信息与用量；Dashboard 管理边界，只接受本站登录会话。
+
+同步采集的 search / reviews / photos 面向外部开发者，归
+`app/api/external/external_maps.py`（`/api/external/maps`，用户 API Key）。
+"""
 
 from fastapi import APIRouter, Depends
 from starlette.responses import JSONResponse
 
-from app.api import maps_api_operations
-from app.api.maps_api_dependencies import get_api_key_user
 from app.api.user_dependencies import UserContext, get_current_user
 from app.core.config import settings
-from app.schemas.maps_api_schema import (
-    MapsPhotosRequest,
-    MapsReviewsRequest,
-    MapsSearchRequest,
-)
 from app.services.user_api_key_service import user_api_key_service
 from app.services.usage_service import api_usage_service, usage_identity, usage_payload
 from app.utils.response import ResponseUtils
 
-router = APIRouter(prefix="/maps/api", tags=["Maps API"])
+router = APIRouter(prefix="/maps-api", tags=["Maps API 管理"])
 
 
 @router.get("/key")
@@ -57,31 +54,7 @@ async def get_connection(
     return ResponseUtils.ok(
         {
             "api_base_url": settings.app.public_api_base_url.rstrip("/")
-            + "/api/client/maps/api",
+            + "/api/external/maps",
             "mcp_url": settings.app.mcp_url,
         }
     )
-
-
-@router.post("/search")
-async def search(
-    request: MapsSearchRequest,
-    current_user: UserContext = Depends(get_api_key_user),
-) -> JSONResponse:
-    return ResponseUtils.ok(await maps_api_operations.search(request, current_user))
-
-
-@router.post("/reviews")
-async def reviews(
-    request: MapsReviewsRequest,
-    current_user: UserContext = Depends(get_api_key_user),
-) -> JSONResponse:
-    return ResponseUtils.ok(await maps_api_operations.reviews(request, current_user))
-
-
-@router.post("/photos")
-async def photos(
-    request: MapsPhotosRequest,
-    current_user: UserContext = Depends(get_api_key_user),
-) -> JSONResponse:
-    return ResponseUtils.ok(await maps_api_operations.photos(request, current_user))

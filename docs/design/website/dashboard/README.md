@@ -775,7 +775,7 @@ History 的搜索与筛选是本稿新画进主流程的能力，原接口不支
 - **示意内容**：
   - 地图是程序生成的示意 SVG，不是 OSM 瓦片；舞台宽高比变化时以 `slice` 方式铺满。
   - 地区数据：国家清单与 `website/src/data/gmap-regions/countries.json` 一致，共 252 个。只有 US / CA / GB / AU 带完整的州 / 省清单，州代码与 GeoNames 一致，例如 CA 的 `02` 是 British Columbia。城市只取示意子集；其余国家没有州和城市数据。
-  - 连接地址 `https://api.mapsgrab.com/api/client/maps/api`、`https://mcp.mapsgrab.com/mcp` 是示意值，落地以接口返回为准。
+  - 连接地址 `https://api.mapsgrab.com/api/external/maps`、`https://mcp.mapsgrab.com/mcp` 是示意值，落地以接口返回为准。
   - 管理链接固定返回 null，所以只演示指引弹窗，没有演示跳转渠道和「弹窗被拦截」两条分支。
   - 过期文件是模拟的：列表里 `has_file` 仍为 true，点下载才返回 404，显示现有的 `downloadUnavailable` 文案。涉及 9 天前的一个任务，以及 60 天以前约三分之一的任务。
   - 「完整任务号」在原型里按 34 位十六进制判断；后端任务号是 32 位 UUID hex 加两位 owner 槽号（`00`–`09`，接口校验 `^[0-9a-f]{32}0[0-9]$`），落地按这个格式判断。

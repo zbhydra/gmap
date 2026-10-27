@@ -3,7 +3,7 @@
  * API 落地页（W4）：/google-maps-scraper-api、/google-maps-reviews-scraper-api、/google-maps-photos-api 共用一套版式，
  * variant 决定首屏、代码台、能力、参考区、FAQ 与 CTA；端点卡、fid 串联、要点与方案区三页共用。
  *
- * 事实按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）：REST 前缀 /api/client/maps/api，用户 API Key 以
+ * 事实按 014 合同（docs/feat/014.Maps云端/tech-API与MCP.md）：REST 前缀 /api/external/maps，用户 API Key 以
  * Authorization: Bearer 传入，响应为 {code, data, msg} 信封；Photos 仅承诺有效部分交付。
  * 获取 Key 与套餐 CTA 走能力表灰化：Search / Reviews 与 API 套餐绑 scraperApi，Photos 页的获取 Key 绑 photosApi。
  * 代码台打字与串联动画由 scripts/pages/api-page.ts 驱动；无 JS 时代码与示例完整可读。

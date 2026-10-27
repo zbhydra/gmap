@@ -33,7 +33,9 @@ from app.utils.time import timestamp_now
 from tests.integration.real.api.conftest import _CleanupState
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
-API = "/api/client/maps/api"
+# 数据入口归外部 API（用户 API Key），Key / 用量管理归 Dashboard 客户端接口（本站 JWT）。
+API = "/api/external/maps"
+DASH = "/api/client/maps-api"
 OAUTH = "/api/client/mcp-oauth"
 REDIRECT = "http://127.0.0.1:7199/callback"
 
@@ -155,10 +157,12 @@ async def test_real_key_rotation_oauth_confirmation_refresh_and_revocation(
 ) -> None:
     client, state = real_launch_client, real_launch_state
     headers = _headers(state.users[0][1])
-    assert not _data(await client.get(API + "/key", headers=headers))["has_api_key"]
-    first = _data(await client.post(API + "/key/generate", headers=headers))["api_key"]
-    second = _data(await client.post(API + "/key/generate", headers=headers))["api_key"]
-    meta = _data(await client.get(API + "/key", headers=headers))
+    assert not _data(await client.get(DASH + "/key", headers=headers))["has_api_key"]
+    first = _data(await client.post(DASH + "/key/generate", headers=headers))["api_key"]
+    second = _data(await client.post(DASH + "/key/generate", headers=headers))[
+        "api_key"
+    ]
+    meta = _data(await client.get(DASH + "/key", headers=headers))
     assert meta["has_api_key"] and "api_key" not in meta
     async with get_async_session() as db:
         user = await db.get(UserModel, state.users[0][0])
@@ -188,7 +192,7 @@ async def test_real_key_rotation_oauth_confirmation_refresh_and_revocation(
         malformed.status_code == 200
         and malformed.json()["code"] == CommonCode.VALIDATION_ERROR
     )
-    assert _data(await client.get(API + "/usage", headers=headers))["used"] == 0
+    assert _data(await client.get(DASH + "/usage", headers=headers))["used"] == 0
     metadata = await client.get("/.well-known/oauth-authorization-server")
     assert metadata.status_code == 200 and metadata.json()["scopes_supported"] == [
         "exports"
@@ -287,7 +291,7 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
     client, state = real_launch_client, real_launch_state
     user_id, token = state.users[0]
     headers = _headers(token)
-    key = _data(await client.post(API + "/key/generate", headers=headers))["api_key"]
+    key = _data(await client.post(DASH + "/key/generate", headers=headers))["api_key"]
     search = _data(
         await client.post(
             API + "/search",
@@ -359,12 +363,12 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
                 f"media-google fid={fid} rest_photos={photos['returned_count']} "
                 f"mcp_photos={data['returned_count']} reviews_cursor_continued=true"
             )
-            usage = _data(await client.get(API + "/usage", headers=headers))
+            usage = _data(await client.get(DASH + "/usage", headers=headers))
             assert usage["used"] == 5
             assert (
                 _data(
                     await client.get(
-                        API + "/usage", headers=_headers(state.users[1][1])
+                        DASH + "/usage", headers=_headers(state.users[1][1])
                     )
                 )["used"]
                 == 0
@@ -426,7 +430,7 @@ async def test_real_media_failure_does_not_consume_and_valid_empty_reviews_does(
     """真实账号与计量，只替换不可控的 Collector HTTP 出口。"""
     client, state = real_async_client, real_launch_state
     headers = _headers(state.users[0][1])
-    key = _data(await client.post(API + "/key/generate", headers=headers))["api_key"]
+    key = _data(await client.post(DASH + "/key/generate", headers=headers))["api_key"]
     fid = "0x123456789abc:0xabcdef123456"
     original_row = await system_data_service.system_data_info(GMAP_COLLECTOR_DATA_KEY)
     original_http = gmap_collector_client._client
@@ -463,13 +467,17 @@ async def test_real_media_failure_does_not_consume_and_valid_empty_reviews_does(
             )
             assert invalid.status_code == 200
             assert invalid.json()["code"] == CommonCode.VALIDATION_ERROR
-            assert _data(await client.get(API + "/usage", headers=headers))["used"] == 0
+            assert (
+                _data(await client.get(DASH + "/usage", headers=headers))["used"] == 0
+            )
             assert _data(
                 await client.post(
                     API + "/reviews", headers=_headers(key), json={"fid": fid}
                 )
             ) == {"reviews": [], "next_cursor": None}
-            assert _data(await client.get(API + "/usage", headers=headers))["used"] == 1
+            assert (
+                _data(await client.get(DASH + "/usage", headers=headers))["used"] == 1
+            )
         async with get_async_session() as db:
             logs = (
                 await db.scalars(

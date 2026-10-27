@@ -9,6 +9,7 @@
 ## 通用约定
 
 - 路由前缀:`/api/external`。
+- 凭证按子前缀区分:`/api/external/system/*` 用管理员 API Key(本文);`/api/external/maps/*` 用用户 API Key,是 Maps 同步采集 API,合同见 [014 API 与 MCP](../014.Maps云端/tech-API与MCP.md)。
 - 挂载角色:只在 business role 挂载。
 - 鉴权方式:`Authorization: Bearer <api_key>`。
 - API Key 来源:管理员在系统设置页生成;数据库只保存 hash、前缀和生成时间。

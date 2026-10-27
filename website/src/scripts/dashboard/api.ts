@@ -41,20 +41,20 @@ export interface MapsApiConnection {
 }
 
 export function getUserApiKey(context: RequestContext): Promise<UserApiKeyMeta> {
-  return withSessionExpiry(getJson<UserApiKeyMeta>('/api/client/maps/api/key', context))
+  return withSessionExpiry(getJson<UserApiKeyMeta>('/api/client/maps-api/key', context))
 }
 
 /** 生成响应是完整 Key 的唯一读取机会；调用方仅在当前视图内存中保留。 */
 export function generateUserApiKey(context: RequestContext): Promise<GeneratedUserApiKey> {
-  return withSessionExpiry(postJson<GeneratedUserApiKey>('/api/client/maps/api/key/generate', context))
+  return withSessionExpiry(postJson<GeneratedUserApiKey>('/api/client/maps-api/key/generate', context))
 }
 
 export function getMapsApiUsage(context: RequestContext): Promise<MapsApiUsage> {
-  return withSessionExpiry(getJson<MapsApiUsage>('/api/client/maps/api/usage', context))
+  return withSessionExpiry(getJson<MapsApiUsage>('/api/client/maps-api/usage', context))
 }
 
 export function getMapsApiConnection(context: RequestContext): Promise<MapsApiConnection> {
-  return withSessionExpiry(getJson<MapsApiConnection>('/api/client/maps/api/connection', context))
+  return withSessionExpiry(getJson<MapsApiConnection>('/api/client/maps-api/connection', context))
 }
 
 export interface OnlineOptions {

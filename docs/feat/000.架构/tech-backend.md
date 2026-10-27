@@ -12,6 +12,7 @@ backend/
 │   │   ├── api/                     # API 层（只做参数判断/处理，不碰事务）
 │   │   │   ├── admin/               #   /api/admin/*    后台接口（节点/订单/渠道/TG 客户端/mark-log/看板）
 │   │   │   ├── client/              #   /api/client/*   互联网客户端接口（下载/解析/积分/计数/订单/登录/签到）
+│   │   │   ├── external/            #   /api/external/* 外部开发者 / 第三方系统接口（按子前缀区分 API Key）
 │   │   │   ├── internal/            #   /api/internal/* 节点内部接口（无业务 DB 依赖）
 │   │   │   ├── system/              #   /api/system/*   健康检查/看板
 │   │   │   ├── callback/            #   /api/callback/* 支付/Telegram 回调

@@ -118,6 +118,7 @@ from app.api.client.export_client import router as export_router
 from app.api.client.mark_client import router as mark_router
 from app.api.client.order_client import router as order_router
 from app.api.client.subscription_client import router as subscription_router
+from app.api.external.external_maps import router as external_maps_router
 from app.api.external.external_system_dashboard import (
     router as external_system_dashboard_router,
 )
@@ -262,6 +263,9 @@ def _include_business_routes(app_instance: FastAPI) -> None:
     app_instance.include_router(admin_users_router, prefix="/api/admin", tags=["admin"])
     app_instance.include_router(
         admin_system_settings_router, prefix="/api/admin", tags=["admin"]
+    )
+    app_instance.include_router(
+        external_maps_router, prefix="/api/external", tags=["external"]
     )
     app_instance.include_router(
         external_system_dashboard_router,

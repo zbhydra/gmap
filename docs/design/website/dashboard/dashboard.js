@@ -1208,7 +1208,7 @@
           : { has_api_key: true, api_key_prefix: 'maps_Q7v2kZx', api_key_created_at: NOW - 19 * DAY },
         used: combo.api.used,
         total: combo.api.total,
-        connection: { api_base_url: 'https://api.mapsgrab.com/api/client/maps/api', mcp_url: 'https://mcp.mapsgrab.com/mcp' },
+        connection: { api_base_url: 'https://api.mapsgrab.com/api/external/maps', mcp_url: 'https://mcp.mapsgrab.com/mcp' },
         grants: empty ? [] : buildGrants(proto.combo)
       }
     }
@@ -1436,13 +1436,13 @@
     async apiAccess() {
       const store = db
       await sleep(LATENCY + 80)
-      if (fault('api')) throw simulatedError('GET /api/client/maps/api/key|connection')
+      if (fault('api')) throw simulatedError('GET /api/client/maps-api/key|connection')
       return { key: { ...store.api.key }, connection: { ...store.api.connection } }
     },
     async apiUsage() {
       const store = db
       await sleep(LATENCY + 160)
-      if (fault('usage')) throw simulatedError('GET /api/client/maps/api/usage')
+      if (fault('usage')) throw simulatedError('GET /api/client/maps-api/usage')
       return { used: store.api.used, total: store.api.total, period: currentPeriod(), exhausted: store.api.used >= store.api.total }
     },
     async grants(page) {
@@ -1457,7 +1457,7 @@
     async generateKey() {
       const store = db
       await sleep(800)
-      if (fault('keygen')) throw simulatedError('POST /api/client/maps/api/key/generate')
+      if (fault('keygen')) throw simulatedError('POST /api/client/maps-api/key/generate')
       const random = rng(hashSeed(`${Date.now()}key`))
       const apiKey = `maps_${randomChars(random, 43, BASE62)}`
       store.api.key = { has_api_key: true, api_key_prefix: apiKey.slice(0, 12), api_key_created_at: Date.now() }
