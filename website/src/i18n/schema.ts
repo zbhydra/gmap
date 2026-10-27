@@ -1109,6 +1109,8 @@ export interface DashboardContent {
     modes: { keywords: string; map: string; regions: string }
     /** 关键词输入框标签。 */
     keywords: string
+    /** Keywords 模式跳到 Regions 模式的按钮。 */
+    regionsCta: string
     /** 关键词输入框占位示例（换行分隔）。 */
     placeholder: string
     /** 含 {count} {limit} 的关键词计数。 */
@@ -1188,15 +1190,15 @@ export interface DashboardContent {
       country: string
       /** 州 / 地区下拉。 */
       state: string
-      /** 城市搜索框标签。 */
+      /** 城市多选标签。 */
       citySearch: string
-      /** 城市搜索框占位。 */
+      /** 未选城市时城市多选的占位。 */
       cityPlaceholder: string
       /** 城市候选列表的无障碍名称。 */
       city: string
       /** 国家下拉的空选项。 */
       selectCountry: string
-      /** 州下拉的全部选项。 */
+      /** 未选州时州多选的占位（即全国）。 */
       allStates: string
       /** 地点数据加载中。 */
       loading: string
@@ -1204,15 +1206,21 @@ export interface DashboardContent {
       loadFailed: string
       /** 重试。 */
       retry: string
-      /** 加入当前国家。 */
-      addCountry: string
-      /** 加入当前州。 */
-      addState: string
-      /** 已选地点列表的无障碍名称。 */
+      /** 多选浮层的过滤框。 */
+      filter: string
+      /** 含 {count} 的全选当前过滤结果。 */
+      selectAll: string
+      /** 全不选（有过滤词时只取消当前过滤结果）。 */
+      clear: string
+      /** 含 {count} 的已选数量摘要。 */
+      selectedCount: string
+      /** 含 {shown} {total} 的候选截断提示。 */
+      more: string
+      /** 已选地点列表的无障碍名称（营销页 Online 演示）。 */
       selectedRegions: string
-      /** 含 {name} 的移除地点。 */
+      /** 含 {name} 的移除地点（营销页 Online 演示）。 */
       remove: string
-      /** 国家、州、城市 combobox 无匹配。 */
+      /** 国家 combobox、州 / 城市多选无匹配。 */
       noMatch: string
       /** 措辞单选组标题。 */
       matchMode: string
@@ -1222,11 +1230,17 @@ export interface DashboardContent {
       nearMode: string
       /** 生成查询按钮。 */
       generate: string
+      /** 生成按钮旁：缺基础关键词。 */
+      needBase: string
+      /** 生成按钮旁：缺国家。 */
+      needCountry: string
+      /** 含 {count} 的将生成条数。 */
+      willGenerate: string
       /** 最终查询框标签。 */
       finalQueries: string
       /** 最终查询框占位。 */
       finalPlaceholder: string
-      /** GeoNames 署名。 */
+      /** GeoNames 署名（营销页 Online 演示）。 */
       attribution: string
     }
   }

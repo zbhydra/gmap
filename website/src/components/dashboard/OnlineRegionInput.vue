@@ -1,78 +1,95 @@
 <script setup lang="ts">
 /**
- * 地区模式的构建列：基础关键词 → 国家 / 州 / 城市 → 已选地点 chips → 措辞 In / Near。
+ * 地区模式的构建列：基础关键词 → 国家（单选）/ 州（多选）→ 城市（多选）→ 措辞 In / Near → Generate queries。
  *
- * - 国家、州 / 省是持有值的 combobox：候选按「代码完全相同 > 名称前缀 > 名称包含」排序，州列表首项是全部州；
- *   城市是选中即加入的 combobox：两个字母起搜索，受所选州限制，最多 50 条。
- * - 基础关键词 × 已选地点按措辞组合成候选查询，交给创建面板的 Generate 写入可编辑的最终查询。
+ * - 国家是持有值的 combobox，候选按「代码完全相同 > 名称前缀 > 名称包含」排序。
+ * - 州 / 省可不选；城市候选限于所选州，没选州时是全国。改州时移除不在所选州内的已选城市。
+ * - 地点取最细的一层：选了城市按城市，否则选了州按州，否则按国家；基础关键词 × 地点按措辞组合成查询，
+ *   点 Generate queries 交给创建面板写入可编辑的最终查询。
  * - 国家列表在首次进入地区模式时加载，州与城市在选中国家后加载；失败时就地重试。
- *   州、城市只看是否选了国家：加载期间照常可聚焦（Tab 换国家后落点不失效），候选随数据到达出现，期间显示加载提示。
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
 import { fill } from '../../scripts/dashboard/format'
-import {
-  CITY_MIN_CHARS,
-  loadCountries,
-  loadRegion,
-  rankPairs,
-  searchCities,
-  type Country,
-  type RegionData,
-  type State
-} from '../../scripts/dashboard/region-data'
+import { loadCountries, loadRegion, rankCountries, type Country, type RegionData } from '../../scripts/dashboard/region-data'
+import PopChecklist, { type CheckOption } from './PopChecklist.vue'
 import PopCombobox, { type ComboOption } from './PopCombobox.vue'
 
 const props = defineProps<{
   copy: DashboardContent['create']['region']
   disabled: boolean
-  /** 提交成功后递增：清空输入与已选地点。 */
+  /** 提交成功后递增：清空输入与所选地点。 */
   resetKey: number
 }>()
 
 const emit = defineEmits<{
-  /** 基础关键词 × 已选地点组合出的候选查询；为空时不能生成。 */
-  generated: [queries: string[]]
+  /** 点 Generate queries：基础关键词 × 地点组合出的查询。 */
+  generate: [queries: string[]]
 }>()
-
-interface Place {
-  key: string
-  label: string
-}
 
 const countries = ref<Country[]>([])
 const countryCode = ref('')
 const region = ref<RegionData | null>(null)
-const stateCode = ref('')
+const stateCodes = ref<string[]>([])
+/** 已选城市，键为「州代码:城市名」。 */
+const cityKeys = ref<string[]>([])
 const countryQuery = ref('')
-const stateQuery = ref('')
-const cityQuery = ref('')
 const loadingCountries = ref(false)
 const loadingRegion = ref(false)
 const countriesError = ref(false)
 const regionError = ref(false)
 const baseText = ref('')
 const phrasing = ref<'in' | 'near'>('in')
-const selected = ref<Place[]>([])
-const cityCombo = ref<InstanceType<typeof PopCombobox> | null>(null)
 
 const countryName = computed(() => countries.value.find(([code]) => code === countryCode.value)?.[1] ?? '')
-const stateName = computed(() => region.value?.s.find(([code]) => code === stateCode.value)?.[1] ?? '')
-const countryOptions = computed<ComboOption[]>(() => rankPairs(countries.value, countryQuery.value, true)
+const stateNames = computed(() => new Map(region.value?.s ?? []))
+const countryOptions = computed<ComboOption[]>(() => rankCountries(countries.value, countryQuery.value)
   .map(([code, name]) => ({ value: code, label: name, sub: code })))
-const stateOptions = computed<ComboOption[]>(() => rankPairs<State>([['', props.copy.allStates], ...(region.value?.s ?? [])], stateQuery.value)
-  .map(([code, name]) => ({ value: code, label: name })))
-// 城市的 value 是「州代码:城市名」，sub 是州名：选中后据此拼出地点，不再回查列表
-const cityOptions = computed<ComboOption[]>(() => {
+const stateOptions = computed<CheckOption[]>(() => (region.value?.s ?? []).map(([code, name]) => ({ value: code, label: name })))
+// 同名同州只留一条
+const cityOptions = computed<CheckOption[]>(() => {
   if (!region.value) return []
-  const states = new Map(region.value.s)
-  return searchCities(region.value, stateCode.value, cityQuery.value)
-    .map(([city, state]) => ({ value: `${state}:${city}`, label: city, sub: states.get(state) ?? '' }))
+  const scope = stateCodes.value.length ? new Set(stateCodes.value) : null
+  const options = new Map<string, CheckOption>()
+  for (const [city, state] of region.value.c) {
+    if (scope && !scope.has(state)) continue
+    const value = `${state}:${city}`
+    if (!options.has(value)) options.set(value, { value, label: city, sub: stateNames.value.get(state) ?? '' })
+  }
+  return [...options.values()]
 })
-const generated = computed(() => {
+const stateSummary = computed(() => summarize(stateCodes.value.map(code => stateNames.value.get(code) ?? code)))
+const citySummary = computed(() => summarize(cityKeys.value.map(key => key.slice(key.indexOf(':') + 1))))
+const places = computed(() => {
+  const code = countryCode.value
+  if (!code) return []
+  if (cityKeys.value.length) {
+    return cityKeys.value.map(key => {
+      const split = key.indexOf(':')
+      return [key.slice(split + 1), stateNames.value.get(key.slice(0, split)), code].filter(Boolean).join(', ')
+    })
+  }
+  if (stateCodes.value.length) return stateCodes.value.map(state => `${stateNames.value.get(state) ?? state}, ${code}`)
+  return [countryName.value]
+})
+const queries = computed(() => {
   const bases = [...new Set(baseText.value.split(/\r?\n/).map(line => line.trim()).filter(Boolean))]
-  return bases.flatMap(base => selected.value.map(place => `${base} ${phrasing.value} ${place.label}`))
+  return bases.flatMap(base => places.value.map(place => `${base} ${phrasing.value} ${place}`))
 })
+/** 生成按钮旁的说明：按表单顺序提示第一个缺项（提醒色），齐全时显示将生成的条数。 */
+const missingHint = computed(() => !baseText.value.trim() ? props.copy.needBase : !countryCode.value ? props.copy.needCountry : '')
+const checklistCopy = computed(() => ({
+  filter: props.copy.filter,
+  selectAll: props.copy.selectAll,
+  clear: props.copy.clear,
+  noMatch: props.copy.noMatch,
+  more: props.copy.more
+}))
+
+/** 触发按钮摘要：两项以内列名称，更多时显示数量。 */
+function summarize(names: string[]): string {
+  return names.length > 2 ? fill(props.copy.selectedCount, { count: names.length }) : names.join(', ')
+}
 
 async function fetchCountries(): Promise<void> {
   loadingCountries.value = true
@@ -87,12 +104,12 @@ async function fetchCountries(): Promise<void> {
   }
 }
 
-/** 换国家：州回到全部、城市输入清空，再加载该国的州与城市；连续切换时只采用最后一次。 */
+/** 换国家：清空州与城市，再加载该国数据；连续切换时只采用最后一次。 */
 async function fetchRegion(code: string): Promise<void> {
   region.value = null
   regionError.value = false
-  stateCode.value = ''
-  cityCombo.value?.clear()
+  stateCodes.value = []
+  cityKeys.value = []
   loadingRegion.value = Boolean(code)
   if (!code) return
   try {
@@ -112,10 +129,11 @@ function selectCountry(code: string): void {
   void fetchRegion(code)
 }
 
-function selectState(code: string): void {
-  if (code === stateCode.value) return
-  stateCode.value = code
-  cityCombo.value?.clear()
+function selectStates(codes: string[]): void {
+  stateCodes.value = codes
+  if (!codes.length) return
+  const scope = new Set(codes)
+  cityKeys.value = cityKeys.value.filter(key => scope.has(key.slice(0, key.indexOf(':'))))
 }
 
 function retry(): void {
@@ -123,31 +141,8 @@ function retry(): void {
   else void fetchRegion(countryCode.value)
 }
 
-function add(key: string, label: string): void {
-  if (!selected.value.some(place => place.key === key)) selected.value.push({ key, label })
-}
-
-function addCountry(): void {
-  add(countryCode.value, countryName.value)
-}
-
-function addState(): void {
-  add(`${countryCode.value}:${stateCode.value}`, `${stateName.value}, ${countryCode.value}`)
-}
-
-function addCity(option: ComboOption): void {
-  add(`${countryCode.value}:${option.value}`, [option.label, option.sub, countryCode.value].filter(Boolean).join(', '))
-}
-
-function remove(key: string): void {
-  selected.value = selected.value.filter(place => place.key !== key)
-}
-
-watch(generated, value => emit('generated', value), { immediate: true })
-
 watch(() => props.resetKey, () => {
   baseText.value = ''
-  selected.value = []
   countryCode.value = ''
   void fetchRegion('')
 })
@@ -192,46 +187,32 @@ onMounted(() => {
       </div>
       <div class="mini-field">
         <label class="mini-label" for="region-state">{{ props.copy.state }}</label>
-        <PopCombobox
+        <PopChecklist
           id="region-state"
           :label="props.copy.state"
           :options="stateOptions"
-          :no-match="props.copy.noMatch"
-          mode="value"
-          :model-value="stateCode"
-          :value-label="stateName"
-          allow-empty
+          :model-value="stateCodes"
+          :summary="stateSummary"
           :placeholder="props.copy.allStates"
-          :disabled="props.disabled || !countryCode"
-          @query="q => stateQuery = q"
-          @update:model-value="selectState"
+          :copy="checklistCopy"
+          :disabled="props.disabled || !region"
+          @update:model-value="selectStates"
         />
       </div>
     </div>
 
-    <div class="region-adds">
-      <button class="btn btn-secondary btn-xs" type="button" :disabled="props.disabled || !countryName" @click="addCountry">
-        <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-plus" /></svg>{{ props.copy.addCountry }}
-      </button>
-      <button class="btn btn-secondary btn-xs" type="button" :disabled="props.disabled || !stateName" @click="addState">
-        <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-plus" /></svg>{{ props.copy.addState }}
-      </button>
-    </div>
-
     <div class="mini-field">
       <label class="mini-label" for="region-city">{{ props.copy.citySearch }}</label>
-      <PopCombobox
+      <PopChecklist
         id="region-city"
-        ref="cityCombo"
         :label="props.copy.city"
         :options="cityOptions"
-        :no-match="props.copy.noMatch"
-        mode="action"
-        :min-chars="CITY_MIN_CHARS"
+        :model-value="cityKeys"
+        :summary="citySummary"
         :placeholder="props.copy.cityPlaceholder"
-        :disabled="props.disabled || !countryCode"
-        @query="q => cityQuery = q"
-        @select="addCity"
+        :copy="checklistCopy"
+        :disabled="props.disabled || !region"
+        @update:model-value="value => cityKeys = value"
       />
     </div>
 
@@ -246,24 +227,26 @@ onMounted(() => {
       </div>
     </div>
 
-    <ul v-if="selected.length" class="place-chips" :aria-label="props.copy.selectedRegions">
-      <li v-for="place in selected" :key="place.key" class="place-chip">
-        <span>{{ place.label }}</span>
-        <button
-          type="button"
-          :aria-label="fill(props.copy.remove, { name: place.label })"
-          :disabled="props.disabled"
-          @click="remove(place.key)"
-        >
-          <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-x" /></svg>
-        </button>
-      </li>
-    </ul>
-
     <fieldset class="phrasing" :disabled="props.disabled">
       <legend>{{ props.copy.matchMode }}</legend>
       <label><input v-model="phrasing" type="radio" value="in" />{{ props.copy.inMode }}</label>
       <label><input v-model="phrasing" type="radio" value="near" />{{ props.copy.nearMode }}</label>
     </fieldset>
+
+    <div class="region-generate">
+      <button
+        class="btn btn-secondary btn-sm"
+        type="button"
+        aria-describedby="region-generate-hint"
+        :disabled="props.disabled || !queries.length"
+        @click="emit('generate', queries)"
+      >
+        <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-list-plus" /></svg>{{ props.copy.generate }}
+      </button>
+      <span id="region-generate-hint" class="region-generate-hint" :data-state="missingHint ? 'warn' : undefined" aria-live="polite">
+        <svg v-if="missingHint" class="icon icon--sm" aria-hidden="true"><use href="/img/icons.svg#i-alert" /></svg>
+        {{ missingHint || fill(props.copy.willGenerate, { count: queries.length }) }}
+      </span>
+    </div>
   </div>
 </template>

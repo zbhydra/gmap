@@ -1061,13 +1061,6 @@ html[data-side-from='collapsed'] .dash-app {
   min-height: 32px;
 }
 
-/* 地区两栏的首个标签与右栏「标签 + 生成按钮」同高 */
-.region-build > .kw-field > .field-label {
-  display: flex;
-  align-items: center;
-  min-height: 32px;
-}
-
 .kw-field {
   display: grid;
   gap: var(--s-2);
@@ -1282,6 +1275,19 @@ html[data-side-from='collapsed'] .dash-app {
   min-width: 0;
 }
 
+/* 跨层搜索结果带上级路径，单列展示才放得下 */
+.map-location-list.is-search {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.map-location-list.is-search .pop-item-sub {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .map-location-status {
   grid-column: 1 / -1;
   padding: 0 var(--s-3) var(--s-3);
@@ -1435,60 +1441,113 @@ html[data-side-from='collapsed'] .dash-app {
   gap: var(--s-3);
 }
 
-.region-adds {
+/* 多选浮层（州 / 城市）：触发按钮与地图区域选择器同形 */
+.checklist-trigger {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  text-align: start;
+  cursor: pointer;
+}
+
+.checklist-trigger > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checklist-trigger .is-placeholder {
+  color: var(--text-3);
+}
+
+.checklist-pop {
+  --pop-cap: 400px;
+}
+
+.checklist-head {
+  display: grid;
+  flex: none;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.checklist-bulk {
+  display: flex;
+  gap: var(--s-1);
+}
+
+.checklist-list {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-height: 0;
+  padding: var(--s-2) var(--s-3) var(--s-3);
+  overflow-y: auto;
+}
+
+.checklist-item {
   gap: var(--s-2);
 }
 
-.place-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
+.checklist-item > input {
+  flex: none;
   margin: 0;
-  padding: 0;
-  list-style: none;
+  accent-color: var(--primary);
 }
 
-.place-chip {
+.checklist-item:has(> input:checked) {
+  color: var(--text);
+}
+
+.checklist-item:has(> input:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.checklist-status {
+  padding: var(--s-2);
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+
+.region-generate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+}
+
+/* 缺项用提醒色（尚未出错，不用 --bad）；齐全时的条数用 --text-2 */
+.region-generate-hint {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-1);
-  max-width: 100%;
-  min-height: 30px;
-  padding: 0 var(--s-1) 0 var(--s-3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-full);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 13px;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 12.5px;
 }
 
-.place-chip > span {
-  overflow-wrap: anywhere;
+.region-generate-hint[data-state='warn'] {
+  color: var(--warn);
+  font-weight: 600;
 }
 
-.place-chip button {
-  display: inline-grid;
-  flex: none;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  color: var(--text-3);
-  transition:
-    background-color var(--dur-2) var(--ease-out),
-    color var(--dur-2) var(--ease-out);
+/* Keywords 模式跳到 Regions 的入口：紧跟标签，软主色，比普通次级按钮更醒目 */
+.kw-head {
+  justify-content: flex-start;
 }
 
-.place-chip button:hover {
-  background: var(--surface-2);
-  color: var(--text);
+.kw-regions-cta {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  box-shadow: none;
 }
 
-.place-chip button .icon {
-  width: 14px;
-  height: 14px;
+.kw-regions-cta:hover {
+  background: var(--primary-soft);
+  box-shadow: inset 0 0 0 1px var(--primary-text);
 }
 
 .phrasing {
@@ -1515,10 +1574,6 @@ html[data-side-from='collapsed'] .dash-app {
   gap: 6px;
   color: var(--text);
   font-size: 13.5px;
-}
-
-.region-final .field-head .btn {
-  flex: none;
 }
 
 .region-final .textarea--dash {

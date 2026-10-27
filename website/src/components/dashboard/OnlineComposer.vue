@@ -41,7 +41,6 @@ const regionOpened = ref(false)
 const keywordsText = ref('')
 const mapKeyword = ref('')
 const finalText = ref('')
-const generated = ref<string[]>([])
 const regionResetKey = ref(0)
 const mapViewports = ref<OnlineViewport[]>([])
 const includeContacts = ref(true)
@@ -148,8 +147,8 @@ function handleModeKeydown(event: KeyboardEvent): void {
 
 /* ---------------------------------------------------------------- 地区 */
 
-function generate(): void {
-  finalText.value = generated.value.join('\n')
+function generate(queries: string[]): void {
+  finalText.value = queries.join('\n')
   submitError.value = ''
   if (finalEl.value) replayClass(finalEl.value, 'is-filled')
 }
@@ -263,12 +262,18 @@ onBeforeUnmount(() => {
                 class="input"
                 :class="{ 'is-invalid': keywordInvalid }"
                 type="text"
+                autocomplete="off"
                 spellcheck="false"
                 :placeholder="props.copy.create.map.keywordPlaceholder"
                 :disabled="submitting"
               />
             </template>
-            <label v-else class="field-label" for="kw-input">{{ props.copy.create.keywords }}</label>
+            <div v-else class="field-head kw-head">
+              <label class="field-label" for="kw-input">{{ props.copy.create.keywords }}</label>
+              <button class="btn btn-secondary btn-xs kw-regions-cta" type="button" :disabled="submitting" @click="setMode('regions')">
+                <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-globe" /></svg>{{ props.copy.create.regionsCta }}
+              </button>
+            </div>
             <div v-if="mode !== 'map'" class="kw-box">
               <textarea
                 id="kw-input"
@@ -304,16 +309,11 @@ onBeforeUnmount(() => {
             :copy="props.copy.create.region"
             :disabled="submitting"
             :reset-key="regionResetKey"
-            @generated="value => generated = value"
+            @generate="generate"
           />
           <div class="region-final">
             <div class="kw-field">
-              <div class="field-head">
-                <label class="field-label" for="region-final">{{ props.copy.create.region.finalQueries }}</label>
-                <button class="btn btn-secondary btn-xs" type="button" :disabled="submitting || !generated.length" @click="generate">
-                  <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-list-plus" /></svg>{{ props.copy.create.region.generate }}
-                </button>
-              </div>
+              <label class="field-label" for="region-final">{{ props.copy.create.region.finalQueries }}</label>
               <div class="kw-box">
                 <textarea
                   id="region-final"
@@ -333,9 +333,6 @@ onBeforeUnmount(() => {
                 </div>
               </div>
             </div>
-            <p class="attribution">
-              <a href="https://www.geonames.org/export/" target="_blank" rel="noopener noreferrer">{{ props.copy.create.region.attribution }}</a>
-            </p>
           </div>
         </div>
       </div>

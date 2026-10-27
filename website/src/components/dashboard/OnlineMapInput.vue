@@ -10,7 +10,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { Circle, LayerGroup, LeafletMouseEvent, Map as LeafletMap, Marker } from 'leaflet'
 import type { DashboardContent } from '../../i18n/schema'
 import { reducedMotion, replayClass } from '../../scripts/dashboard/dom'
-import { fill } from '../../scripts/dashboard/format'
+import { fill, foldText } from '../../scripts/dashboard/format'
 import { gridViewports, type OnlineViewport } from '../../scripts/dashboard/map-grid'
 import { loadMapLocations, type MapLocation } from '../../scripts/dashboard/map-locations'
 import { closePop, isPopOpen, openPop } from '../../scripts/site/pop'
@@ -27,6 +27,14 @@ const emit = defineEmits<{ viewports: [value: OnlineViewport[]] }>()
 
 /** 连续 4 张瓦片失败才提示，偶发失败不打扰。 */
 const TILE_ERROR_THRESHOLD = 4
+/** 跨层搜索只渲染前若干条，避免短查询一次铺开上千个按钮。 */
+const SEARCH_RESULT_LIMIT = 50
+
+interface LocationEntry {
+  path: MapLocation[]
+  key: string
+  parents: string
+}
 
 // type=number 的 v-model 会把可解析的输入转成数字，清空时仍是空字符串
 const lat = ref<number | string>('')
@@ -80,11 +88,35 @@ const locationLevels = computed(() => [
   { level: 1, label: props.regionCopy.state, disabled: !locationPath.value[0]?.children.length },
   { level: 2, label: props.regionCopy.city, disabled: !locationPath.value[1]?.children.length }
 ] as const)
+const locationIndex = computed(() => {
+  const entries: LocationEntry[] = []
+  const visit = (nodes: MapLocation[], parents: MapLocation[]): void => {
+    for (const node of nodes) {
+      const path = [...parents, node]
+      entries.push({ path, key: foldText(node.name), parents: parents.map(location => location.name).join(' / ') })
+      visit(node.children, path)
+    }
+  }
+  visit(locations.value, [])
+  return entries
+})
 const locationOptions = computed(() => {
   const choices = locationLevel.value === 0 ? locations.value : (locationPath.value[locationLevel.value - 1]?.children ?? [])
-  const query = locationQuery.value.trim().toLowerCase()
-  return choices.filter(location => location.name.toLowerCase().includes(query))
+  return choices.map(location => ({ path: [...locationPath.value.slice(0, locationLevel.value), location], parents: '' }))
 })
+/** 有查询时不受当前层级限制：全量匹配，按全等 > 前缀 > 词首 > 包含排序，同级时上层行政区在前。 */
+const locationMatches = computed(() => {
+  const query = foldText(locationQuery.value.trim())
+  if (!query) return null
+  const rank = (key: string): number => key === query ? 0 : key.startsWith(query) ? 1 : key.includes(` ${query}`) ? 2 : 3
+  return locationIndex.value
+    .filter(entry => entry.key.includes(query))
+    .map(entry => ({ entry, rank: rank(entry.key) }))
+    .sort((a, b) => a.rank - b.rank || a.entry.path.length - b.entry.path.length || a.entry.key.localeCompare(b.entry.key))
+    .slice(0, SEARCH_RESULT_LIMIT)
+    .map(({ entry }) => entry)
+})
+const locationItems = computed(() => locationMatches.value ?? locationOptions.value)
 
 async function fetchLocations(): Promise<void> {
   if (locations.value.length || locationsLoading.value) return
@@ -136,18 +168,20 @@ function changeLocationLevel(level: 0 | 1 | 2): void {
   locationQuery.value = ''
 }
 
-async function selectLocation(location: MapLocation): Promise<void> {
-  locationPath.value = [...locationPath.value.slice(0, locationLevel.value), location]
+/** 浏览与搜索共用：path 是从国家到所选节点的完整路径，有下级时进入下一层继续细化。 */
+async function selectLocation(path: MapLocation[]): Promise<void> {
+  const location = path[path.length - 1]
+  locationPath.value = path
   if (location.lat !== null && location.lng !== null) placeCenter(location.lat, location.lng)
   else {
     lat.value = ''
     lng.value = ''
   }
-  if (!location.children.length || locationLevel.value === 2) {
+  if (!location.children.length || path.length === 3) {
     closeLocations()
     return
   }
-  changeLocationLevel(locationLevel.value === 0 ? 1 : 2)
+  changeLocationLevel(path.length === 1 ? 1 : 2)
   await nextTick()
   locationSearch.value?.focus()
 }
@@ -360,6 +394,8 @@ watch(viewports, value => emit('viewports', value), { immediate: true })
           v-model="locationQuery"
           class="input input--sm"
           type="search"
+          autocomplete="off"
+          spellcheck="false"
           :aria-label="props.copy.locationSearch"
           :placeholder="props.copy.locationSearch"
           @keydown.enter.prevent
@@ -370,20 +406,21 @@ watch(viewports, value => emit('viewports', value), { immediate: true })
         <span>{{ props.regionCopy.loadFailed }}</span>
         <button class="btn btn-secondary btn-xs" type="button" @click="fetchLocations">{{ props.regionCopy.retry }}</button>
       </div>
-      <div v-else class="map-location-list">
+      <div v-else class="map-location-list" :class="{ 'is-search': locationMatches }">
         <button
-          v-for="location in locationOptions"
-          :key="location.name"
+          v-for="item in locationItems"
+          :key="item.path.map(location => location.name).join('\u0000')"
           class="pop-item"
-          :class="{ 'is-current': locationPath[locationLevel]?.name === location.name }"
+          :class="{ 'is-current': locationPath[item.path.length - 1] === item.path.at(-1) }"
           type="button"
-          :title="location.name"
-          @click="selectLocation(location)"
+          :title="item.parents ? `${item.path.at(-1)?.name} · ${item.parents}` : item.path.at(-1)?.name"
+          @click="selectLocation(item.path)"
         >
-          <span class="pop-item-label">{{ location.name }}</span>
-          <svg v-if="location.children.length" class="icon icon--sm" aria-hidden="true"><use href="/img/icons.svg#i-chevron-right" /></svg>
+          <span class="pop-item-label">{{ item.path.at(-1)?.name }}</span>
+          <span v-if="item.parents" class="pop-item-sub">{{ item.parents }}</span>
+          <svg v-if="item.path.at(-1)?.children.length" class="icon icon--sm" aria-hidden="true"><use href="/img/icons.svg#i-chevron-right" /></svg>
         </button>
-        <p v-if="!locationOptions.length" class="map-location-status">{{ props.regionCopy.noMatch }}</p>
+        <p v-if="!locationItems.length" class="map-location-status">{{ props.regionCopy.noMatch }}</p>
       </div>
     </div>
   </div>

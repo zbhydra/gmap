@@ -124,3 +124,8 @@ export function quotaLevel(used: number, total: number): QuotaLevel {
   if (used >= total) return 'bad'
   return used >= total * 0.8 ? 'warn' : ''
 }
+
+/** 搜索比较用的文本：忽略大小写与变音符号，Zurich 能匹配 Zürich。 */
+export function foldText(text: string): string {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
