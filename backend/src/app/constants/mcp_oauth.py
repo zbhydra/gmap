@@ -5,7 +5,7 @@ import enum
 # 唯一授予范围：同步 Search / Reviews，消费账号的 maps_api 月请求额度。
 MCP_OAUTH_SCOPE = "exports"
 
-# 协议端点路径；issuer 不带路径，PRM 路径按 RFC 9728 由 mcp.public_url 的 /mcp/ 派生。
+# 协议端点路径；issuer 不带路径，PRM 路径按 RFC 9728 由 MCP 公开地址（API 根地址下的 /mcp/）派生。
 MCP_OAUTH_AUTHORIZATION_SERVER_METADATA_PATH = "/.well-known/oauth-authorization-server"
 MCP_OAUTH_PROTECTED_RESOURCE_METADATA_PATH = (
     "/.well-known/oauth-protected-resource/mcp/"

@@ -10,7 +10,6 @@ from urllib.parse import quote, urlsplit
 
 import yaml  # type: ignore
 from pydantic import (
-    BaseModel,
     Field,
     TypeAdapter,
     ValidationError,
@@ -46,7 +45,6 @@ _VALIDATION_PREFIX_BY_TITLE = {
     "DatabaseSettings": "database",
     "LoggingSettings": "logging",
     "APISettings": "api",
-    "McpSettings": "mcp",
     "AuthSettings": "auth",
     "RedisSettings": "redis",
     "FeishuAlarmSettings": "feishu_alarm",
@@ -105,6 +103,22 @@ class AppSettings(BaseSettings):
         description="对外 Website 根地址，用于 Google redirect 登录成功后跳回网站",
     )
 
+    @property
+    def mcp_url(self) -> str:
+        """MCP 公开地址：与 REST 同源，固定为 API 根地址下的 /mcp/。"""
+        return f"{self.public_api_base_url.rstrip('/')}/mcp/"
+
+    @property
+    def mcp_allowed_hosts(self) -> list[str]:
+        """MCP 入口的精确 Host 清单：API 根地址的主机（含非默认端口）。"""
+        return [urlsplit(self.public_api_base_url).netloc]
+
+    @property
+    def mcp_allowed_origins(self) -> list[str]:
+        """MCP 入口的精确 Origin 清单：Website 根地址的 scheme 与主机，不带路径。"""
+        parts = urlsplit(self.public_website_base_url)
+        return [f"{parts.scheme}://{parts.netloc}"]
+
 
 class DatabaseSettings(BaseSettings):
     """数据库配置"""
@@ -157,41 +171,6 @@ class APISettings(BaseSettings):
         if value == "":
             return None
         return value
-
-
-class McpSettings(BaseModel):
-    """公开连接地址及协议入口的精确 Host/Origin 配置。"""
-
-    public_url: str = ""
-    allowed_hosts: list[str] = Field(default_factory=list)
-    allowed_origins: list[str] = Field(default_factory=list)
-
-    @field_validator("public_url")
-    @classmethod
-    def validate_public_url(cls, value: str) -> str:
-        """空值表示未配置；非空值必须是完整 MCP HTTP(S) 地址。"""
-        if not value:
-            return value
-        parsed = urlsplit(value)
-        if (
-            parsed.scheme not in {"http", "https"}
-            or not parsed.hostname
-            or parsed.username is not None
-            or parsed.password is not None
-            or parsed.query
-            or parsed.fragment
-            or parsed.path != "/mcp/"
-        ):
-            raise ValueError("mcp.public_url 必须是以 /mcp/ 结尾的 HTTP(S) 地址")
-        return value
-
-    @field_validator("allowed_hosts", "allowed_origins")
-    @classmethod
-    def reject_wildcards(cls, values: list[str]) -> list[str]:
-        """公开协议边界只接受精确匹配配置。"""
-        if any(not value or "*" in value for value in values):
-            raise ValueError("MCP Host/Origin 清单不能包含空值或通配符")
-        return values
 
 
 class AuthSettings(BaseSettings):
@@ -331,7 +310,6 @@ class Settings:
         self.database = DatabaseSettings(**self._config_section("database"))
         self.logging = LoggingSettings(**self._config_section("logging"))
         self.api = APISettings(**self._config_section("api"))
-        self.mcp = McpSettings(**self._config_section("mcp"))
         self.auth = AuthSettings(**self._config_section("auth"))
         self.redis = RedisSettings(**self._config_section("redis"))
         self.feishu_alarm = FeishuAlarmSettings(**self._config_section("feishu_alarm"))

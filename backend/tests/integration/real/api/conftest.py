@@ -98,9 +98,6 @@ async def real_launch_client(
         f"settings.app.name = 'launch-api-worker-{test_run_id}'\n"
         f"settings.app.public_api_base_url = '{base_url}'\n"
         "settings.app.public_website_base_url = 'http://localhost:4321'\n"
-        f"settings.mcp.public_url = '{base_url}/mcp/'\n"
-        f"settings.mcp.allowed_hosts = ['127.0.0.1:{port}']\n"
-        "settings.mcp.allowed_origins = ['http://localhost:4321']\n"
         "import uvicorn\n"
         f"uvicorn.run('app.main:app', host='127.0.0.1', port={port}, access_log=False)\n"
     )

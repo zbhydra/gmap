@@ -231,8 +231,7 @@ def _include_business_routes(app_instance: FastAPI) -> None:
             Route("/mcp", endpoint=mcp_endpoint),
         ]
     )
-    if settings.mcp.public_url:
-        app_instance.router.routes.extend(build_mcp_oauth_routes())
+    app_instance.router.routes.extend(build_mcp_oauth_routes())
     app_instance.include_router(
         maps_online_router, prefix="/api/client", tags=["client"]
     )

@@ -59,12 +59,7 @@ def _error(code: CommonCode, language: str) -> dict[str, object]:
 
 
 def _bearer_challenge(has_credential: bool) -> str:
-    """RFC 6750 / RFC 9728 挑战，引导客户端发现授权服务器；携带了凭证才标 invalid_token。
-
-    未配置 mcp.public_url 时不挂载 OAuth 端点，只返回裸 Bearer。
-    """
-    if not settings.mcp.public_url:
-        return "Bearer"
+    """RFC 6750 / RFC 9728 挑战，引导客户端发现授权服务器；携带了凭证才标 invalid_token。"""
     params = [
         f'resource_metadata="{mcp_oauth_issuer()}{MCP_OAUTH_PROTECTED_RESOURCE_METADATA_PATH}"',
         f'scope="{MCP_OAUTH_SCOPE}"',
@@ -136,8 +131,8 @@ mcp_server: Server[object] = Server(
     "MapsGrab", on_list_tools=list_tools, on_call_tool=call_tool
 )
 _security_settings = TransportSecuritySettings(
-    allowed_hosts=settings.mcp.allowed_hosts,
-    allowed_origins=settings.mcp.allowed_origins,
+    allowed_hosts=settings.app.mcp_allowed_hosts,
+    allowed_origins=settings.app.mcp_allowed_origins,
 )
 _sdk_app = mcp_server.streamable_http_app(
     streamable_http_path="/mcp/",
@@ -190,7 +185,7 @@ class _AuthenticatedMcpEndpoint:
 
 _cors_app = CORSMiddleware(
     _AuthenticatedMcpEndpoint(),
-    allow_origins=settings.mcp.allowed_origins,
+    allow_origins=settings.app.mcp_allowed_origins,
     allow_methods=["POST"],
     allow_headers=[
         "Authorization",

@@ -104,8 +104,8 @@ _PORT_SLOT = re.compile(r":[0-9]{1,5}")
 
 
 def mcp_oauth_issuer() -> str:
-    """issuer 取 mcp.public_url 的 scheme、主机与端口，不带路径与尾斜杠；三处引用同一字符串。"""
-    parts = urlsplit(settings.mcp.public_url)
+    """issuer 取 MCP 公开地址的 scheme、主机与端口，不带路径与尾斜杠；三处引用同一字符串。"""
+    parts = urlsplit(settings.app.mcp_url)
     return f"{parts.scheme}://{parts.netloc}"
 
 
@@ -175,12 +175,12 @@ def _canonical_resource(value: str) -> str | None:
 
 
 def match_resource(resource: str | None) -> bool:
-    """与 mcp.public_url 在 scheme、主机小写并忽略一个尾斜杠后逐字一致；缺少即不符。"""
+    """与 MCP 公开地址在 scheme、主机小写并忽略一个尾斜杠后逐字一致；缺少即不符。"""
     if not resource:
         return False
     canonical = _canonical_resource(resource)
     return canonical is not None and canonical == _canonical_resource(
-        settings.mcp.public_url
+        settings.app.mcp_url
     )
 
 
@@ -304,7 +304,7 @@ class MapsOAuthProvider(
             code_challenge=ticket.code_challenge,
             redirect_uri=AnyUrl(ticket.redirect_uri),
             redirect_uri_provided_explicitly=True,
-            resource=settings.mcp.public_url,
+            resource=settings.app.mcp_url,
             subject=str(ticket.user_id),
             user_id=ticket.user_id,
         )
@@ -369,7 +369,7 @@ class MapsOAuthProvider(
             token=refresh_token,
             client_id=grant.client_id,
             scopes=[MCP_OAUTH_SCOPE],
-            resource=settings.mcp.public_url,
+            resource=settings.app.mcp_url,
             subject=str(grant.user_id),
             grant_id=grant.grant_id,
             user_id=grant.user_id,
@@ -412,7 +412,7 @@ class MapsOAuthProvider(
             token=token,
             client_id=record.client_id,
             scopes=[MCP_OAUTH_SCOPE],
-            resource=settings.mcp.public_url,
+            resource=settings.app.mcp_url,
             subject=str(record.user_id),
             claims={"grant_id": record.grant_id},
         )
@@ -497,7 +497,7 @@ async def authorize_endpoint(request: Request) -> Response:
                 code_challenge=auth_request.code_challenge,
                 redirect_uri=redirect_uri,
                 redirect_uri_provided_explicitly=True,
-                resource=settings.mcp.public_url,
+                resource=settings.app.mcp_url,
             ),
         )
     except AppCommonException:
@@ -549,7 +549,7 @@ def _metadata() -> OAuthMetadata:
 def _protected_resource_metadata() -> ProtectedResourceMetadata:
     return ProtectedResourceMetadata.model_validate(
         {
-            "resource": settings.mcp.public_url,
+            "resource": settings.app.mcp_url,
             "authorization_servers": [mcp_oauth_issuer()],
             "scopes_supported": [MCP_OAUTH_SCOPE],
         }
@@ -557,16 +557,16 @@ def _protected_resource_metadata() -> ProtectedResourceMetadata:
 
 
 def build_mcp_oauth_routes() -> list[Route]:
-    """校验 mcp.public_url 与 issuer 后返回协议路由；调用方保证 mcp.public_url 非空。
+    """校验 MCP 公开地址（由 app.public_api_base_url 派生）与 issuer 后返回协议路由。
 
     SDK 元数据与 PRM 经 AnyHttpUrl 规范化（主机小写、去显式默认端口），回跳 iss 与 resource
     比较用配置原文；配置必须已是规范形式，三处才逐字一致，否则启动失败。
     """
-    public_url = settings.mcp.public_url
+    public_url = settings.app.mcp_url
     canonical = str(AnyHttpUrl(public_url))
     if public_url != canonical:
         raise ValueError(
-            f"mcp.public_url must be in canonical form {canonical!r} "
+            f"app.public_api_base_url must yield a canonical MCP URL {canonical!r} "
             f"(lowercase scheme and host, no explicit default port), got {public_url!r}"
         )
     validate_issuer_url(AnyHttpUrl(mcp_oauth_issuer()))

@@ -58,7 +58,7 @@ async def get_connection(
         {
             "api_base_url": settings.app.public_api_base_url.rstrip("/")
             + "/api/client/maps/api",
-            "mcp_url": settings.mcp.public_url,
+            "mcp_url": settings.app.mcp_url,
         }
     )
 

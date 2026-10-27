@@ -17,7 +17,7 @@ Search 的 `page` 是累计采集页数，按每页 20 条映射 Collector 的 `
 | `GET /key`           | 本站用户 JWT，严格 Redis 白名单        | `{has_api_key:boolean,api_key_prefix:string,api_key_created_at:number \| null}`                                          |
 | `POST /key/generate` | 同上                                   | 无 body；`{api_key:string,api_key_prefix:string,api_key_created_at:number}`                                              |
 | `GET /usage`         | 同上                                   | `{used:number,total:number,period:"YYYY-MM",exhausted:boolean}`                                                          |
-| `GET /connection`    | 同上                                   | `{api_base_url:string,mcp_url:string}`；连接地址读取部署配置                                                             |
+| `GET /connection`    | 同上                                   | `{api_base_url:string,mcp_url:string}`；两者都由 `app.public_api_base_url` 派生，分别加 `/api/client/maps/api` 与 `/mcp/` |
 | `POST /search`       | `Authorization: Bearer <用户 API Key>` | `{q:string,page?:1..10,hl?:string,ll?:"@lat,lng,zoom",extra?:boolean}` → `{places:[],partial:boolean,warnings:string[]}` |
 | `POST /reviews`      | 同上                                   | `{fid:string,cursor?:string,sort_by?:1\|2\|3\|4,hl?:string}` → `{reviews:[],next_cursor:string \| null}`                 |
 | `POST /photos`       | 同上                                   | `{fid:string,max_results?:number}` → 照片交付对象，见下方合同                                                            |
@@ -62,7 +62,7 @@ MCP 接受用户 API Key 或本服务签发的 OAuth access token。两者均逐
 
 用户从 MCP 客户端打开官网，经现有登录后点击允许，返回 MCP 客户端。官网确认复用 `get_current_user`，不改变登录、JWT 或刷新协议。
 
-固定协议 scope 保持 `exports`；它授予本站 MCP 的 Search / Reviews / Photos 能力，既有有效授权可直接调用 Photos，无须重新授权，计量产品线仍为 `maps_api`。resource 必须匹配配置的 `mcp.public_url`，token 只在 MCP 入口使用。
+固定协议 scope 保持 `exports`；它授予本站 MCP 的 Search / Reviews / Photos 能力，既有有效授权可直接调用 Photos，无须重新授权，计量产品线仍为 `maps_api`。resource 必须匹配 MCP 公开地址（`app.public_api_base_url` + `/mcp/`），token 只在 MCP 入口使用。
 
 | 协议端点                                         | 行为                                                                              |
 | ------------------------------------------------ | --------------------------------------------------------------------------------- |
@@ -95,7 +95,7 @@ MCP 接受用户 API Key 或本服务签发的 OAuth access token。两者均逐
 
 索引服务实际查询：客户端主键 `client_id`；授权主键 `grant_id`、唯一 `family_hash`（刷新查询）、普通 `user_id`（本人列表/计数）；用户唯一 `api_key_hash`（Key 鉴权）。用户原有主键和 email 唯一键不能覆盖 Key 摘要查询。
 
-配置入口 `McpSettings`：`public_url`、`allowed_hosts`、`allowed_origins`。公开地址须为规范化的 `/mcp/` URL，Host/Origin 使用精确清单；未配置公开 URL 时不挂 OAuth 端点。部署模板从既有 API/官网地址与 Nginx 域名生成配置。应用 lifespan 启动 SDK session manager；错误中间件不包装协议错误；Nginx 显式透传元数据路径并关闭 MCP 缓冲；媒体等待边界见上方合同。
+MCP 没有独立配置，全部由 `app` 的两个公开地址派生（`AppSettings.mcp_url` / `mcp_allowed_hosts` / `mcp_allowed_origins`）：公开地址为 `public_api_base_url` + `/mcp/`，须为规范形式（小写 scheme 与主机、无显式默认端口），否则启动失败；Host 精确清单为 API 根地址的主机（含非默认端口），因此 Nginx `server_name` 必须与之一致；Origin 精确清单为 `public_website_base_url` 的 scheme + 主机。OAuth 端点总是挂载。应用 lifespan 启动 SDK session manager；错误中间件不包装协议错误；Nginx 显式透传元数据路径并关闭 MCP 缓冲；媒体等待边界见上方合同。
 
 ## 验收入口
 
