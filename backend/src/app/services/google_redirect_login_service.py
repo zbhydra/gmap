@@ -28,10 +28,6 @@ GOOGLE_OAUTH_STATE_BYTES = 32
 GOOGLE_REDIRECT_CODE_PARAM = "google_login_code"
 GOOGLE_REDIRECT_ERROR_PARAM = "google_login_error"
 GOOGLE_REDIRECT_EMAIL_VERIFY_PARAM = "google_email_verification"
-GOOGLE_REDIRECT_ALLOWED_HOST_SUFFIXES = (
-    "gmap.example.com",  # 占位:生产域名确定后替换
-    "gmap-b.example.com",  # 占位:生产域名确定后替换
-)
 GOOGLE_REDIRECT_ALLOWED_LOCAL_HOSTS = {"localhost", "127.0.0.1"}
 
 
@@ -298,10 +294,7 @@ class GoogleRedirectLoginService:
         normalized = hostname.lower()
         if normalized in GOOGLE_REDIRECT_ALLOWED_LOCAL_HOSTS:
             return True
-        return any(
-            normalized == suffix or normalized.endswith(f".{suffix}")
-            for suffix in GOOGLE_REDIRECT_ALLOWED_HOST_SUFFIXES
-        )
+        return normalized == urlsplit(settings.app.public_website_base_url).hostname
 
     def _get_redirect_fallback_url(self) -> str:
         """读取默认 Website 回跳地址，只保留站点根路径。"""

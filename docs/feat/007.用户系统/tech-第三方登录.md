@@ -79,12 +79,9 @@ return value
 
 ### 5.4 `return_to` 白名单
 
-| 配置 | 值 |
-| --- | --- |
-| `GOOGLE_REDIRECT_ALLOWED_HOST_SUFFIXES` | `("telegramdownloadmedia.com", "telegramvideodownload.pro")`(精确匹配或 `.<suffix>` 子域) |
-| `_GOOGLE_REDIRECT_ALLOWED_LOCAL_HOSTS` | `{"localhost", "127.0.0.1"}` |
+`google_redirect_login_service._is_allowed_redirect_host` 精确匹配部署配置 `app.public_website_base_url` 的主机名，并允许本地开发地址 `localhost`、`127.0.0.1`；不自动放行同一根域下的其他子域。
 
-`_normalize_google_oauth_return_to`:非空校验;绝对 URL 必须过白名单,否则按 `invalid_return_to` 处理;纯相对路径拼到 `app.public_website_base_url`。失败 fallback 用 `_get_google_redirect_fallback_url`(只保留 `public_website_base_url` 的 scheme+netloc+"/")。
+`normalize_oauth_return_to` 校验非空；绝对 URL 必须过白名单，否则按 `invalid_return_to` 处理；纯相对路径拼到 `app.public_website_base_url`。失败 fallback 用 `_get_redirect_fallback_url`，只保留官网地址的 scheme、netloc 与根路径。
 
 ### 5.5 流程
 
