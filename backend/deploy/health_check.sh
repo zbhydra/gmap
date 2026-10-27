@@ -6,15 +6,19 @@ set -e
 #
 # 用法:
 #   ./health_check.sh                                  # 远端 cwd backend；从 config.yaml 读 port
-#   ./health_check.sh <env_file>                       # 本地：从 .env 读 BACKEND_PORT_PY / SERVER_HOST
+#   ./health_check.sh <env_file>                       # 本地：SSH 到服务器探测 127.0.0.1:<BACKEND_PORT_PY>
 #   ./health_check.sh http://host:<port>/api/system/health  # 直接传 URL
 #
 # 端口一律来自显式输入（URL / .env / config.yaml），读取不到立即报错，不做默认值回退。
+# 后端只监听回环（对外由同机 Nginx 承接），因此 .env 模式必须经 SSH 在服务器本机探测。
 ###############################################################################
 
 LOG_FILE="health_check.log"
 HEALTH_URL=""
 APP_NAME=""
+ENV_MODE=""
+SSH_CMD=()
+REMOTE_BACKEND_LOG=""
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
@@ -49,12 +53,25 @@ if [ -n "$1" ]; then
         if [ -z "$BACKEND_PORT_PY" ]; then
             error_exit ".env 缺少 BACKEND_PORT_PY，无法拼装健康检查 URL: $1"
         fi
-        if [ -z "$SERVER_HOST" ]; then
-            error_exit ".env 缺少 SERVER_HOST，无法拼装健康检查 URL: $1"
+        if [ -z "$SERVER_HOST" ] || [ -z "$SERVER_USER" ] || [ -z "$SERVER_PORT" ]; then
+            error_exit ".env 缺少 SERVER_HOST / SERVER_USER / SERVER_PORT，无法 SSH 探测: $1"
         fi
+        ENV_MODE="1"
+        APP_NAME="${APP_NAME:-}"
         PORT="$BACKEND_PORT_PY"
-        HOST="$SERVER_HOST"
-        HEALTH_URL="http://${HOST}:${PORT}/api/system/health"
+        HEALTH_URL="http://127.0.0.1:${PORT}/api/system/health"
+        REMOTE_BACKEND_LOG="${DEPLOY_DIR}backend/log/supervisor_error.log"
+
+        ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o LogLevel=ERROR)
+        if [ -n "$SSH_PRIVATE_KEY_PATH" ] && [ -f "$SSH_PRIVATE_KEY_PATH" ]; then
+            SSH_CMD=(ssh -i "$SSH_PRIVATE_KEY_PATH" -p "$SERVER_PORT" "${ssh_opts[@]}" "${SERVER_USER}@${SERVER_HOST}")
+        elif [ -f "$HOME/.ssh/id_ed25519" ]; then
+            SSH_CMD=(ssh -i "$HOME/.ssh/id_ed25519" -p "$SERVER_PORT" "${ssh_opts[@]}" "${SERVER_USER}@${SERVER_HOST}")
+        elif [ -f "$HOME/.ssh/id_rsa" ]; then
+            SSH_CMD=(ssh -i "$HOME/.ssh/id_rsa" -p "$SERVER_PORT" "${ssh_opts[@]}" "${SERVER_USER}@${SERVER_HOST}")
+        else
+            error_exit "未找到 SSH 认证方式：请设置 SSH_PRIVATE_KEY_PATH，或在 ~/.ssh/ 放置服务器登录私钥"
+        fi
     else
         error_exit "首参既不是 URL 也不是 .env 文件: $1"
     fi
@@ -88,8 +105,12 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
 
     log "尝试 #$RETRY_COUNT..."
 
-    # 执行健康检查
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
+    # 执行健康检查（.env 模式经 SSH 在服务器本机探测）
+    if [ -n "$ENV_MODE" ]; then
+        HTTP_CODE=$("${SSH_CMD[@]}" "curl -s -o /dev/null -w '%{http_code}' '$HEALTH_URL'" 2>/dev/null || echo "000")
+    else
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
+    fi
 
     if [ "$HTTP_CODE" = "200" ]; then
         log "=========================================="
@@ -97,7 +118,15 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         log "=========================================="
 
         # 显示服务状态
-        if command -v supervisorctl &> /dev/null; then
+        if [ -n "$ENV_MODE" ]; then
+            log ""
+            log "Supervisor 状态:"
+            if [ -n "$APP_NAME" ]; then
+                "${SSH_CMD[@]}" "supervisorctl status $APP_NAME" || log "无法读取 supervisor 状态: $APP_NAME"
+            else
+                log ".env 未设置 APP_NAME，跳过 supervisor 状态"
+            fi
+        elif command -v supervisorctl &> /dev/null; then
             log ""
             log "Supervisor 状态:"
             if [ -n "$APP_NAME" ]; then
@@ -124,7 +153,11 @@ log "=========================================="
 log "服务可能未正常启动，请检查日志"
 
 # 显示最近的日志
-if [ -f "log/supervisor_error.log" ]; then
+if [ -n "$ENV_MODE" ] && [ -n "$REMOTE_BACKEND_LOG" ]; then
+    log ""
+    log "最近的错误日志:"
+    "${SSH_CMD[@]}" "tail -n 20 '$REMOTE_BACKEND_LOG'" 2>/dev/null || log "无法读取远端日志: $REMOTE_BACKEND_LOG"
+elif [ -f "log/supervisor_error.log" ]; then
     log ""
     log "最近的错误日志:"
     tail -n 20 log/supervisor_error.log
