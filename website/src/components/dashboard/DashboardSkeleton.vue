@@ -95,38 +95,23 @@ const HISTORY_ROWS = [...RECENT_ROWS, [76, 64, 100], [62, 56, 90], [68, 68, 98]]
           <span class="skel" style="width: 40%"></span>
         </div>
       </div>
-      <!-- 连接区沿用真实布局类（两条地址宽屏并排、窄屏单列，curl 通栏在下）；骨架条加上下外边距补足文字行高 -->
+      <!-- 接入面板沿用真实布局类（卡头标题 + tab，面板体为地址、示例纵向排）；骨架条加上下外边距补足文字行高 -->
       <div class="d-panel" data-area="conn">
-        <div class="d-panel-head"><span class="skel" style="width: 140px; height: 14px"></span></div>
-        <div class="d-panel-body">
-          <div class="conn-grid">
-            <div class="conn-row">
-              <span class="skel" style="width: 88px; height: 12px; margin-block: 4px"></span>
-              <span class="skel skel--block" style="height: 38px"></span>
-            </div>
-            <div class="conn-row">
-              <span class="skel" style="width: 104px; height: 12px; margin-block: 4px"></span>
-              <span class="skel skel--block" style="height: 38px"></span>
-              <div class="skel-stack" style="padding-block: 5px">
-                <span class="skel" style="width: 92%"></span>
-                <span class="skel" style="width: 48%"></span>
-              </div>
-            </div>
+        <div class="conn-head">
+          <span class="skel" style="width: 80px; height: 14px"></span>
+          <span class="skel skel--pill" style="width: min(300px, 100%); height: 42px"></span>
+        </div>
+        <div class="d-panel-body conn-body">
+          <div class="conn-row">
+            <span class="skel" style="width: 88px; height: 12px; margin-block: 4px"></span>
+            <span class="skel skel--block" style="height: 38px"></span>
           </div>
           <!-- curl 快速上手：代码窗 4 行 = 13px × 1.75 行高 + 上下内边距 38px + 边框 2px -->
-          <div class="conn-curl">
+          <div class="conn-sample">
             <span class="skel" style="width: 76px; height: 12px; margin-block: 2.5px"></span>
             <span class="skel" style="width: 64%; margin-block: 5px"></span>
             <span class="skel skel--block" style="height: 131px"></span>
           </div>
-        </div>
-      </div>
-      <div class="d-panel" data-area="apps">
-        <div class="d-panel-body skel-stack">
-          <span class="skel" style="width: 120px; height: 14px"></span>
-          <span class="skel" style="width: 66%"></span>
-          <span class="skel skel--block" style="height: 56px"></span>
-          <span class="skel skel--block" style="height: 56px"></span>
         </div>
       </div>
     </div>

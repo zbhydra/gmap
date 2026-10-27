@@ -1559,21 +1559,41 @@ export interface DashboardContent {
     planTitle: string
     /** 去订阅视图。 */
     managePlan: string
-    /** 连接信息区标题。 */
+    /** 接入面板标题。 */
     connectionsTitle: string
+    /** 各接入方式示例旁的文档按钮。 */
+    connectDocs: {
+      api: string
+      mcp: string
+      mcpKey: string
+    }
+    /** 接入方式 tablist 的读屏名称。 */
+    connectTabsLabel: string
+    /** 接入方式 tab：REST API、MCP（OAuth 登录授权）、MCP + API Key（请求头带 Key，免登录）。 */
+    connectTabs: {
+      api: string
+      mcp: string
+      mcpKey: string
+    }
     /** REST 接口基础地址。 */
     apiUrl: string
     /** MCP 服务地址。 */
     mcpUrl: string
     /** MCP 客户端登录授权说明。 */
     mcpHint: string
+    /** MCP + API Key 方式说明：适合无法打开浏览器登录的客户端，用 Key 认证、无需授权确认。 */
+    mcpKeyHint: string
+    /** MCP 客户端配置示例的标题。 */
+    mcpConfigTitle: string
+    /** OAuth 方式配置示例下方一句：粘贴到客户端配置，各客户端字段略有差异。 */
+    mcpConfigHint: string
     /** 未配置 MCP 连接地址。 */
     mcpUnavailable: string
     /** 复制连接地址。 */
     copyUrl: string
     /** 连接地址下方 curl 快速上手示例的标题。 */
     curlTitle: string
-    /** 示例下方一句说明：示例里的 Key 是前缀或占位，使用时换成完整 Key。 */
+    /** curl 与 MCP + API Key 示例下方一句说明：示例里的 Key 是前缀或占位，使用时换成完整 Key。 */
     curlHint: string
     /** 本人有效 OAuth 授权。 */
     grants: {

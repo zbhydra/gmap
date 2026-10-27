@@ -62,7 +62,7 @@ Dashboard（单入口 SPA，外壳常驻）
    │   ├─ 工具栏：搜索（任务号 / 关键词）· 状态 · 时间范围 · Refresh
    │   └─ 任务列表：任务行（展开看每个搜索的结果、下载）→ 分页（页码 · 上一页 / 下一页 · 每页 20 / 50 / 100）
    ├─ API management            /dashboard/api/
-   │   └─ API plan + Monthly API usage（合为一张卡）· API key · Connection addresses · Connected apps
+   │   └─ API plan + Monthly API usage（合为一张卡）· API key · Connect（API / MCP / MCP + API key 三个 tab，MCP tab 内含 Connected apps）
    └─ Subscriptions             /dashboard/subscriptions/
        └─ Online Scraper / Browser Extension / API 三张方案卡 → 管理订阅（渠道页或指引弹窗）/ 选方案
 ```
@@ -248,14 +248,14 @@ Dashboard（单入口 SPA，外壳常驻）
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | API plan + Monthly API usage（合卡） | **卡头**（数据来自会话里的订阅摘要）：左侧是 API PLAN 标签、套餐名（没有有效订阅时为 Free），以及 Renews / expires {日期} 和自动续费状态两行，措辞与账户菜单、订阅卡一致；右侧是刷新图标按钮和 Manage subscriptions（跳到订阅视图），Free 时换成 Upgrade ↗（跳到 Pricing 的 API）。**卡身**（数据来自用量接口）：MONTHLY API USAGE 标签；本月用量大数字 +「/ 上限 requests」；进度条（≥ 80% 提醒色，用尽错误色）；一行说明：计量周期、每月 1 日按纽约时间重置、API 与 MCP 共用额度；用尽时追加提示条 |
 | API key                    | 显示前缀 `maps_…` 和创建日期。没有 Key 时显示 Generate API key（primary）；已有 Key 时显示 Replace API key（secondary），点击后先弹确认。新明文只显示一次（警示条 + Copy），离开视图就清除                                                     |
-| Connection addresses       | API base URL 和 MCP URL，各带复制按钮；视图容器 > 720 时两列并排。没有 MCP 地址时显示不可用说明。下方通栏是 curl 快速上手：标题、一句提示（把占位换成完整 Key），以及恒暗代码窗里的一条 Search 请求（POST + JSON 请求体，地址为连接信息里的 API base URL 加 `/search`，请求体同 API 产品页样例）。Bearer 位置只放 Key 前缀加省略号（新 Key 明文显示期间也一样），没有 Key 时为 `YOUR_API_KEY`。静态示例，不发请求，不带复制按钮；原型未包含此示例 |
-| Connected apps             | 每个授权一行：redirect host 为主信息；应用自报的名称为次要信息，并明确标注是自报；然后是连接时间和最后刷新时间（ET）；最后是 Disconnect（先确认，行淡出，焦点回到区块标题）。服务端分页，每页 20 个，按连接时间倒序；超过一页时显示 Page x of y 和翻页按钮。断开后重新拉取当前页；如果当前页被清空，回退到最后一页 |
+| Connect（接入面板）        | 卡头左侧标题 Connect，右侧分段 tab：API（code 图标）/ MCP（bot 图标，OAuth 登录授权）/ MCP + API key（key 图标，请求头带 Key、免登录），默认 API；方向键循环切换（roving tabindex），视图容器 ≤ 680 时 tab 折到标题下并占满整行。面板体纵向排：连接地址（带复制按钮）→ 示例；示例标题右侧是当前方式的文档按钮（secondary，book 图标，同页跳转）：API → API 产品页 `#reference`（API reference），MCP → MCP 产品页 `#setup`（MCP setup guide），MCP + API key → MCP 产品页 API Key 卡片 `#api-key`（API key setup guide）。**API**：API base URL；示例为 curl 快速上手，恒暗代码窗里一条 Search 请求（POST + JSON 请求体，地址为 API base URL 加 `/search`，请求体同 API 产品页样例），提示把占位换成完整 Key。**MCP**：MCP server URL 与登录授权说明；示例为通用 `mcpServers` 客户端配置（只写 url），提示各客户端字段略有差异；下方分隔线后是 Connected apps。**MCP + API key**：MCP server URL 与「适合无法打开浏览器登录的客户端，用 Key 认证、无需批准」说明；示例为带 `headers.Authorization: Bearer …` 的 `mcpServers` 配置，提示把占位换成完整 Key。所有示例的 Bearer 位置只放 Key 前缀加省略号（新 Key 明文显示期间也一样），没有 Key 时为 `YOUR_API_KEY`；静态示例，不发请求，不带复制按钮。没有 MCP 地址时两个 MCP tab 的地址与示例换成不可用说明（MCP tab 的 Connected apps 照常显示） |
+| Connected apps（MCP tab 内） | 小标题 + 一句授权范围说明。每个授权一行：redirect host 为主信息；应用自报的名称为次要信息，并明确标注是自报；然后是连接时间和最后刷新时间（ET）；最后是 Disconnect（先确认，行淡出，焦点回到小标题）。服务端分页，每页 20 个，按连接时间倒序；超过一页时显示 Page x of y 和翻页按钮。断开后重新拉取当前页；如果当前页被清空，回退到最后一页 |
 
 - **合卡的分区状态**：卡头和卡身各自加载、各自失败，互不影响。
   - 订阅读取失败：只有卡头变成 Temporarily unavailable 提示条（不会显示为 Free），刷新按钮保留；卡身照常显示用量。
   - 用量加载中：只有卡身显示骨架。用量首次读取失败：只有卡身换成错误提示条加 Retry。刷新失败：保留上次的数值，只在下方补一行错误说明。
   - 刷新按钮只重新拉取用量；请求期间图标转圈，卡身降低不透明度。
-- **栅格**：视图容器 > 980 时，合卡（1.5fr）与密钥卡（1fr）并排、等高。合卡的用量区连同分隔线贴卡片底部，密钥卡的按钮贴卡片底部，所以无论哪张卡更高，空白都在卡片中部，不在卡片下方；Connection addresses、Connected apps 各占一行。≤ 980 时全部单列，密钥卡的 Key 与按钮排在一行。
+- **栅格**：视图容器 > 980 时，合卡（1.5fr）与密钥卡（1fr）并排、等高。合卡的用量区连同分隔线贴卡片底部，密钥卡的按钮贴卡片底部，所以无论哪张卡更高，空白都在卡片中部，不在卡片下方；Connect 占一行。≤ 980 时全部单列，密钥卡的 Key 与按钮排在一行。
 
 ### 3.5 Subscriptions
 
@@ -751,7 +751,7 @@ History 的搜索与筛选是本稿新画进主流程的能力，原接口不支
 
 1. **侧栏动画结束后切换布局（已采纳）**：宽度动画中保持起始布局，结束后一次切到目标宽度对应布局并淡入；减弱动效直接呈现终态，见 §2.2。原型仍使用固定展开态布局，落地以此合同为准。
 2. **逐搜索下载**：合同是整任务一个 CSV，最后一列 Search Keyword 已能按搜索筛选。建议维持合同，不在详情里加逐搜索下载。
-3. **API 视图的 curl 快速上手（已采纳）**：合同见 §3.4 的 Connection addresses。示例是真实 API base URL 上的一条 Search 请求（POST + JSON 请求体）；Bearer 位置只放 Key 前缀加省略号，没有 Key 时为 `YOUR_API_KEY`；提示说明要换成完整 Key。不涉及新接口；原型未包含此示例。
+3. **API 视图的 curl 快速上手（已采纳）**：合同见 §3.4 的 Connect（API tab）。示例是真实 API base URL 上的一条 Search 请求（POST + JSON 请求体）；Bearer 位置只放 Key 前缀加省略号，没有 Key 时为 `YOUR_API_KEY`；提示说明要换成完整 Key。不涉及新接口；原型未包含此示例。
 4. **额度提醒阈值 80%**：现有界面没有阈值色，80% 是本稿提出的，Online 与 API 共用。
 5. **显示支付渠道**：订阅卡上的「Paid via PayPal / ClinkBill」来自订阅摘要已有的 `payment_method` 字段。现有界面不显示，需要确认是否展示。
 6. **视图保活下的跨视图轮询与完成 toast**：

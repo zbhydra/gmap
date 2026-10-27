@@ -338,10 +338,24 @@ export const site: SiteContent = {
       "quotaReset": "每月 1 日重置（美东时间）· API 与 MCP 共用",
       "planTitle": "API 套餐",
       "managePlan": "管理订阅",
-      "connectionsTitle": "连接地址",
+      "connectionsTitle": "接入",
+      "connectTabsLabel": "接入方式",
+      "connectDocs": {
+        "api": "API 文档",
+        "mcp": "MCP 接入指南",
+        "mcpKey": "API 密钥接入指南"
+      },
+      "connectTabs": {
+        "api": "API",
+        "mcp": "MCP",
+        "mcpKey": "MCP + API 密钥"
+      },
       "apiUrl": "API 基础 URL",
       "mcpUrl": "MCP 服务器 URL",
       "mcpHint": "将此 URL 添加到 MCP 客户端。客户端打开本站后，请登录并批准连接。",
+      "mcpKeyHint": "适用于无法打开浏览器登录的客户端。请求使用你的 API 密钥认证，无需批准连接。",
+      "mcpConfigTitle": "客户端配置",
+      "mcpConfigHint": "将此条目添加到 MCP 客户端配置中。不同客户端的字段名称略有差异。",
       "mcpUnavailable": "MCP 连接地址尚不可用。",
       "copyUrl": "复制 URL",
       "curlTitle": "快速上手",

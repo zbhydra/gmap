@@ -1,12 +1,14 @@
 <script setup lang="ts">
 /**
- * API 管理视图：API 合卡（ApiPlanCard）、API Key、连接地址与已连接应用四个面板。
+ * API 管理视图：API 合卡（ApiPlanCard）、API Key 与接入面板。
  *
+ * - 接入面板按 API / MCP（OAuth 登录）/ MCP + API Key 三个 tab 切换，每个 tab 只放该方式需要的地址与示例；
+ *   已连接应用是 OAuth 授权，只在 MCP tab 内出现。
  * - Key 与连接地址决定视图能否使用：首次读取结束（成败都算）发 ready 让外壳换下骨架；失败整块换成重试面板。
  * - 新 Key 明文只在生成响应后保留在本视图内存，离开视图（active 变为 false）立即清除。
  * - 已连接应用服务端分页；断开前先确认，断开后行淡出、焦点回到区块标题，再重拉当前页（被清空时回到最后一页）。
  */
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
 import type { RequestContext } from '../../scripts/homepage/api'
 import type { HomepageUserInfo } from '../../scripts/homepage/auth'
@@ -17,7 +19,7 @@ import {
   type MapsApiConnection,
   type UserApiKeyMeta
 } from '../../scripts/dashboard/api'
-import { copyText, reducedMotion } from '../../scripts/dashboard/dom'
+import { copyText, placeSegThumb, reducedMotion } from '../../scripts/dashboard/dom'
 import { fill, formatDate, formatDateTime } from '../../scripts/dashboard/format'
 import { isSessionExpiry } from '../../scripts/dashboard/workspace'
 import { trackDashboardAction } from '../../scripts/homepage/web-mark'
@@ -41,6 +43,16 @@ const emit = defineEmits<{ ready: []; openSubscriptions: [] }>()
 
 const GRANTS_PAGE_SIZE = 20
 
+const CONNECT_TABS = ['api', 'mcp', 'mcpKey'] as const
+type ConnectTab = (typeof CONNECT_TABS)[number]
+const CONNECT_TAB_ICONS: Record<ConnectTab, string> = { api: 'code', mcp: 'bot', mcpKey: 'key' }
+/** 各接入方式的使用文档：API 产品页字段参考、MCP 产品页客户端接入、MCP 产品页 API Key 接入卡片。 */
+const CONNECT_DOCS: Record<ConnectTab, string> = {
+  api: '/google-maps-scraper-api/#reference',
+  mcp: '/google-maps-scraper-mcp/#setup',
+  mcpKey: '/google-maps-scraper-mcp/#api-key'
+}
+
 const keyMeta = ref<UserApiKeyMeta | null>(null)
 const connection = ref<MapsApiConnection | null>(null)
 const accessLoading = ref(false)
@@ -63,6 +75,10 @@ const revokingId = ref<number | null>(null)
 const leavingId = ref<number | null>(null)
 const revokeFailedId = ref<number | null>(null)
 let grantsSeq = 0
+
+const tab = ref<ConnectTab>('api')
+const tabsEl = ref<HTMLElement | null>(null)
+let tabsObserver: ResizeObserver | null = null
 
 const copyKeyButton = ref<HTMLButtonElement | null>(null)
 const appsTitle = ref<HTMLElement | null>(null)
@@ -118,15 +134,64 @@ async function generateKey(): Promise<void> {
   }
 }
 
-/** curl 快速上手：沿用 API 产品页的 Search 样例；Key 只放前缀加省略号（同密钥卡写法），没有 Key 时用 YOUR_API_KEY，从不读明文。 */
+/** 示例里的 Key 只放前缀加省略号（同密钥卡写法），没有 Key 时用 YOUR_API_KEY，从不读明文。 */
+function sampleKey(meta: UserApiKeyMeta): string {
+  return meta.has_api_key ? `${meta.api_key_prefix}…` : 'YOUR_API_KEY'
+}
+
+/** curl 快速上手：沿用 API 产品页的 Search 样例。 */
 function curlSample(meta: UserApiKeyMeta, conn: MapsApiConnection): string {
-  const key = meta.has_api_key ? `${meta.api_key_prefix}…` : 'YOUR_API_KEY'
   return [
     `curl ${conn.api_base_url}/search \\`,
-    `  -H "Authorization: Bearer ${key}" \\`,
+    `  -H "Authorization: Bearer ${sampleKey(meta)}" \\`,
     '  -H "Content-Type: application/json" \\',
     `  -d '{"q": "coffee shop in Portland, OR", "extra": true}'`
   ].join('\n')
+}
+
+/** MCP 客户端配置：通用 mcpServers 写法；OAuth 只写地址，API Key 方式加 Authorization 请求头（同 MCP 产品页兜底配置）。 */
+function mcpSample(meta: UserApiKeyMeta, mcpUrl: string, withKey: boolean): string {
+  const server = withKey ? { url: mcpUrl, headers: { Authorization: `Bearer ${sampleKey(meta)}` } } : { url: mcpUrl }
+  return JSON.stringify({ mcpServers: { mapsgrab: server } }, null, 2)
+}
+
+/** 当前 tab 的连接地址与示例；MCP 两个 tab 在没有 MCP 地址时为 null，显示不可用说明。 */
+const connect = computed(() => {
+  const meta = keyMeta.value
+  const conn = connection.value
+  if (!meta || !conn) return null
+  const api = props.copy.api
+  if (tab.value === 'api') {
+    return { label: api.apiUrl, url: conn.api_base_url, target: 'api' as const, hint: '', title: api.curlTitle, sampleHint: api.curlHint, sample: curlSample(meta, conn) }
+  }
+  if (!conn.mcp_url) return null
+  const withKey = tab.value === 'mcpKey'
+  return {
+    label: api.mcpUrl,
+    url: conn.mcp_url,
+    target: 'mcp' as const,
+    hint: withKey ? api.mcpKeyHint : api.mcpHint,
+    title: api.mcpConfigTitle,
+    sampleHint: withKey ? api.curlHint : api.mcpConfigHint,
+    sample: mcpSample(meta, conn.mcp_url, withKey)
+  }
+})
+
+async function setTab(next: ConnectTab, focus = false): Promise<void> {
+  if (next === tab.value) return
+  tab.value = next
+  await nextTick()
+  if (tabsEl.value) placeSegThumb(tabsEl.value)
+  if (focus) tabsEl.value?.querySelector<HTMLElement>(`[data-connect-tab="${next}"]`)?.focus()
+}
+
+/** tablist 的方向键：左右循环切换并聚焦（roving tabindex）。 */
+function handleTabKeydown(event: KeyboardEvent): void {
+  if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+  event.preventDefault()
+  const index = CONNECT_TABS.indexOf(tab.value)
+  const step = event.key === 'ArrowRight' ? 1 : CONNECT_TABS.length - 1
+  void setTab(CONNECT_TABS[(index + step) % CONNECT_TABS.length], true)
 }
 
 async function copyValue(value: string, target: 'key' | 'api' | 'mcp'): Promise<void> {
@@ -217,6 +282,17 @@ async function revokeGrant(grant: McpOAuthGrant): Promise<void> {
   // 服务端分页：重拉当前页，让下一页的记录补位
   void loadGrants()
 }
+
+// tab 在 Key 与地址到达后才渲染；字体加载、视图从隐藏切回与宽度变化都会改变按钮尺寸：滑块直接对齐，不做过渡
+watch(tabsEl, element => {
+  tabsObserver?.disconnect()
+  if (!element) return
+  placeSegThumb(element, true)
+  tabsObserver = new ResizeObserver(() => placeSegThumb(element, true))
+  tabsObserver.observe(element)
+}, { flush: 'post' })
+
+onBeforeUnmount(() => tabsObserver?.disconnect())
 
 watch(() => props.active, active => {
   if (!active) plaintextKey.value = ''
@@ -317,152 +393,156 @@ onMounted(async () => {
         </section>
 
         <section class="d-panel" data-area="conn" aria-labelledby="api-conn-title">
-          <div class="d-panel-head"><h2 id="api-conn-title" class="d-panel-title">{{ props.copy.api.connectionsTitle }}</h2></div>
-          <div class="d-panel-body">
-            <div class="conn-grid">
+          <div class="conn-head">
+            <h2 id="api-conn-title" class="d-panel-title">{{ props.copy.api.connectionsTitle }}</h2>
+            <div ref="tabsEl" class="seg seg--sm" role="tablist" :aria-label="props.copy.api.connectTabsLabel" @keydown="handleTabKeydown">
+              <span class="seg-thumb" aria-hidden="true"></span>
+              <button
+                v-for="item in CONNECT_TABS"
+                :id="`api-tab-${item}`"
+                :key="item"
+                class="seg-btn"
+                type="button"
+                role="tab"
+                :aria-selected="item === tab ? 'true' : 'false'"
+                aria-controls="api-conn-panel"
+                :tabindex="item === tab ? 0 : -1"
+                :data-connect-tab="item"
+                @click="setTab(item)"
+              >
+                <svg class="icon" aria-hidden="true"><use :href="`/img/icons.svg#i-${CONNECT_TAB_ICONS[item]}`" /></svg>{{ props.copy.api.connectTabs[item] }}
+              </button>
+            </div>
+          </div>
+          <div id="api-conn-panel" class="d-panel-body conn-body" role="tabpanel" :aria-labelledby="`api-tab-${tab}`">
+            <template v-if="connect">
               <div class="conn-row">
-                <span id="api-conn-base" class="conn-label">{{ props.copy.api.apiUrl }}</span>
+                <span id="api-conn-url" class="conn-label">{{ connect.label }}</span>
                 <div class="copy-field">
-                  <code class="copy-value" data-api-base-url>{{ connection.api_base_url }}</code>
+                  <code class="copy-value" :data-connect-url="connect.target">{{ connect.url }}</code>
                   <button
                     class="icon-btn icon-btn--sm"
-                    :class="{ 'is-copied': copied === 'api' }"
+                    :class="{ 'is-copied': copied === connect.target }"
                     type="button"
-                    data-copy="api"
+                    :data-copy="connect.target"
                     :aria-label="props.copy.api.copyUrl"
-                    aria-describedby="api-conn-base"
+                    aria-describedby="api-conn-url"
                     :title="props.copy.api.copyUrl"
-                    @click="copyValue(connection.api_base_url, 'api')"
+                    @click="copyValue(connect.url, connect.target)"
                   >
                     <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-copy" /></svg>
                   </button>
                 </div>
+                <p v-if="connect.hint" class="d-hint">{{ connect.hint }}</p>
               </div>
-              <div class="conn-row">
-                <span id="api-conn-mcp" class="conn-label">{{ props.copy.api.mcpUrl }}</span>
-                <template v-if="connection.mcp_url">
-                  <div class="copy-field">
-                    <code class="copy-value" data-mcp-url>{{ connection.mcp_url }}</code>
+              <div class="conn-sample">
+                <div class="conn-sample-head">
+                  <div>
+                    <h3 class="conn-label">{{ connect.title }}</h3>
+                    <p class="d-hint">{{ connect.sampleHint }}</p>
+                  </div>
+                  <a class="btn btn-secondary btn-xs" :href="`${props.localePrefix}${CONNECT_DOCS[tab]}`" data-connect-docs>
+                    <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-book" /></svg>{{ props.copy.api.connectDocs[tab] }}
+                  </a>
+                </div>
+                <div class="codewin">
+                  <pre tabindex="0"><code data-connect-sample>{{ connect.sample }}</code></pre>
+                </div>
+              </div>
+            </template>
+            <p v-else class="d-muted">{{ props.copy.api.mcpUnavailable }}</p>
+
+            <!-- 已连接应用是 OAuth 授权，只属于 MCP（登录授权）方式 -->
+            <div v-if="tab === 'mcp'" class="conn-apps">
+              <div>
+                <h3 id="api-apps-title" ref="appsTitle" class="conn-label" tabindex="-1">{{ props.copy.api.grants.title }}</h3>
+                <p class="d-hint">{{ props.copy.api.grants.description }}</p>
+              </div>
+              <div v-if="grantsFailedPage !== null" class="callout callout--bad" role="alert">
+                <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-alert" /></svg>
+                <div class="callout-body">
+                  <span>{{ props.copy.api.grants.loadFailed }}</span>
+                  <button
+                    class="btn btn-secondary btn-xs"
+                    :class="{ 'is-busy': grantsLoading }"
+                    type="button"
+                    :aria-busy="grantsLoading ? 'true' : undefined"
+                    @click="loadGrants(grantsFailedPage)"
+                  >
+                    <span v-if="grantsLoading" class="spinner spinner--sm" aria-hidden="true"></span>
+                    <svg v-else class="icon" aria-hidden="true"><use href="/img/icons.svg#i-refresh" /></svg>
+                    {{ props.copy.api.retry }}
+                  </button>
+                </div>
+              </div>
+
+              <template v-if="grants.length">
+                <ul ref="grantList" class="grants" :aria-busy="grantsLoading ? 'true' : 'false'">
+                  <li
+                    v-for="grant in grants"
+                    :key="grant.grant_id"
+                    class="grant"
+                    :class="{ 'is-leaving': leavingId === grant.grant_id }"
+                    :data-mcp-grant="grant.grant_id"
+                  >
+                    <span class="icon-tile" aria-hidden="true"><svg class="icon"><use href="/img/icons.svg#i-bot" /></svg></span>
+                    <div class="grant-main">
+                      <bdi :id="`api-grant-${grant.grant_id}`" class="grant-host" dir="ltr">{{ grant.redirect_host }}</bdi>
+                      <span v-if="grant.client_name" class="grant-name">{{ nameBefore }}<bdi>{{ grant.client_name }}</bdi>{{ nameAfter }}</span>
+                      <span class="grant-meta">
+                        <span>{{ props.copy.api.grants.createdLabel }} {{ formatDateTime(grant.created_at) }}</span>
+                        <span>
+                          {{ props.copy.api.grants.refreshedLabel }}
+                          {{ grant.last_refreshed_at === null ? props.copy.api.grants.notRefreshed : formatDateTime(grant.last_refreshed_at) }}
+                        </span>
+                      </span>
+                      <p v-if="revokeFailedId === grant.grant_id" class="inline-err" role="alert">{{ props.copy.api.grants.revokeFailed }}</p>
+                    </div>
                     <button
-                      class="icon-btn icon-btn--sm"
-                      :class="{ 'is-copied': copied === 'mcp' }"
+                      class="btn btn-secondary btn-xs"
+                      :class="{ 'is-busy': revokingId === grant.grant_id }"
                       type="button"
-                      data-copy="mcp"
-                      :aria-label="props.copy.api.copyUrl"
-                      aria-describedby="api-conn-mcp"
-                      :title="props.copy.api.copyUrl"
-                      @click="copyValue(connection.mcp_url, 'mcp')"
+                      :aria-describedby="`api-grant-${grant.grant_id}`"
+                      :aria-busy="revokingId === grant.grant_id ? 'true' : undefined"
+                      @click="revokeGrant(grant)"
                     >
-                      <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-copy" /></svg>
+                      <span v-if="revokingId === grant.grant_id" class="spinner spinner--sm" aria-hidden="true"></span>
+                      {{ props.copy.api.grants.revoke }}
+                    </button>
+                  </li>
+                </ul>
+                <nav v-if="totalPages > 1" class="grants-foot" :aria-label="props.copy.api.grants.paginationLabel">
+                  <span class="d-muted">{{ fill(props.copy.api.grants.pageOf, { page, pages: totalPages }) }}</span>
+                  <div class="pager">
+                    <button
+                      class="btn btn-secondary btn-xs"
+                      type="button"
+                      :aria-disabled="page <= 1 || grantsLoading || revokingId !== null ? 'true' : undefined"
+                      @click="goToPage(page - 1)"
+                    >
+                      {{ props.copy.history.pagination.previous }}
+                    </button>
+                    <button
+                      class="btn btn-secondary btn-xs"
+                      type="button"
+                      :aria-disabled="page >= totalPages || grantsLoading || revokingId !== null ? 'true' : undefined"
+                      @click="goToPage(page + 1)"
+                    >
+                      {{ props.copy.history.pagination.next }}
                     </button>
                   </div>
-                  <p class="d-hint">{{ props.copy.api.mcpHint }}</p>
-                </template>
-                <p v-else class="d-muted">{{ props.copy.api.mcpUnavailable }}</p>
+                </nav>
+              </template>
+              <div v-else-if="grantsFailedPage === null && grantsLoading" class="skel-stack">
+                <span class="sr-only" role="status">{{ props.copy.api.grants.loading }}</span>
+                <span class="skel skel--block" style="height: 56px" aria-hidden="true"></span>
+                <span class="skel skel--block" style="height: 56px" aria-hidden="true"></span>
               </div>
-            </div>
-            <div class="conn-curl">
-              <h3 id="api-curl-title" class="conn-label">{{ props.copy.api.curlTitle }}</h3>
-              <p class="d-hint">{{ props.copy.api.curlHint }}</p>
-              <div class="codewin">
-                <pre tabindex="0"><code data-api-curl>{{ curlSample(keyMeta, connection) }}</code></pre>
-              </div>
+              <p v-else-if="grantsFailedPage === null" class="d-muted">{{ props.copy.api.grants.empty }}</p>
             </div>
           </div>
         </section>
       </template>
-
-      <section class="d-panel" data-area="apps" aria-labelledby="api-apps-title">
-        <div class="d-panel-head">
-          <div>
-            <h2 id="api-apps-title" ref="appsTitle" class="d-panel-title" tabindex="-1">{{ props.copy.api.grants.title }}</h2>
-            <p class="d-section-desc">{{ props.copy.api.grants.description }}</p>
-          </div>
-        </div>
-        <div class="d-panel-body">
-          <div v-if="grantsFailedPage !== null" class="callout callout--bad" role="alert">
-            <svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-alert" /></svg>
-            <div class="callout-body">
-              <span>{{ props.copy.api.grants.loadFailed }}</span>
-              <button
-                class="btn btn-secondary btn-xs"
-                :class="{ 'is-busy': grantsLoading }"
-                type="button"
-                :aria-busy="grantsLoading ? 'true' : undefined"
-                @click="loadGrants(grantsFailedPage)"
-              >
-                <span v-if="grantsLoading" class="spinner spinner--sm" aria-hidden="true"></span>
-                <svg v-else class="icon" aria-hidden="true"><use href="/img/icons.svg#i-refresh" /></svg>
-                {{ props.copy.api.retry }}
-              </button>
-            </div>
-          </div>
-
-          <template v-if="grants.length">
-            <ul ref="grantList" class="grants" :aria-busy="grantsLoading ? 'true' : 'false'">
-              <li
-                v-for="grant in grants"
-                :key="grant.grant_id"
-                class="grant"
-                :class="{ 'is-leaving': leavingId === grant.grant_id }"
-                :data-mcp-grant="grant.grant_id"
-              >
-                <span class="icon-tile" aria-hidden="true"><svg class="icon"><use href="/img/icons.svg#i-bot" /></svg></span>
-                <div class="grant-main">
-                  <bdi :id="`api-grant-${grant.grant_id}`" class="grant-host" dir="ltr">{{ grant.redirect_host }}</bdi>
-                  <span v-if="grant.client_name" class="grant-name">{{ nameBefore }}<bdi>{{ grant.client_name }}</bdi>{{ nameAfter }}</span>
-                  <span class="grant-meta">
-                    <span>{{ props.copy.api.grants.createdLabel }} {{ formatDateTime(grant.created_at) }}</span>
-                    <span>
-                      {{ props.copy.api.grants.refreshedLabel }}
-                      {{ grant.last_refreshed_at === null ? props.copy.api.grants.notRefreshed : formatDateTime(grant.last_refreshed_at) }}
-                    </span>
-                  </span>
-                  <p v-if="revokeFailedId === grant.grant_id" class="inline-err" role="alert">{{ props.copy.api.grants.revokeFailed }}</p>
-                </div>
-                <button
-                  class="btn btn-secondary btn-xs"
-                  :class="{ 'is-busy': revokingId === grant.grant_id }"
-                  type="button"
-                  :aria-describedby="`api-grant-${grant.grant_id}`"
-                  :aria-busy="revokingId === grant.grant_id ? 'true' : undefined"
-                  @click="revokeGrant(grant)"
-                >
-                  <span v-if="revokingId === grant.grant_id" class="spinner spinner--sm" aria-hidden="true"></span>
-                  {{ props.copy.api.grants.revoke }}
-                </button>
-              </li>
-            </ul>
-            <nav v-if="totalPages > 1" class="grants-foot" :aria-label="props.copy.api.grants.paginationLabel">
-              <span class="d-muted">{{ fill(props.copy.api.grants.pageOf, { page, pages: totalPages }) }}</span>
-              <div class="pager">
-                <button
-                  class="btn btn-secondary btn-xs"
-                  type="button"
-                  :aria-disabled="page <= 1 || grantsLoading || revokingId !== null ? 'true' : undefined"
-                  @click="goToPage(page - 1)"
-                >
-                  {{ props.copy.history.pagination.previous }}
-                </button>
-                <button
-                  class="btn btn-secondary btn-xs"
-                  type="button"
-                  :aria-disabled="page >= totalPages || grantsLoading || revokingId !== null ? 'true' : undefined"
-                  @click="goToPage(page + 1)"
-                >
-                  {{ props.copy.history.pagination.next }}
-                </button>
-              </div>
-            </nav>
-          </template>
-          <div v-else-if="grantsFailedPage === null && grantsLoading" class="skel-stack">
-            <span class="sr-only" role="status">{{ props.copy.api.grants.loading }}</span>
-            <span class="skel skel--block" style="height: 56px" aria-hidden="true"></span>
-            <span class="skel skel--block" style="height: 56px" aria-hidden="true"></span>
-          </div>
-          <p v-else-if="grantsFailedPage === null" class="d-muted">{{ props.copy.api.grants.empty }}</p>
-        </div>
-      </section>
     </div>
   </div>
 </template>

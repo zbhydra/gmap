@@ -338,10 +338,24 @@ export const site: SiteContent = {
       "quotaReset": "매월 1일 초기화(ET) · API와 MCP 공용",
       "planTitle": "API 계획",
       "managePlan": "구독 관리",
-      "connectionsTitle": "연결 주소",
+      "connectionsTitle": "연결",
+      "connectTabsLabel": "연결 방식",
+      "connectDocs": {
+        "api": "API 참조",
+        "mcp": "MCP 설정 가이드",
+        "mcpKey": "API 키 설정 가이드"
+      },
+      "connectTabs": {
+        "api": "API",
+        "mcp": "MCP",
+        "mcpKey": "MCP + API 키"
+      },
       "apiUrl": "API 기본 URL",
       "mcpUrl": "MCP 서버 URL",
       "mcpHint": "MCP 클라이언트에 URL을 추가하세요. 이 웹사이트가 열리면 로그인하고 연결을 승인하세요.",
+      "mcpKeyHint": "브라우저로 로그인할 수 없는 클라이언트용입니다. 요청은 API 키로 인증되며 연결 승인 단계가 없습니다.",
+      "mcpConfigTitle": "클라이언트 설정",
+      "mcpConfigHint": "이 항목을 MCP 클라이언트 설정에 추가하세요. 필드 이름은 클라이언트마다 조금씩 다릅니다.",
       "mcpUnavailable": "MCP 연결 주소는 아직 사용할 수 없습니다.",
       "copyUrl": "복사 URL",
       "curlTitle": "빠른 시작",

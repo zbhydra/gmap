@@ -338,10 +338,24 @@ export const site: SiteContent = {
       "quotaReset": "Сброс 1-го числа (ET) · общий для API и MCP",
       "planTitle": "план API",
       "managePlan": "Управление подписками",
-      "connectionsTitle": "Адреса подключения",
+      "connectionsTitle": "Подключение",
+      "connectTabsLabel": "Способ подключения",
+      "connectDocs": {
+        "api": "Справочник API",
+        "mcp": "Настройка MCP",
+        "mcpKey": "Настройка с API-ключом"
+      },
+      "connectTabs": {
+        "api": "API",
+        "mcp": "MCP",
+        "mcpKey": "MCP + API-ключ"
+      },
       "apiUrl": "API база URL",
       "mcpUrl": "MCP сервер URL",
       "mcpHint": "Добавьте этот URL в свой клиент MCP. Войдите в систему и подтвердите соединение при открытии этого веб-сайта.",
+      "mcpKeyHint": "Для клиентов, которые не могут открыть браузер для входа. Запросы используют ваш API-ключ, без шага подтверждения.",
+      "mcpConfigTitle": "Конфигурация клиента",
+      "mcpConfigHint": "Добавьте эту запись в конфигурацию MCP-клиента. Названия полей в разных клиентах немного отличаются.",
       "mcpUnavailable": "Адрес подключения MCP пока недоступен.",
       "copyUrl": "Копировать URL",
       "curlTitle": "Быстрый старт",

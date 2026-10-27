@@ -7,15 +7,14 @@
 
 /* ---------------------------------------------------------------------------
    API 管理
-   宽（> 980）：合卡（1.5fr）与 Key 卡（1fr）并排等高，连接地址、已连接应用各占整行；≤ 980 单列。
+   宽（> 980）：合卡（1.5fr）与 Key 卡（1fr）并排等高，接入面板占整行；≤ 980 单列。
    并排的两张卡同高：合卡用量区沉底、Key 卡操作沉底，空白留在卡片中部而不是卡片下方。
    --------------------------------------------------------------------------- */
 .api-grid {
   display: grid;
   grid-template-areas:
     'plan key'
-    'conn conn'
-    'apps apps';
+    'conn conn';
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: var(--s-5);
 }
@@ -35,11 +34,9 @@
 }
 
 .api-grid > [data-area='conn'] {
-  grid-area: conn;
-}
+  --lock: calc(100cqw - 50px);
 
-.api-grid > [data-area='apps'] {
-  grid-area: apps;
+  grid-area: conn;
 }
 
 /* 合卡：卡头（会话里的订阅摘要）与用量区（用量接口）分区加载、分区失败 */
@@ -171,17 +168,22 @@
   margin-top: auto;
 }
 
-/* 连接地址：两条地址并排（≤ 720 上下排）；说明文字行宽锁定为列宽：（容器宽 − 边框 2 − 内边距 48 − 列距 24）/ 2 */
-.conn-grid {
+/* 接入面板：卡头左标题右 tab（窄屏 tab 折行占满），面板体按「地址 → 示例 →（MCP）已连接应用」纵向排 */
+.conn-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3) var(--s-4);
+  padding: var(--s-5) var(--s-6) 0;
+}
+
+.conn-body {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  gap: var(--s-4) var(--s-6);
+  gap: var(--s-5);
 }
 
 .conn-row {
-  --lock: calc(50cqw - 37px);
-
   display: grid;
   gap: var(--s-2);
 }
@@ -192,10 +194,35 @@
   font-weight: 600;
 }
 
-/* curl 快速上手：通栏接在两条地址下面，代码窗用共享 .codewin，长行只在 pre 内横向滚动 */
-.conn-curl {
+/* curl / 客户端配置示例：代码窗用共享 .codewin，长行只在 pre 内横向滚动 */
+.conn-sample {
   display: grid;
   gap: var(--s-2);
+}
+
+/* 示例标题与说明在左，当前方式的文档按钮在右；窄屏按钮折到说明下方 */
+.conn-sample-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+}
+
+.conn-sample-head .d-hint {
+  margin-top: var(--s-2);
+}
+
+/* 已连接应用（仅 MCP tab）：与上方示例用分隔线隔开，列表行自带上边线 */
+.conn-apps {
+  display: grid;
+  gap: var(--s-3);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--border);
+}
+
+.conn-apps .d-hint {
+  margin-top: var(--s-1);
 }
 
 /* 已连接应用：回调主机为主信息，自报名称与两个时间为次要信息 */
@@ -401,8 +428,7 @@
     grid-template-areas:
       'plan'
       'key'
-      'conn'
-      'apps';
+      'conn';
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -450,20 +476,23 @@
   }
 }
 
-@container view (max-width: 720px) {
-  .conn-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .conn-row {
-    --lock: calc(100cqw - 50px);
-  }
-}
-
 @container view (max-width: 680px) {
-  .api-grid > [data-area],
-  .conn-row {
+  .api-grid > [data-area] {
     --lock: calc(100cqw - 34px);
+  }
+
+  .conn-head {
+    padding: var(--s-4) var(--s-4) 0;
+  }
+
+  .conn-head .seg {
+    width: 100%;
+  }
+
+  .conn-head .seg-btn {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 0 var(--s-2);
   }
 
   .api-plan-head {

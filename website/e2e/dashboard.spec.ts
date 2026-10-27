@@ -613,13 +613,26 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
   await page.goto('/dashboard/api/')
   await expect(page.getByRole('button', { name: 'Generate API key' })).toBeVisible()
   await expect(page.locator('[data-api-usage]')).toHaveText('0 / 20 requests')
-  await expect(page.getByText('No apps are connected.')).toBeVisible()
-  await expect(page.getByText('The MCP connection address is not available yet.')).toBeVisible()
   await expect(page.getByRole('link', { name: 'View API products' })).toHaveAttribute('href', '/google-maps-scraper-api/')
-  // curl 快速上手：地址取连接信息；没有 Key 时用 YOUR_API_KEY 占位
-  const curl = page.locator('[data-api-curl]')
+  // 默认 API tab 的 curl 快速上手：地址取连接信息；没有 Key 时用 YOUR_API_KEY 占位
+  const curl = page.locator('[data-connect-sample]')
   await expect(curl).toContainText('https://api.mapsgrab.test/api/client/maps/api/search')
   await expect(curl).toContainText('Bearer YOUR_API_KEY')
+  const docs = page.locator('[data-connect-docs]')
+  await expect(docs).toHaveAttribute('href', '/google-maps-scraper-api/#reference')
+  // MCP tab（方向键切换）：没有 MCP 地址时显示不可用说明，已连接应用只在这里出现；MCP + API Key tab 不带已连接应用
+  const connectTabs = page.getByRole('tablist', { name: 'Connection method' })
+  await expect(page.getByText('No apps are connected.')).toHaveCount(0)
+  await connectTabs.getByRole('tab', { name: 'API', exact: true }).focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(connectTabs.getByRole('tab', { name: 'MCP', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByText('The MCP connection address is not available yet.')).toBeVisible()
+  await expect(page.getByText('No apps are connected.')).toBeVisible()
+  await expect(docs).toHaveCount(0)
+  await connectTabs.getByRole('tab', { name: 'MCP + API key' }).click()
+  await expect(page.getByText('The MCP connection address is not available yet.')).toBeVisible()
+  await expect(page.getByText('No apps are connected.')).toHaveCount(0)
+  await connectTabs.getByRole('tab', { name: 'API', exact: true }).click()
 
   // 生成中离开视图：响应晚到只更新 Key 前缀（示例同步），回到 API 视图不显示明文；有 Key 后替换按钮为次级。
   const sideNav = page.locator('.side-nav')

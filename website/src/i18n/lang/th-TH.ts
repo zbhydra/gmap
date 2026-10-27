@@ -338,10 +338,24 @@ export const site: SiteContent = {
       "quotaReset": "รีเซ็ตวันที่ 1 (ET) · API และ MCP ใช้ร่วมกัน",
       "planTitle": "API แผน",
       "managePlan": "จัดการการสมัครสมาชิก",
-      "connectionsTitle": "ที่อยู่การเชื่อมต่อ",
+      "connectionsTitle": "เชื่อมต่อ",
+      "connectTabsLabel": "วิธีเชื่อมต่อ",
+      "connectDocs": {
+        "api": "เอกสาร API",
+        "mcp": "คู่มือตั้งค่า MCP",
+        "mcpKey": "คู่มือตั้งค่าคีย์ API"
+      },
+      "connectTabs": {
+        "api": "API",
+        "mcp": "MCP",
+        "mcpKey": "MCP + คีย์ API"
+      },
       "apiUrl": "API ฐาน URL",
       "mcpUrl": "MCP เซิร์ฟเวอร์ URL",
       "mcpHint": "เพิ่ม URL นี้ในไคลเอนต์ MCP ของคุณ ลงชื่อเข้าใช้และอนุมัติการเชื่อมต่อเมื่อเปิดเว็บไซต์นี้",
+      "mcpKeyHint": "สำหรับไคลเอนต์ที่เปิดเบราว์เซอร์เพื่อลงชื่อเข้าใช้ไม่ได้ คำขอจะใช้คีย์ API ของคุณ โดยไม่ต้องอนุมัติการเชื่อมต่อ",
+      "mcpConfigTitle": "การกำหนดค่าไคลเอนต์",
+      "mcpConfigHint": "เพิ่มรายการนี้ลงในการกำหนดค่าไคลเอนต์ MCP ของคุณ ชื่อฟิลด์อาจต่างกันเล็กน้อยในแต่ละไคลเอนต์",
       "mcpUnavailable": "ที่อยู่การเชื่อมต่อ MCP ยังไม่พร้อมใช้งาน",
       "copyUrl": "คัดลอก URL",
       "curlTitle": "เริ่มต้นอย่างรวดเร็ว",

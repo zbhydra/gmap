@@ -338,10 +338,24 @@ export const site: SiteContent = {
       "quotaReset": "Đặt lại ngày 1 (ET) · API và MCP dùng chung",
       "planTitle": "kế hoạch API",
       "managePlan": "Quản lý đăng ký",
-      "connectionsTitle": "Địa chỉ kết nối",
+      "connectionsTitle": "Kết nối",
+      "connectTabsLabel": "Phương thức kết nối",
+      "connectDocs": {
+        "api": "Tài liệu API",
+        "mcp": "Hướng dẫn thiết lập MCP",
+        "mcpKey": "Hướng dẫn dùng khóa API"
+      },
+      "connectTabs": {
+        "api": "API",
+        "mcp": "MCP",
+        "mcpKey": "MCP + khóa API"
+      },
       "apiUrl": "API cơ sở URL",
       "mcpUrl": "MCP máy chủ URL",
       "mcpHint": "Thêm URL này vào ứng dụng khách MCP của bạn. Đăng nhập và phê duyệt kết nối khi mở trang web này.",
+      "mcpKeyHint": "Dành cho các ứng dụng khách không thể mở trình duyệt để đăng nhập. Yêu cầu dùng khóa API của bạn, không cần bước phê duyệt.",
+      "mcpConfigTitle": "Cấu hình ứng dụng khách",
+      "mcpConfigHint": "Thêm mục này vào cấu hình ứng dụng khách MCP của bạn. Tên trường có thể hơi khác giữa các ứng dụng khách.",
       "mcpUnavailable": "Địa chỉ kết nối MCP chưa có sẵn.",
       "copyUrl": "Sao chép URL",
       "curlTitle": "Bắt đầu nhanh",

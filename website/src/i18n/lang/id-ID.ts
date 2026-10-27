@@ -338,10 +338,24 @@ export const site: SiteContent = {
       "quotaReset": "Reset tanggal 1 (ET) · dibagi API dan MCP",
       "planTitle": "API rencana",
       "managePlan": "Kelola langganan",
-      "connectionsTitle": "Alamat koneksi",
+      "connectionsTitle": "Hubungkan",
+      "connectTabsLabel": "Metode koneksi",
+      "connectDocs": {
+        "api": "Referensi API",
+        "mcp": "Panduan penyiapan MCP",
+        "mcpKey": "Panduan kunci API"
+      },
+      "connectTabs": {
+        "api": "API",
+        "mcp": "MCP",
+        "mcpKey": "MCP + kunci API"
+      },
       "apiUrl": "API basis URL",
       "mcpUrl": "MCP pelayan URL",
       "mcpHint": "Tambahkan URL ini di klien MCP Anda. Masuk dan setujui koneksi ketika membuka situs web ini.",
+      "mcpKeyHint": "Untuk klien yang tidak dapat membuka browser untuk masuk. Permintaan menggunakan kunci API Anda, tanpa langkah persetujuan.",
+      "mcpConfigTitle": "Konfigurasi klien",
+      "mcpConfigHint": "Tambahkan entri ini ke konfigurasi klien MCP Anda. Nama kolom sedikit berbeda di setiap klien.",
       "mcpUnavailable": "Alamat koneksi MCP belum tersedia.",
       "copyUrl": "Salin URL",
       "curlTitle": "Mulai cepat",

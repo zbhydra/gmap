@@ -338,10 +338,24 @@ export const site: SiteContent = {
       "quotaReset": "每月 1 日重設（美東時間）· API 與 MCP 共用",
       "planTitle": "API 方案",
       "managePlan": "管理訂閱",
-      "connectionsTitle": "連接位址",
+      "connectionsTitle": "接入",
+      "connectTabsLabel": "接入方式",
+      "connectDocs": {
+        "api": "API 文件",
+        "mcp": "MCP 接入指南",
+        "mcpKey": "API 金鑰接入指南"
+      },
+      "connectTabs": {
+        "api": "API",
+        "mcp": "MCP",
+        "mcpKey": "MCP + API 金鑰"
+      },
       "apiUrl": "API 底座URL",
       "mcpUrl": "MCP 伺服器URL",
       "mcpHint": "將這個URL加入您的 MCP 客戶端。打開此網站時登入並批准連線。",
+      "mcpKeyHint": "適用於無法開啟瀏覽器登入的用戶端。請求使用你的 API 金鑰驗證，無需核准連線。",
+      "mcpConfigTitle": "用戶端設定",
+      "mcpConfigHint": "將此項目加入 MCP 用戶端設定。不同用戶端的欄位名稱略有差異。",
       "mcpUnavailable": "MCP 連接位址尚不可用。",
       "copyUrl": "複製URL",
       "curlTitle": "快速上手",

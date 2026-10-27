@@ -338,10 +338,24 @@ export const site: SiteContent = {
       "quotaReset": "毎月1日にリセット（ET）· API と MCP で共通",
       "planTitle": "API プラン",
       "managePlan": "サブスクリプションを管理する",
-      "connectionsTitle": "接続アドレス",
+      "connectionsTitle": "接続",
+      "connectTabsLabel": "接続方法",
+      "connectDocs": {
+        "api": "API リファレンス",
+        "mcp": "MCP 設定ガイド",
+        "mcpKey": "API キー設定ガイド"
+      },
+      "connectTabs": {
+        "api": "API",
+        "mcp": "MCP",
+        "mcpKey": "MCP + API キー"
+      },
       "apiUrl": "API ベース URL",
       "mcpUrl": "MCP サーバー URL",
       "mcpHint": "この URL を MCP クライアントに追加します。この Web サイトを開いたときにサインインして接続を承認します。",
+      "mcpKeyHint": "ブラウザでサインインできないクライアント向けです。リクエストは API キーで認証され、接続の承認は不要です。",
+      "mcpConfigTitle": "クライアント設定",
+      "mcpConfigHint": "このエントリを MCP クライアントの設定に追加してください。フィールド名はクライアントによって多少異なります。",
       "mcpUnavailable": "MCP 接続アドレスはまだ利用できません。",
       "copyUrl": "URLをコピー",
       "curlTitle": "クイックスタート",

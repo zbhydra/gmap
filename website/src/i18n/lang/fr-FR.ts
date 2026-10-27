@@ -338,10 +338,24 @@ export const site: SiteContent = {
       "quotaReset": "Réinitialisé le 1er (ET) · partagé API/MCP",
       "planTitle": "API forfait",
       "managePlan": "Gérer les abonnements",
-      "connectionsTitle": "Adresses de connexion",
+      "connectionsTitle": "Connexion",
+      "connectTabsLabel": "Mode de connexion",
+      "connectDocs": {
+        "api": "Référence de l'API",
+        "mcp": "Guide de configuration MCP",
+        "mcpKey": "Guide avec clé API"
+      },
+      "connectTabs": {
+        "api": "API",
+        "mcp": "MCP",
+        "mcpKey": "MCP + clé API"
+      },
       "apiUrl": "API base URL",
       "mcpUrl": "MCP serveur URL",
       "mcpHint": "Ajoutez ce URL dans votre client MCP. Connectez-vous et approuvez la connexion lors de l'ouverture de ce site Web.",
+      "mcpKeyHint": "Pour les clients qui ne peuvent pas ouvrir un navigateur pour se connecter. Les requêtes utilisent votre clé API, sans étape d'approbation.",
+      "mcpConfigTitle": "Configuration du client",
+      "mcpConfigHint": "Ajoutez cette entrée à la configuration de votre client MCP. Les noms des champs varient légèrement selon les clients.",
       "mcpUnavailable": "L'adresse de connexion MCP n'est pas encore disponible.",
       "copyUrl": "Copier URL",
       "curlTitle": "Démarrage rapide",
