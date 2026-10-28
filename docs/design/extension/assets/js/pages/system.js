@@ -520,11 +520,11 @@
       return '<svg class="mgp-icon" aria-hidden="true"><use href="' + SPRITE + '#i-' + name + '"/></svg>'
     }
     var MODES = {
-      search: { tag: 'Search', icon: 'search', side: 'left', unit: ['place', 'places'], limit: 10, plan: 'Free · 10 places per run', url: 'google.com/maps/search/<b>coffee+near+Manhattan</b>' },
-      list: { tag: 'List', icon: 'list', side: 'left', unit: ['place', 'places'], limit: 10, plan: 'Free · 10 places per run', url: 'google.com/maps/<b>@40.74,-73.99,14z/data=…10m1!1e1</b>' },
-      place: { tag: 'Place', icon: 'pin', side: 'right', unit: ['place', 'places'], limit: 1, plan: 'Free · 10 places per run', url: 'google.com/maps/place/<b>Ember+%26+Oak+Coffee</b>' },
-      reviews: { tag: 'Reviews', icon: 'review', work: true, unit: ['review', 'reviews'], limit: 20, plan: 'Free · 20 reviews per place', url: 'search.google.com/local/<b>reviews?placeid=…</b>' },
-      photos: { tag: 'Photos', icon: 'image', work: true, unit: ['photo', 'photos'], limit: 10, plan: 'Free · 10 photos per place', url: 'google.com/maps/<b>uv?pb=…</b>' }
+      search: { tag: 'Search', icon: 'search', side: 'left', unit: ['place', 'places'], limit: 10, plan: 'Free · 10 per run', url: 'google.com/maps/search/<b>coffee+near+Manhattan</b>' },
+      list: { tag: 'List', icon: 'list', side: 'left', unit: ['place', 'places'], limit: 10, plan: 'Free · 10 per run', url: 'google.com/maps/<b>@40.74,-73.99,14z/data=…10m1!1e1</b>' },
+      place: { tag: 'Place', icon: 'pin', side: 'right', unit: ['place', 'places'], limit: 1, plan: 'Free · 10 per run', url: 'google.com/maps/place/<b>Ember+%26+Oak+Coffee</b>' },
+      reviews: { tag: 'Reviews', icon: 'review', work: true, unit: ['review', 'reviews'], limit: 20, plan: 'Free · 20 per run', url: 'search.google.com/local/<b>reviews?placeid=…</b>' },
+      photos: { tag: 'Photos', icon: 'image', work: true, unit: ['photo', 'photos'], limit: 10, plan: 'Free · 10 per run', url: 'google.com/maps/<b>uv?pb=…</b>' }
     }
     var MSGS = {
       'not-searched': { icon: 'search', html: 'Search for something first, like <b>coffee in Austin</b>, then press Start.' },
@@ -558,7 +558,7 @@
         }[s.state],
         caption:
           s.state === 'idle'
-            ? { search: 'Search on Google Maps, then press Start.', list: 'Opens each place in this list and collects it.', place: 'Collects this place’s details.' }[s.mode] || ''
+            ? { search: 'Search in Google Maps, then start extracting.', list: 'List page detected. Click start to extract places one by one.', place: 'Collects this place’s details.' }[s.mode] || ''
             : s.state === 'extracting'
               ? { search: 'Scrolling the results list…', list: 'Opening places one by one…', place: 'Reading this place…', reviews: 'Reading review pages…', photos: 'Collecting photo links…' }[s.mode]
               : s.state === 'paused'

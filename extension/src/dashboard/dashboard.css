@@ -494,6 +494,15 @@
 .db-table tr.is-active td:first-child {
   box-shadow: inset 2px 0 0 var(--primary-solid);
 }
+/* 单行状态刚变化（完成 / 跳过）：底色闪一次。只在变化时播放一次的重绘动画 */
+.db-table tr.is-flash td {
+  animation: row-flash 1.4s var(--ease-out);
+}
+@keyframes row-flash {
+  from {
+    background-color: var(--primary-soft-2);
+  }
+}
 .db-table .cell-num {
   text-align: right;
 }
@@ -1106,6 +1115,13 @@
   }
   .db-items-table tr.is-retry {
     background: var(--warn-soft);
+  }
+  /* 堆叠后单元格之间有空隙，闪底色改到整行 */
+  .db-items-table tr.is-flash td {
+    animation: none;
+  }
+  .db-items-table tr.is-flash {
+    animation: row-flash 1.4s var(--ease-out);
   }
   .db-items-table tr:hover td,
   .db-items-table tr.is-active td,

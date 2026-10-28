@@ -26,16 +26,22 @@ const version = chrome.runtime.getManifest().version
   align-items: center;
   flex-shrink: 0;
   gap: var(--s-4);
-  min-height: 48px;
-  padding: 10px var(--s-4);
+  padding: var(--s-2) var(--s-4);
   border-top: 1px solid var(--border);
+  background: var(--bg);
   font-size: var(--fs-xs);
 }
+/* 点击区补到 ≥ 28px（README §9），用负外边距抵消，不撑高页脚排版 */
 a {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-1);
-  min-height: 28px;
+  gap: 6px;
+  padding-block: 6px;
+  margin-block: -6px;
+  border-radius: var(--r-xs);
+}
+a:focus-visible {
+  outline-offset: 0;
 }
 a .icon {
   width: var(--icon-xs);

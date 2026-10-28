@@ -51,27 +51,27 @@
   var RESET_ON = 'Nov 1'
   var MODES = {
     search: {
-      tag: 'Search', icon: 'search', side: 'left', core: 'pin', limit: 10, unit: ['place', 'places'], plan: 'Free · 10 places per run',
-      idle: 'Search on Google Maps, then press Start.', live: 'Scrolling the results list…', end: 'Reached the end of the results.',
+      tag: 'Search', icon: 'search', side: 'left', core: 'pin', limit: 10, unit: ['place', 'places'], plan: 'Free · 10 per run',
+      idle: 'Search in Google Maps, then start extracting.', live: 'Scrolling the results list…', end: 'Reached the end of the results.',
       url: 'google.com/maps/search/<b>coffee+near+Manhattan</b>'
     },
     list: {
-      tag: 'List mode', icon: 'list', side: 'left', core: 'pin', limit: 10, unit: ['place', 'places'], plan: 'Free · 10 places per run',
-      idle: 'Opens each place in this list and collects it.', live: 'Opening places one by one…', end: 'Reached the end of the list.',
+      tag: 'List mode', icon: 'list', side: 'left', core: 'pin', limit: 10, unit: ['place', 'places'], plan: 'Free · 10 per run',
+      idle: 'List page detected. Click start to extract places one by one.', live: 'Opening places one by one…', end: 'Reached the end of the list.',
       url: 'google.com/maps/<b>@40.7411,-73.9897,14z/data=!4m3!11m2!2s…!10m1!1e1</b>'
     },
     place: {
-      tag: 'Place', icon: 'pin', side: 'right', core: 'pin', limit: 1, unit: ['place', 'places'], plan: 'Free · 10 places per run',
+      tag: 'Place', icon: 'pin', side: 'right', core: 'pin', limit: 1, unit: ['place', 'places'], plan: 'Free · 10 per run',
       idle: 'Collects this place’s details.', live: 'Reading this place…', end: 'Collected this place.',
       url: 'google.com/maps/place/<b>Ember+%26+Oak+Coffee</b>'
     },
     reviews: {
-      tag: 'Reviews', icon: 'review', work: true, core: 'review', limit: 20, unit: ['review', 'reviews'], plan: 'Free · 20 reviews per place',
+      tag: 'Reviews', icon: 'review', work: true, core: 'review', limit: 20, unit: ['review', 'reviews'], plan: 'Free · 20 per run',
       live: 'Reading review pages…', end: 'Reached the last review.', empty: 'No reviews found',
       url: 'search.google.com/local/<b>reviews?placeid=ChIJ…&amp;hl=en</b>'
     },
     photos: {
-      tag: 'Photos', icon: 'image', work: true, core: 'image', limit: 10, unit: ['photo', 'photos'], plan: 'Free · 10 photos per place',
+      tag: 'Photos', icon: 'image', work: true, core: 'image', limit: 10, unit: ['photo', 'photos'], plan: 'Free · 10 per run',
       live: 'Collecting photo links…', end: 'Reached the last photo.', empty: 'No photos found',
       url: 'google.com/maps/<b>uv?pb=!1s0x89c259a…!3m1!7e115</b>'
     }

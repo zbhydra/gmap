@@ -11,9 +11,10 @@
           ><span class="op-pv-ext">.{{ settings.exportFormat }}</span></span
         ></span
       >
-      <span class="op-pv-meta">{{
-        t(I18N_KEYS.OPTIONS.PREVIEW_SAMPLE, { count: rows.length })
-      }}</span>
+      <span class="op-pv-meta">
+        <span>{{ columnCount }}</span>
+        <span>{{ t(I18N_KEYS.OPTIONS.PREVIEW_SAMPLE, { count: rows.length }) }}</span>
+      </span>
     </figcaption>
     <div ref="previewStage" class="op-pv-stage">
       <Transition name="preview-format" mode="out-in">
@@ -162,6 +163,23 @@ onUpdated(() => {
   }
 })
 const columns = computed(() => selectEnabledExportColumns(true, props.settings.exportFieldHeaders))
+/** 预览头第二行左侧：列数 + 格式说明（如「36 columns · UTF-8 · comma-separated」）。 */
+const columnCount = computed(() => {
+  const count = columns.value.length
+  const unit = t(
+    props.settings.exportFormat === 'json'
+      ? I18N_KEYS.OPTIONS.PREVIEW_KEYS
+      : I18N_KEYS.OPTIONS.PREVIEW_COLUMNS,
+    { count },
+    count
+  )
+  const formatKey = {
+    csv: I18N_KEYS.OPTIONS.PREVIEW_FORMAT_CSV,
+    xlsx: I18N_KEYS.OPTIONS.PREVIEW_FORMAT_XLSX,
+    json: I18N_KEYS.OPTIONS.PREVIEW_FORMAT_JSON
+  }[props.settings.exportFormat]
+  return `${unit} · ${t(formatKey)}`
+})
 const rows = computed(() =>
   PREVIEW_ROWS.map(row => ({
     ...row,
@@ -257,8 +275,13 @@ function columnLetter(index: number): string {
   flex-shrink: 0;
 }
 .op-pv-meta {
+  display: grid;
+  justify-items: end;
   color: var(--text-3);
   font-size: var(--fs-micro);
+  line-height: 1.5;
+  text-align: right;
+  white-space: nowrap;
 }
 .op-pv-stage {
   min-width: 0;

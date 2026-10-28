@@ -305,6 +305,7 @@
   font-size: var(--fs-xs);
   color: var(--text-2);
 }
+/* 字段格里的 Pro 标记：皇冠圆章（含义由图例写明），右对齐成一列 */
 .op-pro-mini {
   display: inline-grid;
   place-items: center;
@@ -312,12 +313,13 @@
   height: 20px;
   flex-shrink: 0;
   border-radius: var(--r-full);
-  background: var(--primary-soft);
-  color: var(--primary-text);
+  background: var(--grad-avatar);
+  color: var(--on-solid);
 }
 .op-pro-mini .icon {
   width: 11px;
   height: 11px;
+  stroke-width: 2.2;
 }
 .op-groups {
   display: grid;

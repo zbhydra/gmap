@@ -334,7 +334,8 @@
                       :data-index="index"
                       :class="{
                         'is-active': row.item.status === 'running',
-                        'is-retry': row.item.status === 'running' && row.item.tries > 1
+                        'is-retry': row.item.status === 'running' && row.item.tries > 1,
+                        'is-flash': flashingRows.has(index)
                       }"
                     >
                       <td class="cell-index mono">{{ index + 1 }}</td>
@@ -1158,9 +1159,44 @@ function onTabKey(event: KeyboardEvent, group: 'tool' | 'view'): void {
     container?.querySelector<HTMLButtonElement>('[aria-selected="true"]')?.focus()
   )
 }
+/** 正在闪烁的行下标：条目刚变成完成 / 跳过时整行底色闪一次（设计合同 tr.is-flash）。 */
+const flashingRows = ref<ReadonlySet<number>>(new Set())
+const flashTimers = new Map<number, number>()
+/**
+ * 对比前后两份状态，给当前任务里刚落到完成 / 跳过的条目打一次闪烁。
+ * 用下标标识行（表格 v-for 即以 index 为 key）；只处理当前选中任务，
+ * 初次加载时前一份状态为空，不会误闪。
+ */
+function flashCompletedRows(previous: BulkState, next: BulkState): void {
+  const taskId = selectedTaskId.value
+  if (!taskId) return
+  const before = previous.tasks.find(task => task.id === taskId)
+  const after = next.tasks.find(task => task.id === taskId)
+  if (!before || !after) return
+  after.items.forEach((item, index) => {
+    const previousItem = before.items[index]
+    if (!previousItem || previousItem.status === item.status) return
+    if (item.status !== 'complete' && item.status !== 'skipped') return
+    flashingRows.value = new Set(flashingRows.value).add(index)
+    const timer = flashTimers.get(index)
+    if (timer !== undefined) window.clearTimeout(timer)
+    flashTimers.set(
+      index,
+      window.setTimeout(() => {
+        const rows = new Set(flashingRows.value)
+        rows.delete(index)
+        flashingRows.value = rows
+        flashTimers.delete(index)
+      }, 1400)
+    )
+  })
+}
 async function refreshState(): Promise<void> {
+  const previous = state.value
   try {
-    state.value = await background.getBulkState()
+    const next = await background.getBulkState()
+    state.value = next
+    flashCompletedRows(previous, next)
   } catch (error) {
     logger.error('[Dashboard] 读取批量状态失败:', error)
     showError()
@@ -1498,6 +1534,12 @@ function onVisibilityChange(): void {
 watch([taskType, activeView, locale, () => tasks.value.length], () => {
   void nextTick(updateIndicators)
 })
+// 切换任务时行下标会指向别的条目，清掉未播完的闪烁。
+watch(selectedTaskId, () => {
+  for (const timer of flashTimers.values()) window.clearTimeout(timer)
+  flashTimers.clear()
+  flashingRows.value = new Set()
+})
 watch(
   () => [selectedTask.value?.id, selectedTask.value?.cursor, selectedTask.value?.status],
   () => {
@@ -1535,6 +1577,8 @@ onMounted(async () => {
   updateIndicators()
 })
 onUnmounted(() => {
+  for (const timer of flashTimers.values()) window.clearTimeout(timer)
+  flashTimers.clear()
   document.removeEventListener('visibilitychange', onVisibilityChange)
   window.removeEventListener('resize', updateIndicators)
   stateSubscriber.destroy()
