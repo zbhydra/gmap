@@ -4,7 +4,7 @@
  * 覆盖：
  * - 菜单进入用户管理，列表加载与状态 tag 渲染。
  * - 筛选提交用户 ID、邮箱、账号状态（参数断言）、重置、分页翻页。
- * - 用户 ID 点击打开用户信息弹窗，权益区渲染四线订阅 + 三线用量。
+ * - 用户 ID 和邮箱点击打开用户信息弹窗，权益区渲染四线订阅 + 三线用量。
  * - 空数据占位。
  * - 页面不出现用户写操作。
  */
@@ -318,10 +318,17 @@ test("用户管理支持筛选、分页和弹窗权益区展示", async ({ page 
   await expect.poll(() => requests.at(-1)?.email).toBeNull();
   await expect.poll(() => requests.at(-1)?.status).toBeNull();
 
-  // 用户 ID 点击打开弹窗，权益区渲染三类订阅与用量
+  // 用户 ID 与邮箱复用同一弹窗入口
   await page.getByRole("button", { name: "2001", exact: true }).first().click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  const profileRequest = page.waitForRequest(/\/api\/admin\/users\/2001\/profile$/);
+  await page.getByRole("button", { name: "alpha@example.com", exact: true }).click();
+  await profileRequest;
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("alpha@example.com");
   // 三类产品在订阅区与用量区各一行
   await expect(dialog.getByText("Maps 插件", { exact: true })).toHaveCount(2);
   await expect(dialog.getByText("Maps 云端", { exact: true })).toHaveCount(2);

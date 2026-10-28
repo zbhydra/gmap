@@ -3,7 +3,7 @@
 
   功能：
   1. 按用户 ID（精确）、邮箱（模糊）、账号状态、注册时间范围筛选用户分页列表。
-  2. 用户 ID 可点击，打开通用 UserInfoDialog 查看按线订阅与当月用量。
+  2. 用户 ID 和邮箱可点击，打开通用 UserInfoDialog 查看按线订阅与当月用量。
   3. 无任何写操作。
 -->
 <template>
@@ -175,13 +175,14 @@ const columns = computed<DataTableColumns<AdminUserListItem>>(() => [
     title: t("users.userId"),
     key: "user_id",
     width: 110,
-    render: (row) => renderUserIdButton(row.user_id),
+    render: (row) => renderUserButton(row.user_id),
   },
   {
     title: t("users.userEmail"),
     key: "email",
     minWidth: 220,
-    render: (row) => renderEmail(row.email),
+    render: (row) =>
+      row.email ? renderUserButton(row.user_id, row.email) : "-",
   },
   {
     title: t("userInfo.registerSource"),
@@ -305,24 +306,19 @@ function buildListParams(): AdminUserListParams {
 }
 
 /** 渲染用户信息弹窗入口。 */
-function renderUserIdButton(userId: number) {
+function renderUserButton(userId: number, label: string | number = userId) {
   return h(
     NButton,
     {
       text: true,
       type: "primary",
+      class: "user-info-link",
       onClick: () => openUserInfo(userId),
     },
-    { default: () => userId },
+    {
+      default: () => h(NEllipsis, { tooltip: true }, { default: () => label }),
+    },
   );
-}
-
-/** 渲染邮箱列，空值占位。 */
-function renderEmail(email: string | null) {
-  if (!email) {
-    return "-";
-  }
-  return h(NEllipsis, { tooltip: true }, { default: () => email });
 }
 
 /** 打开通用用户信息弹窗。 */
@@ -362,6 +358,15 @@ onMounted(() => {
 
 .users-panel {
   box-shadow: var(--shadow-card);
+}
+
+.user-info-link {
+  max-width: 100%;
+}
+
+.user-info-link :deep(.n-button__content) {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .users-filter {
