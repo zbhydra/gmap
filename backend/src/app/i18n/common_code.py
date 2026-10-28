@@ -93,6 +93,9 @@ class CommonCode(IntEnum):
     # ========== 订阅活动 (26000-26999) ==========
     SUBSCRIPTION_REVIEW_REWARD_BUSY = 26001  # 好评赠送领取暂时繁忙
 
+    # ========== 免费工具 (27000-27999) ==========
+    TOOL_SERVICE_BUSY = 27001  # 工具依赖的第三方服务不可用，请稍后重试
+
     # ========== 管理后台 (30001-30999) ==========
     ADMIN_AUTH_FAILED = 30001  # 管理员账号或密码错误
     ADMIN_CAPTCHA_FAILED = 30002  # 管理员登录验证码错误

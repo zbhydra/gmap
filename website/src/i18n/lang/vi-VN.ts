@@ -828,12 +828,12 @@ export const site: SiteContent = {
             "accent": " nâng cao ",
             "tail": ""
           },
-          "lead": "Bảy tiện ích chạy hoàn toàn trong trình duyệt của bạn — những gì bạn dán sẽ không bao giờ rời khỏi thiết bị của bạn."
+          "lead": "Bảy tiện ích chạy hoàn toàn trong trình duyệt của bạn — những gì bạn dán sẽ không bao giờ rời khỏi thiết bị của bạn. Ngoại lệ là Trình kiểm tra email: công cụ này gửi địa chỉ đến máy chủ của chúng tôi để xác minh."
         },
         "descriptions": {
           "place-id-finder": "Dán địa điểm trên Bản đồ URL và đọc Place ID, CID và FID của địa điểm đó.",
           "review-link-generator": "Nhận liên kết “viết đánh giá” trực tiếp cho bất kỳ doanh nghiệp nào.",
-          "email-checker": "Xem ngay liệu định dạng email có hợp lệ hay không — với các gợi ý về lỗi đánh máy.",
+          "email-checker": "Kiểm tra xem một địa chỉ email có thực sự nhận được thư hay không.",
           "lat-long-to-dms": "Tọa độ thập phân theo độ, phút và giây.",
           "dms-to-dd": "DMS tọa độ trở lại độ thập phân rõ ràng.",
           "bulk-keywords-generator": "Mọi tổ hợp “từ khóa + vị trí”, sẵn sàng để dán.",
@@ -865,7 +865,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Tôi có cần cài đặt bất cứ thứ gì cho các công cụ web không?",
-            "answer": "Không. Các công cụ web miễn phí chạy hoàn toàn trong trình duyệt của bạn — dữ liệu đầu vào của bạn không bao giờ rời khỏi thiết bị của bạn."
+            "answer": "Không. Các công cụ web miễn phí chạy hoàn toàn trong trình duyệt của bạn — dữ liệu đầu vào của bạn không bao giờ rời khỏi thiết bị của bạn. Ngoại lệ là Trình kiểm tra email: công cụ này gửi địa chỉ bạn nhập đến máy chủ của chúng tôi, nơi một nhà cung cấp dịch vụ xác minh email kiểm tra địa chỉ đó mà không gửi email nào."
           },
           {
             "question": "Tôi có thể xuất sang những định dạng nào?",
@@ -4113,7 +4113,7 @@ export const site: SiteContent = {
             "accent": " Dữ liệu bản đồ ",
             "tail": ""
           },
-          "lead": "Các tiện ích nhỏ chạy hoàn toàn trong trình duyệt của bạn — những gì bạn dán sẽ không bao giờ rời khỏi thiết bị của bạn."
+          "lead": "Các tiện ích nhỏ chạy hoàn toàn trong trình duyệt của bạn — những gì bạn dán sẽ không bao giờ rời khỏi thiết bị của bạn. Ngoại lệ là Trình kiểm tra email: công cụ này gửi địa chỉ đến máy chủ của chúng tôi để xác minh."
         },
         "faq": {
           "kicker": "Câu hỏi thường gặp",
@@ -4359,8 +4359,8 @@ export const site: SiteContent = {
       },
       "emailChecker": {
         "seo": {
-          "title": "Trình kiểm tra email - Trình xác thực định dạng email miễn phí | MapsGrab",
-          "description": "Kiểm tra địa chỉ email để tìm lỗi cú pháp và lỗi chính tả phổ biến ngay lập tức. Xác thực định dạng miễn phí chạy trong trình duyệt của bạn - không cần thăm dò SMTP, không có gì được gửi đi bất cứ đâu."
+          "title": "Trình kiểm tra email — Xác minh địa chỉ email miễn phí | MapsGrab",
+          "description": "Tìm hiểu xem một địa chỉ email có nhận được thư hay không. Trình kiểm tra email miễn phí này hỏi trực tiếp máy chủ thư và cho biết trạng thái, khả năng gửi đến, bản ghi MX và loại tài khoản."
         },
         "hero": {
           "title": {
@@ -4368,13 +4368,15 @@ export const site: SiteContent = {
             "accent": " ",
             "tail": ""
           },
-          "description": "Nhập địa chỉ email và ngay lập tức xem liệu định dạng của nó có hợp lệ hay không — cùng với gợi ý về các lỗi chính tả phổ biến nhất. Mọi thứ đều chạy trong trình duyệt của bạn."
+          "description": "Nhập địa chỉ email, chúng tôi sẽ hỏi máy chủ thư của địa chỉ đó xem có thực sự nhận được thư không — kèm trạng thái, bản ghi MX, loại tài khoản và điểm số."
         },
+        "guideLead": "Việc kiểm tra định dạng diễn ra trong trình duyệt của bạn; còn bản thân địa chỉ được gửi đến máy chủ của chúng tôi để xác minh với máy chủ thư.",
         "form": {
           "emailLabel": "Địa chỉ email",
           "emailPlaceholder": "name@example.com",
           "submit": "Xác minh email",
-          "validHeading": "Địa chỉ email này có vẻ hợp lệ.",
+          "submitting": "Đang xác minh…",
+          "verifyingHint": "Đang hỏi máy chủ thư — có thể mất đến một phút.",
           "invalidHeading": "Địa chỉ email này có vấn đề:",
           "issues": {
             "empty": "Nhập địa chỉ email đầu tiên.",
@@ -4393,18 +4395,52 @@ export const site: SiteContent = {
             "typoDomain": "Tên miền này trông giống như lỗi đánh máy của một nhà cung cấp dịch vụ thư phổ biến."
           }
         },
+        "result": {
+          "labels": {
+            "status": "Trạng thái",
+            "deliverable": "Có thể gửi đến",
+            "mxRecords": "Bản ghi MX",
+            "email": "Địa chỉ email",
+            "domain": "Tên miền",
+            "accountType": "Loại tài khoản",
+            "catchAll": "Tên miền catch-all",
+            "score": "Điểm"
+          },
+          "statuses": {
+            "safe": "An toàn",
+            "invalid": "Không hợp lệ",
+            "disabled": "Đã vô hiệu hóa",
+            "disposable": "Dùng một lần",
+            "inbox_full": "Hộp thư đầy",
+            "catch_all": "Catch-all",
+            "role_account": "Email theo vai trò",
+            "spamtrap": "Bẫy thư rác",
+            "unknown": "Không xác định"
+          },
+          "accountTypes": {
+            "standard": "Thông thường",
+            "role": "Theo vai trò",
+            "disposable": "Dùng một lần",
+            "free": "Email miễn phí"
+          },
+          "yes": "Có",
+          "no": "Không",
+          "noMx": "Không tìm thấy",
+          "unavailable": "Không thể kết nối với dịch vụ xác minh. Vui lòng thử lại sau giây lát.",
+          "rateLimited": "Bạn đã dùng hết lượt kiểm tra miễn phí hôm nay. Vui lòng thử lại vào ngày mai."
+        },
         "howTo": [
           {
-            "heading": "Trình kiểm tra này làm gì - và nó cố tình không làm gì",
-            "body": "Công cụ này xác thực định dạng của địa chỉ email: hình dạng của phần cục bộ, \"@\" và miền, tuân theo các quy tắc thực tế của thông số kỹ thuật RFC mà máy chủ thư thực sự thực thi. Nó cũng gắn cờ các lỗi đánh máy có thể xảy ra của các nhà cung cấp hộp thư phổ biến, nguyên nhân phổ biến nhất khiến các địa chỉ không hoạt động trong danh sách khách hàng tiềm năng. Nó không gửi bất kỳ cuộc thăm dò nào đến máy chủ thư: xác minh SMTP sẽ tiết lộ địa chỉ cho bên thứ ba, điều này mâu thuẫn với việc chạy toàn bộ kiểm tra cục bộ trong trình duyệt của bạn."
+            "heading": "Công cụ này kiểm tra những gì",
+            "body": "Công cụ hỏi máy chủ thư của người nhận xem hộp thư có tồn tại và có nhận thư hay không — giống câu hỏi mà máy chủ gửi đặt ra trước khi chuyển thư, nhưng không gửi đi thư nào. Kết quả cho biết trạng thái chung, địa chỉ có thể gửi đến hay không, các bản ghi MX của tên miền, loại tài khoản (thông thường, theo vai trò như info@ hoặc sales@, dùng một lần, hoặc của nhà cung cấp email miễn phí), tên miền có phải catch-all hay không và điểm số từ 0 đến 100."
           },
           {
-            "heading": "Cách kiểm tra địa chỉ email",
-            "body": "Nhập hoặc dán địa chỉ và nhấn \"Xác minh email\". Kết quả màu xanh lá cây có nghĩa là định dạng có hình dạng có thể phân phối được; kết quả màu đỏ liệt kê mọi quy tắc mà địa chỉ đó vi phạm và — khi miền trông giống như một nhà cung cấp sai chính tả — gợi ý quy tắc dự định. Khắc phục sự cố được báo cáo và xác minh lại cho đến khi vượt qua địa chỉ."
+            "heading": "Cách kiểm tra một địa chỉ email",
+            "body": "Nhập hoặc dán một địa chỉ rồi nhấn \"Xác minh email\". Lỗi định dạng được liệt kê ngay trong trình duyệt và địa chỉ đó sẽ không được gửi đi; nếu tên miền có vẻ gõ nhầm từ một nhà cung cấp phổ biến, chẳng hạn \"gmial.com\", công cụ sẽ nhắc nhưng vẫn tiếp tục kiểm tra. Địa chỉ đúng định dạng được gửi đến máy chủ của chúng tôi để xác minh với máy chủ thư — thường chỉ mất vài giây, nhưng có thể đến một phút."
           },
           {
-            "heading": "Nơi kiểm tra định dạng phù hợp với quy trình làm việc dữ liệu",
-            "body": "Xác thực định dạng là bộ lọc đầu tiên, rẻ nhất cho bất kỳ danh sách email nào: nó loại bỏ các địa chỉ không bao giờ có thể tiếp cận hộp thư trước khi bạn chi tiêu ngân sách khả năng gửi hoặc tăng cường cho chúng. MapsGrab áp dụng suy nghĩ này cho toàn bộ quy trình làm việc của khách hàng tiềm năng — tiện ích mở rộng làm phong phú thêm mọi doanh nghiệp được thu thập bằng các địa chỉ email được tìm thấy trên trang web chính thức của nó, vì vậy, bước xác minh tiếp theo sẽ bắt đầu từ một danh sách rõ ràng hơn nhiều."
+            "heading": "Cách đọc kết quả",
+            "body": "\"An toàn\" nghĩa là hộp thư tồn tại và nhận thư. Địa chỉ không hợp lệ và đã vô hiệu hóa sẽ bị trả lại thư, còn bẫy thư rác thì tuyệt đối không nên gửi. Tên miền catch-all chấp nhận mọi địa chỉ nên không thể xác nhận chính hộp thư; email theo vai trò, địa chỉ dùng một lần và hộp thư đầy đều rủi ro khi tiếp cận khách hàng. \"Không xác định\" nghĩa là máy chủ thư không đưa ra câu trả lời rõ ràng — hãy thử lại sau. MapsGrab thu thập địa chỉ email từ trang web chính thức của từng doanh nghiệp, và công cụ này giúp bạn kiểm tra nhanh một địa chỉ trước khi liên hệ."
           }
         ],
         "faq": {
@@ -4415,20 +4451,24 @@ export const site: SiteContent = {
           },
           "items": [
             {
-              "question": "Công cụ này có kiểm tra xem hộp thư có thực sự tồn tại không?",
-              "answer": "Không - cố ý. Việc kiểm tra sự tồn tại yêu cầu truy vấn máy chủ thư của người nhận (thăm dò SMTP), việc này không thể thực hiện riêng tư trong trình duyệt và có thể khiến IP của bạn bị gắn cờ. Công cụ này xác minh mọi thứ có thể được xác minh mà không cần chạm vào mạng: cấu trúc, ký tự được phép và lỗi chính tả phổ biến của nhà cung cấp."
+              "question": "Công cụ này có kiểm tra hộp thư có thực sự tồn tại không?",
+              "answer": "Có. Ngoài định dạng, công cụ hỏi máy chủ thư của người nhận xem có nhận thư cho địa chỉ đó không, mà không gửi email nào. Khi máy chủ không trả lời rõ ràng — ví dụ với tên miền catch-all — kết quả sẽ nêu rõ thay vì phỏng đoán."
             },
             {
-              "question": "Một địa chỉ có thể vượt qua đây và vẫn bị trả lại không?",
-              "answer": "Đúng. Một địa chỉ hoàn hảo về mặt cú pháp vẫn có thể bị đóng, đầy đủ hoặc bị bỏ qua. Xác thực định dạng sẽ loại bỏ các địa chỉ sai thậm chí trước khi cố gắng gửi - nó không thể đảm bảo rằng hộp thư trông hợp lệ sẽ được con người đọc."
+              "question": "Tôi có thể kiểm tra bao nhiêu địa chỉ?",
+              "answer": "Tối đa 5 địa chỉ mỗi ngày miễn phí, mỗi lần một địa chỉ. Địa chỉ không qua được bước kiểm tra định dạng sẽ không bao giờ được gửi đi nên không bị tính vào giới hạn."
+            },
+            {
+              "question": "Địa chỉ đã qua kiểm tra vẫn có thể bị trả lại thư không?",
+              "answer": "Có. Hộp thư có thể bị đóng hoặc đầy sau khi kiểm tra, và một số máy chủ nhận thư lúc đầu rồi trả lại sau. Kết quả \"An toàn\" nghĩa là địa chỉ nhận thư tại thời điểm kiểm tra — không có nghĩa là có người đọc."
             },
             {
               "question": "Tại sao \"name@localhost\" bị từ chối?",
-              "answer": "Trình kiểm tra yêu cầu một miền có đuôi công khai (TLD) vì các địa chỉ không có đuôi công khai sẽ không thể nhận thư từ internet bên ngoài. Các tiêu chuẩn chỉ cho phép tên miền nội bộ không liên quan đến danh sách khách hàng tiềm năng và dữ liệu khách hàng."
+              "answer": "Công cụ yêu cầu tên miền có đuôi công khai (TLD), vì địa chỉ không có đuôi này không thể nhận thư từ Internet. Những địa chỉ như vậy được đánh dấu ngay trong trình duyệt và không bao giờ được gửi đi để xác minh."
             },
             {
-              "question": "Dữ liệu đầu vào của tôi có được lưu trữ ở đâu không?",
-              "answer": "Không. Quá trình xác thực diễn ra dưới dạng JavaScript đơn giản trong tab trình duyệt của bạn; không có gì được truyền đi, ghi lại hoặc lưu trữ - hãy tải lại trang và nội dung đầu vào sẽ biến mất."
+              "question": "Địa chỉ email tôi nhập được xử lý thế nào?",
+              "answer": "Địa chỉ được gửi đến máy chủ của chúng tôi, sau đó một nhà cung cấp dịch vụ xác minh email sẽ kiểm tra với máy chủ thư của người nhận. Không có email nào được gửi đến địa chỉ đó."
             }
           ]
         },
@@ -4751,7 +4791,7 @@ export const company: CompanyContent = {
         "accent": " theo cách ",
         "tail": " đơn giản"
       },
-      "intro": "MapsGrab xây dựng các công cụ thu thập thông tin doanh nghiệp có sẵn công khai từ Google Maps và biến nó thành dữ liệu có cấu trúc, rõ ràng — tiện ích mở rộng trình duyệt cho Edge và Firefox, Trình quét trực tuyến dựa trên đám mây, máy chủ API và MCP, cùng với các công cụ web miễn phí chạy hoàn toàn trong trình duyệt của bạn.",
+      "intro": "MapsGrab xây dựng các công cụ thu thập thông tin doanh nghiệp có sẵn công khai từ Google Maps và biến nó thành dữ liệu có cấu trúc, rõ ràng — tiện ích mở rộng trình duyệt cho Edge và Firefox, Trình quét trực tuyến dựa trên đám mây, máy chủ API và MCP, cùng với các công cụ web miễn phí, phần lớn chạy hoàn toàn trong trình duyệt của bạn.",
       "contactLabel": "Liên hệ hỗ trợ",
       "extensionLabel": "Khám phá tiện ích mở rộng",
       "stageLabel": "Quyền truy cập sớm",
@@ -4827,7 +4867,7 @@ export const company: CompanyContent = {
       },
       "localFirst": {
         "title": "Ưu tiên địa phương",
-        "text": "Với tiện ích mở rộng và các công cụ web miễn phí, cài đặt và kết quả của bạn sẽ hiển thị trong trình duyệt của bạn chứ không phải trên máy chủ của chúng tôi. Trình quét trực tuyến, API và máy chủ MCP chạy trên đám mây của chúng tôi và kết quả của Trình quét trực tuyến được lưu vào tài khoản của bạn.",
+        "text": "Với tiện ích mở rộng và các công cụ web miễn phí, cài đặt và kết quả của bạn sẽ hiển thị trong trình duyệt của bạn chứ không phải trên máy chủ của chúng tôi. Ngoại lệ là Trình kiểm tra email: công cụ này gửi địa chỉ bạn nhập đến máy chủ của chúng tôi, nơi một nhà cung cấp dịch vụ xác minh email kiểm tra địa chỉ đó mà không gửi email nào. Trình quét trực tuyến, API và máy chủ MCP chạy trên đám mây của chúng tôi và kết quả của Trình quét trực tuyến được lưu vào tài khoản của bạn.",
         "storage": "lưu trữ cục bộ",
         "rows": [
           "Cài đặt",
@@ -4837,7 +4877,7 @@ export const company: CompanyContent = {
       },
       "backend": {
         "title": "Công cụ mở rộng và miễn phí: bốn công việc phụ trợ",
-        "text": "Đối với tiện ích mở rộng và các công cụ web miễn phí, phần phụ trợ của chúng tôi xử lý chính xác bốn việc: cấu hình từ xa, trạng thái tài khoản và hạn ngạch, email/làm giàu cho mạng xã hội tùy chọn và nhật ký sử dụng tối thiểu.",
+        "text": "Đối với tiện ích mở rộng và các công cụ web miễn phí, phần phụ trợ của chúng tôi xử lý chính xác bốn việc: cấu hình từ xa, trạng thái tài khoản và hạn ngạch, email/làm giàu cho mạng xã hội tùy chọn và nhật ký sử dụng tối thiểu. Ngoại lệ duy nhất là Trình kiểm tra email: phần phụ trợ của chúng tôi còn chuyển địa chỉ bạn nhập cho một nhà cung cấp dịch vụ xác minh email để kiểm tra, không gửi email nào.",
         "chips": [
           "Cấu hình",
           "hạn ngạch",
@@ -4868,7 +4908,7 @@ export const company: CompanyContent = {
         "accent": " đến với chúng ta ",
         "tail": ""
       },
-      "lead": "Tiện ích mở rộng hoạt động trên dữ liệu được hiển thị công khai và lưu kết quả trong trình duyệt của bạn. Đối với tiện ích mở rộng và các công cụ web miễn phí, chương trình phụ trợ của chúng tôi chỉ hỗ trợ cấu hình, hạn ngạch, nội dung phong phú tùy chọn và nhật ký sử dụng tối thiểu. Thay vào đó, Trình quét trực tuyến, API và máy chủ MCP chạy trên đám mây của chúng tôi và kết quả của Trình quét trực tuyến được lưu vào tài khoản của bạn.",
+      "lead": "Tiện ích mở rộng hoạt động trên dữ liệu được hiển thị công khai và lưu kết quả trong trình duyệt của bạn. Đối với tiện ích mở rộng và các công cụ web miễn phí, chương trình phụ trợ của chúng tôi chỉ hỗ trợ cấu hình, hạn ngạch, nội dung phong phú tùy chọn và nhật ký sử dụng tối thiểu. Ngoại lệ là Trình kiểm tra email: công cụ này gửi địa chỉ bạn nhập đến máy chủ của chúng tôi, nơi một nhà cung cấp dịch vụ xác minh email kiểm tra địa chỉ đó mà không gửi email nào. Thay vào đó, Trình quét trực tuyến, API và máy chủ MCP chạy trên đám mây của chúng tôi và kết quả của Trình quét trực tuyến được lưu vào tài khoản của bạn.",
       "source": {
         "label": "Nguồn",
         "title": "Các trang Google Maps bạn truy cập",

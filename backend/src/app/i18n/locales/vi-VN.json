@@ -37,6 +37,7 @@
     "USER_NOT_FOUND": "Không tìm thấy người dùng",
     "USER_CANNOT_DELETE_SELF": "Bạn không thể tự xóa mình",
     "RATE_LIMIT_EXCEEDED": "Quá nhiều yêu cầu, vui lòng thử lại sau",
+    "TOOL_SERVICE_BUSY": "Hệ thống đang bận. Vui lòng thử lại sau.",
     "VALIDATION_ERROR": "Thông số yêu cầu không hoàn chỉnh hoặc không hợp lệ",
     "ORDER_NOT_FOUND": "Không tìm thấy đơn hàng",
     "ORDER_INVALID_STATUS": "Trạng thái đơn hàng không hợp lệ",

@@ -2037,7 +2037,7 @@ export interface ReviewLinkGeneratorContent extends ToolGuideMessage {
   }
 }
 
-/** Email Checker 校验问题码（lib 与文案字典的稳定契约）。 */
+/** Email Checker 格式问题码（lib 与文案字典的稳定契约）。 */
 export type EmailIssueCode =
   | 'empty'
   | 'multipleAt'
@@ -2054,8 +2054,25 @@ export type EmailIssueCode =
   | 'domainTooLong'
   | 'typoDomain'
 
+/** Email Checker 验证总体状态：后端透出的已知取值，其余取值一律按 unknown 展示。 */
+export type EmailVerifyStatus =
+  | 'safe'
+  | 'invalid'
+  | 'disabled'
+  | 'disposable'
+  | 'inbox_full'
+  | 'catch_all'
+  | 'role_account'
+  | 'spamtrap'
+  | 'unknown'
+
+/** Email Checker 账号类型：角色、一次性与免费邮箱可同时成立，三者都不成立时为普通邮箱。 */
+export type EmailAccountType = 'standard' | 'role' | 'disposable' | 'free'
+
 /** Email Checker 工具内容。 */
 export interface EmailCheckerContent extends ToolGuideMessage {
+  /** 用法区导语：替换工具页通用导语（通用导语声明输入不离开浏览器，本工具会把邮箱提交到服务端验证）。 */
+  guideLead: string
   /** 输入区文案。 */
   form: {
     /** 输入框标签。 */
@@ -2064,12 +2081,50 @@ export interface EmailCheckerContent extends ToolGuideMessage {
     emailPlaceholder: string
     /** 提交按钮。 */
     submit: string
-    /** 校验通过标题。 */
-    validHeading: string
-    /** 校验未通过标题。 */
+    /** 验证进行中的按钮文案。 */
+    submitting: string
+    /** 验证进行中的提示：邮件服务器检查可能需要数十秒。 */
+    verifyingHint: string
+    /** 格式未通过标题。 */
     invalidHeading: string
     /** 问题码 → 用户可见文案。 */
     issues: Record<EmailIssueCode, string>
+  }
+  /** 验证结果明细表。 */
+  result: {
+    /** 明细表行标签。 */
+    labels: {
+      /** 总体状态。 */
+      status: string
+      /** 能否投递。 */
+      deliverable: string
+      /** MX 记录列表。 */
+      mxRecords: string
+      /** 邮箱地址。 */
+      email: string
+      /** 域名。 */
+      domain: string
+      /** 账号类型。 */
+      accountType: string
+      /** 域名是否接收任意地址（catch-all）。 */
+      catchAll: string
+      /** 0–100 综合评分。 */
+      score: string
+    }
+    /** 总体状态 → 用户可见文案。 */
+    statuses: Record<EmailVerifyStatus, string>
+    /** 账号类型 → 用户可见文案。 */
+    accountTypes: Record<EmailAccountType, string>
+    /** 是非项：是。 */
+    yes: string
+    /** 是非项：否。 */
+    no: string
+    /** 域名没有 MX 记录时的占位。 */
+    noMx: string
+    /** 连不上验证接口（网络失败、超时、响应无法解析）时的提示；除限流外的后端业务错误直接展示后端文案。 */
+    unavailable: string
+    /** 当日免费验证次数已用完（后端限流 998）时的提示，代替后端通用限流文案。 */
+    rateLimited: string
   }
 }
 

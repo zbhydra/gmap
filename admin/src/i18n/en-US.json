@@ -248,6 +248,29 @@
     "objectStorageAliOssEndpointInvalid": "Alibaba Cloud OSS Endpoint must be an HTTP(S) URL without a path, credentials, query, or fragment",
     "objectStorageLoadFailed": "Failed to load object storage config",
     "objectStorageSaveSuccess": "Object storage config saved",
-    "objectStorageSaveFailed": "Failed to save object storage config"
+    "objectStorageSaveFailed": "Failed to save object storage config",
+    "tabReoon": "Reoon Email Verification",
+    "reoonHint": "Each email verification uses a randomly chosen account; with no accounts, email verification is unavailable. Credits are checked only for saved accounts, and checking does not consume credits.",
+    "reoonName": "Account name",
+    "reoonApiKey": "API key",
+    "reoonAdd": "Add account",
+    "reoonRemove": "Remove account",
+    "reoonSave": "Save",
+    "reoonRequired": "Name and API key are required for every account",
+    "reoonDuplicateName": "Duplicate account name: {name}",
+    "reoonLoadFailed": "Could not load Reoon settings. Click Refresh to retry.",
+    "reoonSaveSuccess": "Reoon settings saved",
+    "reoonSaveFailed": "Could not save Reoon settings. Refresh and try again.",
+    "reoonRefreshBalances": "Refresh credits",
+    "reoonBalanceLoading": "Checking credits…",
+    "reoonBalancesFailed": "Could not check credits. Try again.",
+    "reoonApiStatus": "Account status",
+    "reoonDailyCredits": "Daily credits left",
+    "reoonInstantCredits": "Instant credits left",
+    "reoonBalanceReason": {
+      "unauthorized": "Reoon rejected this API key. Check it and save again.",
+      "timeout": "Credit check timed out. Refresh credits to retry.",
+      "upstream_error": "Reoon returned an error. Refresh credits later."
+    }
   }
 }

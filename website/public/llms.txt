@@ -1,6 +1,6 @@
 # MapsGrab
 
-> MapsGrab is a maps data toolkit: a browser extension that grabs publicly available Google Maps business data (business details, reviews, photos, emails) into CSV/JSON, plus seven free web tools that run entirely in the browser.
+> MapsGrab is a maps data toolkit: a browser extension that grabs publicly available Google Maps business data (business details, reviews, photos, emails) into CSV/JSON, plus seven free web tools: six run entirely in the browser, and the Email Checker verifies addresses with the recipient's mail server.
 
 ## Product
 
@@ -17,7 +17,7 @@
 
 - [Place ID Finder](https://mapsgrab.com/tools/place-id-finder/): Paste a Google Maps place URL to extract its Place ID, CID, and FID in the browser.
 - [Review Link Generator](https://mapsgrab.com/tools/review-link-generator/): Build a direct Google reviews URL (search.google.com/local/reviews) from a Maps place URL.
-- [Email Checker](https://mapsgrab.com/tools/email-checker/): Validate email address format with common typo detection. Format checks only, no SMTP verification.
+- [Email Checker](https://mapsgrab.com/tools/email-checker/): Check whether an email address can receive mail by asking its mail server, without sending a message: status, deliverability, MX records, account type (standard, role-based, disposable, free email), catch-all and a 0-100 score. Format and common-typo checks run in the browser; a well-formed address is sent to the MapsGrab server for verification. Free, up to 5 checks per day.
 - [Lat Long to DMS](https://mapsgrab.com/tools/lat-long-to-dms/): Convert decimal degrees to degrees-minutes-seconds with hemisphere letters.
 - [DMS to Decimal](https://mapsgrab.com/tools/dms-to-dd/): Convert degrees-minutes-seconds back to signed decimal degrees.
 - [Bulk Keywords Generator](https://mapsgrab.com/tools/bulk-keywords-generator/): Generate keyword × location combinations in bulk, with keyword-first or location-first ordering.
@@ -37,5 +37,5 @@
 
 - Platform type: Marketing website (static) plus browser extension for data extraction.
 - Default language: English (multi-language architecture in place).
-- Tool privacy: All seven tools run client-side; inputs never leave the browser.
+- Tool privacy: Six tools run client-side and their inputs never leave the browser; the Email Checker sends the address to the MapsGrab server, which checks it through an email verification provider.
 - Sitemap: [XML sitemap index](https://mapsgrab.com/sitemap.xml).

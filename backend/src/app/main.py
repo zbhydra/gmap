@@ -118,6 +118,7 @@ from app.api.client.export_client import router as export_router
 from app.api.client.mark_client import router as mark_router
 from app.api.client.order_client import router as order_router
 from app.api.client.subscription_client import router as subscription_router
+from app.api.client.tools_client import router as tools_router
 from app.api.external.external_maps import router as external_maps_router
 from app.api.external.external_system_dashboard import (
     router as external_system_dashboard_router,
@@ -237,6 +238,7 @@ def _include_business_routes(app_instance: FastAPI) -> None:
         maps_online_router, prefix="/api/client", tags=["client"]
     )
     app_instance.include_router(export_router, prefix="/api/client", tags=["client"])
+    app_instance.include_router(tools_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(credits_asset_router)
     app_instance.include_router(
         callback_router, prefix="/api/callback", tags=["callback"]

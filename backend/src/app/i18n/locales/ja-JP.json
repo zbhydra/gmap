@@ -37,6 +37,7 @@
     "USER_NOT_FOUND": "ユーザーが見つかりません",
     "USER_CANNOT_DELETE_SELF": "自分自身を削除することはできません",
     "RATE_LIMIT_EXCEEDED": "リクエストが頻繁すぎます。後でもう一度お試しください",
+    "TOOL_SERVICE_BUSY": "システムが混み合っています。しばらくしてから再度お試しください",
     "VALIDATION_ERROR": "リクエストパラメータが不完全または無効です",
     "PAYMENT_GATEWAY_ERROR": "決済ゲートウェイエラー",
     "PAYMENT_VERIFICATION_FAILED": "決済の検証に失敗しました",

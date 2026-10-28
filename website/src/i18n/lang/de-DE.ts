@@ -828,12 +828,12 @@ export const site: SiteContent = {
             "accent": "Maps-Profis",
             "tail": ""
           },
-          "lead": "Sieben Dienstprogramme, die vollständig in Ihrem Browser ausgeführt werden – was Sie einfügen, verlässt nie Ihr Gerät."
+          "lead": "Sieben Dienstprogramme, die vollständig in Ihrem Browser ausgeführt werden – was Sie einfügen, verlässt nie Ihr Gerät. Ausnahme ist der E-Mail-Checker: Er sendet die Adresse zur Prüfung an unseren Server."
         },
         "descriptions": {
           "place-id-finder": "Fügen Sie einen Kartenort URL ein und lesen Sie dessen Place ID, CID und FID aus.",
           "review-link-generator": "Holen Sie sich den direkten Link „Bewertung schreiben“ für jedes Unternehmen.",
-          "email-checker": "Sehen Sie sofort, ob ein E-Mail-Format gültig ist – mit Tippfehlerhinweisen.",
+          "email-checker": "Prüfen Sie, ob eine E-Mail-Adresse wirklich E-Mails empfangen kann.",
           "lat-long-to-dms": "Dezimalkoordinaten in Grad, Minuten und Sekunden.",
           "dms-to-dd": "DMS führt die Koordinaten zurück auf saubere Dezimalgrade.",
           "bulk-keywords-generator": "Jede „Keyword + Standort“-Kombination, bereit zum Einfügen.",
@@ -865,7 +865,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Muss ich etwas für die Webtools installieren?",
-            "answer": "Nein. Die kostenlosen Web-Tools laufen vollständig in Ihrem Browser – Ihre Eingaben verlassen nie Ihr Gerät."
+            "answer": "Nein. Die kostenlosen Web-Tools laufen vollständig in Ihrem Browser – Ihre Eingaben verlassen nie Ihr Gerät. Ausnahme ist der E-Mail-Checker: Er sendet die eingegebene Adresse an unseren Server, wo ein E-Mail-Verifizierungsdienst sie prüft, ohne eine E-Mail zu versenden."
           },
           {
             "question": "In welche Formate kann ich exportieren?",
@@ -4113,7 +4113,7 @@ export const site: SiteContent = {
             "accent": " Kartendaten ",
             "tail": ""
           },
-          "lead": "Kleine Dienstprogramme, die vollständig in Ihrem Browser ausgeführt werden – was Sie einfügen, verlässt nie Ihr Gerät."
+          "lead": "Kleine Dienstprogramme, die vollständig in Ihrem Browser ausgeführt werden – was Sie einfügen, verlässt nie Ihr Gerät. Ausnahme ist der E-Mail-Checker: Er sendet die Adresse zur Prüfung an unseren Server."
         },
         "faq": {
           "kicker": "Häufige Fragen",
@@ -4359,8 +4359,8 @@ export const site: SiteContent = {
       },
       "emailChecker": {
         "seo": {
-          "title": "E-Mail-Checker – Kostenloser E-Mail-Format-Validator | MapsGrab",
-          "description": "Überprüfen Sie eine E-Mail-Adresse sofort auf Syntaxfehler und häufige Tippfehler. Kostenlose Formatvalidierung, die in Ihrem Browser ausgeführt wird – keine SMTP-Prüfung, nichts wird irgendwohin gesendet."
+          "title": "E-Mail-Checker – E-Mail-Adresse kostenlos prüfen | MapsGrab",
+          "description": "Finden Sie heraus, ob eine E-Mail-Adresse E-Mails empfangen kann. Der kostenlose E-Mail-Checker fragt beim Mailserver nach und zeigt Status, Zustellbarkeit, MX-Einträge und Kontotyp."
         },
         "hero": {
           "title": {
@@ -4368,13 +4368,15 @@ export const site: SiteContent = {
             "accent": " Checker ",
             "tail": ""
           },
-          "description": "Geben Sie eine E-Mail-Adresse ein und sehen Sie sofort, ob das Format gültig ist – plus Hinweise für die häufigsten Tippfehler. Alles läuft in Ihrem Browser."
+          "description": "Geben Sie eine E-Mail-Adresse ein – wir fragen bei ihrem Mailserver nach, ob sie tatsächlich E-Mails empfangen kann, und zeigen Status, MX-Einträge, Kontotyp und eine Bewertung."
         },
+        "guideLead": "Die Formatprüfung läuft in Ihrem Browser; die Adresse selbst wird zur Prüfung beim Mailserver an unseren Server gesendet.",
         "form": {
           "emailLabel": "E-Mail-Adresse",
           "emailPlaceholder": "name@example.com",
-          "submit": "E-Mail bestätigen",
-          "validHeading": "Diese E-Mail-Adresse scheint gültig zu sein.",
+          "submit": "E-Mail prüfen",
+          "submitting": "Wird geprüft …",
+          "verifyingHint": "Der Mailserver wird abgefragt – das kann bis zu einer Minute dauern.",
           "invalidHeading": "Bei dieser E-Mail-Adresse gibt es Probleme:",
           "issues": {
             "empty": "Geben Sie zunächst eine E-Mail-Adresse ein.",
@@ -4393,18 +4395,52 @@ export const site: SiteContent = {
             "typoDomain": "Diese Domain sieht aus wie ein Tippfehler eines beliebten E-Mail-Anbieters."
           }
         },
+        "result": {
+          "labels": {
+            "status": "Status",
+            "deliverable": "Zustellbar",
+            "mxRecords": "MX-Einträge",
+            "email": "E-Mail-Adresse",
+            "domain": "Domain",
+            "accountType": "Kontotyp",
+            "catchAll": "Catch-all-Domain",
+            "score": "Bewertung"
+          },
+          "statuses": {
+            "safe": "Sicher",
+            "invalid": "Ungültig",
+            "disabled": "Deaktiviert",
+            "disposable": "Wegwerfadresse",
+            "inbox_full": "Postfach voll",
+            "catch_all": "Catch-all",
+            "role_account": "Rollenadresse",
+            "spamtrap": "Spamfalle",
+            "unknown": "Unbekannt"
+          },
+          "accountTypes": {
+            "standard": "Standard",
+            "role": "Rollenadresse",
+            "disposable": "Wegwerfadresse",
+            "free": "Freemail"
+          },
+          "yes": "Ja",
+          "no": "Nein",
+          "noMx": "Keine gefunden",
+          "unavailable": "Der Prüfdienst ist nicht erreichbar. Bitte versuchen Sie es gleich noch einmal.",
+          "rateLimited": "Ihre kostenlosen Prüfungen für heute sind aufgebraucht. Bitte versuchen Sie es morgen erneut."
+        },
         "howTo": [
           {
-            "heading": "Was dieser Prüfer tut – und was er bewusst nicht tut",
-            "body": "Dieses Tool validiert das Format einer E-Mail-Adresse: die Form des lokalen Teils, das „@“ und die Domäne und folgt dabei den praktischen Regeln der RFC-Spezifikationen, die Mailserver tatsächlich durchsetzen. Außerdem werden mögliche Tippfehler beliebter Mailbox-Anbieter angezeigt, die häufigste Ursache für tote Adressen in Lead-Listen. Es wird keine Prüfung an den Mailserver gesendet: Bei der SMTP-Überprüfung würde die Adresse an Dritte weitergegeben, was im Widerspruch zur lokalen Ausführung der gesamten Prüfung in Ihrem Browser steht."
+            "heading": "Was dieser Checker prüft",
+            "body": "Der Checker fragt beim Mailserver des Empfängers nach, ob das Postfach existiert und E-Mails annimmt – dieselbe Frage, die ein sendender Server vor der Zustellung stellt, ohne dass eine Nachricht verschickt wird. Das Ergebnis zeigt den Gesamtstatus, ob die Adresse zustellbar ist, die MX-Einträge der Domain, den Kontotyp (Standard, Rollenadresse wie info@ oder vertrieb@, Wegwerfadresse oder Freemail-Anbieter), ob es sich um eine Catch-all-Domain handelt, und eine Bewertung von 0 bis 100."
           },
           {
-            "heading": "So überprüfen Sie eine E-Mail-Adresse",
-            "body": "Geben oder fügen Sie die Adresse ein und klicken Sie auf „E-Mail-Adresse bestätigen“. Ein grünes Ergebnis bedeutet, dass das Format lieferbar ist; Ein rotes Ergebnis listet jede Regel auf, gegen die die Adresse verstößt, und schlägt – wenn die Domain wie ein falsch geschriebener Anbieter aussieht – den beabsichtigten vor. Beheben Sie die gemeldeten Probleme und überprüfen Sie es erneut, bis die Adresse erfolgreich ist."
+            "heading": "So prüfen Sie eine E-Mail-Adresse",
+            "body": "Geben Sie eine Adresse ein oder fügen Sie sie ein und klicken Sie auf „E-Mail prüfen“. Formatfehler werden in Ihrem Browser aufgelistet, und eine solche Adresse wird nicht gesendet; ein wahrscheinlicher Tippfehler bei einem bekannten Anbieter wie „gmial.com“ wird angezeigt, hält die Prüfung aber nicht auf. Eine korrekt aufgebaute Adresse wird an unseren Server übermittelt, der sie beim Mailserver prüft – das dauert meist wenige Sekunden, kann aber bis zu einer Minute dauern."
           },
           {
-            "heading": "Wo die Formatprüfung in einen Datenworkflow passt",
-            "body": "Die Formatvalidierung ist der erste und kostengünstigste Filter für jede E-Mail-Liste: Sie entfernt Adressen, die niemals ein Postfach erreichen können, bevor Sie Zustellbarkeits- oder Anreicherungsbudgets dafür aufwenden. MapsGrab wendet diesen Gedanken auf den gesamten Lead-Workflow an – die Erweiterung reichert jedes gesammelte Unternehmen mit den E-Mail-Adressen an, die auf seiner offiziellen Website gefunden werden, sodass der nachgelagerte Verifizierungsschritt mit einer viel übersichtlicheren Liste beginnt."
+            "heading": "So lesen Sie das Ergebnis",
+            "body": "„Sicher“ bedeutet, dass das Postfach existiert und E-Mails annimmt. Ungültige und deaktivierte Adressen führen zu Bounces, und an Spamfallen sollte nie gesendet werden. Eine Catch-all-Domain nimmt jede Adresse an, daher lässt sich das Postfach selbst nicht bestätigen; Rollenadressen, Wegwerfadressen und volle Postfächer sind für die Kontaktaufnahme riskant. „Unbekannt“ bedeutet, dass der Mailserver keine eindeutige Antwort gegeben hat – versuchen Sie es später erneut. MapsGrab sammelt E-Mail-Adressen von der Website jedes Unternehmens, und mit diesem Checker prüfen Sie eine davon schnell, bevor Sie Kontakt aufnehmen."
           }
         ],
         "faq": {
@@ -4416,19 +4452,23 @@ export const site: SiteContent = {
           "items": [
             {
               "question": "Prüft dieses Tool, ob das Postfach wirklich existiert?",
-              "answer": "Nein – absichtlich. Um die Existenz zu überprüfen, muss der Mailserver des Empfängers abgefragt werden (SMTP-Prüfung), was nicht privat in einem Browser durchgeführt werden kann und dazu führen kann, dass Ihre IP-Adresse markiert wird. Dieses Tool überprüft alles, was überprüft werden kann, ohne das Netzwerk zu berühren: Struktur, zulässige Zeichen und häufige Tippfehler des Anbieters."
+              "answer": "Ja. Über das Format hinaus fragt es beim Mailserver des Empfängers nach, ob er E-Mails für die Adresse annimmt – ohne eine E-Mail zu senden. Gibt der Server keine eindeutige Antwort, etwa bei einer Catch-all-Domain, sagt das Ergebnis das, statt zu raten."
             },
             {
-              "question": "Kann eine Adresse hier passieren und trotzdem abspringen?",
-              "answer": "Ja. Eine syntaktisch perfekte Adresse kann immer noch geschlossen, voll oder aufgegeben sein. Durch die Formatvalidierung werden die falschen Adressen entfernt, bevor überhaupt ein Zustellungsversuch unternommen wird. Sie kann nicht garantieren, dass ein gültig aussehendes Postfach von einem Menschen gelesen wird."
+              "question": "Wie viele Adressen kann ich prüfen?",
+              "answer": "Bis zu 5 pro Tag kostenlos, jeweils eine Adresse. Adressen, die an der Formatprüfung scheitern, werden nie gesendet und zählen daher nicht zum Limit."
+            },
+            {
+              "question": "Kann eine hier bestandene Adresse trotzdem bouncen?",
+              "answer": "Ja. Ein Postfach kann nach der Prüfung geschlossen werden oder volllaufen, und manche Server nehmen E-Mails zunächst an und schicken sie später zurück. „Sicher“ bedeutet, dass die Adresse zum Zeitpunkt der Prüfung E-Mails angenommen hat – nicht, dass jemand sie liest."
             },
             {
               "question": "Warum wird „name@localhost“ abgelehnt?",
-              "answer": "Der Prüfer erfordert eine Domain mit einer öffentlichen Endung (TLD), da Adressen ohne diese keine E-Mails aus dem externen Internet empfangen können. Standards, die nur interne Domains zulassen, sind für Leadlisten und Kundendaten irrelevant."
+              "answer": "Der Checker verlangt eine Domain mit öffentlicher Endung (TLD), weil Adressen ohne eine solche keine E-Mails aus dem Internet empfangen können. Solche Adressen werden in Ihrem Browser markiert und nie zur Prüfung gesendet."
             },
             {
-              "question": "Werden meine Eingaben irgendwo gespeichert?",
-              "answer": "Nein. Die Validierung wird in Ihrem Browser-Tab einfach als JavaScript ausgeführt. Es wird nichts übertragen, protokolliert oder gespeichert – laden Sie die Seite neu und die Eingabe ist weg."
+              "question": "Was passiert mit der E-Mail-Adresse, die ich eingebe?",
+              "answer": "Sie wird an unseren Server gesendet, der sie von einem E-Mail-Prüfdienst beim Mailserver des Empfängers prüfen lässt. An die Adresse wird keine E-Mail gesendet."
             }
           ]
         },
@@ -4751,7 +4791,7 @@ export const company: CompanyContent = {
         "accent": "einfach",
         "tail": " erfasst"
       },
-      "intro": "MapsGrab erstellt Tools, die öffentlich verfügbare Geschäftsinformationen von Google Maps sammeln und in saubere, strukturierte Daten umwandeln – eine Browser-Erweiterung für Edge und Firefox, einen cloudbasierten Online-Scraper, API und MCP Server sowie kostenlose Web-Tools, die vollständig in Ihrem Browser ausgeführt werden.",
+      "intro": "MapsGrab erstellt Tools, die öffentlich verfügbare Geschäftsinformationen von Google Maps sammeln und in saubere, strukturierte Daten umwandeln – eine Browser-Erweiterung für Edge und Firefox, einen cloudbasierten Online-Scraper, API und MCP Server sowie kostenlose Web-Tools, von denen die meisten vollständig in Ihrem Browser ausgeführt werden.",
       "contactLabel": "Kontaktieren Sie den Support",
       "extensionLabel": "Entdecken Sie die Erweiterung",
       "stageLabel": "Frühzeitiger Zugang",
@@ -4827,7 +4867,7 @@ export const company: CompanyContent = {
       },
       "localFirst": {
         "title": "Lokal zuerst",
-        "text": "Mit der Erweiterung und den kostenlosen Web-Tools werden Ihre Einstellungen und Ergebnisse in Ihrem Browser gespeichert, nicht auf unseren Servern. Der Online Scraper, der API und der MCP Server laufen in unserer Cloud und die Online Scraper-Ergebnisse werden in Ihrem Konto gespeichert.",
+        "text": "Mit der Erweiterung und den kostenlosen Web-Tools werden Ihre Einstellungen und Ergebnisse in Ihrem Browser gespeichert, nicht auf unseren Servern. Ausnahme ist der E-Mail-Checker: Er sendet die eingegebene Adresse an unseren Server, wo ein E-Mail-Verifizierungsdienst sie prüft, ohne eine E-Mail zu versenden. Der Online Scraper, der API und der MCP Server laufen in unserer Cloud und die Online Scraper-Ergebnisse werden in Ihrem Konto gespeichert.",
         "storage": "lokaler Speicher",
         "rows": [
           "Einstellungen",
@@ -4837,7 +4877,7 @@ export const company: CompanyContent = {
       },
       "backend": {
         "title": "Erweiterung & kostenlose Tools: vier Backend-Jobs",
-        "text": "Für die Erweiterung und die kostenlosen Web-Tools verwaltet unser Backend genau vier Dinge: Remote-Konfiguration, Konto- und Kontingentstatus, optionale E-Mail-/soziale Anreicherung und minimale Nutzungsprotokolle.",
+        "text": "Für die Erweiterung und die kostenlosen Web-Tools verwaltet unser Backend genau vier Dinge: Remote-Konfiguration, Konto- und Kontingentstatus, optionale E-Mail-/soziale Anreicherung und minimale Nutzungsprotokolle. Die einzige Ausnahme ist der E-Mail-Checker: Unser Backend gibt die eingegebene Adresse zusätzlich an einen E-Mail-Verifizierungsdienst weiter, der sie prüft, ohne eine E-Mail zu versenden.",
         "chips": [
           "Konfig",
           "Quote",
@@ -4868,7 +4908,7 @@ export const company: CompanyContent = {
         "accent": " ",
         "tail": ""
       },
-      "lead": "Die Erweiterung arbeitet mit öffentlich angezeigten Daten und speichert die Ergebnisse in Ihrem Browser. Für die Erweiterung und die kostenlosen Web-Tools unterstützt unser Backend nur die Konfiguration, Kontingente, optionale Anreicherung und minimale Nutzungsprotokolle. Der Online Scraper, der API und der MCP Server laufen stattdessen in unserer Cloud und die Online Scraper-Ergebnisse werden in Ihrem Konto gespeichert.",
+      "lead": "Die Erweiterung arbeitet mit öffentlich angezeigten Daten und speichert die Ergebnisse in Ihrem Browser. Für die Erweiterung und die kostenlosen Web-Tools unterstützt unser Backend nur die Konfiguration, Kontingente, optionale Anreicherung und minimale Nutzungsprotokolle. Ausnahme ist der E-Mail-Checker: Er sendet die eingegebene Adresse an unseren Server, wo ein E-Mail-Verifizierungsdienst sie prüft, ohne eine E-Mail zu versenden. Der Online Scraper, der API und der MCP Server laufen stattdessen in unserer Cloud und die Online Scraper-Ergebnisse werden in Ihrem Konto gespeichert.",
       "source": {
         "label": "Quelle",
         "title": "Google Maps Seiten, die Sie besuchen",

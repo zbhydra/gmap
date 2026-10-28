@@ -1,7 +1,7 @@
 /**
  * 系统设置 API。
  *
- * 提供配置缓存刷新、管理员外部 API Key 与 Collector 配置操作。
+ * 提供配置缓存刷新、管理员外部 API Key、Collector、对象存储与 Reoon 账号配置操作。
  */
 import request from "./request";
 
@@ -138,4 +138,47 @@ export function getObjectStorageConfig() {
 /** 保存全部对象存储配置，并返回后端归一化结果。 */
 export function saveObjectStorageConfig(config: ObjectStorageConfig) {
   return request.post<never, ObjectStorageConfig>("/system-settings/object-storage", config);
+}
+
+/** Reoon 邮箱验证账号；name 在列表内唯一，额度结果按它对应账号。 */
+export interface ReoonAccount {
+  name: string;
+  api_key: string;
+}
+
+/** 整对象保存；空列表时公开邮箱验证不可用。 */
+export interface ReoonConfig {
+  accounts: ReoonAccount[];
+}
+
+/** 单个已保存账号的额度查询结果；失败只体现在该账号自身。 */
+export type ReoonBalance =
+  | {
+      name: string;
+      ok: true;
+      /** Reoon 原值，官方文档只公开 active。 */
+      api_status: string;
+      /** 当日剩余额度，按日重置。 */
+      daily_credits: number;
+      /** 一次性剩余额度，不按日重置。 */
+      instant_credits: number;
+    }
+  | {
+      name: string;
+      ok: false;
+      reason: "unauthorized" | "timeout" | "upstream_error";
+    };
+
+export function getReoonConfig() {
+  return request.get<never, ReoonConfig>("/system-settings/reoon");
+}
+
+/** 保存全部 Reoon 账号，并返回后端归一化结果。 */
+export function saveReoonConfig(config: ReoonConfig) {
+  return request.post<never, ReoonConfig>("/system-settings/reoon", config);
+}
+
+/** 按已保存顺序查询各账号额度；不扣额度，上游约 4 秒。 */
+export function getReoonBalances() {
+  return request.get<never, { items: ReoonBalance[] }>("/system-settings/reoon/balances");
 }

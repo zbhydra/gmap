@@ -128,28 +128,34 @@
   font-weight: 600;
 }
 
-/* Email Checker：结论标题 + 逐条问题 */
-.tool-result h2[data-outcome] {
-  --outcome: var(--ok);
+/* 提交后的进行中提示（与主按钮同排，窄屏折到下一行） */
+.tool-hint {
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* Email Checker：输入框下方就地展示格式问题（标题 + 逐条问题）；格式合法时只剩域名拼写提示，用提醒色 */
+.tool-check {
+  display: grid;
+  gap: 8px;
+}
+
+.tool-check-heading {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--outcome);
-  font-size: 16px;
+  color: var(--bad);
+  font-size: 15px;
   font-weight: 650;
 }
 
-.tool-result h2[data-outcome='invalid'] {
-  --outcome: var(--bad);
-}
-
-.tool-result h2[data-outcome]::before {
+.tool-check-heading::before {
   width: 10px;
   height: 10px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: var(--outcome);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--outcome) 18%, transparent);
+  background: var(--bad);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--bad) 18%, transparent);
   content: '';
 }
 
@@ -163,16 +169,83 @@
   line-height: 1.6;
 }
 
-.tool-issue-list:empty {
-  display: none;
-}
-
 .tool-issue-list li::marker {
   color: var(--bad);
 }
 
-.tool-result:has([data-outcome='valid']) .tool-issue-list li::marker {
+.tool-check[data-tone='warn'] .tool-issue-list li::marker {
   color: var(--warn);
+}
+
+/* Email Checker：验证明细表，行标签 + 取值两列；长地址与 MX 主机名在格内折行 */
+.tool-verify {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.tool-verify-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tool-verify-table th,
+.tool-verify-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: baseline;
+}
+
+.tool-verify-table tr:last-child > * {
+  border-bottom: 0;
+}
+
+.tool-verify-table th {
+  width: 36%;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tool-verify-table td {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* 共享 .badge 定高且不换行；表格按内容最小宽度分配列宽，窄屏下长的本地化状态名会把表撑出外框被裁掉，
+   所以表内徽章允许折行，单行时仍是 22px */
+.tool-verify-table .badge {
+  height: auto;
+  min-height: 22px;
+  padding-block: 2px;
+  white-space: normal;
+}
+
+.tool-verify-mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+}
+
+.tool-verify-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tool-verify-empty {
+  color: var(--text-3);
 }
 
 /* DMS → DD：纬度 / 经度两组，每组度 / 分 / 秒 + 半球 */
@@ -309,5 +382,10 @@
 
   .tool-field-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tool-verify-table th,
+  .tool-verify-table td {
+    padding: 10px 12px;
   }
 }

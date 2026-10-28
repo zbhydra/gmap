@@ -13,11 +13,13 @@ from app.schemas.admin_schema import (
     ObjectStorageConfig,
 )
 from app.schemas.gmap_collector_schema import GmapCollectorConfig, GmapCollectorInstance
+from app.schemas.reoon_schema import ReoonConfig
 from app.provider.gmap.collector_client import gmap_collector_client
 from app.services.admin_api_key_service import admin_api_key_service
 from app.services.admin_system_settings_service import admin_system_settings_service
 from app.services.gmap_collector_config_service import gmap_collector_config_service
 from app.services.object_storage_config_service import object_storage_config_service
+from app.services.reoon_service import reoon_service
 from app.utils.response import ResponseUtils
 
 router = APIRouter(prefix="/system-settings", tags=["admin-system-settings"])
@@ -90,6 +92,39 @@ async def check_collector_proxies(
 ) -> JSONResponse:
     results = await gmap_collector_config_service.check_proxies(req.proxies)
     response = ResponseUtils.ok({"items": [item.model_dump() for item in results]})
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@router.get("/reoon")
+async def get_reoon_config(
+    _admin: AdminContext = Depends(get_admin_user),
+) -> JSONResponse:
+    config = await reoon_service.get_config()
+    response = ResponseUtils.ok(config.model_dump())
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@router.post("/reoon")
+async def save_reoon_config(
+    req: ReoonConfig,
+    _admin: AdminContext = Depends(get_admin_user),
+) -> JSONResponse:
+    config = await reoon_service.save_config(req)
+    response = ResponseUtils.ok(config.model_dump())
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@router.get("/reoon/balances")
+async def get_reoon_balances(
+    _admin: AdminContext = Depends(get_admin_user),
+) -> JSONResponse:
+    items = await reoon_service.check_balances()
+    response = ResponseUtils.ok(
+        {"items": [item.model_dump(exclude_none=True) for item in items]}
+    )
     response.headers["Cache-Control"] = "no-store"
     return response
 

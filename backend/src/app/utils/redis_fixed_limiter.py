@@ -11,6 +11,7 @@ import time
 from app.utils.logger import logger
 from app.core.redis import redis_client
 from app.utils.redis_key import build_redis_key
+from app.utils.time import get_tomorrow_start_timestamp
 
 
 # Lua 脚本：原子性地增加计数器并在首次设置时添加过期时间
@@ -19,6 +20,15 @@ _INCR_WITH_EXPIRE_SCRIPT = """
 local current = redis.call('INCR', KEYS[1])
 if current == 1 then
     redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return current
+"""
+
+# 业务时区自然日计数：首次计数时把 key 过期点设为次日 0 点（毫秒）；返回增加后的计数值。
+_INCR_WITH_EXPIRE_AT_SCRIPT = """
+local current = redis.call('INCR', KEYS[1])
+if current == 1 then
+    redis.call('PEXPIREAT', KEYS[1], ARGV[1])
 end
 return current
 """
@@ -84,6 +94,21 @@ class RedisFixedLimiter:
         except Exception as e:
             logger.error(f"Fixed window rate limit check failed: {e}", exc_info=True)
             # Redis 故障时放行（fail-open），避免因 Redis 故障影响服务可用性
+            return True
+
+    async def is_allowed_today(self, identifier: str, limit: int) -> bool:
+        """按业务时区自然日计数；秒级窗口按 UTC 对齐，无法表达纽约自然日。"""
+        try:
+            reset_at = get_tomorrow_start_timestamp()
+            redis_key = build_redis_key(f"{self._key_prefix}:{identifier}:{reset_at}")
+            redis = await redis_client.get_client()
+            result = await redis.eval(  # type: ignore[misc]
+                _INCR_WITH_EXPIRE_AT_SCRIPT, 1, redis_key, reset_at
+            )
+            return int(result) <= limit
+        except Exception as e:
+            logger.error(f"Daily rate limit check failed: {e}", exc_info=True)
+            # 与 is_allowed 一致：Redis 故障时放行（fail-open）。
             return True
 
     async def get_current_count(self, identifier: str, window: int) -> int:

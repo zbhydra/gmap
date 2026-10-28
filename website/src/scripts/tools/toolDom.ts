@@ -10,7 +10,7 @@ import { collectUtmParams, reportGA4Event } from '../homepage/ga4'
 import { trackToolEvent } from '../homepage/web-mark'
 
 /** 查询必需元素；缺失抛可定位错误（模板契约破坏必须显式暴露）。 */
-export function queryRequired<T extends HTMLElement>(root: ParentNode, selector: string): T {
+export function queryRequired<T extends Element>(root: ParentNode, selector: string): T {
   const element = root.querySelector<T>(selector)
   if (!element) {
     throw new Error(`[tool-dom] Missing element: ${selector}`)

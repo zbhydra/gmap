@@ -37,6 +37,7 @@
     "USER_NOT_FOUND": "User not found",
     "USER_CANNOT_DELETE_SELF": "Cannot delete yourself",
     "RATE_LIMIT_EXCEEDED": "Too many requests, please try again later",
+    "TOOL_SERVICE_BUSY": "The system is busy. Please try again later.",
     "VALIDATION_ERROR": "Request parameters are incomplete or invalid",
     "ORDER_NOT_FOUND": "Order not found",
     "ORDER_INVALID_STATUS": "Invalid order status",

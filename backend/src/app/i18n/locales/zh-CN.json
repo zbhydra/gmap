@@ -37,6 +37,7 @@
     "USER_NOT_FOUND": "用户不存在",
     "USER_CANNOT_DELETE_SELF": "不能删除自己",
     "RATE_LIMIT_EXCEEDED": "请求过于频繁，请稍后再试",
+    "TOOL_SERVICE_BUSY": "系统繁忙，请稍后重试",
     "VALIDATION_ERROR": "请求参数不完整或格式错误",
     "ORDER_NOT_FOUND": "订单不存在",
     "ORDER_INVALID_STATUS": "订单状态无效",

@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.gmap_collector import GMAP_COLLECTOR_DATA_KEY
 from app.constants.object_storage import OBJECT_STORAGE_DATA_KEY
+from app.constants.reoon import REOON_DATA_KEY
 from app.core.database import get_engine
 from app.models.admin_model import AdminModel
 from app.models.system_data_model import JsonValue, SystemDataModel
@@ -60,6 +61,7 @@ async def real_admin_system_settings_cleanup(
     config_keys = (
         OBJECT_STORAGE_DATA_KEY,
         GMAP_COLLECTOR_DATA_KEY,
+        REOON_DATA_KEY,
     )
     async with AsyncSession(get_engine()) as session:
         rows = list(

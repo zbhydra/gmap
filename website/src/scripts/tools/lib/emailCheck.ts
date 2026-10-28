@@ -1,9 +1,9 @@
 /**
- * 邮箱格式校验纯函数（W4 工具矩阵：纯格式校验，SMTP 探测明确不做）。
+ * 邮箱格式校验纯函数：Email Checker 请求后端验证前的本地关口，格式不合法的地址不发请求、不消耗次数。
  *
  * 校验口径 = 邮箱标准中邮件服务器实际执行的结构规则（local@domain 形态、
  * local 长度/字符/点位置、domain 标签与 TLD），外加常见邮箱服务商域名
- * typo 提示（lead list 死信的第一大来源）。不做网络探测。
+ * typo 提示（lead list 死信的第一大来源）。邮箱能否收信由后端验证接口判断。
  */
 
 import type { EmailIssueCode } from '../../../i18n/schema'
@@ -118,7 +118,8 @@ function checkDomain(domainPart: string): EmailIssueCode[] {
     return issues
   }
   const lastLabel = labels[labels.length - 1] as string
-  if (!/^[a-zA-Z]{2,}$/.test(lastLabel)) {
+  if (labels.length < 2 || !/^[a-zA-Z]{2,}$/.test(lastLabel)) {
+    // 公网可收信的域名至少两段：单段域名（如 localhost）没有公开 TLD；
     // TLD 按现行实践中全字母且 ≥2 位校验（数字/连字符 TLD 非公开注册形态）。
     issues.push('domainNoTld')
   }

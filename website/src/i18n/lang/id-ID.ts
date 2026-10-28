@@ -828,12 +828,12 @@ export const site: SiteContent = {
             "accent": "pengguna mahir",
             "tail": " Maps"
           },
-          "lead": "Tujuh utilitas yang berjalan sepenuhnya di browser Anda — apa yang Anda tempel tidak akan pernah keluar dari perangkat Anda."
+          "lead": "Tujuh utilitas yang berjalan sepenuhnya di browser Anda — apa yang Anda tempel tidak akan pernah keluar dari perangkat Anda. Pengecualiannya adalah Pemeriksa Email, yang mengirim alamat ke server kami untuk diverifikasi."
         },
         "descriptions": {
           "place-id-finder": "Tempelkan tempat di Maps URL dan bacakan Place ID, CID, dan FID.",
           "review-link-generator": "Dapatkan tautan “tulis ulasan” langsung untuk bisnis apa pun.",
-          "email-checker": "Lihat secara instan apakah format email valid — dengan petunjuk kesalahan ketik.",
+          "email-checker": "Periksa apakah alamat email benar-benar bisa menerima email.",
           "lat-long-to-dms": "Koordinat desimal ke derajat, menit dan detik.",
           "dms-to-dd": "DMS koordinat kembali ke derajat desimal bersih.",
           "bulk-keywords-generator": "Setiap kombinasi “kata kunci + lokasi”, siap ditempel.",
@@ -865,7 +865,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Apakah saya perlu menginstal sesuatu untuk alat web?",
-            "answer": "Tidak. Alat web gratis berjalan sepenuhnya di browser Anda — masukan Anda tidak pernah keluar dari perangkat Anda."
+            "answer": "Tidak. Alat web gratis berjalan sepenuhnya di browser Anda — masukan Anda tidak pernah keluar dari perangkat Anda. Pengecualiannya adalah Pemeriksa Email: alat ini mengirim alamat yang Anda masukkan ke server kami, lalu penyedia layanan verifikasi email memeriksanya tanpa mengirim email apa pun."
           },
           {
             "question": "Format apa yang dapat saya ekspor?",
@@ -4113,7 +4113,7 @@ export const site: SiteContent = {
             "accent": "data Maps",
             "tail": ""
           },
-          "lead": "Utilitas kecil yang berjalan sepenuhnya di browser Anda — apa yang Anda tempel tidak akan pernah keluar dari perangkat Anda."
+          "lead": "Utilitas kecil yang berjalan sepenuhnya di browser Anda — apa yang Anda tempel tidak akan pernah keluar dari perangkat Anda. Pengecualiannya adalah Pemeriksa Email, yang mengirim alamat ke server kami untuk diverifikasi."
         },
         "faq": {
           "kicker": "Pertanyaan umum",
@@ -4359,8 +4359,8 @@ export const site: SiteContent = {
       },
       "emailChecker": {
         "seo": {
-          "title": "Pemeriksa Email — Validator Format Email Gratis | MapsGrab",
-          "description": "Periksa alamat email untuk melihat kesalahan sintaksis dan kesalahan ketik yang umum secara instan. Validasi format gratis yang berjalan di browser Anda — tanpa pemeriksaan SMTP, tidak ada yang dikirim ke mana pun."
+          "title": "Pemeriksa Email — Verifikasi Alamat Email Gratis | MapsGrab",
+          "description": "Cari tahu apakah alamat email bisa menerima email. Pemeriksa email gratis ini menanyakan langsung ke server email dan menampilkan status, keterkiriman, data MX, dan jenis akun."
         },
         "hero": {
           "title": {
@@ -4368,13 +4368,15 @@ export const site: SiteContent = {
             "accent": "Pemeriksa",
             "tail": ""
           },
-          "description": "Ketikkan alamat email dan langsung lihat apakah formatnya valid — plus petunjuk untuk kesalahan ketik yang paling umum. Semuanya berjalan di browser Anda."
+          "description": "Masukkan alamat email, lalu kami menanyakan ke server email-nya apakah alamat itu benar-benar bisa menerima email — lengkap dengan status, data MX, jenis akun, dan skor."
         },
+        "guideLead": "Pemeriksaan format berjalan di browser Anda; alamatnya sendiri dikirim ke server kami untuk diverifikasi ke server email.",
         "form": {
           "emailLabel": "Alamat email",
           "emailPlaceholder": "name@example.com",
           "submit": "Verifikasi email",
-          "validHeading": "Alamat email ini tampaknya valid.",
+          "submitting": "Memverifikasi…",
+          "verifyingHint": "Sedang menanyakan ke server email — ini bisa memakan waktu hingga satu menit.",
           "invalidHeading": "Alamat email ini bermasalah:",
           "issues": {
             "empty": "Masukkan alamat email terlebih dahulu.",
@@ -4393,18 +4395,52 @@ export const site: SiteContent = {
             "typoDomain": "Domain ini tampak seperti salah ketik dari penyedia email populer."
           }
         },
+        "result": {
+          "labels": {
+            "status": "Status",
+            "deliverable": "Dapat dikirimi",
+            "mxRecords": "Data MX",
+            "email": "Alamat email",
+            "domain": "Domain",
+            "accountType": "Jenis akun",
+            "catchAll": "Domain catch-all",
+            "score": "Skor"
+          },
+          "statuses": {
+            "safe": "Aman",
+            "invalid": "Tidak valid",
+            "disabled": "Dinonaktifkan",
+            "disposable": "Sekali pakai",
+            "inbox_full": "Kotak masuk penuh",
+            "catch_all": "Catch-all",
+            "role_account": "Akun peran",
+            "spamtrap": "Jebakan spam",
+            "unknown": "Tidak diketahui"
+          },
+          "accountTypes": {
+            "standard": "Standar",
+            "role": "Akun peran",
+            "disposable": "Sekali pakai",
+            "free": "Email gratis"
+          },
+          "yes": "Ya",
+          "no": "Tidak",
+          "noMx": "Tidak ditemukan",
+          "unavailable": "Tidak dapat terhubung ke layanan verifikasi. Silakan coba lagi sebentar lagi.",
+          "rateLimited": "Jatah pemeriksaan gratis Anda hari ini sudah habis. Silakan coba lagi besok."
+        },
         "howTo": [
           {
-            "heading": "Apa yang dilakukan pemeriksa ini — dan apa yang sengaja tidak dilakukannya",
-            "body": "Alat ini memvalidasi format alamat email: bentuk bagian lokal, \"@\", dan domain, mengikuti aturan praktis spesifikasi RFC yang sebenarnya diterapkan oleh server email. Ini juga menandai kemungkinan kesalahan ketik pada penyedia kotak surat populer, satu-satunya penyebab paling umum dari alamat mati dalam daftar prospek. Itu tidak mengirimkan penyelidikan apa pun ke server email: verifikasi SMTP akan mengungkapkan alamatnya kepada pihak ketiga, yang bertentangan dengan menjalankan seluruh pemeriksaan secara lokal di browser Anda."
+            "heading": "Apa yang diperiksa alat ini",
+            "body": "Alat ini menanyakan ke server email penerima apakah kotak surat itu ada dan menerima email — pertanyaan yang sama dengan yang diajukan server pengirim sebelum mengirim, tanpa mengirim pesan apa pun. Hasilnya menampilkan status keseluruhan, apakah alamat dapat dikirimi, data MX domain, jenis akun (standar, akun peran seperti info@ atau sales@, sekali pakai, atau penyedia email gratis), apakah domain bersifat catch-all, serta skor dari 0 hingga 100."
           },
           {
             "heading": "Cara memeriksa alamat email",
-            "body": "Ketik atau tempel alamatnya dan tekan \"Verifikasi email\". Hasil berwarna hijau berarti formatnya berbentuk penyampaian; hasil berwarna merah mencantumkan setiap aturan yang dilanggar alamatnya, dan — jika domain terlihat seperti penyedia yang salah eja — menyarankan penyedia yang dimaksud. Perbaiki masalah yang dilaporkan dan verifikasi lagi hingga alamatnya lolos."
+            "body": "Ketik atau tempel satu alamat lalu tekan \"Verifikasi email\". Masalah format langsung dicantumkan di browser, dan alamat tersebut tidak dikirim; jika domainnya tampak salah ketik dari penyedia populer, misalnya \"gmial.com\", alat ini akan memberi tahu tetapi tetap melanjutkan pemeriksaan. Alamat dengan format yang benar dikirim ke server kami, yang memeriksanya ke server email — biasanya hanya beberapa detik, tetapi bisa sampai satu menit."
           },
           {
-            "heading": "Dimana pemeriksaan format cocok dengan alur kerja data",
-            "body": "Validasi format adalah filter pertama dan termurah untuk daftar email apa pun: validasi ini menghapus alamat yang tidak akan pernah dapat mencapai kotak surat sebelum Anda menghabiskan anggaran keterkiriman atau pengayaan untuk alamat tersebut. MapsGrab menerapkan pemikiran ini ke seluruh alur kerja prospek — ekstensi ini memperkaya setiap bisnis yang dikumpulkan dengan alamat email yang ditemukan di situs resminya, sehingga langkah verifikasi di bagian hilir dimulai dari daftar yang jauh lebih rapi."
+            "heading": "Cara membaca hasil",
+            "body": "\"Aman\" berarti kotak surat ada dan menerima email. Alamat yang tidak valid dan dinonaktifkan akan memantul, dan jebakan spam tidak boleh dikirimi sama sekali. Domain catch-all menerima semua alamat, sehingga kotak suratnya sendiri tidak bisa dipastikan; akun peran, alamat sekali pakai, dan kotak masuk penuh berisiko untuk penjangkauan. \"Tidak diketahui\" berarti server email tidak memberi jawaban pasti — coba lagi nanti. MapsGrab mengumpulkan alamat email dari situs resmi setiap bisnis, dan alat ini adalah cara cepat untuk mengecek salah satunya sebelum Anda menghubungi."
           }
         ],
         "faq": {
@@ -4416,19 +4452,23 @@ export const site: SiteContent = {
           "items": [
             {
               "question": "Apakah alat ini memeriksa apakah kotak surat benar-benar ada?",
-              "answer": "Tidak — sengaja. Pengecekan keberadaan memerlukan menanyakan server email penerima (SMTP probing), yang tidak dapat dilakukan secara pribadi di browser dan dapat membuat IP Anda ditandai. Alat ini memverifikasi segala sesuatu yang dapat diverifikasi tanpa menyentuh jaringan: struktur, karakter yang diizinkan, dan kesalahan ketik umum penyedia."
+              "answer": "Ya. Selain format, alat ini menanyakan ke server email penerima apakah server menerima email untuk alamat tersebut, tanpa mengirim email apa pun. Jika server tidak memberi jawaban pasti — misalnya pada domain catch-all — hasilnya menyatakan hal itu, bukan menebak."
             },
             {
-              "question": "Bisakah suatu alamat lewat di sini dan masih terpental?",
-              "answer": "Ya. Alamat yang sempurna secara sintaksis masih bisa ditutup, penuh, atau ditinggalkan. Validasi format menghapus alamat yang salah bahkan sebelum pengiriman dilakukan — validasi ini tidak dapat menjamin bahwa kotak surat yang tampak valid dapat dibaca oleh manusia."
+              "question": "Berapa banyak alamat yang bisa saya periksa?",
+              "answer": "Hingga 5 per hari secara gratis, satu alamat setiap kali. Alamat yang gagal dalam pemeriksaan format tidak pernah dikirim, jadi tidak dihitung dalam batas."
             },
             {
-              "question": "Mengapa \"nama@localhost\" ditolak?",
-              "answer": "Pemeriksa memerlukan domain dengan akhiran publik (TLD) karena alamat tanpa akhiran tidak dapat menerima email dari internet luar. Standar yang mengizinkan domain khusus internal tidak relevan untuk daftar prospek dan data pelanggan."
+              "question": "Bisakah alamat yang lolos di sini tetap memantul?",
+              "answer": "Bisa. Kotak surat dapat ditutup atau penuh setelah pemeriksaan, dan beberapa server menerima email terlebih dahulu lalu memantulkannya kemudian. Hasil \"Aman\" berarti alamat tersebut menerima email pada saat pemeriksaan — bukan berarti ada orang yang membacanya."
             },
             {
-              "question": "Apakah masukan saya disimpan di mana saja?",
-              "answer": "Tidak. Validasi berjalan seperti JavaScript di tab browser Anda; tidak ada yang dikirim, dicatat, atau disimpan — muat ulang halaman dan masukannya hilang."
+              "question": "Mengapa \"name@localhost\" ditolak?",
+              "answer": "Pemeriksa ini mengharuskan domain dengan akhiran publik (TLD), karena alamat tanpa akhiran tersebut tidak dapat menerima email dari internet. Alamat seperti ini ditandai di browser Anda dan tidak pernah dikirim untuk diverifikasi."
+            },
+            {
+              "question": "Apa yang terjadi pada alamat email yang saya masukkan?",
+              "answer": "Alamat dikirim ke server kami, yang meminta penyedia layanan verifikasi email untuk memeriksanya ke server email penerima. Tidak ada email yang dikirim ke alamat tersebut."
             }
           ]
         },
@@ -4751,7 +4791,7 @@ export const company: CompanyContent = {
         "accent": "mudah",
         "tail": ""
       },
-      "intro": "MapsGrab membuat alat yang mengumpulkan informasi bisnis yang tersedia untuk umum dari Google Maps dan mengubahnya menjadi data yang bersih dan terstruktur — ekstensi browser untuk Edge dan Firefox, Pengumpul online berbasis cloud, server API dan MCP, ditambah alat web gratis yang sepenuhnya dijalankan di browser Anda.",
+      "intro": "MapsGrab membuat alat yang mengumpulkan informasi bisnis yang tersedia untuk umum dari Google Maps dan mengubahnya menjadi data yang bersih dan terstruktur — ekstensi browser untuk Edge dan Firefox, Pengumpul online berbasis cloud, server API dan MCP, ditambah alat web gratis yang sebagian besar sepenuhnya dijalankan di browser Anda.",
       "contactLabel": "Hubungi Dukungan",
       "extensionLabel": "Jelajahi Ekstensi",
       "stageLabel": "Akses awal",
@@ -4827,7 +4867,7 @@ export const company: CompanyContent = {
       },
       "localFirst": {
         "title": "Lokal-pertama",
-        "text": "Dengan ekstensi dan alat web gratis, pengaturan dan hasil Anda ditampilkan di browser Anda, bukan di server kami. Server Scraper Online, API dan MCP dijalankan di cloud kami, dan hasil Scraper Online disimpan ke akun Anda.",
+        "text": "Dengan ekstensi dan alat web gratis, pengaturan dan hasil Anda ditampilkan di browser Anda, bukan di server kami. Pengecualiannya adalah Pemeriksa Email: alat ini mengirim alamat yang Anda masukkan ke server kami, lalu penyedia layanan verifikasi email memeriksanya tanpa mengirim email apa pun. Server Scraper Online, API dan MCP dijalankan di cloud kami, dan hasil Scraper Online disimpan ke akun Anda.",
         "storage": "penyimpanan lokal",
         "rows": [
           "Pengaturan",
@@ -4837,7 +4877,7 @@ export const company: CompanyContent = {
       },
       "backend": {
         "title": "Ekstensi & alat gratis: empat pekerjaan backend",
-        "text": "Untuk ekstensi dan alat web gratis, backend kami menangani empat hal: konfigurasi jarak jauh, status akun dan kuota, pengayaan email/sosial opsional, dan log penggunaan minimal.",
+        "text": "Untuk ekstensi dan alat web gratis, backend kami menangani empat hal: konfigurasi jarak jauh, status akun dan kuota, pengayaan email/sosial opsional, dan log penggunaan minimal. Satu-satunya pengecualian adalah Pemeriksa Email: backend kami juga meneruskan alamat yang Anda masukkan ke penyedia layanan verifikasi email untuk diperiksa, tanpa mengirim email apa pun.",
         "chips": [
           "Konfigurasi",
           "Kuota",
@@ -4868,7 +4908,7 @@ export const company: CompanyContent = {
         "accent": "sampai kepada kami",
         "tail": ""
       },
-      "lead": "Ekstensi ini berfungsi pada data yang ditampilkan secara publik dan menyimpan hasilnya di browser Anda. Untuk ekstensi dan alat web gratis, backend kami hanya mendukung konfigurasi, kuota, pengayaan opsional, dan log penggunaan minimal. Server Scraper Online, API dan MCP dijalankan di cloud kami, dan hasil Scraper Online disimpan ke akun Anda.",
+      "lead": "Ekstensi ini berfungsi pada data yang ditampilkan secara publik dan menyimpan hasilnya di browser Anda. Untuk ekstensi dan alat web gratis, backend kami hanya mendukung konfigurasi, kuota, pengayaan opsional, dan log penggunaan minimal. Pengecualiannya adalah Pemeriksa Email: alat ini mengirim alamat yang Anda masukkan ke server kami, lalu penyedia layanan verifikasi email memeriksanya tanpa mengirim email apa pun. Server Scraper Online, API dan MCP dijalankan di cloud kami, dan hasil Scraper Online disimpan ke akun Anda.",
       "source": {
         "label": "Sumber",
         "title": "Google Maps halaman yang Anda kunjungi",

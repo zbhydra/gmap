@@ -37,6 +37,7 @@
     "USER_NOT_FOUND": "Utente non trovato",
     "USER_CANNOT_DELETE_SELF": "Non puoi eliminare te stesso",
     "RATE_LIMIT_EXCEEDED": "Troppe richieste, per favore riprova più tardi",
+    "TOOL_SERVICE_BUSY": "Il sistema è occupato. Riprova più tardi.",
     "VALIDATION_ERROR": "I parametri della richiesta sono incompleti o non validi",
     "ORDER_NOT_FOUND": "Ordine non trovato",
     "ORDER_INVALID_STATUS": "Stato dell'ordine non valido",

@@ -37,6 +37,7 @@
     "USER_NOT_FOUND": "Utilisateur non trouvé",
     "USER_CANNOT_DELETE_SELF": "Vous ne pouvez pas vous supprimer",
     "RATE_LIMIT_EXCEEDED": "Trop de requêtes, veuillez réessayer plus tard",
+    "TOOL_SERVICE_BUSY": "Le système est occupé. Veuillez réessayer plus tard.",
     "VALIDATION_ERROR": "Les paramètres de requête sont incomplets ou invalides",
     "ORDER_NOT_FOUND": "Commande non trouvée",
     "ORDER_INVALID_STATUS": "Statut de commande invalide",

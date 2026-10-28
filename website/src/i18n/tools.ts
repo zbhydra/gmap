@@ -3,9 +3,10 @@ import type { SiteContent } from './schema'
 /**
  * 免费工具矩阵内容（en-US 基线）。
  *
- * 7 个工具页（D1 清单全做）：每页 = 表单 + 纯前端逻辑 + SEO 正文 + FAQ + CTA 漏斗（安装插件 / 查看套餐）。
+ * 7 个工具页（D1 清单全做）：每页 = 表单 + 工具逻辑 + SEO 正文 + FAQ + CTA 漏斗（安装插件 / 查看套餐）。
  * SEO 正文：Place ID Finder 为三步用法 + 标识讲解（steps / identifiers），其余工具为 howTo 三节。
- * 交互形态在 plans §1 W4 钉死：短链不支持、Email 纯格式校验、CSV 纯前端并集合并。
+ * 交互形态：短链不支持、CSV 纯前端并集合并；Email Checker 是唯一调用后端的工具（邮件服务器验证，
+ * 合同见 docs/feat/015.工具与增长/tech-Email验证.md），文案不得声称其输入不离开浏览器。
  * 工具名与一句话描述在 layout.footer.tools 与 pages.home.tools.descriptions，外壳直接复用。
  */
 export const toolsContent: SiteContent['pages']['tools'] = {
@@ -19,7 +20,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     related: {
       kicker: 'Related tools',
       title: { lead: 'More free tools for ', accent: 'Maps data', tail: '' },
-      lead: 'Small utilities that run entirely in your browser — what you paste never leaves your device.'
+      lead: 'Small utilities that run entirely in your browser — what you paste never leaves your device. The Email Checker is the exception: it sends the address to our server for verification.'
     },
     faq: {
       kicker: 'FAQ',
@@ -239,20 +240,22 @@ export const toolsContent: SiteContent['pages']['tools'] = {
   },
   emailChecker: {
     seo: {
-      title: 'Email Checker — Free Email Format Validator | MapsGrab',
+      title: 'Email Checker — Verify an Email Address for Free | MapsGrab',
       description:
-        'Check an email address for syntax errors and common typos instantly. Free format validation that runs in your browser — no SMTP probing, nothing is sent anywhere.'
+        'Find out whether an email address can receive mail. This free email checker asks the mail server and reports status, deliverability, MX records and account type.'
     },
     hero: {
       title: { lead: 'Email ', accent: 'Checker', tail: '' },
       description:
-        'Type an email address and instantly see whether its format is valid — plus hints for the most common typos. Everything runs in your browser.'
+        'Enter an email address and we check with its mail server whether it can actually receive mail — with status, MX records, account type and a score.'
     },
+    guideLead: 'Format checks run in your browser; the address itself is sent to our server to be verified with its mail server.',
     form: {
       emailLabel: 'Email address',
       emailPlaceholder: 'name@example.com',
       submit: 'Verify email',
-      validHeading: 'This email address looks valid.',
+      submitting: 'Verifying…',
+      verifyingHint: 'Checking with the mail server — this can take up to a minute.',
       invalidHeading: 'This email address has problems:',
       issues: {
         empty: 'Enter an email address first.',
@@ -271,18 +274,52 @@ export const toolsContent: SiteContent['pages']['tools'] = {
         typoDomain: 'This domain looks like a typo of a popular mail provider.'
       }
     },
+    result: {
+      labels: {
+        status: 'Status',
+        deliverable: 'Deliverable',
+        mxRecords: 'MX records',
+        email: 'Email address',
+        domain: 'Domain',
+        accountType: 'Account type',
+        catchAll: 'Catch-all domain',
+        score: 'Score'
+      },
+      statuses: {
+        safe: 'Safe',
+        invalid: 'Invalid',
+        disabled: 'Disabled',
+        disposable: 'Disposable',
+        inbox_full: 'Inbox full',
+        catch_all: 'Catch-all',
+        role_account: 'Role account',
+        spamtrap: 'Spam trap',
+        unknown: 'Unknown'
+      },
+      accountTypes: {
+        standard: 'Standard',
+        role: 'Role-based',
+        disposable: 'Disposable',
+        free: 'Free email'
+      },
+      yes: 'Yes',
+      no: 'No',
+      noMx: 'None found',
+      unavailable: 'Couldn\'t reach the verification service. Please try again in a moment.',
+      rateLimited: 'You\'ve used up today\'s free checks. Please try again tomorrow.'
+    },
     howTo: [
       {
-        heading: 'What this checker does — and what it deliberately does not',
-        body: 'This tool validates the format of an email address: the shape of the local part, the "@", and the domain, following the practical rules of the RFC specifications that mail servers actually enforce. It also flags likely typos of popular mailbox providers, the single most common cause of dead addresses in lead lists. It does not send any probe to the mail server: SMTP verification would disclose the address to a third party, which conflicts with running the whole check locally in your browser.'
+        heading: 'What this checker verifies',
+        body: 'The checker asks the recipient\'s mail server whether the mailbox exists and accepts mail — the same question a sending server asks before delivery, without sending a message. The result shows the overall status, whether the address is deliverable, the domain\'s MX records, the account type (standard, role-based such as info@ or sales@, disposable, or a free email provider), whether the domain is catch-all, and a score from 0 to 100.'
       },
       {
         heading: 'How to check an email address',
-        body: 'Type or paste the address and press "Verify email". A green result means the format is deliverable-shaped; a red result lists every rule the address breaks, and — when the domain looks like a misspelled provider — suggests the intended one. Fix the reported problems and verify again until the address passes.'
+        body: 'Type or paste one address and press "Verify email". Format problems are listed in your browser, and such an address is not sent; a likely typo of a popular provider, such as "gmial.com", is pointed out but does not stop the check. A well-formed address is submitted to our server, which checks it with the mail server — that usually takes a few seconds and can take up to a minute.'
       },
       {
-        heading: 'Where format checking fits in a data workflow',
-        body: 'Format validation is the first, cheapest filter for any email list: it removes addresses that can never reach a mailbox before you spend deliverability or enrichment budget on them. MapsGrab applies this thinking to the whole lead workflow — the extension enriches every collected business with the email addresses found on its official website, so the verification step downstream starts from a much cleaner list.'
+        heading: 'How to read the result',
+        body: 'Safe means the mailbox exists and accepts mail. Invalid and disabled addresses will bounce, and spam traps should never be mailed. A catch-all domain accepts every address, so the mailbox itself cannot be confirmed; role accounts, disposable addresses and full inboxes are risky for outreach. Unknown means the mail server gave no definite answer — try again later. MapsGrab collects email addresses from each business\'s own website, and this checker is a quick way to spot-check one before you reach out.'
       }
     ],
     faq: {
@@ -291,22 +328,27 @@ export const toolsContent: SiteContent['pages']['tools'] = {
         {
           question: 'Does this tool check whether the mailbox really exists?',
           answer:
-            'No — deliberately. Checking existence requires querying the recipient\'s mail server (SMTP probing), which cannot be done privately in a browser and can get your IP flagged. This tool verifies everything that can be verified without touching the network: structure, allowed characters, and common provider typos.'
+            'Yes. Beyond the format, it asks the recipient\'s mail server whether it accepts mail for the address, without sending an email. When the server gives no definite answer — for example on a catch-all domain — the result says so instead of guessing.'
+        },
+        {
+          question: 'How many addresses can I check?',
+          answer:
+            'Up to 5 per day for free, one address at a time. Addresses that fail the format check are never sent, so they do not count toward the limit.'
         },
         {
           question: 'Can an address pass here and still bounce?',
           answer:
-            'Yes. A syntactically perfect address can still be closed, full, or abandoned. Format validation removes the addresses that are wrong before delivery is even attempted — it cannot guarantee that a valid-looking mailbox is read by a human.'
+            'Yes. A mailbox can be closed or fill up after the check, and some servers accept mail at first and bounce it later. A safe result means the address accepted mail at the moment of the check — not that a person reads it.'
         },
         {
           question: 'Why is "name@localhost" rejected?',
           answer:
-            'The checker requires a domain with a public ending (TLD) because addresses without one cannot receive mail from the outside internet. Standards that allow internal-only domains are irrelevant for lead lists and customer data.'
+            'The checker requires a domain with a public ending (TLD) because addresses without one cannot receive mail from the outside internet. Such addresses are flagged in your browser and never sent for verification.'
         },
         {
-          question: 'Is my input stored anywhere?',
+          question: 'What happens to the email address I enter?',
           answer:
-            'No. The validation runs as plain JavaScript in your browser tab; nothing is transmitted, logged, or stored — reload the page and the input is gone.'
+            'It is sent to our server, which has an email verification provider check it with the recipient\'s mail server. No email is sent to the address.'
         }
       ]
     },

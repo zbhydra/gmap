@@ -4,7 +4,7 @@
  *
  * 区块：① Hero（工具图标 + 面包屑眉标、H1 = 工具名、说明、工具面板）→ 用法区（guide 插槽：Place ID Finder 为
  * 三步用法 + 标识讲解，其余工具为 howTo 三节）→ 相关工具（排除当前工具）→ FAQ → 收尾 CTA。
- * 工具面板经默认插槽传入，各工具逻辑在 scripts/tools/ 纯前端执行。
+ * 工具面板经默认插槽传入，各工具逻辑在 scripts/tools/ 前端执行；Email Checker 另调用后端验证接口。
  *
  * 埋点：进入 = 各工具脚本上报 tool_view；功能使用 = 主按钮 data-ga-event="tool_use"（全局点击委派）；
  * CTA 漏斗 = data-cta + 链接 utm。安装入口受 extensionInstall 开关控制（未交付时灰化，无链接与埋点）。

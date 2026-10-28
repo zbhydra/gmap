@@ -354,12 +354,12 @@ export const site: SiteContent = {
         head: {
           kicker: 'Free tools',
           title: { lead: 'Small tools for Maps ', accent: 'power users', tail: '' },
-          lead: 'Seven utilities that run entirely in your browser — what you paste never leaves your device.'
+          lead: 'Seven utilities that run entirely in your browser — what you paste never leaves your device. The Email Checker is the exception: it sends the address to our server for verification.'
         },
         descriptions: {
           'place-id-finder': 'Paste a Maps place URL and read out its Place ID, CID and FID.',
           'review-link-generator': 'Get the direct “write a review” link for any business.',
-          'email-checker': 'See instantly whether an email format is valid — with typo hints.',
+          'email-checker': 'Check whether an email address can actually receive mail.',
           'lat-long-to-dms': 'Decimal coordinates to degrees, minutes and seconds.',
           'dms-to-dd': 'DMS coordinates back to clean decimal degrees.',
           'bulk-keywords-generator': 'Every “keyword + location” combination, ready to paste.',
@@ -391,7 +391,7 @@ export const site: SiteContent = {
           {
             question: 'Do I need to install anything for the web tools?',
             answer:
-              'No. The free web tools run entirely in your browser — your input never leaves your device.'
+              'No. The free web tools run entirely in your browser — your input never leaves your device. The Email Checker is the exception: it sends the address you enter to our server, where an email verification provider checks it without sending an email.'
           },
           {
             question: 'What formats can I export to?',
@@ -572,7 +572,7 @@ export const company: CompanyContent = {
       eyebrow: 'About MapsGrab',
       title: { lead: 'Maps data, grabbed the ', accent: 'straightforward', tail: ' way' },
       intro:
-        'MapsGrab builds tools that collect publicly available business information from Google Maps and turn it into clean, structured data — a browser extension for Edge and Firefox, a cloud-based Online Scraper, API and MCP server, plus free web tools that run entirely in your browser.',
+        'MapsGrab builds tools that collect publicly available business information from Google Maps and turn it into clean, structured data — a browser extension for Edge and Firefox, a cloud-based Online Scraper, API and MCP server, plus free web tools, most of which run entirely in your browser.',
       contactLabel: 'Contact Support',
       extensionLabel: 'Explore the Extension',
       stageLabel: 'Early access',
@@ -616,13 +616,13 @@ export const company: CompanyContent = {
       },
       localFirst: {
         title: 'Local-first',
-        text: 'With the extension and the free web tools, your settings and results live in your browser, not on our servers. The Online Scraper, the API and the MCP server run in our cloud, and Online Scraper results are saved to your account.',
+        text: 'With the extension and the free web tools, your settings and results live in your browser, not on our servers. The Email Checker is the exception: it sends the address you enter to our server, where an email verification provider checks it without sending an email. The Online Scraper, the API and the MCP server run in our cloud, and Online Scraper results are saved to your account.',
         storage: 'local storage',
         rows: ['Settings', 'Results', 'Batch tasks']
       },
       backend: {
         title: 'Extension & free tools: four backend jobs',
-        text: 'For the extension and the free web tools, our backend handles exactly four things: remote configuration, account and quota status, optional email/social enrichment, and minimal usage logs.',
+        text: 'For the extension and the free web tools, our backend handles exactly four things: remote configuration, account and quota status, optional email/social enrichment, and minimal usage logs. The Email Checker is the one exception: our backend also passes the address you enter to an email verification provider, which checks it without sending an email.',
         chips: ['Config', 'Quota', 'Enrichment', 'Usage logs']
       },
       never: {
@@ -640,7 +640,7 @@ export const company: CompanyContent = {
     dataFlow: {
       kicker: 'How data moves',
       title: { lead: 'What stays with you, and what ', accent: 'reaches us', tail: '' },
-      lead: 'The extension works on publicly displayed data and keeps results in your browser. For the extension and the free web tools, our backend only powers configuration, quotas, optional enrichment, and minimal usage logs. The Online Scraper, the API and the MCP server run in our cloud instead, and Online Scraper results are saved to your account.',
+      lead: 'The extension works on publicly displayed data and keeps results in your browser. For the extension and the free web tools, our backend only powers configuration, quotas, optional enrichment, and minimal usage logs. The Email Checker is the exception: it sends the address you enter to our server, where an email verification provider checks it without sending an email. The Online Scraper, the API and the MCP server run in our cloud instead, and Online Scraper results are saved to your account.',
       source: {
         label: 'Source',
         title: 'Google Maps pages you visit',

@@ -828,12 +828,12 @@ export const site: SiteContent = {
             "accent": " ",
             "tail": ""
           },
-          "lead": "Sette utilità che vengono eseguite interamente nel tuo browser: ciò che incolli non lascia mai il tuo dispositivo."
+          "lead": "Sette utilità che vengono eseguite interamente nel tuo browser: ciò che incolli non lascia mai il tuo dispositivo. Fa eccezione il Controllo e-mail, che invia l'indirizzo al nostro server per verificarlo."
         },
         "descriptions": {
           "place-id-finder": "Incolla un luogo sulla mappa URL e leggi i suoi Place ID, CID e FID.",
           "review-link-generator": "Ottieni il collegamento diretto \"scrivi una recensione\" per qualsiasi attività.",
-          "email-checker": "Scopri immediatamente se un formato email è valido, con suggerimenti sugli errori di battitura.",
+          "email-checker": "Controlla se un indirizzo email può davvero ricevere messaggi.",
           "lat-long-to-dms": "Coordinate decimali in gradi, minuti e secondi.",
           "dms-to-dd": "Le coordinate DMS tornano ai gradi decimali puliti.",
           "bulk-keywords-generator": "Ogni combinazione \"parola chiave + posizione\", pronta per essere incollata.",
@@ -865,7 +865,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Devo installare qualcosa per gli strumenti web?",
-            "answer": "No. Gli strumenti web gratuiti vengono eseguiti interamente nel tuo browser: il tuo input non lascia mai il tuo dispositivo."
+            "answer": "No. Gli strumenti web gratuiti vengono eseguiti interamente nel tuo browser: il tuo input non lascia mai il tuo dispositivo. Fa eccezione il Controllo e-mail: invia l'indirizzo che inserisci al nostro server, dove un servizio di verifica email lo controlla senza inviare alcuna email."
           },
           {
             "question": "In quali formati posso esportare?",
@@ -4113,7 +4113,7 @@ export const site: SiteContent = {
             "accent": " Dati mappe ",
             "tail": ""
           },
-          "lead": "Piccole utilità che vengono eseguite interamente nel tuo browser: ciò che incolli non lascia mai il tuo dispositivo."
+          "lead": "Piccole utilità che vengono eseguite interamente nel tuo browser: ciò che incolli non lascia mai il tuo dispositivo. Fa eccezione il Controllo e-mail, che invia l'indirizzo al nostro server per verificarlo."
         },
         "faq": {
           "kicker": "Domande frequenti",
@@ -4359,8 +4359,8 @@ export const site: SiteContent = {
       },
       "emailChecker": {
         "seo": {
-          "title": "Controllo e-mail: validatore gratuito del formato e-mail | MapsGrab",
-          "description": "Controlla immediatamente un indirizzo e-mail per eventuali errori di sintassi e errori di battitura comuni. Convalida del formato libero eseguita nel tuo browser: nessun sondaggio SMTP, nulla viene inviato da nessuna parte."
+          "title": "Email Checker — Verifica un indirizzo email gratis | MapsGrab",
+          "description": "Scopri se un indirizzo email può ricevere messaggi. Questo verificatore gratuito interroga il server di posta e mostra stato, recapitabilità, record MX e tipo di account."
         },
         "hero": {
           "title": {
@@ -4368,13 +4368,15 @@ export const site: SiteContent = {
             "accent": " Controllore ",
             "tail": ""
           },
-          "description": "Digita un indirizzo email e verifica immediatamente se il suo formato è valido, oltre a suggerimenti per gli errori di battitura più comuni. Tutto funziona nel tuo browser."
+          "description": "Inserisci un indirizzo email e chiediamo al suo server di posta se può davvero ricevere messaggi, con stato, record MX, tipo di account e un punteggio."
         },
+        "guideLead": "Il controllo del formato avviene nel tuo browser; l'indirizzo vero e proprio viene inviato al nostro server per essere verificato con il suo server di posta.",
         "form": {
           "emailLabel": "Indirizzo e-mail",
           "emailPlaceholder": "name@example.com",
           "submit": "Verifica l'e-mail",
-          "validHeading": "Questo indirizzo email sembra valido.",
+          "submitting": "Verifica in corso…",
+          "verifyingHint": "Stiamo interrogando il server di posta: può richiedere fino a un minuto.",
           "invalidHeading": "Questo indirizzo email presenta problemi:",
           "issues": {
             "empty": "Inserisci prima un indirizzo email.",
@@ -4393,18 +4395,52 @@ export const site: SiteContent = {
             "typoDomain": "Questo dominio sembra un errore di battitura di un popolare provider di posta."
           }
         },
+        "result": {
+          "labels": {
+            "status": "Stato",
+            "deliverable": "Recapitabile",
+            "mxRecords": "Record MX",
+            "email": "Indirizzo email",
+            "domain": "Dominio",
+            "accountType": "Tipo di account",
+            "catchAll": "Dominio catch-all",
+            "score": "Punteggio"
+          },
+          "statuses": {
+            "safe": "Sicuro",
+            "invalid": "Non valido",
+            "disabled": "Disattivato",
+            "disposable": "Usa e getta",
+            "inbox_full": "Casella piena",
+            "catch_all": "Catch-all",
+            "role_account": "Indirizzo generico",
+            "spamtrap": "Spam trap",
+            "unknown": "Sconosciuto"
+          },
+          "accountTypes": {
+            "standard": "Standard",
+            "role": "Generico",
+            "disposable": "Usa e getta",
+            "free": "Email gratuita"
+          },
+          "yes": "Sì",
+          "no": "No",
+          "noMx": "Nessuno trovato",
+          "unavailable": "Impossibile contattare il servizio di verifica. Riprova tra poco.",
+          "rateLimited": "Hai esaurito le verifiche gratuite di oggi. Riprova domani."
+        },
         "howTo": [
           {
-            "heading": "Cosa fa questo controllore e cosa deliberatamente non fa",
-            "body": "Questo strumento valida il formato di un indirizzo email: la forma della parte locale, la \"@\", e il dominio, seguendo le regole pratiche delle specifiche RFC che i server di posta effettivamente applicano. Segnala inoltre i probabili errori di battitura dei provider di caselle postali più diffusi, la causa più comune di indirizzi non più attivi negli elenchi dei lead. Non invia alcuna sonda al server di posta: la verifica SMTP rivelerebbe l'indirizzo a terzi, il che è in conflitto con l'esecuzione dell'intero controllo localmente nel tuo browser."
+            "heading": "Cosa verifica questo strumento",
+            "body": "Lo strumento chiede al server di posta del destinatario se la casella esiste e accetta messaggi, la stessa domanda che un server di invio pone prima della consegna, senza inviare alcun messaggio. Il risultato mostra lo stato complessivo, se l'indirizzo è recapitabile, i record MX del dominio, il tipo di account (standard, generico come info@ o vendite@, usa e getta o di un provider di email gratuita), se il dominio è catch-all e un punteggio da 0 a 100."
           },
           {
-            "heading": "Come controllare un indirizzo email",
-            "body": "Digita o incolla l'indirizzo e premi \"Verifica email\". Un risultato verde significa che il formato ha la forma di un deliverable; un risultato rosso elenca tutte le regole infrante dall'indirizzo e, quando il dominio sembra un provider con errori di ortografia, suggerisce quello previsto. Risolvi i problemi segnalati e verifica di nuovo finché l'indirizzo non viene superato."
+            "heading": "Come verificare un indirizzo email",
+            "body": "Digita o incolla un indirizzo e premi \"Verifica l'e-mail\". I problemi di formato vengono elencati nel browser e quell'indirizzo non viene inviato; un probabile errore di battitura di un provider noto, come \"gmial.com\", viene segnalato ma non blocca la verifica. Un indirizzo ben formato viene inviato al nostro server, che lo verifica con il server di posta: di solito bastano pochi secondi, ma può servire fino a un minuto."
           },
           {
-            "heading": "Dove il controllo del formato si inserisce in un flusso di lavoro dei dati",
-            "body": "La convalida del formato è il primo filtro più economico per qualsiasi lista di posta elettronica: rimuove gli indirizzi che non potranno mai raggiungere una casella di posta prima che tu abbia speso su di essi il budget per la consegna o l'arricchimento. MapsGrab applica questo pensiero all'intero flusso di lavoro dei lead: l'estensione arricchisce ogni azienda raccolta con gli indirizzi e-mail trovati sul suo sito Web ufficiale, quindi la fase di verifica a valle inizia da un elenco molto più pulito."
+            "heading": "Come leggere il risultato",
+            "body": "\"Sicuro\" significa che la casella esiste e accetta messaggi. Gli indirizzi non validi e disattivati generano rimbalzi, e alle spam trap non bisogna mai scrivere. Un dominio catch-all accetta qualsiasi indirizzo, quindi la casella in sé non può essere confermata; indirizzi generici, usa e getta e caselle piene sono rischiosi per la prospezione. \"Sconosciuto\" significa che il server di posta non ha dato una risposta certa: riprova più tardi. MapsGrab raccoglie gli indirizzi email dal sito ufficiale di ogni attività, e questo strumento è un modo rapido per controllarne uno prima di scrivere."
           }
         ],
         "faq": {
@@ -4416,19 +4452,23 @@ export const site: SiteContent = {
           "items": [
             {
               "question": "Questo strumento verifica se la casella di posta esiste davvero?",
-              "answer": "No, deliberatamente. Per verificare l'esistenza è necessario interrogare il server di posta del destinatario (SMTP sondaggio), cosa che non può essere eseguita privatamente in un browser e può far contrassegnare il tuo IP. Questo strumento verifica tutto ciò che può essere verificato senza toccare la rete: struttura, caratteri consentiti ed errori di battitura comuni dei provider."
+              "answer": "Sì. Oltre al formato, chiede al server di posta del destinatario se accetta messaggi per l'indirizzo, senza inviare alcuna email. Quando il server non dà una risposta certa, ad esempio su un dominio catch-all, il risultato lo indica invece di tirare a indovinare."
             },
             {
-              "question": "Può un indirizzo passare qui e rimbalzare comunque?",
-              "answer": "SÌ. Un indirizzo sintatticamente perfetto può comunque essere chiuso, completo o abbandonato. La convalida del formato rimuove gli indirizzi errati prima ancora che venga tentata la consegna: non può garantire che una casella di posta dall'aspetto valido venga letta da un essere umano."
+              "question": "Quanti indirizzi posso verificare?",
+              "answer": "Fino a 5 al giorno gratis, un indirizzo alla volta. Gli indirizzi che non superano il controllo del formato non vengono mai inviati e quindi non contano ai fini del limite."
             },
             {
-              "question": "Perché \"nome@localhost\" viene rifiutato?",
-              "answer": "Il controllo richiede un dominio con un suffisso pubblico (TLD) perché gli indirizzi senza uno non possono ricevere posta da Internet esterno. Gli standard che consentono domini solo interni sono irrilevanti per gli elenchi di lead e i dati dei clienti."
+              "question": "Un indirizzo che supera il controllo può comunque rimbalzare?",
+              "answer": "Sì. Una casella può essere chiusa o riempirsi dopo la verifica, e alcuni server accettano il messaggio all'inizio e lo respingono più tardi. Un risultato \"Sicuro\" significa che l'indirizzo accettava messaggi al momento della verifica, non che qualcuno li legga."
             },
             {
-              "question": "Il mio input è archiviato da qualche parte?",
-              "answer": "No. La convalida viene eseguita semplicemente JavaScript nella scheda del browser; nulla viene trasmesso, registrato o memorizzato: ricarica la pagina e l'input scompare."
+              "question": "Perché \"name@localhost\" viene rifiutato?",
+              "answer": "Lo strumento richiede un dominio con un'estensione pubblica (TLD), perché gli indirizzi senza estensione non possono ricevere posta da Internet. Questi indirizzi vengono segnalati nel browser e non vengono mai inviati per la verifica."
+            },
+            {
+              "question": "Che fine fa l'indirizzo email che inserisco?",
+              "answer": "Viene inviato al nostro server, che lo fa verificare da un fornitore di servizi di verifica email presso il server di posta del destinatario. All'indirizzo non viene inviata alcuna email."
             }
           ]
         },
@@ -4751,7 +4791,7 @@ export const company: CompanyContent = {
         "accent": " ",
         "tail": ""
       },
-      "intro": "MapsGrab crea strumenti che raccolgono informazioni aziendali disponibili pubblicamente da Google Maps e le trasformano in dati puliti e strutturati: un'estensione del browser per Edge e Firefox, uno scraper online basato su cloud, server API e MCP, oltre a strumenti Web gratuiti che funzionano interamente nel tuo browser.",
+      "intro": "MapsGrab crea strumenti che raccolgono informazioni aziendali disponibili pubblicamente da Google Maps e le trasformano in dati puliti e strutturati: un'estensione del browser per Edge e Firefox, uno scraper online basato su cloud, server API e MCP, oltre a strumenti Web gratuiti, la maggior parte dei quali funziona interamente nel tuo browser.",
       "contactLabel": "Contatta l'assistenza",
       "extensionLabel": "Esplora l'estensione",
       "stageLabel": "Accesso anticipato",
@@ -4827,7 +4867,7 @@ export const company: CompanyContent = {
       },
       "localFirst": {
         "title": "Prima il locale",
-        "text": "Con l'estensione e gli strumenti web gratuiti, le tue impostazioni e i risultati risiedono nel tuo browser, non sui nostri server. Estrattore online, i server API e MCP vengono eseguiti nel nostro cloud e i risultati di Estrattore online vengono salvati sul tuo account.",
+        "text": "Con l'estensione e gli strumenti web gratuiti, le tue impostazioni e i risultati risiedono nel tuo browser, non sui nostri server. Fa eccezione il Controllo e-mail: invia l'indirizzo che inserisci al nostro server, dove un servizio di verifica email lo controlla senza inviare alcuna email. Estrattore online, i server API e MCP vengono eseguiti nel nostro cloud e i risultati di Estrattore online vengono salvati sul tuo account.",
         "storage": "archiviazione locale",
         "rows": [
           "Impostazioni",
@@ -4837,7 +4877,7 @@ export const company: CompanyContent = {
       },
       "backend": {
         "title": "Estensione e strumenti gratuiti: quattro lavori di backend",
-        "text": "Per l'estensione e gli strumenti web gratuiti, il nostro backend gestisce esattamente quattro cose: configurazione remota, stato dell'account e della quota, arricchimento email/social opzionale e registri di utilizzo minimo.",
+        "text": "Per l'estensione e gli strumenti web gratuiti, il nostro backend gestisce esattamente quattro cose: configurazione remota, stato dell'account e della quota, arricchimento email/social opzionale e registri di utilizzo minimo. L'unica eccezione è il Controllo e-mail: il nostro backend passa anche l'indirizzo che inserisci a un servizio di verifica email, che lo controlla senza inviare alcuna email.",
         "chips": [
           "Configurazione",
           "Quota",
@@ -4868,7 +4908,7 @@ export const company: CompanyContent = {
         "accent": " ci arriva ",
         "tail": ""
       },
-      "lead": "L'estensione funziona sui dati visualizzati pubblicamente e mantiene i risultati nel tuo browser. Per l'estensione e gli strumenti Web gratuiti, il nostro backend supporta solo la configurazione, le quote, l'arricchimento opzionale e i log di utilizzo minimo. I server Estrattore online, API e MCP vengono invece eseguiti nel nostro cloud e i risultati di Estrattore online vengono salvati sul tuo account.",
+      "lead": "L'estensione funziona sui dati visualizzati pubblicamente e mantiene i risultati nel tuo browser. Per l'estensione e gli strumenti Web gratuiti, il nostro backend supporta solo la configurazione, le quote, l'arricchimento opzionale e i log di utilizzo minimo. Fa eccezione il Controllo e-mail: invia l'indirizzo che inserisci al nostro server, dove un servizio di verifica email lo controlla senza inviare alcuna email. I server Estrattore online, API e MCP vengono invece eseguiti nel nostro cloud e i risultati di Estrattore online vengono salvati sul tuo account.",
       "source": {
         "label": "Fonte",
         "title": "Google Maps pagine visitate",

@@ -9,9 +9,16 @@
  * - 刷新配置缓存命中正确 POST，并展示刷新结果。
  * - Collector 节点检查、敏感 Key 往返、保存重读及加载失败拦截。
  * - 对象存储多配置新增、启用切换、刷新、删除及已有定位只读。
+ * - Reoon 额度逐行展示（含查询中与单行失败）、增删保存及保存后重查额度。
  */
 import { expect, test, type Page } from "@playwright/test";
-import type { GmapCollectorConfig, GmapCollectorTestResult, ObjectStorageConfig } from "../src/api/system-settings";
+import type {
+  GmapCollectorConfig,
+  GmapCollectorTestResult,
+  ObjectStorageConfig,
+  ReoonBalance,
+  ReoonConfig,
+} from "../src/api/system-settings";
 import { registerE2eBrowserIdentity } from "../scripts/playwright-browser-identity.mjs";
 
 registerE2eBrowserIdentity(test);
@@ -62,7 +69,9 @@ type MockResponseData =
   | ConfigCacheRefreshMockData
   | GmapCollectorConfig
   | GmapCollectorTestResult
-  | ObjectStorageConfig;
+  | ObjectStorageConfig
+  | ReoonConfig
+  | { items: ReoonBalance[] };
 
 /** 后端统一成功响应。 */
 function successResponse(data: MockResponseData) {
@@ -105,11 +114,15 @@ async function loginAsAdmin(page: Page) {
 }
 
 /** 切换系统设置顶部 tab。 */
-async function openSettingsTab(page: Page, tab: "api-key" | "gmap-collector" | "object-storage") {
+async function openSettingsTab(
+  page: Page,
+  tab: "api-key" | "gmap-collector" | "object-storage" | "reoon",
+) {
   const tabText = {
     "api-key": "API Key",
     "gmap-collector": "Collector",
     "object-storage": "对象存储",
+    reoon: "Reoon 邮箱验证",
   }[tab];
   await page.locator(".n-tabs-nav").getByText(tabText, { exact: true }).click();
 }
@@ -139,6 +152,38 @@ async function mockSystemSettingsApi(page: Page) {
   let objectStorageConfig: ObjectStorageConfig = { active_id: null, items: [] };
   let objectStorageSaveCallCount = 0;
   let objectStorageLastPayload: ObjectStorageConfig | null = null;
+  let reoonConfig: ReoonConfig = {
+    accounts: [
+      { name: "main", api_key: "reoon_key_main" },
+      { name: "backup", api_key: "reoon_key_invalid" },
+    ],
+  };
+  let reoonSaveCallCount = 0;
+  let reoonLastPayload: ReoonConfig | null = null;
+  let reoonBalanceCallCount = 0;
+
+  await page.route("**/api/admin/system-settings/reoon", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill(successResponse(reoonConfig));
+      return;
+    }
+    expect(route.request().method()).toBe("POST");
+    reoonSaveCallCount += 1;
+    const payload: ReoonConfig = route.request().postDataJSON();
+    reoonLastPayload = payload;
+    reoonConfig = payload;
+    await route.fulfill(successResponse(reoonConfig));
+  });
+  await page.route("**/api/admin/system-settings/reoon/balances", async (route) => {
+    expect(route.request().method()).toBe("GET");
+    reoonBalanceCallCount += 1;
+    const items: ReoonBalance[] = reoonConfig.accounts.map(({ name, api_key }) =>
+      api_key === "reoon_key_invalid"
+        ? { name, ok: false, reason: "unauthorized" }
+        : { name, ok: true, api_status: "active", daily_credits: 20, instant_credits: 100 },
+    );
+    await route.fulfill(successResponse({ items }));
+  });
 
   await page.route("**/api/admin/system-settings/gmap-collector", async (route) => {
     if (route.request().method() === "GET") {
@@ -236,6 +281,9 @@ async function mockSystemSettingsApi(page: Page) {
     objectStorageSaveCallCount: () => objectStorageSaveCallCount,
     /** 最近一次对象存储保存请求体。 */
     objectStorageLastPayload: () => objectStorageLastPayload,
+    reoonSaveCallCount: () => reoonSaveCallCount,
+    reoonLastPayload: () => reoonLastPayload,
+    reoonBalanceCallCount: () => reoonBalanceCallCount,
   };
 }
 
@@ -558,4 +606,66 @@ test("对象存储四配置新增、切换、刷新、删除与已有定位只�
   await expect.poll(api.objectStorageSaveCallCount).toBe(3);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: testInfo.outputPath("object-storage-mobile.png"), fullPage: true, animations: "disabled" });
+});
+
+test("Reoon 额度逐行展示且单行失败不影响其他行，改动保存后重查额度", async ({ page }, testInfo) => {
+  await loginAsAdmin(page);
+  const api = await mockSystemSettingsApi(page);
+  let releaseBalances = () => {};
+  const balancesGate = new Promise<void>((resolve) => {
+    releaseBalances = resolve;
+  });
+  await page.route("**/api/admin/system-settings/reoon/balances", async (route) => {
+    await balancesGate;
+    await route.fallback();
+  });
+  await page.goto("/system-settings");
+  await openSettingsTab(page, "reoon");
+  const names = page.getByLabel("账号名称", { exact: true });
+  const keys = page.getByLabel("API Key", { exact: true });
+  const balances = page.locator(".reoon-balance");
+  const save = page.getByRole("button", { name: "保存", exact: true });
+  await expect(names).toHaveCount(2);
+  await expect(keys.nth(0)).toHaveAttribute("type", "password");
+  await expect(balances.filter({ hasText: "正在查询额度…" })).toHaveCount(2);
+  await expect(save).toBeDisabled();
+  releaseBalances();
+  await expect(balances.nth(0)).toContainText(/active.*当日剩余\s*20.*一次性剩余\s*100/);
+  await expect(balances.nth(1)).toHaveText("Reoon 拒绝该 API Key，请检查后重新保存");
+
+  await keys.nth(1).fill("reoon_key_rotated");
+  await page.getByRole("button", { name: "添加账号", exact: true }).click();
+  await names.nth(2).fill(" main ");
+  await keys.nth(2).fill(" reoon_key_new ");
+  await expect(balances).toHaveCount(1);
+  await save.click();
+  await expect(page.getByText("账号名称重复：main", { exact: true })).toBeVisible();
+  expect(api.reoonSaveCallCount()).toBe(0);
+  await names.nth(2).fill(" third ");
+  const balanceCalls = api.reoonBalanceCallCount();
+  await save.click();
+  await expect(page.getByText("Reoon 配置已保存", { exact: true })).toBeVisible();
+  expect(api.reoonLastPayload()).toEqual({
+    accounts: [
+      { name: "main", api_key: "reoon_key_main" },
+      { name: "backup", api_key: "reoon_key_rotated" },
+      { name: "third", api_key: "reoon_key_new" },
+    ],
+  });
+  await expect(names.nth(2)).toHaveValue("third");
+  await expect(balances.filter({ hasText: "active" })).toHaveCount(3);
+  expect(api.reoonBalanceCallCount()).toBe(balanceCalls + 1);
+  await page.screenshot({ path: testInfo.outputPath("reoon-desktop.png"), fullPage: true, animations: "disabled" });
+
+  await page.reload();
+  await openSettingsTab(page, "reoon");
+  await expect(keys.nth(1)).toHaveValue("reoon_key_rotated");
+  await expect(balances.filter({ hasText: "active" })).toHaveCount(3);
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByRole("button", { name: "删除账号", exact: true }).first().click();
+  }
+  await save.click();
+  await expect.poll(api.reoonSaveCallCount).toBe(2);
+  expect(api.reoonLastPayload()).toEqual({ accounts: [] });
+  await expect(names).toHaveCount(0);
 });

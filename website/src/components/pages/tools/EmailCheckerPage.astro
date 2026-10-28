@@ -1,6 +1,9 @@
 ---
 /**
- * Email Checker 工具页：纯格式校验（SMTP 探测明确不做，SEO 正文说明）。
+ * Email Checker 工具页：前端格式校验 + 后端邮件服务器验证（docs/feat/015.工具与增长/tech-Email验证.md「工具页展示」）。
+ *
+ * 格式问题与域名拼写提示就地显示在输入框下方；验证明细表的行标签构建期渲染，取值由脚本填充。
+ * 用法区导语用本工具专属文案：通用导语声明输入不离开浏览器，而本工具会把邮箱提交到服务端验证。
  */
 import Icon from '../../site/Icon.astro'
 import ToolGuide from '../../tools/ToolGuide.astro'
@@ -15,7 +18,9 @@ const { locale } = Astro.props
 
 const common = getContent(locale).pages.tools.common
 const tool = getContent(locale).pages.tools.emailChecker
-const copyJson = JSON.stringify({ content: tool })
+const labels = tool.result.labels
+// 脚本只用表单与结果文案；SEO 正文与 FAQ 已在页面上，不重复进载荷。
+const copyJson = JSON.stringify({ form: tool.form, result: tool.result })
 ---
 
 <ToolShell locale={locale} toolId="email-checker" content={tool} howToSteps={tool.howTo} copyJson={copyJson}>
@@ -23,7 +28,7 @@ const copyJson = JSON.stringify({ content: tool })
     <form class="tool-form" data-tool-form autocomplete="off" novalidate>
       <div class="field">
         <label class="field-label" for="email-input">{tool.form.emailLabel}</label>
-        {/* type=text：校验交给本工具的纯前端规则（浏览器原生 email 校验会拦截提交，用户看不到逐条问题说明） */}
+        {/* type=text：格式问题由本工具逐条提示（浏览器原生 email 校验会拦截提交，用户看不到逐条问题说明） */}
         <input
           class="input"
           id="email-input"
@@ -36,20 +41,44 @@ const copyJson = JSON.stringify({ content: tool })
           data-tool-input
         />
       </div>
+      <div class="tool-check" data-format-check hidden>
+        <p class="tool-check-heading" data-format-heading>{tool.form.invalidHeading}</p>
+        <ul class="tool-issue-list" data-issue-list></ul>
+      </div>
       <div class="tool-actions">
-        <button class="btn btn-primary" type="submit" data-ga-event="tool_use" data-ga-tool-id="email-checker">
-          {tool.form.submit}<Icon name="arrow-right" class="icon-arrow" />
+        <button class="btn btn-primary" type="submit" data-tool-submit data-ga-event="tool_use" data-ga-tool-id="email-checker">
+          <span class="spinner spinner--sm" aria-hidden="true" data-submit-spinner hidden></span>
+          <span data-submit-label>{tool.form.submit}</span>
+          <Icon name="arrow-right" class="icon-arrow" />
         </button>
+        <p class="tool-hint" role="status" data-verify-hint></p>
       </div>
     </form>
 
     <section class="tool-result" data-tool-result hidden aria-label={common.resultHeading}>
-      <h2 data-result-heading></h2>
-      <ul class="tool-issue-list" data-issue-list></ul>
+      <h2 class="tool-result-label">{common.resultHeading}</h2>
+      <p class="tool-error" role="alert" data-verify-error hidden><Icon name="info" /><span data-verify-error-text></span></p>
+      <div class="tool-verify" data-verify-detail hidden>
+        <table class="tool-verify-table">
+          <tbody>
+            <tr>
+              <th scope="row">{labels.status}</th>
+              <td><span class="badge" data-verify-status><Icon name="info" /><span data-verify-status-text></span></span></td>
+            </tr>
+            <tr><th scope="row">{labels.deliverable}</th><td data-verify-field="deliverable"></td></tr>
+            <tr><th scope="row">{labels.mxRecords}</th><td data-verify-field="mxRecords"></td></tr>
+            <tr><th scope="row">{labels.email}</th><td class="tool-verify-mono" data-verify-field="email"></td></tr>
+            <tr><th scope="row">{labels.domain}</th><td class="tool-verify-mono" data-verify-field="domain"></td></tr>
+            <tr><th scope="row">{labels.accountType}</th><td data-verify-field="accountType"></td></tr>
+            <tr><th scope="row">{labels.catchAll}</th><td data-verify-field="catchAll"></td></tr>
+            <tr><th scope="row">{labels.score}</th><td class="tool-verify-mono" data-verify-field="score"></td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </div>
 
-  <ToolGuide slot="guide" head={common.guide} sections={tool.howTo} />
+  <ToolGuide slot="guide" head={{ ...common.guide, lead: tool.guideLead }} sections={tool.howTo} />
 </ToolShell>
 
 <script src="../../../scripts/tools/emailChecker.ts"></script>

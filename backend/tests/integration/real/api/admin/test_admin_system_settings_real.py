@@ -18,10 +18,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.gmap_collector import GMAP_COLLECTOR_DATA_KEY
 from app.constants.object_storage import OBJECT_STORAGE_DATA_KEY
+from app.constants.reoon import REOON_DATA_KEY
 from app.core.database import get_engine
 from app.i18n.common_code import CommonCode
 from app.models.system_data_model import JsonValue, SystemDataModel
 from app.provider.gmap.collector_client import gmap_collector_client
+from app.services import reoon_service as reoon_service_module
 from app.services.object_storage_config_service import object_storage_config_service
 from app.services.system_data_service import system_data_service
 
@@ -292,3 +294,97 @@ async def test_real_object_storage_multiple_locations_switch_and_preserve_ids(
     assert await object_storage_config_service.get_item(items[1]["id"]) is None
     for marker in ("access-", "secret-r2-", "secret-ali-", "hidden-secret"):
         assert marker not in caplog.text
+
+
+async def test_real_reoon_admin_config_persistence_and_per_account_balances(
+    real_async_client: httpx.AsyncClient,
+    real_admin_token_for_system_settings: str,
+    test_run_id: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """余额替身形态取自 2026-10-27 Reoon 实测；单账号失败只体现在该行 reason。"""
+    endpoint = "/api/admin/system-settings/reoon"
+    headers = {"Authorization": f"Bearer {real_admin_token_for_system_settings}"}
+    secret = f"REOON_SECRET_{test_run_id}"
+    expected = {
+        "accounts": [
+            {"name": name, "api_key": f"{secret}-{name}"}
+            for name in ("ok", "unauthorized", "timeout")
+        ]
+    }
+    for method, path in (
+        ("GET", endpoint),
+        ("POST", endpoint),
+        ("GET", endpoint + "/balances"),
+    ):
+        response = await real_async_client.request(method, path, json={})
+        assert response.status_code == 401
+        assert response.json()["code"] == CommonCode.AUTH_MISSING_CREDENTIALS
+
+    padded = {
+        "accounts": [
+            {"name": f" {item['name']} ", "api_key": f" {item['api_key']} "}
+            for item in expected["accounts"]
+        ]
+    }
+    response = await real_async_client.post(endpoint, headers=headers, json=padded)
+    assert response.status_code == 200 and response.json()["code"] == CommonCode.SUCCESS
+    assert response.json()["data"] == expected
+    response = await real_async_client.get(endpoint, headers=headers)
+    assert response.status_code == 200 and response.json()["code"] == CommonCode.SUCCESS
+    assert response.json()["data"] == expected
+    assert response.headers["Cache-Control"] == "no-store"
+    assert await _read_stored_config(REOON_DATA_KEY) == expected
+
+    for invalid in (
+        {"accounts": [expected["accounts"][0]] * 2},
+        {"accounts": [{"name": " ", "api_key": secret}]},
+        {"accounts": [{"name": "blank-key", "api_key": " "}]},
+    ):
+        response = await real_async_client.post(endpoint, headers=headers, json=invalid)
+        assert response.status_code == 200
+        assert response.json()["code"] == CommonCode.VALIDATION_ERROR
+    assert await _read_stored_config(REOON_DATA_KEY) == expected
+
+    def balance(request: httpx.Request) -> httpx.Response:
+        key = request.url.params["key"]
+        if key.endswith("-ok"):
+            return httpx.Response(
+                200,
+                json={
+                    "api_status": "active",
+                    "remaining_daily_credits": 20,
+                    "remaining_instant_credits": 100,
+                    "status": "success",
+                },
+            )
+        if key.endswith("-unauthorized"):
+            return httpx.Response(
+                401, json={"reason": "Invalid API key.", "status": "error"}
+            )
+        raise httpx.ConnectTimeout("reoon timeout for real test", request=request)
+
+    monkeypatch.setattr(
+        reoon_service_module,
+        "AsyncClient",
+        lambda **kwargs: httpx.AsyncClient(
+            transport=httpx.MockTransport(balance), **kwargs
+        ),
+    )
+    response = await real_async_client.get(endpoint + "/balances", headers=headers)
+    assert response.status_code == 200 and response.json()["code"] == CommonCode.SUCCESS
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.json()["data"] == {
+        "items": [
+            {
+                "name": "ok",
+                "ok": True,
+                "api_status": "active",
+                "daily_credits": 20,
+                "instant_credits": 100,
+            },
+            {"name": "unauthorized", "ok": False, "reason": "unauthorized"},
+            {"name": "timeout", "ok": False, "reason": "timeout"},
+        ]
+    }
+    assert secret not in response.text

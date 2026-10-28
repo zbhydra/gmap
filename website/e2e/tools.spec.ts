@@ -1,8 +1,9 @@
 /**
  * 工具矩阵 + Pricing 页 e2e（W4/W5 交付版）。
  *
- * mock 跑（PUBLIC_API_BASE_URL 指向假地址）：工具为纯前端逻辑，闭环不依赖
- * 后端；Pricing 断言展示结构（三线套餐卡 / 能力灰化 / URL 选线 / 结构化数据），支付配置
+ * mock 跑（PUBLIC_API_BASE_URL 指向假地址）：除 Email Checker 外工具为纯前端逻辑，闭环不依赖
+ * 后端；Email Checker 的验证接口用路由替身，只证明 UI 流程（真实验证结果见人工联调）。
+ * Pricing 断言展示结构（三线套餐卡 / 能力灰化 / URL 选线 / 结构化数据），支付配置
  * 加载在 mock 下进入失败态（按钮禁用），购买交互链路见 website.spec.ts。
  */
 import { expect, test } from '@playwright/test'
@@ -32,6 +33,57 @@ const TOOL_LINKS = [
 ]
 
 const TOOL_ROUTES = TOOL_LINKS.map(tool => tool.path)
+
+const EMAIL_VERIFY_ROUTE = '**/api/client/tools/email-verify'
+
+/** 验证接口 data（字段按 tech-Email验证「公开验证接口」合同）。 */
+interface EmailVerifyData {
+  email: string
+  username: string
+  domain: string
+  status: string
+  score: number
+  is_deliverable: boolean
+  is_safe_to_send: boolean
+  can_connect_smtp: boolean
+  mx_accepts_mail: boolean
+  is_catch_all: boolean
+  is_role_account: boolean
+  is_disposable: boolean
+  is_free_email: boolean
+  is_disabled: boolean
+  has_inbox_full: boolean
+  is_spamtrap: boolean
+  mx_records: string[]
+}
+
+/** 成功信封：默认是一个可安全发送的免费邮箱地址。 */
+function emailVerifyEnvelope(overrides: Partial<EmailVerifyData> = {}): { code: number; msg: string; data: EmailVerifyData } {
+  return {
+    code: 10000,
+    msg: 'success',
+    data: {
+      email: 'jane.doe@gmail.com',
+      username: 'jane.doe',
+      domain: 'gmail.com',
+      status: 'safe',
+      score: 100,
+      is_deliverable: true,
+      is_safe_to_send: true,
+      can_connect_smtp: true,
+      mx_accepts_mail: true,
+      is_catch_all: false,
+      is_role_account: false,
+      is_disposable: false,
+      is_free_email: true,
+      is_disabled: false,
+      has_inbox_full: false,
+      is_spamtrap: false,
+      mx_records: ['gmail-smtp-in.l.google.com', 'alt1.gmail-smtp-in.l.google.com'],
+      ...overrides
+    }
+  }
+}
 
 test.describe('Tool Matrix', () => {
   test('every page exposes the seven tool entries in the footer for internal linking', async ({ page }) => {
@@ -116,24 +168,134 @@ test.describe('Tool Matrix', () => {
     await expect(page.locator('[data-review-open]')).toHaveAttribute('href', /placeid=/)
   })
 
-  test('email checker validates format, flags broken shapes and suggests typo domains', async ({ page }) => {
+  test('email checker lists format problems in place without calling the backend', async ({ page }) => {
+    let verifyCalls = 0
+    await page.route(EMAIL_VERIFY_ROUTE, route => {
+      verifyCalls += 1
+      return route.abort()
+    })
     await page.goto('/tools/email-checker/')
+    const check = page.locator('[data-format-check]')
 
-    // 合法地址 → 通过
-    await page.locator('[data-tool-input]').fill('jane.doe@example.com')
-    await page.locator('[data-tool-form] button[type="submit"]').click()
-    await expect(page.locator('[data-result-heading]')).toHaveAttribute('data-outcome', 'valid')
-
-    // 双 @ → 逐条问题清单
     await page.locator('[data-tool-input]').fill('jane@@example.com')
-    await page.locator('[data-tool-form] button[type="submit"]').click()
-    await expect(page.locator('[data-result-heading]')).toHaveAttribute('data-outcome', 'invalid')
-    await expect(page.locator('[data-issue-list] li')).not.toHaveCount(0)
+    await page.locator('[data-tool-submit]').click()
+    await expect(check.locator('[data-format-heading]')).toHaveText('This email address has problems:')
+    await expect(check.locator('[data-issue-list] li')).toHaveText(['The address contains more than one "@" symbol.'])
 
-    // 服务商域名 typo → 建议正确域名
-    await page.locator('[data-tool-input]').fill('jane@gnail.com')
-    await page.locator('[data-tool-form] button[type="submit"]').click()
-    await expect(page.locator('[data-issue-list]')).toContainText('gmail.com')
+    await page.locator('[data-tool-input]').fill('name@localhost')
+    await page.locator('[data-tool-submit]').click()
+    await expect(check.locator('[data-issue-list]')).toContainText('The domain has no ending (TLD)')
+    await expect(page.locator('[data-tool-result]')).toBeHidden()
+    await expect(page.locator('[data-tool-submit]')).toBeEnabled()
+    expect(verifyCalls).toBe(0)
+  })
+
+  test('email checker verifies a well-formed address and renders the detail table', async ({ page }) => {
+    let release: () => void = () => {}
+    const gate = new Promise<void>(resolve => { release = resolve })
+    let verifyCalls = 0
+    await page.route(EMAIL_VERIFY_ROUTE, async route => {
+      verifyCalls += 1
+      await gate
+      await route.fulfill({ json: emailVerifyEnvelope() })
+    })
+    await page.goto('/tools/email-checker/')
+    const posted = page.waitForRequest(request => request.method() === 'POST' && request.url().endsWith('/api/client/tools/email-verify'))
+    await page.locator('[data-tool-input]').fill('  jane.doe@gmail.com ')
+    await page.locator('[data-tool-submit]').click()
+
+    // 验证进行中：按钮 loading 并禁用，提示可能需要数十秒；提交的是去首尾空白的地址
+    const submit = page.locator('[data-tool-submit]')
+    await expect(submit).toBeDisabled()
+    await expect(submit).toHaveText('Verifying…')
+    await expect(page.locator('[data-verify-hint]')).toHaveText('Checking with the mail server — this can take up to a minute.')
+    await expect(page.locator('[data-format-check]')).toBeHidden()
+    expect((await posted).postDataJSON()).toEqual({ email: 'jane.doe@gmail.com' })
+    // 按钮禁用期间在输入框回车不会再次提交
+    await page.locator('[data-tool-input]').press('Enter')
+
+    release()
+    await expect(page.locator('[data-verify-detail]')).toBeVisible()
+    const status = page.locator('[data-verify-status]')
+    await expect(status).toHaveText('Safe')
+    await expect(status).toHaveClass(/badge--ok/)
+    await expect(page.locator('[data-verify-field="deliverable"]')).toHaveText('Yes')
+    await expect(page.locator('[data-verify-field="mxRecords"] li')).toHaveText([
+      'gmail-smtp-in.l.google.com',
+      'alt1.gmail-smtp-in.l.google.com'
+    ])
+    await expect(page.locator('[data-verify-field="email"]')).toHaveText('jane.doe@gmail.com')
+    await expect(page.locator('[data-verify-field="domain"]')).toHaveText('gmail.com')
+    await expect(page.locator('[data-verify-field="accountType"]')).toHaveText('Free email')
+    await expect(page.locator('[data-verify-field="catchAll"]')).toHaveText('No')
+    await expect(page.locator('[data-verify-field="score"]')).toHaveText('100/100')
+    await expect(page.locator('[data-verify-error]')).toBeHidden()
+    await expect(submit).toBeEnabled()
+    await expect(submit).toHaveText('Verify email')
+    await expect(page.locator('[data-verify-hint]')).toHaveText('')
+    expect(verifyCalls).toBe(1)
+  })
+
+  test('email checker shows failures in the result area and allows resubmitting', async ({ page }) => {
+    const responses = ['rate-limited', 'busy', 'network-down', 'unknown-status']
+    await page.route(EMAIL_VERIFY_ROUTE, route => {
+      const next = responses.shift()
+      if (next === 'rate-limited') {
+        return route.fulfill({ json: { code: 998, msg: 'Too many requests, please try again later', data: null } })
+      }
+      if (next === 'busy') {
+        return route.fulfill({ json: { code: 27001, msg: 'The system is busy. Please try again later.', data: null } })
+      }
+      if (next === 'network-down') {
+        return route.abort('failed')
+      }
+      return route.fulfill({
+        json: emailVerifyEnvelope({
+          email: 'info@gnail.com',
+          username: 'info',
+          domain: 'gnail.com',
+          status: 'not_a_documented_status',
+          score: 12,
+          is_deliverable: false,
+          is_catch_all: true,
+          is_role_account: true,
+          mx_records: []
+        })
+      })
+    })
+    await page.goto('/tools/email-checker/')
+    await page.locator('[data-tool-input]').fill('info@gnail.com')
+    const submit = page.locator('[data-tool-submit]')
+    const error = page.locator('[data-verify-error]')
+
+    // 拼写提示照常展示（提醒色、无问题标题），不阻止提交；限流（当日次数用完）展示本地文案
+    await submit.click()
+    const check = page.locator('[data-format-check]')
+    await expect(check).toHaveAttribute('data-tone', 'warn')
+    await expect(check.locator('[data-issue-list]')).toContainText('gmail.com')
+    await expect(check.locator('[data-format-heading]')).toBeHidden()
+    await expect(error).toHaveText('You\'ve used up today\'s free checks. Please try again tomorrow.')
+    await expect(page.locator('[data-verify-detail]')).toBeHidden()
+
+    // 其他后端业务错误直接展示后端文案；可重新提交
+    await submit.click()
+    await expect(error).toHaveText('The system is busy. Please try again later.')
+
+    // 连不上验证接口：本地文案
+    await submit.click()
+    await expect(error).toHaveText('Couldn\'t reach the verification service. Please try again in a moment.')
+
+    // 未知状态按 unknown 展示；账号类型可多选；没有 MX 记录给占位
+    await submit.click()
+    await expect(page.locator('[data-verify-detail]')).toBeVisible()
+    await expect(error).toBeHidden()
+    const status = page.locator('[data-verify-status]')
+    await expect(status).toHaveText('Unknown')
+    await expect(status).toHaveClass(/badge--muted/)
+    await expect(page.locator('[data-verify-field="deliverable"]')).toHaveText('No')
+    await expect(page.locator('[data-verify-field="mxRecords"]')).toHaveText('None found')
+    await expect(page.locator('[data-verify-field="accountType"]')).toHaveText('Role-based · Free email')
+    await expect(page.locator('[data-verify-field="catchAll"]')).toHaveText('Yes')
   })
 
   test('lat long to DMS converts decimal coordinates with hemisphere letters', async ({ page }) => {

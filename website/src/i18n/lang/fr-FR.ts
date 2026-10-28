@@ -828,12 +828,12 @@ export const site: SiteContent = {
             "accent": "utilisateurs expérimentés",
             "tail": ""
           },
-          "lead": "Sept utilitaires qui s'exécutent entièrement dans votre navigateur : ce que vous collez ne quitte jamais votre appareil."
+          "lead": "Sept utilitaires qui s'exécutent entièrement dans votre navigateur : ce que vous collez ne quitte jamais votre appareil. Seule exception : le Vérificateur de courrier électronique envoie l'adresse à notre serveur pour la vérifier."
         },
         "descriptions": {
           "place-id-finder": "Collez un emplacement Maps URL et lisez ses Place ID, CID et FID.",
           "review-link-generator": "Obtenez le lien direct « écrire un avis » pour toute entreprise.",
-          "email-checker": "Vérifiez instantanément si un format d'e-mail est valide, grâce à des indices de faute de frappe.",
+          "email-checker": "Vérifiez si une adresse e-mail peut réellement recevoir des messages.",
           "lat-long-to-dms": "Coordonnées décimales en degrés, minutes et secondes.",
           "dms-to-dd": "DMS revient aux degrés décimaux propres.",
           "bulk-keywords-generator": "Chaque combinaison « mot clé + emplacement », prête à coller.",
@@ -865,7 +865,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Dois-je installer quelque chose pour les outils Web ?",
-            "answer": "Non. Les outils Web gratuits fonctionnent entièrement dans votre navigateur : votre saisie ne quitte jamais votre appareil."
+            "answer": "Non. Les outils Web gratuits fonctionnent entièrement dans votre navigateur : votre saisie ne quitte jamais votre appareil. Seule exception : le Vérificateur de courrier électronique envoie l'adresse saisie à notre serveur, où un service de vérification d'e-mails la contrôle sans envoyer d'e-mail."
           },
           {
             "question": "Vers quels formats puis-je exporter ?",
@@ -4113,7 +4113,7 @@ export const site: SiteContent = {
             "accent": "Données cartographiques",
             "tail": ""
           },
-          "lead": "Petits utilitaires qui s'exécutent entièrement dans votre navigateur : ce que vous collez ne quitte jamais votre appareil."
+          "lead": "Petits utilitaires qui s'exécutent entièrement dans votre navigateur : ce que vous collez ne quitte jamais votre appareil. Seule exception : le Vérificateur de courrier électronique envoie l'adresse à notre serveur pour la vérifier."
         },
         "faq": {
           "kicker": "Questions fréquentes",
@@ -4359,8 +4359,8 @@ export const site: SiteContent = {
       },
       "emailChecker": {
         "seo": {
-          "title": "Email Checker — Validateur de format d'e-mail gratuit | MapsGrab",
-          "description": "Vérifiez instantanément une adresse e-mail pour détecter les erreurs de syntaxe et les fautes de frappe courantes. Validation de format gratuite qui s'exécute dans votre navigateur — pas de sondage SMTP, rien n'est envoyé nulle part."
+          "title": "Email Checker — Vérifiez une adresse e-mail gratuitement | MapsGrab",
+          "description": "Découvrez si une adresse e-mail peut recevoir des messages. Ce vérificateur gratuit interroge le serveur de messagerie et indique le statut, la délivrabilité, les enregistrements MX et le type de compte."
         },
         "hero": {
           "title": {
@@ -4368,13 +4368,15 @@ export const site: SiteContent = {
             "accent": "Checker",
             "tail": ""
           },
-          "description": "Saisissez une adresse e-mail et voyez instantanément si son format est valide, ainsi que des astuces pour les fautes de frappe les plus courantes. Tout fonctionne dans votre navigateur."
+          "description": "Saisissez une adresse e-mail : nous demandons à son serveur de messagerie si elle peut réellement recevoir des messages, avec le statut, les enregistrements MX, le type de compte et un score."
         },
+        "guideLead": "La vérification du format se fait dans votre navigateur ; l'adresse elle-même est envoyée à notre serveur pour être vérifiée auprès de son serveur de messagerie.",
         "form": {
           "emailLabel": "Adresse email",
           "emailPlaceholder": "name@example.com",
           "submit": "Vérifier l'e-mail",
-          "validHeading": "Cette adresse e-mail semble valide.",
+          "submitting": "Vérification…",
+          "verifyingHint": "Interrogation du serveur de messagerie — cela peut prendre jusqu'à une minute.",
           "invalidHeading": "Cette adresse e-mail présente des problèmes :",
           "issues": {
             "empty": "Entrez d'abord une adresse e-mail.",
@@ -4393,18 +4395,52 @@ export const site: SiteContent = {
             "typoDomain": "Ce domaine ressemble à une faute de frappe d'un fournisseur de messagerie populaire."
           }
         },
+        "result": {
+          "labels": {
+            "status": "Statut",
+            "deliverable": "Délivrable",
+            "mxRecords": "Enregistrements MX",
+            "email": "Adresse e-mail",
+            "domain": "Domaine",
+            "accountType": "Type de compte",
+            "catchAll": "Domaine catch-all",
+            "score": "Score"
+          },
+          "statuses": {
+            "safe": "Sûre",
+            "invalid": "Invalide",
+            "disabled": "Désactivée",
+            "disposable": "Jetable",
+            "inbox_full": "Boîte pleine",
+            "catch_all": "Catch-all",
+            "role_account": "Adresse générique",
+            "spamtrap": "Piège à spam",
+            "unknown": "Inconnue"
+          },
+          "accountTypes": {
+            "standard": "Standard",
+            "role": "Générique",
+            "disposable": "Jetable",
+            "free": "Messagerie gratuite"
+          },
+          "yes": "Oui",
+          "no": "Non",
+          "noMx": "Aucun trouvé",
+          "unavailable": "Impossible de joindre le service de vérification. Réessayez dans un instant.",
+          "rateLimited": "Vous avez utilisé toutes vos vérifications gratuites du jour. Réessayez demain."
+        },
         "howTo": [
           {
-            "heading": "Ce que fait ce vérificateur – et ce qu'il ne fait délibérément pas",
-            "body": "Cet outil valide le format d'une adresse email : la forme de la partie locale, le \"@\", et le domaine, en suivant les règles pratiques des spécifications RFC que les serveurs de messagerie appliquent effectivement. Il signale également les fautes de frappe probables des fournisseurs de boîtes aux lettres populaires, la cause la plus courante d'adresses mortes dans les listes de prospects. Il n'envoie aucune sonde au serveur de messagerie : la vérification SMTP divulguerait l'adresse à un tiers, ce qui entrerait en conflit avec l'exécution de l'intégralité de la vérification localement dans votre navigateur."
+            "heading": "Ce que vérifie cet outil",
+            "body": "L'outil demande au serveur de messagerie du destinataire si la boîte existe et accepte les messages — la même question qu'un serveur d'envoi pose avant la livraison, sans envoyer de message. Le résultat indique le statut global, si l'adresse est délivrable, les enregistrements MX du domaine, le type de compte (standard, générique comme info@ ou contact@, jetable ou fournisseur de messagerie gratuite), si le domaine est catch-all et un score de 0 à 100."
           },
           {
             "heading": "Comment vérifier une adresse e-mail",
-            "body": "Tapez ou collez l'adresse et appuyez sur \"Vérifier l'e-mail\". Un résultat vert signifie que le format est en forme de livrable ; un résultat rouge répertorie toutes les règles que l'adresse enfreint et, lorsque le domaine ressemble à un fournisseur mal orthographié, suggère celui souhaité. Corrigez les problèmes signalés et vérifiez à nouveau jusqu'à ce que l'adresse soit transmise."
+            "body": "Saisissez ou collez une adresse et cliquez sur « Vérifier l'e-mail ». Les problèmes de format sont listés dans votre navigateur et l'adresse n'est alors pas envoyée ; une faute de frappe probable sur un fournisseur courant, comme « gmial.com », est signalée sans bloquer la vérification. Une adresse bien formée est envoyée à notre serveur, qui la vérifie auprès du serveur de messagerie — cela prend généralement quelques secondes, et jusqu'à une minute."
           },
           {
-            "heading": "Où la vérification du format s'intègre dans un flux de données",
-            "body": "La validation du format est le premier filtre le moins cher pour n'importe quelle liste de diffusion : il supprime les adresses qui ne peuvent jamais atteindre une boîte aux lettres avant que vous n'y consacriez un budget de délivrabilité ou d'enrichissement. MapsGrab applique cette réflexion à l'ensemble du flux de travail des leads : l'extension enrichit chaque entreprise collectée avec les adresses e-mail trouvées sur son site officiel, de sorte que l'étape de vérification en aval commence à partir d'une liste beaucoup plus propre."
+            "heading": "Comment lire le résultat",
+            "body": "« Sûre » signifie que la boîte existe et accepte les messages. Les adresses invalides et désactivées provoqueront des rebonds, et il ne faut jamais écrire à un piège à spam. Un domaine catch-all accepte toutes les adresses : la boîte elle-même ne peut donc pas être confirmée ; les adresses génériques, jetables et les boîtes pleines sont risquées pour la prospection. « Inconnue » signifie que le serveur de messagerie n'a pas donné de réponse claire — réessayez plus tard. MapsGrab collecte les adresses e-mail sur le site officiel de chaque entreprise, et cet outil permet d'en contrôler une rapidement avant de prendre contact."
           }
         ],
         "faq": {
@@ -4415,20 +4451,24 @@ export const site: SiteContent = {
           },
           "items": [
             {
-              "question": "Cet outil vérifie-t-il si la boîte aux lettres existe réellement ?",
-              "answer": "Non, délibérément. La vérification de l'existence nécessite d'interroger le serveur de messagerie du destinataire (sonde SMTP), ce qui ne peut pas être effectué en privé dans un navigateur et peut signaler votre adresse IP. Cet outil vérifie tout ce qui peut être vérifié sans toucher au réseau : la structure, les caractères autorisés et les fautes de frappe courantes du fournisseur."
+              "question": "Cet outil vérifie-t-il si la boîte aux lettres existe vraiment ?",
+              "answer": "Oui. Au-delà du format, il demande au serveur de messagerie du destinataire s'il accepte les messages pour cette adresse, sans envoyer d'e-mail. Quand le serveur ne donne pas de réponse claire — par exemple sur un domaine catch-all —, le résultat l'indique au lieu de deviner."
             },
             {
-              "question": "Une adresse peut-elle passer ici et quand même rebondir ?",
-              "answer": "Oui. Une adresse syntaxiquement parfaite peut toujours être fermée, pleine ou abandonnée. La validation du format supprime les adresses erronées avant même que la livraison ne soit tentée – elle ne peut pas garantir qu’une boîte aux lettres d’apparence valide soit lue par un humain."
+              "question": "Combien d'adresses puis-je vérifier ?",
+              "answer": "Jusqu'à 5 par jour gratuitement, une adresse à la fois. Les adresses qui échouent à la vérification du format ne sont jamais envoyées et ne comptent donc pas dans la limite."
             },
             {
-              "question": "Pourquoi « nom@localhost » est-il rejeté ?",
-              "answer": "Le vérificateur nécessite un domaine avec une terminaison publique (TLD), car les adresses sans extension ne peuvent pas recevoir de courrier provenant d'Internet extérieur. Les normes qui autorisent les domaines uniquement internes ne sont pas pertinentes pour les listes de prospects et les données clients."
+              "question": "Une adresse validée ici peut-elle quand même rebondir ?",
+              "answer": "Oui. Une boîte peut être fermée ou se remplir après la vérification, et certains serveurs acceptent d'abord le message puis le renvoient plus tard. Un résultat « Sûre » signifie que l'adresse acceptait les messages au moment de la vérification — pas que quelqu'un les lit."
             },
             {
-              "question": "Ma contribution est-elle stockée quelque part ?",
-              "answer": "Non. La validation s'exécute en clair JavaScript dans l'onglet de votre navigateur ; rien n'est transmis, enregistré ou stocké - rechargez la page et l'entrée disparaît."
+              "question": "Pourquoi « name@localhost » est-il refusé ?",
+              "answer": "L'outil exige un domaine avec une extension publique (TLD), car une adresse sans extension ne peut pas recevoir de courrier depuis Internet. Ces adresses sont signalées dans votre navigateur et ne sont jamais envoyées pour vérification."
+            },
+            {
+              "question": "Que devient l'adresse e-mail que je saisis ?",
+              "answer": "Elle est envoyée à notre serveur, qui la fait vérifier par un prestataire de vérification d'e-mails auprès du serveur de messagerie du destinataire. Aucun e-mail n'est envoyé à cette adresse."
             }
           ]
         },
@@ -4751,7 +4791,7 @@ export const company: CompanyContent = {
         "accent": "simplement",
         "tail": ""
       },
-      "intro": "MapsGrab crée des outils qui collectent des informations commerciales accessibles au public à partir de Google Maps et les transforment en données propres et structurées : une extension de navigateur pour Edge et Firefox, un extracteur en ligne basé sur le cloud, des serveurs API et MCP, ainsi que des outils Web gratuits qui s'exécutent entièrement dans votre navigateur.",
+      "intro": "MapsGrab crée des outils qui collectent des informations commerciales accessibles au public à partir de Google Maps et les transforment en données propres et structurées : une extension de navigateur pour Edge et Firefox, un extracteur en ligne basé sur le cloud, des serveurs API et MCP, ainsi que des outils Web gratuits, dont la plupart s'exécutent entièrement dans votre navigateur.",
       "contactLabel": "Contacter l'assistance",
       "extensionLabel": "Explorez l'extension",
       "stageLabel": "Accès anticipé",
@@ -4827,7 +4867,7 @@ export const company: CompanyContent = {
       },
       "localFirst": {
         "title": "Le local d’abord",
-        "text": "Avec l'extension et les outils Web gratuits, vos paramètres et résultats vivent dans votre navigateur, pas sur nos serveurs. Le serveur Extracteur en ligne, le API et le MCP fonctionnent dans notre cloud, et les résultats du Extracteur en ligne sont enregistrés sur votre compte.",
+        "text": "Avec l'extension et les outils Web gratuits, vos paramètres et résultats vivent dans votre navigateur, pas sur nos serveurs. Seule exception : le Vérificateur de courrier électronique envoie l'adresse saisie à notre serveur, où un service de vérification d'e-mails la contrôle sans envoyer d'e-mail. Le serveur Extracteur en ligne, le API et le MCP fonctionnent dans notre cloud, et les résultats du Extracteur en ligne sont enregistrés sur votre compte.",
         "storage": "stockage local",
         "rows": [
           "Paramètres",
@@ -4837,7 +4877,7 @@ export const company: CompanyContent = {
       },
       "backend": {
         "title": "Extension et outils gratuits : quatre tâches backend",
-        "text": "Pour l'extension et les outils Web gratuits, notre backend gère exactement quatre choses : la configuration à distance, l'état du compte et des quotas, l'enrichissement facultatif par courrier électronique/social et les journaux d'utilisation minimaux.",
+        "text": "Pour l'extension et les outils Web gratuits, notre backend gère exactement quatre choses : la configuration à distance, l'état du compte et des quotas, l'enrichissement facultatif par courrier électronique/social et les journaux d'utilisation minimaux. Seule exception : pour le Vérificateur de courrier électronique, notre backend transmet aussi l'adresse saisie à un service de vérification d'e-mails, qui la contrôle sans envoyer d'e-mail.",
         "chips": [
           "Configuration",
           "Quota",
@@ -4868,7 +4908,7 @@ export const company: CompanyContent = {
         "accent": " nous parvient",
         "tail": ""
       },
-      "lead": "L'extension fonctionne sur les données affichées publiquement et conserve les résultats dans votre navigateur. Pour l'extension et les outils Web gratuits, notre backend alimente uniquement la configuration, les quotas, l'enrichissement facultatif et les journaux d'utilisation minimale. Le serveur Extracteur en ligne, le API et le MCP fonctionnent à la place dans notre cloud, et les résultats du Extracteur en ligne sont enregistrés sur votre compte.",
+      "lead": "L'extension fonctionne sur les données affichées publiquement et conserve les résultats dans votre navigateur. Pour l'extension et les outils Web gratuits, notre backend alimente uniquement la configuration, les quotas, l'enrichissement facultatif et les journaux d'utilisation minimale. Seule exception : le Vérificateur de courrier électronique envoie l'adresse saisie à notre serveur, où un service de vérification d'e-mails la contrôle sans envoyer d'e-mail. Le serveur Extracteur en ligne, le API et le MCP fonctionnent à la place dans notre cloud, et les résultats du Extracteur en ligne sont enregistrés sur votre compte.",
       "source": {
         "label": "Source",
         "title": "Google Maps pages que vous visitez",

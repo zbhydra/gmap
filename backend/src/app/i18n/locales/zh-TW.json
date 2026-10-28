@@ -37,6 +37,7 @@
     "USER_NOT_FOUND": "使用者不存在",
     "USER_CANNOT_DELETE_SELF": "不能刪除自己",
     "RATE_LIMIT_EXCEEDED": "請求過於頻繁，請稍後再試",
+    "TOOL_SERVICE_BUSY": "系統繁忙，請稍後重試",
     "VALIDATION_ERROR": "請求參數不完整或格式錯誤",
     "PAYMENT_GATEWAY_ERROR": "支付閘道錯誤",
     "PAYMENT_VERIFICATION_FAILED": "支付驗證失敗",

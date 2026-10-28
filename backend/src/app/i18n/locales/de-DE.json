@@ -37,6 +37,7 @@
     "USER_NOT_FOUND": "Benutzer Nicht Gefunden",
     "USER_CANNOT_DELETE_SELF": "Sie Können Sich Nicht Selbst Löschen",
     "RATE_LIMIT_EXCEEDED": "Zu Viele Anfragen, Bitte Versuchen Sie Es Später Nochmal",
+    "TOOL_SERVICE_BUSY": "Das System ist ausgelastet. Bitte versuchen Sie es später erneut.",
     "VALIDATION_ERROR": "Anfrageparameter Sind Unvollständig Oder Ungültig",
     "ORDER_NOT_FOUND": "Bestellung Nicht Gefunden",
     "ORDER_INVALID_STATUS": "Ungültiger Bestellstatus",

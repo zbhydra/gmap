@@ -6,6 +6,7 @@
   2. 查询、生成和重新生成当前管理员外部 API Key；完整 key 仅在弹窗中一次性展示。
   3. 维护 Collector 节点、Key 与代理列表，支持检查、保存和重读。
   4. 维护 Cloudflare R2 与阿里云 OSS 对象存储配置。
+  5. 维护 Reoon 邮箱验证账号，并逐行展示已保存账号的额度。
 -->
 <template>
   <div class="system-settings-view">
@@ -278,6 +279,97 @@
             </div>
           </section>
         </NTabPane>
+
+        <NTabPane name="reoon" :tab="t('systemSettings.tabReoon')">
+          <section>
+            <NText class="collector-hint" depth="3">{{ t("systemSettings.reoonHint") }}</NText>
+            <NAlert v-if="!reoonLoaded && !reoonLoading" type="warning" class="unknown-alert">
+              {{ t("systemSettings.reoonLoadFailed") }}
+            </NAlert>
+            <NSpin :show="reoonLoading">
+              <div class="collector-rows">
+                <div
+                  v-for="({ row, saved, balance }, index) in reoonRowViews"
+                  :key="index"
+                  class="collector-row reoon-row"
+                >
+                  <NFormItem
+                    :label="t('systemSettings.reoonName')"
+                    :label-props="{ for: `reoon-name-${index}` }"
+                    label-placement="top"
+                    :show-feedback="false"
+                  >
+                    <NInput
+                      v-model:value="row.name"
+                      :input-props="{ id: `reoon-name-${index}`, autocomplete: 'off' }"
+                      :disabled="reoonDisabled"
+                    />
+                  </NFormItem>
+                  <NFormItem
+                    :label="t('systemSettings.reoonApiKey')"
+                    :label-props="{ for: `reoon-key-${index}` }"
+                    label-placement="top"
+                    :show-feedback="false"
+                  >
+                    <NInput
+                      v-model:value="row.api_key"
+                      type="password"
+                      show-password-on="click"
+                      :input-props="{ id: `reoon-key-${index}`, autocomplete: 'off' }"
+                      :disabled="reoonDisabled"
+                    />
+                  </NFormItem>
+                  <NSpace align="center">
+                    <NButton quaternary type="error" :disabled="reoonDisabled" @click="reoonRows.splice(index, 1)">
+                      {{ t("systemSettings.reoonRemove") }}
+                    </NButton>
+                  </NSpace>
+                  <template v-if="saved">
+                    <NText v-if="reoonBalancesLoading" class="reoon-balance" depth="3" role="status">
+                      {{ t("systemSettings.reoonBalanceLoading") }}
+                    </NText>
+                    <div v-else-if="balance?.ok" class="reoon-balance" role="status">
+                      <span class="reoon-metric">
+                        <NText depth="3">{{ t("systemSettings.reoonApiStatus") }}</NText>
+                        <!-- Reoon 官方只公开 active 一种取值，其余值都提示管理员关注。 -->
+                        <NTag size="small" :type="balance.api_status === 'active' ? 'success' : 'warning'">
+                          {{ balance.api_status }}
+                        </NTag>
+                      </span>
+                      <span class="reoon-metric">
+                        <NText depth="3">{{ t("systemSettings.reoonDailyCredits") }}</NText>
+                        <NText class="reoon-credits">{{ balance.daily_credits }}</NText>
+                      </span>
+                      <span class="reoon-metric">
+                        <NText depth="3">{{ t("systemSettings.reoonInstantCredits") }}</NText>
+                        <NText class="reoon-credits">{{ balance.instant_credits }}</NText>
+                      </span>
+                    </div>
+                    <NText v-else-if="balance" class="reoon-balance" type="error" role="status">
+                      {{ t(`systemSettings.reoonBalanceReason.${balance.reason}`) }}
+                    </NText>
+                  </template>
+                </div>
+              </div>
+              <div class="collector-actions">
+                <NButton dashed :disabled="reoonDisabled" @click="addReoonAccount">
+                  {{ t("systemSettings.reoonAdd") }}
+                </NButton>
+                <NButton :loading="reoonBalancesLoading" :disabled="reoonDisabled" @click="loadReoonBalances">
+                  {{ t("systemSettings.reoonRefreshBalances") }}
+                </NButton>
+              </div>
+            </NSpin>
+            <div class="tab-actions collector-actions">
+              <NButton :loading="reoonLoading" :disabled="reoonBusy" @click="loadReoonConfig">
+                {{ t("common.refresh") }}
+              </NButton>
+              <NButton type="primary" :loading="reoonSaving" :disabled="reoonDisabled" @click="handleSaveReoonConfig">
+                {{ t("systemSettings.reoonSave") }}
+              </NButton>
+            </div>
+          </section>
+        </NTabPane>
       </NTabs>
     </NCard>
 
@@ -512,8 +604,11 @@ import {
   getAdminApiKeyMeta,
   getGmapCollectorConfig,
   getObjectStorageConfig,
+  getReoonBalances,
+  getReoonConfig,
   refreshConfigCache,
   saveGmapCollectorConfig,
+  saveReoonConfig,
   testGmapCollector,
   saveObjectStorageConfig,
   type AdminApiKeyMeta,
@@ -523,6 +618,9 @@ import {
   type GmapProxyCheckResult,
   type ObjectStorageConfig,
   type ObjectStorageItem,
+  type ReoonAccount,
+  type ReoonBalance,
+  type ReoonConfig,
 } from "@/api/system-settings";
 import { formatAdminTimeMs } from "@/utils/time";
 import { BusinessError } from "@/api/request";
@@ -960,10 +1058,114 @@ function isValidAliOssEndpoint(value: string) {
   }
 }
 
+const reoonLoading = ref(false);
+const reoonSaving = ref(false);
+const reoonLoaded = ref(false);
+const reoonBalancesLoading = ref(false);
+const reoonRows = ref<ReoonAccount[]>([]);
+/** 后端当前保存的账号，也就是额度查询的对象。 */
+const reoonSavedAccounts = ref<ReoonAccount[]>([]);
+const reoonBalances = ref<ReoonBalance[]>([]);
+const reoonBusy = computed(
+  () => reoonLoading.value || reoonSaving.value || reoonBalancesLoading.value,
+);
+const reoonDisabled = computed(() => reoonBusy.value || !reoonLoaded.value);
+
+/**
+ * 额度按后端已保存配置查询：只有名称与 Key 都和已保存账号一致的行才展示额度，
+ * 新增或改过的行保存前不展示，避免把旧 Key 的额度显示在新 Key 上。
+ */
+const reoonRowViews = computed(() =>
+  reoonRows.value.map((row) => {
+    const name = row.name.trim();
+    return {
+      row,
+      saved: reoonSavedAccounts.value.some(
+        (account) => account.name === name && account.api_key === row.api_key.trim(),
+      ),
+      balance: reoonBalances.value.find((item) => item.name === name),
+    };
+  }),
+);
+
+function applyReoonConfig(config: ReoonConfig) {
+  reoonSavedAccounts.value = config.accounts;
+  reoonRows.value = config.accounts.map((account) => ({ ...account }));
+}
+
+async function loadReoonConfig() {
+  reoonLoading.value = true;
+  reoonLoaded.value = false;
+  try {
+    applyReoonConfig(await getReoonConfig());
+    reoonLoaded.value = true;
+  } catch {
+    // 配置响应包含 API Key，不能记录原始异常。
+    console.error("SystemSettingsView.loadReoonConfig() 加载 Reoon 配置失败");
+    message.error(t("systemSettings.reoonLoadFailed"));
+  } finally {
+    reoonLoading.value = false;
+  }
+}
+
+/** 单账号失败由后端放进该行 reason；这里只处理整次请求失败。 */
+async function loadReoonBalances() {
+  reoonBalancesLoading.value = true;
+  reoonBalances.value = [];
+  try {
+    reoonBalances.value = (await getReoonBalances()).items;
+  } catch (error) {
+    console.error("SystemSettingsView.loadReoonBalances() 查询 Reoon 额度失败:", error);
+    message.error(
+      error instanceof BusinessError ? error.message : t("systemSettings.reoonBalancesFailed"),
+    );
+  } finally {
+    reoonBalancesLoading.value = false;
+  }
+}
+
+function addReoonAccount() {
+  reoonRows.value.push({ name: "", api_key: "" });
+}
+
+async function handleSaveReoonConfig() {
+  const accounts = reoonRows.value.map(({ name, api_key }) => ({
+    name: name.trim(),
+    api_key: api_key.trim(),
+  }));
+  if (accounts.some((account) => !account.name || !account.api_key)) {
+    message.warning(t("systemSettings.reoonRequired"));
+    return;
+  }
+  // 后端对重名只返回通用参数错误，前端先指出具体名称。
+  const names = accounts.map((account) => account.name);
+  const duplicateName = names.find((name, index) => names.indexOf(name) !== index);
+  if (duplicateName !== undefined) {
+    message.warning(t("systemSettings.reoonDuplicateName", { name: duplicateName }));
+    return;
+  }
+  reoonSaving.value = true;
+  try {
+    applyReoonConfig(await saveReoonConfig({ accounts }));
+    message.success(t("systemSettings.reoonSaveSuccess"));
+    // 已保存账号变了，旧额度可能属于旧 Key，按新配置重查。
+    void loadReoonBalances();
+  } catch (error) {
+    console.error("SystemSettingsView.handleSaveReoonConfig() 保存 Reoon 配置失败");
+    message.error(
+      error instanceof BusinessError ? error.message : t("systemSettings.reoonSaveFailed"),
+    );
+  } finally {
+    reoonSaving.value = false;
+  }
+}
+
 onMounted(() => {
   void loadApiKeyMeta();
   void loadCollectorConfig();
   void loadObjectStorageConfig();
+  void loadReoonConfig();
+  void loadReoonBalances();
 });
 </script>
 
@@ -1077,6 +1279,29 @@ onMounted(() => {
 
 :deep(.generated-api-key-modal) {
   max-width: 720px;
+}
+
+.reoon-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+
+.reoon-balance {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+}
+
+.reoon-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reoon-credits {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 560px) {

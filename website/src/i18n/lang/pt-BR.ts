@@ -828,12 +828,12 @@ export const site: SiteContent = {
             "accent": "usuários avançados",
             "tail": ""
           },
-          "lead": "Sete utilitários que são executados inteiramente no seu navegador — o que você cola nunca sai do seu dispositivo."
+          "lead": "Sete utilitários que são executados inteiramente no seu navegador — o que você cola nunca sai do seu dispositivo. A exceção é o Verificador de e-mail, que envia o endereço ao nosso servidor para verificação."
         },
         "descriptions": {
           "place-id-finder": "Cole um lugar URL do Maps e leia seus Place ID, CID e FID.",
           "review-link-generator": "Obtenha o link direto “escrever um comentário” para qualquer empresa.",
-          "email-checker": "Veja instantaneamente se um formato de e-mail é válido — com dicas de digitação.",
+          "email-checker": "Verifique se um endereço de e-mail realmente pode receber mensagens.",
           "lat-long-to-dms": "Coordenadas decimais em graus, minutos e segundos.",
           "dms-to-dd": "DMS coordenadas de volta para graus decimais limpos.",
           "bulk-keywords-generator": "Cada combinação “palavra-chave + localização”, pronta para colar.",
@@ -865,7 +865,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Preciso instalar alguma coisa para as ferramentas da web?",
-            "answer": "Não. As ferramentas gratuitas da web são executadas inteiramente no seu navegador — suas informações nunca saem do seu dispositivo."
+            "answer": "Não. As ferramentas gratuitas da web são executadas inteiramente no seu navegador — suas informações nunca saem do seu dispositivo. A exceção é o Verificador de e-mail: ele envia o endereço que você digita ao nosso servidor, onde um provedor de verificação de e-mail o confere sem enviar nenhum e-mail."
           },
           {
             "question": "Para quais formatos posso exportar?",
@@ -4113,7 +4113,7 @@ export const site: SiteContent = {
             "accent": "Maps data",
             "tail": ""
           },
-          "lead": "Pequenos utilitários que são executados inteiramente no seu navegador — o que você cola nunca sai do seu dispositivo."
+          "lead": "Pequenos utilitários que são executados inteiramente no seu navegador — o que você cola nunca sai do seu dispositivo. A exceção é o Verificador de e-mail, que envia o endereço ao nosso servidor para verificação."
         },
         "faq": {
           "kicker": "Perguntas frequentes",
@@ -4359,8 +4359,8 @@ export const site: SiteContent = {
       },
       "emailChecker": {
         "seo": {
-          "title": "Verificador de e-mail — Validador de formato de e-mail gratuito | MapsGrab",
-          "description": "Verifique instantaneamente se há erros de sintaxe e erros de digitação comuns em um endereço de e-mail. Validação de formato gratuita executada em seu navegador — sem sondagem SMTP, nada é enviado para lugar nenhum."
+          "title": "Verificador de e-mail — Verifique um endereço de e-mail grátis | MapsGrab",
+          "description": "Descubra se um endereço de e-mail pode receber mensagens. Este verificador gratuito consulta o servidor de e-mail e mostra status, entregabilidade, registros MX e tipo de conta."
         },
         "hero": {
           "title": {
@@ -4368,13 +4368,15 @@ export const site: SiteContent = {
             "accent": "Checker",
             "tail": ""
           },
-          "description": "Digite um endereço de e-mail e veja instantaneamente se seu formato é válido — além de dicas para os erros de digitação mais comuns. Tudo roda no seu navegador."
+          "description": "Digite um endereço de e-mail e consultamos o servidor de e-mail dele para saber se ele realmente pode receber mensagens — com status, registros MX, tipo de conta e uma pontuação."
         },
+        "guideLead": "A verificação de formato acontece no seu navegador; o endereço em si é enviado ao nosso servidor para ser verificado com o servidor de e-mail.",
         "form": {
           "emailLabel": "Endereço de email",
           "emailPlaceholder": "name@example.com",
           "submit": "Verificar e-mail",
-          "validHeading": "Este endereço de e-mail parece válido.",
+          "submitting": "Verificando…",
+          "verifyingHint": "Consultando o servidor de e-mail — isso pode levar até um minuto.",
           "invalidHeading": "Este endereço de e-mail tem problemas:",
           "issues": {
             "empty": "Insira um endereço de e-mail primeiro.",
@@ -4393,18 +4395,52 @@ export const site: SiteContent = {
             "typoDomain": "Este domínio parece um erro de digitação de um provedor de e-mail popular."
           }
         },
+        "result": {
+          "labels": {
+            "status": "Status",
+            "deliverable": "Entregável",
+            "mxRecords": "Registros MX",
+            "email": "Endereço de e-mail",
+            "domain": "Domínio",
+            "accountType": "Tipo de conta",
+            "catchAll": "Domínio catch-all",
+            "score": "Pontuação"
+          },
+          "statuses": {
+            "safe": "Seguro",
+            "invalid": "Inválido",
+            "disabled": "Desativado",
+            "disposable": "Descartável",
+            "inbox_full": "Caixa cheia",
+            "catch_all": "Catch-all",
+            "role_account": "Conta genérica",
+            "spamtrap": "Armadilha de spam",
+            "unknown": "Desconhecido"
+          },
+          "accountTypes": {
+            "standard": "Padrão",
+            "role": "Genérica",
+            "disposable": "Descartável",
+            "free": "E-mail gratuito"
+          },
+          "yes": "Sim",
+          "no": "Não",
+          "noMx": "Nenhum encontrado",
+          "unavailable": "Não foi possível conectar ao serviço de verificação. Tente novamente em instantes.",
+          "rateLimited": "Você já usou todas as verificações gratuitas de hoje. Tente novamente amanhã."
+        },
         "howTo": [
           {
-            "heading": "O que este verificador faz – e o que deliberadamente não faz",
-            "body": "Esta ferramenta valida o formato de um endereço de email: o formato da parte local, o “@” e o domínio, seguindo as regras práticas das especificações RFC que os servidores de email realmente aplicam. Ele também sinaliza prováveis ​​​​erros de digitação de provedores de caixa de correio populares, a causa mais comum de endereços inativos em listas de leads. Ele não envia nenhuma investigação ao servidor de e-mail: a verificação SMTP divulgaria o endereço a terceiros, o que entra em conflito com a execução de toda a verificação localmente no seu navegador."
+            "heading": "O que este verificador confere",
+            "body": "O verificador pergunta ao servidor de e-mail do destinatário se a caixa de correio existe e aceita mensagens — a mesma pergunta que um servidor de envio faz antes da entrega, sem enviar nenhuma mensagem. O resultado mostra o status geral, se o endereço é entregável, os registros MX do domínio, o tipo de conta (padrão, genérica como info@ ou vendas@, descartável ou de um provedor de e-mail gratuito), se o domínio é catch-all e uma pontuação de 0 a 100."
           },
           {
             "heading": "Como verificar um endereço de e-mail",
-            "body": "Digite ou cole o endereço e pressione “Verificar e-mail”. Um resultado verde significa que o formato tem formato de entrega; um resultado vermelho lista todas as regras que o endereço quebra e – quando o domínio parece um provedor com erro ortográfico – sugere a regra pretendida. Corrija os problemas relatados e verifique novamente até que o endereço seja aprovado."
+            "body": "Digite ou cole um endereço e clique em “Verificar e-mail”. Problemas de formato são listados no seu navegador, e esse endereço não é enviado; um provável erro de digitação de um provedor conhecido, como “gmial.com”, é apontado, mas não impede a verificação. Um endereço bem formado é enviado ao nosso servidor, que o verifica com o servidor de e-mail — isso costuma levar alguns segundos e pode chegar a um minuto."
           },
           {
-            "heading": "Onde a verificação de formato se encaixa em um fluxo de trabalho de dados",
-            "body": "A validação de formato é o primeiro e mais barato filtro para qualquer lista de e-mail: ela remove endereços que nunca podem chegar a uma caixa de correio antes de você gastar capacidade de entrega ou orçamento de enriquecimento neles. MapsGrab aplica esse pensamento a todo o fluxo de trabalho do lead – a extensão enriquece cada empresa coletada com os endereços de e-mail encontrados em seu site oficial, de modo que a etapa de verificação posterior começa com uma lista muito mais limpa."
+            "heading": "Como interpretar o resultado",
+            "body": "“Seguro” significa que a caixa de correio existe e aceita mensagens. Endereços inválidos e desativados vão retornar, e armadilhas de spam nunca devem receber envios. Um domínio catch-all aceita qualquer endereço, então a caixa de correio em si não pode ser confirmada; contas genéricas, endereços descartáveis e caixas cheias são arriscados para prospecção. “Desconhecido” significa que o servidor de e-mail não deu uma resposta definitiva — tente novamente mais tarde. O MapsGrab coleta endereços de e-mail do site oficial de cada empresa, e este verificador é um jeito rápido de conferir um deles antes de entrar em contato."
           }
         ],
         "faq": {
@@ -4416,19 +4452,23 @@ export const site: SiteContent = {
           "items": [
             {
               "question": "Esta ferramenta verifica se a caixa de correio realmente existe?",
-              "answer": "Não - deliberadamente. A verificação da existência requer uma consulta ao servidor de e-mail do destinatário (SMTP sondagem), o que não pode ser feito de forma privada em um navegador e pode sinalizar seu IP. Esta ferramenta verifica tudo o que pode ser verificado sem tocar na rede: estrutura, caracteres permitidos e erros de digitação comuns do provedor."
+              "answer": "Sim. Além do formato, ela pergunta ao servidor de e-mail do destinatário se ele aceita mensagens para o endereço, sem enviar nenhum e-mail. Quando o servidor não dá uma resposta definitiva — por exemplo, em um domínio catch-all —, o resultado informa isso em vez de adivinhar."
             },
             {
-              "question": "Um endereço pode passar aqui e ainda assim saltar?",
-              "answer": "Sim. Um endereço sintaticamente perfeito ainda pode ser fechado, completo ou abandonado. A validação de formato remove os endereços errados antes mesmo de tentar a entrega – ela não pode garantir que uma caixa de correio de aparência válida seja lida por um ser humano."
+              "question": "Quantos endereços posso verificar?",
+              "answer": "Até 5 por dia, de graça, um endereço por vez. Endereços que falham na verificação de formato nunca são enviados, então não contam para o limite."
             },
             {
-              "question": "Por que \"name@localhost\" foi rejeitado?",
-              "answer": "O verificador requer um domínio com final público (TLD) porque endereços sem um não podem receber mensagens de fora da Internet. Os padrões que permitem domínios apenas internos são irrelevantes para listas de leads e dados de clientes."
+              "question": "Um endereço aprovado aqui ainda pode retornar?",
+              "answer": "Sim. Uma caixa de correio pode ser encerrada ou ficar cheia depois da verificação, e alguns servidores aceitam a mensagem no início e a devolvem depois. Um resultado “Seguro” significa que o endereço aceitava mensagens no momento da verificação — não que alguém vá lê-las."
             },
             {
-              "question": "Minha entrada está armazenada em algum lugar?",
-              "answer": "Não. A validação é executada simplesmente JavaScript na aba do seu navegador; nada é transmitido, registrado ou armazenado – recarregue a página e a entrada desaparecerá."
+              "question": "Por que “name@localhost” é rejeitado?",
+              "answer": "O verificador exige um domínio com uma terminação pública (TLD), porque endereços sem ela não recebem e-mails da internet. Esses endereços são sinalizados no seu navegador e nunca são enviados para verificação."
+            },
+            {
+              "question": "O que acontece com o endereço de e-mail que eu digito?",
+              "answer": "Ele é enviado ao nosso servidor, que pede a um provedor de verificação de e-mail para checá-lo junto ao servidor de e-mail do destinatário. Nenhum e-mail é enviado para o endereço."
             }
           ]
         },
@@ -4751,7 +4791,7 @@ export const company: CompanyContent = {
         "accent": "simples",
         "tail": ""
       },
-      "intro": "MapsGrab cria ferramentas que coletam informações comerciais disponíveis publicamente de Google Maps e as transformam em dados limpos e estruturados - uma extensão de navegador para Edge e Firefox, um extrator online baseado em nuvem, servidor API e MCP, além de ferramentas da web gratuitas que são executadas inteiramente em seu navegador.",
+      "intro": "MapsGrab cria ferramentas que coletam informações comerciais disponíveis publicamente de Google Maps e as transformam em dados limpos e estruturados - uma extensão de navegador para Edge e Firefox, um extrator online baseado em nuvem, servidor API e MCP, além de ferramentas da web gratuitas, a maioria delas executada inteiramente em seu navegador.",
       "contactLabel": "Contate o suporte",
       "extensionLabel": "Explore a extensão",
       "stageLabel": "Acesso antecipado",
@@ -4827,7 +4867,7 @@ export const company: CompanyContent = {
       },
       "localFirst": {
         "title": "Local primeiro",
-        "text": "Com a extensão e as ferramentas web gratuitas, suas configurações e resultados ficam no seu navegador, não em nossos servidores. O Extrator online, os servidores API e MCP são executados em nossa nuvem, e os resultados do Extrator online são salvos em sua conta.",
+        "text": "Com a extensão e as ferramentas web gratuitas, suas configurações e resultados ficam no seu navegador, não em nossos servidores. A exceção é o Verificador de e-mail: ele envia o endereço que você digita ao nosso servidor, onde um provedor de verificação de e-mail o confere sem enviar nenhum e-mail. O Extrator online, os servidores API e MCP são executados em nossa nuvem, e os resultados do Extrator online são salvos em sua conta.",
         "storage": "armazenamento local",
         "rows": [
           "Configurações",
@@ -4837,7 +4877,7 @@ export const company: CompanyContent = {
       },
       "backend": {
         "title": "Extensão e ferramentas gratuitas: quatro trabalhos de back-end",
-        "text": "Para a extensão e as ferramentas web gratuitas, nosso back-end lida com exatamente quatro coisas: configuração remota, status de conta e cota, enriquecimento opcional de e-mail/social e registros de uso mínimo.",
+        "text": "Para a extensão e as ferramentas web gratuitas, nosso back-end lida com exatamente quatro coisas: configuração remota, status de conta e cota, enriquecimento opcional de e-mail/social e registros de uso mínimo. A única exceção é o Verificador de e-mail: nosso back-end também repassa o endereço que você digita a um provedor de verificação de e-mail, que o confere sem enviar nenhum e-mail.",
         "chips": [
           "Configuração",
           "Contingente",
@@ -4868,7 +4908,7 @@ export const company: CompanyContent = {
         "accent": "chega até nós",
         "tail": ""
       },
-      "lead": "A extensão funciona em dados exibidos publicamente e mantém os resultados no seu navegador. Para a extensão e as ferramentas web gratuitas, nosso back-end fornece apenas configuração, cotas, enriquecimento opcional e registros de uso mínimo. O Extrator online, os servidores API e MCP são executados em nossa nuvem, e os resultados do Extrator online são salvos em sua conta.",
+      "lead": "A extensão funciona em dados exibidos publicamente e mantém os resultados no seu navegador. Para a extensão e as ferramentas web gratuitas, nosso back-end fornece apenas configuração, cotas, enriquecimento opcional e registros de uso mínimo. A exceção é o Verificador de e-mail: ele envia o endereço que você digita ao nosso servidor, onde um provedor de verificação de e-mail o confere sem enviar nenhum e-mail. O Extrator online, os servidores API e MCP são executados em nossa nuvem, e os resultados do Extrator online são salvos em sua conta.",
       "source": {
         "label": "Fonte",
         "title": "Google Maps páginas que você visita",
