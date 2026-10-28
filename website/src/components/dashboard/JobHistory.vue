@@ -345,10 +345,11 @@ onBeforeUnmount(() => {
 
       <template v-if="panel === 'skeleton' || panel === 'list'">
         <div class="jobs-head" aria-hidden="true">
-          <span class="d-label">{{ props.copy.history.columns.taskNo }} · {{ props.copy.history.columns.createdAt }}</span>
-          <span class="d-label">{{ props.copy.history.columns.samples }}</span>
+          <span class="d-label">{{ props.copy.history.detail.keyword }}</span>
           <span class="d-label is-num">{{ props.copy.history.columns.records }}</span>
           <span class="d-label">{{ props.copy.history.columns.status }}</span>
+          <span class="d-label">{{ props.copy.history.columns.time }}</span>
+          <span class="d-label">{{ props.copy.history.columns.contacts }}</span>
           <span></span>
         </div>
         <ul
@@ -360,10 +361,11 @@ onBeforeUnmount(() => {
           <template v-if="panel === 'skeleton'">
             <li v-for="row in skeletonRows" :key="`skeleton-${row}`" class="job is-skel" aria-hidden="true">
               <div class="job-row">
-                <span class="skel-stack"><span class="skel" style="width: 72%"></span><span class="skel" style="width: 132px"></span></span>
-                <span class="skel" style="width: 64%"></span>
-                <span class="skel" style="width: 40px; justify-self: end"></span>
+                <span class="skel" style="width: 72%"></span>
+                <span class="skel" style="width: 32px; justify-self: end"></span>
                 <span class="skel skel--pill" style="width: 96px; height: 22px"></span>
+                <span class="skel-stack"><span class="skel" style="width: 104px"></span><span class="skel" style="width: 104px"></span></span>
+                <span class="skel" style="width: 56px"></span>
                 <span class="skel skel--pill" style="width: 120px; height: 32px; justify-self: end"></span>
               </div>
             </li>

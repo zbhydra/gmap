@@ -235,14 +235,13 @@ test('dashboard history: pagination, item facts, CSV / Excel download with unava
   // 当年日期省略年份，跨年运行时带年份：只断言月日
   await expect(page.locator('.job-time').first()).toContainText('Sep 1')
   await expect(page.locator(`[data-job="${first.job_no}"] .badge`)).toHaveText('Partial success')
+  await expect(page.locator(`[data-job="${first.job_no}"] .job-contacts`)).toHaveText('Enabled')
   await expect(page.locator(`[data-job="${jobs[2].job_no}"] .badge`)).toHaveText('Failed')
   await expect(page.locator(`[data-history-download="${jobs[1].job_no}"]`)).toHaveCount(0)
   await expect(page.locator(`[data-job="${jobs[1].job_no}"]`)).toContainText('No CSV')
 
   await page.locator(`[data-history-expand="${first.job_no}"]`).click()
   const detail = page.locator(`#jd-${first.job_no}`)
-  await expect(detail.locator('.detail-meta')).toContainText(first.run_no)
-  await expect(detail.locator('.detail-meta')).toContainText('Enabled')
   await expect(detail.locator('.items')).toContainText('40.0000, -74.0000 · zoom 15')
   const failedItem = detail.locator('.items tbody tr').filter({ hasText: 'bookstore brooklyn' })
   await expect(failedItem).toContainText('Could not collect this search.')

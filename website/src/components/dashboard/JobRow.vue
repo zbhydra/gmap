@@ -2,14 +2,15 @@
 /**
  * 任务行：History 完整列表与 Online 最近任务共用。
  *
- * 5 列（任务格 / 进度 / 记录 / 状态与错误 / 操作），窄视图容器下由样式折成卡片。
+ * 6 列（关键词 / 记录 / 状态与错误 / 创建与完成时间 / 邮箱和社交账号 / 操作），窄视图容器下由样式折成卡片。
+ * 运行中进度条挂在状态徽标下；任务号与批次不对用户展示。
  * 紧凑变体（最近任务）没有展开：任务格是去 History 定位该任务的真实链接，修饰键交给浏览器开新标签。
  * History 行点整行或 caret 展开明细；选中文字时不展开，避免复制任务号时误触。
  */
 import { computed, ref, watch } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
 import type { ExportJobDetail, ExportJobStatus, ExportJobSummary } from '../../scripts/dashboard/api'
-import { formatNumber } from '../../scripts/dashboard/format'
+import { formatDateTime, formatNumber } from '../../scripts/dashboard/format'
 import type { DownloadFormat } from '../../scripts/dashboard/workspace'
 import { errorLabel, isRunningStatus, shortJobNo } from '../../scripts/dashboard/jobs'
 import { isPlainClick } from '../../scripts/dashboard/route'
@@ -106,16 +107,6 @@ function toggleFromRow(event: MouseEvent): void {
         </button>
       </div>
 
-      <div class="jc jc-prog">
-        <span class="jc-label d-label">{{ props.copy.history.columns.samples }}</span>
-        <div class="jc-body">
-          <span class="job-prog-text">
-            <b class="mono-num">{{ formatNumber(props.job.processed_count) }}</b> / <span class="mono-num">{{ formatNumber(props.job.total_count) }}</span>
-          </span>
-          <div v-if="running" class="meter meter--thin" aria-hidden="true"><i :style="{ '--v': progress }"></i></div>
-        </div>
-      </div>
-
       <div class="jc jc-rec">
         <span class="jc-label d-label">{{ props.copy.history.columns.records }}</span>
         <div class="jc-body">
@@ -130,6 +121,24 @@ function toggleFromRow(event: MouseEvent): void {
             <svg v-if="badge.icon" class="icon" aria-hidden="true"><use :href="`/img/icons.svg#i-${badge.icon}`" /></svg>
             <span v-else class="spinner spinner--xs" aria-hidden="true"></span>
             {{ props.copy.history.status[props.job.status] }}
+          </span>
+          <div v-if="running" class="meter meter--thin" aria-hidden="true"><i :style="{ '--v': progress }"></i></div>
+        </div>
+      </div>
+
+      <div class="jc jc-time">
+        <span class="jc-label d-label">{{ props.copy.history.columns.time }}</span>
+        <div class="jc-body">
+          <span class="job-time">{{ formatDateTime(props.job.created_at) }}</span>
+          <span class="job-time is-end">{{ formatDateTime(props.job.finished_at) }}</span>
+        </div>
+      </div>
+
+      <div class="jc jc-contacts">
+        <span class="jc-label d-label">{{ props.copy.history.columns.contacts }}</span>
+        <div class="jc-body">
+          <span class="job-contacts" :class="{ 'is-on': props.job.include_contacts }">
+            {{ props.job.include_contacts ? props.copy.history.contactsOn : props.copy.history.contactsOff }}
           </span>
         </div>
       </div>
@@ -176,7 +185,6 @@ function toggleFromRow(event: MouseEvent): void {
           <JobDetail
             v-if="props.expanded || props.detail"
             :copy="props.copy"
-            :job-no="props.job.job_no"
             :detail="props.detail"
             :failed="props.detailFailed ?? false"
             :query="props.query ?? ''"

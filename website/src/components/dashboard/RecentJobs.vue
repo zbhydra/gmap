@@ -70,10 +70,11 @@ function openAll(event: MouseEvent): void {
           </div>
         </div>
         <div class="jobs-head" aria-hidden="true">
-          <span class="d-label">{{ props.copy.history.columns.taskNo }} · {{ props.copy.history.columns.createdAt }}</span>
-          <span class="d-label">{{ props.copy.history.columns.samples }}</span>
+          <span class="d-label">{{ props.copy.history.detail.keyword }}</span>
           <span class="d-label is-num">{{ props.copy.history.columns.records }}</span>
           <span class="d-label">{{ props.copy.history.columns.status }}</span>
+          <span class="d-label">{{ props.copy.history.columns.time }}</span>
+          <span class="d-label">{{ props.copy.history.columns.contacts }}</span>
           <span></span>
         </div>
         <ul

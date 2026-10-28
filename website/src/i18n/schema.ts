@@ -1351,8 +1351,10 @@ export interface DashboardContent {
     columns: {
       /** 任务号。 */
       taskNo: string
-      /** 创建时间（含时区标注）。 */
-      createdAt: string
+      /** 创建 / 完成时间（两行）。 */
+      time: string
+      /** 邮箱和社交账号选项快照。 */
+      contacts: string
       /** 已收口 / 总搜索数。 */
       samples: string
       /** 去重后的记录数。 */
@@ -1447,18 +1449,6 @@ export interface DashboardContent {
       keyword: string
       /** 明细记录数列头。 */
       records: string
-      /** 真实执行编号。 */
-      runNo: string
-      /** 开始时间。 */
-      startedAt: string
-      /** 结束时间。 */
-      finishedAt: string
-      /** 联系方式选项快照。 */
-      contacts: string
-      /** 本任务启用联系方式。 */
-      contactsEnabled: string
-      /** 本任务关闭联系方式。 */
-      contactsDisabled: string
       /** 已成功收口。 */
       completed: string
       /** 尚未收口。 */
@@ -1466,8 +1456,10 @@ export interface DashboardContent {
       /** 视口来源，含 {lat} {lng} {zoom}。 */
       viewport: string
     }
-    /** 复制完整任务号。 */
-    copyJob: string
+    /** 本任务启用邮箱和社交账号。 */
+    contactsOn: string
+    /** 本任务未启用邮箱和社交账号。 */
+    contactsOff: string
     /** 明细底部说明：记录数按整个任务去重。 */
     dedupeHint: string
     /** 含 {job} {status} 的任务结束 toast 标题。 */

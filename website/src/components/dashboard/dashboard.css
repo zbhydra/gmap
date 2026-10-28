@@ -1595,10 +1595,10 @@ html[data-side-from='collapsed'] .dash-app {
    6 · 任务列表（History 完整列表与 Online「最近任务」共用行组件）
    --------------------------------------------------------------------------- */
 .jobs {
-  /* 操作列定宽：行内下载错误只在本列内换行，不改变该行列宽，保证各行列对齐。
-     状态列（徽标 + 多行错误说明）按视图容器 cqw 定宽，取值等于侧栏展开时原 1.35fr 的宽度（0.3 ×（容器宽 − 290））：
-     侧栏收放时这一列不变宽、说明文字不重排，多出的宽度只给任务 / 进度 / 记录三列（单行或图形） */
-  --job-cols: minmax(140px, 1.45fr) minmax(112px, 1.15fr) minmax(64px, 0.55fr) clamp(152px, 30cqw - 87px, 320px) 184px;
+  /* 关键词 / 记录 / 状态 / 时间 / 邮箱和社交账号 / 操作。
+     除关键词外均定宽：行内下载错误只在操作列内换行，各行列对齐；
+     状态列（徽标 + 多行错误说明）按视图容器 cqw 定宽，侧栏收放时说明文字不重排，多出的宽度只给关键词列 */
+  --job-cols: minmax(160px, 1fr) 64px clamp(152px, 30cqw - 160px, 280px) 152px 128px 184px;
 
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
@@ -1684,24 +1684,28 @@ html[data-side-from='collapsed'] .dash-app {
   grid-column: 1;
 }
 
-.jc-prog {
+.jc-rec {
   grid-column: 2;
 }
 
-.jc-rec {
+.jc-status {
   grid-column: 3;
 }
 
-.jc-status {
+.jc-time {
   grid-column: 4;
 }
 
-.jc-act {
+.jc-contacts {
   grid-column: 5;
 }
 
+.jc-act {
+  grid-column: 6;
+}
+
 .jc-err {
-  grid-column: 4;
+  grid-column: 3;
   grid-row: 2;
   align-self: start;
   padding-top: var(--s-1);
@@ -1733,8 +1737,10 @@ html[data-side-from='collapsed'] .dash-app {
   min-width: 0;
 }
 
-.jc-prog .meter {
-  max-width: 140px;
+.jc-status .meter {
+  width: 100%;
+  max-width: 120px;
+  margin-top: var(--s-1);
 }
 
 .job-toggle {
@@ -1802,34 +1808,6 @@ html[data-side-from='collapsed'] .dash-app {
   font-weight: 500;
 }
 
-/* 次行：创建时间（ET）· 任务号前 8 位（CSV 文件名即任务号，便于对照搜索） */
-.job-sub {
-  display: flex;
-  gap: var(--s-2);
-  min-width: 0;
-  overflow: hidden;
-  color: var(--text-3);
-  font-size: 12.5px;
-  white-space: nowrap;
-}
-
-.job-sub > * + *::before {
-  margin-right: var(--s-2);
-  content: '·';
-}
-
-.job-time {
-  flex: none;
-}
-
-.job-no {
-  overflow: hidden;
-  font-family: var(--font-mono);
-  font-variant-ligatures: none;
-  font-size: 12px;
-  text-overflow: ellipsis;
-}
-
 /* 最近任务：紧凑行，无展开；任务格是去 History 定位该任务的链接 */
 .jobs--compact .job-row {
   min-height: 56px;
@@ -1867,17 +1845,6 @@ html[data-side-from='collapsed'] .dash-app {
   animation: dash-fade var(--dur-3) var(--ease-out) backwards;
 }
 
-.job-prog-text {
-  color: var(--text-2);
-  font-size: 12.5px;
-  white-space: nowrap;
-}
-
-.job-prog-text b {
-  color: var(--text);
-  font-weight: 600;
-}
-
 .job-records {
   color: var(--text);
   font-size: 13.5px;
@@ -1902,6 +1869,41 @@ html[data-side-from='collapsed'] .dash-app {
 .jc-act {
   justify-items: end;
   text-align: right;
+}
+
+/* 创建 / 完成两行；未完成时第二行为「—」 */
+.job-time {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+}
+
+.job-time.is-end {
+  color: var(--text-3);
+}
+
+/* 邮箱和社交账号：启用为成功色圆点 + 文字，未启用弱化 */
+.job-contacts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.job-contacts::before {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+
+.job-contacts.is-on {
+  color: var(--ok);
+  font-weight: 500;
 }
 
 .job-nofile {
@@ -1940,56 +1942,6 @@ html[data-side-from='collapsed'] .dash-app {
   display: grid;
   gap: var(--s-4);
   padding: 0 var(--s-5) var(--s-5) var(--s-12);
-}
-
-/* 五项一行；视图容器 ≤ 1080 时三列、≤ 680 时两列（均见 §11）。列数只看视图容器，侧栏收放不换行 */
-.detail-meta {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--s-3) var(--s-5);
-  margin: 0;
-  padding: var(--s-4);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-}
-
-.detail-meta div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-/* 每项行宽锁定为展开态列宽：（容器宽 − 104 − 列距 4 × 20）/ 5；104 = 卡片边框 2 + 明细左右内边距 68 + 元信息边框 2 + 内边距 32 */
-.detail-meta > div {
-  max-inline-size: calc((100cqw - 184px) / 5);
-}
-
-.detail-meta dd {
-  display: flex;
-  align-items: center;
-  gap: var(--s-1);
-  min-width: 0;
-  margin: 0;
-  color: var(--text);
-  font-size: 13px;
-}
-
-.detail-meta code {
-  min-width: 0;
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-
-.detail-meta .icon-btn {
-  flex: none;
-  width: 28px;
-  height: 28px;
-}
-
-.detail-meta .icon-btn .icon {
-  width: 14px;
-  height: 14px;
 }
 
 .items {
@@ -2229,10 +2181,9 @@ html[data-side-from='collapsed'] .dash-app {
    --------------------------------------------------------------------------- */
 @container view (max-width: 980px) {
   .jobs {
-    /* 列最小宽之和 + 间距 + 内边距 + 边框 = 680，恰好接上 680 的卡片断点；
-       任务列 144 容纳表头「Job · Created」，状态列 152 容纳最长徽标，操作列 142 容纳下载按钮；
-       状态列同样按 cqw 定宽（展开态 1.25fr 的宽度），侧栏收放时不变 */
-    --job-cols: minmax(144px, 1.3fr) minmax(96px, 1fr) minmax(56px, 0.5fr) max(152px, 31cqw - 72px) 142px;
+    /* 列最小宽之和 + 间距 + 内边距 + 边框 ≤ 680，接上 680 的卡片断点；
+       状态列 140 容纳最长徽标，操作列 96 让 CSV / Excel 两个按钮上下排 */
+    --job-cols: minmax(96px, 1fr) 56px 136px 112px 72px 96px;
   }
 
   .jobs-head,
@@ -2242,14 +2193,6 @@ html[data-side-from='collapsed'] .dash-app {
 }
 
 @container view (max-width: 1080px) {
-  .detail-meta {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .detail-meta > div {
-    max-inline-size: calc((100cqw - 144px) / 3);
-  }
-
   .hist-bar {
     grid-template-areas:
       'search search search refresh'
@@ -2350,7 +2293,8 @@ html[data-side-from='collapsed'] .dash-app {
   .job-row {
     grid-template-areas:
       'id status'
-      'prog rec'
+      'time rec'
+      'contacts contacts'
       'act act';
     grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--s-3);
@@ -2361,26 +2305,32 @@ html[data-side-from='collapsed'] .dash-app {
     grid-template-areas:
       'id status'
       'err err'
-      'prog rec'
+      'time rec'
+      'contacts contacts'
       'act act';
   }
 
   .job-row:has(.jc-act:empty) {
     grid-template-areas:
       'id status'
-      'prog rec';
+      'time rec'
+      'contacts contacts';
   }
 
   .jc-id {
     grid-area: id;
   }
 
-  .jc-prog {
-    grid-area: prog;
-  }
-
   .jc-rec {
     grid-area: rec;
+  }
+
+  .jc-time {
+    grid-area: time;
+  }
+
+  .jc-contacts {
+    grid-area: contacts;
   }
 
   .jc-status,
@@ -2409,8 +2359,9 @@ html[data-side-from='collapsed'] .dash-app {
     width: 100%;
   }
 
-  .jc-prog .jc-label,
-  .jc-rec .jc-label {
+  .jc-rec .jc-label,
+  .jc-time .jc-label,
+  .jc-contacts .jc-label {
     position: static;
     width: auto;
     height: auto;
@@ -2422,24 +2373,7 @@ html[data-side-from='collapsed'] .dash-app {
     text-align: left;
   }
 
-  /* 明细：元信息两列（任务号 / Run 号独占整行），采样表折为两行一项 */
-  .detail-meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .detail-meta .is-wide {
-    grid-column: 1 / -1;
-  }
-
-  /* 卡片布局：卡片边框 2 + 明细左右 32 + 元信息边框 2 + 内边距 32 = 68；两列列距 20 */
-  .detail-meta > div {
-    max-inline-size: calc(50cqw - 44px);
-  }
-
-  .detail-meta > .is-wide {
-    max-inline-size: calc(100cqw - 68px);
-  }
-
+  /* 明细：采样表折为两行一项 */
   .items table,
   .items tbody {
     display: block;
