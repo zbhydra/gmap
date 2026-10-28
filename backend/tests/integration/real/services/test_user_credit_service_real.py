@@ -163,21 +163,6 @@ async def test_real_registration_entry_grants_credits(
     assert await user_credit_service.get_balance(user.user_id) == 10
 
 
-async def test_real_password_registration_entry_grants_credits(
-    make_credit_real_email: Callable[[str], str],
-) -> None:
-    """真实 MySQL 中密码注册入口成功后能读取到 Credits 余额。"""
-
-    email = make_credit_real_email("real-credit-password")
-    user = await UserService().create_user_with_registration_bonus(
-        email=email,
-        password="TestPassword123!",
-        full_name="Real Credit Password User",
-    )
-
-    assert await user_credit_service.get_balance(user.user_id) == 10
-
-
 async def test_real_registration_bonus_failure_does_not_rollback_user(
     make_credit_real_email: Callable[[str], str],
 ) -> None:

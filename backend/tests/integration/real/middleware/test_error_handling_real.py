@@ -38,10 +38,9 @@ async def test_real_request_validation_failure_uses_common_response_envelope(
     secret = "SECRET_VALIDATION_INPUT_" * 6
     caplog.set_level(logging.INFO, logger="server")
     response = await real_async_client.post(
-        "/api/client/auth/register",
+        "/api/client/auth/google-login",
         json={
-            "email": "validation-log@example.com",
-            "password": secret,
+            "credential": secret * 32,
         },
     )
 
@@ -49,7 +48,7 @@ async def test_real_request_validation_failure_uses_common_response_envelope(
     assert response.json() == {
         "code": CommonCode.VALIDATION_ERROR,
         "data": {},
-        "msg": "body.password: Request parameters are incomplete or invalid",
+        "msg": "body.credential: Request parameters are incomplete or invalid",
     }
     records = [record for record in caplog.records if record.name == "server"]
     assert len(records) == 2
@@ -60,7 +59,7 @@ async def test_real_request_validation_failure_uses_common_response_envelope(
         in records[0].getMessage()
     )
     assert response.json()["msg"] in records[0].getMessage()
-    assert 'POST /api/client/auth/register HTTP/1.1" 200' in records[1].getMessage()
+    assert 'POST /api/client/auth/google-login HTTP/1.1" 200' in records[1].getMessage()
     assert secret not in caplog.text
 
 

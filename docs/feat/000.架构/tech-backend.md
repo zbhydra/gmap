@@ -146,7 +146,6 @@ email_sender.py           # SMTP 发信
 feishu_utils.py           # 飞书告警/工具
 filename.py               # 文件名处理
 geoip.py                  # 地理定位
-ip_block_manager.py       # IP 封禁
 jwt.py                    # JWT 签发/校验
 money.py                  # 金额处理
 network.py                # 网络工具

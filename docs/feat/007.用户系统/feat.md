@@ -53,7 +53,7 @@
 - **订单归属用户、下单/履约编排**:属订单系统(`@../004.订单系统/feat.md`)。
 - **extension 每日下载次数计数、device_id 匿名下载规则**:属计数器系统(`@../005.计数器系统/feat.md`)。
 - **账号自助注销入口**:当前无公开的账号注销/删除接口(软删标记字段存在但无客户端入口触发;详见 `@tech-账号与认证.md`)。
-- **密码登录入口**:历史上有密码注册接口,website/extension 当前都不暴露密码登录 UI,主路径是邮箱验证码与 Google。
+- **密码注册与登录**:客户端仅支持邮箱验证码与 Google 登录。
 - **GitHub 登录、绑定多个第三方账号、独立 OAuth account 表**:不接入。
 - **保存 Google access token / refresh token**:不保存。
 - **URL 传递 token、跨任意域名接收 token、共享 Cookie 登录**:不做;官网与插件之间只交接短效一次性 code(URL fragment 回跳,60 秒有效、只能消费一次),网页 token 与插件 token 均不进 URL、不经任何消息通道。
@@ -64,9 +64,8 @@
 - **website 登录以 Google 为主**:首屏只展示 Google 主按钮和 `Continue with email` 次级入口,邮箱验证码表单默认隐藏。
 - **extension 使用官网统一登录(v3 浏览器身份流程)**:插件 popup 提供登录入口(Bing 面板未登录态另有入口),点击后由插件 background 发起浏览器身份流程打开官网确认页 `/extension-login`;插件内不维护邮箱验证码表单。确认页复用官网 Google 主路径与邮箱验证码次级路径,用户显式确认账号后签发一次性 code,插件凭 code 换取独立插件 token;官网与插件之间无消息通道、不登记扩展 ID,详见 `@tech-第三方登录.md`。
 - **website 不存 refresh token、不自动刷新**:website 只存 access token,401 直接清登录态重新弹窗;extension 存 refresh token 并有 401 自动刷新拦截器(两套客户端策略不同,见 `@tech-账号与认证.md`)。
-- **注册赠送**:邮箱验证码、Google 无密码注册、密码注册路径默认赠送 10 Credits(走积分系统);命中 IP 注册权益风控的新账号不赠送。注册赠送不写 `user_subscriptions`。
+- **注册赠送**:邮箱验证码、Google 注册路径默认赠送 10 Credits(走积分系统);命中 IP 注册权益风控的新账号不赠送。注册赠送不写 `user_subscriptions`。
 - **账号注销**:无公开入口;被标记为已注销的账号登录被拒(按"用户不存在")。
-- **登录失败保护**:当前生效的是 **IP 级别限流**(5 分钟 10 次失败 → 封该 IP 10 分钟)。用户级别锁定(按账号累计失败次数锁定)字段与依赖已就位,但失败计数尚未接线(为 stub,带 TODO),实际不触发按用户锁定。
 - **登出范围**:登出只撤销当前 access token,**不撤销 refresh token、不影响其他设备**(多设备登录态保留);完整撤销所有 token 的能力存在但没有公开入口触发。
 
 ## 业务流程
@@ -163,7 +162,6 @@
 - IP 注册权益风控:同一 IP 在配置窗口内第 N+1 个及之后注册的新账号不获得注册 Credits;进入签到系统时直接得到已结束活动,不会出现可领取签到奖励。N 由 `config_public.registration_ip_benefit_guard.max_registrations` 配置。
 - Website 设备可信校验:website 页面加载后会请求 `/assets/icons/credits.svg`;请求成功后 7 天内同一 device_id 可发送邮箱验证码、提交验证码登录、发起媒体 pre-v2 解析和下载授权;开启校验后,未验证或过期时受保护入口直接提示用户刷新页面后重试。Logo 请求 IP 和受保护 API 当前 IP 只进日志。
 - 邮箱验证码规则:6 位数字、10 分钟有效、同邮箱 60 秒内最多发 1 次、最多 5 次验证尝试;发送失败可立即重发(频率限制回退)。
-- IP 限流:同一 IP 5 分钟内 10 次登录失败后封禁 10 分钟,封禁期间登录返回 IP 封禁错误。
 - Google 登录(website):手动按钮点击后立即 loading 并整页跳转后端 OAuth authorize;权威邮箱完成授权后能拿到项目 token;非权威邮箱不直接发项目 token 而是回邮箱验证码;`aud`/`iss`/`exp`/`email_verified` 任一不达标拒绝;`google_login_code` 一次性,第二次兑换失败。
 - One Tap:弹窗打开时自动提示;失败不阻断手动 Google 按钮与邮箱验证码 fallback。
 - 同一邮箱先邮箱验证码、再 Google 登录(或反过来),最终是同一个用户;首次注册方式只在新用户创建时写,后续换登录方式不覆盖。

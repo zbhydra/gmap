@@ -91,7 +91,6 @@ class CreditChargeResult:
 
 修改 `backend/src/app/services/user_service.py`,位置:
 
-- `create_user_with_registration_bonus()`
 - `create_user_without_password_with_registration_bonus()`
 
 规则:
