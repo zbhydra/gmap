@@ -2223,7 +2223,7 @@ html[data-side-from='collapsed'] .dash-app {
 @container view (max-width: 980px) {
   .jobs {
     /* 列最小宽之和 + 间距 + 内边距 + 边框 = 680，恰好接上 680 的卡片断点；
-       任务列 144 容纳表头「Job · Created (ET)」，状态列 152 容纳最长徽标，操作列 142 容纳下载按钮；
+       任务列 144 容纳表头「Job · Created」，状态列 152 容纳最长徽标，操作列 142 容纳下载按钮；
        状态列同样按 cqw 定宽（展开态 1.25fr 的宽度），侧栏收放时不变 */
     --job-cols: minmax(144px, 1.3fr) minmax(96px, 1fr) minmax(56px, 0.5fr) max(152px, 31cqw - 72px) 142px;
   }

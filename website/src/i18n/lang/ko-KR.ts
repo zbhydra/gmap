@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "온라인 내보내기 내역",
-      "description": "온라인 스크레이퍼에서 실행한 작업이 최신 항목부터 표시됩니다. 시간은 동부 표준시(New York)로 표시됩니다.",
+      "description": "온라인 스크레이퍼에서 실행한 작업이 최신 항목부터 표시됩니다.",
       "refresh": "새로 고치다",
       "autoRefresh": "자동 새로고침 중",
       "loading": "내보내기 로드 중...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "외 {count}개",
       "columns": {
         "taskNo": "작업",
-        "createdAt": "생성 시간(ET)",
+        "createdAt": "생성 시간",
         "samples": "검색",
         "records": "기록",
         "status": "상태"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "부분적인 성공",
         "failed": "실패한"
       },
-      "timezone": "ET",
       "search": {
         "label": "작업 검색",
         "placeholder": "작업 번호 또는 키워드로 검색",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "시작",
         "to": "종료",
         "apply": "적용",
-        "invalid": "시작일은 종료일과 같거나 이전이어야 합니다.",
-        "hint": "날짜는 미국 동부 시간(뉴욕) 기준입니다."
+        "invalid": "시작일은 종료일과 같거나 이전이어야 합니다."
       },
       "pagination": {
         "label": "페이지 이동",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "예어",
         "records": "기록",
         "runNo": "달리다",
-        "startedAt": "시작 시간(ET)",
-        "finishedAt": "종료 시간(ET)",
+        "startedAt": "시작 시간",
+        "finishedAt": "종료 시간",
         "contacts": "이메일 및 소셜 프로필",
         "contactsEnabled": "이 작업에 활성화됨",
         "contactsDisabled": "이 작업을 위해 꺼짐",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "연결된 앱이 없습니다.",
         "loadFailed": "연결된 앱을 로드할 수 없습니다. 다시 시도해 주세요.",
         "selfDeclared": "앱 자체에서 제공하는 이름: {name}",
-        "createdLabel": "연결됨(ET)",
-        "refreshedLabel": "마지막 새로 고침(ET)",
+        "createdLabel": "연결됨",
+        "refreshedLabel": "마지막 새로 고침",
         "notRefreshed": "아직 아님",
         "revoke": "연결 끊기",
         "revokeTitle": "이 앱을 연결 해제하시겠습니까?",

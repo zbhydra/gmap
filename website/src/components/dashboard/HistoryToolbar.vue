@@ -10,7 +10,7 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
 import { placeSegThumb } from '../../scripts/dashboard/dom'
-import { addDays, etYmd, formatDayRange } from '../../scripts/dashboard/format'
+import { addDays, formatDayRange, localYmd } from '../../scripts/dashboard/format'
 import {
   hasHistoryFilters,
   HISTORY_QUERY_MAX,
@@ -79,7 +79,7 @@ function presetLabel(range: RangePreset): string {
 
 /** 打开时间范围或 Filters 菜单：丢掉上次没有 Apply 的日期；当前是自定义范围时从它开始，否则默认最近 7 天。 */
 function openDraft(): void {
-  today.value = etYmd(Date.now())
+  today.value = localYmd(Date.now())
   draft.from = isCustom.value ? props.query.from : addDays(today.value, 1 - CUSTOM_DEFAULT_DAYS)
   draft.to = isCustom.value ? props.query.to : today.value
 }

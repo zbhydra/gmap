@@ -35,7 +35,7 @@ const jobNo = computed(() => {
     </span>
   </span>
   <span class="job-sub">
-    <span class="job-time">{{ formatDateTime(props.job.created_at) }} {{ props.copy.timezone }}</span>
+    <span class="job-time">{{ formatDateTime(props.job.created_at) }}</span>
     <span class="job-no"><span class="sr-only">{{ props.copy.columns.taskNo }} </span><mark v-if="jobNo.match" class="hl">{{ jobNo.match }}</mark>{{ jobNo.rest }}…</span>
   </span>
 </template>

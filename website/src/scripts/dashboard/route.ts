@@ -6,7 +6,7 @@
  */
 
 import type { ExportJobQuery, ExportJobStatus } from './api'
-import { addDays, etMidnight, etYmd, isYmd } from './format'
+import { addDays, isYmd, localMidnight, localYmd } from './format'
 
 export const DASHBOARD_VIEWS = ['online', 'history', 'api', 'subscriptions'] as const
 export type DashboardView = (typeof DASHBOARD_VIEWS)[number]
@@ -100,18 +100,18 @@ export function hasHistoryFilters(query: HistoryQuery): boolean {
 }
 
 /**
- * 查询 → 列表接口参数。Running 展开为三个运行中的公开状态；时间范围按纽约日界换算成左闭右开的毫秒区间：
+ * 查询 → 列表接口参数。Running 展开为三个运行中的公开状态；时间范围按本地日界换算成左闭右开的毫秒区间：
  * 最近 N 天含今天，自定义范围的结束日取次日零点。
  */
 export function historyApiQuery(query: HistoryQuery, now: number): ExportJobQuery {
-  const today = etYmd(now)
+  const today = localYmd(now)
   let createdFromMs: number | undefined
   let createdToMs: number | undefined
-  if (query.range === '7d') createdFromMs = etMidnight(addDays(today, -6))
-  else if (query.range === '30d') createdFromMs = etMidnight(addDays(today, -29))
+  if (query.range === '7d') createdFromMs = localMidnight(addDays(today, -6))
+  else if (query.range === '30d') createdFromMs = localMidnight(addDays(today, -29))
   else if (query.range === 'custom') {
-    createdFromMs = etMidnight(query.from)
-    createdToMs = etMidnight(addDays(query.to, 1))
+    createdFromMs = localMidnight(query.from)
+    createdToMs = localMidnight(addDays(query.to, 1))
   }
   return {
     offset: (query.page - 1) * query.size,

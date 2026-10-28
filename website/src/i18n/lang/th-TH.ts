@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "ประวัติการส่งออกออนไลน์",
-      "description": "งานที่คุณใช้งานบน เครื่องมือดึงข้อมูลออนไลน์ ใหม่ล่าสุดก่อน เวลาแสดงเป็นเวลาตะวันออก (New York)",
+      "description": "งานที่คุณใช้งานบน เครื่องมือดึงข้อมูลออนไลน์ ใหม่ล่าสุดก่อน",
       "refresh": "รีเฟรช",
       "autoRefresh": "รีเฟรชอัตโนมัติอยู่",
       "loading": "กำลังโหลดการส่งออกของคุณ...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "และอีก {count} รายการ",
       "columns": {
         "taskNo": "งาน",
-        "createdAt": "เวลาสร้าง (ET)",
+        "createdAt": "เวลาสร้าง",
         "samples": "ค้นหา",
         "records": "บันทึก",
         "status": "สถานะ"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "ความสำเร็จบางส่วน",
         "failed": "ล้มเหลว"
       },
-      "timezone": "ET",
       "search": {
         "label": "ค้นหางาน",
         "placeholder": "ค้นหาด้วยหมายเลขงานหรือคำหลัก",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "ตั้งแต่",
         "to": "ถึง",
         "apply": "ใช้",
-        "invalid": "เลือกวันที่เริ่มต้นที่ไม่ช้ากว่าวันที่สิ้นสุด",
-        "hint": "วันที่ใช้เวลาฝั่งตะวันออกของสหรัฐฯ (นิวยอร์ก)"
+        "invalid": "เลือกวันที่เริ่มต้นที่ไม่ช้ากว่าวันที่สิ้นสุด"
       },
       "pagination": {
         "label": "การแบ่งหน้า",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "คำสำคัญ",
         "records": "บันทึก",
         "runNo": "วิ่ง",
-        "startedAt": "เวลาเริ่ม (ET)",
-        "finishedAt": "เวลาเสร็จสิ้น (ET)",
+        "startedAt": "เวลาเริ่ม",
+        "finishedAt": "เวลาเสร็จสิ้น",
         "contacts": "อีเมลและโปรไฟล์โซเชียล",
         "contactsEnabled": "เปิดใช้งานสำหรับงานนี้",
         "contactsDisabled": "หมดแล้วสำหรับงานนี้",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "ไม่มีแอปที่เชื่อมต่ออยู่",
         "loadFailed": "ไม่สามารถโหลดแอปที่เชื่อมต่อได้ โปรดลองอีกครั้ง",
         "selfDeclared": "ตั้งชื่อแอปให้ตัวเอง: {name}",
-        "createdLabel": "เชื่อมต่อแล้ว (ET)",
-        "refreshedLabel": "รีเฟรชครั้งล่าสุด (ET)",
+        "createdLabel": "เชื่อมต่อแล้ว",
+        "refreshedLabel": "รีเฟรชครั้งล่าสุด",
         "notRefreshed": "ยัง",
         "revoke": "ตัดการเชื่อมต่อ",
         "revokeTitle": "ยกเลิกการเชื่อมต่อแอปนี้ไหม",

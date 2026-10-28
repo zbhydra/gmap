@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "Riwayat ekspor online",
-      "description": "Tugas yang Anda jalankan di Scraper Online, yang terbaru terlebih dahulu. Waktu ditampilkan dalam Waktu Bagian Timur (New York).",
+      "description": "Tugas yang Anda jalankan di Scraper Online, yang terbaru terlebih dahulu.",
       "refresh": "Menyegarkan",
       "autoRefresh": "Penyegaran otomatis aktif",
       "loading": "Memuat ekspor Anda...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "dan {count} lainnya",
       "columns": {
         "taskNo": "Tugas",
-        "createdAt": "Dibuat (ET)",
+        "createdAt": "Dibuat",
         "samples": "Pencarian",
         "records": "Catatan",
         "status": "Status"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "Keberhasilan parsial",
         "failed": "Gagal"
       },
-      "timezone": "ET",
       "search": {
         "label": "Cari tugas",
         "placeholder": "Cari berdasarkan nomor tugas atau kata kunci",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "Dari",
         "to": "Sampai",
         "apply": "Terapkan",
-        "invalid": "Pilih tanggal mulai yang sama dengan atau sebelum tanggal akhir.",
-        "hint": "Tanggal menggunakan Waktu Timur AS (New York)."
+        "invalid": "Pilih tanggal mulai yang sama dengan atau sebelum tanggal akhir."
       },
       "pagination": {
         "label": "Paginasi",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "Kata kunci",
         "records": "Catatan",
         "runNo": "Berlari",
-        "startedAt": "Dimulai (ET)",
-        "finishedAt": "Selesai (ET)",
+        "startedAt": "Dimulai",
+        "finishedAt": "Selesai",
         "contacts": "Email dan profil sosial",
         "contactsEnabled": "Diaktifkan untuk tugas ini",
         "contactsDisabled": "Mati untuk tugas ini",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "Tidak ada aplikasi yang terhubung.",
         "loadFailed": "Tidak dapat memuat aplikasi yang terhubung. Silakan coba lagi.",
         "selfDeclared": "Nama yang diberikan aplikasi itu sendiri: {name}",
-        "createdLabel": "Terhubung (ET)",
-        "refreshedLabel": "Terakhir disegarkan (ET)",
+        "createdLabel": "Terhubung",
+        "refreshedLabel": "Terakhir disegarkan",
         "notRefreshed": "Belum",
         "revoke": "Memutuskan",
         "revokeTitle": "Putuskan sambungan aplikasi ini?",

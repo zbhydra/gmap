@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "Histórico de exportação on-line",
-      "description": "Tarefas que você executou no Extrator online, as mais recentes primeiro. Os horários são mostrados no Horário do Leste (New York).",
+      "description": "Tarefas que você executou no Extrator online, as mais recentes primeiro.",
       "refresh": "Atualizar",
       "autoRefresh": "Atualização automática ativada",
       "loading": "Carregando suas exportações...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "e mais {count}",
       "columns": {
         "taskNo": "Tarefa",
-        "createdAt": "Criado (ET)",
+        "createdAt": "Criado",
         "samples": "Pesquisas",
         "records": "Registros",
         "status": "Status"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "Sucesso parcial",
         "failed": "Fracassado"
       },
-      "timezone": "ET",
       "search": {
         "label": "Pesquisar tarefas",
         "placeholder": "Pesquisar por número da tarefa ou palavra-chave",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "De",
         "to": "Até",
         "apply": "Aplicar",
-        "invalid": "Escolha uma data inicial igual ou anterior à data final.",
-        "hint": "As datas usam o horário do Leste (Nova York)."
+        "invalid": "Escolha uma data inicial igual ou anterior à data final."
       },
       "pagination": {
         "label": "Paginação",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "Palavra-chave",
         "records": "Registros",
         "runNo": "Correr",
-        "startedAt": "Iniciado (ET)",
-        "finishedAt": "Concluído (ET)",
+        "startedAt": "Iniciado",
+        "finishedAt": "Concluído",
         "contacts": "E-mails e perfis sociais",
         "contactsEnabled": "Ativado para esta tarefa",
         "contactsDisabled": "Desativado para esta tarefa",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "Nenhum aplicativo está conectado.",
         "loadFailed": "Não foi possível carregar os aplicativos conectados. Por favor, tente novamente.",
         "selfDeclared": "Nome dado ao aplicativo: {name}",
-        "createdLabel": "Conectado (ET)",
-        "refreshedLabel": "Última atualização (ET)",
+        "createdLabel": "Conectado",
+        "refreshedLabel": "Última atualização",
         "notRefreshed": "Ainda não",
         "revoke": "Desconectar",
         "revokeTitle": "Desconectar este aplicativo?",

@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "Historique des exportations en ligne",
-      "description": "Tâches que vous avez exécutées sur Extracteur en ligne, les plus récentes en premier. Les heures sont affichées en heure de l'Est (New York).",
+      "description": "Tâches que vous avez exécutées sur Extracteur en ligne, les plus récentes en premier.",
       "refresh": "Rafraîchir",
       "autoRefresh": "Actualisation automatique activée",
       "loading": "Chargement de vos exportations...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "et {count} de plus",
       "columns": {
         "taskNo": "Tâche",
-        "createdAt": "Créé (ET)",
+        "createdAt": "Créé",
         "samples": "Recherches",
         "records": "Enregistrements",
         "status": "Statut"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "Succès partiel",
         "failed": "Échoué"
       },
-      "timezone": "ET",
       "search": {
         "label": "Rechercher des tâches",
         "placeholder": "Rechercher par numéro de tâche ou mot-clé",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "Du",
         "to": "Au",
         "apply": "Appliquer",
-        "invalid": "Choisissez une date de début antérieure ou égale à la date de fin.",
-        "hint": "Les dates sont à l'heure de l'Est (New York)."
+        "invalid": "Choisissez une date de début antérieure ou égale à la date de fin."
       },
       "pagination": {
         "label": "Pagination",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "Mot-clé",
         "records": "Enregistrements",
         "runNo": "Courir",
-        "startedAt": "Commencé (ET)",
-        "finishedAt": "Terminé (ET)",
+        "startedAt": "Commencé",
+        "finishedAt": "Terminé",
         "contacts": "E-mails et profils sociaux",
         "contactsEnabled": "Activé pour cette tâche",
         "contactsDisabled": "C'est parti pour cette tâche",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "Aucune application n'est connectée.",
         "loadFailed": "Impossible de charger les applications connectées. Veuillez réessayer.",
         "selfDeclared": "Nom que l'application se donne : {name}",
-        "createdLabel": "Connecté (ET)",
-        "refreshedLabel": "Dernière actualisation (ET)",
+        "createdLabel": "Connecté",
+        "refreshedLabel": "Dernière actualisation",
         "notRefreshed": "Pas encore",
         "revoke": "Déconnecter",
         "revokeTitle": "Déconnecter cette application ?",

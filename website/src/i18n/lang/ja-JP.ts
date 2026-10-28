@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "オンラインエクスポート履歴",
-      "description": "オンライン スクレイパーで実行したタスク (最新のものから順)。時間は東部時間 (New York) で表示されます。",
+      "description": "オンライン スクレイパーで実行したタスク (最新のものから順)。",
       "refresh": "リフレッシュ",
       "autoRefresh": "自動更新中",
       "loading": "エクスポートをロードしています...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "ほか {count} 件",
       "columns": {
         "taskNo": "タスク",
-        "createdAt": "作成日時 (ET)",
+        "createdAt": "作成日時",
         "samples": "検索",
         "records": "記録",
         "status": "状態"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "部分的に成功",
         "failed": "失敗した"
       },
-      "timezone": "ET",
       "search": {
         "label": "タスクを検索",
         "placeholder": "タスク番号またはキーワードで検索",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "開始日",
         "to": "終了日",
         "apply": "適用",
-        "invalid": "開始日は終了日以前の日付を選んでください。",
-        "hint": "日付は米国東部時間（ニューヨーク）です。"
+        "invalid": "開始日は終了日以前の日付を選んでください。"
       },
       "pagination": {
         "label": "ページ送り",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "キーワード",
         "records": "記録",
         "runNo": "走る",
-        "startedAt": "開始日時 (ET)",
-        "finishedAt": "終了日時 (ET)",
+        "startedAt": "開始日時",
+        "finishedAt": "終了日時",
         "contacts": "メールとソーシャルプロフィール",
         "contactsEnabled": "このタスクに対して有効になっています",
         "contactsDisabled": "このタスクではオフです",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "接続されているアプリはありません。",
         "loadFailed": "接続されているアプリを読み込めませんでした。もう一度試してください。",
         "selfDeclared": "アプリ自体に付ける名前: {name}",
-        "createdLabel": "接続済み (ET)",
-        "refreshedLabel": "最終更新日 (ET)",
+        "createdLabel": "接続済み",
+        "refreshedLabel": "最終更新日",
         "notRefreshed": "まだ",
         "revoke": "切断する",
         "revokeTitle": "このアプリを切断しますか?",

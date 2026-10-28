@@ -118,8 +118,7 @@ export const dashboardContent: DashboardContent = {
   },
   history: {
     title: 'Online export history',
-    description:
-      'Tasks you ran on the Online Scraper, newest first. Times are shown in Eastern Time (New York).',
+    description: 'Tasks you ran on the Online Scraper, newest first.',
     refresh: 'Refresh',
     autoRefresh: 'Auto-refresh on',
     loading: 'Loading your exports...',
@@ -138,7 +137,7 @@ export const dashboardContent: DashboardContent = {
     moreKeywords: 'and {count} more',
     columns: {
       taskNo: 'Job',
-      createdAt: 'Created (ET)',
+      createdAt: 'Created',
       samples: 'Searches',
       records: 'Records',
       status: 'Status'
@@ -151,7 +150,6 @@ export const dashboardContent: DashboardContent = {
       partial: 'Partial success',
       failed: 'Failed'
     },
-    timezone: 'ET',
     search: {
       label: 'Search tasks',
       placeholder: 'Search by job number or keyword',
@@ -174,8 +172,7 @@ export const dashboardContent: DashboardContent = {
       from: 'From',
       to: 'To',
       apply: 'Apply',
-      invalid: 'Choose a start date on or before the end date.',
-      hint: 'Dates use Eastern Time (New York).'
+      invalid: 'Choose a start date on or before the end date.'
     },
     pagination: {
       label: 'Pagination',
@@ -192,8 +189,8 @@ export const dashboardContent: DashboardContent = {
       keyword: 'Keyword',
       records: 'Records',
       runNo: 'Run',
-      startedAt: 'Started (ET)',
-      finishedAt: 'Finished (ET)',
+      startedAt: 'Started',
+      finishedAt: 'Finished',
       contacts: 'Emails and social profiles',
       contactsEnabled: 'Enabled for this task',
       contactsDisabled: 'Off for this task',
@@ -273,8 +270,8 @@ export const dashboardContent: DashboardContent = {
       empty: 'No apps are connected.',
       loadFailed: 'Could not load connected apps. Please try again.',
       selfDeclared: 'Name the app gives itself: {name}',
-      createdLabel: 'Connected (ET)',
-      refreshedLabel: 'Last refreshed (ET)',
+      createdLabel: 'Connected',
+      refreshedLabel: 'Last refreshed',
       notRefreshed: 'Not yet',
       revoke: 'Disconnect',
       revokeTitle: 'Disconnect this app?',

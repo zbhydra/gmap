@@ -357,7 +357,7 @@ test('dashboard popovers: rows per page, history time range or filters, account 
   const from = rangePop.getByLabel('From', { exact: true })
   const to = rangePop.getByLabel('To', { exact: true })
   await expect(from).toBeFocused()
-  await expect(to).toHaveValue(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date()))
+  await expect(to).toHaveValue(new Intl.DateTimeFormat('en-CA').format(new Date()))
   await page.keyboard.press('Escape')
   await expect(rangeMenu.getByRole('menuitem', { name: /^Custom range/ })).toBeFocused()
   await page.keyboard.press('Escape')

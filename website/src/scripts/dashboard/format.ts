@@ -1,12 +1,9 @@
 /**
  * Dashboard 展示格式。
  *
- * 时间统一按后端业务时区 America/New_York 展示（界面标 ET），当年省略年份；History 的时间范围按纽约日历日
- * 换算成毫秒边界。随页面语言的格式化器惰性创建：Astro SSR 也会执行组件模块，读取 DOM 必须推迟到客户端。
+ * 时间按浏览器时区展示，当年省略年份；History 的时间范围按浏览器本地日历日换算成毫秒边界。
+ * 随页面语言的格式化器惰性创建：Astro SSR 也会执行组件模块，读取 DOM 必须推迟到客户端。
  */
-
-/** 后端业务时区（backend utils/time.py）。 */
-export const BUSINESS_TIME_ZONE = 'America/New_York'
 
 const DAY_MS = 86_400_000
 
@@ -23,16 +20,13 @@ let localeFormatters: LocaleFormatters | null = null
 function formatters(): LocaleFormatters {
   if (!localeFormatters) {
     const locale = document.documentElement.lang || 'en-US'
-    const timeZone = BUSINESS_TIME_ZONE
     localeFormatters = {
       dateTime: new Intl.DateTimeFormat(locale, {
-        timeZone, year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+        year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
       }),
-      dateTimeNoYear: new Intl.DateTimeFormat(locale, {
-        timeZone, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
-      }),
-      date: new Intl.DateTimeFormat(locale, { timeZone, year: 'numeric', month: 'short', day: 'numeric' }),
-      // 日历日本身就是纽约日期，按 UTC 零点表达，展示时不再换时区
+      dateTimeNoYear: new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+      date: new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' }),
+      // 日历日按 UTC 零点表达，展示时不再换时区
       dayRange: new Intl.DateTimeFormat(locale, { timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric' }),
       number: new Intl.NumberFormat(locale)
     }
@@ -40,24 +34,15 @@ function formatters(): LocaleFormatters {
   return localeFormatters
 }
 
-const yearFormat = new Intl.DateTimeFormat('en-US', { timeZone: BUSINESS_TIME_ZONE, year: 'numeric' })
-const ymdFormat = new Intl.DateTimeFormat('en-CA', {
-  timeZone: BUSINESS_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit'
-})
-const partsFormat = new Intl.DateTimeFormat('en-US', {
-  timeZone: BUSINESS_TIME_ZONE, hourCycle: 'h23',
-  year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
-})
-
-/** 日期时间（ET）：当年省略年份，跨年才显示；空值显示破折号。 */
+/** 日期时间：当年省略年份，跨年才显示；空值显示破折号。 */
 export function formatDateTime(ms: number | null): string {
   if (ms === null) return '—'
   const date = new Date(ms)
-  const sameYear = yearFormat.format(date) === yearFormat.format(new Date())
+  const sameYear = date.getFullYear() === new Date().getFullYear()
   return (sameYear ? formatters().dateTimeNoYear : formatters().dateTime).format(date)
 }
 
-/** 日期（ET）。 */
+/** 日期。 */
 export function formatDate(ms: number): string {
   return formatters().date.format(new Date(ms))
 }
@@ -77,9 +62,10 @@ export function fill(template: string, values: Readonly<Record<string, string | 
   return template.replace(/\{(\w+)\}/g, (match, key: string) => (key in values ? String(values[key]) : match))
 }
 
-/** 毫秒时间戳对应的纽约日历日（YYYY-MM-DD）。 */
-export function etYmd(ms: number): string {
-  return ymdFormat.format(new Date(ms))
+/** 毫秒时间戳对应的本地日历日（YYYY-MM-DD）。 */
+export function localYmd(ms: number): string {
+  const date = new Date(ms)
+  return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(n => String(n).padStart(2, '0')).join('-')
 }
 
 function ymdToUtc(ymd: string): number {
@@ -97,19 +83,10 @@ export function isYmd(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && addDays(value, 0) === value
 }
 
-/** 某一时刻纽约相对 UTC 的偏移（毫秒）。 */
-function etOffsetMs(ms: number): number {
-  const parts: Record<string, number> = {}
-  for (const part of partsFormat.formatToParts(new Date(ms))) parts[part.type] = Number(part.value)
-  const asUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second)
-  return asUtc - Math.floor(ms / 1000) * 1000
-}
-
-/** 纽约日历日零点的毫秒时间戳；夏令时切换日按当日偏移再校正一次即可收敛。 */
-export function etMidnight(ymd: string): number {
-  const base = ymdToUtc(ymd)
-  const guess = base - etOffsetMs(base)
-  return base - etOffsetMs(guess)
+/** 本地日历日零点的毫秒时间戳。 */
+export function localMidnight(ymd: string): number {
+  const [year, month, day] = ymd.split('-').map(Number)
+  return new Date(year, month - 1, day).getTime()
 }
 
 /** 自定义时间范围的按钮文字（两端含），由浏览器按语言合并相同的年月。 */

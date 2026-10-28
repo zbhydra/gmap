@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "Cronologia delle esportazioni online",
-      "description": "Attività eseguite su Estrattore online, prima le più recenti. Gli orari sono mostrati nell'ora di New York (New York).",
+      "description": "Attività eseguite su Estrattore online, prima le più recenti.",
       "refresh": "Aggiorna",
       "autoRefresh": "Aggiornamento automatico attivo",
       "loading": "Caricamento delle esportazioni...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "e altre {count}",
       "columns": {
         "taskNo": "Attività",
-        "createdAt": "Creato (ET)",
+        "createdAt": "Creato",
         "samples": "Ricerche",
         "records": "Record",
         "status": "Stato"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "Successo parziale",
         "failed": "Fallito"
       },
-      "timezone": "ET",
       "search": {
         "label": "Cerca attività",
         "placeholder": "Cerca per numero attività o parola chiave",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "Dal",
         "to": "Al",
         "apply": "Applica",
-        "invalid": "Scegli una data di inizio uguale o precedente alla data di fine.",
-        "hint": "Le date usano l'ora della costa orientale (New York)."
+        "invalid": "Scegli una data di inizio uguale o precedente alla data di fine."
       },
       "pagination": {
         "label": "Paginazione",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "Parola chiave",
         "records": "Record",
         "runNo": "Correre",
-        "startedAt": "Iniziato (ET)",
-        "finishedAt": "Finito (ET)",
+        "startedAt": "Iniziato",
+        "finishedAt": "Finito",
         "contacts": "Email e profili social",
         "contactsEnabled": "Abilitato per questa attività",
         "contactsDisabled": "Fuori per questo compito",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "Nessuna app connessa.",
         "loadFailed": "Impossibile caricare le app connesse. Per favore riprova.",
         "selfDeclared": "Nome che l'app si dà: {name}",
-        "createdLabel": "Connesso (ET)",
-        "refreshedLabel": "Ultimo aggiornamento (ET)",
+        "createdLabel": "Connesso",
+        "refreshedLabel": "Ultimo aggiornamento",
         "notRefreshed": "Non ancora",
         "revoke": "Disconnetti",
         "revokeTitle": "Disconnettere questa app?",

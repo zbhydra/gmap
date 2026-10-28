@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "История онлайн-экспорта",
-      "description": "Задачи, которые вы выполняли в Онлайн-сборщик, сначала самые новые. Время указано по восточному времени (New York).",
+      "description": "Задачи, которые вы выполняли в Онлайн-сборщик, сначала самые новые.",
       "refresh": "Обновить",
       "autoRefresh": "Автообновление включено",
       "loading": "Загрузка экспорта...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "и ещё {count}",
       "columns": {
         "taskNo": "Задача",
-        "createdAt": "Создано (ET)",
+        "createdAt": "Создано",
         "samples": "Поиски",
         "records": "Записи",
         "status": "Статус"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "Частичный успех",
         "failed": "Неуспешный"
       },
-      "timezone": "ET",
       "search": {
         "label": "Поиск задач",
         "placeholder": "Поиск по номеру задачи или ключевому слову",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "С",
         "to": "По",
         "apply": "Применить",
-        "invalid": "Дата начала не может быть позже даты окончания.",
-        "hint": "Даты указаны по восточному времени (Нью-Йорк)."
+        "invalid": "Дата начала не может быть позже даты окончания."
       },
       "pagination": {
         "label": "Навигация по страницам",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "Ключевое слово",
         "records": "Рекорды",
         "runNo": "Бегать",
-        "startedAt": "Начато (ET)",
-        "finishedAt": "Завершено (ET)",
+        "startedAt": "Начато",
+        "finishedAt": "Завершено",
         "contacts": "Электронная почта и социальные профили",
         "contactsEnabled": "Включено для этой задачи",
         "contactsDisabled": "Выкл. для этой задачи",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "Никакие приложения не подключены.",
         "loadFailed": "Не удалось загрузить подключенные приложения. Пожалуйста, попробуйте еще раз.",
         "selfDeclared": "Имя, которое приложение дает себе: {name}",
-        "createdLabel": "Подключено (ET)",
-        "refreshedLabel": "Последнее обновление (ET)",
+        "createdLabel": "Подключено",
+        "refreshedLabel": "Последнее обновление",
         "notRefreshed": "Еще нет",
         "revoke": "Отключить",
         "revokeTitle": "Отключить это приложение?",

@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "在线采集导出记录",
-      "description": "你在在线采集器中运行的任务，按最新时间排序。时间均为美国东部时间（纽约）。",
+      "description": "你在在线采集器中运行的任务，按最新时间排序。",
       "refresh": "刷新",
       "autoRefresh": "自动刷新中",
       "loading": "正在加载导出记录…",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "另有 {count} 个",
       "columns": {
         "taskNo": "任务",
-        "createdAt": "创建时间（美东）",
+        "createdAt": "创建时间",
         "samples": "搜索次数",
         "records": "记录",
         "status": "状态"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "部分成功",
         "failed": "失败"
       },
-      "timezone": "ET",
       "search": {
         "label": "搜索任务",
         "placeholder": "按任务号或关键词搜索",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "开始",
         "to": "结束",
         "apply": "应用",
-        "invalid": "开始日期不能晚于结束日期。",
-        "hint": "日期按美国东部时间（纽约）计算。"
+        "invalid": "开始日期不能晚于结束日期。"
       },
       "pagination": {
         "label": "分页",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "关键词",
         "records": "记录",
         "runNo": "批次",
-        "startedAt": "开始时间（美东）",
-        "finishedAt": "结束时间（美东）",
+        "startedAt": "开始时间",
+        "finishedAt": "结束时间",
         "contacts": "邮箱和社交账号",
         "contactsEnabled": "此任务已启用",
         "contactsDisabled": "此任务未启用",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "尚未连接任何应用。",
         "loadFailed": "无法加载已连接的应用，请重试。",
         "selfDeclared": "应用自报名称：{name}",
-        "createdLabel": "连接时间（美东）",
-        "refreshedLabel": "上次刷新时间（美东）",
+        "createdLabel": "连接时间",
+        "refreshedLabel": "上次刷新时间",
         "notRefreshed": "暂无",
         "revoke": "断开连接",
         "revokeTitle": "要断开此应用的连接吗？",

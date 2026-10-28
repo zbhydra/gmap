@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "在線匯出歷史記錄",
-      "description": "您在 線上採集器 上運行的任務，最新的在前。時間以東部時間 (紐約) 顯示。",
+      "description": "您在 線上採集器 上運行的任務，最新的在前。",
       "refresh": "重新整理",
       "autoRefresh": "自動重新整理中",
       "loading": "正在加載您的匯出...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "另有 {count} 個",
       "columns": {
         "taskNo": "任務",
-        "createdAt": "建立時間（ET）",
+        "createdAt": "建立時間",
         "samples": "搜尋次數",
         "records": "記錄",
         "status": "狀態"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "部分成功",
         "failed": "失敗的"
       },
-      "timezone": "ET",
       "search": {
         "label": "搜尋任務",
         "placeholder": "依任務編號或關鍵字搜尋",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "開始",
         "to": "結束",
         "apply": "套用",
-        "invalid": "開始日期不能晚於結束日期。",
-        "hint": "日期以美國東部時間（紐約）為準。"
+        "invalid": "開始日期不能晚於結束日期。"
       },
       "pagination": {
         "label": "分頁",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "關鍵字",
         "records": "記錄",
         "runNo": "執行批次",
-        "startedAt": "開始時間（ET）",
-        "finishedAt": "結束時間（ET）",
+        "startedAt": "開始時間",
+        "finishedAt": "結束時間",
         "contacts": "電子郵件和社交資料",
         "contactsEnabled": "此任務已啟用",
         "contactsDisabled": "此任務未啟用",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "沒有連接任何應用程式。",
         "loadFailed": "無法載入連接的應用程式。請再試一次。",
         "selfDeclared": "應用程式給自己取的名字：{name}",
-        "createdLabel": "已連接 (ET)",
-        "refreshedLabel": "上次刷新 (ET)",
+        "createdLabel": "已連接",
+        "refreshedLabel": "上次刷新",
         "notRefreshed": "還沒有",
         "revoke": "斷開",
         "revokeTitle": "斷開此應用程式的連接嗎？",

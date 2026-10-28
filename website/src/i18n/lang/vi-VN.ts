@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "Lịch sử xuất dữ liệu trực tuyến",
-      "description": "Các tác vụ bạn đã chạy trên Công cụ quét trực tuyến, mới nhất trước tiên. Thời gian được hiển thị theo Giờ Miền Đông (New York).",
+      "description": "Các tác vụ bạn đã chạy trên Công cụ quét trực tuyến, mới nhất trước tiên.",
       "refresh": "Làm cho khỏe lại",
       "autoRefresh": "Đang tự động làm mới",
       "loading": "Đang tải bản xuất của bạn...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "và {count} từ khóa khác",
       "columns": {
         "taskNo": "Tác vụ",
-        "createdAt": "Tạo lúc (ET)",
+        "createdAt": "Tạo lúc",
         "samples": "Tìm kiếm",
         "records": "Hồ sơ",
         "status": "Trạng thái"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "Thành công một phần",
         "failed": "Thất bại"
       },
-      "timezone": "ET",
       "search": {
         "label": "Tìm tác vụ",
         "placeholder": "Tìm theo mã tác vụ hoặc từ khóa",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "Từ",
         "to": "Đến",
         "apply": "Áp dụng",
-        "invalid": "Chọn ngày bắt đầu không muộn hơn ngày kết thúc.",
-        "hint": "Ngày theo giờ miền Đông Hoa Kỳ (New York)."
+        "invalid": "Chọn ngày bắt đầu không muộn hơn ngày kết thúc."
       },
       "pagination": {
         "label": "Phân trang",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "Từ khóa",
         "records": "Hồ sơ",
         "runNo": "Chạy",
-        "startedAt": "Bắt đầu lúc (ET)",
-        "finishedAt": "Kết thúc lúc (ET)",
+        "startedAt": "Bắt đầu lúc",
+        "finishedAt": "Kết thúc lúc",
         "contacts": "Email và hồ sơ xã hội",
         "contactsEnabled": "Đã bật cho tác vụ này",
         "contactsDisabled": "Tắt cho nhiệm vụ này",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "Không có ứng dụng nào được kết nối.",
         "loadFailed": "Không thể tải ứng dụng được kết nối. Vui lòng thử lại.",
         "selfDeclared": "Tên ứng dụng tự đặt: {name}",
-        "createdLabel": "Đã kết nối (ET)",
-        "refreshedLabel": "Làm mới lần cuối (ET)",
+        "createdLabel": "Đã kết nối",
+        "refreshedLabel": "Làm mới lần cuối",
         "notRefreshed": "Chưa",
         "revoke": "Ngắt kết nối",
         "revokeTitle": "Ngắt kết nối ứng dụng này?",

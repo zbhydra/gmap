@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "Historial de exportaciones en línea",
-      "description": "Tareas que ejecutó en Extractor online, las más nuevas primero. Los horarios se muestran en hora del este (New York).",
+      "description": "Tareas que ejecutó en Extractor online, las más nuevas primero.",
       "refresh": "Refrescar",
       "autoRefresh": "Actualización automática activada",
       "loading": "Cargando tus exportaciones...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "y {count} más",
       "columns": {
         "taskNo": "Tarea",
-        "createdAt": "Creado (ET)",
+        "createdAt": "Creado",
         "samples": "Búsquedas",
         "records": "Registros",
         "status": "Estado"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "Éxito parcial",
         "failed": "Fallido"
       },
-      "timezone": "ET",
       "search": {
         "label": "Buscar tareas",
         "placeholder": "Buscar por número de tarea o palabra clave",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "Desde",
         "to": "Hasta",
         "apply": "Aplicar",
-        "invalid": "Elige una fecha de inicio igual o anterior a la fecha de fin.",
-        "hint": "Las fechas usan la hora del Este (Nueva York)."
+        "invalid": "Elige una fecha de inicio igual o anterior a la fecha de fin."
       },
       "pagination": {
         "label": "Paginación",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "Palabra clave",
         "records": "Archivos",
         "runNo": "Correr",
-        "startedAt": "Iniciado (ET)",
-        "finishedAt": "Terminado (ET)",
+        "startedAt": "Iniciado",
+        "finishedAt": "Terminado",
         "contacts": "Correos electrónicos y perfiles sociales",
         "contactsEnabled": "Habilitado para esta tarea",
         "contactsDisabled": "Fuera de esta tarea",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "No hay aplicaciones conectadas.",
         "loadFailed": "No se pudieron cargar las aplicaciones conectadas. Por favor inténtalo de nuevo.",
         "selfDeclared": "Nombre que la aplicación se da a sí misma: {name}",
-        "createdLabel": "Conectado (ET)",
-        "refreshedLabel": "Última actualización (ET)",
+        "createdLabel": "Conectado",
+        "refreshedLabel": "Última actualización",
         "notRefreshed": "Aún no",
         "revoke": "Desconectar",
         "revokeTitle": "¿Desconectar esta aplicación?",

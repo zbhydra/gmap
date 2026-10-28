@@ -206,7 +206,7 @@ export const site: SiteContent = {
     },
     "history": {
       "title": "Online-Exporthistorie",
-      "description": "Aufgaben, die Sie auf dem Online Scraper ausgeführt haben, das Neueste zuerst. Die Zeiten werden in Eastern Time (New York) angezeigt.",
+      "description": "Aufgaben, die Sie auf dem Online Scraper ausgeführt haben, das Neueste zuerst.",
       "refresh": "Aktualisieren",
       "autoRefresh": "Automatische Aktualisierung an",
       "loading": "Ihre Exporte werden geladen...",
@@ -225,7 +225,7 @@ export const site: SiteContent = {
       "moreKeywords": "und {count} weitere",
       "columns": {
         "taskNo": "Aufgabe",
-        "createdAt": "Erstellt (ET)",
+        "createdAt": "Erstellt",
         "samples": "Suchen",
         "records": "Aufzeichnungen",
         "status": "Status"
@@ -238,7 +238,6 @@ export const site: SiteContent = {
         "partial": "Teilerfolg",
         "failed": "Fehlgeschlagen"
       },
-      "timezone": "ET",
       "search": {
         "label": "Aufgaben durchsuchen",
         "placeholder": "Nach Aufgabennummer oder Schlüsselwort suchen",
@@ -261,8 +260,7 @@ export const site: SiteContent = {
         "from": "Von",
         "to": "Bis",
         "apply": "Anwenden",
-        "invalid": "Wählen Sie ein Startdatum, das nicht nach dem Enddatum liegt.",
-        "hint": "Datumsangaben in Eastern Time (New York)."
+        "invalid": "Wählen Sie ein Startdatum, das nicht nach dem Enddatum liegt."
       },
       "pagination": {
         "label": "Seitennavigation",
@@ -279,8 +277,8 @@ export const site: SiteContent = {
         "keyword": "Stichwort",
         "records": "Aufzeichnungen",
         "runNo": "Laufen",
-        "startedAt": "Gestartet (ET)",
-        "finishedAt": "Fertig (ET)",
+        "startedAt": "Gestartet",
+        "finishedAt": "Fertig",
         "contacts": "E-Mails und soziale Profile",
         "contactsEnabled": "Für diese Aufgabe aktiviert",
         "contactsDisabled": "Aus für diese Aufgabe",
@@ -367,8 +365,8 @@ export const site: SiteContent = {
         "empty": "Es sind keine Apps verbunden.",
         "loadFailed": "Verbundene Apps konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
         "selfDeclared": "Name, den sich die App gibt: {name}",
-        "createdLabel": "Verbunden (ET)",
-        "refreshedLabel": "Zuletzt aktualisiert (ET)",
+        "createdLabel": "Verbunden",
+        "refreshedLabel": "Zuletzt aktualisiert",
         "notRefreshed": "Noch nicht",
         "revoke": "Trennen",
         "revokeTitle": "Diese App trennen?",

@@ -1375,8 +1375,6 @@ export interface DashboardContent {
       /** 失败。 */
       failed: string
     }
-    /** 时间的时区标注（America/New_York）。 */
-    timezone: string
     /** 搜索框。 */
     search: {
       /** 搜索框无障碍名称。 */
@@ -1401,7 +1399,7 @@ export interface DashboardContent {
       /** 清除筛选（连同搜索）。 */
       clear: string
     }
-    /** 时间范围（纽约时间日历日）。 */
+    /** 时间范围（浏览器本地日历日）。 */
     range: {
       /** 时间范围分组标题。 */
       label: string
@@ -1421,8 +1419,6 @@ export interface DashboardContent {
       apply: string
       /** 开始晚于结束的说明。 */
       invalid: string
-      /** 日期按纽约时间的说明。 */
-      hint: string
     }
     /** 分页条。 */
     pagination: {
@@ -1453,9 +1449,9 @@ export interface DashboardContent {
       records: string
       /** 真实执行编号。 */
       runNo: string
-      /** 开始时间，纽约时区。 */
+      /** 开始时间。 */
       startedAt: string
-      /** 结束时间，纽约时区。 */
+      /** 结束时间。 */
       finishedAt: string
       /** 联系方式选项快照。 */
       contacts: string

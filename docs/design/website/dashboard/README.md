@@ -38,7 +38,7 @@ History 的查询条件也在 URL 里（这是落地合同，不是原型专用�
 | -------- | ------------------------------------------------------- | ---------------------------------------------------------- |
 | `q`      | 空 / 任意文本                                           | 任务号或关键词，去掉首尾空白后最长 100 字符               |
 | `status` | `all` / `running` / `completed` / `partial` / `failed` | `running` 包含 queued、collecting、publishing 三个公开状态 |
-| `range`  | `all` / `7d` / `30d` / `custom`                         | 时间范围，按纽约时间的日历日计算                           |
+| `range`  | `all` / `7d` / `30d` / `custom`                         | 时间范围，按浏览器本地日历日计算                           |
 | `from` / `to` | `YYYY-MM-DD`                                       | 只在 `range=custom` 时有效，两端都包含                     |
 | `page`   | `1` / 正整数                                            | 页码                                                       |
 | `size`   | `20` / `50` / `100`                                     | 每页条数                                                   |
@@ -177,14 +177,14 @@ Dashboard（单入口 SPA，外壳常驻）
 
   | 列 | 内容 |
   | --- | --- |
-  | Job · Created (ET) | 关键词预览（第一个关键词；搜索时取第一个命中的关键词）+「+n」个其余关键词；第二行是时间与短任务号 |
+  | Job · Created | 关键词预览（第一个关键词；搜索时取第一个命中的关键词）+「+n」个其余关键词；第二行是时间与短任务号 |
   | Searches | 已收口采样数 / 总数；只有运行中才显示进度条 |
   | Records | 去重后的行数 |
   | Status | 徽标 + 错误说明 |
   | 操作 | Download CSV / No CSV / 运行中留空 |
 
   - 关键词预览单行省略；读屏读作「coffee shop in Portland, OR and 4 more」。
-  - 时间统一按 America/New_York 显示并标 ET；当年的时间省略年份。
+  - 时间按浏览器时区显示、不标时区；当年的时间省略年份。
   - 状态列按视图容器宽度定宽（§2.2），收起侧栏后多出的宽度给关键词和进度两列。
   - 搜索时，命中的关键词片段和任务号前缀用 `mark.hl` 高亮。
 - **状态徽标**：图标、文字、颜色三重编码。
@@ -689,7 +689,6 @@ combobox：
 | `history.range.label` / `last7` / `last30` / `all` / `custom`            | Time range / Last 7 days / Last 30 days / All time / Custom range                     |
 | `history.range.from` / `to` / `apply`                                    | From / To / Apply                                                                     |
 | `history.range.invalid`                                                  | Choose a start date on or before the end date.                                        |
-| `history.range.hint`                                                     | Dates use Eastern Time (New York).                                                    |
 | `history.noMatchTitle`                                                   | No matching tasks                                                                     |
 | `history.noMatchHint`                                                    | Try a different job number or keyword, or clear the filters.                          |
 | `history.pagination.label` / `page` / `pageSize`                         | Pagination / Page {page} / Rows per page                                              |
