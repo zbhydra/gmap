@@ -67,11 +67,12 @@ import {
   type DashboardSummary,
 } from "@/api/dashboard";
 import ChartCanvas from "@/components/ChartCanvas.vue";
-import { useIsMobile, usePrefersDark } from "@/composables/useResponsive";
+import { useIsMobile } from "@/composables/useResponsive";
+import { useTheme } from "@/composables/useTheme";
 
 const { t } = useI18n();
 const isMobile = useIsMobile();
-const isDark = usePrefersDark();
+const { isDark } = useTheme();
 
 /** 数据看板固定展示最近 60 天，表格不再分页。 */
 const DASHBOARD_VISIBLE_ROW_COUNT = 60;

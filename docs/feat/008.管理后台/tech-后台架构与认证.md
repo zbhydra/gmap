@@ -52,12 +52,15 @@ admin 是独立 SPA,不是 website 的一部分,独立仓库目录、独立构�
 | POST | `/api/admin/auth/captcha` | 获取图片验证码 | 否 |
 | POST | `/api/admin/auth/login` | 管理员登录 | 否 |
 | POST | `/api/admin/auth/refresh` | 续签令牌对 | Refresh Token |
+| GET | `/api/admin/auth/me` | 当前管理员信息 | Access Token |
 
 `POST /api/admin/auth/captcha` 响应:`captcha_id`、`image_base64`(data URI PNG,120×40)。验证码只存 Redis，生成写入与登录消费任一 Redis 操作失败都直接上抛，由统一错误中间件返回服务异常，不使用进程内状态兜底。
 
 `POST /api/admin/auth/login` 请求:`username`、`password`、`captcha_id`、`captcha_code`;响应:`access_token`、`refresh_token`、`expires_in`、`refresh_expires_in`(剩余秒数)。
 
 `POST /api/admin/auth/refresh` 请求:`refresh_token`;响应:新的 `access_token`、`refresh_token`、`expires_in`、`refresh_expires_in`。Refresh Token 存 Redis ZSet,member 为 token 摘要,score 为 JWT `exp`;新 token 的 `exp` 不早于同 key 已有 score(大于或等于),同秒签发可相等。当前 ZSet 每次写入或轮换都在 transaction pipeline 内同步设置 `EXPIREAT` 为新 token 的 `exp`,成功后独立清理已过期 member。旧 token 仍保留约 30 秒宽限期以容忍续签并发,宽限期 ZSet 使用独立短 TTL。事务写入失败按 fail-closed 返回错误,后置过期 member 清理失败只记录日志。`admin` token 有效期配置只能保持或延长;若缩短,新 `EXPIREAT` 会让同 key 中按旧周期签发的 refresh token 提前失效,管理员需要重新登录。
+
+`GET /api/admin/auth/me` 响应:`admin_id`、`username`。前端用户名只放内存(`stores/auth.ts` 的 `username`),由侧边栏用户入口首次挂载时拉取,退出登录清空。
 
 ### 4.2 admin JWT claims 与有效期
 
@@ -127,8 +130,9 @@ API Key 存在 `admins` 表对应管理员记录中,只保存 hash、前缀和�
 
 布局形态:
 
-- 桌面(> 960):可折叠侧边栏(220 / 折叠 64)+ 顶栏,行为不变。
-- 移动(≤ 960):侧边栏隐藏,顶栏左侧汉堡按钮 + 应用标题;点击打开左侧 NDrawer(280px)承载同一份菜单,路由跳转后自动收起。
+- 桌面(> 960):可折叠侧边栏(220 / 折叠 64),无顶栏;侧边栏底部为用户入口(头像 + 用户名,折叠时只显示头像)。
+- 移动(≤ 960):侧边栏隐藏,顶栏左侧汉堡按钮 + 应用标题;点击打开左侧 NDrawer(280px)承载同一份菜单,底部同一用户入口,路由跳转后自动收起。
+- 用户入口(`components/UserMenu.vue`)点击弹出菜单:主题「跟随系统 / 浅色 / 深色」(当前项打勾)与退出登录(二次确认)。
 
 页面适配约定:
 
@@ -139,6 +143,8 @@ API Key 存在 `admins` 表对应管理员记录中,只保存 hash、前缀和�
 - 视口高度用 `100dvh`(保留 `vh` fallback),避免移动端地址栏伸缩抖动。
 
 全局样式:`styles/global.css` 是 admin 的 Material You 亮暗语义 token owner 与唯一非 scoped 样式入口(main.ts 引入),同时承载需要覆盖 Naive UI teleport 弹层的规则;组件样式、Naive UI theme overrides 与运行时 Canvas 样式统一消费该 owner。
+
+亮暗主题:`composables/useTheme.ts` 是唯一主题状态 owner。模式 `system / light / dark` 存 localStorage `admin_theme_mode`(缺省 `system`),实际亮暗写入 `<html data-theme>`;`global.css` 暗色 token 只挂在 `:root[data-theme="dark"]`,不直接读 `prefers-color-scheme`。`system` 模式监听系统偏好变化实时切换;Naive UI `darkTheme` 与 Dashboard Canvas 通过 `useTheme().isDark` 读同一结果。
 
 ## 10. 改动范围锚点
 
@@ -158,6 +164,8 @@ API Key 存在 `admins` 表对应管理员记录中,只保存 hash、前缀和�
 - 路由与守卫:`@admin/src/router/index.ts`。
 - 布局(含移动端抽屉导航):`@admin/src/layouts/AdminLayout.vue`。
 - 响应式断点:`@admin/src/composables/useResponsive.ts`。
+- 亮暗主题:`@admin/src/composables/useTheme.ts`。
+- 侧边栏用户入口:`@admin/src/components/UserMenu.vue`。
 - 全局样式:`@admin/src/styles/global.css`。
 - 系统设置页:`@admin/src/views/SystemSettingsView.vue`。
 - i18n:`@admin/src/i18n/`。

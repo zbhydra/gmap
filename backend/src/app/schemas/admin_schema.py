@@ -49,6 +49,13 @@ class AdminLoginResponse(BaseModel):
     refresh_expires_in: int = Field(..., description="Refresh Token 有效期（秒）")
 
 
+class AdminProfileResponse(BaseModel):
+    """当前登录管理员信息"""
+
+    admin_id: int = Field(..., description="管理员 ID")
+    username: str = Field(..., description="管理员用户名")
+
+
 class AdminRefreshRequest(BaseModel):
     """管理员 Token 续签请求"""
 

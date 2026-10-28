@@ -21,7 +21,12 @@
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to logout?",
     "systemSettings": "System Settings",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "theme": "Theme",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "account": "Account menu"
   },
   "dashboard": {
     "totalUsers": "Total Users",

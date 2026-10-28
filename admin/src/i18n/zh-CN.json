@@ -21,7 +21,12 @@
     "logout": "退出登录",
     "logoutConfirm": "确定要退出登录吗？",
     "systemSettings": "系统设置",
-    "openMenu": "打开菜单"
+    "openMenu": "打开菜单",
+    "theme": "主题",
+    "themeSystem": "跟随系统",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "account": "账户菜单"
   },
   "dashboard": {
     "totalUsers": "总用户数",

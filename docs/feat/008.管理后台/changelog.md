@@ -1,5 +1,18 @@
 # 008 · 管理后台 · 变更记录
 
+## 2026-10-28 侧边栏底部用户入口与主题切换
+
+**为什么**:登录后无处显示当前管理员,只有顶栏一个退出按钮;主题只能跟随系统。
+
+**变更**:
+
+- 后端新增 `GET /api/admin/auth/me` 返回 `admin_id`、`username`。
+- 新增 `UserMenu.vue`:桌面侧边栏底部 / 移动抽屉底部显示头像 + 用户名,点击菜单切换主题(跟随系统 / 浅色 / 深色)与退出登录;桌面顶栏随之删除(原只承载退出按钮)。
+- 新增 `useTheme.ts` 取代 `useResponsive.ts` 的 `usePrefersDark`;`global.css` 暗色 token 从 `@media (prefers-color-scheme: dark)` 改挂 `:root[data-theme="dark"]`。
+- i18n 新增 `layout.theme` / `themeSystem` / `themeLight` / `themeDark` / `account`(中英)。
+
+**验证**:admin `pnpm build` 通过,`ui_token_lint` admin 0 违规;Chromium 临时 E2E 覆盖用户名展示、切深色后刷新保持、跟随系统随系统偏好切换、折叠态、退出登录、移动抽屉(验证后删除);既有 admin Chromium E2E 27/28 通过,唯一失败 `login.spec.ts`「未登录访问 /tg-clients」是 TG 路由已删除后遗留的旧用例,与本次无关;后端 `app.main` 导入后 `/api/admin/auth/me` 已注册,black / ruff 通过,mypy 仅报未改动的 `utils/jwt.py` 既有错误。
+
 ## 2026-09-06 订单 / 用户筛选区压缩为一行工具条
 
 **为什么**:筛选区原为拉伸网格,宽屏下输入框 700px+、时间选择器横贯整卡;窄内容区下占据 4-5 行,数据表被挤出首屏(hydra 反馈「我要看的是内容,不是搜索条件」)。

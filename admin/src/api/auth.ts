@@ -4,6 +4,7 @@
  * - 获取验证码（captcha_id + base64 图片）
  * - 登录（用户名 + 密码 + 验证码）
  * - 刷新 Token
+ * - 当前管理员信息
  */
 import request from "./request";
 
@@ -24,6 +25,12 @@ export interface LoginData {
 /** Token 续签请求参数 */
 export interface RefreshParams {
   refresh_token: string;
+}
+
+/** 当前管理员信息 */
+export interface AdminProfile {
+  admin_id: number;
+  username: string;
 }
 
 /** 登录请求参数 */
@@ -47,4 +54,9 @@ export function login(params: LoginParams) {
 /** 刷新 Token */
 export function refreshToken(params: RefreshParams) {
   return request.post<never, LoginData>("/auth/refresh", params);
+}
+
+/** 获取当前登录管理员信息 */
+export function getProfile() {
+  return request.get<never, AdminProfile>("/auth/me");
 }

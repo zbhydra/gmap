@@ -21,9 +21,9 @@ import {
   type GlobalThemeOverrides,
 } from "naive-ui";
 import { computed } from "vue";
-import { usePrefersDark } from "@/composables/useResponsive";
+import { useTheme } from "@/composables/useTheme";
 
-const isDark = usePrefersDark();
+const { isDark } = useTheme();
 const themeOverrides = computed<GlobalThemeOverrides>(() => {
   void isDark.value;
   const styles = getComputedStyle(document.documentElement);

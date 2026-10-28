@@ -53,47 +53,46 @@
   --font-mono: 'Azeret Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --bg: #15171c;
-    --bg-image: linear-gradient(
-      180deg,
-      rgba(26, 115, 232, 0.16) 0%,
-      rgba(26, 115, 232, 0.06) 300px,
-      rgba(26, 115, 232, 0) 560px
-    );
-    --surface: #1d2026;
-    --surface-2: #262a31;
-    --border: #31353d;
-    --border-strong: #4c515b;
-    --text: #e8eaed;
-    --text-2: #9aa0a6;
-    --text-3: #7c828c;
-    --primary: #8ab4f8;
-    --primary-hover: #aecbfa;
-    --primary-fg: #0d2b45;
-    --primary-soft: rgba(138, 180, 248, 0.15);
-    --accent: #81c995;
-    --accent-fg: #0c2b1c;
-    --accent-soft: rgba(129, 201, 149, 0.14);
-    --ok: #81c995;
-    --ok-fg: #0d2b1c;
-    --ok-soft: rgba(129, 201, 149, 0.14);
-    --warn: #fdd663;
-    --warn-fg: #2d2000;
-    --warn-soft: rgba(253, 214, 99, 0.13);
-    --bad: #f28b82;
-    --bad-fg: #2c1210;
-    --bad-soft: rgba(242, 139, 130, 0.13);
-    --link: #8ab4f8;
-    --ring: #8ab4f8;
-    --overlay: rgba(0, 0, 0, 0.6);
-    --head-bg: rgba(21, 23, 28, 0.86);
-    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
-    --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5);
-    --shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.65);
-  }
+/* 暗色 token 只认 data-theme，由 composables/useTheme.ts 按「跟随系统 / 浅色 / 深色」写入 */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #15171c;
+  --bg-image: linear-gradient(
+    180deg,
+    rgba(26, 115, 232, 0.16) 0%,
+    rgba(26, 115, 232, 0.06) 300px,
+    rgba(26, 115, 232, 0) 560px
+  );
+  --surface: #1d2026;
+  --surface-2: #262a31;
+  --border: #31353d;
+  --border-strong: #4c515b;
+  --text: #e8eaed;
+  --text-2: #9aa0a6;
+  --text-3: #7c828c;
+  --primary: #8ab4f8;
+  --primary-hover: #aecbfa;
+  --primary-fg: #0d2b45;
+  --primary-soft: rgba(138, 180, 248, 0.15);
+  --accent: #81c995;
+  --accent-fg: #0c2b1c;
+  --accent-soft: rgba(129, 201, 149, 0.14);
+  --ok: #81c995;
+  --ok-fg: #0d2b1c;
+  --ok-soft: rgba(129, 201, 149, 0.14);
+  --warn: #fdd663;
+  --warn-fg: #2d2000;
+  --warn-soft: rgba(253, 214, 99, 0.13);
+  --bad: #f28b82;
+  --bad-fg: #2c1210;
+  --bad-soft: rgba(242, 139, 130, 0.13);
+  --link: #8ab4f8;
+  --ring: #8ab4f8;
+  --overlay: rgba(0, 0, 0, 0.6);
+  --head-bg: rgba(21, 23, 28, 0.86);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.65);
 }
 
 body {

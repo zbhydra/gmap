@@ -1,7 +1,8 @@
 /**
  * Auth Store — 管理员 Token 管理
  *
- * Access Token 和 Refresh Token 存储在 localStorage，页面刷新后自动恢复登录态。
+ * Access Token 和 Refresh Token 存储在 localStorage，页面刷新后自动恢复登录态；
+ * 当前管理员用户名只放内存，由布局进入时向后端拉取。
  */
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
@@ -15,6 +16,9 @@ export const useAuthStore = defineStore("auth", () => {
 
   /** 管理员 Refresh Token */
   const refreshToken = ref<string>(localStorage.getItem(REFRESH_TOKEN_KEY) ?? "");
+
+  /** 当前管理员用户名，未加载时为空串 */
+  const username = ref("");
 
   /** 是否已登录 */
   const isLoggedIn = computed(() => token.value.length > 0);
@@ -31,9 +35,10 @@ export const useAuthStore = defineStore("auth", () => {
   function clearToken() {
     token.value = "";
     refreshToken.value = "";
+    username.value = "";
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
   }
 
-  return { token, refreshToken, isLoggedIn, setTokens, clearToken };
+  return { token, refreshToken, username, isLoggedIn, setTokens, clearToken };
 });

@@ -1,16 +1,17 @@
 """
 Admin 认证 API
 
-提供管理员登录所需的验证码获取、登录验证、Token 续签三个接口。
+提供管理员登录所需的验证码获取、登录验证、Token 续签，以及当前管理员信息接口。
 
 流程：验证码 → 登录签发 token pair → refresh token 轮换续签
 """
 
 import time
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
+from app.api.admin_dependencies import AdminContext, get_admin_user
 from app.constants.auth import TokenType
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
@@ -18,6 +19,7 @@ from app.schemas.admin_schema import (
     AdminCaptchaResponse,
     AdminLoginRequest,
     AdminLoginResponse,
+    AdminProfileResponse,
     AdminRefreshRequest,
     AdminRefreshResponse,
 )
@@ -161,5 +163,16 @@ async def refresh_token(req: AdminRefreshRequest) -> JSONResponse:
             refresh_token=refresh_token,
             expires_in=_remaining_seconds(access_expire),
             refresh_expires_in=_remaining_seconds(refresh_expire),
+        ).model_dump()
+    )
+
+
+@router.get("/me")
+async def get_me(admin: AdminContext = Depends(get_admin_user)) -> JSONResponse:
+    """获取当前登录管理员信息，供后台侧边栏展示。"""
+
+    return ResponseUtils.ok(
+        AdminProfileResponse(
+            admin_id=admin.admin_id, username=admin.username
         ).model_dump()
     )
