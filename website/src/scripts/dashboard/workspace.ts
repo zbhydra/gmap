@@ -5,7 +5,7 @@
  * - 最近任务在首次进入 Online 后开始加载；有运行中任务时每 5 秒静默刷新，切到其他视图也继续，
  *   这样任务在任何视图结束都能收到提示。页面在后台时暂停，回到前台立即刷新一次。
  * - 最近任务与 History 共用一份「正在观察的任务」：同一任务进入终态只提示一次、刷新一次额度，
- *   并让 History 下次进入时静默刷新。CSV 下载状态两张列表共用。
+ *   并让 History 下次进入时静默刷新。CSV / XLSX 下载状态两张列表共用。
  */
 
 import { reactive } from 'vue'
@@ -14,6 +14,7 @@ import { HomepageApiError, type RequestContext } from '../homepage/api'
 import { trackDashboardAction } from '../homepage/web-mark'
 import {
   getExportDownload,
+  getExportFile,
   getOnlineOptions,
   listExportJobs,
   type ExportJobStatus,
@@ -23,6 +24,9 @@ import {
 import { toast } from './dom'
 import { fill, formatNumber } from './format'
 import { errorLabel, hasRunning, isRunningStatus, POLL_INTERVAL_MS, RECENT_LIMIT, shortJobNo } from './jobs'
+import { csvToXlsx } from './xlsx'
+
+export type DownloadFormat = 'csv' | 'xlsx'
 
 export interface RecentJobsState {
   jobs: ExportJobSummary[]
@@ -51,7 +55,7 @@ export interface WorkspaceState {
   recent: RecentJobsState
   /** History 的当前页已过期（有新提交或任务结束），下次进入时静默刷新。 */
   historyStale: boolean
-  downloading: Set<string>
+  downloading: Map<string, DownloadFormat>
   /** 下载失败的行内说明，按任务号。 */
   downloadMessages: Map<string, string>
 }
@@ -68,7 +72,7 @@ export interface DashboardWorkspace {
   jobSubmitted(job: ExportJobSummary): Promise<void>
   /** 任一列表拿到任务快照后调用：任务从运行中变为终态时提示一次。 */
   observeJobs(jobs: readonly ExportJobSummary[]): void
-  download(jobNo: string): Promise<void>
+  download(jobNo: string, format: DownloadFormat): Promise<void>
   dispose(): void
 }
 
@@ -93,7 +97,7 @@ export function createWorkspace(context: RequestContext, copy: DashboardContent)
       highlight: ''
     },
     historyStale: false,
-    downloading: new Set(),
+    downloading: new Map(),
     downloadMessages: new Map()
   })
   /** 正在观察的运行中任务：任务号 → 最近一次看到的状态。 */
@@ -201,30 +205,35 @@ export function createWorkspace(context: RequestContext, copy: DashboardContent)
     state.historyStale = true
   }
 
-  async function download(jobNo: string): Promise<void> {
+  /** CSV 走签名 URL（后端带 attachment 头与文件名）；XLSX 同源取 CSV 后在浏览器转换，文件名沿用 CSV 主体。 */
+  async function download(jobNo: string, format: DownloadFormat): Promise<void> {
     if (state.downloading.has(jobNo)) return
-    state.downloading.add(jobNo)
+    state.downloading.set(jobNo, format)
     state.downloadMessages.delete(jobNo)
     try {
-      const file = await getExportDownload(context, jobNo)
-      if (disposed) return
-      trackDashboardAction('job_download', { job_no: jobNo, outcome: 'success' })
-      // 签名 URL 由后端携带 attachment 头；download 属性只是本地命名兜底
-      const anchor = document.createElement('a')
-      anchor.href = file.url
-      anchor.download = file.filename
-      anchor.rel = 'noopener'
-      document.body.append(anchor)
-      anchor.click()
-      anchor.remove()
+      if (format === 'csv') {
+        const file = await getExportDownload(context, jobNo)
+        if (disposed) return
+        // 签名 URL 由后端携带 attachment 头；download 属性只是本地命名兜底
+        saveAs(file.url, file.filename)
+      } else {
+        const [file, csv] = await Promise.all([getExportDownload(context, jobNo), getExportFile(context, jobNo)])
+        const blob = await csvToXlsx(csv)
+        if (disposed) return
+        const url = URL.createObjectURL(blob)
+        saveAs(url, file.filename.replace(/\.csv$/, '.xlsx'))
+        setTimeout(() => URL.revokeObjectURL(url), 0)
+      }
+      trackDashboardAction('job_download', { job_no: jobNo, format, outcome: 'success' })
     } catch (error) {
       if (disposed) return
       trackDashboardAction('job_download', {
         job_no: jobNo,
+        format,
         outcome: 'failed',
         code: error instanceof HomepageApiError ? (error.code ?? '') : ''
       })
-      if (!isSessionExpiry(error)) console.error(new Error(`[dashboard-workspace] CSV download failed: job_no=${jobNo}`, { cause: error }))
+      if (!isSessionExpiry(error)) console.error(new Error(`[dashboard-workspace] ${format} download failed: job_no=${jobNo}`, { cause: error }))
       state.downloadMessages.set(jobNo,
         error instanceof HomepageApiError && error.code === 404
           ? copy.history.downloadUnavailable
@@ -234,6 +243,16 @@ export function createWorkspace(context: RequestContext, copy: DashboardContent)
     } finally {
       if (!disposed) state.downloading.delete(jobNo)
     }
+  }
+
+  function saveAs(href: string, filename: string): void {
+    const anchor = document.createElement('a')
+    anchor.href = href
+    anchor.download = filename
+    anchor.rel = 'noopener'
+    document.body.append(anchor)
+    anchor.click()
+    anchor.remove()
   }
 
   function handleVisibility(): void {

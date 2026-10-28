@@ -1909,6 +1909,13 @@ html[data-side-from='collapsed'] .dash-app {
   font-size: 12.5px;
 }
 
+.job-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s-1);
+}
+
 .jc-act .inline-err {
   text-align: right;
 }

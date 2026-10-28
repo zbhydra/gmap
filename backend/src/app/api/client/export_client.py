@@ -1,10 +1,14 @@
 """本人 Google Export 创建、历史、详情与整 Job CSV 下载。"""
 
+import pathlib
+import re
+from tempfile import TemporaryDirectory
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Path, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import StringConstraints
+from starlette.background import BackgroundTask
 
 from app.api.user_dependencies import UserContext, get_current_user
 from app.constants.export import EXPORT_PUBLIC_STATUSES, ExportRunStatus
@@ -15,6 +19,7 @@ from app.i18n.common_code import CommonCode
 from app.models.export_job_model import ExportJobModel
 from app.models.export_run_model import ExportRunModel
 from app.runtime.export_job_runtime import export_job_runtime
+from app.schemas.admin_schema import ObjectStorageItem
 from app.schemas.export_item_schema import ExportCreateRequest, GmapSearchOptions
 from app.schemas.export_run_schema import ExportRunResult
 from app.services.export_job_service import export_job_service
@@ -25,10 +30,14 @@ from app.services.usage_service import online_usage_service, usage_identity
 from app.utils import object_storage
 from app.utils.common import get_locale
 from app.utils.response import ResponseUtils
+from app.utils.time import timestamp_to_datetime_str
 
 router = APIRouter(prefix="/export", tags=["Google Export"])
 JobNo = Annotated[str, Path(pattern=r"^[0-9a-f]{32}0[0-9]$")]
 HistoryQuery = Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)]
+# Windows / macOS 文件名非法字符与控制字符
+_FILENAME_UNSAFE = re.compile(r'[\x00-\x1f\x7f\\/:*?"<>|]+')
+_FILENAME_KEYWORD_MAX = 80
 PublicStatus = Literal[
     "queued", "collecting", "publishing", "completed", "partial", "failed"
 ]
@@ -201,11 +210,10 @@ async def job_detail(
     return ResponseUtils.ok(_detail(job, run))
 
 
-@router.get("/jobs/{job_no}/download")
-async def download_job(
-    job_no: JobNo, current_user: UserContext = Depends(get_current_user)
-) -> JSONResponse:
-    job, _ = await _user_job(current_user.user_id, job_no)
+async def _published_file(
+    user_id: int, job_no: str
+) -> tuple[ExportJobModel, ObjectStorageItem, ExportRunResult]:
+    job, _ = await _user_job(user_id, job_no)
     if (
         job.status not in (ExportRunStatus.COMPLETED, ExportRunStatus.PARTIAL)
         or job.result_json is None
@@ -214,14 +222,28 @@ async def download_job(
             CommonCode.NOT_FOUND,
             ext_msg=f"export.download: 没有已发布 CSV job_no={job_no}",
         )
-    result = ExportRunResult.model_validate(job.result_json)
     storage = await object_storage_config_service.get_item(job.storage_id)
     if storage is None:
         raise AppCommonException(
             CommonCode.NOT_FOUND,
             ext_msg=f"export.download: 对象存储已移除 job_no={job_no}",
         )
-    filename = f"{job_no}.csv"
+    return job, storage, ExportRunResult.model_validate(job.result_json)
+
+
+def _download_filename(job: ExportJobModel) -> str:
+    """整 Job CSV 下载名：首个关键词-创建日（业务时区）.csv；XLSX 由前端换扩展名。"""
+    keyword = GmapSearchOptions.model_validate(job.options_json).keywords[0]
+    stem = _FILENAME_UNSAFE.sub("_", keyword)[:_FILENAME_KEYWORD_MAX].strip(" ._")
+    return f"{stem or 'export'}-{timestamp_to_datetime_str(job.created_at, '%Y-%m-%d')}.csv"
+
+
+@router.get("/jobs/{job_no}/download")
+async def download_job(
+    job_no: JobNo, current_user: UserContext = Depends(get_current_user)
+) -> JSONResponse:
+    job, storage, result = await _published_file(current_user.user_id, job_no)
+    filename = _download_filename(job)
     try:
         url = await object_storage.presign_get(
             storage, result.object_key, filename=filename
@@ -233,3 +255,29 @@ async def download_job(
     response = ResponseUtils.ok({"url": url, "filename": filename})
     response.headers["Cache-Control"] = "no-store"
     return response
+
+
+@router.get("/jobs/{job_no}/file")
+async def download_job_file(
+    job_no: JobNo, current_user: UserContext = Depends(get_current_user)
+) -> FileResponse:
+    """同源返回整 Job CSV 字节，供网站在浏览器内转换 XLSX；对象存储未开放 CORS。"""
+    _, storage, result = await _published_file(current_user.user_id, job_no)
+    directory = TemporaryDirectory(prefix="gmap-export-")
+    path = pathlib.Path(directory.name) / "export.csv"
+    try:
+        await object_storage.download_file(storage, result.object_key, path)
+    except FileNotFoundError:
+        directory.cleanup()
+        raise AppCommonException(
+            CommonCode.NOT_FOUND, ext_msg=f"export.file: 对象不存在 job_no={job_no}"
+        ) from None
+    except BaseException:
+        directory.cleanup()
+        raise
+    return FileResponse(
+        path,
+        media_type="text/csv; charset=utf-8",
+        headers={"Cache-Control": "no-store"},
+        background=BackgroundTask(directory.cleanup),
+    )

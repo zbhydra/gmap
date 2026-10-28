@@ -291,6 +291,7 @@ export const site: SiteContent = {
       "finished": "작업 {job}: {status}",
       "finishedRecords": "레코드 {count}개",
       "downloadCsv": "다운로드 CSV",
+      "downloadXlsx": "Excel 다운로드",
       "noFile": "아니요 CSV",
       "errors": {
         "31301": "이 검색을 수집할 수 없습니다.",

@@ -291,6 +291,7 @@ export const site: SiteContent = {
       "finished": "Tugas {job}: {status}",
       "finishedRecords": "{count} catatan",
       "downloadCsv": "Unduh CSV",
+      "downloadXlsx": "Unduh Excel",
       "noFile": "Tidak CSV",
       "errors": {
         "31301": "Tidak dapat mengumpulkan penelusuran ini.",

@@ -291,6 +291,7 @@ export const site: SiteContent = {
       "finished": "งาน {job}: {status}",
       "finishedRecords": "{count} รายการ",
       "downloadCsv": "ดาวน์โหลด CSV",
+      "downloadXlsx": "ดาวน์โหลด Excel",
       "noFile": "ไม่ CSV",
       "errors": {
         "31301": "ไม่สามารถรวบรวมการค้นหานี้ได้",

@@ -12,6 +12,9 @@
 | GET `/jobs`                   | 分页与筛选见[历史查询](#历史查询)                         | `{jobs:[job],total,offset,limit}`，按 `job_id` 倒序            |
 | GET `/jobs/{job_no}`          | 本人编号                                                  | `{job,items}`                                                  |
 | GET `/jobs/{job_no}/download` | 本人且已发布的编号                                        | `{url,filename}`，整 Job CSV，签名有效期 300 秒，响应 no-store |
+| GET `/jobs/{job_no}/file`     | 本人且已发布的编号                                        | 整 Job CSV 字节（同源，no-store），供网站浏览器内转换 XLSX     |
+
+下载名为 `{首个关键词}-{创建日 YYYY-MM-DD}.csv`，创建日按业务时区；关键词中的文件名非法字符与控制字符替换为 `_`，最长 80 字符，清洗后为空时用 `export`。XLSX 由网站以同一主体换 `.xlsx` 扩展名。对象存储签名地址不开放 CORS，浏览器取 CSV 字节只走 `/file`。
 
 `include_contacts` 为可选 boolean，省略默认 true；关闭时必须显式传 false。
 

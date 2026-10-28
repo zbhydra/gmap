@@ -378,10 +378,10 @@ onBeforeUnmount(() => {
               :expanded="expanded.has(job.job_no)"
               :detail="details.get(job.job_no)"
               :detail-failed="detailErrors.has(job.job_no)"
-              :downloading="state.downloading.has(job.job_no)"
+              :downloading="state.downloading.get(job.job_no)"
               :download-message="state.downloadMessages.get(job.job_no)"
               @toggle="toggle(job.job_no)"
-              @download="props.workspace.download(job.job_no)"
+              @download="format => props.workspace.download(job.job_no, format)"
               @retry-detail="retryDetail(job.job_no)"
             />
           </template>

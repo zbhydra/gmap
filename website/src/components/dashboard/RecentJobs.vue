@@ -88,11 +88,11 @@ function openAll(event: MouseEvent): void {
             :copy="props.copy"
             :job="job"
             :href="props.historyHref(job.job_no)"
-            :downloading="props.workspace.state.downloading.has(job.job_no)"
+            :downloading="props.workspace.state.downloading.get(job.job_no)"
             :download-message="props.workspace.state.downloadMessages.get(job.job_no)"
             :fresh="job.job_no === props.workspace.state.recent.highlight"
             @open="emit('openHistory', job.job_no)"
-            @download="props.workspace.download(job.job_no)"
+            @download="format => props.workspace.download(job.job_no, format)"
           />
         </ul>
       </template>

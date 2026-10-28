@@ -1474,8 +1474,10 @@ export interface DashboardContent {
     finished: string
     /** 含 {count} 的任务结束 toast 说明。 */
     finishedRecords: string
-    /** 整 Job CSV 下载按钮。 */
+    /** 整 Job CSV 下载按钮的完整动作（aria-label）。 */
     downloadCsv: string
+    /** 整 Job Excel 下载按钮的完整动作（aria-label）。 */
+    downloadXlsx: string
     /** 终态没有可下载文件。 */
     noFile: string
     /** 采集、局部结果、忙及发布失败业务码文案。 */

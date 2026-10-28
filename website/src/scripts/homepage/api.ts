@@ -391,6 +391,44 @@ export async function getJson<T>(
 }
 
 /**
+ * 发送 GET 请求并返回文本响应体（如 CSV）
+ *
+ * 业务错误仍是 JSON 信封（HTTP 200），按 Content-Type 分流给信封解析抛出。
+ *
+ * @param path - API 路径
+ * @param context - 请求上下文
+ * @returns 响应文本（UTF-8 BOM 已由解码剥离）
+ */
+export async function getText(path: string, context: RequestContext): Promise<string> {
+  let response: Response
+  try {
+    response = await fetch(buildUrl(path), {
+      method: 'GET',
+      headers: buildRequestHeaders(context)
+    })
+  } catch (error) {
+    console.error(error)
+    const errorName = error instanceof Error ? error.name || 'Error' : 'NonError'
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    reportBackendConnectFailureToSls('GET', path, context, 'NETWORK_ERROR', errorName, errorMessage)
+    throw new HomepageApiError(
+      `GET ${path} network failed: ${errorName}: ${errorMessage}`,
+      0,
+      'NETWORK_ERROR',
+      {
+        failure_reason: `api_get_failed: path=${path}, reason=NETWORK_ERROR, error=${errorName}: ${errorMessage}`
+      }
+    )
+  }
+
+  if (!response.ok || response.headers.get('Content-Type')?.includes('application/json')) {
+    await parseEnvelope<JsonValue>(response, 'GET', path)
+    throw new HomepageApiError(`GET ${path} expected text, got JSON`, response.status)
+  }
+  return response.text()
+}
+
+/**
  * 发送 POST 请求并返回 JSON 数据
  *
  * @param path - API 路径

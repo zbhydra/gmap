@@ -291,6 +291,7 @@ export const site: SiteContent = {
       "finished": "タスク {job}：{status}",
       "finishedRecords": "{count} 件のレコード",
       "downloadCsv": "CSVをダウンロード",
+      "downloadXlsx": "Excel をダウンロード",
       "noFile": "いいえ CSV",
       "errors": {
         "31301": "この検索を収集できませんでした。",

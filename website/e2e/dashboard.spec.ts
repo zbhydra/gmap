@@ -187,7 +187,7 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
   await expect(page.locator('[data-dashboard-account-button]')).toContainText('hydra@mapsgrab.test')
 })
 
-test('dashboard history: pagination, item facts and single CSV with unavailable feedback', async ({ page }, testInfo) => {
+test('dashboard history: pagination, item facts, CSV / Excel download with unavailable feedback', async ({ page }, testInfo) => {
   mockAuthMe(page)
   await signInByStoredToken(page, 'e2e-history-token')
 
@@ -216,12 +216,16 @@ test('dashboard history: pagination, item facts and single CSV with unavailable 
       })
     })
   )
-  const signedCsvUrl = await csvDownloadUrl(`${first.job_no}.csv`)
+  // 下载名：首个关键词-创建日（业务时区）
+  const signedCsvUrl = await csvDownloadUrl('cafe-2025-09-01.csv')
   await page.route(`**/api/client/export/jobs/${first.job_no}/download`, route =>
     route.fulfill({ json: fileAvailable
-      ? envelope({ url: signedCsvUrl, filename: `${first.job_no}.csv` })
+      ? envelope({ url: signedCsvUrl, filename: 'cafe-2025-09-01.csv' })
       : { code: 404, msg: 'No downloadable file.' }
     })
+  )
+  await page.route(`**/api/client/export/jobs/${first.job_no}/file`, route =>
+    route.fulfill({ contentType: 'text/csv; charset=utf-8', body: '\ufeff#,Place ID\nRow number,Place ID\n1,12345678901234567890\n' })
   )
 
   await page.goto('/dashboard/history/')
@@ -245,10 +249,13 @@ test('dashboard history: pagination, item facts and single CSV with unavailable 
   await expect(failedItem).not.toContainText('Completed')
   await expect(detail.locator('.items button')).toHaveCount(0)
   const csvDownload = page.waitForEvent('download')
-  await page.locator(`[data-history-download="${first.job_no}"]`).click()
-  expect((await csvDownload).suggestedFilename()).toBe(`${first.job_no}.csv`)
+  await page.locator(`[data-history-download="${first.job_no}"][data-download-format="csv"]`).click()
+  expect((await csvDownload).suggestedFilename()).toBe('cafe-2025-09-01.csv')
+  const xlsxDownload = page.waitForEvent('download')
+  await page.locator(`[data-history-download="${first.job_no}"][data-download-format="xlsx"]`).click()
+  expect((await xlsxDownload).suggestedFilename()).toBe('cafe-2025-09-01.xlsx')
   fileAvailable = false
-  await page.locator(`[data-history-download="${first.job_no}"]`).click()
+  await page.locator(`[data-history-download="${first.job_no}"][data-download-format="csv"]`).click()
   await expect(page.getByText('No downloadable CSV. The file may have expired.')).toBeVisible()
 
   // 翻页只替换当前历史记录：地址带页码，刷新后保持

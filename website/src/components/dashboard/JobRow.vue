@@ -10,6 +10,7 @@ import { computed, ref, watch } from 'vue'
 import type { DashboardContent } from '../../i18n/schema'
 import type { ExportJobDetail, ExportJobStatus, ExportJobSummary } from '../../scripts/dashboard/api'
 import { formatNumber } from '../../scripts/dashboard/format'
+import type { DownloadFormat } from '../../scripts/dashboard/workspace'
 import { errorLabel, isRunningStatus, shortJobNo } from '../../scripts/dashboard/jobs'
 import { isPlainClick } from '../../scripts/dashboard/route'
 import JobDetail from './JobDetail.vue'
@@ -27,7 +28,8 @@ const props = defineProps<{
   expanded?: boolean
   detail?: ExportJobDetail
   detailFailed?: boolean
-  downloading: boolean
+  /** 正在下载的格式；同一任务下载期间两个按钮都不可再点。 */
+  downloading?: DownloadFormat
   downloadMessage?: string
   /** 刚提交的任务：插入时短暂高亮。 */
   fresh?: boolean
@@ -36,9 +38,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   open: []
   toggle: []
-  download: []
+  download: [format: DownloadFormat]
   retryDetail: []
 }>()
+
+/** 下载按钮：可见文字是格式名（不翻译），完整动作走 aria-label。 */
+const DOWNLOAD_FORMATS = [
+  { value: 'csv', text: 'CSV', label: 'downloadCsv' },
+  { value: 'xlsx', text: 'Excel', label: 'downloadXlsx' }
+] as const satisfies readonly { value: DownloadFormat; text: string; label: 'downloadCsv' | 'downloadXlsx' }[]
 
 /** 状态徽标：图标、文字、颜色三重编码；运行中两态用转圈（icon 为空）。 */
 const STATUS_BADGE: Record<ExportJobStatus, { tone: string; icon: string }> = {
@@ -131,20 +139,25 @@ function toggleFromRow(event: MouseEvent): void {
       </div>
 
       <div class="jc jc-act">
-        <button
-          v-if="props.job.has_file"
-          class="btn btn-secondary btn-xs"
-          :class="{ 'is-busy': props.downloading }"
-          type="button"
-          :aria-label="`${props.copy.history.downloadCsv} ${shortJobNo(props.job.job_no)}`"
-          :aria-busy="props.downloading ? 'true' : undefined"
-          :data-history-download="props.job.job_no"
-          @click="emit('download')"
-        >
-          <span v-if="props.downloading" class="spinner spinner--sm" aria-hidden="true"></span>
-          <svg v-else class="icon" aria-hidden="true"><use href="/img/icons.svg#i-download" /></svg>
-          {{ props.downloading ? props.copy.history.downloading : props.copy.history.downloadCsv }}
-        </button>
+        <div v-if="props.job.has_file" class="job-downloads">
+          <button
+            v-for="format in DOWNLOAD_FORMATS"
+            :key="format.value"
+            class="btn btn-secondary btn-xs"
+            :class="{ 'is-busy': props.downloading === format.value }"
+            type="button"
+            :disabled="props.downloading !== undefined && props.downloading !== format.value"
+            :aria-label="`${props.copy.history[format.label]} ${shortJobNo(props.job.job_no)}`"
+            :aria-busy="props.downloading === format.value ? 'true' : undefined"
+            :data-history-download="props.job.job_no"
+            :data-download-format="format.value"
+            @click="emit('download', format.value)"
+          >
+            <span v-if="props.downloading === format.value" class="spinner spinner--sm" aria-hidden="true"></span>
+            <svg v-else class="icon" aria-hidden="true"><use href="/img/icons.svg#i-download" /></svg>
+            {{ props.downloading === format.value ? props.copy.history.downloading : format.text }}
+          </button>
+        </div>
         <span v-else-if="!running" class="job-nofile">{{ props.copy.history.noFile }}</span>
         <p v-if="props.downloadMessage" class="inline-err" role="alert">{{ props.downloadMessage }}</p>
       </div>

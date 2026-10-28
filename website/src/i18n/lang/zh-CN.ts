@@ -291,6 +291,7 @@ export const site: SiteContent = {
       "finished": "任务 {job}：{status}",
       "finishedRecords": "{count} 条记录",
       "downloadCsv": "下载 CSV",
+      "downloadXlsx": "下载 Excel",
       "noFile": "无 CSV 文件",
       "errors": {
         "31301": "无法完成此次搜索的数据采集。",

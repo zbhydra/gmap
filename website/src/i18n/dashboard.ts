@@ -203,6 +203,7 @@ export const dashboardContent: DashboardContent = {
     finished: 'Task {job}: {status}',
     finishedRecords: '{count} records',
     downloadCsv: 'Download CSV',
+    downloadXlsx: 'Download Excel',
     noFile: 'No CSV',
     errors: {
       31301: 'Could not collect this search.',

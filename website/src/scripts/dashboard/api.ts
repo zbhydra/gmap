@@ -1,12 +1,13 @@
 /**
  * Dashboard 客户端接口封装。
  *
- * 复用站级 JSON、鉴权与会话失效边界；Export 下载使用后端签名 URL。
+ * 复用站级 JSON、鉴权与会话失效边界；Export CSV 下载使用后端签名 URL，XLSX 走同源文件接口。
  */
 
 import {
   HomepageApiError,
   getJson,
+  getText,
   postJson,
   type RequestContext
 } from '../homepage/api'
@@ -176,6 +177,11 @@ export function getExportJob(context: RequestContext, jobNo: string): Promise<Ex
 export function getExportDownload(context: RequestContext, jobNo: string): Promise<{ url: string; filename: string }> {
   return withSessionExpiry(getJson<{ url: string; filename: string }>(
     `/api/client/export/jobs/${encodeURIComponent(jobNo)}/download`, context))
+}
+
+/** 同源读取整 Job CSV 文本，供浏览器内转换 XLSX（对象存储签名 URL 不开放 CORS）。 */
+export function getExportFile(context: RequestContext, jobNo: string): Promise<string> {
+  return withSessionExpiry(getText(`/api/client/export/jobs/${encodeURIComponent(jobNo)}/file`, context))
 }
 
 /** 请求当前产品类别的渠道管理入口；后端按订阅实例选择渠道，URL 可为空。 */

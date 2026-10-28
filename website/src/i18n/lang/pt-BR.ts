@@ -291,6 +291,7 @@ export const site: SiteContent = {
       "finished": "Tarefa {job}: {status}",
       "finishedRecords": "{count} registros",
       "downloadCsv": "Baixar CSV",
+      "downloadXlsx": "Baixar Excel",
       "noFile": "Não CSV",
       "errors": {
         "31301": "Não foi possível coletar esta pesquisa.",
