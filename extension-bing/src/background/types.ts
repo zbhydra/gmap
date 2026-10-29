@@ -4,6 +4,7 @@
  * 这些类型描述 background 对 content/popup 暴露的状态与扩展能力。
  */
 
+import type { UserInfo } from '@/core/types'
 import type { MarkType } from '@/core/api/mark/types'
 import type { RuntimeConfig } from '@/core/runtimeConfig'
 import type { BingRemoteConfigOverride } from '@/sites/bing/config/contract'
@@ -65,3 +66,6 @@ export interface BackgroundEnrichBusinessesRequest {
 
 /** background 代理 Email/社媒补全响应（服务端载荷透传）。 */
 export type BackgroundEnrichBusinessesResponse = EnrichResponse
+
+/** 只向 popup 提供账号展示资料，不传递凭据。 */
+export type BackgroundGetAuthStateResponse = UserInfo | null

@@ -11,6 +11,15 @@ import { I18nService } from '../../../locales'
 import { toastService } from '../../composables/useToast'
 import { isAuthFailureCode, isAuthFailureStatus } from '../auth/sessionFailure'
 import type { JsonObject, JsonValue } from '../../rpc/types'
+import {
+  clearAuthSession,
+  commitRefreshedTokens,
+  commitUserInfo,
+  readAuthSnapshot,
+  sameAuthTokens,
+  staleAuthRequest,
+  type AuthTokens
+} from '../auth/session'
 
 interface RefreshTokenResponse {
   /** 新访问令牌。 */
@@ -19,7 +28,13 @@ interface RefreshTokenResponse {
   refresh_token: string
 }
 
-type RefreshAccessTokenResult = 'refreshed' | 'auth_failed' | 'transient_failed' | 'missing_refresh'
+type RefreshOutcome = 'refreshed' | 'auth_failed' | 'transient_failed' | 'missing_refresh' | 'stale'
+
+interface RefreshAccessTokenResult {
+  outcome: RefreshOutcome
+  previousTokens: AuthTokens
+  tokens: AuthTokens | null
+}
 
 let refreshPromise: Promise<RefreshAccessTokenResult> | null = null
 
@@ -61,7 +76,7 @@ function readRefreshErrorCode(body: JsonValue): string | number | undefined {
 async function parseRefreshResponse(
   response: Response,
   requestUrl: string
-): Promise<RefreshAccessTokenResult> {
+): Promise<AuthTokens | 'auth_failed' | 'transient_failed'> {
   let body: JsonValue
 
   try {
@@ -90,33 +105,42 @@ async function parseRefreshResponse(
     return response.status === 200 ? 'auth_failed' : 'transient_failed'
   }
 
-  await storageManager.set(STORAGE_KEYS.ACCESS_TOKEN, tokenResponse.access_token)
-  await storageManager.set(STORAGE_KEYS.REFRESH_TOKEN, tokenResponse.refresh_token)
-  return 'refreshed'
+  return { accessToken: tokenResponse.access_token, refreshToken: tokenResponse.refresh_token }
 }
 
-async function refreshAccessToken(): Promise<RefreshAccessTokenResult> {
-  const refreshToken = await storageManager.get<string>(STORAGE_KEYS.REFRESH_TOKEN)
-  if (!refreshToken) {
-    return 'missing_refresh'
+async function refreshAccessToken(previousTokens: AuthTokens): Promise<RefreshAccessTokenResult> {
+  const result = (outcome: RefreshOutcome, tokens: AuthTokens | null = null) => ({
+    outcome,
+    previousTokens,
+    tokens
+  })
+  if (!previousTokens.refreshToken) {
+    return result('missing_refresh')
   }
 
+  const requestUrl = `${API_CONFIG.BASE_URL}${API.ENDPOINTS.AUTH_REFRESH}`
+  let response: Response
   try {
-    const requestUrl = `${API_CONFIG.BASE_URL}${API.ENDPOINTS.AUTH_REFRESH}`
-    const response = await fetch(requestUrl, {
+    response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Content-Type': HTTP_HEADERS.CONTENT_TYPE,
         [HTTP_HEADERS.CLIENT_PRODUCT]: 'extension'
       },
-      body: JSON.stringify({ refresh_token: refreshToken })
+      body: JSON.stringify({ refresh_token: previousTokens.refreshToken })
     })
-
-    return parseRefreshResponse(response, requestUrl)
   } catch (err) {
     logger.error('[HttpClient] Auth refresh request failed:', err)
-    return 'transient_failed'
+    return result('transient_failed')
   }
+
+  const parsed = await parseRefreshResponse(response, requestUrl)
+  if (typeof parsed === 'string') {
+    return result(parsed)
+  }
+  return (await commitRefreshedTokens(previousTokens, parsed))
+    ? result('refreshed', parsed)
+    : result('stale')
 }
 
 /**
@@ -142,11 +166,16 @@ export const deviceIdInjector: RequestInterceptor = async context => {
 export const tokenInjector: RequestInterceptor = async context => {
   // 默认需要认证，除非明确设置为 false
   if (context.options.requireAuth !== false) {
-    const token = await storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN)
-    if (token) {
+    const { accessToken, refreshToken } = await readAuthSnapshot()
+    const current = { accessToken, refreshToken }
+    if (context._authTokens && !sameAuthTokens(context._authTokens, current)) {
+      throw staleAuthRequest()
+    }
+    context._authTokens = current
+    if (accessToken) {
       context.options.headers = {
         ...context.options.headers,
-        Authorization: HTTP_HEADERS.AUTH_PREFIX + token
+        Authorization: HTTP_HEADERS.AUTH_PREFIX + accessToken
       }
     }
   }
@@ -242,6 +271,36 @@ export const dataExtractor: ResponseInterceptor = (response, context) => {
   return response
 }
 
+/** /auth/me 资料只能回写给本次请求实际使用的会话。 */
+export const authUserInfoUpdater: ResponseInterceptor = async (response, context) => {
+  if (context.url !== `${API_CONFIG.BASE_URL}${API.ENDPOINTS.AUTH_ME}` || !context._authTokens) {
+    return response
+  }
+  const user = response.data as JsonValue
+  if (
+    !isJsonObject(user) ||
+    typeof user.user_id !== 'number' ||
+    (user.email !== null && typeof user.email !== 'string') ||
+    (user.full_name !== null && typeof user.full_name !== 'string') ||
+    (user.avatar_url !== null && typeof user.avatar_url !== 'string') ||
+    typeof user.created_at !== 'number'
+  ) {
+    throw new ApiError('[AuthApi] /auth/me 响应用户资料不完整', response.status, 'INVALID_RESPONSE')
+  }
+  if (
+    !(await commitUserInfo(context._authTokens, {
+      user_id: user.user_id,
+      email: user.email,
+      full_name: user.full_name,
+      avatar_url: user.avatar_url,
+      created_at: user.created_at
+    }))
+  ) {
+    throw staleAuthRequest()
+  }
+  return response
+}
+
 /**
  * 错误重试拦截器
  * 对 5xx 错误自动重试
@@ -268,34 +327,44 @@ export const retryInterceptor: ErrorInterceptor = async (error, context) => {
 export const authRefreshInterceptor: ErrorInterceptor = async (error, context) => {
   if (
     error.status !== 401 ||
+    error.preserveAuthState ||
     context.options.requireAuth === false ||
-    context._authRefreshAttempted
+    context._authRefreshAttempted ||
+    !context._authTokens
   ) {
     return
   }
 
   context._authRefreshAttempted = true
-
+  let pending: Promise<RefreshAccessTokenResult> | null = null
   try {
-    refreshPromise = refreshPromise ?? refreshAccessToken()
-    const refreshResult = await refreshPromise
-    if (refreshResult === 'transient_failed') {
+    if (!sameAuthTokens(context._authTokens, await readAuthSnapshot())) {
+      error.preserveAuthState = true
+      return
+    }
+    pending = refreshPromise ??= refreshAccessToken(context._authTokens)
+    const result = await pending
+    if (
+      !sameAuthTokens(context._authTokens, result.previousTokens) ||
+      result.outcome === 'stale' ||
+      result.outcome === 'transient_failed'
+    ) {
       error.preserveAuthState = true
       context._preserveAuthOnUnauthorized = true
       return
     }
-    if (refreshResult !== 'refreshed') {
+    if (result.outcome !== 'refreshed' || !result.tokens) {
+      return
+    }
+    if (!sameAuthTokens(result.tokens, await readAuthSnapshot())) {
+      error.preserveAuthState = true
       return
     }
 
-    const token = await storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN)
-    if (!token) {
-      return
-    }
-
+    context._authTokens = result.tokens
     context.options.headers = {
       ...context.options.headers,
-      Authorization: HTTP_HEADERS.AUTH_PREFIX + token
+      Authorization: HTTP_HEADERS.AUTH_PREFIX + result.tokens.accessToken
     }
     context._shouldRetry = true
   } catch (err) {
@@ -303,7 +372,7 @@ export const authRefreshInterceptor: ErrorInterceptor = async (error, context) =
     error.preserveAuthState = true
     context._preserveAuthOnUnauthorized = true
   } finally {
-    refreshPromise = null
+    if (pending && refreshPromise === pending) refreshPromise = null
   }
 }
 
@@ -311,17 +380,15 @@ export const authRefreshInterceptor: ErrorInterceptor = async (error, context) =
  * 默认错误处理拦截器
  */
 export const defaultErrorHandler: ErrorInterceptor = async (error, context) => {
-  // 401 错误：清除认证状态
   if (
-    error.status === 401 &&
+    (isAuthFailureStatus(error.status) || isAuthFailureCode(error.backendCode)) &&
+    context.options.requireAuth !== false &&
     context.options.preserveAuthOnUnauthorized !== true &&
+    context._authTokens &&
     !context._shouldRetry &&
     !context._preserveAuthOnUnauthorized &&
     !error.preserveAuthState
   ) {
-    logger.warn('[HttpClient] Unauthorized, clearing auth')
-    await storageManager.remove(STORAGE_KEYS.ACCESS_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.REFRESH_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.USER_INFO)
+    await clearAuthSession(context._authTokens)
   }
 }

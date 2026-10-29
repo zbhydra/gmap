@@ -53,7 +53,7 @@
 - 后端信封 `{code, data, msg}`，`code === 10000` 成功（`dataExtractor`）。
 - BASE_URL 读取构建期定义的 `__API_BASE_URL__`；环境值及默认值由各端 `vite.config.ts` 的 `resolveBuildEnvironment` 统一解析。
 - 跨域：API/SLS 域后端返回通配 CORS，官网登录走 v3 浏览器身份流程（`chrome.identity.launchWebAuthFlow` + PKCE + 一次性 code 回跳；不登记扩展 ID、无 `externally_connectable`、无 `onMessageExternal`，不进 content script、不授予 host access，合同见 007 域 `tech-第三方登录.md` §9），均**不进 `host_permissions`**；`host_permissions` 只列平台页面与媒体下载实际需要的域。
-- 鉴权拦截器栈：401 用 refresh_token 单飞刷新。
+- 认证 HTTP 与刷新由 background 统一执行，popup 经专用 RPC 获取展示状态及退出；会话提交边界见[插件侧认证行为](../../feat/007.用户系统/tech-第三方登录.md#95-插件侧行为maps--bing-同构)。
 
 ## 8. 消息通信（RPC v2，核心）
 

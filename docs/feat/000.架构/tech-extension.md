@@ -58,7 +58,7 @@ Maps 的 MAIN world 入口保留站点搜索 XHR 拦截，使用单向 CustomEve
 
 ### A4. Store（Pinia，分散在各上下文）
 
-- `core/stores/authStore.ts` 保存认证状态；Maps 月度用量由 `sites/maps/usage/` 维护。
+- 双插件的 `popup/stores/authStore.ts` 只保存账号展示状态，通过 background RPC 校验会话和退出；Bing 的 `core/stores/authStore.ts` 由 background 管理登录提交与订阅缓存。认证写入与刷新合同见[插件侧认证行为](../007.用户系统/tech-第三方登录.md#95-插件侧行为maps--bing-同构)。Maps 月度用量由 `sites/maps/usage/` 维护。
 
 ### A5. 订阅状态与月度用量
 

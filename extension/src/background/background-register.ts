@@ -17,6 +17,7 @@ import type {
   BackgroundGetMapsUsageResponse,
   BackgroundGetRuntimeConfigResponse,
   BackgroundGetStateResponse,
+  BackgroundGetAuthStateResponse,
   BackgroundOpenBulkDashboardRequest,
   BackgroundOpenBulkDashboardResponse,
   BackgroundOpenExtensionLoginResponse,
@@ -60,6 +61,16 @@ export const Handler = {
   /** 由 background 代 content script 记录打点。 */
   recordMark(_params: BackgroundRecordMarkRequest): Promise<BackgroundRecordMarkResponse> {
     return declarationOnly('background.recordMark')
+  },
+
+  /** 校验当前插件会话并返回展示资料。 */
+  getAuthState(): Promise<BackgroundGetAuthStateResponse> {
+    return declarationOnly('background.getAuthState')
+  },
+
+  /** 退出当前插件会话。 */
+  logout(): Promise<void> {
+    return declarationOnly('background.logout')
   },
 
   /**
@@ -151,6 +162,8 @@ export const METHOD_TARGETS = {
   getMapsConfig: ['content', 'popup'],
   /** recordMark 允许 popup（弹窗/仪表盘/设置页）与 content（面板动作）调用，统一由 background 写 SLS。 */
   recordMark: ['popup', 'content'],
+  getAuthState: ['popup'],
+  logout: ['popup'],
   /** openExtensionLogin 仅允许 popup 调用（账号区 Sign in 入口）。 */
   openExtensionLogin: ['popup'],
   /** getMapsUsage 允许 content（面板门控）与 popup（账号区）调用。 */
@@ -181,6 +194,8 @@ export const METHOD_REQUEST_LIMITS = {
   getMapsConfig: 1024,
   /** recordMark 携带打点类型和附加信息。 */
   recordMark: 4096,
+  getAuthState: 1024,
+  logout: 1024,
   /** openExtensionLogin 无入参。 */
   openExtensionLogin: 1024,
   /** getMapsUsage 无入参。 */
@@ -213,6 +228,8 @@ export const METHOD_RESPONSE_LIMITS = {
   getMapsConfig: 16384,
   /** recordMark 返回记录结果。 */
   recordMark: 1024,
+  getAuthState: 16384,
+  logout: 1024,
   /** openExtensionLogin 返回 {opened} 布尔结果。 */
   openExtensionLogin: 1024,
   /** getMapsUsage 返回 used/total/period/exhausted 快照（快照不可得时为 null）。 */

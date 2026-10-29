@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => ({
   recordMark: vi.fn()
 }))
 
-vi.mock('../../src/core/stores/authStore', () => ({
+vi.mock('../../src/popup/stores/authStore', () => ({
   useAuthStore: () => ({
     initialize: mocks.authInitialize,
     logout: mocks.authLogout,

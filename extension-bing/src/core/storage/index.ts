@@ -8,7 +8,7 @@ export interface StorageManager {
   get<T>(key: string): Promise<T | null>
   set<T>(key: string, value: T): Promise<void>
   setMany(items: Record<string, StorageValue>): Promise<void>
-  remove(key: string): Promise<void>
+  remove(key: string | string[]): Promise<void>
   getAll(): Promise<Record<string, StorageValue>>
   onChanged<T>(key: string, callback: (newValue: T, oldValue: T | undefined) => void): () => void
 }
@@ -44,7 +44,7 @@ export class ChromeStorageManager implements StorageManager {
     }
   }
 
-  async remove(key: string): Promise<void> {
+  async remove(key: string | string[]): Promise<void> {
     try {
       await chrome.storage.local.remove(key)
     } catch (error) {

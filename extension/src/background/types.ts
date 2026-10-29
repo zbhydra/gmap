@@ -4,6 +4,7 @@
  * 这些类型描述 background 对 content/popup 暴露的状态与扩展能力。
  */
 
+import type { UserInfo } from '@/core/types'
 import type { MarkType } from '@/core/api/mark/types'
 import type { RuntimeConfig } from '@/core/runtimeConfig'
 import type { MapsRemoteConfigOverride } from '@/sites/maps/config/contract'
@@ -129,3 +130,6 @@ export interface BackgroundBulkTaskIdRequest {
 
 /** background 批量任务命令响应（业务拒绝用 code 承载，不抛 RPC 错误）。 */
 export type BackgroundBulkCommandResponse = BulkCommandResult
+
+/** 只向 popup 提供账号展示资料，不传递凭据。 */
+export type BackgroundGetAuthStateResponse = UserInfo | null

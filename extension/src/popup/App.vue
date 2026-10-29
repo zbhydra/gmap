@@ -203,7 +203,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from './stores/authStore'
 import { markApi, MARK_TYPE } from '@/core/api/mark'
 import { STORAGE_KEYS, WEBSITE } from '@/core/api/config'
 import { storageManager } from '@/core/storage'

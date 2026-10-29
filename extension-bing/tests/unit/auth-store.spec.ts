@@ -1,7 +1,7 @@
 /**
  * Auth Store 的 v3 browser identity 登录回归测试（006 §4.4）。
  *
- * 证明 applyExtensionLogin 提交的三键登录态可以恢复和登出，同时锁定 Popup 内
+ * 证明 applyExtensionLogin 提交的三键登录态可以恢复，同时锁定 Popup 内
  * 旧邮箱验证码 action 已从 Store 公共面删除。
  */
 
@@ -12,11 +12,8 @@ import { ApiError } from '../../src/core/api/client/types'
 import type { UserInfo } from '../../src/core/types'
 
 const mocks = vi.hoisted(() => ({
-  getStoredUserInfo: vi.fn(),
   getAccessToken: vi.fn(),
-  clearLocalAuth: vi.fn(),
-  getCurrentUser: vi.fn(),
-  logout: vi.fn(),
+  getAuthState: vi.fn(),
   exchangeExtensionLogin: vi.fn(),
   storageGet: vi.fn(),
   storageSet: vi.fn(),
@@ -26,11 +23,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../../src/core/api', () => ({
   authApi: {
-    getStoredUserInfo: mocks.getStoredUserInfo,
     getAccessToken: mocks.getAccessToken,
-    clearLocalAuth: mocks.clearLocalAuth,
-    getCurrentUser: mocks.getCurrentUser,
-    logout: mocks.logout,
+    getAuthState: mocks.getAuthState,
     exchangeExtensionLogin: mocks.exchangeExtensionLogin
   },
   STORAGE_KEYS: {
@@ -84,11 +78,8 @@ describe('Auth Store v3 extension login', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    mocks.getStoredUserInfo.mockResolvedValue(storedUser)
     mocks.getAccessToken.mockResolvedValue('extension-access-token')
-    mocks.getCurrentUser.mockResolvedValue(currentUser)
-    mocks.clearLocalAuth.mockResolvedValue(undefined)
-    mocks.logout.mockResolvedValue(undefined)
+    mocks.getAuthState.mockResolvedValue(currentUser)
     mocks.exchangeExtensionLogin.mockResolvedValue(tokenResponse)
     mocks.storageGet.mockResolvedValue(null)
     mocks.storageSet.mockResolvedValue(undefined)
@@ -124,21 +115,7 @@ describe('Auth Store v3 extension login', () => {
     expect(store.token).toBe('extension-access-token')
     expect(store.user).toEqual(currentUser)
     expect(store.isAuthenticated).toBe(true)
-    expect(mocks.getCurrentUser).toHaveBeenCalledOnce()
-  })
-
-  it('退出时清除插件本地状态', async () => {
-    const { useAuthStore } = await import('../../src/core/stores/authStore')
-    const store = useAuthStore()
-    await store.initialize()
-
-    await store.logout()
-
-    expect(mocks.logout).toHaveBeenCalledOnce()
-    expect(store.user).toBeNull()
-    expect(store.token).toBeNull()
-    expect(store.isAuthenticated).toBe(false)
-    expect(store.loading).toBe(false)
+    expect(mocks.getAuthState).toHaveBeenCalledOnce()
   })
 
   it('applyExtensionLogin exchange 失败：不写 storage、内存态保持未登录', async () => {
@@ -188,15 +165,13 @@ describe('Auth Store v3 extension login', () => {
   })
 
   it('初始化认证永久失败时清除持久化和内存登录态', async () => {
-    mocks.getCurrentUser.mockRejectedValue(
-      new ApiError('Refresh returned HTTP 200 without a complete token pair', 401, 10104)
-    )
+    mocks.getAuthState.mockResolvedValue(null)
     const { useAuthStore } = await import('../../src/core/stores/authStore')
     const store = useAuthStore()
 
     await store.initialize()
 
-    expect(mocks.clearLocalAuth).toHaveBeenCalledOnce()
+    expect(mocks.getAuthState).toHaveBeenCalledOnce()
     expect(store.user).toBeNull()
     expect(store.token).toBeNull()
     expect(store.isAuthenticated).toBe(false)

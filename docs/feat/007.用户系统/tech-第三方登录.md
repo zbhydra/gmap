@@ -241,10 +241,12 @@ E: 校验响应合同 → 快照比对 → 原子写插件 storage 三键 → UI
 ### 9.5 插件侧行为(Maps / Bing 同构)
 
 - 登录 owner 是 background RPC(`openExtensionLogin`):PKCE 生成、`launchWebAuthFlow`、exchange、存储提交全在 background;不放 popup(popup 生命周期不覆盖登录窗口)。
-- **快照比对提交**:exchange 前读 storage 三键快照,提交前重读比对(access+refresh+user 全等才写);不一致(如期间用户已在 popup 登出)放弃写入并按失败返回,不写半截态、不重试、不清原登录态。
+- **认证 owner**：双插件的认证 HTTP、刷新、登录与退出凭据写入都在 background。popup 的 `getAuthState` / `logout` RPC 仅允许扩展页调用；认证状态只返回用户资料，popup store 只保存展示状态。
+- **条件提交**：`core/api/auth/session.ts` 以扩展 storage 为会话真相，只将快照比对与存储写入/删除串行执行，HTTP 不占用提交队列。登录沿用 exchange 前的三键快照；access、refresh、user 均匹配时一次写入三键，不匹配则放弃登录提交。
+- **刷新与旧请求**：认证请求记录实际使用的 token 对；并发 401 在 background 等待同一次刷新，成功后一次写入新 token 对。刷新结果、认证失败清理和 `/auth/me` 资料回写都只作用于仍匹配的会话；会话已退出或切换时，旧请求失败并保留当前会话，不得读取新账号 token 重试。HTTP 每次尝试前重新核对请求快照，覆盖等待重试期间的退出/换号。
 - UI 不依赖 RPC 返回值判断登录结果:任何失败统一按未完成处理并静默复位按钮(30 秒 RPC 超时同);最终结果一律以 `storage.onChanged`(auth 三键)为准——登录在 background 完成,popup / 面板保持打开时靠监听即时刷新账号态与用量 / 订阅。
 - Bing 特有:登录写入成功后强制失效并重拉订阅态(FREE/PRO 门控);background 另有 auth 三键 storage watcher,登出时失效内存订阅态,防门控陈旧。
-- 登出仍按现有口径:清插件三键 + 撤销服务端当前 access token,不影响 website 登录态。
+- 登出在 background 的同一队列项内读取当前 access token 并清除插件三键，再在队列外尽力撤销实际清除的 access token。撤销请求不刷新认证，失败也不恢复本地凭据，不影响 website 登录态；popup 在退出 RPC 完成后重新读取当前后台状态，保留撤销期间新登录的账号展示。
 
 ### 9.6 安全边界
 

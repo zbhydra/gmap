@@ -5,6 +5,7 @@
 import { I18nService } from '../../../locales'
 import { I18N_KEYS } from '../../constants/i18n'
 import type { JsonValue } from '../../rpc/types'
+import type { AuthTokens } from '../auth/session'
 
 /** HTTP 请求方法 */
 export type HttpMethod = 'GET' | 'POST'
@@ -43,6 +44,8 @@ export interface RequestContext {
   options: RequestOptions
   /** 请求时间戳 */
   timestamp: number
+  /** 请求实际使用的 token 对；重试沿用同一会话。 */
+  _authTokens?: AuthTokens
   /** 内部：当前重试次数 */
   _retryCount?: number
   /** 内部：是否应该重试 */

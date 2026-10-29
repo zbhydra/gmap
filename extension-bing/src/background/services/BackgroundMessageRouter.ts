@@ -4,6 +4,7 @@
  * 使用新的 RPC 系统处理来自 popup 的消息
  */
 
+import { authApi } from '@/core/api/auth/api'
 import { logger } from '@/core/utils/logger'
 import { serve } from '@/core/rpc/serve'
 import type {
@@ -49,6 +50,8 @@ export class BackgroundMessageRouter {
       getRuntimeConfig: () => getRuntimeConfig(),
       getBingConfig: () => fetchBingRemoteConfig(),
       getGateState: () => this.getGateState(),
+      getAuthState: () => authApi.getAuthState(),
+      logout: () => authApi.logout(),
       openExtensionLogin: (params, context) => handleOpenExtensionLogin(params, context),
       recordMark: (params, context) => {
         const request = parseRecordMarkRequest(params)

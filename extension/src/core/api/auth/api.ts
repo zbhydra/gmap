@@ -5,11 +5,17 @@
  */
 
 import { httpClient } from '../index'
-import { API, STORAGE_KEYS } from '../config'
-import { storageManager } from '../../storage'
+import { API, HTTP_HEADERS } from '../config'
 import type { UserInfo } from '../../types'
 import { logger } from '../../utils/logger'
 import { ApiError } from '../client/types'
+import {
+  clearAuthSession,
+  clearCurrentAuthSession,
+  commitExtensionLogin,
+  readAuthSnapshot,
+  type AuthStorageSnapshot
+} from './session'
 
 /** v3 插件登录 exchange 请求（无 Bearer；旧 token 字段供服务端 best-effort 撤销）。 */
 export interface ExtensionLoginExchangeParams {
@@ -33,16 +39,6 @@ export interface ExtensionLoginTokenResponse {
   user: UserInfo
 }
 
-/** auth 三键快照（v3 登录条件提交的比对基准）。 */
-export interface AuthStorageSnapshot {
-  /** exchange 发起时的 access token。 */
-  accessToken: string | null
-  /** exchange 发起时的 refresh token。 */
-  refreshToken: string | null
-  /** exchange 发起时的用户信息。 */
-  userInfo: UserInfo | null
-}
-
 /** 校验 exchange 响应合同：token 对 + 数字 user_id（HTTP 解析边界，形状外字段信任服务端）。 */
 function isExtensionLoginTokenResponse(value: unknown): value is ExtensionLoginTokenResponse {
   if (typeof value !== 'object' || value === null) {
@@ -60,15 +56,6 @@ function isExtensionLoginTokenResponse(value: unknown): value is ExtensionLoginT
   )
 }
 
-/** 快照全等判断：token 键值直比；user 为对象，storage 往返后引用必不同，序列化比较。 */
-function isSameSnapshot(a: AuthStorageSnapshot, b: AuthStorageSnapshot): boolean {
-  return (
-    a.accessToken === b.accessToken &&
-    a.refreshToken === b.refreshToken &&
-    JSON.stringify(a.userInfo) === JSON.stringify(b.userInfo)
-  )
-}
-
 /**
  * 认证 API 函数集合
  */
@@ -77,69 +64,42 @@ export const authApi = {
    * 获取当前用户信息
    */
   getCurrentUser: async (): Promise<UserInfo> => {
-    const token = await storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN)
-    if (!token) {
-      throw new ApiError('No access token available', 401, 'NO_TOKEN')
-    }
-
-    const result = await httpClient.get<UserInfo>(API.ENDPOINTS.AUTH_ME)
-
-    // 更新 storage
-    await storageManager.set(STORAGE_KEYS.USER_INFO, result)
-
-    return result
+    return httpClient.get<UserInfo>(API.ENDPOINTS.AUTH_ME)
   },
 
-  /**
-   * 退出登录
-   */
-  logout: async (): Promise<void> => {
-    const token = await storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN)
+  /** background 验活后只向 UI 返回用户资料；临时故障保留当前会话。 */
+  getAuthState: async (): Promise<UserInfo | null> => {
+    const snapshot = await readAuthSnapshot()
+    if (!snapshot.accessToken || !snapshot.userInfo) {
+      if (snapshot.accessToken || snapshot.refreshToken || snapshot.userInfo) {
+        await clearAuthSession(snapshot)
+      }
+      return null
+    }
+    try {
+      await authApi.getCurrentUser()
+    } catch (error) {
+      logger.error('[AuthApi] 当前会话校验失败:', error)
+    }
+    const current = await readAuthSnapshot()
+    return current.accessToken ? current.userInfo : null
+  },
 
-    if (token) {
+  /** 先退出本地会话，再 best-effort 撤销这次退出所携带的 access token。 */
+  logout: async (): Promise<void> => {
+    const accessToken = await clearCurrentAuthSession()
+    if (accessToken) {
       try {
-        await httpClient.post<void>(API.ENDPOINTS.AUTH_LOGOUT)
-      } catch (err) {
-        logger.error('[AuthApi] Logout request failed:', err)
+        await httpClient.post<void>(API.ENDPOINTS.AUTH_LOGOUT, undefined, {
+          requireAuth: false,
+          skipRetry: true,
+          skipErrorToast: true,
+          headers: { Authorization: HTTP_HEADERS.AUTH_PREFIX + accessToken }
+        })
+      } catch (error) {
+        logger.error('[AuthApi] Logout request failed:', error)
       }
     }
-
-    // 清除存储
-    await storageManager.remove(STORAGE_KEYS.ACCESS_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.REFRESH_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.USER_INFO)
-  },
-
-  /**
-   * 获取存储的访问令牌
-   */
-  getAccessToken: (): Promise<string | null> => {
-    return storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN)
-  },
-
-  /**
-   * 获取存储的用户信息
-   */
-  getStoredUserInfo: (): Promise<UserInfo | null> => {
-    return storageManager.get<UserInfo>(STORAGE_KEYS.USER_INFO)
-  },
-
-  /**
-   * 检查是否已认证
-   */
-  isAuthenticated: async (): Promise<boolean> => {
-    const token = await authApi.getAccessToken()
-    const user = await authApi.getStoredUserInfo()
-    return !!(token && user)
-  },
-
-  /**
-   * 清除本地认证信息
-   */
-  clearLocalAuth: async (): Promise<void> => {
-    await storageManager.remove(STORAGE_KEYS.ACCESS_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.REFRESH_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.USER_INFO)
   },
 
   /**
@@ -174,14 +134,7 @@ export const authApi = {
   /**
    * 读取 auth 三键快照（v3 登录条件提交的比对基准，exchange 发起前调用）。
    */
-  getAuthSnapshot: async (): Promise<AuthStorageSnapshot> => {
-    const [accessToken, refreshToken, userInfo] = await Promise.all([
-      storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN),
-      storageManager.get<string>(STORAGE_KEYS.REFRESH_TOKEN),
-      storageManager.get<UserInfo>(STORAGE_KEYS.USER_INFO)
-    ])
-    return { accessToken, refreshToken, userInfo }
-  },
+  getAuthSnapshot: readAuthSnapshot,
 
   /**
    * v3 登录结果条件提交：当前三键与快照全等才写入新 token 对（单次
@@ -192,16 +145,10 @@ export const authApi = {
     tokenResponse: ExtensionLoginTokenResponse,
     snapshot: AuthStorageSnapshot
   ): Promise<boolean> => {
-    const current = await authApi.getAuthSnapshot()
-    if (!isSameSnapshot(current, snapshot)) {
-      return false
-    }
-
-    await storageManager.setMany({
-      [STORAGE_KEYS.ACCESS_TOKEN]: tokenResponse.extension_access_token,
-      [STORAGE_KEYS.REFRESH_TOKEN]: tokenResponse.extension_refresh_token,
-      [STORAGE_KEYS.USER_INFO]: { ...tokenResponse.user }
+    return commitExtensionLogin(snapshot, {
+      accessToken: tokenResponse.extension_access_token,
+      refreshToken: tokenResponse.extension_refresh_token,
+      userInfo: tokenResponse.user
     })
-    return true
   }
 }

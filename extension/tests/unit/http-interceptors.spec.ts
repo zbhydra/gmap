@@ -18,11 +18,13 @@ import {
 import { ApiError, type HttpResponse, type RequestContext } from '../../src/core/api/client/types'
 import { I18N_KEYS } from '../../src/core/constants/i18n'
 import type { JsonValue } from '../../src/core/rpc/types'
+import type { StorageValue } from '../../src/core/storage'
 
 const mocks = vi.hoisted(() => ({
-  storage: new Map<string, string>(),
+  storage: new Map<string, StorageValue>(),
   get: vi.fn(),
   set: vi.fn(),
+  setMany: vi.fn(),
   remove: vi.fn(),
   loggerInfo: vi.fn(),
   loggerWarn: vi.fn(),
@@ -35,6 +37,7 @@ vi.mock('../../src/core/storage', () => ({
   storageManager: {
     get: mocks.get,
     set: mocks.set,
+    setMany: mocks.setMany,
     remove: mocks.remove
   }
 }))
@@ -86,8 +89,12 @@ describe('HTTP request and response interceptors', () => {
       mocks.storage.set(key, value)
       return Promise.resolve()
     })
-    mocks.remove.mockImplementation((key: string) => {
-      mocks.storage.delete(key)
+    mocks.setMany.mockImplementation((values: Record<string, StorageValue>) => {
+      for (const [key, value] of Object.entries(values)) mocks.storage.set(key, value)
+      return Promise.resolve()
+    })
+    mocks.remove.mockImplementation((keys: string | string[]) => {
+      for (const key of typeof keys === 'string' ? [keys] : keys) mocks.storage.delete(key)
       return Promise.resolve()
     })
     mocks.translate.mockImplementation((key: string) => key)
@@ -221,8 +228,12 @@ describe('HTTP retry and authentication interceptors', () => {
       mocks.storage.set(key, value)
       return Promise.resolve()
     })
-    mocks.remove.mockImplementation((key: string) => {
-      mocks.storage.delete(key)
+    mocks.setMany.mockImplementation((values: Record<string, StorageValue>) => {
+      for (const [key, value] of Object.entries(values)) mocks.storage.set(key, value)
+      return Promise.resolve()
+    })
+    mocks.remove.mockImplementation((keys: string | string[]) => {
+      for (const key of typeof keys === 'string' ? [keys] : keys) mocks.storage.delete(key)
       return Promise.resolve()
     })
   })
@@ -412,7 +423,7 @@ describe('HTTP retry and authentication interceptors', () => {
     await authRefreshInterceptor(error, context)
     await defaultErrorHandler(error, context)
 
-    expect(mocks.remove.mock.calls.map(call => call[0])).toEqual([
+    expect(mocks.remove.mock.calls.flatMap(call => call[0])).toEqual([
       STORAGE_KEYS.ACCESS_TOKEN,
       STORAGE_KEYS.REFRESH_TOKEN,
       STORAGE_KEYS.USER_INFO
@@ -438,7 +449,7 @@ describe('HTTP retry and authentication interceptors', () => {
 
   it('preserves auth state when storing refreshed credentials fails', async () => {
     mocks.storage.set(STORAGE_KEYS.REFRESH_TOKEN, 'refresh-old')
-    mocks.set.mockRejectedValue(new Error('storage unavailable'))
+    mocks.setMany.mockRejectedValue(new Error('storage unavailable'))
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
@@ -468,7 +479,7 @@ describe('HTTP retry and authentication interceptors', () => {
 
     await defaultErrorHandler(new ApiError('unauthorized', 401), createContext())
 
-    expect(mocks.remove.mock.calls.map(call => call[0])).toEqual([
+    expect(mocks.remove.mock.calls.flatMap(call => call[0])).toEqual([
       STORAGE_KEYS.ACCESS_TOKEN,
       STORAGE_KEYS.REFRESH_TOKEN,
       STORAGE_KEYS.USER_INFO
@@ -501,6 +512,12 @@ function createContext(options: RequestContext['options'] = {}): RequestContext 
     url: 'https://api.example.test/items',
     method: 'GET',
     options,
+    _authTokens: {
+      accessToken: typeof mocks.storage.get(STORAGE_KEYS.ACCESS_TOKEN) === 'string'
+        ? String(mocks.storage.get(STORAGE_KEYS.ACCESS_TOKEN)) : null,
+      refreshToken: typeof mocks.storage.get(STORAGE_KEYS.REFRESH_TOKEN) === 'string'
+        ? String(mocks.storage.get(STORAGE_KEYS.REFRESH_TOKEN)) : null
+    },
     timestamp: 1
   }
 }

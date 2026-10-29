@@ -52,6 +52,26 @@ export class BackgroundChannel {
     )
   }
 
+  /** 调用 getAuthState 能力。 */
+  getAuthState(
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'getAuthState'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'getAuthState'>>(
+      'getAuthState',
+      undefined,
+      options
+    )
+  }
+
+  /** 调用 logout 能力。 */
+  logout(options?: RpcCallOptions): Promise<RpcMethodResult<BackgroundHandler, 'logout'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'logout'>>(
+      'logout',
+      undefined,
+      options
+    )
+  }
+
   /** 调用 openExtensionLogin 能力。 */
   openExtensionLogin(
     options?: RpcCallOptions

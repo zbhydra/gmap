@@ -260,7 +260,17 @@ export const chrome = {
   runtime,
   tabs,
   storage,
-  downloads
+  downloads,
+  identity: {
+    getRedirectURL: vi.fn((path = '') => `https://test-extension-id.chromiumapp.org/${path}`),
+    launchWebAuthFlow: vi.fn(
+      (_options: chrome.identity.WebAuthFlowDetails, callback?: (url?: string) => void) => {
+        const url = 'https://test-extension-id.chromiumapp.org/extension-login#code=mock-code'
+        callback?.(url)
+        return Promise.resolve(url)
+      }
+    )
+  }
 }
 
 // 添加类型导出

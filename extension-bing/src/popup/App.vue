@@ -40,8 +40,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/core/stores/authStore'
-import { authApi, STORAGE_KEYS } from '@/core/api'
+import { useAuthStore } from './stores/authStore'
+import { STORAGE_KEYS } from '@/core/api/config'
 import { markApi, MARK_TYPE, type MarkType } from '@/core/api/mark'
 import { I18N_KEYS } from '@/core/constants/i18n'
 import { storageManager } from '@/core/storage'
@@ -112,32 +112,6 @@ async function onSignOut(): Promise<void> {
 /** storage.onChanged 退订函数集合（popup 卸载时统一退订）。 */
 let unwatchAuthStorage: Array<() => void> = []
 
-/**
- * 登录在 background 完成后，popup 若保持打开需即时刷新 authStore 并重拉
- * 订阅态（登录后 FREE/PRO 归属变化）。三键分批写入会触发多次事件，按
- * 「登录身份是否变化」去重，避免同一会话的 token 刷新重复拉订阅。
- */
-async function syncAuthFromStorage(): Promise<void> {
-  const [storedUser, storedToken] = await Promise.all([
-    authApi.getStoredUserInfo(),
-    authApi.getAccessToken()
-  ])
-  const nextUserId = storedUser && storedToken ? storedUser.user_id : null
-  const currentUserId = authStore.isAuthenticated ? (authStore.user?.user_id ?? null) : null
-  if (nextUserId === currentUserId) {
-    return
-  }
-
-  if (storedUser && storedToken) {
-    authStore.user = storedUser
-    authStore.token = storedToken
-    authStore.invalidateSubscription()
-    await authStore.refreshSubscription({ force: true })
-  } else {
-    authStore.clearAuth()
-  }
-}
-
 function watchAuthStorage(): void {
   unwatchAuthStorage = [
     STORAGE_KEYS.ACCESS_TOKEN,
@@ -145,7 +119,7 @@ function watchAuthStorage(): void {
     STORAGE_KEYS.USER_INFO
   ].map(key =>
     storageManager.onChanged(key, () => {
-      syncAuthFromStorage().catch(error => {
+      authStore.initialize().catch(error => {
         logger.error('[Popup] 登录态 storage 同步失败:', error)
       })
     })

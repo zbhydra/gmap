@@ -5,12 +5,13 @@
  */
 
 import { httpClient } from '../index'
-import { API, STORAGE_KEYS } from '../config'
+import { API, HTTP_HEADERS, STORAGE_KEYS } from '../config'
 import { storageManager } from '../../storage'
 import type { UserInfo } from '../../types'
 import { logger } from '../../utils/logger'
 import { ApiError } from '../client/types'
 import type { JsonObject, JsonValue } from '../../rpc/types'
+import { clearAuthSession, clearCurrentAuthSession, readAuthSnapshot } from './session'
 
 /**
  * v3 browser identity exchange 响应合同（后端 ExtensionTokenResponse 结构）。
@@ -95,17 +96,42 @@ export const authApi = {
    * 获取当前用户信息
    */
   getCurrentUser: async (): Promise<UserInfo> => {
-    const token = await storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN)
-    if (!token) {
-      throw new ApiError('No access token available', 401, 'NO_TOKEN')
+    return httpClient.get<UserInfo>(API.ENDPOINTS.AUTH_ME)
+  },
+
+  /** background 验活后只向 UI 返回用户资料；临时故障保留当前会话。 */
+  getAuthState: async (): Promise<UserInfo | null> => {
+    const snapshot = await readAuthSnapshot()
+    if (!snapshot.accessToken || !snapshot.userInfo) {
+      if (snapshot.accessToken || snapshot.refreshToken || snapshot.userInfo) {
+        await clearAuthSession(snapshot)
+      }
+      return null
     }
+    try {
+      await authApi.getCurrentUser()
+    } catch (error) {
+      logger.error('[AuthApi] 当前会话校验失败:', error)
+    }
+    const current = await readAuthSnapshot()
+    return current.accessToken ? current.userInfo : null
+  },
 
-    const result = await httpClient.get<UserInfo>(API.ENDPOINTS.AUTH_ME)
-
-    // 更新 storage
-    await storageManager.set(STORAGE_KEYS.USER_INFO, result)
-
-    return result
+  /** 先退出本地会话，再 best-effort 撤销这次退出所携带的 access token。 */
+  logout: async (): Promise<void> => {
+    const accessToken = await clearCurrentAuthSession()
+    if (accessToken) {
+      try {
+        await httpClient.post<void>(API.ENDPOINTS.AUTH_LOGOUT, undefined, {
+          requireAuth: false,
+          skipRetry: true,
+          skipErrorToast: true,
+          headers: { Authorization: HTTP_HEADERS.AUTH_PREFIX + accessToken }
+        })
+      } catch (error) {
+        logger.error('[AuthApi] Logout request failed:', error)
+      }
+    }
   },
 
   /**
@@ -143,54 +169,9 @@ export const authApi = {
   },
 
   /**
-   * 退出登录
-   */
-  logout: async (): Promise<void> => {
-    const token = await storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN)
-
-    if (token) {
-      try {
-        await httpClient.post<void>(API.ENDPOINTS.AUTH_LOGOUT)
-      } catch (err) {
-        logger.error('[AuthApi] Logout request failed:', err)
-      }
-    }
-
-    // 清除存储
-    await storageManager.remove(STORAGE_KEYS.ACCESS_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.REFRESH_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.USER_INFO)
-  },
-
-  /**
    * 获取存储的访问令牌
    */
   getAccessToken: (): Promise<string | null> => {
     return storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN)
-  },
-
-  /**
-   * 获取存储的用户信息
-   */
-  getStoredUserInfo: (): Promise<UserInfo | null> => {
-    return storageManager.get<UserInfo>(STORAGE_KEYS.USER_INFO)
-  },
-
-  /**
-   * 检查是否已认证
-   */
-  isAuthenticated: async (): Promise<boolean> => {
-    const token = await authApi.getAccessToken()
-    const user = await authApi.getStoredUserInfo()
-    return !!(token && user)
-  },
-
-  /**
-   * 清除本地认证信息
-   */
-  clearLocalAuth: async (): Promise<void> => {
-    await storageManager.remove(STORAGE_KEYS.ACCESS_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.REFRESH_TOKEN)
-    await storageManager.remove(STORAGE_KEYS.USER_INFO)
   }
 }

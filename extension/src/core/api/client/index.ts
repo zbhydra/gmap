@@ -19,6 +19,7 @@ export {
   headersInjector,
   requestLogger,
   responseLogger,
+  authUserInfoUpdater,
   retryInterceptor,
   authRefreshInterceptor,
   defaultErrorHandler

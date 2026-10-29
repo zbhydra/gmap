@@ -4,6 +4,7 @@
  * 使用新的 RPC 系统处理来自 popup 的消息
  */
 
+import { authApi } from '@/core/api/auth/api'
 import { logger } from '@/core/utils/logger'
 import { serve } from '@/core/rpc/serve'
 import type {
@@ -60,6 +61,8 @@ export class BackgroundMessageRouter {
       getMapsUsage: () => mapsUsageService.getSnapshot(true),
       // v3 插件登录（popup 账号区入口）：登录 owner 在 background，失败
       // 统一收敛为 opened=false，不抛 RPC 错误（完整登录常态超默认 30s 超时）
+      getAuthState: () => authApi.getAuthState(),
+      logout: () => authApi.logout(),
       openExtensionLogin: () => openExtensionLogin(),
       // Email/社媒补全代理（U8）：透传商家数组给后端 enrich 端点，配额
       // 已由采集侧计量（服务端不重复扣减），身份由 httpClient 拦截器注入

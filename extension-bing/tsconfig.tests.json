@@ -11,6 +11,7 @@
     "tests/setup.ts",
     "tests/mocks/**/*.ts",
     "tests/unit/*.spec.ts",
+    "tests/integration/auth-session-rpc.spec.ts",
     "tests/e2e/*.ts"
   ],
   "exclude": []

@@ -13,6 +13,7 @@ import {
   acceptLanguageInjector,
   requestLogger,
   responseLogger,
+  authUserInfoUpdater,
   dataExtractor,
   retryInterceptor,
   authRefreshInterceptor,
@@ -41,6 +42,7 @@ httpClient.useRequest(tokenInjector)
 httpClient.useRequest(acceptLanguageInjector)
 httpClient.useRequest(requestLogger)
 httpClient.useResponse(dataExtractor)
+httpClient.useResponse(authUserInfoUpdater)
 httpClient.useResponse(responseLogger)
 httpClient.useError(retryInterceptor)
 httpClient.useError(authRefreshInterceptor)
@@ -78,6 +80,7 @@ export const createHttpClient = (baseURL: string = API_CONFIG.BASE_URL) => {
   client.useRequest(acceptLanguageInjector)
   client.useRequest(requestLogger)
   client.useResponse(dataExtractor)
+  client.useResponse(authUserInfoUpdater)
   client.useResponse(responseLogger)
   client.useError(retryInterceptor)
   client.useError(authRefreshInterceptor)

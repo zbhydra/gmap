@@ -12,6 +12,7 @@ import type {
   BackgroundGetGateStateResponse,
   BackgroundGetRuntimeConfigResponse,
   BackgroundGetStateResponse,
+  BackgroundGetAuthStateResponse,
   BackgroundOpenExtensionLoginResponse,
   BackgroundPingResponse,
   BackgroundRecordMarkRequest,
@@ -51,6 +52,16 @@ export const Handler = {
     return declarationOnly('background.getGateState')
   },
 
+  /** 校验当前插件会话并返回展示资料。 */
+  getAuthState(): Promise<BackgroundGetAuthStateResponse> {
+    return declarationOnly('background.getAuthState')
+  },
+
+  /** 退出当前插件会话。 */
+  logout(): Promise<void> {
+    return declarationOnly('background.logout')
+  },
+
   /** 发起 v3 browser identity 登录（PKCE + launchWebAuthFlow + exchange，006 §3）。 */
   openExtensionLogin(): Promise<BackgroundOpenExtensionLoginResponse> {
     return declarationOnly('background.openExtensionLogin')
@@ -87,6 +98,8 @@ export const METHOD_TARGETS = {
   getBingConfig: ['content'],
   /** getGateState 允许 content script 调用（面板与采集停止策略读取账号/订阅态）。 */
   getGateState: ['content'],
+  getAuthState: ['popup'],
+  logout: ['popup'],
   /** openExtensionLogin 允许 popup / content 调用（两处登录入口，同一 background RPC）。 */
   openExtensionLogin: ['popup', 'content'],
   /** recordMark 允许 popup / content 调用，统一由 background 写 SLS（T1 §4.1）。 */
@@ -107,6 +120,8 @@ export const METHOD_REQUEST_LIMITS = {
   getBingConfig: 1024,
   /** getGateState 无业务参数。 */
   getGateState: 1024,
+  getAuthState: 1024,
+  logout: 1024,
   /** openExtensionLogin 无业务参数。 */
   openExtensionLogin: 1024,
   /** recordMark 携带打点类型和附加信息。 */
@@ -127,6 +142,8 @@ export const METHOD_RESPONSE_LIMITS = {
   getBingConfig: 16384,
   /** getGateState 返回账号/订阅判定三元组。 */
   getGateState: 1024,
+  getAuthState: 16384,
+  logout: 1024,
   /** openExtensionLogin 返回是否提交完成。 */
   openExtensionLogin: 1024,
   /** recordMark 返回记录结果。 */

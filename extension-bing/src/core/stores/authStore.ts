@@ -9,13 +9,12 @@
 
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { authApi, subscriptionApi, STORAGE_KEYS } from '../api'
+import { authApi, subscriptionApi } from '../api'
 import type { ExtensionLoginTokenResponse } from '../api/auth/api'
 import type { SubscriptionStatus } from '../api/subscription/types'
 import type { UserInfo } from '../types'
 import { logger } from '../utils/logger'
-import { isAuthSessionFailure } from '../api/auth/sessionFailure'
-import { storageManager } from '../storage'
+import { commitExtensionLogin, readAuthSnapshot } from '../api/auth/session'
 
 /**
  * 订阅状态缓存有效期：5 分钟内不重复发 HTTP。
@@ -26,38 +25,6 @@ import { storageManager } from '../storage'
  * （applyExtensionLogin）会强制失效重拉，5 分钟只覆盖存量会话的漂移窗口。
  */
 const SUBSCRIPTION_CACHE_TTL_MS = 5 * 60 * 1000
-
-/**
- * 登录提交的快照条件：exchange 发起时的三键持久化值。
- * 提交前重读比对全等才写，防止长登录流程中途的登出/换号被覆盖。
- */
-interface AuthStorageSnapshot {
-  accessToken: string | null
-  refreshToken: string | null
-  userInfo: UserInfo | null
-}
-
-/** 读一次 auth 三键持久化快照（storage 为跨上下文真相，不读内存态）。 */
-function readAuthStorageSnapshot(): Promise<AuthStorageSnapshot> {
-  return Promise.all([
-    storageManager.get<string>(STORAGE_KEYS.ACCESS_TOKEN),
-    storageManager.get<string>(STORAGE_KEYS.REFRESH_TOKEN),
-    storageManager.get<UserInfo>(STORAGE_KEYS.USER_INFO)
-  ]).then(([accessToken, refreshToken, userInfo]) => ({
-    accessToken: accessToken ?? null,
-    refreshToken: refreshToken ?? null,
-    userInfo: userInfo ?? null
-  }))
-}
-
-/** 三键全等判定（access + refresh + user 逐一比对）。 */
-function authSnapshotsEqual(left: AuthStorageSnapshot, right: AuthStorageSnapshot): boolean {
-  return (
-    left.accessToken === right.accessToken &&
-    left.refreshToken === right.refreshToken &&
-    JSON.stringify(left.userInfo) === JSON.stringify(right.userInfo)
-  )
-}
 
 export const useAuthStore = defineStore('auth', () => {
   // ============================================================================
@@ -70,8 +37,6 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   /** 订阅状态（登录态下经 subscriptionApi 查询；null = 未查询/无缓存） */
   const subscription = ref<SubscriptionStatus | null>(null)
-  /** 是否正在加载 */
-  const loading = ref<boolean>(false)
   /** 初始化中标志（防止并发调用） */
   let isInitializing = false
 
@@ -134,58 +99,19 @@ export const useAuthStore = defineStore('auth', () => {
       isInitializing = true
       logger.info('[AuthStore] Initializing')
 
-      // 从本地存储恢复状态
-      const storedUser = await authApi.getStoredUserInfo()
-      const storedToken = await authApi.getAccessToken()
-
-      if (storedUser && storedToken) {
-        user.value = storedUser
-        token.value = storedToken
-        logger.info('[AuthStore] Restored authentication for user:', storedUser.user_id)
-      } else if (storedUser || storedToken) {
-        await authApi.clearLocalAuth()
-      }
-
-      if (isAuthenticated.value) {
-        try {
-          const currentUser = await authApi.getCurrentUser()
-          user.value = currentUser
-          logger.info('[AuthStore] Token validated, user updated')
-        } catch (err) {
-          logger.error('[AuthStore] Token validation failed:', err)
-          if (err instanceof Error && isAuthSessionFailure(err)) {
-            await authApi.clearLocalAuth()
-            clearAuth()
-          }
-        }
+      const currentUser = await authApi.getAuthState()
+      const currentToken = await authApi.getAccessToken()
+      if (currentUser && currentToken) {
+        user.value = currentUser
+        token.value = currentToken
+      } else {
+        clearAuth()
       }
     } catch (err) {
       logger.error('[AuthStore] Initialization failed:', err)
       clearAuth()
     } finally {
       isInitializing = false
-    }
-  }
-
-  /**
-   * 退出登录
-   */
-  async function logout(): Promise<void> {
-    try {
-      loading.value = true
-
-      await authApi.logout()
-
-      clearAuth()
-
-      logger.info('[AuthStore] Logout successful')
-    } catch (err) {
-      logger.error('[AuthStore] Logout failed:', err)
-      // 即使 API 调用失败，也清除本地状态
-      clearAuth()
-      throw err
-    } finally {
-      loading.value = false
     }
   }
 
@@ -204,7 +130,7 @@ export const useAuthStore = defineStore('auth', () => {
    * @param codeVerifier 本次登录发起时生成的 PKCE verifier
    */
   async function applyExtensionLogin(code: string, codeVerifier: string): Promise<void> {
-    const snapshot = await readAuthStorageSnapshot()
+    const snapshot = await readAuthSnapshot()
 
     const tokenResponse: ExtensionLoginTokenResponse = await authApi.exchangeExtensionLogin({
       code,
@@ -213,18 +139,15 @@ export const useAuthStore = defineStore('auth', () => {
       oldRefreshToken: snapshot.refreshToken
     })
 
-    const current = await readAuthStorageSnapshot()
-    if (!authSnapshotsEqual(current, snapshot)) {
+    const userInfo = tokenResponse.user
+    const committed = await commitExtensionLogin(snapshot, {
+      accessToken: tokenResponse.extension_access_token,
+      refreshToken: tokenResponse.extension_refresh_token,
+      userInfo
+    })
+    if (!committed) {
       throw new Error('[AuthStore] extension login 期间登录态已变化，放弃写入（请重新登录）')
     }
-
-    const userInfo = tokenResponse.user
-    // spread 为对象字面量类型（带隐式 index signature）适配 setMany 的 StorageValue 约束
-    await storageManager.setMany({
-      [STORAGE_KEYS.ACCESS_TOKEN]: tokenResponse.extension_access_token,
-      [STORAGE_KEYS.REFRESH_TOKEN]: tokenResponse.extension_refresh_token,
-      [STORAGE_KEYS.USER_INFO]: { ...userInfo }
-    })
     token.value = tokenResponse.extension_access_token
     user.value = userInfo
     logger.info('[AuthStore] Extension login committed for user:', userInfo.user_id)
@@ -306,7 +229,6 @@ export const useAuthStore = defineStore('auth', () => {
     // 状态
     user,
     token,
-    loading,
     subscription,
 
     // Getters
@@ -316,7 +238,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Actions
     initialize,
-    logout,
     clearAuth,
     applyExtensionLogin,
     refreshSubscription,

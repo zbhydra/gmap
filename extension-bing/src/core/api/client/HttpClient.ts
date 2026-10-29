@@ -103,17 +103,17 @@ export class HttpClient {
       timestamp: Date.now()
     }
 
-    // 执行请求拦截器
-    for (const interceptor of this.requestInterceptors) {
-      context = await interceptor(context)
-    }
-
     // 执行请求（带重试）
     let lastError: Error | null = null
     const maxAttempts = (options.skipRetry ? 1 : API_CONFIG.RETRY_COUNT + 1) + 1
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
+        // 重试也核对请求所属会话，避免等待期间换号后继续使用旧凭据。
+        for (const interceptor of this.requestInterceptors) {
+          context = await interceptor(context)
+        }
+
         // 每次重试都重建 headers，确保认证刷新后使用新 token
         const fetchOptions: RequestInit = {
           method,

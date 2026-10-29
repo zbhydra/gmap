@@ -9,7 +9,7 @@
   "include": [
     "src/vite-env.d.ts",
     "tests/unit/auth-session-failure.spec.ts",
-    "tests/unit/auth-store.spec.ts",
+    "tests/integration/auth-session-rpc.spec.ts",
     "tests/unit/install-mark-reporter.spec.ts",
     "tests/unit/maps-export.spec.ts",
     "tests/unit/maps-list-mode.spec.ts",
