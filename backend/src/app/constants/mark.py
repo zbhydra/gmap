@@ -14,3 +14,5 @@ class MarkType(str, enum.Enum):
     # 网页行为
     WEB_FIRST_OPENED = "web_first_opened"  # 网页首次访问
     WEB_EXTENSION_INSTALL_CLICK = "web_extension_install_click"  # 网页点击插件安装
+
+    INSTALL = "install"  # 插件安装或更新

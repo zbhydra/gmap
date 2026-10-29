@@ -271,6 +271,41 @@ async def test_real_record_mark_persists_extension_store_review_click(
     assert row.first_opened_at == 1_762_345_678_901
 
 
+async def test_real_record_mark_persists_extension_install(
+    real_async_client,
+    make_real_mark_device_id: Callable[[str], str],
+) -> None:
+    """插件首次安装双报使用的匿名请求必须写入 MySQL。"""
+
+    device_id = make_real_mark_device_id("extension-install")
+    mark_msg = "reason=install, version=0.1.0"
+    response = await real_async_client.post(
+        "/api/client/mark/record",
+        json={
+            "mark_type": "install",
+            "mark_msg": mark_msg,
+            "first_opened_at": 0,
+        },
+        headers={"X-Device-Id": device_id},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["code"] == CommonCode.SUCCESS
+    assert body["data"] == {"recorded": True}
+
+    async with get_async_session() as db:
+        result = await db.execute(
+            select(MarkLogModel).where(MarkLogModel.device_id == device_id)
+        )
+        row = result.scalar_one()
+
+    assert row.user_id == 0
+    assert row.mark_type == "install"
+    assert row.mark_msg == mark_msg
+    assert row.first_opened_at == 0
+
+
 @pytest.mark.parametrize(
     ("label", "mark_msg"),
     [

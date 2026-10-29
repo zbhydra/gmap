@@ -79,7 +79,7 @@ Google Maps 月度用量由 `sites/maps/usage/usageService.ts` 通过 `/maps/usa
 
 ### A7. SLS mark-log 上报
 
-- 插件端旧的后端 `/api/client/mark/record` 写入已停用；`core/api/mark/api.ts` 现在只写阿里云 SLS WebTracking，不再进入后端 `mark_logs`。
+- 插件常规行为经 `core/api/mark/api.ts` 写入 SLS；安装/更新由 `background/services/InstallMarkReporter.ts` 按[通道合同](tech-可观测与SLS.md#1-通道裁决)双报。
 - `core/api/mark/sls.ts` 复用 website 的 WebTracking GET 协议：`APIVersion=0.6.0`、`__topic__=mark-log`、`__source__=extension`，不引入阿里云 SDK。
 - `core/api/mark/mark-sanitizer.ts` 对 `mark_msg` 做 URL query、token、Cookie、Authorization、直链脱敏后再上报。
 - popup 打开与下载点击直接调用 `markApi.record()`；Telegram content script 的初始化和下载点击仍通过 `BackgroundMessageRouter.recordMark()` 交给 background 写 SLS。
