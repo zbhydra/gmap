@@ -90,7 +90,6 @@ from app.constants.subscription import (
 )
 from app.exceptions.common_exception import AppCommonException
 from app.i18n.common_code import CommonCode
-from app.i18n.dependencies import SupportedLanguage
 from app.models import UserModel
 from app.schemas.client_user_schema import (
     CurrentUserInfoResponse,
@@ -202,11 +201,15 @@ async def _create_extension_token_response(
 
 async def _send_email_verify_code_or_raise(
     email: str,
-    language: SupportedLanguage,
+    request: Request,
 ) -> None:
     """发送邮箱验证码，并统一映射限流和发送失败错误。"""
 
-    result = await email_verification_service.send_verify_code(email, language)
+    result = await email_verification_service.send_verify_code(
+        email,
+        get_locale(request).language,
+        ip=_require_client_ip(request, "send_email_verify_code.rate_limit"),
+    )
 
     if result == SendResult.RATE_LIMITED:
         raise AppCommonException(
@@ -650,7 +653,7 @@ async def send_email_verify_code(
 ) -> JSONResponse:
     """发送邮箱验证码.
 
-    1. 检查发送频率限制 (1分钟1次)
+    1. 检查邮箱冷却与 IP 发送频率
     2. 生成6位数字验证码
     3. 存储到 Redis (10分钟过期)
     4. 发送邮件 (重试3次)
@@ -661,9 +664,7 @@ async def send_email_verify_code(
         operation="send_email_verify_code",
     )
 
-    language = get_locale(request).language
-
-    await _send_email_verify_code_or_raise(data.email, language)
+    await _send_email_verify_code_or_raise(data.email, request)
 
     return ResponseUtils.ok({"message": MESSAGE_VERIFY_CODE_SENT})
 
@@ -756,10 +757,7 @@ async def google_login(data: GoogleLoginRequest, request: Request) -> JSONRespon
     profile = await google_auth_service.verify_id_token(data.credential)
 
     if not profile.email_is_authoritative:
-        await _send_email_verify_code_or_raise(
-            profile.email,
-            get_locale(request).language,
-        )
+        await _send_email_verify_code_or_raise(profile.email, request)
         return ResponseUtils.ok(
             {
                 "requires_email_verification": True,
@@ -860,10 +858,7 @@ async def google_oauth_callback(
         )
 
         if not profile.email_is_authoritative:
-            await _send_email_verify_code_or_raise(
-                profile.email,
-                get_locale(request).language,
-            )
+            await _send_email_verify_code_or_raise(profile.email, request)
             return _google_redirect_response(
                 {GOOGLE_REDIRECT_EMAIL_VERIFY_PARAM: profile.email},
                 redirect_state,

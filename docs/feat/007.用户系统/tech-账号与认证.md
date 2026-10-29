@@ -167,7 +167,9 @@ Token 不直接可信,服务端在 Redis 维护"未撤销 token 哈希集合"做
 | `EMAIL_VERIFY_RATE_LIMIT_MAX` | `1` | 同邮箱 60 秒内最多发 1 次 |
 | `EMAIL_VERIFY_MAX_ATTEMPTS` | `5` | 最多 5 次验证尝试 |
 
-### 5.2 Redis Key(`EmailVerificationService`,前缀 `tg-download`)
+IP 发送窗口与次数由 `backend/src/app/constants/auth.py` 的 `EMAIL_VERIFY_IP_RATE_LIMIT_WINDOW`、`EMAIL_VERIFY_IP_RATE_LIMIT_MAX` 定义。
+
+### 5.2 Redis Key(`EmailVerificationService`,统一前缀见 `build_redis_key`)
 
 | Key | 用途 |
 | --- | --- |
@@ -175,11 +177,12 @@ Token 不直接可信,服务端在 Redis 维护"未撤销 token 哈希集合"做
 | `email_verify_attempts:{email}` | 验证尝试计数;`INCR` 后首次 `EXPIRE 600` |
 | `lock:email_verify:{email}` | 串行化同邮箱的验证码读取、计数与消费 |
 
-发送频率用 `RedisRateLimiter`(滑动窗口 ZSet),key = `email_verify:{email}`,limit=1,window=60。限流、锁和验证码读写都以 Redis 为唯一状态源；Redis 故障直接上抛，由统一错误中间件返回服务异常，不放行、不走本地或无锁流程。
+发送频率用 `RedisRateLimiter` 的 Lua 滑动窗口，分别以 `email_verify:{email}` 和 `email_verify_ip:{ip}` 累计，工具添加 `rate_limit` 子前缀；每个维度的检查、记录与 TTL 设置原子执行。限流、锁和验证码读写都以 Redis 为唯一状态源；Redis 故障直接上抛，由统一错误中间件返回服务异常，不放行、不走本地或无锁流程。
 
 ### 5.3 行为
 
-- `send_verify_code(email)`:先频率限制(超限返回 RATE_LIMITED)→ 生成码 → `redis.set EX=600` → 发邮件;**发邮件失败时删码并重置频率限制**(让用户立即重试)→ 返回 SUCCESS / RATE_LIMITED / SEND_FAILED。Redis 异常不映射为 SEND_FAILED，直接交统一错误中间件。
+- `send_verify_code(email, language, ip=...)`:依次检查并记录邮箱冷却、IP 发送次数(任一超限返回 RATE_LIMITED)→ 生成码 → `redis.set EX=600` → 发邮件；**发邮件失败时删码并重置邮箱冷却，保留 IP 次数**→ 返回 SUCCESS / RATE_LIMITED / SEND_FAILED。Redis 异常不映射为 SEND_FAILED，直接交统一错误中间件。
+- 普通邮箱发送、Google ID token 登录及 OAuth 回调中的非权威邮箱补验证统一经过 `auth_client._send_email_verify_code_or_raise`；该边界按既有 `get_client_ip` 合同提取 IP，缺失时拒绝发送。两个维度超限均映射为现有 i18n 业务码 `EMAIL_VERIFY_SEND_TOO_FREQUENT`，OAuth 回调沿用错误回跳。
 - `verify_code(email, code)`:先按邮箱获取 Redis 短锁，在锁内执行 `INCR attempts`(首次设 600 秒 TTL)→ `attempts > 5` 删码+计数返回 `False` → `secrets.compare_digest` 比对 → 命中删码+计数返回 `True`。**计数在码缺失/过期时也会 +1**；抢锁超时按验证失败返回，Redis 锁获取或释放异常直接上抛。
 
 ### 5.4 邮件文案

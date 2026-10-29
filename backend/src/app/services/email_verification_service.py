@@ -6,6 +6,8 @@ from enum import Enum
 from app.constants.auth import (
     EMAIL_VERIFY_CODE_EXPIRE_SECONDS,
     EMAIL_VERIFY_CODE_LENGTH,
+    EMAIL_VERIFY_IP_RATE_LIMIT_MAX,
+    EMAIL_VERIFY_IP_RATE_LIMIT_WINDOW,
     EMAIL_VERIFY_MAX_ATTEMPTS,
     EMAIL_VERIFY_RATE_LIMIT_MAX,
     EMAIL_VERIFY_RATE_LIMIT_WINDOW,
@@ -57,21 +59,35 @@ class EmailVerificationService:
         )
 
     async def send_verify_code(
-        self, email: str, language: SupportedLanguage = DEFAULT_LANGUAGE
+        self,
+        email: str,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
+        *,
+        ip: str,
     ) -> SendResult:
-        """发送验证码（原子操作，包含限流检查）.
+        """校验邮箱与 IP 发送频率后发送验证码。
 
         Args:
             email: 邮箱地址
             language: 语言代码
+            ip: 客户端来源 IP，跨邮箱累计发送次数
 
         Returns:
             发送结果
         """
+        # 两级限流均依赖 Redis；故障直接上抛，避免绕过发送限制。
         allowed = await self._rate_limiter.is_allowed(
             key=f"email_verify:{email}",
             limit=EMAIL_VERIFY_RATE_LIMIT_MAX,
             window=EMAIL_VERIFY_RATE_LIMIT_WINDOW,
+        )
+        if not allowed:
+            return SendResult.RATE_LIMITED
+
+        allowed = await self._rate_limiter.is_allowed(
+            key=f"email_verify_ip:{ip}",
+            limit=EMAIL_VERIFY_IP_RATE_LIMIT_MAX,
+            window=EMAIL_VERIFY_IP_RATE_LIMIT_WINDOW,
         )
         if not allowed:
             return SendResult.RATE_LIMITED
@@ -88,10 +104,9 @@ class EmailVerificationService:
         # 发送邮件
         success = await email_sender.send_verify_code(email, code, language)
 
-        # 如果发送失败,删除验证码并清除限流记录
+        # 发送失败释放邮箱冷却，IP 配额保留以限制重试次数。
         if not success:
             await redis.delete(redis_key)
-            # 清除限流记录(CD),允许用户立即重试
             await self._rate_limiter.reset(f"email_verify:{email}")
             return SendResult.SEND_FAILED
 
