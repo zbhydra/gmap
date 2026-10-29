@@ -6,17 +6,17 @@ REST 与 MCP 共用 `backend/src/app/api/maps_api_operations.py` 的 `search` / 
 
 Search 的 `page` 是累计采集页数，按每页 20 条映射 Collector 的 `max_results`，不是第 N 页。`extra=true` 使用 Collector 官网补全、完整 URL 缓存和 `ENRICH_BATCH_BUDGET_SECONDS`，补全邮箱与社媒；权限归 API 请求额度，不检查 Online 订阅。
 
-鉴权、入参及月额度检查通过后执行采集；Search 有效结果（含零结果与 partial）、Reviews 有效单页（含合法空页）或 Photos 有效部分结果各消费一次请求，不按照片张数计量。认证、参数、额度或采集失败不扣量。服务端生成请求编号，调用 `api_usage_service.consume(records=1)`，产品线固定 `maps_api`，自然月及总额度归 [额度基建](../000.架构/tech-额度基建.md)。并行请求允许超过当时剩余额度；计量失败返回错误，客户端重试视为新请求。
+鉴权、入参及月额度检查通过后执行采集；Search 有效结果（含零结果与 partial）、Reviews 有效单页（含合法空页）或 Photos 有效部分结果各消费一次请求，不按照片张数计量。认证、参数、额度或采集失败不扣量。服务端生成请求编号，产品线固定 `maps_api`，自然月及总额度归 [额度基建](../000.架构/tech-额度基建.md)。并行请求允许超过当时剩余额度；计量失败返回错误，客户端重试视为新请求。独立调用记录与成功计量的事务合同归 [采集记录](tech-采集记录.md)。
 
 ## REST 与 Dashboard
 
 REST 按凭证分两个前缀：外部开发者用用户 API Key 调数据接口，前缀 `/api/external/maps`；Dashboard 用本站登录会话管 Key、用量与连接信息，前缀 `/api/client/maps-api`。两处响应都使用 `{code,data,msg}`，成功码为 `SUCCESS`；认证无效 HTTP 401，其余业务错误 HTTP 200。
 
-| 方法与路径           | 认证                                   | 请求 / data                                                                                                             |
-| -------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `POST /search`       | `Authorization: Bearer <用户 API Key>` | `{q:string,page?:1..10,hl?:string,ll?:"@lat,lng,zoom",extra?:boolean}` → `{places:[],partial:boolean,warnings:string[]}` |
-| `POST /reviews`      | 同上                                   | `{fid:string,cursor?:string,sort_by?:1\|2\|3\|4,hl?:string}` → `{reviews:[],next_cursor:string \| null}`                 |
-| `POST /photos`       | 同上                                   | `{fid:string,max_results?:number}` → 照片交付对象，见下方合同                                                           |
+| 方法与路径      | 认证                                   | 请求 / data                                                                                                              |
+| --------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `POST /search`  | `Authorization: Bearer <用户 API Key>` | `{q:string,page?:1..10,hl?:string,ll?:"@lat,lng,zoom",extra?:boolean}` → `{places:[],partial:boolean,warnings:string[]}` |
+| `POST /reviews` | 同上                                   | `{fid:string,cursor?:string,sort_by?:1\|2\|3\|4,hl?:string}` → `{reviews:[],next_cursor:string \| null}`                 |
+| `POST /photos`  | 同上                                   | `{fid:string,max_results?:number}` → 照片交付对象，见下方合同                                                            |
 
 以上三条挂在 `/api/external/maps` 下。Dashboard 管理接口与凭证同前缀，挂 `/api/client/maps-api`：
 
@@ -33,13 +33,13 @@ REST 按凭证分两个前缀：外部开发者用用户 API Key 调数据接口
 
 地点及评论字段分别沿用 `GmapPlaceEntry`、`GmapReview` 的 snake_case DTO，定义位于 `backend/src/app/provider/gmap/types.py`。开启 extra 后为每条地点补全 `emails:string[]` 与 `medias:Record<string,string>`。Provider 局部补列状态透传为 `partial` / `warnings`。
 
-每个账号仅一个 API Key，`users` 保存 SHA-256 摘要、展示前缀和生成时间；完整 Key 仅生成响应出现，轮换后旧 Key 立即无效。凭证鉴权逐请求检查账号可用状态。额度耗尽返回 `MAPS_API_QUOTA_EXHAUSTED`；存储不可用由现有用量 owner 返回 `EXTENSION_USAGE_UNAVAILABLE`。
+每个账号仅一个 API Key，`users` 保存 SHA-256 摘要、展示前缀和生成时间；完整 Key 仅生成响应出现，轮换后旧 Key 立即无效。凭证鉴权逐请求检查账号可用状态。额度耗尽返回 `MAPS_API_QUOTA_EXHAUSTED`；准入读取用量时存储不可用，由现有用量 owner 返回 `EXTENSION_USAGE_UNAVAILABLE`。成功结果的结算事务失败原样抛出，返回通用 `INTERNAL_SERVER_ERROR`，见 [采集记录](tech-采集记录.md)。
 
 ## 媒体 Collector
 
 媒体与共享客户端使用同一份后台配置，节点、代理、管理员接口及敏感信息边界归 [单一采集配置](tech-Export与Collector重构.md#5-单一采集配置)。运行时不读取旧媒体 YAML 或旧引擎代理配置；一次媒体调用按配置顺序传递最多三个 Google 代理，没有代理时报业务错误。
 
-`backend/src/app/provider/gmap/collector_client.py` 的模块级 `gmap_collector_client` 复用 HTTPX 连接池，应用退出时关闭。媒体使用 `POST /` 的同步响应；调用 ID、原状态解包、有限实例切换与歧义提交处理归 [Collector 协议](tech-Export与Collector重构.md#33-collector-异步调用与恢复)。请求提供独立 `task_id`，业务关联为临时 `job_no` 与 `item_index=0`，不伪造 `run_no`，不创建 Online Job/Run 或恢复定位文件。Server 取消停止等待，已受理 Collector 调用可能继续到原期限。
+`backend/src/app/provider/gmap/collector_client.py` 的模块级 `gmap_collector_client` 复用 HTTPX 连接池，应用退出时关闭。媒体使用 `POST /` 的同步响应；调用 ID、原状态解包、有限实例切换与歧义提交处理归 [Collector 协议](tech-Export与Collector重构.md#33-collector-异步调用与恢复)。请求提供独立 `task_id`，业务关联以 [调用记录](tech-采集记录.md) 编号作为 `job_no`、`item_index=0`，不伪造 `run_no`，不创建 Online Job/Run 或恢复定位文件。Server 取消停止等待，已受理 Collector 调用可能继续到原期限。
 
 完整调用预算唯一来源为 `backend/src/app/constants/gmap.py` 的 `GMAP_MEDIA_BUDGET_SECONDS`。绝对超时约束排队、照片准备、取数及响应解析；HTTPX 阶段超时不能延长完整预算，取消继续传播。`backend/deploy/nginx/nginx.conf` 的媒体 REST 与 `/mcp/` 路径显式覆盖该预算并预留响应时间。
 
@@ -49,12 +49,12 @@ Collector JSON 只在 HTTP 信任边界用 Pydantic 收窄，内部使用 DTO。
 
 `max_results` 为正整数，默认 200，仅限制本次交付数量；不保证取得该数量。不提供 page／cursor，内部语言固定为 `en`，地点元数据由 Collector 按需取得。
 
-| 字段             | 合同                                                                  |
-| ---------------- | --------------------------------------------------------------------- |
-| `photos`         | `[{url:string}]`，经 Collector 核对商家归属的公开照片                 |
-| `returned_count` | 实际交付数量，等于非空照片数组长度，且不超过本次上限                  |
-| `reported_total` | 上游报告数或 null，不能视为已核实的相册照片总数                       |
-| `status`         | 有效成功状态限定为 `partial`，不承诺完整相册                          |
+| 字段             | 合同                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `photos`         | `[{url:string}]`，经 Collector 核对商家归属的公开照片                                                                        |
+| `returned_count` | 实际交付数量，等于非空照片数组长度，且不超过本次上限                                                                         |
+| `reported_total` | 上游报告数或 null，不能视为已核实的相册照片总数                                                                              |
+| `status`         | 有效成功状态限定为 `partial`，不承诺完整相册                                                                                 |
 | `reason`         | 由 [GmapPhotosReason](../../../backend/src/app/provider/gmap/types.py) 定义，保留 Collector 的上限、完整性或后续分页失败原因 |
 
 Collector 已有有效照片时，后续分页停滞、取数预算耗尽、上游或解析等失败仍交付 `partial`，保留照片及对应原因；有效部分交付仍计一次请求。没有有效照片时，`empty_unverified`、照片准备、上游、解析或归属失败均返回业务错误；空数组与 HTTP 200 不能单独证明成功。照片分页、会话维护和媒体筛选由现成 Collector 负责。

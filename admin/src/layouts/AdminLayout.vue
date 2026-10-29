@@ -4,7 +4,7 @@
   结构：
   NLayout（桌面 has-sider，移动单列）
   ├── NLayoutSider（仅桌面，可折叠侧边栏）
-  │   ├── NMenu（Dashboard / 用户管理 / 订单管理 / 系统设置）
+  │   ├── NMenu（Dashboard / 用户管理 / 订单管理 / 任务记录 / 系统设置）
   │   └── UserMenu（底部：用户名 + 主题切换 / 退出登录）
   └── NLayout
       ├── NLayoutHeader（仅移动端：汉堡 + 标题）
@@ -100,6 +100,7 @@ import {
 } from "naive-ui";
 import {
   DashboardOutlined,
+  HistoryOutlined,
   SettingOutlined,
   ProfileOutlined,
   TeamOutlined,
@@ -142,6 +143,11 @@ const menuOptions = computed<MenuOption[]>(() => [
     icon: renderIcon(ProfileOutlined),
   },
   {
+    label: t("layout.taskRecords"),
+    key: "TaskRecords",
+    icon: renderIcon(HistoryOutlined),
+  },
+  {
     label: t("layout.systemSettings"),
     key: "SystemSettings",
     icon: renderIcon(SettingOutlined),
@@ -155,6 +161,7 @@ function handleMenuClick(key: string) {
     Dashboard: "/",
     Users: "/users",
     Orders: "/orders",
+    TaskRecords: "/task-records",
     SystemSettings: "/system-settings",
   };
   const path = routeMap[key];

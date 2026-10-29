@@ -16,6 +16,7 @@ from app.constants.auth import TokenType
 from app.core.config import settings
 from app.core.database import get_async_session
 from app.core.redis import redis_client
+from app.models.export_api_job_model import EXPORT_API_JOB_MODELS, ExportApiJobModel
 from app.models.mcp_oauth_client_model import McpOAuthClientModel
 from app.models.mcp_oauth_grant_model import McpOAuthGrantModel
 from app.models.user_model import UserModel
@@ -39,7 +40,13 @@ async def real_launch_state(
 ) -> AsyncIterator[_CleanupState]:
     async with get_async_session() as db:
         tables = {row[0] for row in (await db.execute(text("SHOW TABLES"))).all()}
-    required = {"users", "mcp_oauth_clients", "mcp_oauth_grants", "user_usage_logs"}
+    required = {
+        "users",
+        "mcp_oauth_clients",
+        "mcp_oauth_grants",
+        "user_usage_logs",
+        *(model.__tablename__ for model in EXPORT_API_JOB_MODELS),
+    }
     if not required <= tables:
         pytest.skip(f"REAL_SCHEMA_UNAVAILABLE: 缺少 {sorted(required - tables)}")
     state = _CleanupState()
@@ -77,6 +84,9 @@ async def real_launch_state(
             await db.execute(
                 delete(UserUsageLogModel).where(UserUsageLogModel.user_id.in_(user_ids))
             )
+            for user_id in user_ids:
+                model = ExportApiJobModel.model_for_user(user_id)
+                await db.execute(delete(model).where(model.user_id == user_id))
             await db.execute(delete(UserModel).where(UserModel.user_id.in_(user_ids)))
             await db.commit()
 

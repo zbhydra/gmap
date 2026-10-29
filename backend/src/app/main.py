@@ -103,6 +103,7 @@ from app.api.admin.admin_dashboard import router as admin_dashboard_router
 from app.api.admin.admin_order_analytics import router as admin_order_analytics_router
 from app.api.admin.admin_orders import router as admin_orders_router
 from app.api.admin.admin_system_settings import router as admin_system_settings_router
+from app.api.admin.admin_task_records import router as admin_task_records_router
 from app.api.admin.admin_users import router as admin_users_router
 from app.api.callback.paypal_callback import router as paypal_callback_router
 from app.api.callback.clink_callback import router as clink_callback_router
@@ -265,6 +266,9 @@ def _include_business_routes(app_instance: FastAPI) -> None:
     app_instance.include_router(admin_users_router, prefix="/api/admin", tags=["admin"])
     app_instance.include_router(
         admin_system_settings_router, prefix="/api/admin", tags=["admin"]
+    )
+    app_instance.include_router(
+        admin_task_records_router, prefix="/api/admin", tags=["admin"]
     )
     app_instance.include_router(
         external_maps_router, prefix="/api/external", tags=["external"]

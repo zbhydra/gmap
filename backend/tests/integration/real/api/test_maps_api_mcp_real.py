@@ -13,9 +13,12 @@ from mcp import Client
 from mcp.client.streamable_http import streamable_http_client
 from sqlalchemy import func, select, update
 
+from app.constants.export import ExportRunStatus
+from app.constants.export_api import ExportApiOperation, ExportApiSource
 from app.constants.gmap_collector import GMAP_COLLECTOR_DATA_KEY
 from app.core.database import get_async_session
 from app.i18n.common_code import CommonCode
+from app.models.export_api_job_model import ExportApiJobModel
 from app.models.export_job_model import ExportJobModel
 from app.models.mcp_oauth_grant_model import McpOAuthGrantModel
 from app.models.user_model import UserModel
@@ -142,6 +145,18 @@ async def _grant(
     return tokens
 
 
+async def _call_records(user_id: int) -> list[ExportApiJobModel]:
+    model = ExportApiJobModel.model_for_user(user_id)
+    async with get_async_session() as db:
+        return list(
+            (
+                await db.scalars(
+                    select(model).where(model.user_id == user_id).order_by(model.id)
+                )
+            ).all()
+        )
+
+
 async def _mcp_response(client: httpx.AsyncClient, token: str) -> httpx.Response:
     return await client.post(
         "/mcp/",
@@ -193,6 +208,8 @@ async def test_real_key_rotation_oauth_confirmation_refresh_and_revocation(
         and malformed.json()["code"] == CommonCode.VALIDATION_ERROR
     )
     assert _data(await client.get(DASH + "/usage", headers=headers))["used"] == 0
+    # 鉴权、参数拒绝与 MCP 工具列表都不是受理的调用。
+    assert not await _call_records(state.users[0][0])
     metadata = await client.get("/.well-known/oauth-authorization-server")
     assert metadata.status_code == 200 and metadata.json()["scopes_supported"] == [
         "exports"
@@ -393,6 +410,39 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
                     .select_from(ExportJobModel.model_for_user(user_id))
                     .where(ExportJobModel.model_for_user(user_id).user_id == user_id)
                 )
+            records = await _call_records(user_id)
+            assert [(r.source, r.operation, r.status) for r in records] == [
+                (
+                    ExportApiSource.API,
+                    ExportApiOperation.SEARCH,
+                    (
+                        ExportRunStatus.PARTIAL
+                        if search["partial"]
+                        else ExportRunStatus.COMPLETED
+                    ),
+                ),
+                (
+                    ExportApiSource.API,
+                    ExportApiOperation.PHOTOS,
+                    ExportRunStatus.PARTIAL,
+                ),
+                (
+                    ExportApiSource.API,
+                    ExportApiOperation.REVIEWS,
+                    ExportRunStatus.COMPLETED,
+                ),
+                (
+                    ExportApiSource.MCP,
+                    ExportApiOperation.REVIEWS,
+                    ExportRunStatus.COMPLETED,
+                ),
+                (
+                    ExportApiSource.MCP,
+                    ExportApiOperation.PHOTOS,
+                    ExportRunStatus.PARTIAL,
+                ),
+            ]
+            assert {log.request_id for log in logs} == {r.request_id for r in records}
             await api_usage_service.consume(
                 usage_identity(user_id, None),
                 user_id=user_id,
@@ -413,6 +463,7 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
                 and limited.structured_content["code"]
                 == CommonCode.MAPS_API_QUOTA_EXHAUSTED
             )
+            assert len(await _call_records(user_id)) == 5
     grant_id = _data(await client.get(OAUTH + "/grants", headers=headers))["items"][0][
         "grant_id"
     ]
@@ -422,13 +473,14 @@ async def test_real_rest_and_oauth_mcp_share_account_request_quota(
     assert (await _mcp_response(client, tokens["access_token"])).status_code == 401
 
 
-async def test_real_media_failure_does_not_consume_and_valid_empty_reviews_does(
+async def test_real_api_calls_record_terminal_states_and_charge_only_valid_results(
     real_async_client: httpx.AsyncClient,
     real_launch_state: _CleanupState,
     test_run_id: str,
 ) -> None:
-    """真实账号与计量，只替换不可控的 Collector HTTP 出口。"""
+    """真实账号、计量与调用记录，只替换不可控的 Collector HTTP 出口。"""
     client, state = real_async_client, real_launch_state
+    user_id = state.users[0][0]
     headers = _headers(state.users[0][1])
     key = _data(await client.post(DASH + "/key/generate", headers=headers))["api_key"]
     fid = "0x123456789abc:0xabcdef123456"
@@ -436,7 +488,16 @@ async def test_real_media_failure_does_not_consume_and_valid_empty_reviews_does(
     original_http = gmap_collector_client._client
 
     def respond(request: httpx.Request) -> httpx.Response:
-        if json.loads(request.content)["operation"] == "list_reviews":
+        operation = json.loads(request.content)["operation"]
+        if operation == "search_item":
+            return httpx.Response(
+                200,
+                json={
+                    "status": "partial",
+                    "entries": [{"name": "Cafe", "fid": fid, "search_keyword": "cafe"}],
+                },
+            )
+        if operation == "list_reviews":
             return httpx.Response(
                 200, json={"status": "ok", "reviews": [], "next_cursor": None}
             )
@@ -457,6 +518,14 @@ async def test_real_media_failure_does_not_consume_and_valid_empty_reviews_does(
         )
         async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as http:
             gmap_collector_client._client = http
+            search = _data(
+                await client.post(
+                    API + "/search",
+                    headers=_headers(key),
+                    json={"q": "cafe", "ll": "@45.5,-122.6,14"},
+                )
+            )
+            assert search["partial"] and len(search["places"]) == 1
             failed = await client.post(
                 API + "/photos", headers=_headers(key), json={"fid": fid}
             )
@@ -468,32 +537,72 @@ async def test_real_media_failure_does_not_consume_and_valid_empty_reviews_does(
             assert invalid.status_code == 200
             assert invalid.json()["code"] == CommonCode.VALIDATION_ERROR
             assert (
-                _data(await client.get(DASH + "/usage", headers=headers))["used"] == 0
+                _data(await client.get(DASH + "/usage", headers=headers))["used"] == 1
             )
             assert _data(
                 await client.post(
                     API + "/reviews", headers=_headers(key), json={"fid": fid}
                 )
             ) == {"reviews": [], "next_cursor": None}
-            assert (
-                _data(await client.get(DASH + "/usage", headers=headers))["used"] == 1
+            usage = _data(await client.get(DASH + "/usage", headers=headers))
+            assert usage["used"] == 2
+            await api_usage_service.consume(
+                usage_identity(user_id, None),
+                user_id=user_id,
+                records=usage["total"] - usage["used"],
+                request_id=f"exhaust-{test_run_id}",
             )
+            exhausted = await client.post(
+                API + "/reviews", headers=_headers(key), json={"fid": fid}
+            )
+            assert exhausted.status_code == 200
+            assert exhausted.json()["code"] == CommonCode.MAPS_API_QUOTA_EXHAUSTED
+        records = await _call_records(user_id)
+        # 参数与额度拒绝不受理；三条受理记录各自收口。
+        assert len(records) == 3
+        searched, failed_record, reviewed = records
+        assert (searched.source, searched.operation, searched.status) == (
+            ExportApiSource.API,
+            ExportApiOperation.SEARCH,
+            ExportRunStatus.PARTIAL,
+        )
+        assert searched.params_json["ll"] == {"lat": 45.5, "lng": -122.6, "zoom": 14}
+        assert searched.summary_json == {"record_count": 1, "warnings": []}
+        assert (
+            failed_record.operation,
+            failed_record.status,
+            failed_record.error_code,
+            failed_record.summary_json,
+        ) == (
+            ExportApiOperation.PHOTOS,
+            ExportRunStatus.FAILED,
+            CommonCode.MAPS_API_MEDIA_UNAVAILABLE,
+            None,
+        )
+        assert failed_record.finished_at is not None
+        assert (reviewed.operation, reviewed.status, reviewed.summary_json) == (
+            ExportApiOperation.REVIEWS,
+            ExportRunStatus.COMPLETED,
+            {"record_count": 0, "has_more": False},
+        )
         async with get_async_session() as db:
             logs = (
                 await db.scalars(
                     select(UserUsageLogModel).where(
-                        UserUsageLogModel.user_id == state.users[0][0]
+                        UserUsageLogModel.user_id == user_id
                     )
                 )
             ).all()
-            assert len(logs) == 1 and logs[0].product_kind == "maps_api"
+            # 有效结果与用量同事务共用请求编号；失败与拒绝不扣量。
+            assert {log.request_id for log in logs} == {
+                searched.request_id,
+                reviewed.request_id,
+                f"exhaust-{test_run_id}",
+            }
             assert not await db.scalar(
                 select(func.count())
-                .select_from(ExportJobModel.model_for_user(state.users[0][0]))
-                .where(
-                    ExportJobModel.model_for_user(state.users[0][0]).user_id
-                    == state.users[0][0]
-                )
+                .select_from(ExportJobModel.model_for_user(user_id))
+                .where(ExportJobModel.model_for_user(user_id).user_id == user_id)
             )
     finally:
         gmap_collector_client._client = original_http

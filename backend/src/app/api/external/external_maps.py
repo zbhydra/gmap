@@ -11,6 +11,7 @@ from starlette.responses import JSONResponse
 from app.api import maps_api_operations
 from app.api.maps_api_dependencies import get_api_key_user
 from app.api.user_dependencies import UserContext
+from app.constants.export_api import ExportApiSource
 from app.schemas.maps_api_schema import (
     MapsPhotosRequest,
     MapsReviewsRequest,
@@ -26,7 +27,11 @@ async def search(
     request: MapsSearchRequest,
     current_user: UserContext = Depends(get_api_key_user),
 ) -> JSONResponse:
-    return ResponseUtils.ok(await maps_api_operations.search(request, current_user))
+    return ResponseUtils.ok(
+        await maps_api_operations.search(
+            request, current_user, source=ExportApiSource.API
+        )
+    )
 
 
 @router.post("/reviews")
@@ -34,7 +39,11 @@ async def reviews(
     request: MapsReviewsRequest,
     current_user: UserContext = Depends(get_api_key_user),
 ) -> JSONResponse:
-    return ResponseUtils.ok(await maps_api_operations.reviews(request, current_user))
+    return ResponseUtils.ok(
+        await maps_api_operations.reviews(
+            request, current_user, source=ExportApiSource.API
+        )
+    )
 
 
 @router.post("/photos")
@@ -42,4 +51,8 @@ async def photos(
     request: MapsPhotosRequest,
     current_user: UserContext = Depends(get_api_key_user),
 ) -> JSONResponse:
-    return ResponseUtils.ok(await maps_api_operations.photos(request, current_user))
+    return ResponseUtils.ok(
+        await maps_api_operations.photos(
+            request, current_user, source=ExportApiSource.API
+        )
+    )

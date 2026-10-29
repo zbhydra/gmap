@@ -20,6 +20,7 @@ admin 是独立 SPA,不是 website 的一部分,独立仓库目录、独立构�
 | `/tg-clients` | 布局 + TG 客户端管理 | 是 |
 | `/channel-settings` | 布局 + 渠道设置 / X、Instagram Cookie | 是 |
 | `/orders` | 布局 + 订单管理 | 是 |
+| `/task-records` | 布局 + 任务记录 | 是 |
 | `/system-settings` | 布局 + 系统设置 | 是 |
 | `/download-logs` | 布局 + 下载详情列表 | 是 |
 | `/mark-logs` | 布局 + 解析失败排查 | 是 |

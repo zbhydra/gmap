@@ -6,6 +6,7 @@
  *   /            → AdminLayout > DashboardView（需鉴权）
  *   /users       → AdminLayout > UsersView（需鉴权）
  *   /orders      → AdminLayout > OrdersView（需鉴权）
+ *   /task-records → AdminLayout > TaskRecordsView（需鉴权）
  *   /system-settings → AdminLayout > SystemSettingsView（需鉴权）
  *
  * 守卫：未登录时重定向到 /login
@@ -39,6 +40,11 @@ const routes: RouteRecordRaw[] = [
         path: "orders",
         name: "Orders",
         component: () => import("@/views/OrdersView.vue"),
+      },
+      {
+        path: "task-records",
+        name: "TaskRecords",
+        component: () => import("@/views/TaskRecordsView.vue"),
       },
       {
         path: "system-settings",

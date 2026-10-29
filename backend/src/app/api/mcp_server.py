@@ -20,6 +20,7 @@ from app.api import maps_api_operations
 from app.api.mcp_dependencies import get_mcp_user
 from app.api.mcp_oauth import mcp_oauth_issuer
 from app.api.user_dependencies import UserContext
+from app.constants.export_api import ExportApiSource
 from app.constants.mcp_oauth import (
     MCP_OAUTH_PROTECTED_RESOURCE_METADATA_PATH,
     MCP_OAUTH_SCOPE,
@@ -98,13 +99,15 @@ async def call_tool(
         if model is None:
             raise AppCommonException(CommonCode.INVALID_REQUEST)
         args = model.model_validate(params.arguments or {})
+        # 凭证无论是 OAuth token 还是 API Key，经 MCP 协议进入的调用都记为 MCP。
+        source = ExportApiSource.MCP
         if isinstance(args, McpSearchRequest):
-            data = await maps_api_operations.search(args, user)
+            data = await maps_api_operations.search(args, user, source=source)
         elif isinstance(args, McpReviewsRequest):
-            data = await maps_api_operations.reviews(args, user)
+            data = await maps_api_operations.reviews(args, user, source=source)
         else:
             assert isinstance(args, McpPhotosRequest)
-            data = await maps_api_operations.photos(args, user)
+            data = await maps_api_operations.photos(args, user, source=source)
     except ValidationError:
         data, is_error = _error(CommonCode.VALIDATION_ERROR, user.language), True
     except AppCommonException as exc:
