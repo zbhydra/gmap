@@ -2,11 +2,12 @@
 密码和加密相关工具函数
 """
 
-import bcrypt
+import hashlib
+import hmac
 
 
 def hash_password(plain_password: str) -> str:
-    """使用 bcrypt 哈希密码
+    """使用双重 SHA-256 哈希密码。
 
     Args:
         plain_password: 明文密码
@@ -14,8 +15,8 @@ def hash_password(plain_password: str) -> str:
     Returns:
         哈希后的密码字符串
     """
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(plain_password.encode("utf-8"), salt).decode("utf-8")
+    inner = hashlib.sha256(plain_password.encode("utf-8")).hexdigest()
+    return hashlib.sha256((inner + "pd%").encode("utf-8")).hexdigest()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -28,6 +29,4 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         密码是否匹配
     """
-    return bcrypt.checkpw(
-        plain_password.encode("utf-8"), hashed_password.encode("utf-8")
-    )
+    return hmac.compare_digest(hash_password(plain_password), hashed_password)

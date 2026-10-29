@@ -1,7 +1,7 @@
 """
 Admin 管理员数据模型
 
-管理后台的管理员账号表，密码使用 bcrypt 哈希存储。
+管理后台的管理员账号表，密码以哈希存储。
 通过 CLI 命令 `python scripts/create_admin.py` 创建管理员。
 """
 
@@ -27,7 +27,7 @@ class AdminModel(BaseDBModel):
         String(64), unique=True, nullable=False, comment="用户名"
     )
     password_hash: Mapped[str] = mapped_column(
-        String(128), nullable=False, comment="密码 bcrypt 哈希"
+        String(128), nullable=False, comment="管理员密码哈希"
     )
     api_key_hash: Mapped[str | None] = mapped_column(
         String(64),

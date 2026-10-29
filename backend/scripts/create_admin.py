@@ -5,7 +5,7 @@ CLI 工具：创建管理员账号。
 用法：
     cd backend && uv run python scripts/create_admin.py --username <用户名> --password <密码>
 
-密码使用 bcrypt 哈希后存入 admins 表。
+密码经公共密码工具哈希后存入 admins 表。
 如果用户名已存在则报错退出。
 """
 

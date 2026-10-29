@@ -1,4 +1,15 @@
 {
+  "cli": {
+    "change_admin_password": {
+      "description": "管理者のパスワードを変更",
+      "username_help": "既存の管理者ユーザー名",
+      "password_help": "新しいパスワード",
+      "invalid_username": "--username は 1～64 文字で指定してください",
+      "empty_password": "--password は空にできません",
+      "not_found": "パスワードを変更できませんでした。管理者 '{username}' は存在しません。ユーザー名を確認してください。",
+      "updated": "管理者 '{username}' のパスワードを更新しました。"
+    }
+  },
   "validation": {
     "proxy_url": "proxies の {index} 番目の形式が無効です。http://ユーザー名:パスワード@IP:ポート を使用してください（認証不要なら認証情報は省略）。対応: http、https、socks5、socks5h。IP:ポート:ユーザー名:パスワード は非対応です。"
   },

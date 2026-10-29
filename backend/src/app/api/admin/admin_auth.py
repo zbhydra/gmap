@@ -54,7 +54,7 @@ async def login(req: AdminLoginRequest) -> JSONResponse:
     """
     管理员登录
 
-    流程：验证码校验 → 查 admins 表 → bcrypt 校验密码 → 检查 is_active → 签发 JWT
+    流程：验证码校验 → 查 admins 表 → 校验密码 → 检查 is_active → 签发 JWT
     """
     # 1. 验证码校验
     if not await captcha_service.verify_captcha(req.captcha_id, req.captcha_code):

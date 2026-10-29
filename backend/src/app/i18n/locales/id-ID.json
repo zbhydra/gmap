@@ -1,4 +1,15 @@
 {
+  "cli": {
+    "change_admin_password": {
+      "description": "Ubah kata sandi administrator",
+      "username_help": "Nama pengguna administrator yang sudah ada",
+      "password_help": "Kata sandi baru",
+      "invalid_username": "--username harus berisi 1 hingga 64 karakter",
+      "empty_password": "--password tidak boleh kosong",
+      "not_found": "Kata sandi tidak diubah: administrator '{username}' tidak ada. Periksa nama pengguna.",
+      "updated": "Kata sandi administrator '{username}' telah diperbarui."
+    }
+  },
   "validation": {
     "proxy_url": "Format proxies item {index} tidak valid: gunakan http://pengguna:kata_sandi@IP:port (hilangkan kredensial jika tidak diperlukan). Mendukung http, https, socks5, socks5h; bukan IP:port:pengguna:kata_sandi."
   },

@@ -1,4 +1,15 @@
 {
+  "cli": {
+    "change_admin_password": {
+      "description": "Modifica la password di un amministratore",
+      "username_help": "Nome utente di un amministratore esistente",
+      "password_help": "Nuova password",
+      "invalid_username": "--username deve contenere da 1 a 64 caratteri",
+      "empty_password": "--password non può essere vuoto",
+      "not_found": "Password non modificata: l'amministratore '{username}' non esiste. Controlla il nome utente.",
+      "updated": "Password dell'amministratore '{username}' aggiornata."
+    }
+  },
   "validation": {
     "proxy_url": "Formato non valido in proxies, elemento {index}: usa http://utente:password@IP:porta (ometti le credenziali se non richieste). Protocolli: http, https, socks5, socks5h. IP:porta:utente:password non è supportato."
   },

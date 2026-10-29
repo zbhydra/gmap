@@ -1,4 +1,15 @@
 {
+  "cli": {
+    "change_admin_password": {
+      "description": "Đổi mật khẩu quản trị viên",
+      "username_help": "Tên người dùng của quản trị viên hiện có",
+      "password_help": "Mật khẩu mới",
+      "invalid_username": "--username phải có từ 1 đến 64 ký tự",
+      "empty_password": "--password không được để trống",
+      "not_found": "Chưa đổi mật khẩu: quản trị viên '{username}' không tồn tại. Hãy kiểm tra tên người dùng.",
+      "updated": "Đã cập nhật mật khẩu cho quản trị viên '{username}'."
+    }
+  },
   "validation": {
     "proxy_url": "Sai định dạng proxies tại mục {index}: dùng http://tên:mật_khẩu@IP:cổng (bỏ thông tin đăng nhập nếu không cần). Hỗ trợ http, https, socks5, socks5h; không hỗ trợ IP:cổng:tên:mật_khẩu."
   },

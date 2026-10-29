@@ -40,9 +40,13 @@ admin 是独立 SPA,不是 website 的一部分,独立仓库目录、独立构�
 
 ## 4. 管理员账号与登录
 
-管理员账号存储于独立的管理员账号表(表名与字段定义属本域数据,见 service / model 层),与客户端用户表完全独立。初始管理员通过 CLI 创建,不在后台 UI 增删改。密码以 bcrypt 哈希存储,复用项目通用 crypto 工具。
+管理员账号存储于独立的管理员账号表(表名与字段定义属本域数据,见 service / model 层),与客户端用户表完全独立。初始管理员通过 CLI 创建,不在后台 UI 增删改。密码哈希由 [crypto.py](../../../backend/src/app/utils/crypto.py) 的 `hash_password` 和 `verify_password` 统一生成、校验。
 
-登录流程:验证码 → 查管理员表 → bcrypt 校验密码 → 检查启用状态 → 签发令牌对 → 前端存储并跳首页。
+创建管理员使用 [create_admin.py](../../../backend/scripts/create_admin.py),在 `backend/` 目录执行 `uv run python scripts/create_admin.py --username '<用户名>' --password '<密码>'`。同名账号已存在时退出,不会重置密码。
+
+修改现有管理员密码使用 [change_admin_password.py](../../../backend/scripts/change_admin_password.py),在 `backend/` 目录执行 `uv run python scripts/change_admin_password.py --username '<用户名>' --password '<新密码>'`。脚本调用 `AdminService.update_password`,只更新指定账号的密码哈希与更新时间;用户名不存在时退出,不会创建账号。已有令牌继续遵循原有效期,管理员启用状态和外部 API Key 保持不变。既有 bcrypt 哈希不能转换为新格式,需由维护者使用此脚本设置新密码后登录。
+
+登录流程:验证码 → 查管理员表 → 校验密码 → 检查启用状态 → 签发令牌对 → 前端存储并跳首页。
 
 ### 4.1 认证接口规格
 

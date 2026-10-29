@@ -1,4 +1,15 @@
 {
+  "cli": {
+    "change_admin_password": {
+      "description": "修改管理后台管理员密码",
+      "username_help": "现有管理员用户名",
+      "password_help": "新密码",
+      "invalid_username": "--username 长度必须为 1 至 64 个字符",
+      "empty_password": "--password 不能为空",
+      "not_found": "修改密码失败：管理员 '{username}' 不存在，请检查用户名。",
+      "updated": "管理员 '{username}' 的密码已更新。"
+    }
+  },
   "validation": {
     "proxy_url": "proxies 字段第 {index} 项格式错误：请使用 http://用户名:密码@IP:端口（无认证可省略用户名和密码）；支持 http、https、socks5、socks5h，不支持 IP:端口:用户名:密码。"
   },

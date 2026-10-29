@@ -2,12 +2,12 @@
 Admin 管理员业务逻辑
 
 负责管理员认证、Token 签发和续签。
-密码使用 bcrypt（复用 crypto.py），存储在 admins 表。
+密码哈希由 crypto.py 统一生成和校验，存储在 admins 表。
 """
 
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.database import get_async_session
 from app.models.admin_model import AdminModel
@@ -38,7 +38,7 @@ class AdminService:
             return result.scalar_one_or_none()
 
     async def authenticate(self, username: str, password: str) -> Optional[AdminModel]:
-        """验证管理员凭据（用户名 + bcrypt 密码校验）"""
+        """验证管理员凭据（用户名 + 密码校验）"""
         admin = await self.get_by_username(username)
         if not admin:
             return None
@@ -68,6 +68,20 @@ class AdminService:
         access_token, access_expires_at = self.create_token(admin)
         refresh_token, refresh_expires_at = self.create_refresh_token(admin)
         return access_token, refresh_token, access_expires_at, refresh_expires_at
+
+    async def update_password(self, username: str, password: str) -> bool:
+        """按用户名修改密码；返回是否找到并更新管理员。"""
+        async with get_async_session() as session:
+            result = await session.execute(
+                update(AdminModel)
+                .where(AdminModel.username == username)
+                .values(
+                    password_hash=hash_password(password),
+                    updated_at=timestamp_now(),
+                )
+            )
+            await session.commit()
+            return getattr(result, "rowcount", 0) == 1
 
     async def create_admin(self, username: str, password: str) -> AdminModel:
         """创建管理员（CLI 调用）"""

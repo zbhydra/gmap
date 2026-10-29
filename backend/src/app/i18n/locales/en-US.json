@@ -1,4 +1,15 @@
 {
+  "cli": {
+    "change_admin_password": {
+      "description": "Change an administrator's password",
+      "username_help": "Existing administrator username",
+      "password_help": "New password",
+      "invalid_username": "--username must contain 1 to 64 characters",
+      "empty_password": "--password must not be empty",
+      "not_found": "Password not changed: administrator '{username}' does not exist. Check the username.",
+      "updated": "Password updated for administrator '{username}'."
+    }
+  },
   "validation": {
     "proxy_url": "Invalid proxies item {index}: use http://username:password@IP:port (omit credentials when not required). Supported schemes: http, https, socks5, socks5h. IP:port:username:password is not supported."
   },
