@@ -124,7 +124,6 @@ from app.api.external.external_maps import router as external_maps_router
 from app.api.external.external_system_dashboard import (
     router as external_system_dashboard_router,
 )
-from app.api.system.dashboard import router as dashboard_router
 from app.api.system.health import router as health_router
 
 
@@ -216,7 +215,6 @@ def _include_api_info(app_instance: FastAPI) -> None:
 def _include_business_routes(app_instance: FastAPI) -> None:
     """挂载业务路由。"""
     app_instance.include_router(health_router, prefix="/api/system", tags=["system"])
-    app_instance.include_router(dashboard_router, prefix="/api/system", tags=["system"])
     app_instance.include_router(auth_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(checkin_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(credit_router, prefix="/api/client", tags=["client"])

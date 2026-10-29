@@ -6,6 +6,8 @@
 
 Dashboard 只读展示运营统计,复用现有 Dashboard 服务。打点数据口径属计数器 / 用户域,本文件只描述 admin 侧读取接口与图表展示。
 
+运营人员通过管理员认证后读取 Dashboard;第三方系统使用[外部 API](tech-外部API.md)的 API Key 认证入口。
+
 ## 接口
 
 | 方法 | 路径 | 鉴权 |
