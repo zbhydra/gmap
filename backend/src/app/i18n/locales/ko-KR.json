@@ -60,6 +60,7 @@
     "ORDER_EXPIRED": "주문이 만료되었습니다",
     "ORDER_ALREADY_PAID": "이미 결제된 주문입니다",
     "ORDER_CANNOT_CANCEL": "현재 상태에서는 주문을 취소할 수 없습니다",
+    "ORDER_DUPLICATE": "이 결제에 대한 주문이 이미 있습니다. 페이지를 새로고침하여 주문 상태를 확인하세요.",
     "CALLBACK_FAILED": "비즈니스 콜백 처리에 실패했습니다",
     "CALLBACK_MAX_RETRY": "콜백 최대 재시도 횟수를 초과했습니다",
     "CALLBACK_NO_CONFIG": "콜백 URL이 설정되지 않았습니다",

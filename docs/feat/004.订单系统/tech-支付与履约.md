@@ -182,6 +182,7 @@ POST /api/callback/paypal/payment
 - 首期订阅订单走 `/api/client/order/create`。
 - 后续自动续费没有用户点击;provider webhook 验签后,服务端按本次渠道扣款号创建 `ProductClass.SUBSCRIPTION` 续费订单。
 - 创建续费订单前先按 `(payment_method, payment_channel_order_no)` 查重;命中则按已有订单幂等返回。
+- 并发查重均未命中时，由[渠道流水唯一约束](tech-订单数据与状态机.md#31-索引)拒绝重复插入；失败请求返回 `ORDER_DUPLICATE`，成功建单的请求继续处理自己的订单。
 - 新续费订单创建后立即调用 `order_success`,再由订单履约分发到订阅域按 Provider 归一化账期推进(`user_subscriptions.expires_at` 只被更晚的渠道到期时间覆盖)。
 - 续费订单不进入用户未完成订单列表;它是已发生扣款的服务端记录。
 - 自动续费升级确认不预建订单；折算发票复用此实付建单链。统一换档结果与具体引用核对见 [订阅升级合同](../006.订阅系统/tech-订阅升级.md#路径-b自动续费线maps_extension渠道协议内换价)。
@@ -909,6 +910,7 @@ PayPal webhook 在 PayPal Developer Dashboard 人工配置:
 | `20003` | `ORDER_EXPIRED` | 订单已过期 |
 | `20004` | `ORDER_ALREADY_PAID` | 订单已支付,不能重复支付 |
 | `20005` | `ORDER_CANNOT_CANCEL` | 订单不可取消 |
+| `20006` | `ORDER_DUPLICATE` | 同一渠道流水已存在订单 |
 
 ### 12.2 支付错误码
 

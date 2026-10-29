@@ -27,7 +27,7 @@
 
 - 商品单一计费模式:计费方式是 `config_subscription_product.auto_renew` 商品列(不再读 metadata);创建订单时 `check_product` 校验请求 `auto_renew + period` 与商品配置一致,同一份配置完整写入 `orders.extra_metadata.product_snapshot`。订单创建后 `auto_renew` 立即通过 `PaymentRequest` 传给 Provider,创建 Clink Session 不再读取实时运营配置。
 - 自动续费回调通过 `RecurringPaymentReference.original_order_no` 定位首单;首单已支付时,订单服务会按新的渠道扣款号创建本地续费订单。
-- 一次性重复回调由现有订单状态 CAS 和履约状态 CAS 收敛;自动续费并发回调额外复用 OrderService 已有 Redis 短锁和渠道扣款号查重,不新增 Clink 专用幂等层。
+- 一次性重复回调由现有订单状态 CAS 和履约状态 CAS 收敛；自动续费并发回调按[续费建单合同](tech-支付与履约.md#19-自动续费-webhook-续费订单)处理。
 - `orders.payment_data` 可保存 Clink `sessionId` 和 Checkout URL;`orders.payment_channel_order_no` 可保存本次履约的渠道幂等号。
 
 ## 3. 渠道配置
@@ -230,7 +230,7 @@ Clink 通用 skill 推荐所有事件额外写入按 `event.id` 唯一的持久 
 - Session 创建网络失败、超时、Clink 非 2xx、响应结构错误：抛出包含本地订单号、请求路径、HTTP 状态和 Clink 错误码的 `PaymentProviderError`，用户重试创建新订单。
 - Webhook 验签失败：非 2xx，不查订单、不履约。
 - Webhook 对账不一致：非 2xx，错误必须包含 event ID、Clink order/invoice/session ID 和本地订单号，不自动修正。
-- 重复 Webhook：返回 2xx 幂等结果，不重复履约。
+- 查重命中已有订单的重复 Webhook：返回 2xx 幂等结果，不重复履约；并发续费插入冲突按[续费建单合同](tech-支付与履约.md#19-自动续费-webhook-续费订单)返回重复订单错误。
 - 密钥缺失：`clink` 渠道创建 Provider 失败，其他支付渠道不受影响。
 - 日志不输出 Secret Key、Webhook 签名、完整 Checkout URL token 或完整原始支付方式信息。
 

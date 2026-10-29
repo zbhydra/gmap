@@ -44,6 +44,7 @@
     "ORDER_EXPIRED": "Đơn hàng đã hết hạn",
     "ORDER_ALREADY_PAID": "Đơn hàng đã được thanh toán",
     "ORDER_CANNOT_CANCEL": "Không thể hủy đơn hàng trong trạng thái hiện tại",
+    "ORDER_DUPLICATE": "Khoản thanh toán này đã có đơn hàng. Hãy tải lại trang để kiểm tra trạng thái.",
     "PAYMENT_GATEWAY_ERROR": "Lỗi cổng thanh toán",
     "PAYMENT_VERIFICATION_FAILED": "Xác minh thanh toán thất bại",
     "PAYMENT_AMOUNT_MISMATCH": "Sai lệch số tiền thanh toán",

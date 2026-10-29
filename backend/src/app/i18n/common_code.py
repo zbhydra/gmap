@@ -67,6 +67,7 @@ class CommonCode(IntEnum):
     ORDER_EXPIRED = 20003  # 订单已过期
     ORDER_ALREADY_PAID = 20004  # 订单已支付，不能重复支付
     ORDER_CANNOT_CANCEL = 20005  # 订单不可取消
+    ORDER_DUPLICATE = 20006  # 同一渠道流水已存在订单
 
     # ========== 支付系统 (21000-21999) ==========
     PAYMENT_GATEWAY_ERROR = 21001  # 支付网关请求失败

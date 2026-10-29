@@ -99,8 +99,10 @@ class CallbackStatus(int, enum.Enum):
 | 索引 | 类型 | 服务查询 |
 | --- | --- | --- |
 | `order_no` 上 `unique=True` | unique | 订单号查询、CAS 更新、履约抢占、订单状态轮询(全链路高频) |
-| `uk_orders_payment_channel_order(payment_method, payment_channel_order_no)` | unique | 自动续费 webhook 按本次渠道扣款号去重;MySQL 允许多行 NULL,不影响待支付订单 |
+| `idx_orders_payment_method_payment_channel_order_no(payment_method, payment_channel_order_no)` | unique | 自动续费 webhook 按本次渠道扣款号查重,并由数据库阻止同渠道重复流水 |
 | `user_id` 上 `index=True` | index | 用户订单列表、未完成订单列表、用户订单统计 |
+
+渠道与流水共同构成唯一身份，不同渠道允许使用相同流水号。尚无流水时保存 `NULL`，MySQL 允许多行 `NULL`；空字符串是实际值，同渠道下也受唯一约束。Redis 短锁只减少竞争，锁故障、超时或过期时仍由数据库约束防重。建单冲突处理见[自动续费 webhook 续费订单](tech-支付与履约.md#19-自动续费-webhook-续费订单)。
 
 不额外加:
 - `order_status` / `callback_status` / `product_class` 单列索引(低基数枚举,订单列表查询都带 `user_id` 前缀,单列索引无收益)。
@@ -227,7 +229,7 @@ return f"ORD{timestamp}{random_part:04d}"
 
 ## 8. 幂等与并发控制(CAS)
 
-订单系统的并发安全完全靠 SQL 层 CAS(`UPDATE ... WHERE order_status = expected`),不引入分布式锁。
+订单支付状态和履约状态的并发更新靠 SQL 层 CAS(`UPDATE ... WHERE order_status = expected`)；续费建单的并发约束见[索引](#31-索引)。
 
 ### 8.1 支付回调幂等(`order_success`)
 

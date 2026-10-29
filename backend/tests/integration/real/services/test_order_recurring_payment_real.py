@@ -6,18 +6,26 @@
 
 import asyncio
 import json
+from dataclasses import replace
 from typing import Protocol, cast
 
 import pytest
 from sqlalchemy import select, update
 from sqlalchemy.sql.elements import ColumnElement
 
-from app.constants.order import CallbackStatus, OrderStatus, ProductClass
+from app.constants.order import (
+    CallbackStatus,
+    OrderCreateParam,
+    OrderStatus,
+    ProductClass,
+)
 from app.constants.subscription import (
     MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
     MAPS_EXTENSION_PRO_PRODUCT_ID,
 )
 from app.core.database import get_async_session
+from app.exceptions.common_exception import AppCommonException
+from app.i18n.common_code import CommonCode
 from app.models.order_model import OrderModel
 from app.models.subscription_model import UserSubscriptionModel
 from app.provider.payment.payment_base import (
@@ -64,6 +72,47 @@ async def _get_renewal_orders(channel_order_no: str) -> list[OrderModel]:
             )
         )
         return list(result.all())
+
+
+async def test_real_order_channel_uniqueness(
+    real_recurring_payment_cleanup_state: _CleanupState,
+) -> None:
+    """同渠道重复流水拒绝建单，跨渠道同号和多个 NULL 仍可建单。"""
+
+    cleanup = real_recurring_payment_cleanup_state
+    param = OrderCreateParam(
+        user_id=cleanup.user_id,
+        product_class=ProductClass.SUBSCRIPTION.value,
+        product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
+        product_name=f"pytest-unique-{cleanup.test_run_id}",
+        amount=_PAID_AMOUNT,
+        currency=_PAID_CURRENCY,
+        payment_method=_PAYMENT_METHOD,
+        payment_channel_order_no=f"renewal-{cleanup.test_run_id}",
+    )
+    first_order = await order_service.create_order(param)
+    with pytest.raises(AppCommonException) as error:
+        await order_service.create_order(param)
+    assert error.value.code == CommonCode.ORDER_DUPLICATE
+    assert f"channel_order_no={param.payment_channel_order_no}" in error.value.ext_msg
+
+    cross_channel_order = await order_service.create_order(
+        replace(param, payment_method="clink")
+    )
+    pending_param = replace(param, payment_channel_order_no=None)
+    pending_orders = [
+        await order_service.create_order(pending_param),
+        await order_service.create_order(pending_param),
+    ]
+
+    stored = await order_service.order_lists(user_ids=[cleanup.user_id])
+    assert len(stored) == 4
+    assert {order.order_no for order in stored} == {
+        first_order.order_no,
+        cross_channel_order.order_no,
+        *(order.order_no for order in pending_orders),
+    }
+    assert all(order.order_status == OrderStatus.PENDING.value for order in stored)
 
 
 async def test_real_recurring_callback_concurrency_creates_and_fulfills_once(

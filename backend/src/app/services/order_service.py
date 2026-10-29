@@ -10,6 +10,7 @@ from typing import Any, Literal, cast
 
 from sqlalchemy import Select, func, or_, select, update
 from sqlalchemy.engine import CursorResult
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.order import (
@@ -137,7 +138,25 @@ class OrderService(BaseService[OrderModel]):
             client_ip=param.client_ip,
             extra_metadata=extra_metadata,
         )
-        return await self.create(order)
+        try:
+            return await self.create(order)
+        except IntegrityError as exc:
+            if exc.orig is None or exc.orig.args[0] != 1062:
+                raise
+            key_name = str(exc.orig.args[1]).rsplit(" for key ", 1)[-1].strip("'")
+            if (
+                key_name.rsplit(".", 1)[-1]
+                != "idx_orders_payment_method_payment_channel_order_no"
+            ):
+                raise
+            raise AppCommonException(
+                CommonCode.ORDER_DUPLICATE,
+                ext_msg=(
+                    "order_create: 渠道流水对应的订单已存在: "
+                    f"order_no={order_no}, payment_method={param.payment_method}, "
+                    f"channel_order_no={param.payment_channel_order_no}"
+                ),
+            ) from exc
 
     async def create_order_with_payment(
         self,
@@ -597,7 +616,7 @@ class OrderService(BaseService[OrderModel]):
         paid_amount: int,
         paid_currency: str,
     ) -> OrderModel:
-        """用 Redis 短锁收敛同一次自动续费的本地订单创建。"""
+        """用 Redis 短锁减少同一次自动续费的建单竞争。"""
 
         lock = RedisLock()
         lock_key = self._recurring_payment_lock_key(
@@ -611,8 +630,7 @@ class OrderService(BaseService[OrderModel]):
                 timeout=_RECURRING_PAYMENT_LOCK_TIMEOUT_SECONDS,
             )
         except Exception:
-            # fail-open：Redis 故障时降级无锁查重，接受极端并发下的重复风险，
-            # 避免把支付主流程拖垮。符合 spec-redis §6 可用性优先语义。
+            # Redis 故障时继续建单，渠道流水唯一约束负责阻止重复。
             logger.error(
                 "payment_callback_recurring_lock_error: payment_method=%s, "
                 "channel_order_no=%s, original_order_no=%s",

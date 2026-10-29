@@ -44,6 +44,7 @@
     "ORDER_EXPIRED": "Pesanan telah kedaluwarsa",
     "ORDER_ALREADY_PAID": "Pesanan sudah dibayar",
     "ORDER_CANNOT_CANCEL": "Tidak dapat membatalkan pesanan dalam status saat ini",
+    "ORDER_DUPLICATE": "Pembayaran ini sudah memiliki pesanan. Muat ulang halaman untuk memeriksa statusnya.",
     "PAYMENT_GATEWAY_ERROR": "Kesalahan gerbang pembayaran",
     "PAYMENT_VERIFICATION_FAILED": "Verifikasi pembayaran gagal",
     "PAYMENT_AMOUNT_MISMATCH": "Ketidakcocokan jumlah pembayaran",

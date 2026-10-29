@@ -60,6 +60,7 @@
     "ORDER_EXPIRED": "訂單已過期",
     "ORDER_ALREADY_PAID": "訂單已付款",
     "ORDER_CANNOT_CANCEL": "目前狀態無法取消訂單",
+    "ORDER_DUPLICATE": "這筆付款已有訂單，請重新整理頁面查看訂單狀態。",
     "CALLBACK_FAILED": "業務回呼失敗",
     "CALLBACK_MAX_RETRY": "回呼重試次數已達上限",
     "CALLBACK_NO_CONFIG": "尚未設定回呼網址",
