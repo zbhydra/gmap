@@ -1,12 +1,12 @@
 /**
  * Maps Email/社媒补全 content 侧编排（013 A4，U8）。
  *
- * 职责：从采集行收集有官网（domain）的目标 → 按 ≤50 条/批经 background RPC
+ * 职责：从采集行收集有官网的目标 → 按 ≤50 条/批经 background RPC
  * 调 enrich 端点（content 不直连后端，零 CORS 面，与 usage 通道同构）→
  * 把结果写回行对象（Email 列逗号分隔、Social Medias 列 `平台: url` 多行，
  * 逆向 04 列格式）→ 发 enrich_complete 打点（成功/失败均报）。
  *
- * 无 domain 行跳过（服务端也无数据源可抓）；失败语义与「失败收敛空结果」
+ * 无官网行跳过（服务端也无数据源可抓）；失败语义与「失败收敛空结果」
  * 声明一致：单批失败只损失该批（行 Email/Social Medias 保持空串），记录后
  * 继续剩余批次，不中止整次补全；存在失败批次时 ok=false（enrich_complete
  * 打点携带），导出与批量推进照常执行——用户可见的是部分行为空，而非中断。
@@ -25,9 +25,9 @@ export const ENRICH_BATCH_SIZE = 50
 
 /** 补全运行结果摘要（打点与观测用）。 */
 export interface EnrichRunSummary {
-  /** 本次提交补全的目标数（按 domain + website 去重后）。 */
+  /** 本次提交补全的目标数（按官网 URL 去重后）。 */
   totalTargets: number
-  /** 写回数据的行数（同域名且官网相同的行都会写）。 */
+  /** 写回数据的行数（官网相同的行都会写）。 */
   writtenRows: number
   /** 批预算截断标注（服务端返回）。 */
   partial: boolean
@@ -43,28 +43,28 @@ export interface EnrichRunOptions {
   onBatchSettled?: () => void
 }
 
-/** 归一化域名用于去重与写回匹配（大小写不敏感）。 */
-function normalizeDomain(domain: string): string {
-  return domain.trim().toLowerCase()
+/** Maps 只有域名时仍可抓取，将它统一整理为官网 URL。 */
+function getEnrichWebsite(row: MapsPlaceRow): string {
+  const website = row.website.trim()
+  const domain = row.domain.trim()
+  return website || (domain ? `https://${domain}` : '')
 }
 
 /**
- * 收集补全目标：有 domain 的行按 domain + website 去重，
- * 无 domain 行跳过。顺序保持首见序，保证与批次结果位置对齐可稳定写回。
+ * 收集补全目标：按官网 URL 去重，无官网行跳过。
+ * 顺序保持首见序，保证与批次结果位置对齐可稳定写回。
  */
 export function collectEnrichTargets(rows: readonly MapsPlaceRow[]): MapsEnrichBusinessInput[] {
   const seen = new Set<string>()
   const targets: MapsEnrichBusinessInput[] = []
   for (const row of rows) {
-    const domain = normalizeDomain(row.domain)
-    const key = JSON.stringify([domain, row.website])
-    if (domain.length === 0 || seen.has(key)) {
+    const website = getEnrichWebsite(row)
+    if (website.length === 0 || seen.has(website)) {
       continue
     }
-    seen.add(key)
+    seen.add(website)
     targets.push({
-      domain,
-      website: row.website,
+      website,
       name: row.name,
       address: row.fullAddress
     })
@@ -81,7 +81,7 @@ export function formatSocialMedias(medias: Record<string, string>): string {
   return platforms.map(platform => `${platform}: ${medias[platform]}`).join('\n')
 }
 
-/** 把单条补全结果写回同域名且官网相同的行，返回写回行数。 */
+/** 把单条补全结果写回官网相同的行，返回写回行数。 */
 function applyResultToRows(
   rows: readonly MapsPlaceRow[],
   target: MapsEnrichBusinessInput,
@@ -89,7 +89,7 @@ function applyResultToRows(
 ): number {
   let written = 0
   for (const row of rows) {
-    if (normalizeDomain(row.domain) !== target.domain || row.website !== target.website) {
+    if (getEnrichWebsite(row) !== target.website) {
       continue
     }
     row.email = result.emails.join(',')

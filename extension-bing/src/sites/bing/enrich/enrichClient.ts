@@ -72,7 +72,7 @@ export function collectEnrichTargets(rows: readonly BingExportRow[]): EnrichBusi
       continue
     }
     seen.add(row.website)
-    targets.push({ domain: '', website: row.website, name: row.name, address: row.address })
+    targets.push({ website: row.website, name: row.name, address: row.address })
   }
   return targets
 }

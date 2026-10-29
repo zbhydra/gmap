@@ -1,6 +1,8 @@
 """Maps HubSpot 与官网补全 API 的真实入口测试。"""
 
 from collections.abc import AsyncIterator
+import asyncio
+import socket
 
 import httpx
 import pytest
@@ -140,29 +142,59 @@ async def test_real_maps_hubspot_rejection_maps_to_business_error(
     assert response.json()["code"] == CommonCode.MAPS_HUBSPOT_SYNC_FAILED
 
 
-async def test_real_maps_enrich_success_returns_contacts_and_caches_result(
+async def test_real_maps_enrich_caches_by_website_host_ignoring_claimed_domain(
     real_async_client: AsyncClient,
     real_redis_ready: None,
     test_run_id: str,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """真实 API 解析官网出口响应并把结果写入真实 Redis 缓存。"""
+    """真实 API 将结果缓存到实际官网名下，伪造 domain 不能污染其他商家的缓存。"""
 
     domain = f"enrich-{test_run_id}.example.com"
+    claimed_domain = f"victim-{test_run_id}.example.com"
     cache_key = build_redis_key(build_enrich_cache_key(domain))
+    claimed_cache_key = build_redis_key(build_enrich_cache_key(claimed_domain))
     redis = await redis_client.get_client()
-    await redis.delete(cache_key)
+    await redis.delete(cache_key, claimed_cache_key)
+    requests: list[str] = []
+    loop = asyncio.get_running_loop()
+    original_getaddrinfo = loop.getaddrinfo
+
+    async def getaddrinfo(
+        host: str,
+        port: int,
+        *,
+        family: int = 0,
+        type: int = 0,
+        proto: int = 0,
+        flags: int = 0,
+    ) -> list[tuple]:
+        if host == domain:
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("1.1.1.1", port))]
+        return await original_getaddrinfo(
+            host, port, family=family, type=type, proto=proto, flags=flags
+        )
 
     async def get(_self: AsyncSession, _url: str, *, stream: bool) -> _EnrichResponse:
         assert stream is True
+        assert _url == f"https://{domain}/contact"
+        requests.append(_url)
         return _EnrichResponse()
 
+    monkeypatch.setattr(loop, "getaddrinfo", getaddrinfo)
     monkeypatch.setattr(AsyncSession, "get", get)
     try:
         response = await real_async_client.post(
             "/api/client/maps/enrich",
             headers=_DEVICE_HEADERS,
-            json={"businesses": [{"domain": domain, "website": "https://1.1.1.1"}]},
+            json={
+                "businesses": [
+                    {
+                        "domain": claimed_domain,
+                        "website": f"https://{domain}/contact",
+                    }
+                ]
+            },
         )
 
         assert response.status_code == 200
@@ -177,12 +209,23 @@ async def test_real_maps_enrich_success_returns_contacts_and_caches_result(
         ]
         assert await redis.get(cache_key) is not None
         assert await redis.ttl(cache_key) > 0
+        assert await redis.get(claimed_cache_key) is None
+        cached = await real_async_client.post(
+            "/api/client/maps/enrich",
+            headers=_DEVICE_HEADERS,
+            json={"businesses": [{"website": f"https://{domain}/contact"}]},
+        )
+        assert cached.status_code == 200
+        assert cached.json()["code"] == CommonCode.SUCCESS
+        assert cached.json()["data"] == body["data"]
+        assert requests == [f"https://{domain}/contact"]
     finally:
-        await redis.delete(cache_key)
+        await redis.delete(cache_key, claimed_cache_key)
 
 
 async def test_real_maps_enrich_blocks_loopback_before_http_exit(
     real_async_client: AsyncClient,
+    real_redis_ready: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """用户 URL 指向环回地址时 SSRF 边界在 HTTP 出口前拒绝。"""
@@ -196,16 +239,10 @@ async def test_real_maps_enrich_blocks_loopback_before_http_exit(
     response = await real_async_client.post(
         "/api/client/maps/enrich",
         headers=_DEVICE_HEADERS,
-        json={
-            "businesses": [
-                {"domain": "invalid/cache-key", "website": "http://127.0.0.1"}
-            ]
-        },
+        json={"businesses": [{"website": "http://127.0.0.1"}]},
     )
 
     assert response.status_code == 200
     body = response.json()
     assert body["code"] == CommonCode.SUCCESS
-    assert body["data"]["results"] == [
-        {"key": "invalid/cache-key", "emails": [], "medias": {}}
-    ]
+    assert body["data"]["results"] == [{"key": "127.0.0.1", "emails": [], "medias": {}}]

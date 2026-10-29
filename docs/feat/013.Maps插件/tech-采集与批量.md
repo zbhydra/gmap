@@ -39,6 +39,8 @@ Google 插件套餐名与单次权益由 [maps_client.py](../../../backend/src/a
 
 搜索完成后的 Email/社媒补全期间，面板显示网站处理进度，Export 与 Reset 等待；补全结束后恢复导出，自动下载与批量强制导出共用此边沿。导出后按钮短暂显示 Exported。
 
+补全请求、结果定位与缓存归属见[官网联系方式采集](../014.Maps云端/tech-官网联系方式采集.md#3-本项目编排)。
+
 搜索、列表、Place 商家区及评论/照片工作页均可导出已有结果。照片媒体以 [photosCsv.ts](../../../extension/src/sites/maps/content/export/photosCsv.ts) 的 `PHOTOS_CSV_COLUMNS` 为字段入口，三种格式保留同一组媒体字段与单媒体计数。
 
 ## 工作页导航与批量上下文

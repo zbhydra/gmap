@@ -206,9 +206,9 @@ async def test_real_enrich_shared_slots_start_site_budget_after_wait(
             active -= 1
 
     monkeypatch.setattr(AsyncSession, "get", get)
-    # 不可缓存的唯一归属键，避免测试缓存掩盖真实并发；HTTP 出口保持确定。
+    # 不同公网 IPv6 主机各占一个并发槽，现有域名缓存不收录 IPv6；HTTP 出口由替身接管。
     businesses = [
-        MapsEnrichBusiness(domain=f"site/{i}", website="https://1.1.1.1")
+        MapsEnrichBusiness(website=f"https://[2606:4700:4700::{i + 1:x}]")
         for i in range(51)
     ]
     first = asyncio.create_task(
@@ -230,6 +230,7 @@ async def test_real_enrich_shared_slots_start_site_budget_after_wait(
 
 
 async def test_real_online_contacts_retry_proxy_only_for_recoverable_direct_failures(
+    real_redis_ready: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     proxy = "http://proxy.test:8000"
@@ -257,7 +258,7 @@ async def test_real_online_contacts_retry_proxy_only_for_recoverable_direct_fail
         direct_failure = failure
         calls.clear()
         result = await maps_enrich_provider.enrich(
-            [MapsEnrichBusiness(domain="retry/case", website="https://1.1.1.1")],
+            [MapsEnrichBusiness(website="https://[2606:4700:4700::1111]")],
             proxies=[proxy],
         )
         assert calls == ["", proxy]
@@ -267,17 +268,18 @@ async def test_real_online_contacts_retry_proxy_only_for_recoverable_direct_fail
         direct_failure = failure
         calls.clear()
         result = await maps_enrich_provider.enrich(
-            [MapsEnrichBusiness(domain="retry/case", website="https://1.1.1.1")],
+            [MapsEnrichBusiness(website="https://[2606:4700:4700::1111]")],
             proxies=[proxy],
         )
         assert calls == [""]
         assert result["results"][0]["emails"] == []
 
     direct_failure = 403
+    proxies: list[str] | None
     for proxies in (None, []):
         calls.clear()
         result = await maps_enrich_provider.enrich(
-            [MapsEnrichBusiness(domain="retry/case", website="https://1.1.1.1")],
+            [MapsEnrichBusiness(website="https://[2606:4700:4700::1111]")],
             proxies=proxies,
         )
         assert calls == [""]
@@ -285,7 +287,7 @@ async def test_real_online_contacts_retry_proxy_only_for_recoverable_direct_fail
 
     calls.clear()
     result = await maps_enrich_provider.enrich(
-        [MapsEnrichBusiness(domain="retry/private", website="https://127.0.0.1")],
+        [MapsEnrichBusiness(website="https://127.0.0.1")],
         proxies=[proxy],
     )
     assert not calls and result["results"][0]["emails"] == []
@@ -349,11 +351,11 @@ async def test_real_contacts_proxy_gzip_stream_counts_consumed_body_and_truncati
 async def test_real_enrich_social_homepages_bypass_fetch_without_mixing_merchants(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """真实解析与编排；无数据库依赖，不可缓存归属键避免读写 Redis，仅替换 HTTP。"""
+    """真实解析与编排；无数据库依赖，普通站点使用不走域名缓存的 IPv6，仅替换 HTTP。"""
     calls: list[str] = []
 
     async def get(_session: AsyncSession, url: str, *, stream: bool) -> _Page:
-        assert url == "https://1.1.1.1/contact"
+        assert url == "https://[2606:4700:4700::1111]/contact"
         calls.append(url)
         return _Page()
 
@@ -369,9 +371,9 @@ async def test_real_enrich_social_homepages_bypass_fetch_without_mixing_merchant
         ("facebook", "https://facebook.com/Second"),
     ]
     businesses = [
-        MapsEnrichBusiness(domain="social/test", website=url + "/?tracking=1#about")
-        for _, url in profiles
+        MapsEnrichBusiness(website=url + "/?tracking=1#about") for _, url in profiles
     ]
+    proxies: list[str] | None
     for proxies in (None, []):
         batch = await maps_enrich_provider.enrich(businesses, proxies=proxies)
         assert not batch["partial"]
@@ -409,13 +411,11 @@ async def test_real_enrich_social_homepages_bypass_fetch_without_mixing_merchant
     batch = await maps_enrich_provider.enrich(
         [
             *businesses,
-            MapsEnrichBusiness(
-                domain="ordinary/test", website="https://1.1.1.1/contact"
-            ),
+            MapsEnrichBusiness(website="https://[2606:4700:4700::1111]/contact"),
         ],
         proxies=None,
     )
-    assert calls == ["https://1.1.1.1/contact"]
+    assert calls == ["https://[2606:4700:4700::1111]/contact"]
     assert batch["results"][-1]["emails"] == ["Owner@merchant.test"]
     assert [row["medias"] for row in batch["results"][:-1]] == [
         {platform: url} for platform, url in profiles

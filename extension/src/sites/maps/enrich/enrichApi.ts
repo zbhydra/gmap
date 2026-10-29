@@ -15,7 +15,7 @@ import type { MapsEnrichBusinessInput, MapsEnrichResponse } from './types'
 /**
  * 批量补全：单批上限 50（服务端 pydantic 同款校验，超出 422）。
  *
- * @param businesses 商家数组（调用方已按 domain 去重分批）。
+ * @param businesses 商家数组（调用方已按官网 URL 去重分批）。
  */
 export async function enrichMapsBusinesses(
   businesses: MapsEnrichBusinessInput[]

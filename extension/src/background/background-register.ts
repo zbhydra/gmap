@@ -185,7 +185,7 @@ export const METHOD_REQUEST_LIMITS = {
   openExtensionLogin: 1024,
   /** getMapsUsage 无入参。 */
   getMapsUsage: 1024,
-  /** enrichMapsBusinesses：50 商家（domain/website/name/address 原文）最坏形态上界。 */
+  /** enrichMapsBusinesses：50 商家（website/name/address 原文）最坏形态上界。 */
   enrichMapsBusinesses: 131072,
   /** openPricingPage：单个完整 URL（浏览器对 URL 长度有 ~2MB 上限，此处取宽松 8KB）。 */
   openPricingPage: 8192,

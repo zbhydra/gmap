@@ -25,6 +25,7 @@ import { getRuntimeConfig } from '../runtimeConfig'
 import { fetchMapsRemoteConfig } from '@/sites/maps/config/remoteFetch'
 import { mapsUsageService } from '@/sites/maps/usage/usageService'
 import { enrichMapsBusinesses } from '@/sites/maps/enrich/enrichApi'
+import type { MapsEnrichBusinessInput } from '@/sites/maps/enrich/types'
 import { openExtensionLogin } from '../services/extensionLogin'
 import { bulkScheduler } from '../batch/controller'
 import type { BulkCreateTaskParams } from '../batch/types'
@@ -185,12 +186,7 @@ function isJsonObject(value: JsonValue | undefined): value is JsonObject {
 /**
  * 解析补全请求：逐字段校验商家数组形状（上限 50 的切片在调用方 enrichClient）。
  */
-function parseEnrichBusinesses(params: JsonValue | undefined): Array<{
-  domain: string
-  website: string
-  name: string
-  address: string
-}> {
+function parseEnrichBusinesses(params: JsonValue | undefined): MapsEnrichBusinessInput[] {
   if (!isJsonObject(params) || !Array.isArray(params.businesses)) {
     throw new Error('[BackgroundMessageRouter] enrichMapsBusinesses 请求缺少 businesses 数组')
   }
@@ -199,7 +195,6 @@ function parseEnrichBusinesses(params: JsonValue | undefined): Array<{
       throw new Error('[BackgroundMessageRouter] enrichMapsBusinesses 商家项必须是对象')
     }
     return {
-      domain: requireEnrichString(business, 'domain'),
       website: requireEnrichString(business, 'website'),
       name: requireEnrichString(business, 'name'),
       address: requireEnrichString(business, 'address')

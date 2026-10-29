@@ -2,8 +2,8 @@
  * Maps Email/社媒补全单元测试（013 A4，U8 验收行为直接覆盖）。
  *
  * 覆盖面：设置开关门控基线（默认关 + 非法值回退）、collectEnrichTargets
- * （无 domain 跳过 / 同 domain + website 去重 / 目标字段映射）、enrichRows（分批 ≤50、
- * 结果按 domain + website 写回行、无 domain 行不动、失败收敛 ok=false、每批回调、
+ * （无官网跳过 / 同官网去重 / 目标字段映射）、enrichRows（分批 ≤50、
+ * 结果按官网写回行、无官网行不动、失败收敛 ok=false、每批回调、
  * enrich_complete 打点成功与失败均发）、formatSocialMedias（平台序 + 行格式）。
  */
 
@@ -31,7 +31,7 @@ import {
 /** RPC 响应编排状态（vi.hoisted 提升到 mock 工厂之前）。 */
 const rpcState = vi.hoisted(() => ({
   /** 每次调 enrichMapsBusinesses 收到的批次入参。 */
-  calls: [] as Array<Array<{ domain: string; website: string }>>,
+  calls: [] as Array<Array<{ website: string }>>,
   /** 注入的响应器：返回响应载荷或抛错。 */
   respond: null as null | ((businesses: MapsEnrichBusinessInput[]) => Promise<MapsEnrichResponse>)
 }))
@@ -167,18 +167,19 @@ describe('设置开关（U8 门控基线）', () => {
 })
 
 describe('collectEnrichTargets', () => {
-  it('无 domain 行跳过；同 domain + website 去重；目标映射 name/address/website', () => {
+  it('按官网去重并映射目标，只有域名时补成网址，无官网时跳过', () => {
     const targets = collectEnrichTargets([
-      makeRow({ domain: '' }), // 无官网：跳过
+      makeRow({ domain: '', website: '' }), // 无官网：跳过
       makeRow({ domain: 'Cafe.com', name: 'Cafe A', fullAddress: '1 St' }),
       makeRow({ domain: 'cafe.com', website: 'https://Cafe.com', name: 'Cafe B' }), // 同域（大小写不敏感）：去重
-      makeRow({ domain: 'shop.org', name: 'Shop' })
+      makeRow({ domain: 'shop.org', website: '', name: 'Shop' }),
+      makeRow({ domain: '', website: 'https://only-website.org', name: 'Website Only' })
     ])
 
     expect(targets).toEqual([
-      // website 透传行原文（服务端优先用它拼抓取 URL）；domain 已归一化
-      { domain: 'cafe.com', website: 'https://Cafe.com', name: 'Cafe A', address: '1 St' },
-      { domain: 'shop.org', website: 'https://shop.org', name: 'Shop', address: '1 Test St' }
+      { website: 'https://Cafe.com', name: 'Cafe A', address: '1 St' },
+      { website: 'https://shop.org', name: 'Shop', address: '1 Test St' },
+      { website: 'https://only-website.org', name: 'Website Only', address: '1 Test St' }
     ])
   })
 })
@@ -187,7 +188,7 @@ describe('enrichRows', () => {
   it('同平台不同主页分别提交并按官网写回', async () => {
     rpcState.respond = async businesses => ({
       results: businesses.map(business => ({
-        key: business.domain,
+        key: new URL(business.website).hostname,
         emails: [],
         medias: { facebook: business.website }
       })),
@@ -209,7 +210,7 @@ describe('enrichRows', () => {
 
   it('分批 ≤50：51 个目标拆 50+1 两批', async () => {
     rpcState.respond = async businesses => ({
-      results: businesses.map(business => ({ key: business.domain, emails: [], medias: {} })),
+      results: businesses.map(business => ({ key: new URL(business.website).hostname, emails: [], medias: {} })),
       partial: false
     })
 
@@ -229,10 +230,10 @@ describe('enrichRows', () => {
     })
   })
 
-  it('结果按 domain + website 写回行：Email 逗号分隔、Social Medias 多行；无 domain 行不动', async () => {
+  it('结果按官网写回行：Email 逗号分隔、Social Medias 多行；无官网行不动', async () => {
     rpcState.respond = async businesses => ({
       results: businesses.map(business =>
-        business.domain === 'cafe.com'
+        business.website === 'https://cafe.com'
           ? {
               key: 'cafe.com',
               emails: ['info@cafe.com', 'hello@cafe.com'],
@@ -241,16 +242,16 @@ describe('enrichRows', () => {
                 twitter: 'https://x.com/cafe'
               }
             }
-          : { key: business.domain, emails: [], medias: {} }
+          : { key: new URL(business.website).hostname, emails: [], medias: {} }
       ),
       partial: false
     })
 
     const cafeRow = makeRow()
-    const cafeRowDuplicate = makeRow({ placeId: 'p2' }) // 同域第二行
-    const noDomainRow = makeRow({ domain: '', placeId: 'p3' })
+    const cafeRowDuplicate = makeRow({ domain: '', website: 'https://cafe.com', placeId: 'p2' }) // 官网相同，独立域名字段不参与匹配
+    const noWebsiteRow = makeRow({ domain: '', website: '', placeId: 'p3' })
     const { emitter } = makeEmitter()
-    const summary = await enrichRows([cafeRow, cafeRowDuplicate, noDomainRow], emitter)
+    const summary = await enrichRows([cafeRow, cafeRowDuplicate, noWebsiteRow], emitter)
 
     expect(summary.writtenRows).toBe(2)
     expect(cafeRow.email).toBe('info@cafe.com,hello@cafe.com')
@@ -258,14 +259,14 @@ describe('enrichRows', () => {
     expect(cafeRow.socialMedias).toBe(
       'instagram: https://www.instagram.com/cafe\ntwitter: https://x.com/cafe'
     )
-    expect(noDomainRow.email).toBe('')
-    expect(noDomainRow.socialMedias).toBe('')
+    expect(noWebsiteRow.email).toBe('')
+    expect(noWebsiteRow.socialMedias).toBe('')
   })
 
   it('成功后发 enrich_complete 打点（ok=true 携带计数）', async () => {
     rpcState.respond = async businesses => ({
       results: businesses.map(business => ({
-        key: business.domain,
+        key: new URL(business.website).hostname,
         emails: ['a@b.com'],
         medias: {}
       })),
@@ -302,7 +303,7 @@ describe('enrichRows', () => {
 
   it('每批完成后回调 onBatchSettled（批量模式重置卡死时钟）', async () => {
     rpcState.respond = async businesses => ({
-      results: businesses.map(business => ({ key: business.domain, emails: [], medias: {} })),
+      results: businesses.map(business => ({ key: new URL(business.website).hostname, emails: [], medias: {} })),
       partial: false
     })
 
@@ -318,7 +319,7 @@ describe('enrichRows', () => {
 
   it('partial=true 透传进打点与摘要', async () => {
     rpcState.respond = async businesses => ({
-      results: businesses.map(business => ({ key: business.domain, emails: [], medias: {} })),
+      results: businesses.map(business => ({ key: new URL(business.website).hostname, emails: [], medias: {} })),
       partial: true
     })
 
@@ -341,8 +342,8 @@ describe('enrichRows', () => {
       }
       return {
         results: businesses.map(business => ({
-          key: business.domain,
-          emails: [`info@${business.domain}`],
+          key: new URL(business.website).hostname,
+          emails: [`info@${new URL(business.website).hostname}`],
           medias: {}
         })),
         partial: false

@@ -7,9 +7,7 @@
 
 /** 待补全的单条商家（字段与 36 列导出行对应）。 */
 export interface MapsEnrichBusinessInput {
-  /** 官网域名（空串 = 无官网，服务端直接空结果）。 */
-  domain: string
-  /** 完整官网 URL（优先于 domain 拼 URL）。 */
+  /** 官网 URL（空串 = 无官网，服务端直接空结果）。 */
   website: string
   /** 商家名（预留：搜索兜底数据源，当前未消费）。 */
   name: string
@@ -19,7 +17,7 @@ export interface MapsEnrichBusinessInput {
 
 /** 单条商家补全结果（与请求 businesses 位置对齐）。 */
 export interface MapsEnrichResult {
-  /** 归属键 = domain（无官网为空串）。 */
+  /** 归属键 = 服务端从官网 URL 提取的主机名（无官网为空串）。 */
   key: string
   /** 官网抽取的邮箱（mailto 优先 + 文本正则，已滤典型误报）。 */
   emails: string[]

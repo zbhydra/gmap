@@ -149,7 +149,7 @@ async def enrich_maps_businesses(
 
     鉴权与 maps/usage 同款（optional user + device_id，观测位）；**不重复
     扣配额**——与 U7 对齐，采集完成边沿已按会话计量，补全不计次。单站失败
-    （超时/非 2xx/SSRF 拒绝）收敛为空结果不报错；无 domain 的商家直接空结果。
+    （超时/非 2xx/SSRF 拒绝）收敛为空结果不报错；无官网的商家直接空结果。
     """
     result = await maps_enrich_provider.enrich(
         request.businesses, proxies=None, batch_timeout=ENRICH_BATCH_BUDGET_SECONDS

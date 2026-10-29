@@ -36,6 +36,8 @@ Online 通过 `GmapExportProvider` 调用 Collector 补全，权益快照、恢�
 
 插件继续逐条识别官网，命中六类社媒直接分类；普通官网沿原域名缓存、批内去重和每进程 50 路预算。插件显式直连，保留 25 秒批量期限和 50 条外部请求上限；不依赖 Collector 或旧引擎配置。库的取消向上传播，单站失败由插件编排转空结果；不新增锁或跨任务协调。
 
+插件入口为 `POST /api/client/maps/enrich`，`businesses` 每项提供 `website`、`name`、`address`，不声明独立的 `domain` 字段。后端为裸官网补齐 HTTPS，再从同一抓取 URL 的主机名推导结果 `key` 与缓存归属；主机名统一小写并去尾点。无有效官网返回空结果。Google 行只有导出域名时，由插件在组装请求时将它补成官网 URL；导出行的域名字段保留。响应 `results` 与请求位置对齐，双插件按本次提交的官网 URL 写回对应行。
+
 ## 4. 外部边界
 
 - `curl_cffi` 版本使用 `backend/uv.lock`；迁移复用现有 AsyncSession、显式代理、手动重定向和流式读取能力。[官方文档](https://curl-cffi.readthedocs.io/en/latest/)

@@ -72,7 +72,7 @@ export type BackgroundGetMapsUsageResponse = MapsUsageSnapshot | null
 
 /** background 代理 Email/社媒补全请求（013 A4，U8；content 不直连后端）。 */
 export interface BackgroundEnrichMapsBusinessesRequest {
-  /** 单批商家数组（调用方已按 domain 去重，≤50 条）。 */
+  /** 单批商家数组（调用方已按官网 URL 去重，≤50 条）。 */
   businesses: MapsEnrichBusinessInput[]
 }
 

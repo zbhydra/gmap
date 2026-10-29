@@ -7,18 +7,9 @@ MAX_ENRICH_BUSINESSES = 50
 
 
 class MapsEnrichBusiness(BaseModel):
-    """待补全的单条商家（字段与插件端 36 列导出行对应，允许空串）。
+    """待补全的单条商家；抓取与缓存归属均从官网 URL 推导，空串返回空结果。"""
 
-    ``domain`` 为空但 ``website`` 非空时，以 website 主机名为归属键抓取；
-    两者皆空返回空结果（无官网可抓）。官网 URL 优先取 ``website``，缺省回退
-    ``https://{domain}``。
-    """
-
-    domain: str = Field(
-        default="",
-        description="官网域名（归属键优先来源；空串时回退 website 主机名）",
-    )
-    website: str = Field(default="", description="完整官网 URL（优先于 domain 拼 URL）")
+    website: str = Field(default="", description="官网 URL，省略协议时使用 HTTPS")
     name: str = Field(
         default="", description="商家名（预留：搜索兜底数据源用，当前未消费）"
     )

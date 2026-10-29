@@ -31,42 +31,27 @@ class _SiteDataPayload(BaseModel):
 
 
 class _EnrichTarget(NamedTuple):
-    """单条商家的补全目标（key 为空 = 无官网可抓，直接空结果）。"""
+    """由官网 URL 解析的补全目标，key 与缓存归属均取其主机名。"""
 
     key: str
     cache_domain: str | None
-    fetch_url: str | None
-
-
-def _derive_business_key(business: MapsEnrichBusiness) -> str:
-    """推导结果归属键：domain 优先，缺省取 website 主机名，均为空返回空串。"""
-
-    domain = business.domain.strip().lower()
-    if domain:
-        return domain
-    website = business.website.strip()
-    if not website:
-        return ""
-    try:
-        hostname = urlsplit(
-            website if "://" in website else f"https://{website}"
-        ).hostname
-    except ValueError:
-        return ""
-    return hostname.lower().rstrip(".") if hostname else ""
+    fetch_url: str
 
 
 def _resolve_enrich_target(business: MapsEnrichBusiness) -> _EnrichTarget | None:
-    """解析单商家抓取目标；无 domain/website 返回 None（空结果直通）。"""
+    """由实际抓取 URL 推导主机名；无有效官网时返回空结果。"""
 
-    key = _derive_business_key(business)
-    if not key:
-        return None
     website = business.website.strip()
-    if website:
-        fetch_url = website if "://" in website else f"https://{website}"
-    else:
-        fetch_url = f"https://{key}"
+    if not website:
+        return None
+    fetch_url = website if "://" in website else f"https://{website}"
+    try:
+        hostname = urlsplit(fetch_url).hostname
+    except ValueError:
+        return None
+    if not hostname:
+        return None
+    key = hostname.lower().rstrip(".")
     return _EnrichTarget(
         key=key, cache_domain=normalize_cache_domain(key), fetch_url=fetch_url
     )
@@ -100,16 +85,16 @@ class MapsEnrichProvider:
         """
 
         results: list[EnrichResult] = [
-            {"key": _derive_business_key(business), "emails": [], "medias": {}}
-            for business in businesses
+            {"key": "", "emails": [], "medias": {}} for _business in businesses
         ]
 
         # 按缓存域名分组去重：同域名一次抓取扇回多行（礼貌性构造之一）。
         groups: dict[str, tuple[_EnrichTarget, list[int]]] = {}
         for index, business in enumerate(businesses):
             target = _resolve_enrich_target(business)
-            if target is None or target.fetch_url is None:
+            if target is None:
                 continue
+            results[index]["key"] = target.key
             medias = classify_social_url(target.fetch_url)
             if medias:
                 results[index]["medias"] = medias
@@ -172,20 +157,20 @@ class MapsEnrichProvider:
         try:
             async with _SITE_SEMAPHORE:
                 if proxies is None:
-                    contacts = await scrape_contacts(target.fetch_url or "", proxy=None)
+                    contacts = await scrape_contacts(target.fetch_url, proxy=None)
                 else:
                     # 单站 12 秒内为直连保留 8 秒，其余留给一次代理回退。
                     deadline = asyncio.get_running_loop().time() + 12
                     try:
                         contacts = await scrape_contacts(
-                            target.fetch_url or "", proxy=None, timeout=8
+                            target.fetch_url, proxy=None, timeout=8
                         )
                     except ContactScrapeError as exc:
                         remaining = deadline - asyncio.get_running_loop().time()
                         if not exc.retryable or not proxies or remaining <= 0:
                             raise
                         contacts = await scrape_contacts(
-                            target.fetch_url or "",
+                            target.fetch_url,
                             proxy=random.choice(proxies),
                             timeout=remaining,
                         )

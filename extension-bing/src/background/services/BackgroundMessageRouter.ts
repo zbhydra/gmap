@@ -23,6 +23,7 @@ import { markApi } from '@/core/api/mark'
 import { MARK_TYPE, type MarkType } from '@/core/api/mark/types'
 import { fetchBingRemoteConfig } from '@/sites/bing/config/remoteFetch'
 import { enrichBusinesses } from '@/sites/bing/enrich/enrichApi'
+import type { EnrichBusinessInput } from '@/sites/bing/enrich/types'
 import { getBackgroundAuthStore, ensureAuthStoreHydrated } from './backgroundStores'
 import { handleOpenExtensionLogin } from './openExtensionLogin'
 import type { BackgroundGetGateStateResponse } from '../types'
@@ -167,12 +168,7 @@ function isJsonObject(value: JsonValue | undefined): value is JsonObject {
 /**
  * 解析补全请求：逐字段校验商家数组形状（上限 50 的切片在调用方 enrichClient）。
  */
-function parseEnrichBusinesses(params: JsonValue | undefined): Array<{
-  domain: string
-  website: string
-  name: string
-  address: string
-}> {
+function parseEnrichBusinesses(params: JsonValue | undefined): EnrichBusinessInput[] {
   if (!isJsonObject(params) || !Array.isArray(params.businesses)) {
     throw new Error('[BackgroundMessageRouter] enrichBusinesses 请求缺少 businesses 数组')
   }
@@ -181,7 +177,6 @@ function parseEnrichBusinesses(params: JsonValue | undefined): Array<{
       throw new Error('[BackgroundMessageRouter] enrichBusinesses 商家项必须是对象')
     }
     return {
-      domain: requireEnrichString(business, 'domain'),
       website: requireEnrichString(business, 'website'),
       name: requireEnrichString(business, 'name'),
       address: requireEnrichString(business, 'address')

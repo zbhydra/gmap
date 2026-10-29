@@ -97,7 +97,7 @@ describe('websiteKey', () => {
 })
 
 describe('collectEnrichTargets', () => {
-  it('无 website 行跳过；同官网多行去重为一目标；domain 恒空串', () => {
+  it('无 website 行跳过；同官网多行去重为一目标', () => {
     const rows = [
       makeRow('https://cafe.com'),
       makeRow('https://cafe.com'),
@@ -107,7 +107,6 @@ describe('collectEnrichTargets', () => {
     const targets = collectEnrichTargets(rows)
     expect(targets).toHaveLength(2)
     expect(targets[0]).toEqual({
-      domain: '',
       website: 'https://cafe.com',
       name: 'Business',
       address: '1 Test St'

@@ -2,7 +2,7 @@
  * Email/社媒补全 HTTP 通道（016 E6 二期，background 侧）。
  *
  * POST /api/client/maps/enrich  官网 Email/社媒补全（013 A4 自研服务端，
- * gmap/bing 两线共享；Bing 行无独立 domain，服务端以 website 主机名归属）。
+ * gmap/bing 两线共享；服务端以 website 主机名归属）。
  *
  * 身份由服务端从请求头推导（拦截器自动注入 X-Device-Id 与 Bearer）；配额在
  * 采集完成边沿已按会话计量（U7 口径），本端点服务端不重复扣减。调用失败一律

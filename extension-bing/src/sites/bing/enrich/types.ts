@@ -7,10 +7,8 @@
  * `POST /api/client/maps/enrich`。
  */
 
-/** 待补全的单条商家（Bing 18 列行无独立 domain 字段，归属键取 website 主机名）。 */
+/** 待补全的单条商家，归属键由服务端从 website 提取。 */
 export interface EnrichBusinessInput {
-  /** 官网域名（Bing 行恒空串：服务端回退 website 主机名做归属键）。 */
-  domain: string
   /** 完整官网 URL。 */
   website: string
   /** 商家名（服务端预留：搜索兜底数据源，当前未消费）。 */
