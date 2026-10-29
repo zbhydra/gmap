@@ -4,7 +4,7 @@
  * 覆盖：
  * - 菜单进入用户管理，列表加载与状态 tag 渲染。
  * - 筛选提交用户 ID、邮箱、账号状态（参数断言）、重置、分页翻页。
- * - 用户 ID 和邮箱点击打开用户信息弹窗，权益区渲染四线订阅 + 三线用量。
+ * - 用户 ID 和邮箱点击打开用户信息弹窗，三类产品合并展示套餐、到期时间和当月用量。
  * - 空数据占位。
  * - 页面不出现用户写操作。
  */
@@ -56,6 +56,7 @@ interface SubscriptionLineMockData {
   product_kind: string;
   /** 是否有效订阅。 */
   has_subscription: boolean;
+  display_name: string;
   /** 原始过期时间。 */
   expires_at: number | null;
 }
@@ -101,7 +102,7 @@ interface UserProfileMockData {
   };
   /** Credits。 */
   credits: { balance: number };
-  /** 订阅摘要四行。 */
+  /** 订阅摘要三行。 */
   subscriptions: SubscriptionLineMockData[];
   /** 用量快照三行。 */
   usage: UsageLineMockData[];
@@ -120,10 +121,7 @@ interface UserOrdersMockData {
 }
 
 /** 本文件 route.fulfill 可返回的数据联合。 */
-type MockResponseData =
-  | AdminUsersListMockData
-  | UserProfileMockData
-  | UserOrdersMockData;
+type MockResponseData = AdminUsersListMockData | UserProfileMockData | UserOrdersMockData;
 
 /** 最近一次用户列表请求参数。 */
 interface UsersRequestParams {
@@ -255,14 +253,29 @@ async function mockUsersApi(page: Page, requests: UsersRequestParams[]) {
     },
     credits: { balance: 66 },
     subscriptions: [
-      { product_kind: "maps_extension", has_subscription: false, expires_at: 1780100000000 },
-      { product_kind: "maps_online", has_subscription: false, expires_at: null },
-      { product_kind: "maps_api", has_subscription: true, expires_at: 1780100000000 },
+      {
+        product_kind: "maps_extension",
+        has_subscription: false,
+        display_name: "Free",
+        expires_at: 1780100000000,
+      },
+      {
+        product_kind: "maps_online",
+        has_subscription: false,
+        display_name: "Free",
+        expires_at: null,
+      },
+      {
+        product_kind: "maps_api",
+        has_subscription: true,
+        display_name: "API Basic",
+        expires_at: 1893456000000,
+      },
     ],
     usage: [
-      { product_kind: "maps_extension", ym: 202609, used: 320, total: 1000, exhausted: false },
       { product_kind: "maps_online", ym: 202609, used: 40, total: 40, exhausted: true },
       { product_kind: "maps_api", ym: 202609, used: 5, total: 100, exhausted: false },
+      { product_kind: "maps_extension", ym: 202609, used: 320, total: 1000, exhausted: false },
     ],
   };
 
@@ -329,18 +342,24 @@ test("用户管理支持筛选、分页和弹窗权益区展示", async ({ page 
   await profileRequest;
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("alpha@example.com");
-  // 三类产品在订阅区与用量区各一行
-  await expect(dialog.getByText("Maps 插件", { exact: true })).toHaveCount(2);
-  await expect(dialog.getByText("Maps 云端", { exact: true })).toHaveCount(2);
-  await expect(dialog.getByText("Maps API", { exact: true })).toHaveCount(2);
-  await expect(dialog.getByText("订阅中", { exact: true })).toHaveCount(1);
-  await expect(dialog.getByText("未订阅", { exact: true })).toHaveCount(2);
-  // 过期行保留原始过期时间（maps_extension 已过期）；未订阅行不显示时间
-  await expect(dialog.getByText("2026-05-30 08:13:20").first()).toBeVisible();
-  await expect(dialog.getByText("2026-09 · 320/1000")).toBeVisible();
-  await expect(dialog.getByText("2026-09 · 40/40")).toBeVisible();
-  await expect(dialog.getByText("2026-09 · 5/100")).toBeVisible();
-  await expect(dialog.getByText("已耗尽", { exact: true })).toBeVisible();
+  await expect(dialog.getByRole("columnheader", { name: "当月用量" })).toBeVisible();
+  await expect(dialog.getByText("Maps 插件", { exact: true })).toHaveCount(1);
+  await expect(dialog.getByText("Maps 云端", { exact: true })).toHaveCount(1);
+  await expect(dialog.getByText("Maps API", { exact: true })).toHaveCount(1);
+  const extensionRow = dialog.getByRole("row", { name: /^Maps 插件/ });
+  const onlineRow = dialog.getByRole("row", { name: /^Maps 云端/ });
+  const apiRow = dialog.getByRole("row", { name: /^Maps API/ });
+  await expect(extensionRow).toContainText("Free");
+  await expect(extensionRow).toContainText("（到期时间：2026-05-30 08:13:20）");
+  await expect(extensionRow).toContainText("320/1000");
+  await expect(onlineRow).toContainText("Free");
+  await expect(onlineRow).toContainText("（到期时间：-）");
+  await expect(onlineRow).toContainText("40/40");
+  await expect(onlineRow.getByText("已耗尽", { exact: true })).toBeVisible();
+  await expect(apiRow).toContainText("API Basic");
+  await expect(apiRow).toContainText("（到期时间：2030-01-01 08:00:00）");
+  await expect(apiRow).toContainText("5/100");
+  await expect(dialog.getByText(/2026-09/)).toHaveCount(0);
 
   await page.keyboard.press("Escape");
 
@@ -360,9 +379,7 @@ test("无匹配用户时列表显示空态占位", async ({ page }) => {
   });
 
   await page.route(/\/api\/admin\/users(?:\?.*)?$/, async (route) => {
-    await route.fulfill(
-      successResponse({ rows: [], total: 0, page: 1, page_size: 20 }),
-    );
+    await route.fulfill(successResponse({ rows: [], total: 0, page: 1, page_size: 20 }));
   });
 
   await page.goto("/users");

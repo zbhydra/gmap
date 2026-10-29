@@ -45,7 +45,7 @@ from app.services.user_credit_service import user_credit_service
 from app.services.user_service import user_service
 from app.utils.time import timestamp_now
 
-# profile 订阅摘要固定四行，顺序 = extension 历史线在前、maps 三线在后。
+# profile 订阅摘要固定 Maps 三行。
 _PROFILE_SUBSCRIPTION_KINDS = (
     MAPS_EXTENSION_PRODUCT_KIND,
     MAPS_ONLINE_PRODUCT_KIND,
@@ -117,7 +117,7 @@ class AdminUserProfileService:
     async def get_profile(self, user_id: int) -> AdminUserProfileData:
         """读取用户基础信息、Credits 余额、按线订阅摘要和 maps 三线用量快照。
 
-        subscriptions 固定四行：无付费行（Free 不落库）与已过期行都压成
+        subscriptions 固定三行：无付费行（Free 不落库）与已过期行都压成
         has_subscription=False，过期行保留原始过期时间供排障。
         usage 固定三行：total 来自所持档位配置（含 free 档），配置合同
         破裂由 usage 门面抛 PAYMENT_GATEWAY_ERROR（fail-closed），不兜底。
@@ -129,11 +129,15 @@ class AdminUserProfileService:
         subscriptions = []
         for product_kind in _PROFILE_SUBSCRIPTION_KINDS:
             row = await subscription_service.get_subscription_row(user_id, product_kind)
+            _, config = await subscription_service.get_user_subscription_config(
+                user_id, product_kind
+            )
             expires_at = row.expires_at if row else None
             subscriptions.append(
                 AdminUserSubscriptionLineInfo(
                     product_kind=product_kind,
                     has_subscription=(expires_at is not None and expires_at > now_ms),
+                    display_name=config.name,
                     expires_at=expires_at,
                 )
             )

@@ -51,6 +51,7 @@ class AdminUserSubscriptionLineInfo(BaseModel):
 
     product_kind: str = Field(..., description="产品线标识")
     has_subscription: bool = Field(..., description="该线是否持有有效付费订阅")
+    display_name: str = Field(..., description="当前生效档位的商品名称，含 Free 档")
     expires_at: int | None = Field(
         None, description="订阅原始过期时间（毫秒时间戳），无付费行为 null"
     )
@@ -73,7 +74,7 @@ class AdminUserProfileData(BaseModel):
     credits: AdminUserCreditsInfo = Field(..., description="Credits 信息")
     subscriptions: list[AdminUserSubscriptionLineInfo] = Field(
         ...,
-        description="订阅摘要，固定四行：extension / maps_extension / maps_online / maps_api",
+        description="订阅摘要，固定三行：maps_extension / maps_online / maps_api",
     )
     usage: list[AdminUserUsageLineInfo] = Field(
         ..., description="当月用量快照，固定三行：maps 三线"

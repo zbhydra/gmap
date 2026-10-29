@@ -49,7 +49,7 @@ Query 参数:
   "user": { "...": "AdminUserBasicInfo 字段不变" },
   "credits": { "balance": 88 },
   "subscriptions": [
-    { "product_kind": "maps_extension", "has_subscription": true, "expires_at": 1782000000000 }
+    { "product_kind": "maps_extension", "has_subscription": true, "display_name": "Maps Pro", "expires_at": 1782000000000 }
   ],
   "usage": [
     { "product_kind": "maps_extension", "ym": 202609, "used": 320, "total": 1000, "exhausted": false }
@@ -59,11 +59,12 @@ Query 参数:
 
 - `subscriptions` 固定三行,顺序 `maps_extension` → `maps_online` → `maps_api`;经 `subscription_service.get_subscription_row(user_id, product_kind)` 按复合主键读取各类别原始行。
 - `has_subscription = expires_at is not None and expires_at > now_ms`;无付费行(Free 不落库口径)= `false` + `expires_at: null`;已过期行压成 `false` 但保留原始过期时间供排障。
+- `display_name` 经 `subscription_service.get_user_subscription_config` 读取当前生效档位的商品名称;无有效付费订阅或已过期时取本产品线 Free 档名称。
 - `usage` 固定三行(maps 三线),经 000 域 usage 三线门面各调 `get_usage(usage_identity(user_id, None), user_id=user_id)`;`ym` 为当前业务月(YYYYMM),`total` 单一真源 = 所持档位(付费或 free 档)配置的月度额度,当前 free 档配置为 maps_extension / maps_online 各 1000、maps_api 20。
 - 档位配置合同破裂(配置行缺失或月度额度为空)由 usage 门面抛 `PAYMENT_GATEWAY_ERROR` 维持 fail-closed,profile 不兜底(三线 free 档已配,常态不触发)。
 - 旧单数 `subscription` 字段删除,前后端同仓同步改,不留兼容。
 - 用户不存在返回 `USER_NOT_FOUND`。
-- 弹窗展示规格(绿 / 灰标签、exhausted 红标、ym 周期标签、产品线 i18n 名)见 `@tech-用户信息弹窗.md`。
+- 弹窗展示规格见 `@tech-用户信息弹窗.md` 的组件规则。
 
 ## 前端
 

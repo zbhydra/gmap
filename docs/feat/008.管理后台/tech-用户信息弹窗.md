@@ -197,10 +197,9 @@ admin/src/i18n/en-US.json
 - 暴露 `open(userId: number): void`;每次打开重置订单分页为 1,加载 profile + 订单第一页数据。
 - modal 使用 `NModal preset="card"` 或同等 Naive UI 组件,宽度 `min(960px, calc(100vw - 32px))`。
 - 上半部分为基础信息和权益信息;下半部分为「订单列表」区块(无 tabs)。
-- 权益信息三块:
+- 权益信息两块:
   - Credits 余额(描述列表项,原样数字)。
-  - 订阅权益:固定三行,行 label = 产品线 i18n 名(Maps 插件 / Maps 云端 / Maps API),值 = 状态标签 + 过期时间;订阅中绿标签,未订阅灰标签;过期行的过期时间弱化(灰)展示;`expires_at` 为 null 显示 `-`。
-  - 当月用量:固定三行,行 label 同上,值 = 周期标签(`ym` 整数转 `YYYY-MM`)+ `used/total`(表格数字对齐);`exhausted=true` 追加红色「已耗尽」标签。
+  - 产品权益表:按 `product_kind` 合并订阅与用量,固定三行,列为产品、订阅权益、当月用量。产品名走 i18n;订阅列展示 `display_name` 套餐标签和括号内的到期时间,有效付费为绿色标签,无有效订阅为 Free 档灰色标签。保留历史过期时间并弱化,`expires_at=null` 显示 `-`。用量列展示 `used/total` 并右对齐,不展示 `ym`;`exhausted=true` 追加红色「已耗尽」标签。
 - 订单表格远程分页,列为订单号、商品、金额、订单状态、履约状态、支付方式、创建时间。
 - 所有用户可见文案走 `userInfo.*` i18n;产品线名与订阅 / 用量文案中英同步。
 - 所有时间展示调用 `admin/src/utils/time.ts`,固定输出 `YYYY-MM-DD HH:mm:ss` UTC+8。
@@ -235,12 +234,12 @@ uv run pytest tests/integration/real/api/admin/test_admin_users_real.py
 ```bash
 cd admin
 pnpm build
-pnpm test:e2e -- users.spec.ts
+pnpm exec playwright test users.spec.ts --project=chromium --grep '用户管理支持筛选、分页和弹窗权益区展示'
 ```
 
 人工:
 
 - 用户管理页的用户 ID、非空邮箱与订单管理的用户 ID 都能打开同一个弹窗。
-- 弹窗展示 IP(归属地)、Credits、三类订阅(绿 / 灰标签与过期时间)、三线用量(周期标签、used/total、耗尽红标);订单列表可分页。
+- 弹窗展示 IP(归属地)、Credits,产品权益表按上述组件规则合并三类订阅与当月用量;订单列表可分页。
 - 字段缺失、用户不存在不导致页面崩溃。
 - 任务记录两个标签页的列表与详情抽屉中的用户 ID 都能打开同一个弹窗。

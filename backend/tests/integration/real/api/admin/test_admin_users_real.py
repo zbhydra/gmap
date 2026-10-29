@@ -468,12 +468,15 @@ async def test_real_admin_user_profile_multi_line_subscriptions_and_usage(
         "maps_api",
     ]
     assert subscriptions[0]["has_subscription"] is True
+    assert subscriptions[0]["display_name"] == "Maps Pro"
     assert subscriptions[0]["expires_at"] == active_maps_expires
     # 已过期行保留原始过期时间，has_subscription 压成 False。
     assert subscriptions[1]["has_subscription"] is False
+    assert subscriptions[1]["display_name"] == "Free"
     assert subscriptions[1]["expires_at"] == expired_online_expires
     # 无付费行 = Free 不落库口径。
     assert subscriptions[2]["has_subscription"] is False
+    assert subscriptions[2]["display_name"] == "Free"
     assert subscriptions[2]["expires_at"] is None
 
     # total 单一真源 = 所持档位 monthly_quota：持 Pro 的线读 Pro 配置，

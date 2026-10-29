@@ -10,10 +10,7 @@ import type { AdminOrder } from "./orders";
 export type AdminUserAccountStatus = "normal" | "locked" | "deleted";
 
 /** 产品类别标识，与后端 subscription 常量一致。 */
-export type AdminUserProductKind =
-  | "maps_extension"
-  | "maps_online"
-  | "maps_api";
+export type AdminUserProductKind = "maps_extension" | "maps_online" | "maps_api";
 
 /** 用户基础信息。 */
 export interface AdminUserBasicInfo {
@@ -71,6 +68,8 @@ export interface AdminUserSubscriptionLineInfo {
   product_kind: AdminUserProductKind;
   /** 该线是否持有有效付费订阅。 */
   has_subscription: boolean;
+  /** 当前生效档位的商品名称，过期或无订阅时为 Free 档名称。 */
+  display_name: string;
   /** 订阅原始过期时间，毫秒时间戳。 */
   expires_at: number | null;
 }

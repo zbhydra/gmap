@@ -12,12 +12,7 @@
     class="user-info-dialog"
   >
     <NSpin :show="profileLoading">
-      <NAlert
-        v-if="profileError"
-        type="error"
-        :show-icon="false"
-        class="user-info-alert"
-      >
+      <NAlert v-if="profileError" type="error" :show-icon="false" class="user-info-alert">
         {{ profileError }}
       </NAlert>
 
@@ -51,12 +46,7 @@
               {{ formatIpGeo(profile.user.last_login_ip, profile.user.last_login_country) }}
             </NDescriptionsItem>
             <NDescriptionsItem :label="t('userInfo.lastOperationIp')">
-              {{
-                formatIpGeo(
-                  profile.user.last_operation_ip,
-                  profile.user.last_operation_country,
-                )
-              }}
+              {{ formatIpGeo(profile.user.last_operation_ip, profile.user.last_operation_country) }}
             </NDescriptionsItem>
             <NDescriptionsItem :label="t('userInfo.createdAt')">
               {{ formatAdminTimeMs(profile.user.created_at) }}
@@ -75,69 +65,40 @@
             </NDescriptionsItem>
           </NDescriptions>
 
-          <div class="user-info-block-title">
-            {{ t("userInfo.subscriptionsTitle") }}
-          </div>
-          <NDescriptions
-            bordered
-            size="small"
-            :column="1"
-            label-placement="left"
-            class="user-info-lines"
-          >
-            <NDescriptionsItem
-              v-for="line in profile.subscriptions"
-              :key="line.product_kind"
-              :label="productKindLabel(line.product_kind)"
-            >
-              <div class="user-info-line-value">
-                <NTag
-                  :type="line.has_subscription ? 'success' : 'default'"
-                  size="small"
-                >
-                  {{
-                    line.has_subscription
-                      ? t("userInfo.subscriptionActive")
-                      : t("userInfo.subscriptionInactive")
-                  }}
-                </NTag>
-                <!-- 过期行保留原始过期时间供排障，从未订阅（Free 不落库）显示占位符 -->
-                <span
-                  v-if="line.expires_at !== null"
-                  :class="{ 'user-info-muted': !line.has_subscription }"
-                >
-                  {{ formatAdminTimeMs(line.expires_at) }}
-                </span>
-                <span v-else class="user-info-muted">-</span>
-              </div>
-            </NDescriptionsItem>
-          </NDescriptions>
-
-          <div class="user-info-block-title">
-            {{ t("userInfo.usageTitle") }}
-          </div>
-          <NDescriptions
-            bordered
-            size="small"
-            :column="1"
-            label-placement="left"
-            class="user-info-lines"
-          >
-            <NDescriptionsItem
-              v-for="line in profile.usage"
-              :key="line.product_kind"
-              :label="productKindLabel(line.product_kind)"
-            >
-              <div class="user-info-line-value">
-                <span class="user-info-usage-text">
-                  {{ formatUsageYm(line.ym) }} · {{ line.used }}/{{ line.total }}
-                </span>
-                <NTag v-if="line.exhausted" type="error" size="small">
-                  {{ t("userInfo.usageExhausted") }}
-                </NTag>
-              </div>
-            </NDescriptionsItem>
-          </NDescriptions>
+          <NTable :single-line="false" size="small" class="user-info-entitlements">
+            <thead>
+              <tr>
+                <th scope="col">{{ t("userInfo.product") }}</th>
+                <th scope="col">{{ t("userInfo.subscriptionsTitle") }}</th>
+                <th scope="col" class="user-info-usage-text">{{ t("userInfo.usageTitle") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="line in entitlementLines" :key="line.product_kind">
+                <th scope="row">{{ productKindLabel(line.product_kind) }}</th>
+                <td>
+                  <div class="user-info-line-value">
+                    <NTag :type="line.has_subscription ? 'success' : 'default'" size="small">
+                      {{ line.display_name }}
+                    </NTag>
+                    <span :class="{ 'user-info-muted': !line.has_subscription }">
+                      {{
+                        t("userInfo.subscriptionExpiresAt", {
+                          time: formatAdminTimeMs(line.expires_at),
+                        })
+                      }}
+                    </span>
+                  </div>
+                </td>
+                <td class="user-info-usage-text">
+                  {{ line.used }}/{{ line.total }}
+                  <NTag v-if="line.exhausted" type="error" size="small">
+                    {{ t("userInfo.usageExhausted") }}
+                  </NTag>
+                </td>
+              </tr>
+            </tbody>
+          </NTable>
         </div>
 
         <NDataTable
@@ -169,6 +130,7 @@ import {
   NEllipsis,
   NModal,
   NSpin,
+  NTable,
   NTag,
   useMessage,
   type DataTableColumns,
@@ -196,6 +158,15 @@ const currentUserId = ref<number | null>(null);
 const profileLoading = ref(false);
 const profileError = ref("");
 const profile = ref<AdminUserProfileData | null>(null);
+const entitlementLines = computed(() => {
+  const data = profile.value;
+  return (
+    data?.subscriptions.map((subscription) => ({
+      ...subscription,
+      ...data.usage.find((usage) => usage.product_kind === subscription.product_kind),
+    })) ?? []
+  );
+});
 
 const ordersLoading = ref(false);
 const ordersLoaded = ref(false);
@@ -398,11 +369,6 @@ function productKindLabel(productKind: AdminUserProductKind): string {
   return t(productKindLabelKeys[productKind]);
 }
 
-/** 用量周期标签：后端 ym 整数（YYYYMM）转 YYYY-MM。 */
-function formatUsageYm(ym: number): string {
-  return `${Math.floor(ym / 100)}-${String(ym % 100).padStart(2, "0")}`;
-}
-
 function renderText(value: string | null) {
   if (!value) {
     return "-";
@@ -486,19 +452,21 @@ function callbackStatusTagType(value: CallbackStatus): TagType {
   margin-bottom: 12px;
 }
 
-.user-info-block-title {
-  color: var(--text-2);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 18px;
+.user-info-entitlements {
+  table-layout: fixed;
 }
 
-.user-info-lines :deep(.n-descriptions-table-header) {
-  width: 140px;
+.user-info-entitlements th:first-child {
+  width: 22%;
+}
+
+.user-info-entitlements th:last-child {
+  width: 26%;
 }
 
 .user-info-line-value {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   min-width: 0;
@@ -506,6 +474,7 @@ function callbackStatusTagType(value: CallbackStatus): TagType {
 
 .user-info-usage-text {
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .user-info-product {
