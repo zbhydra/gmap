@@ -38,7 +38,9 @@ async def paypal_payment_callback(request: Request) -> JSONResponse:
     callback_start_time = time.perf_counter()
     body = await request.body()
     _write_raw_callback_log(request, body)
-    provider = await payment_service.get_provider(PAYPAL_PAYMENT_METHOD)
+    provider = await payment_service.get_provider_for_existing_payment(
+        PAYPAL_PAYMENT_METHOD
+    )
     verify_start_time = time.perf_counter()
     verified = await provider.verify_callback(request)
     verify_duration_ms = _elapsed_ms(verify_start_time)

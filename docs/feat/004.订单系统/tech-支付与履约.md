@@ -207,9 +207,11 @@ POST /api/client/subscription/management
 | `id` | BigInteger PK | | 主键 |
 | `channel_code` | string | unique(`uk_config_payment_channel_channel_code`) | 渠道标识,业务唯一;`payment_method` 在下单中对应此字段 |
 | `channel_name` | string | | 渠道名称 |
-| `enabled` | bool | | 是否启用 |
+| `enabled` | bool | | 是否开放新支付 |
 | `config_json` | string(JSON) | | 渠道配置 |
 | `created_at / updated_at` | bigint | | 毫秒时间戳 |
+
+停用渠道只停止新销售。PayPal、ClinkBill webhook 和已有订单的收款确认通过 `payment_service.get_provider_for_existing_payment` 读取最新凭据,不受 `enabled` 限制;渠道配置与凭据必须保留。
 
 `telegram_stars` 渠道的 `config_json` 必须是对象,必填字段:
 
