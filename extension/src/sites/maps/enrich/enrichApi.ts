@@ -24,7 +24,6 @@ export async function enrichMapsBusinesses(
     API.ENDPOINTS.MAPS_ENRICH,
     { businesses },
     {
-      requireAuth: false,
       skipErrorToast: true
     }
   )

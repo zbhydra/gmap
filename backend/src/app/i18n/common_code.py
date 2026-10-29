@@ -107,6 +107,7 @@ class CommonCode(IntEnum):
     # ========== Maps Extractor 插件 (31100-31199) ==========
     MAPS_HUBSPOT_SYNC_FAILED = 31101  # Maps 插件 HubSpot 同步转发失败
     EXTENSION_USAGE_UNAVAILABLE = 31102  # Maps 配额服务暂不可用（Redis 故障，可重试）
+    MAPS_ENRICH_SUBSCRIPTION_REQUIRED = 31103  # 邮箱/社媒补全需有效插件订阅
 
     # Maps 同步 API 与 MCP 授权
     MAPS_API_QUOTA_EXHAUSTED = 31201  # API 自然月请求额度耗尽

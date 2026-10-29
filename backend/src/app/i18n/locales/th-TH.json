@@ -75,6 +75,7 @@
     "SUBSCRIPTION_REVIEW_REWARD_BUSY": "เซิร์ฟเวอร์กำลังทำงานหนัก โปรดลองอีกครั้งในภายหลัง",
     "MAPS_HUBSPOT_SYNC_FAILED": "การซิงก์ HubSpot ล้มเหลว โปรดเชื่อมต่อ HubSpot อีกครั้งแล้วลองใหม่",
     "EXTENSION_USAGE_UNAVAILABLE": "บริการโควตา Maps ไม่พร้อมใช้งานชั่วคราว กรุณาลองอีกครั้งภายหลัง",
+    "MAPS_ENRICH_SUBSCRIPTION_REQUIRED": "การเติมอีเมลและลิงก์โซเชียลมีเดียต้องมีการสมัครส่วนขยายที่ยังใช้งานได้ โปรดสมัครเพื่อดำเนินการต่อ",
     "ADMIN_AUTH_FAILED": "ชื่อผู้ดูแลระบบหรือรหัสผ่านไม่ถูกต้อง",
     "ADMIN_CAPTCHA_FAILED": "CAPTCHA ไม่ถูกต้องหรือหมดอายุ",
     "ADMIN_TOKEN_EXPIRED": "โทเค็นผู้ดูแลระบบหมดอายุ",

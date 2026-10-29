@@ -312,7 +312,7 @@ export const I18N_KEYS = {
     AUTOMATION_DESC: 'options.automationDesc',
     APPEARANCE_DESC: 'options.appearanceDesc',
     EXPORT_FORMAT_HINT: 'options.exportFormatHint',
-    PRO_FREE: 'options.proFree',
+    ENRICH_SUBSCRIPTION: 'options.enrichSubscription',
     PRO_FIELDS: 'options.proFields',
     SELECT_ALL: 'options.selectAll',
     CLEAR_FIELDS: 'options.clearFields',

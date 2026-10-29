@@ -75,6 +75,7 @@
     "SUBSCRIPTION_REVIEW_REWARD_BUSY": "Der Server ist ausgelastet. Bitte versuchen Sie es später erneut.",
     "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot-Synchronisierung fehlgeschlagen. Bitte HubSpot neu verbinden und erneut versuchen",
     "EXTENSION_USAGE_UNAVAILABLE": "Maps-Kontingentdienst vorübergehend nicht verfügbar. Bitte später erneut versuchen",
+    "MAPS_ENRICH_SUBSCRIPTION_REQUIRED": "Zum Ergänzen von E-Mails und Social-Media-Links ist ein aktives Erweiterungsabo erforderlich. Schließe ein Abo ab, um fortzufahren.",
     "ADMIN_AUTH_FAILED": "Ungültiger Administratorname oder ungültiges Passwort",
     "ADMIN_CAPTCHA_FAILED": "Ungültiges oder abgelaufenes Captcha",
     "ADMIN_TOKEN_EXPIRED": "Administrator-Token ist abgelaufen",

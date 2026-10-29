@@ -66,6 +66,7 @@
     "SUBSCRIPTION_REVIEW_REWARD_BUSY": "サーバーが混み合っています。しばらくしてからもう一度お試しください。",
     "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot 同期に失敗しました。HubSpot を再接続してからもう一度お試しください",
     "EXTENSION_USAGE_UNAVAILABLE": "Maps quota サービスは一時的に利用できません。後でもう一度お試しください",
+    "MAPS_ENRICH_SUBSCRIPTION_REQUIRED": "メールとSNSリンクの補完には有効な拡張機能のサブスクリプションが必要です。登録してから再試行してください。",
     "ORDER_NOT_FOUND": "注文が見つかりません",
     "ORDER_INVALID_STATUS": "注文の状態が無効です",
     "ORDER_EXPIRED": "注文の有効期限が切れています",

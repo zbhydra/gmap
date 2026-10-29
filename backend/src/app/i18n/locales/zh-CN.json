@@ -80,6 +80,7 @@
     "SUBSCRIPTION_REVIEW_REWARD_BUSY": "服务器繁忙，请稍后重试",
     "MAPS_HUBSPOT_SYNC_FAILED": "HubSpot 同步失败，请重新连接 HubSpot 后重试",
     "EXTENSION_USAGE_UNAVAILABLE": "Maps 配额服务暂不可用，请稍后重试",
+    "MAPS_ENRICH_SUBSCRIPTION_REQUIRED": "邮箱和社媒补全需要有效插件订阅，请订阅后重试。",
     "EXPORT_TARGET_FAILED": "采集失败，请新建导出重试。",
     "EXPORT_PARTIAL_RESULT": "部分结果或字段未能采集。",
     "EXPORT_REQUEST_RETRY": "导出队列繁忙，请稍后重试。",

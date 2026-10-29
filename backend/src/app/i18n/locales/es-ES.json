@@ -75,6 +75,7 @@
     "SUBSCRIPTION_REVIEW_REWARD_BUSY": "El servidor está ocupado. Inténtalo de nuevo más tarde.",
     "MAPS_HUBSPOT_SYNC_FAILED": "Error al sincronizar con HubSpot. Vuelva a conectar HubSpot e inténtelo de nuevo",
     "EXTENSION_USAGE_UNAVAILABLE": "El servicio de cuota de Maps no está disponible temporalmente. Inténtelo más tarde",
+    "MAPS_ENRICH_SUBSCRIPTION_REQUIRED": "Se requiere una suscripción activa de la extensión para completar emails y enlaces sociales. Suscríbete para continuar.",
     "ADMIN_AUTH_FAILED": "Nombre de usuario o contraseña de administrador incorrectos",
     "ADMIN_CAPTCHA_FAILED": "Captcha no válido o caducado",
     "ADMIN_TOKEN_EXPIRED": "El token de administrador ha caducado",

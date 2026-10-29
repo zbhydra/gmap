@@ -124,7 +124,7 @@
                     aria-hidden="true"
                     ><Icon v-for="icon in socialIcons" :key="icon" :name="icon" /></span
                   ><span class="op-plan-note"
-                    ><Icon :name="IconName.SPARKLE" />{{ t(K.PRO_FREE) }}</span
+                    ><Icon :name="IconName.SPARKLE" />{{ t(K.ENRICH_SUBSCRIPTION) }}</span
                   >
                 </div>
                 <div class="op-ctl">

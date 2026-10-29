@@ -14,14 +14,18 @@ Redis 月度计数（get_current_user_optional 分派），月度窗口按业务
 docs/feat/000.架构/tech-额度基建.md。
 
 补全通道（013 A4，U8）：Email/社媒补全——服务端自研（基线 #4），fetch 商家
-官网 + 正则抽取（竞品 findV3 出参形状同构）。鉴权与 maps/usage 同款
-（optional user + device_id）；配额已在采集侧计量，本端点不重复扣减。
+官网 + 正则抽取（竞品 findV3 出参形状同构）。必须登录并持有有效插件
+订阅；配额已在采集侧计量，本端点不重复扣减。
 """
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from app.api.user_dependencies import UserContext, get_current_user_optional
+from app.api.user_dependencies import (
+    UserContext,
+    get_current_user,
+    get_current_user_optional,
+)
 from app.constants.subscription import (
     FREE_SUBSCRIPTION_PRODUCT_ID,
     MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
@@ -31,6 +35,8 @@ from app.constants.subscription import (
 from app.schemas.maps_enrich_schema import MapsEnrichRequest
 from app.schemas.maps_hubspot_schema import MapsHubspotSyncRequest
 from app.schemas.maps_usage_schema import MapsUsageReportRequest
+from app.exceptions.common_exception import AppCommonException
+from app.i18n.common_code import CommonCode
 from app.provider.maps_enrich import maps_enrich_provider
 from app.constants.maps_enrich import ENRICH_BATCH_BUDGET_SECONDS
 from app.services.maps_hubspot_service import maps_hubspot_service
@@ -143,14 +149,26 @@ async def sync_maps_hubspot(
 @router.post("/enrich")
 async def enrich_maps_businesses(
     request: MapsEnrichRequest,
-    current_user: UserContext = Depends(get_current_user_optional),
+    current_user: UserContext = Depends(get_current_user),
 ) -> JSONResponse:
     """Email/社媒补全（013 A4，U8）：返回与入参位置对齐的 ``{results, partial}``。
 
-    鉴权与 maps/usage 同款（optional user + device_id，观测位）；**不重复
-    扣配额**——与 U7 对齐，采集完成边沿已按会话计量，补全不计次。单站失败
+    登录且持有有效插件订阅后才能访问共享缓存或抓取；**不重复扣配额**——
+    采集完成边沿已按会话计量，补全不计次。单站失败
     （超时/非 2xx/SSRF 拒绝）收敛为空结果不报错；无官网的商家直接空结果。
     """
+    subscription = await subscription_service.get_user_subscription(
+        current_user.user_id, MAPS_EXTENSION_PRODUCT_KIND
+    )
+    if subscription.expires_at is None:
+        raise AppCommonException(
+            CommonCode.MAPS_ENRICH_SUBSCRIPTION_REQUIRED,
+            ext_msg=(
+                "enrich_maps_businesses: active extension subscription required: "
+                f"user_id={current_user.user_id}, "
+                f"product_kind={MAPS_EXTENSION_PRODUCT_KIND}"
+            ),
+        )
     result = await maps_enrich_provider.enrich(
         request.businesses, proxies=None, batch_timeout=ENRICH_BATCH_BUDGET_SECONDS
     )

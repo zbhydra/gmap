@@ -357,7 +357,7 @@ function dispatchAutoSaveExport(scraper: MapsSearchScraper): void {
 /**
  * 采集完成边沿收尾（013 A4，U8：补全 + 导出 + 集成 + 批量回报）。
  *
- * 补全先行：extractEmail/extractSocialMedias 任一开启时，先把 enrich 结果
+ * 补全先行：有效插件订阅且 extractEmail/extractSocialMedias 任一开启时，先把 enrich 结果
  * 写回行（分批 ≤50 经 background 调服务端），后续导出/集成都消费补全后的行
  * ——与竞品「勾选即补全后导出」语义一致，且只产一份含全量数据的产物。批量
  * 模式经 onBatchSettled 回报进展（补全过程对调度器可见，不触发 90s 卡死误判）。
@@ -373,7 +373,9 @@ async function finalizeCompleteSession(
   count: number
 ): Promise<void> {
   const snapshot = getMapsUserSettingsSnapshot()
-  if (snapshot.extractEmail || snapshot.extractSocialMedias) {
+  const usage =
+    snapshot.extractEmail || snapshot.extractSocialMedias ? await panel.checkQuota(false) : null
+  if (usage !== null && usage.plan_name !== 'Free') {
     const total = collectEnrichTargets(scraper.getRows()).length
     let done = 0
     panel.setFinishing({ done, total })

@@ -2,6 +2,7 @@
 
 import { expect, it, vi } from 'vitest'
 import { BackgroundMessageRouter } from '@/background/services/BackgroundMessageRouter'
+import { STORAGE_KEYS } from '@/core/api/config'
 import type { JsonValue, RpcResponse, RpcServeResult } from '@/core/rpc/types'
 import { parseBingRow } from '@/sites/bing/content/parser'
 import { enrichRows } from '@/sites/bing/enrich/enrichClient'
@@ -37,6 +38,7 @@ it('只提交官网字段即可经真实 background 解析器访问 HTTP 并按�
     )
   )
   vi.stubGlobal('fetch', fetchMock)
+  await chrome.storage.local.set({ [STORAGE_KEYS.ACCESS_TOKEN]: 'enrich-rpc-token' })
   const router = new BackgroundMessageRouter()
   router.setupListener()
   const listener = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls.at(-1)?.[0]
@@ -61,7 +63,11 @@ it('只提交官网字段即可经真实 background 解析器访问 HTTP 并按�
     expect(summary).toEqual({ totalTargets: 2, writtenRows: 2, partial: false, ok: true })
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/api/client/maps/enrich',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ businesses }) })
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ businesses }),
+        headers: expect.objectContaining({ Authorization: 'Bearer enrich-rpc-token' })
+      })
     )
     expect(rows.map(row => row.facebook)).toEqual([
       'https://facebook.com/First',
@@ -69,6 +75,7 @@ it('只提交官网字段即可经真实 background 解析器访问 HTTP 并按�
     ])
   } finally {
     router.destroy()
+    await chrome.storage.local.remove(STORAGE_KEYS.ACCESS_TOKEN)
     Object.assign(chrome.runtime, { sendMessage: originalSendMessage })
     vi.unstubAllGlobals()
   }

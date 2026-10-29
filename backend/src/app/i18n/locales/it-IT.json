@@ -75,6 +75,7 @@
     "SUBSCRIPTION_REVIEW_REWARD_BUSY": "Il server è occupato. Riprova più tardi.",
     "MAPS_HUBSPOT_SYNC_FAILED": "Sincronizzazione con HubSpot non riuscita. Riconnetti HubSpot e riprova",
     "EXTENSION_USAGE_UNAVAILABLE": "Il servizio di quota Maps non è temporaneamente disponibile. Riprova più tardi",
+    "MAPS_ENRICH_SUBSCRIPTION_REQUIRED": "Serve un abbonamento attivo all’estensione per completare email e link social. Abbonati per continuare.",
     "ADMIN_AUTH_FAILED": "Nome utente o password amministratore non validi",
     "ADMIN_CAPTCHA_FAILED": "CAPTCHA non valido o scaduto",
     "ADMIN_TOKEN_EXPIRED": "Token amministratore scaduto",

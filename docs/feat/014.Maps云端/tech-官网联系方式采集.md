@@ -38,6 +38,8 @@ Online 通过 `GmapExportProvider` 调用 Collector 补全，权益快照、恢�
 
 插件入口为 `POST /api/client/maps/enrich`，`businesses` 每项提供 `website`、`name`、`address`，不声明独立的 `domain` 字段。后端为裸官网补齐 HTTPS，再从同一抓取 URL 的主机名推导结果 `key` 与缓存归属；主机名统一小写并去尾点。无有效官网返回空结果。Google 行只有导出域名时，由插件在组装请求时将它补成官网 URL；导出行的域名字段保留。响应 `results` 与请求位置对齐，双插件按本次提交的官网 URL 写回对应行。
 
+插件补全入口使用 `get_current_user` 严格认证，并通过 `subscription_service.get_user_subscription` 查询 `MAPS_EXTENSION_PRODUCT_KIND` 的有效订阅；有效性和到期折算复用该 owner，不限定付费档位。检查在调用插件 provider 之前完成，共享缓存命中同样需要订阅。缺少登录凭据按认证合同返回 HTTP 401；无有效插件订阅返回 HTTP 200 与 `MAPS_ENRICH_SUBSCRIPTION_REQUIRED`。Online/API 订阅及 Credits 余额不授予插件补全权益；采集侧已计量，补全不重复扣量。Google 完成边沿按现有插件权益快照跳过免费补全，Bing 复用已有订阅门控；双插件补全 HTTP 通道均启用 Bearer 注入。
+
 ## 4. 外部边界
 
 - `curl_cffi` 版本使用 `backend/uv.lock`；迁移复用现有 AsyncSession、显式代理、手动重定向和流式读取能力。[官方文档](https://curl-cffi.readthedocs.io/en/latest/)

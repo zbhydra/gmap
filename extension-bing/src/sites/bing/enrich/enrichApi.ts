@@ -23,7 +23,6 @@ export async function enrichBusinesses(businesses: EnrichBusinessInput[]): Promi
     API.ENDPOINTS.MAPS_ENRICH,
     { businesses },
     {
-      requireAuth: false,
       skipErrorToast: true
     }
   )

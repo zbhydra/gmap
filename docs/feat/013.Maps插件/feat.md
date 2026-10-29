@@ -88,7 +88,7 @@ Place 详情页 → 同屏 **Reviews & Photos** 区域 → 点击 Reviews → �
 
 ### Email / 社媒补全(采集中的可选增强)
 
-设置中勾选 Extract email address / Extract social medias(Pro 字段)→ 采集完成后由服务端补全 → 写入 Email / Social Medias 列并供导出使用。补全失败不阻断导出或批量任务推进。`@references/A4-Email与社媒补全.md`
+设置中勾选 Extract email address / Extract social medias → 已登录且持有有效插件订阅时，采集完成后由服务端补全 → 写入 Email / Social Medias 列并供导出使用。所有有效插件订阅档位均可使用；无订阅或订阅到期时跳过补全，其他字段仍可导出。补全失败不阻断导出或批量任务推进。`@references/A4-Email与社媒补全.md`
 
 ### 批量任务流程
 

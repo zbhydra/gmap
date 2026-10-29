@@ -75,6 +75,7 @@
     "SUBSCRIPTION_REVIEW_REWARD_BUSY": "Server sedang sibuk. Silakan coba lagi nanti.",
     "MAPS_HUBSPOT_SYNC_FAILED": "Sinkronisasi HubSpot gagal. Silakan hubungkan kembali HubSpot dan coba lagi",
     "EXTENSION_USAGE_UNAVAILABLE": "Layanan kuota Maps sementara tidak tersedia. Silakan coba lagi nanti",
+    "MAPS_ENRICH_SUBSCRIPTION_REQUIRED": "Langganan ekstensi aktif diperlukan untuk melengkapi email dan tautan media sosial. Berlangganan untuk melanjutkan.",
     "ADMIN_AUTH_FAILED": "Nama pengguna atau kata sandi administrator salah",
     "ADMIN_CAPTCHA_FAILED": "CAPTCHA tidak valid atau kedaluwarsa",
     "ADMIN_TOKEN_EXPIRED": "Token administrator telah kedaluwarsa",
