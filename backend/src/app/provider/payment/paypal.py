@@ -28,6 +28,11 @@ from app.constants.payment import (
 )
 from app.core.config import settings
 from app.core.redis import redis_client
+from app.exceptions.payment_exception import (
+    PaymentFailureCategory,
+    payment_http_failure_category,
+)
+from app.models.order_model import OrderModel
 from app.provider.payment.payment_base import (
     CallbackVerificationResult,
     PaymentBase,
@@ -36,6 +41,7 @@ from app.provider.payment.payment_base import (
     RecurringPaymentReference,
     SubscriptionState,
 )
+from app.services.order_service import order_service
 from app.utils.logger import logger
 from app.utils.money import NORMALIZED_AMOUNT_FACTOR
 from app.utils.redis_key import build_redis_key
@@ -442,58 +448,109 @@ class PayPalPaymentProvider(PaymentBase):
             provider_data={"ignored": True},
         )
 
-    async def capture_order(self, paypal_order_id: str) -> PayPalCaptureResult:
-        """服务端 capture 已 approved 的 PayPal order。"""
-
+    async def capture_order(self, order: OrderModel) -> PayPalCaptureResult:
+        """收款结果不明时只读核对渠道事实，不再次发起扣款。"""
         start_time = time.perf_counter()
+        paypal_order_id = order.payment_channel_order_no
         token = await self._get_access_token()
-        data = await self._post_paypal_json(
-            f"/v2/checkout/orders/{paypal_order_id}/capture",
-            {},
-            access_token=token,
-            context="paypal.capture_order",
-        )
-        capture_result = self._capture_result_from_order(data)
+        try:
+            data = await self._post_paypal_json(
+                f"/v2/checkout/orders/{paypal_order_id}/capture",
+                {},
+                access_token=token,
+                context="paypal.capture_order",
+                is_capture=True,
+            )
+            captured = self._capture_result_from_order(data, order)
+        except PaymentProviderError as exc:
+            if exc.category != PaymentFailureCategory.UNKNOWN:
+                raise
+            try:
+                data = await self._get_paypal_json(
+                    f"/v2/checkout/orders/{paypal_order_id}",
+                    access_token=token,
+                    context="paypal.capture_confirmation",
+                )
+                captured = self._capture_result_from_order(data, order)
+            except Exception as confirmation_error:
+                raise PaymentProviderError(
+                    f"paypal.capture_confirmation: 扣款仍未确认: order_no={order.order_no}, "
+                    f"capture_error={exc}, confirmation_error={confirmation_error}",
+                    category=PaymentFailureCategory.UNKNOWN,
+                ) from confirmation_error
         logger.info(
             "paypal_order_capture_finished: paypal_order_id=%s, order_no=%s, "
             "capture_id=%s, duration_ms=%.2f",
-            capture_result.paypal_order_id,
-            capture_result.order_no,
-            capture_result.capture_id,
+            captured.paypal_order_id,
+            captured.order_no,
+            captured.capture_id,
             self._elapsed_ms(start_time),
         )
-        return capture_result
+        return captured
 
-    async def confirm_payment(
-        self, paypal_order_id: str, *, order_no: str
-    ) -> CallbackVerificationResult:
-        """回跳后查询并收款；已收款订单复用渠道结果，和 webhook 共用履约入口。"""
+    async def confirm_payment(self, order: OrderModel) -> CallbackVerificationResult:
+        """回跳查询与 webhook 共用扣款前核验、收款解析和订单履约。"""
         token = await self._get_access_token()
         data = await self._get_paypal_json(
-            f"/v2/checkout/orders/{paypal_order_id}",
+            f"/v2/checkout/orders/{order.payment_channel_order_no}",
             access_token=token,
             context="paypal.confirm_payment",
         )
-        if self._string_field(data, "id") != paypal_order_id:
-            raise PaymentProviderError(
-                f"paypal.confirm_payment: 渠道订单不匹配: order_no={order_no}"
-            )
-        unit = self._first_object(data, "purchase_units")
-        if self._string_field(unit, "reference_id") != order_no:
-            raise PaymentProviderError(
-                f"paypal.confirm_payment: 商户订单不匹配: order_no={order_no}"
-            )
+        self._validate_checkout_order(data, order)
         if self._string_field(data, "status") == "APPROVED":
-            captured = await self.capture_order(paypal_order_id)
+            captured = await self.capture_order(order)
         else:
-            captured = self._capture_result_from_order(data)
-        if captured.paypal_order_id != paypal_order_id or captured.order_no != order_no:
-            raise PaymentProviderError(
-                f"paypal.confirm_payment: 收款订单不匹配: order_no={order_no}"
-            )
+            captured = self._capture_result_from_order(data, order)
         return self._verification_result_from_capture(
             PAYPAL_CAPTURE_COMPLETED_EVENT, captured
         )
+
+    def _validate_checkout_order(
+        self, resource: dict[str, object], order: OrderModel
+    ) -> None:
+        """扣款前核对本地关系及渠道实际携带的快照。"""
+        paypal_order_id = self._string_field(resource, "id")
+        payment_data = order_service.decode_order_payment_data(
+            order.payment_data, context=f"paypal.checkout: order_no={order.order_no}"
+        )
+        if (
+            order.payment_method != PAYPAL_PAYMENT_METHOD
+            or order.payment_channel_order_no != paypal_order_id
+            or not payment_data
+            or payment_data.get("paypal_order_id") != paypal_order_id
+        ):
+            raise PaymentProviderError(
+                f"paypal.checkout: 渠道订单不匹配: order_no={order.order_no}, "
+                f"paypal_order_id={paypal_order_id}"
+            )
+        if order.order_status not in {
+            OrderStatus.PENDING.value,
+            OrderStatus.PAID.value,
+        }:
+            raise PaymentProviderError(
+                f"paypal.checkout: 本地订单状态不可付款: order_no={order.order_no}, "
+                f"status={order.order_status}"
+            )
+        if "purchase_units" not in resource:
+            return
+        unit = self._first_object(resource, "purchase_units")
+        self._validate_order_references(unit, order)
+        if "amount" in unit:
+            amount = self._object_field(unit, "amount")
+            order_service.validate_paid_amount(
+                order,
+                self._amount_from_paypal_value(self._string_field(amount, "value")),
+                self._string_field(amount, "currency_code"),
+            )
+
+    def _validate_order_references(
+        self, data: dict[str, object], order: OrderModel
+    ) -> None:
+        for field in ("reference_id", "custom_id", "invoice_id"):
+            if field in data and self._string_field(data, field) != order.order_no:
+                raise PaymentProviderError(
+                    f"paypal.checkout: 商户订单不匹配: order_no={order.order_no}, field={field}"
+                )
 
     def _validate_payment_request(self, request: PaymentRequest) -> None:
         """确认订单快照可用于创建 PayPal Checkout 订单。"""
@@ -654,11 +711,29 @@ class PayPalPaymentProvider(PaymentBase):
         """处理 PayPal order approved webhook：内部 capture 后返回支付成功结果。"""
 
         paypal_order_id = self._string_field(resource, "id")
-        capture_result = await self.capture_order(paypal_order_id)
-        return self._verification_result_from_capture(
-            PAYPAL_APPROVED_EVENT,
-            capture_result,
+        order = await order_service.get_order_by_payment_channel_order_no(
+            PAYPAL_PAYMENT_METHOD, paypal_order_id
         )
+        if order is None:
+            raise PaymentProviderError(
+                f"paypal.approved: 本地订单不存在: paypal_order_id={paypal_order_id}",
+                category=PaymentFailureCategory.UNKNOWN,
+            )
+        self._validate_checkout_order(resource, order)
+        if order.order_status == OrderStatus.PAID.value:
+            return CallbackVerificationResult(
+                valid=True,
+                processed=True,
+                event=PAYPAL_APPROVED_EVENT,
+                order_no=order.order_no,
+                channel_order_no=paypal_order_id,
+                channel_uid=order.payment_channel_uid,
+                amount=order.paid_amount,
+                currency=order.paid_currency,
+                transaction_id=order.payment_transaction_id,
+            )
+        captured = await self.capture_order(order)
+        return self._verification_result_from_capture(PAYPAL_APPROVED_EVENT, captured)
 
     def _handle_capture_completed(
         self,
@@ -667,6 +742,7 @@ class PayPalPaymentProvider(PaymentBase):
     ) -> CallbackVerificationResult:
         """处理 PayPal capture completed webhook 兜底通知。"""
 
+        self._assert_capture_completed(resource)
         paypal_order_id = self._paypal_order_id_from_capture_resource(resource)
         amount = self._object_field(resource, "amount")
         currency = self._string_field(amount, "currency_code")
@@ -786,37 +862,62 @@ class PayPalPaymentProvider(PaymentBase):
             ),
         )
 
-    def _capture_result_from_order(
-        self,
-        data: dict[str, object],
-    ) -> PayPalCaptureResult:
-        """从 PayPal capture order 响应里提取本地需要的支付成功字段。"""
+    def _assert_capture_completed(self, capture: dict[str, object]) -> None:
+        status = self._optional_string_field(capture, "status")
+        if status != "COMPLETED":
+            raise PaymentProviderError(
+                f"paypal.capture_result: 渠道收款尚未完成: status={status}",
+                category=(
+                    PaymentFailureCategory.NON_RETRYABLE
+                    if status in {"DECLINED", "REFUNDED", "PARTIALLY_REFUNDED"}
+                    else PaymentFailureCategory.UNKNOWN
+                ),
+            )
 
-        paypal_order_id = self._string_field(data, "id")
-        purchase_unit = self._first_object(data, "purchase_units")
-        order_no = self._string_field(purchase_unit, "reference_id")
-        payments = self._object_field(purchase_unit, "payments")
-        capture = self._first_object(payments, "captures")
-        if (
-            self._string_field(data, "status") != "COMPLETED"
-            or self._string_field(capture, "status") != "COMPLETED"
+    def _capture_result_from_order(
+        self, data: dict[str, object], order: OrderModel
+    ) -> PayPalCaptureResult:
+        """解析收款完成态并复用本地订单的身份、金额核验。"""
+        try:
+            paypal_order_id = self._string_field(data, "id")
+            purchase_unit = self._first_object(data, "purchase_units")
+            payments = self._object_field(purchase_unit, "payments")
+            capture = self._first_object(payments, "captures")
+            capture_id = self._string_field(capture, "id")
+            amount = self._object_field(capture, "amount")
+            currency = self._string_field(amount, "currency_code")
+            paid_amount = self._amount_from_paypal_value(
+                self._string_field(amount, "value")
+            )
+            order_status = self._string_field(data, "status")
+        except PaymentProviderError as exc:
+            raise PaymentProviderError(
+                f"paypal.capture_result: 无法确认收款结果: order_no={order.order_no}, error={exc}",
+                category=PaymentFailureCategory.UNKNOWN,
+            ) from exc
+        self._assert_capture_completed(capture)
+        if order_status != "COMPLETED":
+            raise PaymentProviderError(
+                f"paypal.capture_result: 渠道订单尚未完成: order_no={order.order_no}, status={order_status}",
+                category=PaymentFailureCategory.UNKNOWN,
+            )
+        self._validate_checkout_order(data, order)
+        self._validate_order_references(capture, order)
+        if order.order_no not in (
+            purchase_unit.get("reference_id"),
+            purchase_unit.get("custom_id"),
+            capture.get("custom_id"),
         ):
             raise PaymentProviderError(
-                f"paypal.capture_result: 渠道收款尚未完成: order_no={order_no}"
+                f"paypal.capture_result: 商户订单引用缺失: order_no={order.order_no}"
             )
-        capture_id = self._string_field(capture, "id")
-        amount = self._object_field(capture, "amount")
-        currency = self._string_field(amount, "currency_code")
-        paid_amount = self._amount_from_paypal_value(
-            self._string_field(amount, "value")
-        )
+        order_service.validate_paid_amount(order, paid_amount, currency)
         payer = self._optional_object_field(data, "payer")
         payer_id = self._optional_string_field(payer, "payer_id") if payer else None
-
         return PayPalCaptureResult(
             paypal_order_id=paypal_order_id,
             capture_id=capture_id,
-            order_no=order_no,
+            order_no=order.order_no,
             amount=paid_amount,
             currency=currency,
             payer_id=payer_id,
@@ -1006,7 +1107,8 @@ class PayPalPaymentProvider(PaymentBase):
                 )
         except httpx.HTTPError as exc:
             raise PaymentProviderError(
-                f"PayPal OAuth request failed: endpoint={url}, error={exc}"
+                f"PayPal OAuth request failed: endpoint={url}, error={exc}",
+                category=payment_http_failure_category(error=exc),
             ) from exc
 
         data = self._paypal_response_json(
@@ -1091,6 +1193,7 @@ class PayPalPaymentProvider(PaymentBase):
         *,
         access_token: str,
         context: str,
+        is_capture: bool = False,
     ) -> dict[str, object]:
         """调用 PayPal JSON POST API。"""
 
@@ -1107,11 +1210,15 @@ class PayPalPaymentProvider(PaymentBase):
                         "Accept": "application/json",
                         "Content-Type": "application/json",
                         "Authorization": f"Bearer {access_token}",
+                        **({"Prefer": "return=representation"} if is_capture else {}),
                     },
                 )
         except httpx.HTTPError as exc:
             raise PaymentProviderError(
-                f"PayPal API {context} request failed: endpoint={url}, error={exc}"
+                f"PayPal API {context} request failed: endpoint={url}, error={exc}",
+                category=payment_http_failure_category(
+                    error=exc, is_write=context != "paypal.verify_webhook_signature"
+                ),
             ) from exc
         logger.info(
             "paypal_api_post_finished: context=%s, path=%s, status=%s, "
@@ -1125,6 +1232,7 @@ class PayPalPaymentProvider(PaymentBase):
             response,
             context=context,
             safe_endpoint=url,
+            is_write=context != "paypal.verify_webhook_signature",
         )
 
     async def _get_paypal_json(
@@ -1150,7 +1258,8 @@ class PayPalPaymentProvider(PaymentBase):
                 )
         except httpx.HTTPError as exc:
             raise PaymentProviderError(
-                f"PayPal API {context} request failed: endpoint={url}, error={exc}"
+                f"PayPal API {context} request failed: endpoint={url}, error={exc}",
+                category=payment_http_failure_category(error=exc),
             ) from exc
 
         return self._paypal_response_json(
@@ -1185,13 +1294,17 @@ class PayPalPaymentProvider(PaymentBase):
                 )
         except httpx.HTTPError as exc:
             raise PaymentProviderError(
-                f"PayPal API {context} request failed: endpoint={url}, error={exc}"
+                f"PayPal API {context} request failed: endpoint={url}, error={exc}",
+                category=PaymentFailureCategory.UNKNOWN,
             ) from exc
 
         if response.status_code >= 400:
             raise PaymentProviderError(
                 f"PayPal API {context} HTTP failed: endpoint={url}, "
-                f"status={response.status_code}, body={response.text[:500]}"
+                f"status={response.status_code}",
+                category=payment_http_failure_category(
+                    status=response.status_code, is_write=True
+                ),
             )
 
     def _required_subscription_id(self, value: str, *, context: str) -> str:
@@ -1231,7 +1344,6 @@ class PayPalPaymentProvider(PaymentBase):
         """调用 PayPal verify-webhook-signature 校验 webhook 来源。"""
 
         start_time = time.perf_counter()
-        token = await self._get_access_token()
         headers = request.headers
         payload: dict[str, object] = {
             "auth_algo": self._required_header(headers.get("paypal-auth-algo")),
@@ -1248,6 +1360,7 @@ class PayPalPaymentProvider(PaymentBase):
             "webhook_id": self.config.webhook_id,
             "webhook_event": event,
         }
+        token = await self._get_access_token()
         data = await self._post_paypal_json(
             "/v1/notifications/verify-webhook-signature",
             payload,
@@ -1271,7 +1384,7 @@ class PayPalPaymentProvider(PaymentBase):
 
         try:
             data = json.loads(body)
-        except json.JSONDecodeError as exc:
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             raise PaymentProviderError("PayPal webhook body is invalid JSON") from exc
         if not isinstance(data, dict):
             raise PaymentProviderError(
@@ -1317,25 +1430,31 @@ class PayPalPaymentProvider(PaymentBase):
         *,
         context: str,
         safe_endpoint: str,
+        is_write: bool = False,
     ) -> dict[str, object]:
         """解析 PayPal HTTP JSON 响应并转换错误。"""
 
         if response.status_code >= 400:
             raise PaymentProviderError(
                 f"PayPal API {context} HTTP failed: endpoint={safe_endpoint}, "
-                f"status={response.status_code}, body={response.text[:500]}"
+                f"status={response.status_code}",
+                category=payment_http_failure_category(
+                    status=response.status_code, is_write=is_write
+                ),
             )
         try:
             data = response.json()
         except ValueError as exc:
             raise PaymentProviderError(
                 f"PayPal API {context} returned invalid JSON: "
-                f"endpoint={safe_endpoint}, body={response.text[:500]}"
+                f"endpoint={safe_endpoint}",
+                category=PaymentFailureCategory.UNKNOWN,
             ) from exc
         if not isinstance(data, dict):
             raise PaymentProviderError(
                 f"PayPal API {context} response must be object: "
-                f"endpoint={safe_endpoint}"
+                f"endpoint={safe_endpoint}",
+                category=PaymentFailureCategory.UNKNOWN,
             )
         return data
 

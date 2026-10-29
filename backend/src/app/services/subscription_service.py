@@ -30,6 +30,7 @@ from app.constants.subscription import (
 from app.core.config import settings
 from app.core.database import get_async_session
 from app.exceptions.common_exception import AppCommonException
+from app.exceptions.payment_exception import PaymentProcessingError
 from app.i18n.common_code import CommonCode
 from app.models.order_model import OrderModel
 from app.models.subscription_model import UserSubscriptionModel
@@ -682,8 +683,8 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         比较 plan_id），命中且与行内档位不同才更新 product_id，expires_at、
         渠道引用与续费快照保持。返回是否发生换档：唯一映射且本地已同档
         返回 False（重复事件幂等）；零映射（渠道价与任何启用价不符）与
-        其他核对失败抛 PaymentProviderError，由错误中间件转 HTTP 500 让
-        渠道 webhook 重试。
+        其他核对失败抛 PaymentProviderError，由错误中间件返回业务错误；
+        不依赖 HTTP 非成功状态触发渠道重投。
         """
 
         provider = await payment_service.get_provider_for_existing_payment(
@@ -947,7 +948,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             return
         auto_renew = snapshot.get("auto_renew")
         if not isinstance(auto_renew, bool):
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: invalid auto_renew snapshot: "
                 f"order_no={order.order_no}, auto_renew={auto_renew!r}"
             )
@@ -982,7 +983,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             or not target_product_id.strip()
             or type(base_expires_at) is not int
         ):
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: invalid upgrade snapshot: "
                 f"order_no={order.order_no}, user_id={order.user_id}, "
                 f"snapshot={snapshot!r}"
@@ -1001,7 +1002,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         )
         result = cast(CursorResult[Any], await db.execute(stmt))
         if result.rowcount != 1:
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: upgrade condition missed, escalate "
                 "for manual review: "
                 f"order_no={order.order_no}, user_id={order.user_id}, "
@@ -1092,13 +1093,13 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         try:
             period = SubscriptionPeriodEnum(period_value)
         except (TypeError, ValueError) as exc:
-            raise ValueError(
+            raise PaymentProcessingError(
                 f"Unsupported subscription period for paid order: "
                 f"period={period_value}"
             ) from exc
 
         if period == SubscriptionPeriodEnum.NONE:
-            raise ValueError(
+            raise PaymentProcessingError(
                 f"Unconfigured subscription period cannot be fulfilled: "
                 f"period={period_value}"
             )
@@ -1202,7 +1203,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         metadata = self._load_order_metadata(order)
         snapshot = metadata.get("product_snapshot")
         if not isinstance(snapshot, dict):
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: product_snapshot missing: "
                 f"order_no={order.order_no}, user_id={order.user_id}"
             )
@@ -1217,7 +1218,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         product_kind = snapshot.get("product_kind")
         if isinstance(product_kind, str) and product_kind in SUBSCRIPTION_PRODUCT_KINDS:
             return product_kind
-        raise ValueError(
+        raise PaymentProcessingError(
             "subscription_fulfillment: invalid product_kind: "
             f"order_id={order.id}, product_kind={product_kind!r}"
         )
@@ -1227,7 +1228,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
         product_id = order.product_id
         if not isinstance(product_id, str) or not product_id.strip():
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: invalid product_id: "
                 f"order_no={order.order_no}, user_id={order.user_id}, "
                 f"product_id={product_id!r}"
@@ -1313,7 +1314,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             else None
         )
         if not isinstance(provider_subscription, dict):
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: provider subscription missing: "
                 f"order_no={order.order_no}, payment_method={order.payment_method}"
             )
@@ -1325,7 +1326,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             or not isinstance(subscription_id, str)
             or not subscription_id
         ):
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: invalid provider subscription: "
                 f"order_no={order.order_no}, "
                 f"provider_subscription={provider_subscription!r}"
@@ -1384,19 +1385,19 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         """解析订单履约快照 JSON。"""
 
         if not order.extra_metadata:
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: order extra_metadata missing: "
                 f"order_no={order.order_no}, user_id={order.user_id}"
             )
         try:
             metadata = json.loads(order.extra_metadata)
         except json.JSONDecodeError as exc:
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: invalid order extra_metadata json: "
                 f"order_no={order.order_no}, user_id={order.user_id}"
             ) from exc
         if not isinstance(metadata, dict):
-            raise ValueError(
+            raise PaymentProcessingError(
                 "subscription_fulfillment: extra_metadata must be object: "
                 f"order_no={order.order_no}, user_id={order.user_id}"
             )

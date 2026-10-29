@@ -4,6 +4,7 @@
 """
 
 from app.constants.order import CallbackStatus, OrderStatus, ProductClass
+from app.exceptions.payment_exception import PaymentProcessingError
 from app.services.order_service import order_service
 from app.utils.logger import logger
 from app.utils.time import timestamp_now
@@ -19,7 +20,7 @@ async def compensate_paid_pending_orders() -> None:
         # 用 updated_at 判断滞留，避免订单创建很久但刚支付成功时被提前补偿。
         orders = await order_service.order_lists(
             order_statuses=[OrderStatus.PAID],
-            callback_statuses=[CallbackStatus.PENDING, CallbackStatus.FAILED],
+            callback_statuses=[CallbackStatus.PENDING],
             product_classes=[ProductClass.SUBSCRIPTION, ProductClass.RECHARGE],
             updated_before_ms=(
                 timestamp_now() - ORDER_FULFILLMENT_COMPENSATION_STALE_MS
@@ -38,12 +39,20 @@ async def compensate_paid_pending_orders() -> None:
 
     success_count = 0
     failed_count = 0
-    skipped_count = 0
     runtime_error_count = 0
 
     for order in orders:
         try:
-            fulfilled = await order_service.fulfill_paid_order(order)
+            await order_service.fulfill_paid_order(order)
+        except PaymentProcessingError as exc:
+            failed_count += 1
+            logger.error(
+                "order_fulfillment_compensation failed order_no=%s category=%s",
+                order.order_no,
+                exc.category.value,
+                exc_info=True,
+            )
+            continue
         except Exception as exc:
             runtime_error_count += 1
             logger.error(
@@ -59,19 +68,15 @@ async def compensate_paid_pending_orders() -> None:
             )
             continue
 
-        if fulfilled:
-            success_count += 1
-        else:
-            skipped_count += 1
+        success_count += 1
 
     logger.info(
         "order_fulfillment_compensation finished task_key=%s scanned_count=%d "
-        "success_count=%d failed_count=%d skipped_count=%d runtime_error_count=%d",
+        "success_count=%d failed_count=%d runtime_error_count=%d",
         ORDER_FULFILLMENT_COMPENSATION_TASK_KEY,
         len(orders),
         success_count,
         failed_count,
-        skipped_count,
         runtime_error_count,
     )
 

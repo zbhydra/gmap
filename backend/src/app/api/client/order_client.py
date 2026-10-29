@@ -16,6 +16,7 @@ from app.api.user_dependencies import UserContext, get_current_user
 from app.constants.order import OrderCheckProductParam, OrderStatus
 from app.constants.payment import PAYPAL_PAYMENT_METHOD
 from app.exceptions.common_exception import AppCommonException
+from app.exceptions.payment_exception import PaymentProcessingError
 from app.i18n.common_code import CommonCode
 from app.schemas.order_schema import (
     CancelOrderApiResponse,
@@ -114,13 +115,12 @@ async def confirm_paypal_order(
     )
     assert isinstance(provider, PayPalPaymentProvider)
     try:
-        verified = await provider.confirm_payment(
-            paypal_order_id, order_no=order.order_no
-        )
+        verified = await provider.confirm_payment(order)
     except PaymentProviderError as exc:
-        raise AppCommonException(
-            CommonCode.PAYMENT_GATEWAY_ERROR,
-            ext_msg=f"order_paypal_confirm: order_no={order.order_no}, error={exc}",
+        raise PaymentProcessingError(
+            code=CommonCode.PAYMENT_GATEWAY_ERROR,
+            message=f"order_paypal_confirm: order_no={order.order_no}, error={exc}",
+            category=exc.category,
         ) from exc
     result = await order_service.handle_payment_callback(
         payment_method=PAYPAL_PAYMENT_METHOD, callback=verified

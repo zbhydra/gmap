@@ -6,6 +6,8 @@ from typing import Literal
 
 from fastapi import Request
 
+from app.exceptions.payment_exception import PaymentProcessingError
+
 
 @dataclass
 class PaymentRequest:
@@ -74,7 +76,7 @@ class AfterOrderSuccessResult:
     processed: bool = False
 
 
-class PaymentProviderError(RuntimeError):
+class PaymentProviderError(PaymentProcessingError):
     """支付 provider 创建支付或校验回调失败。"""
 
 

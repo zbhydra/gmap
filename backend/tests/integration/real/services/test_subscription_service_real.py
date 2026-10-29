@@ -40,6 +40,10 @@ from app.constants.subscription import (
 )
 from app.core.database import get_async_session, get_engine
 from app.exceptions.common_exception import AppCommonException
+from app.exceptions.payment_exception import (
+    PaymentFailureCategory,
+    PaymentProcessingError,
+)
 from app.i18n.common_code import CommonCode
 from app.models.order_model import OrderModel
 from app.models.subscription_model import UserSubscriptionModel
@@ -646,7 +650,9 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
     )
     stale_paid_order = await order_service.get_order_by_no(order_stale.order_no)
     assert stale_paid_order is not None
-    assert await order_service.fulfill_paid_order(stale_paid_order) is False
+    with pytest.raises(PaymentProcessingError) as error:
+        await order_service.fulfill_paid_order(stale_paid_order)
+    assert error.value.category == PaymentFailureCategory.NON_RETRYABLE
 
     row_after = await subscription_service.get_subscription_row(
         user_id, MAPS_ONLINE_PRODUCT_KIND

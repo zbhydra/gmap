@@ -20,6 +20,11 @@ from urllib.parse import quote, urlencode, urlsplit
 import httpx
 from fastapi import Request
 
+from app.exceptions.payment_exception import (
+    PaymentFailureCategory,
+    payment_http_failure_category,
+)
+
 from app.constants.payment import CLINK_PAYMENT_METHOD, recurring_provider_sku_parts
 from app.core.config import settings
 from app.models.order_model import OrderModel
@@ -670,7 +675,8 @@ class ClinkPaymentProvider(PaymentBase):
         order = await order_service.get_order_by_no(order_no)
         if order is None:
             raise PaymentProviderError(
-                f"{context}: local order missing: order_no={order_no}"
+                f"{context}: local order missing: order_no={order_no}",
+                category=PaymentFailureCategory.UNKNOWN,
             )
         if order.payment_method != CLINK_PAYMENT_METHOD:
             raise PaymentProviderError(
@@ -726,26 +732,34 @@ class ClinkPaymentProvider(PaymentBase):
         except httpx.HTTPError as exc:
             raise PaymentProviderError(
                 f"{context}: Clink request failed: path={path}, "
-                f"error={type(exc).__name__}"
+                f"error={type(exc).__name__}",
+                category=payment_http_failure_category(
+                    error=exc, is_write=method != "GET"
+                ),
             ) from exc
         try:
             raw_data = response.json()
         except json.JSONDecodeError as exc:
             raise PaymentProviderError(
                 f"{context}: Clink response is not JSON: path={path}, "
-                f"status={response.status_code}"
+                f"status={response.status_code}",
+                category=PaymentFailureCategory.UNKNOWN,
             ) from exc
         if not isinstance(raw_data, dict):
             raise PaymentProviderError(
                 f"{context}: Clink response must be object: path={path}, "
-                f"status={response.status_code}"
+                f"status={response.status_code}",
+                category=PaymentFailureCategory.UNKNOWN,
             )
         data = cast(dict[str, object], raw_data)
         code = data.get("code")
         if not 200 <= response.status_code < 300 or code != 200:
             raise PaymentProviderError(
                 f"{context}: Clink API rejected request: path={path}, "
-                f"status={response.status_code}, code={code}"
+                f"status={response.status_code}, code={code}",
+                category=payment_http_failure_category(
+                    status=response.status_code, is_write=method != "GET"
+                ),
             )
         return data
 

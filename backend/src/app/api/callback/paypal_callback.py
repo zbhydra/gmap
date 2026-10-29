@@ -49,7 +49,7 @@ async def paypal_payment_callback(request: Request) -> JSONResponse:
         total_duration_ms = _elapsed_ms(callback_start_time)
         logger.info(
             "paypal_payment_callback_finished: event=%s, order_no=%s, valid=false, "
-            "processed=%s, verify_duration_ms=%.2f, total_duration_ms=%.2f",
+            "category=no_retry, processed=%s, verify_duration_ms=%.2f, total_duration_ms=%.2f",
             verified.event,
             verified.order_no,
             verified.processed,

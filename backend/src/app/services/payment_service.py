@@ -9,6 +9,10 @@ from typing import Any
 
 from app.constants.payment import CLINK_PAYMENT_METHOD, PAYPAL_PAYMENT_METHOD
 from app.exceptions.common_exception import AppCommonException
+from app.exceptions.payment_exception import (
+    PaymentProcessingError,
+    database_failure_category,
+)
 from app.i18n.common_code import CommonCode
 from app.provider.payment.clink import ClinkPaymentProvider
 from app.provider.payment.payment_base import PaymentBase, PaymentProviderError
@@ -48,11 +52,19 @@ class PaymentService:
 
         channel_code = payment_method.strip()
         self._assert_supported_method(channel_code)
-        channel = await config_payment_channel_service.get_by_channel_code(channel_code)
+        try:
+            channel = await config_payment_channel_service.get_by_channel_code(
+                channel_code
+            )
+        except Exception as exc:
+            raise PaymentProcessingError(
+                f"payment_service: 读取历史渠道配置失败: channel_code={channel_code}",
+                category=database_failure_category(exc),
+            ) from exc
         if channel is None:
-            raise AppCommonException(
-                CommonCode.PAYMENT_UNSUPPORTED_METHOD,
-                ext_msg=(
+            raise PaymentProcessingError(
+                code=CommonCode.PAYMENT_UNSUPPORTED_METHOD,
+                message=(
                     "payment_service: historical payment channel config missing: "
                     f"channel_code={channel_code}"
                 ),
@@ -74,12 +86,13 @@ class PaymentService:
                 return TgStarPaymentProvider(channel_config)
             return PayPalPaymentProvider(channel_config)
         except PaymentProviderError as exc:
-            raise AppCommonException(
-                CommonCode.PAYMENT_GATEWAY_ERROR,
-                ext_msg=(
+            raise PaymentProcessingError(
+                code=CommonCode.PAYMENT_GATEWAY_ERROR,
+                message=(
                     "payment_service._create_provider: 支付渠道 provider 构造失败: "
                     f"channel_code={channel_code}, error={exc}"
                 ),
+                category=exc.category,
             ) from exc
 
     def is_supported_method(self, payment_method: str) -> bool:
@@ -118,17 +131,17 @@ class PaymentService:
         try:
             parsed = json.loads(raw)
         except json.JSONDecodeError as exc:
-            raise AppCommonException(
-                CommonCode.PAYMENT_GATEWAY_ERROR,
-                ext_msg=(
+            raise PaymentProcessingError(
+                code=CommonCode.PAYMENT_GATEWAY_ERROR,
+                message=(
                     "payment_service: invalid payment channel config json: "
                     f"channel_code={channel_code}"
                 ),
             ) from exc
         if not isinstance(parsed, dict):
-            raise AppCommonException(
-                CommonCode.PAYMENT_GATEWAY_ERROR,
-                ext_msg=(
+            raise PaymentProcessingError(
+                code=CommonCode.PAYMENT_GATEWAY_ERROR,
+                message=(
                     "payment_service: payment channel config must be object: "
                     f"channel_code={channel_code}"
                 ),
