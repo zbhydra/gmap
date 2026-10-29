@@ -119,7 +119,7 @@ raise AppCommonException(
 - router 双层 prefix：`main.py` 里 `include_router(xxx_router, prefix="/api/client|admin|external|internal")`，router 文件内再带业务 `prefix="/xxx"`。
 - 鉴权/上下文：`Security(HTTPBearer)` + `Depends(get_current_user)`（client）/ `Depends(get_admin_user)`（admin）。**session 不走 Depends**——在 service 内自取（见 spec-mysql）。
 - **参数校验与处理在 api 层完成**：pydantic v2 schema 校验 + 参数清洗，service 层不做参数校验。schema 放 `app/schemas/`（admin 可就近放 api 目录，保持一致性即可）。
-- 统一响应：`ResponseUtils.ok(data)` / `ResponseUtils.error(...)`，结构固定 `{code, data, msg}`，成功 `code=10000`。认证失效使用 HTTP 401；其他业务错误、参数校验失败和服务端异常均返回 HTTP 200，通过 `code`、`msg` 表达错误，不按业务码推断其他 HTTP 状态。
+- 统一响应：`ResponseUtils.ok(data)` / `ResponseUtils.error(...)`，结构固定 `{code, data, msg}`，成功 `code=10000`。认证失效使用 HTTP 401；其他业务错误、参数校验失败和服务端异常默认返回 HTTP 200，通过 `code`、`msg` 表达错误，不按业务码推断其他 HTTP 状态。协议边界可显式指定 `status_code`，支付回调应答见[支付失败分类与恢复边界](../../feat/004.订单系统/tech-支付与履约.md#81-失败分类与恢复边界)。
 
 ## 9. Service 层
 

@@ -195,7 +195,7 @@ Provider 把已验证金额/币种的结果交给现有 `handle_payment_callback
 2. 服务端调用 `GET /subscription/{subscriptionId}`，取得该订阅的 `merchantReference`、`sessionId` 和 `customerId`。
 3. 用 `merchantReference` 精确定位首笔本地订单，再比对本地 `payment_data.sessionId` 与 `payment_method=clink`(自动续费商品在 session 创建链路已锚定,webhook 不重复核对)。
 4. 核对 Invoice 币种与首单币种，按渠道实付金额记账；折算发票不与首单或新档整月金额比较。换档与实付订单的关系见 [订阅升级](../006.订阅系统/tech-订阅升级.md#路径-b自动续费线maps_extension渠道协议内换价)。
-5. 查询或核对失败按[支付失败分类](tech-支付与履约.md#81-失败分类与恢复边界)抛业务异常，沿用 HTTP 200 错误应答；不能依赖非 2xx 触发渠道重投。
+5. 查询或核对失败按[支付失败分类](tech-支付与履约.md#81-失败分类与恢复边界)抛业务异常，回调 HTTP 应答由该分类统一映射。
 
 核对通过后映射为：
 

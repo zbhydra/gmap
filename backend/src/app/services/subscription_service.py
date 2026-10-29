@@ -683,8 +683,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         比较 plan_id），命中且与行内档位不同才更新 product_id，expires_at、
         渠道引用与续费快照保持。返回是否发生换档：唯一映射且本地已同档
         返回 False（重复事件幂等）；零映射（渠道价与任何启用价不符）与
-        其他核对失败抛 PaymentProviderError，由错误中间件返回业务错误；
-        不依赖 HTTP 非成功状态触发渠道重投。
+        其他核对失败抛 PaymentProviderError，由错误中间件按支付失败分类应答。
         """
 
         provider = await payment_service.get_provider_for_existing_payment(

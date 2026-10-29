@@ -13,6 +13,10 @@ from pydantic import ValidationError
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.exceptions.common_exception import AppCommonException
+from app.exceptions.payment_exception import (
+    PaymentFailureCategory,
+    PaymentProcessingError,
+)
 from app.utils.logger import logger
 
 
@@ -51,12 +55,20 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)
         except AppCommonException as e:
+            status_code = e.status_code
+            if (
+                request.url.path.startswith("/api/callback/")
+                and isinstance(e, PaymentProcessingError)
+                and e.category == PaymentFailureCategory.RETRYABLE
+            ):
+                # 支付渠道以非 2xx 判断通知投递失败并重投。
+                status_code = 500
             # 业务异常 - 翻译后返回（透传 data 字段）
             response = ResponseUtils.error(
                 e.code,
                 locale,
                 data=e.data,
-                status_code=e.status_code,
+                status_code=status_code,
             )
             if response.status_code != 401:
                 logger.error(f"{e.code} - {e.ext_msg}", exc_info=True)

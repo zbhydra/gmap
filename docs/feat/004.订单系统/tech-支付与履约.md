@@ -604,7 +604,7 @@ APPROVED 的订单定位与核验见 [收款核验](#63-收款核验)。完成�
 
 入口先记录原始回调，再通过历史支付渠道 getter 获取当前凭据并验签。APPROVED、capture 完成、订阅 sale 完成进入支付处理；`BILLING.SUBSCRIPTION.UPDATED` 仍只进入订阅计划收敛，不发放权益。未支持事件确认接收并记录 `no_retry`。
 
-支付通知均由订单付款 CAS 和履约 CAS 防止重复发货；异常保留 [恢复分类](#81-失败分类与恢复边界)，HTTP 应答遵守项目业务错误合同。
+支付通知均由订单付款 CAS 和履约 CAS 防止重复发货；异常分类及 HTTP 应答见[失败分类与恢复边界](#81-失败分类与恢复边界)。
 
 ### 7.4 原始回调日志
 
@@ -638,7 +638,11 @@ order_success (PENDING -> PAID, CAS, 独立事务)
 
 ### 8.1 失败分类与恢复边界
 
-`PaymentProcessingError` 扩展既有 `AppCommonException`，`PaymentProviderError` 与 `OrderSuccessError` 继承它。分类用于诊断及补偿决策，不增加持久化状态，不改变业务错误 HTTP 200、认证失败 HTTP 401 的合同。
+`PaymentProcessingError` 扩展既有 `AppCommonException`，`PaymentProviderError` 与 `OrderSuccessError` 继承它。分类用于诊断、履约补偿及支付回调应答，不增加持久化状态。
+
+`/api/callback/*` 中的 `PaymentProcessingError` 若为 `retryable`，统一错误中间件返回 HTTP 500，供渠道重投；`non_retryable`、`no_retry`、`unknown` 保持 HTTP 200。响应体仍使用原业务码与本地化文案。普通客户端支付接口保持既有 HTTP 200 业务错误合同；未分类异常不自动视为可重试。
+
+[PayPal 通知接收规则](https://developer.paypal.com/api/rest/webhooks/#receiving-and-processing-a-webhook)以 HTTP 2xx 确认投递成功，非 2xx 或无响应会触发重投。重投处理复用现有付款与履约幂等，不增加本地回调重试队列。
 
 | 分类 | 证据与处理 |
 | --- | --- |

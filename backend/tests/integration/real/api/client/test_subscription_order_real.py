@@ -189,7 +189,7 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
     real_subscription_order_schema_ready,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """真实下单、内网回跳与重复通知；仅替换 PayPal HTTP，不写配置表。"""
+    """真实下单、回跳与回调重投的 HTTP 边界及幂等履约；仅替换 PayPal HTTP。"""
     user_id, token = await real_user_factory(make_test_email("paypal-one-time"))
     _, other_token = await real_user_factory(make_test_email("paypal-other"))
     headers = {"Authorization": f"Bearer {token}"}
@@ -210,6 +210,8 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
     captured = False
     settled = False
     capture_calls = 0
+    query_http_status = 200
+    verification_http_status = 200
     original_client = httpx.AsyncClient
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -236,13 +238,17 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
                 },
             )
         if path == "/v1/notifications/verify-webhook-signature":
-            return httpx.Response(200, json={"verification_status": "SUCCESS"})
+            return httpx.Response(
+                verification_http_status, json={"verification_status": "SUCCESS"}
+            )
         if path == f"/v2/checkout/orders/{paypal_order_id}/capture":
             capture_calls += 1
             captured = True
         else:
             assert path == f"/v2/checkout/orders/{paypal_order_id}"
             assert request.method == "GET"
+            if query_http_status != 200:
+                return httpx.Response(query_http_status, json={})
         unit = {"reference_id": order_no}
         if captured:
             unit["payments"] = {
@@ -292,6 +298,15 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
     assert denied.status_code == 200
     assert denied.json()["code"] == CommonCode.ORDER_NOT_FOUND
     assert capture_calls == 0
+
+    query_http_status = 503
+    unavailable = await real_async_client.post(
+        "/api/client/order/paypal/confirm", headers=headers, json={"order_no": order_no}
+    )
+    assert unavailable.status_code == 200
+    assert unavailable.json()["code"] == CommonCode.PAYMENT_GATEWAY_ERROR
+    assert capture_calls == 0
+    query_http_status = 200
 
     pending = await real_async_client.post(
         "/api/client/order/paypal/confirm", headers=headers, json={"order_no": order_no}
@@ -344,25 +359,37 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
         assert order.paid_amount == 39_000_000
         assert order.payment_transaction_id == f"CAPTURE{user_id}"
 
+    webhook_headers = {
+        "paypal-auth-algo": "SHA256withRSA",
+        "paypal-cert-url": "https://api-m.paypal.com/certs.pem",
+        "paypal-transmission-id": "one-time-test",
+        "paypal-transmission-sig": "test",
+        "paypal-transmission-time": "2026-10-20T00:00:00Z",
+    }
+    event = {
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "resource": {
+            "id": f"CAPTURE{user_id}",
+            "status": "COMPLETED",
+            "invoice_id": order_no,
+            "amount": {"currency_code": "USD", "value": "39.00"},
+            "supplementary_data": {"related_ids": {"order_id": paypal_order_id}},
+        },
+    }
+    # 只读临时故障请求渠道重投；明确拒绝和未分类故障保持 200。
+    for verification_http_status, expected_http_status in (
+        (503, 500),
+        (400, 200),
+        (500, 200),
+    ):
+        failed = await real_async_client.post(
+            "/api/callback/paypal/payment", headers=webhook_headers, json=event
+        )
+        assert failed.status_code == expected_http_status
+        assert failed.json()["code"] == CommonCode.INTERNAL_SERVER_ERROR
+    verification_http_status = 200
     replay = await real_async_client.post(
-        "/api/callback/paypal/payment",
-        headers={
-            "paypal-auth-algo": "SHA256withRSA",
-            "paypal-cert-url": "https://api-m.paypal.com/certs.pem",
-            "paypal-transmission-id": "one-time-test",
-            "paypal-transmission-sig": "test",
-            "paypal-transmission-time": "2026-10-20T00:00:00Z",
-        },
-        json={
-            "event_type": "PAYMENT.CAPTURE.COMPLETED",
-            "resource": {
-                "id": f"CAPTURE{user_id}",
-                "status": "COMPLETED",
-                "invoice_id": order_no,
-                "amount": {"currency_code": "USD", "value": "39.00"},
-                "supplementary_data": {"related_ids": {"order_id": paypal_order_id}},
-            },
-        },
+        "/api/callback/paypal/payment", headers=webhook_headers, json=event
     )
     assert replay.status_code == 200
     assert replay.json()["code"] == CommonCode.SUCCESS

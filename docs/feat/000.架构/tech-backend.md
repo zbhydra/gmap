@@ -68,7 +68,7 @@ HTTP 方法约束：**只能用 GET 和 POST**（根 `@../../../AGENTS.md` §3 �
 - `AppCommonException(code: CommonCode, ext_msg: str = "", *, data: dict | None = None, status_code: int | None = None)`：唯一业务异常，`code` 是 `i18n.common_code.CommonCode` 枚举，`ext_msg` 必须可定位（哪里的错误、错误的是什么、什么请求/接口/返回），`data` 携带 `wait_seconds` 等结构化附加；业务码与 HTTP 状态不同时由 `status_code` 显式指定。
 
 错误中间件：`middleware/error_handling.py` 的 `ErrorHandlingMiddleware`（洋葱模型最内层）。处理顺序：
-1. `AppCommonException` → `ResponseUtils.error(code, locale, data, status_code)`（**i18n 翻译**）；认证失败返回 HTTP 401，不记录异常堆栈。其他业务错误统一 HTTP 200，保留异常 ERROR 与堆栈（`@../../references/specs/spec-code.md` §2）。
+1. `AppCommonException` → `ResponseUtils.error(code, locale, data, status_code)`（**i18n 翻译**）；认证失败返回 HTTP 401，不记录异常堆栈。其他业务错误默认 HTTP 200，保留异常 ERROR 与堆栈（`@../../references/specs/spec-code.md` §2）；支付回调的分类应答见[支付失败分类与恢复边界](../004.订单系统/tech-支付与履约.md#81-失败分类与恢复边界)。
 2. FastAPI `RequestValidationError` → 应用级异常处理器返回 `VALIDATION_ERROR` 统一信封与 HTTP 200；消息带首个错误字段路径，代理 URL 错误使用包含项号及修正格式的 i18n 文案，不记录敏感输入。
 3. `pydantic.ValidationError` → 中间件翻译为 `VALIDATION_ERROR`。
 4. 其他未捕获 `Exception` → 记录带 `exc_info` 的 error，返回 HTTP 200，响应体 `code=500`。
