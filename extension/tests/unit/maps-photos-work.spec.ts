@@ -4,11 +4,11 @@ import type { JsonValue, RpcContext, RpcResponse } from '@/core/rpc/types'
 import { serve } from '@/core/rpc/serve'
 
 const source: RpcContext = {
-  transport: 'chrome', caller: 'content', tabId: 1,
+  caller: 'content', tabId: 1,
   senderUrl: 'https://www.google.com/maps/place/Gold'
 }
 const target: RpcContext = {
-  transport: 'chrome', caller: 'content', tabId: 2,
+  caller: 'content', tabId: 2,
   senderUrl: 'https://www.google.com.hk/search?q=Gold#lkt=LocalPoiPhotos'
 }
 const fid = '0x89c2597ca044ec9b:0xa0acdb1716592b4d'
@@ -23,9 +23,7 @@ describe('照片跨跳转采集意图', () => {
     vi.mocked(chrome.tabs.create).mockResolvedValue({ id: 2 } as chrome.tabs.Tab)
     vi.mocked(chrome.tabs.update).mockResolvedValue({ id: 2 } as chrome.tabs.Tab)
     const registration = serve('background', { photosWorkPage }, {
-      transports: ['chrome'],
       methodTargets: { photosWorkPage: ['content'] },
-      methodTransports: { photosWorkPage: ['chrome'] },
       requestLimits: { photosWorkPage: 1024 },
       responseLimits: { photosWorkPage: 1024 }
     })
@@ -63,6 +61,6 @@ describe('照片跨跳转采集意图', () => {
     const search = { ...source, senderUrl: 'https://www.google.com/search?q=Gold' }
     await expect(photosWorkPage({ action: 'open', fid }, search)).rejects.toThrow('地点页')
     await expect(photosWorkPage({ action: 'claim', tabId: 2 }, search)).rejects.toThrow('照片图库')
-    await expect(photosWorkPage({ action: 'claim' }, { transport: 'chrome', caller: 'content' })).rejects.toThrow('可信来源标签页')
+    await expect(photosWorkPage({ action: 'claim' }, { caller: 'content' })).rejects.toThrow('可信来源标签页')
   })
 })

@@ -1,7 +1,7 @@
 /**
  * RPC v2 核心类型。
  *
- * 新协议用上下文级 channel 描述 provider，用 caller 描述调用方身份，用 transport 描述消息承载方式。
+ * 新协议用上下文级 channel 描述 provider，用 caller 描述调用方身份；消息统一经 Chrome message 承载。
  */
 
 import type { DEFAULT_RPC_TIMEOUT } from './constants'
@@ -21,21 +21,17 @@ export type JsonArray = readonly JsonValue[]
 /** 可通过 RPC 安全序列化传输的值。 */
 export type JsonValue = JsonPrimitive | JsonObject | JsonArray
 
-/** RPC 传输实现名称。 */
-export type RpcTransportName = 'chrome' | 'event'
-
 /** RPC provider 所在上下文。 */
-export type RpcChannel = 'content' | 'injected' | 'background'
+export type RpcChannel = 'content' | 'background'
 
 /** RPC 调用方上下文。 */
-export type RpcCaller = 'content' | 'injected' | 'background' | 'popup'
+export type RpcCaller = 'content' | 'background' | 'popup'
 
 /** RPC 统一错误码。 */
 export type RpcErrorCode =
   | 'TIMEOUT'
   | 'TARGET_NOT_FOUND'
   | 'METHOD_NOT_FOUND'
-  | 'TRANSPORT_FORBIDDEN'
   | 'UNAUTHORIZED'
   | 'PAYLOAD_TOO_LARGE'
   | 'SERVER_ERROR'
@@ -74,8 +70,6 @@ export interface RpcResponse<TData = never> {
 
 /** RPC handler 执行上下文。 */
 export interface RpcContext {
-  /** 当前使用的传输类型。 */
-  transport: RpcTransportName
   /** 接收方推导出的调用方身份。 */
   caller: RpcCaller
   /** Chrome tab ID。 */
@@ -109,20 +103,6 @@ export interface RpcTransport {
   destroy(): void
 }
 
-/** EventRpc 使用的原生 DOM 方法句柄。 */
-export interface RpcEventDom {
-  /** 事件目标，通常为 document。 */
-  target: EventTarget
-  /** document_start 捕获的 addEventListener。 */
-  addEventListener: EventTarget['addEventListener']
-  /** document_start 捕获的 removeEventListener。 */
-  removeEventListener: EventTarget['removeEventListener']
-  /** document_start 捕获的 dispatchEvent。 */
-  dispatchEvent: EventTarget['dispatchEvent']
-  /** document_start 捕获的 CustomEvent 构造函数。 */
-  CustomEventCtor: typeof CustomEvent
-}
-
 /** RPC server handler 返回值。 */
 export type RpcServeResult = object | string | number | boolean | null | void
 
@@ -137,18 +117,12 @@ export type RpcServeHandlers = Record<string, RpcServeHandler>
 
 /** serve 注册配置。 */
 export interface ServeOptions {
-  /** 当前 server 启用的传输。 */
-  transports: readonly RpcTransportName[]
   /** 每个方法允许的 caller。 */
   methodTargets: Record<string, readonly RpcCaller[]>
-  /** 每个方法允许的 transport。 */
-  methodTransports: Record<string, readonly RpcTransportName[]>
   /** 每个方法请求体大小限制。 */
   requestLimits: Record<string, number>
   /** 每个方法响应体大小限制。 */
   responseLimits: Record<string, number>
-  /** EventRpc 使用的原生 DOM 句柄。 */
-  eventDom?: RpcEventDom
 }
 
 /** serve 返回的注册句柄。 */
@@ -172,14 +146,3 @@ export type RpcMethodParams<THandler, TMethod extends keyof THandler> = THandler
 export type RpcMethodResult<THandler, TMethod extends keyof THandler> = Awaited<
   THandler[TMethod] extends (...args: infer _TArgs) => infer TResult ? TResult : never
 >
-
-/** 捕获当前上下文的默认 DOM 句柄。 */
-export function getDefaultRpcEventDom(): RpcEventDom {
-  return {
-    target: document,
-    addEventListener: document.addEventListener,
-    removeEventListener: document.removeEventListener,
-    dispatchEvent: document.dispatchEvent,
-    CustomEventCtor: CustomEvent
-  }
-}

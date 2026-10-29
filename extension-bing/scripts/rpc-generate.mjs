@@ -15,16 +15,14 @@ import { fileURLToPath } from 'node:url'
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(scriptDir, '..')
 
-const validChannels = ['content', 'injected', 'background']
-const validCallers = ['content', 'injected', 'background', 'popup']
-const validTransports = ['chrome', 'event']
+const validChannels = ['content', 'background']
+const validCallers = ['content', 'background', 'popup']
 const generatedOutputDirs = ['src/popup/rpc', 'src/content/rpc', 'src/background/rpc']
-const transportMatrix = new Map([
-  ['popup->content', ['chrome']],
-  ['background->content', ['chrome']],
-  ['content->background', ['chrome']],
-  ['popup->background', ['chrome']],
-  ['content->injected', ['event']]
+const allowedRoutes = new Set([
+  'popup->content',
+  'background->content',
+  'content->background',
+  'popup->background'
 ])
 
 /** 读取生成器 manifest。 */
@@ -53,7 +51,6 @@ export function parseRegisterFile(registerFile, root = projectRoot) {
   const channel = getStringConst(exportedConsts, 'CHANNEL')
   const className = getStringConst(exportedConsts, 'CLASS_NAME')
   const methodTargets = parseStringArrayRecord(exportedConsts, 'METHOD_TARGETS')
-  const methodTransports = parseStringArrayRecord(exportedConsts, 'METHOD_TRANSPORTS')
   const requestLimits = parseNumberRecord(exportedConsts, 'METHOD_REQUEST_LIMITS')
   const responseLimits = parseNumberRecord(exportedConsts, 'METHOD_RESPONSE_LIMITS')
   const methodTimeouts = parseOptionalNumberRecord(exportedConsts, 'METHOD_TIMEOUTS')
@@ -67,7 +64,6 @@ export function parseRegisterFile(registerFile, root = projectRoot) {
     handlerType: `${capitalize(channel)}Handler`,
     methods,
     methodTargets,
-    methodTransports,
     requestLimits,
     responseLimits,
     methodTimeouts
@@ -89,27 +85,20 @@ export function validateRegister(register) {
 
   const methodNames = register.methods.map(method => method.name)
   assertCoveredKeys(register.relativePath, 'METHOD_TARGETS', methodNames, register.methodTargets)
-  assertCoveredKeys(register.relativePath, 'METHOD_TRANSPORTS', methodNames, register.methodTransports)
   assertCoveredKeys(register.relativePath, 'METHOD_REQUEST_LIMITS', methodNames, register.requestLimits)
   assertCoveredKeys(register.relativePath, 'METHOD_RESPONSE_LIMITS', methodNames, register.responseLimits)
   assertSubsetKeys(register.relativePath, 'METHOD_TIMEOUTS', methodNames, register.methodTimeouts)
 
   for (const method of register.methods) {
     const targets = register.methodTargets[method.name]
-    const transports = register.methodTransports[method.name]
     const requestLimit = register.requestLimits[method.name]
     const responseLimit = register.responseLimits[method.name]
     const timeout = register.methodTimeouts[method.name]
 
     validateStringUnion(register.relativePath, `METHOD_TARGETS.${method.name}`, targets, validCallers)
-    validateStringUnion(register.relativePath, `METHOD_TRANSPORTS.${method.name}`, transports, validTransports)
 
     if (targets.length === 0) {
       throw new Error(`[rpc-generate] METHOD_TARGETS.${method.name} must not be empty in ${register.relativePath}`)
-    }
-
-    if (transports.length === 0) {
-      throw new Error(`[rpc-generate] METHOD_TRANSPORTS.${method.name} must not be empty in ${register.relativePath}`)
     }
 
     if (!Number.isInteger(requestLimit) || requestLimit <= 0) {
@@ -125,35 +114,17 @@ export function validateRegister(register) {
     }
 
     for (const caller of targets) {
-      const matrixKey = `${caller}->${register.channel}`
-      const allowedTransports = transportMatrix.get(matrixKey)
-      if (!allowedTransports) {
-        throw new Error(`[rpc-generate] invalid target ${matrixKey} for ${register.relativePath}:${method.name}`)
-      }
-
-      const legalTransports = transports.filter(transport => allowedTransports.includes(transport))
-      if (legalTransports.length === 0) {
-        throw new Error(
-          `[rpc-generate] no legal transport for ${matrixKey} at ${register.relativePath}:${method.name}`
-        )
-      }
-
-      for (const transport of transports) {
-        if (!allowedTransports.includes(transport)) {
-          throw new Error(
-            `[rpc-generate] invalid transport ${transport} for ${matrixKey} at ${register.relativePath}:${method.name}`
-          )
-        }
+      const route = `${caller}->${register.channel}`
+      if (!allowedRoutes.has(route)) {
+        throw new Error(`[rpc-generate] invalid target ${route} for ${register.relativePath}:${method.name}`)
       }
     }
-
   }
 }
 
 /** 为 register 生成输出文件。 */
 export async function generateOutputs(registers, root = projectRoot) {
   const chromeTemplate = fs.readFileSync(path.join(root, 'src/core/rpc/generator/templates/chrome-client.ts.template'), 'utf8')
-  const eventTemplate = fs.readFileSync(path.join(root, 'src/core/rpc/generator/templates/event-client.ts.template'), 'utf8')
   const prettierConfig = readPrettierConfig(root)
   const outputs = []
 
@@ -166,10 +137,8 @@ export async function generateOutputs(registers, root = projectRoot) {
         continue
       }
 
-      const transport = getTransportForCaller(register, caller)
       const methods = register.methods.filter(method => register.methodTargets[method.name].includes(caller))
-      const template = transport === 'event' ? eventTemplate : chromeTemplate
-      const rawSource = renderClient(template, register, caller, transport, methods)
+      const rawSource = renderClient(chromeTemplate, register, caller, methods)
       const source = await prettier.format(rawSource, {
         ...prettierConfig,
         parser: 'typescript'
@@ -480,7 +449,7 @@ function collectCallers(register) {
 function getPossibleOutputPathsForRegister(register) {
   const outputPaths = []
   for (const caller of validCallers) {
-    if (!transportMatrix.has(`${caller}->${register.channel}`)) {
+    if (!allowedRoutes.has(`${caller}->${register.channel}`)) {
       continue
     }
 
@@ -509,21 +478,9 @@ function getOutputPath(caller, channel) {
   return null
 }
 
-/** 获取 caller 到 provider 的 transport。 */
-function getTransportForCaller(register, caller) {
-  const matrixKey = `${caller}->${register.channel}`
-  const allowedTransports = transportMatrix.get(matrixKey)
-  if (!allowedTransports) {
-    throw new Error(`[rpc-generate] output transport missing for ${matrixKey}`)
-  }
-  return allowedTransports[0]
-}
-
 /** 渲染客户端。 */
-function renderClient(template, register, caller, transport, methods) {
-  const methodSource = methods
-    .map(method => renderMethod(register, method, transport))
-    .join('\n\n')
+function renderClient(template, register, caller, methods) {
+  const methodSource = methods.map(method => renderMethod(register, method)).join('\n\n')
   const hasParamMethod = methods.some(method => method.hasParams)
 
   return template
@@ -538,7 +495,7 @@ function renderClient(template, register, caller, transport, methods) {
 }
 
 /** 渲染单个方法。 */
-function renderMethod(register, method, _transport) {
+function renderMethod(register, method) {
   const transportAccessor = 'this.transport'
   const timeout = register.methodTimeouts[method.name]
   const optionsExpression = timeout === undefined ? 'options' : `{ ...options, timeout: options?.timeout ?? ${timeout} }`

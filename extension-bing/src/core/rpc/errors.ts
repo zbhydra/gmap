@@ -62,14 +62,6 @@ export class RpcMethodNotFoundError extends RpcError {
   }
 }
 
-/** RPC 传输方向非法错误。 */
-export class RpcTransportForbiddenError extends RpcError {
-  /** 创建传输非法错误。 */
-  constructor(message: string) {
-    super('TRANSPORT_FORBIDDEN', message)
-  }
-}
-
 /** RPC 权限错误。 */
 export class RpcUnauthorizedError extends RpcError {
   /** 创建权限错误。 */
@@ -138,8 +130,6 @@ export function createRpcErrorFromResponse<TData>(response: RpcResponse<TData>):
       return new RpcTargetNotFoundError(message)
     case 'METHOD_NOT_FOUND':
       return new RpcMethodNotFoundError(message)
-    case 'TRANSPORT_FORBIDDEN':
-      return new RpcTransportForbiddenError(message)
     case 'UNAUTHORIZED':
       return new RpcUnauthorizedError(message)
     case 'PAYLOAD_TOO_LARGE':

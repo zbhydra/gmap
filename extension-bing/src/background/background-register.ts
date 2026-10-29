@@ -95,26 +95,6 @@ export const METHOD_TARGETS = {
   enrichBusinesses: ['content']
 } as const satisfies Record<keyof BackgroundHandler, readonly ('content' | 'popup')[]>
 
-/** background 方法允许传输。 */
-export const METHOD_TRANSPORTS = {
-  /** ping 使用 Chrome message。 */
-  ping: ['chrome'],
-  /** getState 使用 Chrome message。 */
-  getState: ['chrome'],
-  /** getRuntimeConfig 使用 Chrome message。 */
-  getRuntimeConfig: ['chrome'],
-  /** getBingConfig 使用 Chrome message。 */
-  getBingConfig: ['chrome'],
-  /** getGateState 使用 Chrome message。 */
-  getGateState: ['chrome'],
-  /** openExtensionLogin 使用 Chrome message。 */
-  openExtensionLogin: ['chrome'],
-  /** recordMark 使用 Chrome message。 */
-  recordMark: ['chrome'],
-  /** enrichBusinesses 使用 Chrome message。 */
-  enrichBusinesses: ['chrome']
-} as const satisfies Record<keyof BackgroundHandler, readonly ['chrome']>
-
 /** background 方法请求体限制，单位字节。 */
 export const METHOD_REQUEST_LIMITS = {
   /** ping 无业务参数。 */

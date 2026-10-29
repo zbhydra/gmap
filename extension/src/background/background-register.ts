@@ -169,36 +169,6 @@ export const METHOD_TARGETS = {
   deleteBulkTask: ['popup']
 } as const satisfies Record<keyof BackgroundHandler, readonly ('content' | 'popup')[]>
 
-/** background 方法允许传输。 */
-export const METHOD_TRANSPORTS = {
-  /** ping 使用 Chrome message。 */
-  ping: ['chrome'],
-  /** getState 使用 Chrome message。 */
-  getState: ['chrome'],
-  /** getRuntimeConfig 使用 Chrome message。 */
-  getRuntimeConfig: ['chrome'],
-  /** getMapsConfig 使用 Chrome message。 */
-  getMapsConfig: ['chrome'],
-  /** recordMark 使用 Chrome message。 */
-  recordMark: ['chrome'],
-  /** openExtensionLogin 使用 Chrome message。 */
-  openExtensionLogin: ['chrome'],
-  /** getMapsUsage 使用 Chrome message。 */
-  getMapsUsage: ['chrome'],
-  /** enrichMapsBusinesses 使用 Chrome message。 */
-  enrichMapsBusinesses: ['chrome'],
-  /** openPricingPage 使用 Chrome message。 */
-  openPricingPage: ['chrome'],
-  openBulkDashboard: ['chrome'],
-  photosWorkPage: ['chrome'],
-  /** 批量方法使用 Chrome message。 */
-  getBulkState: ['chrome'],
-  createBulkTask: ['chrome'],
-  startBulkTask: ['chrome'],
-  stopBulkTask: ['chrome'],
-  deleteBulkTask: ['chrome']
-} as const satisfies Record<keyof BackgroundHandler, readonly ['chrome']>
-
 /** background 方法请求体限制，单位字节。 */
 export const METHOD_REQUEST_LIMITS = {
   /** ping 无业务参数。 */

@@ -1,17 +1,13 @@
 /**
  * RPC v2 provider 注册入口。
  *
- * serve 负责统一监听 Chrome/Event 请求，并按 target、transport、payload 限制执行校验。
+ * serve 负责统一监听 Chrome message 请求，并按 caller、payload 限制执行校验。
  */
 
 import {
   DEFAULT_RPC_REQUEST_LIMIT,
   DEFAULT_RPC_RESPONSE_LIMIT,
-  RPC_EVENT_FRAME_OVERHEAD_LIMIT,
-  RPC_PROTOCOL_VERSION,
-  createRpcRequestEventName,
-  createRpcResponseEventName,
-  measureRpcTextBytes
+  RPC_PROTOCOL_VERSION
 } from './constants'
 import {
   RpcDuplicateChannelError,
@@ -21,7 +17,6 @@ import {
   RpcPayloadTooLargeError,
   RpcSerializationError,
   RpcServerError,
-  RpcTransportForbiddenError,
   RpcUnauthorizedError
 } from './errors'
 import type {
@@ -30,22 +25,16 @@ import type {
   RpcCaller,
   RpcChannel,
   RpcContext,
-  RpcEventDom,
   RpcRequest,
   RpcResponse,
   RpcServeHandlers,
   RpcServeRegistration,
   RpcServeResult,
-  RpcTransportName,
   ServeOptions
 } from './types'
-import { getDefaultRpcEventDom } from './types'
 
 /** 已启动的 provider channel。 */
 const activeChannels = new Set<RpcChannel>()
-
-/** EventRpc 不可信页面可见响应使用的固定服务端错误文案。 */
-const EVENT_SERVER_ERROR_MESSAGE = '[rpc] event handler failed'
 
 /** 注册 RPC provider。 */
 export function serve(
@@ -59,22 +48,12 @@ export function serve(
 
   activeChannels.add(channel)
 
-  const cleanupTasks: Array<() => void> = []
-
-  if (options.transports.includes('chrome')) {
-    cleanupTasks.push(registerChromeServer(channel, handlers, options))
-  }
-
-  if (options.transports.includes('event')) {
-    cleanupTasks.push(registerEventServer(channel, handlers, options))
-  }
+  const cleanup = registerChromeServer(channel, handlers, options)
 
   return {
     channel,
     stop() {
-      for (const cleanup of cleanupTasks.splice(0)) {
-        cleanup()
-      }
+      cleanup()
       activeChannels.delete(channel)
     }
   }
@@ -102,9 +81,7 @@ function registerChromeServer(
       .then(sendResponse)
       .catch(error => {
         console.error(error)
-        sendResponse(
-          toFailureResponse(request.id, error instanceof Error ? error : String(error), 'chrome')
-        )
+        sendResponse(toFailureResponse(request.id, error instanceof Error ? error : String(error)))
       })
 
     return true
@@ -114,60 +91,6 @@ function registerChromeServer(
 
   return () => {
     chrome.runtime.onMessage.removeListener(listener)
-  }
-}
-
-/** 注册 EventRpc server。 */
-function registerEventServer(
-  channel: RpcChannel,
-  handlers: RpcServeHandlers,
-  options: ServeOptions
-): () => void {
-  const eventDom = options.eventDom ?? getDefaultRpcEventDom()
-  const requestEventName = createRpcRequestEventName(channel)
-  const responseEventName = createRpcResponseEventName(channel)
-  const frameLimit = getEventFrameLimit(handlers, options)
-  const listener = (event: Event): void => {
-    const customEvent = event as CustomEvent<string>
-    if (typeof customEvent.detail !== 'string') {
-      return
-    }
-
-    // DOM transport 不可信；先限制原始字符串，避免页面在 JSON.parse 前塞入超大 frame。
-    if (measureRpcTextBytes(customEvent.detail) > frameLimit) {
-      return
-    }
-
-    const request = parseRequestText(channel, customEvent.detail)
-    if (!request) {
-      return
-    }
-
-    const context: RpcContext = {
-      transport: 'event',
-      // caller 只描述本通道的预期路由，不证明事件确实由 content 发出。
-      caller: 'content',
-      origin: location.origin
-    }
-
-    handleRpcRequest(channel, handlers, options, request, context)
-      .then(response => {
-        dispatchEventResponse(eventDom, responseEventName, response)
-      })
-      .catch(error => {
-        logRpcFailure(channel, request.method, error, 'event')
-        dispatchEventResponse(
-          eventDom,
-          responseEventName,
-          toFailureResponse(request.id, error instanceof Error ? error : String(error), 'event')
-        )
-      })
-  }
-
-  eventDom.addEventListener.call(eventDom.target, requestEventName, listener)
-
-  return () => {
-    eventDom.removeEventListener.call(eventDom.target, requestEventName, listener)
   }
 }
 
@@ -205,12 +128,8 @@ async function handleRpcRequest(
 
     return response
   } catch (error) {
-    logRpcFailure(channel, request.method, error, context.transport)
-    return toFailureResponse(
-      request.id,
-      error instanceof Error ? error : String(error),
-      context.transport
-    )
+    console.error(error)
+    return toFailureResponse(request.id, error instanceof Error ? error : String(error))
   }
 }
 
@@ -237,7 +156,7 @@ function validateRequest(channel: RpcChannel, request: RpcRequest<JsonValue>): v
   }
 }
 
-/** 校验方法权限和传输方向。 */
+/** 校验方法调用方权限。 */
 function validateMethodAccess(method: string, context: RpcContext, options: ServeOptions): void {
   const allowedTargets = options.methodTargets[method]
   if (!allowedTargets?.includes(context.caller)) {
@@ -245,19 +164,11 @@ function validateMethodAccess(method: string, context: RpcContext, options: Serv
       `[rpc] caller ${context.caller} cannot call method: ${method}, allowed=${allowedTargets?.join(',') ?? 'none'}`
     )
   }
-
-  const allowedTransports = options.methodTransports[method]
-  if (!allowedTransports?.includes(context.transport)) {
-    throw new RpcTransportForbiddenError(
-      `[rpc] transport ${context.transport} cannot call method: ${method}`
-    )
-  }
 }
 
 /** 推导 Chrome 调用方上下文。 */
 function inferChromeContext(channel: RpcChannel, sender: chrome.runtime.MessageSender): RpcContext {
   return {
-    transport: 'chrome',
     caller: inferChromeCaller(channel, sender),
     tabId: sender.tab?.id,
     frameId: sender.frameId,
@@ -319,17 +230,6 @@ function parseRequest(
   }
 }
 
-/** 解析 Event detail 请求。 */
-function parseRequestText(channel: RpcChannel, requestText: string): RpcRequest<JsonValue> | null {
-  try {
-    const message = JSON.parse(requestText) as JsonValue
-    return parseRequest(channel, message)
-  } catch (error) {
-    console.error(`[rpc:${channel}] Event 请求文本解析失败:`, error)
-    return null
-  }
-}
-
 /** 判断值是否为 JSON 对象。 */
 function isJsonObject(value: JsonValue | undefined): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -338,15 +238,6 @@ function isJsonObject(value: JsonValue | undefined): value is JsonObject {
 /** 获取请求体限制。 */
 function getRequestLimit(method: string, options: ServeOptions): number {
   return options.requestLimits[method] ?? DEFAULT_RPC_REQUEST_LIMIT
-}
-
-/** 计算 EventRpc 原始 frame 上限，只考虑当前 provider 实际拥有的 handler。 */
-function getEventFrameLimit(handlers: RpcServeHandlers, options: ServeOptions): number {
-  const maxRequestLimit = Object.keys(handlers).reduce(
-    (currentMax, method) => Math.max(currentMax, getRequestLimit(method, options)),
-    0
-  )
-  return maxRequestLimit + RPC_EVENT_FRAME_OVERHEAD_LIMIT
 }
 
 /** 获取响应体限制。 */
@@ -386,17 +277,10 @@ function measureJsonBytes(value: JsonValue | RpcServeResult): number {
 /** 转换失败响应。 */
 function toFailureResponse(
   id: string,
-  error: Error | string | number | boolean | null,
-  transport: RpcTransportName
+  error: Error | string | number | boolean | null
 ): RpcResponse<RpcServeResult> {
   if (error instanceof RpcError) {
     return error.toResponse(id) as RpcResponse<RpcServeResult>
-  }
-
-  if (transport === 'event') {
-    return new RpcServerError(EVENT_SERVER_ERROR_MESSAGE).toResponse(
-      id
-    ) as RpcResponse<RpcServeResult>
   }
 
   if (error instanceof Error) {
@@ -404,48 +288,4 @@ function toFailureResponse(
   }
 
   return new RpcServerError(String(error)).toResponse(id) as RpcResponse<RpcServeResult>
-}
-
-/**
- * 记录 RPC 失败。
- *
- * EventRpc 面向不可信 DOM，不能把 handler 原始错误对象写入页面控制台；Chrome
- * transport 保留原有详细错误，便于扩展自身上下文定位问题。
- */
-function logRpcFailure(
-  channel: RpcChannel,
-  method: string,
-  error: unknown,
-  transport: RpcTransportName
-): void {
-  if (transport === 'chrome') {
-    console.error(error)
-    return
-  }
-
-  const classification = error instanceof RpcError ? 'protocol' : 'handler'
-  const code = error instanceof RpcError ? error.code : 'SERVER_ERROR'
-  console.error(
-    `[rpc] event request failed: channel=${channel}, method=${method}, classification=${classification}, code=${code}`
-  )
-  if (__DEV__) {
-    console.error(error)
-  }
-}
-
-/** 序列化响应。 */
-function stringifyResponse(response: RpcResponse<RpcServeResult>): string {
-  return JSON.stringify(response)
-}
-
-/** 通过固定响应事件返回 EventRpc 结果。 */
-function dispatchEventResponse(
-  eventDom: RpcEventDom,
-  responseEventName: string,
-  response: RpcResponse<RpcServeResult>
-): void {
-  eventDom.dispatchEvent.call(
-    eventDom.target,
-    new eventDom.CustomEventCtor(responseEventName, { detail: stringifyResponse(response) })
-  )
 }

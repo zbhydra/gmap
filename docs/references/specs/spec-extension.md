@@ -27,7 +27,7 @@
 ## 4. 四上下文
 
 - **background**（MV3 service worker，可被浏览器终止并在事件到来时重启）、**content**（隔离 world，业务编排）、**injected**（MAIN world，捕获原生 DOM API）、**popup/options**（Vue UI）。background 不得依赖模块级内存跨生命周期持久存在，需持久化的数据使用 `chrome.storage`。
-- **injected 无 `chrome.*` API**，与 content 通信用 EventRpc（CustomEvent）。
+- **injected 无 `chrome.*` API**，Maps MAIN world 通过站点专属 CustomEvent 向 content 转发搜索 XHR 响应；入口见 `extension/src/injected/index.ts`。
 - background `onSuspend` 时 `messageRouter.destroy()` 释放资源。
 
 ## 5. 组件与样式
@@ -58,9 +58,9 @@
 ## 8. 消息通信（RPC v2，核心）
 
 - 项目自研 RPC 框架，**业务代码禁止直连 `chrome.runtime.sendMessage`**。
-- 新增能力流程：`*-register.ts` 声明（Handler 签名 + `METHOD_TARGETS` + `METHOD_TRANSPORTS` + `METHOD_REQUEST_LIMITS`/`RESPONSE_LIMITS`）→ `pnpm rpc-generate` 生成 typed client → 调用。
-- 双传输：`chrome`（popup↔content↔background）、`event`（content↔injected，因 MAIN world 无 chrome API）。
-- EventRpc 是宿主页面可伪造的非可信边界，只允许承载不授予 Chrome、存储、token 或后端权限的参数；运行时日志配置按 `background → content → injected` 分发即属于此类无权限布尔配置。
+- 新增能力流程：`*-register.ts` 声明（Handler 签名 + `METHOD_TARGETS` + `METHOD_REQUEST_LIMITS`/`METHOD_RESPONSE_LIMITS`）→ `pnpm rpc-generate` 生成 typed client → 调用。
+- RPC 统一使用 Chrome message；调用方向由各端 `scripts/rpc-generate.mjs` 的 `allowedRoutes` 限定，运行时按浏览器 sender 推导调用方并校验 `METHOD_TARGETS`。
+- Maps MAIN world 的单向采集事件与权限边界见 [插件 RPC 系统](../../feat/000.架构/tech-插件RPC.md#3-页面采集事件边界)。
 - payload 字节上限是协议一等公民，超限抛 `RpcPayloadTooLargeError`；大对象显式调大 limit。
 - 不用 `chrome.runtime.connect` Port，全 request-response。
 - 广播事件用 `ChromeEventEmitter` / `Subscriber`。
@@ -74,7 +74,7 @@
 
 ## 10. 错误与日志
 
-- 自研 Logger 分级（dev=DEBUG / prod=ERROR，`error` 永远输出）。生产构建仅在扩展自有 `chrome.storage.local.debug_logging` 严格等于布尔 `true` 时启用 DEBUG；background 是配置所有者，content / popup 通过 Chrome RPC 获取，content 再通过 EventRpc 同步给 injected。读取或同步失败保持 prod=ERROR，不阻塞页面业务初始化。
+- 自研 Logger 分级（dev=DEBUG / prod=ERROR，`error` 永远输出）。生产构建仅在扩展自有 `chrome.storage.local.debug_logging` 严格等于布尔 `true` 时启用 DEBUG；background 是配置所有者，popup 通过 Chrome RPC 获取；content / injected 使用构建环境对应的默认级别。读取失败保持 prod=ERROR，不阻塞业务初始化。
 - catch 并处理或终止异常传播时，记录 `logger.error` / `console.error`；仅补充上下文后继续上抛且上层统一记录时不重复日志。
 - RPC 错误使用 `core/rpc/errors.ts` 的 `RpcError` 子类，API 错误用 `ApiError(message, status, code, data)`，业务错误自动 toast（除非 `skipErrorToast`）。
 - msg 三要素见 [[spec-code]] §2。

@@ -14,7 +14,6 @@ describe('RPC errors', () => {
     ['TIMEOUT', 'RpcTimeoutError'],
     ['TARGET_NOT_FOUND', 'RpcTargetNotFoundError'],
     ['METHOD_NOT_FOUND', 'RpcMethodNotFoundError'],
-    ['TRANSPORT_FORBIDDEN', 'RpcTransportForbiddenError'],
     ['UNAUTHORIZED', 'RpcUnauthorizedError'],
     ['PAYLOAD_TOO_LARGE', 'RpcPayloadTooLargeError'],
     ['SERIALIZATION_ERROR', 'RpcSerializationError'],

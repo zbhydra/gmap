@@ -17,8 +17,7 @@ import {
   CHANNEL,
   METHOD_REQUEST_LIMITS,
   METHOD_RESPONSE_LIMITS,
-  METHOD_TARGETS,
-  METHOD_TRANSPORTS
+  METHOD_TARGETS
 } from '@/background/background-register'
 import { markApi } from '@/core/api/mark'
 import { MARK_TYPE, type MarkType } from '@/core/api/mark/types'
@@ -134,9 +133,7 @@ export class BackgroundMessageRouter {
    */
   setupListener(): void {
     this.rpcRegistration = serve(CHANNEL, this.createRpcHandlers(), {
-      transports: ['chrome'],
       methodTargets: METHOD_TARGETS,
-      methodTransports: METHOD_TRANSPORTS,
       requestLimits: METHOD_REQUEST_LIMITS,
       responseLimits: METHOD_RESPONSE_LIMITS
     })

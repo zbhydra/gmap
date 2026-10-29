@@ -9,7 +9,7 @@
 | 源 feat | 一句话 | 000 归宿 | 与代码一致 |
 | --- | --- | --- | --- |
 | `feat.009 多站点目录结构重构` | 插件按「站点优先」重组:`shared/` → `core/`(通用)、新增 `sites/telegram/`(TG 专用)、popup `isTelegramTab()` 泛化为 `isSupportedTab()` | `@../tech-extension.md` §A2 已充分覆盖(`core/` 共享层 + `sites/telegram/` + 三上下文) | 一致,已落地 |
-| `feat.010 重构插件RPC系统` | 插件跨上下文 RPC:声明式注册、代码生成、调用矩阵、固定 EventRpc 通道与权限边界 | `@../tech-extension.md` §A3(骨架) + `@../tech-插件RPC.md`(契约与站点边界) | 源文档的私有通道和复杂下载语义已过时；现行目标以归宿文档为准 |
+| `feat.010 重构插件RPC系统` | 插件跨上下文 RPC:声明式注册、代码生成、Chrome message 调用矩阵与权限边界 | `@../tech-extension.md` §A3(骨架) + `@../tech-插件RPC.md`(契约与站点边界) | 源文档的私有通道和复杂下载语义已过时；现行目标以归宿文档为准 |
 | `feat.033 website前端SLS日志双写` | website 前端 mark-log 阿里云 SLS WebTracking 旁路双写 + 全局异常/后端连接失败捕获；extension 另有只写 SLS 的 mark-log 入口 | `@../tech-website.md` §7(website 机制) + `@../tech-extension.md` §A7(extension 机制) + `@../tech-可观测与SLS.md`(字段表/环境变量/URL/脱敏/异常事件) | 一致,实现多出 `inferSlsMarkSite` 兜底、指纹去重与 extension 只写 SLS mark-log |
 | `feat.043 后端 Crons 定时任务框架` | 后端统一 crons 框架:注册表 + MySQL 游标领取 + 调度器 + 执行器,声明式注册 | `@../tech-backend.md` §6(骨架) + `@../tech-Crons框架.md`(细节:Spec 字段/领取 SQL/常量/daily 时区) | **部分过时**(见下) |
 | `feat.008 SMTP多账号发送` | 后端邮件发送基础设施:SMTP 多账号权重轮换 + 单次请求内失败排除 + i18n 模板 + 密码脱敏 | `@../tech-邮件发送.md`(细节:账号池/权重抽取/失败语义/模板/配置项) | 一致,已落地 |

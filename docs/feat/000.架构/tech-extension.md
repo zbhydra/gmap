@@ -21,18 +21,16 @@ extension/src/
 ├── background/           # Service Worker 上下文
 │   ├── index.ts          # SW 入口（device_id 初始化）
 │   ├── background-register.ts
-│   ├── rpc/content.rpc.ts
-│   └── services/         # BackgroundMessageRouter / BrowserDownloadService / BadgeManager
+│   └── services/         # BackgroundMessageRouter 与后台业务服务
 ├── content/              # Content Script 上下文
-│   ├── content-register.ts
-│   └── rpc/              # background / injected / 唯一 injectedClient
+│   └── rpc/              # background typed client
 ├── injected/             # MAIN world 注入上下文
-│   └── injected-register.ts
+│   └── index.ts          # Maps 搜索 XHR 拦截与采集事件转发
 ├── core/                 # 跨上下文共享核心（插件内部共享层）
 │   ├── api/              # config.ts / client/(HttpClient,interceptors) / auth/ mark/ quota/ subscription/ order/
-│   ├── rpc/              # 自研 RPC 框架（见 A4）
-│   │   ├── serve.ts / errors.ts / injectedReady.ts
-│   │   ├── transports/   # ChromeRpcTransport / EventRpcTransport
+│   ├── rpc/              # 自研 RPC 框架（见 A3）
+│   │   ├── serve.ts / errors.ts
+│   │   ├── transports/   # ChromeRpcTransport
 │   │   ├── types.ts / constants.ts
 │   │   └── generator/    # manifest.json + templates（代码生成）
 │   ├── stores/           # authStore.ts / quotaStore.ts（Pinia）
@@ -46,26 +44,17 @@ extension/src/
 ```
 
 **上下文划分**：
-- `background/`（Service Worker）、`content/`（Content Script）、`injected/`（MAIN world 注入页上下文）各有独立入口与 `*-register.ts`。
+- `background/`（Service Worker）通过 `background-register.ts` 声明 RPC；`content/` 调用 background，Maps 的 `injected/`（MAIN world）只向 content 转发站点搜索响应。
 - 旧 `options/` 设置页已删除；`popup/`（弹窗 UI）承载资源列表、登录状态、额度/升级入口，底部固定显示可点击、可复制的支持邮箱，复制结果通过全局 Toast 反馈。Popup 最小尺寸为 600×400px；空态资源区填满 header 与 footer 之间的剩余空间，footer 位于 400px 底边，有资源时列表按内容自然增高。未登录按钮经真实 background RPC 发起 v3 浏览器身份登录（background `launchWebAuthFlow` 打开官网统一确认页 `/extension-login`，用户确认后一次性 code 回跳换取插件独立 token，2026-09-01 替代原 v2 `externally_connectable` 官网推送桥）；Popup 内没有邮箱验证码登录弹窗。
-- `core/` 是**跨上下文共享核心**——API 客户端、RPC 框架、Pinia store、协议、存储和 `core/content/download/` 的共享单项下载编排。需要页面媒体 API、分片读取或 mux 的来源由各站点 injected provider 负责；可直接保存的 Vimeo Progressive/Thumbnail 由 content 分流到 background 的 Chrome 下载管理器。Telegram 特有解析留在 `sites/telegram/`。
-- Instagram 的生产路径固定为 `PageContext -> routeMediaStore Map -> parser/resolver -> buttons/Popup -> downloadOne/downloadMany -> fixed EventRpc`。DOM 只证明实体和挂载位置，主媒体不来自 thumbnail、poster、CSS 背景或 blob/data URL。
+- `core/` 是**跨上下文共享核心**，包含 API 客户端、RPC 框架、Pinia store、协议和存储；站点采集逻辑位于各端的 `sites/maps/` 或 `sites/bing/`。
 
 ### A3. RPC 系统（自研 v2，声明式 + 代码生成）
 
-目录：`extension/src/core/rpc/`。
+双插件的 RPC 实现位于各自 `src/core/rpc/`，通过 Chrome message 连接 popup/content 与 background。方法声明、生成流程、权限与 payload 边界见 [插件 RPC 系统](tech-插件RPC.md)。
 
-- **两种 transport**：
-  - `ChromeRpcTransport`：走 `chrome.runtime` message（popup ↔ content ↔ background）。
-  - `EventRpcTransport`：走固定 DOM `CustomEvent` 通道（content ↔ injected）。
-- **EventRpc 信任边界**：DOM transport 对宿主页面可观察、可伪造、可干扰，这一风险被明确接受。入口只做 method allowlist、请求结构和 payload 大小校验；Event handler 的内部异常只向 DOM 返回固定中性错误，Chrome transport 仍保留可定位错误。Chrome API、storage、token、额度和后端权限操作只留在 content/background，站点下载与解析仍校验 host、redirect、MIME 和媒体类型。
-- **运行时日志配置**：扩展不访问宿主页面 Web Storage。生产 DEBUG 开关只存于扩展自有 `chrome.storage.local`，由 background 读取；popup / content 通过 Chrome RPC 获取，content 在 injected ready 后再经非可信 EventRpc 把已收窄的布尔配置同步到 MAIN world。EventRpc 不获得存储读取能力，配置读取或同步失败时各上下文保持生产默认 ERROR 级别，页面业务继续初始化。
-- **Maps 采集与导出**：宿主页面采集和结果导出归 [Maps 插件](../013.Maps插件/feat.md) 与 [Bing 插件](../016.Bing插件/feat.md)。历史媒体下载平台的 RPC 与每日下载额度不作为现役产品合同。
-- **声明式注册 + 代码生成**：每个上下文写 `*-register.ts`，只声明方法签名（`Handler` 对象返回 `declarationOnly(...)`），不含实现。
-- 生成器 `scripts/rpc-generate.mjs` 读取 `core/rpc/generator/manifest.json` 列出的 register 文件 → 校验**调用矩阵**（`transportMatrix`：popup→content、background→content、content/popup→background 用 chrome；content→injected 用 event）→ 生成 typed client 到 `popup/rpc/`、`content/rpc/`、`background/rpc/`。
-- **一致性保证**：`pnpm rpc-generate:check` 挂在 `pretype-check` / `prebuild`，生成产物与声明不一致则构建失败。
+Maps 的 MAIN world 入口保留站点搜索 XHR 拦截，使用单向 CustomEvent 向 content 转发响应；Bing 采集在 content 中执行。两端采集与导出合同分别见 [Maps 插件](../013.Maps插件/feat.md) 和 [Bing 插件](../016.Bing插件/feat.md)。
 
-详见 `feat.010.重构插件RPC系统`。
+运行时日志配置由 background 从扩展自有 `chrome.storage.local` 读取，popup 通过 `getRuntimeConfig()` 获取；content 与 Maps injected 使用构建环境对应的默认日志级别。
 
 ### A4. Store（Pinia，分散在各上下文）
 
@@ -140,7 +129,7 @@ admin/deploy/       # deploy.sh + tg-admin.conf（nginx）+ .env.example
 ## C. 三前端关系速览
 
 - **website**（Astro 静态站，nginx）面向终端用户做 SEO/落地页，引导安装 extension。
-- **extension / extension-bing**（Chrome MV3）分别运行在 Google Maps / Bing Maps，跨上下文 RPC 使用 chrome message + DOM event；登录、订阅与用量调用同一后端。
+- **extension / extension-bing**（Chrome MV3）分别运行在 Google Maps / Bing Maps，跨上下文 RPC 使用 Chrome message；登录、订阅与用量调用同一后端。
 - **admin**（独立 Vue SPA，nginx @ admin 域，Vite proxy → :7600）管后台，走 `/api/admin/*`。
 - website 与 admin 无代码共享；website 运行时代码在其 `src/` 内（components、download、scripts/homepage），无独立共享包；extension 的 `core/` 是其内部共享层。
 - 三个前端 + 后端 business 共用同一套 HTTP 契约与错误信封（`{code,data,msg}`，`code=10000` 为成功）。
