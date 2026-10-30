@@ -18,7 +18,7 @@
           <span class="db-runpill-name truncate">{{ runningTask.name }}</span>
           <span class="mono"
             ><span v-roll="stats(runningTask).done"></span> /
-            {{ format(runningTask.items.length) }}</span
+            {{ format(runningTask.itemCount) }}</span
           ><Icon :name="IconName.CHEVRON_RIGHT" :size="IconSize.XS" />
         </button>
         <a
@@ -108,26 +108,26 @@
             @click="showView('history')"
           >
             <Icon :name="IconName.HISTORY" />{{ t(D.HISTORY)
-            }}<span v-roll="tasks.length" class="badge badge--count"></span>
+            }}<span v-roll="state.total" class="badge badge--count"></span>
           </button>
           <span class="tab-ink" aria-hidden="true" :style="viewIndicator"></span>
         </div>
         <div
           class="db-slots"
           :class="{
-            'tone-warn': state.tasks.length >= 140,
-            'tone-bad': state.tasks.length >= BULK_LIMITS.maxTasks
+            'tone-warn': state.totalTasks >= 140,
+            'tone-bad': state.totalTasks >= BULK_LIMITS.maxTasks
           }"
         >
           <span
             ><b class="mono"
-              ><span v-roll="state.tasks.length"></span> / {{ BULK_LIMITS.maxTasks }}</b
+              ><span v-roll="state.totalTasks"></span> / {{ BULK_LIMITS.maxTasks }}</b
             >
             {{ t(D.SLOTS_HINT) }}</span
           >
           <span
             class="progress progress--sm"
-            :style="{ '--p': (state.tasks.length / BULK_LIMITS.maxTasks) * 100 }"
+            :style="{ '--p': (state.totalTasks / BULK_LIMITS.maxTasks) * 100 }"
             aria-hidden="true"
             ><span class="progress-fill"></span
           ></span>
@@ -725,7 +725,7 @@
                 <Icon :name="IconName.PLUS" />{{ t(D.SECTION_CREATE) }}
               </button>
               <p class="field-hint">
-                {{ t(D.HISTORY_HINT, { count: state.tasks.length, max: BULK_LIMITS.maxTasks }) }}
+                {{ t(D.HISTORY_HINT, { count: state.totalTasks, max: BULK_LIMITS.maxTasks }) }}
               </p>
             </div>
             <div v-else class="card db-history-wrap">
@@ -745,7 +745,9 @@
                     :key="task.id"
                     :class="{ 'is-active': task.status === 'running' }"
                   >
-                    <td class="cell-index mono">{{ index + 1 }}</td>
+                    <td class="cell-index mono">
+                      {{ (state.page - 1) * BULK_TASK_PAGE_SIZE + index + 1 }}
+                    </td>
                     <td class="db-cell-task">
                       <button type="button" class="db-task-name" @click="openTask(task)">
                         {{ task.name }}
@@ -763,7 +765,7 @@
                       <div class="db-prog">
                         <span class="mono"
                           ><b v-roll="stats(task).done"></b
-                          ><span class="subtle"> / {{ format(task.items.length) }}</span></span
+                          ><span class="subtle"> / {{ format(task.itemCount) }}</span></span
                         ><span
                           class="progress progress--sm"
                           :class="{ 'is-live': task.status === 'running' }"
@@ -805,6 +807,27 @@
                     </td></tr
                 ></TransitionGroup>
               </table>
+              <nav v-if="pageCount > 1" class="row db-pagination" :aria-label="t(D.HISTORY)">
+                <button
+                  class="btn btn-secondary btn-sm"
+                  type="button"
+                  :disabled="page <= 1 || submitting"
+                  @click="changePage(page - 1)"
+                >
+                  {{ t(D.PREVIOUS_PAGE) }}
+                </button>
+                <span class="mono" role="status">{{
+                  t(D.PAGE_STATUS, { page: state.page, pages: pageCount })
+                }}</span>
+                <button
+                  class="btn btn-secondary btn-sm"
+                  type="button"
+                  :disabled="page >= pageCount || submitting"
+                  @click="changePage(page + 1)"
+                >
+                  {{ t(D.NEXT_PAGE) }}
+                </button>
+              </nav>
             </div>
           </div>
         </Transition>
@@ -905,11 +928,13 @@ import { estimateBulkRecords } from '@/background/batch/quota'
 import { buildReviewWorkUrl } from '@/background/batch/workUrl'
 import {
   BULK_LIMITS,
+  BULK_TASK_PAGE_SIZE,
   type BulkErrorCode,
-  type BulkState,
-  type BulkTask,
+  type BulkTaskDetail,
   type BulkTaskItem,
+  type BulkTaskPage,
   type BulkTaskStatus,
+  type BulkTaskSummary,
   type BulkTaskType
 } from '@/background/batch/types'
 
@@ -928,7 +953,8 @@ function sendMark(markType: (typeof MARK_TYPE)[keyof typeof MARK_TYPE], markMsg:
     .catch(error => logger.error(`[Dashboard] ${markType} 打点失败:`, error))
 }
 const stateSubscriber = new ChromeEventSubscriber<ExtensionEvents>()
-const state = ref<BulkState>({ version: 1, tasks: [] })
+const state = ref<BulkTaskPage>({ tasks: [], total: 0, totalTasks: 0, page: 1, runningTask: null })
+const page = ref(1)
 const taskType = ref<BulkTaskType>(
   new URLSearchParams(location.search).get('type') === '1' ? 'review-urls' : 'keywords'
 )
@@ -939,6 +965,7 @@ const reviewLimits = Array.from({ length: 25 }, (_, index) => (index + 1) * 100)
 const retryCount = ref(1)
 const view = ref<'create' | 'history'>('create')
 const selectedTaskId = ref<string | null>(null)
+const selectedTask = ref<BulkTaskDetail | null>(null)
 const submitting = ref(false)
 const submitted = ref(false)
 const usage = ref<MapsUsageSnapshot | null>(null)
@@ -953,10 +980,8 @@ const taskMenu = ref<HTMLDivElement | null>(null)
 const deleteDialog = ref<HTMLDialogElement | null>(null)
 const menuTaskId = ref<string | null>(null)
 const deleteTargetId = ref<string | null>(null)
-const menuTask = computed(() => state.value.tasks.find(task => task.id === menuTaskId.value))
-const deleteTarget = computed(() =>
-  state.value.tasks.find(task => task.id === deleteTargetId.value)
-)
+const menuTask = computed(() => findTask(menuTaskId.value))
+const deleteTarget = computed(() => findTask(deleteTargetId.value))
 const toolTabs = ref<HTMLDivElement | null>(null)
 const viewTabs = ref<HTMLDivElement | null>(null)
 const toolIndicator = ref({ width: '0px', transform: 'translateX(0px)' })
@@ -971,13 +996,9 @@ let noticeStarted = 0
 let lastAnnouncedAt = 0
 let removeSettingsListener: (() => void) | null = null
 
-const tasks = computed(() =>
-  state.value.tasks.filter(task => task.type === taskType.value).reverse()
-)
-const selectedTask = computed(
-  () => state.value.tasks.find(task => task.id === selectedTaskId.value) ?? null
-)
-const runningTask = computed(() => state.value.tasks.find(task => task.status === 'running'))
+const tasks = computed(() => state.value.tasks)
+const pageCount = computed(() => Math.max(1, Math.ceil(state.value.total / BULK_TASK_PAGE_SIZE)))
+const runningTask = computed(() => state.value.runningTask)
 const activeView = computed(() => (selectedTask.value ? 'history' : view.value))
 const lines = computed(() =>
   draft.value.items ? draft.value.items.split('\n').map(line => line.trim()) : []
@@ -1031,38 +1052,16 @@ const selectedRows = computed(
           : null
     })) ?? []
 )
-const taskStats = computed(() =>
-  Object.fromEntries(
-    state.value.tasks.map(task => {
-      const counts = {
-        done: 0,
-        complete: 0,
-        skipped: 0,
-        stuck: 0,
-        invalid: 0,
-        tries: 0,
-        records: 0
-      }
-      for (const item of task.items) {
-        counts.tries += item.tries
-        if (item.status === 'complete') {
-          counts.complete++
-          counts.records += item.collected
-        }
-        if (item.status === 'skipped') counts.skipped++
-        if (item.skipReason === 'stuck') counts.stuck++
-        if (item.skipReason === 'invalid-url') counts.invalid++
-      }
-      counts.done = counts.complete + counts.skipped
-      return [task.id, counts]
-    })
-  )
-)
-function stats(task: BulkTask) {
-  return taskStats.value[task.id]!
+function findTask(taskId: string | null): BulkTaskSummary | undefined {
+  return selectedTask.value?.id === taskId
+    ? selectedTask.value
+    : state.value.tasks.find(task => task.id === taskId)
 }
-function progress(task: BulkTask): number {
-  return task.items.length ? Math.floor((stats(task).done / task.items.length) * 100) : 0
+function stats(task: BulkTaskSummary) {
+  return task.stats
+}
+function progress(task: BulkTaskSummary): number {
+  return task.itemCount ? Math.floor((stats(task).done / task.itemCount) * 100) : 0
 }
 function format(value: number): string {
   return new Intl.NumberFormat(locale.value).format(value)
@@ -1091,8 +1090,8 @@ const vRoll: Directive<HTMLElement, number> = {
 function validReviewUrl(value: string): boolean {
   return buildReviewWorkUrl(value, '', 0, reviewsLimit.value, 1) !== null
 }
-function taskMeta(task: BulkTask): string {
-  const parts = [t(D.ITEM_COUNT, { count: format(task.items.length) }, task.items.length)]
+function taskMeta(task: BulkTaskSummary): string {
+  const parts = [t(D.ITEM_COUNT, { count: format(task.itemCount) }, task.itemCount)]
   if (task.type === 'review-urls')
     parts.push(
       t(D.QUOTA_RULE_REVIEWS, {
@@ -1122,24 +1121,35 @@ function updateIndicators(): void {
 function selectType(type: BulkTaskType): void {
   if (submitting.value) return
   taskType.value = type
+  page.value = 1
   selectedTaskId.value = null
+  selectedTask.value = null
   submitted.value = false
   clearNotice()
   const url = new URL(location.href)
   url.searchParams.set('type', type === 'review-urls' ? '1' : '0')
   history.replaceState(null, '', url)
+  void refreshState()
 }
 function showView(next: 'create' | 'history'): void {
   view.value = next
   selectedTaskId.value = null
+  selectedTask.value = null
   submitted.value = false
 }
-function openTask(task: BulkTask): void {
+async function openTask(task: BulkTaskSummary): Promise<void> {
   if (submitting.value) return
-  selectType(task.type)
+  if (task.type !== taskType.value) selectType(task.type)
   selectedTaskId.value = task.id
+  selectedTask.value = null
   following.value = true
-  void nextTick(jumpToCurrent)
+  clearNotice()
+  await refreshState()
+  await nextTick(jumpToCurrent)
+}
+async function changePage(next: number): Promise<void> {
+  page.value = next
+  await refreshState()
 }
 function onTabKey(event: KeyboardEvent, group: 'tool' | 'view'): void {
   if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
@@ -1167,12 +1177,8 @@ const flashTimers = new Map<number, number>()
  * 用下标标识行（表格 v-for 即以 index 为 key）；只处理当前选中任务，
  * 初次加载时前一份状态为空，不会误闪。
  */
-function flashCompletedRows(previous: BulkState, next: BulkState): void {
-  const taskId = selectedTaskId.value
-  if (!taskId) return
-  const before = previous.tasks.find(task => task.id === taskId)
-  const after = next.tasks.find(task => task.id === taskId)
-  if (!before || !after) return
+function flashCompletedRows(before: BulkTaskDetail | null, after: BulkTaskDetail | null): void {
+  if (!before || !after || before.id !== after.id) return
   after.items.forEach((item, index) => {
     const previousItem = before.items[index]
     if (!previousItem || previousItem.status === item.status) return
@@ -1192,11 +1198,23 @@ function flashCompletedRows(previous: BulkState, next: BulkState): void {
   })
 }
 async function refreshState(): Promise<void> {
-  const previous = state.value
+  const type = taskType.value
+  const requestedPage = page.value
+  const taskId = selectedTaskId.value
   try {
-    const next = await background.getBulkState()
-    state.value = next
-    flashCompletedRows(previous, next)
+    const [next, detail] = await Promise.all([
+      background.getBulkTaskPage({ type, page: requestedPage }),
+      taskId ? background.getBulkTask({ taskId }) : Promise.resolve(null)
+    ])
+    if (taskType.value === type && page.value === requestedPage) {
+      state.value = next
+      page.value = next.page
+    }
+    if (selectedTaskId.value === taskId) {
+      flashCompletedRows(selectedTask.value, detail)
+      selectedTask.value = detail
+      if (!detail) selectedTaskId.value = null
+    }
   } catch (error) {
     logger.error('[Dashboard] 读取批量状态失败:', error)
     showError()
@@ -1258,7 +1276,7 @@ async function createTasks(startNow: boolean): Promise<void> {
     document.getElementById(!name ? 'db-name' : 'db-input')?.focus()
     return
   }
-  if (state.value.tasks.length + taskCount.value > BULK_LIMITS.maxTasks) {
+  if (state.value.totalTasks + taskCount.value > BULK_LIMITS.maxTasks) {
     showError('limit-tasks')
     return
   }
@@ -1283,18 +1301,17 @@ async function createTasks(startNow: boolean): Promise<void> {
         values: input.slice(offset, offset + MAX_ITEMS),
         reviewsPerStoreLimit: type === 'review-urls' ? reviewsLimit.value : null
       })
-      state.value = result.state
       if (!result.ok) {
         showError(result.code)
         return
       }
-      const created = result.state.tasks[result.state.tasks.length - 1]!
-      createdIds.push(created.id)
+      createdIds.push(result.taskId)
       // 局部失败只保留未保存的输入，用户重试不会重复创建成功的部分。
       draft.value.items = input.slice(offset + MAX_ITEMS).join('\n')
     }
     draft.value.name = ''
     submitted.value = false
+    page.value = 1
     sendMark(
       MARK_TYPE.BULK_TASK_CREATE,
       `type=${type}, count=${createdIds.length}, chunks=${chunks}, start_now=${startNow}`
@@ -1314,6 +1331,7 @@ async function createTasks(startNow: boolean): Promise<void> {
     logger.error('[Dashboard] 创建任务失败:', error)
     showError()
   } finally {
+    await refreshState()
     submitting.value = false
   }
 }
@@ -1321,20 +1339,21 @@ async function startTask(taskId: string, showDetail = false): Promise<boolean> {
   clearNotice()
   try {
     const result = await background.startBulkTask({ taskId })
-    state.value = result.state
     sendMark(
       MARK_TYPE.BULK_TASK_ACTION,
       `action=start, ok=${result.ok}${result.ok ? '' : `, code=${result.code ?? ''}`}`
     )
     if (!result.ok) {
+      await refreshState()
       showError(result.code)
       return false
     }
     if (showDetail) {
       selectedTaskId.value = taskId
       following.value = true
-      void nextTick(jumpToCurrent)
     }
+    await refreshState()
+    if (showDetail) await nextTick(jumpToCurrent)
     return true
   } catch (error) {
     logger.error(`[Dashboard] 启动任务失败: taskId=${taskId}`, error)
@@ -1342,16 +1361,16 @@ async function startTask(taskId: string, showDetail = false): Promise<boolean> {
     return false
   }
 }
-async function primaryAction(task: BulkTask): Promise<void> {
+async function primaryAction(task: BulkTaskSummary): Promise<void> {
   if (submitting.value) return
   submitting.value = true
   clearNotice()
   try {
     if (task.status === 'running') {
       const result = await background.stopBulkTask({ taskId: task.id })
-      state.value = result.state
       sendMark(MARK_TYPE.BULK_TASK_ACTION, `action=pause, ok=${result.ok}`)
       if (!result.ok) showError(result.code)
+      await refreshState()
     } else await startTask(task.id)
     await refreshUsage()
   } catch (error) {
@@ -1366,7 +1385,7 @@ function leaveTask(): void {
     showSuccess(t(D.KEEPS_RUNNING, { name: selectedTask.value.name }))
   showView('history')
 }
-async function openMenu(event: MouseEvent, task: BulkTask): Promise<void> {
+async function openMenu(event: MouseEvent, task: BulkTaskSummary): Promise<void> {
   menuTaskId.value = task.id
   const button = event.currentTarget
   if (!(button instanceof HTMLElement)) return
@@ -1391,7 +1410,7 @@ function onMenuKey(event: KeyboardEvent): void {
         : (current + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
   buttons[index]?.focus()
 }
-function requestDelete(task: BulkTask): void {
+function requestDelete(task: BulkTaskSummary): void {
   taskMenu.value?.hidePopover()
   deleteTargetId.value = task.id
   deleteDialog.value?.showModal()
@@ -1401,9 +1420,9 @@ async function confirmDelete(): Promise<void> {
   submitting.value = true
   try {
     const result = await background.deleteBulkTask({ taskId: deleteTarget.value.id })
-    state.value = result.state
     sendMark(MARK_TYPE.BULK_TASK_ACTION, `action=delete, ok=${result.ok}`)
     deleteDialog.value?.close()
+    await refreshState()
     if (!result.ok) showError(result.code)
     else {
       if (!selectedTask.value) showView('history')
@@ -1417,23 +1436,28 @@ async function confirmDelete(): Promise<void> {
     submitting.value = false
   }
 }
-function copyCount(task: BulkTask, scope: CopyScope): number {
+function copyCount(task: BulkTaskSummary, scope: CopyScope): number {
   return scope === 'all'
-    ? task.items.length
+    ? task.itemCount
     : scope === 'completed'
       ? stats(task).complete
-      : task.items.length - stats(task).complete
+      : task.itemCount - stats(task).complete
 }
-async function copyItems(task: BulkTask, scope: CopyScope): Promise<void> {
+async function copyItems(task: BulkTaskSummary, scope: CopyScope): Promise<void> {
   taskMenu.value?.hidePopover()
-  const copied = task.items
-    .filter(
-      item =>
-        scope === 'all' ||
-        (scope === 'completed' ? item.status === 'complete' : item.status !== 'complete')
-    )
-    .map(item => item.value)
   try {
+    const detail = await background.getBulkTask({ taskId: task.id })
+    if (!detail) {
+      showError('not-found')
+      return
+    }
+    const copied = detail.items
+      .filter(
+        item =>
+          scope === 'all' ||
+          (scope === 'completed' ? item.status === 'complete' : item.status !== 'complete')
+      )
+      .map(item => item.value)
     await navigator.clipboard.writeText(copied.join('\n'))
     showNotice(t(D.COPIED))
   } catch (error) {
@@ -1457,7 +1481,7 @@ function statusText(status: BulkTaskStatus): string {
     }[status]
   )
 }
-function actionText(task: BulkTask): string {
+function actionText(task: BulkTaskSummary): string {
   return t(
     {
       idle: D.ACTION_START,
@@ -1467,7 +1491,7 @@ function actionText(task: BulkTask): string {
     }[task.status]
   )
 }
-function actionIcon(task: BulkTask): IconName {
+function actionIcon(task: BulkTaskSummary): IconName {
   return task.status === 'running'
     ? IconName.PAUSE
     : task.status === 'completed'
@@ -1487,7 +1511,7 @@ function itemStatusText(item: BulkTaskItem): string {
     }[item.status]
   )
 }
-function stateLine(task: BulkTask): string {
+function stateLine(task: BulkTaskDetail): string {
   return t(
     task.status === 'running'
       ? D.WORKING_ITEM
@@ -1563,7 +1587,7 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', onVisibilityChange)
   window.addEventListener('resize', updateIndicators)
   await Promise.all([refreshState(), refreshUsage()])
-  selectedTaskId.value = tasks.value.find(task => task.status === 'running')?.id ?? null
+  if (runningTask.value?.type === taskType.value) await openTask(runningTask.value)
   try {
     retryCount.value = (await MapsUserSettingsManager.getSettings()).stuckMaxRetry
     removeSettingsListener = MapsUserSettingsManager.onSettingsChanged(settings => {

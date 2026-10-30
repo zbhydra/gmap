@@ -62,7 +62,7 @@ describe('批量前置配额校验（controller 接线）', () => {
 
     expect(result.ok).toBe(false)
     expect(result.code).toBe('quota-exceeded')
-    expect(result.state.tasks).toHaveLength(0)
+    expect(result).toEqual({ ok: false, code: 'quota-exceeded' })
     expect(bulkStateStore.save).not.toHaveBeenCalled()
   })
 
@@ -83,7 +83,8 @@ describe('批量前置配额校验（controller 接线）', () => {
 
     expect(result.ok).toBe(true)
     expect(result.code).toBeNull()
-    expect(result.state.tasks).toHaveLength(1)
+    expect(result).toEqual({ ok: true, code: null, taskId: expect.any(String) })
+    expect(vi.mocked(bulkStateStore.save).mock.calls[0]?.[0].tasks).toHaveLength(1)
   })
 
   it('usage 不可得（null）时 fail-open 放行创建', async () => {
@@ -98,6 +99,7 @@ describe('批量前置配额校验（controller 接线）', () => {
     })
 
     expect(result.ok).toBe(true)
-    expect(result.state.tasks).toHaveLength(1)
+    expect(result).toEqual({ ok: true, code: null, taskId: expect.any(String) })
+    expect(vi.mocked(bulkStateStore.save).mock.calls[0]?.[0].tasks).toHaveLength(1)
   })
 })

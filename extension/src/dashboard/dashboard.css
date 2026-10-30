@@ -460,6 +460,13 @@
 .db-history-wrap {
   overflow: hidden;
 }
+.db-pagination {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-sm);
+}
 .db-table {
   width: 100%;
   border-collapse: separate;

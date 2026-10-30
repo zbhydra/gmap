@@ -10,7 +10,14 @@ import type { RuntimeConfig } from '@/core/runtimeConfig'
 import type { MapsRemoteConfigOverride } from '@/sites/maps/config/contract'
 import type { MapsUsageSnapshot } from '@/sites/maps/usage/types'
 import type { MapsEnrichBusinessInput, MapsEnrichResponse } from '@/sites/maps/enrich/types'
-import type { BulkCommandResult, BulkState, BulkTaskType } from '@/background/batch/types'
+import type {
+  BulkCommandResult,
+  BulkCreateTaskResult,
+  BulkTaskDetail,
+  BulkTaskPage,
+  BulkTaskPageQuery,
+  BulkTaskType
+} from '@/background/batch/types'
 
 /** background ping 响应。 */
 export interface BackgroundPingResponse {
@@ -107,8 +114,10 @@ export interface BackgroundPhotosWorkPageResponse {
   fid: string | null
 }
 
-/** background 读取批量任务状态的响应（013 A6，U5）。 */
-export type BackgroundGetBulkStateResponse = BulkState
+export type BackgroundGetBulkTaskPageRequest = BulkTaskPageQuery
+export type BackgroundGetBulkTaskPageResponse = BulkTaskPage
+export type BackgroundGetBulkTaskResponse = BulkTaskDetail | null
+export type BackgroundCreateBulkTaskResponse = BulkCreateTaskResult
 
 /** background 创建批量任务请求。 */
 export interface BackgroundCreateBulkTaskRequest {

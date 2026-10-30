@@ -43,6 +43,12 @@ Google 插件套餐名与单次权益由 [maps_client.py](../../../backend/src/a
 
 搜索、列表、Place 商家区及评论/照片工作页均可导出已有结果。照片媒体以 [photosCsv.ts](../../../extension/src/sites/maps/content/export/photosCsv.ts) 的 `PHOTOS_CSV_COLUMNS` 为字段入口，三种格式保留同一组媒体字段与单媒体计数。
 
+## 批量任务列表与详情
+
+[BulkSchedulerController](../../../extension/src/background/batch/controller.ts) 从 IndexedDB 的 `BulkState` 生成读取投影，存储与调度器共用同一任务状态。`getBulkTaskPage` 接收任务类型与从 1 开始的页码，在 background 按类型筛选、按创建顺序倒序后分页；固定页大小由 [BULK_TASK_PAGE_SIZE](../../../extension/src/background/batch/types.ts) 定义。响应只包含当前页 `BulkTaskSummary`、当前类型总数、全局任务总数、有效页码及全局运行任务摘要；摘要保留现有完成、跳过、重试和采集计数，不携带条目。
+
+`getBulkTask` 接收任务 ID，返回该任务的摘要、完整条目与游标；任务已删除时返回 null。Dashboard 查看详情或复制条目时按需读取，查看期间随状态通知刷新。创建成功只返回任务 ID 与业务结果，启停和删除只返回业务结果；错误分类保持 `BulkErrorCode`。命令后重读当前页与已选详情，创建成功回到第一页，删除末页最后一项后由 background 校正到有效末页。`mapsBulkStateChanged` 只通知重读，不传递历史快照。
+
 ## 工作页导航与批量上下文
 
 [workUrl.ts](../../../extension/src/background/batch/workUrl.ts) 的 `buildKeywordWorkUrl` / `buildReviewWorkUrl` 接收 `itemCount`，写入 `gme_bulk_total`；现有 `gme_bulk_item` 保持零基索引，展示时加一，不另加显示序号参数。[bulkAuto.ts](../../../extension/src/sites/maps/content/bulkAuto.ts) 在 URL 边界校验并解析参数。搜索与评论工作页面板显示只读序号 / 总数，任务类型由当前页面决定。

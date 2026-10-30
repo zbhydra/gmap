@@ -30,12 +30,19 @@ import { checkBulkQuota, estimateBulkRecords } from './quota'
 import { bulkStateStore, emptyBulkState } from './store'
 import { buildWorkUrlForItem, reduceBulkEvent } from './machine'
 import { readBulkWorkParams } from '@/sites/maps/content/bulkAuto'
+import { BULK_TASK_PAGE_SIZE } from './types'
 import type {
   BulkCommandResult,
   BulkCreateTaskParams,
+  BulkCreateTaskResult,
   BulkMachineEvent,
   BulkReduceResult,
-  BulkState
+  BulkState,
+  BulkTask,
+  BulkTaskDetail,
+  BulkTaskPage,
+  BulkTaskPageQuery,
+  BulkTaskSummary
 } from './types'
 
 /** 兜底扫描 alarm 名。 */
@@ -124,13 +131,34 @@ export class BulkSchedulerController {
     this.subscriber.destroy()
   }
 
-  /** 读取当前状态（dashboard 渲染入口）。 */
-  async getState(): Promise<BulkState> {
+  private async getState(): Promise<BulkState> {
     return (await bulkStateStore.load()) ?? emptyBulkState()
   }
 
+  async getTaskPage(query: BulkTaskPageQuery): Promise<BulkTaskPage> {
+    const state = await this.getState()
+    const tasks = state.tasks.filter(task => task.type === query.type).reverse()
+    const page = Math.min(query.page, Math.max(1, Math.ceil(tasks.length / BULK_TASK_PAGE_SIZE)))
+    const runningTask = state.tasks.find(task => task.status === 'running')
+    return {
+      tasks: tasks
+        .slice((page - 1) * BULK_TASK_PAGE_SIZE, page * BULK_TASK_PAGE_SIZE)
+        .map(summarizeTask),
+      total: tasks.length,
+      totalTasks: state.tasks.length,
+      page,
+      runningTask: runningTask ? summarizeTask(runningTask) : null
+    }
+  }
+
+  async getTask(taskId: string): Promise<BulkTaskDetail | null> {
+    const state = await this.getState()
+    const task = state.tasks.find(candidate => candidate.id === taskId)
+    return task ? { ...summarizeTask(task), items: task.items, cursor: task.cursor } : null
+  }
+
   /** 创建任务（dashboard RPC）。配额前置校验不满足时拒绝，不落状态。 */
-  async createTask(params: BulkCreateTaskParams): Promise<BulkCommandResult> {
+  async createTask(params: BulkCreateTaskParams): Promise<BulkCreateTaskResult> {
     const quota = await this.checkQuota(
       params.type,
       params.values.length,
@@ -146,7 +174,9 @@ export class BulkSchedulerController {
       values: params.values,
       reviewsPerStoreLimit: params.reviewsPerStoreLimit
     })
-    return toCommandResult(result)
+    return result.error === null
+      ? { ok: true, code: null, taskId: result.state.tasks[result.state.tasks.length - 1]!.id }
+      : { ok: false, code: result.error }
   }
 
   /** 启动/续跑任务（dashboard RPC；互斥由状态机裁决）。 */
@@ -202,7 +232,7 @@ export class BulkSchedulerController {
     type: BulkCreateTaskParams['type'],
     itemCount: number,
     reviewsPerStoreLimit: number | null
-  ): Promise<BulkCommandResult | null> {
+  ): Promise<{ ok: false; code: 'quota-exceeded' } | null> {
     if (itemCount <= 0) {
       return null
     }
@@ -222,12 +252,11 @@ export class BulkSchedulerController {
     if (!exceeded) {
       return null
     }
-    const state = await this.getState()
     logger.info(
       `[BulkScheduler] 配额不足拒绝: type=${type}, items=${String(itemCount)}, ` +
         `estimate=${String(estimate)}, used=${String(snapshot.used)}/${String(snapshot.total)}`
     )
-    return { ok: false, code: 'quota-exceeded', state }
+    return { ok: false, code: 'quota-exceeded' }
   }
 
   /** 停止任务（dashboard RPC）：关工作页、状态转 paused。 */
@@ -372,5 +401,30 @@ async function readStuckMaxRetry(): Promise<number> {
 
 /** reducer 结果 → RPC 命令结果。 */
 function toCommandResult(result: BulkReduceResult): BulkCommandResult {
-  return { ok: result.error === null, code: result.error, state: result.state }
+  return { ok: result.error === null, code: result.error }
+}
+
+function summarizeTask(task: BulkTask): BulkTaskSummary {
+  const stats = { done: 0, complete: 0, skipped: 0, stuck: 0, invalid: 0, tries: 0, records: 0 }
+  for (const item of task.items) {
+    stats.tries += item.tries
+    if (item.status === 'complete') {
+      stats.complete++
+      stats.records += item.collected
+    }
+    if (item.status === 'skipped') stats.skipped++
+    if (item.skipReason === 'stuck') stats.stuck++
+    if (item.skipReason === 'invalid-url') stats.invalid++
+  }
+  stats.done = stats.complete + stats.skipped
+  return {
+    id: task.id,
+    name: task.name,
+    type: task.type,
+    status: task.status,
+    createdAt: task.createdAt,
+    reviewsPerStoreLimit: task.reviewsPerStoreLimit,
+    itemCount: task.items.length,
+    stats
+  }
 }

@@ -18,6 +18,8 @@ Maps 使用 `chrome.runtime.getURL('')` 返回的本扩展资源根地址识别�
 
 请求与响应按 JSON 序列化后的 UTF-8 字节数应用方法限制；超限返回 `PAYLOAD_TOO_LARGE`，不返回原始大 payload。handler 的普通异常保留可定位消息，转换为 `SERVER_ERROR`；已有 `RpcError` 保留其错误码和消息。错误类型与响应还原入口见 `src/core/rpc/errors.ts` 的 `RpcError`、`createRpcErrorFromResponse()`。
 
+Maps 批量列表按 background 分页摘要、单任务详情与命令结果分开传输，合同见[批量任务列表与详情](../013.Maps插件/tech-采集与批量.md#批量任务列表与详情)。
+
 `ChromeRpcTransport` 使用 request-response，不使用 Port。调用 content provider 必须指定 tab；超时仅使当前调用失败，不代表业务操作已取消。background 在 `onSuspend` 时通过 `messageRouter.destroy()` 释放 listener。日志不得记录 token、完整请求或响应、用户正文等敏感数据。
 
 ## 3. 页面采集事件边界

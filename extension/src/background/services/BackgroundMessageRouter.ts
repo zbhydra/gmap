@@ -29,7 +29,7 @@ import { enrichMapsBusinesses } from '@/sites/maps/enrich/enrichApi'
 import type { MapsEnrichBusinessInput } from '@/sites/maps/enrich/types'
 import { openExtensionLogin } from '../services/extensionLogin'
 import { bulkScheduler } from '../batch/controller'
-import type { BulkCreateTaskParams } from '../batch/types'
+import type { BulkCreateTaskParams, BulkTaskPageQuery } from '../batch/types'
 import { photosWorkPage } from '../photosWorkPage'
 import { openBulkDashboard } from '@/core/utils/navigation'
 
@@ -75,7 +75,8 @@ export class BackgroundMessageRouter {
       }),
       photosWorkPage,
       authorizeBulkWorkPage: (_params, context) => this.authorizeBulkWorkPage(context),
-      getBulkState: () => bulkScheduler.getState(),
+      getBulkTaskPage: params => bulkScheduler.getTaskPage(parseBulkTaskPageRequest(params)),
+      getBulkTask: params => bulkScheduler.getTask(parseBulkTaskIdRequest(params)),
       createBulkTask: params => bulkScheduler.createTask(parseCreateBulkTaskRequest(params)),
       startBulkTask: params => bulkScheduler.startTask(parseBulkTaskIdRequest(params)),
       stopBulkTask: params => bulkScheduler.stopTask(parseBulkTaskIdRequest(params)),
@@ -300,4 +301,14 @@ function parseBulkTaskIdRequest(params: JsonValue | undefined): string {
     throw new Error('[BackgroundMessageRouter] 批量任务命令缺少合法 taskId')
   }
   return params.taskId
+}
+
+function parseBulkTaskPageRequest(params: JsonValue | undefined): BulkTaskPageQuery {
+  if (!isJsonObject(params) || (params.type !== 'keywords' && params.type !== 'review-urls')) {
+    throw new Error('[BackgroundMessageRouter] getBulkTaskPage 请求 type 非法')
+  }
+  if (typeof params.page !== 'number' || !Number.isInteger(params.page) || params.page < 1) {
+    throw new Error('[BackgroundMessageRouter] getBulkTaskPage 请求 page 必须为正整数')
+  }
+  return { type: params.type, page: params.page }
 }

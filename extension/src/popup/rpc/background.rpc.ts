@@ -116,15 +116,26 @@ export class BackgroundChannel {
     )
   }
 
-  /** 调用 getBulkState 能力。 */
-  getBulkState(
+  /** 调用 getBulkTaskPage 能力。 */
+  getBulkTaskPage(
+    params: RpcMethodParams<BackgroundHandler, 'getBulkTaskPage'>,
     options?: RpcCallOptions
-  ): Promise<RpcMethodResult<BackgroundHandler, 'getBulkState'>> {
-    return this.transport.call<RpcMethodResult<BackgroundHandler, 'getBulkState'>>(
-      'getBulkState',
-      undefined,
-      options
-    )
+  ): Promise<RpcMethodResult<BackgroundHandler, 'getBulkTaskPage'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'getBulkTaskPage'>,
+      RpcMethodParams<BackgroundHandler, 'getBulkTaskPage'>
+    >('getBulkTaskPage', params, options)
+  }
+
+  /** 调用 getBulkTask 能力。 */
+  getBulkTask(
+    params: RpcMethodParams<BackgroundHandler, 'getBulkTask'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'getBulkTask'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'getBulkTask'>,
+      RpcMethodParams<BackgroundHandler, 'getBulkTask'>
+    >('getBulkTask', params, options)
   }
 
   /** 调用 authorizeBulkWorkPage 能力。 */

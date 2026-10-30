@@ -22,6 +22,8 @@ export const BULK_LIMITS = {
   defaultReviewsPerStoreLimit: 300
 } as const
 
+export const BULK_TASK_PAGE_SIZE = 10
+
 /** 批量任务类型：关键词队列 / 评论 URL 队列。 */
 export type BulkTaskType = 'keywords' | 'review-urls'
 
@@ -78,6 +80,49 @@ export interface BulkState {
   version: 1
   /** 任务列表（创建序）。 */
   tasks: BulkTask[]
+}
+
+export interface BulkTaskStats {
+  done: number
+  complete: number
+  skipped: number
+  stuck: number
+  invalid: number
+  tries: number
+  records: number
+}
+
+/** 列表与全局运行提示只传统计，不携带条目载荷或调度器内部状态。 */
+export interface BulkTaskSummary {
+  id: string
+  name: string
+  type: BulkTaskType
+  status: BulkTaskStatus
+  createdAt: number
+  reviewsPerStoreLimit: number | null
+  itemCount: number
+  stats: BulkTaskStats
+}
+
+export interface BulkTaskDetail extends BulkTaskSummary {
+  items: BulkTaskItem[]
+  cursor: number
+}
+
+export interface BulkTaskPageQuery {
+  type: BulkTaskType
+  /** 页码从 1 开始，页大小由 BULK_TASK_PAGE_SIZE 固定。 */
+  page: number
+}
+
+export interface BulkTaskPage {
+  tasks: BulkTaskSummary[]
+  /** 当前类型的任务总数。 */
+  total: number
+  totalTasks: number
+  /** 删除末页后返回有效末页。 */
+  page: number
+  runningTask: BulkTaskSummary | null
 }
 
 /** 命令/事件被状态机拒绝的错误码（dashboard 据此映射 i18n 文案）。 */
@@ -155,6 +200,8 @@ export interface BulkCommandResult {
   ok: boolean
   /** 拒绝原因；ok = true 时为 null。 */
   code: BulkErrorCode | null
-  /** 命令后的最新状态（含未变化时的现值），dashboard 直接渲染。 */
-  state: BulkState
 }
+
+export type BulkCreateTaskResult =
+  | { ok: true; code: null; taskId: string }
+  | { ok: false; code: BulkErrorCode }

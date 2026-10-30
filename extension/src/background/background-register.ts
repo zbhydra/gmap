@@ -10,9 +10,12 @@ import type {
   BackgroundBulkCommandResponse,
   BackgroundBulkTaskIdRequest,
   BackgroundCreateBulkTaskRequest,
+  BackgroundCreateBulkTaskResponse,
   BackgroundEnrichMapsBusinessesRequest,
   BackgroundEnrichMapsBusinessesResponse,
-  BackgroundGetBulkStateResponse,
+  BackgroundGetBulkTaskPageRequest,
+  BackgroundGetBulkTaskPageResponse,
+  BackgroundGetBulkTaskResponse,
   BackgroundGetMapsConfigResponse,
   BackgroundGetMapsUsageResponse,
   BackgroundGetRuntimeConfigResponse,
@@ -121,9 +124,16 @@ export const Handler = {
     return declarationOnly('background.photosWorkPage')
   },
 
-  /** 读取批量任务队列状态（013 A6，dashboard 页渲染入口）。 */
-  getBulkState(): Promise<BackgroundGetBulkStateResponse> {
-    return declarationOnly('background.getBulkState')
+  /** 按类型读取当前页任务摘要与全局运行提示。 */
+  getBulkTaskPage(
+    _params: BackgroundGetBulkTaskPageRequest
+  ): Promise<BackgroundGetBulkTaskPageResponse> {
+    return declarationOnly('background.getBulkTaskPage')
+  },
+
+  /** 按任务 id 读取完整条目。 */
+  getBulkTask(_params: BackgroundBulkTaskIdRequest): Promise<BackgroundGetBulkTaskResponse> {
+    return declarationOnly('background.getBulkTask')
   },
 
   /** 中转页登记真实标签页 owner，成功落盘后取得采集许可。 */
@@ -132,7 +142,9 @@ export const Handler = {
   },
 
   /** 创建批量任务（关键词/评论 URL 队列）。 */
-  createBulkTask(_params: BackgroundCreateBulkTaskRequest): Promise<BackgroundBulkCommandResponse> {
+  createBulkTask(
+    _params: BackgroundCreateBulkTaskRequest
+  ): Promise<BackgroundCreateBulkTaskResponse> {
     return declarationOnly('background.createBulkTask')
   },
 
@@ -180,7 +192,8 @@ export const METHOD_TARGETS = {
   openBulkDashboard: ['content'],
   photosWorkPage: ['content'],
   /** 批量状态/命令允许扩展页调用（dashboard 页按 sender 推导为 popup 通道）。 */
-  getBulkState: ['popup'],
+  getBulkTaskPage: ['popup'],
+  getBulkTask: ['popup'],
   authorizeBulkWorkPage: ['popup'],
   createBulkTask: ['popup'],
   startBulkTask: ['popup'],
@@ -212,8 +225,8 @@ export const METHOD_REQUEST_LIMITS = {
   openPricingPage: 8192,
   openBulkDashboard: 1024,
   photosWorkPage: 1024,
-  /** 批量状态无入参。 */
-  getBulkState: 1024,
+  getBulkTaskPage: 1024,
+  getBulkTask: 1024,
   authorizeBulkWorkPage: 1024,
   /** 创建任务：500 条目（关键词/URL 原文）最坏形态上界。 */
   createBulkTask: 262144,
@@ -247,14 +260,13 @@ export const METHOD_RESPONSE_LIMITS = {
   openPricingPage: 1024,
   openBulkDashboard: 1024,
   photosWorkPage: 1024,
-  /** 批量状态响应：150 任务 × 500 条目的理论上界放宽到 8MB。 */
-  getBulkState: 8_388_608,
+  getBulkTaskPage: 8_388_608,
+  getBulkTask: 8_388_608,
   authorizeBulkWorkPage: 1024,
-  /** 批量命令响应携带命令后的全量状态，上限对齐 getBulkState。 */
-  createBulkTask: 8_388_608,
-  startBulkTask: 8_388_608,
-  stopBulkTask: 8_388_608,
-  deleteBulkTask: 8_388_608
+  createBulkTask: 1024,
+  startBulkTask: 1024,
+  stopBulkTask: 1024,
+  deleteBulkTask: 1024
 } as const satisfies Record<keyof BackgroundHandler, number>
 
 /** register 占位函数，避免声明被业务代码误调用。 */
