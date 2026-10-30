@@ -48,6 +48,3 @@ export { ChromeRpcTransport } from './transports/ChromeRpcTransport'
 
 // Chrome 扩展事件
 export { ChromeEventEmitter, ChromeEventSubscriber } from './ChromeEventBus'
-
-// DOM CustomEvent 事件
-export { DomEventEmitter, DomEventSubscriber } from './DomEventBus'
