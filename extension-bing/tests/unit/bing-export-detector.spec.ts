@@ -67,6 +67,23 @@ describe('bing csv 组装', () => {
     expect(csv).toContain('"A,B ""C""\nD"')
   })
 
+  it('仅首字符为等号的文本前置单引号，保留转义与原始行', () => {
+    const row = makeRow({
+      name: '=1+1',
+      address: '=A,"B"\nC',
+      category: "'=1+1",
+      phone: '+1 212-555-0000',
+      website: ' =1+1',
+      longitude: -73.1
+    })
+    const original = structuredClone(row)
+    const csv = buildBingCsv([row], DEFAULT_BING_CONFIG.export, false)
+
+    expect(csv).toContain('ypid:YN0000000000000001,\'=1+1,"\'=A,""B""\nC"')
+    expect(csv).toContain(',,,-73.1,,,\'=1+1,, =1+1,+1 212-555-0000,')
+    expect(row).toEqual(original)
+  })
+
   it('免费档末行追加提示，Pro（includeFreeNote=false）不追加', () => {
     const freeCsv = buildBingCsv([makeRow()], DEFAULT_BING_CONFIG.export, true)
     const freeLines = freeCsv.replace(/^\uFEFF/, '').split('\n')

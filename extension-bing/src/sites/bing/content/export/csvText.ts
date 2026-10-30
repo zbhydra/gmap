@@ -21,7 +21,10 @@ export type BingCsvCell = string | number | null
 
 /** 单元格转义：命中分隔符/引号/换行即加引号并双写内部引号。 */
 export function escapeCsvCell(value: BingCsvCell, delimiter: string): string {
-  const text = value === null ? '' : String(value)
+  let text = value === null ? '' : String(value)
+  if (text.startsWith('=')) {
+    text = `'${text}`
+  }
   if (
     text.includes(delimiter) ||
     text.includes('"') ||

@@ -43,6 +43,10 @@ Google 插件套餐名与单次权益由 [maps_client.py](../../../backend/src/a
 
 搜索、列表、Place 商家区及评论/照片工作页均可导出已有结果。照片媒体以 [photosCsv.ts](../../../extension/src/sites/maps/content/export/photosCsv.ts) 的 `PHOTOS_CSV_COLUMNS` 为字段入口，三种格式保留同一组媒体字段与单媒体计数。
 
+### CSV 文本规则
+
+文本字段首字符为 `=` 时，在最终 CSV 写出边界前置一个 ASCII 单引号，再沿用分隔符、双引号和换行转义。不修剪前导空白，其他首字符与已以单引号开头的文本保持原样。Google 插件的原始采集数据及 JSON、XLSX 导出值不变。Google 搜索、评论与照片共用 [csvText.ts](../../../extension/src/sites/maps/content/export/csvText.ts) 的 `escapeCsvCell`。
+
 ## 批量任务列表与详情
 
 [BulkSchedulerController](../../../extension/src/background/batch/controller.ts) 从 IndexedDB 的 `BulkState` 生成读取投影，存储与调度器共用同一任务状态。`getBulkTaskPage` 接收任务类型与从 1 开始的页码，在 background 按类型筛选、按创建顺序倒序后分页；固定页大小由 [BULK_TASK_PAGE_SIZE](../../../extension/src/background/batch/types.ts) 定义。响应只包含当前页 `BulkTaskSummary`、当前类型总数、全局任务总数、有效页码及全局运行任务摘要；摘要保留现有完成、跳过、重试和采集计数，不携带条目。

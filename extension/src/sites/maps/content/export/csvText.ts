@@ -11,6 +11,9 @@ export function serializeCsvRow(cells: readonly string[]): string {
 
 /** 单元格转义。 */
 function escapeCsvCell(value: string): string {
+  if (value.startsWith('=')) {
+    value = `'${value}`
+  }
   if (value.includes('"') || value.includes(',') || value.includes('\n') || value.includes('\r')) {
     return `"${value.replace(/"/g, '""')}"`
   }

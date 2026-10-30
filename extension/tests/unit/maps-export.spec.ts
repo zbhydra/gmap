@@ -285,6 +285,29 @@ describe('CSV 构建（36 列）', () => {
     expect(csv).toContain('"Cafe, ""Alpha""\nBeta"')
     expect(csv.endsWith('\r\n')).toBe(true)
   })
+
+  it('仅首字符为等号的文本前置单引号，保留转义与原始行', () => {
+    const row = makeRow({
+      name: '=1+1',
+      description: '=A,"B"\nC',
+      street: ' =1+1',
+      note: "'=1+1",
+      phone: '+1 212-555-0000'
+    })
+    const original = structuredClone(row)
+    const columns = selectExportColumns(true)
+    const csv = buildSearchCsv([row], columns)
+    const cells = csvToRow(csv, columns.map(column => column.header))
+
+    expect(cells['Name']).toBe("'=1+1")
+    expect(cells['Description']).toBe('\'=A,"B"\nC')
+    expect(cells['Street']).toBe(' =1+1')
+    expect(cells['Note']).toBe("'=1+1")
+    expect(cells['Phone']).toBe('+1 212-555-0000')
+    expect(cells['Longitude']).toBe('-73.1')
+    expect(csv).toContain('"\'=A,""B""\nC"')
+    expect(row).toEqual(original)
+  })
 })
 
 describe('JSON 构建（36 列）', () => {

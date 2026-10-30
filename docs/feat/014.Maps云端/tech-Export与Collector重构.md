@@ -79,6 +79,8 @@ Run 采用 CAS 的 `QUEUED → COLLECTING → PUBLISHING → COMPLETED / PARTIAL
 
 同一 Runtime 是工作 CSV 唯一写入者：先追加并 fsync，再提交 CSV 字节边界、输出行数与 item 完成事实。沿用 CAS 节点内 flock 和节点绑定，工作目录跨发版、进程重启保留。Collector 负责原调用的执行与临时结果，Runtime 负责本地 CSV 和交付；拿到 Collector 终态不等于 item 已提交，也不代表已经扣量。
 
+公开 CSV 由 [ExportFileService.project_gmap_csv](../../../backend/src/app/services/export_file_service.py) 投影时应用 [CSV 文本规则](../013.Maps插件/tech-采集与批量.md#csv-文本规则)；用于恢复和去重的工作 CSV 保留原值。网站 Excel 下载从同一份公开 CSV 转换，前置单引号作为 XLSX 字符串内容保留。
+
 采集阶段恢复同一 Run：按 DB 已确认字节数恢复工作 CSV 与去重集合，跳过已提交 item；未提交 item 按 §3.3 先查原 Collector 调用，不默认重新采集。已提交的错误 item 不自动重试；已提交文件缺失或变短时失败，不创建空文件伪装恢复。仅同节点恢复，不新增跨节点接管、持久队列或租约。发布阶段的失败与中断按 §4.2 结束，不恢复发布。
 
 为避免问题任务在重启后反复续期，采集与查询总预算使用 Run 首次持久化 `started_at` 加既有一小时预算计算；恢复、查询、切换阶段和重复提交都不刷新截止时间。到期后停止等待及新提交，沿既有局部成功/失败规则收口；官网补全的既有接收余量只接收结果，不增加执行预算。CAS 异步计划仍允许 Server 恢复时刷新业务期限，本项目不沿用该建议。

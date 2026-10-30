@@ -199,8 +199,15 @@ class ExportFileService:
             for index, row in enumerate(reader, 1):
                 if None in row or any(value is None for value in row.values()):
                     raise ExportFileError("export_file: malformed gmap work row")
+                values = (row[column.key] for column in public_columns[1:])
                 writer.writerow(
-                    [index, *(row[column.key] for column in public_columns[1:])]
+                    [
+                        index,
+                        *(
+                            f"'{value}" if value.startswith("=") else value
+                            for value in values
+                        ),
+                    ]
                 )
             output.flush()
             os.fsync(output.fileno())
