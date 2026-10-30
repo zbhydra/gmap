@@ -180,7 +180,8 @@ function inferChromeContext(channel: RpcChannel, sender: chrome.runtime.MessageS
 /** 根据 sender 推导 Chrome 调用方。 */
 function inferChromeCaller(channel: RpcChannel, sender: chrome.runtime.MessageSender): RpcCaller {
   const senderUrl = sender.url ?? sender.origin ?? ''
-  const extensionPrefix = chrome.runtime.id ? `chrome-extension://${chrome.runtime.id}/` : ''
+  // Firefox 的扩展资源 URL 使用安装期 UUID，与 runtime.id 不同。
+  const extensionPrefix = chrome.runtime.getURL('')
   const fromExtensionPage = extensionPrefix.length > 0 && senderUrl.startsWith(extensionPrefix)
 
   if (fromExtensionPage) {

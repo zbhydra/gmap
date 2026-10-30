@@ -49,6 +49,8 @@ Google 插件套餐名与单次权益由 [maps_client.py](../../../backend/src/a
 
 面板返回 Dashboard 走仅对 content 开放的 `openBulkDashboard` RPC，边界只接受关键词 / 评论两类任务值，内部复用 [navigation.ts](../../../extension/src/core/utils/navigation.ts) 的同名导航函数复用或打开标签页。
 
+Dashboard 的受限调用沿用[插件 RPC 的扩展页身份合同](../000.架构/tech-插件RPC.md#2-请求权限与错误)，官网身份回调见[统一登录合同](../007.用户系统/tech-第三方登录.md#92-pkce-与回调)。
+
 [vite.config.ts](../../../extension/vite.config.ts) 对 Maps 使用 `https://www.google.com/maps*` 注入匹配，覆盖 Popup 打开的裸 `/maps`；[bootstrap.ts](../../../extension/src/sites/maps/content/bootstrap.ts) 继续在入口限制 Maps 路径，图库交给照片工作页通道。
 
 ## 评论工作页与 Google 协议

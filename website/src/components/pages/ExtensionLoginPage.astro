@@ -3,7 +3,7 @@
  * 插件统一登录页（v3 browser identity；Maps 与 Bing 插件共用，noindex）。
  *
  * 流程：插件 background 经 chrome.identity.launchWebAuthFlow 打开本页
- * （query 携带 redirect_uri=<chromiumapp.org 回调> + code_challenge=<PKCE S256>）→
+ * （query 携带 redirect_uri=<浏览器身份回调> + code_challenge=<PKCE S256>）→
  * 入口参数校验（只归一化这一次，非法即终止）→ 已登录渲染账号确认卡 / 未登录打开
  * AuthModal（Google redirect 主路径 + 邮箱验证码）→ 用户显式点 Continue 后
  * POST /api/client/auth/extension-login/code 换一次性 code →
@@ -163,8 +163,8 @@ const authCopy = {
   import { createSendCodeCooldown } from '../../scripts/homepage/sendCodeCooldown'
   import { showSiteToast } from '../../scripts/site/toast'
 
-  /** chromiumapp.org 回调 host：32 位小写 a-p，chrome.identity.getRedirectURL 的固定形状。 */
-  const REDIRECT_URI_HOST_PATTERN = /^[a-p]{32}\.chromiumapp\.org$/
+  /** identity.getRedirectURL 的 Chromium 扩展 ID / Firefox 扩展 ID SHA-1 回调域。 */
+  const REDIRECT_URI_HOST_PATTERN = /^(?:[a-p]{32}\.chromiumapp\.org|[a-f0-9]{40}\.extensions\.allizom\.org)$/
   /** PKCE S256 code_challenge：32 字节 SHA256 摘要的 Base64URL 编码，固定 43 字符。 */
   const CODE_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]{43}$/
   /** 插件回调地址固定 pathname（getRedirectURL('extension-login')）。 */
@@ -320,7 +320,7 @@ const authCopy = {
 
   /** 入口归一化结果：redirect_uri 与 code_challenge 只在这里校验一次。 */
   interface ExtensionLoginParams {
-    /** 插件 launchWebAuthFlow 回调地址（chromiumapp.org）。 */
+    /** 插件 launchWebAuthFlow 回调地址。 */
     redirectUri: string
     /** PKCE S256 code_challenge。 */
     codeChallenge: string
@@ -337,7 +337,7 @@ const authCopy = {
   /**
    * 解析并归一化入口参数（外部输入只在这里校验一次）。
    *
-   * redirect_uri 是插件 launchWebAuthFlow 的 chromiumapp.org 回调地址，
+   * redirect_uri 是插件 launchWebAuthFlow 的浏览器身份回调地址，
    * 协议 / userinfo / 端口 / host / path / query / hash 逐项锁定防止 open redirect；
    * code_challenge 锁定 PKCE S256 的 Base64URL 形状。非法返回 null，页面渲染参数错误并终止。
    */

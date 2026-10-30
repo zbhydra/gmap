@@ -184,7 +184,7 @@ v2「官网推送」桥已整体删除:无 `externally_connectable`、无固定�
 
 ```text
 E: 生成 verifier/challenge(S256) → launchWebAuthFlow 交互式打开确认页
-W: {WEBSITE}/extension-login/?redirect_uri=<chromiumapp回调>&code_challenge=<43字符>
+W: {WEBSITE}/extension-login/?redirect_uri=<浏览器身份回调>&code_challenge=<43字符>
 W: 入口校验 redirect_uri + code_challenge(非法 → 参数错误文案终止,不进入登录)
 W: 未登录 → 认证弹窗(Google 主路径 / 邮箱验证码;Google redirect 回跳本页收尾)
    已登录 → 校验网页登录态(/auth/me)后进入账号确认卡
@@ -201,8 +201,8 @@ E: 校验响应合同 → 快照比对 → 原子写插件 storage 三键 → UI
 ### 9.2 PKCE 与回调
 
 - **PKCE**:verifier = 32 字节随机 → Base64URL(43 字符);challenge = BASE64URL(SHA256(verifier));固定 S256,不传算法参数。无 `state`(RFC 9700 §2.1:PKCE 即 public client 的 CSRF 防护)。
-- **回调地址**:`chrome.identity.getRedirectURL('extension-login')` = `https://<32位小写a-p>.chromiumapp.org/extension-login`,运行时临时域,无需在 Google Console、manifest 或官网登记。
-- **入口校验**(确认页对外部输入只归一化这一次):`redirect_uri` 恰好出现 1 次、必须 `https:`、host 匹配 32 位 `a-p`、pathname 为 `/extension-login`、无 search/hash;`code_challenge` 43 字符。非法只渲染参数错误文案。
+- **回调地址**:由浏览器 `identity.getRedirectURL('extension-login')` 生成。Chromium 为 `https://<32位小写a-p>.chromiumapp.org/extension-login`;Maps 的 Firefox 产物为 `https://<扩展ID的40位小写SHA-1摘要>.extensions.allizom.org/extension-login`。无需在 Google Console、manifest 或官网登记回调地址。
+- **入口校验**(确认页对外部输入只归一化这一次):`redirect_uri` 恰好出现 1 次、必须 `https:`、无 userinfo 与非默认端口,host 严格匹配上述 Chromium 或 Firefox 官方形状、pathname 为 `/extension-login`、无 search/hash;`code_challenge` 43 字符。非法只渲染参数错误文案。校验入口为 [ExtensionLoginPage.astro](../../../website/src/components/pages/ExtensionLoginPage.astro) 的 `parseExtensionLoginParams()`。
 
 ### 9.3 一次性 code 设计
 

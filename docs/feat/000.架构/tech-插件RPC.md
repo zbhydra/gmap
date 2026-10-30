@@ -14,6 +14,8 @@
 
 `src/core/rpc/serve.ts` 负责协议字段、方法自有键、调用方白名单和 payload 大小校验。调用方身份由 `inferChromeCaller()` 根据浏览器提供的 `sender` 推导，业务参数不能替代 sender URL 或声明自身权限。
 
+Maps 使用 `chrome.runtime.getURL('')` 返回的本扩展资源根地址识别扩展页，popup 与批量 Dashboard 共用 `popup` 角色；Firefox 的资源 URL 使用安装期 UUID，不等于 Gecko 扩展 ID。其他扩展页面与站点 content 不能因此取得 `popup` 方法权限。
+
 请求与响应按 JSON 序列化后的 UTF-8 字节数应用方法限制；超限返回 `PAYLOAD_TOO_LARGE`，不返回原始大 payload。handler 的普通异常保留可定位消息，转换为 `SERVER_ERROR`；已有 `RpcError` 保留其错误码和消息。错误类型与响应还原入口见 `src/core/rpc/errors.ts` 的 `RpcError`、`createRpcErrorFromResponse()`。
 
 `ChromeRpcTransport` 使用 request-response，不使用 Port。调用 content provider 必须指定 tab；超时仅使当前调用失败，不代表业务操作已取消。background 在 `onSuspend` 时通过 `messageRouter.destroy()` 释放 listener。日志不得记录 token、完整请求或响应、用户正文等敏感数据。

@@ -410,3 +410,59 @@ test('site structure: nav, API dropdown, home cards, extension install and legal
   await expect(page.locator('h2').filter({ hasText: 'What our backend processes' })).toBeVisible()
   await expect(page.locator('h2').filter({ hasText: 'What we never do' })).toBeVisible()
 })
+
+test('插件确认页接受 Chromium 与 Firefox 回调，显式确认后交回一次性 code', async ({ page }) => {
+  await mockPurchaseBackend(page)
+  const codeChallenge = 'a'.repeat(43)
+  let issued = 0
+  await page.route('**/api/client/auth/extension-login/code', route => {
+    expect(route.request().postDataJSON()).toEqual({ code_challenge: codeChallenge })
+    issued += 1
+    return route.fulfill({ json: envelope({ code: 'e2e-one-time-code', expires_in: 60 }) })
+  })
+
+  for (const host of [`${'a'.repeat(32)}.chromiumapp.org`, `${'a1'.repeat(20)}.extensions.allizom.org`]) {
+    const redirectUri = `https://${host}/extension-login`
+    await page.route(redirectUri, route => route.fulfill({ contentType: 'text/html', body: '' }))
+    const params = new URLSearchParams({ redirect_uri: redirectUri, code_challenge: codeChallenge })
+    const previousIssued = issued
+    await page.goto(`/extension-login/?${params}`)
+    await expect(page.locator('[data-extension-login-confirm]')).toBeVisible()
+    await expect(page.locator('[data-extension-login-account-email]')).toHaveText('hydra@mapsgrab.test')
+    expect(issued).toBe(previousIssued)
+
+    await page.locator('[data-extension-login-continue]').click()
+    await expect(page).toHaveURL(`${redirectUri}#code=e2e-one-time-code`)
+    expect(issued).toBe(previousIssued + 1)
+  }
+})
+
+test('插件确认页拒绝伪造回调域、凭据、端口与非固定回调地址', async ({ page }) => {
+  await mockPurchaseBackend(page)
+  let authRequests = 0
+  await page.route('**/api/client/auth/**', route => {
+    authRequests += 1
+    return route.abort()
+  })
+  const host = `${'a1'.repeat(20)}.extensions.allizom.org`
+  const invalidRedirectUris = [
+    `https://${host}.example.test/extension-login`,
+    `https://${'a'.repeat(39)}.extensions.allizom.org/extension-login`,
+    `https://${'g'.repeat(40)}.extensions.allizom.org/extension-login`,
+    `https://user:password@${host}/extension-login`,
+    `https://${host}:8443/extension-login`,
+    `https://${host}/another-path`,
+    `https://${host}/extension-login?next=another-path`,
+    `https://${host}/extension-login#code=forged`,
+    `http://${host}/extension-login`
+  ]
+
+  for (const redirectUri of invalidRedirectUris) {
+    const params = new URLSearchParams({ redirect_uri: redirectUri, code_challenge: 'a'.repeat(43) })
+    await page.goto(`/extension-login/?${params}`)
+    await expect(page.locator('[data-extension-login-status-title]')).toHaveText('Invalid sign-in link')
+    await expect(page.locator('[data-extension-login-confirm]')).toBeHidden()
+    await expect(page.locator('[data-download-auth-modal]')).toBeHidden()
+  }
+  expect(authRequests).toBe(0)
+})
