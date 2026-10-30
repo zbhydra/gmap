@@ -53,6 +53,14 @@ Dashboard 的受限调用沿用[插件 RPC 的扩展页身份合同](../000.架�
 
 [vite.config.ts](../../../extension/vite.config.ts) 对 Maps 使用 `https://www.google.com/maps*` 注入匹配，覆盖 Popup 打开的裸 `/maps`；[bootstrap.ts](../../../extension/src/sites/maps/content/bootstrap.ts) 继续在入口限制 Maps 路径，图库交给照片工作页通道。
 
+## 批量工作页启动与恢复
+
+[controller.ts](../../../extension/src/background/batch/controller.ts) 的 `applyEffects` 只创建尚未采集的扩展中转页；[bulk-launch](../../../extension/src/bulk-launch/main.ts) 必须先取得 `authorizeBulkWorkPage` RPC 许可，才能导航到 Google 工作页。
+
+[BackgroundMessageRouter.authorizeBulkWorkPage](../../../extension/src/background/services/BackgroundMessageRouter.ts) 只接受浏览器确认来自本扩展中转页的请求，标签页 ID 取真实 sender，不接收页面自报 ID。[BulkSchedulerController.authorizeWorkPage](../../../extension/src/background/batch/controller.ts) 核对任务、条目与规范工作页目标，再经现有串行状态机登记 owner，成功落盘后才返回许可；同页重复确认幂等，其他中转页不能覆盖已有 owner。
+
+后台在创建页后、登记前停止时，旧页仍未获采集许可；恢复扫描可以补发中转页，最终只有登记成功的 owner 能开始采集。许可失败或被拒绝的中转页关闭自身。正常超时重试仍先关闭已登记的旧工作页，再创建新中转页；暂停、续跑与重试计数沿用既有状态机规则。
+
 ## 评论工作页与 Google 协议
 
 实施与验收记录见 [006](plans/006.评论工作页迁移.md)。

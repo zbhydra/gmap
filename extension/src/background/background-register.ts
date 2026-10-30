@@ -126,6 +126,11 @@ export const Handler = {
     return declarationOnly('background.getBulkState')
   },
 
+  /** 中转页登记真实标签页 owner，成功落盘后取得采集许可。 */
+  authorizeBulkWorkPage(): Promise<boolean> {
+    return declarationOnly('background.authorizeBulkWorkPage')
+  },
+
   /** 创建批量任务（关键词/评论 URL 队列）。 */
   createBulkTask(_params: BackgroundCreateBulkTaskRequest): Promise<BackgroundBulkCommandResponse> {
     return declarationOnly('background.createBulkTask')
@@ -176,6 +181,7 @@ export const METHOD_TARGETS = {
   photosWorkPage: ['content'],
   /** 批量状态/命令允许扩展页调用（dashboard 页按 sender 推导为 popup 通道）。 */
   getBulkState: ['popup'],
+  authorizeBulkWorkPage: ['popup'],
   createBulkTask: ['popup'],
   startBulkTask: ['popup'],
   stopBulkTask: ['popup'],
@@ -208,6 +214,7 @@ export const METHOD_REQUEST_LIMITS = {
   photosWorkPage: 1024,
   /** 批量状态无入参。 */
   getBulkState: 1024,
+  authorizeBulkWorkPage: 1024,
   /** 创建任务：500 条目（关键词/URL 原文）最坏形态上界。 */
   createBulkTask: 262144,
   /** 任务 id 命令入参。 */
@@ -242,6 +249,7 @@ export const METHOD_RESPONSE_LIMITS = {
   photosWorkPage: 1024,
   /** 批量状态响应：150 任务 × 500 条目的理论上界放宽到 8MB。 */
   getBulkState: 8_388_608,
+  authorizeBulkWorkPage: 1024,
   /** 批量命令响应携带命令后的全量状态，上限对齐 getBulkState。 */
   createBulkTask: 8_388_608,
   startBulkTask: 8_388_608,

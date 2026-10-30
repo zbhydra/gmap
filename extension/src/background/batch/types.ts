@@ -66,7 +66,7 @@ export interface BulkTask {
   items: BulkTaskItem[]
   /** 处理游标：运行中 = 当前条目下标；暂停/待开始 = 下一个待处理条目下标。 */
   cursor: number
-  /** 当前工作标签页 id（null = 未启动或已丢失，由 alarm 兜底重启）。 */
+  /** 已获采集许可的工作标签页 id（null = 尚未登记，由 alarm 补启动）。 */
   activeTabId: number | null
   /** 当前条目启动时间（卡死判定基准；null = 尚未启动）。 */
   activeStartedAt: number | null
@@ -106,7 +106,7 @@ export type BulkMachineEvent =
   | { kind: 'start-task'; taskId: string }
   | { kind: 'stop-task'; taskId: string }
   | { kind: 'delete-task'; taskId: string }
-  /** 工作标签页已创建（回填 activeTabId；丢失时由 alarm 兜底重启）。 */
+  /** 中转页申请采集许可（回填 activeTabId，落盘后才允许导航）。 */
   | { kind: 'item-launched'; taskId: string; itemIndex: number; tabId: number }
   | { kind: 'item-done'; taskId: string; itemIndex: number; collected: number }
   /**
@@ -119,10 +119,8 @@ export type BulkMachineEvent =
   /** alarm 兜底扫描（30s 级）：卡死判定 + 启动丢失恢复。 */
   | { kind: 'scan-tick'; stuckMaxRetry: number }
 
-/** 待打开的工作标签页描述（controller 据此 tabs.create 并回填 item-launched）。 */
+/** 待打开的工作标签页描述（controller 据此创建等待许可的中转页）。 */
 export interface BulkLaunchPlan {
-  taskId: string
-  itemIndex: number
   url: string
 }
 

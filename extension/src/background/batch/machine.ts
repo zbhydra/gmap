@@ -11,8 +11,8 @@
  * - 卡死：条目启动后 90s（BULK_LIMITS.stuckMs）无完成回报 → tries 尚未
  *   耗尽（tries < stuckMaxRetry + 1）则关旧页重跑同一关键词，否则永久跳过
  *   （竞品 `try ≥ max_retry+1 → skip` 语义）；
- * - 恢复：alarm 扫描补齐丢失的启动（条目 pending / activeTabId 丢失 → 重新
- *   打开工作页），标签页被关走 tab-gone 立即重试或跳过；
+ * - 恢复：alarm 扫描补齐丢失的启动；中转页登记 owner 后才允许采集，
+ *   标签页被关走 tab-gone 立即重试或跳过；
  * - 状态引用不变 = 无变化，controller 跳过落盘。
  */
 
@@ -66,8 +66,8 @@ function scanAlarmFor(state: BulkState): 'on' | 'off' {
 }
 
 /**
- * 启动单个条目：置 running、tries+1、记录启动时间（tab id 待 item-launched
- * 回填；丢失由 alarm 兜底重启）。
+ * 启动单个条目：置 running、tries+1、记录启动时间（tab id 待中转页许可
+ * 请求回填；未登记时不能采集，alarm 可补启动）。
  */
 function launchItem(task: BulkTask, itemIndex: number, now: number): void {
   const item = task.items[itemIndex]
@@ -112,7 +112,7 @@ function launchFrom(task: BulkTask, fromIndex: number, now: number, effects: Bul
     }
 
     launchItem(task, index, now)
-    effects.launches.push({ taskId: task.id, itemIndex: index, url })
+    effects.launches.push({ url })
     return true
   }
 
@@ -287,7 +287,7 @@ export function reduceBulkEvent(
         item.status !== 'running' ||
         task.activeTabId !== null
       ) {
-        // 陈旧回报（游标已前进 / 重复启动回执）：忽略
+        // 游标已前进或已有 owner：不让其他中转页覆盖。
         return { state, effects, error: null }
       }
       const nextTask = cloneTask(task)
@@ -379,13 +379,11 @@ export function reduceBulkEvent(
           launchFrom(nextTask, nextTask.cursor, now, effects)
         } else if (item.status === 'running') {
           if (nextTask.activeTabId === null) {
-            // 标签页创建回执丢失：重新打开（陈旧页的回报会被游标匹配丢弃）
+            // 未登记的中转页不能采集；补启动后仍由许可请求竞争唯一 owner。
             launchItem(nextTask, nextTask.cursor, now)
             const url = buildWorkUrlForItem(nextTask, nextTask.cursor)
             if (url !== null) {
               effects.launches.push({
-                taskId: nextTask.id,
-                itemIndex: nextTask.cursor,
                 url
               })
             }
@@ -412,8 +410,8 @@ export function reduceBulkEvent(
   }
 }
 
-/** 构造游标条目的工作页 URL（scan-tick 恢复路径专用；失败返回 null 忽略）。 */
-function buildWorkUrlForItem(task: BulkTask, itemIndex: number): string | null {
+/** 构造条目的规范工作页 URL，供恢复与中转页许可核对。 */
+export function buildWorkUrlForItem(task: BulkTask, itemIndex: number): string | null {
   const item = task.items[itemIndex]
   if (!item) {
     return null

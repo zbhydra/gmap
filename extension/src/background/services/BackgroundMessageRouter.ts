@@ -74,12 +74,31 @@ export class BackgroundMessageRouter {
         opened: await openBulkDashboard(parseBulkDashboardType(params))
       }),
       photosWorkPage,
+      authorizeBulkWorkPage: (_params, context) => this.authorizeBulkWorkPage(context),
       getBulkState: () => bulkScheduler.getState(),
       createBulkTask: params => bulkScheduler.createTask(parseCreateBulkTaskRequest(params)),
       startBulkTask: params => bulkScheduler.startTask(parseBulkTaskIdRequest(params)),
       stopBulkTask: params => bulkScheduler.stopTask(parseBulkTaskIdRequest(params)),
       deleteBulkTask: params => bulkScheduler.deleteTask(parseBulkTaskIdRequest(params))
     }
+  }
+
+  /** 许可只发给本扩展中转文档，标签页身份由浏览器提供。 */
+  private async authorizeBulkWorkPage(context: RpcContext): Promise<boolean> {
+    const launcherUrl = chrome.runtime.getURL('src/bulk-launch.html')
+    if (!context.senderUrl?.startsWith(`${launcherUrl}?`)) {
+      throw new Error('[BulkScheduler] 采集许可只能由本扩展批量中转页申请')
+    }
+    const source = new URL(context.senderUrl)
+    const workUrl = source.searchParams.get('url')
+    if (source.hash || workUrl === null || !URL.canParse(workUrl)) {
+      throw new Error('[BulkScheduler] 中转页缺少合法工作页目标')
+    }
+    const tabId = context.tabId
+    if (tabId === undefined || tabId < 0) {
+      throw new Error('[BulkScheduler] 中转页许可请求缺少浏览器标签页身份')
+    }
+    return bulkScheduler.authorizeWorkPage(workUrl, tabId)
   }
 
   /**

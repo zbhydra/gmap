@@ -234,7 +234,6 @@ describe('状态机：完成推进', () => {
     expect(after.activeTabId).toBeNull()
     expect(done.effects.closeTabIds).toEqual([11])
     expect(done.effects.launches).toHaveLength(1)
-    expect(done.effects.launches[0]?.itemIndex).toBe(1)
     expect(new URL(done.effects.launches[0]?.url ?? '').searchParams.get('gme_bulk_item')).toBe('1')
     expect(done.effects.scanAlarm).toBe('on')
   })
@@ -325,7 +324,7 @@ describe('状态机：卡死跳过（消费 stuckMaxRetry）', () => {
     expect(after.items[0]).toMatchObject({ status: 'running', tries: 2 })
     expect(stuck.effects.closeTabIds).toEqual([21])
     expect(stuck.effects.launches).toHaveLength(1)
-    expect(stuck.effects.launches[0]?.itemIndex).toBe(0)
+    expect(new URL(stuck.effects.launches[0]!.url).searchParams.get('gme_bulk_item')).toBe('0')
     expect(after.activeStartedAt).toBe(T0 + 2000 + BULK_LIMITS.stuckMs + 1000)
   })
 
@@ -684,32 +683,32 @@ describe('持久化与恢复', () => {
     expect(reloaded.tasks[0]?.items[1]?.status).toBe('running')
   })
 
-  it('alarm 兜底：启动丢失（条目 pending）→ 重新打开工作页', () => {
+  it('alarm 补启动保留同一任务与条目上下文', () => {
     const started = createAndStart(['k1', 'k2'])
     const task = started.tasks[0]!
 
-    // tabs.create 与 item-launched 之间 SW 被杀：状态里 cursor 条目仍 pending
+    // 工作页尚未登记 owner，alarm 补发等待许可的中转页。
     const tick = reduceBulkEvent(
       started,
       { kind: 'scan-tick', stuckMaxRetry: 1 },
       T0 + 60_000
     )
     expect(tick.effects.launches).toHaveLength(1)
-    expect(tick.effects.launches[0]).toMatchObject({ taskId: task.id, itemIndex: 0 })
+    const url = new URL(tick.effects.launches[0]!.url)
+    expect(url.searchParams.get('gme_bulk_task')).toBe(task.id)
+    expect(url.searchParams.get('gme_bulk_item')).toBe('0')
     expect(tick.state.tasks[0]?.items[0]?.status).toBe('running')
   })
 
-  it('alarm 兜底：标签页创建回执丢失（activeTabId=null）→ 重开工作页', () => {
+  it('alarm 兜底：中转页尚未登记（activeTabId=null）→ 补启动', () => {
     const started = createAndStart(['k1'])
-    const task = started.tasks[0]!
-    // running 但 activeTabId 仍为 null（item-launched 丢失）
+    // running 但 activeTabId 仍为 null，未获许可不能采集。
     const tick = reduceBulkEvent(started, { kind: 'scan-tick', stuckMaxRetry: 1 }, T0 + 120_000)
     const after = tick.state.tasks[0]!
     expect(after.items[0]?.status).toBe('running')
     expect(after.activeTabId).toBeNull()
     expect(tick.effects.launches).toHaveLength(1)
-    expect(tick.effects.launches[0]?.itemIndex).toBe(0)
-    void task
+    expect(new URL(tick.effects.launches[0]!.url).searchParams.get('gme_bulk_item')).toBe('0')
   })
 
   it('alarm 兜底：半程状态（缺启动时间）归一为当前时间，不重启工作页', () => {

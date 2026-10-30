@@ -11,7 +11,7 @@
  * 3. chrome.tabs.onRemoved：工作页被用户关闭立即重试/跳过，不等 90s。
  *
  * 并发控制：dispatch 经模块级 Promise 串行队列，保证 read-modify-write 不
- * 交错；副作用在落盘之后执行，中途 SW 被杀由下次 alarm 恢复（幂等）。
+ * 交错；副作用在落盘之后执行，未登记的中转页由下次 alarm 补启动。
  *
  * 工作页以 `active: true` 打开：批处理是串行单页推进，活动标签页不触发后台
  * 计时器节流（竞品用双页轮换对抗节流，我们以单活动页获得同样效果）。
@@ -28,7 +28,8 @@ import { MARK_TYPE } from '@/core/api/mark/types'
 import { clearPhotosWorkIntent } from '../photosWorkPage'
 import { checkBulkQuota, estimateBulkRecords } from './quota'
 import { bulkStateStore, emptyBulkState } from './store'
-import { reduceBulkEvent } from './machine'
+import { buildWorkUrlForItem, reduceBulkEvent } from './machine'
+import { readBulkWorkParams } from '@/sites/maps/content/bulkAuto'
 import type {
   BulkCommandResult,
   BulkCreateTaskParams,
@@ -166,6 +167,32 @@ export class BulkSchedulerController {
     return toCommandResult(await this.dispatch({ kind: 'start-task', taskId }))
   }
 
+  /** 中转页先登记 owner 并落盘，获准后才可导航采集。 */
+  async authorizeWorkPage(workUrl: string, tabId: number): Promise<boolean> {
+    const params = readBulkWorkParams(new URL(workUrl))
+    if (params === null) {
+      return false
+    }
+    const state = await this.getState()
+    const task = state.tasks.find(candidate => candidate.id === params.taskId)
+    if (!task || buildWorkUrlForItem(task, params.itemIndex) !== workUrl) {
+      return false
+    }
+    const result = await this.dispatch({
+      kind: 'item-launched',
+      taskId: params.taskId,
+      itemIndex: params.itemIndex,
+      tabId
+    })
+    const registered = result.state.tasks.find(candidate => candidate.id === params.taskId)
+    return (
+      registered?.status === 'running' &&
+      registered.cursor === params.itemIndex &&
+      registered.items[params.itemIndex]?.status === 'running' &&
+      registered.activeTabId === tabId
+    )
+  }
+
   /**
    * 配额前置校验（U5 遗留补口）：预估消耗（条目数 × 单批上限）超过剩余额度
    * 时拒绝并返回 quota-exceeded。usage 不可得（服务端/网络故障）时放行——
@@ -292,7 +319,7 @@ export class BulkSchedulerController {
     }
   }
 
-  /** 执行副作用：关页 → 开新工作页 → alarm 开关 → 广播（顺序即依赖序）。 */
+  /** 执行副作用：关页 → 开中转页 → alarm 开关 → 广播（顺序即依赖序）。 */
   private async applyEffects(effects: BulkReduceResult['effects']): Promise<void> {
     for (const tabId of effects.closeTabIds) {
       try {
@@ -305,17 +332,9 @@ export class BulkSchedulerController {
 
     for (const launch of effects.launches) {
       try {
-        const tab = await chrome.tabs.create({ url: buildLauncherUrl(launch.url), active: true })
-        if (tab.id !== undefined) {
-          void this.dispatch({
-            kind: 'item-launched',
-            taskId: launch.taskId,
-            itemIndex: launch.itemIndex,
-            tabId: tab.id
-          })
-        }
+        await chrome.tabs.create({ url: buildLauncherUrl(launch.url), active: true })
       } catch (error) {
-        // 创建失败极罕见（浏览器退出中）：activeTabId 保持 null，alarm 兜底重启
+        // 未登记的中转页不能采集；创建或许可失败由 alarm 补启动。
         logger.error(`[BulkScheduler] 打开工作页失败: url=${launch.url}`, error)
       }
     }
@@ -334,10 +353,7 @@ export class BulkSchedulerController {
 export const bulkScheduler = new BulkSchedulerController()
 
 /**
- * 经启动中转页打开工作页：SW tabs.create 的主框架导航在 Playwright 环境
- * 绕过 route（上游限制，e2e 零外网依赖拦截），因此先开扩展中转页，由渲染
- * 进程 location.replace 跳到真实工作页（渲染进程发起的导航可被正常拦截）。
- * 生产语义不变：中转页只是一瞬的扩展页闪现。见 src/bulk-launch/main.ts。
+ * 中转页必须先获得 owner 落盘许可，避免创建回执丢失后两页同时采集。
  */
 function buildLauncherUrl(workUrl: string): string {
   return `${chrome.runtime.getURL('src/bulk-launch.html')}?url=${encodeURIComponent(workUrl)}`

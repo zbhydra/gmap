@@ -127,6 +127,17 @@ export class BackgroundChannel {
     )
   }
 
+  /** 调用 authorizeBulkWorkPage 能力。 */
+  authorizeBulkWorkPage(
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'authorizeBulkWorkPage'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'authorizeBulkWorkPage'>>(
+      'authorizeBulkWorkPage',
+      undefined,
+      options
+    )
+  }
+
   /** 调用 createBulkTask 能力。 */
   createBulkTask(
     params: RpcMethodParams<BackgroundHandler, 'createBulkTask'>,
