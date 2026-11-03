@@ -130,7 +130,7 @@ restore_dependencies() {
         error_exit "uv 未安装，请先安装 uv"
     fi
 
-    uv sync
+    uv sync --locked --no-dev
 
     log "依赖恢复完成"
 }

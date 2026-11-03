@@ -418,7 +418,7 @@ install_dependencies() {
 
     # 安装依赖
     log_info "创建虚拟环境并安装依赖..."
-    uv sync
+    uv sync --locked --no-dev
 
     install_captcha_fonts
     verify_captcha_font
@@ -450,7 +450,7 @@ install_captcha_fonts() {
 
 verify_captcha_font() {
     log_info "校验 Admin 验证码字体..."
-    if ! uv run python - <<'PY'
+    if ! uv run --locked --no-dev python - <<'PY'
 from app.services.captcha_service import captcha_service
 
 font = captcha_service._load_font()
@@ -476,7 +476,7 @@ sync_database_schema() {
         return
     fi
 
-    uv run python src/app/init/sync_database_schema.py --yes
+    uv run --locked --no-dev python src/app/init/sync_database_schema.py --yes
     log_info "数据库结构同步完成"
 }
 
