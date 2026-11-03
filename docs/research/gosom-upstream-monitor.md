@@ -35,11 +35,11 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-11-02`
-- 本地仓库提交:`a9aec3e48f14d698350b383137e74d78afa8fb38`
+- 检查时间:`2026-11-03`
+- 本地仓库提交:`727512ca47d3a786e1132bc66f2d1007294e6f59`
 - GOSOM 最新提交:`903b96d7aa8863188022c04db220e44f3218c860`
 - SCRAPEMATE 最新提交:`859d15f56ba5ed3851587edc305fab6ee956cc71`
-- 结论:题设限定无网络,未执行 `git ls-remote`;提供的两个 `main` HEAD 均与本地 `.upstream/` 的 `main` 一致,且分别等于当前基线,完整 `git diff --name-status` 均为空,`git diff --check` 均通过。GOSOM `go.mod` 已跟进 `github.com/gosom/scrapemate v1.4.0`,两仓库 playwright-go 均为 `v0.6100.0`。复核「待确认项」、`docs/ROADMAP.md` B4 与 `docs/feat/014.Maps云端/plans/001.Provider采集基建.md`、`002.Online任务与结果基建.md`、`003.可选联系方式与独立采集库.md`、`005.CAS改进参考清单.md`、`010.Export服务端实施.md` 的验收记录后,仍未见 GOSOM worker 健康服务与 Maps URL 解析修复两项预发验证的完成证据;`010` 的 Collector 开发服验证不覆盖这两项。当前 `backend/src`、`admin/src` 已无 gosom 配置或调用入口,`docs/feat/014.Maps云端/tech-引擎Provider层.md` 也记载旧引擎退役;本仓事实不能证明部署机已移除旧镜像或完成历史预发验证。两项继续待确认,由人工核对部署机 digest 与旧镜像是否仍需运行,再决定是否按原条件评估更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。本轮两仓库均无新增影响,不建议仅因本次巡检主动更新镜像;两条基线不变,不追加变更记录。
+- 结论:题设限定无网络,未执行 `git ls-remote`;提供的两个 `main` HEAD 均与本地 `.upstream/` 的 `main` 一致,且分别等于当前基线,完整 `git diff --name-status` 均为空,`git diff --check` 均通过。GOSOM `go.mod` 已跟进 `github.com/gosom/scrapemate v1.4.0`,两仓库 playwright-go 均为 `v0.6100.0`。复核「待确认项」、`docs/ROADMAP.md` B4、`docs/feat/014.Maps云端/plans/001.Provider采集基建.md`、`002.Online任务与结果基建.md`、`003.可选联系方式与独立采集库.md`、`005.CAS改进参考清单.md`、`010.Export服务端实施.md` 的验收记录后,仍未见 GOSOM worker 健康服务与 Maps URL 解析修复两项预发验证的完成证据;`010` 的 Collector 开发服验证不覆盖这两项。当前 `backend/src`、`admin/src` 已无 gosom 配置或调用入口,`docs/feat/014.Maps云端/tech-引擎Provider层.md` 也记载旧引擎退役;本仓事实不能证明部署机已移除旧镜像或完成历史预发验证。两项继续待确认,由人工核对部署机 digest 与旧镜像是否仍需运行,再决定是否按原条件评估更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。本轮两仓库均无新增影响,不建议仅因本次巡检主动更新镜像;两条基线不变,不追加变更记录。
 
 该区只保留最近一次结果。只有上游提交变化、检查失败或待确认项状态变化时,才在「变更记录」追加事件,避免每天写入无信息量的记录。
 
