@@ -389,14 +389,20 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
     real_clink_cleanup_state: _CleanupState,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Invoice 回调经订阅双引用对账后创建续费订单并按渠道账期推进。"""
+    """折抵与收费行都标记 proration 时，按实付建单并冻结目标整期价。"""
 
     config, environment = await _load_clink_config()
     prices = await payment_config_service.get_snapshot(force_refresh=True)
     current = prices.prices.get(("api_basic", CLINK_PAYMENT_METHOD))
     target = prices.prices.get(("api_professional", CLINK_PAYMENT_METHOD))
-    if current is None or target is None or not target.provider_sku:
+    if (
+        current is None
+        or not current.provider_sku
+        or target is None
+        or not target.provider_sku
+    ):
         pytest.skip("REAL_CLINK_CHANNEL_UNAVAILABLE: Clink 自动续费 Price 映射未配齐")
+    current_product, current_price = current.provider_sku.split(":")
     target_product, target_price = target.provider_sku.split(":")
     webhook_key = str(config["webhook_signing_key"])
     cleanup = real_clink_cleanup_state
@@ -413,14 +419,14 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
         product_class=ProductClass.SUBSCRIPTION.value,
         product_id="api_basic",
         product_name=f"pytest-clink-{cleanup.test_run_id}",
-        amount=current.amount,
+        amount=15_000_000,
         currency="USD",
         order_status=OrderStatus.PAID.value,
         callback_status=CallbackStatus.PENDING.value,
         payment_method=CLINK_PAYMENT_METHOD,
         payment_channel_order_no=f"ord_{cleanup.test_run_id}",
         payment_channel_uid=customer_id,
-        paid_amount=current.amount,
+        paid_amount=15_000_000,
         paid_currency="USD",
         paid_at=now_ms,
         payment_data=json.dumps({"sessionId": session_id}, separators=(",", ":")),
@@ -433,7 +439,7 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
                     "auto_renew": True,
                     "period": "month",
                     "currency": "USD",
-                    "amount": current.amount,
+                    "amount": 15_000_000,
                     "provider_sku": current.provider_sku,
                 },
                 "payment_callback": {
@@ -462,23 +468,34 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
         "invoiceId": f"inv_{cleanup.test_run_id}",
         "subscriptionId": subscription_id,
         "orderId": f"ordr_{cleanup.test_run_id}",
-        "originalAmount": format_normalized_amount(target.amount - current.amount),
+        "originalAmount": "50.07",
         "originalCurrency": "USD",
         "status": "paid",
         "currentPeriodStart": first_period_end,
         "currentPeriodEnd": renewal_period_end,
         "items": [
             {
-                "amount": format_normalized_amount(target.amount),
+                "amount": "-14.93",
                 "currency": "USD",
-                "proration": None,
+                "proration": True,
+                "price": {
+                    "productId": current_product,
+                    "priceId": current_price,
+                    "unitAmount": "15.00",
+                    "quantity": 1,
+                },
+            },
+            {
+                "amount": "65.00",
+                "currency": "USD",
+                "proration": True,
                 "price": {
                     "productId": target_product,
                     "priceId": target_price,
-                    "unitAmount": format_normalized_amount(target.amount),
+                    "unitAmount": "65.00",
                     "quantity": 1,
                 },
-            }
+            },
         ],
     }
     _install_clink_http(
@@ -520,11 +537,11 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
     assert renewal_orders[0].callback_status == CallbackStatus.SUCCESS.value
     assert renewal_orders[0].payment_transaction_id == f"ordr_{cleanup.test_run_id}"
     assert renewal_orders[0].product_id == "api_professional"
-    assert renewal_orders[0].amount == target.amount - current.amount
+    assert renewal_orders[0].amount == 50_070_000
     paid_snapshot = json.loads(renewal_orders[0].extra_metadata or "{}")[
         "product_snapshot"
     ]
-    assert paid_snapshot["amount"] == target.amount
+    assert paid_snapshot["amount"] == 65_000_000
     assert paid_snapshot["product_price_id"] == target.id
     assert paid_snapshot["provider_sku"] == target.provider_sku
 

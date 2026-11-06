@@ -210,7 +210,7 @@ recurring_reference.original_order_no = subscription.merchantReference
 - `customerId` 沿订单成功与订阅履约链路保存到 `user_subscriptions.channel_uid`,渠道订阅管理用它调用 `POST /billing/session` 创建 Customer Portal Session(带服务端生成的 Pricing `returnUrl`);Portal URL 只接受当前环境官方 HTTPS 主机:Sandbox `uat-portal.clinkbill.com`,正式 `portal.clinkbill.com`。
 - Clink `subscriptionId`、`orderId`、`invoiceId`、`sessionId`、`event.id` 保存在订单支付扩展元数据中用于排查;本地订阅实例只保存 `channel_subscription_id/账期起止`,自动续费本地首单号(`original_order_no`)仅保存在订单回调元数据,不复制渠道实时状态。
 - 首期支付时首单仍为 `PENDING`，现有链路直接将首单置为已支付并按快照周期履约。
-- 后续扣款时首单已为 `PAID`，按新 `invoiceId` 创建本地实付订单。商品与 Price 引用取本次发票整期计费行，整期金额取 `items.price.unitAmount` 的不可变发票快照，不能取净实付或当前配置标价；缺少 `items` 时在同一解析入口查询官方 Invoice。订单快照合同见 [订阅订单履约](../006.订阅系统/tech-订阅商品与状态.md#订单履约)。
+- 后续扣款时首单已为 `PAID`，按新 `invoiceId` 创建本地实付订单。商品与 Price 引用取本次发票唯一正计费行，整期金额取 `items.price.unitAmount` 的不可变发票快照，不能取净实付或当前配置标价；缺少 `items` 时在同一解析入口查询官方 Invoice。订单快照合同见 [订阅订单履约](../006.订阅系统/tech-订阅商品与状态.md#订单履约)。
 - 运营之后把商品 `auto_renew` 修改为 `false` 不影响已存在的 Clink 周期协议；续费订单保留实例的自动续费方式。本地到期只向后推进，续费与折算发票不覆盖已同步的当前档位。
 
 Clink 针对 `order.succeeded` 的 API 文档明确允许按 `event.id` 或 `orderId` 幂等；订阅指南要求每个 `invoiceId` 只履约一次。本方案分别使用 `orderId` 和 `invoiceId` 进入现有订单幂等链路，并复用自动续费已有 Redis 短锁，不增加 Clink 专用 Redis key 或持久 Inbox 真相源。

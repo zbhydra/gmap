@@ -622,7 +622,12 @@ class ClinkPaymentProvider(PaymentBase):
         lines = [
             item
             for item in items
-            if isinstance(item, dict) and item.get("proration") is not True
+            if isinstance(item, dict)
+            and self._signed_normalized_amount(
+                item.get("amount"),
+                context=f"clink.invoice_paid: invoice_id={invoice_id}, item.amount",
+            )
+            > 0
         ]
         if len(lines) != 1:
             raise PaymentProviderError(
@@ -964,9 +969,7 @@ class ClinkPaymentProvider(PaymentBase):
     def _signed_normalized_amount(value: object, *, context: str) -> int:
         """把 Clink 主币种金额转换为允许负数的 6 位精度整数。
 
-        仅供 update preview 使用：官方 preview 对折抵大于收费的换价会返回
-        负的 lines.totalAmount，原样转成负整数交由 service 按非正差额
-        映射为不可升级，不在 provider 层预判正负。
+        换价预览和发票抵扣行均可为负，由调用方判断收费或抵扣语义。
         """
 
         if isinstance(value, bool) or not isinstance(value, int | float | str):
