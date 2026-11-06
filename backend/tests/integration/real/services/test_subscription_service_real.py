@@ -463,10 +463,6 @@ class _UpgradeCleanupState:
     user_id: int
 
 
-# Stripe 的美分对应六位金额整数下的 10_000。
-_STRIPE_CENT_UNIT = 10_000
-
-
 @pytest.fixture
 async def real_upgrade_schema_ready(real_mysql_ready: None) -> None:
     """检查升级差额单测试需要的真实 MySQL 表（配置表只读）。"""
@@ -616,11 +612,20 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
     async def _create_order() -> OrderModel:
         return await order_service.create_order(await _checkout_param())
 
+    quote = await subscription_service.get_upgrade_quote(
+        user_id=user_id,
+        product_kind=MAPS_API_PRODUCT_KIND,
+        target_product_id=API_PROFESSIONAL_PRODUCT_ID,
+    )
+    assert quote["available"] is True
+    assert cast(int, quote["amount"]) % 10_000 == 0
+
     order = await _create_order()
     assert order.product_class == ProductClass.SUBSCRIPTION.value
     assert order.product_id == API_PROFESSIONAL_PRODUCT_ID
     assert order.payment_method == "clink"
     assert order.currency == "USD"
+    assert order.amount % 10_000 == 0
 
     metadata = json.loads(cast(str, order.extra_metadata))
     snapshot = metadata["product_snapshot"]
@@ -658,14 +663,14 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
     assert snapshot["upgrade_inputs"]["current_period_amount"] == 10_000_000
     assert (
         subscription_service._prorated_upgrade_amount(
-            current_amount=10_000_000,
-            target_amount=50_000_000,
-            start_at=0,
-            expires_at=30 * _DAY_MS,
-            now_ms=3 * _DAY_MS,
-            unit=_STRIPE_CENT_UNIT,
+            current_amount=19_000_000,
+            target_amount=49_000_000,
+            start_at=1793972904479,
+            expires_at=1796564904479,
+            now_ms=1793984898918,
+            unit=unit,
         )
-        == 41_000_000
+        == 30_080_000
     )
     await api_usage_service.consume(
         f"u:{user_id}", user_id=user_id, records=300, request_id=f"upgrade-{user_id}"

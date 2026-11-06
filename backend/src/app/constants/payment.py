@@ -25,11 +25,15 @@ _PAYPAL_PLAN_ID_PATTERN = re.compile(r"P-[A-Z0-9]{24}")
 def channel_amount_unit(channel_code: str) -> int:
     """返回渠道计费最小单位（6 位精度整数下的倍数）。
 
-    升级折算金额向下取整到该倍数：Stripe / PayPal 使用两位小数（美分），
-    Telegram Stars 只接受整数 Stars，Clink 及其他渠道按 1e-6 表示。
+    升级折算金额向下取整到该倍数：本期 Stripe / PayPal / Clink 的 USD 按美分，
+    Telegram Stars 只接受整数 Stars，其他渠道按 1e-6 表示。
     """
 
-    if channel_code in {PAYPAL_PAYMENT_METHOD, STRIPE_PAYMENT_METHOD}:
+    if channel_code in {
+        PAYPAL_PAYMENT_METHOD,
+        STRIPE_PAYMENT_METHOD,
+        CLINK_PAYMENT_METHOD,
+    }:
         return PAYPAL_USD_AMOUNT_UNIT
     if channel_code == TELEGRAM_STARS_PAYMENT_METHOD:
         return TELEGRAM_STARS_AMOUNT_UNIT
