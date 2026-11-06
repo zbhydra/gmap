@@ -9,6 +9,8 @@ from app.utils.money import NORMALIZED_AMOUNT_FACTOR
 
 DISPLAY_PRICE_CHANNEL_CODE = "display"
 CLINK_PAYMENT_METHOD = "clink"
+STRIPE_PAYMENT_METHOD = "stripe"
+NEW_SALE_PAYMENT_METHODS = frozenset({STRIPE_PAYMENT_METHOD, CLINK_PAYMENT_METHOD})
 PAYPAL_PAYMENT_METHOD = "paypal"
 PAYPAL_CURRENCY = "USD"
 PAYPAL_USD_AMOUNT_UNIT = NORMALIZED_AMOUNT_FACTOR // 100
@@ -23,11 +25,11 @@ _PAYPAL_PLAN_ID_PATTERN = re.compile(r"P-[A-Z0-9]{24}")
 def channel_amount_unit(channel_code: str) -> int:
     """返回渠道计费最小单位（6 位精度整数下的倍数）。
 
-    升级折算金额向下取整到该倍数：PayPal 只接受两位小数（美分），
+    升级折算金额向下取整到该倍数：Stripe / PayPal 使用两位小数（美分），
     Telegram Stars 只接受整数 Stars，Clink 及其他渠道按 1e-6 表示。
     """
 
-    if channel_code == PAYPAL_PAYMENT_METHOD:
+    if channel_code in {PAYPAL_PAYMENT_METHOD, STRIPE_PAYMENT_METHOD}:
         return PAYPAL_USD_AMOUNT_UNIT
     if channel_code == TELEGRAM_STARS_PAYMENT_METHOD:
         return TELEGRAM_STARS_AMOUNT_UNIT
@@ -37,10 +39,10 @@ def channel_amount_unit(channel_code: str) -> int:
 def payment_currency_matches_channel(channel_code: str, currency: str) -> bool:
     """判断渠道结算币种是否满足当前 Provider 合同。
 
-    PayPal 仅售 USD 是项目约束；Telegram Stars 使用 XTR 是官方协议约束。
+    Stripe / PayPal 仅售 USD 是项目约束；Telegram Stars 使用 XTR 是官方协议约束。
     """
 
-    if channel_code == PAYPAL_PAYMENT_METHOD:
+    if channel_code in {PAYPAL_PAYMENT_METHOD, STRIPE_PAYMENT_METHOD}:
         return currency == PAYPAL_CURRENCY
     if channel_code == TELEGRAM_STARS_PAYMENT_METHOD:
         return currency == TELEGRAM_STARS_CURRENCY
@@ -54,6 +56,8 @@ def recurring_provider_sku_parts(
     """解析自动续费 SKU；返回 None 表示不符合当前渠道合同。"""
 
     value = provider_sku.strip() if provider_sku else ""
+    if channel_code == STRIPE_PAYMENT_METHOD:
+        return (value,) if re.fullmatch(r"price_[A-Za-z0-9]+", value) else None
     if channel_code == PAYPAL_PAYMENT_METHOD:
         return (value,) if _PAYPAL_PLAN_ID_PATTERN.fullmatch(value) else None
     # Clink API 使用两个独立 ID，冒号仅是本项目单列存储约定。

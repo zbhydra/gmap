@@ -14,10 +14,14 @@ from typing import Any, cast
 import uuid
 
 import pytest
-from sqlalchemy import delete, select, text
+from sqlalchemy import delete, select, text, update
 
 from app.constants.order import CallbackStatus, OrderStatus, ProductClass
 from app.core.database import get_async_session, get_engine
+from app.exceptions.payment_exception import (
+    PaymentFailureCategory,
+    PaymentProcessingError,
+)
 from app.models.order_model import OrderModel
 from app.models.subscription_model import UserSubscriptionModel
 from app.models.user_credit_account_model import UserCreditAccountModel
@@ -156,7 +160,7 @@ async def _insert_order(
 async def test_real_order_fulfillment_scan_filters_stale_paid_pending_orders(
     real_order_fulfillment_cleanup_state: _CleanupState,
 ) -> None:
-    """真实 MySQL 上只扫描滞留 PAID + PENDING/FAILED + 可履约商品订单。"""
+    """真实 MySQL 上只扫描滞留 PAID + PENDING + 可履约商品订单。"""
     cleanup = real_order_fulfillment_cleanup_state
     now_ms = timestamp_now()
     stale_order = await _insert_order(
@@ -210,7 +214,7 @@ async def test_real_order_fulfillment_scan_filters_stale_paid_pending_orders(
 
     scanned_orders = await order_service.order_lists(
         order_statuses=[OrderStatus.PAID],
-        callback_statuses=[CallbackStatus.PENDING, CallbackStatus.FAILED],
+        callback_statuses=[CallbackStatus.PENDING],
         product_classes=[ProductClass.SUBSCRIPTION, ProductClass.RECHARGE],
         updated_before_ms=timestamp_now() - 60_000,
         limit=20,
@@ -220,7 +224,7 @@ async def test_real_order_fulfillment_scan_filters_stale_paid_pending_orders(
 
     assert stale_order.order_no in scanned_order_nos
     assert fresh_order.order_no not in scanned_order_nos
-    assert failed_order.order_no in scanned_order_nos
+    assert failed_order.order_no not in scanned_order_nos
     assert recharge_order.order_no in scanned_order_nos
     assert non_subscription_order.order_no not in scanned_order_nos
     assert unpaid_order.order_no not in scanned_order_nos
@@ -302,3 +306,128 @@ async def test_real_recharge_fulfillment_creates_account_and_is_idempotent(
     assert len(logs) == 1
     assert logs[0].change_amount == 200
     assert logs[0].reason == "recharge_purchase"
+
+
+async def test_real_deterministic_fulfillment_stops_without_delivering(
+    real_order_fulfillment_cleanup_state: _CleanupState,
+) -> None:
+    """坏商品快照回滚发货并停止补偿，修复快照本身不会绕过人工恢复边界。"""
+    cleanup = real_order_fulfillment_cleanup_state
+    order = await _insert_order(
+        cleanup,
+        label="broken",
+        order_status=OrderStatus.PAID,
+        callback_status=CallbackStatus.PENDING,
+        product_class=ProductClass.RECHARGE,
+        updated_at=timestamp_now() - 120_000,
+    )
+    with pytest.raises(PaymentProcessingError) as error:
+        await order_service.fulfill_paid_order(order)
+    assert error.value.category == PaymentFailureCategory.NON_RETRYABLE
+    saved = await order_service.get_order_by_no(order.order_no)
+    assert saved is not None and saved.order_status == OrderStatus.PAID.value
+    assert saved.callback_status == CallbackStatus.FAILED.value
+    async with get_async_session() as db:
+        assert (
+            await db.scalar(
+                select(UserCreditAccountModel).where(
+                    UserCreditAccountModel.user_id == order.user_id
+                )
+            )
+            is None
+        )
+
+        assert (
+            await db.scalar(
+                select(UserCreditLogModel).where(
+                    UserCreditLogModel.user_id == order.user_id
+                )
+            )
+            is None
+        )
+    order.extra_metadata = json.dumps({"product_snapshot": {"credits_amount": 100}})
+    with pytest.raises(PaymentProcessingError):
+        await order_service.fulfill_paid_order(order)
+    async with get_async_session() as db:
+        assert (
+            await db.scalar(
+                select(UserCreditAccountModel).where(
+                    UserCreditAccountModel.user_id == order.user_id
+                )
+            )
+            is None
+        )
+
+
+async def test_real_fulfillment_timeout_rolls_back_then_can_compensate(
+    real_order_fulfillment_cleanup_state: _CleanupState,
+) -> None:
+    """真实账户行竞争导致超时；订单领取回滚为 PENDING，解锁后只发货一次。"""
+    order = await _insert_order(
+        real_order_fulfillment_cleanup_state,
+        label="timeout",
+        order_status=OrderStatus.PAID,
+        callback_status=CallbackStatus.PENDING,
+        product_class=ProductClass.RECHARGE,
+        updated_at=timestamp_now() - 120_000,
+    )
+    order.extra_metadata = json.dumps({"product_snapshot": {"credits_amount": 200}})
+    async with get_async_session() as db:
+        db.add(order)
+        db.add(UserCreditAccountModel(user_id=order.user_id, balance=0))  # type: ignore[call-arg]
+        await db.commit()
+    async with get_async_session() as blocker:
+        await blocker.execute(
+            update(UserCreditAccountModel)
+            .where(UserCreditAccountModel.user_id == order.user_id)
+            .values(balance=1)
+        )
+        with pytest.raises(PaymentProcessingError) as error:
+            await order_service.fulfill_paid_order(order)
+        assert error.value.category == PaymentFailureCategory.RETRYABLE
+        await blocker.rollback()
+    async with get_async_session() as db:
+        saved = await db.scalar(
+            select(OrderModel).where(OrderModel.order_no == order.order_no)
+        )
+        assert saved is not None and saved.order_status == OrderStatus.PAID.value
+        assert saved.callback_status == CallbackStatus.PENDING.value
+        account = await db.scalar(
+            select(UserCreditAccountModel).where(
+                UserCreditAccountModel.user_id == order.user_id
+            )
+        )
+        assert account is not None and account.balance == 0
+        assert (
+            await db.scalar(
+                select(UserCreditLogModel).where(
+                    UserCreditLogModel.user_id == order.user_id
+                )
+            )
+            is None
+        )
+    assert await order_service.fulfill_paid_order(order) is True
+    assert await order_service.fulfill_paid_order(order) is True
+    async with get_async_session() as db:
+        saved = await db.scalar(
+            select(OrderModel).where(OrderModel.order_no == order.order_no)
+        )
+        assert (
+            saved is not None and saved.callback_status == CallbackStatus.SUCCESS.value
+        )
+        account = await db.scalar(
+            select(UserCreditAccountModel).where(
+                UserCreditAccountModel.user_id == order.user_id
+            )
+        )
+        assert account is not None and account.balance == 200
+        logs = list(
+            (
+                await db.scalars(
+                    select(UserCreditLogModel).where(
+                        UserCreditLogModel.user_id == order.user_id
+                    )
+                )
+            ).all()
+        )
+        assert len(logs) == 1 and logs[0].change_amount == 200

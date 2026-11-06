@@ -46,7 +46,7 @@ const SUBSCRIPTIONS = {
     display_name: 'Maps Pro',
     expires_at: Date.parse('2026-10-01T00:00:00Z'),
     auto_renew: true,
-    payment_method: 'clink'
+    payment_method: 'stripe'
   },
   api: {
     status: 'unavailable',
@@ -561,10 +561,10 @@ test('dashboard subscriptions: three-line states, pricing tab links and manage s
   mockAuthMe(page)
   await signInByStoredToken(page, 'e2e-subs-token')
   await page.route('**/api/client/subscription/management', route =>
-    route.fulfill({ json: envelope({ url: 'https://uat-portal.clinkbill.com/portal/sess_e2e_1' }) })
+    route.fulfill({ json: envelope({ url: 'https://billing.stripe.com/p/session/sess_e2e_1' }) })
   )
-  await page.context().route('https://uat-portal.clinkbill.com/**', route =>
-    route.fulfill({ contentType: 'text/html', body: '<html><title>ClinkBill Portal</title></html>' })
+  await page.context().route('https://billing.stripe.com/**', route =>
+    route.fulfill({ contentType: 'text/html', body: '<html><title>Stripe Portal</title></html>' })
   )
 
   await page.goto('/dashboard/subscriptions/')
@@ -578,6 +578,8 @@ test('dashboard subscriptions: three-line states, pricing tab links and manage s
 
   const extensionCard = page.locator('[data-subscription-line="extension"]')
   await expect(extensionCard).toContainText('Maps Pro')
+  await expect(extensionCard).toContainText('Paid via Stripe')
+  await expect(onlineCard).toContainText('Paid via PayPal')
   await expect(extensionCard.locator('[data-subs-manage]')).toBeVisible()
 
   const apiCard = page.locator('[data-subscription-line="api"]')
@@ -592,7 +594,9 @@ test('dashboard subscriptions: three-line states, pricing tab links and manage s
   const portalPopupPromise = page.waitForEvent('popup')
   await extensionCard.locator('[data-subs-manage]').click()
   const portalPopup = await portalPopupPromise
-  await expect(portalPopup).toHaveURL(/uat-portal\.clinkbill\.com/)
+  await expect(portalPopup).toHaveURL(/billing\.stripe\.com/)
+
+  await portalPopup.close()
 
   // 桌面视口截图。
   await page.screenshot({ path: testInfo.outputPath('dashboard-subscriptions-desktop.png'), fullPage: true })

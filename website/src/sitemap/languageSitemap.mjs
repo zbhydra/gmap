@@ -23,6 +23,8 @@ const SEARCH_BOT_BLOCKED_ROUTE_PATHS = new Set([
   '/clink/success/',
   '/paypal/cancel/',
   '/paypal/success/',
+  '/stripe/cancel/',
+  '/stripe/success/',
   '/extension-login/',
   // Dashboard 工作区 noindex：四个视图地址都是私有工作区，不进搜索与 sitemap。
   '/dashboard/',

@@ -8,6 +8,7 @@
 import type { ClinkReturnContent } from '../../i18n/schema'
 
 interface Props {
+  provider?: 'clink' | 'stripe'
   /** 支付结果。 */
   status: 'success' | 'cancel'
   /** success 页的等待、按订单类别的确认与失败文案。 */
@@ -16,13 +17,14 @@ interface Props {
   cancelCopy: ClinkReturnContent['cancel']
 }
 
-const { status, successCopy, cancelCopy } = Astro.props
+const { provider = 'clink', status, successCopy, cancelCopy } = Astro.props
 const copy = status === 'success' ? successCopy.waiting : cancelCopy
 ---
 
 <section
   class="clink-return-page"
   data-payment-return
+  data-payment-return-provider={provider}
   data-payment-return-status={status}
   data-payment-return-state={status === 'success' ? 'waiting' : 'cancelled'}
 >
@@ -51,8 +53,8 @@ const copy = status === 'success' ? successCopy.waiting : cancelCopy
     hidden
   ></span>
   <section class="clink-return-card" aria-live="polite">
-    <img src="/payment-icons/clinkbill.png" alt="" aria-hidden="true" width="32" height="32" />
-    <p class="kicker clink-return-eyebrow">ClinkBill</p>
+    {provider === 'clink' && <img src="/payment-icons/clinkbill.png" alt="" aria-hidden="true" width="32" height="32" />}
+    <p class="kicker clink-return-eyebrow">{provider === 'stripe' ? 'Stripe' : 'ClinkBill'}</p>
     <h1 data-payment-return-title>{copy.title}</h1>
     <p data-payment-return-description>{copy.description}</p>
   </section>
@@ -63,11 +65,12 @@ const copy = status === 'success' ? successCopy.waiting : cancelCopy
 
   const root = document.querySelector<HTMLElement>('[data-payment-return]')
   const status = root?.dataset.paymentReturnStatus
-  if (status === 'success' || status === 'cancel') {
-    initPaymentReturnPage({ provider: 'clink', status, orderNo: null })
+  const provider = root?.dataset.paymentReturnProvider
+  if ((status === 'success' || status === 'cancel') && (provider === 'clink' || provider === 'stripe')) {
+    initPaymentReturnPage({ provider, status, orderNo: null })
   } else {
     console.error(
-      new Error(`clink return page: invalid or missing status=${String(status)}`)
+      new Error(`支付回跳页：无效的渠道或状态 provider=${String(provider)}, status=${String(status)}`)
     )
   }
 </script>

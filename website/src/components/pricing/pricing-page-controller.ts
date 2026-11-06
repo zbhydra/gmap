@@ -23,9 +23,10 @@ import {
 import { ensureDeviceId } from '../../scripts/homepage/device'
 import { reportGA4Event } from '../../scripts/homepage/ga4'
 import { trackCheckoutEvent } from '../../scripts/homepage/web-mark'
-import type { PricingPageContent } from '../../i18n/schema'
+import type { DashboardContent, PricingPageContent } from '../../i18n/schema'
 import type { JsonObject, JsonValue, RequestContext } from '../../scripts/homepage/api'
 import { getSiteSession } from '../../scripts/site/session'
+import { createSubscriptionManagementUrl } from '../../scripts/dashboard/api'
 import {
   ORDER_CHECKOUT_AUTH_INVALID_EVENT,
   ORDER_CHECKOUT_PRICE_UPDATED_EVENT,
@@ -123,6 +124,7 @@ interface PricingCopy {
   /** 支付窗口被浏览器拦截时的引导文案（与 checkout 弹窗共用单键）。 */
   popupBlocked: string
   upgrade: PricingPageContent['upgrade']
+  management: Pick<DashboardContent['subscriptions'], 'manageSubscription' | 'manageFailed'>
 }
 
 /** 单个可购买档位卡的 DOM 集合。 */
@@ -133,12 +135,15 @@ interface BuyableCardElements {
   buy: HTMLButtonElement
   /** 卡内错误提示行。 */
   error: HTMLElement
+  resume: HTMLButtonElement
   /** SSR 的普通购买标签，退出登录后恢复。 */
   label: string
 }
 
 /** 页面 DOM 集合。 */
 interface PricingElements {
+  /** 卡片与对比表共用商品配置的计费说明。 */
+  billingLabels: NodeListOf<HTMLElement>
   /** 产品类别 tab 容器（站级 [data-tabs]，切换时派发 tabchange）。 */
   tabs: HTMLElement
   /** 产品类别 tab 按钮（keyed by line）。 */
@@ -236,6 +241,26 @@ function bindEvents(elements: PricingElements, copy: PricingCopy, state: Pricing
   })
 
   for (const [sku, card] of elements.buyableCards) {
+    card.resume.addEventListener('click', () => {
+      const popup = window.open('', '_blank')
+      if (!popup) {
+        setMessage(card.error, copy.popupBlocked)
+        return
+      }
+      popup.opener = null
+      card.resume.disabled = true
+      void createSubscriptionManagementUrl(buildRequestContext(state), PRICING_LINE_CONFIG[card.line].productKind)
+        .then(url => {
+          if (!url) throw new Error('[pricing-page-controller] 续费恢复管理入口未返回 URL。')
+          if (!popup.closed) popup.location.href = url
+        })
+        .catch(error => {
+          popup.close()
+          console.error(error)
+          setMessage(card.error, copy.management.manageFailed)
+        })
+        .finally(() => { card.resume.disabled = false })
+    })
     card.buy.addEventListener('click', () => {
       trackCheckoutEvent('plan_click', { line: card.line, sku })
       void openPlanCheckout(elements, copy, state, card.line, sku).catch(error => {
@@ -423,6 +448,15 @@ function renderPlanButtons(
   copy: PricingCopy,
   state: PricingState
 ): void {
+  for (const label of elements.billingLabels) {
+    const plan = state.plans.get(label.dataset.pricingBilling ?? '')
+    if (plan) {
+      label.textContent = [
+        formatSubscriptionPeriod(plan.period, copy.plans.billingPeriodMonthly, document.documentElement.lang || 'en-US'),
+        plan.auto_renew ? copy.plans.billingAutoRenew : copy.plans.billingOneTime
+      ].join(' · ')
+    }
+  }
   for (const [sku, card] of elements.buyableCards) {
     const plan = state.plans.get(sku)
     const hasChannel = Boolean(getDefaultOrderPaymentChannel(plan?.payment_channels ?? []))
@@ -430,6 +464,7 @@ function renderPlanButtons(
     card.buy.textContent = card.label
     // 配置整体缺失由全局状态行说明；单卡仅在商品存在但无渠道时提示。
     setMessage(card.error, plan && !hasChannel ? copy.plans.noChannels : '')
+    card.resume.hidden = state.upgradeQuotes.get(sku)?.reason !== 'renewal_resume_required'
     if (hasActiveLineSubscription(state, card.line)) {
       const quote = state.upgradeQuotes.get(sku)
       card.buy.disabled = !plan || !quote?.available
@@ -554,7 +589,8 @@ async function openUpgradeCheckout(
     upgrade: {
       productKind: plan.product_kind,
       currentProductId: quote.current_product_id,
-      copy: copy.upgrade
+      copy: copy.upgrade,
+      managementCopy: copy.management
     },
     product: {
       productClass: plan.product_class,
@@ -565,7 +601,7 @@ async function openUpgradeCheckout(
       priceText,
       usageNotice: detailText,
       successTitle: copy.upgrade.successTitle,
-      successDescription: copy.upgrade.successDescription.replace('{date}', expiry),
+      successDescription: copy.tabs[line].checkout.successDescription,
       successPrimaryText: plan.product_name,
       paymentChannels: [{
         payment_method: quote.payment_method,
@@ -687,11 +723,16 @@ async function handleOrderCheckoutSuccess(
   state: PricingState,
   payload: OrderCheckoutSuccessPayload
 ): Promise<void> {
-  if (!isPricingCheckoutSource(payload.source)) {
+  const line = PRICING_LINE_IDS.find(line => PRICING_LINE_CONFIG[line].checkoutSource === payload.source)
+  if (!line) {
     return
   }
   try {
     state.user = await getCurrentUser(buildRequestContext(state))
+    const expiresAt = getLineSubscription(state, line)?.expires_at
+    if (expiresAt) {
+      payload.updateSuccessSecondaryText(copy.upgrade.successDescription.replace('{date}', formatTimestamp(expiresAt)))
+    }
     renderPlanButtons(elements, copy, state)
     await loadUpgradeQuotes(elements, copy, state)
   } catch (error) {
@@ -786,11 +827,12 @@ function getPricingElements(root: HTMLElement): PricingElements {
     }
     const error = root.querySelector<HTMLElement>(`[data-plan-error="${sku}"]`)
     if (error) {
-      buyableCards.set(sku, { line, buy, error, label: buy.textContent?.trim() ?? '' })
+      buyableCards.set(sku, { line, buy, error, resume: query<HTMLButtonElement>(root, `[data-pricing-resume="${sku}"]`), label: buy.textContent?.trim() ?? '' })
     }
   }
 
   return {
+    billingLabels: root.querySelectorAll<HTMLElement>('[data-pricing-billing]'),
     tabs: query<HTMLElement>(root, '[data-pricing-tabs]'),
     tabButtons,
     plansStatus: query<HTMLElement>(root, '[data-pricing-plans-status]'),

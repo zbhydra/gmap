@@ -44,6 +44,7 @@
     "ORDER_EXPIRED": "Bestellung Ist Abgelaufen",
     "ORDER_ALREADY_PAID": "Bestellung Wurde Bereits Bezahlt",
     "ORDER_CANNOT_CANCEL": "Bestellung Kann Im Aktuellen Status Nicht Storniert Werden",
+    "ORDER_DUPLICATE": "Für diese Zahlung besteht bereits eine Bestellung. Aktualisieren Sie die Seite, um den Status zu prüfen.",
     "PAYMENT_GATEWAY_ERROR": "Zahlungs-Gateway-Fehler",
     "PAYMENT_VERIFICATION_FAILED": "Zahlungsverifizierung Fehlgeschlagen",
     "PAYMENT_AMOUNT_MISMATCH": "Zahlungsbetrag-Stimmung",

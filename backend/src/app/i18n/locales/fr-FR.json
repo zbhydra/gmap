@@ -44,6 +44,7 @@
     "ORDER_EXPIRED": "La commande a expiré",
     "ORDER_ALREADY_PAID": "La commande a déjà été payée",
     "ORDER_CANNOT_CANCEL": "Impossible d'annuler la commande dans l'état actuel",
+    "ORDER_DUPLICATE": "Une commande existe déjà pour ce paiement. Actualisez la page pour consulter son statut.",
     "PAYMENT_GATEWAY_ERROR": "Erreur de la passerelle de paiement",
     "PAYMENT_VERIFICATION_FAILED": "Échec de la vérification du paiement",
     "PAYMENT_AMOUNT_MISMATCH": "Discrepance du montant du paiement",

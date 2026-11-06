@@ -44,6 +44,7 @@
     "ORDER_EXPIRED": "订单已过期",
     "ORDER_ALREADY_PAID": "订单已支付",
     "ORDER_CANNOT_CANCEL": "当前状态无法取消订单",
+    "ORDER_DUPLICATE": "该笔付款已有订单，请刷新查看订单状态。",
     "PAYMENT_GATEWAY_ERROR": "支付网关错误",
     "PAYMENT_VERIFICATION_FAILED": "支付验证失败",
     "PAYMENT_AMOUNT_MISMATCH": "支付金额不匹配",

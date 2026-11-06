@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI 工具：表驱动播种 MapsGrab 全部订阅商品与渠道价（006 产品线扩展 + 单一计费模式）。
+CLI 工具：表驱动播种 MapExporter 全部订阅商品与渠道价（006 产品线扩展 + 单一计费模式）。
 
 用法：
     cd backend && uv run python scripts/seed_subscription_products.py
@@ -15,8 +15,8 @@ payment_config 的验价链路）。表级约束是复合唯一键
 - 商品单一计费模式：auto_renew 是商品列（不再读 metadata）；free 档
   period='none'，付费档 period=month（自然月履约，不再使用 duration_days）。
 - display_order 只负责展示排序；tier_rank 只表达业务档次（free=0，同线付费档递增）。
-- 三条产品线均为 PayPal 单次购买；金额镜像展示价，无需注册 Billing Plan。
-- 同批关闭这些商品的其他渠道价，不改历史订单、订阅或渠道凭据。
+- Stripe / Clink 新价格默认停用，由各环境配置渠道能力及 SKU 后启用。
+- 重复播种保留商品续费方式、价格启用状态、自动续费能力和渠道 SKU。
 """
 
 from __future__ import annotations
@@ -27,7 +27,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from sqlalchemy import bindparam, text
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
@@ -51,6 +52,7 @@ from app.constants.subscription import (  # noqa: E402
     ONLINE_PRO_PRODUCT_ID,
 )
 from app.core.database import get_async_session  # noqa: E402
+from app.constants.payment import NEW_SALE_PAYMENT_METHODS  # noqa: E402
 
 # free 档在各线内的展示排序值：小于全部付费档（付费最低 20），free 永远排最前。
 FREE_DISPLAY_ORDER = 10
@@ -69,8 +71,6 @@ class _ProductSeedRow:
     tier_rank: int
     auto_renew: bool
     monthly_quota: int | None
-    paypal_amount: int | None
-    paypal_sku: str | None = None
 
 
 _SEED_ROWS: list[_ProductSeedRow] = [
@@ -85,7 +85,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         0,
         False,
         1000,
-        None,
     ),
     _ProductSeedRow(
         FREE_SUBSCRIPTION_PRODUCT_ID,
@@ -97,7 +96,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         0,
         False,
         1000,
-        None,
     ),
     _ProductSeedRow(
         FREE_SUBSCRIPTION_PRODUCT_ID,
@@ -109,7 +107,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         0,
         False,
         20,
-        None,
     ),
     # ---- maps_extension 线：一次性支付月度套餐。 ----
     _ProductSeedRow(
@@ -122,8 +119,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         1,
         False,
         100_000,
-        39_000_000,
-        paypal_sku=f"{MAPS_EXTENSION_PRO_PRODUCT_ID}-paypal",
     ),
     _ProductSeedRow(
         MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
@@ -135,8 +130,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         2,
         False,
         500_000,
-        99_000_000,
-        paypal_sku=f"{MAPS_EXTENSION_BUSINESS_PRODUCT_ID}-paypal",
     ),
     # ---- maps_online 线：一次性支付月度套餐。 ----
     _ProductSeedRow(
@@ -149,8 +142,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         1,
         False,
         20_000,
-        19_000_000,
-        paypal_sku=f"{ONLINE_LITE_PRODUCT_ID}-paypal",
     ),
     _ProductSeedRow(
         ONLINE_BASIC_PRODUCT_ID,
@@ -162,8 +153,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         2,
         False,
         80_000,
-        49_000_000,
-        paypal_sku=f"{ONLINE_BASIC_PRODUCT_ID}-paypal",
     ),
     _ProductSeedRow(
         ONLINE_GROWTH_PRODUCT_ID,
@@ -175,8 +164,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         3,
         False,
         250_000,
-        99_000_000,
-        paypal_sku=f"{ONLINE_GROWTH_PRODUCT_ID}-paypal",
     ),
     _ProductSeedRow(
         ONLINE_PRO_PRODUCT_ID,
@@ -188,8 +175,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         4,
         False,
         500_000,
-        149_000_000,
-        paypal_sku=f"{ONLINE_PRO_PRODUCT_ID}-paypal",
     ),
     # ---- maps_api 线：一次性支付月度套餐。 ----
     _ProductSeedRow(
@@ -202,8 +187,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         1,
         False,
         1_000,
-        15_000_000,
-        paypal_sku=f"{API_BASIC_PRODUCT_ID}-paypal",
     ),
     _ProductSeedRow(
         API_PROFESSIONAL_PRODUCT_ID,
@@ -215,8 +198,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         2,
         False,
         5_000,
-        65_000_000,
-        paypal_sku=f"{API_PROFESSIONAL_PRODUCT_ID}-paypal",
     ),
     _ProductSeedRow(
         API_BUSINESS_PRODUCT_ID,
@@ -228,8 +209,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         3,
         False,
         10_000,
-        115_000_000,
-        paypal_sku=f"{API_BUSINESS_PRODUCT_ID}-paypal",
     ),
     _ProductSeedRow(
         API_SCALE_PRODUCT_ID,
@@ -241,8 +220,6 @@ _SEED_ROWS: list[_ProductSeedRow] = [
         4,
         False,
         50_000,
-        365_000_000,
-        paypal_sku=f"{API_SCALE_PRODUCT_ID}-paypal",
     ),
 ]
 
@@ -255,7 +232,7 @@ def _build_metadata(monthly_quota: int | None) -> str:
     return json.dumps(metadata)
 
 
-async def _upsert_product(db, row: _ProductSeedRow) -> None:
+async def _upsert_product(db: AsyncSession, row: _ProductSeedRow) -> None:
     """幂等 upsert 单个商品行。"""
 
     await db.execute(
@@ -274,7 +251,6 @@ async def _upsert_product(db, row: _ProductSeedRow) -> None:
                 name = VALUES(name),
                 product_kind = VALUES(product_kind),
                 period = VALUES(period),
-                auto_renew = VALUES(auto_renew),
                 display_currency = VALUES(display_currency),
                 display_amount = VALUES(display_amount),
                 enabled = VALUES(enabled),
@@ -299,7 +275,7 @@ async def _upsert_product(db, row: _ProductSeedRow) -> None:
 
 
 async def _upsert_price(
-    db,
+    db: AsyncSession,
     *,
     product_id: str,
     channel_code: str,
@@ -321,11 +297,8 @@ async def _upsert_price(
                  :provider_sku, :enabled, UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000,
                  UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)
             ON DUPLICATE KEY UPDATE
-                auto_renew_supported = VALUES(auto_renew_supported),
                 currency = VALUES(currency),
                 amount = VALUES(amount),
-                provider_sku = VALUES(provider_sku),
-                enabled = VALUES(enabled),
                 updated_at = VALUES(updated_at)
             """
         ),
@@ -345,34 +318,21 @@ async def seed() -> None:
     async with get_async_session() as db:
         for row in _SEED_ROWS:
             await _upsert_product(db, row)
-            if row.paypal_amount is not None:
-                await _upsert_price(
-                    db,
-                    product_id=row.product_id,
-                    channel_code="paypal",
-                    amount=row.paypal_amount,
-                    provider_sku=row.paypal_sku,
-                    auto_renew_supported=row.auto_renew,
-                )
+            if row.display_amount > 0:
+                for channel_code in sorted(NEW_SALE_PAYMENT_METHODS):
+                    await _upsert_price(
+                        db,
+                        product_id=row.product_id,
+                        channel_code=channel_code,
+                        amount=row.display_amount,
+                        provider_sku=None,
+                        auto_renew_supported=False,
+                        enabled=False,
+                    )
             print(
                 f"播种完成: product_id={row.product_id}, "
-                f"product_kind={row.product_kind}, period={row.period}, "
-                f"auto_renew={row.auto_renew}"
+                f"product_kind={row.product_kind}, period={row.period}"
             )
-        await db.execute(
-            text(
-                "UPDATE config_subscription_product_price "
-                "SET enabled = 0, updated_at = UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000 "
-                "WHERE product_id IN :product_ids AND channel_code != 'paypal'"
-            ).bindparams(bindparam("product_ids", expanding=True)),
-            {
-                "product_ids": [
-                    row.product_id
-                    for row in _SEED_ROWS
-                    if row.paypal_amount is not None
-                ]
-            },
-        )
         await db.commit()
 
 

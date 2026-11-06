@@ -1087,6 +1087,8 @@ export interface PricingPageContent {
       non_positive_diff: string
       /** 当前渠道不可用于升级。 */
       channel_unavailable: string
+      /** 已申请期末取消，须先在支付渠道恢复续费。 */
+      renewal_resume_required: string
     }
   }
   /** ⑥ 购买答疑（同时输出 FAQPage 结构化数据）。 */

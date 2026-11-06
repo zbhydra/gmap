@@ -1,6 +1,6 @@
 # 011 · Pricing 页与订阅配置
 
-> 当前源码实现口径。本文是 Pricing 页消费合同的唯一 owner:checkout 配置消费、下单请求、订单轮询与支付回跳都在这里;`tech-实现与配置.md` 只负责前端文件责任与商品配置命令。渠道管理入口与账户摘要已迁用户 Dashboard(015 域,见 `@../015.工具与增长/tech-用户Dashboard.md`),本文只保留升级资格判断所需的订阅摘要消费。
+> 本文是 Pricing 页消费合同的唯一 owner:checkout 配置消费、下单请求、订单轮询与支付回跳都在这里;`tech-实现与配置.md` 只负责前端文件责任与商品配置命令。升档目标与实施进度见 [订阅升级](../006.订阅系统/tech-订阅升级.md) 及其计划。渠道管理入口与账户摘要已迁用户 Dashboard(015 域,见 `@../015.工具与增长/tech-用户Dashboard.md`),本文只保留升级资格判断所需的订阅摘要消费。
 > 订阅商品、状态与订单履约的唯一合同在 `@../006.订阅系统/tech-订阅商品与状态.md` 与 `@../004.订单系统/tech-ClinkBill支付.md`、`@../004.订单系统/tech-支付与履约.md`;升级接口与业务规则见 `@../006.订阅系统/tech-订阅升级.md`,本文只定义网站消费方式。
 
 ## 实现结论
@@ -10,7 +10,7 @@
 - 初始 tab 先读 hash `#online` / `#extension` / `#api`,再读查询参数 `product_kind`(经 `pricing-page-controller.ts` 的 `PRICING_LINE_CONFIG` 映射,例如 `/pricing/?product_kind=maps_extension`),缺省或未知值为 Online。切换 tab(含对比表的产品分段)用 `history.replaceState` 把 hash 写回当前线,不新增历史记录、不改查询参数;hash 变为产品线时切到对应 tab,页内锚点 hash 不影响 tab。插件与网站共用这条购买、升级及管理路径。
 - checkout 配置按商品单一计费模式消费:商品的 `auto_renew` 与 `period` 是商品级字段,支付选项文案据此展示 `Auto-renews until canceled` 或 `One-time payment`。
 - 下单请求携带 `auto_renew + period`,与商品配置不一致时后端按价格已更新拒绝,页面重载配置。
-- 新销售的三条产品线统一为 PayPal 单次自然月商品；展示与下单读取后端配置，播种入口见 006 的商品配置合同。历史渠道订单与协议保留原处理能力。
+- 新销售的三条产品线按商品配置选择一次性或自动续费模式，可售渠道为已配置的 Stripe / Clink；播种入口见 006 的商品配置合同，历史渠道订单与协议保留原处理能力。
 - 已登录账号各产品线订阅摘要来自 `/api/client/auth/me` 的 `maps_online_subscription` / `maps_extension_subscription` / `maps_api_subscription`(六字段合同,见 006 状态 tech),经站级会话恢复与 Pricing 页共享一次请求。
 - 渠道管理入口(Manage subscription)已迁用户 Dashboard 订阅管理页,交互合同见 `@../015.工具与增长/tech-用户Dashboard.md`;Pricing 页只消费订阅摘要做同线重复购买拦截与升级报价定档。
 
@@ -32,34 +32,34 @@
 
 Pricing 订阅下单调用 `POST /api/client/order/create`,请求核心字段:
 
-| 字段 | 来源 |
-| --- | --- |
-| `product_class` | 1,即 `SUBSCRIPTION` |
-| `product_id` | 所点卡片的 SKU |
-| `payment_method` | checkout 弹窗内选中的渠道(默认 PayPal) |
-| `currency` / `amount` | 所选渠道价行,6 位精度 |
-| `auto_renew` / `period` | 商品级单一计费模式字段,必须与商品配置一致 |
+| 字段                    | 来源                                               |
+| ----------------------- | -------------------------------------------------- |
+| `product_class`         | 1,即 `SUBSCRIPTION`                                |
+| `product_id`            | 所点卡片的 SKU                                     |
+| `payment_method`        | checkout 弹窗内选中的可售渠道，优先 Stripe / Clink |
+| `currency` / `amount`   | 所选渠道价行,6 位精度                              |
+| `auto_renew` / `period` | 商品级单一计费模式字段,必须与商品配置一致          |
 
 同产品线已有未过期订阅时,由服务端升级报价决定卡片状态,见下节;跨产品线购买互不影响。价格被后台调整时弹窗提示价格更新并重载配置。订单快照、履约双路径与渠道幂等合同见 006 状态 tech 与 004 支付履约 tech,本文不重复。
 
 ## 升级交互
 
 - `pricing-page-controller.ts` 的 `loadUpgradeQuotes` 在登录与配置加载完成、登录成功及支付成功刷新后请求各卡报价。`current_product_id` 唯一决定 Current Plan;`available/reason` 决定升级按钮与禁用提示,不按卡片顺序、展示价或 `auth/me` 套餐名猜档位。
-- `openUpgradeCheckout` 将报价金额、币种与当前订阅渠道交给公共 checkout,隐藏渠道选择,展示补差及到期日不变说明。当前订阅的 `auto_renew` 决定一次性差额订单或协议内确认。三个升级接口的字段与原因合同由 006 升级 tech 维护。
-- 一次性差额订单继续由 `order-checkout-controller.ts` 创建、打开外部支付页并轮询订单;沿用 PayPal/Clink 既有回跳。后端重新计算补差,网站提交的升级请求只含产品线与目标档位。
+- `openUpgradeCheckout` 将报价金额、币种与当前订阅渠道交给公共 checkout,隐藏渠道选择,展示旧权益抵扣、新档完整周期应付和重开账期说明。当前订阅的 `auto_renew` 决定一次性订单或协议内确认。三个升级接口的字段与原因合同由 006 升级 tech 维护；报价中的到期时间是预计值，成功后刷新账户摘要读取实际新到期时间。
+- 一次性净应付订单由 `order-checkout-controller.ts` 创建、打开外部支付页并轮询订单；本次对接 Stripe / Clink 回跳。后端计算新档整期价减旧权益抵扣，网站提交的升级请求只含产品线与目标档位。
 - 自动续费确认统一消费 `status/action`。`succeeded` 展示成功;`failed` 展示失败;`requires_action` 复用 `pending_payment`,按 `wait` 等待或按 `redirect` 打开 HTTPS 地址,随后只轮询 quote。仅 `current_product_id === target_product_id` 结束等待,不重复 POST confirm、不以无档位 ID 的 `auth/me` 或 `subscription/status` 判定升级成功。
 - 自动续费升级不产生订单,公共成功事件的 `orderNo/orderStatus` 为空;Pricing 沿用成功事件刷新 `auth/me` 与报价。关闭弹窗停止页面轮询,服务端渠道事件继续负责最终档位。
-- PayPal 自动续费升级由服务端报价拒绝,页面展示渠道不可升级提示;一次性 PayPal 补差保留。升级交互与文案不按渠道写两份流程。
+- PayPal 新购与新建升档入口本次暂不开放，仅保留已有订单和协议处理。Stripe / Clink 的升级交互消费同一结果与文案合同。
 - `upgrade_quote_shown` 在当前 tab 的可升级卡片曝光时上报;`upgrade_confirmed` 在共享 checkout 确认履约或新档生效时上报,提交按钮点击不算成功。
 
-验证入口为 `website/e2e/website.spec.ts` 的 `Pricing Online purchase path` 与 `Pricing extension subscription`(后者在 `extensionPurchase` 未放开时跳过)。route mock 证明网站交互与协议,不证明真实渠道扣款或 webhook;真实 SKU、公网 webhook 的验收归 004/006。
+验证入口为 `website/e2e/website.spec.ts` 的 `Pricing Online purchase path` 与 `Pricing recurring upgrade` 用例。route mock 证明网站交互与协议,不证明真实渠道扣款或 webhook;真实 SKU、公网 webhook 的验收归 004/006。
 
 ## 支付渠道与回跳
 
-- 渠道展示名与图标:展示名读后端 `payment_method_name`;图标 PayPal / ClinkBill 走本地静态资源。
-- 支付 URL 白名单:PayPal 只允许 HTTPS `paypal.com`(含子域),Clink 只允许 HTTPS `uat-checkout.clinkbill.com` / `checkout.clinkbill.com`;其余一律拒绝并在弹窗内提示。
+- 渠道展示名与图标:展示名读后端 `payment_method_name`;图标 Stripe / PayPal / ClinkBill 走本地静态资源。
+- 支付 URL 白名单:Stripe 只允许 HTTPS `checkout.stripe.com`，PayPal 只允许 HTTPS `paypal.com`(含子域),Clink 只允许 HTTPS `uat-checkout.clinkbill.com` / `checkout.clinkbill.com`;其余一律拒绝并在弹窗内提示。
 - 用户确认后新标签页打开 Hosted Checkout,原页按 2 秒间隔轮询本地订单状态,直到已支付且履约成功;BroadcastChannel/postMessage 同源通知可加速轮询,但不替代轮询。
-- PayPal 回跳页:`/paypal/success|cancel`;Clink 回跳页:`/clink/success|cancel`(noindex)。success 页轮询本地订单状态后确认,确认文案按订单 `product_class` 分发(订阅口径 / Credits 口径);cancel 页调用 `/api/client/order/cancel` 落取消状态。两个渠道共用同一个 payment return 脚本(`credit-purchase/paypal-return.ts`),文案经页内 data 钩子注入。
+- PayPal 回跳页:`/paypal/success|cancel`;Clink 回跳页:`/clink/success|cancel`(noindex)。success 页轮询本地订单状态后确认,确认文案按订单 `product_class` 分发(订阅口径 / Credits 口径);cancel 页调用 `/api/client/order/cancel` 落取消状态。Stripe 回跳页为 `/stripe/success|cancel`：success 只轮询已付且履约成功的本地订单，cancel 保留待支付，不调用取消接口。三个渠道共用 `credit-purchase/paypal-return.ts`，文案经页内 data 钩子注入。
 
 ## 渠道管理入口(已迁 Dashboard)
 

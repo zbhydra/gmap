@@ -32,6 +32,7 @@ export type SubscriptionUpgradeReason =
   | 'not_higher_tier'
   | 'non_positive_diff'
   | 'channel_unavailable'
+  | 'renewal_resume_required'
 
 /** 档位、补差与渠道均以服务端报价为准；金额为六位整数，到期时间为毫秒。 */
 export interface SubscriptionUpgradeQuote {

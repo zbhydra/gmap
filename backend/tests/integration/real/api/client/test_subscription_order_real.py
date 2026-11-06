@@ -12,21 +12,23 @@ import httpx
 import pytest
 from sqlalchemy import func, select, text
 
-from app.constants.order import CallbackStatus, OrderStatus, ProductClass
+from app.constants.order import (
+    CallbackStatus,
+    OrderCreateParam,
+    OrderStatus,
+    ProductClass,
+)
 from app.core.database import get_async_session, get_engine
 from app.i18n.common_code import CommonCode
 from app.models.order_model import OrderModel
 from app.models.subscription_model import UserSubscriptionModel
 from app.models.user_model import UserModel
-from app.services.payment_config_service import payment_config_service
-from app.services.subscription_service import subscription_service
+from app.services.order_service import order_service
 from app.utils.time import timestamp_now
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
 _DAY_MS = 24 * 3600 * 1000
-# PayPal 只接受两位小数（美分），对应 6 位精度整数下的最小倍数。
-_PAYPAL_CENT_UNIT = 10_000
 
 
 class _CheckoutPrice(TypedDict):
@@ -82,10 +84,10 @@ async def real_subscription_order_schema_ready(
         pytest.skip(f"REAL_SCHEMA_UNAVAILABLE: 数据库缺少 {','.join(missing)} 表")
 
 
-def _online_basic_paypal_price(
+def _online_basic_price(
     plans: list[_CheckoutPlan],
 ) -> tuple[_CheckoutPlan, _CheckoutPrice]:
-    """从 checkout 方案里取 maps_online 类别 online_basic 的 PayPal 渠道价。"""
+    """从 checkout 方案里取 maps_online 类别 online_basic 的当前可售渠道价。"""
 
     plan = next(
         item
@@ -94,8 +96,17 @@ def _online_basic_paypal_price(
         and item["product_id"] == "online_basic"
     )
     channel = next(
-        item for item in plan["payment_channels"] if item["payment_method"] == "paypal"
+        (
+            item
+            for item in plan["payment_channels"]
+            if item["payment_method"] in {"stripe", "clink"}
+        ),
+        None,
     )
+    if channel is None:
+        pytest.skip(
+            "REAL_PAYMENT_CHANNEL_UNAVAILABLE: online_basic 缺少 Stripe/Clink 可售价"
+        )
     return plan, channel
 
 
@@ -113,7 +124,7 @@ async def test_real_subscription_checkout_configs_serialize_product_level_billin
     plans = body["data"]["checkout_configs"]
     if not plans:
         pytest.skip("REAL_SCHEMA_UNAVAILABLE: 订阅商品展示配置尚未初始化")
-    plan, paypal = _online_basic_paypal_price(plans)
+    plan, paypal = _online_basic_price(plans)
 
     assert plan["product_class"] == ProductClass.SUBSCRIPTION.value
     assert plan["period"] == "month"
@@ -143,7 +154,7 @@ async def test_real_subscription_order_rejects_mismatched_billing_mode_without_o
     plans = config_response.json()["data"]["checkout_configs"]
     if not plans:
         pytest.skip("REAL_SCHEMA_UNAVAILABLE: 订阅商品展示配置尚未初始化")
-    _plan, paypal = _online_basic_paypal_price(plans)
+    _plan, paypal = _online_basic_price(plans)
 
     response = await real_async_client.post(
         "/api/client/order/create",
@@ -183,61 +194,37 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
     real_subscription_order_schema_ready,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """真实下单、内网回跳与重复通知；仅替换 PayPal HTTP，不写配置表。"""
+    """历史待支付订单的回跳与重投仍可幂等履约；仅替换 PayPal HTTP。"""
     user_id, token = await real_user_factory(make_test_email("paypal-one-time"))
     _, other_token = await real_user_factory(make_test_email("paypal-other"))
     headers = {"Authorization": f"Bearer {token}"}
-    configs = await real_async_client.get("/api/client/subscription/checkout-configs")
-    assert configs.status_code == 200
-    assert configs.json()["code"] == CommonCode.SUCCESS
-    plans = configs.json()["data"]["checkout_configs"]
-    assert len(plans) == 10
-    for plan in plans:
-        assert plan["auto_renew"] is False
-        assert [item["payment_method"] for item in plan["payment_channels"]] == [
-            "paypal"
-        ]
-    plan = next(item for item in plans if item["product_id"] == "maps_extension_pro")
-    price = plan["payment_channels"][0]
     paypal_order_id = f"PP{user_id}"
     order_no = ""
     captured = False
     settled = False
     capture_calls = 0
+    query_http_status = 200
+    verification_http_status = 200
     original_client = httpx.AsyncClient
 
     def handler(request: httpx.Request) -> httpx.Response:
-        nonlocal order_no, captured, capture_calls
+        nonlocal captured, capture_calls
         path = request.url.path
         if path == "/v1/oauth2/token":
             return httpx.Response(200, json={"access_token": "test", "expires_in": 30})
-        if path == "/v2/checkout/orders":
-            payload = json.loads(request.content)
-            assert payload["intent"] == "CAPTURE"
-            unit = payload["purchase_units"][0]
-            order_no = unit["reference_id"]
-            assert unit["amount"] == {"currency_code": "USD", "value": "39.00"}
-            return httpx.Response(
-                201,
-                json={
-                    "id": paypal_order_id,
-                    "links": [
-                        {
-                            "rel": "approve",
-                            "href": f"https://www.sandbox.paypal.com/checkoutnow?token={paypal_order_id}",
-                        }
-                    ],
-                },
-            )
         if path == "/v1/notifications/verify-webhook-signature":
-            return httpx.Response(200, json={"verification_status": "SUCCESS"})
+            return httpx.Response(
+                verification_http_status, json={"verification_status": "SUCCESS"}
+            )
         if path == f"/v2/checkout/orders/{paypal_order_id}/capture":
             capture_calls += 1
             captured = True
         else:
             assert path == f"/v2/checkout/orders/{paypal_order_id}"
             assert request.method == "GET"
-        unit = {"reference_id": order_no}
+            if query_http_status != 200:
+                return httpx.Response(query_http_status, json={})
+        unit: dict[str, object] = {"reference_id": order_no}
         if captured:
             unit["payments"] = {
                 "captures": [
@@ -261,22 +248,35 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
         return original_client(timeout=timeout, transport=httpx.MockTransport(handler))
 
     monkeypatch.setattr("app.provider.payment.paypal.httpx.AsyncClient", client_factory)
-    created = await real_async_client.post(
-        "/api/client/order/create",
-        headers=headers,
-        json={
-            "product_class": ProductClass.SUBSCRIPTION.value,
-            "product_id": plan["product_id"],
-            "payment_method": "paypal",
-            "currency": price["currency"],
-            "amount": price["amount"],
-            "auto_renew": False,
-            "period": "month",
+    historical = await order_service.create_order(
+        OrderCreateParam(
+            user_id=user_id,
+            product_class=ProductClass.SUBSCRIPTION.value,
+            product_id="maps_extension_pro",
+            product_name="历史 PayPal 订单",
+            amount=39_000_000,
+            currency="USD",
+            payment_method="paypal",
+            extra_metadata=json.dumps(
+                {
+                    "product_snapshot": {
+                        "product_kind": "maps_extension",
+                        "auto_renew": False,
+                        "period": "month",
+                        "amount": 39_000_000,
+                    }
+                }
+            ),
+        )
+    )
+    order_no = historical.order_no
+    assert await order_service.save_order_payment_data(
+        order_no=order_no,
+        payment_data={
+            "channel_order_id": paypal_order_id,
+            "paypal_order_id": paypal_order_id,
         },
     )
-    assert created.status_code == 200
-    assert created.json()["code"] == CommonCode.SUCCESS
-    assert created.json()["data"]["order_no"] == order_no
 
     denied = await real_async_client.post(
         "/api/client/order/paypal/confirm",
@@ -286,6 +286,15 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
     assert denied.status_code == 200
     assert denied.json()["code"] == CommonCode.ORDER_NOT_FOUND
     assert capture_calls == 0
+
+    query_http_status = 503
+    unavailable = await real_async_client.post(
+        "/api/client/order/paypal/confirm", headers=headers, json={"order_no": order_no}
+    )
+    assert unavailable.status_code == 200
+    assert unavailable.json()["code"] == CommonCode.PAYMENT_GATEWAY_ERROR
+    assert capture_calls == 0
+    query_http_status = 200
 
     pending = await real_async_client.post(
         "/api/client/order/paypal/confirm", headers=headers, json={"order_no": order_no}
@@ -338,24 +347,37 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
         assert order.paid_amount == 39_000_000
         assert order.payment_transaction_id == f"CAPTURE{user_id}"
 
+    webhook_headers = {
+        "paypal-auth-algo": "SHA256withRSA",
+        "paypal-cert-url": "https://api-m.paypal.com/certs.pem",
+        "paypal-transmission-id": "one-time-test",
+        "paypal-transmission-sig": "test",
+        "paypal-transmission-time": "2026-10-20T00:00:00Z",
+    }
+    event = {
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "resource": {
+            "id": f"CAPTURE{user_id}",
+            "status": "COMPLETED",
+            "invoice_id": order_no,
+            "amount": {"currency_code": "USD", "value": "39.00"},
+            "supplementary_data": {"related_ids": {"order_id": paypal_order_id}},
+        },
+    }
+    # 只读临时故障请求渠道重投；明确拒绝和未分类故障保持 200。
+    for verification_http_status, expected_http_status in (
+        (503, 500),
+        (400, 200),
+        (500, 200),
+    ):
+        failed = await real_async_client.post(
+            "/api/callback/paypal/payment", headers=webhook_headers, json=event
+        )
+        assert failed.status_code == expected_http_status
+        assert failed.json()["code"] == CommonCode.INTERNAL_SERVER_ERROR
+    verification_http_status = 200
     replay = await real_async_client.post(
-        "/api/callback/paypal/payment",
-        headers={
-            "paypal-auth-algo": "SHA256withRSA",
-            "paypal-cert-url": "https://api-m.paypal.com/certs.pem",
-            "paypal-transmission-id": "one-time-test",
-            "paypal-transmission-sig": "test",
-            "paypal-transmission-time": "2026-10-20T00:00:00Z",
-        },
-        json={
-            "event_type": "PAYMENT.CAPTURE.COMPLETED",
-            "resource": {
-                "id": f"CAPTURE{user_id}",
-                "invoice_id": order_no,
-                "amount": {"currency_code": "USD", "value": "39.00"},
-                "supplementary_data": {"related_ids": {"order_id": paypal_order_id}},
-            },
-        },
+        "/api/callback/paypal/payment", headers=webhook_headers, json=event
     )
     assert replay.status_code == 200
     assert replay.json()["code"] == CommonCode.SUCCESS
@@ -371,13 +393,13 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
         )
 
 
-async def test_real_subscription_upgrade_quote_prorates_one_time_diff(
+async def test_real_paypal_existing_subscription_cannot_upgrade(
     real_async_client,
     make_test_email,
     real_user_factory,
     real_subscription_order_schema_ready,
 ) -> None:
-    """一次性线升级报价主路径：tier 判高、剩余占比折算与美分向下取整。"""
+    """旧 PayPal 实例本期拒绝两条升档入口。"""
 
     email = make_test_email("sub-upgrade-quote")
     user_id, token = await real_user_factory(email)
@@ -419,47 +441,197 @@ async def test_real_subscription_upgrade_quote_prorates_one_time_diff(
         "amount",
         "expires_at",
     }
-    assert data["available"] is True
-    assert data["reason"] is None
-    assert data["current_product_id"] == "online_lite"
-    assert data["target_product_id"] == "online_growth"
+    assert data["available"] is False
+    assert data["reason"] == "channel_unavailable"
     assert data["payment_method"] == "paypal"
-    assert data["currency"] == "USD"
-    assert data["expires_at"] == expires_at
-
-    snapshot = await payment_config_service.get_snapshot()
-    current_price = snapshot.prices.get(("online_lite", "paypal"))
-    target_price = snapshot.prices.get(("online_growth", "paypal"))
-    if current_price is None or target_price is None:
-        pytest.skip("REAL_SCHEMA_UNAVAILABLE: maps_online 渠道价配置尚未初始化")
-    diff = target_price.amount - current_price.amount
-    # 剩余 10/30 期；服务端 own now 比测试 now 晚几毫秒，允许一个美分内的取整漂移。
-    upper = diff * 10 * _DAY_MS // (30 * _DAY_MS)
-    upper = upper // _PAYPAL_CENT_UNIT * _PAYPAL_CENT_UNIT
-    assert data["amount"] is not None
-    assert upper - _PAYPAL_CENT_UNIT < data["amount"] <= upper
-    assert data["amount"] % _PAYPAL_CENT_UNIT == 0
-
-    # 渠道白名单直接调用证明：stars 等非 PayPal/Clink 渠道不看价目配置，
-    # 直接 channel_unavailable（maps_extension 两档 tier 满足，可触达渠道判定）。
-    async with get_async_session() as db:
-        db.add(
-            UserSubscriptionModel(  # type: ignore[call-arg]
-                user_id=user_id,
-                product_kind="maps_extension",
-                product_id="maps_extension_pro",
-                auto_renew=True,
-                payment_method="telegram_stars",
-                start_at=now,
-                expires_at=expires_at,
-            )
+    assert data["amount"] is None
+    for endpoint in ("checkout", "confirm"):
+        rejected = await real_async_client.post(
+            f"/api/client/subscription/upgrade/{endpoint}",
+            json={"product_kind": "maps_online", "target_product_id": "online_growth"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        await db.commit()
-    quote = await subscription_service.get_upgrade_quote(
-        user_id=user_id,
-        product_kind="maps_extension",
-        target_product_id="maps_extension_business",
+        assert rejected.status_code == 200
+        assert rejected.json()["code"] == CommonCode.INVALID_REQUEST
+        assert rejected.json()["data"]["reason"] == "channel_unavailable"
+    async with get_async_session() as db:
+        assert (
+            await db.scalar(
+                select(func.count())
+                .select_from(OrderModel)
+                .where(OrderModel.user_id == user_id)
+            )
+            == 0
+        )
+
+
+@pytest.mark.parametrize("confirmation_succeeds", [True, False])
+async def test_real_paypal_approved_checks_snapshot_and_reconciles_capture_timeout(
+    real_async_client,
+    make_test_email,
+    real_user_factory,
+    real_subscription_order_schema_ready,
+    monkeypatch: pytest.MonkeyPatch,
+    confirmation_succeeds: bool,
+) -> None:
+    """APPROVED 先核对快照；扣款超时只查一次事实，重复已付事件不再扣款。"""
+    user_id, token = await real_user_factory(make_test_email("approved-recovery"))
+    order = await order_service.create_order(
+        OrderCreateParam(
+            user_id=user_id,
+            product_class=ProductClass.SUBSCRIPTION.value,
+            product_id="maps_extension_pro",
+            product_name=f"approved-{user_id}",
+            amount=39_000_000,
+            currency="USD",
+            payment_method="paypal",
+            extra_metadata=json.dumps(
+                {
+                    "product_snapshot": {
+                        "product_kind": "maps_extension",
+                        "auto_renew": False,
+                        "period": "month",
+                    }
+                }
+            ),
+        )
     )
-    assert quote["available"] is False
-    assert quote["reason"] == "channel_unavailable"
-    assert quote["amount"] is None
+    paypal_order_id = f"APPROVED-{user_id}"
+    assert await order_service.save_order_payment_data(
+        order_no=order.order_no,
+        payment_data={
+            "channel_order_id": paypal_order_id,
+            "paypal_order_id": paypal_order_id,
+        },
+    )
+    original_client = httpx.AsyncClient
+    capture_calls = 0
+    confirmation_calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal capture_calls, confirmation_calls
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(200, json={"access_token": "test", "expires_in": 30})
+        if request.url.path == "/v1/notifications/verify-webhook-signature":
+            return httpx.Response(200, json={"verification_status": "SUCCESS"})
+        if request.url.path == f"/v2/checkout/orders/{paypal_order_id}/capture":
+            assert request.headers["Prefer"] == "return=representation"
+            capture_calls += 1
+            raise httpx.ReadTimeout("capture response lost", request=request)
+        assert request.method == "GET"
+        assert request.url.path == f"/v2/checkout/orders/{paypal_order_id}"
+        confirmation_calls += 1
+        if not confirmation_succeeds:
+            return httpx.Response(503, json={"name": "SERVICE_UNAVAILABLE"})
+        return httpx.Response(
+            200,
+            json={
+                "id": paypal_order_id,
+                "status": "COMPLETED",
+                "purchase_units": [
+                    {
+                        "reference_id": order.order_no,
+                        "payments": {
+                            "captures": [
+                                {
+                                    "id": f"CAPTURE-{user_id}",
+                                    "status": "COMPLETED",
+                                    "amount": {
+                                        "currency_code": "USD",
+                                        "value": "39.00",
+                                    },
+                                }
+                            ]
+                        },
+                    }
+                ],
+            },
+        )
+
+    def client_factory(*, timeout: float) -> httpx.AsyncClient:
+        return original_client(timeout=timeout, transport=httpx.MockTransport(handler))
+
+    monkeypatch.setattr("app.provider.payment.paypal.httpx.AsyncClient", client_factory)
+    headers = {
+        "paypal-auth-algo": "SHA256withRSA",
+        "paypal-cert-url": "https://api-m.paypal.com/certs.pem",
+        "paypal-transmission-id": f"approved-{user_id}",
+        "paypal-transmission-sig": "test",
+        "paypal-transmission-time": "2026-10-29T00:00:00Z",
+    }
+    # 其中一个引用正确也不能掩盖其他实际携带字段的冲突。
+    for invalid_unit in (
+        {"reference_id": order.order_no, "custom_id": "OTHER"},
+        {
+            "reference_id": order.order_no,
+            "amount": {"currency_code": "USD", "value": "38.00"},
+        },
+        {
+            "reference_id": order.order_no,
+            "amount": {"currency_code": "EUR", "value": "39.00"},
+        },
+    ):
+        rejected = await real_async_client.post(
+            "/api/callback/paypal/payment",
+            headers=headers,
+            json={
+                "event_type": "CHECKOUT.ORDER.APPROVED",
+                "resource": {"id": paypal_order_id, "purchase_units": [invalid_unit]},
+            },
+        )
+        assert rejected.status_code == 200
+        assert rejected.json()["code"] == CommonCode.INTERNAL_SERVER_ERROR
+    assert capture_calls == confirmation_calls == 0
+    saved = await order_service.get_order_by_no(order.order_no)
+    assert saved is not None and saved.order_status == OrderStatus.PENDING.value
+
+    event = {
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "resource": {"id": paypal_order_id},
+    }
+    result = await real_async_client.post(
+        "/api/callback/paypal/payment", headers=headers, json=event
+    )
+    assert result.status_code == 200
+    assert result.json()["code"] == (
+        CommonCode.SUCCESS
+        if confirmation_succeeds
+        else CommonCode.INTERNAL_SERVER_ERROR
+    )
+    assert capture_calls == confirmation_calls == 1
+    saved = await order_service.get_order_by_no(order.order_no)
+    assert saved is not None
+    if not confirmation_succeeds:
+        assert saved.order_status == OrderStatus.PENDING.value
+        assert saved.paid_amount is None
+        async with get_async_session() as db:
+            assert (
+                await db.get(UserSubscriptionModel, (user_id, "maps_extension")) is None
+            )
+        # 后续用户回跳只读取已收款事实，不再次 capture。
+        confirmation_succeeds = True
+        confirmed = await real_async_client.post(
+            "/api/client/order/paypal/confirm",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"order_no": order.order_no},
+        )
+        assert confirmed.status_code == 200
+        assert confirmed.json()["code"] == CommonCode.SUCCESS
+    saved = await order_service.get_order_by_no(order.order_no)
+    assert saved is not None and saved.order_status == OrderStatus.PAID.value
+    assert saved.callback_status == CallbackStatus.SUCCESS.value
+    assert saved.payment_transaction_id == f"CAPTURE-{user_id}"
+    async with get_async_session() as db:
+        subscription = await db.get(UserSubscriptionModel, (user_id, "maps_extension"))
+        assert subscription is not None
+        expires_at = subscription.expires_at
+    repeated = await real_async_client.post(
+        "/api/callback/paypal/payment", headers=headers, json=event
+    )
+    assert repeated.status_code == 200
+    assert repeated.json()["code"] == CommonCode.SUCCESS
+    assert repeated.json()["data"]["idempotent"] is True
+    assert capture_calls == 1
+    async with get_async_session() as db:
+        subscription = await db.get(UserSubscriptionModel, (user_id, "maps_extension"))
+        assert subscription is not None and subscription.expires_at == expires_at

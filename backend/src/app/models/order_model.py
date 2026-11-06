@@ -13,12 +13,12 @@ class OrderModel(BaseDBModel):
 
     __tablename__ = "orders"
     __table_args__ = (
-        # 支付 webhook 按渠道与渠道流水精确查重，收敛续费单并发建单竞态。
         Index(
             "idx_orders_payment_method_payment_channel_order_no",
             "payment_method",
             "payment_channel_order_no",
-        ),
+            unique=True,
+        ),  # get_order_by_payment_channel_order_no 按渠道与流水查重。
     )
 
     # 主键

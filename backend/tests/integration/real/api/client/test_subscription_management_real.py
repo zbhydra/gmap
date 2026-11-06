@@ -168,5 +168,5 @@ async def test_real_subscription_management_creates_portal_url_per_product_kind(
         json={"product_kind": MAPS_ONLINE_PRODUCT_KIND},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert missing_line.status_code == 400
+    assert missing_line.status_code == 200
     assert missing_line.json()["code"] == CommonCode.INVALID_REQUEST

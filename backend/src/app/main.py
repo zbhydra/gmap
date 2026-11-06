@@ -107,6 +107,7 @@ from app.api.admin.admin_task_records import router as admin_task_records_router
 from app.api.admin.admin_users import router as admin_users_router
 from app.api.callback.paypal_callback import router as paypal_callback_router
 from app.api.callback.clink_callback import router as clink_callback_router
+from app.api.callback.stripe_callback import router as stripe_callback_router
 from app.api.callback.telegram_callback import router as telegram_callback_router
 from app.api.callback.test_pay_callback import router as callback_router
 from app.api.client.auth_client import router as auth_router
@@ -124,7 +125,6 @@ from app.api.external.external_maps import router as external_maps_router
 from app.api.external.external_system_dashboard import (
     router as external_system_dashboard_router,
 )
-from app.api.system.dashboard import router as dashboard_router
 from app.api.system.health import router as health_router
 
 
@@ -216,7 +216,6 @@ def _include_api_info(app_instance: FastAPI) -> None:
 def _include_business_routes(app_instance: FastAPI) -> None:
     """挂载业务路由。"""
     app_instance.include_router(health_router, prefix="/api/system", tags=["system"])
-    app_instance.include_router(dashboard_router, prefix="/api/system", tags=["system"])
     app_instance.include_router(auth_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(checkin_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(credit_router, prefix="/api/client", tags=["client"])
@@ -252,6 +251,9 @@ def _include_business_routes(app_instance: FastAPI) -> None:
     )
     app_instance.include_router(
         clink_callback_router, prefix="/api/callback", tags=["callback"]
+    )
+    app_instance.include_router(
+        stripe_callback_router, prefix="/api/callback", tags=["callback"]
     )
     app_instance.include_router(admin_auth_router, prefix="/api/admin", tags=["admin"])
     app_instance.include_router(

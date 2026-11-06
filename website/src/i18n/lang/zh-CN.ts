@@ -1484,7 +1484,7 @@ export const site: SiteContent = {
     "pricing": {
       "seo": {
         "title": "定价 — 在线采集、浏览器扩展程序和 API 套餐 | MapsGrab",
-        "description": "MapsGrab 各产品套餐：在线采集器 $19 起，浏览器扩展程序 $39 起，API $15 起。每款产品均有免费档位；在线采集和 API 按自然月一次性付款，扩展程序按月订阅。"
+        "description": "MapsGrab 套餐：在线采集器 $19 起，浏览器扩展程序 $39 起，API $15 起。每款产品均有免费档位，购买前可查看各套餐的付款与续费方式。"
       },
       "hero": {
         "kicker": "定价",
@@ -1496,8 +1496,8 @@ export const site: SiteContent = {
         "lead": "选择适合工作流程的产品：云端在线采集器、浏览器扩展程序或 HTTP API，再选择每月额度，即可在此页面购买或升级。",
         "meta": [
           "每款产品均有免费档位",
-          "使用 PayPal 支付",
-          "补差价升级"
+          "Stripe / ClinkBill",
+          "升级您的套餐"
         ],
         "switchLabel": "产品线"
       },
@@ -1506,16 +1506,12 @@ export const site: SiteContent = {
         "online": {
           "name": "在线采集器",
           "shortName": "在线采集",
-          "switchMeta": "{price} 起 · 一次性付款",
+          "switchMeta": "{price} 起",
           "unit": "条记录",
           "eyebrow": "在线采集器套餐",
           "title": "云端采集，按记录计费",
           "description": "在云端运行 MapsGrab 引擎，每采集一行商家数据计为一条记录。付费套餐可选邮箱和社交账号补全，不额外消耗记录额度。",
-          "billingChips": [
-            "一次性付款",
-            "涵盖一个自然月",
-            "不自动续费"
-          ],
+          "billingChips": ["每款产品均有免费档位","每月 1 日重置","付款前查看计费方式"],
           "cards": [
             {
               "id": "free",
@@ -1542,12 +1538,11 @@ export const site: SiteContent = {
               "name": "Lite",
               "tagline": "适合偶尔导出数据",
               "price": "$19",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "20,000 条记录/月",
               "features": [
                 "包含免费版全部功能",
                 "1 个月内可用 20,000 条记录",
-                "一次性付款——无自动续订",
                 "每项任务最多 5 个关键词",
                 "邮箱和社交账号补全默认开启，也可关闭"
               ],
@@ -1561,12 +1556,11 @@ export const site: SiteContent = {
               "name": "基础版",
               "tagline": "适合每周稳定采集潜在客户",
               "price": "$49",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "80,000 条记录/月",
               "features": [
                 "包含轻量版全部功能",
                 "1 个月内可用 80,000 条记录",
-                "一次性付款——无自动续订",
                 "每项任务最多 10 个关键词"
               ],
               "ctaLabel": "选择基础版",
@@ -1579,12 +1573,11 @@ export const site: SiteContent = {
               "name": "成长版",
               "tagline": "适合持续增长的潜在客户采集需求",
               "price": "$99",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "250,000 条记录/月",
               "features": [
                 "包含基础版全部功能",
                 "1 个月内可用 250,000 条记录",
-                "一次性付款——无自动续订",
                 "每项任务最多 20 个关键词"
               ],
               "ctaLabel": "选择成长版",
@@ -1597,12 +1590,11 @@ export const site: SiteContent = {
               "name": "专业版",
               "tagline": "适合代理机构及数据需求量大的团队",
               "price": "$149",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "500,000 条记录/月",
               "features": [
                 "包含成长版全部功能",
                 "1 个月内可用 500,000 条记录",
-                "一次性付款——无自动续订",
                 "每项任务最多 50 个关键词"
               ],
               "ctaLabel": "选择专业版",
@@ -1610,7 +1602,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "一次性付款，权益覆盖一个自然月，本页套餐不自动续费。每采集一行 Google Maps 商家数据计为一条记录；用量于每月 1 日重置，未用完的额度不结转。",
+          "quotaNote": "每采集一行 Google Maps 商家数据计为一条记录；用量于每月 1 日重置，未用完的额度不结转。",
           "compare": {
             "lead": "在线采集器套餐，云端采集，按记录计费。",
             "volume": "每月记录数",
@@ -1680,22 +1672,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "适用于 MapsGrab 在线采集器的每月记录额度。",
             "successTitle": "套餐已生效",
-            "successDescription": "一次性购买的 1 个月套餐已生效。在线采集器会在下次刷新额度时应用新套餐。"
+            "successDescription": "套餐已生效，可以继续使用新额度。"
           }
         },
         "extension": {
           "name": "扩展程序",
           "shortName": "扩展程序",
-          "switchMeta": "{price} 起 · 一次性付款",
+          "switchMeta": "{price} 起",
           "unit": "条记录",
           "eyebrow": "扩展程序套餐",
           "title": "浏览器采集，按记录计费",
           "description": "扩展程序采集的每行商家、评论或照片数据均计为一条记录。所有套餐都支持评论、照片和批量任务；付费套餐可导出全部 36 列，包括邮箱和社交账号补全。",
-          "billingChips": [
-            "一次性付款",
-            "可用 1 个月",
-            "不自动续费"
-          ],
+          "billingChips": ["每款产品均有免费档位","每月 1 日重置","付款前查看计费方式"],
           "cards": [
             {
               "id": "free",
@@ -1721,7 +1709,7 @@ export const site: SiteContent = {
               "name": "Pro",
               "tagline": "适合自由职业者和不断增长的潜在客户采集需求",
               "price": "$39",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "100,000 条记录/月",
               "features": [
                 "包含免费版全部功能",
@@ -1739,7 +1727,7 @@ export const site: SiteContent = {
               "name": "企业版",
               "tagline": "适合代理机构及数据需求量大的团队",
               "price": "$99",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "500,000 条记录/月",
               "features": [
                 "包含专业版全部功能",
@@ -1828,22 +1816,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "适用于 MapsGrab 浏览器扩展程序每月配额。",
             "successTitle": "套餐已生效",
-            "successDescription": "一次性购买的 1 个月套餐已生效。扩展程序会在下次刷新额度时应用新套餐。"
+            "successDescription": "套餐已生效，可以继续使用新额度。"
           }
         },
         "api": {
           "name": "API & MCP",
           "shortName": "API & MCP",
-          "switchMeta": "{price} 起 · 一次性付款",
+          "switchMeta": "{price} 起",
           "unit": "次请求",
           "eyebrow": "API 套餐",
           "title": "程序调用，按请求计费",
           "description": "通过简单的 HTTP API，在自己的应用中搜索 Google Maps 商家并读取评论。每次成功调用计为一次请求，包括返回空结果或部分数据的情况。",
-          "billingChips": [
-            "一次性付款",
-            "涵盖一个自然月",
-            "不自动续费"
-          ],
+          "billingChips": ["每款产品均有免费档位","每月 1 日重置","付款前查看计费方式"],
           "cards": [
             {
               "id": "free",
@@ -1870,12 +1854,11 @@ export const site: SiteContent = {
               "name": "基础版",
               "tagline": "适合原型开发和轻量集成",
               "price": "$15",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "每月 1,000 次请求",
               "features": [
                 "包含免费版全部功能",
                 "1 个月内可用 1,000 次请求",
-                "一次性付款——无自动续订",
                 "JSON 响应"
               ],
               "ctaLabel": "选择基础版",
@@ -1888,12 +1871,11 @@ export const site: SiteContent = {
               "name": "专业版",
               "tagline": "适合生产环境集成",
               "price": "$65",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "每月 5,000 次请求",
               "features": [
                 "包含基础版全部功能",
                 "1 个月内可用 5,000 次请求",
-                "一次性付款——无自动续订",
                 "JSON 响应"
               ],
               "ctaLabel": "选择专业版",
@@ -1906,12 +1888,11 @@ export const site: SiteContent = {
               "name": "企业版",
               "tagline": "适合基于 MapsGrab 数据开发的产品",
               "price": "$115",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "每月 10,000 次请求",
               "features": [
                 "包含专业版全部功能",
                 "1 个月内可用 10,000 次请求",
-                "一次性付款——无自动续订",
                 "JSON 响应"
               ],
               "ctaLabel": "选择企业版",
@@ -1924,12 +1905,11 @@ export const site: SiteContent = {
               "name": "规模版",
               "tagline": "适合高请求量的数据业务",
               "price": "$365",
-              "periodLabel": "一次性付款 · 1 个月",
+              "periodLabel": "1 个月",
               "quota": "每月 50,000 次请求",
               "features": [
                 "包含企业版全部功能",
                 "1 个月内可用 50,000 次请求",
-                "一次性付款——无自动续订",
                 "JSON 响应"
               ],
               "ctaLabel": "选择规模版",
@@ -1937,7 +1917,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "一次性付款，权益覆盖一个自然月，本页套餐不自动续费。每次成功的 API 或 MCP 调用计为一次请求，包括空结果和部分结果；失败调用不计费。用量于每月 1 日重置，未用完的请求额度不结转。",
+          "quotaNote": "每次成功的 API 或 MCP 调用计为一次请求，包括空结果和部分结果；失败调用不计费。用量于每月 1 日重置，未用完的请求额度不结转。",
           "compare": {
             "lead": "API 套餐，程序调用，按请求计费。",
             "volume": "每月请求数",
@@ -2017,7 +1997,7 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "适用于 MapsGrab API 每月请求配额。",
             "successTitle": "套餐已生效",
-            "successDescription": "一次性购买的 1 个月套餐已生效。API 会在下次请求时应用新额度。"
+            "successDescription": "套餐已生效，可以继续使用新额度。"
           }
         }
       },
@@ -2094,16 +2074,16 @@ export const site: SiteContent = {
         },
         "items": {
           "channels": {
-            "title": "PayPal",
-            "body": "通过 PayPal 支付任何套餐的费用。在 PayPal 上完成付款，然后返回此处激活您的套餐。"
+            "title": "Stripe / ClinkBill",
+            "body": "从当前套餐已配置的 Stripe 和 ClinkBill 付款方式中选择。"
           },
           "cadence": {
-            "title": "一次性付款",
-            "body": "每个付费套餐涵盖一个自然月。一次性支付，无自动收费；当您还需要一个月时再次购买。"
+            "title": "付款与续费",
+            "body": "各套餐会标明一次性付款或自动续费。在 Dashboard → 订阅中管理续费和付款方式；取消续费后，已付权益保留至到期。"
           },
           "upgrade": {
             "title": "补差价升级",
-            "body": "通过当前支付服务商，将有效套餐补差价升级至符合条件的更高档位。到期日期和已用额度不变。"
+            "body": "用旧套餐剩余价值抵扣更高档位的完整周期费用。付款且换档成功后开启新账期，本月已用额度保留。"
           },
           "independent": {
             "title": "独立套餐",
@@ -2126,19 +2106,20 @@ export const site: SiteContent = {
         "button": "升级·{amount}",
         "title": "升级您的套餐",
         "confirm": "确认升级",
-        "oneTime": "通过 {channel} 一次性支付差价，到期日期仍为 {date}。",
-        "autoRenew": "差价将立即通过 {channel} 收取。您的到期日期仍为 {date}；未来的续订将使用新的套餐价格。",
+        "oneTime": "通过 {channel} 支付新套餐完整周期费用，抵扣旧套餐剩余价值。预计新到期日：{date}。本月已用额度保留。",
+        "autoRenew": "将立即通过 {channel} 收取新套餐完整周期价减旧套餐剩余价值的金额。预计新到期日：{date}。后续按新价格续费，本月已用额度保留。",
         "pendingTitle": "正在等待升级结果",
         "pendingDescription": "支付服务商正在处理升级，确认前当前套餐仍有效。",
         "successTitle": "套餐已升级",
-        "successDescription": "新额度已生效，到期日期仍为 {date}。",
+        "successDescription": "新额度已生效，新账期到期日为 {date}。本月已用额度保留。",
         "quoteFailed": "无法加载您的升级价格。刷新页面重试。",
         "failed": "无法确认您的升级。刷新页面以检查您的套餐，然后重试。",
         "reasons": {
           "no_active_subscription": "您的套餐不再有效。刷新页面以选择套餐。",
           "not_higher_tier": "选择更高的级别进行升级，或者等到您的套餐到期后再更改级别。",
           "non_positive_diff": "当前套餐的剩余价值不低于目标档位，套餐到期后可更换档位。",
-          "channel_unavailable": "您当前的付款方式无法进行升级。到期后您可以更改套餐。"
+          "channel_unavailable": "当前付款方式不支持升级。PayPal 订阅需等到期后，再选择 Stripe 或 ClinkBill。",
+          renewal_resume_required: "请先在支付渠道恢复自动续费，再刷新此页升级。"
         }
       },
       "faq": {
@@ -2165,11 +2146,11 @@ export const site: SiteContent = {
           },
           {
             "question": "我的套餐会自动续订吗？",
-            "answer": "不会。所有套餐均通过 PayPal 一次性付款，权益覆盖一个自然月。套餐到期后恢复免费档位，需要继续使用付费套餐时可再次购买。"
+            "answer": "付款前请查看套餐的计费方式。一次性套餐不会续费；自动续费套餐会持续续费，直至通过 Dashboard → 订阅 → 管理订阅取消。取消后，已付权益保留至到期。"
           },
           {
             "question": "我可以在不同级别之间切换吗？",
-            "answer": "可以通过 PayPal 补差价，将有效套餐升级到符合条件的更高档位，到期日期和已用额度不变。不同产品标签页的套餐相互独立。"
+            "answer": "符合条件的升级通过原支付渠道，用旧套餐剩余价值抵扣新档完整周期费用。付款且换档成功后新额度和新账期才生效，本月已用额度保留。已取消续费的订阅需先在渠道恢复续费。存量 PayPal 订阅本期不可升级，到期后可选择 Stripe 或 ClinkBill。"
           }
         ]
       },
@@ -5350,5 +5331,30 @@ export const clink: ClinkReturnContent = {
   "cancel": {
     "title": "付款已取消",
     "description": "没有完成付款。您可以返回并选择其他付款方式。"
+  }
+}
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "付款已提交",
+      "description": "正在确认付款，原标签页会自动更新。"
+    },
+    "confirmedCredits": {
+      "title": "积分已到账",
+      "description": "Stripe 付款已确认，积分已到账。你可以返回原标签页。"
+    },
+    "confirmedSubscription": {
+      "title": "套餐已生效",
+      "description": "Stripe 付款已确认，MapExporter 套餐已生效。你可以返回原标签页。"
+    },
+    "failed": {
+      "title": "付款需要进一步处理",
+      "description": "我们无法确认该订单。返回到原始选项卡并重试。"
+    }
+  },
+  "cancel": {
+    "title": "已退出收银台",
+    "description": "订单仍在等待付款。请返回原标签页查询状态，仍可在 Stripe 收银台完成付款。"
   }
 }

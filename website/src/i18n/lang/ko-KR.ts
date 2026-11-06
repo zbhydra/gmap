@@ -1484,7 +1484,7 @@ export const site: SiteContent = {
     "pricing": {
       "seo": {
         "title": "가격 — 온라인, 확장 및 API 계획 | MapsGrab",
-        "description": "모든 표면에 대한 MapsGrab 계획: $19, 브라우저 확장의 온라인 스크레이퍼 $39, 및 API $15. 모든 제품에는 무료 등급이 포함되어 있습니다. 온라인에서는 일회성 일반 월간 요금제, Extension에서는 API 월간 구독이 가능합니다."
+        "description": "MapsGrab 요금제: 온라인 스크레이퍼 $19, 확장 프로그램 $39, API $15부터. 모든 제품에 무료 요금제가 있으며 구매 전에 결제 및 갱신 조건을 확인할 수 있습니다."
       },
       "hero": {
         "kicker": "가격",
@@ -1496,8 +1496,8 @@ export const site: SiteContent = {
         "lead": "클라우드 온라인 스크레이퍼, 브라우저 확장 또는 HTTP API 등 귀하의 워크플로에 맞는 표면을 선택한 다음 월별 볼륨을 선택하세요. 몇 분 안에 이 페이지에서 업그레이드하거나 구매하세요.",
         "meta": [
           "모든 제품에 무료 등급 제공",
-          "PayPal로 결제하세요",
-          "차액을 지불하여 업그레이드하세요"
+          "Stripe / ClinkBill",
+          "계획을 업그레이드하세요"
         ],
         "switchLabel": "제품 라인"
       },
@@ -1506,16 +1506,12 @@ export const site: SiteContent = {
         "online": {
           "name": "온라인 스크레이퍼",
           "shortName": "온라인",
-          "switchMeta": "{price}부터 · 일회성",
+          "switchMeta": "{price}부터",
           "unit": "기록",
           "eyebrow": "온라인 스크레이퍼 계획",
           "title": "기록에 따라 가격이 책정되는 클라우드 추출",
           "description": "인프라에서 MapsGrab 엔진을 실행하세요. 레코드는 수집된 하나의 비즈니스 행입니다. 유료 플랜에는 추가 기록 비용 없이 선택적 이메일 및 소셜 미디어 강화 기능이 포함됩니다.",
-          "billingChips": [
-            "일회성 결제",
-            "자연적인 한 달을 다룹니다.",
-            "자동 갱신 없음"
-          ],
+          "billingChips": ["모든 제품에 무료 등급 제공","1일에 재설정됩니다.","결제 전 청구 방식 확인"],
           "cards": [
             {
               "id": "free",
@@ -1542,12 +1538,11 @@ export const site: SiteContent = {
               "name": "Lite",
               "tagline": "가끔 일회성 내보내기용",
               "price": "$19",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "20,000 기록/월",
               "features": [
                 "모든 것이 무료로 제공됩니다.",
                 "1개월 동안의 기록 20,000개",
-                "일회성 결제 — 자동 갱신 없음",
                 "작업당 최대 5개의 키워드",
                 "이메일 및 소셜 강화(기본 및 선택 사항)"
               ],
@@ -1561,12 +1556,11 @@ export const site: SiteContent = {
               "name": "기초적인",
               "tagline": "매주 꾸준한 리드 수집을 위해",
               "price": "$49",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "80,000 기록/월",
               "features": [
                 "Lite의 모든 것",
                 "1개월 동안의 기록 80,000개",
-                "일회성 결제 — 자동 갱신 없음",
                 "작업당 최대 10개의 키워드"
               ],
               "ctaLabel": "기본 받기",
@@ -1579,12 +1573,11 @@ export const site: SiteContent = {
               "name": "성장",
               "tagline": "리드 파이프라인 성장을 위해",
               "price": "$99",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "250,000 기록/월",
               "features": [
                 "기본의 모든 것",
                 "1개월 동안의 기록 250,000개",
-                "일회성 결제 — 자동 갱신 없음",
                 "작업당 최대 20개의 키워드"
               ],
               "ctaLabel": "성장을 얻으세요",
@@ -1597,12 +1590,11 @@ export const site: SiteContent = {
               "name": "전문적인",
               "tagline": "대행사 및 데이터 사용량이 많은 팀용",
               "price": "$149",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "500,000 기록/월",
               "features": [
                 "성장의 모든 것",
                 "1개월 동안의 기록 500,000개",
-                "일회성 결제 — 자동 갱신 없음",
                 "작업당 최대 50개의 키워드"
               ],
               "ctaLabel": "전문적인 지식을 얻으세요",
@@ -1610,7 +1602,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "한 달 동안의 일회성 결제 — 이 탭의 요금제는 자동 갱신되지 않습니다. 레코드는 Google Maps에서 수집된 하나의 비즈니스 행입니다. 1번째에 사용량이 재설정되고 사용하지 않은 기록은 이월되지 않습니다.",
+          "quotaNote": "레코드는 Google Maps에서 수집된 하나의 비즈니스 행입니다. 1번째에 사용량이 재설정되고 사용하지 않은 기록은 이월되지 않습니다.",
           "compare": {
             "lead": "온라인 스크레이퍼 계획 — 기록에 따라 가격이 책정되는 클라우드 추출.",
             "volume": "월별 기록",
@@ -1680,22 +1672,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "MapsGrab 온라인 스크레이퍼 월별 기록 할당량에 적용됩니다.",
             "successTitle": "계획이 활성화되었습니다",
-            "successDescription": "일회성 1개월 계획이 실행되었습니다. 온라인 스크레이퍼는 다음 할당량 새로 고침 시 이를 선택합니다."
+            "successDescription": "요금제가 활성화되었습니다. 새 한도로 계속 이용할 수 있습니다."
           }
         },
         "extension": {
           "name": "확장 프로그램",
           "shortName": "확장 프로그램",
-          "switchMeta": "{price}부터 · 일회성",
+          "switchMeta": "{price}부터",
           "unit": "기록",
           "eyebrow": "확장 계획",
           "title": "기록에 따라 가격이 책정되는 브라우저 추출",
           "description": "확장 프로그램이 수집하는 모든 행(비즈니스, 리뷰 또는 사진)은 하나의 기록으로 계산됩니다. 모든 계획에는 리뷰, 사진 및 일괄 작업이 포함됩니다. 유료 플랜은 이메일 및 소셜 강화를 포함하여 모든 36 열을 내보냅니다.",
-          "billingChips": [
-            "일회성 결제",
-            "1 접속 월",
-            "자동 갱신 없음"
-          ],
+          "billingChips": ["모든 제품에 무료 등급 제공","1일에 재설정됩니다.","결제 전 청구 방식 확인"],
           "cards": [
             {
               "id": "free",
@@ -1721,7 +1709,7 @@ export const site: SiteContent = {
               "name": "Pro",
               "tagline": "프리랜서 및 성장하는 리드 파이프라인용",
               "price": "$39",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "100,000 기록/월",
               "features": [
                 "모든 것이 무료로 제공됩니다.",
@@ -1739,7 +1727,7 @@ export const site: SiteContent = {
               "name": "사업",
               "tagline": "대행사 및 데이터 사용량이 많은 팀용",
               "price": "$99",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "500,000 기록/월",
               "features": [
                 "프로의 모든 것",
@@ -1828,22 +1816,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "MapsGrab 브라우저 확장 월별 할당량에 적용됩니다.",
             "successTitle": "계획이 활성화되었습니다",
-            "successDescription": "일회성 1개월 계획이 실행되었습니다. 확장 프로그램은 다음 할당량 새로 고침 시 이를 선택합니다."
+            "successDescription": "요금제가 활성화되었습니다. 새 한도로 계속 이용할 수 있습니다."
           }
         },
         "api": {
           "name": "API & MCP",
           "shortName": "API & MCP",
-          "switchMeta": "{price}부터 · 일회성",
+          "switchMeta": "{price}부터",
           "unit": "요청",
           "eyebrow": "API 계획",
           "title": "요청에 따라 가격이 책정되는 프로그래밍 방식 액세스",
           "description": "간단한 HTTP API를 통해 Google Maps개 업체를 검색하고 자신의 애플리케이션에서 리뷰를 가져옵니다. 성공적인 각 호출은 결과가 없거나 부분적인 데이터를 반환하는 경우에도 하나의 요청으로 계산됩니다.",
-          "billingChips": [
-            "일회성 결제",
-            "자연적인 한 달을 다룹니다.",
-            "자동 갱신 없음"
-          ],
+          "billingChips": ["모든 제품에 무료 등급 제공","1일에 재설정됩니다.","결제 전 청구 방식 확인"],
           "cards": [
             {
               "id": "free",
@@ -1870,12 +1854,11 @@ export const site: SiteContent = {
               "name": "기초적인",
               "tagline": "프로토타입 및 조명 통합용",
               "price": "$15",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "1,000 요청/월",
               "features": [
                 "모든 것이 무료로 제공됩니다.",
                 "1개월 동안 1,000 요청",
-                "일회성 결제 — 자동 갱신 없음",
                 "JSON 응답"
               ],
               "ctaLabel": "기본 받기",
@@ -1888,12 +1871,11 @@ export const site: SiteContent = {
               "name": "전문적인",
               "tagline": "생산 통합의 경우",
               "price": "$65",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "5,000 요청/월",
               "features": [
                 "기본의 모든 것",
                 "1개월 동안 5,000 요청",
-                "일회성 결제 — 자동 갱신 없음",
                 "JSON 응답"
               ],
               "ctaLabel": "전문적인 지식을 얻으세요",
@@ -1906,12 +1888,11 @@ export const site: SiteContent = {
               "name": "사업",
               "tagline": "MapsGrab 데이터를 기반으로 구축된 제품의 경우",
               "price": "$115",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "10,000 요청/월",
               "features": [
                 "프로페셔널의 모든 것",
                 "1개월 동안 10,000 요청",
-                "일회성 결제 — 자동 갱신 없음",
                 "JSON 응답"
               ],
               "ctaLabel": "사업을 시작하세요",
@@ -1924,12 +1905,11 @@ export const site: SiteContent = {
               "name": "규모",
               "tagline": "대용량 데이터 작업용",
               "price": "$365",
-              "periodLabel": "일회성 · 1월",
+              "periodLabel": "1개월",
               "quota": "50,000 요청/월",
               "features": [
                 "비즈니스의 모든 것",
                 "1개월 동안 50,000 요청",
-                "일회성 결제 — 자동 갱신 없음",
                 "JSON 응답"
               ],
               "ctaLabel": "규모 확보",
@@ -1937,7 +1917,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "한 달 동안의 일회성 결제 — 이 탭의 요금제는 자동 갱신되지 않습니다. 각각의 성공적인 API 또는 MCP 호출은 비어 있거나 부분적인 결과를 포함하여 하나의 요청으로 계산됩니다. 실패한 통화는 계산되지 않습니다. 1번째에 사용량이 재설정되고 사용되지 않은 요청은 이월되지 않습니다.",
+          "quotaNote": "각각의 성공적인 API 또는 MCP 호출은 비어 있거나 부분적인 결과를 포함하여 하나의 요청으로 계산됩니다. 실패한 통화는 계산되지 않습니다. 1번째에 사용량이 재설정되고 사용되지 않은 요청은 이월되지 않습니다.",
           "compare": {
             "lead": "API 계획 — 프로그래밍 방식 액세스, 요청에 따라 가격 책정.",
             "volume": "월별 요청",
@@ -2017,7 +1997,7 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "MapsGrab API 월별 요청 할당량에 적용됩니다.",
             "successTitle": "계획이 활성화되었습니다",
-            "successDescription": "일회성 1개월 계획이 실행되었습니다. API 키는 다음 요청 시 새 할당량을 선택합니다."
+            "successDescription": "요금제가 활성화되었습니다. 새 한도로 계속 이용할 수 있습니다."
           }
         }
       },
@@ -2094,16 +2074,16 @@ export const site: SiteContent = {
         },
         "items": {
           "channels": {
-            "title": "PayPal",
-            "body": "PayPal을 통해 모든 요금제를 결제하세요. PayPal에서 결제를 완료하고 여기로 돌아와서 요금제를 활성화하세요."
+            "title": "Stripe / ClinkBill",
+            "body": "이 요금제에 제공되는 Stripe 또는 ClinkBill 결제 수단을 선택하세요."
           },
           "cadence": {
-            "title": "일회성 결제",
-            "body": "모든 유료 플랜에는 한 달이 포함됩니다. 자동 청구 없이 한 번만 결제하세요. 한 달 더 필요할 때 다시 구매하세요."
+            "title": "결제 및 갱신",
+            "body": "각 요금제에 일회성 결제 또는 자동 갱신 여부가 표시됩니다. Dashboard → 구독에서 갱신과 결제 수단을 관리하세요. 갱신을 취소해도 결제한 기간은 만료일까지 이용할 수 있습니다."
           },
           "upgrade": {
             "title": "차액을 지불하여 업그레이드하세요",
-            "body": "현재 결제 제공업체를 통해 활성 요금제를 적격한 상위 등급으로 이동하세요. 만료 날짜와 사용량은 지금까지 변경되지 않습니다."
+            "body": "기존 요금제의 남은 가치를 상위 요금제의 전체 기간 요금에서 공제합니다. 결제와 변경이 성공하면 새 청구 기간이 시작되며 이번 달 사용량은 유지됩니다."
           },
           "independent": {
             "title": "독립 계획",
@@ -2126,19 +2106,20 @@ export const site: SiteContent = {
         "button": "업그레이드 · {amount}",
         "title": "계획을 업그레이드하세요",
         "confirm": "업그레이드 확인",
-        "oneTime": "{channel}을 통한 일회성 차이. 만료일은 {date}로 유지됩니다.",
-        "autoRenew": "차액은 {channel}을 통해 즉시 청구됩니다. 만료일은 {date}로 유지됩니다. 향후 갱신에는 새 요금제 가격이 사용됩니다.",
+        "oneTime": "{channel}에서 새 요금제의 전체 기간 요금에서 기존 요금제의 남은 가치를 공제한 금액을 결제합니다. 예상 새 만료일: {date}. 이번 달 사용량은 유지됩니다.",
+        "autoRenew": "{channel}에서 새 요금제의 전체 기간 요금에서 남은 가치를 공제한 금액을 즉시 청구합니다. 예상 새 만료일: {date}. 이후 새 요금으로 갱신되며 이번 달 사용량은 유지됩니다.",
         "pendingTitle": "업그레이드를 기다리는 중",
         "pendingDescription": "결제 서비스 제공업체가 업그레이드를 적용 중입니다. 현재 계획은 확인될 때까지 활성 상태로 유지됩니다.",
         "successTitle": "업그레이드된 요금제",
-        "successDescription": "새 할당량이 활성화되었습니다. 만료일은 {date}로 유지됩니다.",
+        "successDescription": "새 한도가 적용되었습니다. 새 기간 만료일은 {date}입니다. 이번 달 사용량은 유지됩니다.",
         "quoteFailed": "업그레이드 가격을 로드할 수 없습니다. 다시 시도하려면 페이지를 새로고침하세요.",
         "failed": "업그레이드를 확인할 수 없습니다. 다시 시도하기 전에 페이지를 새로 고쳐 계획을 확인하세요.",
         "reasons": {
           "no_active_subscription": "귀하의 계획은 더 이상 활성화되지 않습니다. 요금제를 선택하려면 페이지를 새로고침하세요.",
           "not_higher_tier": "업그레이드하려면 더 높은 등급을 선택하거나, 등급을 변경하려면 요금제가 만료될 때까지 기다리세요.",
           "non_positive_diff": "남은 플랜 가치는 이 등급보다 낮지 않습니다. 요금제가 만료된 후에도 등급을 변경할 수 있습니다.",
-          "channel_unavailable": "현재 결제 방법으로는 업그레이드를 사용할 수 없습니다. 만료 후 요금제를 변경할 수 있습니다."
+          "channel_unavailable": "현재 결제 수단으로는 업그레이드할 수 없습니다. PayPal 구독은 만료 후 Stripe 또는 ClinkBill을 선택하세요.",
+          renewal_resume_required: "결제 서비스에서 자동 갱신을 재개한 다음 이 페이지를 새로고침하여 업그레이드하세요."
         }
       },
       "faq": {
@@ -2165,11 +2146,11 @@ export const site: SiteContent = {
           },
           {
             "question": "내 요금제가 자동으로 갱신되나요?",
-            "answer": "아니요. 모든 플랜은 한 달에 걸쳐 일회성 PayPal 결제입니다. 요금제가 만료되면 무료 등급으로 돌아갑니다. 유료 요금제를 계속 사용하려면 다시 구매하세요."
+            "answer": "결제 전에 요금제의 청구 방식을 확인하세요. 일회성 요금제는 갱신되지 않습니다. 자동 갱신은 Dashboard → 구독 → 구독 관리에서 취소할 때까지 계속됩니다. 결제한 기간은 만료일까지 유지됩니다."
           },
           {
             "question": "등급 간에 전환할 수 있나요?",
-            "answer": "PayPal을 통해 차액을 지불하면 활성 요금제를 적격한 상위 등급으로 업그레이드할 수 있습니다. 만료 날짜와 사용량은 지금까지 변경되지 않습니다. 다른 탭의 계획은 독립적입니다."
+            "answer": "업그레이드는 기존 결제 수단을 통해 남은 가치를 새 요금제의 전체 기간 요금에 공제합니다. 결제와 변경이 성공해야 새 한도와 청구 기간이 적용되며 이번 달 사용량은 유지됩니다. 갱신을 취소했다면 먼저 결제 서비스에서 재개하세요. 기존 PayPal 구독은 이번 기간에 업그레이드할 수 없습니다. 만료 후 Stripe 또는 ClinkBill을 선택할 수 있습니다."
           }
         ]
       },
@@ -5350,5 +5331,30 @@ export const clink: ClinkReturnContent = {
   "cancel": {
     "title": "결제가 취소되었습니다.",
     "description": "결제가 완료되지 않았습니다. 반품하고 다른 결제 방법을 선택할 수 있습니다."
+  }
+}
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "결제가 완료되었습니다.",
+      "description": "귀하의 결제를 확인하는 중입니다. 원본 탭은 자동으로 업데이트됩니다."
+    },
+    "confirmedCredits": {
+      "title": "크레딧이 충전되었습니다",
+      "description": "Stripe 결제가 확인되었으며 크레딧이 추가되었습니다. 원래 탭으로 돌아갈 수 있습니다."
+    },
+    "confirmedSubscription": {
+      "title": "계획이 활성화되었습니다",
+      "description": "귀하의 Stripe 결제가 확인되었으며 귀하의 MapExporter 요금제가 활성화되었습니다. 원래 탭으로 돌아갈 수 있습니다."
+    },
+    "failed": {
+      "title": "결제에 주의가 필요함",
+      "description": "이 주문을 확인할 수 없습니다. 원래 탭으로 돌아가서 다시 시도하세요."
+    }
+  },
+  "cancel": {
+    "title": "결제 화면을 닫았습니다",
+    "description": "주문은 여전히 결제 대기 중입니다. 원래 탭에서 상태를 확인하세요. Stripe 결제 화면에서 결제를 완료할 수 있습니다."
   }
 }

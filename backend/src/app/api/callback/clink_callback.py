@@ -71,6 +71,14 @@ async def clink_payment_callback(request: Request) -> JSONResponse:
             payment_method=CLINK_PAYMENT_METHOD,
             callback=verified,
         )
+        if verified.subscription_state is not None:
+            await subscription_service.sync_plan_from_channel(
+                payment_method=CLINK_PAYMENT_METHOD,
+                channel_subscription_id=str(
+                    (verified.provider_data or {})["clink_subscription_id"]
+                ),
+                state=verified.subscription_state,
+            )
 
     # 官方 Order Webhook 合同：所有已验证 order.succeeded 都以 account 事件应答。
     # 本地下单要求登录，订单用户必然已存在，固定 account.reloaded；

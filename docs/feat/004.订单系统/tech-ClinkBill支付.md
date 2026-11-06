@@ -27,7 +27,7 @@
 
 - 商品单一计费模式:计费方式是 `config_subscription_product.auto_renew` 商品列(不再读 metadata);创建订单时 `check_product` 校验请求 `auto_renew + period` 与商品配置一致,同一份配置完整写入 `orders.extra_metadata.product_snapshot`。订单创建后 `auto_renew` 立即通过 `PaymentRequest` 传给 Provider,创建 Clink Session 不再读取实时运营配置。
 - 自动续费回调通过 `RecurringPaymentReference.original_order_no` 定位首单;首单已支付时,订单服务会按新的渠道扣款号创建本地续费订单。
-- 一次性重复回调由现有订单状态 CAS 和履约状态 CAS 收敛;自动续费并发回调额外复用 OrderService 已有 Redis 短锁和渠道扣款号查重,不新增 Clink 专用幂等层。
+- 一次性重复回调由现有订单状态 CAS 和履约状态 CAS 收敛；自动续费并发回调按[续费建单合同](tech-支付与履约.md#19-自动续费-webhook-续费订单)处理。
 - `orders.payment_data` 可保存 Clink `sessionId` 和 Checkout URL;`orders.payment_channel_order_no` 可保存本次履约的渠道幂等号。
 
 ## 3. 渠道配置
@@ -160,7 +160,7 @@ Clink 可能同时发送 recurring `order.succeeded`；该事件验签并核对�
 5. 用 §3.2 的 `webhook_signing_key` 计算 HMAC-SHA256 hex，使用常量时间比较。
 6. 验签成功后才解析 JSON，校验 `event_` ID、`object="event"`、毫秒 `created`、允许的事件类型和对象形式 `data.object`。
 
-验签、结构或事件类型不合法时返回非 2xx，不进入订单服务。
+验签或结构不合法时返回 HTTP 200 业务错误，不进入订单服务；已验签但未支持的事件确认接收。
 
 ### 5.3 一次性支付对账
 
@@ -194,8 +194,8 @@ Provider 把已验证金额/币种的结果交给现有 `handle_payment_callback
 1. 从 Invoice 事件取得 `subscriptionId`、`invoiceId`、`orderId`、金额和币种。
 2. 服务端调用 `GET /subscription/{subscriptionId}`，取得该订阅的 `merchantReference`、`sessionId` 和 `customerId`。
 3. 用 `merchantReference` 精确定位首笔本地订单，再比对本地 `payment_data.sessionId` 与 `payment_method=clink`(自动续费商品在 session 创建链路已锚定,webhook 不重复核对)。
-4. 核对 Invoice 币种与首单币种，按渠道实付金额记账；折算发票不与首单或新档整月金额比较。换档与实付订单的关系见 [订阅升级](../006.订阅系统/tech-订阅升级.md#路径-b自动续费线maps_extension渠道协议内换价)。
-5. 任一查询或核对失败就返回非 2xx，等待 Clink 重试；不新增本地恢复任务。
+4. 核对 Invoice 币种与首单币种，按渠道实付金额记账；折算发票不与首单或新档整月金额比较。换档与实付订单的关系见 [订阅升级](../006.订阅系统/tech-订阅升级.md#路径-b自动续费)。
+5. 查询或核对失败按[支付失败分类](tech-支付与履约.md#81-失败分类与恢复边界)抛业务异常，回调 HTTP 应答由该分类统一映射。
 
 核对通过后映射为：
 
@@ -228,9 +228,9 @@ Clink 通用 skill 推荐所有事件额外写入按 `event.id` 唯一的持久 
 ## 7. 错误语义
 
 - Session 创建网络失败、超时、Clink 非 2xx、响应结构错误：抛出包含本地订单号、请求路径、HTTP 状态和 Clink 错误码的 `PaymentProviderError`，用户重试创建新订单。
-- Webhook 验签失败：非 2xx，不查订单、不履约。
-- Webhook 对账不一致：非 2xx，错误必须包含 event ID、Clink order/invoice/session ID 和本地订单号，不自动修正。
-- 重复 Webhook：返回 2xx 幂等结果，不重复履约。
+- Webhook 验签失败：返回业务错误，不查订单、不履约。
+- Webhook 对账不一致：返回业务错误，错误必须包含 event ID、Clink order/invoice/session ID 和本地订单号，不自动修正。
+- 查重命中已有订单的重复 Webhook：返回 2xx 幂等结果，不重复履约；并发续费插入冲突按[续费建单合同](tech-支付与履约.md#19-自动续费-webhook-续费订单)返回重复订单错误。
 - 密钥缺失：`clink` 渠道创建 Provider 失败，其他支付渠道不受影响。
 - 日志不输出 Secret Key、Webhook 签名、完整 Checkout URL token 或完整原始支付方式信息。
 

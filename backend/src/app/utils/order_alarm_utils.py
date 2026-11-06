@@ -206,7 +206,6 @@ def _build_fulfillment_failed_content(
         [
             f"失败原因：{reason}",
             f"错误信息：{error_message}",
-            "处理建议：检查订单快照、用户权益记录和支付回调日志；必要时修复数据后等待补偿任务重试",
         ]
     )
     return "\n".join(lines)

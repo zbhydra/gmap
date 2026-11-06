@@ -44,7 +44,7 @@ const LINES: readonly PlanLine[] = [
 ]
 
 /** 支付渠道品牌名，不翻译（与下单页一致）。 */
-const PAYMENT_METHODS: Readonly<Record<string, string>> = { paypal: 'PayPal', clink: 'ClinkBill' }
+const PAYMENT_METHODS: Readonly<Record<string, string>> = { stripe: 'Stripe', paypal: 'PayPal', clink: 'ClinkBill' }
 
 const guideOpen = ref(false)
 const managingLine = ref<DashboardLineId | null>(null)

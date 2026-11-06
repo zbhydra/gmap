@@ -1484,7 +1484,7 @@ export const site: SiteContent = {
     "pricing": {
       "seo": {
         "title": "Prezzi: piani online, estensione e API | MapsGrab",
-        "description": "Piani MapsGrab per ogni superficie: Estrattore online da $19, Estensione del browser da $39, e API da $15. Livelli gratuiti inclusi in ogni prodotto: piani mensili naturali una tantum su Online e API, abbonamenti mensili su Extension."
+        "description": "Piani MapsGrab: estrattore online da $19, estensione da $39 e API da $15. Ogni prodotto include un piano gratuito. Verifica le condizioni di pagamento e rinnovo prima dell’acquisto."
       },
       "hero": {
         "kicker": "Prezzi",
@@ -1496,8 +1496,8 @@ export const site: SiteContent = {
         "lead": "Scegli la superficie adatta al tuo flusso di lavoro: estrattore online cloud, estensione del browser o HTTP API, quindi scegli il volume mensile. Aggiorna o acquista da questa pagina in pochi minuti.",
         "meta": [
           "Livello gratuito su ogni prodotto",
-          "Paga con PayPal",
-          "Upgrade pagando la differenza"
+          "Stripe / ClinkBill",
+          "Aggiorna il tuo piano"
         ],
         "switchLabel": "Linea di prodotti"
       },
@@ -1506,16 +1506,12 @@ export const site: SiteContent = {
         "online": {
           "name": "Estrattore online",
           "shortName": "Online",
-          "switchMeta": "Da {price} · una tantum",
+          "switchMeta": "Da {price}",
           "unit": "record",
           "eyebrow": "Piani di estrattore online",
           "title": "Estrazione del cloud, valutata in base ai record",
           "description": "Esegui il motore MapsGrab sulla nostra infrastruttura. Un record è una riga aziendale raccolta. I piani a pagamento includono l'e-mail opzionale e l'arricchimento dei social media senza costi aggiuntivi.",
-          "billingChips": [
-            "Pagamento una tantum",
-            "Copre un mese naturale",
-            "Nessun rinnovo automatico"
-          ],
+          "billingChips": ["Livello gratuito su ogni prodotto","Si ripristina al 1st","Condizioni visibili prima del pagamento"],
           "cards": [
             {
               "id": "free",
@@ -1542,12 +1538,11 @@ export const site: SiteContent = {
               "name": "Lite",
               "tagline": "Per esportazioni occasionali una tantum",
               "price": "$19",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "20,000 record/mese",
               "features": [
                 "Tutto gratis",
                 "20,000 record per 1 mese",
-                "Pagamento una tantum: nessun rinnovo automatico",
                 "Fino a 5 parole chiave per attività",
                 "E-mail e arricchimento social, attivi per impostazione predefinita e facoltativi"
               ],
@@ -1561,12 +1556,11 @@ export const site: SiteContent = {
               "name": "Di base",
               "tagline": "Per una raccolta settimanale costante di lead",
               "price": "$49",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "80,000 record/mese",
               "features": [
                 "Tutto in Lite",
                 "80,000 record per 1 mese",
-                "Pagamento una tantum: nessun rinnovo automatico",
                 "Fino a 10 parole chiave per attività"
               ],
               "ctaLabel": "Ottieni Base",
@@ -1579,12 +1573,11 @@ export const site: SiteContent = {
               "name": "Crescita",
               "tagline": "Per la crescita di condutture di piombo",
               "price": "$99",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "250,000 record/mese",
               "features": [
                 "Tutto in Basic",
                 "250,000 record per 1 mese",
-                "Pagamento una tantum: nessun rinnovo automatico",
                 "Fino a 20 parole chiave per attività"
               ],
               "ctaLabel": "Ottieni crescita",
@@ -1597,12 +1590,11 @@ export const site: SiteContent = {
               "name": "Professionale",
               "tagline": "Per agenzie e team che utilizzano molti dati",
               "price": "$149",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "500,000 record/mese",
               "features": [
                 "Tutto in crescita",
                 "500,000 record per 1 mese",
-                "Pagamento una tantum: nessun rinnovo automatico",
                 "Fino a 50 parole chiave per attività"
               ],
               "ctaLabel": "Diventa professionale",
@@ -1610,7 +1602,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Pagamento una tantum che copre un mese naturale: i piani in questa scheda non si rinnovano automaticamente. Un record è una riga aziendale raccolta da Google Maps; l'utilizzo si ripristina al 1st e i record inutilizzati non vengono ripristinati.",
+          "quotaNote": "Un record è una riga aziendale raccolta da Google Maps; l'utilizzo si ripristina al 1st e i record inutilizzati non vengono ripristinati.",
           "compare": {
             "lead": "Piani di Scraper online: estrazione del cloud, prezzi in base ai record.",
             "volume": "Registrazioni al mese",
@@ -1680,22 +1672,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Si applica alla quota di record mensile di MapsGrab Estrattore online.",
             "successTitle": "Piano attivato",
-            "successDescription": "Il tuo piano una tantum da 1 al mese è attivo. Lo scraper online lo riprende al successivo aggiornamento della quota."
+            "successDescription": "Il piano è attivo. Puoi continuare con la nuova quota."
           }
         },
         "extension": {
           "name": "Estensione",
           "shortName": "Estensione",
-          "switchMeta": "Da {price} · una tantum",
+          "switchMeta": "Da {price}",
           "unit": "record",
           "eyebrow": "Piani di estensione",
           "title": "Estrazione del browser, valutata in base ai record",
           "description": "Ogni riga raccolta dall'estensione (un'attività, una recensione o una foto) conta come un record. Tutti i piani includono recensioni, foto e attività batch; i piani a pagamento esportano tutte le colonne 36, incluse email e arricchimento sociale.",
-          "billingChips": [
-            "Pagamento una tantum",
-            "1 mese di accesso",
-            "Nessun rinnovo automatico"
-          ],
+          "billingChips": ["Livello gratuito su ogni prodotto","Si ripristina al 1st","Condizioni visibili prima del pagamento"],
           "cards": [
             {
               "id": "free",
@@ -1721,7 +1709,7 @@ export const site: SiteContent = {
               "name": "Pro",
               "tagline": "Per liberi professionisti e pipeline di lead in crescita",
               "price": "$39",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "100,000 record/mese",
               "features": [
                 "Tutto gratis",
@@ -1739,7 +1727,7 @@ export const site: SiteContent = {
               "name": "Attività commerciale",
               "tagline": "Per agenzie e team che utilizzano molti dati",
               "price": "$99",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "500,000 record/mese",
               "features": [
                 "Tutto nel professionista",
@@ -1828,22 +1816,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Si applica alla quota mensile dell'estensione del browser MapsGrab.",
             "successTitle": "Piano attivato",
-            "successDescription": "Il tuo piano una tantum da 1 al mese è attivo. L'estensione lo riprende al successivo aggiornamento della quota."
+            "successDescription": "Il piano è attivo. Puoi continuare con la nuova quota."
           }
         },
         "api": {
           "name": "API & MCP",
           "shortName": "API & MCP",
-          "switchMeta": "Da {price} · una tantum",
+          "switchMeta": "Da {price}",
           "unit": "richieste",
           "eyebrow": "API piani",
           "title": "Accesso programmatico, tariffato in base alle richieste",
           "description": "Cerca Google Maps aziende e recupera le loro recensioni dalle tue applicazioni tramite un semplice HTTP API. Ogni chiamata riuscita conta come una richiesta, anche quando non restituisce risultati o dati parziali.",
-          "billingChips": [
-            "Pagamento una tantum",
-            "Copre un mese naturale",
-            "Nessun rinnovo automatico"
-          ],
+          "billingChips": ["Livello gratuito su ogni prodotto","Si ripristina al 1st","Condizioni visibili prima del pagamento"],
           "cards": [
             {
               "id": "free",
@@ -1870,12 +1854,11 @@ export const site: SiteContent = {
               "name": "Di base",
               "tagline": "Per prototipi e integrazioni leggere",
               "price": "$15",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "1,000 richieste/mese",
               "features": [
                 "Tutto gratis",
                 "1,000 richieste per 1 mese",
-                "Pagamento una tantum: nessun rinnovo automatico",
                 "JSON risposte"
               ],
               "ctaLabel": "Ottieni Base",
@@ -1888,12 +1871,11 @@ export const site: SiteContent = {
               "name": "Professionale",
               "tagline": "Per integrazioni produttive",
               "price": "$65",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "5,000 richieste/mese",
               "features": [
                 "Tutto in Basic",
                 "5,000 richieste per 1 mese",
-                "Pagamento una tantum: nessun rinnovo automatico",
                 "JSON risposte"
               ],
               "ctaLabel": "Diventa professionale",
@@ -1906,12 +1888,11 @@ export const site: SiteContent = {
               "name": "Attività commerciale",
               "tagline": "Per prodotti basati su dati MapsGrab",
               "price": "$115",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "10,000 richieste/mese",
               "features": [
                 "Tutto in Professional",
                 "10,000 richieste per 1 mese",
-                "Pagamento una tantum: nessun rinnovo automatico",
                 "JSON risposte"
               ],
               "ctaLabel": "Ottieni affari",
@@ -1924,12 +1905,11 @@ export const site: SiteContent = {
               "name": "Scala",
               "tagline": "Per operazioni di dati con volumi elevati",
               "price": "$365",
-              "periodLabel": "una tantum · 1 mese",
+              "periodLabel": "1 mese",
               "quota": "50,000 richieste/mese",
               "features": [
                 "Tutto negli affari",
                 "50,000 richieste per 1 mese",
-                "Pagamento una tantum: nessun rinnovo automatico",
                 "JSON risposte"
               ],
               "ctaLabel": "Ottieni Scala",
@@ -1937,7 +1917,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Pagamento una tantum che copre un mese naturale: i piani in questa scheda non si rinnovano automaticamente. Ogni chiamata API o MCP riuscita conta come una richiesta, compresi i risultati vuoti e parziali; le chiamate fallite non vengono conteggiate. L'utilizzo si ripristina il 1st e le richieste non utilizzate non vengono trasferite.",
+          "quotaNote": "Ogni chiamata API o MCP riuscita conta come una richiesta, compresi i risultati vuoti e parziali; le chiamate fallite non vengono conteggiate. L'utilizzo si ripristina il 1st e le richieste non utilizzate non vengono trasferite.",
           "compare": {
             "lead": "Piani API: accesso programmatico, tariffato in base alle richieste.",
             "volume": "Richieste al mese",
@@ -2017,7 +1997,7 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Si applica alla quota di richiesta mensile MapsGrab API.",
             "successTitle": "Piano attivato",
-            "successDescription": "Il tuo piano una tantum da 1 al mese è attivo. La tua chiave API preleva la nuova quota alla richiesta successiva."
+            "successDescription": "Il piano è attivo. Puoi continuare con la nuova quota."
           }
         }
       },
@@ -2094,16 +2074,16 @@ export const site: SiteContent = {
         },
         "items": {
           "channels": {
-            "title": "PayPal",
-            "body": "Paga qualsiasi piano tramite PayPal. Completa il pagamento su PayPal e torna qui per attivare il tuo piano."
+            "title": "Stripe / ClinkBill",
+            "body": "Scegli tra i metodi Stripe e ClinkBill disponibili per il tuo piano."
           },
           "cadence": {
-            "title": "Pagamento una tantum",
-            "body": "Ogni piano a pagamento copre un mese naturale. Paga una volta senza addebiti automatici; acquista di nuovo quando hai bisogno di un altro mese."
+            "title": "Pagamento e rinnovo",
+            "body": "Ogni piano indica se il pagamento è unico o se si rinnova automaticamente. Gestisci rinnovo e metodo di pagamento in Dashboard → Abbonamenti. Annullando il rinnovo, l’accesso pagato resta valido fino alla scadenza."
           },
           "upgrade": {
             "title": "Upgrade pagando la differenza",
-            "body": "Sposta un piano attivo a un livello superiore idoneo tramite il tuo attuale fornitore di servizi di pagamento. La data di scadenza e l'utilizzo finora rimangono invariati."
+            "body": "Il valore residuo del piano viene sottratto dal prezzo di un intero periodo del piano superiore. Il nuovo periodo inizia dopo il pagamento e il cambio riusciti. L’utilizzo di questo mese viene mantenuto."
           },
           "independent": {
             "title": "Piani indipendenti",
@@ -2126,19 +2106,20 @@ export const site: SiteContent = {
         "button": "Migliora · {amount}",
         "title": "Aggiorna il tuo piano",
         "confirm": "Conferma l'aggiornamento",
-        "oneTime": "Differenza una tantum tramite {channel}. La tua data di scadenza rimane {date}.",
-        "autoRenew": "La differenza verrà addebitata immediatamente tramite {channel}. La tua data di scadenza rimane {date}; i rinnovi futuri utilizzano il nuovo prezzo del piano.",
+        "oneTime": "Paga un intero nuovo periodo tramite {channel}, meno il valore residuo del piano. Nuova scadenza stimata: {date}. L’utilizzo di questo mese viene mantenuto.",
+        "autoRenew": "Verrà addebitato subito tramite {channel} un periodo completo meno il valore residuo. Nuova scadenza stimata: {date}. I rinnovi useranno il nuovo prezzo e l’utilizzo del mese viene mantenuto.",
         "pendingTitle": "In attesa del tuo aggiornamento",
         "pendingDescription": "Il tuo fornitore di servizi di pagamento sta applicando l'aggiornamento. Il tuo piano attuale rimane attivo finché non viene confermato.",
         "successTitle": "Piano aggiornato",
-        "successDescription": "La tua nuova quota è attiva. La tua data di scadenza rimane {date}.",
+        "successDescription": "La nuova quota è attiva. Il nuovo periodo termina il {date}. L’utilizzo di questo mese viene mantenuto.",
         "quoteFailed": "Impossibile caricare il prezzo dell'aggiornamento. Aggiorna la pagina per riprovare.",
         "failed": "Impossibile confermare l'aggiornamento. Aggiorna la pagina per verificare il tuo piano prima di riprovare.",
         "reasons": {
           "no_active_subscription": "Il tuo piano non è più attivo. Aggiorna la pagina per scegliere un piano.",
           "not_higher_tier": "Scegli un livello superiore per eseguire l'upgrade o attendi la scadenza del piano per cambiare livello.",
           "non_positive_diff": "Il valore rimanente del tuo piano non è inferiore a questo livello. Puoi cambiare livello dopo la scadenza del tuo piano.",
-          "channel_unavailable": "Gli upgrade non sono disponibili con il tuo metodo di pagamento attuale. Puoi modificare i piani dopo la scadenza."
+          "channel_unavailable": "Il metodo di pagamento attuale non consente upgrade. Con PayPal attendi la scadenza e scegli Stripe o ClinkBill.",
+          renewal_resume_required: "Riattiva il rinnovo automatico dal fornitore, poi aggiorna questa pagina per l’upgrade."
         }
       },
       "faq": {
@@ -2165,11 +2146,11 @@ export const site: SiteContent = {
           },
           {
             "question": "Il mio piano si rinnoverà automaticamente?",
-            "answer": "No. Tutti i piani prevedono pagamenti una tantum di PayPal che coprono un mese naturale. Alla scadenza del tuo piano, ritorni al livello gratuito. Acquista nuovamente per continuare con un piano a pagamento."
+            "answer": "Verifica le condizioni prima di pagare. I piani a pagamento unico non si rinnovano. Gli altri si rinnovano fino all’annullamento in Dashboard → Abbonamenti → Gestisci abbonamento. L’accesso pagato resta valido fino alla scadenza."
           },
           {
             "question": "Posso passare da un livello all'altro?",
-            "answer": "Puoi aggiornare un piano attivo a un livello superiore idoneo pagando la differenza tramite PayPal. La data di scadenza e l'utilizzo finora rimangono invariati. I piani su diverse schede sono indipendenti."
+            "answer": "Gli upgrade idonei sottraggono il valore residuo dal prezzo di un periodo completo tramite il fornitore attuale. Quota e periodo cambiano solo dopo pagamento e cambio riusciti; l’utilizzo del mese viene mantenuto. Se hai annullato il rinnovo, riattivalo prima dal fornitore. Gli abbonamenti PayPal non possono cambiare in questo periodo; alla scadenza scegli Stripe o ClinkBill."
           }
         ]
       },
@@ -5350,5 +5331,30 @@ export const clink: ClinkReturnContent = {
   "cancel": {
     "title": "Pagamento annullato",
     "description": "Nessun pagamento è stato completato. Puoi restituire e scegliere un altro metodo di pagamento."
+  }
+}
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "Pagamento inviato",
+      "description": "Stiamo confermando il tuo pagamento. La scheda originale si aggiornerà automaticamente."
+    },
+    "confirmedCredits": {
+      "title": "Crediti aggiunti",
+      "description": "Il tuo pagamento Stripe è confermato e i crediti sono stati aggiunti. Puoi tornare alla scheda originale."
+    },
+    "confirmedSubscription": {
+      "title": "Piano attivato",
+      "description": "Il tuo pagamento Stripe è confermato e il tuo piano MapExporter è attivo. Puoi tornare alla scheda originale."
+    },
+    "failed": {
+      "title": "Il pagamento richiede attenzione",
+      "description": "Non è stato possibile confermare questo ordine. Torna alla scheda originale e riprova."
+    }
+  },
+  "cancel": {
+    "title": "Checkout chiuso",
+    "description": "L’ordine è ancora in attesa di pagamento. Torna alla scheda originale per verificarne lo stato. Puoi ancora pagare in Stripe Checkout."
   }
 }

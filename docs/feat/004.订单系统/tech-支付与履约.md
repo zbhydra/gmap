@@ -182,9 +182,10 @@ POST /api/callback/paypal/payment
 - 首期订阅订单走 `/api/client/order/create`。
 - 后续自动续费没有用户点击;provider webhook 验签后,服务端按本次渠道扣款号创建 `ProductClass.SUBSCRIPTION` 续费订单。
 - 创建续费订单前先按 `(payment_method, payment_channel_order_no)` 查重;命中则按已有订单幂等返回。
+- 并发查重均未命中时，由[渠道流水唯一约束](tech-订单数据与状态机.md#31-索引)拒绝重复插入；失败请求返回 `ORDER_DUPLICATE`，成功建单的请求继续处理自己的订单。
 - 新续费订单创建后立即调用 `order_success`,再由订单履约分发到订阅域按 Provider 归一化账期推进(`user_subscriptions.expires_at` 只被更晚的渠道到期时间覆盖)。
 - 续费订单不进入用户未完成订单列表;它是已发生扣款的服务端记录。
-- 自动续费升级确认不预建订单；折算发票复用此实付建单链。统一换档结果与具体引用核对见 [订阅升级合同](../006.订阅系统/tech-订阅升级.md#路径-b自动续费线maps_extension渠道协议内换价)。
+- 自动续费升级确认不预建订单；折算发票复用此实付建单链。统一换档结果与具体引用核对见 [订阅升级合同](../006.订阅系统/tech-订阅升级.md#路径-b自动续费)。
 
 ### 1.10 渠道订阅管理入口
 
@@ -202,14 +203,16 @@ POST /api/client/subscription/management
 
 模型:`backend/src/app/models/config_payment_channel_model.py`,`__tablename__ = "config_payment_channel"`。
 
-| 字段 | 类型 | 约束 | 说明 |
-| --- | --- | --- | --- |
-| `id` | BigInteger PK | | 主键 |
-| `channel_code` | string | unique(`uk_config_payment_channel_channel_code`) | 渠道标识,业务唯一;`payment_method` 在下单中对应此字段 |
-| `channel_name` | string | | 渠道名称 |
-| `enabled` | bool | | 是否启用 |
-| `config_json` | string(JSON) | | 渠道配置 |
-| `created_at / updated_at` | bigint | | 毫秒时间戳 |
+| 字段                      | 类型          | 约束                                             | 说明                                                  |
+| ------------------------- | ------------- | ------------------------------------------------ | ----------------------------------------------------- |
+| `id`                      | BigInteger PK |                                                  | 主键                                                  |
+| `channel_code`            | string        | unique(`uk_config_payment_channel_channel_code`) | 渠道标识,业务唯一;`payment_method` 在下单中对应此字段 |
+| `channel_name`            | string        |                                                  | 渠道名称                                              |
+| `enabled`                 | bool          |                                                  | 是否开放新支付                                        |
+| `config_json`             | string(JSON)  |                                                  | 渠道配置                                              |
+| `created_at / updated_at` | bigint        |                                                  | 毫秒时间戳                                            |
+
+停用渠道只停止新销售。PayPal、ClinkBill webhook 和已有订单的收款确认通过 `payment_service.get_provider_for_existing_payment` 读取最新凭据,不受 `enabled` 限制;渠道配置与凭据必须保留。
 
 `telegram_stars` 渠道的 `config_json` 必须是对象,必填字段:
 
@@ -519,32 +522,17 @@ class PaymentBase(ABC):
 - `payment_data.channel_order_id / paypal_order_id` 保存 PayPal order id;同时在保存 payment_data 时把 `orders.payment_channel_order_no` 预写为 PayPal order id,供 `CHECKOUT.ORDER.APPROVED` webhook 在本地订单仍未支付时查回订单。
 - success/cancel 回跳页 URL 中的 `order_no` 只用于通知原页面和取消本地待支付订单;支付成功只认 PayPal webhook 验签通过后的后端 capture / completed 结果。
 
-### 6.3 capture_order
+### 6.3 收款核验
 
-`capture_order(order) -> CallbackVerificationResult` 是 PayPal 专属方法,不进入 `PaymentBase`。
+共享入口为 `PayPalPaymentProvider._validate_checkout_order`、`_capture_result_from_order` 和 `OrderService.validate_paid_amount`；回跳 `confirm_payment` 与 APPROVED webhook 共用这些边界。
 
-输入:
+- APPROVED 按 `(paypal, resource.id)` 定位本地订单；渠道、`payment_channel_order_no` 与 `payment_data.paypal_order_id` 必须一致，本地状态只允许待付或已付。
+- 扣款前逐项核对事件实际携带的商户订单引用、金额与币种。未携带的可选快照不补造；多个引用中任一冲突都拒绝。
+- 本地已付直接进入重复通知处理，不再 capture。待付订单调用 capture 时请求完整响应。
+- 收款响应必须同时具有订单和 capture 的 `COMPLETED` 状态，渠道订单 ID、商户订单引用、金额与币种均匹配本地快照才可记账。独立 capture 完成通知也必须声明 capture 完成态。
+- capture 的网络超时、无法解析的成功响应或“可能已经扣款”的拒绝，先只读查询一次该渠道订单。确认完成则继续；查询失败或仍不明确保持 `unknown`，本次处理不再发起扣款。
 
-- 本地订单必须属于当前登录用户。
-- `payment_method == paypal`。
-- `order_status ∈ {PENDING, PAID}`。
-- `payment_data.paypal_order_id` 非空。
-
-处理:
-
-1. 调 PayPal `POST /v2/checkout/orders/{paypal_order_id}/capture`。
-2. 校验 PayPal order id 与本地 `payment_data.paypal_order_id` 一致。
-3. 校验 capture 状态为完成态,并取第一个 completed capture。
-4. 校验 `purchase_units[].reference_id/custom_id` 至少一个等于本地 `order_no`。
-5. 校验 capture 金额 `currency_code == order.currency` 且归一化金额等于 `order.amount`。
-6. 返回 `CallbackVerificationResult(valid=True, order_no, channel_order_no, channel_uid, amount, currency, transaction_id, extra_metadata)`。
-
-`channel_order_no` 使用 PayPal order id,保持和创建支付时预写入的 `orders.payment_channel_order_no` 一致;PayPal capture id 写入 `orders.payment_transaction_id` 和原始支付快照,不覆盖查单键。`channel_uid` 优先使用 payer id;capture 响应常见路径为 `payer.payer_id`,webhook 事件常见路径为 `resource.payer.payer_id`;缺失时允许为空,不影响履约。
-
-幂等:
-
-- 如果 PayPal 返回 order 已经 captured,按查询到的 capture 结果构造同样的 `CallbackVerificationResult`。
-- 如果本地订单已经是 `PAID + SUCCESS`,webhook 重复到达仍调用 `order_success`,由订单 CAS 返回幂等成功。
+`channel_order_no` 始终使用 PayPal order id；capture id 写入 `payment_transaction_id`。付款事实落库前的未知结果不进入履约补偿，需要后续有效通知、用户回跳确认或人工核对。
 
 ### 6.4 webhook 校验(verify_callback)
 
@@ -562,19 +550,14 @@ PayPal webhook 入口必须验证签名后才处理。签名校验使用 PayPal 
 
 支持事件:
 
-| PayPal 事件 | 处理 |
-| --- | --- |
-| `CHECKOUT.ORDER.APPROVED` | 用 PayPal order id 查本地订单并触发服务端 capture;capture 成功后进入 `order_success` |
-| `PAYMENT.CAPTURE.COMPLETED` | 校验本地订单、金额、币种后触发 `order_success` |
-| `PAYMENT.SALE.COMPLETED` | PayPal 订阅首期与后续续费扣款;回调内查询订阅状态,以 `billing_info.next_billing_time` 作为本账期到期,`last_payment_time` 作为账期起点,连同 `channel_subscription_id/original_order_no` 写入 `provider_subscription` 后进入续费订单链路 |
-| 其他事件 | 忽略并记录事件类型 |
+| PayPal 事件                 | 处理                                                                                                                                                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CHECKOUT.ORDER.APPROVED`   | 按 [收款核验](#63-收款核验) 校验本地订单后收款，已付订单跳过 capture                                                                                                                                                                  |
+| `PAYMENT.CAPTURE.COMPLETED` | 校验本地订单、金额、币种后触发 `order_success`                                                                                                                                                                                        |
+| `PAYMENT.SALE.COMPLETED`    | PayPal 订阅首期与后续续费扣款;回调内查询订阅状态,以 `billing_info.next_billing_time` 作为本账期到期,`last_payment_time` 作为账期起点,连同 `channel_subscription_id/original_order_no` 写入 `provider_subscription` 后进入续费订单链路 |
+| 其他事件                    | 忽略并记录事件类型                                                                                                                                                                                                                    |
 
-webhook 找回本地订单:
-
-- 优先从 `resource.purchase_units[].reference_id`、`resource.purchase_units[].payments.captures[].custom_id`、`resource.custom_id` 中读取本地 `order_no` 并按 `orders.order_no` 查询。
-- 读不到本地 `order_no` 时,从 `resource.id` 或 `resource.supplementary_data.related_ids.order_id` 读取 PayPal order id,按 `orders.payment_channel_order_no == paypal_order_id` 兜底查询。PayPal webhook 是低频回调,本期不为该兜底查询新增索引;若上线后成为高频路径,按 `docs/references/specs/spec-index.md` 提供实际查询位置和数据量后再补索引。
-- 找到订单后,必须用订单 `payment_data.paypal_order_id` 与事件 PayPal order id 交叉校验。
-- 找不到本地订单时记录日志并返回 processed,不抛给 PayPal 无限重试。
+APPROVED 的订单定位与核验见 [收款核验](#63-收款核验)。完成通知由 `OrderService.handle_payment_callback` 先按渠道流水定位，再核对实际携带的本地订单号；缺失本地订单归为 `unknown`，不声称付款已处理。
 
 ### 6.5 PayPal OAuth token 缓存与耗时日志
 
@@ -613,46 +596,15 @@ webhook 找回本地订单:
 - 渠道协议金额只保留在原始 webhook 文件日志中,不进入订单业务字段。
 - 支付回调不因 `expired_at` 早于当前时间而拒绝。
 
-### 7.2 PayPal webhook capture 编排
+### 7.2 PayPal 收款入口
 
-唯一后端入口:`backend/src/app/api/callback/paypal_callback.py`,`POST /api/callback/paypal/payment`。
+`POST /api/callback/paypal/payment` 验签后分发支付通知；`POST /api/client/order/paypal/confirm` 在登录用户回跳后查询本人订单并确认收款。两者共用 [收款核验](#63-收款核验) 和 `handle_payment_callback`，回跳参数不能作为付款凭证。
 
-调用边界:
+### 7.3 PayPal webhook 分发
 
-- website success/cancel 回跳页只做展示和通知原购买弹窗,不调用 PayPal capture。
-- PayPal `CHECKOUT.ORDER.APPROVED` webhook 在入口验签通过后调用 provider 内部 capture;该流程用 PayPal order id 查回本地订单,不要求用户登录。
-- PayPal `PAYMENT.CAPTURE.COMPLETED` webhook 按已完成 capture 结果进入同一个 `order_success` 收口。
+入口先记录原始回调，再通过历史支付渠道 getter 获取当前凭据并验签。APPROVED、capture 完成、订阅 sale 完成进入支付处理；`BILLING.SUBSCRIPTION.UPDATED` 仍只进入订阅计划收敛，不发放权益。未支持事件确认接收并记录 `no_retry`。
 
-```text
-1. 校验 PayPal webhook 签名
-2. CHECKOUT.ORDER.APPROVED:读取 resource.id 作为 PayPal order id
-3. provider = payment_service.get_provider(paypal)
-4. verified = provider.capture_order(paypal_order_id)
-5. verified.valid == True → order_service.order_success(order_no, channel_order_no, channel_uid, payment_method, extra_metadata, paid_amount, paid_currency)
-6. 返回 {processed, event, order_no, idempotent}
-```
-
-capture 失败:
-
-- PayPal 仍未完成支付或用户取消 → webhook 入口返回失败响应并记录原始日志;原购买弹窗继续按本地订单状态展示。
-- PayPal API 超时 / 连接失败 → webhook 入口抛支付网关错误,依赖 PayPal 后续 webhook 或用户重试购买。
-- 本地订单已成功履约 → `order_success` 返回幂等成功。
-
-### 7.3 PayPal webhook 入口
-
-入口:`backend/src/app/api/callback/paypal_callback.py`,`POST /api/callback/paypal/payment`。
-
-```text
-1. 读 body,_write_raw_callback_log 把原始请求追加到 log/payment/paypal/{date}.log
-2. provider = payment_service.get_provider(paypal)
-3. verified = provider.verify_callback(request)
-4. event == CHECKOUT.ORDER.APPROVED 且 verified.order_no 存在 → provider 内部完成 PayPal capture,再进入 order_success
-5. event == PAYMENT.CAPTURE.COMPLETED 且 verified.valid == True → order_service.order_success(...)
-6. verified.valid == False → 返回 {processed, event, order_no, payment_valid: false}(不触发 order_success)
-7. 返回 {processed, event, order_no, idempotent}
-```
-
-PayPal webhook 与 capture 都可能先到;统一靠 `order_success` 的订单状态 CAS 和履约 CAS 保证不重复发货。
+支付通知均由订单付款 CAS 和履约 CAS 防止重复发货；异常分类及 HTTP 应答见[失败分类与恢复边界](#81-失败分类与恢复边界)。
 
 ### 7.4 原始回调日志
 
@@ -670,7 +622,7 @@ order_success (PENDING -> PAID, CAS, 独立事务)
        └─ fulfill_paid_order (10 秒超时包裹)
             └─ _fulfill_paid_order_once (独立事务):
                  1. _claim_order_callback_success: CAS
-                    WHERE order_status=PAID AND callback_status IN (PENDING, FAILED)
+                    WHERE order_status=PAID AND callback_status=PENDING
                     SET callback_status=SUCCESS
                     ├─ 影响 0 行 → 查 _is_order_callback_success,幂等返回
                     └─ 影响 1 行 → 继续
@@ -680,22 +632,37 @@ order_success (PENDING -> PAID, CAS, 独立事务)
                  3. db.commit()
 ```
 
-- 订阅快照 `purpose=upgrade` 的条件换档与账期保持见 [升级履约合同](../006.订阅系统/tech-订阅升级.md#路径-a一次性线maps_online--maps_api差额订单走收银台)。
+- 订阅快照 `purpose=upgrade` 的条件换档与账期履约见 [升级履约合同](../006.订阅系统/tech-订阅升级.md#路径-a非自动续费)。
 - 业务发货与 `callback_status=SUCCESS` 必须在同一事务内提交。
-- 发货抛确定性异常 → 整事务回滚,`fulfill_paid_order` 捕获后 `mark_callback_failed`(CAS `PENDING -> FAILED`),返回 `False`;`_trigger_order_success_callback` 抛 `OrderSuccessError`。
-- 发货抛运行时异常(锁、连接、网络抖动等)→ 整事务回滚,不主动标 `FAILED`,保留 `PENDING` 等补偿任务下轮重试。
-- 履约超时(> 10 秒)→ `asyncio.TimeoutError`,返回 `False`,不主动标 FAILED(留给补偿任务下轮重试)。
+- `fulfill_paid_order` 成功或确认已成功返回 `True`；失败抛带恢复分类的业务异常，不把异常伪装成 CAS 未命中。
 
-### 8.1 履约失败时的补偿兜底
+### 8.1 失败分类与恢复边界
 
-`order_success` 在履约失败时抛 `OrderSuccessError`;此时订单已 `PAID + callback_status ∈ {PENDING, FAILED}`。由补偿任务在下一轮重试(见 §9)。**webhook 回调本身不重试履约**:Telegram 的 `successful_payment` 只到达一次,PayPal webhook/capture 也只负责确认付款,履约重试靠补偿任务。
+`PaymentProcessingError` 扩展既有 `AppCommonException`，`PaymentProviderError` 与 `OrderSuccessError` 继承它。分类用于诊断、履约补偿及支付回调应答，不增加持久化状态。
+
+`/api/callback/*` 中的 `PaymentProcessingError` 若为 `retryable`，统一错误中间件返回 HTTP 500，供渠道重投；`non_retryable`、`no_retry`、`unknown` 保持 HTTP 200。响应体仍使用原业务码与本地化文案。普通客户端支付接口保持既有 HTTP 200 业务错误合同；未分类异常不自动视为可重试。
+
+[PayPal 通知接收规则](https://developer.paypal.com/api/rest/webhooks/#receiving-and-processing-a-webhook)以 HTTP 2xx 确认投递成功，非 2xx 或无响应会触发重投。重投处理复用现有付款与履约幂等，不增加本地回调重试队列。
+
+| 分类            | 证据与处理                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| `retryable`     | 已知只读临时故障，或确认回滚后的数据库临时故障及履约超时。已付订单保留 `PENDING`，由履约 cron 重试。  |
+| `non_retryable` | 明确业务拒绝、快照冲突或确定性数据库错误。履约失败转 `FAILED`，停止自动补偿。                         |
+| `no_retry`      | 已成功的重复通知或已确认忽略的事件，不重复扣款、履约或发消息。                                        |
+| `unknown`       | 未分类异常、扣款结果或数据库 commit 结果不明。先核对实际事实；仍未确认的履约转 `FAILED`，交人工处理。 |
+
+付款 commit 回执不明时只重读订单：核对已付快照一致后幂等返回，后续履约可由 cron 处理；核对失败仍保留 `unknown`，不重放付款写入。履约 commit 不明时核对 `callback_status=SUCCESS`；确认成功即返回，失败标记的 CAS 不能覆盖成功态。提交阶段的超时也按结果不明处理，不能直接当成已回滚。
+
+付款与履约是两个事务：履约失败不会撤销已保存的付款。补偿只覆盖已经落库的已付待履约订单，不承诺付款全链路自动恢复。若数据库持续不可用，失败状态也可能无法写入，需从异常日志核对。
+
+人工处理 `FAILED`：先核对渠道付款、本地订单和权益流水，确认没有已提交的权益；修复快照或业务问题后，按原 `PAID + FAILED` 条件将该单恢复为 `PENDING`，再由现有履约任务处理。结果仍不明确时保持失败状态，避免重复发货。
 
 ### 8.2 订单 Feishu 告警
 
 工具:`backend/src/app/utils/order_alarm_utils.py`。
 
 - `schedule_order_purchase_success_alarm(order)`:仅在 `_fulfill_paid_order_once` 完成履约事务 `commit` 后调度。告警标题为"付费订单履约成功",领域正文包含用户(`user_id/email/name`)、支付时间、履约时间、商品(`product_name/product_class/product_id`)、金额、支付渠道、订单号、渠道订单号和渠道用户。
-- `schedule_order_fulfillment_failed_alarm(order, reason, error_message)`:在履约超时、履约异常、`fulfill_paid_order` 返回失败时调度。告警标题为"付费订单履约失败",正文包含同一组订单上下文,并追加失败原因、错误信息和处理建议。
+- `schedule_order_fulfillment_failed_alarm(order, reason, error_message)`:在履约异常且未确认成功时调度。告警标题为"付费订单履约失败",正文包含同一组订单上下文,并追加失败分类与错误信息。
 - 调度方式统一使用 `asyncio.get_running_loop().create_task`,不阻塞 webhook、下单轮询或 cron。
 - 告警出口复用 `send_feishu_alarm`,由统一出口追加应用名;Feishu 配置缺失、Redis 去重异常或 webhook 发送失败都 fail-open,只写日志。
 - 成功告警和失败告警均按 `order_no` 做 24 小时去重,避免补偿任务每分钟重复推送同一订单。
@@ -721,53 +688,13 @@ CronTaskSpec(
 - 任务函数无参 async,不新增依赖注入。
 - 注册表在进程启动时加载到调度器;领取由现有 `cron_task_cursor` 保证同一时刻只有一个 worker 执行该 task。
 
-### 9.2 扫描条件(SQL 层过滤,不全量加载)
+### 9.2 扫描与处理
 
-```python
-orders = await order_service.order_lists(
-    order_statuses=[OrderStatus.PAID],
-    callback_statuses=[CallbackStatus.PENDING, CallbackStatus.FAILED],   # 注意:同时扫 PENDING 和 FAILED
-    product_classes=[ProductClass.SUBSCRIPTION, ProductClass.RECHARGE],    # 订阅与积分包都走 orders
-    updated_before_ms=timestamp_now() - 60_000,                           # 滞留 60 秒以上
-    limit=20,                                                             # 每轮最多 20 单
-    order_by="updated_at_asc",                                            # 最旧优先
-)
-```
+`compensate_paid_pending_orders` 只扫描 `PAID + PENDING` 的订阅与 Credits 订单；使用 `updated_at` 判断滞留，最旧优先，每轮批量限制见任务文件中的常量。`FAILED` 不会自动领取，单订单失败不阻断同轮其他订单。
 
-补偿任务覆盖所有已支付但未履约完成的订单,包括 Credits 与 Maps 订阅首期/续费订单。
+每单复用 `fulfill_paid_order`，状态归属遵守 [失败分类与恢复边界](#81-失败分类与恢复边界)。扫描失败记录异常并结束本轮；订单失败记录分类，由后续轮次或人工按既定边界处理。
 
-`updated_before_ms` 用 `updated_at` 判断滞留(而非 `created_at`),避免订单创建很久但刚支付成功时被提前补偿。
-
-### 9.3 处理算法
-
-```text
-for order in orders:
-    try:
-        fulfilled = await order_service.fulfill_paid_order(order)
-    except Exception as exc:           # 运行时异常(锁、连接、超时)
-        runtime_error_count += 1
-        logger.error(... order_no, user_id, product_id, callback_status, error ...)
-        continue                       # 不标 FAILED,保留 PENDING,等下轮
-    if fulfilled:
-        success_count += 1
-    else:
-        skipped_count += 1             # CAS 未抢到或已被其他路径处理
-```
-
-- 确定性业务错误(`ValueError` / `LookupError`,如商品快照损坏、订阅 product_id 不支持)在 `fulfill_paid_order` 内部被捕获并 `mark_callback_failed`(CAS `PENDING -> FAILED`),计入 `failed_count` 路径(由 `fulfill_paid_order` 返回 `False` 体现为 `skipped_count`)。
-- 数据库锁、连接中断、超时等运行时异常只记录日志,不标 `FAILED`,订单保持原状态,等待下轮补偿。
-- 单订单异常不中断本轮其他订单处理。
-- 整轮扫描查询失败直接记录错误并结束本轮。
-
-并发控制:
-
-- 领取由 `cron_task_cursor` 保证单 worker。
-- 履约内部用 `callback_status` CAS 保证不重复发货。
-- cron 框架单任务运行上限 300 秒;超时释放后可能被下一轮重入,仍靠 CAS 保证不重复发货。
-
-### 9.4 日志
-
-每轮输出结构化日志:`task_key / scanned_count / success_count / failed_count / skipped_count / runtime_error_count`。单订单失败日志必须含 `order_no / user_id / product_id / callback_status / error`。
+领取由 `cron_task_cursor` 保证单 worker，权益和履约成功标记同事务提交。每轮日志包含扫描数、成功数、已分类失败数和未分类异常数；没有用 `False` 跳过异常的分支。
 
 ## 10. Bot 购买成功消息
 
@@ -900,13 +827,14 @@ PayPal webhook 在 PayPal Developer Dashboard 人工配置:
 
 ### 12.1 订单错误码
 
-| code | 名称 | 说明 |
-| --- | --- | --- |
-| `20001` | `ORDER_NOT_FOUND` | 订单不存在或不属于当前用户 |
-| `20002` | `ORDER_INVALID_STATUS` | 订单状态不允许当前操作 |
-| `20003` | `ORDER_EXPIRED` | 订单已过期 |
-| `20004` | `ORDER_ALREADY_PAID` | 订单已支付,不能重复支付 |
-| `20005` | `ORDER_CANNOT_CANCEL` | 订单不可取消 |
+| code    | 名称                   | 说明                       |
+| ------- | ---------------------- | -------------------------- |
+| `20001` | `ORDER_NOT_FOUND`      | 订单不存在或不属于当前用户 |
+| `20002` | `ORDER_INVALID_STATUS` | 订单状态不允许当前操作     |
+| `20003` | `ORDER_EXPIRED`        | 订单已过期                 |
+| `20004` | `ORDER_ALREADY_PAID`   | 订单已支付,不能重复支付    |
+| `20005` | `ORDER_CANNOT_CANCEL`  | 订单不可取消               |
+| `20006` | `ORDER_DUPLICATE`      | 同一渠道流水已存在订单     |
 
 ### 12.2 支付错误码
 
@@ -981,10 +909,10 @@ raise AppCommonException(
 - 支付成功履约在同事务内完成 `callback_status=SUCCESS` 与业务发货(积分加余额)。
 - 履约成功后异步发送 Feishu 成功告警,内容包含应用名、用户、时间、商品、金额、渠道与订单号。
 - 重复 webhook 不重复发货、不重复发 Bot 消息。
-- 履约失败的订单(`PAID + PENDING/FAILED`)会被补偿任务在 60 秒级别内重新处理;覆盖积分包与订阅订单。
+- 履约补偿只重新处理 `PAID + PENDING` 的积分包与订阅订单；`FAILED` 停止自动处理，等待人工核对。
 - 履约失败或超时后异步发送 Feishu 失败告警,内容包含失败原因和错误信息;重复补偿不重复刷屏。
 - 补偿任务查询在 SQL 层过滤,按 `updated_at ASC` 最旧优先,每轮最多 20 单。
-- 履约超时(> 10 秒)返回失败,不主动标 `FAILED`,由补偿任务下轮重试。
+- 履约超时按[失败分类与恢复边界](#81-失败分类与恢复边界)验收。
 - webhook 请求头密钥缺失或不一致时验签失败,不触发 `order_success`;PayPal 签名校验失败同样不触发。
 - Bot 购买成功消息按钮跳网站首页(不带 `order_no`);重复回调不重复发消息。
 - 注册脚本只从数据库渠道配置读取,不从 argv / 环境变量 / `.env` 传入 bot token 与 secret。

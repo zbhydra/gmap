@@ -58,7 +58,7 @@ class ResponseUtils:
             code: 错误码枚举
             locale: 语言上下文
             data: 结构化附加数据（如 {"wait_seconds": 60}），None 时使用空对象
-            status_code: 认证失败使用 401，其他业务响应统一使用 200。
+            status_code: 显式 HTTP 状态；缺省时认证失败为 401，其他业务响应为 200。
         """
         if locale is None:
             locale = LocaleContext(language=DEFAULT_LANGUAGE)
@@ -69,5 +69,9 @@ class ResponseUtils:
             code.value,
             data if data is not None else {},
             message,
-            status_code=401 if status_code == 401 or code.value == 401 else 200,
+            status_code=(
+                status_code
+                if status_code is not None
+                else 401 if code.value == 401 else 200
+            ),
         )

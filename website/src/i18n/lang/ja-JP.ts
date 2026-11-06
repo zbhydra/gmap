@@ -1484,7 +1484,7 @@ export const site: SiteContent = {
     "pricing": {
       "seo": {
         "title": "価格 — オンライン、延長、および API プラン | MapsGrab",
-        "description": "すべてのサーフェスの MapsGrab プラン: $19, ブラウザ拡張機能の $39, および $15 の API からのオンライン スクレイパー。すべての製品に無料枠が含まれています。オンラインでは 1 回限りの自然月プラン、Extension では月次サブスクリプションの API が含まれています。"
+        "description": "MapsGrab：オンラインスクレイパーは $19、拡張機能は $39、API は $15 から。全製品に無料プランがあり、購入前に支払いと更新の条件を確認できます。"
       },
       "hero": {
         "kicker": "価格設定",
@@ -1496,8 +1496,8 @@ export const site: SiteContent = {
         "lead": "ワークフローに合ったサーフェス (クラウド オンライン スクレイパー、ブラウザ拡張機能、または HTTP API) を選択してから、月間ボリュームを選択します。このページから数分でアップグレードまたは購入できます。",
         "meta": [
           "すべての製品の無料枠",
-          "PayPal でお支払いください",
-          "差額を支払ってアップグレード"
+          "Stripe / ClinkBill",
+          "プランをアップグレードする"
         ],
         "switchLabel": "製品ライン"
       },
@@ -1506,16 +1506,12 @@ export const site: SiteContent = {
         "online": {
           "name": "オンラインスクレイパー",
           "shortName": "オンライン",
-          "switchMeta": "{price} · 1 回限り",
+          "switchMeta": "{price} から",
           "unit": "記録",
           "eyebrow": "オンラインスクレイパープラン",
           "title": "クラウド抽出、記録に基づいて価格設定",
           "description": "インフラストラクチャで MapsGrab エンジンを実行します。レコードは、収集された 1 つのビジネス行です。有料プランには、追加のレコード費用なしで、オプションの電子メールとソーシャル メディアの強化が含まれます。",
-          "billingChips": [
-            "1回払い",
-            "自然な 1 か月をカバーします",
-            "自動更新なし"
-          ],
+          "billingChips": ["すべての製品の無料枠","1st でリセット","支払い前に課金方式を確認"],
           "cards": [
             {
               "id": "free",
@@ -1542,12 +1538,11 @@ export const site: SiteContent = {
               "name": "Lite",
               "tagline": "不定期の 1 回限りのエクスポートの場合",
               "price": "$19",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "20,000 レコード/月",
               "features": [
                 "すべてが無料",
                 "1 月の 20,000 レコード",
-                "1 回限りの支払い — 自動更新なし",
                 "タスクごとに最大 5 のキーワード",
                 "電子メールとソーシャル エンリッチメント、デフォルトおよびオプションでオン"
               ],
@@ -1561,12 +1556,11 @@ export const site: SiteContent = {
               "name": "基本",
               "tagline": "毎週の安定したリード収集のために",
               "price": "$49",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "80,000 レコード/月",
               "features": [
                 "Lite のすべて",
                 "1 月の 80,000 レコード",
-                "1 回限りの支払い — 自動更新なし",
                 "タスクごとに最大 10 のキーワード"
               ],
               "ctaLabel": "基本を入手",
@@ -1579,12 +1573,11 @@ export const site: SiteContent = {
               "name": "成長",
               "tagline": "リードパイプラインの成長に向けて",
               "price": "$99",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "250,000 レコード/月",
               "features": [
                 "基本のすべて",
                 "1 月の 250,000 レコード",
-                "1 回限りの支払い — 自動更新なし",
                 "タスクごとに最大 20 のキーワード"
               ],
               "ctaLabel": "成長を遂げる",
@@ -1597,12 +1590,11 @@ export const site: SiteContent = {
               "name": "プロ",
               "tagline": "代理店やデータを大量に扱うチーム向け",
               "price": "$149",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "500,000 レコード/月",
               "features": [
                 "成長のすべて",
                 "1 月の 500,000 レコード",
-                "1 回限りの支払い — 自動更新なし",
                 "タスクごとに最大 50 のキーワード"
               ],
               "ctaLabel": "プロフェッショナルになる",
@@ -1610,7 +1602,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "自然 1 か月をカバーする 1 回限りの支払い — このタブのプランは自動更新されません。レコードは、Google Maps から収集された 1 つのビジネス行です。 1st の使用状況はリセットされ、未使用のレコードはロールオーバーされません。",
+          "quotaNote": "レコードは、Google Maps から収集された 1 つのビジネス行です。 1st の使用状況はリセットされ、未使用のレコードはロールオーバーされません。",
           "compare": {
             "lead": "オンライン スクレイパー プラン — クラウド抽出、レコードごとに価格設定されます。",
             "volume": "月ごとの記録",
@@ -1680,22 +1672,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "MapsGrab オンライン スクレイパーの月間レコード クォータに適用されます。",
             "successTitle": "プランが有効化されました",
-            "successDescription": "1 回限りの 1 月プランが有効になりました。オンライン スクレイパーは、次回のクォータ更新時にそれを取得します。"
+            "successDescription": "プランが有効になりました。新しい上限で利用を続けられます。"
           }
         },
         "extension": {
           "name": "拡張機能",
           "shortName": "拡張機能",
-          "switchMeta": "{price} · 1 回限り",
+          "switchMeta": "{price} から",
           "unit": "記録",
           "eyebrow": "延長計画",
           "title": "ブラウザ抽出、レコードごとに価格設定",
           "description": "拡張機能が収集する各行 (ビジネス、レビュー、写真) は 1 つのレコードとしてカウントされます。すべてのプランにはレビュー、写真、バッチ タスクが含まれます。有料プランでは、電子メールやソーシャル エンリッチメントを含むすべての 36 列がエクスポートされます。",
-          "billingChips": [
-            "1回払い",
-            "1 のアクセス月",
-            "自動更新なし"
-          ],
+          "billingChips": ["すべての製品の無料枠","1st でリセット","支払い前に課金方式を確認"],
           "cards": [
             {
               "id": "free",
@@ -1721,7 +1709,7 @@ export const site: SiteContent = {
               "name": "Pro",
               "tagline": "フリーランサーと成長するリードパイプライン向け",
               "price": "$39",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "100,000 レコード / 月",
               "features": [
                 "すべてが無料",
@@ -1739,7 +1727,7 @@ export const site: SiteContent = {
               "name": "仕事",
               "tagline": "代理店やデータを大量に扱うチーム向け",
               "price": "$99",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "500,000 レコード/月",
               "features": [
                 "プロのすべて",
@@ -1828,22 +1816,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "MapsGrab ブラウザー拡張機能の月間割り当てに適用されます。",
             "successTitle": "プランが有効化されました",
-            "successDescription": "1 回限りの 1 月プランが有効になりました。拡張機能は、次回のクォータ更新時にそれを取得します。"
+            "successDescription": "プランが有効になりました。新しい上限で利用を続けられます。"
           }
         },
         "api": {
           "name": "API & MCP",
           "shortName": "API & MCP",
-          "switchMeta": "{price} · 1 回限り",
+          "switchMeta": "{price} から",
           "unit": "リクエスト",
           "eyebrow": "API プラン",
           "title": "プログラムによるアクセス、リクエストに応じた価格設定",
           "description": "Google Maps ビジネスを検索し、単純な HTTP API を介して独自のアプリケーションからレビューを取得します。成功した各呼び出しは、結果が返されない場合や部分的なデータが返された場合でも、1 つのリクエストとしてカウントされます。",
-          "billingChips": [
-            "1回払い",
-            "自然な 1 か月をカバーします",
-            "自動更新なし"
-          ],
+          "billingChips": ["すべての製品の無料枠","1st でリセット","支払い前に課金方式を確認"],
           "cards": [
             {
               "id": "free",
@@ -1870,12 +1854,11 @@ export const site: SiteContent = {
               "name": "基本",
               "tagline": "プロトタイプとライト統合用",
               "price": "$15",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "1,000 リクエスト / 月",
               "features": [
                 "すべてが無料",
                 "1 月の 1,000 リクエスト",
-                "1 回限りの支払い — 自動更新なし",
                 "JSON の応答"
               ],
               "ctaLabel": "基本を入手",
@@ -1888,12 +1871,11 @@ export const site: SiteContent = {
               "name": "プロ",
               "tagline": "実稼働統合の場合",
               "price": "$65",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "5,000 リクエスト / 月",
               "features": [
                 "基本のすべて",
                 "1 月の 5,000 リクエスト",
-                "1 回限りの支払い — 自動更新なし",
                 "JSON の応答"
               ],
               "ctaLabel": "プロフェッショナルになる",
@@ -1906,12 +1888,11 @@ export const site: SiteContent = {
               "name": "仕事",
               "tagline": "MapsGrab データに基づいて構築された製品の場合",
               "price": "$115",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "10,000 リクエスト / 月",
               "features": [
                 "プロフェッショナルのすべて",
                 "1 月の 10,000 リクエスト",
-                "1 回限りの支払い — 自動更新なし",
                 "JSON の応答"
               ],
               "ctaLabel": "ビジネスを獲得する",
@@ -1924,12 +1905,11 @@ export const site: SiteContent = {
               "name": "規模",
               "tagline": "大容量データ操作向け",
               "price": "$365",
-              "periodLabel": "1 回限り · 1 月",
+              "periodLabel": "1か月",
               "quota": "50,000 リクエスト / 月",
               "features": [
                 "ビジネスのすべて",
                 "1 月の 50,000 リクエスト",
-                "1 回限りの支払い — 自動更新なし",
                 "JSON の応答"
               ],
               "ctaLabel": "スケールの取得",
@@ -1937,7 +1917,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "自然 1 か月をカバーする 1 回限りの支払い — このタブのプランは自動更新されません。成功した API または MCP 呼び出しは、空の結果や部分的な結果も含めて 1 つのリクエストとしてカウントされます。失敗した呼び出しはカウントされません。 1st での使用量のリセットと未使用のリクエストはロールオーバーされません。",
+          "quotaNote": "成功した API または MCP 呼び出しは、空の結果や部分的な結果も含めて 1 つのリクエストとしてカウントされます。失敗した呼び出しはカウントされません。 1st での使用量のリセットと未使用のリクエストはロールオーバーされません。",
           "compare": {
             "lead": "API プラン — プログラムによるアクセス、リクエストに応じた価格設定。",
             "volume": "月ごとのリクエスト",
@@ -2017,7 +1997,7 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "MapsGrab API の月間リクエスト クォータに適用されます。",
             "successTitle": "プランが有効化されました",
-            "successDescription": "1 回限りの 1 月プランが有効になりました。 API キーは、次のリクエストで新しいクォータを取得します。"
+            "successDescription": "プランが有効になりました。新しい上限で利用を続けられます。"
           }
         }
       },
@@ -2094,16 +2074,16 @@ export const site: SiteContent = {
         },
         "items": {
           "channels": {
-            "title": "PayPal",
-            "body": "PayPal を通じてプランの支払いを行います。 PayPal でお支払いを完了し、ここに戻ってプランを有効にしてください。"
+            "title": "Stripe / ClinkBill",
+            "body": "プランで利用できる Stripe または ClinkBill の支払い方法を選択してください。"
           },
           "cadence": {
-            "title": "1回払い",
-            "body": "すべての有料プランは 1 か月をカバーします。自動料金なしで一度お支払いいただけます。さらに 1 か月必要になったときに再度購入してください。"
+            "title": "支払いと更新",
+            "body": "各プランに一回払いか自動更新かが表示されます。更新と支払い方法は Dashboard → サブスクリプションで管理できます。更新を解約しても、支払い済みの期間は利用できます。"
           },
           "upgrade": {
             "title": "差額を支払ってアップグレード",
-            "body": "現在の支払いプロバイダーを通じて、有効なプランを対象となる上位階層に移動します。有効期限と使用量はこれまでのところ変更されません。"
+            "body": "現在のプランの残存価値を上位プランの全期間分の料金から差し引きます。支払いとプラン変更の完了後に新しい請求期間が始まり、今月の使用量は引き継がれます。"
           },
           "independent": {
             "title": "独立したプラン",
@@ -2126,19 +2106,20 @@ export const site: SiteContent = {
         "button": "アップグレード · {amount}",
         "title": "プランをアップグレードする",
         "confirm": "アップグレードの確認",
-        "oneTime": "{channel}経由の1回の差。有効期限は {date} のままです。",
-        "autoRenew": "差額は{channel}経由ですぐに請求されます。有効期限は {date} のままです。今後の更新には新しいプランの価格が使用されます。",
+        "oneTime": "{channel} で新しい全期間分の料金から現在のプランの残存価値を差し引いて支払います。新しい有効期限の目安：{date}。今月の使用量は引き継がれます。",
+        "autoRenew": "{channel} で新しい全期間分の料金から残存価値を差し引いた金額を直ちに請求します。新しい有効期限の目安：{date}。以後は新料金で更新され、今月の使用量は引き継がれます。",
         "pendingTitle": "アップグレードを待っています",
         "pendingDescription": "決済プロバイダーがアップグレードを適用しています。現在のプランは、確認されるまでアクティブのままです。",
         "successTitle": "プランがアップグレードされました",
-        "successDescription": "新しいクォータは有効です。有効期限は {date} のままです。",
+        "successDescription": "新しい上限が適用されました。新期間の有効期限は {date} です。今月の使用量は引き継がれます。",
         "quoteFailed": "アップグレード価格を読み込めませんでした。ページを更新して再試行してください。",
         "failed": "アップグレードを確認できませんでした。再試行する前に、ページを更新してプランを確認してください。",
         "reasons": {
           "no_active_subscription": "あなたのプランはもうアクティブではありません。ページを更新してプランを選択します。",
           "not_higher_tier": "より高い階層を選択してアップグレードするか、プランの有効期限が切れるまで待って階層を変更してください。",
           "non_positive_diff": "残りのプラン金額はこのレベルを下回っていません。プランの有効期限が切れた後もレベルを変更できます。",
-          "channel_unavailable": "現在のお支払い方法ではアップグレードをご利用いただけません。有効期限が切れた後でもプランを変更できます。"
+          "channel_unavailable": "現在の支払い方法ではアップグレードできません。PayPal の契約は期限後に Stripe または ClinkBill を選択してください。",
+          renewal_resume_required: "支払いサービスで自動更新を再開してから、このページを更新してアップグレードしてください。"
         }
       },
       "faq": {
@@ -2165,11 +2146,11 @@ export const site: SiteContent = {
           },
           {
             "question": "私のプランは自動的に更新されますか?",
-            "answer": "いいえ。すべてのプランは、自然 1 か月にわたる 1 回限りの PayPal 支払いです。プランの有効期限が切れると、無料利用枠に戻ります。有料プランを継続するには、再度購入してください。"
+            "answer": "支払い前に課金方式を確認してください。一回払いのプランは更新されません。自動更新は Dashboard → サブスクリプション → サブスクリプション管理から解約するまで続きます。支払い済みの期間は引き続き利用できます。"
           },
           {
             "question": "ティア間を切り替えることはできますか?",
-            "answer": "PayPal を通じて差額を支払うことで、有効なプランを対象となる上位レベルにアップグレードできます。有効期限と使用量はこれまでのところ変更されません。異なるタブのプランは独立しています。"
+            "answer": "対象のアップグレードでは、現在の支払いサービスで残存価値を新プランの全期間分の料金に充当します。支払いと変更の成功後に新しい上限と請求期間が適用され、今月の使用量は引き継がれます。更新を解約済みの場合は先に支払いサービスで再開してください。PayPal の既存契約は今期アップグレードできません。期限後に Stripe または ClinkBill を選択できます。"
           }
         ]
       },
@@ -5350,5 +5331,30 @@ export const clink: ClinkReturnContent = {
   "cancel": {
     "title": "支払いがキャンセルされました",
     "description": "支払いが完了していませんでした。戻って別の支払い方法を選択することもできます。"
+  }
+}
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "支払いが完了しました",
+      "description": "お支払いを確認中です。元のタブは自動的に更新されます。"
+    },
+    "confirmedCredits": {
+      "title": "クレジットを追加しました",
+      "description": "Stripe の支払いが確認され、クレジットが追加されました。元のタブに戻ることができます。"
+    },
+    "confirmedSubscription": {
+      "title": "プランが有効化されました",
+      "description": "Stripe の支払いが確認され、MapExporter プランが有効になっています。元のタブに戻ることができます。"
+    },
+    "failed": {
+      "title": "支払いには注意が必要です",
+      "description": "この注文を確認できませんでした。元のタブに戻って再試行してください。"
+    }
+  },
+  "cancel": {
+    "title": "決済画面を閉じました",
+    "description": "注文は引き続き支払い待ちです。元のタブで状態を確認してください。Stripe の決済画面で支払いを完了できます。"
   }
 }

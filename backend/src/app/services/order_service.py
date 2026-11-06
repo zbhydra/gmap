@@ -10,6 +10,7 @@ from typing import Any, Literal, cast
 
 from sqlalchemy import Select, func, or_, select, update
 from sqlalchemy.engine import CursorResult
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.order import (
@@ -22,7 +23,14 @@ from app.constants.order import (
     ProductClass,
 )
 from app.exceptions.common_exception import AppCommonException
+from app.exceptions.payment_exception import (
+    PaymentFailureCategory,
+    PaymentProcessingError,
+    database_failure_category,
+    payment_failure_category,
+)
 from app.constants.subscription import SUBSCRIPTION_PRODUCT_KINDS
+from app.constants.payment import STRIPE_PAYMENT_METHOD
 from app.i18n.common_code import CommonCode
 from app.core.database import get_async_session
 from app.models.order_model import OrderModel
@@ -44,7 +52,7 @@ from app.utils.redis_lock import RedisLock
 from app.utils.time import timestamp_now
 
 
-class OrderSuccessError(RuntimeError):
+class OrderSuccessError(PaymentProcessingError):
     """订单支付成功处理失败。"""
 
 
@@ -58,6 +66,7 @@ _RECURRING_PAYMENT_LOCK_TIMEOUT_SECONDS = 5
 OrderListOrder = Literal[
     "created_at_asc",
     "created_at_desc",
+    "paid_at_desc",
     "updated_at_asc",
     "updated_at_desc",
     "id_asc",
@@ -137,7 +146,25 @@ class OrderService(BaseService[OrderModel]):
             client_ip=param.client_ip,
             extra_metadata=extra_metadata,
         )
-        return await self.create(order)
+        try:
+            return await self.create(order)
+        except IntegrityError as exc:
+            if exc.orig is None or exc.orig.args[0] != 1062:
+                raise
+            key_name = str(exc.orig.args[1]).rsplit(" for key ", 1)[-1].strip("'")
+            if (
+                key_name.rsplit(".", 1)[-1]
+                != "idx_orders_payment_method_payment_channel_order_no"
+            ):
+                raise
+            raise AppCommonException(
+                CommonCode.ORDER_DUPLICATE,
+                ext_msg=(
+                    "order_create: 渠道流水对应的订单已存在: "
+                    f"order_no={order_no}, payment_method={param.payment_method}, "
+                    f"channel_order_no={param.payment_channel_order_no}"
+                ),
+            ) from exc
 
     async def create_order_with_payment(
         self,
@@ -177,12 +204,14 @@ class OrderService(BaseService[OrderModel]):
                     user_id=order.user_id,
                     auto_renew=param.auto_renew,
                     provider_sku=param.provider_sku,
+                    period=param.period,
                 )
             )
         except PaymentProviderError as exc:
-            raise AppCommonException(
-                CommonCode.PAYMENT_GATEWAY_ERROR,
-                ext_msg=f"order_create_with_payment: payment gateway failed: {exc}",
+            raise PaymentProcessingError(
+                code=CommonCode.PAYMENT_GATEWAY_ERROR,
+                message=f"order_create_with_payment: payment gateway failed: {exc}",
+                category=exc.category,
             ) from exc
         payment_data_saved = await self.save_order_payment_data(
             order_no=order.order_no,
@@ -351,7 +380,13 @@ class OrderService(BaseService[OrderModel]):
         Returns:
             OrderModel | None: 订单对象或None
         """
-        orders = await self.order_lists(order_nos=[order_no], limit=1)
+        try:
+            orders = await self.order_lists(order_nos=[order_no], limit=1)
+        except Exception as exc:
+            raise OrderSuccessError(
+                f"order_query: 读取订单失败: order_no={order_no}",
+                category=database_failure_category(exc),
+            ) from exc
         return orders[0] if orders else None
 
     async def get_order_by_payment_channel_order_no(
@@ -370,9 +405,16 @@ class OrderService(BaseService[OrderModel]):
             .order_by(OrderModel.id.desc())
             .limit(1)
         )
-        async with get_async_session() as db:
-            result = await db.execute(stmt)
-            return result.scalar_one_or_none()
+        try:
+            async with get_async_session() as db:
+                result = await db.execute(stmt)
+                return result.scalar_one_or_none()
+        except Exception as exc:
+            raise OrderSuccessError(
+                "payment_callback: 读取渠道流水失败: "
+                f"payment_method={payment_method}, channel_order_no={payment_channel_order_no}",
+                category=database_failure_category(exc),
+            ) from exc
 
     async def handle_payment_callback(
         self,
@@ -429,7 +471,7 @@ class OrderService(BaseService[OrderModel]):
                     original_order,
                     callback.transaction_id,
                 ):
-                    self._validate_paid_amount(
+                    self.validate_paid_amount(
                         original_order,
                         validate_normalized_amount(paid_amount),
                         normalize_currency(paid_currency),
@@ -503,7 +545,8 @@ class OrderService(BaseService[OrderModel]):
         if order is None:
             raise OrderSuccessError(
                 "Payment callback active payment local order missing: "
-                f"payment_method={payment_method}, order_no={order_no}"
+                f"payment_method={payment_method}, order_no={order_no}",
+                category=PaymentFailureCategory.UNKNOWN,
             )
         self._validate_callback_payment_method(order, payment_method)
         return order
@@ -521,7 +564,8 @@ class OrderService(BaseService[OrderModel]):
             raise OrderSuccessError(
                 "Payment callback recurring original order missing: "
                 f"payment_method={payment_method}, "
-                f"original_order_no={original_order_no}"
+                f"original_order_no={original_order_no}",
+                category=PaymentFailureCategory.UNKNOWN,
             )
         self._validate_callback_payment_method(order, payment_method)
         return order
@@ -597,7 +641,7 @@ class OrderService(BaseService[OrderModel]):
         paid_amount: int,
         paid_currency: str,
     ) -> OrderModel:
-        """用 Redis 短锁收敛同一次自动续费的本地订单创建。"""
+        """用 Redis 短锁减少同一次自动续费的建单竞争。"""
 
         lock = RedisLock()
         lock_key = self._recurring_payment_lock_key(
@@ -611,8 +655,7 @@ class OrderService(BaseService[OrderModel]):
                 timeout=_RECURRING_PAYMENT_LOCK_TIMEOUT_SECONDS,
             )
         except Exception:
-            # fail-open：Redis 故障时降级无锁查重，接受极端并发下的重复风险，
-            # 避免把支付主流程拖垮。符合 spec-redis §6 可用性优先语义。
+            # Redis 故障时继续建单，渠道流水唯一约束负责阻止重复。
             logger.error(
                 "payment_callback_recurring_lock_error: payment_method=%s, "
                 "channel_order_no=%s, original_order_no=%s",
@@ -726,6 +769,7 @@ class OrderService(BaseService[OrderModel]):
             paid_amount=paid_amount,
             paid_currency=paid_currency,
             transaction_id=callback.transaction_id,
+            paid_at=callback.paid_at,
         )
         result = PaymentCallbackResult(
             order_no=cast(str, raw_result["order_no"]),
@@ -880,6 +924,12 @@ class OrderService(BaseService[OrderModel]):
                 data={"order_no": order_no, "order_status": order.order_status},
             )
 
+        if order.payment_method == STRIPE_PAYMENT_METHOD:
+            raise AppCommonException(
+                CommonCode.ORDER_CANNOT_CANCEL,
+                ext_msg=f"order_cancel: Stripe 收银台仍可到账: order_no={order_no}",
+            )
+
         updated = await self._cas_update_order(
             order_no=order_no,
             expected_status=OrderStatus.PENDING,
@@ -944,6 +994,7 @@ class OrderService(BaseService[OrderModel]):
         paid_amount: int,
         paid_currency: str,
         transaction_id: str | None = None,
+        paid_at: int | None = None,
     ) -> dict[str, object]:
         """统一处理支付渠道确认成功后的订单落库与业务回调。
 
@@ -962,11 +1013,14 @@ class OrderService(BaseService[OrderModel]):
         """
         order = await self.get_order_by_no(order_no)
         if not order:
-            raise OrderSuccessError(f"Order success order missing: order_no={order_no}")
+            raise OrderSuccessError(
+                f"Order success order missing: order_no={order_no}",
+                category=PaymentFailureCategory.UNKNOWN,
+            )
 
         paid_currency = normalize_currency(paid_currency)
         paid_amount = validate_normalized_amount(paid_amount)
-        self._validate_paid_amount(order, paid_amount, paid_currency)
+        self.validate_paid_amount(order, paid_amount, paid_currency)
 
         if order.order_status == OrderStatus.PAID.value:
             return await self._handle_paid_order_success(
@@ -985,7 +1039,7 @@ class OrderService(BaseService[OrderModel]):
         update_data: dict[str, object] = {
             "order_status": OrderStatus.PAID.value,
             "payment_channel_order_no": channel_order_no,
-            "paid_at": timestamp_now(),
+            "paid_at": paid_at if paid_at is not None else timestamp_now(),
             "payment_method": payment_method,
             "callback_status": CallbackStatus.PENDING.value,
             "paid_amount": paid_amount,
@@ -1001,12 +1055,34 @@ class OrderService(BaseService[OrderModel]):
                 order.extra_metadata,
                 extra_metadata,
             )
-        updated = await self._cas_update_order(
-            order_no=order_no,
-            expected_status=OrderStatus.PENDING,
-            target_status=OrderStatus.PAID,
-            update_data=update_data,
-        )
+        try:
+            updated = await self._cas_update_order(
+                order_no=order_no,
+                expected_status=OrderStatus.PENDING,
+                target_status=OrderStatus.PAID,
+                update_data=update_data,
+            )
+        except OrderSuccessError as exc:
+            if exc.category != PaymentFailureCategory.UNKNOWN:
+                raise
+            # commit 回执丢失只能重读事实，不能再次把付款写入当作未提交事务。
+            try:
+                current_order = await self.get_order_by_no(order_no)
+            except Exception as confirmation_error:
+                raise OrderSuccessError(
+                    f"order_success: 付款提交仍未确认: order_no={order_no}, "
+                    f"commit_error={exc}, confirmation_error={confirmation_error}",
+                    category=PaymentFailureCategory.UNKNOWN,
+                ) from confirmation_error
+            if (
+                current_order is None
+                or current_order.order_status != OrderStatus.PAID.value
+            ):
+                raise
+            self.validate_paid_amount(current_order, paid_amount, paid_currency)
+            return await self._handle_paid_order_success(
+                current_order, channel_order_no, channel_uid, payment_method
+            )
         if not updated:
             current_order = await self.get_order_by_no(order_no)
             if not current_order:
@@ -1014,7 +1090,7 @@ class OrderService(BaseService[OrderModel]):
                     f"Order success CAS missed and order disappeared: "
                     f"order_no={order_no}, channel_order_no={channel_order_no}"
                 )
-            self._validate_paid_amount(current_order, paid_amount, paid_currency)
+            self.validate_paid_amount(current_order, paid_amount, paid_currency)
             return await self._handle_paid_order_success(
                 current_order,
                 channel_order_no,
@@ -1035,12 +1111,13 @@ class OrderService(BaseService[OrderModel]):
         )
 
     async def mark_callback_failed(self, order_no: str) -> bool:
-        """把履约标记为失败，但不能覆盖已经成功的订单。"""
+        """停止本单自动履约；已成功订单只能保持成功。"""
         async with get_async_session() as db:
             stmt = (
                 update(OrderModel)
                 .where(
                     OrderModel.order_no == order_no,
+                    OrderModel.order_status == OrderStatus.PAID.value,
                     OrderModel.callback_status == CallbackStatus.PENDING.value,
                 )
                 .values(
@@ -1060,6 +1137,7 @@ class OrderService(BaseService[OrderModel]):
         order_clauses: dict[OrderListOrder, tuple[Any, ...]] = {
             "created_at_asc": (OrderModel.created_at.asc(), OrderModel.id.asc()),
             "created_at_desc": (OrderModel.created_at.desc(), OrderModel.id.desc()),
+            "paid_at_desc": (OrderModel.paid_at.desc(), OrderModel.id.desc()),
             "updated_at_asc": (OrderModel.updated_at.asc(), OrderModel.id.asc()),
             "updated_at_desc": (OrderModel.updated_at.desc(), OrderModel.id.desc()),
             "id_asc": (OrderModel.id.asc(),),
@@ -1168,38 +1246,43 @@ class OrderService(BaseService[OrderModel]):
         target_status: OrderStatus,
         update_data: dict[str, object],
     ) -> bool:
-        """按订单状态 CAS 更新订单，避免并发支付回调重复置成功。"""
-        async with get_async_session() as db:
-            try:
-                stmt = (
-                    update(OrderModel)
-                    .where(
-                        OrderModel.order_no == order_no,
-                        OrderModel.order_status == expected_status.value,
+        """CAS 未命中返回 False；事务失败保留提交阶段及可恢复边界。"""
+        committing = False
+        rolled_back = False
+        try:
+            async with get_async_session() as db:
+                try:
+                    result = await db.execute(
+                        update(OrderModel)
+                        .where(
+                            OrderModel.order_no == order_no,
+                            OrderModel.order_status == expected_status.value,
+                        )
+                        .values(**update_data)
                     )
-                    .values(
-                        **update_data,
-                    )
-                )
-                result = cast(CursorResult[Any], await db.execute(stmt))
-                rowcount = result.rowcount
-                if rowcount != 1:
-                    await db.rollback()
-                    logger.warning(
-                        f"Order CAS update missed: order_no={order_no}, "
-                        f"expected_status={expected_status.value}, "
-                        f"target_status={target_status.value}, rowcount={rowcount}"
-                    )
-                    return False
-                await db.commit()
-                logger.info(f"Order {order_no} status updated to {target_status.value}")
-                return True
-            except Exception as e:
-                await db.rollback()
-                logger.error(f"Failed to update order {order_no}: {e}", exc_info=True)
-                return False
+                    if cast(CursorResult, result).rowcount != 1:
+                        return False
+                    committing = True
+                    await db.commit()
+                except Exception:
+                    if not committing:
+                        # 自动重试必须有显式回滚完成证据；回滚本身失败保留 UNKNOWN。
+                        await db.rollback()
+                        rolled_back = True
+                    raise
+        except Exception as exc:
+            raise OrderSuccessError(
+                f"order_cas: 更新订单失败: order_no={order_no}, "
+                f"target_status={target_status.value}, committing={committing}",
+                category=(
+                    database_failure_category(exc)
+                    if rolled_back and not committing
+                    else PaymentFailureCategory.UNKNOWN
+                ),
+            ) from exc
+        return True
 
-    def _validate_paid_amount(
+    def validate_paid_amount(
         self,
         order: OrderModel,
         paid_amount: int,
@@ -1228,7 +1311,17 @@ class OrderService(BaseService[OrderModel]):
         if order.order_status != OrderStatus.PAID.value:
             raise OrderSuccessError(
                 f"Order success CAS missed with unexpected status: "
-                f"order_no={order.order_no}, status={order.order_status}"
+                f"order_no={order.order_no}, status={order.order_status}",
+                category=(
+                    PaymentFailureCategory.NON_RETRYABLE
+                    if order.order_status
+                    in {
+                        OrderStatus.CANCELLED.value,
+                        OrderStatus.EXPIRED.value,
+                        OrderStatus.REFUNDED.value,
+                    }
+                    else PaymentFailureCategory.UNKNOWN
+                ),
             )
 
         if order.payment_channel_order_no != channel_order_no:
@@ -1258,6 +1351,16 @@ class OrderService(BaseService[OrderModel]):
                 f"{order.payment_method}, received_payment_method={payment_method}"
             )
 
+        category = {
+            CallbackStatus.SUCCESS.value: PaymentFailureCategory.NO_RETRY,
+            CallbackStatus.PENDING.value: PaymentFailureCategory.RETRYABLE,
+        }.get(order.callback_status, PaymentFailureCategory.UNKNOWN)
+        logger.info(
+            "payment_callback_duplicate order_no=%s category=%s callback_status=%s",
+            order.order_no,
+            category.value,
+            order.callback_status,
+        )
         return self._order_success_result(
             order.order_no,
             idempotent=True,
@@ -1271,22 +1374,7 @@ class OrderService(BaseService[OrderModel]):
         idempotent: bool,
     ) -> dict[str, object]:
         """触发支付成功后的业务回调。"""
-        callback_ok = await self.fulfill_paid_order(order)
-        if not callback_ok:
-            schedule_order_fulfillment_failed_alarm(
-                order,
-                reason="callback_returned_false",
-                error_message=(
-                    "order_success trigger callback returned false: "
-                    f"order_no={order.order_no}, product_class={order.product_class}, "
-                    f"product_id={order.product_id}"
-                ),
-            )
-            raise OrderSuccessError(
-                f"Order success business callback failed: "
-                f"order_no={order.order_no}, product_class={order.product_class}, "
-                f"product_id={order.product_id}"
-            )
+        await self.fulfill_paid_order(order)
 
         return self._order_success_result(
             order.order_no,
@@ -1295,54 +1383,52 @@ class OrderService(BaseService[OrderModel]):
         )
 
     async def fulfill_paid_order(self, order: OrderModel) -> bool:
-        """订单侧履约入口，负责抢占订单状态、超时和失败标记。"""
+        """统一履约：瞬时故障保留待补偿，拒绝和未确认结果转人工核对。"""
         try:
-            return await asyncio.wait_for(
+            fulfilled = await asyncio.wait_for(
                 self._fulfill_paid_order_once(order),
                 timeout=ORDER_FULFILLMENT_TIMEOUT_SECONDS,
             )
-        except asyncio.TimeoutError:
-            schedule_order_fulfillment_failed_alarm(
-                order,
-                reason="timeout",
-                error_message=(
-                    "order_fulfillment_timeout: "
-                    f"order_no={order.order_no}, "
-                    f"timeout_seconds={ORDER_FULFILLMENT_TIMEOUT_SECONDS}"
-                ),
+            if fulfilled:
+                return True
+            raise OrderSuccessError(
+                f"order_fulfillment: 未取得履约状态且未确认成功: order_no={order.order_no}",
+                category=PaymentFailureCategory.UNKNOWN,
             )
-            logger.error(
-                "order_fulfillment_timeout order_no=%s timeout=%s",
-                order.order_no,
-                ORDER_FULFILLMENT_TIMEOUT_SECONDS,
-                exc_info=True,
-            )
-            return False
         except Exception as exc:
-            logger.error(
-                "order_fulfillment_failed order_no=%s error=%s",
-                order.order_no,
-                exc,
-                exc_info=True,
-            )
+            category = payment_failure_category(exc)
+            if category == PaymentFailureCategory.UNKNOWN:
+                try:
+                    if await self._is_order_callback_success(order.order_no):
+                        return True
+                except Exception:
+                    logger.error(
+                        "order_fulfillment_check_failed order_no=%s",
+                        order.order_no,
+                        exc_info=True,
+                    )
             schedule_order_fulfillment_failed_alarm(
                 order,
-                reason=type(exc).__name__,
+                reason=category.value,
                 error_message=str(exc),
             )
-            try:
-                await self.mark_callback_failed(order.order_no)
-            except Exception as mark_exc:
-                logger.error(
-                    "order_fulfillment_mark_failed_error order_no=%s error=%s",
-                    order.order_no,
-                    mark_exc,
-                    exc_info=True,
-                )
-            return False
+            if category != PaymentFailureCategory.RETRYABLE:
+                try:
+                    await self.mark_callback_failed(order.order_no)
+                except Exception:
+                    logger.error(
+                        "order_fulfillment_mark_failed_error order_no=%s",
+                        order.order_no,
+                        exc_info=True,
+                    )
+            raise OrderSuccessError(
+                f"order_fulfillment: 履约未完成: order_no={order.order_no}, error={exc}",
+                category=category,
+            ) from exc
 
     async def _fulfill_paid_order_once(self, order: OrderModel) -> bool:
         """同一事务内把订单标记成功并执行业务发货。"""
+        committing = False
         async with get_async_session() as db:
             try:
                 claimed = await self._claim_order_callback_success(db, order.order_no)
@@ -1351,12 +1437,27 @@ class OrderService(BaseService[OrderModel]):
                     return await self._is_order_callback_success(order.order_no)
 
                 await self._fulfill_order_product(db, order)
+                committing = True
                 await db.commit()
-                schedule_order_purchase_success_alarm(order)
-                return True
-            except BaseException:
+            except BaseException as exc:
+                # wait_for 的取消也必须回滚；提交阶段的取消不能当作未提交。
                 await db.rollback()
-                raise
+                if not isinstance(exc, (Exception, asyncio.CancelledError)):
+                    raise
+                raise OrderSuccessError(
+                    f"order_fulfillment_transaction: order_no={order.order_no}, committing={committing}, error={exc}",
+                    category=(
+                        PaymentFailureCategory.UNKNOWN
+                        if committing
+                        else (
+                            PaymentFailureCategory.RETRYABLE
+                            if isinstance(exc, asyncio.CancelledError)
+                            else database_failure_category(exc)
+                        )
+                    ),
+                ) from exc
+        schedule_order_purchase_success_alarm(order)
+        return True
 
     async def _claim_order_callback_success(
         self,
@@ -1369,9 +1470,7 @@ class OrderService(BaseService[OrderModel]):
             .where(
                 OrderModel.order_no == order_no,
                 OrderModel.order_status == OrderStatus.PAID.value,
-                OrderModel.callback_status.in_(
-                    [CallbackStatus.PENDING.value, CallbackStatus.FAILED.value]
-                ),
+                OrderModel.callback_status == CallbackStatus.PENDING.value,
             )
             .values(
                 callback_status=CallbackStatus.SUCCESS.value,
@@ -1404,7 +1503,7 @@ class OrderService(BaseService[OrderModel]):
             )
             return
 
-        raise ValueError(
+        raise OrderSuccessError(
             f"No fulfillment handler for product_class: {order.product_class}"
         )
 
@@ -1430,13 +1529,13 @@ class OrderService(BaseService[OrderModel]):
         metadata = self._load_recharge_order_snapshot(order)
         snapshot = metadata.get("product_snapshot")
         if not isinstance(snapshot, dict):
-            raise ValueError(
+            raise OrderSuccessError(
                 "credit_recharge_fulfillment: product_snapshot missing: "
                 f"order_no={order.order_no}, user_id={order.user_id}"
             )
         credits_amount = snapshot.get("credits_amount")
         if not isinstance(credits_amount, int) or credits_amount <= 0:
-            raise ValueError(
+            raise OrderSuccessError(
                 "credit_recharge_fulfillment: invalid credits_amount: "
                 f"order_no={order.order_no}, user_id={order.user_id}, "
                 f"credits_amount={credits_amount!r}"
@@ -1449,12 +1548,12 @@ class OrderService(BaseService[OrderModel]):
         try:
             metadata = json.loads(order.extra_metadata or "{}")
         except json.JSONDecodeError as exc:
-            raise ValueError(
+            raise OrderSuccessError(
                 "credit_recharge_fulfillment: invalid order extra_metadata json: "
                 f"order_no={order.order_no}, user_id={order.user_id}"
             ) from exc
         if not isinstance(metadata, dict):
-            raise ValueError(
+            raise OrderSuccessError(
                 "credit_recharge_fulfillment: extra_metadata must be object: "
                 f"order_no={order.order_no}, user_id={order.user_id}"
             )

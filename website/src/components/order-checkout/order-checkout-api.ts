@@ -60,7 +60,7 @@ export const CALLBACK_STATUS_FAILED = 4
 export const CALLBACK_STATUS_MAX_RETRY = 5
 
 /** 默认优先选中的支付方式。 */
-export const DEFAULT_ORDER_PAYMENT_METHODS = ['paypal', 'telegram_stars', 'tg_star'] as const
+export const DEFAULT_ORDER_PAYMENT_METHODS = ['stripe', 'clink', 'paypal', 'telegram_stars', 'tg_star'] as const
 
 /** 自动轮询间隔，毫秒。 */
 export const ORDER_CHECKOUT_POLL_INTERVAL_MS = 2000
@@ -79,7 +79,7 @@ export type OrderCheckoutPeriod = 'none' | 'month' | 'quarter' | 'year'
 
 /** 单个支付渠道价格快照（各渠道共有的下单身份字段；渠道专属字段由具体域扩展）。 */
 export interface OrderCheckoutPaymentChannel {
-  /** 支付方式，例如 paypal 或 telegram_stars。 */
+  /** 支付渠道编码。 */
   payment_method: string
   /** 支付渠道展示名。 */
   payment_method_name: string
@@ -209,7 +209,7 @@ export function buildCreateOrderRequest(
   }
 }
 
-/** 选取默认支付渠道，优先 PayPal，其次 Telegram Stars。 */
+/** 选取默认支付渠道，新购优先 Stripe / Clink。 */
 export function getDefaultOrderPaymentChannel<T extends OrderCheckoutPaymentChannel>(
   channels: T[]
 ): T | null {
@@ -233,8 +233,9 @@ export function readPaymentUrl(paymentData: JsonValue, paymentMethod: string): s
     return null
   }
 
-  const value =
-    paymentData.checkoutUrl ?? paymentData.payment_url ?? paymentData.url ?? paymentData.approval_url
+  const value = paymentMethod === 'stripe'
+    ? paymentData.checkoutUrl
+    : paymentData.checkoutUrl ?? paymentData.payment_url ?? paymentData.url ?? paymentData.approval_url
   if (typeof value !== 'string') {
     return null
   }
@@ -247,6 +248,9 @@ export function readPaymentUrl(paymentData: JsonValue, paymentMethod: string): s
   try {
     const parsed = new URL(trimmed)
     const hostname = parsed.hostname.toLowerCase()
+    if (paymentMethod === 'stripe') {
+      return parsed.origin === 'https://checkout.stripe.com' ? trimmed : null
+    }
     if (paymentMethod === 'paypal') {
       const paypalHostAllowed = hostname === 'paypal.com' || hostname.endsWith('.paypal.com')
       return parsed.protocol === 'https:' && paypalHostAllowed ? trimmed : null

@@ -1072,3 +1072,28 @@ export const clink: ClinkReturnContent = {
     description: 'No payment was completed. You can return and choose another payment method.'
   }
 }
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "Payment submitted",
+      "description": "We are confirming your payment. The original tab will update automatically."
+    },
+    "confirmedCredits": {
+      "title": "Credits added",
+      "description": "Your Stripe payment is confirmed and the Credits have been added. You can return to the original tab."
+    },
+    "confirmedSubscription": {
+      "title": "Plan activated",
+      "description": "Your Stripe payment is confirmed and your MapExporter plan is active. You can return to the original tab."
+    },
+    "failed": {
+      "title": "Payment needs attention",
+      "description": "We could not confirm this order. Return to the original tab and try again."
+    }
+  },
+  "cancel": {
+    "title": "Checkout closed",
+    "description": "Your order is still awaiting payment. Return to the original tab to check its status. You can still complete payment in Stripe Checkout."
+  }
+}

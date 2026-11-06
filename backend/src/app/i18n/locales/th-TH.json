@@ -44,6 +44,7 @@
     "ORDER_EXPIRED": "คำสั่งซื้อหมดอายุ",
     "ORDER_ALREADY_PAID": "คำสั่งซื้อถูกชำระแล้ว",
     "ORDER_CANNOT_CANCEL": "ไม่สามารถยกเลิกคำสั่งซื้อในสถานะปัจจุบัน",
+    "ORDER_DUPLICATE": "มีคำสั่งซื้อสำหรับการชำระเงินนี้แล้ว โปรดรีเฟรชหน้าเพื่อตรวจสอบสถานะ",
     "PAYMENT_GATEWAY_ERROR": "ข้อผิดพลาดเกตเวย์ชำระเงิน",
     "PAYMENT_VERIFICATION_FAILED": "การตรวจสอบการชำระเงินล้มเหลว",
     "PAYMENT_AMOUNT_MISMATCH": "ยอดเงินชำระไม่ตรงกัน",

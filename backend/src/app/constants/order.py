@@ -67,6 +67,7 @@ class OrderCreateParam:
     language: str | None = None
     auto_renew: bool = False
     provider_sku: str | None = None
+    period: str = "none"
     # 续费单建单即写入渠道流水，供回调按 (payment_method, payment_channel_order_no) 查重。
     payment_channel_order_no: str | None = None
 

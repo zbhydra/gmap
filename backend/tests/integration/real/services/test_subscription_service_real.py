@@ -27,26 +27,33 @@ from app.constants.order import (
     OrderStatus,
     ProductClass,
 )
-from app.constants.payment import recurring_provider_sku_parts
+from app.constants.payment import channel_amount_unit, recurring_provider_sku_parts
 from app.constants.subscription import (
+    API_BASIC_PRODUCT_ID,
+    API_PROFESSIONAL_PRODUCT_ID,
     MAPS_API_PRODUCT_KIND,
     MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
     MAPS_EXTENSION_PRODUCT_KIND,
     MAPS_EXTENSION_PRO_PRODUCT_ID,
     MAPS_ONLINE_PRODUCT_KIND,
-    ONLINE_GROWTH_PRODUCT_ID,
-    ONLINE_LITE_PRODUCT_ID,
     ONLINE_BASIC_PRODUCT_ID,
 )
 from app.core.database import get_async_session, get_engine
 from app.exceptions.common_exception import AppCommonException
+from app.exceptions.payment_exception import (
+    PaymentFailureCategory,
+    PaymentProcessingError,
+)
 from app.i18n.common_code import CommonCode
 from app.models.order_model import OrderModel
+from app.models.user_usage_log_model import UserUsageLogModel
 from app.models.subscription_model import UserSubscriptionModel
 from app.services.order_service import order_service
+from app.provider.payment.payment_base import SubscriptionState
+from app.services.usage_service import api_usage_service
 from app.services.payment_config_service import payment_config_service
 from app.services.subscription_service import subscription_service
-from app.utils.time import timestamp_now
+from app.utils.time import add_natural_months, timestamp_now
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
@@ -277,7 +284,7 @@ async def test_real_check_product_paid_sku_resolves_unique_product(
         user_id=real_free_tier_cleanup_state.user_id,
         product_class=ProductClass.SUBSCRIPTION.value,
         product_id=ONLINE_BASIC_PRODUCT_ID,
-        payment_method="paypal",
+        payment_method="stripe",
         amount=49_000_000,
         currency="USD",
         auto_renew=False,
@@ -288,7 +295,7 @@ async def test_real_check_product_paid_sku_resolves_unique_product(
     assert create_param.product_id == ONLINE_BASIC_PRODUCT_ID
     assert create_param.amount == 49_000_000
     assert create_param.auto_renew is False
-    assert create_param.provider_sku == "online_basic-paypal"
+    assert create_param.payment_method == "stripe"
 
 
 async def test_real_check_product_unknown_product_id_rejected(
@@ -456,8 +463,8 @@ class _UpgradeCleanupState:
     user_id: int
 
 
-# PayPal 只接受两位小数（美分），对应 6 位精度整数下的最小倍数。
-_PAYPAL_CENT_UNIT = 10_000
+# Stripe 的美分对应六位金额整数下的 10_000。
+_STRIPE_CENT_UNIT = 10_000
 
 
 @pytest.fixture
@@ -470,6 +477,7 @@ async def real_upgrade_schema_ready(real_mysql_ready: None) -> None:
         "config_payment_channel",
         "config_subscription_product",
         "config_subscription_product_price",
+        "user_usage_logs",
     }
     missing_tables = [
         table_name
@@ -496,6 +504,11 @@ async def real_upgrade_cleanup_state(
     finally:
         async with get_async_session() as db:
             await db.execute(
+                delete(UserUsageLogModel).where(
+                    UserUsageLogModel.user_id == state.user_id
+                )
+            )
+            await db.execute(
                 delete(UserSubscriptionModel).where(
                     UserSubscriptionModel.user_id == state.user_id
                 )
@@ -506,8 +519,8 @@ async def real_upgrade_cleanup_state(
             await db.commit()
 
 
-async def _insert_paypal_lite_subscription(user_id: int) -> tuple[int, int]:
-    """预置 maps_online Lite 有效订阅行，返回 (start_at, expires_at)。"""
+async def _insert_clink_basic_subscription(user_id: int) -> tuple[int, int]:
+    """预置 maps_api Basic 有效订阅行，返回 (start_at, expires_at)。"""
 
     now_ms = timestamp_now()
     start_at = now_ms - 20 * _DAY_MS
@@ -516,14 +529,41 @@ async def _insert_paypal_lite_subscription(user_id: int) -> tuple[int, int]:
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_kind=MAPS_ONLINE_PRODUCT_KIND,
-                product_id=ONLINE_LITE_PRODUCT_ID,
+                product_kind=MAPS_API_PRODUCT_KIND,
+                product_id=API_BASIC_PRODUCT_ID,
                 auto_renew=False,
-                payment_method="paypal",
+                payment_method="clink",
                 start_at=start_at,
                 expires_at=expires_at,
                 created_at=now_ms,
                 updated_at=now_ms,
+            )
+        )
+        db.add(
+            OrderModel(  # type: ignore[call-arg]
+                order_no=f"BASE{user_id}",
+                user_id=user_id,
+                product_class=ProductClass.SUBSCRIPTION.value,
+                product_id=API_BASIC_PRODUCT_ID,
+                product_name="历史整期价",
+                amount=10_000_000,
+                currency="USD",
+                payment_method="clink",
+                order_status=OrderStatus.PAID.value,
+                callback_status=CallbackStatus.SUCCESS.value,
+                paid_at=start_at,
+                expired_at=expires_at,
+                extra_metadata=json.dumps(
+                    {
+                        "test_run_id": str(user_id),
+                        "product_snapshot": {
+                            "product_kind": MAPS_API_PRODUCT_KIND,
+                            "period": "month",
+                            "amount": 10_000_000,
+                            "auto_renew": False,
+                        },
+                    }
+                ),
             )
         )
         await db.commit()
@@ -553,24 +593,22 @@ async def _mark_order_paid(order_no: str, *, amount: int, currency: str) -> None
 async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snapshot(
     real_upgrade_cleanup_state: _UpgradeCleanupState,
 ) -> None:
-    """一次性线升级差额单主路径：服务端定价冻结升级快照，履约条件换档且
-    到期时间/账期起点保持；订阅行变化后旧快照条件更新不命中、不覆盖当前
-    订阅并转履约失败人工路径。"""
+    """旧整期快照抵扣新整期价，重开账期并保留本月用量；旧快照不覆盖新状态。"""
 
     user_id = real_upgrade_cleanup_state.user_id
-    start_at, expires_at = await _insert_paypal_lite_subscription(user_id)
+    start_at, expires_at = await _insert_clink_basic_subscription(user_id)
 
     snapshot_config = await payment_config_service.get_snapshot()
-    current_price = snapshot_config.prices.get((ONLINE_LITE_PRODUCT_ID, "paypal"))
-    target_price = snapshot_config.prices.get((ONLINE_GROWTH_PRODUCT_ID, "paypal"))
+    current_price = snapshot_config.prices.get((API_BASIC_PRODUCT_ID, "clink"))
+    target_price = snapshot_config.prices.get((API_PROFESSIONAL_PRODUCT_ID, "clink"))
     if current_price is None or target_price is None:
-        pytest.skip("REAL_SCHEMA_UNAVAILABLE: maps_online PayPal 渠道价配置尚未初始化")
+        pytest.skip("REAL_SCHEMA_UNAVAILABLE: maps_api Clink 渠道价配置尚未初始化")
 
     async def _checkout_param() -> OrderCreateParam:
         return await subscription_service.prepare_upgrade_checkout_param(
             user_id=user_id,
-            product_kind=MAPS_ONLINE_PRODUCT_KIND,
-            target_product_id=ONLINE_GROWTH_PRODUCT_ID,
+            product_kind=MAPS_API_PRODUCT_KIND,
+            target_product_id=API_PROFESSIONAL_PRODUCT_ID,
             client_ip=None,
             language=None,
         )
@@ -580,28 +618,58 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
 
     order = await _create_order()
     assert order.product_class == ProductClass.SUBSCRIPTION.value
-    assert order.product_id == ONLINE_GROWTH_PRODUCT_ID
-    assert order.payment_method == "paypal"
+    assert order.product_id == API_PROFESSIONAL_PRODUCT_ID
+    assert order.payment_method == "clink"
     assert order.currency == "USD"
 
     metadata = json.loads(cast(str, order.extra_metadata))
     snapshot = metadata["product_snapshot"]
     assert snapshot["purpose"] == "upgrade"
-    assert snapshot["product_kind"] == MAPS_ONLINE_PRODUCT_KIND
-    assert snapshot["source_product_id"] == ONLINE_LITE_PRODUCT_ID
-    assert snapshot["target_product_id"] == ONLINE_GROWTH_PRODUCT_ID
+    assert snapshot["product_kind"] == MAPS_API_PRODUCT_KIND
+    assert snapshot["source_product_id"] == API_BASIC_PRODUCT_ID
+    assert snapshot["target_product_id"] == API_PROFESSIONAL_PRODUCT_ID
     assert snapshot["base_expires_at"] == expires_at
     assert snapshot["upgrade_inputs"]["period_start"] == start_at
     assert 0 < snapshot["upgrade_inputs"]["remaining_ratio"] < 1
     assert snapshot["auto_renew"] is False
     assert snapshot["period"] == "month"
+    assert (
+        snapshot_config.products[
+            (MAPS_API_PRODUCT_KIND, API_BASIC_PRODUCT_ID)
+        ].auto_renew
+        is True
+    )
+    assert (
+        snapshot_config.products[
+            (MAPS_API_PRODUCT_KIND, API_PROFESSIONAL_PRODUCT_ID)
+        ].auto_renew
+        is True
+    )
 
-    # 金额与报价 owner 同链折算：剩余 10/30 期，向下取整到美分；
-    # 服务端 now 比断言时刻略早，允许一个美分内的取整漂移。
-    diff = target_price.amount - current_price.amount
-    upper = diff * (expires_at - timestamp_now()) // (expires_at - start_at)
-    upper = upper // _PAYPAL_CENT_UNIT * _PAYPAL_CENT_UNIT
-    assert upper - _PAYPAL_CENT_UNIT < order.amount <= upper
+    unit = channel_amount_unit("clink")
+    duration = expires_at - start_at
+    expected = (
+        (target_price.amount * duration - 10_000_000 * (expires_at - timestamp_now()))
+        // (duration * unit)
+        * unit
+    )
+    assert expected - unit <= order.amount <= expected
+    assert snapshot["amount"] == target_price.amount
+    assert snapshot["upgrade_inputs"]["current_period_amount"] == 10_000_000
+    assert (
+        subscription_service._prorated_upgrade_amount(
+            current_amount=10_000_000,
+            target_amount=50_000_000,
+            start_at=0,
+            expires_at=30 * _DAY_MS,
+            now_ms=3 * _DAY_MS,
+            unit=_STRIPE_CENT_UNIT,
+        )
+        == 41_000_000
+    )
+    await api_usage_service.consume(
+        f"u:{user_id}", user_id=user_id, records=300, request_id=f"upgrade-{user_id}"
+    )
 
     # 同一订阅行连续两笔差额单（并发场景）：快照冻结同一账期锚点。
     order_stale = await _create_order()
@@ -616,14 +684,24 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
     assert await order_service.fulfill_paid_order(paid_order) is True
 
     row = await subscription_service.get_subscription_row(
-        user_id, MAPS_ONLINE_PRODUCT_KIND
+        user_id, MAPS_API_PRODUCT_KIND
     )
     assert row is not None
-    assert row.product_id == ONLINE_GROWTH_PRODUCT_ID
-    assert row.expires_at == expires_at
-    assert row.start_at == start_at
+    assert row.product_id == API_PROFESSIONAL_PRODUCT_ID
+    assert row.start_at == paid_order.paid_at
+    assert row.start_at is not None
+    assert row.expires_at == add_natural_months(row.start_at, 1)
+    usage = await api_usage_service.get_usage(f"u:{user_id}", user_id=user_id)
+    assert usage.used == 300
+    assert usage.total == 5000 and usage.total - usage.used == 4700
+    assert (
+        usage.total
+        == snapshot_config.products[
+            (MAPS_API_PRODUCT_KIND, API_PROFESSIONAL_PRODUCT_ID)
+        ].metadata["monthly_quota"]
+    )
     assert row.auto_renew is False
-    assert row.payment_method == "paypal"
+    assert row.payment_method == "clink"
 
     # 订阅行在第二笔支付等待期内被加时：旧快照条件更新必须不命中，
     # 不覆盖当前订阅并转履约失败人工路径。
@@ -633,7 +711,7 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
             update(UserSubscriptionModel)
             .where(
                 UserSubscriptionModel.user_id == user_id,
-                UserSubscriptionModel.product_kind == MAPS_ONLINE_PRODUCT_KIND,
+                UserSubscriptionModel.product_kind == MAPS_API_PRODUCT_KIND,
             )
             .values(expires_at=mutated_expires_at, updated_at=timestamp_now())
         )
@@ -646,29 +724,32 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
     )
     stale_paid_order = await order_service.get_order_by_no(order_stale.order_no)
     assert stale_paid_order is not None
-    assert await order_service.fulfill_paid_order(stale_paid_order) is False
+    with pytest.raises(PaymentProcessingError) as error:
+        await order_service.fulfill_paid_order(stale_paid_order)
+    assert error.value.category == PaymentFailureCategory.NON_RETRYABLE
 
     row_after = await subscription_service.get_subscription_row(
-        user_id, MAPS_ONLINE_PRODUCT_KIND
+        user_id, MAPS_API_PRODUCT_KIND
     )
     assert row_after is not None
-    assert row_after.product_id == ONLINE_GROWTH_PRODUCT_ID
+    assert row_after.product_id == API_PROFESSIONAL_PRODUCT_ID
     assert row_after.expires_at == mutated_expires_at
 
     stale_after = await order_service.get_order_by_no(order_stale.order_no)
     assert stale_after is not None
     assert stale_after.callback_status == CallbackStatus.FAILED.value
 
-    # PayPal 自动续费实例不参与换档，能力边界拒绝后不增加订单。
+    # PayPal 存量实例不参与本期升档，能力边界拒绝后不增加订单。
     async with get_async_session() as db:
         await db.execute(
             update(UserSubscriptionModel)
             .where(
                 UserSubscriptionModel.user_id == user_id,
-                UserSubscriptionModel.product_kind == MAPS_ONLINE_PRODUCT_KIND,
+                UserSubscriptionModel.product_kind == MAPS_API_PRODUCT_KIND,
             )
             .values(
-                product_id=ONLINE_LITE_PRODUCT_ID,
+                product_id=API_BASIC_PRODUCT_ID,
+                payment_method="paypal",
                 auto_renew=True,
                 updated_at=timestamp_now(),
             )
@@ -684,7 +765,7 @@ async def test_real_upgrade_checkout_fulfills_tier_change_and_rejects_stale_snap
             .select_from(OrderModel)
             .where(OrderModel.user_id == user_id)
         )
-    assert order_count == 2
+    assert order_count == 3
 
 
 async def test_real_paypal_plan_change_event_syncs_local_tier_once(
@@ -842,11 +923,9 @@ async def test_real_clink_confirm_idempotent_when_channel_already_at_target(
     expires_at = now_ms + 20 * _DAY_MS
 
     snapshot = await payment_config_service.get_snapshot()
-    target_price = snapshot.prices.get((MAPS_EXTENSION_BUSINESS_PRODUCT_ID, "clink"))
+    target_price = snapshot.prices.get((API_PROFESSIONAL_PRODUCT_ID, "clink"))
     if target_price is None:
-        pytest.skip(
-            "REAL_SCHEMA_UNAVAILABLE: maps_extension_business Clink 渠道价未初始化"
-        )
+        pytest.skip("REAL_SCHEMA_UNAVAILABLE: api_professional Clink 渠道价未初始化")
     target_sku = recurring_provider_sku_parts("clink", target_price.provider_sku)
     assert target_sku is not None
 
@@ -856,7 +935,7 @@ async def test_real_clink_confirm_idempotent_when_channel_already_at_target(
                 order_no=order_no,
                 user_id=user_id,
                 product_class=ProductClass.SUBSCRIPTION.value,
-                product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
+                product_id=API_BASIC_PRODUCT_ID,
                 product_name="clink-confirm-idempotent",
                 amount=target_price.amount,
                 currency="USD",
@@ -870,7 +949,7 @@ async def test_real_clink_confirm_idempotent_when_channel_already_at_target(
                 extra_metadata=json.dumps(
                     {
                         "product_snapshot": {
-                            "product_kind": MAPS_EXTENSION_PRODUCT_KIND,
+                            "product_kind": MAPS_API_PRODUCT_KIND,
                             "product_price_id": 0,
                             "auto_renew": True,
                             "period": "month",
@@ -889,8 +968,8 @@ async def test_real_clink_confirm_idempotent_when_channel_already_at_target(
         db.add(
             UserSubscriptionModel(  # type: ignore[call-arg]
                 user_id=user_id,
-                product_kind=MAPS_EXTENSION_PRODUCT_KIND,
-                product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
+                product_kind=MAPS_API_PRODUCT_KIND,
+                product_id=API_BASIC_PRODUCT_ID,
                 auto_renew=True,
                 payment_method="clink",
                 channel_subscription_id=subscription_id,
@@ -935,26 +1014,44 @@ async def test_real_clink_confirm_idempotent_when_channel_already_at_target(
     # 渠道完整 productId:priceId 已目标：GET 后直接同步本地，succeeded。
     result = await subscription_service.confirm_upgrade(
         user_id=user_id,
-        product_kind=MAPS_EXTENSION_PRODUCT_KIND,
-        target_product_id=MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
+        product_kind=MAPS_API_PRODUCT_KIND,
+        target_product_id=API_PROFESSIONAL_PRODUCT_ID,
     )
     assert result["status"] == "succeeded"
     assert result["action"] is None
 
     row = await subscription_service.get_subscription_row(
-        user_id, MAPS_EXTENSION_PRODUCT_KIND
+        user_id, MAPS_API_PRODUCT_KIND
     )
     assert row is not None
-    assert row.product_id == MAPS_EXTENSION_BUSINESS_PRODUCT_ID
+    assert row.product_id == API_PROFESSIONAL_PRODUCT_ID
     assert row.expires_at == expires_at
     assert row.auto_renew is True
     assert row.channel_subscription_id == subscription_id
 
+    source_price = snapshot.prices[(API_BASIC_PRODUCT_ID, "clink")]
+    assert source_price.provider_sku is not None
+    changed = await subscription_service.sync_plan_from_channel(
+        payment_method="clink",
+        channel_subscription_id=subscription_id,
+        state=SubscriptionState(
+            provider_sku=source_price.provider_sku, original_order_no=order_no
+        ),
+    )
+    assert changed is False
+    after_stale = await subscription_service.get_subscription_row(
+        user_id, MAPS_API_PRODUCT_KIND
+    )
+    assert (
+        after_stale is not None
+        and after_stale.product_id == API_PROFESSIONAL_PRODUCT_ID
+    )
+
     # 本地已目标档：重复 confirm 幂等命中，不发起任何渠道调用。
     result_again = await subscription_service.confirm_upgrade(
         user_id=user_id,
-        product_kind=MAPS_EXTENSION_PRODUCT_KIND,
-        target_product_id=MAPS_EXTENSION_BUSINESS_PRODUCT_ID,
+        product_kind=MAPS_API_PRODUCT_KIND,
+        target_product_id=API_PROFESSIONAL_PRODUCT_ID,
     )
     assert result_again["status"] == "succeeded"
     assert result_again["action"] is None

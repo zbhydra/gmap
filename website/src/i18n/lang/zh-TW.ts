@@ -1484,7 +1484,7 @@ export const site: SiteContent = {
     "pricing": {
       "seo": {
         "title": "定價 — 線上、擴充與 API 方案 | MapsGrab",
-        "description": "MapsGrab 方案適用於每個表面：來自 $19, 的線上採集器來自 $39, 的瀏覽器擴充功能和來自 $15 的 API。每個產品都包含免費套餐 - Online 和 API 上的一次性自然月方案，Extension 上的每月訂閱。"
+        "description": "MapsGrab 方案：線上擷取器 $19 起，瀏覽器擴充功能 $39 起，API $15 起。每款產品均有免費方案，購買前可查看付款與續訂方式。"
       },
       "hero": {
         "kicker": "定價",
@@ -1496,8 +1496,8 @@ export const site: SiteContent = {
         "lead": "選擇適合您工作流程的介面 - 雲端 線上採集器、瀏覽器擴充功能或 HTTP API - 然後選擇每月的數量。只需幾分鐘即可從此頁面升級或購買。",
         "meta": [
           "每款產品免費",
-          "使用 PayPal 支付",
-          "補差價升級"
+          "Stripe / ClinkBill",
+          "升級您的方案"
         ],
         "switchLabel": "產品線"
       },
@@ -1506,16 +1506,12 @@ export const site: SiteContent = {
         "online": {
           "name": "線上採集器",
           "shortName": "線上採集",
-          "switchMeta": "{price} 起 · 一次性付款",
+          "switchMeta": "{price} 起",
           "unit": "記錄",
           "eyebrow": "線上採集器方案",
           "title": "雲端擷取，按記錄定價",
           "description": "在我們的基礎設施上運行 MapsGrab 引擎。一筆記錄是收集的一個商家行。付費方案包括可選的電子郵件與社群資訊補全功能，無需額外的記錄費用。",
-          "billingChips": [
-            "一次付款",
-            "涵蓋一個自然月",
-            "沒有自動續訂"
-          ],
+          "billingChips": ["每款產品免費","每月 1 日重設","付款前查看計費方式"],
           "cards": [
             {
               "id": "free",
@@ -1542,12 +1538,11 @@ export const site: SiteContent = {
               "name": "Lite",
               "tagline": "用於偶爾的一次性匯出",
               "price": "$19",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "20,000 筆記錄/月",
               "features": [
                 "包含免費方案的所有功能",
                 "1 個月內可使用 20,000 筆記錄",
-                "一次性付款－無自動續訂",
                 "每個任務最多 5 關鍵字",
                 "電子郵件與社群資訊補全，預設為開啟且可選"
               ],
@@ -1561,12 +1556,11 @@ export const site: SiteContent = {
               "name": "基礎版",
               "tagline": "每週穩定收集潛在客戶",
               "price": "$49",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "80,000 筆記錄/月",
               "features": [
                 "包含Lite 方案的所有功能",
                 "1 個月內可使用 80,000 筆記錄",
-                "一次性付款－無自動續訂",
                 "每個任務最多 10 關鍵字"
               ],
               "ctaLabel": "取得 基礎版",
@@ -1579,12 +1573,11 @@ export const site: SiteContent = {
               "name": "成長版",
               "tagline": "用於不斷增長的鉛管道",
               "price": "$99",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "250,000 筆記錄/月",
               "features": [
                 "包含基礎版方案的所有功能",
                 "1 個月內可使用 250,000 筆記錄",
-                "一次性付款－無自動續訂",
                 "每個任務最多 20 關鍵字"
               ],
               "ctaLabel": "取得 成長版",
@@ -1597,12 +1590,11 @@ export const site: SiteContent = {
               "name": "專業版",
               "tagline": "對於機構和數據密集型團隊",
               "price": "$149",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "500,000 筆記錄/月",
               "features": [
                 "包含成長版方案的所有功能",
                 "1 個月內可使用 500,000 筆記錄",
-                "一次性付款－無自動續訂",
                 "每個任務最多 50 關鍵字"
               ],
               "ctaLabel": "取得 專業版",
@@ -1610,7 +1602,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "一次性付款涵蓋一個自然月，此分頁的方案不會自動續訂。一筆記錄代表從 Google Maps 採集到的一家商家；使用量於每月 1 日重設，未使用的記錄額度不會累計至下個月。",
+          "quotaNote": "一筆記錄代表從 Google Maps 採集到的一家商家；使用量於每月 1 日重設，未使用的記錄額度不會累計至下個月。",
           "compare": {
             "lead": "線上 Scraper 計畫 — 雲端提取，按記錄定價。",
             "volume": "每月記錄",
@@ -1680,22 +1672,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "適用於 MapsGrab 線上採集器月記錄配額。",
             "successTitle": "方案已啟動",
-            "successDescription": "您的一次性 1 個月方案已生效。線上抓取工具會在下一次配額刷新時拾取它。"
+            "successDescription": "方案已生效，可以繼續使用新額度。"
           }
         },
         "extension": {
           "name": "擴充功能",
           "shortName": "擴充功能",
-          "switchMeta": "{price} 起 · 一次性付款",
+          "switchMeta": "{price} 起",
           "unit": "記錄",
           "eyebrow": "擴充功能方案",
           "title": "瀏覽器擷取，按記錄定價",
           "description": "擴充功能收集的每一行（企業、評論或照片）都算是一筆記錄。所有方案均包括評論、照片和批次任務；付費方案匯出所有 36 列，包括電子郵件與社群資訊補全內容。",
-          "billingChips": [
-            "一次付款",
-            "1 個月使用權",
-            "沒有自動續訂"
-          ],
+          "billingChips": ["每款產品免費","每月 1 日重設","付款前查看計費方式"],
           "cards": [
             {
               "id": "free",
@@ -1721,7 +1709,7 @@ export const site: SiteContent = {
               "name": "Pro",
               "tagline": "對於自由工作者和不斷增長的潛在客戶管道",
               "price": "$39",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "100,000 筆記錄/月",
               "features": [
                 "包含免費方案的所有功能",
@@ -1739,7 +1727,7 @@ export const site: SiteContent = {
               "name": "商務版",
               "tagline": "對於機構和數據密集型團隊",
               "price": "$99",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "500,000 筆記錄/月",
               "features": [
                 "包含Pro 方案的所有功能",
@@ -1828,22 +1816,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "適用於 MapsGrab 瀏覽器擴充功能每月配額。",
             "successTitle": "方案已啟動",
-            "successDescription": "您的一次性 1 個月方案已生效。擴充功能會在下一次配額刷新時選擇它。"
+            "successDescription": "方案已生效，可以繼續使用新額度。"
           }
         },
         "api": {
           "name": "API & MCP",
           "shortName": "API & MCP",
-          "switchMeta": "{price} 起 · 一次性付款",
+          "switchMeta": "{price} 起",
           "unit": "請求",
           "eyebrow": "API 方案",
           "title": "程序化訪問，按請求定價",
           "description": "搜尋 Google Maps 企業並透過簡單的 HTTP API 從您自己的應用程式取得他們的評論。每次成功的呼叫都算作一個請求，即使它沒有傳回結果或部分資料。",
-          "billingChips": [
-            "一次付款",
-            "涵蓋一個自然月",
-            "沒有自動續訂"
-          ],
+          "billingChips": ["每款產品免費","每月 1 日重設","付款前查看計費方式"],
           "cards": [
             {
               "id": "free",
@@ -1870,12 +1854,11 @@ export const site: SiteContent = {
               "name": "基礎版",
               "tagline": "用於原型和光集成",
               "price": "$15",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "1,000 請求數/月",
               "features": [
                 "包含免費方案的所有功能",
                 "1 個月內可使用 1,000 次請求",
-                "一次性付款－無自動續訂",
                 "JSON 回复"
               ],
               "ctaLabel": "取得 基礎版",
@@ -1888,12 +1871,11 @@ export const site: SiteContent = {
               "name": "專業版",
               "tagline": "用於生產集成",
               "price": "$65",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "5,000 請求數/月",
               "features": [
                 "包含基礎版方案的所有功能",
                 "1 個月內可使用 5,000 次請求",
-                "一次性付款－無自動續訂",
                 "JSON 回复"
               ],
               "ctaLabel": "取得 專業版",
@@ -1906,12 +1888,11 @@ export const site: SiteContent = {
               "name": "商務版",
               "tagline": "對於基於 MapsGrab 資料建構的產品",
               "price": "$115",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "10,000 請求數/月",
               "features": [
                 "包含Professional 方案的所有功能",
                 "1 個月內可使用 10,000 次請求",
-                "一次性付款－無自動續訂",
                 "JSON 回复"
               ],
               "ctaLabel": "取得 商務版",
@@ -1924,12 +1905,11 @@ export const site: SiteContent = {
               "name": "規模",
               "tagline": "適用於大容量資料操作",
               "price": "$365",
-              "periodLabel": "一次性 · 1 個月",
+              "periodLabel": "1 個月",
               "quota": "50,000 請求數/月",
               "features": [
                 "包含Business 方案的所有功能",
                 "1 個月內可使用 50,000 次請求",
-                "一次性付款－無自動續訂",
                 "JSON 回复"
               ],
               "ctaLabel": "取得 Scale",
@@ -1937,7 +1917,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "一次性付款涵蓋一個自然月，此分頁的方案不會自動續訂。每次成功的 API 或 MCP 呼叫都算作一次請求，包含空結果和部分結果；失敗的呼叫不計入。使用量於每月 1 日重設，未使用的請求額度不會累計至下個月。",
+          "quotaNote": "每次成功的 API 或 MCP 呼叫都算作一次請求，包含空結果和部分結果；失敗的呼叫不計入。使用量於每月 1 日重設，未使用的請求額度不會累計至下個月。",
           "compare": {
             "lead": "API 方案 — 程序化訪問，按請求定價。",
             "volume": "每月請求數",
@@ -2017,7 +1997,7 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "適用於 MapsGrab API 每月請求配額。",
             "successTitle": "方案已啟動",
-            "successDescription": "您的一次性 1 個月方案已生效。您的 API 金鑰將在下一個請求時取得新配額。"
+            "successDescription": "方案已生效，可以繼續使用新額度。"
           }
         }
       },
@@ -2094,16 +2074,16 @@ export const site: SiteContent = {
         },
         "items": {
           "channels": {
-            "title": "PayPal",
-            "body": "透過 PayPal 支付任何方案的費用。在 PayPal 上完成付款，然後返回此處啟動您的方案。"
+            "title": "Stripe / ClinkBill",
+            "body": "從目前方案已設定的 Stripe 和 ClinkBill 付款方式中選擇。"
           },
           "cadence": {
-            "title": "一次付款",
-            "body": "每個付費方案涵蓋一個自然月。一次性支付，無自動收費；當您還需要一個月時再次購買。"
+            "title": "付款與續訂",
+            "body": "各方案會標明一次性付款或自動續訂。在 Dashboard → 訂閱中管理續訂和付款方式；取消續訂後，已付權益保留至到期。"
           },
           "upgrade": {
             "title": "補差價升級",
-            "body": "透過您目前的支付提供者將有效方案轉移到符合資格的更高層級。到目前為止，您的到期日期和使用情況保持不變。"
+            "body": "以舊方案剩餘價值折抵更高等級的完整週期費用。付款且變更成功後開始新帳期，本月已用額度保留。"
           },
           "independent": {
             "title": "獨立方案",
@@ -2126,19 +2106,20 @@ export const site: SiteContent = {
         "button": "升級·{amount}",
         "title": "升級您的方案",
         "confirm": "確認升級",
-        "oneTime": "透過 {channel} 一次性補繳差價。您的到期日維持為 {date}。",
-        "autoRenew": "差價將立即透過 {channel} 收取。您的到期日仍為 {date}；未來的續約將使用新的方案價格。",
+        "oneTime": "透過 {channel} 支付新方案完整週期費用，折抵舊方案剩餘價值。預估新到期日：{date}。本月已用額度保留。",
+        "autoRenew": "將立即透過 {channel} 收取新方案完整週期價格減去舊方案剩餘價值的金額。預估新到期日：{date}。之後依新價格續訂，本月已用額度保留。",
         "pendingTitle": "等待您的升級",
         "pendingDescription": "您的支付提供者正在套用升級。您目前的方案在得到確認之前一直有效。",
         "successTitle": "方案升級",
-        "successDescription": "您的新配額已啟動。您的到期日仍為 {date}。",
+        "successDescription": "新額度已生效，新帳期到期日為 {date}。本月已用額度保留。",
         "quoteFailed": "無法加載您的升級價格。刷新頁面重試。",
         "failed": "無法確認您的升級。重新整理頁面以檢查您的方案，然後再試一次。",
         "reasons": {
           "no_active_subscription": "您的方案不再有效。重新整理頁面以選擇方案。",
           "not_higher_tier": "選擇更高的等級進行升級，或等到您的方案到期後再更改等級。",
           "non_positive_diff": "您的剩餘方案價值不低於此等級。您可以在方案到期後變更等級。",
-          "channel_unavailable": "您目前的付款方式無法進行升級。到期後您可以更改方案。"
+          "channel_unavailable": "目前付款方式不支援升級。PayPal 訂閱須到期後，再選擇 Stripe 或 ClinkBill。",
+          renewal_resume_required: "請先在付款管道恢復自動續訂，再重新整理此頁升級。"
         }
       },
       "faq": {
@@ -2165,11 +2146,11 @@ export const site: SiteContent = {
           },
           {
             "question": "我的方案會自動續訂嗎？",
-            "answer": "不是。所有方案均為一個自然月一次性支付 PayPal。當您的方案到期時，您將返回免費套餐。再次購買以繼續付費方案。"
+            "answer": "付款前請查看方案的計費方式。一次性方案不會續訂；自動續訂方案會持續續訂，直到透過 Dashboard → 訂閱 → 管理訂閱取消。取消後，已付權益保留至到期。"
           },
           {
             "question": "我可以在不同等級之間切換嗎？",
-            "answer": "您可以透過 PayPal 支付差價，將有效方案升級到符合資格的更高等級。到目前為止，您的到期日期和使用情況保持不變。不同選項卡上的方案是獨立的。"
+            "answer": "符合條件的升級透過原付款管道，以舊方案剩餘價值折抵新等級完整週期費用。付款且變更成功後，新額度和新帳期才會生效，本月已用額度保留。已取消續訂者須先在付款管道恢復續訂。現有 PayPal 訂閱本期無法升級，到期後可選擇 Stripe 或 ClinkBill。"
           }
         ]
       },
@@ -5350,5 +5331,30 @@ export const clink: ClinkReturnContent = {
   "cancel": {
     "title": "付款已取消",
     "description": "沒有完成付款。您可以返回並選擇其他付款方式。"
+  }
+}
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "付款已提交",
+      "description": "我們正在確認您的付款。原始選項卡將自動更新。"
+    },
+    "confirmedCredits": {
+      "title": "點數已入帳",
+      "description": "您的 Stripe 付款已確認，帳戶點數已新增。您可以返回原始選項卡。"
+    },
+    "confirmedSubscription": {
+      "title": "方案已啟動",
+      "description": "您的 Stripe 付款已確認，且您的 MapExporter 計畫已生效。您可以返回原始選項卡。"
+    },
+    "failed": {
+      "title": "付款需要注意",
+      "description": "我們無法確認該訂單。返回原始選項卡並重試。"
+    }
+  },
+  "cancel": {
+    "title": "已離開結帳頁",
+    "description": "訂單仍在等待付款。請返回原分頁查詢狀態，仍可在 Stripe 結帳頁完成付款。"
   }
 }

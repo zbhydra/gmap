@@ -60,6 +60,7 @@
     "ORDER_EXPIRED": "注文の有効期限が切れています",
     "ORDER_ALREADY_PAID": "注文はすでに支払い済みです",
     "ORDER_CANNOT_CANCEL": "現在の状態では注文をキャンセルできません",
+    "ORDER_DUPLICATE": "この支払いにはすでに注文があります。ページを更新して注文状況を確認してください。",
     "CALLBACK_FAILED": "ビジネスコールバックに失敗しました",
     "CALLBACK_MAX_RETRY": "コールバックの最大再試行回数を超えました",
     "CALLBACK_NO_CONFIG": "コールバックURLが設定されていません",

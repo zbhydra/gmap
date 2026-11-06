@@ -1484,7 +1484,7 @@ export const site: SiteContent = {
     "pricing": {
       "seo": {
         "title": "Tarification — Forfaits en ligne, d'extension et API | MapsGrab",
-        "description": "Plans MapsGrab pour chaque surface : Scraper en ligne de $19, Extension de navigateur de $39, et API de $15. Niveaux gratuits inclus avec chaque produit : forfaits mensuels naturels uniques sur Online et API, abonnements mensuels sur Extension."
+        "description": "Offres MapsGrab : extracteur en ligne dès $19, extension dès $39 et API dès $15. Chaque produit propose une offre gratuite. Consultez les conditions de paiement et de renouvellement avant l’achat."
       },
       "hero": {
         "kicker": "Tarifs",
@@ -1496,8 +1496,8 @@ export const site: SiteContent = {
         "lead": "Choisissez la surface qui correspond à votre flux de travail – cloud Extracteur en ligne, extension de navigateur ou HTTP API – puis choisissez le volume mensuel. Mettez à niveau ou achetez sur cette page en quelques minutes.",
         "meta": [
           "Niveau gratuit sur chaque produit",
-          "Payez avec PayPal",
-          "Surclassement en payant la différence"
+          "Stripe / ClinkBill",
+          "Améliorez votre forfait"
         ],
         "switchLabel": "Gamme de produits"
       },
@@ -1506,16 +1506,12 @@ export const site: SiteContent = {
         "online": {
           "name": "Extracteur en ligne",
           "shortName": "En ligne",
-          "switchMeta": "À partir de {price} · unique",
+          "switchMeta": "À partir de {price}",
           "unit": "enregistrements",
           "eyebrow": "Plans Scraper en ligne",
           "title": "Extraction cloud, tarifée par enregistrements",
           "description": "Exécutez le moteur MapsGrab sur notre infrastructure. Un enregistrement est une ligne commerciale collectée. Les forfaits payants incluent un enrichissement facultatif par courrier électronique et sur les réseaux sociaux, sans frais supplémentaires.",
-          "billingChips": [
-            "Paiement unique",
-            "Couvre un mois naturel",
-            "Pas de renouvellement automatique"
-          ],
+          "billingChips": ["Niveau gratuit sur chaque produit","Se réinitialise le 1st","Conditions affichées avant paiement"],
           "cards": [
             {
               "id": "free",
@@ -1542,12 +1538,11 @@ export const site: SiteContent = {
               "name": "Lite",
               "tagline": "Pour des exportations ponctuelles occasionnelles",
               "price": "$19",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "20,000 enregistrements / mois",
               "features": [
                 "Tout est gratuit",
                 "20,000 enregistrements pour 1 mois",
-                "Paiement unique – pas de renouvellement automatique",
                 "Jusqu'à 5 mots-clés par tâche",
                 "Enrichissement par e-mail et réseaux sociaux, activé par défaut et facultatif"
               ],
@@ -1561,12 +1556,11 @@ export const site: SiteContent = {
               "name": "Basique",
               "tagline": "Pour une collecte hebdomadaire régulière de leads",
               "price": "$49",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "80,000 enregistrements / mois",
               "features": [
                 "Tout en Lite",
                 "80,000 enregistrements pour 1 mois",
-                "Paiement unique – pas de renouvellement automatique",
                 "Jusqu'à 10 mots-clés par tâche"
               ],
               "ctaLabel": "Devenez basique",
@@ -1579,12 +1573,11 @@ export const site: SiteContent = {
               "name": "Croissance",
               "tagline": "Pour des pipelines de prospects en croissance",
               "price": "$99",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "250,000 enregistrements / mois",
               "features": [
                 "Tout en Basic",
                 "250,000 enregistrements pour 1 mois",
-                "Paiement unique – pas de renouvellement automatique",
                 "Jusqu'à 20 mots-clés par tâche"
               ],
               "ctaLabel": "Obtenez de la croissance",
@@ -1597,12 +1590,11 @@ export const site: SiteContent = {
               "name": "Professionnel",
               "tagline": "Pour les agences et les équipes gourmandes en données",
               "price": "$149",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "500,000 enregistrements / mois",
               "features": [
                 "Tout en croissance",
                 "500,000 enregistrements pour 1 mois",
-                "Paiement unique – pas de renouvellement automatique",
                 "Jusqu'à 50 mots-clés par tâche"
               ],
               "ctaLabel": "Devenez professionnel",
@@ -1610,7 +1602,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Paiement unique couvrant un mois naturel : les forfaits de cet onglet ne se renouvellent pas automatiquement. Un enregistrement est une ligne commerciale collectée à partir de Google Maps ; l'utilisation est réinitialisée au 1er et les enregistrements inutilisés ne sont pas reconduits.",
+          "quotaNote": "Un enregistrement est une ligne commerciale collectée à partir de Google Maps ; l'utilisation est réinitialisée au 1er et les enregistrements inutilisés ne sont pas reconduits.",
           "compare": {
             "lead": "Plans Scraper en ligne – extraction dans le cloud, tarifés par enregistrements.",
             "volume": "Enregistrements par mois",
@@ -1680,22 +1672,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "S'applique au quota d'enregistrement mensuel MapsGrab Extracteur en ligne.",
             "successTitle": "Forfait activé",
-            "successDescription": "Votre forfait mensuel unique de 1 est en ligne. Le Extracteur en ligne le récupère lors de la prochaine actualisation du quota."
+            "successDescription": "Votre offre est active. Vous pouvez utiliser votre nouveau quota."
           }
         },
         "extension": {
           "name": "Extension",
           "shortName": "Extension",
-          "switchMeta": "À partir de {price} · unique",
+          "switchMeta": "À partir de {price}",
           "unit": "enregistrements",
           "eyebrow": "Plans d'extension",
           "title": "Extraction par navigateur, tarifée par enregistrements",
           "description": "Chaque ligne collectée par l'extension (une entreprise, un avis ou une photo) compte pour un enregistrement. Tous les plans incluent des critiques, des photos et des tâches par lots ; les forfaits payants exportent toutes les colonnes 36, y compris les e-mails et l'enrichissement social.",
-          "billingChips": [
-            "Paiement unique",
-            "1 mois d'accès",
-            "Pas de renouvellement automatique"
-          ],
+          "billingChips": ["Niveau gratuit sur chaque produit","Se réinitialise le 1st","Conditions affichées avant paiement"],
           "cards": [
             {
               "id": "free",
@@ -1721,7 +1709,7 @@ export const site: SiteContent = {
               "name": "Pro",
               "tagline": "Pour les indépendants et les pipelines de leads en pleine croissance",
               "price": "$39",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "100,000 enregistrements / mois",
               "features": [
                 "Tout est gratuit",
@@ -1739,7 +1727,7 @@ export const site: SiteContent = {
               "name": "Entreprise",
               "tagline": "Pour les agences et les équipes gourmandes en données",
               "price": "$99",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "500,000 enregistrements / mois",
               "features": [
                 "Tout en Pro",
@@ -1828,22 +1816,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "S'applique au quota mensuel d'extension de navigateur MapsGrab.",
             "successTitle": "Forfait activé",
-            "successDescription": "Votre forfait mensuel unique de 1 est en ligne. L’extension le récupère lors de la prochaine actualisation du quota."
+            "successDescription": "Votre offre est active. Vous pouvez utiliser votre nouveau quota."
           }
         },
         "api": {
           "name": "API & MCP",
           "shortName": "API & MCP",
-          "switchMeta": "À partir de {price} · unique",
+          "switchMeta": "À partir de {price}",
           "unit": "demandes",
           "eyebrow": "API plans",
           "title": "Accès programmatique, tarifé par demandes",
           "description": "Recherchez Google Maps entreprises et récupérez leurs avis à partir de vos propres applications via un simple HTTP API. Chaque appel réussi compte comme une requête, même s'il ne renvoie aucun résultat ou données partielles.",
-          "billingChips": [
-            "Paiement unique",
-            "Couvre un mois naturel",
-            "Pas de renouvellement automatique"
-          ],
+          "billingChips": ["Niveau gratuit sur chaque produit","Se réinitialise le 1st","Conditions affichées avant paiement"],
           "cards": [
             {
               "id": "free",
@@ -1870,12 +1854,11 @@ export const site: SiteContent = {
               "name": "Basique",
               "tagline": "Pour les prototypes et les intégrations légères",
               "price": "$15",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "1,000 requêtes / mois",
               "features": [
                 "Tout est gratuit",
                 "1,000 demandes pour 1 mois",
-                "Paiement unique – pas de renouvellement automatique",
                 "JSON réponses"
               ],
               "ctaLabel": "Devenez basique",
@@ -1888,12 +1871,11 @@ export const site: SiteContent = {
               "name": "Professionnel",
               "tagline": "Pour les intégrations de production",
               "price": "$65",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "5,000 requêtes / mois",
               "features": [
                 "Tout en Basic",
                 "5,000 demandes pour 1 mois",
-                "Paiement unique – pas de renouvellement automatique",
                 "JSON réponses"
               ],
               "ctaLabel": "Devenez professionnel",
@@ -1906,12 +1888,11 @@ export const site: SiteContent = {
               "name": "Entreprise",
               "tagline": "Pour les produits construits sur des données MapsGrab",
               "price": "$115",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "10,000 requêtes / mois",
               "features": [
                 "Tout en Professionnel",
                 "10,000 demandes pour 1 mois",
-                "Paiement unique – pas de renouvellement automatique",
                 "JSON réponses"
               ],
               "ctaLabel": "Obtenez des affaires",
@@ -1924,12 +1905,11 @@ export const site: SiteContent = {
               "name": "Échelle",
               "tagline": "Pour les opérations de données volumineuses",
               "price": "$365",
-              "periodLabel": "unique · 1 mois",
+              "periodLabel": "1 mois",
               "quota": "50,000 requêtes / mois",
               "features": [
                 "Tout en affaires",
                 "50,000 demandes pour 1 mois",
-                "Paiement unique – pas de renouvellement automatique",
                 "JSON réponses"
               ],
               "ctaLabel": "Obtenez de l'échelle",
@@ -1937,7 +1917,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Paiement unique couvrant un mois naturel : les forfaits de cet onglet ne se renouvellent pas automatiquement. Chaque appel API ou MCP réussi compte comme une requête, y compris les résultats vides et partiels ; les appels échoués ne sont pas comptés. Les réinitialisations d'utilisation le 1st et les requêtes inutilisées ne sont pas reconduites.",
+          "quotaNote": "Chaque appel API ou MCP réussi compte comme une requête, y compris les résultats vides et partiels ; les appels échoués ne sont pas comptés. Les réinitialisations d'utilisation le 1st et les requêtes inutilisées ne sont pas reconduites.",
           "compare": {
             "lead": "Forfaits API — accès programmatique, tarifé en fonction des demandes.",
             "volume": "Demandes par mois",
@@ -2017,7 +1997,7 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "S'applique au quota de demandes mensuel MapsGrab API.",
             "successTitle": "Forfait activé",
-            "successDescription": "Votre forfait mensuel unique de 1 est en ligne. Votre clé API récupère le nouveau quota à la prochaine requête."
+            "successDescription": "Votre offre est active. Vous pouvez utiliser votre nouveau quota."
           }
         }
       },
@@ -2094,16 +2074,16 @@ export const site: SiteContent = {
         },
         "items": {
           "channels": {
-            "title": "PayPal",
-            "body": "Payez n'importe quel forfait via PayPal. Complétez votre paiement sur PayPal et revenez ici pour activer votre forfait."
+            "title": "Stripe / ClinkBill",
+            "body": "Choisissez parmi les moyens Stripe et ClinkBill disponibles pour votre offre."
           },
           "cadence": {
-            "title": "Paiement unique",
-            "body": "Chaque forfait payant couvre un mois naturel. Payez une fois sans frais automatiques ; achetez à nouveau lorsque vous avez besoin d’un mois supplémentaire."
+            "title": "Paiement et renouvellement",
+            "body": "Chaque offre indique si le paiement est unique ou le renouvellement automatique. Gérez le renouvellement et le moyen de paiement dans Dashboard → Abonnements. En cas d’annulation, l’accès payé reste actif jusqu’à l’échéance."
           },
           "upgrade": {
             "title": "Surclassement en payant la différence",
-            "body": "Déplacez un forfait actif vers un niveau supérieur éligible via votre fournisseur de paiement actuel. Votre date d’expiration et votre utilisation restent inchangées jusqu’à présent."
+            "body": "La valeur restante de votre offre est déduite du prix d’une période complète au niveau supérieur. La nouvelle période commence après le paiement et le changement réussis. L’utilisation de ce mois est conservée."
           },
           "independent": {
             "title": "Régimes indépendants",
@@ -2126,19 +2106,20 @@ export const site: SiteContent = {
         "button": "Mise à niveau · {amount}",
         "title": "Améliorez votre forfait",
         "confirm": "Confirmer la mise à niveau",
-        "oneTime": "Différence unique via {channel}. Votre date d'expiration reste {date}.",
-        "autoRenew": "La différence sera facturée immédiatement via {channel}. Votre date d'expiration reste {date} ; les renouvellements futurs utilisent le nouveau prix du forfait.",
+        "oneTime": "Payez une période complète via {channel}, déduction faite de la valeur restante de votre offre. Nouvelle échéance estimée : {date}. L’utilisation de ce mois est conservée.",
+        "autoRenew": "Une période complète, moins la valeur restante, sera facturée immédiatement via {channel}. Nouvelle échéance estimée : {date}. Les renouvellements utiliseront le nouveau prix ; l’utilisation du mois est conservée.",
         "pendingTitle": "En attente de votre mise à niveau",
         "pendingDescription": "Votre fournisseur de paiement applique la mise à niveau. Votre forfait actuel reste actif jusqu'à ce qu'il soit confirmé.",
         "successTitle": "Forfait amélioré",
-        "successDescription": "Votre nouveau quota est actif. Votre date d'expiration reste {date}.",
+        "successDescription": "Votre nouveau quota est actif. La nouvelle période se termine le {date}. L’utilisation de ce mois est conservée.",
         "quoteFailed": "Impossible de charger le prix de votre mise à niveau. Actualisez la page pour réessayer.",
         "failed": "Votre mise à niveau n'a pas pu être confirmée. Actualisez la page pour vérifier votre forfait avant de réessayer.",
         "reasons": {
           "no_active_subscription": "Votre forfait n'est plus actif. Actualisez la page pour choisir un forfait.",
           "not_higher_tier": "Choisissez un niveau supérieur pour mettre à niveau ou attendez l'expiration de votre forfait pour changer de niveau.",
           "non_positive_diff": "La valeur restante de votre plan n'est pas inférieure à ce niveau. Vous pouvez changer de niveau après l'expiration de votre forfait.",
-          "channel_unavailable": "Les surclassements ne sont pas disponibles avec votre mode de paiement actuel. Vous pouvez changer de forfait après l'expiration."
+          "channel_unavailable": "Votre moyen de paiement ne permet pas ce changement. Avec PayPal, attendez l’échéance puis choisissez Stripe ou ClinkBill.",
+          renewal_resume_required: "Réactivez le renouvellement automatique chez votre prestataire, puis actualisez cette page pour changer d’offre."
         }
       },
       "faq": {
@@ -2165,11 +2146,11 @@ export const site: SiteContent = {
           },
           {
             "question": "Mon forfait se renouvellera-t-il automatiquement ?",
-            "answer": "Non. Tous les forfaits sont des paiements uniques de PayPal couvrant un mois naturel. Lorsque votre forfait expire, vous revenez au niveau gratuit. Achetez à nouveau pour continuer avec un forfait payant."
+            "answer": "Consultez les conditions avant de payer. Les offres à paiement unique ne se renouvellent pas. Les autres se renouvellent jusqu’à leur annulation dans Dashboard → Abonnements → Gérer l’abonnement. L’accès payé reste actif jusqu’à l’échéance."
           },
           {
             "question": "Puis-je basculer entre les niveaux ?",
-            "answer": "Vous pouvez mettre à niveau un plan actif vers un niveau supérieur éligible en payant la différence via PayPal. Votre date d’expiration et votre utilisation restent inchangées jusqu’à présent. Les plans sur les différents onglets sont indépendants."
+            "answer": "Les changements éligibles déduisent la valeur restante du prix d’une période complète via le prestataire actuel. Le quota et la période ne changent qu’après réussite du paiement et du changement ; l’utilisation du mois est conservée. Si le renouvellement est annulé, réactivez-le d’abord chez le prestataire. Les abonnements PayPal ne peuvent pas changer cette période ; après échéance, choisissez Stripe ou ClinkBill."
           }
         ]
       },
@@ -5350,5 +5331,30 @@ export const clink: ClinkReturnContent = {
   "cancel": {
     "title": "Paiement annulé",
     "description": "Aucun paiement n'a été effectué. Vous pouvez revenir et choisir un autre mode de paiement."
+  }
+}
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "Paiement soumis",
+      "description": "Nous confirmons votre paiement. L'onglet d'origine sera mis à jour automatiquement."
+    },
+    "confirmedCredits": {
+      "title": "Crédits ajoutés",
+      "description": "Votre paiement Stripe est confirmé et les crédits ont été ajoutés. Vous pouvez revenir à l'onglet d'origine."
+    },
+    "confirmedSubscription": {
+      "title": "Forfait activé",
+      "description": "Votre paiement Stripe est confirmé et votre forfait MapExporter est actif. Vous pouvez revenir à l'onglet d'origine."
+    },
+    "failed": {
+      "title": "Le paiement nécessite une attention particulière",
+      "description": "Nous n'avons pas pu confirmer cette commande. Revenez à l'onglet d'origine et réessayez."
+    }
+  },
+  "cancel": {
+    "title": "Page de paiement quittée",
+    "description": "Votre commande est toujours en attente de paiement. Revenez à l’onglet initial pour consulter son état. Vous pouvez encore payer dans Stripe Checkout."
   }
 }

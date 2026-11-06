@@ -55,7 +55,7 @@ class CallbackStatus(int, enum.Enum):
     NOT_CALLED = 1  # 未回调
     PENDING = 2     # 处理中(已支付,履约进行中)
     SUCCESS = 3     # 成功(履约完成)
-    FAILED = 4      # 失败(履约明确失败,人工排查)
+    FAILED = 4      # 失败(明确失败或核对仍不明,人工排查)
     MAX_RETRY = 5   # 历史预留(超过最大重试次数;当前不写入,客户端按失败处理)
 ```
 
@@ -99,8 +99,10 @@ class CallbackStatus(int, enum.Enum):
 | 索引 | 类型 | 服务查询 |
 | --- | --- | --- |
 | `order_no` 上 `unique=True` | unique | 订单号查询、CAS 更新、履约抢占、订单状态轮询(全链路高频) |
-| `uk_orders_payment_channel_order(payment_method, payment_channel_order_no)` | unique | 自动续费 webhook 按本次渠道扣款号去重;MySQL 允许多行 NULL,不影响待支付订单 |
+| `idx_orders_payment_method_payment_channel_order_no(payment_method, payment_channel_order_no)` | unique | 自动续费 webhook 按本次渠道扣款号查重,并由数据库阻止同渠道重复流水 |
 | `user_id` 上 `index=True` | index | 用户订单列表、未完成订单列表、用户订单统计 |
+
+渠道与流水共同构成唯一身份，不同渠道允许使用相同流水号。尚无流水时保存 `NULL`，MySQL 允许多行 `NULL`；空字符串是实际值，同渠道下也受唯一约束。Redis 短锁只减少竞争，锁故障、超时或过期时仍由数据库约束防重。建单冲突处理见[自动续费 webhook 续费订单](tech-支付与履约.md#19-自动续费-webhook-续费订单)。
 
 不额外加:
 - `order_status` / `callback_status` / `product_class` 单列索引(低基数枚举,订单列表查询都带 `user_id` 前缀,单列索引无收益)。
@@ -197,8 +199,8 @@ PayPal 一次性订单的 `payment_channel_order_no` 保存 PayPal order id,因�
 
 - `NOT_CALLED → PENDING`:`order_success` 在 `PENDING → PAID` 的同一次 CAS 里一并写入。
 - `PENDING → SUCCESS`:履约事务内 CAS 抢占(`_claim_order_callback_success`),在同事务内完成发货。
-- `PENDING → FAILED`:`mark_callback_failed` CAS;履约确定性业务错误时设置。
-- 补偿任务同时扫描 `PENDING` 与 `FAILED`,重新调用履约入口(`@tech-支付与履约.md`);CAS 保证不重复发货。
+- `PENDING → FAILED`:`mark_callback_failed` CAS；明确失败或核对仍不明时设置，不能覆盖 `SUCCESS`。
+- 补偿任务仅扫描 `PAID + PENDING`；`FAILED` 停止自动补偿。恢复边界见 [支付与履约](tech-支付与履约.md#81-失败分类与恢复边界)。
 
 ## 6. 订单号生成
 
@@ -227,7 +229,7 @@ return f"ORD{timestamp}{random_part:04d}"
 
 ## 8. 幂等与并发控制(CAS)
 
-订单系统的并发安全完全靠 SQL 层 CAS(`UPDATE ... WHERE order_status = expected`),不引入分布式锁。
+订单支付状态和履约状态的并发更新靠 SQL 层 CAS(`UPDATE ... WHERE order_status = expected`)；续费建单的并发约束见[索引](#31-索引)。
 
 ### 8.1 支付回调幂等(`order_success`)
 
@@ -259,23 +261,9 @@ order_success(order_no, channel_order_no, channel_uid, payment_method, paid_*)
 
 ### 8.2 履约幂等(`_fulfill_paid_order_once`)
 
-```python
-async with get_async_session() as db:
-    claimed = await _claim_order_callback_success(db, order_no)
-    # CAS: WHERE order_status=PAID AND callback_status IN (PENDING, FAILED)
-    #      SET callback_status=SUCCESS
-    if not claimed:
-        return await _is_order_callback_success(order_no)  # 已被其他处理者成功
-    await _fulfill_order_product(db, order)  # 按商品类别发货(同事务)
-    await db.commit()
-    return True
-```
+同事务内以 `PAID + PENDING` 条件 CAS 抢占履约，预写 `SUCCESS`，执行业务发货后统一提交。CAS 未命中时只查询是否已成功；不得领取 `FAILED`。
 
-- 同事务内先 CAS 抢占 `callback_status` 为 `SUCCESS`,再执行业务发货,最后 `commit`。
-- CAS 影响 0 行说明已被其他处理者(webhook / 并发补偿)抢占,查询确认是 `SUCCESS` 后返回幂等成功,不重复发货。
-- 业务发货异常 → 整事务回滚,`callback_status` 回到 `PENDING` 或 `FAILED`,等待下轮补偿或人工排查。
-- 整个履约被 `ORDER_FULFILLMENT_TIMEOUT_SECONDS = 10` 秒 `asyncio.wait_for` 包裹;超时返回 `False`(不主动标 `FAILED`,由补偿任务下轮重试)。
-- 履约抛确定性异常时 `mark_callback_failed` 把 `callback_status` CAS 为 `FAILED`(从 `PENDING` 抢占);运行时异常(锁、连接、超时)不标 `FAILED`,保留 `PENDING`。
+付款写入、履约失败、超时与提交结果不明的处理统一见 [履约事务与恢复边界](tech-支付与履约.md#8-履约事务编排)。
 
 ### 8.3 履约发货分发(`_fulfill_order_product`)
 
@@ -340,19 +328,19 @@ class OrderCreateParam:         # 校验后的落单快照(check_product 返回)
 
 ### 9.2 关键方法
 
-| 方法 | 职责 |
-| --- | --- |
-| `check_product(param) -> OrderCreateParam` | 按 `product_class` 分发到订阅域 / 积分域校验,返回落单快照 |
-| `create_order(param) -> OrderModel` | 生成订单号、算过期、归一化金额、合并客户端语言到 `extra_metadata`,落库 |
-| `order_lists(*filters) -> list[OrderModel]` | 通用条件查询(支持订单号、用户、状态、商品类别、支付方式、时间窗、是否有支付入口数据等),SQL 层过滤,不在 Python 里全量过滤 |
-| `count_orders(*filters) -> int` | 同 `order_lists` 条件的计数 |
-| `get_order_by_no(order_no) -> OrderModel \| None` | 按订单号查单(走 `order_lists` 复用过滤) |
-| `save_order_payment_data(order_no, payment_data) -> bool` | CAS 保存支付入口数据(要求订单仍为 `PENDING`) |
-| `cancel_user_order(order_no, user_id) -> OrderModel` | 用户取消自己的 `PENDING` 订单,CAS 置 `CANCELLED` |
-| `decode_order_payment_data(raw, *, context) -> dict \| None` | 解析订单 `payment_data` JSON,坏数据返回 None 并记录上下文日志 |
-| `order_success(*, order_no, channel_order_no, channel_uid, payment_method, extra_metadata, paid_amount, paid_currency) -> dict` | 支付渠道确认成功后的统一入口:校验金额、CAS 置 PAID、触发履约、返回 `{order_no, idempotent, callback_triggered}` |
-| `mark_callback_failed(order_no) -> bool` | 把 `callback_status` 从 `PENDING` CAS 为 `FAILED`(履约确定性失败时) |
-| `fulfill_paid_order(order) -> bool` | 履约入口:10 秒超时包裹,内部同事务 CAS + 发货;成功 True / CAS 未抢到或已被处理 False / 确定性业务错误 `mark_callback_failed` 后 False / 运行时异常或超时保留 `PENDING` 后 False |
+| 方法                                                                                                                            | 职责                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `check_product(param) -> OrderCreateParam`                                                                                      | 按 `product_class` 分发到订阅域 / 积分域校验,返回落单快照                                                                |
+| `create_order(param) -> OrderModel`                                                                                             | 生成订单号、算过期、归一化金额、合并客户端语言到 `extra_metadata`,落库                                                   |
+| `order_lists(*filters) -> list[OrderModel]`                                                                                     | 通用条件查询(支持订单号、用户、状态、商品类别、支付方式、时间窗、是否有支付入口数据等),SQL 层过滤,不在 Python 里全量过滤 |
+| `count_orders(*filters) -> int`                                                                                                 | 同 `order_lists` 条件的计数                                                                                              |
+| `get_order_by_no(order_no) -> OrderModel \| None`                                                                               | 按订单号查单(走 `order_lists` 复用过滤)                                                                                  |
+| `save_order_payment_data(order_no, payment_data) -> bool`                                                                       | CAS 保存支付入口数据(要求订单仍为 `PENDING`)                                                                             |
+| `cancel_user_order(order_no, user_id) -> OrderModel`                                                                            | 用户取消自己的 `PENDING` 订单,CAS 置 `CANCELLED`                                                                         |
+| `decode_order_payment_data(raw, *, context) -> dict \| None`                                                                    | 解析订单 `payment_data` JSON,坏数据返回 None 并记录上下文日志                                                            |
+| `order_success(*, order_no, channel_order_no, channel_uid, payment_method, extra_metadata, paid_amount, paid_currency) -> dict` | 支付渠道确认成功后的统一入口:校验金额、CAS 置 PAID、触发履约、返回 `{order_no, idempotent, callback_triggered}`          |
+| `mark_callback_failed(order_no) -> bool`                                                                                        | 把已付订单的 `callback_status` 从 `PENDING` CAS 为 `FAILED`，停止自动补偿                                                |
+| `fulfill_paid_order(order) -> bool`                                                                                             | 履约入口：同事务 CAS 与发货；确认成功返回 True，失败抛带恢复分类的业务异常                                               |
 
 ### 9.3 订单列表查询过滤实现
 
@@ -364,7 +352,7 @@ class OrderCreateParam:         # 校验后的落单快照(check_product 返回)
 
 - **api 层不直接调事务**:api 入口只做参数校验与编排(`order_client.py`),事务全在 service 层。
 - **下单不是一个大事务**:`check_product` → `create_order`(独立事务落库)→ `provider.create_payment`(无事务,HTTP 调用)→ `save_order_payment_data`(独立 CAS 事务)。支付入口创建失败时已创建订单不回滚,用户重试即可(遵循"允许局部出错"原则)。
-- **支付成功 + 履约是同一事务**:`order_success` 先 CAS 置 PAID(独立事务),再触发履约 `_fulfill_paid_order_once`(独立事务:CAS 抢占 `callback_status=SUCCESS` + 业务发货 + commit)。履约事务回滚时 `callback_status` 不变(回到抢占前的 `PENDING` / `FAILED`)。
+- **付款与履约分两次提交**:`order_success` 先 CAS 置 PAID(独立事务),再触发履约 `_fulfill_paid_order_once`(独立事务:CAS 抢占 `callback_status=SUCCESS` + 业务发货 + commit)。履约事务回滚时 `callback_status` 不变(回到抢占前的 `PENDING`，再按恢复分类决定是否标记失败)。
 - **每个事务用独立 async session**;更新操作在事务内重新查询对象,避免 detached instance 问题。
 
 ## 11. 金额归一化

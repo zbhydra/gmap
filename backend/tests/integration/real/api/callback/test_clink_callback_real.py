@@ -342,8 +342,9 @@ async def test_real_clink_purchase_then_onetime_order_fulfills_natural_month(
             "merchantReferenceId": order_no,
             "customerEmail": email,
             "sessionId": session_id,
-            "amountTotal": float(format_normalized_amount(int(price["amount"]))),
+            "amountTotal": float(format_normalized_amount(cast(int, price["amount"]))),
             "paymentCurrency": str(price["currency"]),
+            "paymentTime": timestamp_now() - 5000,
         },
     )
     response = await real_async_client.post(
@@ -357,7 +358,7 @@ async def test_real_clink_purchase_then_onetime_order_fulfills_natural_month(
     assert payload["data"]["customerEmail"] == email
     assert payload["data"]["userId"] == str(user_id)
     assert payload["data"]["amount"] == float(
-        format_normalized_amount(int(price["amount"]))
+        format_normalized_amount(cast(int, price["amount"]))
     )
     assert payload["data"]["currency"] == "USD"
 
@@ -456,9 +457,10 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
             "merchantReference": order_no,
             "customerId": customer_id,
             "sessionId": session_id,
+            "status": "past_due",
             "recurringInvoiceItem": {
-                "periodStart": first_period_end,
-                "periodEnd": renewal_period_end,
+                "periodStart": renewal_period_end,
+                "periodEnd": renewal_period_end + 30 * _DAY_MS,
             },
         },
     )
@@ -473,6 +475,9 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
             "orderId": f"ordr_{cleanup.test_run_id}",
             "originalAmount": "12.34",
             "originalCurrency": "USD",
+            "status": "paid",
+            "currentPeriodStart": first_period_end,
+            "currentPeriodEnd": renewal_period_end,
         },
     )
     response = await real_async_client.post(
