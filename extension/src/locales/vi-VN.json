@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "Đang thu thập trong tab mới",
   "mapsPanel.reviewsExport": "Xuất {count} đánh giá",
   "mapsPanel.photosExport": "Xuất {count} ảnh",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "Mục bị coi là kẹt sau 90 giây không tiến triển hoặc khi thẻ bị đóng.",
   "dashboard.retryValue": "Thử lại {retries} lần · tối đa {attempts} lần thử mỗi mục rồi bỏ qua.",
   "dashboard.runningFootHint": "“{name}” đang chạy. Tác vụ mới chờ trong lịch sử.",
-  "dashboard.savedNotStarted": "Đã lưu nhưng chưa chạy vì có tác vụ khác. Bắt đầu từ lịch sử khi tác vụ đó hoàn tất."
+  "dashboard.savedNotStarted": "Đã lưu nhưng chưa chạy vì có tác vụ khác. Bắt đầu từ lịch sử khi tác vụ đó hoàn tất.",
+  "pluginVersion.updateAvailable": "Đã có phiên bản {version}. Bạn có thể tiếp tục trích xuất.",
+  "pluginVersion.disabled": "Phiên bản này đã bị vô hiệu hóa. Hãy cập nhật lên {version} để bắt đầu lần trích xuất mới.",
+  "pluginVersion.disabledNoUpdate": "Phiên bản này đã bị vô hiệu hóa. Chưa có bản cập nhật. Hãy liên hệ hỗ trợ.",
+  "pluginVersion.checkFailed": "Không thể kiểm tra phiên bản tiện ích. Hãy kiểm tra lại trước khi bắt đầu lần trích xuất mới.",
+  "pluginVersion.download": "Tải bản cập nhật",
+  "pluginVersion.checkAgain": "Kiểm tra lại"
 }

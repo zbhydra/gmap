@@ -10,6 +10,7 @@ import { searchExportExtLabel, type SearchExportFormat } from '../export/engine'
 import type { BulkWorkParams } from '../bulkAuto'
 import {
   createPanel,
+  checkPanelVersion,
   icon,
   IconName,
   K,
@@ -54,7 +55,6 @@ export interface MapsPanelRenderState {
 }
 export interface MapsPanelOperationsState {
   announcementHtml: string
-  newVersionAvailable: boolean
 }
 
 export class MapsPanel {
@@ -76,8 +76,7 @@ export class MapsPanel {
   private placeError: PanelError | null = null
   private bulk: BulkWorkParams | null = null
   private operations: MapsPanelOperationsState = {
-    announcementHtml: '',
-    newVersionAvailable: false
+    announcementHtml: ''
   }
   private lastSearch: MapsPanelRenderState = {
     status: 'idle',
@@ -131,6 +130,10 @@ export class MapsPanel {
       this.placeError = null
     }
     this.render()
+  }
+
+  checkVersion() {
+    return this.panel ? checkPanelVersion(this.panel) : Promise.resolve(null)
   }
 
   renderOperations(state: MapsPanelOperationsState): void {
@@ -306,9 +309,6 @@ export class MapsPanel {
       cores[state]
     )
     renderFooter(panel, this.usage, this.usage?.run_limits.search ?? limit)
-    const version = node(panel, '[data-version]')
-    version.hidden = !this.operations.newVersionAvailable
-    version.textContent = I18nService.t(K.NEW_VERSION)
     const announcement = node(panel, '[data-announcement]')
     announcement.hidden = this.operations.announcementHtml.trim().length === 0
     if (announcement.innerHTML !== this.operations.announcementHtml)

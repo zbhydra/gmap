@@ -47,5 +47,10 @@
   "bingPanel.goBack": "Go Back",
   "bingPanel.freeBadge": "FREE",
   "bingPanel.proBadge": "PRO",
-  "apiError.fallback": "Permintaan gagal. Silakan coba lagi."
+  "apiError.fallback": "Permintaan gagal. Silakan coba lagi.",
+  "pluginVersion.updateAvailable": "Versi {version} tersedia.",
+  "pluginVersion.disabled": "Versi ini dinonaktifkan. Ekstraksi baru tidak dapat dimulai.",
+  "pluginVersion.noUpdate": "Belum ada pembaruan. Hubungi dukungan.",
+  "pluginVersion.checkFailed": "Tidak dapat memeriksa versi ini. Coba lagi sebelum memulai ekstraksi baru.",
+  "pluginVersion.downloadUpdate": "Unduh pembaruan"
 }

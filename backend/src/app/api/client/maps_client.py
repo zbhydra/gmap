@@ -83,16 +83,14 @@ MAPS_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
     },
 }
 
-# 远端运营配置组（013 A12）：公告与新版本提示，随 /maps/config 一并下发。
+# 远端运营配置组（013 A12）：公告与订阅地址，随 /maps/config 一并下发。
 # 公告为空 = 不展示；运营时在此改值即可，插件免发版生效（公告 HTML 由插件
-# innerHTML 注入面板，来源为本仓库 backend 可信通道）。minPluginVersion 为
-# 空串表示不提示新版本；插件在其大于本地版本时展示升级提示。
+# innerHTML 注入面板，来源为本仓库 backend 可信通道）。
 # pricingUrl（006 扩展 / W7 联动登记）：插件「额度用尽/升级」按钮的落地页
 # 常量；域名占位与 astro.config site 占位同源，生产域名确定后同步替换。
 MAPS_OPERATIONS_CONFIG: dict[str, str] = {
     "announcementHtml": "",
     "announcementVersion": "",
-    "minPluginVersion": "",
     "pricingUrl": "https://mapexporter.app/pricing/",
 }
 

@@ -47,5 +47,10 @@
   "bingPanel.goBack": "Go Back",
   "bingPanel.freeBadge": "FREE",
   "bingPanel.proBadge": "PRO",
-  "apiError.fallback": "요청에 실패했습니다. 다시 시도해 주세요."
+  "apiError.fallback": "요청에 실패했습니다. 다시 시도해 주세요.",
+  "pluginVersion.updateAvailable": "버전 {version}이 출시되었습니다.",
+  "pluginVersion.disabled": "이 버전은 비활성화되었습니다. 새 추출을 시작할 수 없습니다.",
+  "pluginVersion.noUpdate": "업데이트가 없습니다. 지원팀에 문의하세요.",
+  "pluginVersion.checkFailed": "버전을 확인할 수 없습니다. 다시 시도한 후 새 추출을 시작하세요.",
+  "pluginVersion.downloadUpdate": "업데이트 다운로드"
 }

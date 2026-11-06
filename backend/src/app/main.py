@@ -102,6 +102,7 @@ from app.api.admin.admin_auth import router as admin_auth_router
 from app.api.admin.admin_dashboard import router as admin_dashboard_router
 from app.api.admin.admin_order_analytics import router as admin_order_analytics_router
 from app.api.admin.admin_orders import router as admin_orders_router
+from app.api.admin.admin_plugin_versions import router as admin_plugin_versions_router
 from app.api.admin.admin_system_settings import router as admin_system_settings_router
 from app.api.admin.admin_task_records import router as admin_task_records_router
 from app.api.admin.admin_users import router as admin_users_router
@@ -118,6 +119,7 @@ from app.api.client.maps_online_client import router as maps_online_router
 from app.api.client.export_client import router as export_router
 from app.api.client.mark_client import router as mark_router
 from app.api.client.order_client import router as order_router
+from app.api.client.plugin_version_client import router as plugin_version_router
 from app.api.client.subscription_client import router as subscription_router
 from app.api.client.tools_client import router as tools_router
 from app.api.external.external_maps import router as external_maps_router
@@ -224,6 +226,9 @@ def _include_business_routes(app_instance: FastAPI) -> None:
     app_instance.include_router(order_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(mark_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(maps_router, prefix="/api/client", tags=["client"])
+    app_instance.include_router(
+        plugin_version_router, prefix="/api/client", tags=["client"]
+    )
     app_instance.include_router(maps_api_router, prefix="/api/client", tags=["client"])
     app_instance.include_router(mcp_oauth_router, prefix="/api/client", tags=["client"])
     app_instance.router.routes.extend(
@@ -262,6 +267,9 @@ def _include_business_routes(app_instance: FastAPI) -> None:
         admin_orders_router, prefix="/api/admin", tags=["admin"]
     )
     app_instance.include_router(admin_users_router, prefix="/api/admin", tags=["admin"])
+    app_instance.include_router(
+        admin_plugin_versions_router, prefix="/api/admin", tags=["admin"]
+    )
     app_instance.include_router(
         admin_system_settings_router, prefix="/api/admin", tags=["admin"]
     )

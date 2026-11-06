@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "Erfassung in neuem Tab",
   "mapsPanel.reviewsExport": "{count} Rezensionen exportieren",
   "mapsPanel.photosExport": "{count} Fotos exportieren",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "Nach 90 Sekunden ohne Fortschritt oder beim Schließen des Tabs gilt ein Eintrag als festgefahren.",
   "dashboard.retryValue": "Keine Wiederholungen · ein Versuch pro Eintrag, danach wird er übersprungen. | 1 Wiederholung · maximal 2 Versuche pro Eintrag, danach wird er übersprungen. | {retries} Wiederholungen · maximal {attempts} Versuche pro Eintrag, danach wird er übersprungen.",
   "dashboard.runningFootHint": "„{name}“ läuft. Neue Aufgaben warten im Aufgabenverlauf.",
-  "dashboard.savedNotStarted": "Gespeichert, aber nicht gestartet. Eine andere Aufgabe läuft. Nach deren Ende im Verlauf starten."
+  "dashboard.savedNotStarted": "Gespeichert, aber nicht gestartet. Eine andere Aufgabe läuft. Nach deren Ende im Verlauf starten.",
+  "pluginVersion.updateAvailable": "Version {version} ist verfügbar. Sie können weiter Daten erfassen.",
+  "pluginVersion.disabled": "Diese Version ist deaktiviert. Aktualisieren Sie auf {version}, um eine neue Erfassung zu starten.",
+  "pluginVersion.disabledNoUpdate": "Diese Version ist deaktiviert. Noch kein Update verfügbar. Kontaktieren Sie den Support.",
+  "pluginVersion.checkFailed": "Die Plugin-Version konnte nicht geprüft werden. Prüfen Sie vor einer neuen Erfassung erneut.",
+  "pluginVersion.download": "Update herunterladen",
+  "pluginVersion.checkAgain": "Erneut prüfen"
 }

@@ -320,13 +320,13 @@ export interface MapsScrapeConfig {
 /**
  * 远端运营配置组（A12，U6 契约扩展；pricingUrl 为 U7 遗留接线/W7 契约扩展）。
  *
- * 承载「免发版触达用户」的运营能力：面板公告、新版本提示与订阅落地页。每次
+ * 承载「免发版触达用户」的运营能力：面板公告与订阅落地页。每次
  * boot 随远程配置通道现拉、只进内存（随 loader 模块级单例存活），不落用户
  * 数据——与用户设置（A9，全本地个人偏好）分层，同名冲突时用户设置优先
  * （分层裁决见 sites/maps/settings/userSettings.ts 模块注释）。
  *
  * GA4 Measurement Protocol 裁决（2026-08-30）：行为分析走 SLS 通道，不做真
- * GA4；需要 measurement_id 时另行立项。本组只承载公告/版本/订阅落地页，
+ * GA4；需要 measurement_id 时另行立项。本组只承载公告/订阅落地页，
  * 不含埋点配置。
  */
 export interface MapsOperationsConfig {
@@ -334,8 +334,6 @@ export interface MapsOperationsConfig {
   announcementHtml: string
   /** 公告版本标识（服务端运营治理用，客户端当前不消费）。 */
   announcementVersion: string
-  /** 最低插件版本：远端值 > 本地 manifest 版本时面板提示有新版本（空串 = 不提示）。 */
-  minPluginVersion: string
   /**
    * 订阅落地页（013 U7 遗留接线，W7）：面板「额度用尽」提示旁的跳转按钮
    * 目标页，插件打开时追加 `utm_source=extension` 归因参数。空串 = 未配置，
@@ -539,7 +537,6 @@ export const DEFAULT_MAPS_CONFIG: MapsRemoteConfig = {
   operations: {
     announcementHtml: '',
     announcementVersion: '',
-    minPluginVersion: '',
     pricingUrl: ''
   }
 }

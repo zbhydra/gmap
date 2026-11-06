@@ -7,11 +7,12 @@
     />
     <main class="pp-body enter-group" @scroll="onScroll">
       <Transition name="pp-notice">
-        <div v-if="newVersionAvailable || announcementHtml" class="pp-notices">
-          <div v-if="newVersionAvailable" class="notice tone-warn" role="status">
-            <Icon :name="IconName.REFRESH" />
-            <p class="notice-desc">{{ t(I18N_KEYS.MAPS_PANEL.NEW_VERSION) }}</p>
-          </div>
+        <div v-if="pluginVersionMessageKey(pluginVersion) || announcementHtml" class="pp-notices">
+          <PluginVersionNotice
+            :state="pluginVersion"
+            :checking="checkingVersion"
+            @retry="refreshVersion"
+          />
           <div v-if="announcementHtml" class="notice notice--announce tone-primary">
             <Icon :name="IconName.MEGAPHONE" />
             <div class="notice-desc" v-html="announcementHtml"></div>
@@ -212,7 +213,9 @@ import { I18N_KEYS } from '@/core/constants/i18n'
 import { Icon, IconName } from '@/core/components/icons'
 import { openBulkDashboard, openExternalPage, openPricingPage } from '@/core/utils/navigation'
 import { recordUiAction } from '@/core/api/mark/actions'
-import { isNewVersionAvailable } from '@/sites/maps/config/operations'
+import PluginVersionNotice from '@/core/components/PluginVersionNotice.vue'
+import { fetchPluginVersion, pluginVersionMessageKey } from '@/core/plugin-version/client'
+import type { PluginVersionState } from '@/core/api/plugin-version/types'
 import { BackgroundChannel } from './rpc/background.rpc'
 import type { MapsUsageSnapshot } from '@/sites/maps/usage/types'
 import AppHeader from './components/AppHeader.vue'
@@ -228,7 +231,13 @@ watch(locale, language => {
 })
 const subscriptionsUrl = new URL('/dashboard/subscriptions/', WEBSITE.BASE_URL).toString()
 const announcementHtml = ref('')
-const newVersionAvailable = ref(false)
+const pluginVersion = ref<PluginVersionState>()
+const checkingVersion = ref(false)
+async function refreshVersion(): Promise<void> {
+  checkingVersion.value = true
+  pluginVersion.value = await fetchPluginVersion()
+  checkingVersion.value = false
+}
 const usage = ref<MapsUsageSnapshot | null>(null)
 const loadingUsage = ref(true)
 const loginInFlight = ref(false)
@@ -312,10 +321,6 @@ async function loadOperations(): Promise<void> {
   try {
     const { operations } = await channel.getMapsConfig()
     announcementHtml.value = operations?.announcementHtml ?? ''
-    newVersionAvailable.value = isNewVersionAvailable(
-      operations?.minPluginVersion ?? '',
-      chrome.runtime.getManifest().version
-    )
   } catch (error) {
     logger.error('[Popup] 运营配置读取失败:', error)
   } finally {
@@ -375,6 +380,7 @@ onMounted(async () => {
     .record(MARK_TYPE.POPUP_OPEN, '', { surface: 'popup' })
     .catch(error => logger.error('[Popup] SLS 打点失败:', error))
   void loadOperations()
+  void refreshVersion()
   removeStorageListeners = [
     storageManager.onChanged<string | undefined>(STORAGE_KEYS.ACCESS_TOKEN, token => {
       // 仅退出时清内存；资料回写触发的通知不能打断进行中的账号恢复。

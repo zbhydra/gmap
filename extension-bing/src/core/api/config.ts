@@ -19,6 +19,7 @@ export const API = {
 
   /** API 端点（完整路径） */
   ENDPOINTS: {
+    PLUGIN_VERSION_CHECK: '/api/client/plugin-versions/check',
     // ========== 认证 ==========
     /** v3 browser identity 登录：一次性 code 换插件 token 对（无 Bearer，006 §3） */
     AUTH_EXTENSION_LOGIN_EXCHANGE: '/api/client/auth/extension-login/exchange',

@@ -2,6 +2,8 @@
 
 产品上限以 [单次采集权益](feat.md#单次采集权益) 为准，批量按钮与拆分行为以 [批量任务流程](feat.md#批量任务流程) 为准。本页维护跨后端、background、content 的边界合同。
 
+开始入口、媒体 Reset 与批量条目之间的版本门控遵循 [插件版本管理](../008.管理后台/tech-插件版本管理.md#插件接入)，版本检查独立于下文的采集配置缓存和用量查询。
+
 ## 权益所有权
 
 Google 插件套餐名与单次权益由 [maps_client.py](../../../backend/src/app/api/client/maps_client.py) 的 `MAPS_ENTITLEMENTS` 同时给出，分别为 `plan_name` 和 `run_limits`。通过 `subscription_service.get_user_subscription_config` 解析 `maps_extension` 的有效商品 ID，再精确选择权益；不根据展示名称或排序推断套餐。匿名、无订阅和过期订阅沿用本产品 Free 配置。

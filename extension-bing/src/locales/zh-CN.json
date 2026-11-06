@@ -47,5 +47,10 @@
   "bingPanel.goBack": "Go Back",
   "bingPanel.freeBadge": "FREE",
   "bingPanel.proBadge": "PRO",
-  "apiError.fallback": "请求失败，请重试。"
+  "apiError.fallback": "请求失败，请重试。",
+  "pluginVersion.updateAvailable": "新版本 {version} 已发布。",
+  "pluginVersion.disabled": "当前版本已禁用，无法开始新采集。",
+  "pluginVersion.noUpdate": "暂无可升级版本，请联系支持。",
+  "pluginVersion.checkFailed": "无法检查当前版本，请重试后再开始新采集。",
+  "pluginVersion.downloadUpdate": "下载更新"
 }

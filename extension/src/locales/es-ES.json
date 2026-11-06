@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "Recopilando en otra pestaña",
   "mapsPanel.reviewsExport": "Exportar {count} reseñas",
   "mapsPanel.photosExport": "Exportar {count} fotos",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "Un elemento se considera bloqueado tras 90 segundos sin progreso o al cerrarse su pestaña.",
   "dashboard.retryValue": "Sin reintentos · un intento por elemento; después se omite. | 1 reintento · hasta 2 intentos por elemento; después se omite. | {retries} reintentos · hasta {attempts} intentos por elemento; después se omite.",
   "dashboard.runningFootHint": "«{name}» está en curso. Las nuevas tareas esperan en el historial.",
-  "dashboard.savedNotStarted": "Guardada, sin iniciar. Otra tarea está en curso. Iníciala desde el historial cuando termine."
+  "dashboard.savedNotStarted": "Guardada, sin iniciar. Otra tarea está en curso. Iníciala desde el historial cuando termine.",
+  "pluginVersion.updateAvailable": "La versión {version} está disponible. Puedes seguir extrayendo.",
+  "pluginVersion.disabled": "Esta versión está deshabilitada. Actualiza a {version} para iniciar una nueva extracción.",
+  "pluginVersion.disabledNoUpdate": "Esta versión está deshabilitada. Aún no hay una actualización. Contacta con soporte.",
+  "pluginVersion.checkFailed": "No se pudo comprobar la versión del complemento. Vuelve a comprobarla antes de una nueva extracción.",
+  "pluginVersion.download": "Descargar actualización",
+  "pluginVersion.checkAgain": "Volver a comprobar"
 }

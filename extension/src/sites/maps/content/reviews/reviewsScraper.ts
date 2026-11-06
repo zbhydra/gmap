@@ -1,3 +1,4 @@
+import { canStartWithPluginVersion } from '@/core/api/plugin-version/types'
 /**
  * 评论采集控制器（013 A2，在 Maps 地点工作页自治运行）。
  *
@@ -265,6 +266,7 @@ export async function bootReviewsPage(
   await panel.mount()
 
   panel.setBulkContext(bulk)
+  if (bulk !== null || options.autoStart === false) void panel.checkVersion()
   let previousStatus: ReviewsScraperStatus = 'extracting'
   // 配额会话上报器（U7）：boot 自动开始即首个会话；Reset 重启换新幂等 ID
   const usageReporter = createUsageSessionReporter(markEmitter, 'reviews')
@@ -318,6 +320,8 @@ export async function bootReviewsPage(
   const startExtraction = async (reset = false): Promise<void> => {
     panel.setChecking(true)
     try {
+      // 批量首次启动由调度器检查；Reset 属于新的采集。
+      if ((bulk === null || reset) && !canStartWithPluginVersion(await panel.checkVersion())) return
       const snapshot = await fetchUsageSnapshot()
       const pageLimit = getRunLimit(snapshot, 'reviews', reviewsMax)
       panel.setUsage(snapshot, pageLimit)
@@ -329,6 +333,11 @@ export async function bootReviewsPage(
       if (reset) {
         scraper.reset(pageLimit)
       } else {
+        panel.render({
+          status: 'extracting',
+          count: scraper.getCount(),
+          format: getMapsUserSettingsSnapshot().exportFormat
+        })
         void scraper.start(pageLimit)
       }
       logger.info(

@@ -6,6 +6,8 @@
  * 调用方仅限 popup 与 content script（METHOD_TARGETS 逐方法声明）。
  */
 
+import type { JsonValue } from '@/core/rpc/types'
+
 import type {
   BackgroundBulkCommandResponse,
   BackgroundBulkTaskIdRequest,
@@ -59,6 +61,11 @@ export const Handler = {
   /** 由 background 代 content script 透传拉取 Maps 远程配置。 */
   getMapsConfig(): Promise<BackgroundGetMapsConfigResponse> {
     return declarationOnly('background.getMapsConfig')
+  },
+
+  /** 从 manifest 版本检查更新及禁用；调用方在 RPC 边界收窄。 */
+  checkPluginVersion(): Promise<JsonValue> {
+    return declarationOnly('background.checkPluginVersion')
   },
 
   /** 由 background 代 content script 记录打点。 */
@@ -177,6 +184,7 @@ export const METHOD_TARGETS = {
   getRuntimeConfig: ['popup'],
   /** 面板与 Popup 共用远程运营配置。 */
   getMapsConfig: ['content', 'popup'],
+  checkPluginVersion: ['content', 'popup'],
   /** recordMark 允许 popup（弹窗/仪表盘/设置页）与 content（面板动作）调用，统一由 background 写 SLS。 */
   recordMark: ['popup', 'content'],
   getAuthState: ['popup'],
@@ -211,6 +219,7 @@ export const METHOD_REQUEST_LIMITS = {
   getRuntimeConfig: 1024,
   /** getMapsConfig 无业务参数。 */
   getMapsConfig: 1024,
+  checkPluginVersion: 1024,
   /** recordMark 携带打点类型和附加信息。 */
   recordMark: 4096,
   getAuthState: 1024,
@@ -246,6 +255,7 @@ export const METHOD_RESPONSE_LIMITS = {
   getRuntimeConfig: 1024,
   /** getMapsConfig 返回三组稀疏覆盖，上限对齐远程配置通道的 16KB 约定。 */
   getMapsConfig: 16384,
+  checkPluginVersion: 4096,
   /** recordMark 返回记录结果。 */
   recordMark: 1024,
   getAuthState: 16384,

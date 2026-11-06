@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "Collecte dans un nouvel onglet",
   "mapsPanel.reviewsExport": "Exporter {count} avis",
   "mapsPanel.photosExport": "Exporter {count} photos",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "Un élément est bloqué après 90 secondes sans progression ou si son onglet est fermé.",
   "dashboard.retryValue": "Aucune nouvelle tentative · une tentative par élément, puis il est ignoré. | 1 nouvelle tentative · jusqu’à 2 tentatives par élément, puis il est ignoré. | {retries} nouvelles tentatives · jusqu’à {attempts} tentatives par élément, puis il est ignoré.",
   "dashboard.runningFootHint": "« {name} » est en cours. Les nouvelles tâches attendent dans l’historique.",
-  "dashboard.savedNotStarted": "Enregistrée mais non lancée : une autre tâche est en cours. Lancez-la dans l’historique une fois l’autre terminée."
+  "dashboard.savedNotStarted": "Enregistrée mais non lancée : une autre tâche est en cours. Lancez-la dans l’historique une fois l’autre terminée.",
+  "pluginVersion.updateAvailable": "La version {version} est disponible. Vous pouvez continuer les extractions.",
+  "pluginVersion.disabled": "Cette version est désactivée. Passez à {version} pour démarrer une nouvelle extraction.",
+  "pluginVersion.disabledNoUpdate": "Cette version est désactivée. Aucune mise à jour disponible. Contactez le support.",
+  "pluginVersion.checkFailed": "Impossible de vérifier la version de l’extension. Réessayez avant une nouvelle extraction.",
+  "pluginVersion.download": "Télécharger la mise à jour",
+  "pluginVersion.checkAgain": "Vérifier à nouveau"
 }

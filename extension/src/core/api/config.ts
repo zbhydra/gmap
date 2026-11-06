@@ -41,6 +41,8 @@ export const API = {
     /** 获取 Telegram 统一远端稀疏覆盖 */
     TELEGRAM_CONFIG: '/api/client/tg/config',
 
+    PLUGIN_VERSION_CHECK: '/api/client/plugin-versions/check',
+
     // ========== Maps Config ==========
     /** 获取 Maps 远程配置（dom/parseSchema/scrape 三组稀疏覆盖） */
     MAPS_CONFIG: '/api/client/maps/config',

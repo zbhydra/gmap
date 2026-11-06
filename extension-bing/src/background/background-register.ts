@@ -19,6 +19,8 @@ import type {
   BackgroundRecordMarkResponse
 } from './types'
 
+import type { JsonValue } from '@/core/rpc/types'
+
 /** background provider channel。 */
 export const CHANNEL = 'background' as const
 
@@ -27,6 +29,9 @@ export const CLASS_NAME = 'BackgroundChannel' as const
 
 /** Background RPC 方法签名声明。 */
 export const Handler = {
+  checkPluginVersion(): Promise<JsonValue> {
+    return declarationOnly('background.checkPluginVersion')
+  },
   /** background 连通性检查。 */
   ping(): Promise<BackgroundPingResponse> {
     return declarationOnly('background.ping')
@@ -88,6 +93,7 @@ export type BackgroundHandler = typeof Handler
 
 /** background 方法允许调用方。 */
 export const METHOD_TARGETS = {
+  checkPluginVersion: ['popup', 'content'],
   /** ping 允许 popup 调用。 */
   ping: ['popup'],
   /** getState 允许 popup 调用。 */
@@ -110,6 +116,7 @@ export const METHOD_TARGETS = {
 
 /** background 方法请求体限制，单位字节。 */
 export const METHOD_REQUEST_LIMITS = {
+  checkPluginVersion: 1024,
   /** ping 无业务参数。 */
   ping: 1024,
   /** getState 无业务参数。 */
@@ -132,6 +139,7 @@ export const METHOD_REQUEST_LIMITS = {
 
 /** background 方法响应体限制，单位字节。 */
 export const METHOD_RESPONSE_LIMITS = {
+  checkPluginVersion: 4096,
   /** ping 返回连通状态。 */
   ping: 4096,
   /** getState 返回状态文本。 */

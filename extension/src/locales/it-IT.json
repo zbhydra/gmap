@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "Raccolta in una nuova scheda",
   "mapsPanel.reviewsExport": "Esporta {count} recensioni",
   "mapsPanel.photosExport": "Esporta {count} foto",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "Un elemento è bloccato dopo 90 secondi senza progressi o se la scheda viene chiusa.",
   "dashboard.retryValue": "Nessun nuovo tentativo · un tentativo per elemento, poi viene saltato. | 1 nuovo tentativo · fino a 2 tentativi per elemento, poi viene saltato. | {retries} nuovi tentativi · fino a {attempts} tentativi per elemento, poi viene saltato.",
   "dashboard.runningFootHint": "“{name}” è in corso. Le nuove attività attendono nella cronologia.",
-  "dashboard.savedNotStarted": "Salvata ma non avviata: un’altra attività è in corso. Avviala dalla cronologia quando termina."
+  "dashboard.savedNotStarted": "Salvata ma non avviata: un’altra attività è in corso. Avviala dalla cronologia quando termina.",
+  "pluginVersion.updateAvailable": "È disponibile la versione {version}. Puoi continuare le estrazioni.",
+  "pluginVersion.disabled": "Questa versione è disabilitata. Aggiorna a {version} per avviare una nuova estrazione.",
+  "pluginVersion.disabledNoUpdate": "Questa versione è disabilitata. Nessun aggiornamento disponibile. Contatta l’assistenza.",
+  "pluginVersion.checkFailed": "Impossibile verificare la versione dell’estensione. Riprova prima di una nuova estrazione.",
+  "pluginVersion.download": "Scarica aggiornamento",
+  "pluginVersion.checkAgain": "Verifica di nuovo"
 }

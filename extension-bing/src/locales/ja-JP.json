@@ -47,5 +47,10 @@
   "bingPanel.goBack": "Go Back",
   "bingPanel.freeBadge": "FREE",
   "bingPanel.proBadge": "PRO",
-  "apiError.fallback": "リクエストに失敗しました。もう一度お試しください。"
+  "apiError.fallback": "リクエストに失敗しました。もう一度お試しください。",
+  "pluginVersion.updateAvailable": "バージョン {version} が公開されました。",
+  "pluginVersion.disabled": "このバージョンは無効です。新しい抽出は開始できません。",
+  "pluginVersion.noUpdate": "更新はありません。サポートにお問い合わせください。",
+  "pluginVersion.checkFailed": "バージョンを確認できませんでした。再試行してから新しい抽出を開始してください。",
+  "pluginVersion.downloadUpdate": "更新をダウンロード"
 }

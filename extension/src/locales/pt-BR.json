@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "Coletando em outra aba",
   "mapsPanel.reviewsExport": "Exportar {count} avaliações",
   "mapsPanel.photosExport": "Exportar {count} fotos",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "Um item é considerado travado após 90 segundos sem progresso ou ao fechar sua aba.",
   "dashboard.retryValue": "Sem novas tentativas · uma tentativa por item; depois ele é ignorado. | 1 nova tentativa · até 2 tentativas por item; depois ele é ignorado. | {retries} novas tentativas · até {attempts} tentativas por item; depois ele é ignorado.",
   "dashboard.runningFootHint": "“{name}” está em execução. Novas tarefas aguardam no histórico.",
-  "dashboard.savedNotStarted": "Salva, mas não iniciada. Outra tarefa está em execução. Inicie pelo histórico quando ela terminar."
+  "dashboard.savedNotStarted": "Salva, mas não iniciada. Outra tarefa está em execução. Inicie pelo histórico quando ela terminar.",
+  "pluginVersion.updateAvailable": "A versão {version} está disponível. Você pode continuar extraindo.",
+  "pluginVersion.disabled": "Esta versão está desativada. Atualize para {version} para iniciar uma nova extração.",
+  "pluginVersion.disabledNoUpdate": "Esta versão está desativada. Ainda não há atualização. Entre em contato com o suporte.",
+  "pluginVersion.checkFailed": "Não foi possível verificar a versão da extensão. Verifique novamente antes de uma nova extração.",
+  "pluginVersion.download": "Baixar atualização",
+  "pluginVersion.checkAgain": "Verificar novamente"
 }

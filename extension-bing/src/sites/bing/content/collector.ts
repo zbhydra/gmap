@@ -16,6 +16,8 @@
  *   截断，Pro 订阅态有效 = null 无上限，见 ./gate）。
  */
 
+import { BackgroundChannel } from '@/content/rpc/background.rpc'
+import { parsePluginVersionCheck, type PluginVersionCheck } from '@/core/api/plugin-version/types'
 import { logger } from '@/core/utils/logger'
 import { MARK_TYPE } from '@/core/api/mark/types'
 import { getBingConfig } from '@/sites/bing/config/loader'
@@ -29,6 +31,9 @@ export type BingPanelPhase = 'idle' | 'collecting' | 'completed'
 
 /** 采集状态快照（面板渲染的唯一数据源）。 */
 export interface BingCollectState {
+  pluginVersion: PluginVersionCheck | null
+  versionCheckFailed: boolean
+  checkingVersion: boolean
   /** 主状态。 */
   phase: BingPanelPhase
   /** 当前命中适配器版本名（未探测到为 null）。 */
@@ -65,6 +70,9 @@ interface CollectRoundResult {
 export class BingCollector {
   /** 状态快照。 */
   private state: BingCollectState = {
+    pluginVersion: null,
+    versionCheckFailed: false,
+    checkingVersion: false,
     phase: 'idle',
     adapterName: null,
     listDetected: false,
@@ -125,10 +133,11 @@ export class BingCollector {
 
   /** 进入采集中：列表就绪等待 → search 打点 → 主循环。 */
   async start(): Promise<void> {
-    if (this.state.phase !== 'idle') {
+    if (this.state.phase !== 'idle' || this.state.checkingVersion) {
       return
     }
     const generation = ++this.generation
+    if (!(await this.checkPluginVersion()) || generation !== this.generation) return
     this.updateState({ phase: 'collecting', stoppedManually: false, freeLimitReached: false })
 
     const ready = await this.waitListReady(generation)
@@ -147,6 +156,25 @@ export class BingCollector {
     recordContentMark(MARK_TYPE.SEARCH, `version=${adapterName}`)
 
     await this.runLoop(generation)
+  }
+
+  /** 页面打开与每次新采集分别现查；失败只拒绝这次开始。 */
+  async checkPluginVersion(): Promise<boolean> {
+    if (this.state.checkingVersion) return false
+    this.updateState({ checkingVersion: true })
+    const channel = new BackgroundChannel()
+    try {
+      const pluginVersion = parsePluginVersionCheck(await channel.checkPluginVersion())
+      this.updateState({ pluginVersion, versionCheckFailed: false })
+      return pluginVersion.status !== 'disabled'
+    } catch (error) {
+      logger.error('[BingCollector] 版本检查失败，拒绝本次新采集:', error)
+      this.updateState({ pluginVersion: null, versionCheckFailed: true })
+      return false
+    } finally {
+      channel.destroy()
+      this.updateState({ checkingVersion: false })
+    }
   }
 
   /** 手动停止：使 in-flight 循环失效并立即进入完成态。 */

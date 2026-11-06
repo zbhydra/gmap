@@ -1,3 +1,4 @@
+import { canStartWithPluginVersion } from '@/core/api/plugin-version/types'
 /**
  * 照片采集控制器（013 A3，在 Google 照片图库页自治运行）。
  *
@@ -254,6 +255,7 @@ export async function bootPhotosPage(
   const startExtraction = async (reset = false): Promise<void> => {
     panel.setChecking(true)
     try {
+      if (!canStartWithPluginVersion(await panel.checkVersion())) return
       const snapshot = await fetchUsageSnapshot()
       const pageLimit = getRunLimit(snapshot, 'photos')
       panel.setUsage(snapshot, pageLimit)
@@ -265,6 +267,11 @@ export async function bootPhotosPage(
       if (reset) {
         scraper.reset(pageLimit)
       } else {
+        panel.render({
+          status: 'extracting',
+          count: scraper.getCount(),
+          format: getMapsUserSettingsSnapshot().exportFormat
+        })
         void scraper.start(pageLimit)
       }
       logger.info(`[PhotosScraper] 照片采集已开始: fid=${fid}, limit=${pageLimit}`)

@@ -30,6 +30,7 @@
 | 用户管理  | `@tech-用户管理.md`          | 用户只读列表(多条件筛选)与 profile 多线订阅 / 用量契约                   |
 | 订单管理  | `@tech-订单管理.md`          | 订单只读列表与详情                                                       |
 | 任务记录  | [任务记录](tech-任务记录.md) | Online 任务与 API/MCP 调用的独立列表和详情                               |
+| 插件版本  | [插件版本管理](tech-插件版本管理.md) | Google Maps / Bing 发布记录、推荐版本与指定版本禁用，以及匿名检查合同 |
 | 渠道设置  | `@tech-渠道设置.md`          | X / Instagram Cookie 本地池管理                                          |
 | 系统设置  | `@tech-系统设置.md`          | 配置读取缓存刷新、外部 API Key 生成 / 轮换                               |
 | 外部 API  | `@tech-外部API.md`           | API Key 鉴权的独立外部接口分组                                           |

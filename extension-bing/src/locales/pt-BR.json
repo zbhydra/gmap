@@ -47,5 +47,10 @@
   "bingPanel.goBack": "Go Back",
   "bingPanel.freeBadge": "FREE",
   "bingPanel.proBadge": "PRO",
-  "apiError.fallback": "A solicitação falhou. Tente novamente."
+  "apiError.fallback": "A solicitação falhou. Tente novamente.",
+  "pluginVersion.updateAvailable": "A versão {version} está disponível.",
+  "pluginVersion.disabled": "Esta versão está desativada. Não é possível iniciar novas extrações.",
+  "pluginVersion.noUpdate": "Nenhuma atualização disponível. Entre em contato com o suporte.",
+  "pluginVersion.checkFailed": "Não foi possível verificar esta versão. Tente novamente antes de iniciar uma nova extração.",
+  "pluginVersion.downloadUpdate": "Baixar atualização"
 }

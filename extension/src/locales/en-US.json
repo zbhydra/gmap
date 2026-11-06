@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "Collecting in a new tab",
   "mapsPanel.reviewsExport": "Export {count} reviews",
   "mapsPanel.photosExport": "Export {count} photos",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "An item is stuck after 90 seconds without progress, or when its tab is closed.",
   "dashboard.retryValue": "No retries · one attempt per item, then skipped. | 1 retry · up to 2 attempts per item, then skipped. | {retries} retries · up to {attempts} attempts per item, then skipped.",
   "dashboard.runningFootHint": "“{name}” is running. New tasks wait in Task history.",
-  "dashboard.savedNotStarted": "Saved, but not started. Another task is running. Start this one from Task history when it finishes."
+  "dashboard.savedNotStarted": "Saved, but not started. Another task is running. Start this one from Task history when it finishes.",
+  "pluginVersion.updateAvailable": "Version {version} is available. You can keep extracting.",
+  "pluginVersion.disabled": "This version is disabled. Update to {version} to start a new extraction.",
+  "pluginVersion.disabledNoUpdate": "This version is disabled. No update is available yet. Contact support.",
+  "pluginVersion.checkFailed": "Could not check the plugin version. Check again before starting a new extraction.",
+  "pluginVersion.download": "Download update",
+  "pluginVersion.checkAgain": "Check again"
 }

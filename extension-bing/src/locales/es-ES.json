@@ -47,5 +47,10 @@
   "bingPanel.goBack": "Go Back",
   "bingPanel.freeBadge": "FREE",
   "bingPanel.proBadge": "PRO",
-  "apiError.fallback": "La solicitud ha fallado. Inténtalo de nuevo."
+  "apiError.fallback": "La solicitud ha fallado. Inténtalo de nuevo.",
+  "pluginVersion.updateAvailable": "La versión {version} está disponible.",
+  "pluginVersion.disabled": "Esta versión está deshabilitada. No se pueden iniciar nuevas extracciones.",
+  "pluginVersion.noUpdate": "No hay actualizaciones disponibles. Contacta con soporte.",
+  "pluginVersion.checkFailed": "No se pudo comprobar esta versión. Reintenta antes de iniciar una nueva extracción.",
+  "pluginVersion.downloadUpdate": "Descargar actualización"
 }

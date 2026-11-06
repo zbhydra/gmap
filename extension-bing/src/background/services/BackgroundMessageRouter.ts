@@ -5,6 +5,7 @@
  */
 
 import { authApi } from '@/core/api/auth/api'
+import { checkPluginVersion } from '@/core/api/plugin-version/api'
 import { logger } from '@/core/utils/logger'
 import { serve } from '@/core/rpc/serve'
 import type {
@@ -45,6 +46,7 @@ export class BackgroundMessageRouter {
    */
   private createRpcHandlers(): RpcServeHandlers {
     return {
+      checkPluginVersion: () => checkPluginVersion(),
       ping: () => this.ping(),
       getState: () => this.getState(),
       getRuntimeConfig: () => getRuntimeConfig(),

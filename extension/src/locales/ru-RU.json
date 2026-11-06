@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "Сбор в новой вкладке",
   "mapsPanel.reviewsExport": "Экспорт {count} отзывов",
   "mapsPanel.photosExport": "Экспорт {count} фото",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "Элемент считается зависшим после 90 секунд без прогресса или закрытия вкладки.",
   "dashboard.retryValue": "Без повторов · одна попытка на элемент, затем пропуск. | 1 повтор · до 2 попыток на элемент, затем пропуск. | Повторов: {retries} · до {attempts} попыток на элемент, затем пропуск.",
   "dashboard.runningFootHint": "«{name}» выполняется. Новые задачи ожидают в истории.",
-  "dashboard.savedNotStarted": "Сохранено, но не запущено: другая задача выполняется. Запустите эту из истории после её завершения."
+  "dashboard.savedNotStarted": "Сохранено, но не запущено: другая задача выполняется. Запустите эту из истории после её завершения.",
+  "pluginVersion.updateAvailable": "Доступна версия {version}. Можно продолжать сбор данных.",
+  "pluginVersion.disabled": "Эта версия отключена. Обновитесь до {version}, чтобы начать новый сбор.",
+  "pluginVersion.disabledNoUpdate": "Эта версия отключена. Обновлений пока нет. Обратитесь в поддержку.",
+  "pluginVersion.checkFailed": "Не удалось проверить версию расширения. Повторите проверку перед новым сбором.",
+  "pluginVersion.download": "Скачать обновление",
+  "pluginVersion.checkAgain": "Проверить снова"
 }

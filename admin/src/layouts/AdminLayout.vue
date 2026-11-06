@@ -4,7 +4,7 @@
   结构：
   NLayout（桌面 has-sider，移动单列）
   ├── NLayoutSider（仅桌面，可折叠侧边栏）
-  │   ├── NMenu（Dashboard / 用户管理 / 订单管理 / 任务记录 / 系统设置）
+  │   ├── NMenu（Dashboard / 用户管理 / 订单管理 / 任务记录 / 插件版本 / 系统设置）
   │   └── UserMenu（底部：用户名 + 主题切换 / 退出登录）
   └── NLayout
       ├── NLayoutHeader（仅移动端：汉堡 + 标题）
@@ -105,6 +105,7 @@ import {
   ProfileOutlined,
   TeamOutlined,
   MenuOutlined,
+  AppstoreOutlined,
 } from "@vicons/antd";
 import UserMenu from "@/components/UserMenu.vue";
 import { useIsMobile } from "@/composables/useResponsive";
@@ -148,6 +149,11 @@ const menuOptions = computed<MenuOption[]>(() => [
     icon: renderIcon(HistoryOutlined),
   },
   {
+    label: t("layout.pluginVersions"),
+    key: "PluginVersions",
+    icon: renderIcon(AppstoreOutlined),
+  },
+  {
     label: t("layout.systemSettings"),
     key: "SystemSettings",
     icon: renderIcon(SettingOutlined),
@@ -162,6 +168,7 @@ function handleMenuClick(key: string) {
     Users: "/users",
     Orders: "/orders",
     TaskRecords: "/task-records",
+    PluginVersions: "/plugin-versions",
     SystemSettings: "/system-settings",
   };
   const path = routeMap[key];

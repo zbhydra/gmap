@@ -16,7 +16,7 @@ import type { ExtensionEvents } from '@/core/events/types'
 import { i18nReady } from '@/locales'
 import { BackgroundChannel } from '@/content/rpc/background.rpc'
 import { getMapsConfig, loadMapsConfig } from '../config/loader'
-import { isNewVersionAvailable } from '../config/operations'
+import { canStartWithPluginVersion } from '@/core/api/plugin-version/types'
 import {
   getMapsUserSettingsSnapshot,
   initializeMapsUserSettings,
@@ -187,6 +187,7 @@ async function mountMapsExtractionUi(): Promise<void> {
       start: (snapshot: MapsUsageSnapshot | null) => void | Promise<void>,
       source: 'search' | 'reviews' | 'photos' | 'bulk' = 'search'
     ): Promise<void> => {
+      if (bulkWork === null && !canStartWithPluginVersion(await panel.checkVersion())) return
       // Start 前现拉最新 usage（竞品「每次 start 前查用量」同构）；查询失败
       // 放行（fail-open），耗尽则禁用 Start 并显示额度用尽提示
       const snapshot = await panel.checkQuota(false)
@@ -266,12 +267,9 @@ async function mountMapsExtractionUi(): Promise<void> {
 
     await panel.mount(dom.panelMount, dom.main)
     panel.setBulkContext(bulkWork)
+    void panel.checkVersion()
     panel.renderOperations({
-      announcementHtml: operations.announcementHtml,
-      newVersionAvailable: isNewVersionAvailable(
-        operations.minPluginVersion,
-        chrome.runtime.getManifest().version
-      )
+      announcementHtml: operations.announcementHtml
     })
     // 挂载即门控预检（U7）：已耗尽则直接禁用 Start 并显示额度用尽提示，
     // 用户无需点击后才被发现；查询失败不门控（放行，Start 点击时再校验）

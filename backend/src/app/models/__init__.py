@@ -21,6 +21,7 @@ from .export_api_job_model import EXPORT_API_JOB_MODELS
 from .export_job_model import EXPORT_JOB_MODELS
 from .export_run_model import EXPORT_RUN_MODELS
 from .order_model import OrderModel
+from .plugin_version_model import PluginVersionModel
 from .subscription_model import UserSubscriptionModel
 from .system_data_model import SystemDataModel
 from .user_checkin_campaign_model import UserCheckinCampaignModel
@@ -37,6 +38,7 @@ __all__ = [
     "UserModel",
     "UserSubscriptionModel",
     "OrderModel",
+    "PluginVersionModel",
     "AdminModel",
     "ConfigPublicModel",
     "ConfigCreditProductModel",

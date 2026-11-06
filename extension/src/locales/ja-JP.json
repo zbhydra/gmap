@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "新しいタブで収集中",
   "mapsPanel.reviewsExport": "{count} 件の口コミを出力",
   "mapsPanel.photosExport": "{count} 枚の写真を出力",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "90 秒間進捗がない場合、またはタブが閉じた場合は停止と判断します。",
   "dashboard.retryValue": "再試行 {retries} 回 · 各項目は最大 {attempts} 回試してからスキップ。",
   "dashboard.runningFootHint": "「{name}」が実行中です。新しいタスクは履歴で待機します。",
-  "dashboard.savedNotStarted": "保存しましたが、別のタスクが実行中です。終了後に履歴から開始してください。"
+  "dashboard.savedNotStarted": "保存しましたが、別のタスクが実行中です。終了後に履歴から開始してください。",
+  "pluginVersion.updateAvailable": "新しいバージョン {version} があります。引き続き抽出できます。",
+  "pluginVersion.disabled": "このバージョンは無効です。新しい抽出を開始するには {version} に更新してください。",
+  "pluginVersion.disabledNoUpdate": "このバージョンは無効です。更新版はまだありません。サポートにお問い合わせください。",
+  "pluginVersion.checkFailed": "拡張機能のバージョンを確認できませんでした。新しい抽出を開始する前に再確認してください。",
+  "pluginVersion.download": "更新をダウンロード",
+  "pluginVersion.checkAgain": "再確認"
 }

@@ -3,6 +3,39 @@
     <!-- 顶部标题栏 -->
     <AppHeader />
 
+    <section
+      v-if="versionCheckFailed || (pluginVersion?.status !== 'current' && pluginVersion)"
+      class="version-notice"
+      aria-live="polite"
+    >
+      <p v-if="versionCheckFailed">{{ t(I18N_KEYS.PLUGIN_VERSION.CHECK_FAILED) }}</p>
+      <p v-else-if="pluginVersion?.status === 'disabled'">
+        {{ t(I18N_KEYS.PLUGIN_VERSION.DISABLED) }}
+      </p>
+      <template v-if="pluginVersion?.update">
+        <p>
+          {{
+            t(I18N_KEYS.PLUGIN_VERSION.UPDATE_AVAILABLE, { version: pluginVersion.update.version })
+          }}
+        </p>
+        <a :href="pluginVersion.update.url" target="_blank" rel="noopener noreferrer">
+          {{ t(I18N_KEYS.PLUGIN_VERSION.DOWNLOAD_UPDATE) }}
+        </a>
+      </template>
+      <p v-else-if="pluginVersion?.status === 'disabled'">
+        {{ t(I18N_KEYS.PLUGIN_VERSION.NO_UPDATE) }}
+      </p>
+      <button
+        v-if="versionCheckFailed || pluginVersion?.status === 'disabled'"
+        class="account-button"
+        type="button"
+        :disabled="checkingVersion"
+        @click="checkVersion"
+      >
+        {{ t(I18N_KEYS.APP_ERROR.RETRY) }}
+      </button>
+    </section>
+
     <!-- 账号区：未登录 Sign in；已登录 displayName + Sign out -->
     <section class="account-section">
       <template v-if="authStore.isAuthenticated">
@@ -51,6 +84,7 @@ import AppFooter from './components/AppFooter.vue'
 import Toast from '@/core/components/Toast.vue'
 import { useToast } from '@/core/composables/useToast'
 import { BackgroundChannel } from './rpc/background.rpc'
+import { parsePluginVersionCheck, type PluginVersionCheck } from '@/core/api/plugin-version/types'
 
 // Stores
 const authStore = useAuthStore()
@@ -59,6 +93,26 @@ const { t } = useI18n()
 
 /** 登录发起中（RPC 返回/超时前按钮禁用）。 */
 const signingIn = ref(false)
+const pluginVersion = ref<PluginVersionCheck | null>(null)
+const versionCheckFailed = ref(false)
+const checkingVersion = ref(false)
+
+async function checkVersion(): Promise<void> {
+  if (checkingVersion.value) return
+  checkingVersion.value = true
+  const channel = new BackgroundChannel()
+  try {
+    pluginVersion.value = parsePluginVersionCheck(await channel.checkPluginVersion())
+    versionCheckFailed.value = false
+  } catch (error) {
+    logger.error('[Popup] 版本检查失败:', error)
+    pluginVersion.value = null
+    versionCheckFailed.value = true
+  } finally {
+    channel.destroy()
+    checkingVersion.value = false
+  }
+}
 
 // 记录打点（异步，不阻塞业务）
 function recordMark(markType: MarkType, markMsg = ''): void {
@@ -130,6 +184,7 @@ function watchAuthStorage(): void {
 onMounted(async () => {
   // 第一时间记录弹窗打开打点（不等待，不阻塞）
   recordMark(MARK_TYPE.POPUP_OPEN)
+  void checkVersion()
 
   watchAuthStorage()
   await authStore.initialize()
@@ -162,6 +217,24 @@ onUnmounted(() => {
   gap: 8px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--gme-border);
+}
+
+.version-notice {
+  margin: 12px;
+  padding: 12px;
+  border: 1px solid var(--gme-border);
+  border-radius: var(--gme-rounded-md);
+  background: var(--gme-warn-soft);
+  font-size: 13px;
+}
+
+.version-notice p {
+  margin: 0 0 8px;
+}
+
+.version-notice a {
+  color: var(--gme-link);
+  text-decoration: underline;
 }
 
 .account-name {

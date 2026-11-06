@@ -8,6 +8,10 @@ import { BULK_TASK_PAGE_SIZE, type BulkState } from '@/background/batch/types'
 import { BackgroundChannel } from '@/popup/rpc/background.rpc'
 import type { JsonValue, RpcResponse, RpcServeResult } from '@/core/rpc/types'
 
+vi.mock('@/core/api/plugin-version/api', () => ({
+  checkPluginVersion: vi.fn(async () => ({ status: 'current', update: null }))
+}))
+
 vi.mock('@/background/batch/store', async importOriginal => ({
   ...(await importOriginal<object>()),
   bulkStateStore: { load: vi.fn(), save: vi.fn() }

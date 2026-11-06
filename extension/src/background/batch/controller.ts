@@ -17,6 +17,8 @@
  * 计时器节流（竞品用双页轮换对抗节流，我们以单活动页获得同样效果）。
  */
 
+import { checkPluginVersion } from '@/core/api/plugin-version/api'
+import { canStartWithPluginVersion } from '@/core/api/plugin-version/types'
 import { logger } from '@/core/utils/logger'
 import { ChromeEventEmitter, ChromeEventSubscriber } from '@/core/rpc/ChromeEventBus'
 import type { ExtensionEvents } from '@/core/events/types'
@@ -302,7 +304,7 @@ export class BulkSchedulerController {
   /** 单步：读状态 → reduce → 落盘 → 执行副作用。 */
   private async process(event: BulkMachineEvent): Promise<BulkReduceResult> {
     const state = await this.getState()
-    const result = reduceBulkEvent(state, event, Date.now())
+    let result = reduceBulkEvent(state, event, Date.now())
 
     if (result.error !== null) {
       logger.info(`[BulkScheduler] 事件被拒绝: kind=${event.kind}, code=${result.error}`)
@@ -310,6 +312,29 @@ export class BulkSchedulerController {
     }
     if (result.state === state) {
       return result
+    }
+
+    if (result.effects.launches.length > 0) {
+      const version = await checkPluginVersion()
+      if (!canStartWithPluginVersion(version)) {
+        // 完成边沿仍落盘；尚未实际启动的下一项退回 pending，暂停后 alarm 不再重开。
+        const launching = result.state.tasks.find(task => task.status === 'running')
+        if (launching) {
+          const paused = reduceBulkEvent(
+            result.state,
+            { kind: 'stop-task', taskId: launching.id },
+            Date.now()
+          )
+          result = {
+            state: paused.state,
+            effects: {
+              ...paused.effects,
+              closeTabIds: [...result.effects.closeTabIds, ...paused.effects.closeTabIds]
+            },
+            error: version === null ? 'version-check-failed' : 'plugin-disabled'
+          }
+        }
+      }
     }
 
     await bulkStateStore.save(result.state)
@@ -374,7 +399,7 @@ export class BulkSchedulerController {
       await chrome.alarms.clear(BULK_SCAN_ALARM)
     }
 
-    await this.broadcaster.broadcast('mapsBulkStateChanged', { taskId: null })
+    this.broadcaster.emit('mapsBulkStateChanged', { taskId: null })
   }
 }
 

@@ -16,6 +16,15 @@ export const I18N_KEYS = {
   /** 操作标题 */
   ACTION_TITLE: 'actionTitle',
 
+  PLUGIN_VERSION: {
+    UPDATE_AVAILABLE: 'pluginVersion.updateAvailable',
+    DISABLED: 'pluginVersion.disabled',
+    DISABLED_NO_UPDATE: 'pluginVersion.disabledNoUpdate',
+    CHECK_FAILED: 'pluginVersion.checkFailed',
+    DOWNLOAD: 'pluginVersion.download',
+    CHECK_AGAIN: 'pluginVersion.checkAgain'
+  },
+
   /** App 相关 */
   APP: {
     /** 应用标题 */
@@ -115,7 +124,6 @@ export const I18N_KEYS = {
     COLLECTING_NEW_TAB: 'mapsPanel.collectingNewTab',
     REVIEWS_EXPORT: 'mapsPanel.reviewsExport',
     PHOTOS_EXPORT: 'mapsPanel.photosExport',
-    NEW_VERSION: 'mapsPanel.newVersionAvailable',
     LIST_SECTION: 'mapsPanel.listSection',
     LIST_IDLE_HINT: 'mapsPanel.listIdleHint',
     QUOTA_EXHAUSTED: 'mapsPanel.quotaExhausted',

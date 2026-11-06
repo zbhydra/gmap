@@ -12,6 +12,7 @@ export type HttpMethod = 'GET' | 'POST'
 
 /** 请求配置选项 */
 export interface RequestOptions {
+  cache?: RequestCache
   /** URL 参数 */
   params?: Record<string, string | number>
   /** 请求体 */

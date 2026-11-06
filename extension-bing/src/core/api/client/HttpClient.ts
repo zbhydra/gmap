@@ -118,6 +118,7 @@ export class HttpClient {
         const fetchOptions: RequestInit = {
           method,
           headers: context.options.headers,
+          cache: options.cache,
           signal: options.signal
         }
 

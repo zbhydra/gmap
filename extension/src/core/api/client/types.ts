@@ -20,6 +20,8 @@ export interface RequestOptions {
   headers?: Record<string, string>
   /** 是否需要认证（默认自动注入 token） */
   requireAuth?: boolean
+  /** 浏览器 HTTP 缓存策略。 */
+  cache?: RequestCache
   /** 超时时间（毫秒），覆盖全局配置 */
   timeout?: number
   /** 是否跳过重试 */

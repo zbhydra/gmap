@@ -4,6 +4,7 @@
  * 使用新的 RPC 系统处理来自 popup 的消息
  */
 
+import { checkPluginVersion } from '@/core/api/plugin-version'
 import { authApi } from '@/core/api/auth/api'
 import { logger } from '@/core/utils/logger'
 import { serve } from '@/core/rpc/serve'
@@ -52,6 +53,7 @@ export class BackgroundMessageRouter {
       getState: () => this.getState(),
       getRuntimeConfig: () => getRuntimeConfig(),
       getMapsConfig: () => fetchMapsRemoteConfig(),
+      checkPluginVersion,
       recordMark: (params, context) => {
         const request = parseRecordMarkRequest(params)
         return this.recordMark(request.mark_type, request.mark_msg, context)

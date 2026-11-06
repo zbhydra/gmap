@@ -7,6 +7,7 @@
  * 走远程配置覆盖。
  */
 
+import { BackgroundChannel } from '@/content/rpc/background.rpc'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ChromeEventEmitter } from '@/core/rpc/ChromeEventBus'
 import type { ExtensionEvents } from '@/core/events/types'
@@ -413,6 +414,7 @@ it('配置加载期间 Maps 同文档清参后，翻页、批量完成与 Reset 
   })
   vi.spyOn(configLoader, 'loadMapsConfig').mockReturnValue(pending)
   vi.spyOn(userSettings, 'initializeMapsUserSettings').mockResolvedValue()
+  vi.spyOn(BackgroundChannel.prototype, 'checkPluginVersion').mockResolvedValue({ status: 'current', update: null })
   const ownerCheck = vi.spyOn(bulkAuto, 'checkBulkWorkOwner').mockResolvedValue(true)
   vi.spyOn(usageClient, 'fetchUsageSnapshot').mockResolvedValue({
     plan_name: 'Free',

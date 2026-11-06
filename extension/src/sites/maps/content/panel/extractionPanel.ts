@@ -7,6 +7,7 @@ import type { BulkWorkParams } from '../bulkAuto'
 import { searchExportExtLabel, type SearchExportFormat } from '../export/engine'
 import {
   createPanel,
+  checkPanelVersion,
   IconName,
   K,
   node,
@@ -46,7 +47,7 @@ export class ExtractionPanel {
   private usage: MapsUsageSnapshot | null = null
   private limit = 0
   private bulk: BulkWorkParams | null = null
-  private lastState: ExtractionPanelState = { status: 'extracting', count: 0, format: 'csv' }
+  private lastState: ExtractionPanelState = { status: 'stopped', count: 0, format: 'csv' }
   private readonly mode: 'reviews' | 'photos'
 
   constructor(
@@ -77,6 +78,10 @@ export class ExtractionPanel {
     })
     this.unsubscribeLanguage = I18nService.onLanguageChange(() => this.refresh())
     this.refresh()
+  }
+
+  checkVersion() {
+    return this.panel ? checkPanelVersion(this.panel) : Promise.resolve(null)
   }
 
   render(state: ExtractionPanelState): void {

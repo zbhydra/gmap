@@ -20,6 +20,48 @@
 
 <template>
   <section ref="rootRef" class="bing-panel-root" :style="panelStyle">
+    <div
+      v-if="
+        state.versionCheckFailed ||
+        (state.pluginVersion && state.pluginVersion.status !== 'current')
+      "
+      class="version-notice"
+      aria-live="polite"
+    >
+      <p v-if="state.versionCheckFailed">{{ t(I18N_KEYS.PLUGIN_VERSION.CHECK_FAILED) }}</p>
+      <p v-else-if="state.pluginVersion?.status === 'disabled'">
+        {{ t(I18N_KEYS.PLUGIN_VERSION.DISABLED) }}
+      </p>
+      <template v-if="state.pluginVersion?.update">
+        <p>
+          {{
+            t(I18N_KEYS.PLUGIN_VERSION.UPDATE_AVAILABLE, {
+              version: state.pluginVersion.update.version
+            })
+          }}
+        </p>
+        <a
+          class="text-link"
+          :href="state.pluginVersion.update.url"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ t(I18N_KEYS.PLUGIN_VERSION.DOWNLOAD_UPDATE) }}
+        </a>
+      </template>
+      <p v-else-if="state.pluginVersion?.status === 'disabled'">
+        {{ t(I18N_KEYS.PLUGIN_VERSION.NO_UPDATE) }}
+      </p>
+      <button
+        v-if="state.versionCheckFailed || state.pluginVersion?.status === 'disabled'"
+        class="text-link"
+        type="button"
+        :disabled="state.checkingVersion"
+        @click="collector.checkPluginVersion()"
+      >
+        {{ t(I18N_KEYS.APP_ERROR.RETRY) }}
+      </button>
+    </div>
     <!-- 待命 -->
     <template v-if="phase === 'idle'">
       <header class="title-row">
@@ -41,7 +83,7 @@
       <button
         class="button button-primary"
         type="button"
-        :disabled="!listDetected"
+        :disabled="!listDetected || state.checkingVersion"
         @click="onStart"
       >
         {{ t(K.START) }}
@@ -368,6 +410,14 @@ function onOpenPricingPage(): void {
 .title-row {
   display: flex;
   align-items: center;
+}
+
+.version-notice {
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--gme-warn) 35%, transparent);
+  border-radius: var(--gme-rounded-md);
+  background: var(--gme-warn-soft);
+  font-size: 13px;
 }
 
 .panel-title {

@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "已在新分頁中擷取",
   "mapsPanel.reviewsExport": "匯出 {count} 則評論",
   "mapsPanel.photosExport": "匯出 {count} 張相片",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "90 秒沒有新進展，或工作分頁被關閉時，項目視為卡住。",
   "dashboard.retryValue": "重試 {retries} 次 · 每項最多嘗試 {attempts} 次，之後略過。",
   "dashboard.runningFootHint": "「{name}」正在執行，新任務將儲存在任務紀錄中等待。",
-  "dashboard.savedNotStarted": "已儲存但未啟動，另一個任務正在執行。結束後請從任務紀錄啟動本任務。"
+  "dashboard.savedNotStarted": "已儲存但未啟動，另一個任務正在執行。結束後請從任務紀錄啟動本任務。",
+  "pluginVersion.updateAvailable": "發現新版本 {version}，可繼續採集。",
+  "pluginVersion.disabled": "目前版本已停用，請更新至 {version} 後開始新採集。",
+  "pluginVersion.disabledNoUpdate": "目前版本已停用，暫無可升級版本，請聯絡支援。",
+  "pluginVersion.checkFailed": "版本檢查失敗，請重試後開始新採集。",
+  "pluginVersion.download": "下載更新",
+  "pluginVersion.checkAgain": "重新檢查"
 }

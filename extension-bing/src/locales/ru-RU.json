@@ -47,5 +47,10 @@
   "bingPanel.goBack": "Go Back",
   "bingPanel.freeBadge": "FREE",
   "bingPanel.proBadge": "PRO",
-  "apiError.fallback": "Не удалось выполнить запрос. Повторите попытку."
+  "apiError.fallback": "Не удалось выполнить запрос. Повторите попытку.",
+  "pluginVersion.updateAvailable": "Доступна версия {version}.",
+  "pluginVersion.disabled": "Эта версия отключена. Нельзя начать новое извлечение.",
+  "pluginVersion.noUpdate": "Обновлений нет. Обратитесь в поддержку.",
+  "pluginVersion.checkFailed": "Не удалось проверить эту версию. Повторите проверку перед новым извлечением.",
+  "pluginVersion.downloadUpdate": "Скачать обновление"
 }

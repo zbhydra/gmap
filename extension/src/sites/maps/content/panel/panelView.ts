@@ -1,6 +1,8 @@
 import panelStyles from './panel.css?inline'
 import { IconName } from '@/core/components/icons/iconTypes'
 import { iconPaths } from '@/core/components/icons/iconPaths'
+import { fetchPluginVersion, pluginVersionMessageKey } from '@/core/plugin-version/client'
+import type { PluginVersionState } from '@/core/api/plugin-version/types'
 import { I18N_KEYS } from '@/core/constants/i18n'
 import { I18nService } from '@/locales'
 import { BackgroundChannel } from '@/content/rpc/background.rpc'
@@ -328,4 +330,42 @@ export async function openPanelPricing(): Promise<void> {
   } finally {
     channel.destroy()
   }
+}
+
+/** 提示与开始门控共用现查结果；展示不会打断已运行会话。 */
+export async function checkPanelVersion(panel: HTMLElement): Promise<PluginVersionState> {
+  const state = await fetchPluginVersion()
+  renderVersionNotice(panel, state)
+  return state
+}
+
+export function renderVersionNotice(
+  panel: HTMLElement,
+  state: PluginVersionState | undefined
+): void {
+  const notice = node(panel, '[data-version]')
+  const key = pluginVersionMessageKey(state)
+  notice.hidden = key === null
+  notice.replaceChildren()
+  if (key === null) return
+  const label = document.createElement('span')
+  label.textContent = I18nService.t(key, { version: state?.update?.version ?? '' })
+  notice.appendChild(label)
+  if (state?.update) {
+    const link = document.createElement('a')
+    link.href = state.update.url
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
+    link.textContent = I18nService.t(I18N_KEYS.PLUGIN_VERSION.DOWNLOAD)
+    label.append(' ', link)
+  }
+  const retry = document.createElement('button')
+  retry.type = 'button'
+  retry.className = 'mgp-msg-action'
+  retry.textContent = I18nService.t(I18N_KEYS.PLUGIN_VERSION.CHECK_AGAIN)
+  retry.onclick = async () => {
+    retry.disabled = true
+    await checkPanelVersion(panel)
+  }
+  label.append(' ', retry)
 }

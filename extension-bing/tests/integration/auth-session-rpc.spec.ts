@@ -88,6 +88,7 @@ beforeEach(async () => {
   })
   fetchMock = vi.fn<typeof fetch>().mockImplementation(async (input, options) => {
     const path = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url).pathname
+    if (path === API.ENDPOINTS.PLUGIN_VERSION_CHECK) return response({ status: 'current', update: null })
     const token = new Headers(options?.headers).get('Authorization')
     if (path === API.ENDPOINTS.AUTH_REFRESH) {
       refreshStarted.resolve()

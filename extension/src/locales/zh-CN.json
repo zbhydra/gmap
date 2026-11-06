@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "已在新标签页中采集",
   "mapsPanel.reviewsExport": "导出 {count} 条评论",
   "mapsPanel.photosExport": "导出 {count} 张照片",
-  "mapsPanel.newVersionAvailable": "有新版本可用。",
   "mapsPanel.listSection": "列表模式",
   "mapsPanel.listIdleHint": "已检测到列表页面，点击开始逐项采集。",
   "options.title": "设置",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "90 秒没有新进展，或工作标签页被关闭时，条目视为卡死。",
   "dashboard.retryValue": "重试 {retries} 次 · 每项最多尝试 {attempts} 次，之后跳过。",
   "dashboard.runningFootHint": "“{name}” 正在运行，新任务将保存在任务历史中等待。",
-  "dashboard.savedNotStarted": "已保存但未启动，另一个任务正在运行。结束后请从任务历史启动本任务。"
+  "dashboard.savedNotStarted": "已保存但未启动，另一个任务正在运行。结束后请从任务历史启动本任务。",
+  "pluginVersion.updateAvailable": "发现新版本 {version}，可继续采集。",
+  "pluginVersion.disabled": "当前版本已禁用，请更新至 {version} 后开始新采集。",
+  "pluginVersion.disabledNoUpdate": "当前版本已禁用，暂无可升级版本，请联系支持。",
+  "pluginVersion.checkFailed": "版本检查失败，请重试后开始新采集。",
+  "pluginVersion.download": "下载更新",
+  "pluginVersion.checkAgain": "重新检查"
 }

@@ -47,5 +47,10 @@
   "bingPanel.goBack": "Go Back",
   "bingPanel.freeBadge": "FREE",
   "bingPanel.proBadge": "PRO",
-  "apiError.fallback": "La requête a échoué. Veuillez réessayer."
+  "apiError.fallback": "La requête a échoué. Veuillez réessayer.",
+  "pluginVersion.updateAvailable": "La version {version} est disponible.",
+  "pluginVersion.disabled": "Cette version est désactivée. Aucune nouvelle extraction ne peut démarrer.",
+  "pluginVersion.noUpdate": "Aucune mise à jour disponible. Contactez le support.",
+  "pluginVersion.checkFailed": "Impossible de vérifier cette version. Réessayez avant de lancer une nouvelle extraction.",
+  "pluginVersion.downloadUpdate": "Télécharger la mise à jour"
 }

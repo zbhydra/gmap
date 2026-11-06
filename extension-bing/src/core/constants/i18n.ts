@@ -9,6 +9,13 @@
  * 翻译键常量
  */
 export const I18N_KEYS = {
+  PLUGIN_VERSION: {
+    UPDATE_AVAILABLE: 'pluginVersion.updateAvailable',
+    DISABLED: 'pluginVersion.disabled',
+    NO_UPDATE: 'pluginVersion.noUpdate',
+    CHECK_FAILED: 'pluginVersion.checkFailed',
+    DOWNLOAD_UPDATE: 'pluginVersion.downloadUpdate'
+  },
   /** 扩展名称 */
   EXTENSION_NAME: 'extensionName',
   /** 扩展描述 */

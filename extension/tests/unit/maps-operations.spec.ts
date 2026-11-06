@@ -1,57 +1,11 @@
-/**
- * 远端运营通道单元测试（013 A12，U6 验收行为直接覆盖）：
- * - 版本比较纯函数（相等/大于/小于/段数不齐/脏数据）；
- * - 新版本提示判定（minPluginVersion > 本地版本）；
- * - 面板运营区渲染：公告 innerHTML 注入、版本提示出现、空公告隐藏；
- * - 导出按钮格式后缀随用户设置变化。
- */
+/** 公告渲染与导出格式展示。 */
 
 import { describe, expect, it } from 'vitest'
 
 import { MapsPanel } from '../../src/sites/maps/content/panel/mapsPanel'
-import { compareVersions, isNewVersionAvailable } from '../../src/sites/maps/config/operations'
-
-describe('版本比较（compareVersions）', () => {
-  it('相等返回 0', () => {
-    expect(compareVersions('0.1.0', '0.1.0')).toBe(0)
-  })
-
-  it('逐段数值比较：大于/小于', () => {
-    expect(compareVersions('99.0.0', '0.1.0')).toBeGreaterThan(0)
-    expect(compareVersions('0.1.0', '99.0.0')).toBeLessThan(0)
-    expect(compareVersions('0.2.0', '0.1.9')).toBeGreaterThan(0)
-    expect(compareVersions('0.1.10', '0.1.9')).toBeGreaterThan(0)
-  })
-
-  it('段数不齐补 0：1.0 与 1.0.0 等价', () => {
-    expect(compareVersions('1.0', '1.0.0')).toBe(0)
-    expect(compareVersions('1', '0.9.9')).toBeGreaterThan(0)
-  })
-
-  it('脏数据容错：非数字段按 0，不抛错', () => {
-    expect(compareVersions('1.a.3', '1.0.3')).toBe(0)
-    expect(compareVersions('abc', '0.0.1')).toBeLessThan(0)
-  })
-})
-
-describe('新版本提示判定（isNewVersionAvailable）', () => {
-  it('远端版本大于本地版本时提示', () => {
-    expect(isNewVersionAvailable('99.0.0', '0.1.0')).toBe(true)
-  })
-
-  it('远端版本等于或小于本地版本时不提示', () => {
-    expect(isNewVersionAvailable('0.1.0', '0.1.0')).toBe(false)
-    expect(isNewVersionAvailable('0.0.9', '0.1.0')).toBe(false)
-  })
-
-  it('远端或本地版本为空串不提示（运营未配置）', () => {
-    expect(isNewVersionAvailable('', '0.1.0')).toBe(false)
-    expect(isNewVersionAvailable('99.0.0', '')).toBe(false)
-  })
-})
 
 describe('面板运营区渲染（renderOperations）', () => {
-  it('公告存在时 innerHTML 注入公告区，版本提示出现', async () => {
+  it('公告存在时 innerHTML 注入公告区', async () => {
     const panel = new MapsPanel({
       onStart: () => undefined,
       onPause: () => undefined,
@@ -67,7 +21,6 @@ describe('面板运营区渲染（renderOperations）', () => {
 
     panel.renderOperations({
       announcementHtml: '<p class="gme-test-announcement">Welcome to MapExporter!</p>',
-      newVersionAvailable: true
     })
 
     const host = document.getElementById('gmap-extractor-panel-host')
@@ -80,11 +33,6 @@ describe('面板运营区渲染（renderOperations）', () => {
     expect(announcement).not.toBeNull()
     const announcementBox = shadow!.querySelector('[data-announcement]')
     expect(announcementBox?.hasAttribute('hidden')).toBe(false)
-
-    // 版本提示行可见且有文案
-    const notice = shadow!.querySelector('[data-version]')
-    expect(notice?.hasAttribute('hidden')).toBe(false)
-    expect(notice?.textContent?.length).toBeGreaterThan(0)
 
     panel.destroy()
   })
@@ -103,7 +51,7 @@ describe('面板运营区渲染（renderOperations）', () => {
     document.body.innerHTML = '<div role="main"></div>'
     await panel.mount('body', 'div[role=main]')
 
-    panel.renderOperations({ announcementHtml: '', newVersionAvailable: false })
+    panel.renderOperations({ announcementHtml: '' })
 
     const shadow = document.getElementById('gmap-extractor-panel-host')!.shadowRoot!
     expect(shadow.querySelector('[data-announcement]')?.hasAttribute('hidden')).toBe(true)

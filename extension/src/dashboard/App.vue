@@ -40,6 +40,11 @@
       </div>
     </header>
     <main class="page db">
+      <PluginVersionNotice
+        :state="pluginVersion"
+        :checking="checkingVersion"
+        @retry="refreshVersion"
+      />
       <div class="db-head">
         <div class="db-title">
           <h1 class="h1">
@@ -915,6 +920,9 @@ import { I18N_KEYS } from '@/core/constants/i18n'
 import { WEBSITE } from '@/core/api/config'
 import { Icon, IconName, IconSize } from '@/core/components/icons'
 import Toast from '@/core/components/Toast.vue'
+import PluginVersionNotice from '@/core/components/PluginVersionNotice.vue'
+import { fetchPluginVersion } from '@/core/plugin-version/client'
+import type { PluginVersionState } from '@/core/api/plugin-version/types'
 import { useToast } from '@/core/composables/useToast'
 import { logger } from '@/core/utils/logger'
 import { BackgroundChannel } from '@/popup/rpc/background.rpc'
@@ -946,6 +954,13 @@ const toolTypes: BulkTaskType[] = ['keywords', 'review-urls']
 const copyScopes = ['completed', 'pending', 'all'] as const
 type CopyScope = (typeof copyScopes)[number]
 const background = new BackgroundChannel()
+const pluginVersion = ref<PluginVersionState>()
+const checkingVersion = ref(false)
+async function refreshVersion(): Promise<void> {
+  checkingVersion.value = true
+  pluginVersion.value = await fetchPluginVersion()
+  checkingVersion.value = false
+}
 /** 批量任务打点：失败只记日志，绝不阻塞任务操作。 */
 function sendMark(markType: (typeof MARK_TYPE)[keyof typeof MARK_TYPE], markMsg: string): void {
   markApi
@@ -1236,9 +1251,15 @@ function errorMessage(code: BulkErrorCode | null): string {
     'empty-input': D.ERROR_EMPTY_INPUT,
     'invalid-param': D.ERROR_INVALID_PARAM,
     'not-found': D.ERROR_NOT_FOUND,
-    'quota-exceeded': D.ERROR_QUOTA_EXCEEDED
+    'quota-exceeded': D.ERROR_QUOTA_EXCEEDED,
+    'plugin-disabled': pluginVersion.value?.update
+      ? I18N_KEYS.PLUGIN_VERSION.DISABLED
+      : I18N_KEYS.PLUGIN_VERSION.DISABLED_NO_UPDATE,
+    'version-check-failed': I18N_KEYS.PLUGIN_VERSION.CHECK_FAILED
   }
-  return t(code === null ? D.ERROR_ACTION : mapping[code])
+  return t(code === null ? D.ERROR_ACTION : mapping[code], {
+    version: pluginVersion.value?.update?.version ?? ''
+  })
 }
 function showError(code: BulkErrorCode | null = null): void {
   showNotice(errorMessage(code), false, code)
@@ -1344,7 +1365,7 @@ async function startTask(taskId: string, showDetail = false): Promise<boolean> {
       `action=start, ok=${result.ok}${result.ok ? '' : `, code=${result.code ?? ''}`}`
     )
     if (!result.ok) {
-      await refreshState()
+      await Promise.all([refreshState(), refreshVersion()])
       showError(result.code)
       return false
     }
@@ -1582,11 +1603,14 @@ watch(
 )
 onMounted(async () => {
   stateSubscriber.on('mapsBulkStateChanged', () => {
-    void refreshState()
+    const runningId = runningTask.value?.id
+    void refreshState().then(() => {
+      if (runningId && runningTask.value === null) void refreshVersion()
+    })
   })
   document.addEventListener('visibilitychange', onVisibilityChange)
   window.addEventListener('resize', updateIndicators)
-  await Promise.all([refreshState(), refreshUsage()])
+  await Promise.all([refreshState(), refreshUsage(), refreshVersion()])
   if (runningTask.value?.type === taskType.value) await openTask(runningTask.value)
   try {
     retryCount.value = (await MapsUserSettingsManager.getSettings()).stuckMaxRetry

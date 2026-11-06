@@ -81,7 +81,6 @@
   "mapsPanel.collectingNewTab": "กำลังเก็บข้อมูลในแท็บใหม่",
   "mapsPanel.reviewsExport": "ส่งออก {count} รีวิว",
   "mapsPanel.photosExport": "ส่งออก {count} รูปภาพ",
-  "mapsPanel.newVersionAvailable": "A new version is available.",
   "mapsPanel.listSection": "List Mode",
   "mapsPanel.listIdleHint": "List page detected. Click start to extract places one by one.",
   "options.title": "Settings",
@@ -362,5 +361,11 @@
   "dashboard.retryHint": "รายการจะถือว่าค้างเมื่อไม่คืบหน้า 90 วินาทีหรือเมื่อแท็บถูกปิด",
   "dashboard.retryValue": "ลองใหม่ {retries} ครั้ง · ลองสูงสุด {attempts} ครั้งต่อรายการแล้วข้าม",
   "dashboard.runningFootHint": "“{name}” กำลังทำงาน งานใหม่จะรอในประวัติงาน",
-  "dashboard.savedNotStarted": "บันทึกแล้วแต่ยังไม่เริ่ม มีงานอื่นกำลังทำงาน เริ่มจากประวัติงานเมื่องานนั้นเสร็จ"
+  "dashboard.savedNotStarted": "บันทึกแล้วแต่ยังไม่เริ่ม มีงานอื่นกำลังทำงาน เริ่มจากประวัติงานเมื่องานนั้นเสร็จ",
+  "pluginVersion.updateAvailable": "มีเวอร์ชัน {version} พร้อมใช้งาน คุณสามารถดึงข้อมูลต่อได้",
+  "pluginVersion.disabled": "เวอร์ชันนี้ถูกปิดใช้งาน โปรดอัปเดตเป็น {version} เพื่อเริ่มดึงข้อมูลใหม่",
+  "pluginVersion.disabledNoUpdate": "เวอร์ชันนี้ถูกปิดใช้งาน ยังไม่มีเวอร์ชันอัปเดต โปรดติดต่อฝ่ายสนับสนุน",
+  "pluginVersion.checkFailed": "ตรวจสอบเวอร์ชันส่วนขยายไม่สำเร็จ โปรดตรวจสอบอีกครั้งก่อนเริ่มดึงข้อมูลใหม่",
+  "pluginVersion.download": "ดาวน์โหลดอัปเดต",
+  "pluginVersion.checkAgain": "ตรวจสอบอีกครั้ง"
 }

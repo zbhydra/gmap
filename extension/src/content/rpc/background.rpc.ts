@@ -34,6 +34,17 @@ export class BackgroundChannel {
     )
   }
 
+  /** 调用 checkPluginVersion 能力。 */
+  checkPluginVersion(
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'checkPluginVersion'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'checkPluginVersion'>>(
+      'checkPluginVersion',
+      undefined,
+      options
+    )
+  }
+
   /** 调用 recordMark 能力。 */
   recordMark(
     params: RpcMethodParams<BackgroundHandler, 'recordMark'>,

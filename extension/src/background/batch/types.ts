@@ -135,6 +135,8 @@ export type BulkErrorCode =
   | 'invalid-param'
   /** 月度配额剩余不足（U7 前置校验；预估消耗 = 条目数 × 单批上限）。 */
   | 'quota-exceeded'
+  | 'plugin-disabled'
+  | 'version-check-failed'
 
 /**
  * 状态机输入事件（controller 从 RPC 命令 / 工作页回报 / alarm / 标签事件
@@ -183,7 +185,7 @@ export interface BulkEffects {
 export interface BulkReduceResult {
   state: BulkState
   effects: BulkEffects
-  /** 非 null = 事件被拒绝，state 保持不变。 */
+  /** 拒绝原因；controller 的版本门控拒绝仍会保留完成边沿并保存暂停状态。 */
   error: BulkErrorCode | null
 }
 

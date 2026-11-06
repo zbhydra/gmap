@@ -47,5 +47,10 @@
   "bingPanel.goBack": "Go Back",
   "bingPanel.freeBadge": "FREE",
   "bingPanel.proBadge": "PRO",
-  "apiError.fallback": "Yêu cầu không thành công. Vui lòng thử lại."
+  "apiError.fallback": "Yêu cầu không thành công. Vui lòng thử lại.",
+  "pluginVersion.updateAvailable": "Đã có phiên bản {version}.",
+  "pluginVersion.disabled": "Phiên bản này đã bị vô hiệu hóa. Không thể bắt đầu lượt trích xuất mới.",
+  "pluginVersion.noUpdate": "Chưa có bản cập nhật. Vui lòng liên hệ hỗ trợ.",
+  "pluginVersion.checkFailed": "Không thể kiểm tra phiên bản này. Hãy thử lại trước khi bắt đầu lượt trích xuất mới.",
+  "pluginVersion.downloadUpdate": "Tải bản cập nhật"
 }
