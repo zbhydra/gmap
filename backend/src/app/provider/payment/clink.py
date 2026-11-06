@@ -560,6 +560,13 @@ class ClinkPaymentProvider(PaymentBase):
         invoice_id = self._string_field(
             invoice, "invoiceId", context=f"clink.invoice_paid: event_id={event_id}"
         )
+        if "items" not in invoice:
+            response = await self._request_json(
+                "GET",
+                f"/subscription/invoice/{invoice_id}",
+                context=f"clink.invoice_paid: invoice_id={invoice_id}",
+            )
+            invoice = self._object_field(response, "data", context="clink.invoice_paid")
         subscription_id = self._string_field(
             invoice,
             "subscriptionId",
@@ -607,6 +614,27 @@ class ClinkPaymentProvider(PaymentBase):
                 "clink.invoice_paid: 发票尚未付清: "
                 f"event_id={event_id}, subscription_id={subscription_id}"
             )
+        items = invoice.get("items")
+        if not isinstance(items, list):
+            raise PaymentProviderError(
+                f"clink.invoice_paid: items must be array: invoice_id={invoice_id}"
+            )
+        lines = [
+            item
+            for item in items
+            if isinstance(item, dict) and item.get("proration") is False
+        ]
+        if len(lines) != 1:
+            raise PaymentProviderError(
+                f"clink.invoice_paid: 缺少唯一整期计费行: invoice_id={invoice_id}"
+            )
+        line = cast(dict[str, object], lines[0])
+        price = self._object_field(line, "price", context="clink.invoice_paid")
+        if price.get("quantity") != 1 or line.get("currency") != currency:
+            raise PaymentProviderError(
+                "clink.invoice_paid: 整期价格数量或币种不符: "
+                f"invoice_id={invoice_id}"
+            )
         await self._validate_local_order(
             order_no=original_order_no,
             session_id=session_id,
@@ -653,7 +681,15 @@ class ClinkPaymentProvider(PaymentBase):
             extra_metadata=self._metadata_json(provider_data),
             provider_data=provider_data,
             recurring_reference=RecurringPaymentReference(
-                original_order_no=original_order_no
+                original_order_no=original_order_no,
+                provider_sku=(
+                    self._string_field(price, "productId", context="clink.invoice_paid")
+                    + ":"
+                    + self._string_field(price, "priceId", context="clink.invoice_paid")
+                ),
+                period_amount=self._normalized_amount(
+                    price.get("unitAmount"), context="clink.invoice_paid.unitAmount"
+                ),
             ),
         )
 

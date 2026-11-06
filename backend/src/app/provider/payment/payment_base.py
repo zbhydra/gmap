@@ -31,9 +31,11 @@ class PaymentRequest:
 
 @dataclass(frozen=True, slots=True)
 class RecurringPaymentReference:
-    """支付渠道回调携带的统一续费引用。"""
+    """首购引用及本次已付发票冻结的渠道整期价。"""
 
     original_order_no: str | None = None
+    provider_sku: str | None = None
+    period_amount: int | None = None
 
 
 @dataclass

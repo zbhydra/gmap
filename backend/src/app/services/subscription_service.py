@@ -1370,10 +1370,9 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         advances 守卫：本地 expires_at 为空或早于渠道到期时间才推进，
         乱序回调不会回退权益；实例字段全部 case 保护，被旧事件覆盖时保持原值。
 
-        档位保护（005）：行内 product_id 只在首购回调（provider_subscription
-        的 original_order_no 等于当前履约订单号）时覆盖；续费/折算发票履约
-        用的续费订单复制的是首购档快照，覆盖会把升级后的档位打回，因此
-        续费履约只推进 expires_at 等账期事实。
+        行内 product_id 只在首购回调（provider_subscription 的 original_order_no
+        等于当前履约订单号）时覆盖；后续发票只推进账期，避免乱序历史发票
+        覆盖已同步的当前档位。
         """
 
         # 快照 period 仅用于校验合法账期；实例不保存 period，账期由 expires_at 表达。

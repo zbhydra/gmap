@@ -58,6 +58,8 @@ def _invoice(
     start: int,
     end: int,
     cents: int,
+    *,
+    gross_cents: int | None = None,
 ) -> dict[str, object]:
     return {
         "id": invoice_id,
@@ -89,7 +91,7 @@ def _invoice(
         "lines": {
             "data": [
                 {
-                    "amount": cents,
+                    "amount": cents if gross_cents is None else gross_cents,
                     "period": {"start": start, "end": end},
                     "parent": {
                         "subscription_item_details": {"subscription": subscription_id}
@@ -612,6 +614,7 @@ async def test_real_stripe_paid_invoices_and_applied_plan_keep_separate_facts(
         now + 100,
         end + 100,
         4100,
+        gross_cents=target.amount // 10_000,
     )
     invoices[str(upgraded["id"])] = upgraded
     state = _subscription(order.order_no, sub_id, target_sku, upgraded)
@@ -669,5 +672,15 @@ async def test_real_stripe_paid_invoices_and_applied_plan_keep_separate_facts(
     assert len(orders) == 3 and sorted(o.amount for o in orders) == sorted(
         [current.amount, 41_000_000, target.amount]
     )
+    for paid_order in orders:
+        if paid_order.order_no == order.order_no:
+            continue
+        assert paid_order.product_id == "api_professional"
+        paid_snapshot = json.loads(paid_order.extra_metadata or "{}")[
+            "product_snapshot"
+        ]
+        assert paid_snapshot["amount"] == target.amount
+        assert paid_snapshot["product_price_id"] == target.id
+        assert paid_snapshot["provider_sku"] == target_sku
     assert payment_queries == 0
     assert set(invoice_queries) == {first["id"], upgraded["id"], renewal["id"]}

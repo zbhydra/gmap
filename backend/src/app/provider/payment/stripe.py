@@ -304,6 +304,10 @@ class StripePaymentProvider(PaymentBase):
             )
             line = self._invoice_line(invoice, subscription_id)
             period = self._object(line.get("period"), "invoice.line.period")
+            pricing = self._object(line.get("pricing"), "invoice.line.pricing")
+            price = self._object(
+                pricing.get("price_details"), "invoice.line.price_details"
+            )
             provider_data: dict[str, object] = {
                 "stripe_invoice_id": self._string(invoice, "id"),
                 "stripe_subscription_id": subscription_id,
@@ -334,7 +338,10 @@ class StripePaymentProvider(PaymentBase):
                 extra_metadata=json.dumps(provider_data, ensure_ascii=False),
                 provider_data=provider_data,
                 recurring_reference=RecurringPaymentReference(
-                    original_order_no=original_order_no
+                    original_order_no=original_order_no,
+                    provider_sku=self._id(price.get("price")),
+                    period_amount=self._integer(line, "amount")
+                    * channel_amount_unit(self.provider_name),
                 ),
             )
         if event_type in STRIPE_PLAN_EVENTS:

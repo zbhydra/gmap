@@ -42,6 +42,7 @@ from app.provider.payment.payment_base import (
 )
 from app.services.base_service import BaseService
 from app.services.config_public_service import config_public_service
+from app.services.payment_config_service import payment_config_service
 from app.utils.logger import logger
 from app.utils.money import normalize_currency, validate_normalized_amount
 from app.utils.order_alarm_utils import (
@@ -487,6 +488,7 @@ class OrderService(BaseService[OrderModel]):
                     original_order_no=original_order_no,
                     paid_amount=paid_amount,
                     paid_currency=paid_currency,
+                    callback=callback,
                 )
                 user_created_order = False
             else:
@@ -640,6 +642,7 @@ class OrderService(BaseService[OrderModel]):
         original_order_no: str,
         paid_amount: int,
         paid_currency: str,
+        callback: CallbackVerificationResult,
     ) -> OrderModel:
         """用 Redis 短锁减少同一次自动续费的建单竞争。"""
 
@@ -670,6 +673,7 @@ class OrderService(BaseService[OrderModel]):
                 original_order_no=original_order_no,
                 paid_amount=paid_amount,
                 paid_currency=paid_currency,
+                callback=callback,
             )
 
         if lock_value is None:
@@ -687,6 +691,7 @@ class OrderService(BaseService[OrderModel]):
                 original_order_no=original_order_no,
                 paid_amount=paid_amount,
                 paid_currency=paid_currency,
+                callback=callback,
             )
 
         try:
@@ -696,6 +701,7 @@ class OrderService(BaseService[OrderModel]):
                 original_order_no=original_order_no,
                 paid_amount=paid_amount,
                 paid_currency=paid_currency,
+                callback=callback,
             )
         finally:
             await lock.release(lock_key, lock_value)
@@ -708,6 +714,7 @@ class OrderService(BaseService[OrderModel]):
         original_order_no: str,
         paid_amount: int,
         paid_currency: str,
+        callback: CallbackVerificationResult,
     ) -> OrderModel:
         """在锁内或 fail-open 路径重查流水和原订单，再按需创建续费订单。"""
 
@@ -731,17 +738,53 @@ class OrderService(BaseService[OrderModel]):
                 f"status={original_order.order_status}"
             )
 
+        product_id = original_order.product_id
+        product_name = original_order.product_name
+        extra_metadata = original_order.extra_metadata
+        reference = callback.recurring_reference
+        if reference.provider_sku is not None:
+            config = await payment_config_service.get_snapshot()
+            product_kind = self.get_order_product_kind(original_order)
+            matches = [
+                (product, price)
+                for price in config.prices.values()
+                if price.channel_code == payment_method
+                and price.provider_sku == reference.provider_sku
+                for product in config.products_by_id[price.product_id]
+                if product.product_kind == product_kind
+            ]
+            if len(matches) != 1:
+                raise OrderSuccessError(
+                    "payment_callback_recurring: 渠道发票价格缺少唯一商品映射: "
+                    f"payment_method={payment_method}, invoice={channel_order_no}, "
+                    f"provider_sku={reference.provider_sku}"
+                )
+            product, price = matches[0]
+            metadata: dict[str, object] = json.loads(extra_metadata or "{}")
+            metadata["product_snapshot"] = {
+                "product_kind": product.product_kind,
+                "product_price_id": price.id,
+                "auto_renew": True,
+                "period": product.period,
+                "currency": paid_currency,
+                "amount": reference.period_amount,
+                "provider_sku": reference.provider_sku,
+            }
+            product_id = product.product_id
+            product_name = product.name
+            extra_metadata = json.dumps(metadata, ensure_ascii=False)
+
         return await self.create_order(
             OrderCreateParam(
                 user_id=original_order.user_id,
                 product_class=original_order.product_class,
-                product_id=original_order.product_id,
-                product_name=original_order.product_name,
+                product_id=product_id,
+                product_name=product_name,
                 amount=paid_amount,
                 payment_method=payment_method,
                 currency=paid_currency,
                 client_ip=original_order.client_ip,
-                extra_metadata=original_order.extra_metadata,
+                extra_metadata=extra_metadata,
                 auto_renew=True,
                 payment_channel_order_no=channel_order_no,
             )

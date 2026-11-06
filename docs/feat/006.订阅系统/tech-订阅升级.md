@@ -96,7 +96,7 @@
 3. 服务端按行内协议调用渠道换价：Clink preview / confirm 显式使用 `immediate=true`、`billingCycleAnchor=now`、`prorationBehavior=always_invoice`；Stripe 重置账期锚点为当前时刻，使用立即折算开票与付款后应用变更。参数结构按固定 API 版本核对。
 4. 渠道付款且目标价已生效后，由确认成功路径或计划事件同步 `product_id`；已付发票路径独立推进 `start_at / expires_at`，复用既有幂等守卫，不要求同一事务写入两类事实。渠道、协议 ID 和自动续费方式保持；等待操作或失败时不提前授予新档。
 5. Clink `subscription.updated.plan_changed`、Stripe 目标 items 已生效的 `customer.subscription.updated` 与 `customer.subscription.pending_update_applied` 触发同一档位核对，覆盖立即成功与稍后成功；用户关闭页面后仍能收敛，重复 confirm 或重复事件按渠道当前已付状态幂等处理。
-6. confirm 不预建本地订单。`invoice.paid` 验签后通过首单引用进入统一实付建单链。订单金额记录新档整期费用减旧权益抵扣后的实付，不与首单整期金额比较。只使用本次已付新账期；重开账期后不得继续沿用旧到期日，也不在新到期日上额外累加一次周期。
+6. confirm 不预建本地订单。`invoice.paid` 验签后通过首单引用进入统一实付建单链。商品与价格快照取本次已付发票对应的新档整期价，遵循 [订阅订单履约](tech-订阅商品与状态.md#订单履约)，不复制首购商品模板；订单金额记录新档整期费用减旧权益抵扣后的实付，不与首单整期金额比较。只使用本次已付新账期；重开账期后不得继续沿用旧到期日，也不在新到期日上额外累加一次周期。
 
 **PayPal 渠道**：本次暂不开新销售；保留已有订单、回调及协议处理，不开放自动续费协议内升档。
 
