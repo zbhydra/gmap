@@ -622,7 +622,7 @@ class ClinkPaymentProvider(PaymentBase):
         lines = [
             item
             for item in items
-            if isinstance(item, dict) and item.get("proration") is False
+            if isinstance(item, dict) and item.get("proration") is not True
         ]
         if len(lines) != 1:
             raise PaymentProviderError(

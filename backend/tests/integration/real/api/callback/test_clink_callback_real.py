@@ -471,7 +471,7 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
             {
                 "amount": format_normalized_amount(target.amount),
                 "currency": "USD",
-                "proration": False,
+                "proration": None,
                 "price": {
                     "productId": target_product,
                     "priceId": target_price,
@@ -502,7 +502,7 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
         webhook_key,
         f"event_invoice_{cleanup.test_run_id}",
         "invoice.paid",
-        {k: v for k, v in paid_invoice.items() if k != "items"},
+        paid_invoice,
     )
     response = await real_async_client.post(
         _WEBHOOK_PATH,
