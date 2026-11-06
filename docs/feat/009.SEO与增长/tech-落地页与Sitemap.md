@@ -1,6 +1,6 @@
 # 009 · 落地页与 Sitemap(平台落地页 + 多语言 Sitemap 生成器 + 长尾文章页)
 
-> 技术实现文档。覆盖:website 平台 SEO 落地页的共享模板与路由、自定义 Astro sitemap 集成(14 语言拆分 + lastmod)、长尾文章页结构。
+> 技术实现文档。§2 与 §4 记录 MapExporter 的现役 Sitemap 基建及验收入口；§1、§3、§5–§7 为 TG 下载站的历史设计。
 >
 > 来源:原 `feat.020 平台SEO落地页` + `feat.026 website多语言Sitemap治理` + `feat.030 website禁下载频道workaround落地页` + `feat.024 website首页private视频下载改造`(首页 SEO 内容改造,§6)。
 >
@@ -12,6 +12,8 @@
 > - 14 语言清单/locale→URL 路径映射:`@../010.多语言/tech-website多语言.md`
 
 ## 1. 平台 SEO 落地页(website)
+
+> **【历史 · TG 下载站已退役】** 本节保留当时的平台下载页、组件与品牌规则；这些路由与下载工作区已不在现役代码中。现役路由与源文件映射见 §2.5。
 
 ### 1.1 现状(以代码为准)
 
@@ -105,18 +107,7 @@ locale→URL 前缀映射见 `@../010.多语言/tech-website多语言.md`(en-US 
 
 源文档基线:单个混合语言 sitemap-0.xml + 无 lastmod + 静态 public/sitemap.xml。
 
-代码事实:`website/astro.config.mjs` 已**移除 `@astrojs/sitemap` integration**,接入自定义 `languageSitemap()`:
-
-```js
-// website/astro.config.mjs
-import languageSitemap from './src/sitemap/languageSitemap.mjs'
-export default defineConfig({
-  site: 'https://telegramdownloadmedia.com',
-  integrations: [vue(), languageSitemap()],
-  trailingSlash: 'always',
-  // ...
-})
-```
+现役配置见 [astro.config.mjs](../../../website/astro.config.mjs)：使用自定义 `languageSitemap()` 与 Vue 集成；`site` 读取 `PUBLIC_SITE_URL`，未配置时为本地 `http://localhost:7620`。MapExporter 主域为 `mapexporter.app`，canonical 与 Sitemap 的绝对 URL 均应与部署时的 `site` 一致。配置的 `trailingSlash` 为 `ignore`，布局与 Sitemap 将 canonical 规范为尾斜杠。
 
 `website/public/sitemap.xml`(静态索引)**已删除**,所有 sitemap 文件由构建生成。
 
@@ -159,7 +150,7 @@ export default defineConfig({
 
 每个 `<url>` 只包含:
 
-- `<loc>`:完整绝对 URL(https://telegramdownloadmedia.com/...)。
+- `<loc>`:基于 `Astro.site` 的完整绝对 URL（正式主域为 `https://mapexporter.app/`）。
 - `<lastmod>`:W3C Datetime。
 
 **不输出 `<priority>` / `<changefreq>`**(Google 忽略它们)。
@@ -175,18 +166,19 @@ export default defineConfig({
 
 ### 2.5 页面族 → 源文件映射(getRouteSourceFiles)
 
-`getRouteSourceFiles(routePath)` 把 URL 路径归到页面族,返回该族的源文件列表(只从族源文件算 lastmod,不叠加全局壳层/配置/locale 大文件):
+`getRouteSourceFiles(routePath)` 把去除语言前缀的 URL 归到页面族；完整清单以 [languageSitemap.mjs](../../../website/src/sitemap/languageSitemap.mjs) 的同名函数为准：
 
 | route pattern | source group |
 | --- | --- |
 | `/`、`/{lang}/` | `src/pages/index.astro` + `src/pages/[lang]/index.astro` + `src/components/pages/HomePage.astro` |
-| `/changelog/`、`/{lang}/changelog/` | changelog.astro + [lang]/ + `src/i18n/content.ts` |
+| `/extension/`、`/online-scraper/` 及语言镜像 | 对应双路由、`ExtensionPage` / `OnlineScraperPage`、产品区块、演示脚本与文案 |
 | `/terms/`、`/privacy/`、`/{lang}/terms|privacy/` | `LegalPage.astro` + `components/legal/`（`LegalHero`、`LegalDocument`）+ `legalContent.ts` |
 | `/about/`、`/contact/`、`/{lang}/about|contact/` | `CompanyPage.astro` + `companyContent.ts`；About 加 `components/company/` 的 `About*` 区块与 `about-globe` / `about-wires`，Contact 加 `ContactSection.astro` |
-| `/telegram-download-disabled-channel-workaround/`、`/{lang}/...` | 该页 + [lang]/ + `TelegramDownloadDisabledGuidePage.astro` + `i18n/downloadDisabledChannelWorkaround.ts` |
-| `/*-downloader/`、`/{lang}/*-downloader/` | 对应 page + [lang]/ + `PlatformDownloaderPage.astro` |
+| `/pricing/` 及语言镜像 | 双路由、`PricingPage.astro`、Pricing 外壳、控制器与 `i18n/pricing.ts` |
+| `/tools/<slug>/` 及语言镜像 | 七个工具的双路由、各工具装配与脚本、共享工具区块及文案 |
+| `/google-maps-scraper-api/`、`/google-maps-reviews-scraper-api/`、`/google-maps-photos-api/`、`/google-maps-scraper-mcp/` 及语言镜像 | 双路由、API / MCP 页面、共享产品区块及对应文案 |
 
-**不叠加** `src/layouts/Layout.astro`、`src/i18n/ui.ts`、`src/i18n/lang/{locale}.ts`:这些粒度过粗,会让壳层/配置/整种语言的翻译改动污染全站或整语言的 lastmod。
+`getUrlSourceFiles(routePath, locale)` 在页面族列表上追加 `src/i18n/content.ts`、`src/i18n/localized-content.ts` 与对应 `src/i18n/lang/{locale}.ts`，因此共享内容或该语言字典的提交会参与 lastmod。`Layout.astro` 与 `i18n/ui.ts` 不在这组附加列表中。新增公开页面族必须补映射；未映射会让构建报错。
 
 ### 2.6 语言分组规则
 
@@ -200,10 +192,10 @@ export default defineConfig({
 
 - `404`、`500`。
 - noindex 页面、非 HTML 页面。
-- 已退休的 `/solutions/` 及其所有子路径；历史入口由 Cloudflare 301 到 workaround 指南。
-- 已退休信息页 `/features/`、`/guide/`、`/faq/` 及各语言前缀版本(这些由 Cloudflare Bulk Redirects 301 到对应语言首页,不生成页面)。
+- `SEARCH_BOT_BLOCKED_ROUTE_PATHS` 中的登录、OAuth 确认、Dashboard 工作区与支付回跳页，含语言镜像。
+- 当前 `pages/` 不生成的 TG 下载页、workaround、changelog 与旧信息页。仓库的 `cloudflare/retired-page-redirects.csv` 为空，不代表线上仍有旧 301；外部规则需单独查询。
 
-> **pricing 的处理(以代码为准)**:源文档 feat.026 说"pricing 由 robots.txt 屏蔽,不进入 sitemap"。代码事实:主站 `website/public/robots.txt` 当前对 `User-agent: *` **无 Disallow**(不屏蔽 pricing)。本域按主站现状写。
+> **Pricing 是公开购买页**：robots 不屏蔽，Sitemap 与现役 llms.txt 均包含它。robots 的 Disallow 与 Sitemap 的排除清单分别维护，不能互相推导。
 
 ### 2.8 XML 写入
 
@@ -215,21 +207,19 @@ XML 写入做实体转义(`&`→`&amp;`、`<`→`&lt;`、`>`→`&gt;`、`"`→`&
 
 ```txt
 User-agent: *
-Disallow: /extension-login/
+Disallow: /clink/cancel/
+Disallow: /clink/success/
 Disallow: /paypal/cancel/
 Disallow: /paypal/success/
 
-Allow: /llms.txt
-Allow: /llms-full.txt
-
-Sitemap: https://telegramdownloadmedia.com/sitemap.xml
+Sitemap: https://mapexporter.app/sitemap.xml
 ```
 
-- `User-agent: *` 下屏蔽登录回跳页 `/extension-login/` 与 PayPal 回跳页 `/paypal/cancel/`、`/paypal/success/`；这些页面也不进入 sitemap。
-- 显式 Allow `/llms.txt` 和 `/llms-full.txt` 作为 AI-readable 入口提示。
-- 只暴露根 sitemap 入口。
+实际内容以 [robots.txt](../../../website/public/robots.txt) 为准：当前只列 Clink 与 PayPal 回跳页的 Disallow，未列 extension-login 或双 llms Allow。登录、授权、Dashboard 及 Stripe 回跳仍由页面 noindex 和 Sitemap 排除规则处理；robots 与这两层的覆盖范围不同。只暴露现役根 Sitemap 入口。
 
 ## 3. 长尾文章页:禁下载频道 workaround(website)
+
+> **【历史 · TG 下载站已退役】** 本节路由、组件与 Solutions 301 均为旧站记录，不是当前仓库或 Cloudflare 运行状态。不得据此恢复旧 TG 页面或重定向条目。
 
 ### 3.1 路由
 
@@ -309,20 +299,13 @@ faq.items 含 5 个问题(与 FAQPage JSON-LD 一致)。
 
 ### website
 
-```bash
-cd website
-pnpm tsc --noEmit
-pnpm build
-pnpm test:module-scripts
-# 抽查构建产物:
-#   dist/tiktok-downloader/index.html, dist/x-downloader/index.html, ...
-#   dist/zh-cn/tiktok-downloader/index.html (多语言抽查)
-#   dist/sitemap.xml, dist/sitemap_index.xml, dist/sitemap-0.xml, dist/*-sitemap.xml
-#   dist/llms.txt, dist/llms-full.txt, dist/robots.txt
-xmllint --noout dist/sitemap.xml dist/sitemap_index.xml dist/sitemap-0.xml dist/*-sitemap.xml
-```
+网站实现变更的构建、启动及测试门禁见 [网站规范](../../references/specs/spec-website.md)。Sitemap 验收抽查根索引、14 语言分片、扁平表与 XSL，核对现役产品 / 工具 / 公司 / 法务页面的 canonical、语言归属、lastmod 与排除规则；llms.txt 和 robots.txt 按当前 `public/` 内容核对，不检查退役下载页或 llms-full.txt。
+
+仅修改本文时只检查文档格式、链接和源码一致性，不构建、不启动网站。
 
 ## 5. 回滚
+
+> **【历史 · Sitemap 迁移记录】** 下方是从默认 Sitemap 集成迁出时保留的回滚步骤，不是现役变更或部署指令。
 
 ### Sitemap
 
@@ -332,6 +315,8 @@ xmllint --noout dist/sitemap.xml dist/sitemap_index.xml dist/sitemap-0.xml dist/
 4. 重新 `pnpm build`。回滚后站点仍能通过 `robots.txt → sitemap.xml → sitemap-0.xml` 暴露 URL,只是失去语言拆分和 lastmod。
 
 ## 6. 首页 Telegram Private Video Downloader 改造(website)
+
+> **【历史 · TG 下载站已退役】** 本节仅保留原首页设计，现役 MapExporter 首页不采用此关键词、下载工作区与内容结构。
 
 > 来源:原 `feat.024 website首页private视频下载改造`(纯 SEO 内容改造,14 语言、JSON-LD、sitemap、关键词,归本域而非下载功能域)。
 
@@ -389,6 +374,8 @@ xmllint --noout dist/sitemap.xml dist/sitemap_index.xml dist/sitemap-0.xml dist/
 保留现有 `data-ga-event` / `data-ga-source` 委派埋点机制。新增可点击内链 / CTA 沿用 `data-ga-event="internal_workflow_click"`,`data-ga-source` 区分区块(如 `homepage_situation` / `homepage_solutions` / `homepage_comparison`)。交叉链接与解析 CTA 的现有埋点不变。不新增自定义事件类型(本节为内容改造,非埋点改造)。
 
 ## 7. SEO meta 来源治理(website)
+
+> **【历史 · TG 下载站已退役】** 本节的品牌、页面族与代码示例均为旧站合同。现役 `Layout.astro` 的 `schemaName` 为 MapExporter，Organization 使用 `contact.ts` 的支持邮箱，无旧 X / Chrome 商店 sameAs；GA4 只在 `PUBLIC_GA4_MEASUREMENT_ID` 非空且页面允许统计时加载，无 Clarity 注入。共享元数据入口见 [网站架构](../000.架构/tech-website.md#6-seo-基建)。
 
 ### 7.1 JSON-LD 品牌字段与页面 SEO 解耦
 

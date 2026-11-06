@@ -1,6 +1,6 @@
 # 003 · Credits 购买(商品 + 双渠道支付确认 + 下载弹窗 + pricing 入口)
 
-> 技术实现文档。覆盖:积分包商品配置与定价、PayPal / Telegram Stars 支付方式确认、积分不足购买弹窗交互、pricing 页主动购买入口与支付回跳。
+> 技术实现文档。现役部分记录共享充值商品读取与余额履约能力；旧 TG 下载不足弹窗、Credits Pricing 入口和渠道 UI 保留为历史。
 >
 > 关联:
 > - 本域产品:`@feat.md`
@@ -13,11 +13,13 @@
 
 ## 0. 域边界
 
-本文件只描述 Credits **商品侧**:积分包商品定义、档位、定价读取接口、website 购买弹窗、pricing 页购买入口与支付方式确认。
+本文件的现役范围是 Credits **商品侧**的共享模型、配置读取、验价与订单履约接入。`credit_checkout_config_service`、`user_credit_service.check_product` 和订单事务内加余额仍在役；配置与渠道是否可用以实际启用配置为准，不以历史默认价格表推断。
 
 订单创建、`check_product` 校验框架、支付 provider、订单履约与回调幂等,属于订单系统,见 `@../004.订单系统/feat.md`。本文件在涉及订单处只描述"Credits 商品作为 `RECHARGE` 商品接入订单系统的契约面",不搬订单实现。
 
-下载扣费(下载授权时按用户口径扣减、6 小时下载记录窗口去重)见 `@tech-数据模型与扣费.md`,不在本文件。
+Telegram Stars Provider、回调与共享渠道能力仍保留，不能因 TG 下载产品退役将它们视为废弃。现役 Maps 新销售合同归 [订阅系统](../006.订阅系统/feat.md) 与订单域，不由本页历史 PayPal / Stars UI 决定。
+
+**历史范围**：§1.2 的旧默认定价与网站双渠道展示规则，以及 §3–§8 的下载工作区、充值弹窗、Pricing、Telegram 成功消息跳转、UI 验收和回滚，均属于已退役 TG 下载站。共享余额能力见 [现役余额底座](tech-数据模型与扣费.md#现役余额底座与月度用量边界)；不恢复旧下载扣费或充值入口。
 
 ## 1. 积分包商品配置(商品侧)
 
@@ -43,6 +45,8 @@ Credits 积分包作为 `ProductClass.RECHARGE = 2` 接入订单系统。商品�
 不新增无实际查询用途的索引。
 
 ### 1.2 档位与默认定价
+
+> **【历史 · TG 下载站已退役】** 下列默认商品、价格与网站 PayPal / Stars 展示是原站合同，不是当前数据库配置或 MapExporter 购买页声明；共享商品模型与支付基建仍保留。
 
 默认 3 档积分包。每个商品有一个美元展示价,并按支付渠道维护独立渠道价:
 
@@ -199,11 +203,7 @@ backend/src/app/services/credit_checkout_config_service.py
 
 支付成功履约由订单侧 `OrderService` 解析订单商品快照,在订单事务内调用 Credits 侧的加余额方法。Credits 侧只提供加余额能力,不实现订单履约编排:
 
-```python
-class UserCreditService:
-    async def check_product(self, param: OrderCheckProductParam) -> OrderCreateParam
-    async def add_balance_in_session(self, db: AsyncSession, *, user_id: int, amount: int, reason: str, resource_key: str | None = None, metadata_json: str | None = None) -> CreditBalanceChangeResult
-```
+现役入口为 `UserCreditService.check_product` 与 `add_balance_in_session(db, *, user_id, amount, reason, metadata_json=None)`；后者不接收 `resource_key`，具体签名以 [user_credit_service.py](../../../backend/src/app/services/user_credit_service.py) 为准。
 
 规则:
 
@@ -216,6 +216,8 @@ class UserCreditService:
 > 余额表、流水表、`add_balance_in_session` 的内部实现见 `@tech-数据模型与扣费.md`,本文件只记录"商品侧提供这个能力、订单侧在履约事务里调用"的契约面。
 
 ## 3. 积分不足购买弹窗(website)
+
+> **【历史 · TG 下载站已退役】** 从本节到 §8 均为旧下载 / 充值 UI、验收与回滚记录。原 Telegram Stars 跳转动线已不适用于现役网站，但 Provider 和回调继续作为共享后端能力保留。
 
 把 Credits 购买能力做成独立可复用组件;`workspace` 只作为首个触发入口,在 Credits 不足时拉起弹窗,完成下单、支付、轮询、成功刷新余额的完整前端闭环。
 

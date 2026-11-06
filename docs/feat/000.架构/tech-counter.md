@@ -6,7 +6,7 @@
 
 本模块只回答“某个用户、某个 Counter 在当前周期累计多少”，不负责额度上限、订阅、下载、积分、匿名设备或业务事务。
 
-现行 extension 每日下载额度继续由 `quota_service` 与 Redis 日期 key 提供，见 `@../005.计数器系统/tech-计数数据与重置.md`。订阅好评赠送使用永久 Counter 记录账号领取次数，但活动资格、锁和订阅加时仍归订阅系统，不进入 Counter 基础设施。
+现役 Google Maps / Bing 插件共用 `maps_extension` 自然月 records，用量查询与上报归 [额度基建](tech-额度基建.md)，不使用本 Counter 代替月度账本。旧每日下载 quota 与 005 域已退役。订阅好评赠送使用永久 Counter 记录账号领取次数，但活动资格、锁和订阅加时仍归订阅系统，不进入 Counter 基础设施。
 
 ## 2. 方案
 
@@ -45,13 +45,13 @@ CounterDefinition: counter_id + cycle
 
 这些 ID 是生产合同，不是测试期间动态注册的夹具，不得删除、改周期或复用。未来业务 ID 进入同一注册表，但不得占用 `9001` 至 `9003`。
 
-### 3.3 计划业务 ID
+### 3.3 生产业务 ID
 
 | 名称 | counter_id | 周期 | 用途 |
 | --- | ---: | --- | --- |
 | `SUBSCRIPTION_REVIEW_REWARD_CLAIMED` | `6001` | `LIFETIME` | 记录账号领取好评赠送订阅的永久次数 |
 
-该 Counter 将在好评赠送实施时注册,只记录领取事实。是否展示活动、并发锁、重复领取响应和订阅加时规则见 `@../006.订阅系统/tech-好评赠送订阅.md`。
+该 Counter 已在 `backend/src/app/constants/counter.py` 的 `COUNTER_DEFINITIONS` 注册，只记录领取事实；注册不表示活动入口已开放。是否展示活动、并发锁、重复领取响应和订阅加时规则见 `@../006.订阅系统/tech-好评赠送订阅.md`。
 
 ## 4. MySQL 数据模型
 
@@ -140,9 +140,9 @@ get_list(user_id: int, counter_ids: list[int]) -> dict[int, int]
 
 | 周期 | 实际 WHERE | 当前源码位置 |
 | --- | --- | --- |
-| daily | `user_id = ? AND ymd = ? AND counter_id IN (...)` | `backend/src/app/services/counter_service.py:108-112` |
-| monthly | `user_id = ? AND ym = ? AND counter_id IN (...)` | `backend/src/app/services/counter_service.py:123-127` |
-| lifetime | `user_id = ? AND counter_id IN (...)` | `backend/src/app/services/counter_service.py:138-141` |
+| daily | `user_id = ? AND ymd = ? AND counter_id IN (...)` | `backend/src/app/services/counter_service.py:113-117` |
+| monthly | `user_id = ? AND ym = ? AND counter_id IN (...)` | `backend/src/app/services/counter_service.py:128-132` |
+| lifetime | `user_id = ? AND counter_id IN (...)` | `backend/src/app/services/counter_service.py:143-146` |
 
 索引三件套审查完成：§7.1 已列出三张新表的完整 PK/UK 清单；上述真实 WHERE 均被对应 UK 的完整列序覆盖；daily、monthly、lifetime Model 的 UK 行尾分别在 `counter_user_daily_model.py:20`、`counter_user_monthly_model.py:20`、`counter_user_lifetime_model.py:19` 注明服务 `counter_service.add/get_list`。三条 UK 同时承担 upsert 冲突检测，不增加 `user_id`、周期或 `counter_id` 单列索引。
 
@@ -156,7 +156,7 @@ get_list(user_id: int, counter_ids: list[int]) -> dict[int, int]
 - `/api/client/counter/increment|get|get-all` 路由及 Backend route 注册。
 - Extension `core/api/counter/`、三个 Counter endpoint 常量以及公共导出。
 
-`quota_service`、`/api/client/quota/check`、`/api/client/subscription/status` 及 Extension 对应调用仍保持不变：下载链路继续使用 quota API，额度展示继续使用 subscription API。
+上述是旧 Redis Counter 的迁移范围。现役已无 `quota_service` 或 `/api/client/quota/check` 路由；双插件使用共享月 records，订阅状态只提供档位与账期，边界见 [额度基建](tech-额度基建.md)。Maps `core/api/config.ts` 中残留的 `QUOTA_CHECK` 常量没有生产调用，不构成可用接口。
 
 ## 9. 文件责任
 
@@ -184,8 +184,8 @@ backend/src/app/api/client/counter_client.py  # 删除
 - 覆盖同一用户、同一桶和同一 Counter ID 的并发正增量，最终总和必须精确且只有一行。
 - 覆盖同一用户、同一桶、同一 Counter ID 只有一行且累计值正确。
 - schema sync 创建三张表；通过 `information_schema` 核对字段、comment、PK 与 UK，不存在额外索引。
-- 检索确认旧 Counter API、路由、Extension wrapper 与导出全部消失，quota/subscription 调用仍存在。
-- Black、Ruff、`compileall`、Counter 相关文件限定范围 mypy、后端 Counter real 测试、Extension 类型检查与构建通过；Backend business 角色启动无异常。全量 `mypy src/app` 被既有 `core/config_schema.py` 27 个错误阻断，不记为通过。
+- 检索确认旧 Counter API、路由、Extension wrapper 与导出全部消失；现役月度计量与订阅状态分别由 usage 与 subscription 入口承担。
+- **历史实施验收记录**：Black、Ruff、`compileall`、Counter 相关文件限定范围 mypy、后端 Counter real 测试、Extension 类型检查与构建通过；Backend business 角色启动无异常。全量 `mypy src/app` 被既有 `core/config_schema.py` 27 个错误阻断，不记为通过。此条不代表当前工作区或生产验证。
 
 ## 11. 失败语义
 

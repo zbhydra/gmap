@@ -1,6 +1,6 @@
 # 003 · Credits 数据模型与扣费(模型 + 扣费算法 + resource token + 6 小时窗口)
 
-> 技术实现文档。覆盖:Credits 持久化模型与注册赠送/存量补发迁移、website 下载扣费算法、resource token、6 小时免扣窗口、余额查询、extension 端保留每日次数的边界。
+> 技术实现文档。现役部分记录共享 Credits 余额底座与 Maps 月度用量边界；原 TG 下载扣费、resource token、免扣窗口与每日下载额度保留为历史合同。
 >
 > 来源:原 `feat.051.001 Credits 数据模型与迁移` + `feat.051.002 Credits 下载扣费后端`。
 >
@@ -8,9 +8,28 @@
 > - 本域产品:`@feat.md`
 > - 积分包商品配置与购买弹窗后端:`@tech-购买.md`
 > - website 前端弹窗组件、旧 quota 清理、用户信息字段:`@tech-前端与清理.md`
-> - 下载授权链路调用本域扣费:`@../002.下载功能/tech-链路与授权.md`
-> - extension 端每日次数口径:`@../005.计数器系统/feat.md`
+> - 历史下载授权链路:`@../002.下载功能/tech-链路与授权.md`
+> - 现役双插件月度 records:[额度基建](../000.架构/tech-额度基建.md)
 > - 订单履约给用户加 Credits:`@../004.订单系统/feat.md`
+
+## 现役余额底座与月度用量边界
+
+现役持久化模型为 [余额账户](../../../backend/src/app/models/user_credit_account_model.py) 与 [余额流水](../../../backend/src/app/models/user_credit_log_model.py)。[UserCreditService](../../../backend/src/app/services/user_credit_service.py) 只负责通用余额变更与充值商品验价，不再提供 `charge_download`、下载体积分档或下载资源键算法；`user_download_record_model.py` 已不在现役模型集合中。
+
+| 方法 | 现役语义 |
+| --- | --- |
+| `get_balance(user_id)` | 读取余额，无账户返回 0 |
+| `add_balance` / `add_balance_in_session` | 增加余额并写正向流水；前者独立提交，后者供订单履约事务复用 |
+| `cut_balance` / `cut_balance_in_session` | 使用余额足够的条件 UPDATE 原子扣减并写负向流水；不足返回 `allowed=False`，不写流水；前者自行提交或回滚 |
+| `check_product` | 以当前充值配置校验价格，生成订单商品快照 |
+
+公共余额变更字段为 `user_id / amount / reason / metadata_json`，不接收 `resource_key` 或 `dedupe_key`；业务幂等归订单或对应业务记录。注册赠送、签到、充值履约、余额查询与后台展示仍使用共享 Credits 能力，业务规则分别归用户、签到与订单域。
+
+Google Maps 与 Bing 插件按共享 `maps_extension` 自然月 records 读取和上报用量，不走 Credits 或旧每日下载 quota。Online / API 的月度计量也归 [额度基建](../000.架构/tech-额度基建.md)，不以余额流水代替月度账本。
+
+## TG 下载站历史合同
+
+> **【历史 · TG 下载站已退役】** 下方 §1–§11 保留原站模型、扣费、迁移和验收口径；其中下载记录表、`charge_download`、resource token、6 小时免扣窗口与每日额度均不在现役 Maps 运行链。旧文中的“新增”“保留”“不能删除”仅对当时实施有效；仍在役的通用余额、赠送与查询能力以上方现役说明和各域合同为准，不据下文恢复旧表、接口或调用。
 
 ## 1. 数据模型
 

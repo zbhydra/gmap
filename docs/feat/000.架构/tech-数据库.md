@@ -32,7 +32,6 @@ backend/src/app/models/
 ├── user_model.py                 # 用户
 ├── user_credit_account_model.py  # 积分账户
 ├── user_credit_log_model.py      # 积分流水
-├── user_download_record_model.py # 下载记录
 ├── user_checkin_record_model.py  # 签到记录
 ├── user_checkin_campaign_model.py# 签到活动
 ├── counter_user_daily_model.py    # 用户自然日 Counter
@@ -40,7 +39,6 @@ backend/src/app/models/
 ├── counter_user_lifetime_model.py # 用户永久 Counter
 ├── order_model.py                # 订单
 ├── subscription_model.py         # 订阅
-├── service_node_model.py         # 服务节点
 ├── admin_model.py                # 管理员
 ├── config_public_model.py        # 公共配置
 ├── config_credit_product_model.py + _price_model.py        # 积分商品 + 价格档
@@ -50,6 +48,8 @@ backend/src/app/models/
 ├── mark_log_model.py             # 前端 mark-log
 ├── callback_log_model.py         # 回调日志
 ```
+
+上表列出共享模型；完整现役集合以 `backend/src/app/models/__init__.py` 的导入与 `Base.metadata` 为准。旧 TG 下载记录与服务节点模型已不在源码中，不作为当前建表目标；余额、流水、签到与用户 Counter 仍在役。
 
 约定（代码现状）：
 - 文件名 `<域>_model.py`，类名 `<域>Model`（如 `UserModel`、`OrderModel`）。

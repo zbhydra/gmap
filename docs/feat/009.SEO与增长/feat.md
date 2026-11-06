@@ -1,6 +1,6 @@
 # 009 · SEO 与增长
 
-> 产品需求文档。只描述"做哪些 SEO 资产、承接哪些增长流量、签到活动、边界、验收"。技术实现(落地页生成、Sitemap 多语言生成器、llms.txt 内容、签到后端)见同目录 `tech-*.md`。
+> 产品需求文档。现役范围为 MapExporter 的共享 SEO 与可发现性资产；TG 下载站的原产品合同在下方单独保留为历史。技术实现见同目录 `tech-*.md`。
 >
 > 关联:
 > - 本域技术:`@tech-落地页与Sitemap.md` `@tech-LLMs与增长入口.md` `@tech-签到活动.md`
@@ -9,6 +9,22 @@
 > - 多语言机制(14 语言清单、locale→URL 路径映射、文案 key 规则):`@../010.多语言/feat.md`
 > - 用户/账户入口、登录态:`@../007.用户系统/feat.md`
 > - 签到发放的 Credits 余额、流水、扣费:`@../003.积分系统/feat.md`
+
+## 现役范围与验收
+
+MapExporter 主域为 `mapexporter.app`，公开页面围绕 Maps 插件、Online Scraper、API / MCP、Pricing、七个工具及公司和法务信息组织。产品与工具页面范围分别见 [Maps 插件](../013.Maps插件/feat.md)、[Maps 云端](../014.Maps云端/feat.md) 和 [工具与增长](../015.工具与增长/feat.md)。
+
+- 共享 SEO 基建继续使用 14 语言 Sitemap、canonical、hreflang 与按内容变更生成的 lastmod；公开 Pricing 页可发现，登录、授权、支付回跳和私有工作区不进入 Sitemap。生成与排除规则见 [Sitemap 技术合同](tech-落地页与Sitemap.md#2-多语言-sitemap-治理website)。
+- AI 可读入口为 llms.txt，收录现役产品、Pricing、工具、公司和法务目录，并提供支持邮箱与 Sitemap 入口。旧站的双 llms 文件、下载页与邮箱禁项不适用于现役站；内容规则见 [LLMs 入口](tech-LLMs与增长入口.md#现役-mapexporter-入口)。
+- 公开身份使用 MapExporter 与当前支持邮箱，不沿用 TG 官方 X 身份；元数据归 [网站架构](../000.架构/tech-website.md#6-seo-基建) 维护。
+- 网站 GA4 仅在配置统计 ID 且页面允许统计时加载；不继承旧 TG 域名或 Clarity 采集承诺。后台 GSC / GA4 指标采集保持退役，运营使用官方控制台。
+- 签到后端与 Credits 发放仍属共享能力，见 [签到技术合同](tech-签到活动.md)；下方旧首页账户入口与签到 UI 不作为现役 Maps 网站的交付声明。
+
+验收时核对现役页面的 canonical / hreflang、14 语言 Sitemap 的收录与 lastmod、robots 和 llms.txt 的真实目录，以及支持身份和可选统计配置；部署、DNS 与外部控制台状态以 [ROADMAP](../../ROADMAP.md) 为准。
+
+## TG 下载站历史合同
+
+> **【历史 · TG 下载站已退役】** 以下各节保留原下载站的需求、当时现状与验收记录，其中“当前”“已上线”“最终状态”均指 TG 下载站时期。平台下载页、workaround、旧首页、双 llms、官方 X、旧域名及 Clarity 不属于现役 MapExporter 合同；仍复用的 SEO 基建与共享后端能力以上方现役范围为准。
 
 ## 系统定性:SEO 与流量增长域
 

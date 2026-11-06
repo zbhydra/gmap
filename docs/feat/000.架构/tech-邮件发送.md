@@ -8,11 +8,11 @@
 邮件发送是后端的基础设施能力，**当前唯一落地点是邮箱验证码下发**（007 用户域）。它不绑定任何单一业务——只要后端需要向用户邮箱发信，就走这套 `EmailSender`。
 
 核心代码：
-- 发送器：`/Users/hydra/Documents/work/project/extension-tg-download/backend/src/app/utils/email_sender.py`
-- 配置：`/Users/hydra/Documents/work/project/extension-tg-download/backend/src/app/core/config_schema.py`（`SMTPSettings` / `SMTPSettingsList`）
-- 验证码业务（调用方）：`/Users/hydra/Documents/work/project/extension-tg-download/backend/src/app/services/email_verification_service.py`
-- 验证码模板：`/Users/hydra/Documents/work/project/extension-tg-download/backend/src/app/templates/email_verification.html`
-- 邮件文案 i18n：`/Users/hydra/Documents/work/project/extension-tg-download/backend/src/app/i18n/locales/*.json`（14 语言，key 前缀 `email.*`）
+- 发送器：[backend/src/app/utils/email_sender.py](../../../backend/src/app/utils/email_sender.py) 的 `EmailSender`。
+- 配置：[backend/src/app/core/config_schema.py](../../../backend/src/app/core/config_schema.py) 的 `SMTPSettings` / `SMTPSettingsList`。
+- 验证码业务（调用方）：[email_verification_service.py](../../../backend/src/app/services/email_verification_service.py) 的 `send_verify_code`。
+- 验证码模板：[email_verification.html](../../../backend/src/app/templates/email_verification.html)。
+- 邮件文案 i18n：`backend/src/app/i18n/locales/*.json`（14 语言，key 前缀 `email.*`）。
 
 ## 2. 账号池与配置
 
@@ -28,7 +28,7 @@
 | `password` | str | 必填 | SMTP 授权码（QQ 邮箱等需用授权码而非登录密码） |
 | `use_tls` | bool | 缺省 True | 是否使用 TLS |
 | `from_email` | str | 必填 | 发件人邮箱 |
-| `from_name` | str | 缺省 `"TG Download"` | 发件人名称 |
+| `from_name` | str | 缺省 `"GMap"` | 发件人名称；实际值以运行配置为准 |
 | `weight` | int | ≥1，缺省 100 | 发送权重，只影响单次抽取概率 |
 
 根配置 `Settings.smtp` 是 `list[SMTPSettings]`（别名 `SMTPSettingsList = Annotated[list[SMTPSettings], Field(min_length=1)]`），即**至少 1 个账号**。
@@ -37,7 +37,7 @@
 
 - 从 `config_data["smtp"]` 读取，经 `TypeAdapter(SMTPSettingsList).validate_python(...)` 校验。
 - 校验失败时把 Pydantic 错误拼成 `smtp: <field>: <msg>; ...` 形式抛出，msg 带具体字段路径（满足「抛错带可定位 msg」）。
-- **download 角色节点允许 `smtp` 缺省**（节点不连业务库、不发邮件）；business 角色必须有配置。
+- 统一后端要求至少一个 SMTP 账号，不再按 business/download 角色豁免。
 
 ### 2.3 配置脱敏
 
@@ -70,7 +70,7 @@
 
 - **失败集合只在单次发送请求内生效**：某账号本次失败，从 `available_accounts` 移除，本次不再选中；**下一次发送请求重新参与**权重随机。
 - **不引入全局熔断/熔断器状态**：配置与运行时保持简单，避免长期故障账号被误判不可用。如需全局熔断，应基于真实发送失败率单独设计（源文档 §5 明确留空）。
-- **尝试次数 = 账号数量**（不是固定 3 次）。`send_verify_code` 的 `retry_times` 参数仅作旧调用兼容，**实际不生效**。
+- **尝试次数 = 账号数量**。`send_verify_code(to_email, code, language=DEFAULT_LANGUAGE) -> bool` 不接收 `retry_times`，每个账号在单次请求中最多尝试一次。
 
 ## 6. 账号标识与日志（`smtp_account_identifier`）
 
@@ -96,4 +96,4 @@
 
 1. **源 §4.8「失败处理：清理验证码与尝试次数、重置发送限流」**：实际由调用方 `email_verification_service` 而非 `EmailSender` 执行；`EmailSender` 只返回 `bool`。
 2. **源 §6「Python 发送器当前会打印 SMTP 配置，实施时移除」**：代码已移除该调试输出，`EmailSender` 不打印完整配置。
-3. **`retry_times` 参数**：源未提及，代码保留为兼容旧调用的无用参数，实际尝试次数由账号数决定。
+3. **发送签名**：不保留 `retry_times` 兼容参数，实际尝试次数由账号数决定。

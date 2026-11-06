@@ -7,20 +7,19 @@
 ```
 backend/
 ├── src/
-│   ├── app/                         # 应用主体
+│   └── app/                         # 应用主体
 │   │   ├── main.py                  # FastAPI app 入口 + lifespan + 中间件挂载 + 路由聚合
 │   │   ├── api/                     # API 层（只做参数判断/处理，不碰事务）
-│   │   │   ├── admin/               #   /api/admin/*    后台接口（节点/订单/渠道/TG 客户端/mark-log/看板）
-│   │   │   ├── client/              #   /api/client/*   互联网客户端接口（下载/解析/积分/计数/订单/登录/签到）
+│   │   │   ├── admin/               #   /api/admin/*    后台认证、用户、订单、任务、系统设置与看板
+│   │   │   ├── client/              #   /api/client/*   Maps、用量、订阅、订单、登录、积分与签到
 │   │   │   ├── external/            #   /api/external/* 外部开发者 / 第三方系统接口（按子前缀区分 API Key）
-│   │   │   ├── internal/            #   /api/internal/* 节点内部接口（无业务 DB 依赖）
 │   │   │   ├── system/              #   /api/system/*   健康检查/看板
 │   │   │   ├── callback/            #   /api/callback/* 支付/Telegram 回调
 │   │   │   ├── admin_dependencies.py  admin 侧 FastAPI 依赖（Depends 只在 api 入口）
 │   │   │   └── user_dependencies.py    client 侧 FastAPI 依赖
-│   │   ├── services/                # 业务层（类，事务都在这；61 个 service 文件）
+│   │   ├── services/                # 业务层（类，事务都在这）
 │   │   │   ├── base_service.py      #   BaseService[ModelType] 抽象基类，泛型 model_class
-│   │   │   └── *_service.py         #   如 user_service / order_service / quota_service ...
+│   │   │   └── *_service.py         #   如 user_service / order_service / usage_service ...
 │   │   ├── models/                  # SQLAlchemy 模型（见 @tech-数据库.md）
 │   │   ├── schemas/                 # Pydantic 请求/响应模型（按域 *_schema.py）
 │   │   ├── core/
@@ -38,17 +37,16 @@ backend/
 │   │   ├── init/                    # DB 初始化与结构同步（sync_database_schema.py 等，见 @tech-数据库.md）
 │   │   ├── i18n/                    # 国际化（见 §7）
 │   │   ├── provider/                # 外部能力提供者
-│   │   │   ├── payment/             #   支付（payment_base / tg_star）
-│   │   │   └── telegram_manager.py
+│   │   │   ├── payment/             #   共享支付 Provider（含 Telegram Stars）
+│   │   │   └── gmap/                #   Collector 客户端与采集/补全
+│   │   ├── runtime/                 # Export 任务运行时
 │   │   ├── constants/               # 常量与枚举（按域 *.py）
 │   │   ├── templates/               # 邮件等模板（email_verification.html）
 │   │   └── utils/                   # 工具（见 §8）
-│   └── tg_link_client/              # Telegram 链接解析客户端（link_parser / downloader / message_mapper）
-├── config.yaml / config.yaml.example         # 运行配置（业务角色）
-├── config.download.yaml / .example           # 下载角色配置
+├── config.yaml / config.yaml.example         # 统一运行配置
 ├── pyproject.toml / uv.lock                  # uv 管理
 ├── scripts/ / data/ / deploy/ / resources/
-└── README.md                                 # 含 TG 登录生成 session 说明、with-python-cache.sh 用法
+└── README.md                                 # 后端开发与运行说明
 ```
 
 ## 2. 分层约定
@@ -90,20 +88,20 @@ HTTP 方法约束：**只能用 GET 和 POST**（根 `@../../../AGENTS.md` §3 �
 
 入口：`core/config.py` 的全局 `settings = Settings()` 单例。模型在 `core/config_schema.py`。
 
-- 配置来源：`backend/config.yaml`（业务角色）/ `backend/config.download.yaml`（下载角色），YAML。`Settings.__init__` 读文件 → `_apply_config_data()` 映射为强类型子配置。
-- 子配置（`_apply_config_data` 实例化的属性）：`app / database / logging / api / auth / redis / feishu_alarm / smtp / telegram / download / admin / service_node / download_token`。
-- **角色隔离**：`app.role ∈ {"business","download"}`。下载角色禁止配 `download_token.private_key`（business 专属），且不配 smtp 时返回空列表。`download_token.resource_token_secret` 必须非默认值。
+- 配置来源：默认 `backend/config.yaml`，也可由 `Settings(config_path=...)` 显式指定。`Settings.__init__` 读 YAML → `_apply_config_data()` 映射为强类型子配置。
+- 子配置由 `core/config_schema.py` 的 `Settings._apply_config_data` 定义：`app / database / logging / api / auth / redis / feishu_alarm / smtp / admin`；SMTP 是至少一个账号的列表，其余对应强类型配置对象。
+- **统一进程**：现役配置没有 `app.role`、下载节点或下载 token 段；不再按 business/download 分派启动。Collector 连接配置属于 Maps 采集配置，入口见 [引擎 Provider](../014.Maps云端/tech-引擎Provider层.md)。
 - **热加载**：`settings.reload()` 重新读文件再 `_apply_config_data`；`settings.load_candidate()` 与 `load_settings_candidate(path)` 不影响运行态、只做前置校验，失败抛 `ConfigReloadError`（聚合 YAML/文件系统/字段校验错误为可定位路径，供后台 reload 接口返回）。后台改配置走候选校验 → reload。
 - 各 Settings 子类都是 `pydantic.BaseSettings`。
 
 ## 5. 数据库会话与 Redis
 
-- **DB 会话**：`core/database.py`，`get_engine()` 单例异步引擎，`get_async_session()` 上下文管理器。`close_engine()` 在 business lifespan shutdown 时调用。
-- **Redis**：`core/redis.py` 的 `RedisClient` 单例（`BlockingConnectionPool` + `asyncio.Lock` 双检锁）。带 `RedisException / RedisConnectionError / RedisOperationError`。Redis 之上的能力在 `utils/`：`redis_lock`（分布式锁）、`redis_rate_limiter` / `redis_fixed_limiter`（限流）、`redis_queue`、`async_token_bucket`（令牌桶）、`redis_key`（key 命名）。
+- **DB 会话**：`core/database.py`，`get_engine()` 单例异步引擎，`get_async_session()` 上下文管理器。`close_engine()` 在统一 lifespan shutdown 时调用。
+- **Redis**：`core/redis.py` 的 `RedisClient` 单例（`BlockingConnectionPool` + `asyncio.Lock` 双检锁）。带 `RedisException / RedisConnectionError / RedisOperationError`。Redis 之上的能力在 `utils/`：`redis_lock`（分布式锁）、`redis_rate_limiter` / `redis_fixed_limiter`（限流）、`redis_queue`、`redis_key`（key 命名）。
 
 ## 6. crons 框架
 
-> 对应 `feat.043.后端Crons定时任务框架`。business 角色专属，lifespan 启停。
+> 对应 `feat.043.后端Crons定时任务框架`，由统一 lifespan 启停。
 
 目录：`backend/src/app/crons/`
 ```
@@ -122,7 +120,7 @@ crons/
 - **声明式注册**：`registry.CRONT_TASKS: list[CronTaskSpec]` 是唯一注册点。`CronTaskSpec(task_key, task, kind="interval", interval_seconds=...)`。新增任务只改 `registry.py` + 在 `task/` 加实现。
 - **MySQL 游标 + 领取**：`cron_task_cursor_service` 在 `cron_task_cursors` 表记录每个 task_key 的上次执行/占用状态，调度器周期扫描到期任务、领取（防多实例重复）、执行、释放。
 - **超时与取消**：`executor.execute_claimed_task` 用 `asyncio.wait_for(asyncio.shield(business_task), timeout)`；超时/取消后异步消费残留 task 并释放游标。
-- **启动/停止**：`cron_scheduler.start()` / `.stop()` 在 business lifespan（`main.py._start_business_cron_scheduler`）。download 角色不启 cron。
+- **启动/停止**：`cron_scheduler.start()` / `.stop()` 由 `main.py._start_cron_scheduler` / `_stop_cron_scheduler` 在 lifespan 内调用。
 
 ## 7. 日志与 i18n
 
@@ -139,22 +137,17 @@ crons/
 
 `backend/src/app/utils/`（与 DB 无关的纯工具，供 service/api 复用）：
 ```
-async_token_bucket.py     # 异步令牌桶（限速）
 common.py                 # get_locale 等通用
 crypto.py                 # 加解密
 email_sender.py           # SMTP 发信
 feishu_utils.py           # 飞书告警/工具
-filename.py               # 文件名处理
 geoip.py                  # 地理定位
 jwt.py                    # JWT 签发/校验
 money.py                  # 金额处理
 network.py                # 网络工具
 redis_fixed_limiter.py / redis_lock.py / redis_queue.py / redis_rate_limiter.py / redis_key.py
 response.py               # ResponseUtils（统一响应封装）
-service_node_url.py       # 节点 URL 构造
-tg_client_alarm_utils.py  # TG 客户端告警
 time.py                   # 业务时间工具（America/New_York，见 @tech-数据库.md §2）
-ytdlp_runner.py           # yt-dlp 执行器
 logger.py                 # setup_logger
 ```
 
@@ -164,11 +157,12 @@ logger.py                 # setup_logger
 
 根 `@../../../AGENTS.md` §3 红线 4：**新增代码不允许有依赖注入**。FastAPI 的 `Depends` 只允许出现在 **api 入口**与 `api/*_dependencies.py`，service/utils/内部不得引入 DI。`BaseService` 用泛型绑定 model_class、模块级单例（如 `user_service = UserService()`），不通过容器注入。
 
-## 10. 业务/下载双角色 lifespan
+## 10. 应用 lifespan 与路由聚合
 
-`main.py._create_lifespan(role)` 按 `app.role` 装配生命周期：
-- **business**：启动 monitor + cron_scheduler + service_node_health 后台任务；shutdown 时依次停掉、释放节点运行态资源（tg_client / http client / browser runtimes）、关业务 DB 引擎。
-- **download**：只启停 monitor；不导业务 DB、不启 cron；shutdown 只清理本地运行态资源。
+`backend/src/app/main.py` 的 `_create_lifespan()` 不接收 role：
+
+- 启动 crons 与 `export_job_runtime`，在 MCP `session_manager.run()` 上下文内服务请求。
+- 退出时停止 crons 与 Export runtime，关闭 `gmap_collector_client` 与业务 DB 引擎。
 - **请求排空边界**：收到停止信号后立即停止监听新请求，存量请求最多等待 10 秒；超时取消存量请求，禁止长下载阻塞进程重启。
 
-`_load_optional_media_v2_router()` 用延迟导入避免 download 角色初始化业务路由依赖（`_MEDIA_V2_MODULE`）。节点内部接口（`api/internal/service_node_health.py`）无业务 DB 依赖，两个角色都挂载在 `/internal`。
+`create_app()` 聚合中间件、异常处理器与 `_include_business_routes()`。现役路由覆盖 `/api/client/*`、`/api/admin/*`、`/api/external/*`、`/api/system/*`、共享支付回调及 MCP/OAuth；没有 TG 解析/下载或 internal 节点路由。路由模块在模块顶部统一导入。

@@ -9,7 +9,7 @@ monorepo，各前端子项目独立用 pnpm 管理（无根 workspace），后�
 
 | 端 | 目录 | 技术栈 | 职责 |
 | --- | --- | --- | --- |
-| **backend** | `backend/` | Python 3 + FastAPI + SQLAlchemy(async) + aiomysql + Redis | 业务服务器（`business` 角色）与执行节点（`download` 角色）共用同一份代码；API、调度、crons、支付、节点管理全在这。详见 `@tech-backend.md` |
+| **backend** | `backend/` | Python 3 + FastAPI + SQLAlchemy(async) + aiomysql + Redis | 统一业务 API、Maps 云端任务、crons 与共享支付；采集通过 GMap Collector Provider 调用。单一 lifespan 与路由聚合见 `@tech-backend.md` |
 | **website** | `website/` | Astro，nginx 部署；依赖以本端 package.json 为准 | MapExporter 主站，提供产品页、Pricing 与工具；站点配置见本端 README，工程职责见 `@tech-website.md` |
 | **extension** | `extension/` | Vue 3 + Pinia + vue-i18n，**Chrome Manifest V3** | Google Maps 采集插件，跨上下文 RPC、与 backend 共用 HTTP 契约。详见 `@tech-extension.md` |
 | **extension-bing** | `extension-bing/` | Vue 3，**Chrome Manifest V3** | Bing Maps 采集插件，与 Google Maps 插件共享 `maps_extension` 订阅类别。详见 `@../016.Bing插件/feat.md` |
@@ -17,18 +17,17 @@ monorepo，各前端子项目独立用 pnpm 管理（无根 workspace），后�
 
 ### 1.1 本地开发端口
 
-日常应用固定使用 4 个监听端口；开发服务器启用严格端口模式，端口被占用时启动失败，不自动顺延。
+日常应用使用下列 3 个监听端口；前端开发服务器启用严格端口模式，端口被占用时启动失败，不自动顺延。
 
 | 端口 | 服务 | 配置来源 |
 | --- | --- | --- |
 | `7610` | admin 管理后台 | `admin/vite.config.ts` |
 | `7620` | website 主站 | `website/astro.config.mjs` |
-| `7600` | backend business 业务服务 | `backend/config.yaml` |
-| `7601` | backend download 执行节点 | `backend/config.download.yaml` |
+| `7600` | backend 业务服务 | `backend/config.yaml` 的 `app.port` |
 
 extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式运行 `pnpm dev:extension` 时固定使用 `5173`。
 
-测试保留 `4332`（website 独立 E2E）和 `7602`（第二个 download E2E 节点），不属于日常应用端口。MySQL `3306`、Redis `6379` 与 Edge CDP `9222` 是外部基础设施或调试工具端口，也不计入上述 5 个应用端口。
+测试端口以各端 Playwright 配置为准。MySQL `3306`、Redis `6379` 与 Edge CDP `9222` 是外部基础设施或调试工具端口，不计入应用端口。旧下载节点及其配置已退出本仓运行链。
 
 ## 2. 技术栈速查
 
@@ -44,30 +43,30 @@ extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式
 用户
  │
  ├─ 浏览器 ─→ website (Astro 静态站)
- │             │  登录/订阅/订单 调 backend business (HTTP)
- │             │  mark-log 双写: backend /api/client/mark + 阿里云 SLS WebTracking (后端不可用时逃生)
+ │             │  登录/订阅/订单 调 backend (HTTP)
+ │             │  行为日志写 SLS；转化白名单另写 backend mark
  │             ▼
- │      backend (business 角色, FastAPI)
+ │      backend (FastAPI，单一 lifespan)
  │        ├─ /api/client/*   Maps 采集/用量/订阅/订单/登录接口
  │        ├─ /api/external/* 外部开发者与第三方系统接口（按子前缀区分凭证）
  │        ├─ /api/admin/*    admin 后台接口
  │        ├─ /api/system/*   健康检查/看板
- │        ├─ /api/internal/* 节点内部接口 (无业务 DB 依赖)
  │        ├─ /api/callback/* 共享支付回调 (保留 Telegram Stars)
+ │        ├─ /mcp + OAuth 端点
  │        ├─ crons 框架 (注册表 + MySQL 游标 + 调度器)
  │        └─ Maps 云端任务 → 采集 Provider / 结果存储
  │
  └─ 桌面浏览器 ─→ extension / extension-bing (Google Maps / Bing Maps)
                   │  content/background/injected 三上下文, 自研 RPC
-                  │  HTTP 调同一 backend business (X-Device-Id + token)
+                  │  HTTP 调同一 backend (X-Device-Id + token)
                   │  采集结果本地导出；订阅购买和管理跳转 website Pricing
                   ▼
-              backend business (同上, /api/client/*)
+              backend (同上, /api/client/*)
 ```
 
 要点：
 - **website / extension / admin 走同一套后端 HTTP 契约**，客户端前缀 `/api/client/*`、后台前缀 `/api/admin/*`；面向外部开发者 / 第三方系统的数据接口走 `/api/external/*`（当前 `maps` 认用户 API Key、`system` 认管理员 API Key）。接口只用 GET 和 POST（见 `@../../../AGENTS.md` §3）。
-- **SLS 日志双写在 website 前端**，不在 backend Python 侧（后端用标准 logging：控制台 + 文件）。见 `@tech-website.md` 与 `feat.033`。
+- **SLS 由 website 与双插件写入**，仅转化白名单双写后端；后端 Python 使用标准 logging（控制台 + 文件）。通道与白名单见 [可观测与 SLS](tech-可观测与SLS.md#1-通道裁决)。
 
 ## 4. 业务域依赖地图
 
@@ -99,7 +98,7 @@ extension 常规开发命令执行 watch 构建，不监听 HTTP 端口；显式
 | MySQL / 时区 / 结构同步 / 索引规则 | `@tech-数据库.md` |
 | FastAPI 分层 / 异常中间件 / 配置 / crons / Redis / SLS | `@tech-backend.md` |
 | Astro 目录 / 多语言 / Sitemap / Cloudflare / SEO | `@tech-website.md` |
-| 插件上下文 / RPC / store / quota / 与后端通信 + admin 后台 | `@tech-extension.md` |
+| 插件上下文 / RPC / store / 月度用量 / 与后端通信 + admin 后台 | `@tech-extension.md` |
 | 本次建立记录 | `@changelog.md` |
 
 规则文档（指令性，非本域重复）：

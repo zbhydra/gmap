@@ -1,22 +1,24 @@
 # 003 · Credits 前端展示与旧额度清理(website)
 
-> 技术实现文档。覆盖:website 展示 Credits 余额、下载扣费后刷新、播放入口屏蔽;website 用户可见的旧每日下载次数口径清理。
+> 技术实现文档。现役边界见 §0；§1–§8 保留原 TG 下载站 Credits 展示与每日额度清理记录，不作为现役前端验收。
 >
 > 关联:
 > - 本域产品:`@feat.md`
 > - 余额数据模型与扣费规则:`@tech-数据模型与扣费.md`
 > - 积分不足时的购买弹窗:`@tech-购买.md`
-> - extension 每日次数计数器(不在本文件,保留):`@../005.计数器系统/feat.md`
+> - 现役双插件月度 records:[额度基建](../000.架构/tech-额度基建.md)
 >
 > 来源:原 `feat.051.003 Credits 前端与旧额度清理`。
 
 ## 0. 域边界
 
-本文件只描述 **website 展示层** 的 Credits 化与旧额度清理。
+现役 Google Maps / Bing 插件共用 `maps_extension` 自然月 records，不展示或扣减旧每日下载次数。查询与上报分别使用 `/api/client/maps/usage` 和 `/api/client/maps/usage/report`，两端实现入口是 `extension/src/sites/maps/usage/` 与 `extension-bing/src/sites/bing/usage/`，合同见 [额度基建](../000.架构/tech-额度基建.md)。
 
-extension 端的每日次数计数器(`quotaStore`、`QuotaCounter.vue`、`/api/client/quota/check` 的 `count` 调用)属计数器系统,保留不动,见 `@../005.计数器系统`。本文件不修改、不清理 extension。
+旧 `quotaStore`、`QuotaCounter.vue`、quota-check 与“每日剩余次数”不是现役 Maps / Bing 采集路径。Maps API 配置中尚有未消费的 `QUOTA_CHECK` 常量，但后端无对应路由，不能视为接口仍可调用。
 
-下载扣费的后端规则、余额表、流水表见 `@tech-数据模型与扣费.md`,本文件只描述前端如何读取与刷新。
+Credits 余额与流水仍是共享后端能力，见 [余额底座](tech-数据模型与扣费.md#现役余额底座与月度用量边界)；网站保留余额字段不代表原下载工作区或充值入口仍在役。
+
+> **【历史 · TG 下载站已退役】** 下方 §1–§8 的目录、UI、quota 保留要求、验收命令与回滚均属于原站时期；“extension 保持不变”不约束当前插件。旧下载工作区和 005 域已退出现役，不按这些记录恢复每日次数或播放/下载入口。
 
 ## 1. website 用户状态类型与展示
 

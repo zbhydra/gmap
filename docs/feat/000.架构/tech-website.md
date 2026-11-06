@@ -16,7 +16,7 @@ website/
 ├── astro.config.mjs          # 集成 vue() + languageSitemap()
 ├── package.json
 ├── cloudflare/
-│   ├── retired-page-redirects.csv   # 废弃 URL 301 重定向表（14 语言全量）
+│   ├── retired-page-redirects.csv   # 退役页重定向配置（当前空表）
 │   └── README.md
 ├── deploy/
 │   ├── mapexporter.conf           # nginx 配置（真实目录无尾斜杠→HTTPS 尾斜杠 301；静态 30d immutable）
@@ -37,13 +37,13 @@ website/
     ├── company/
     │   └── companyContent.ts # about/contact 文案（en-US 基线）、页面日期与 footer 标签
     ├── lib/
-    │   └── contact.ts        # 公开支持邮箱与官方 X 账号身份常量
+    │   └── contact.ts        # 公开支持邮箱 DEVELOPER_EMAIL
     ├── middleware.ts         # 当前空壳（pass-through，无语言重定向）
     ├── pages/
     │   ├── index.astro       # 默认 en-US（无 URL 前缀）
     │   ├── *.astro           # 无前缀业务页与非公开流程页
-    │   ├── paypal/           # 支付成功/取消结果页
-    │   └── [lang]/           # 动态语言段镜像（index/changelog/privacy/terms + *-downloader + disabled-channel-workaround）
+    │   ├── paypal/ clink/ stripe/ # 各渠道支付回跳页
+    │   └── [lang]/           # 首页、Maps 产品/API/MCP、Pricing、工具、公司/法务与登录/授权/工作区/支付流程的语言镜像
     ├── scripts/
     │   ├── homepage/         # api / auth / device / ga4 / mark / sls-mark
     │   └── site/             # toast / confirm / language-switcher
@@ -69,13 +69,13 @@ website/
 3. `lastmod` 从 `git log` 取（失败回退文件 mtime）。
 4. 输出：`sitemap.xml` + `sitemap_index.xml`（索引）+ 每语言一份 `<slug>-sitemap.xml`（共 14 份）+ `sitemap-0.xml`（兼容旧扁平格式）+ `sitemap.xsl`（人类可读样式表）。
 
-详见 `feat.026.website多语言Sitemap治理`。
+页面族源文件由 `getRouteSourceFiles` 定义，`getUrlSourceFiles` 再追加共享内容与当前语言字典。完整合同见 [落地页与 Sitemap](../009.SEO与增长/tech-落地页与Sitemap.md#2-多语言-sitemap-治理website)。
 
 ## 5. Cloudflare / 部署
 
-- `cloudflare/retired-page-redirects.csv`：废弃 URL 的 301 重定向表（features/guide/faq/solutions 等历史页，按 14 语言全量列），格式 `source,target,301,true`。Pricing 是当前有效购买页,不在退役页列表中。
+- `cloudflare/retired-page-redirects.csv`：当前为空，未携带旧 TG 页的 14 语言 301 清单。仓库空表不代表线上 Cloudflare 状态；外部规则需另行查询。Pricing 是当前有效购买页。
 - `cloudflare/README.md`：使用说明。
-- `deploy/mapexporter.conf` / `deploy/mapexporter-test.conf`：nginx 配置——仅对构建产物中真实存在的目录执行「无尾斜杠 → HTTPS 尾斜杠」单跳 301，不维护第二份路由白名单；已退休 URL 只由 Cloudflare Bulk Redirects 承接。
+- `deploy/mapexporter.conf` / `deploy/mapexporter-test.conf`：nginx 配置——仅对构建产物中真实存在的目录执行「无尾斜杠 → HTTPS 尾斜杠」单跳 301，不维护第二份路由白名单；不据旧站文档恢复退役 URL 映射。
 - `deploy/deploy.sh`：发布静态版本后将对应环境的 vhost 安装到 `/usr/local/nginx/vhost/`，执行 `nginx -t`，失败恢复原配置，通过后 reload；静态资源使用 30 天 immutable 缓存。
 
 ## 6. SEO 基建
@@ -83,11 +83,11 @@ website/
 - **唯一布局 `src/layouts/Layout.astro`** 集中注入：
   - canonical URL
   - hreflang alternate 链（含 `x-default` → en-US）
-  - Open Graph / Twitter card（`twitter:site` 绑定官方 X 账号）
-  - JSON-LD 结构化数据（`SoftwareApplication` + 带公开 `ContactPoint`、Chrome Web Store 与官方 X `sameAs` 的 `Organization`，可叠加页面级 `structuredData` props）
-  - GA4（`G-LBSKJD0H16`）内联加载
+  - Open Graph / Twitter card（不绑定旧 TG X 账号）
+  - JSON-LD 结构化数据（`schemaName = MapExporter`；`SoftwareApplication` + 带公开 `ContactPoint` 的 `Organization`，邮箱来自 `lib/contact.ts` 的 `DEVELOPER_EMAIL`，不含旧 Chrome 商店 / X `sameAs`；可叠加页面级 `structuredData` props）
+  - GA4：`PUBLIC_GA4_MEASUREMENT_ID` 非空且页面 `analytics` 为真时加载；没有固定旧 ID 或 Clarity 注入
 - 页面通过 props 传 `title / description / ogImage / structuredData`，布局内组装 meta。
-- 主推关键词：`Telegram Private Video Downloader`（见 MEMORY 产品策略）。
+- 现役内容围绕 Maps 插件、Online、API / MCP 和工具；页面级 SEO 文案由各页面传入，TG 下载关键词属于历史。
 
 ## 7. SLS 日志双写（website）
 
@@ -99,9 +99,11 @@ website/
 - SLS `first_opened_at` 与后端 `mark_logs.first_opened_at` 都来自 website 本地首次打开毫秒时间；旧客户端不传后端字段时默认 `0`。
 - website `device_id` 只使用 UUID，存储 key 为 `homepage_device_id_v2`；上线后脚本会删除旧 `homepage_device_id` / `homepage_legacy_device_ids`。
 - 全局 `error` / `unhandledrejection`、后端连接失败/超时 → 只写 SLS（`web_frontend_uncaught_error`、`web_backend_connect_failed`），不请求 mark 接口、不进后端 `mark_logs`。
-- SLS 上报**不依赖本项目后端**（后端不可用时仍尝试写 SLS），失败**不得影响**页面解析/下载/安装 CTA/登录/订阅。
+- SLS 上报**不依赖本项目后端**（后端不可用时仍尝试写 SLS），失败**不得影响**产品、工具、安装 CTA、登录与订阅流程。
 - 字段只含排障必需信息，**不发送** Cookie/Authorization/访问令牌/完整下载直链；API path 预脱敏（只留 path）。
 
 ## 8. 与 backend 的契约
 
-website 前端调用 backend business 的 `/api/client/*`（下载/解析/积分/计数/订单/登录/签到）与 `/api/client/mark/record`（mark-log）。base URL 在 `src/scripts/homepage/api.ts`。后端契约同 `@tech-backend.md`。
+website 前端调用统一后端的 `/api/client/*`，现役入口包括登录、账号、Maps 预览、Export、API key / MCP 授权、用量、订阅、订单、工具与转化打点。共享 Credits / 签到路由仍在 `backend/src/app/main.py` 的 `_include_business_routes` 注册，但路由保留不代表网站仍展示旧下载或充值 UI。base URL 由 `src/scripts/homepage/api.ts` 的 `getApiBaseUrl` 读取构建配置；完整路由聚合见 [后端架构](tech-backend.md#10-应用-lifespan-与路由聚合)。
+
+TG 解析 / 下载接口、下载工作区与每日下载 quota 已退役，不属于现役网站调用合同。

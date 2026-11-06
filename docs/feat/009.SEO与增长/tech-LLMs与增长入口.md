@@ -1,6 +1,6 @@
 # 009 · LLMs 入口与增长导航(llms.txt + 导航/Install CTA + Solution 分组)
 
-> 技术实现文档。覆盖:website llms.txt / llms-full.txt 内容规则与测试约束、首页导航精简与 Install CTA 拼图图标、Solution 下拉分组的最终状态。
+> 技术实现文档。现役部分记录 MapExporter 的 llms.txt 与导航入口；编号章节保留 TG 下载站的原合同。
 >
 > 来源:原 `feat.028 websiteLLMs入口` + `feat.029 website导航与插件CTA识别`(导航/CTA 部分) + `feat.030 ...workaround落地页`(导航 Solution 分组部分)。
 >
@@ -10,6 +10,19 @@
 > - 签到后端:`@tech-签到活动.md`
 > - website 目录结构/Layout.astro/导航:`@../000.架构/tech-website.md`
 > - 14 语言文案 key 组织:`@../010.多语言/tech-website多语言.md`
+
+## 现役 MapExporter 入口
+
+- [website/public/llms.txt](../../../website/public/llms.txt) 是现役静态目录，构建时复制到 `dist/llms.txt`。主域为 `mapexporter.app`，内容含产品、Pricing、七个免费工具、公司、法务、支持邮箱与 Sitemap；不要求 llms-full.txt。套餐与支付规则以 [订阅合同](../006.订阅系统/feat.md) 为准。
+- [robots.txt](../../../website/public/robots.txt) 指向现役根 Sitemap，未声明旧站的双 llms Allow；robots 不是 LLM 目录的内容来源。Sitemap 排除规则由 [languageSitemap.mjs](../../../website/src/sitemap/languageSitemap.mjs) 的 `SEARCH_BOT_BLOCKED_ROUTE_PATHS` 与 URL 收集流程维护。
+- 导航与页脚由 [SiteHeader.astro](../../../website/src/components/site/SiteHeader.astro) / [SiteFooter.astro](../../../website/src/components/site/SiteFooter.astro) 装配，公开入口围绕现役产品、工具、Pricing 和公司信息；不恢复旧 TG Solution/workaround 路由、旧 X 账号或 Chrome 商店身份。
+- 联系身份读取 [contact.ts](../../../website/src/lib/contact.ts) 的 `DEVELOPER_EMAIL`；Organization 与可选 GA4 见 [网站架构](../000.架构/tech-website.md#6-seo-基建)。
+
+目录只写真实存在的页面与可确认的能力。核验时从 llms.txt 的站内链接回查 `website/src/pages/` 与对应静态资产；14 语言 URL 与 lastmod 规则见 [Sitemap 技术合同](tech-落地页与Sitemap.md#2-多语言-sitemap-治理website)。
+
+## TG 下载站历史合同
+
+> **【历史 · TG 下载站已退役】** 下方 §1–§6 为原 TG 下载站的文件、导航、测试与回滚记录；“当前代码”“最终状态”仅描述当时基线，不是现役文件或验收清单。旧双 llms、Pricing 排除、邮箱禁项、TG 路由和账号均不移植至 MapExporter。
 
 ## 1. llms.txt / llms-full.txt(website)
 
