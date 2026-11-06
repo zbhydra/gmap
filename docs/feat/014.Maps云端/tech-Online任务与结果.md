@@ -62,6 +62,8 @@
 
 整 Job 仅一份 UTF-8 BOM CSV；第一行固定英文列名，第二行为创建请求语言的字段说明，第三行起为数据。共 37 个公开列，连续行号为 `#`，来源列为 `Search Keyword`。精确顺序由 `provider/export/gmap_columns.py` 拥有；内部 record_id、item_index 与搜索视口来源列不全部对外投影。跨关键词重复商家只保留首次提交行及其关键词。
 
+`Website` 在 CSV 与同源转换的 Excel 中保留采集结果的完整 URL，包括 `http(s)://`、www、大小写、端口、路径、查询参数和片段；null 或空串导出为空单元格。
+
 关闭联系方式时不查询补全缓存或调用补全；Emails 与六类社媒列保留为空，不改变列数。启用时尽力补全，失败保留基础行。合法零结果为 completed，无文件且不扣量；partial 按已发布且去重后的行数消费。
 
 `GET /api/client/maps-online/options` 保留 `{keyword_limit,logical_sample_limit,contacts_allowed,usage}`。usage 沿原 `{used,total,period,exhausted}`，period 为纽约自然月 `YYYY-MM`，Online 计量单位为 records；运行中的任务允许超过剩余额度，耗尽后拒绝新建。原商品、账户和账本归 [额度基建](../000.架构/tech-额度基建.md)。

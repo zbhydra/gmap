@@ -1,6 +1,7 @@
-"""真实 Run 定位文件与 Redis；只替换 Collector HTTP 出口，不证明真实采集。"""
+"""真实本地 CSV、Run 定位文件与 Redis；只替换 Collector HTTP 出口，不证明真实采集。"""
 
 import asyncio
+import csv
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -13,7 +14,8 @@ from app.constants.gmap_collector import GMAP_COLLECTOR_RESPONSE_GRACE_SECONDS
 from app.core.config import settings
 from app.core.redis import redis_client
 from app.provider.export.export_base import ExportProviderRequest
-from app.provider.export.gmap_export import gmap_export_provider
+from app.provider.export.gmap_columns import GMAP_DESCRIPTIONS, GMAP_PUBLIC_COLUMNS
+from app.provider.export.gmap_export import _record, gmap_export_provider
 from app.provider.gmap.collector_client import gmap_collector_client
 from app.provider.gmap.enrich import _collector_cache_key, enrich_places
 from app.provider.gmap.types import GmapPlaceEntry, GmapSearchResult
@@ -31,6 +33,55 @@ pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 @dataclass
 class _CleanupState:
     cache_keys: list[str] = field(default_factory=list)
+
+
+async def test_real_public_csv_preserves_complete_website_urls_and_empty_cells(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "root_path", str(tmp_path))
+    websites = (
+        "https://www.Example.com:8443/Path?q=1,2#F",
+        "http://www.Example.com:8080/Path?q=1#F",
+        "HTTPS://WWW.Example.com:8443/Path?q=1#F",
+        None,
+        "",
+    )
+    records = [
+        _record(
+            GmapPlaceEntry(
+                name="Website",
+                fid=f"website-{index}",
+                search_keyword="website",
+                website=website,
+            )
+        )
+        for index, website in enumerate(websites)
+    ]
+    assert records[-2]["website"] is None
+    assert records[-1]["website"] is None
+    provider = gmap_export_provider
+    work_path = export_file_service.run_path(
+        job_no="website", run_no="one", name="increment.csv"
+    )
+    work_path.parent.mkdir(parents=True)
+    with work_path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow([column.header for column in provider.columns])
+        writer.writerows(provider.record_to_row(record) for record in records)
+
+    public_path = export_file_service.project_gmap_csv(
+        job_no="website",
+        run_no="one",
+        work_columns=provider.columns,
+        public_columns=GMAP_PUBLIC_COLUMNS,
+        descriptions=GMAP_DESCRIPTIONS["en-US"],
+    )
+    with public_path.open(encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        next(reader)
+        assert [row["Website"] for row in reader] == [
+            website or "" for website in websites
+        ]
 
 
 async def test_real_enrich_receives_new_and_restored_results_inside_existing_grace(

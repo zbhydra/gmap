@@ -1,7 +1,6 @@
 """CAS Google Export：并行 item，按完成顺序交由 Runtime 单写 CSV。"""
 
 import asyncio
-import re
 from collections.abc import AsyncGenerator
 from dataclasses import replace
 
@@ -85,11 +84,7 @@ def _record(entry: GmapPlaceEntry) -> ExportRecord:
         "review_url": entry.review_url,
         "cid": entry.cid,
         "fid": entry.fid,
-        "website": (
-            re.sub(r"^https?://", "", entry.website, flags=re.I)
-            if entry.website
-            else None
-        ),
+        "website": entry.website or None,
         "domain": entry.domain,
         "latitude": entry.latitude,
         "longitude": entry.longitude,
