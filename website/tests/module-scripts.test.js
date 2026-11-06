@@ -12,7 +12,7 @@ const distDir = path.resolve(__dirname, '../dist')
 const repoDir = path.resolve(__dirname, '..')
 const tempRootDir = path.join(repoDir, 'tmp')
 const execFileAsync = promisify(execFile)
-const builtSiteOrigin = new URL(process.env.PUBLIC_SITE_URL || 'https://mapsgrab.com').origin
+const builtSiteOrigin = new URL(process.env.PUBLIC_SITE_URL || 'https://mapexporter.app').origin
 const GOOGLE_TEST_REQUEST_CONTEXT = {
   deviceId: 'test-google-device',
   token: null
@@ -116,7 +116,7 @@ async function collectCanonicalUrls() {
 }
 
 test('Nginx configs canonicalize every built directory route directly to HTTPS', async () => {
-  const configPaths = ['deploy/mapsgrab.conf', 'deploy/mapsgrab-test.conf']
+  const configPaths = ['deploy/mapexporter.conf', 'deploy/mapexporter-test.conf']
   const htmlFiles = await collectHtmlFiles(distDir)
   const builtDirectoryRoutes = htmlFiles
     .filter((filePath) => path.basename(filePath) === 'index.html')
@@ -173,6 +173,50 @@ test('built pages do not reference TypeScript module scripts', async () => {
   }
 })
 
+test('Maps 地点链接支持国家域名并保持 host、路径与标识校验边界', async () => {
+  const { module, cleanup } = await importCompiledTypescriptModule(
+    'src/scripts/tools/lib/placeUrl.ts', 'placeUrl.js', 'place-url-'
+  )
+  const placePath = '/maps/place/sample/data=!1s0x8085809c23193567:0xa64e70a2e1a9c0e5'
+
+  try {
+    for (const prefix of ['', 'www.', 'maps.']) {
+      for (const suffix of ['com', 'co', 'de', 'fr', 'co.uk', 'com.au', 'co.jp', 'com.br']) {
+        const host = `${prefix}google.${suffix}`
+        const result = module.parsePlaceUrl(`https://${host}${placePath}`)
+        assert.equal(result.ok, true, host)
+        assert.deepEqual([result.fid, result.cid, result.placeId], [
+          '0x8085809c23193567:0xa64e70a2e1a9c0e5',
+          '11983639503352479973',
+          'ChIJZzUZI5yAhYAR5cCp4aJwTqY'
+        ], host)
+      }
+    }
+
+    for (const host of [
+      'google.com.evil.com', 'evilgoogle.com', 'google.evil.com', 'google.com@evil.com',
+      'example.com', 'search.google.com', 'www.maps.google.co.uk',
+      'google.c', 'google.comm', 'google.co.abc', 'google.uk.com'
+    ]) {
+      assert.deepEqual(module.parsePlaceUrl(`https://${host}${placePath}`), {
+        ok: false, error: 'invalid-url'
+      }, host)
+    }
+
+    assert.deepEqual(module.parsePlaceUrl('https://maps.app.goo.gl/8f9xAbCdEfGh'), {
+      ok: false, error: 'short-link'
+    })
+    assert.deepEqual(module.parsePlaceUrl(`https://google.co.uk${placePath.replace('/maps/', '/search/')}`), {
+      ok: false, error: 'invalid-url'
+    })
+    assert.deepEqual(module.parsePlaceUrl('https://maps.google.de/maps/place/sample'), {
+      ok: false, error: 'no-ids'
+    })
+  } finally {
+    await cleanup()
+  }
+})
+
 test('language switch URL keeps the current query parameters', async () => {
   const { module, cleanup } = await importCompiledTypescriptModule(
     'src/scripts/site/language-switcher.ts',
@@ -184,14 +228,14 @@ test('language switch URL keeps the current query parameters', async () => {
     assert.equal(
       module.buildLanguageSwitchUrl(
         '/zh-cn/pricing/',
-        'https://mapsgrab.com/pricing/?utm_source=extension&source=upgrade_modal'
+        'https://mapexporter.app/pricing/?utm_source=extension&source=upgrade_modal'
       ),
       '/zh-cn/pricing/?utm_source=extension&source=upgrade_modal'
     )
     assert.equal(
       module.buildLanguageSwitchUrl(
         '/pricing/',
-        'https://mapsgrab.com/zh-cn/pricing/'
+        'https://mapexporter.app/zh-cn/pricing/'
       ),
       '/pricing/'
     )
@@ -295,7 +339,7 @@ test('language sitemap output matches locale mapping and built canonical pages',
   assert.match(indexXml, /<\?xml-stylesheet type="text\/xsl" href="\/sitemap\.xsl"\?>/)
   assert.match(indexXml, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/)
   const sitemapStylesheet = await readFile(path.join(distDir, 'sitemap.xsl'), 'utf8')
-  assert.match(sitemapStylesheet, /XML Sitemap Index \| MapsGrab/)
+  assert.match(sitemapStylesheet, /XML Sitemap Index \| MapExporter/)
   assert.match(sitemapStylesheet, /sitemap:sitemapindex/)
   assert.match(sitemapStylesheet, /sitemap:urlset/)
 
@@ -364,7 +408,7 @@ test('language sitemap output matches locale mapping and built canonical pages',
   assert.deepEqual(new Set(legacyFlatLocs), publicCanonicalUrls)
 
   const robotsTxt = await readFile(path.join(distDir, 'robots.txt'), 'utf8')
-  assert.match(robotsTxt, /Sitemap: https:\/\/mapsgrab\.com\/sitemap\.xml/)
+  assert.match(robotsTxt, /Sitemap: https:\/\/mapexporter\.app\/sitemap\.xml/)
   assert.match(robotsTxt, /^Disallow: \/clink\/cancel\/$/m)
   assert.match(robotsTxt, /^Disallow: \/clink\/success\/$/m)
   assert.match(robotsTxt, /^Disallow: \/paypal\/cancel\/$/m)
@@ -403,8 +447,8 @@ test('About and Contact pages expose localized trust content and structured data
     assert.ok(contactHtml.includes(`"@id":"${siteUrl}/#support"`))
     assert.equal(aboutHtml.includes(`href="/${languagePath}contact/"`), true)
     assert.equal(contactHtml.includes(`href="/${languagePath}about/"`), true)
-    assert.match(contactHtml, /href="mailto:support@mapsgrab\.com\?subject=/)
-    assert.match(contactHtml, /support@mapsgrab\.com/)
+    assert.match(contactHtml, /href="mailto:support@mapexporter\.app\?subject=/)
+    assert.match(contactHtml, /support@mapexporter\.app/)
     assert.match(contactHtml, /data-ga-source="contact"/)
   }
 })
@@ -485,7 +529,7 @@ test('every built page exposes complete title, description and Open Graph metada
   }
 
   const cancelHtml = await readFile(path.join(distDir, 'paypal/cancel/index.html'), 'utf8')
-  assert.match(cancelHtml, /<title>Payment canceled \| MapsGrab<\/title>/)
+  assert.match(cancelHtml, /<title>Payment canceled \| MapExporter<\/title>/)
   assert.match(
     cancelHtml,
     /<meta name="description" content="Your PayPal payment was canceled\."\s*\/?>/
@@ -529,13 +573,13 @@ test('llms.txt indexes every public content route and excludes paypal returns', 
 
   for (const route of publicRoutes) {
     assert.ok(
-      llms.includes(`https://mapsgrab.com${route}`),
+      llms.includes(`https://mapexporter.app${route}`),
       `Expected llms.txt to index ${route}`
     )
   }
 
   assert.equal(llms.includes('/paypal/'), false)
-  assert.match(llms, /https:\/\/mapsgrab\.com\/sitemap\.xml/)
+  assert.match(llms, /https:\/\/mapexporter\.app\/sitemap\.xml/)
 })
 
 
@@ -603,11 +647,11 @@ async function patchCompiledBrowserModuleFiles(rootDir) {
     )
     source = source.replace(
       /import\.meta\.env\.PUBLIC_API_BASE_URL/g,
-      "'https://api-mapsgrab.example.com/'"
+      "'https://api-mapexporter.example.com/'"
     )
     source = source.replace(
       /import\.meta\.env\.PUBLIC_SHARED_COOKIE_DOMAIN/g,
-      "'mapsgrab.com'"
+      "'mapexporter.app'"
     )
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_PROJECT/g, "'gmap'")
     source = source.replace(/import\.meta\.env\.PUBLIC_ALI_SLS_HOST/g, "'ap-northeast-1.log.aliyuncs.com'")
@@ -998,7 +1042,7 @@ function installGoogleScriptDom() {
     },
     setTimeout: () => 1,
     clearTimeout: () => {},
-    location: Object.assign(new URL('https://mapsgrab.com/'), {
+    location: Object.assign(new URL('https://mapexporter.app/'), {
       assign(url) {
         assignedLocations.push(String(url))
       }
@@ -1081,7 +1125,7 @@ function installPromptingGoogleIdentity() {
 }
 
 function installGoogleRedirectDom(
-  href = 'https://mapsgrab.com/pricing/?plan=month&google_login_code=old'
+  href = 'https://mapexporter.app/pricing/?plan=month&google_login_code=old'
 ) {
   const dom = installGoogleScriptDom()
   const locationUrl = new URL(href)
@@ -1215,11 +1259,11 @@ async function assertGoogleRedirectButtonUsesOAuthAuthorize(sourceFile, tempPref
     assert.equal(dom.assignedLocations.length, 1)
 
     const authorizeUrl = new URL(dom.assignedLocations[0])
-    assert.equal(authorizeUrl.origin, 'https://api-mapsgrab.example.com')
+    assert.equal(authorizeUrl.origin, 'https://api-mapexporter.example.com')
     assert.equal(authorizeUrl.pathname, '/api/client/auth/google/oauth/authorize')
     assert.equal(
       authorizeUrl.searchParams.get('return_to'),
-      'https://mapsgrab.com/pricing/?plan=month'
+      'https://mapexporter.app/pricing/?plan=month'
     )
   } finally {
     dom.cleanup()
@@ -1313,7 +1357,7 @@ async function assertGoogleOneTapCallbackPostsCredential(sourceFile, tempPrefix)
 async function assertGoogleRedirectResultCanBeCleared(sourceFile, tempPrefix) {
   const { module, cleanup } = await importHomepageAuthModule(sourceFile, tempPrefix)
   const dom = installGoogleRedirectDom(
-    'https://mapsgrab.com/pricing/?plan=month&google_login_code=code-1&google_login_error=bad&google_email_verification=user%40example.com'
+    'https://mapexporter.app/pricing/?plan=month&google_login_code=code-1&google_login_error=bad&google_email_verification=user%40example.com'
   )
 
   try {
@@ -1324,7 +1368,7 @@ async function assertGoogleRedirectResultCanBeCleared(sourceFile, tempPrefix) {
     })
 
     module.clearGoogleRedirectResult()
-    assert.equal(dom.replacedUrl, 'https://mapsgrab.com/pricing/?plan=month')
+    assert.equal(dom.replacedUrl, 'https://mapexporter.app/pricing/?plan=month')
   } finally {
     dom.cleanup()
     await cleanup()
@@ -1404,7 +1448,7 @@ async function assertStoredTokenWritesPersistAccessToken(sourceFile, tempPrefix)
 }
 
 function installSlsBrowserGlobals({
-  href = 'https://mapsgrab.com/extension/',
+  href = 'https://mapexporter.app/extension/',
   language = 'zh-CN',
   userAgent = 'Mozilla/5.0 SLS test browser',
   viewport = { width: 1365, height: 768 }
@@ -1455,7 +1499,7 @@ function installSlsBrowserGlobals({
 }
 
 function installFirstOpenedMarkBrowserGlobals({
-  href = 'https://mapsgrab.com/',
+  href = 'https://mapexporter.app/',
   language = 'zh-CN',
   userAgent = 'Mozilla/5.0 first opened mark test',
   viewport = { width: 1365, height: 768 },
@@ -1575,7 +1619,7 @@ function installFirstOpenedMarkBrowserGlobals({
 }
 
 function installFrontendErrorBrowserGlobals({
-  href = 'https://mapsgrab.com/extension/',
+  href = 'https://mapexporter.app/extension/',
   language = 'zh-CN',
   userAgent = 'Mozilla/5.0 Frontend error SLS test',
   viewport = { width: 1365, height: 768 },
@@ -1658,7 +1702,7 @@ function restoreGlobalProperty(name, descriptor) {
 }
 
 function installFooterBrandBrowser({
-  href = 'https://mapsgrab.com/',
+  href = 'https://mapexporter.app/',
   deviceId = '01234567-89ab-4def-8123-456789abcdef'
 } = {}) {
   const previousWindow = globalThis.window
@@ -2034,13 +2078,13 @@ test('homepage SLS mark builds WebTracking URL for website', async () => {
     'src/scripts/homepage/sls-mark.ts',
     'homepage-sls-mark-',
     'website',
-    'https://mapsgrab.com/some-page/'
+    'https://mapexporter.app/some-page/'
   )
   await assertSlsMarkBuildsWebTrackingUrl(
     path.resolve(repoDir, 'src/scripts/homepage/sls-mark.ts'),
     'shared-homepage-sls-mark-',
     'website',
-    'https://mapsgrab.com/some-tool/'
+    'https://mapexporter.app/some-tool/'
   )
 })
 
@@ -2166,7 +2210,7 @@ test('frontend error capture dispatches uncaught Error to callback', async () =>
       target: browser.windowObject,
       error: new TypeError('Boom token=secret-token'),
       message: 'Boom token=secret-token',
-      filename: 'https://mapsgrab.com/assets/app.js?token=secret-token',
+      filename: 'https://mapexporter.app/assets/app.js?token=secret-token',
       lineno: 12,
       colno: 34
     })
@@ -2176,7 +2220,7 @@ test('frontend error capture dispatches uncaught Error to callback', async () =>
     assert.equal(capturedErrors[0].errorName, 'TypeError')
     assert.equal(capturedErrors[0].errorMessage, 'Boom token=secret-token')
     assert.equal(capturedErrors[0].pagePath, '/extension/')
-    assert.equal(capturedErrors[0].sourceFile, 'https://mapsgrab.com/assets/app.js?token=secret-token')
+    assert.equal(capturedErrors[0].sourceFile, 'https://mapexporter.app/assets/app.js?token=secret-token')
     assert.equal(capturedErrors[0].line, 12)
     assert.equal(capturedErrors[0].column, 34)
   } finally {
@@ -2209,7 +2253,7 @@ test('frontend captured error SLS callback sends uncaught Error to SLS only', as
       errorName: 'TypeError',
       errorMessage: 'Boom token=secret-token',
       pagePath: '/extension/',
-      sourceFile: 'https://mapsgrab.com/assets/app.js?token=secret-token',
+      sourceFile: 'https://mapexporter.app/assets/app.js?token=secret-token',
       line: 12,
       column: 34
     })
@@ -2226,7 +2270,7 @@ test('frontend captured error SLS callback sends uncaught Error to SLS only', as
     assert.equal(markMsg.error_kind, 'error_event')
     assert.equal(markMsg.error_name, 'TypeError')
     assert.equal(markMsg.error_message.includes('secret-token'), false)
-    assert.equal(markMsg.source_file, 'https://mapsgrab.com/assets/app.js')
+    assert.equal(markMsg.source_file, 'https://mapexporter.app/assets/app.js')
     assert.equal(markMsg.line, 12)
     assert.equal(markMsg.column, 34)
   } finally {
@@ -2246,7 +2290,7 @@ test('shared frontend error capture dispatches unhandled rejection to callback',
     'shared-frontend-error-capture-'
   )
   const browser = installFrontendErrorBrowserGlobals({
-    href: 'https://mapsgrab.com/some-tool/'
+    href: 'https://mapexporter.app/some-tool/'
   })
   const capturedErrors = []
 
@@ -2279,7 +2323,7 @@ test('shared frontend captured error SLS callback reports website site', async (
     'shared-frontend-captured-error-sls-'
   )
   const browser = installFrontendErrorBrowserGlobals({
-    href: 'https://mapsgrab.com/some-tool/'
+    href: 'https://mapexporter.app/some-tool/'
   })
   const previousFetch = globalThis.fetch
   const calls = []
@@ -2355,7 +2399,7 @@ test('frontend error capture ignores resource errors and deduplicates same error
       target: browser.windowObject,
       error: new Error('Same frontend failure'),
       message: 'Same frontend failure',
-      filename: 'https://mapsgrab.com/assets/app.js',
+      filename: 'https://mapexporter.app/assets/app.js',
       lineno: 56,
       colno: 78
     }
@@ -2534,7 +2578,7 @@ test('global install CTA click sends SLS and keepalive mark', async () => {
   globalThis.HTMLAnchorElement = FakeGlobalClickElement
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
-    value: new URL('https://mapsgrab.com/')
+    value: new URL('https://mapexporter.app/')
   })
   Object.defineProperty(globalThis, 'navigator', {
     configurable: true,
@@ -2559,7 +2603,7 @@ test('global install CTA click sends SLS and keepalive mark', async () => {
     }
   }
   globalThis.document = {
-    title: 'MapsGrab',
+    title: 'MapExporter',
     documentElement: { lang: 'en-US' },
     addEventListener(type, listener) {
       if (type === 'click') {
@@ -2587,7 +2631,7 @@ test('global install CTA click sends SLS and keepalive mark', async () => {
 
   try {
     const target = new FakeGlobalClickElement({
-      href: 'https://chromewebstore.google.com/detail/mapsgrab/example',
+      href: 'https://chromewebstore.google.com/detail/mapexporter/example',
       attributes: {
         'data-ga-event': 'chrome_web_store_click',
         'data-ga-source': 'hero_install'
@@ -3312,7 +3356,7 @@ test('Pricing checkout client loads maps plans and formats channel prices', asyn
     assert.equal(module.formatPricingDisplayPrice(plan), '$39.00')
     assert.equal(module.formatPricingDisplayPrice(plan.payment_channels[0]), '$39.00')
     assert.deepEqual(fetchCalls, [
-      { url: 'https://api-mapsgrab.example.com/api/client/subscription/checkout-configs', body: null }
+      { url: 'https://api-mapexporter.example.com/api/client/subscription/checkout-configs', body: null }
     ])
   } finally {
     globalThis.fetch = previousFetch
@@ -3456,7 +3500,7 @@ test('PayPal success return confirms a pending payment and switches copy by prod
       'Your PayPal payment is confirmed and the Credits have been added. You can close this tab and continue in the original window.',
     confirmedSubscriptionTitle: 'Subscription activated',
     confirmedSubscriptionMessage:
-      'Your PayPal payment is confirmed and your MapsGrab plan is active. You can close this tab and continue in the original window.',
+      'Your PayPal payment is confirmed and your MapExporter plan is active. You can close this tab and continue in the original window.',
     failedTitle: 'Payment needs attention',
     failedMessage:
       'We could not confirm this order automatically. Return to the original window or try refreshing your payment status there.'
@@ -3494,7 +3538,7 @@ test('PayPal success return confirms a pending payment and switches copy by prod
         }
       },
       location: {
-        origin: 'https://mapsgrab.com',
+        origin: 'https://mapexporter.app',
         search: '?order_no=ORD-PAYPAL-RETURN'
       },
       opener: {
@@ -3625,13 +3669,13 @@ test('PayPal success return confirms a pending payment and switches copy by prod
     productId: 'maps_extension_pro',
     productClass: 1,
     expectedTitle: 'Subscription activated',
-    expectedMessageFragment: 'MapsGrab plan is active'
+    expectedMessageFragment: 'MapExporter plan is active'
   })
   await runScenario({
     productId: 'online_lite',
     productClass: 1,
     expectedTitle: 'Subscription activated',
-    expectedMessageFragment: 'MapsGrab plan is active'
+    expectedMessageFragment: 'MapExporter plan is active'
   })
 })
 

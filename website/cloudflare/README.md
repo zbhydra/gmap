@@ -1,6 +1,6 @@
 # Cloudflare Website Rules
 
-本目录记录 MapsGrab 营销站在 Cloudflare 上的手工配置。当前包含：
+本目录记录 MapExporter 营销站在 Cloudflare 上的手工配置。当前包含：
 
 - `retired-page-redirects.csv`：Bulk Redirects 导入文件。
 - `cache-rules.md`：必须绕过缓存的后端资源规则。
@@ -13,12 +13,12 @@
 ## Retired Page Redirects
 
 `retired-page-redirects.csv` 用于 Cloudflare Bulk Redirects，只处理已删除或合并页面的 301。
-当前为空：MapsGrab 是新站，正式域名上线后如有退役路径再补录（CSV 无 header，一行一条）。
+当前为空：MapExporter 是新站，正式域名上线后如有退役路径再补录（CSV 无 header，一行一条）。
 
 ## 部署
 
 1. Cloudflare Dashboard 打开账号级 `Bulk redirects`。
-2. 创建 Bulk Redirect List（如 `mapsgrab-retired-pages`）。
+2. 创建 Bulk Redirect List（如 `mapexporter-retired-pages`）。
 3. 导入本目录下的 `retired-page-redirects.csv`。
 4. 创建 Bulk Redirect Rule 选择该 list，保存并部署。
 

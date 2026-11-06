@@ -16,6 +16,7 @@ POST /maps/usage/report | Y(匿名+登录+幂等重放) | centralized(同 GET �
 
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
+from datetime import timedelta
 from uuid import uuid4
 
 import pytest
@@ -28,7 +29,7 @@ from app.constants.subscription import (
     MAPS_EXTENSION_PRODUCT_KIND,
     MAPS_EXTENSION_PRO_PRODUCT_ID,
 )
-from app.constants.usage import build_dedup_key, build_usage_key
+from app.constants.usage import build_dedup_key, build_usage_key, dedup_key_ttl_seconds
 from app.core.database import get_async_session
 from app.core.redis import redis_client
 from app.i18n.common_code import CommonCode
@@ -202,6 +203,11 @@ async def test_real_usage_report_writes_prefixed_redis_keys(
     redis = await redis_client.get_client()
     assert await redis.exists(prefixed_usage_key) == 1
     assert await redis.exists(prefixed_dedup_key) == 1
+    assert (
+        dedup_key_ttl_seconds() - 5
+        <= await redis.ttl(prefixed_dedup_key)
+        <= 7 * 24 * 60 * 60
+    )
     # 裸子键（缺全局前缀）必须不存在
     assert await redis.exists(usage_subkey) == 0
     assert await redis.exists(build_dedup_key(request_id)) == 0
@@ -318,7 +324,7 @@ async def test_real_logged_in_usage_reads_effective_limits_and_deducts_via_mysql
     额度基建 U5 回归锚：登录路径的 used 来自 user_usage_logs SUM(delta)，
     不再触碰匿名 Redis key（headers 无 device_id，identity = u:{user_id}）。
     """
-    email = f"maps-usage-{uuid4().hex}@test.mapsgrab.com"
+    email = f"maps-usage-{uuid4().hex}@test.mapexporter.app"
     user, headers = await _create_user_and_headers(email, real_usage_api_cleanup)
     if product_id is not None:
         async with get_async_session() as db:
@@ -374,3 +380,90 @@ async def test_real_logged_in_usage_reads_effective_limits_and_deducts_via_mysql
         )
         deltas = [int(row[0]) for row in rows]
     assert deltas == [15]
+
+
+async def test_real_usage_expected_user_rejects_expired_token_before_anonymous_deduction(
+    real_async_client, real_usage_api_cleanup
+) -> None:
+    """默认仍可降级匿名；显式归属失配返回 401，恢复凭据后只写账号账本一次。"""
+    email = f"maps-usage-identity-{uuid4().hex}@test.mapexporter.app"
+    user, valid_headers = await _create_user_and_headers(email, real_usage_api_cleanup)
+    device_headers = _device_header()
+    valid_headers.update(device_headers)
+    expired_token, _ = JwtUnit.create_access_token(
+        JwtData(user_id=user.user_id, email=email), expires_delta=timedelta(seconds=-1)
+    )
+    expired_headers = {**device_headers, "Authorization": f"Bearer {expired_token}"}
+    request_id = uuid4().hex
+    legacy_request_id = uuid4().hex
+    identity = {"expected_user_id": user.user_id}
+    redis = await redis_client.get_client()
+    usage_subkey, _ = build_usage_key(
+        MAPS_EXTENSION_PRODUCT_KIND, f"d:{device_headers['X-Device-Id']}"
+    )
+    try:
+        legacy = _usage_payload(
+            await real_async_client.post(
+                "/api/client/maps/usage/report",
+                headers=expired_headers,
+                json={"records": 3, "request_id": legacy_request_id},
+            )
+        )
+        assert legacy["used"] == 3
+        for endpoint in ("/api/client/maps/usage", "/api/client/maps/usage/report"):
+            response = await real_async_client.request(
+                "POST" if endpoint.endswith("report") else "GET",
+                endpoint,
+                params=identity,
+                headers=expired_headers,
+                **(
+                    {"json": {"records": 22, "request_id": request_id}}
+                    if endpoint.endswith("report")
+                    else {}
+                ),
+            )
+            assert response.status_code == 401
+            assert response.json()["code"] == CommonCode.AUTH_INVALID_TOKEN
+        wrong_user = await real_async_client.post(
+            "/api/client/maps/usage/report",
+            headers=valid_headers,
+            params={"expected_user_id": user.user_id + 1},
+            json={"records": 22, "request_id": request_id},
+        )
+        assert wrong_user.status_code == 401
+        assert wrong_user.json()["code"] == CommonCode.AUTH_INVALID_TOKEN
+        assert await redis.get(build_redis_key(usage_subkey)) == "3"
+        assert await redis.exists(build_redis_key(build_dedup_key(request_id))) == 0
+        initial = _usage_payload(
+            await real_async_client.get(
+                "/api/client/maps/usage",
+                params=identity,
+                headers=valid_headers,
+            )
+        )
+        assert initial["used"] == 0
+        for deducted in (True, False):
+            payload = _usage_payload(
+                await real_async_client.post(
+                    "/api/client/maps/usage/report",
+                    params=identity,
+                    headers=valid_headers,
+                    json={"records": 22, "request_id": request_id},
+                )
+            )
+            assert payload["deducted"] is deducted
+            assert payload["used"] == 22
+        assert await redis.get(build_redis_key(usage_subkey)) == "3"
+        async with get_async_session() as db:
+            rows = await db.execute(
+                select(UserUsageLogModel.delta).where(
+                    UserUsageLogModel.user_id == user.user_id
+                )
+            )
+            assert [int(row[0]) for row in rows] == [22]
+    finally:
+        await redis.delete(
+            build_redis_key(usage_subkey),
+            build_redis_key(build_dedup_key(legacy_request_id)),
+            build_redis_key(build_dedup_key(request_id)),
+        )

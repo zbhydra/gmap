@@ -103,8 +103,8 @@ test.describe('Extension page', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/extension/')
     for (const [cta, href] of [
-      ['extension-install-zip', '/downloads/mapsgrab.zip'],
-      ['extension-install-firefox', '/downloads/mapsgrab-firefox.zip']
+      ['extension-install-zip', '/downloads/mapexporter.zip'],
+      ['extension-install-firefox', '/downloads/mapexporter-firefox.zip']
     ]) {
       const download = page.locator(`a[data-cta="${cta}"]`)
       await expect(download).toHaveAttribute('href', href)

@@ -45,7 +45,7 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>XML Sitemap Index | MapsGrab</title>
+        <title>XML Sitemap Index | MapExporter</title>
         <style>
           <![CDATA[${ATLAS_TOKENS}]]>
 
@@ -124,7 +124,7 @@ const SITEMAP_XSL = `<?xml version="1.0" encoding="UTF-8"?>
       <body>
         <main>
           <h1>XML Sitemap</h1>
-          <p class="brand">MapsGrab</p>
+          <p class="brand">MapExporter</p>
           <xsl:choose>
             <xsl:when test="sitemap:sitemapindex">
               <p class="summary">

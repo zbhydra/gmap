@@ -16,6 +16,7 @@ import { getMapsConfig, resetMapsConfigForTests } from '@/sites/maps/config/load
 import * as configLoader from '@/sites/maps/config/loader'
 import * as userSettings from '@/sites/maps/settings/userSettings'
 import * as usageClient from '@/sites/maps/usage/usageClient'
+import * as bulkAuto from '@/sites/maps/content/bulkAuto'
 import * as downloads from '@/sites/maps/content/export/download'
 import { parseReviewsRpcResponse } from '@/sites/maps/content/parser/reviewsParser'
 import {
@@ -183,7 +184,7 @@ describe('评论 11 列 CSV 导出', () => {
       'csv'
     )
     expect(filename).toBe(
-      'MapsGrab-Extractor-Reviews-Gold coffee - Google Search-20-2026-08-30.csv'
+      'MapExporter-Reviews-Gold coffee - Google Search-20-2026-08-30.csv'
     )
   })
 
@@ -195,7 +196,7 @@ describe('评论 11 列 CSV 导出', () => {
     )
 
     const artifact = buildReviewsExport(rows, 'Gold coffee', new Date(2026, 7, 30), 'json')
-    expect(artifact.filename).toBe('MapsGrab-Extractor-Reviews-Gold coffee-2-2026-08-30.json')
+    expect(artifact.filename).toBe('MapExporter-Reviews-Gold coffee-2-2026-08-30.json')
     expect(artifact.mime).toBe('application/json')
     const records = JSON.parse(artifact.content as string) as Array<Record<string, unknown>>
     expect(Object.keys(records[0])).toEqual([
@@ -343,7 +344,7 @@ describe('评论页兜底判定', () => {
     vi.stubGlobal('fetch', fetch)
     const scraper = new ReviewsScraper(
       { fid: '', hl: 'en', gl: 'us' },
-      { emit } as ChromeEventEmitter<ExtensionEvents>,
+      { emit } as never as ChromeEventEmitter<ExtensionEvents>,
       { onStateChanged: vi.fn(), onError }
     )
     await scraper.start(getMapsConfig().scrape.reviewsPageLimit)
@@ -406,12 +407,13 @@ it('配置加载期间 Maps 同文档清参后，翻页、批量完成与 Reset 
   const originalUrl = location.href
   const fid = '0x89c2597ca044ec9b:0xa0acdb1716592b4d'
   location.href = `https://www.google.com/maps/place/?gme_fid=${fid}&hl=ja&gl=jp&gme_bulk=1&gme_bulk_task=task-snapshot&gme_bulk_item=2&gme_bulk_total=12&gme_bulk_max=15`
-  let release = () => undefined
+  let release: () => void = () => undefined
   const pending = new Promise<void>(resolve => {
     release = resolve
   })
   vi.spyOn(configLoader, 'loadMapsConfig').mockReturnValue(pending)
   vi.spyOn(userSettings, 'initializeMapsUserSettings').mockResolvedValue()
+  const ownerCheck = vi.spyOn(bulkAuto, 'checkBulkWorkOwner').mockResolvedValue(true)
   vi.spyOn(usageClient, 'fetchUsageSnapshot').mockResolvedValue({
     plan_name: 'Free',
     used: 0,
@@ -431,7 +433,7 @@ it('配置加载期间 Maps 同文档清参后，翻页、批量完成与 Reset 
   getMapsConfig().scrape.reviewsPageDelayMs = 0
   const emit = vi.fn()
   try {
-    const boot = bootReviewsPage({ emit } as ChromeEventEmitter<ExtensionEvents>)
+    const boot = bootReviewsPage({ emit } as never as ChromeEventEmitter<ExtensionEvents>)
     history.replaceState(null, '', '/maps/place/Gold+coffee?hl=en&gl=us')
     expect(location.search).toBe('?hl=en&gl=us')
     release()
@@ -459,7 +461,14 @@ it('配置加载期间 Maps 同文档清参后，翻页、批量完成与 Reset 
     expect(reports).toHaveLength(2)
     expect(reports[0]?.[1]).toMatchObject({ records: 15 })
     expect(reports[1]?.[1]).toMatchObject({ records: 15 })
+    expect(reports[0]?.[1].bulk).toEqual({ taskId: 'task-snapshot', itemIndex: 2 })
+    expect(ownerCheck).toHaveBeenCalledWith(expect.objectContaining({ taskId: 'task-snapshot', itemIndex: 2 }))
     expect(reports[0]?.[1].requestId).not.toBe(reports[1]?.[1].requestId)
+    ownerCheck.mockResolvedValue(false)
+    shadow.querySelector<HTMLButtonElement>('[data-secondary]')!.click()
+    await vi.waitFor(() => expect(ownerCheck).toHaveBeenCalledTimes(3))
+    expect(fetch).toHaveBeenCalledTimes(4)
+    expect(download).toHaveBeenCalledTimes(2)
   } finally {
     location.href = originalUrl
     document.getElementById(REVIEWS_PANEL_HOST_ID)?.remove()

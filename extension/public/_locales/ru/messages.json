@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Название расширения Chrome Web Store"
   },
   "extensionDescription": {
@@ -8,19 +8,19 @@
     "description": "Описание расширения Chrome Web Store - макс 132 символа"
   },
   "actionTitle": {
-    "message": "Открыть MapsGrab",
+    "message": "Открыть MapExporter",
     "description": "Browser action title"
   },
   "popupDescription": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Popup page description"
   },
   "optionsTitle": {
-    "message": "MapsGrab Settings",
+    "message": "MapExporter Settings",
     "description": "Options page title"
   },
   "dashboardTitle": {
-    "message": "MapsGrab Bulk Tasks",
+    "message": "MapExporter Bulk Tasks",
     "description": "Dashboard page title"
   }
 }

@@ -111,7 +111,7 @@ test.describe('API / MCP Landing Pages', () => {
   test('MCP setup tabs switch client configs and expose the endpoint', async ({ page }) => {
     await page.goto('/google-maps-scraper-mcp/')
     await expect(page.locator('#mcp-setup-claude')).toBeVisible()
-    await expect(page.locator('#mcp-setup-claude [data-copy]')).toHaveAttribute('data-copy', /^claude mcp add --transport http mapsgrab \S*\/mcp\/$/)
+    await expect(page.locator('#mcp-setup-claude [data-copy]')).toHaveAttribute('data-copy', /^claude mcp add --transport http mapexporter \S*\/mcp\/$/)
     await page.locator('#mcp-setup-tab-cursor').click()
     await expect(page.locator('#mcp-setup-cursor')).toBeVisible()
     await expect(page.locator('#mcp-setup-claude')).toBeHidden()

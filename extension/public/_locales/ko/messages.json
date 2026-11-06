@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Chrome 웹 스토어 확장 프로그램 이름"
   },
   "extensionDescription": {
@@ -8,19 +8,19 @@
     "description": "Chrome 웹 스토어 확장 프로그램 설명 - 132자까지"
   },
   "actionTitle": {
-    "message": "MapsGrab 열기",
+    "message": "MapExporter 열기",
     "description": "브라우저 작업 제목"
   },
   "popupDescription": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "팝업 페이지 설명"
   },
   "optionsTitle": {
-    "message": "MapsGrab Settings",
+    "message": "MapExporter Settings",
     "description": "Options page title"
   },
   "dashboardTitle": {
-    "message": "MapsGrab Bulk Tasks",
+    "message": "MapExporter Bulk Tasks",
     "description": "Dashboard page title"
   }
 }

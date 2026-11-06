@@ -1,6 +1,6 @@
 /*
  * About 页（about.html；#contact 同时是真实 /contact 路由的模板）
- *   - Hero 地球：canvas 正交投影的经纬网 + 城市周边的商家点簇；pin 落在城市上被“抓取”，数据光束汇入顶部 MapsGrab 节点。
+ *   - Hero 地球：canvas 正交投影的经纬网 + 城市周边的商家点簇；pin 落在城市上被“抓取”，数据光束汇入顶部 MapExporter 节点。
  *     可拖拽旋转（带惯性），离屏 / 标签页隐藏时停帧；减弱动效下只画一帧静态终态
  *   - 连线：产品家族与数据流向的三次贝塞尔 + 流动光点；坐标取布局位置（offset 累加），不受显现动画的 transform 影响
  *   - 免费工具胶囊：由 MGChrome.tools 渲染，与导航 / 页脚同源
@@ -739,7 +739,7 @@
         body.hidden = true
         success.hidden = false
         successTitle.focus()
-        MG.toast('Prototype only — nothing was sent', 'The live contact page uses email: support@mapsgrab.com', 'info')
+        MG.toast('Prototype only — nothing was sent', 'The live contact page uses email: support@mapexporter.app', 'info')
       })
     })
 

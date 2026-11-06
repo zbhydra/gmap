@@ -2,15 +2,16 @@ import type { SiteContent, McpOAuthContent, ClinkReturnContent } from '../schema
 import type { CompanyContent } from '../../company/companyContent'
 import type { LegalContent } from '../../legal/legalContent'
 
+// TODO: 首页 MCP 工具集描述译文（pages.home.products.cards.mcp.body、pages.home.developers.items.mcp.description）由 AI 翻译，尚未经专业校对，校对前不视为定稿；工具集口径见 website/src/i18n/mcp.ts。
 export const site: SiteContent = {
   "site": {
-    "name": "MapsGrab",
-    "description": "MapsGrab은 지도 데이터 도구 키트입니다. 브라우저 확장 프로그램과 웹 도구를 사용하여 지도에서 공개적으로 사용 가능한 비즈니스 정보를 가져오고, 링크를 리뷰하고, 장소 ID 등을 얻을 수 있습니다.",
+    "name": "MapExporter",
+    "description": "MapExporter은 지도 데이터 도구 키트입니다. 브라우저 확장 프로그램과 웹 도구를 사용하여 지도에서 공개적으로 사용 가능한 비즈니스 정보를 가져오고, 링크를 리뷰하고, 장소 ID 등을 얻을 수 있습니다.",
     "keywords": "지도 데이터, Google 지도 추출기, 장소 ID 찾기, 리뷰 링크 생성기, 지도 도구"
   },
   "layout": {
     "nav": {
-      "brand": "MapsGrab",
+      "brand": "MapExporter",
       "primaryLabel": "기본 탐색",
       "mobileLabel": "모바일 내비게이션",
       "extension": "확장 프로그램",
@@ -35,7 +36,7 @@ export const site: SiteContent = {
       "legalLabel": "합법적인",
       "resources": "무료 도구",
       "product": "제품",
-      "rights": "© 2026 MapsGrab. 모든 권리 보유.",
+      "rights": "© 2026 MapExporter. 모든 권리 보유.",
       "tools": [
         {
           "id": "place-id-finder",
@@ -171,13 +172,13 @@ export const site: SiteContent = {
       }
     },
     "seo": {
-      "title": "대시보드 | MapsGrab",
-      "description": "하나의 작업 공간에서 MapsGrab 내보내기, API 액세스 및 구독을 관리하세요."
+      "title": "대시보드 | MapExporter",
+      "description": "하나의 작업 공간에서 MapExporter 내보내기, API 액세스 및 구독을 관리하세요."
     },
     "shell": {
       "skipToContent": "본문으로 건너뛰기",
       "sideLabel": "작업 공간",
-      "homeLabel": "MapsGrab 홈",
+      "homeLabel": "MapExporter 홈",
       "navLabel": "작업 공간 메뉴",
       "loading": "작업공간 로드 중...",
       "retry": "다시 해 보다",
@@ -301,7 +302,7 @@ export const site: SiteContent = {
       "downloadFailed": "다운로드를 시작할 수 없습니다. 다시 시도해 주세요.",
       "signInPrompt": "온라인 내보내기 기록을 보려면 로그인하세요.",
       "signInCta": "로그인",
-      "unreachable": "지금은 MapsGrab에 도달할 수 없습니다."
+      "unreachable": "지금은 MapExporter에 도달할 수 없습니다."
     },
     "api": {
       "description": "API 키, 월별 요청 허용량 및 연결된 AI 앱을 관리하세요.",
@@ -403,14 +404,14 @@ export const site: SiteContent = {
           "steps": [
             "PayPal에 로그인하고 설정을 엽니다.",
             "결제로 이동한 다음 자동 결제로 이동하세요.",
-            "MapsGrab을 선택하고 취소를 선택합니다."
+            "MapExporter을 선택하고 취소를 선택합니다."
           ]
         },
         {
           "provider": "ClinkBill",
           "steps": [
             "구매 이메일에서 고객 포털 링크를 엽니다.",
-            "로그인하고 MapsGrab 구독을 선택하세요.",
+            "로그인하고 MapExporter 구독을 선택하세요.",
             "취소를 선택합니다."
           ]
         }
@@ -421,8 +422,8 @@ export const site: SiteContent = {
   "pages": {
     "home": {
       "seo": {
-        "title": "MapsGrab — Google Maps 비즈니스 데이터를 CSV 및 JSON로 가져옵니다.",
-        "description": "MapsGrab은 Google Maps에서 이름, 전화번호, 리뷰, 사진, 이메일 등 공개적으로 사용 가능한 비즈니스 정보를 수집하여 CSV 또는 JSON로 내보내는 브라우저 확장 프로그램이자 웹 툴킷입니다."
+        "title": "MapExporter — Google Maps 비즈니스 데이터를 CSV 및 JSON로 가져옵니다.",
+        "description": "MapExporter은 Google Maps에서 이름, 전화번호, 리뷰, 사진, 이메일 등 공개적으로 사용 가능한 비즈니스 정보를 수집하여 CSV 또는 JSON로 내보내는 브라우저 확장 프로그램이자 웹 툴킷입니다."
       },
       "hero": {
         "announce": {
@@ -461,8 +462,8 @@ export const site: SiteContent = {
         ],
         "dashboard": "온라인 스크레이퍼 열기",
         "theater": {
-          "panelLabel": "MapsGrab 패널 미리보기",
-          "extensionActive": "MapsGrab 확장 프로그램 활성화됨",
+          "panelLabel": "MapExporter 패널 미리보기",
+          "extensionActive": "MapExporter 확장 프로그램 활성화됨",
           "mapFilters": [
             "지금 열기",
             "최고 평점",
@@ -504,7 +505,7 @@ export const site: SiteContent = {
         }
       },
       "facts": {
-        "caption": "MapsGrab 숫자로 보기",
+        "caption": "MapExporter 숫자로 보기",
         "items": [
           {
             "value": 36,
@@ -537,7 +538,7 @@ export const site: SiteContent = {
             "accent": "스프레드시트",
             "tail": "까지 3단계로 완료"
           },
-          "lead": "코드도 없고 복사 붙여넣기도 없습니다. MapsGrab은 Google Maps이 이미 표시한 내용을 읽고 이를 구조화된 행으로 변환합니다."
+          "lead": "코드도 없고 복사 붙여넣기도 없습니다. MapExporter은 Google Maps이 이미 표시한 내용을 읽고 이를 구조화된 행으로 변환합니다."
         },
         "steps": [
           {
@@ -546,7 +547,7 @@ export const site: SiteContent = {
           },
           {
             "title": "데이터 수집 시작",
-            "body": "{action}을 클릭하세요. MapsGrab은 결과를 스크롤하고 목록을 수집하며 활성화되면 연락처를 풍부하게 합니다.",
+            "body": "{action}을 클릭하세요. MapExporter은 결과를 스크롤하고 목록을 수집하며 활성화되면 연락처를 풍부하게 합니다.",
             "action": "데이터 수집 시작"
           },
           {
@@ -590,7 +591,7 @@ export const site: SiteContent = {
           "mcp": {
             "badge": "MCP 서버",
             "title": "AI 에이전트를 위한 실시간 지도 데이터",
-            "body": "Claude Code, Cursor, VS Code 및 Codex에 대한 MCP 도구로 검색하고 리뷰합니다.",
+            "body": "검색, 리뷰, 사진을 Claude Code, Cursor, VS Code, Codex용 MCP 도구로 제공합니다.",
             "link": "MCP 서버 탐색"
           }
         },
@@ -696,7 +697,7 @@ export const site: SiteContent = {
             "accent": "이메일",
             "tail": "을 보낼 수 있습니다."
           },
-          "lead": "농축이 켜져 있으면 MapsGrab 각 업체 공식 홈페이지를 확인하고 추출하면서 직접 연락 채널을 채워넣습니다."
+          "lead": "농축이 켜져 있으면 MapExporter 각 업체 공식 홈페이지를 확인하고 추출하면서 직접 연락 채널을 채워넣습니다."
         },
         "points": [
           "비즈니스 웹사이트에서 찾은 이메일 주소",
@@ -731,7 +732,7 @@ export const site: SiteContent = {
           },
           "mcp": {
             "title": "MCP 서버",
-            "description": "모든 MCP 클라이언트를 위한 검색 및 리뷰 도구"
+            "description": "모든 MCP 클라이언트를 위한 검색, 리뷰, 사진 도구"
           }
         },
         "langLabel": "언어",
@@ -847,16 +848,16 @@ export const site: SiteContent = {
         "contact": "지원팀에 문의",
         "items": [
           {
-            "question": "MapsGrab은 무료로 사용할 수 있나요?",
+            "question": "MapExporter은 무료로 사용할 수 있나요?",
             "answer": "예. 확장 프로그램은 계정 없이 작동하며 무료 월간 기록 할당량을 포함합니다. 가격 페이지의 유료 요금제는 더 필요할 때 한도를 높입니다."
           },
           {
             "question": "어떤 브라우저가 지원되나요?",
-            "answer": "확장 프로그램 페이지에서 MapsGrab을 다운로드하세요. Chrome, Edge 및 Brave는 압축을 푼 ZIP을 로드합니다. Firefox는 다시 시작한 후 다시 로드해야 하는 별도의 임시 추가 기능을 사용합니다. 이 페이지에는 설치 및 업데이트 지침이 포함되어 있습니다."
+            "answer": "확장 프로그램 페이지에서 MapExporter을 다운로드하세요. Chrome, Edge 및 Brave는 압축을 푼 ZIP을 로드합니다. Firefox는 다시 시작한 후 다시 로드해야 하는 별도의 임시 추가 기능을 사용합니다. 이 페이지에는 설치 및 업데이트 지침이 포함되어 있습니다."
           },
           {
             "question": "데이터의 출처는 어디이며, 수집하는 것이 합법적인가요?",
-            "answer": "MapsGrab은 귀하가 방문하는 Google Maps 페이지에 공개적으로 표시되는 정보만 수집합니다. 이는 모든 방문자가 읽을 수 있는 것과 동일한 세부정보입니다. 우리는 개인 계정, 비공개 콘텐츠 또는 비공개 데이터에 접근하지 않습니다."
+            "answer": "MapExporter은 귀하가 방문하는 Google Maps 페이지에 공개적으로 표시되는 정보만 수집합니다. 이는 모든 방문자가 읽을 수 있는 것과 동일한 세부정보입니다. 우리는 개인 계정, 비공개 콘텐츠 또는 비공개 데이터에 접근하지 않습니다."
           },
           {
             "question": "웹 도구를 설치해야 합니까?",
@@ -867,7 +868,7 @@ export const site: SiteContent = {
             "answer": "내보내기는 선택한 필드 선택에 따라 CSV 또는 JSON로 제공되며 Place ID로 중복이 제거됩니다."
           },
           {
-            "question": "MapsGrab가 내가 수집한 데이터를 볼 수 있나요?",
+            "question": "MapExporter가 내가 수집한 데이터를 볼 수 있나요?",
             "answer": "귀하의 설정과 결과는 귀하의 브라우저에 로컬로 저장됩니다. 당사 서버는 원격 구성, 계정 및 할당량 상태, 선택적 이메일/소셜 강화 및 최소 사용 로그만 처리합니다."
           }
         ]
@@ -880,14 +881,14 @@ export const site: SiteContent = {
           "tail": " 후에 잡기 시작하세요"
         },
         "lead": "확장 프로그램을 설치하고, Google Maps을 열고, 검색하고, 첫 번째 목록을 내보냅니다. 계정은 필요하지 않습니다.",
-        "install": "MapsGrab 무료 설치",
+        "install": "MapExporter 무료 설치",
         "online": "온라인 스크레이퍼를 사용해 보세요",
         "note": "무료 월별 할당량이 포함되어 있습니다. 신용카드가 없습니다."
       }
     },
     "extension": {
       "seo": {
-        "title": "MapsGrab for Chrome, Edge & Firefox — Google Maps 추출기 확장",
+        "title": "MapExporter for Chrome, Edge & Firefox — Google Maps 추출기 확장",
         "description": "Google Maps에서 비즈니스 데이터, 리뷰 및 사진의 36열을 추출하고, 이메일 및 소셜 링크로 기록을 보강하고, 일괄 작업을 실행하고, CSV 또는 JSON로 내보냅니다."
       },
       "hero": {
@@ -909,8 +910,8 @@ export const site: SiteContent = {
           "내보내기는 컴퓨터에 유지됩니다."
         ],
         "theater": {
-          "panelLabel": "MapsGrab 패널 미리보기",
-          "extensionActive": "MapsGrab이 페이지에서 활성화되었습니다.",
+          "panelLabel": "MapExporter 패널 미리보기",
+          "extensionActive": "MapExporter이 페이지에서 활성화되었습니다.",
           "dock": "도킹 왼쪽/오른쪽",
           "filters": [
             "지금 열기",
@@ -975,11 +976,11 @@ export const site: SiteContent = {
             "accent": "지도 보기",
             "tail": "당 하나의 패널"
           },
-          "lead": "MapsGrab 패널이 Google Maps 바로 위에 나타납니다. 검색 결과, 비즈니스 페이지 및 저장된 목록은 각각 올바른 추출 모드를 갖습니다. 복사-붙여넣기나 탭 저글링이 필요하지 않습니다."
+          "lead": "MapExporter 패널이 Google Maps 바로 위에 나타납니다. 검색 결과, 비즈니스 페이지 및 저장된 목록은 각각 올바른 추출 모드를 갖습니다. 복사-붙여넣기나 탭 저글링이 필요하지 않습니다."
         },
         "search": {
           "title": "검색결과",
-          "description": "검색에서 추출 시작을 누르세요. MapsGrab는 사람의 속도로 결과 목록을 스크롤하고 로드되는 각 목록을 수집합니다."
+          "description": "검색에서 추출 시작을 누르세요. MapExporter는 사람의 속도로 결과 목록을 스크롤하고 로드되는 각 목록을 수집합니다."
         },
         "place": {
           "title": "비즈니스 페이지",
@@ -995,7 +996,7 @@ export const site: SiteContent = {
         },
         "saved": {
           "title": "저장된 목록",
-          "description": "저장된 목록을 열고 시작을 한 번 누르세요. MapsGrab 각 장소를 차례로 열고 수집합니다. 항목별 클릭이 없습니다.",
+          "description": "저장된 목록을 열고 시작을 한 번 누르세요. MapExporter 각 장소를 차례로 열고 수집합니다. 항목별 클릭이 없습니다.",
           "listName": "즐겨찾기 · {count} 장소"
         }
       },
@@ -1112,7 +1113,7 @@ export const site: SiteContent = {
             "accent": "가라.",
             "tail": ""
           },
-          "lead": "하나의 작업에 최대 500개의 키워드를 붙여넣거나 URLs을 리뷰하세요. MapsGrab 실시간 진행 상황을 통해 항목별로 살펴보고, 지연되는 항목을 건너뛰고, 작업이 완료되면 자동으로 내보냅니다."
+          "lead": "하나의 작업에 최대 500개의 키워드를 붙여넣거나 URLs을 리뷰하세요. MapExporter 실시간 진행 상황을 통해 항목별로 살펴보고, 지연되는 항목을 건너뛰고, 작업이 완료되면 자동으로 내보냅니다."
         },
         "checks": [
           "키워드 작업은 키워드당 하나의 지도 검색을 실행합니다.",
@@ -1170,10 +1171,10 @@ export const site: SiteContent = {
         ],
         "diagram": {
           "browser": "귀하의 브라우저",
-          "servers": "MapsGrab 서버",
+          "servers": "MapExporter 서버",
           "nodes": {
             "mapsTab": "Google Maps 탭",
-            "panel": "MapsGrab 패널",
+            "panel": "MapExporter 패널",
             "storage": "로컬 저장소",
             "exports": "귀하의 내보내기",
             "config": "원격 구성",
@@ -1193,7 +1194,7 @@ export const site: SiteContent = {
           "kicker": "설치하다",
           "title": {
             "lead": "",
-            "accent": "MapsGrab",
+            "accent": "MapExporter",
             "tail": " 설치"
           },
           "lead": "여기에서 ZIP을 다운로드하고 브라우저에 맞는 단계를 따르세요. Chrome, Edge 및 Brave는 압축이 풀린 폴더를 로드합니다. Firefox은 다시 시작한 후 다시 로드해야 하는 별도의 임시 추가 기능을 사용합니다. 전체 크기로 보려면 이미지를 클릭하세요."
@@ -1217,11 +1218,11 @@ export const site: SiteContent = {
                 "description": [
                   "다운로드 ",
                   {
-                    "code": "mapsgrab.zip"
+                    "code": "mapexporter.zip"
                   },
                   ". Windows에서 마우스 오른쪽 버튼을 클릭하고 \"모두 추출\"을 선택합니다. macOS에서 더블클릭하세요. 추출된 폴더를 유지하십시오."
                 ],
-                "shot": "MapsGrab ZIP Chrome에 다운로드됨"
+                "shot": "MapExporter ZIP Chrome에 다운로드됨"
               },
               {
                 "title": "확장 프로그램 페이지 열기",
@@ -1252,9 +1253,9 @@ export const site: SiteContent = {
               {
                 "title": "압축을 푼 폴더를 로드합니다.",
                 "description": [
-                  "\"압축해제된 파일 로드\"를 클릭하고 추출된 폴더를 선택하세요. MapsGrab이 확장 프로그램 목록에 나타납니다. Google Maps 검색을 열어서 사용하세요."
+                  "\"압축해제된 파일 로드\"를 클릭하고 추출된 폴더를 선택하세요. MapExporter이 확장 프로그램 목록에 나타납니다. Google Maps 검색을 열어서 사용하세요."
                 ],
-                "shot": "MapsGrab 카드가 추가된 상태로 포장을 풀고 로드하세요."
+                "shot": "MapExporter 카드가 추가된 상태로 포장을 풀고 로드하세요."
               }
             ]
           },
@@ -1268,11 +1269,11 @@ export const site: SiteContent = {
                 "description": [
                   "다운로드 ",
                   {
-                    "code": "mapsgrab-firefox.zip"
+                    "code": "mapexporter-firefox.zip"
                   },
                   ". Windows에서 마우스 오른쪽 버튼을 클릭하고 \"모두 추출\"을 선택합니다. macOS에서 더블클릭하세요. 추출된 폴더를 유지하십시오."
                 ],
-                "shot": "MapsGrab Firefox ZIP Firefox에 다운로드됨"
+                "shot": "MapExporter Firefox ZIP Firefox에 다운로드됨"
               },
               {
                 "title": "디버깅 페이지 열기",
@@ -1294,7 +1295,7 @@ export const site: SiteContent = {
                   },
                   " 압축을 푼 폴더 안에 있습니다. Firefox이 다시 시작되면 임시 추가 기능이 언로드됩니다. 다시 로드하려면 이 단계를 반복하세요."
                 ],
-                "shot": "MapsGrab는 백그라운드 스크립트가 실행 중인 임시 Firefox 확장으로 로드됩니다."
+                "shot": "MapExporter는 백그라운드 스크립트가 실행 중인 임시 Firefox 확장으로 로드됩니다."
               }
             ]
           }
@@ -1310,7 +1311,7 @@ export const site: SiteContent = {
           "status": "시험판",
           "date": "8월 2026",
           "items": [
-            "MapsGrab 확장 프로그램의 첫 번째 사전 출시",
+            "MapExporter 확장 프로그램의 첫 번째 사전 출시",
             "Google Maps 자동 스크롤 및 36 열 스키마를 사용한 검색 추출",
             "비즈니스 페이지에서 리뷰 및 사진 추출",
             "비즈니스별 이메일 및 소셜 미디어 강화",
@@ -1364,12 +1365,12 @@ export const site: SiteContent = {
             "answer": "추출 규칙은 원격 구성으로 제공되므로 확장을 다시 설치하지 않고도 수정 사항이 패널에 적용됩니다. 페이지를 읽을 수 없으면 패널에 자동으로 실패하는 대신 오류가 표시됩니다."
           },
           {
-            "question": "MapsGrab가 내가 수집한 데이터를 볼 수 있나요?",
+            "question": "MapExporter가 내가 수집한 데이터를 볼 수 있나요?",
             "answer": "귀하의 설정과 결과는 귀하의 브라우저에 로컬로 저장됩니다. 당사 서버는 원격 구성, 계정 및 할당량 상태, 선택적 이메일 및 소셜 강화, 최소 사용 로그만 처리합니다."
           },
           {
             "question": "데이터의 출처는 어디이며, 수집하는 것이 합법적인가요?",
-            "answer": "MapsGrab은 귀하가 방문하는 Google Maps 페이지에 공개적으로 표시되는 정보만 수집합니다. 이는 모든 방문자가 읽을 수 있는 것과 동일한 세부정보입니다. 우리는 개인 계정, 비공개 콘텐츠 또는 비공개 데이터에 접근하지 않습니다."
+            "answer": "MapExporter은 귀하가 방문하는 Google Maps 페이지에 공개적으로 표시되는 정보만 수집합니다. 이는 모든 방문자가 읽을 수 있는 것과 동일한 세부정보입니다. 우리는 개인 계정, 비공개 콘텐츠 또는 비공개 데이터에 접근하지 않습니다."
           }
         ]
       },
@@ -1381,7 +1382,7 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "확장 프로그램을 설치하고, Google Maps을 검색하고, 깨끗한 스프레드시트를 내보냅니다. 계정은 필요하지 않습니다.",
-        "primary": "설치 MapsGrab",
+        "primary": "설치 MapExporter",
         "secondary": "요금제 비교",
         "note": "무료 월별 할당량이 포함되어 있습니다. 신용카드가 없습니다."
       }
@@ -1429,7 +1430,7 @@ export const site: SiteContent = {
         "confirmedCreditsTitle": "크레딧이 충전되었습니다",
         "confirmedCreditsMessage": "PayPal 결제가 확인되었으며 크레딧이 추가되었습니다. 이 탭을 닫고 원래 창에서 계속할 수 있습니다.",
         "confirmedSubscriptionTitle": "구독이 활성화되었습니다",
-        "confirmedSubscriptionMessage": "귀하의 PayPal 결제가 확인되었으며 귀하의 MapsGrab 요금제가 활성화되었습니다. 이 탭을 닫고 원래 창에서 계속할 수 있습니다.",
+        "confirmedSubscriptionMessage": "귀하의 PayPal 결제가 확인되었으며 귀하의 MapExporter 요금제가 활성화되었습니다. 이 탭을 닫고 원래 창에서 계속할 수 있습니다.",
         "failedTitle": "결제에 주의가 필요함",
         "failedMessage": "이 주문을 자동으로 확인할 수 없습니다. 원래 창으로 돌아가거나 결제 상태를 새로고침해 보세요."
       },
@@ -1478,13 +1479,13 @@ export const site: SiteContent = {
         "orderExpired": "주문이 만료되었습니다. 다시 구매해주세요.",
         "fulfillmentFailed": "결제가 접수되었지만 아직 크레딧이 추가되지 않았습니다. 나중에 다시 시도해 주세요.",
         "authExpired": "로그인이 만료되었습니다. 계속하려면 다시 로그인하세요.",
-        "popupBlocked": "귀하의 브라우저가 새 창을 차단했습니다. MapsGrab가 팝업을 열도록 허용하고 다시 시도하세요."
+        "popupBlocked": "귀하의 브라우저가 새 창을 차단했습니다. MapExporter가 팝업을 열도록 허용하고 다시 시도하세요."
       }
     },
     "pricing": {
       "seo": {
-        "title": "가격 — 온라인, 확장 및 API 계획 | MapsGrab",
-        "description": "모든 표면에 대한 MapsGrab 계획: $19, 브라우저 확장의 온라인 스크레이퍼 $39, 및 API $15. 모든 제품에는 무료 등급이 포함되어 있습니다. 온라인에서는 일회성 일반 월간 요금제, Extension에서는 API 월간 구독이 가능합니다."
+        "title": "가격 — 온라인, 확장 및 API 계획 | MapExporter",
+        "description": "모든 표면에 대한 MapExporter 계획: $19, 브라우저 확장의 온라인 스크레이퍼 $39, 및 API $15. 모든 제품에는 무료 등급이 포함되어 있습니다. 온라인에서는 일회성 일반 월간 요금제, Extension에서는 API 월간 구독이 가능합니다."
       },
       "hero": {
         "kicker": "가격",
@@ -1510,7 +1511,7 @@ export const site: SiteContent = {
           "unit": "기록",
           "eyebrow": "온라인 스크레이퍼 계획",
           "title": "기록에 따라 가격이 책정되는 클라우드 추출",
-          "description": "인프라에서 MapsGrab 엔진을 실행하세요. 레코드는 수집된 하나의 비즈니스 행입니다. 유료 플랜에는 추가 기록 비용 없이 선택적 이메일 및 소셜 미디어 강화 기능이 포함됩니다.",
+          "description": "인프라에서 MapExporter 엔진을 실행하세요. 레코드는 수집된 하나의 비즈니스 행입니다. 유료 플랜에는 추가 기록 비용 없이 선택적 이메일 및 소셜 미디어 강화 기능이 포함됩니다.",
           "billingChips": [
             "일회성 결제",
             "자연적인 한 달을 다룹니다.",
@@ -1678,7 +1679,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "MapsGrab 온라인 스크레이퍼 월별 기록 할당량에 적용됩니다.",
+            "usageNotice": "MapExporter 온라인 스크레이퍼 월별 기록 할당량에 적용됩니다.",
             "successTitle": "계획이 활성화되었습니다",
             "successDescription": "일회성 1개월 계획이 실행되었습니다. 온라인 스크레이퍼는 다음 할당량 새로 고침 시 이를 선택합니다."
           }
@@ -1826,7 +1827,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "MapsGrab 브라우저 확장 월별 할당량에 적용됩니다.",
+            "usageNotice": "MapExporter 브라우저 확장 월별 할당량에 적용됩니다.",
             "successTitle": "계획이 활성화되었습니다",
             "successDescription": "일회성 1개월 계획이 실행되었습니다. 확장 프로그램은 다음 할당량 새로 고침 시 이를 선택합니다."
           }
@@ -1904,7 +1905,7 @@ export const site: SiteContent = {
               "id": "business",
               "productId": "api_business",
               "name": "사업",
-              "tagline": "MapsGrab 데이터를 기반으로 구축된 제품의 경우",
+              "tagline": "MapExporter 데이터를 기반으로 구축된 제품의 경우",
               "price": "$115",
               "periodLabel": "일회성 · 1월",
               "quota": "10,000 요청/월",
@@ -2015,7 +2016,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "MapsGrab API 월별 요청 할당량에 적용됩니다.",
+            "usageNotice": "MapExporter API 월별 요청 할당량에 적용됩니다.",
             "successTitle": "계획이 활성화되었습니다",
             "successDescription": "일회성 1개월 계획이 실행되었습니다. API 키는 다음 요청 시 새 할당량을 선택합니다."
           }
@@ -2115,7 +2116,7 @@ export const site: SiteContent = {
         "loading": "결제 옵션 로드 중...",
         "loadFailed": "결제 옵션을 로드하지 못했습니다. 다시 시도하려면 페이지를 새로고침하세요.",
         "noChannels": "현재 이 요금제에 사용할 수 있는 결제 수단이 없습니다.",
-        "productTitlePrefix": "MapsGrab",
+        "productTitlePrefix": "MapExporter",
         "failedTitle": "결제 미완료",
         "billingPeriodMonthly": "1개월",
         "billingAutoRenew": "취소할 때까지 자동 갱신",
@@ -2156,7 +2157,7 @@ export const site: SiteContent = {
             "answer": "레코드는 수집된 하나의 행으로, 무료 플랜에서 계산되는 것과 동일한 단위입니다. 하나의 비즈니스인 온라인 스크레이퍼에서; 확장 프로그램에서는 수집한 각 비즈니스, 리뷰 또는 사진이 하나의 기록입니다. 이메일 및 소셜 강화는 기록을 추가하지 않습니다. 대신 API 탭에서는 성공적인 요청으로 사용량이 계산됩니다."
           },
           {
-            "question": "MapsGrab을 사용해 보려면 유료 요금제가 필요합니까?",
+            "question": "MapExporter을 사용해 보려면 유료 요금제가 필요합니까?",
             "answer": "아니요. 모든 제품에는 시간 제한이 없는 무료 등급이 있습니다. 온라인 스크레이퍼 및 확장에는 월별 1,000 레코드가 포함되고, API에는 월별 20 요청이 포함됩니다. 온라인 스크레이퍼 및 확장 무료 계획에는 이메일 또는 소셜 미디어 강화가 포함되지 않습니다. 유료 온라인 플랜에는 기본적으로 이 기능이 포함되어 있으며 각 작업마다 기능을 끌 수 있습니다."
           },
           {
@@ -2187,8 +2188,8 @@ export const site: SiteContent = {
       }
     },
     "extensionLogin": {
-      "title": "확장 로그인 | MapsGrab",
-      "description": "MapsGrab 웹사이트 세션을 브라우저 확장 프로그램에 연결하려면 로그인하세요.",
+      "title": "확장 로그인 | MapExporter",
+      "description": "MapExporter 웹사이트 세션을 브라우저 확장 프로그램에 연결하려면 로그인하세요.",
       "eyebrow": "브라우저 확장",
       "heading": "확장 로그인",
       "checkingState": "확인 중",
@@ -2221,7 +2222,7 @@ export const site: SiteContent = {
     },
     "online": {
       "seo": {
-        "title": "온라인 Google Maps 스크레이퍼 — 클라우드에서 추출 실행 | MapsGrab",
+        "title": "온라인 Google Maps 스크레이퍼 — 클라우드에서 추출 실행 | MapExporter",
         "description": "클라우드에서 Google Maps 키워드 검색을 실행하고, 비즈니스 데이터를 수집하고, 작업당 하나의 CSV을 다운로드하세요."
       },
       "hero": {
@@ -2484,7 +2485,7 @@ export const site: SiteContent = {
             "accent": "기록에 따라 가격 책정",
             "tail": ""
           },
-          "lead": "인프라에서 MapsGrab 엔진을 실행하세요. 레코드는 전달된 하나의 비즈니스 행입니다. 유료 플랜에는 추가 기록 비용 없이 이메일과 사회적 풍요로움이 포함됩니다."
+          "lead": "인프라에서 MapExporter 엔진을 실행하세요. 레코드는 전달된 하나의 비즈니스 행입니다. 유료 플랜에는 추가 기록 비용 없이 이메일과 사회적 풍요로움이 포함됩니다."
         },
         "specs": {
           "keywords": "작업별 키워드",
@@ -2511,7 +2512,7 @@ export const site: SiteContent = {
           },
           {
             "question": "데이터의 출처는 어디이며, 수집하는 것이 합법적인가요?",
-            "answer": "MapsGrab은 Google Maps에 공개적으로 표시되는 정보만 수집합니다. 이는 모든 방문자가 읽을 수 있는 것과 동일한 세부정보입니다. 우리는 개인 계정, 비공개 콘텐츠 또는 비공개 데이터에 접근하지 않습니다."
+            "answer": "MapExporter은 Google Maps에 공개적으로 표시되는 정보만 수집합니다. 이는 모든 방문자가 읽을 수 있는 것과 동일한 세부정보입니다. 우리는 개인 계정, 비공개 콘텐츠 또는 비공개 데이터에 접근하지 않습니다."
           },
           {
             "question": "어떤 형식으로 내보낼 수 있나요?",
@@ -2519,7 +2520,7 @@ export const site: SiteContent = {
           },
           {
             "question": "비용은 얼마입니까?",
-            "answer": "온라인 스크레이퍼는 무료 월별 레코드 할당량을 포함하여 가격 페이지의 MapsGrab 계획을 따릅니다. 유료 플랜은 더 많은 것이 필요할 때 한도를 높입니다."
+            "answer": "온라인 스크레이퍼는 무료 월별 레코드 할당량을 포함하여 가격 페이지의 MapExporter 계획을 따릅니다. 유료 플랜은 더 많은 것이 필요할 때 한도를 높입니다."
           },
           {
             "question": "이메일과 소셜 프로필을 이용하려면 유료 플랜이 필요합니까?",
@@ -2695,8 +2696,8 @@ export const site: SiteContent = {
     },
     "scraperApi": {
       "seo": {
-        "title": "Google Maps 스크레이퍼 API — JSON의 비즈니스 데이터 | MapsGrab",
-        "description": "MapsGrab 스크레이퍼 API는 Google Maps 검색 결과를 JSON로 반환합니다: 이름, 주소, 전화, 웹사이트, 등급, 시간, 좌표, Place ID 및 fid — 요청 시 이메일 및 소셜 프로필도 제공됩니다."
+        "title": "Google Maps 스크레이퍼 API — JSON의 비즈니스 데이터 | MapExporter",
+        "description": "MapExporter 스크레이퍼 API는 Google Maps 검색 결과를 JSON로 반환합니다: 이름, 주소, 전화, 웹사이트, 등급, 시간, 좌표, Place ID 및 fid — 요청 시 이메일 및 소셜 프로필도 제공됩니다."
       },
       "hero": {
         "title": {
@@ -3018,7 +3019,7 @@ export const site: SiteContent = {
           },
           {
             "question": "어떻게 인증하나요?",
-            "answer": "MapsGrab API 키를 Authorization 헤더의 전달자 토큰으로 보냅니다. 각 계정에는 하나의 키가 있습니다. 생성한 경우에만 전체가 표시되며, 새 키를 생성하면 이전 키가 즉시 비활성화됩니다."
+            "answer": "MapExporter API 키를 Authorization 헤더의 전달자 토큰으로 보냅니다. 각 계정에는 하나의 키가 있습니다. 생성한 경우에만 전체가 표시되며, 새 키를 생성하면 이전 키가 즉시 비활성화됩니다."
           },
           {
             "question": "요청은 어떻게 계산되나요?",
@@ -3045,8 +3046,8 @@ export const site: SiteContent = {
     },
     "reviewsApi": {
       "seo": {
-        "title": "Google Maps 리뷰 스크레이퍼 API — JSON의 리뷰 | MapsGrab",
-        "description": "MapsGrab 리뷰 API는 Google Maps 업체에 대한 공개 리뷰를 JSON로 반환합니다. 평점, 텍스트 및 번역, 작성자, 날짜, 리뷰 사진 및 소유자 답변 — 커서가 있는 페이지당 최대 60까지."
+        "title": "Google Maps 리뷰 스크레이퍼 API — JSON의 리뷰 | MapExporter",
+        "description": "MapExporter 리뷰 API는 Google Maps 업체에 대한 공개 리뷰를 JSON로 반환합니다. 평점, 텍스트 및 번역, 작성자, 날짜, 리뷰 사진 및 소유자 답변 — 커서가 있는 페이지당 최대 60까지."
       },
       "hero": {
         "title": {
@@ -3292,7 +3293,7 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "사진 API — 공개 비즈니스 사진 URL | MapsGrab",
+        "title": "사진 API — 공개 비즈니스 사진 URL | MapExporter",
         "description": "비즈니스의 fid로 공개 사진 URL을 JSON으로 받으세요. max_results는 반환 수의 상한이며, 결과는 일부 사진이므로 전체 앨범을 보장하지 않습니다."
       },
       "hero": {
@@ -3447,7 +3448,7 @@ export const site: SiteContent = {
     },
     "scraperMcp": {
       "seo": {
-        "title": "Google Maps 스크레이퍼 MCP 서버 | MapsGrab",
+        "title": "Google Maps 스크레이퍼 MCP 서버 | MapExporter",
         "description": "하나의 MCP 연결로 Google Maps 장소를 검색하고 리뷰와 공개 비즈니스 사진 URL을 가져오세요."
       },
       "clients": {
@@ -3482,7 +3483,7 @@ export const site: SiteContent = {
         ]
       },
       "agent": {
-        "label": "에이전트 세션 예시: 지역 비즈니스에 대한 질문, 구조화된 결과가 포함된 MapsGrab 도구 호출 및 에이전트의 답변",
+        "label": "에이전트 세션 예시: 지역 비즈니스에 대한 질문, 구조화된 결과가 포함된 MapExporter 도구 호출 및 에이전트의 답변",
         "session": "에이전트 세션",
         "connected": "MCP 서버 {server} 연결됨",
         "placeholder": "Google Maps에 있는 어떤 장소에 대해 물어보세요...",
@@ -3743,7 +3744,7 @@ export const site: SiteContent = {
         "clientsLabel": "MCP 고객",
         "anyClient": "모든 MCP 클라이언트",
         "toolsLabel": "도구",
-        "hub": "MapsGrab MCP",
+        "hub": "MapExporter MCP",
         "publicData": "공개 Google Maps 데이터",
         "resultLabel": "결과",
         "results": [
@@ -3754,11 +3755,11 @@ export const site: SiteContent = {
         "steps": [
           {
             "title": "연결하다",
-            "description": "클라이언트에 엔드포인트를 추가한 다음 브라우저를 통해 MapsGrab에 로그인하세요."
+            "description": "클라이언트에 엔드포인트를 추가한 다음 브라우저를 통해 MapExporter에 로그인하세요."
           },
           {
             "title": "발견하다",
-            "description": "에이전트는 MapsGrab 도구와 해당 입력 스키마를 나열합니다."
+            "description": "에이전트는 MapExporter 도구와 해당 입력 스키마를 나열합니다."
           },
           {
             "title": "부르다",
@@ -3773,7 +3774,7 @@ export const site: SiteContent = {
           "accent": "클라이언트당",
           "tail": ""
         },
-        "lead": "클라이언트를 MapsGrab 엔드포인트로 지정하고 브라우저를 통해 로그인하세요. 복사할 API 키도 없고, SDK도 없고, 실행할 로컬 프로세스도 없습니다.",
+        "lead": "클라이언트를 MapExporter 엔드포인트로 지정하고 브라우저를 통해 로그인하세요. 복사할 API 키도 없고, SDK도 없고, 실행할 로컬 프로세스도 없습니다.",
         "tabsLabel": "MCP 고객",
         "copy": "구성 복사",
         "clients": {
@@ -3782,15 +3783,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "서버 추가",
-                "description": "HTTP를 통해 `mapsgrab`를 등록하는 명령을 실행합니다."
+                "description": "HTTP를 통해 `mapexporter`를 등록하는 명령을 실행합니다."
               },
               {
                 "title": "로그인",
-                "description": "Claude Code에서 `/mcp`를 실행하고 `mapsgrab`를 선택한 후 인증하세요. 승인할 수 있도록 MapsGrab가 브라우저에서 열립니다."
+                "description": "Claude Code에서 `/mcp`를 실행하고 `mapexporter`를 선택한 후 인증하세요. 승인할 수 있도록 MapExporter가 브라우저에서 열립니다."
               },
               {
                 "title": "지도 데이터 요청",
-                "description": "Claude Code는 MapsGrab 도구를 나열하고 프롬프트에 필요할 때 호출합니다."
+                "description": "Claude Code는 MapExporter 도구를 나열하고 프롬프트에 필요할 때 호출합니다."
               }
             ]
           },
@@ -3803,11 +3804,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "로그인",
-                "description": "Cursor 설정 → MCP에서 `mapsgrab` 옆 연결을 클릭하고 브라우저에서 승인합니다."
+                "description": "Cursor 설정 → MCP에서 `mapexporter` 옆 연결을 클릭하고 브라우저에서 승인합니다."
               },
               {
                 "title": "도구를 사용하세요",
-                "description": "`mapsgrab`는 에이전트를 위해 준비된 MCP 서버 목록에 해당 도구를 표시합니다."
+                "description": "`mapexporter`는 에이전트를 위해 준비된 MCP 서버 목록에 해당 도구를 표시합니다."
               }
             ]
           },
@@ -3820,11 +3821,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "로그인",
-                "description": "서버를 시작합니다. VS Code는 MapsGrab 인증을 요청하고 브라우저를 열어 승인합니다."
+                "description": "서버를 시작합니다. VS Code는 MapExporter 인증을 요청하고 브라우저를 열어 승인합니다."
               },
               {
                 "title": "에이전트 모드 사용",
-                "description": "상담원 모드에서 채팅을 열고 MapsGrab 도구를 활성화하세요."
+                "description": "상담원 모드에서 채팅을 열고 MapExporter 도구를 활성화하세요."
               }
             ]
           },
@@ -3833,15 +3834,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "서버 추가",
-                "description": "`codex mcp add`를 실행하여 URL로 `mapsgrab`를 등록합니다."
+                "description": "`codex mcp add`를 실행하여 URL로 `mapexporter`를 등록합니다."
               },
               {
                 "title": "로그인",
-                "description": "`codex mcp login mapsgrab`를 실행하고 브라우저에서 MapsGrab를 승인하세요."
+                "description": "`codex mcp login mapexporter`를 실행하고 브라우저에서 MapExporter를 승인하세요."
               },
               {
                 "title": "시작 Codex",
-                "description": "새 세션에서는 `mapsgrab` 및 해당 도구가 로드됩니다."
+                "description": "새 세션에서는 `mapexporter` 및 해당 도구가 로드됩니다."
               }
             ]
           }
@@ -3870,7 +3871,7 @@ export const site: SiteContent = {
           "accent": "행을 다시 가져옵니다.",
           "tail": ""
         },
-        "lead": "잠재 고객 발굴, 현지 시장 조사, 리뷰 모니터링 — 작업을 설명하면 상담원이 어떤 MapsGrab 도구를 호출할지 결정합니다.",
+        "lead": "잠재 고객 발굴, 현지 시장 조사, 리뷰 모니터링 — 작업을 설명하면 상담원이 어떤 MapExporter 도구를 호출할지 결정합니다.",
         "rows": [
           [
             {
@@ -4059,7 +4060,7 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "MapsGrab MCP 서버란 무엇인가요?",
+            "question": "MapExporter MCP 서버란 무엇인가요?",
             "answer": "하나의 MCP 연결로 Google Maps 장소를 검색하고 리뷰와 공개 비즈니스 사진 URL을 가져오세요. search_places / list_reviews / list_photos."
           },
           {
@@ -4068,7 +4069,7 @@ export const site: SiteContent = {
           },
           {
             "question": "어떻게 인증되나요?",
-            "answer": "OAuth 로그인 사용: Claude Code, Cursor, VS Code, Codex 및 MCP 인증을 지원하는 기타 클라이언트는 브라우저에서 MapsGrab를 엽니다. 클라이언트를 승인하고 나중에 대시보드 → API에서 취소할 수 있습니다. 클라이언트가 로그인할 수 없는 경우에만 API 키를 Authorization 헤더의 전달자 토큰으로 전달하세요."
+            "answer": "OAuth 로그인 사용: Claude Code, Cursor, VS Code, Codex 및 MCP 인증을 지원하는 기타 클라이언트는 브라우저에서 MapExporter를 엽니다. 클라이언트를 승인하고 나중에 대시보드 → API에서 취소할 수 있습니다. 클라이언트가 로그인할 수 없는 경우에만 API 키를 Authorization 헤더의 전달자 토큰으로 전달하세요."
           },
           {
             "question": "도구 호출은 어떻게 계산되나요?",
@@ -4117,7 +4118,7 @@ export const site: SiteContent = {
         },
         "cta": {
           "kicker": "대량 추출",
-          "primary": "설치 MapsGrab",
+          "primary": "설치 MapExporter",
           "secondary": "가격 보기",
           "note": "무료 월별 할당량이 포함되어 있습니다. 신용카드가 없습니다."
         },
@@ -4129,7 +4130,7 @@ export const site: SiteContent = {
       },
       "placeIdFinder": {
         "seo": {
-          "title": "Place ID Finder — URL에서 Google Maps Place ID을 얻습니다 | MapsGrab",
+          "title": "Place ID Finder — URL에서 Google Maps Place ID을 얻습니다 | MapExporter",
           "description": "Google Maps 장소 URL를 붙여넣으면 Place ID, CID 및 FID를 즉시 얻을 수 있습니다. 무료 브라우저 기반 Place ID 찾기 — 로그인이 필요 없으며 URL이 기기를 떠나지 않습니다."
         },
         "hero": {
@@ -4276,12 +4277,12 @@ export const site: SiteContent = {
             "accent": "가 필요하십니까?",
             "tail": ""
           },
-          "lead": "MapsGrab는 수집한 모든 비즈니스에 대해 33 다른 열과 함께 Place ID, CID 및 FID을 추출하고 CSV 또는 JSON로 바로 내보냅니다."
+          "lead": "MapExporter는 수집한 모든 비즈니스에 대해 33 다른 열과 함께 Place ID, CID 및 FID을 추출하고 CSV 또는 JSON로 바로 내보냅니다."
         }
       },
       "reviewLinkGenerator": {
         "seo": {
-          "title": "Google 리뷰 링크 생성기 — 무료 직접 리뷰 URL | MapsGrab",
+          "title": "Google 리뷰 링크 생성기 — 무료 직접 리뷰 URL | MapExporter",
           "description": "Google Maps 장소 URL를 고객과 공유할 수 있는 직접 Google 리뷰 링크로 전환하세요. 무료이며 브라우저 기반이며 아무것도 업로드되지 않습니다."
         },
         "hero": {
@@ -4315,7 +4316,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "장소 ID의 출처",
-            "body": "이 도구는 Place ID Finder와 동일한 로컬 디코딩을 재사용합니다. 식별자는 이미 지도 URL에 있으며 \"ChIJ…\" 형식으로의 변환은 전적으로 브라우저에서 발생합니다. 여러 위치를 관리하는 경우 위치별로 프로세스를 반복하거나 모든 내보내기에서 MapsGrab에 Place ID 열을 전달하여 스프레드시트에서 리뷰 링크가 대량으로 생성될 수 있도록 하세요."
+            "body": "이 도구는 Place ID Finder와 동일한 로컬 디코딩을 재사용합니다. 식별자는 이미 지도 URL에 있으며 \"ChIJ…\" 형식으로의 변환은 전적으로 브라우저에서 발생합니다. 여러 위치를 관리하는 경우 위치별로 프로세스를 반복하거나 모든 내보내기에서 MapExporter에 Place ID 열을 전달하여 스프레드시트에서 리뷰 링크가 대량으로 생성될 수 있도록 하세요."
           }
         ],
         "faq": {
@@ -4349,12 +4350,12 @@ export const site: SiteContent = {
             "accent": "획득",
             "tail": "한 모든 리뷰를 추적하세요."
           },
-          "lead": "MapsGrab는 평가, 텍스트, 날짜, 소유자 답변 등 모든 비즈니스 페이지의 리뷰를 가져오므로 피드백을 확인하고 더 빠르게 답변할 수 있습니다."
+          "lead": "MapExporter는 평가, 텍스트, 날짜, 소유자 답변 등 모든 비즈니스 페이지의 리뷰를 가져오므로 피드백을 확인하고 더 빠르게 답변할 수 있습니다."
         }
       },
       "emailChecker": {
         "seo": {
-          "title": "이메일 검사기 — 이메일 주소 무료 검증 | MapsGrab",
+          "title": "이메일 검사기 — 이메일 주소 무료 검증 | MapExporter",
           "description": "이메일 주소가 메일을 받을 수 있는지 확인하세요. 무료 이메일 검사기가 메일 서버에 직접 확인해 상태, 전송 가능 여부, MX 레코드, 계정 유형을 알려 줍니다."
         },
         "hero": {
@@ -4435,7 +4436,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "결과 읽는 법",
-            "body": "\"안전\"은 사서함이 존재하고 메일을 받는다는 뜻입니다. \"유효하지 않음\"과 \"비활성화됨\" 주소는 반송되며, \"스팸 트랩\"에는 절대 보내면 안 됩니다. 캐치올 도메인은 모든 주소를 받기 때문에 사서함 자체를 확인할 수 없습니다. 역할 계정, 일회용 주소, 받은편지함이 가득 찬 주소는 영업 연락에 위험합니다. \"알 수 없음\"은 메일 서버가 명확한 답을 주지 않았다는 뜻이니 나중에 다시 시도하세요. MapsGrab은 각 업체의 공식 웹사이트에서 이메일 주소를 수집하며, 연락하기 전에 이 검사기로 빠르게 확인할 수 있습니다."
+            "body": "\"안전\"은 사서함이 존재하고 메일을 받는다는 뜻입니다. \"유효하지 않음\"과 \"비활성화됨\" 주소는 반송되며, \"스팸 트랩\"에는 절대 보내면 안 됩니다. 캐치올 도메인은 모든 주소를 받기 때문에 사서함 자체를 확인할 수 없습니다. 역할 계정, 일회용 주소, 받은편지함이 가득 찬 주소는 영업 연락에 위험합니다. \"알 수 없음\"은 메일 서버가 명확한 답을 주지 않았다는 뜻이니 나중에 다시 시도하세요. MapExporter은 각 업체의 공식 웹사이트에서 이메일 주소를 수집하며, 연락하기 전에 이 검사기로 빠르게 확인할 수 있습니다."
           }
         ],
         "faq": {
@@ -4473,12 +4474,12 @@ export const site: SiteContent = {
             "accent": "확인",
             "tail": " 가치가 있는 이메일을 수집하세요"
           },
-          "lead": "MapsGrab은 추출한 모든 비즈니스의 이메일 주소와 소셜 프로필을 각 비즈니스의 자체 웹사이트에서 직접 찾습니다."
+          "lead": "MapExporter은 추출한 모든 비즈니스의 이메일 주소와 소셜 프로필을 각 비즈니스의 자체 웹사이트에서 직접 찾습니다."
         }
       },
       "latLongToDms": {
         "seo": {
-          "title": "위도 경도를 DMS로 변환 — 십진수 도를 도 분 초로 변환 | MapsGrab",
+          "title": "위도 경도를 DMS로 변환 — 십진수 도를 도 분 초로 변환 | MapExporter",
           "description": "십진수 위도와 경도를 도, 분, 초(DMS) 형식으로 즉시 변환합니다. 무료 브라우저 기반 좌표 변환기, 아무것도 업로드되지 않았습니다."
         },
         "hero": {
@@ -4511,7 +4512,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "이것이 지도 데이터 작업에 중요한 이유",
-            "body": "좌표 왕복은 도구 간에 비즈니스 데이터를 이동할 때 일상적인 마찰 지점입니다. Google Maps은 소수점을 내보내는 반면 지적 및 인쇄 작업 흐름에서는 DMS을 기대합니다. MapsGrab는 이러한 마찰을 규모에 맞게 낮게 유지합니다. 추출된 모든 비즈니스는 이미 내보내기에서 위도와 경도를 전달하며 일괄 좌표 변환은 이 페이지에서 사용하는 것과 동일한 공식을 사용하여 오프라인에서 실행할 수 있습니다."
+            "body": "좌표 왕복은 도구 간에 비즈니스 데이터를 이동할 때 일상적인 마찰 지점입니다. Google Maps은 소수점을 내보내는 반면 지적 및 인쇄 작업 흐름에서는 DMS을 기대합니다. MapExporter는 이러한 마찰을 규모에 맞게 낮게 유지합니다. 추출된 모든 비즈니스는 이미 내보내기에서 위도와 경도를 전달하며 일괄 좌표 변환은 이 페이지에서 사용하는 것과 동일한 공식을 사용하여 오프라인에서 실행할 수 있습니다."
           }
         ],
         "faq": {
@@ -4545,12 +4546,12 @@ export const site: SiteContent = {
             "accent": "추출됨",
             "tail": ""
           },
-          "lead": "MapsGrab은 내보내는 각 행에 위도와 경도를 기록합니다. 다음 라우팅 또는 지역 프로젝트에 대한 수동 좌표 조회가 없습니다."
+          "lead": "MapExporter은 내보내는 각 행에 위도와 경도를 기록합니다. 다음 라우팅 또는 지역 프로젝트에 대한 수동 좌표 조회가 없습니다."
         }
       },
       "dmsToDd": {
         "seo": {
-          "title": "DMS을 DD로 변환 — 도 분 초를 십진수 도으로 변환 | MapsGrab",
+          "title": "DMS을 DD로 변환 — 도 분 초를 십진수 도으로 변환 | MapExporter",
           "description": "도, 분, 초 좌표를 즉시 십진수로 변환합니다. 무료 브라우저 기반 DMS-DD 변환기, 아무것도 업로드되지 않았습니다."
         },
         "hero": {
@@ -4559,7 +4560,7 @@ export const site: SiteContent = {
             "accent": "(위도, 경도)",
             "tail": "로 변환"
           },
-          "description": "두 축 모두에 대해 도, 분, 초를 입력하고 깨끗한 십진수 도를 얻으세요. 형식 Google Maps, 스프레드시트 및 MapsGrab이 이해됩니다."
+          "description": "두 축 모두에 대해 도, 분, 초를 입력하고 깨끗한 십진수 도를 얻으세요. 형식 Google Maps, 스프레드시트 및 MapExporter이 이해됩니다."
         },
         "form": {
           "latitudeHeading": "위도(N/S)",
@@ -4586,7 +4587,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "좌표 데이터의 일관성 유지",
-            "body": "혼합된 표기법은 수입 후 위치가 잘못된 바다에 빠지게 되는 일반적인 이유입니다. 소수점 이하도를 한 번 결정하고 경계의 모든 것을 변환하면 파이프라인이 정상적으로 유지됩니다. MapsGrab은 이미 십진수 단위로 좌표를 내보내므로 확장 프로그램으로 수집된 데이터는 변환 단계 없이 GIS 및 BI 도구에 저장됩니다."
+            "body": "혼합된 표기법은 수입 후 위치가 잘못된 바다에 빠지게 되는 일반적인 이유입니다. 소수점 이하도를 한 번 결정하고 경계의 모든 것을 변환하면 파이프라인이 정상적으로 유지됩니다. MapExporter은 이미 십진수 단위로 좌표를 내보내므로 확장 프로그램으로 수집된 데이터는 변환 단계 없이 GIS 및 BI 도구에 저장됩니다."
           }
         ],
         "faq": {
@@ -4620,12 +4621,12 @@ export const site: SiteContent = {
             "accent": "규모",
             "tail": ""
           },
-          "lead": "MapsGrab은 수집하는 모든 비즈니스의 십진수 위도와 경도를 주소, 전화번호 및 Place ID 열 옆에 내보냅니다."
+          "lead": "MapExporter은 수집하는 모든 비즈니스의 십진수 위도와 경도를 주소, 전화번호 및 Place ID 열 옆에 내보냅니다."
         }
       },
       "bulkKeywords": {
         "seo": {
-          "title": "대량 키워드 생성기 — 키워드 + 위치 조합 | MapsGrab",
+          "title": "대량 키워드 생성기 — 키워드 + 위치 조합 | MapExporter",
           "description": "로컬 SEO 및 지도 스크래핑 작업을 위해 키워드 및 위치 조합을 대량으로 생성합니다. 두 개의 목록을 붙여넣고 모든 조합을 얻은 다음 CSV로 다운로드하세요. 무료."
         },
         "hero": {
@@ -4660,7 +4661,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "키워드 목록부터 수집된 데이터까지",
-            "body": "일반적인 다음 단계는 각 조합을 Google Maps 검색으로 실행하고 결과를 수집하는 것입니다. 이 루프는 바로 MapsGrab이 자동화하는 것입니다. 확장 프로그램은 키워드 목록을 일괄 작업으로 받아들이고, 검색을 하나씩 진행하고, 찾은 모든 비즈니스를 내보냅니다. 따라서 여기에서 생성한 조합은 수동으로 복사하지 않고도 구조화된 행이 됩니다."
+            "body": "일반적인 다음 단계는 각 조합을 Google Maps 검색으로 실행하고 결과를 수집하는 것입니다. 이 루프는 바로 MapExporter이 자동화하는 것입니다. 확장 프로그램은 키워드 목록을 일괄 작업으로 받아들이고, 검색을 하나씩 진행하고, 찾은 모든 비즈니스를 내보냅니다. 따라서 여기에서 생성한 조합은 수동으로 복사하지 않고도 구조화된 행이 됩니다."
           }
         ],
         "faq": {
@@ -4694,12 +4695,12 @@ export const site: SiteContent = {
             "accent": "결과",
             "tail": "로 전환"
           },
-          "lead": "MapsGrab 일괄 작업은 모든 키워드를 지도 검색으로 실행하고 그 뒤에 있는 비즈니스(CSV 또는 JSON)를 리뷰, 사진 및 연락처 강화와 함께 내보냅니다."
+          "lead": "MapExporter 일괄 작업은 모든 키워드를 지도 검색으로 실행하고 그 뒤에 있는 비즈니스(CSV 또는 JSON)를 리뷰, 사진 및 연락처 강화와 함께 내보냅니다."
         }
       },
       "mergeCsv": {
         "seo": {
-          "title": "온라인으로 CSV 파일 병합 — 여러 CSV 파일 무료 결합 | MapsGrab",
+          "title": "온라인으로 CSV 파일 병합 — 여러 CSV 파일 무료 결합 | MapExporter",
           "description": "온라인에서 여러 개의 CSV 파일을 하나의 파일로 병합합니다. 열 헤더는 무료, 비공개 및 완전한 브라우저 기반 통합 방식으로 자동 정렬됩니다."
         },
         "hero": {
@@ -4732,7 +4733,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "다중 실행 데이터 수집을 위해 제작됨",
-            "body": "일반적인 사용 사례는 실행을 추가하는 것입니다. 각 MapsGrab 추출 세션은 자체 CSV을 내보내고, 병합하면 중복 제거 및 정리 전에 해당 주의 세션을 하나의 데이터 세트로 가져옵니다. 파서는 인용된 필드, 포함된 쉼표 및 셀 내부의 줄 바꿈(RFC 4180)을 처리하므로 여러 줄 주소로 내보내기 또는 리뷰 조각이 올바르게 병합됩니다."
+            "body": "일반적인 사용 사례는 실행을 추가하는 것입니다. 각 MapExporter 추출 세션은 자체 CSV을 내보내고, 병합하면 중복 제거 및 정리 전에 해당 주의 세션을 하나의 데이터 세트로 가져옵니다. 파서는 인용된 필드, 포함된 쉼표 및 셀 내부의 줄 바꿈(RFC 4180)을 처리하므로 여러 줄 주소로 내보내기 또는 리뷰 조각이 올바르게 병합됩니다."
           }
         ],
         "faq": {
@@ -4766,7 +4767,7 @@ export const site: SiteContent = {
             "accent": "하나의 데이터세트",
             "tail": ""
           },
-          "lead": "MapsGrab은 필드 선택 및 Place ID 중복 제거를 통해 세션당 깨끗한 CSV/JSON을 내보냅니다. 따라서 다중 실행 데이터세트는 이미 거의 병합되기 시작합니다."
+          "lead": "MapExporter은 필드 선택 및 Place ID 중복 제거를 통해 세션당 깨끗한 CSV/JSON을 내보냅니다. 따라서 다중 실행 데이터세트는 이미 거의 병합되기 시작합니다."
         }
       }
     }
@@ -4777,16 +4778,16 @@ export const company: CompanyContent = {
   "footerGroupLabel": "회사",
   "about": {
     "navLabel": "에 대한",
-    "seoTitle": "약 MapsGrab | 제품과 경계",
-    "seoDescription": "MapsGrab은 브라우저 확장, 클라우드 온라인 스크레이퍼, API 및 MCP 서버, 무료 웹 도구 등 공공 비즈니스 데이터를 위한 지도 데이터 도구 키트입니다. 데이터 경계가 어디에 있는지 알아보세요.",
+    "seoTitle": "약 MapExporter | 제품과 경계",
+    "seoDescription": "MapExporter은 브라우저 확장, 클라우드 온라인 스크레이퍼, API 및 MCP 서버, 무료 웹 도구 등 공공 비즈니스 데이터를 위한 지도 데이터 도구 키트입니다. 데이터 경계가 어디에 있는지 알아보세요.",
     "hero": {
-      "eyebrow": "약 MapsGrab",
+      "eyebrow": "약 MapExporter",
       "title": {
         "lead": "지도 데이터, ",
         "accent": "직접",
         "tail": " 방식으로 확보"
       },
-      "intro": "MapsGrab은 Google Maps에서 공개적으로 사용 가능한 비즈니스 정보를 수집하여 이를 깨끗하고 구조화된 데이터로 변환하는 도구를 구축합니다. Edge 및 Firefox, 클라우드 기반 온라인 스크레이퍼, API 및 MCP 서버용 브라우저 확장 프로그램과 대부분이 브라우저에서 완전히 실행되는 무료 웹 도구입니다.",
+      "intro": "MapExporter은 Google Maps에서 공개적으로 사용 가능한 비즈니스 정보를 수집하여 이를 깨끗하고 구조화된 데이터로 변환하는 도구를 구축합니다. Edge 및 Firefox, 클라우드 기반 온라인 스크레이퍼, API 및 MCP 서버용 브라우저 확장 프로그램과 대부분이 브라우저에서 완전히 실행되는 무료 웹 도구입니다.",
       "contactLabel": "지원팀에 문의",
       "extensionLabel": "확장 프로그램 살펴보기",
       "stageLabel": "조기 액세스",
@@ -4817,7 +4818,7 @@ export const company: CompanyContent = {
       },
       "lead": "브라우저 확장 프로그램, 클라우드 기반 온라인 스크레이퍼 또는 API을 선택하세요. 확장 프로그램은 귀하의 브라우저 내에서 작동합니다. 온라인 스크레이퍼와 API은 하나의 클라우드 엔진을 공유하고, MCP 서버는 API을 AI 에이전트에 제공합니다.",
       "hub": {
-        "title": "MapsGrab 데이터 툴킷",
+        "title": "MapExporter 데이터 툴킷",
         "detail": "비즈니스 데이터 · 리뷰 · 사진 · 이메일 및 소셜 강화"
       },
       "tags": {
@@ -4853,7 +4854,7 @@ export const company: CompanyContent = {
         "accent": "경계",
         "tail": "가 있는 곳"
       },
-      "lead": "MapsGrab은 데이터에 대해 의도적으로 보수적입니다. 이것이 우리가 준수하는 제품 규칙입니다.",
+      "lead": "MapExporter은 데이터에 대해 의도적으로 보수적입니다. 이것이 우리가 준수하는 제품 규칙입니다.",
       "publicData": {
         "title": "공개 데이터만",
         "text": "공개적으로 사용 가능한 비즈니스 정보만 — 페이지 방문자가 이미 볼 수 있는 정보입니다.",
@@ -4920,7 +4921,7 @@ export const company: CompanyContent = {
         "badge": "브라우저에 저장됨"
       },
       "backend": {
-        "label": "MapsGrab 백엔드 · 네 가지 목적",
+        "label": "MapExporter 백엔드 · 네 가지 목적",
         "lanes": [
           {
             "title": "원격 구성",
@@ -4978,19 +4979,19 @@ export const company: CompanyContent = {
   },
   "contact": {
     "navLabel": "연락하다",
-    "seoTitle": "문의 MapsGrab 지원",
-    "seoDescription": "계정, 브라우저 확장 프로그램, 결제, 도구 또는 개인 정보 보호 요청에 대해서는 MapsGrab에 문의하세요.",
-    "eyebrow": "연락처 MapsGrab",
+    "seoTitle": "문의 MapExporter 지원",
+    "seoDescription": "계정, 브라우저 확장 프로그램, 결제, 도구 또는 개인 정보 보호 요청에 대해서는 MapExporter에 문의하세요.",
+    "eyebrow": "연락처 MapExporter",
     "title": {
       "lead": "",
       "accent": "인간",
       "tail": "과 대화하세요"
     },
-    "intro": "우리에게 편지를 보내면 사람이 그것을 읽을 것입니다. 현재 지원은 MapsGrab을 빌드하는 팀에서 직접 처리합니다.",
+    "intro": "우리에게 편지를 보내면 사람이 그것을 읽을 것입니다. 현재 지원은 MapExporter을 빌드하는 팀에서 직접 처리합니다.",
     "emailCardLabel": "지원 이메일",
     "copyEmail": "복사 {email}",
     "emailLabel": "이메일 지원",
-    "emailSubject": "MapsGrab 지원 요청",
+    "emailSubject": "MapExporter 지원 요청",
     "responseTimes": "영업일 기준 1일 이내에 지원 이메일에 답변해 드리며 일반적으로 더 빠릅니다. 개인정보 보호 요청은 계정 소유권을 먼저 확인해야 하는 경우 며칠이 걸릴 수 있습니다.",
     "include": {
       "title": "포함할 내용",
@@ -5018,6 +5019,7 @@ export const company: CompanyContent = {
   }
 }
 
+// TODO: Email Checker 披露译文（terms 的 what-the-service-does；privacy 的 intro、前两张 glance、where-data-is-stored、what-our-backend-processes）由 AI 翻译，尚未经专业法务校对，校对前不视为定稿；合同见 docs/feat/015.工具与增长/tech-Email验证.md。
 export const legal: LegalContent = {
   "page": {
     "crumbHome": "집",
@@ -5036,13 +5038,13 @@ export const legal: LegalContent = {
   },
   "terms": {
     "navLabel": "자귀",
-    "seoTitle": "서비스 약관 | MapsGrab",
-    "seoDescription": "MapsGrab 서비스 약관: 사용 제한, 수집된 데이터에 대한 사용자 책임, 구매, 면책 조항 및 당사에 연락하는 방법.",
+    "seoTitle": "서비스 약관 | MapExporter",
+    "seoDescription": "MapExporter 서비스 약관: 사용 제한, 수집된 데이터에 대한 사용자 책임, 구매, 면책 조항 및 당사에 연락하는 방법.",
     "title": "서비스 약관",
-    "intro": "본 약관은 브라우저 확장 프로그램, 이 웹사이트 및 무료 웹 도구인 MapsGrab 사용에 적용됩니다. 서비스를 이용하시기 전에 꼭 읽어보시기 바랍니다.",
+    "intro": "본 약관은 브라우저 확장 프로그램, 이 웹사이트 및 무료 웹 도구인 MapExporter 사용에 적용됩니다. 서비스를 이용하시기 전에 꼭 읽어보시기 바랍니다.",
     "updatedLabel": "마지막 업데이트",
-    "updatedAt": "8월 31, 2026",
-    "updatedAtISO": "2026-08-31",
+    "updatedAt": "11월 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "허용되는 사용, 수집된 데이터에 대한 사용자 책임, 구매, 면책 조항 및 당사에 연락하는 방법.",
     "helpTitle": "본 약관에 대해 질문이 있으십니까?",
     "glance": [
@@ -5078,14 +5080,14 @@ export const legal: LegalContent = {
         "id": "acceptance-of-terms",
         "title": "약관 동의",
         "paragraphs": [
-          "MapsGrab에 액세스하거나 사용하면 본 약관에 동의하는 것으로 간주됩니다. 이에 동의하지 않으면 확장 프로그램을 설치하지 말고 웹사이트와 도구를 사용하지 마세요."
+          "MapExporter에 액세스하거나 사용하면 본 약관에 동의하는 것으로 간주됩니다. 이에 동의하지 않으면 확장 프로그램을 설치하지 말고 웹사이트와 도구를 사용하지 마세요."
         ]
       },
       {
         "id": "what-the-service-does",
         "title": "서비스의 기능",
         "paragraphs": [
-          "MapsGrab은 귀하가 방문하는 Google Maps 페이지에 공개적으로 표시되는 정보(업체 세부 정보, 리뷰, 사진 및 관련 연락처 정보)를 수집하고 내보내는 데 도움이 됩니다. 이 서비스는 이 웹사이트인 Microsoft Edge 및 Firefox에 대한 브라우저 확장과 브라우저에서 실행되는 무료 웹 도구로 구성됩니다."
+          "MapExporter은 귀하가 방문하는 Google Maps 페이지에 공개적으로 표시되는 정보(업체 세부 정보, 리뷰, 사진 및 관련 연락처 정보)를 수집하고 내보내는 데 도움이 됩니다. 이 서비스는 Microsoft Edge 및 Firefox용 브라우저 확장 프로그램, 이 웹사이트 및 무료 웹 도구로 구성됩니다. 무료 웹 도구는 대부분 브라우저에서 실행되지만, 이메일 검사기와 같은 일부 도구는 입력한 내용을 당사 서버로 보내고, 서버가 이를 타사 검증 서비스에 전달하여 처리합니다."
         ]
       },
       {
@@ -5129,7 +5131,7 @@ export const legal: LegalContent = {
         "id": "the-service-is-provided-as-is",
         "title": "서비스는 그대로 제공됩니다",
         "paragraphs": [
-          "서비스는 \"있는 그대로\", \"사용 가능한 대로\" 제공됩니다. 플랫폼은 자주 변경되며 컬렉션 기능은 언제든지 부분적으로 또는 전체적으로 작동이 중지될 수 있습니다. MapsGrab은 중단 없는 가용성, 수집된 데이터의 완전성 또는 특정 목적에 대한 적합성에 대해 명시적이든 묵시적이든 어떠한 보증도 하지 않습니다.",
+          "서비스는 \"있는 그대로\", \"사용 가능한 대로\" 제공됩니다. 플랫폼은 자주 변경되며 컬렉션 기능은 언제든지 부분적으로 또는 전체적으로 작동이 중지될 수 있습니다. MapExporter은 중단 없는 가용성, 수집된 데이터의 완전성 또는 특정 목적에 대한 적합성에 대해 명시적이든 묵시적이든 어떠한 보증도 하지 않습니다.",
           "당사는 서비스의 일부를 변경, 일시 중지 또는 중단할 수 있으며 본 약관을 업데이트할 수 있습니다. 중요한 변경 사항이 있을 경우 당사는 이를 이 웹사이트에 공지할 것입니다. 변경 사항이 적용된 후에도 계속 사용한다는 것은 업데이트된 약관에 동의한다는 것을 의미합니다."
         ]
       },
@@ -5137,14 +5139,14 @@ export const legal: LegalContent = {
         "id": "limitation-of-liability",
         "title": "책임의 제한",
         "paragraphs": [
-          "법률이 허용하는 최대 한도 내에서 MapsGrab 및 그 운영자는 귀하의 서비스 이용 또는 이용 불가로 인해 발생하는 수익 또는 데이터 손실을 포함하여 간접적, 우발적, 특수적 또는 결과적 손해에 대해 책임을 지지 않습니다."
+          "법률이 허용하는 최대 한도 내에서 MapExporter 및 그 운영자는 귀하의 서비스 이용 또는 이용 불가로 인해 발생하는 수익 또는 데이터 손실을 포함하여 간접적, 우발적, 특수적 또는 결과적 손해에 대해 책임을 지지 않습니다."
         ]
       },
       {
         "id": "contact",
         "title": "연락하다",
         "paragraphs": [
-          "본 약관에 관한 질문은 support@mapsgrab.com로 문의하세요."
+          "본 약관에 관한 질문은 support@mapexporter.app로 문의하세요."
         ]
       }
     ],
@@ -5157,13 +5159,13 @@ export const legal: LegalContent = {
   },
   "privacy": {
     "navLabel": "은둔",
-    "seoTitle": "개인정보 보호정책 | MapsGrab",
-    "seoDescription": "MapsGrab 개인정보 보호정책: 확장 프로그램과 웹사이트에서 처리하는 데이터, 저장 위치, 백엔드의 용도, 준수 경계.",
+    "seoTitle": "개인정보 보호정책 | MapExporter",
+    "seoDescription": "MapExporter 개인정보 보호정책: 확장 프로그램과 웹사이트에서 처리하는 데이터, 저장 위치, 백엔드의 용도, 준수 경계.",
     "title": "개인 정보 보호 정책",
-    "intro": "이 정책은 MapsGrab이 처리하는 데이터, 저장 위치, 서버에 도달하는 데이터에 대해 설명합니다. 짧은 버전: 확장 프로그램은 공개적으로 표시된 데이터에 대해 작동하고 브라우저에 결과를 유지합니다. 클라우드 서비스와 별도로 백엔드는 구성, 할당량, 선택적 강화 및 최소 사용 로그만 지원합니다. 확장 프로그램에서는 광고나 타사 추적기를 실행하지 않습니다. 온라인 스크레이퍼, API 및 MCP 서버와 같은 클라우드 서비스에 대한 요청은 당사 서버에서 처리되며 온라인 스크레이퍼 결과는 귀하의 계정에 연결되어 다운로드할 수 있습니다.",
+    "intro": "이 정책은 MapExporter이 처리하는 데이터, 저장 위치, 서버에 도달하는 데이터에 대해 설명합니다. 짧은 버전: 확장 프로그램은 공개적으로 표시된 데이터에 대해 작동하고 브라우저에 결과를 유지합니다. 클라우드 서비스와 별도로 백엔드는 구성, 할당량, 선택적 강화, 이메일 검사기의 이메일 검증 및 최소 사용 로그만 지원합니다. 확장 프로그램에서는 광고나 타사 추적기를 실행하지 않습니다. 이메일 검사기는 입력한 주소를 당사 서버로 보내고, 서버가 이를 타사 이메일 검증 서비스에 전달합니다. 온라인 스크레이퍼, API 및 MCP 서버와 같은 클라우드 서비스에 대한 요청은 당사 서버에서 처리되며 온라인 스크레이퍼 결과는 귀하의 계정에 연결되어 다운로드할 수 있습니다.",
     "updatedLabel": "마지막 업데이트",
-    "updatedAt": "10월 16, 2026",
-    "updatedAtISO": "2026-10-16",
+    "updatedAt": "11월 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "확장 프로그램과 웹사이트가 처리하는 데이터, 저장 위치, 백엔드의 용도, 우리가 따르는 경계.",
     "helpTitle": "이 정책에 대해 질문이 있으십니까?",
     "glance": [
@@ -5172,13 +5174,13 @@ export const legal: LegalContent = {
         "icon": "lock",
         "tone": "ok",
         "title": "결과가 저장되는 위치",
-        "text": "확장 기능과 무료 웹 도구는 귀하의 데이터를 브라우저에 보관합니다. 온라인 스크레이퍼 결과는 귀하의 계정에 연결됩니다."
+        "text": "확장 기능과 무료 웹 도구는 귀하의 데이터를 브라우저에 보관합니다. 단, 이메일 검사기는 예외로, 입력한 주소를 당사 서버와 타사 이메일 검증 서비스로 보냅니다. 온라인 스크레이퍼 결과는 귀하의 계정에 연결됩니다."
       },
       {
         "section": "what-our-backend-processes",
         "icon": "database",
         "title": "우리 서버에 도달하는 것",
-        "text": "온라인 스크레이퍼, API 및 MCP 서버에 대한 요청과 구성, 계정 및 할당량, 선택적 강화 및 최소 사용 로그."
+        "text": "온라인 스크레이퍼, API 및 MCP 서버에 대한 요청과 구성, 계정 및 할당량, 선택적 강화, 이메일 검사기에 입력한 주소 및 최소 사용 로그."
       },
       {
         "section": "what-we-never-do",
@@ -5212,7 +5214,7 @@ export const legal: LegalContent = {
         "id": "where-data-is-stored",
         "title": "데이터가 저장되는 위치",
         "paragraphs": [
-          "확장 프로그램을 사용하면 설정, 추출 결과 및 일괄 작업 상태가 브라우저에 로컬로 저장됩니다(확장 로컬 저장소 및 IndexedDB). 내보내기나 아래에 설명된 선택적 통합 중 하나를 실행하지 않는 한 기기를 떠나지 않습니다. 무료 웹 도구는 브라우저에 입력한 내용도 처리합니다.",
+          "확장 프로그램을 사용하면 설정, 추출 결과 및 일괄 작업 상태가 브라우저에 로컬로 저장됩니다(확장 로컬 저장소 및 IndexedDB). 내보내기나 아래에 설명된 선택적 통합 중 하나를 실행하지 않는 한 기기를 떠나지 않습니다. 무료 웹 도구는 브라우저에 입력한 내용도 처리합니다. 단, 이메일 검사기는 예외로, 입력한 주소를 당사 서버로 보내고, 서버가 이를 타사 이메일 검증 서비스에 전달합니다.",
           "Google Drive 및 HubSpot OAuth 토큰을 연결하면 브라우저에만 저장됩니다.",
           "온라인 스크레이퍼 작업은 당사 서버에서 실행됩니다. 결과는 귀하의 계정에 저장되므로 대시보드에서 다운로드할 수 있습니다."
         ]
@@ -5223,12 +5225,13 @@ export const legal: LegalContent = {
         "paragraphs": [
           "온라인 스크레이퍼, API 및 MCP 서버 등 당사 클라우드 서비스에 대한 귀하의 요청은 당사 서버에서 처리됩니다. 또한 당사 서버는 귀하의 API 키와 귀하가 승인한 MCP 클라이언트 인증을 포함하여 이러한 서비스에 대한 액세스를 관리하고 귀하의 사용 기록을 유지합니다.",
           "귀하가 승인한 MCP 클라이언트는 요청의 결과를 받습니다. 대시보드에서 승인을 취소할 수 있습니다.",
-          "이러한 클라우드 서비스 외에도 확장 프로그램과 이 웹 사이트는 다음 네 가지 목적을 위해 자체 서버에 연결합니다."
+          "이러한 클라우드 서비스 외에도 확장 프로그램과 이 웹 사이트는 다음 다섯 가지 목적을 위해 자체 서버에 연결합니다."
         ],
         "items": [
           "원격 구성 — Google이 페이지를 변경할 때 추출이 계속 작동하는 페이지 구조 사전 설정입니다.",
           "계정 및 할당량 서비스 — 로그인, 계획 상태 및 월간 사용량 계산.",
           "이메일 및 소셜 미디어 강화 - 이 기능을 사용할 때 수집된 비즈니스 웹사이트에 공개적으로 나열된 연락처 세부 정보를 조회합니다.",
+          "이메일 검증 — 이메일 검사기를 사용할 때 입력한 주소를 당사 서버로 보내고, 서버가 이를 타사 이메일 검증 서비스에 전달하여 해당 주소가 메일을 받을 수 있는지 확인합니다.",
           "사용 로깅 — 서비스를 유지하고 개선하는 데 사용되는 기능 사용 및 오류에 대한 최소한의 기록입니다."
         ]
       },
@@ -5264,7 +5267,7 @@ export const legal: LegalContent = {
         "id": "data-removal",
         "title": "데이터 제거",
         "paragraphs": [
-          "확장 프로그램을 제거하면 로컬에 저장된 모든 데이터가 삭제됩니다. 백엔드 계정 데이터를 삭제하려면 support@mapsgrab.com으로 문의해 주세요. 삭제해 드리겠습니다."
+          "확장 프로그램을 제거하면 로컬에 저장된 모든 데이터가 삭제됩니다. 백엔드 계정 데이터를 삭제하려면 support@mapexporter.app으로 문의해 주세요. 삭제해 드리겠습니다."
         ]
       },
       {
@@ -5278,7 +5281,7 @@ export const legal: LegalContent = {
         "id": "contact",
         "title": "연락하다",
         "paragraphs": [
-          "개인정보 보호에 관한 질문이나 요청은 support@mapsgrab.com로 보내주세요."
+          "개인정보 보호에 관한 질문이나 요청은 support@mapexporter.app로 보내주세요."
         ]
       }
     ]
@@ -5286,9 +5289,9 @@ export const legal: LegalContent = {
 }
 
 export const mcpOAuth: McpOAuthContent = {
-  "seoTitle": "AI 앱 인증 | MapsGrab",
+  "seoTitle": "AI 앱 인증 | MapExporter",
   "title": "AI 앱을 계정에 연결하세요",
-  "intro": "앱에서 귀하의 MapsGrab 계정에 대한 액세스를 요청하고 있습니다. 이 연결을 직접 시작한 경우에만 허용하십시오.",
+  "intro": "앱에서 귀하의 MapExporter 계정에 대한 액세스를 요청하고 있습니다. 이 연결을 직접 시작한 경우에만 허용하십시오.",
   "loading": "연결 요청 로드 중...",
   "hostLabel": "앱 주소",
   "selfDeclared": "앱 자체에서 제공하는 이름: {name}",
@@ -5316,12 +5319,12 @@ export const mcpOAuth: McpOAuthContent = {
     "invalid_redirect_uri": "앱에서 보낸 반송 주소가 등록된 주소와 일치하지 않습니다.",
     "unsupported_response_type": "앱에서 지원되지 않는 인증 유형을 요청했습니다.",
     "invalid_pkce": "앱이 필수 보안 확인(PKCE과 S256)을 전송하지 않았습니다.",
-    "invalid_resource": "앱에서 MapsGrab MCP 서버 접근을 요청하지 않았거나, 다른 서버를 요청했습니다.",
-    "server_error": "MapsGrab 지금은 이 요청을 저장할 수 없습니다. 잠시 후 다시 시도해 주세요."
+    "invalid_resource": "앱에서 MapExporter MCP 서버 접근을 요청하지 않았거나, 다른 서버를 요청했습니다.",
+    "server_error": "MapExporter 지금은 이 요청을 저장할 수 없습니다. 잠시 후 다시 시도해 주세요."
   },
   "errorHint": "AI 앱에서 연결을 다시 시작하세요. 문제가 계속되면 앱 개발자에게 문의하세요.",
   "signInTitle": "계속하려면 로그인하세요.",
-  "signInText": "연결하려는 MapsGrab 계정에 로그인하세요. 이 요청은 당신을 기다릴 것입니다.",
+  "signInText": "연결하려는 MapExporter 계정에 로그인하세요. 이 요청은 당신을 기다릴 것입니다.",
   "signIn": "로그인",
   "loadFailed": "연결 요청을 로드할 수 없습니다. 네트워크를 확인하고 다시 시도하세요.",
   "decideFailed": "이 작업을 완료할 수 없습니다. 네트워크를 확인하고 다시 시도하세요.",
@@ -5340,7 +5343,7 @@ export const clink: ClinkReturnContent = {
     },
     "confirmedSubscription": {
       "title": "계획이 활성화되었습니다",
-      "description": "귀하의 ClinkBill 결제가 확인되었으며 귀하의 MapsGrab 요금제가 활성화되었습니다. 원래 탭으로 돌아갈 수 있습니다."
+      "description": "귀하의 ClinkBill 결제가 확인되었으며 귀하의 MapExporter 요금제가 활성화되었습니다. 원래 탭으로 돌아갈 수 있습니다."
     },
     "failed": {
       "title": "결제에 주의가 필요함",

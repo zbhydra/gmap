@@ -70,10 +70,10 @@ Google Maps 月度用量由 `sites/maps/usage/usageService.ts` 通过 `/maps/usa
 
 ### A6. 与 backend 通信
 
-- `vite.config.ts`：打包时注入 `__API_BASE_URL__` / `__WEBSITE_BASE_URL__`，运行时代码不直接读 `import.meta.env`；各环境地址与覆盖变量以本端构建配置为准,网站入口指向 MapsGrab。
+- `vite.config.ts`：打包时注入 `__API_BASE_URL__` / `__WEBSITE_BASE_URL__`，运行时代码不直接读 `import.meta.env`；各环境地址与覆盖变量以本端构建配置为准,网站入口指向 MapExporter。
 - `core/api/config.ts`：消费打包注入的 API / Website base URL；所有端点完整路径常量集中在此。
-- manifest 不再写入固定 public key(TG 时代的固定扩展 ID 体系已废,登录 v3 亦无需登记扩展 ID);`pnpm build` 生成商店包,`pnpm build:dev` 生成 localhost 开发包,`pnpm build:pre-release` 生成连接生产服务的预发布包。public key 可提交,私钥不进入仓库。
-- manifest `host_permissions` / 站点 `content_scripts.matches` / `web_accessible_resources` 按 dev/prod 与 `src/platforms/registry.ts` 生成，`vite.config.ts` 只消费该注册表：host_permissions 只含平台域，API 域依赖后端通配 CORS；prod 包不包含 `localhost:7600` / `localhost:7620`，dev 包不默认请求线上官网；平台关闭时会在编译期移除对应平台页面、CDN 权限与暴露样式资源。站点 content / injected 使用平台独立 entry，关闭平台不会静态加载该平台业务模块。官网登录为 v3 浏览器身份流程（不登记扩展 ID、无 `externally_connectable`、无 manifest 固定 key），登录 URL 不传扩展 ID。
+- Maps 的 Chrome/Edge 构建向 manifest 注入同一个固定 `key`（`extension/vite.config.ts` 的 `CHROMIUM_PUBLIC_KEY`），保证 ZIP 解压加载跨用户、跨路径的扩展 ID 一致；开发、真实验收与生产构建共用该身份。公钥可提交，RSA 私钥保存在被 git 忽略的 `extension/.keys/`，权限为 `600`，不进入仓库或分发包。Firefox 仍使用独立 Gecko 身份；第三方 OAuth 登记见 [A10](../013.Maps插件/references/A10-Drive与HubSpot集成.md#固定身份与-oauth-登记)。`pnpm build` 生成生产包，`pnpm build:dev` 生成 localhost 开发包，`pnpm build:pre-release` 生成连接生产服务的预发布包。
+- manifest `host_permissions` / 站点 `content_scripts.matches` / `web_accessible_resources` 按 dev/prod 与 `src/platforms/registry.ts` 生成，`vite.config.ts` 只消费该注册表：host_permissions 只含平台域，API 域依赖后端通配 CORS；prod 包不包含 `localhost:7600` / `localhost:7620`，dev 包不默认请求线上官网；平台关闭时会在编译期移除对应平台页面、CDN 权限与暴露样式资源。站点 content / injected 使用平台独立 entry，关闭平台不会静态加载该平台业务模块。官网登录为 v3 浏览器身份流程（不登记扩展 ID、无 `externally_connectable`），登录 URL 不传扩展 ID。
 - `core/api/client/HttpClient.ts` + `interceptors.ts`：自封装 HttpClient，拦截器链注入 `deviceId / token / Accept-Language / headers`，5xx 重试、401 刷新 token。
 - 与 website 走**同一套后端 `/api/client/*` 契约**。
 

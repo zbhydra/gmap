@@ -1,7 +1,7 @@
 ---
 version: 1.0
 name: Atlas
-description: MapsGrab website 的 UI 合同（营销页、Dashboard 与站内登录 / 支付回调页）。插件与 Admin 仍按 design.md / design.dark.md（Material You）。
+description: MapExporter website 的 UI 合同（营销页、Dashboard 与站内登录 / 支付回调页）。插件与 Admin 仍按 design.md / design.dark.md（Material You）。
 source: 定稿设计稿 docs/design/website/（2026-10-14）；取值以其 assets/css/tokens.css 为准，落地后以 website 全局 token 文件为准。
 ---
 

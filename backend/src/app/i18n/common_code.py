@@ -104,7 +104,7 @@ class CommonCode(IntEnum):
     ADMIN_SESSION_INVALID = 30004  # 管理员 session 无效
     ADMIN_INACTIVE = 30005  # 管理员账号停用
 
-    # ========== Maps Extractor 插件 (31100-31199) ==========
+    # ========== MapExporter 插件 (31100-31199) ==========
     MAPS_HUBSPOT_SYNC_FAILED = 31101  # Maps 插件 HubSpot 同步转发失败
     EXTENSION_USAGE_UNAVAILABLE = 31102  # Maps 配额服务暂不可用（Redis 故障，可重试）
     MAPS_ENRICH_SUBSCRIPTION_REQUIRED = 31103  # 邮箱/社媒补全需有效插件订阅

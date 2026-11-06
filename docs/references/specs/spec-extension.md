@@ -1,7 +1,7 @@
 # Extension 工程规范（MV3 插件）
 
 > `extension/` 浏览器插件代码**强制规范**。写/改 extension 前必读。
-> `extension/` 为 Maps Extractor 插件（013 域），`extension-bing/` 为同构的 Bing Maps Scraper（016 域）。
+> `extension/` 为 MapExporter 插件（013 域），`extension-bing/` 为同构的 Bing Maps Scraper（016 域）。
 > 技术栈：Manifest V3 + Vue 3 + Pinia + Vue I18n + Vite 7（vite-plugin-web-extension）。
 > 关联：[[spec-website]]、注释与错误定位见 [[spec-code]]。
 

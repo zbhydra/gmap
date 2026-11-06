@@ -2,15 +2,16 @@ import type { SiteContent, McpOAuthContent, ClinkReturnContent } from '../schema
 import type { CompanyContent } from '../../company/companyContent'
 import type { LegalContent } from '../../legal/legalContent'
 
+// TODO: 首页 MCP 工具集描述译文（pages.home.products.cards.mcp.body、pages.home.developers.items.mcp.description）由 AI 翻译，尚未经专业校对，校对前不视为定稿；工具集口径见 website/src/i18n/mcp.ts。
 export const site: SiteContent = {
   "site": {
-    "name": "MapsGrab",
-    "description": "MapsGrab adalah perangkat data peta: ambil informasi bisnis yang tersedia untuk umum dari peta, tautan ulasan, ID tempat, dan lainnya dengan ekstensi browser dan alat web.",
+    "name": "MapExporter",
+    "description": "MapExporter adalah perangkat data peta: ambil informasi bisnis yang tersedia untuk umum dari peta, tautan ulasan, ID tempat, dan lainnya dengan ekstensi browser dan alat web.",
     "keywords": "data peta, ekstraktor peta google, pencari id tempat, pembuat tautan ulasan, alat peta"
   },
   "layout": {
     "nav": {
-      "brand": "MapsGrab",
+      "brand": "MapExporter",
       "primaryLabel": "Navigasi utama",
       "mobileLabel": "Navigasi seluler",
       "extension": "Ekstensi",
@@ -35,7 +36,7 @@ export const site: SiteContent = {
       "legalLabel": "Legal",
       "resources": "Alat gratis",
       "product": "Produk",
-      "rights": "© 2026 MapsGrab. Semua hak dilindungi undang-undang.",
+      "rights": "© 2026 MapExporter. Semua hak dilindungi undang-undang.",
       "tools": [
         {
           "id": "place-id-finder",
@@ -171,13 +172,13 @@ export const site: SiteContent = {
       }
     },
     "seo": {
-      "title": "Dasbor | MapsGrab",
-      "description": "Kelola MapsGrab ekspor, API dan langganan Anda dalam satu ruang kerja."
+      "title": "Dasbor | MapExporter",
+      "description": "Kelola MapExporter ekspor, API dan langganan Anda dalam satu ruang kerja."
     },
     "shell": {
       "skipToContent": "Lewati ke konten",
       "sideLabel": "Ruang kerja",
-      "homeLabel": "Beranda MapsGrab",
+      "homeLabel": "Beranda MapExporter",
       "navLabel": "Menu ruang kerja",
       "loading": "Memuat ruang kerja Anda...",
       "retry": "Mencoba kembali",
@@ -301,7 +302,7 @@ export const site: SiteContent = {
       "downloadFailed": "Pengunduhan tidak dapat dimulai. Silakan coba lagi.",
       "signInPrompt": "Masuk untuk melihat riwayat ekspor online Anda.",
       "signInCta": "Masuk",
-      "unreachable": "Tidak dapat mencapai MapsGrab saat ini."
+      "unreachable": "Tidak dapat mencapai MapExporter saat ini."
     },
     "api": {
       "description": "Kelola kunci API Anda, tunjangan permintaan bulanan, dan aplikasi AI yang terhubung.",
@@ -403,14 +404,14 @@ export const site: SiteContent = {
           "steps": [
             "Masuk ke PayPal dan buka Pengaturan.",
             "Buka Pembayaran, lalu Pembayaran Otomatis.",
-            "Pilih MapsGrab dan pilih Batal."
+            "Pilih MapExporter dan pilih Batal."
           ]
         },
         {
           "provider": "ClinkBill",
           "steps": [
             "Buka tautan Portal Pelanggan dari email pembelian Anda.",
-            "Masuk dan pilih langganan MapsGrab Anda.",
+            "Masuk dan pilih langganan MapExporter Anda.",
             "Pilih Batal."
           ]
         }
@@ -421,8 +422,8 @@ export const site: SiteContent = {
   "pages": {
     "home": {
       "seo": {
-        "title": "MapsGrab — Ambil Google Maps Data Bisnis ke CSV & JSON",
-        "description": "MapsGrab adalah ekstensi browser dan perangkat web yang mengumpulkan informasi bisnis yang tersedia untuk umum dari Google Maps — nama, telepon, ulasan, foto, email — dan mengekspornya ke CSV atau JSON."
+        "title": "MapExporter — Ambil Google Maps Data Bisnis ke CSV & JSON",
+        "description": "MapExporter adalah ekstensi browser dan perangkat web yang mengumpulkan informasi bisnis yang tersedia untuk umum dari Google Maps — nama, telepon, ulasan, foto, email — dan mengekspornya ke CSV atau JSON."
       },
       "hero": {
         "announce": {
@@ -461,8 +462,8 @@ export const site: SiteContent = {
         ],
         "dashboard": "Buka Pengumpul data Online",
         "theater": {
-          "panelLabel": "MapsGrab pratinjau panel",
-          "extensionActive": "MapsGrab ekstensi aktif",
+          "panelLabel": "MapExporter pratinjau panel",
+          "extensionActive": "MapExporter ekstensi aktif",
           "mapFilters": [
             "Buka sekarang",
             "Nilai tertinggi",
@@ -504,7 +505,7 @@ export const site: SiteContent = {
         }
       },
       "facts": {
-        "caption": "MapsGrab berdasarkan angka",
+        "caption": "MapExporter berdasarkan angka",
         "items": [
           {
             "value": 36,
@@ -537,7 +538,7 @@ export const site: SiteContent = {
             "accent": "spreadsheet",
             "tail": " dalam tiga langkah"
           },
-          "lead": "Tanpa kode dan tanpa salin-tempel. MapsGrab membaca apa yang Google Maps sudah tunjukkan kepada Anda dan mengubahnya menjadi baris terstruktur."
+          "lead": "Tanpa kode dan tanpa salin-tempel. MapExporter membaca apa yang Google Maps sudah tunjukkan kepada Anda dan mengubahnya menjadi baris terstruktur."
         },
         "steps": [
           {
@@ -546,7 +547,7 @@ export const site: SiteContent = {
           },
           {
             "title": "Mulai ekstraksi",
-            "body": "Klik {action}. MapsGrab menggulirkan hasil, mengumpulkan daftar dan, bila diaktifkan, memperkaya kontak.",
+            "body": "Klik {action}. MapExporter menggulirkan hasil, mengumpulkan daftar dan, bila diaktifkan, memperkaya kontak.",
             "action": "Mulai ekstraksi"
           },
           {
@@ -590,7 +591,7 @@ export const site: SiteContent = {
           "mcp": {
             "badge": "MCP pelayan",
             "title": "Data Live Maps untuk agen AI Anda",
-            "body": "Telusuri dan ulas sebagai alat MCP untuk Claude Code, Cursor, VS Code, dan Codex.",
+            "body": "Pencarian, ulasan, dan foto sebagai alat MCP untuk Claude Code, Cursor, VS Code, dan Codex.",
             "link": "Jelajahi server MCP"
           }
         },
@@ -696,7 +697,7 @@ export const site: SiteContent = {
             "accent": "mengirimkan email",
             "tail": ""
           },
-          "lead": "Saat pengayaan aktif, MapsGrab memeriksa situs web resmi setiap bisnis dan mengisi saluran kontak langsung saat melakukan ekstraksi."
+          "lead": "Saat pengayaan aktif, MapExporter memeriksa situs web resmi setiap bisnis dan mengisi saluran kontak langsung saat melakukan ekstraksi."
         },
         "points": [
           "Alamat email ditemukan di situs web bisnis",
@@ -731,7 +732,7 @@ export const site: SiteContent = {
           },
           "mcp": {
             "title": "MCP pelayan",
-            "description": "Alat pencarian dan ulasan untuk klien MCP mana pun"
+            "description": "Alat pencarian, ulasan, dan foto untuk klien MCP mana pun"
           }
         },
         "langLabel": "Bahasa",
@@ -847,16 +848,16 @@ export const site: SiteContent = {
         "contact": "Hubungi dukungan",
         "items": [
           {
-            "question": "Apakah MapsGrab gratis untuk digunakan?",
+            "question": "Apakah MapExporter gratis untuk digunakan?",
             "answer": "Ya. Ekstensi ini berfungsi tanpa akun dan mencakup kuota catatan bulanan gratis. Paket berbayar di halaman Harga menaikkan batas saat Anda membutuhkan lebih banyak."
           },
           {
             "question": "Browser mana yang didukung?",
-            "answer": "Unduh MapsGrab dari halaman Ekstensi. Chrome, Edge dan Brave memuat ZIP yang belum dibongkar; Firefox menggunakan add-on sementara terpisah yang harus dimuat ulang setelah restart. Halaman ini mencakup petunjuk instalasi dan pembaruan."
+            "answer": "Unduh MapExporter dari halaman Ekstensi. Chrome, Edge dan Brave memuat ZIP yang belum dibongkar; Firefox menggunakan add-on sementara terpisah yang harus dimuat ulang setelah restart. Halaman ini mencakup petunjuk instalasi dan pembaruan."
           },
           {
             "question": "Dari mana data tersebut berasal, dan apakah pengumpulannya sah?",
-            "answer": "MapsGrab hanya mengumpulkan informasi yang ditampilkan secara publik di halaman Google Maps yang Anda kunjungi — detail yang sama yang dapat dibaca oleh pengunjung mana pun. Kami tidak mengakses akun pribadi, konten yang dilindungi undang-undang, atau data non-publik."
+            "answer": "MapExporter hanya mengumpulkan informasi yang ditampilkan secara publik di halaman Google Maps yang Anda kunjungi — detail yang sama yang dapat dibaca oleh pengunjung mana pun. Kami tidak mengakses akun pribadi, konten yang dilindungi undang-undang, atau data non-publik."
           },
           {
             "question": "Apakah saya perlu menginstal sesuatu untuk alat web?",
@@ -867,7 +868,7 @@ export const site: SiteContent = {
             "answer": "Ekspor datang sebagai CSV atau JSON dengan pilihan bidang yang Anda pilih, dihapus duplikatnya sebesar Place ID."
           },
           {
-            "question": "Apakah MapsGrab melihat data yang saya kumpulkan?",
+            "question": "Apakah MapExporter melihat data yang saya kumpulkan?",
             "answer": "Pengaturan dan hasil Anda disimpan secara lokal di browser Anda. Server kami hanya menangani konfigurasi jarak jauh, status akun dan kuota, pengayaan email/sosial opsional, dan log penggunaan minimal."
           }
         ]
@@ -880,14 +881,14 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "Instal ekstensinya, buka Google Maps, cari, dan ekspor daftar pertama Anda — tidak perlu akun.",
-        "install": "Instal MapsGrab gratis",
+        "install": "Instal MapExporter gratis",
         "online": "Coba Pengumpul data Online",
         "note": "Sudah termasuk kuota bulanan gratis. Tidak ada kartu kredit."
       }
     },
     "extension": {
       "seo": {
-        "title": "MapsGrab untuk Chrome, Edge & Firefox — Google Maps Ekstensi Ekstraktor",
+        "title": "MapExporter untuk Chrome, Edge & Firefox — Google Maps Ekstensi Ekstraktor",
         "description": "Ekstrak 36 kolom data bisnis, ulasan, dan foto dari Google Maps, perkaya catatan dengan email dan tautan sosial, jalankan tugas batch, dan ekspor ke CSV atau JSON."
       },
       "hero": {
@@ -909,8 +910,8 @@ export const site: SiteContent = {
           "Ekspor tetap ada di mesin Anda"
         ],
         "theater": {
-          "panelLabel": "MapsGrab pratinjau panel",
-          "extensionActive": "MapsGrab aktif di halaman ini",
+          "panelLabel": "MapExporter pratinjau panel",
+          "extensionActive": "MapExporter aktif di halaman ini",
           "dock": "Dermaga kiri/kanan",
           "filters": [
             "Buka sekarang",
@@ -975,11 +976,11 @@ export const site: SiteContent = {
             "accent": "tampilan Maps",
             "tail": ""
           },
-          "lead": "Panel MapsGrab muncul tepat di Google Maps. Hasil pencarian, halaman bisnis, dan daftar tersimpan masing-masing mendapatkan mode ekstraksi yang tepat — tanpa salin-tempel, tanpa juggling tab."
+          "lead": "Panel MapExporter muncul tepat di Google Maps. Hasil pencarian, halaman bisnis, dan daftar tersimpan masing-masing mendapatkan mode ekstraksi yang tepat — tanpa salin-tempel, tanpa juggling tab."
         },
         "search": {
           "title": "Hasil pencarian",
-          "description": "Tekan Mulai Mengekstrak pada pencarian apa pun. MapsGrab menggulir daftar hasil dengan kecepatan manusia dan mengumpulkan setiap daftar saat dimuat."
+          "description": "Tekan Mulai Mengekstrak pada pencarian apa pun. MapExporter menggulir daftar hasil dengan kecepatan manusia dan mengumpulkan setiap daftar saat dimuat."
         },
         "place": {
           "title": "Halaman bisnis",
@@ -995,7 +996,7 @@ export const site: SiteContent = {
         },
         "saved": {
           "title": "Daftar yang disimpan",
-          "description": "Buka daftar tersimpan dan tekan Mulai sekali. MapsGrab membuka setiap tempat secara bergantian dan mengumpulkannya — tanpa klik per item.",
+          "description": "Buka daftar tersimpan dan tekan Mulai sekali. MapExporter membuka setiap tempat secara bergantian dan mengumpulkannya — tanpa klik per item.",
           "listName": "Favorit · {count} tempat"
         }
       },
@@ -1112,7 +1113,7 @@ export const site: SiteContent = {
             "accent": "Menjauhlah.",
             "tail": ""
           },
-          "lead": "Tempelkan hingga 500 kata kunci atau ulasan URLs ke dalam satu tugas. MapsGrab menelusuri item demi item dengan kemajuan langsung, melewati apa pun yang terhenti, dan mengekspor secara otomatis saat tugas selesai."
+          "lead": "Tempelkan hingga 500 kata kunci atau ulasan URLs ke dalam satu tugas. MapExporter menelusuri item demi item dengan kemajuan langsung, melewati apa pun yang terhenti, dan mengekspor secara otomatis saat tugas selesai."
         },
         "checks": [
           "Tugas kata kunci menjalankan satu pencarian Maps per kata kunci",
@@ -1170,10 +1171,10 @@ export const site: SiteContent = {
         ],
         "diagram": {
           "browser": "Peramban Anda",
-          "servers": "MapsGrab server",
+          "servers": "MapExporter server",
           "nodes": {
             "mapsTab": "Google Maps tab",
-            "panel": "MapsGrab panel",
+            "panel": "MapExporter panel",
             "storage": "Penyimpanan lokal",
             "exports": "Ekspor Anda",
             "config": "Konfigurasi jarak jauh",
@@ -1193,7 +1194,7 @@ export const site: SiteContent = {
           "kicker": "Memasang",
           "title": {
             "lead": "Instal ",
-            "accent": "MapsGrab",
+            "accent": "MapExporter",
             "tail": ""
           },
           "lead": "Unduh ZIP di sini dan ikuti langkah-langkah untuk browser Anda. Chrome, Edge dan Brave memuat folder yang belum dibongkar. Firefox menggunakan add-on sementara terpisah yang harus dimuat ulang setelah restart. Klik gambar mana pun untuk melihatnya dalam ukuran penuh."
@@ -1217,11 +1218,11 @@ export const site: SiteContent = {
                 "description": [
                   "Unduh ",
                   {
-                    "code": "mapsgrab.zip"
+                    "code": "mapexporter.zip"
                   },
                   ". Pada Windows, klik kanan dan pilih “Ekstrak Semua”. Pada macOS, klik dua kali. Simpan folder hasil ekstraknya."
                 ],
-                "shot": "MapsGrab ZIP diunduh dalam Chrome"
+                "shot": "MapExporter ZIP diunduh dalam Chrome"
               },
               {
                 "title": "Buka halaman ekstensi",
@@ -1252,9 +1253,9 @@ export const site: SiteContent = {
               {
                 "title": "Muat folder yang belum dibongkar",
                 "description": [
-                  "Klik \"Load unpacked\" dan pilih folder yang diekstraksi. MapsGrab muncul di daftar ekstensi. Buka pencarian Google Maps untuk menggunakannya."
+                  "Klik \"Load unpacked\" dan pilih folder yang diekstraksi. MapExporter muncul di daftar ekstensi. Buka pencarian Google Maps untuk menggunakannya."
                 ],
-                "shot": "Muatan dibongkar dengan kartu MapsGrab ditambahkan"
+                "shot": "Muatan dibongkar dengan kartu MapExporter ditambahkan"
               }
             ]
           },
@@ -1268,11 +1269,11 @@ export const site: SiteContent = {
                 "description": [
                   "Unduh ",
                   {
-                    "code": "mapsgrab-firefox.zip"
+                    "code": "mapexporter-firefox.zip"
                   },
                   ". Pada Windows, klik kanan dan pilih “Ekstrak Semua”. Pada macOS, klik dua kali. Simpan folder hasil ekstraknya."
                 ],
-                "shot": "MapsGrab Firefox ZIP diunduh di Firefox"
+                "shot": "MapExporter Firefox ZIP diunduh di Firefox"
               },
               {
                 "title": "Buka halaman debug",
@@ -1294,7 +1295,7 @@ export const site: SiteContent = {
                   },
                   " di dalam folder yang belum di-zip. Add-on sementara akan dibongkar ketika Firefox dimulai ulang; ulangi langkah ini untuk memuatnya lagi."
                 ],
-                "shot": "MapsGrab dimuat sebagai ekstensi sementara Firefox dengan skrip latar belakangnya berjalan"
+                "shot": "MapExporter dimuat sebagai ekstensi sementara Firefox dengan skrip latar belakangnya berjalan"
               }
             ]
           }
@@ -1310,7 +1311,7 @@ export const site: SiteContent = {
           "status": "Pra-rilis",
           "date": "Agustus 2026",
           "items": [
-            "Pra-rilis pertama dari ekstensi MapsGrab",
+            "Pra-rilis pertama dari ekstensi MapExporter",
             "Google Maps ekstraksi pencarian dengan pengguliran otomatis dan skema kolom 36",
             "Tinjau dan ekstraksi foto dari halaman bisnis",
             "Pengayaan email dan media sosial per bisnis",
@@ -1364,12 +1365,12 @@ export const site: SiteContent = {
             "answer": "Aturan ekstraksi dikirimkan sebagai konfigurasi jarak jauh, sehingga perbaikan dapat dilakukan di panel tanpa menginstal ulang ekstensi. Jika halaman tidak dapat dibaca, panel akan menampilkan kesalahan alih-alih gagal secara diam-diam."
           },
           {
-            "question": "Apakah MapsGrab melihat data yang saya kumpulkan?",
+            "question": "Apakah MapExporter melihat data yang saya kumpulkan?",
             "answer": "Pengaturan dan hasil Anda disimpan secara lokal di browser Anda. Server kami hanya menangani konfigurasi jarak jauh, status akun dan kuota, email opsional dan pengayaan sosial, serta log penggunaan minimal."
           },
           {
             "question": "Dari mana data tersebut berasal, dan apakah pengumpulannya sah?",
-            "answer": "MapsGrab hanya mengumpulkan informasi yang ditampilkan secara publik di halaman Google Maps yang Anda kunjungi — detail yang sama yang dapat dibaca oleh pengunjung mana pun. Kami tidak mengakses akun pribadi, konten yang dilindungi undang-undang, atau data non-publik."
+            "answer": "MapExporter hanya mengumpulkan informasi yang ditampilkan secara publik di halaman Google Maps yang Anda kunjungi — detail yang sama yang dapat dibaca oleh pengunjung mana pun. Kami tidak mengakses akun pribadi, konten yang dilindungi undang-undang, atau data non-publik."
           }
         ]
       },
@@ -1381,7 +1382,7 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "Instal ekstensinya, cari Google Maps, dan ekspor spreadsheet yang bersih — tidak perlu akun.",
-        "primary": "Instal MapsGrab",
+        "primary": "Instal MapExporter",
         "secondary": "Bandingkan rencana",
         "note": "Sudah termasuk kuota bulanan gratis. Tidak ada kartu kredit."
       }
@@ -1429,7 +1430,7 @@ export const site: SiteContent = {
         "confirmedCreditsTitle": "Kredit ditambahkan",
         "confirmedCreditsMessage": "Pembayaran PayPal Anda telah dikonfirmasi dan Kredit telah ditambahkan. Anda dapat menutup tab ini dan melanjutkan di jendela asli.",
         "confirmedSubscriptionTitle": "Langganan diaktifkan",
-        "confirmedSubscriptionMessage": "Pembayaran PayPal Anda telah dikonfirmasi dan paket MapsGrab Anda aktif. Anda dapat menutup tab ini dan melanjutkan di jendela asli.",
+        "confirmedSubscriptionMessage": "Pembayaran PayPal Anda telah dikonfirmasi dan paket MapExporter Anda aktif. Anda dapat menutup tab ini dan melanjutkan di jendela asli.",
         "failedTitle": "Pembayaran perlu diperhatikan",
         "failedMessage": "Kami tidak dapat mengonfirmasi pesanan ini secara otomatis. Kembali ke jendela awal atau coba segarkan status pembayaran Anda di sana."
       },
@@ -1478,13 +1479,13 @@ export const site: SiteContent = {
         "orderExpired": "Pesanan sudah habis masa berlakunya. Silakan beli lagi.",
         "fulfillmentFailed": "Pembayaran telah diterima tetapi Kredit belum ditambahkan. Silakan coba lagi nanti.",
         "authExpired": "Masa masuk sudah habis. Masuk lagi untuk melanjutkan.",
-        "popupBlocked": "Browser Anda memblokir jendela baru. Izinkan MapsGrab untuk membuka pop-up dan coba lagi."
+        "popupBlocked": "Browser Anda memblokir jendela baru. Izinkan MapExporter untuk membuka pop-up dan coba lagi."
       }
     },
     "pricing": {
       "seo": {
-        "title": "Harga — Paket Online, Ekstensi, dan API | MapsGrab",
-        "description": "MapsGrab rencana untuk setiap permukaan: Scraper Online dari $19, Ekstensi browser dari $39, dan API dari $15. Tingkatan gratis disertakan dalam setiap produk — paket bulanan alami satu kali di Online dan API, langganan bulanan di Ekstensi."
+        "title": "Harga — Paket Online, Ekstensi, dan API | MapExporter",
+        "description": "MapExporter rencana untuk setiap permukaan: Scraper Online dari $19, Ekstensi browser dari $39, dan API dari $15. Tingkatan gratis disertakan dalam setiap produk — paket bulanan alami satu kali di Online dan API, langganan bulanan di Ekstensi."
       },
       "hero": {
         "kicker": "Harga",
@@ -1510,7 +1511,7 @@ export const site: SiteContent = {
           "unit": "catatan",
           "eyebrow": "Paket Scraper Online",
           "title": "Ekstraksi awan, dihargai berdasarkan catatan",
-          "description": "Jalankan mesin MapsGrab di infrastruktur kami. Catatan adalah satu baris bisnis yang dikumpulkan. Paket berbayar mencakup email opsional dan pengayaan media sosial tanpa biaya tambahan.",
+          "description": "Jalankan mesin MapExporter di infrastruktur kami. Catatan adalah satu baris bisnis yang dikumpulkan. Paket berbayar mencakup email opsional dan pengayaan media sosial tanpa biaya tambahan.",
           "billingChips": [
             "Pembayaran satu kali",
             "Mencakup satu bulan alami",
@@ -1678,7 +1679,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "Berlaku untuk kuota catatan bulanan MapsGrab Pengumpul online.",
+            "usageNotice": "Berlaku untuk kuota catatan bulanan MapExporter Pengumpul online.",
             "successTitle": "Paket diaktifkan",
             "successDescription": "Paket satu kali 1 bulan Anda sudah aktif. Scraper Online mengambilnya pada penyegaran kuota berikutnya."
           }
@@ -1826,7 +1827,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "Berlaku untuk kuota bulanan ekstensi browser MapsGrab.",
+            "usageNotice": "Berlaku untuk kuota bulanan ekstensi browser MapExporter.",
             "successTitle": "Paket diaktifkan",
             "successDescription": "Paket satu kali 1 bulan Anda sudah aktif. Ekstensi mengambilnya pada penyegaran kuota berikutnya."
           }
@@ -1904,7 +1905,7 @@ export const site: SiteContent = {
               "id": "business",
               "productId": "api_business",
               "name": "Bisnis",
-              "tagline": "Untuk produk yang dibuat berdasarkan data MapsGrab",
+              "tagline": "Untuk produk yang dibuat berdasarkan data MapExporter",
               "price": "$115",
               "periodLabel": "satu kali · 1 bulan",
               "quota": "10,000 permintaan / bulan",
@@ -2015,7 +2016,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "Berlaku untuk kuota permintaan bulanan MapsGrab API.",
+            "usageNotice": "Berlaku untuk kuota permintaan bulanan MapExporter API.",
             "successTitle": "Paket diaktifkan",
             "successDescription": "Paket satu kali 1 bulan Anda sudah aktif. Kunci API Anda mengambil kuota baru pada permintaan berikutnya."
           }
@@ -2115,7 +2116,7 @@ export const site: SiteContent = {
         "loading": "Memuat opsi pembayaran...",
         "loadFailed": "Gagal memuat opsi pembayaran. Segarkan halaman untuk mencoba lagi.",
         "noChannels": "Tidak ada metode pembayaran yang tersedia untuk paket ini saat ini.",
-        "productTitlePrefix": "MapsGrab",
+        "productTitlePrefix": "MapExporter",
         "failedTitle": "Pembayaran tidak lengkap",
         "billingPeriodMonthly": "1 bulan",
         "billingAutoRenew": "Perpanjangan otomatis hingga dibatalkan",
@@ -2156,7 +2157,7 @@ export const site: SiteContent = {
             "answer": "Catatan adalah satu baris yang dikumpulkan — unit yang sama dengan jumlah paket gratis. Di Scraper Online itu adalah salah satu bisnis; dalam ekstensi, setiap bisnis, ulasan, atau foto yang dikumpulkannya merupakan satu catatan. Pengayaan email dan sosial tidak menambah catatan. Pada tab API, penggunaan dihitung dalam permintaan yang berhasil."
           },
           {
-            "question": "Apakah saya memerlukan paket berbayar untuk mencoba MapsGrab?",
+            "question": "Apakah saya memerlukan paket berbayar untuk mencoba MapExporter?",
             "answer": "Tidak. Setiap produk memiliki tingkat gratis tanpa batas waktu: Scraper Online dan ekstensinya mencakup 1,000 catatan per bulan, dan API mencakup 20 permintaan per bulan. Paket Scraper Online dan ekstensi gratis tidak termasuk pengayaan email atau media sosial. Paket Online Berbayar menyertakannya secara default, dan Anda dapat menonaktifkannya untuk setiap tugas."
           },
           {
@@ -2187,8 +2188,8 @@ export const site: SiteContent = {
       }
     },
     "extensionLogin": {
-      "title": "Masuk Ekstensi | MapsGrab",
-      "description": "Masuk untuk menghubungkan sesi situs web MapsGrab Anda ke ekstensi browser.",
+      "title": "Masuk Ekstensi | MapExporter",
+      "description": "Masuk untuk menghubungkan sesi situs web MapExporter Anda ke ekstensi browser.",
       "eyebrow": "Ekstensi Peramban",
       "heading": "Masuk Ekstensi",
       "checkingState": "Memeriksa",
@@ -2221,7 +2222,7 @@ export const site: SiteContent = {
     },
     "online": {
       "seo": {
-        "title": "Online Google Maps Scraper — Jalankan Ekstraksi di Cloud | MapsGrab",
+        "title": "Online Google Maps Scraper — Jalankan Ekstraksi di Cloud | MapExporter",
         "description": "Jalankan Google Maps pencarian kata kunci di cloud, kumpulkan data bisnis, dan unduh satu CSV per tugas."
       },
       "hero": {
@@ -2484,7 +2485,7 @@ export const site: SiteContent = {
             "accent": "dihargai berdasarkan catatan",
             "tail": ""
           },
-          "lead": "Jalankan mesin MapsGrab di infrastruktur kami. Catatan adalah satu baris bisnis yang dikirimkan; paket berbayar mencakup email dan pengayaan sosial tanpa biaya tambahan."
+          "lead": "Jalankan mesin MapExporter di infrastruktur kami. Catatan adalah satu baris bisnis yang dikirimkan; paket berbayar mencakup email dan pengayaan sosial tanpa biaya tambahan."
         },
         "specs": {
           "keywords": "Kata kunci per tugas",
@@ -2511,7 +2512,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Dari mana data tersebut berasal, dan apakah pengumpulannya sah?",
-            "answer": "MapsGrab hanya mengumpulkan informasi yang ditampilkan secara publik di Google Maps — detail yang sama yang dapat dibaca oleh pengunjung mana pun. Kami tidak mengakses akun pribadi, konten yang dilindungi undang-undang, atau data non-publik."
+            "answer": "MapExporter hanya mengumpulkan informasi yang ditampilkan secara publik di Google Maps — detail yang sama yang dapat dibaca oleh pengunjung mana pun. Kami tidak mengakses akun pribadi, konten yang dilindungi undang-undang, atau data non-publik."
           },
           {
             "question": "Format apa yang dapat saya ekspor?",
@@ -2519,7 +2520,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Harganya berapa?",
-            "answer": "Scraper Online mengikuti paket MapsGrab di halaman Harga, termasuk kuota catatan bulanan gratis. Paket berbayar meningkatkan batasan saat Anda membutuhkan lebih banyak."
+            "answer": "Scraper Online mengikuti paket MapExporter di halaman Harga, termasuk kuota catatan bulanan gratis. Paket berbayar meningkatkan batasan saat Anda membutuhkan lebih banyak."
           },
           {
             "question": "Apakah saya memerlukan paket berbayar untuk email dan profil sosial?",
@@ -2695,8 +2696,8 @@ export const site: SiteContent = {
     },
     "scraperApi": {
       "seo": {
-        "title": "Google Maps API ekstraksi — Data Bisnis di JSON | MapsGrab",
-        "description": "MapsGrab API ekstraksi mengembalikan Google Maps hasil pencarian sebagai JSON: nama, alamat, telepon, situs web, peringkat, jam kerja, koordinat, Place ID dan fid — ditambah email dan profil sosial berdasarkan permintaan."
+        "title": "Google Maps API ekstraksi — Data Bisnis di JSON | MapExporter",
+        "description": "MapExporter API ekstraksi mengembalikan Google Maps hasil pencarian sebagai JSON: nama, alamat, telepon, situs web, peringkat, jam kerja, koordinat, Place ID dan fid — ditambah email dan profil sosial berdasarkan permintaan."
       },
       "hero": {
         "title": {
@@ -3018,7 +3019,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Bagaimana cara mengautentikasi?",
-            "answer": "Kirim kunci MapsGrab API Anda sebagai token pembawa di header Authorization. Setiap akun memiliki satu kunci. Itu ditampilkan secara penuh hanya ketika Anda membuatnya, dan membuat kunci baru akan segera menonaktifkan yang lama."
+            "answer": "Kirim kunci MapExporter API Anda sebagai token pembawa di header Authorization. Setiap akun memiliki satu kunci. Itu ditampilkan secara penuh hanya ketika Anda membuatnya, dan membuat kunci baru akan segera menonaktifkan yang lama."
           },
           {
             "question": "Bagaimana cara menghitung permintaan?",
@@ -3045,8 +3046,8 @@ export const site: SiteContent = {
     },
     "reviewsApi": {
       "seo": {
-        "title": "Google Maps Ulasan Pengumpul data API — Ulasan di JSON | MapsGrab",
-        "description": "MapsGrab Ulasan API mengembalikan ulasan publik dari bisnis Google Maps sebagai JSON: peringkat, teks dan terjemahan, penulis, tanggal, foto ulasan, dan balasan pemilik — hingga 60 per halaman dengan kursor."
+        "title": "Google Maps Ulasan Pengumpul data API — Ulasan di JSON | MapExporter",
+        "description": "MapExporter Ulasan API mengembalikan ulasan publik dari bisnis Google Maps sebagai JSON: peringkat, teks dan terjemahan, penulis, tanggal, foto ulasan, dan balasan pemilik — hingga 60 per halaman dengan kursor."
       },
       "hero": {
         "title": {
@@ -3292,7 +3293,7 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "API foto — URL foto publik bisnis | MapsGrab",
+        "title": "API foto — URL foto publik bisnis | MapExporter",
         "description": "Dapatkan URL foto publik bisnis dalam JSON menggunakan fid. max_results membatasi jumlah yang dikirim; hasilnya sebagian dan tidak menjamin album lengkap."
       },
       "hero": {
@@ -3447,7 +3448,7 @@ export const site: SiteContent = {
     },
     "scraperMcp": {
       "seo": {
-        "title": "Google Maps Pengumpul data MCP Server | MapsGrab",
+        "title": "Google Maps Pengumpul data MCP Server | MapExporter",
         "description": "Cari tempat Google Maps, baca ulasan, dan dapatkan URL foto publik bisnis melalui satu koneksi MCP."
       },
       "clients": {
@@ -3482,7 +3483,7 @@ export const site: SiteContent = {
         ]
       },
       "agent": {
-        "label": "Contoh sesi agen: pertanyaan tentang bisnis lokal, panggilan alat MapsGrab dengan hasil terstruktur, dan jawaban agen",
+        "label": "Contoh sesi agen: pertanyaan tentang bisnis lokal, panggilan alat MapExporter dengan hasil terstruktur, dan jawaban agen",
         "session": "Sesi agen",
         "connected": "MCP server {server} terhubung",
         "placeholder": "Tanyakan tentang tempat mana saja di Google Maps…",
@@ -3743,7 +3744,7 @@ export const site: SiteContent = {
         "clientsLabel": "MCP klien",
         "anyClient": "Klien MCP mana pun",
         "toolsLabel": "Peralatan",
-        "hub": "MapsGrab MCP",
+        "hub": "MapExporter MCP",
         "publicData": "Data publik Google Maps",
         "resultLabel": "hasil",
         "results": [
@@ -3754,11 +3755,11 @@ export const site: SiteContent = {
         "steps": [
           {
             "title": "Menghubungkan",
-            "description": "Tambahkan titik akhir ke klien Anda, lalu masuk ke MapsGrab melalui browser Anda."
+            "description": "Tambahkan titik akhir ke klien Anda, lalu masuk ke MapExporter melalui browser Anda."
           },
           {
             "title": "Menemukan",
-            "description": "Agen Anda mencantumkan alat MapsGrab dan skema masukannya."
+            "description": "Agen Anda mencantumkan alat MapExporter dan skema masukannya."
           },
           {
             "title": "Panggilan",
@@ -3773,7 +3774,7 @@ export const site: SiteContent = {
           "accent": "per klien",
           "tail": ""
         },
-        "lead": "Arahkan klien Anda ke titik akhir MapsGrab dan masuk melalui browser Anda — tanpa kunci API untuk disalin, tanpa SDK, tanpa proses lokal untuk dijalankan.",
+        "lead": "Arahkan klien Anda ke titik akhir MapExporter dan masuk melalui browser Anda — tanpa kunci API untuk disalin, tanpa SDK, tanpa proses lokal untuk dijalankan.",
         "tabsLabel": "MCP klien",
         "copy": "Salin konfigurasi",
         "clients": {
@@ -3782,15 +3783,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "Tambahkan servernya",
-                "description": "Jalankan perintah untuk mendaftarkan `mapsgrab` melalui HTTP."
+                "description": "Jalankan perintah untuk mendaftarkan `mapexporter` melalui HTTP."
               },
               {
                 "title": "Masuk",
-                "description": "Di Claude Code, jalankan `/mcp`, pilih `mapsgrab` dan autentikasi — MapsGrab terbuka di browser Anda untuk Anda setujui."
+                "description": "Di Claude Code, jalankan `/mcp`, pilih `mapexporter` dan autentikasi — MapExporter terbuka di browser Anda untuk Anda setujui."
               },
               {
                 "title": "Minta data Maps",
-                "description": "Claude Code mencantumkan alat MapsGrab dan memanggilnya saat prompt membutuhkannya."
+                "description": "Claude Code mencantumkan alat MapExporter dan memanggilnya saat prompt membutuhkannya."
               }
             ]
           },
@@ -3803,11 +3804,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "Masuk",
-                "description": "Di Pengaturan Cursor → MCP, klik Hubungkan di sebelah `mapsgrab` dan setujui di browser Anda."
+                "description": "Di Pengaturan Cursor → MCP, klik Hubungkan di sebelah `mapexporter` dan setujui di browser Anda."
               },
               {
                 "title": "Gunakan alatnya",
-                "description": "`mapsgrab` menunjukkan alatnya di daftar server MCP, siap untuk agen."
+                "description": "`mapexporter` menunjukkan alatnya di daftar server MCP, siap untuk agen."
               }
             ]
           },
@@ -3820,11 +3821,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "Masuk",
-                "description": "Mulai servernya. VS Code meminta untuk mengautentikasi dengan MapsGrab dan membuka browser Anda untuk menyetujui."
+                "description": "Mulai servernya. VS Code meminta untuk mengautentikasi dengan MapExporter dan membuka browser Anda untuk menyetujui."
               },
               {
                 "title": "Gunakan mode agen",
-                "description": "Buka Obrolan dalam mode agen dan aktifkan alat MapsGrab."
+                "description": "Buka Obrolan dalam mode agen dan aktifkan alat MapExporter."
               }
             ]
           },
@@ -3833,15 +3834,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "Tambahkan servernya",
-                "description": "Jalankan `codex mcp add` untuk mendaftarkan `mapsgrab` dengan URL."
+                "description": "Jalankan `codex mcp add` untuk mendaftarkan `mapexporter` dengan URL."
               },
               {
                 "title": "Masuk",
-                "description": "Jalankan `codex mcp login mapsgrab` dan setujui MapsGrab di browser Anda."
+                "description": "Jalankan `codex mcp login mapexporter` dan setujui MapExporter di browser Anda."
               },
               {
                 "title": "Mulai Codex",
-                "description": "Sesi baru memuat `mapsgrab` dan alat-alatnya."
+                "description": "Sesi baru memuat `mapexporter` dan alat-alatnya."
               }
             ]
           }
@@ -3870,7 +3871,7 @@ export const site: SiteContent = {
           "accent": "Dapatkan kembali baris.",
           "tail": ""
         },
-        "lead": "Pencarian calon pelanggan, riset pasar lokal, pemantauan tinjauan — jelaskan pekerjaannya, dan agen Anda memutuskan alat MapsGrab mana yang akan digunakan.",
+        "lead": "Pencarian calon pelanggan, riset pasar lokal, pemantauan tinjauan — jelaskan pekerjaannya, dan agen Anda memutuskan alat MapExporter mana yang akan digunakan.",
         "rows": [
           [
             {
@@ -4059,7 +4060,7 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "Apa itu server MapsGrab MCP?",
+            "question": "Apa itu server MapExporter MCP?",
             "answer": "Cari tempat Google Maps, baca ulasan, dan dapatkan URL foto publik bisnis melalui satu koneksi MCP. search_places / list_reviews / list_photos."
           },
           {
@@ -4068,7 +4069,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Bagaimana cara autentikasinya?",
-            "answer": "Dengan masuk OAuth: Claude Code, Cursor, VS Code, Codex dan klien lain yang mendukung otorisasi MCP, buka MapsGrab di browser Anda; Anda menyetujui klien dan dapat mencabutnya nanti di Dasbor → API. Hanya jika klien Anda tidak dapat masuk, teruskan kunci API Anda sebagai token pembawa di header Authorization."
+            "answer": "Dengan masuk OAuth: Claude Code, Cursor, VS Code, Codex dan klien lain yang mendukung otorisasi MCP, buka MapExporter di browser Anda; Anda menyetujui klien dan dapat mencabutnya nanti di Dasbor → API. Hanya jika klien Anda tidak dapat masuk, teruskan kunci API Anda sebagai token pembawa di header Authorization."
           },
           {
             "question": "Bagaimana cara penghitungan panggilan alat?",
@@ -4117,7 +4118,7 @@ export const site: SiteContent = {
         },
         "cta": {
           "kicker": "Ekstraksi massal",
-          "primary": "Instal MapsGrab",
+          "primary": "Instal MapExporter",
           "secondary": "Lihat harga",
           "note": "Sudah termasuk kuota bulanan gratis. Tidak ada kartu kredit."
         },
@@ -4129,7 +4130,7 @@ export const site: SiteContent = {
       },
       "placeIdFinder": {
         "seo": {
-          "title": "Place ID Pencari — Dapatkan Google Maps Place ID dari URL | MapsGrab",
+          "title": "Place ID Pencari — Dapatkan Google Maps Place ID dari URL | MapExporter",
           "description": "Tempelkan Google Maps tempat URL dan dapatkan Place ID, CID, dan FID secara instan. Pencari Place ID berbasis browser gratis — tanpa perlu masuk, URL Anda tidak akan pernah keluar dari perangkat."
         },
         "hero": {
@@ -4276,12 +4277,12 @@ export const site: SiteContent = {
             "accent": "dalam skala besar?",
             "tail": ""
           },
-          "lead": "MapsGrab mengekstrak Place ID, CID, dan FID untuk setiap bisnis yang dikumpulkannya — bersama 33 kolom lainnya — dan mengekspor langsung ke CSV atau JSON."
+          "lead": "MapExporter mengekstrak Place ID, CID, dan FID untuk setiap bisnis yang dikumpulkannya — bersama 33 kolom lainnya — dan mengekspor langsung ke CSV atau JSON."
         }
       },
       "reviewLinkGenerator": {
         "seo": {
-          "title": "Google Pembuat Tautan Ulasan — Ulasan Langsung Gratis URL | MapsGrab",
+          "title": "Google Pembuat Tautan Ulasan — Ulasan Langsung Gratis URL | MapExporter",
           "description": "Ubah tempat Google Maps URL menjadi tautan ulasan langsung Google yang dapat Anda bagikan dengan pelanggan. Gratis, berbasis browser, dan tidak ada yang diunggah."
         },
         "hero": {
@@ -4315,7 +4316,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Dari mana ID tempat itu berasal",
-            "body": "Alat ini menggunakan kembali decoding lokal yang sama dengan Place ID Finder: pengidentifikasi sudah ada di Maps URL, dan konversi ke formulir \"ChIJ...\" terjadi sepenuhnya di browser Anda. Jika Anda mengelola beberapa lokasi, ulangi prosesnya per tempat — atau biarkan MapsGrab memuat kolom Place ID di setiap ekspor sehingga tautan ulasan dapat dibuat secara massal dari spreadsheet."
+            "body": "Alat ini menggunakan kembali decoding lokal yang sama dengan Place ID Finder: pengidentifikasi sudah ada di Maps URL, dan konversi ke formulir \"ChIJ...\" terjadi sepenuhnya di browser Anda. Jika Anda mengelola beberapa lokasi, ulangi prosesnya per tempat — atau biarkan MapExporter memuat kolom Place ID di setiap ekspor sehingga tautan ulasan dapat dibuat secara massal dari spreadsheet."
           }
         ],
         "faq": {
@@ -4349,12 +4350,12 @@ export const site: SiteContent = {
             "accent": "dapatkan",
             "tail": ""
           },
-          "lead": "MapsGrab menarik ulasan halaman bisnis mana pun — peringkat, teks, tanggal, dan balasan pemilik — sehingga Anda dapat melihat masukan masuk dan menjawabnya lebih cepat."
+          "lead": "MapExporter menarik ulasan halaman bisnis mana pun — peringkat, teks, tanggal, dan balasan pemilik — sehingga Anda dapat melihat masukan masuk dan menjawabnya lebih cepat."
         }
       },
       "emailChecker": {
         "seo": {
-          "title": "Pemeriksa Email — Verifikasi Alamat Email Gratis | MapsGrab",
+          "title": "Pemeriksa Email — Verifikasi Alamat Email Gratis | MapExporter",
           "description": "Cari tahu apakah alamat email bisa menerima email. Pemeriksa email gratis ini menanyakan langsung ke server email dan menampilkan status, keterkiriman, data MX, dan jenis akun."
         },
         "hero": {
@@ -4435,7 +4436,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Cara membaca hasil",
-            "body": "\"Aman\" berarti kotak surat ada dan menerima email. Alamat yang tidak valid dan dinonaktifkan akan memantul, dan jebakan spam tidak boleh dikirimi sama sekali. Domain catch-all menerima semua alamat, sehingga kotak suratnya sendiri tidak bisa dipastikan; akun peran, alamat sekali pakai, dan kotak masuk penuh berisiko untuk penjangkauan. \"Tidak diketahui\" berarti server email tidak memberi jawaban pasti — coba lagi nanti. MapsGrab mengumpulkan alamat email dari situs resmi setiap bisnis, dan alat ini adalah cara cepat untuk mengecek salah satunya sebelum Anda menghubungi."
+            "body": "\"Aman\" berarti kotak surat ada dan menerima email. Alamat yang tidak valid dan dinonaktifkan akan memantul, dan jebakan spam tidak boleh dikirimi sama sekali. Domain catch-all menerima semua alamat, sehingga kotak suratnya sendiri tidak bisa dipastikan; akun peran, alamat sekali pakai, dan kotak masuk penuh berisiko untuk penjangkauan. \"Tidak diketahui\" berarti server email tidak memberi jawaban pasti — coba lagi nanti. MapExporter mengumpulkan alamat email dari situs resmi setiap bisnis, dan alat ini adalah cara cepat untuk mengecek salah satunya sebelum Anda menghubungi."
           }
         ],
         "faq": {
@@ -4473,12 +4474,12 @@ export const site: SiteContent = {
             "accent": "diverifikasi",
             "tail": ""
           },
-          "lead": "MapsGrab menemukan alamat email dan profil sosial di balik setiap bisnis yang diekstraksi — langsung dari situs web masing-masing bisnis."
+          "lead": "MapExporter menemukan alamat email dan profil sosial di balik setiap bisnis yang diekstraksi — langsung dari situs web masing-masing bisnis."
         }
       },
       "latLongToDms": {
         "seo": {
-          "title": "Konversikan Lat Long ke DMS — Derajat Desimal ke Derajat Menit Detik | MapsGrab",
+          "title": "Konversikan Lat Long ke DMS — Derajat Desimal ke Derajat Menit Detik | MapExporter",
           "description": "Ubah format desimal lintang dan bujur menjadi derajat, menit, detik (DMS) secara instan. Konverter koordinat berbasis browser gratis, tidak ada yang diunggah."
         },
         "hero": {
@@ -4511,7 +4512,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Mengapa hal ini penting untuk pekerjaan data peta",
-            "body": "Perjalanan bolak-balik koordinat adalah titik gesekan harian ketika memindahkan data bisnis antar alat: Google Maps mengekspor desimal, sedangkan alur kerja kadaster dan pencetakan mengharapkan DMS. MapsGrab menjaga skala gesekan ini tetap rendah — setiap bisnis yang diekstraksi telah mengekspor garis lintang dan bujurnya, dan konversi koordinat batch dapat dijalankan secara offline dengan rumus yang sama yang digunakan halaman ini."
+            "body": "Perjalanan bolak-balik koordinat adalah titik gesekan harian ketika memindahkan data bisnis antar alat: Google Maps mengekspor desimal, sedangkan alur kerja kadaster dan pencetakan mengharapkan DMS. MapExporter menjaga skala gesekan ini tetap rendah — setiap bisnis yang diekstraksi telah mengekspor garis lintang dan bujurnya, dan konversi koordinat batch dapat dijalankan secara offline dengan rumus yang sama yang digunakan halaman ini."
           }
         ],
         "faq": {
@@ -4545,12 +4546,12 @@ export const site: SiteContent = {
             "accent": "diekstraksi",
             "tail": ""
           },
-          "lead": "MapsGrab menulis garis lintang dan garis bujur pada setiap baris yang diekspor — tidak ada pencarian koordinat manual untuk proyek perutean atau wilayah berikutnya."
+          "lead": "MapExporter menulis garis lintang dan garis bujur pada setiap baris yang diekspor — tidak ada pencarian koordinat manual untuk proyek perutean atau wilayah berikutnya."
         }
       },
       "dmsToDd": {
         "seo": {
-          "title": "Konversi DMS ke DD — Derajat Menit Detik ke Derajat Desimal | MapsGrab",
+          "title": "Konversi DMS ke DD — Derajat Menit Detik ke Derajat Desimal | MapExporter",
           "description": "Ubah koordinat derajat, menit, detik menjadi derajat desimal secara instan. Konverter DMS ke DD berbasis browser gratis, tidak ada yang diunggah."
         },
         "hero": {
@@ -4559,7 +4560,7 @@ export const site: SiteContent = {
             "accent": "(Lat, Long)",
             "tail": ""
           },
-          "description": "Masukkan derajat, menit, dan detik untuk kedua sumbu dan dapatkan derajat desimal yang bersih — format Google Maps, spreadsheet, dan MapsGrab pahami."
+          "description": "Masukkan derajat, menit, dan detik untuk kedua sumbu dan dapatkan derajat desimal yang bersih — format Google Maps, spreadsheet, dan MapExporter pahami."
         },
         "form": {
           "latitudeHeading": "Lintang (N/S)",
@@ -4586,7 +4587,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Menjaga konsistensi data koordinat",
-            "body": "Notasi campuran adalah alasan umum mengapa lokasi berakhir di laut yang salah setelah diimpor. Memutuskan derajat desimal satu kali dan mengonversi segala sesuatu di batasnya akan membuat jaringan pipa tetap sehat. MapsGrab sudah mengekspor koordinat dalam derajat desimal, sehingga data yang dikumpulkan dengan ekstensi tersebut dimasukkan ke alat GIS dan BI tanpa langkah konversi apa pun."
+            "body": "Notasi campuran adalah alasan umum mengapa lokasi berakhir di laut yang salah setelah diimpor. Memutuskan derajat desimal satu kali dan mengonversi segala sesuatu di batasnya akan membuat jaringan pipa tetap sehat. MapExporter sudah mengekspor koordinat dalam derajat desimal, sehingga data yang dikumpulkan dengan ekstensi tersebut dimasukkan ke alat GIS dan BI tanpa langkah konversi apa pun."
           }
         ],
         "faq": {
@@ -4620,12 +4621,12 @@ export const site: SiteContent = {
             "accent": "dalam skala besar",
             "tail": ""
           },
-          "lead": "MapsGrab mengekspor garis lintang dan bujur desimal untuk setiap bisnis yang dikumpulkannya, di samping kolom alamat, telepon, dan Place ID."
+          "lead": "MapExporter mengekspor garis lintang dan bujur desimal untuk setiap bisnis yang dikumpulkannya, di samping kolom alamat, telepon, dan Place ID."
         }
       },
       "bulkKeywords": {
         "seo": {
-          "title": "Generator Kata Kunci Massal — Kombinasi Kata Kunci + Lokasi | MapsGrab",
+          "title": "Generator Kata Kunci Massal — Kombinasi Kata Kunci + Lokasi | MapExporter",
           "description": "Hasilkan kombinasi kata kunci dan lokasi secara massal untuk tugas SEO lokal dan pengumpul dataan peta. Tempel dua daftar, dapatkan setiap kombinasi, unduh sebagai CSV. Bebas."
         },
         "hero": {
@@ -4660,7 +4661,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Dari daftar kata kunci hingga data yang dikumpulkan",
-            "body": "Langkah klasik berikutnya adalah menjalankan setiap kombinasi sebagai pencarian Google Maps dan mengumpulkan hasilnya. Perulangan itulah yang diotomatisasi oleh MapsGrab: ekstensi menerima daftar kata kunci sebagai tugas batch, menelusuri penelusuran satu per satu, dan mengekspor setiap bisnis yang ditemukan — sehingga kombinasi yang Anda hasilkan di sini menjadi baris terstruktur tanpa penyalinan manual."
+            "body": "Langkah klasik berikutnya adalah menjalankan setiap kombinasi sebagai pencarian Google Maps dan mengumpulkan hasilnya. Perulangan itulah yang diotomatisasi oleh MapExporter: ekstensi menerima daftar kata kunci sebagai tugas batch, menelusuri penelusuran satu per satu, dan mengekspor setiap bisnis yang ditemukan — sehingga kombinasi yang Anda hasilkan di sini menjadi baris terstruktur tanpa penyalinan manual."
           }
         ],
         "faq": {
@@ -4694,12 +4695,12 @@ export const site: SiteContent = {
             "accent": "hasil",
             "tail": ""
           },
-          "lead": "MapsGrab tugas batch menjalankan setiap kata kunci sebagai pencarian Maps dan mengekspor bisnis di belakangnya — CSV atau JSON, dengan ulasan, foto, dan pengayaan kontak."
+          "lead": "MapExporter tugas batch menjalankan setiap kata kunci sebagai pencarian Maps dan mengekspor bisnis di belakangnya — CSV atau JSON, dengan ulasan, foto, dan pengayaan kontak."
         }
       },
       "mergeCsv": {
         "seo": {
-          "title": "Gabungkan CSV File Secara Online — Gabungkan Beberapa File CSV Gratis | MapsGrab",
+          "title": "Gabungkan CSV File Secara Online — Gabungkan Beberapa File CSV Gratis | MapExporter",
           "description": "Gabungkan beberapa file CSV secara online menjadi satu file. Header kolom disejajarkan secara otomatis berdasarkan gabungan — gratis, pribadi, dan sepenuhnya berbasis browser."
         },
         "hero": {
@@ -4732,7 +4733,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Dibuat untuk pengumpulan data multi-proses",
-            "body": "Kasus penggunaan yang umum adalah menambahkan proses: setiap sesi ekstraksi MapsGrab mengekspor CSV miliknya sendiri, dan penggabungan menjadikan sesi minggu ini menjadi satu kumpulan data sebelum deduplikasi dan pembersihan. Parser menangani kolom yang dikutip, koma yang disematkan, dan baris baru di dalam sel (RFC 4180), sehingga ekspor dengan alamat multi-baris atau cuplikan ulasan digabungkan dengan benar."
+            "body": "Kasus penggunaan yang umum adalah menambahkan proses: setiap sesi ekstraksi MapExporter mengekspor CSV miliknya sendiri, dan penggabungan menjadikan sesi minggu ini menjadi satu kumpulan data sebelum deduplikasi dan pembersihan. Parser menangani kolom yang dikutip, koma yang disematkan, dan baris baru di dalam sel (RFC 4180), sehingga ekspor dengan alamat multi-baris atau cuplikan ulasan digabungkan dengan benar."
           }
         ],
         "faq": {
@@ -4766,7 +4767,7 @@ export const site: SiteContent = {
             "accent": "satu kumpulan data",
             "tail": ""
           },
-          "lead": "MapsGrab ekspor bersih CSV/JSON per sesi dengan pemilihan bidang dan Place ID deduplikasi, sehingga kumpulan data multi-proses mulai hampir digabungkan."
+          "lead": "MapExporter ekspor bersih CSV/JSON per sesi dengan pemilihan bidang dan Place ID deduplikasi, sehingga kumpulan data multi-proses mulai hampir digabungkan."
         }
       }
     }
@@ -4777,16 +4778,16 @@ export const company: CompanyContent = {
   "footerGroupLabel": "Perusahaan",
   "about": {
     "navLabel": "Tentang",
-    "seoTitle": "Tentang MapsGrab | Produk dan Batasan",
-    "seoDescription": "MapsGrab adalah perangkat data peta untuk data bisnis publik: ekstensi browser, Cloud Pengumpul online, server API dan MCP, dan alat web gratis. Pelajari di mana batas datanya.",
+    "seoTitle": "Tentang MapExporter | Produk dan Batasan",
+    "seoDescription": "MapExporter adalah perangkat data peta untuk data bisnis publik: ekstensi browser, Cloud Pengumpul online, server API dan MCP, dan alat web gratis. Pelajari di mana batas datanya.",
     "hero": {
-      "eyebrow": "Tentang MapsGrab",
+      "eyebrow": "Tentang MapExporter",
       "title": {
         "lead": "Data Maps, diambil dengan ",
         "accent": "mudah",
         "tail": ""
       },
-      "intro": "MapsGrab membuat alat yang mengumpulkan informasi bisnis yang tersedia untuk umum dari Google Maps dan mengubahnya menjadi data yang bersih dan terstruktur — ekstensi browser untuk Edge dan Firefox, Pengumpul online berbasis cloud, server API dan MCP, ditambah alat web gratis yang sebagian besar sepenuhnya dijalankan di browser Anda.",
+      "intro": "MapExporter membuat alat yang mengumpulkan informasi bisnis yang tersedia untuk umum dari Google Maps dan mengubahnya menjadi data yang bersih dan terstruktur — ekstensi browser untuk Edge dan Firefox, Pengumpul online berbasis cloud, server API dan MCP, ditambah alat web gratis yang sebagian besar sepenuhnya dijalankan di browser Anda.",
       "contactLabel": "Hubungi Dukungan",
       "extensionLabel": "Jelajahi Ekstensi",
       "stageLabel": "Akses awal",
@@ -4817,7 +4818,7 @@ export const company: CompanyContent = {
       },
       "lead": "Pilih ekstensi browser, Pengumpul online berbasis cloud, atau API. Ekstensi ini berfungsi di dalam browser Anda sendiri; Scraper Online dan API berbagi satu mesin cloud, dan server MCP membawa API tersebut ke agen AI.",
       "hub": {
-        "title": "MapsGrab perangkat data",
+        "title": "MapExporter perangkat data",
         "detail": "Data bisnis · ulasan · foto · email & pengayaan sosial"
       },
       "tags": {
@@ -4853,7 +4854,7 @@ export const company: CompanyContent = {
         "accent": "batas",
         "tail": " berada"
       },
-      "lead": "MapsGrab sengaja bersikap konservatif terhadap data. Ini adalah aturan produk yang kami patuhi.",
+      "lead": "MapExporter sengaja bersikap konservatif terhadap data. Ini adalah aturan produk yang kami patuhi.",
       "publicData": {
         "title": "Hanya data publik",
         "text": "Hanya informasi bisnis yang tersedia untuk umum — yang sudah dapat dilihat oleh pengunjung halaman mana pun.",
@@ -4920,7 +4921,7 @@ export const company: CompanyContent = {
         "badge": "Disimpan di browser Anda"
       },
       "backend": {
-        "label": "MapsGrab backend · empat tujuan",
+        "label": "MapExporter backend · empat tujuan",
         "lanes": [
           {
             "title": "Konfigurasi jarak jauh",
@@ -4978,19 +4979,19 @@ export const company: CompanyContent = {
   },
   "contact": {
     "navLabel": "Kontak",
-    "seoTitle": "Hubungi Dukungan MapsGrab",
-    "seoDescription": "Hubungi MapsGrab tentang akun, ekstensi browser, penagihan, alat, atau permintaan privasi.",
-    "eyebrow": "Hubungi MapsGrab",
+    "seoTitle": "Hubungi Dukungan MapExporter",
+    "seoDescription": "Hubungi MapExporter tentang akun, ekstensi browser, penagihan, alat, atau permintaan privasi.",
+    "eyebrow": "Hubungi MapExporter",
     "title": {
       "lead": "Bicaralah dengan ",
       "accent": "manusia",
       "tail": ""
     },
-    "intro": "Menulis kepada kami dan seseorang akan membacanya. Dukungan saat ini ditangani langsung oleh tim yang membangun MapsGrab.",
+    "intro": "Menulis kepada kami dan seseorang akan membacanya. Dukungan saat ini ditangani langsung oleh tim yang membangun MapExporter.",
     "emailCardLabel": "Email dukungan",
     "copyEmail": "Salin {email}",
     "emailLabel": "Dukungan Email",
-    "emailSubject": "MapsGrab permintaan dukungan",
+    "emailSubject": "MapExporter permintaan dukungan",
     "responseTimes": "Kami menjawab email dukungan dalam satu hari kerja, biasanya lebih cepat. Permintaan privasi mungkin memerlukan waktu beberapa hari ketika kami perlu memverifikasi kepemilikan akun terlebih dahulu.",
     "include": {
       "title": "Apa yang harus disertakan",
@@ -5018,6 +5019,7 @@ export const company: CompanyContent = {
   }
 }
 
+// TODO: Email Checker 披露译文（terms 的 what-the-service-does；privacy 的 intro、前两张 glance、where-data-is-stored、what-our-backend-processes）由 AI 翻译，尚未经专业法务校对，校对前不视为定稿；合同见 docs/feat/015.工具与增长/tech-Email验证.md。
 export const legal: LegalContent = {
   "page": {
     "crumbHome": "Rumah",
@@ -5036,13 +5038,13 @@ export const legal: LegalContent = {
   },
   "terms": {
     "navLabel": "Ketentuan",
-    "seoTitle": "Ketentuan Layanan | MapsGrab",
-    "seoDescription": "Ketentuan Layanan MapsGrab: penggunaan yang dapat diterima, tanggung jawab pengguna atas data yang dikumpulkan, pembelian, penafian, dan cara menghubungi kami.",
+    "seoTitle": "Ketentuan Layanan | MapExporter",
+    "seoDescription": "Ketentuan Layanan MapExporter: penggunaan yang dapat diterima, tanggung jawab pengguna atas data yang dikumpulkan, pembelian, penafian, dan cara menghubungi kami.",
     "title": "Ketentuan Layanan",
-    "intro": "Ketentuan ini mengatur penggunaan Anda atas MapsGrab: ekstensi browser, situs web ini, dan alat web gratis. Harap membacanya sebelum menggunakan layanan ini.",
+    "intro": "Ketentuan ini mengatur penggunaan Anda atas MapExporter: ekstensi browser, situs web ini, dan alat web gratis. Harap membacanya sebelum menggunakan layanan ini.",
     "updatedLabel": "Terakhir diperbarui",
-    "updatedAt": "Agustus 31, 2026",
-    "updatedAtISO": "2026-08-31",
+    "updatedAt": "November 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "Penggunaan yang dapat diterima, tanggung jawab pengguna atas data yang dikumpulkan, pembelian, penafian, dan cara menghubungi kami.",
     "helpTitle": "Ada pertanyaan tentang Ketentuan ini?",
     "glance": [
@@ -5078,14 +5080,14 @@ export const legal: LegalContent = {
         "id": "acceptance-of-terms",
         "title": "Penerimaan persyaratan",
         "paragraphs": [
-          "Dengan mengakses atau menggunakan MapsGrab, Anda menyetujui Ketentuan ini. Jika Anda tidak menyetujuinya, jangan memasang ekstensi atau menggunakan situs web dan alatnya."
+          "Dengan mengakses atau menggunakan MapExporter, Anda menyetujui Ketentuan ini. Jika Anda tidak menyetujuinya, jangan memasang ekstensi atau menggunakan situs web dan alatnya."
         ]
       },
       {
         "id": "what-the-service-does",
         "title": "Apa yang dilakukan layanan tersebut",
         "paragraphs": [
-          "MapsGrab membantu Anda mengumpulkan informasi yang ditampilkan secara publik di Google Maps halaman yang Anda kunjungi — detail bisnis, ulasan, foto, dan informasi kontak terkait — dan mengekspornya. Layanan ini terdiri dari ekstensi browser untuk Microsoft Edge dan Firefox, situs web ini, dan alat web gratis yang berjalan di browser Anda."
+          "MapExporter membantu Anda mengumpulkan informasi yang ditampilkan secara publik di Google Maps halaman yang Anda kunjungi — detail bisnis, ulasan, foto, dan informasi kontak terkait — dan mengekspornya. Layanan ini terdiri dari ekstensi browser untuk Microsoft Edge dan Firefox, situs web ini, dan alat web gratis. Sebagian besar alat web gratis berjalan di browser Anda; beberapa alat, seperti Pemeriksa Email, mengirim apa yang Anda masukkan ke server kami, yang meneruskannya ke layanan verifikasi pihak ketiga untuk diproses."
         ]
       },
       {
@@ -5129,7 +5131,7 @@ export const legal: LegalContent = {
         "id": "the-service-is-provided-as-is",
         "title": "Layanan disediakan apa adanya",
         "paragraphs": [
-          "Layanan disediakan \"sebagaimana adanya\" dan \"sebagaimana tersedia\". Platform sering berubah, dan fitur koleksi dapat berhenti berfungsi sebagian atau seluruhnya kapan saja. MapsGrab tidak memberikan jaminan, tersurat maupun tersirat, tentang ketersediaan tanpa gangguan, kelengkapan data yang dikumpulkan, atau kesesuaian untuk tujuan tertentu.",
+          "Layanan disediakan \"sebagaimana adanya\" dan \"sebagaimana tersedia\". Platform sering berubah, dan fitur koleksi dapat berhenti berfungsi sebagian atau seluruhnya kapan saja. MapExporter tidak memberikan jaminan, tersurat maupun tersirat, tentang ketersediaan tanpa gangguan, kelengkapan data yang dikumpulkan, atau kesesuaian untuk tujuan tertentu.",
           "Kami dapat mengubah, menangguhkan, atau menghentikan bagian mana pun dari layanan, dan kami dapat memperbarui Ketentuan ini. Jika perubahannya bersifat material, kami akan mengumumkannya di situs web ini. Penggunaan yang berkelanjutan setelah perubahan berlaku berarti Anda menerima Ketentuan yang diperbarui."
         ]
       },
@@ -5137,14 +5139,14 @@ export const legal: LegalContent = {
         "id": "limitation-of-liability",
         "title": "Batasan tanggung jawab",
         "paragraphs": [
-          "Sejauh diizinkan oleh undang-undang, MapsGrab dan operatornya tidak bertanggung jawab atas kerugian tidak langsung, insidental, khusus, atau konsekuensial — termasuk hilangnya keuntungan atau data — yang timbul dari penggunaan atau ketidakmampuan Anda menggunakan layanan ini."
+          "Sejauh diizinkan oleh undang-undang, MapExporter dan operatornya tidak bertanggung jawab atas kerugian tidak langsung, insidental, khusus, atau konsekuensial — termasuk hilangnya keuntungan atau data — yang timbul dari penggunaan atau ketidakmampuan Anda menggunakan layanan ini."
         ]
       },
       {
         "id": "contact",
         "title": "Kontak",
         "paragraphs": [
-          "Pertanyaan mengenai Ketentuan ini dapat dikirimkan ke support@mapsgrab.com."
+          "Pertanyaan mengenai Ketentuan ini dapat dikirimkan ke support@mapexporter.app."
         ]
       }
     ],
@@ -5157,13 +5159,13 @@ export const legal: LegalContent = {
   },
   "privacy": {
     "navLabel": "Pribadi",
-    "seoTitle": "Kebijakan Privasi | MapsGrab",
-    "seoDescription": "Kebijakan Privasi MapsGrab: data apa yang diproses oleh ekstensi dan situs web, di mana data tersebut disimpan, untuk apa backend kami digunakan, dan batasan yang kami ikuti.",
+    "seoTitle": "Kebijakan Privasi | MapExporter",
+    "seoDescription": "Kebijakan Privasi MapExporter: data apa yang diproses oleh ekstensi dan situs web, di mana data tersebut disimpan, untuk apa backend kami digunakan, dan batasan yang kami ikuti.",
     "title": "Kebijakan Privasi",
-    "intro": "Kebijakan ini menjelaskan data apa yang MapsGrab tangani, di mana data tersebut disimpan, dan apa yang sampai ke server kami. Versi singkatnya: ekstensi berfungsi pada data yang ditampilkan secara publik dan menyimpan hasilnya di browser Anda; selain layanan cloud kami, backend kami hanya mendukung konfigurasi, kuota, pengayaan opsional, dan log penggunaan minimal; dan kami tidak menjalankan iklan dan pelacak pihak ketiga di ekstensi. Permintaan ke layanan cloud kami — server Scraper Online, API dan MCP — diproses di server kami, dan hasil Scraper Online ditautkan ke akun Anda sehingga Anda dapat mengunduhnya.",
+    "intro": "Kebijakan ini menjelaskan data apa yang MapExporter tangani, di mana data tersebut disimpan, dan apa yang sampai ke server kami. Versi singkatnya: ekstensi berfungsi pada data yang ditampilkan secara publik dan menyimpan hasilnya di browser Anda; selain layanan cloud kami, backend kami hanya mendukung konfigurasi, kuota, pengayaan opsional, verifikasi email untuk Pemeriksa Email, dan log penggunaan minimal; dan kami tidak menjalankan iklan dan pelacak pihak ketiga di ekstensi. Pemeriksa Email mengirim alamat yang Anda masukkan ke server kami, yang meneruskannya ke layanan verifikasi email pihak ketiga. Permintaan ke layanan cloud kami — server Scraper Online, API dan MCP — diproses di server kami, dan hasil Scraper Online ditautkan ke akun Anda sehingga Anda dapat mengunduhnya.",
     "updatedLabel": "Terakhir diperbarui",
-    "updatedAt": "Oktober 16, 2026",
-    "updatedAtISO": "2026-10-16",
+    "updatedAt": "November 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "Data apa yang diproses oleh ekstensi dan situs web, di mana data tersebut disimpan, untuk apa backend kami digunakan, dan batasan yang kami ikuti.",
     "helpTitle": "Ada pertanyaan tentang kebijakan ini?",
     "glance": [
@@ -5172,13 +5174,13 @@ export const legal: LegalContent = {
         "icon": "lock",
         "tone": "ok",
         "title": "Dimana hasilnya disimpan",
-        "text": "Ekstensi dan alat web gratis menyimpan data Anda di browser Anda; Hasil Scraper Online ditautkan ke akun Anda."
+        "text": "Ekstensi dan alat web gratis menyimpan data Anda di browser Anda, kecuali Pemeriksa Email, yang mengirim alamat yang Anda masukkan ke server kami dan layanan verifikasi email pihak ketiga; Hasil Scraper Online ditautkan ke akun Anda."
       },
       {
         "section": "what-our-backend-processes",
         "icon": "database",
         "title": "Apa yang mencapai server kami",
-        "text": "Permintaan ke server Scraper Online, API dan MCP, ditambah konfigurasi, akun dan kuota, pengayaan opsional, dan log penggunaan minimal."
+        "text": "Permintaan ke server Scraper Online, API dan MCP, ditambah konfigurasi, akun dan kuota, pengayaan opsional, alamat yang dimasukkan di Pemeriksa Email, dan log penggunaan minimal."
       },
       {
         "section": "what-we-never-do",
@@ -5212,7 +5214,7 @@ export const legal: LegalContent = {
         "id": "where-data-is-stored",
         "title": "Tempat data disimpan",
         "paragraphs": [
-          "Dengan ekstensi, pengaturan, hasil ekstraksi, dan status tugas batch disimpan secara lokal di browser Anda (penyimpanan lokal ekstensi dan IndexedDB). Mereka tidak pernah meninggalkan perangkat Anda kecuali Anda memicu ekspor atau salah satu integrasi opsional yang dijelaskan di bawah. Alat web gratis juga memproses apa yang Anda masukkan di browser Anda.",
+          "Dengan ekstensi, pengaturan, hasil ekstraksi, dan status tugas batch disimpan secara lokal di browser Anda (penyimpanan lokal ekstensi dan IndexedDB). Mereka tidak pernah meninggalkan perangkat Anda kecuali Anda memicu ekspor atau salah satu integrasi opsional yang dijelaskan di bawah. Alat web gratis juga memproses apa yang Anda masukkan di browser Anda. Pengecualiannya adalah Pemeriksa Email: alat ini mengirim alamat yang Anda masukkan ke server kami, yang meneruskannya ke layanan verifikasi email pihak ketiga.",
           "Token Google Drive dan HubSpot OAuth, jika Anda menghubungkannya, juga hanya disimpan di browser Anda.",
           "Tugas Scraper online dijalankan di server kami. Hasilnya disimpan di akun Anda sehingga Anda dapat mendownloadnya dari Dasbor Anda."
         ]
@@ -5223,12 +5225,13 @@ export const legal: LegalContent = {
         "paragraphs": [
           "Permintaan yang Anda buat ke layanan cloud kami — Pengumpul online, server API dan MCP — diproses di server kami. Server kami juga mengelola akses ke layanan ini, termasuk kunci API Anda dan otorisasi klien MCP yang Anda setujui, dan menyimpan catatan penggunaan Anda.",
           "Klien MCP yang Anda otorisasi menerima hasil permintaan yang dibuatnya. Anda dapat mencabut otorisasi dari Dasbor Anda.",
-          "Selain layanan cloud ini, ekstensi dan situs web ini menghubungi server kami sendiri untuk empat tujuan:"
+          "Selain layanan cloud ini, ekstensi dan situs web ini menghubungi server kami sendiri untuk lima tujuan:"
         ],
         "items": [
           "Konfigurasi jarak jauh — preset struktur halaman yang membuat ekstraksi tetap berfungsi saat Google mengubah halamannya.",
           "Layanan akun dan kuota — login, status paket, dan akuntansi penggunaan bulanan.",
           "Pengayaan email dan media sosial — mencari detail kontak yang terdaftar secara publik di situs web bisnis yang dikumpulkan saat fitur tersebut digunakan.",
+          "Verifikasi email — saat Anda menggunakan Pemeriksa Email, alamat yang Anda masukkan dikirim ke server kami, yang meneruskannya ke layanan verifikasi email pihak ketiga untuk memeriksa apakah alamat tersebut dapat menerima email.",
           "Pencatatan penggunaan — catatan minimal penggunaan fitur dan kesalahan yang digunakan untuk memelihara dan meningkatkan layanan."
         ]
       },
@@ -5264,7 +5267,7 @@ export const legal: LegalContent = {
         "id": "data-removal",
         "title": "Penghapusan data",
         "paragraphs": [
-          "Menghapus ekstensi akan menghapus semua data yang disimpan secara lokal. Jika Anda ingin data akun backend Anda dihapus, hubungi kami di support@mapsgrab.com dan kami akan menghapusnya."
+          "Menghapus ekstensi akan menghapus semua data yang disimpan secara lokal. Jika Anda ingin data akun backend Anda dihapus, hubungi kami di support@mapexporter.app dan kami akan menghapusnya."
         ]
       },
       {
@@ -5278,7 +5281,7 @@ export const legal: LegalContent = {
         "id": "contact",
         "title": "Kontak",
         "paragraphs": [
-          "Pertanyaan atau permintaan tentang privasi dapat dikirim ke support@mapsgrab.com."
+          "Pertanyaan atau permintaan tentang privasi dapat dikirim ke support@mapexporter.app."
         ]
       }
     ]
@@ -5286,9 +5289,9 @@ export const legal: LegalContent = {
 }
 
 export const mcpOAuth: McpOAuthContent = {
-  "seoTitle": "Otorisasi aplikasi AI | MapsGrab",
+  "seoTitle": "Otorisasi aplikasi AI | MapExporter",
   "title": "Hubungkan aplikasi AI ke akun Anda",
-  "intro": "Sebuah aplikasi meminta untuk mengakses akun MapsGrab Anda. Izinkan hanya jika Anda sendiri yang memulai koneksi ini.",
+  "intro": "Sebuah aplikasi meminta untuk mengakses akun MapExporter Anda. Izinkan hanya jika Anda sendiri yang memulai koneksi ini.",
   "loading": "Memuat permintaan koneksi...",
   "hostLabel": "Alamat aplikasi",
   "selfDeclared": "Nama yang diberikan aplikasi itu sendiri: {name}",
@@ -5316,12 +5319,12 @@ export const mcpOAuth: McpOAuthContent = {
     "invalid_redirect_uri": "Alamat pengirim yang dikirim oleh aplikasi tidak sesuai dengan yang didaftarkan.",
     "unsupported_response_type": "Aplikasi meminta jenis otorisasi yang tidak didukung.",
     "invalid_pkce": "Aplikasi tidak mengirimkan pemeriksaan keamanan yang diperlukan (PKCE dengan S256).",
-    "invalid_resource": "Aplikasi tidak meminta akses ke server MapsGrab MCP, atau meminta server lain.",
-    "server_error": "MapsGrab tidak dapat menyimpan permintaan ini sekarang. Silakan coba lagi sebentar lagi."
+    "invalid_resource": "Aplikasi tidak meminta akses ke server MapExporter MCP, atau meminta server lain.",
+    "server_error": "MapExporter tidak dapat menyimpan permintaan ini sekarang. Silakan coba lagi sebentar lagi."
   },
   "errorHint": "Mulai koneksi lagi dari aplikasi AI Anda. Jika masalah berlanjut, hubungi pengembang aplikasi.",
   "signInTitle": "Masuk untuk melanjutkan",
-  "signInText": "Masuk ke akun MapsGrab yang ingin Anda sambungkan. Permintaan ini akan menunggu Anda.",
+  "signInText": "Masuk ke akun MapExporter yang ingin Anda sambungkan. Permintaan ini akan menunggu Anda.",
   "signIn": "Masuk",
   "loadFailed": "Tidak dapat memuat permintaan koneksi. Periksa jaringan Anda dan coba lagi.",
   "decideFailed": "Tidak dapat menyelesaikan tindakan ini. Periksa jaringan Anda dan coba lagi.",
@@ -5340,7 +5343,7 @@ export const clink: ClinkReturnContent = {
     },
     "confirmedSubscription": {
       "title": "Paket diaktifkan",
-      "description": "Pembayaran ClinkBill Anda telah dikonfirmasi dan paket MapsGrab Anda aktif. Anda dapat kembali ke tab asli."
+      "description": "Pembayaran ClinkBill Anda telah dikonfirmasi dan paket MapExporter Anda aktif. Anda dapat kembali ke tab asli."
     },
     "failed": {
       "title": "Pembayaran perlu diperhatikan",

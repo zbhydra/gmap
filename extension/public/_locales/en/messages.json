@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Extension name for Chrome Web Store"
   },
   "extensionDescription": {
@@ -8,19 +8,19 @@
     "description": "Extension description for Chrome Web Store - 132 chars max"
   },
   "actionTitle": {
-    "message": "Open MapsGrab",
+    "message": "Open MapExporter",
     "description": "Browser action title"
   },
   "popupDescription": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Popup page description"
   },
   "optionsTitle": {
-    "message": "MapsGrab Settings",
+    "message": "MapExporter Settings",
     "description": "Options page title"
   },
   "dashboardTitle": {
-    "message": "MapsGrab Bulk Tasks",
+    "message": "MapExporter Bulk Tasks",
     "description": "Dashboard page title"
   }
 }

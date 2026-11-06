@@ -46,7 +46,7 @@ export const apiPageContent: ApiPageSharedContent = {
     mcp: {
       title: 'Building with AI agents?',
       description:
-        'The MapsGrab MCP server brings Search, Reviews and Photos to Claude Code, Cursor, VS Code, Codex and other MCP clients — connect by signing in or with your API key.',
+        'The MapExporter MCP server brings Search, Reviews and Photos to Claude Code, Cursor, VS Code, Codex and other MCP clients — connect by signing in or with your API key.',
       link: 'Explore MCP'
     }
   },
@@ -138,9 +138,9 @@ export const apiPageContent: ApiPageSharedContent = {
 
 export const scraperApiContent: ApiVariantContent = {
   seo: {
-    title: 'Google Maps Scraper API — Business Data in JSON | MapsGrab',
+    title: 'Google Maps Scraper API — Business Data in JSON | MapExporter',
     description:
-      'The MapsGrab Scraper API returns Google Maps search results as JSON: name, address, phone, website, rating, hours, coordinates, Place ID and fid — plus emails and social profiles on request.'
+      'The MapExporter Scraper API returns Google Maps search results as JSON: name, address, phone, website, rating, hours, coordinates, Place ID and fid — plus emails and social profiles on request.'
   },
   hero: {
     title: { lead: 'Google Maps ', accent: 'Scraper', tail: ' API' },
@@ -313,7 +313,7 @@ export const scraperApiContent: ApiVariantContent = {
       {
         question: 'How do I authenticate?',
         answer:
-          'Send your MapsGrab API key as a bearer token in the Authorization header. Each account has one key. It is shown in full only when you generate it, and generating a new key disables the old one immediately.'
+          'Send your MapExporter API key as a bearer token in the Authorization header. Each account has one key. It is shown in full only when you generate it, and generating a new key disables the old one immediately.'
       },
       {
         question: 'How are requests counted?',
@@ -340,9 +340,9 @@ export const scraperApiContent: ApiVariantContent = {
 
 export const reviewsApiContent: ApiVariantContent = {
   seo: {
-    title: 'Google Maps Reviews Scraper API — Reviews in JSON | MapsGrab',
+    title: 'Google Maps Reviews Scraper API — Reviews in JSON | MapExporter',
     description:
-      'The MapsGrab Reviews API returns the public reviews of a Google Maps business as JSON: rating, text and translation, author, date, review photos and owner replies — up to 60 per page with a cursor.'
+      'The MapExporter Reviews API returns the public reviews of a Google Maps business as JSON: rating, text and translation, author, date, review photos and owner replies — up to 60 per page with a cursor.'
   },
   hero: {
     title: { lead: 'Google Maps ', accent: 'Reviews', tail: ' Scraper API' },
@@ -503,7 +503,7 @@ export const reviewsApiContent: ApiVariantContent = {
 
 export const photosApiContent: ApiVariantContent = {
   seo: {
-    title: 'Google Maps Photos API — Business Photo URLs | MapsGrab',
+    title: 'Google Maps Photos API — Business Photo URLs | MapExporter',
     description:
       'Get public Google Maps business photo URLs by fid. Set a result limit and receive JSON with the delivered count, upstream reported total and partial delivery reason.'
   },

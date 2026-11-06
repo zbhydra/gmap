@@ -79,7 +79,7 @@
 
   var MSGS = {
     'not-searched': { icon: 'search', html: 'Search for something first, like <b>coffee in Austin</b>, then press Start.' },
-    parse: { tone: 'bad', icon: 'alert-circle', html: 'Couldn’t read the latest results. MapsGrab keeps trying — if this stays, <button class="mgp-msg-action" type="button" data-link="reload">reload the page</button>.' },
+    parse: { tone: 'bad', icon: 'alert-circle', html: 'Couldn’t read the latest results. MapExporter keeps trying — if this stays, <button class="mgp-msg-action" type="button" data-link="reload">reload the page</button>.' },
     google: { tone: 'warn', icon: 'hourglass', html: 'Google Maps is limiting requests, so the run paused. Wait a minute, then press Resume.' },
     'unknown-place': { tone: 'neutral', icon: 'help', html: 'Couldn’t identify this place. <button class="mgp-msg-action" type="button" data-link="reload">Reload the page</button>, then try again.' },
     'still-out': { tone: 'bad', icon: 'lock', html: 'Checked just now — still no records left this month.' },
@@ -92,8 +92,8 @@
   }
 
   var LINKS = {
-    pricing: { title: 'Opens Pricing in a new tab', desc: 'mapsgrab.com/pricing — the default target for every upgrade entry (L3).' },
-    help: { title: 'Opens Help & FAQ in a new tab', desc: 'mapsgrab.com/help' },
+    pricing: { title: 'Opens Pricing in a new tab', desc: 'mapexporter.app/pricing — the default target for every upgrade entry (L3).' },
+    help: { title: 'Opens Help & FAQ in a new tab', desc: 'mapexporter.app/help' },
     update: { title: 'Opens the update guide', desc: 'Chrome updates extensions automatically; the guide shows how to update now.' },
     dashboard: { title: 'Switches to the Bulk Tasks dashboard', desc: 'Reuses the open dashboard tab for this task type.' },
     reload: { title: 'Reloads the Google Maps page', desc: 'The panel mounts again and the error clears.' }
@@ -187,7 +187,7 @@
     return (
       '<header class="mgp-head">' +
       '<img class="mgp-mark" src="assets/img/logo.svg" alt="" />' +
-      '<span class="mgp-title">MapsGrab</span>' +
+      '<span class="mgp-title">MapExporter</span>' +
       '<span class="mgp-mode">' + pi(m.icon) + m.tag + '</span>' +
       (m.work ? '' : '<button class="mgp-icon-btn" type="button" data-dock aria-label="Move panel to the ' + other + '" title="Move to the ' + other + '">' + pi(side === 'left' ? 'dock-right' : 'dock-left') + '</button>') +
       '</header>'
@@ -212,7 +212,7 @@
 
   var noticeHTML = function (s) {
     if (s.notice === 'update') {
-      return '<div class="mgp-notice" data-slot="notice" data-key="update" role="status">' + pi('sparkles') + '<span>Update MapsGrab to keep extracting. <a class="mgp-notice-link" href="#" data-link="update">How to update</a></span></div>'
+      return '<div class="mgp-notice" data-slot="notice" data-key="update" role="status">' + pi('sparkles') + '<span>Update MapExporter to keep extracting. <a class="mgp-notice-link" href="#" data-link="update">How to update</a></span></div>'
     }
     if (s.notice === 'announce') {
       return '<div class="mgp-notice mgp-notice--announce" data-slot="notice" data-key="announce" role="status">' + pi('megaphone') + '<span>New: export to XLSX — choose the format in Settings.</span></div>'
@@ -364,7 +364,7 @@
     var v = view(s)
     var side = sideOf(s)
     return (
-      '<section class="mgp mgp--' + side + (o.steady ? ' is-steady' : '') + '" role="region" aria-label="MapsGrab panel">' +
+      '<section class="mgp mgp--' + side + (o.steady ? ' is-steady' : '') + '" role="region" aria-label="MapExporter panel">' +
       headHTML(s) +
       contextHTML(s) +
       '<div class="mgp-body">' +
@@ -733,7 +733,7 @@
   var exportName = function (s) {
     var m = MODES[s.mode]
     var subject = m.work ? 'Ember+Oak+Coffee-' + m.unit[1] : (s.query || 'coffee near Manhattan').replace(/ /g, '+')
-    return 'MapsGrab-Extractor-' + s.n + '-' + subject + '-2026-10-18.' + s.format.toLowerCase()
+    return 'MapExporter-' + s.n + '-' + subject + '-2026-10-18.' + s.format.toLowerCase()
   }
 
   var exportToast = function (s, auto) {
@@ -1701,7 +1701,7 @@
         return p.wait(2600)
       })
       .then(function () {
-        p.step('Upgraded on mapsgrab.com')
+        p.step('Upgraded on mapexporter.app')
         live.server = 'ok'
         return p.wait(1200)
       })

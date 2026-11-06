@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI 工具：表驱动播种 MapsGrab 全部订阅商品与渠道价（006 产品线扩展 + 单一计费模式）。
+CLI 工具：表驱动播种 MapExporter 全部订阅商品与渠道价（006 产品线扩展 + 单一计费模式）。
 
 用法：
     cd backend && uv run python scripts/seed_subscription_products.py

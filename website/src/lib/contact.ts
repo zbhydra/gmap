@@ -6,4 +6,4 @@
  */
 
 /** 法务页与支持文案中展示的客服邮箱占位。 */
-export const DEVELOPER_EMAIL = 'support@mapsgrab.com'
+export const DEVELOPER_EMAIL = 'support@mapexporter.app'

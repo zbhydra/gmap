@@ -27,6 +27,6 @@ run(['build:store', 'chrome', 'firefox'], extensionDir, {
 
 const downloads = new URL('../public/downloads/', import.meta.url)
 mkdirSync(downloads, { recursive: true })
-copyFileSync(new URL('../../extension/dist.zip', import.meta.url), new URL('mapsgrab.zip', downloads))
-copyFileSync(new URL('../../extension/dist-firefox.zip', import.meta.url), new URL('mapsgrab-firefox.zip', downloads))
+copyFileSync(new URL('../../extension/dist.zip', import.meta.url), new URL('mapexporter.zip', downloads))
+copyFileSync(new URL('../../extension/dist-firefox.zip', import.meta.url), new URL('mapexporter-firefox.zip', downloads))
 run(['exec', 'astro', 'build', '--mode', mode])

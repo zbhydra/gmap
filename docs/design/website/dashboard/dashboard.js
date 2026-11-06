@@ -1,5 +1,5 @@
 /*
- * MapsGrab Dashboard 设计稿交互（原型，零依赖）
+ * MapExporter Dashboard 设计稿交互（原型，零依赖）
  * ---------------------------------------------------------------------------
  * 落地映射见 README §9：路由与外壳 → DashboardApp（含侧栏收起）；用户卡与账户菜单 → DashboardUserCard / DashboardAccountMenu；
  * Online 视图 → OnlineComposer（MapInput / RegionInput）+ RecentJobs；History 视图 → JobHistory（工具栏 + 列表 + 分页）；
@@ -647,7 +647,7 @@
      未标注的键取自 website/src/i18n/dashboard.ts；标注「新增」的键见 README §11。
      ========================================================================= */
   const T = {
-    seo: { title: 'Dashboard | MapsGrab' },
+    seo: { title: 'Dashboard | MapExporter' },
     shell: {
       loading: 'Loading your workspace...',
       retry: 'Retry',
@@ -756,7 +756,7 @@
       downloadFailed: 'The download could not be started. Please try again.',
       signInPrompt: 'Sign in to see your Online export history.',
       signInCta: 'Sign in',
-      unreachable: 'Could not reach MapsGrab right now.',
+      unreachable: 'Could not reach MapExporter right now.',
       autoRefresh: 'Auto-refresh on', // 新增
       refreshFailed: 'Could not refresh. Showing the last loaded results.', // 新增
       copyJob: 'Copy job number', // 新增
@@ -1208,7 +1208,7 @@
           : { has_api_key: true, api_key_prefix: 'maps_Q7v2kZx', api_key_created_at: NOW - 19 * DAY },
         used: combo.api.used,
         total: combo.api.total,
-        connection: { api_base_url: 'https://api.mapsgrab.com/api/external/maps', mcp_url: 'https://mcp.mapsgrab.com/mcp' },
+        connection: { api_base_url: 'https://api.mapexporter.app/api/external/maps', mcp_url: 'https://mcp.mapexporter.app/mcp' },
         grants: empty ? [] : buildGrants(proto.combo)
       }
     }

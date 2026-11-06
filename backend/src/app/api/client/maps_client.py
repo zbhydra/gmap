@@ -18,7 +18,7 @@ docs/feat/000.架构/tech-额度基建.md。
 订阅；配额已在采集侧计量，本端点不重复扣减。
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
 from app.api.user_dependencies import (
@@ -57,6 +57,7 @@ MAPS_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
         "searchInput": "div[role=search] input[name=q]",
         "searchSubmitButton": 'div[role=search] button[aria-label="Search"]',
         "feed": "div[role=feed]",
+        "feedCardSelector": '[role="article"], a[href*="/maps/place/"]',
         "main": "div[role=main]",
         "paginationButton": 'button[jsaction="pane.paginationSection.nextPage"]',
         "dragCheckbox": "button[role=checkbox][aria-checked]",
@@ -92,7 +93,7 @@ MAPS_OPERATIONS_CONFIG: dict[str, str] = {
     "announcementHtml": "",
     "announcementVersion": "",
     "minPluginVersion": "",
-    "pricingUrl": "https://mapsgrab.com/pricing/",
+    "pricingUrl": "https://mapexporter.app/pricing/",
 }
 
 # 单次采集权益归 Maps 插件所有，月度计量仍由共享 usage 服务负责。
@@ -175,15 +176,32 @@ async def enrich_maps_businesses(
     return ResponseUtils.ok(dict(result))
 
 
+async def _get_usage_user(
+    current_user: UserContext = Depends(get_current_user_optional),
+    expected_user_id: int | None = Query(None, ge=0),
+) -> UserContext:
+    """先核对计量归属，避免过期 token 静默降级后扣到匿名设备。"""
+    if expected_user_id is not None and current_user.user_id != expected_user_id:
+        raise AppCommonException(
+            CommonCode.AUTH_INVALID_TOKEN,
+            ext_msg=(
+                "maps_usage: resolved identity differs from expected user: "
+                f"expected_user_id={expected_user_id}, user_id={current_user.user_id}"
+            ),
+            status_code=401,
+        )
+    return current_user
+
+
 @router.get("/usage")
 async def get_maps_usage(
-    current_user: UserContext = Depends(get_current_user_optional),
+    current_user: UserContext = Depends(_get_usage_user),
 ) -> JSONResponse:
     """查询当月配额用量（竞品云函数 quota 形状：used/total/period/exhausted）。
 
     登录按 user_id、匿名按 device_id 归属；插件面板 Start 前门控与 popup
-    账号区消费本端点。存储故障按 fail-closed 抛 EXTENSION_USAGE_UNAVAILABLE，
-    插件侧自行降级放行（采集可用性优先）。
+    账号区消费本端点。expected_user_id 可要求解析身份一致，失配返回 401。
+    存储故障抛 EXTENSION_USAGE_UNAVAILABLE；客户端失败策略由各端决定。
     """
     snapshot = await extension_usage_service.get_usage(
         usage_identity(current_user.user_id, current_user.device_id),
@@ -200,14 +218,13 @@ async def get_maps_usage(
 @router.post("/usage/report")
 async def report_maps_usage(
     request: MapsUsageReportRequest,
-    current_user: UserContext = Depends(get_current_user_optional),
+    current_user: UserContext = Depends(_get_usage_user),
 ) -> JSONResponse:
     """采集完成上报扣减：按 request_id 幂等，返回扣减后的最新用量。
 
     插件在搜索/评论/照片采集完成边沿上报记录数（批量任务按条目完成逐次
-    上报，任务消耗 = 条目上报之和）；上报失败不阻断采集，插件仅记录不重试
-    （计量丢失 = 免费多给额度，防滥用计量口径可接受），同会话重复上报经
-    幂等键只扣一次。
+    上报，任务消耗 = 条目上报之和）。expected_user_id 失配在扣量前返回 401；
+    客户端负责失败恢复策略，同会话在对应身份的幂等窗口内只扣一次。
     """
     result = await extension_usage_service.consume(
         usage_identity(current_user.user_id, current_user.device_id),

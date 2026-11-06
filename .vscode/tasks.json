@@ -51,7 +51,7 @@
       }
     },
     {
-      "label": "dev: Maps Extractor 插件",
+      "label": "dev: MapExporter 插件",
       "type": "shell",
       "command": "pkill -9 -f \"${workspaceFolder}/extension/scripts/dev-edge-current.mjs\" 2>/dev/null; PATH=\"${workspaceFolder}/extension/node_modules/.bin:$PATH\" node \"${workspaceFolder}/extension/scripts/dev-edge-current.mjs\"",
       "options": {
@@ -87,9 +87,9 @@
         "dev: 后端 (7600)",
         "dev: 主站 (7620)",
         "dev: 管理后台 (7610)",
-        "dev: Maps Extractor 插件",
+        "dev: MapExporter 插件",
         "dev: Bing Maps 插件",
-        "dev: MapsGrab 站 (7630)"
+        "dev: MapExporter 站 (7630)"
       ]
     }
   ]

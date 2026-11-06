@@ -424,7 +424,7 @@
 
     /* ------------------------------------------------------------ 组件交互 */
     var TOASTS = {
-      ok: { title: 'Export ready', desc: 'MapsGrab-coffee-near-Manhattan-2026-10-18.csv · 48 places', tone: 'ok', icon: 'download' },
+      ok: { title: 'Export ready', desc: 'MapExporter-coffee-near-Manhattan-2026-10-18.csv · 48 places', tone: 'ok', icon: 'download' },
       primary: { title: 'Task started', desc: 'Coffee shops · Austin runs in background tabs.', tone: 'primary', icon: 'play' },
       warn: { title: 'Google is limiting requests', desc: 'Paused for a minute. The task resumes on its own.', tone: 'warn', icon: 'hourglass' },
       bad: { title: 'Couldn’t save settings', desc: 'Check your connection and try again.', tone: 'bad', icon: 'x', action: { label: 'Retry', onClick: function () {} } }
@@ -615,15 +615,15 @@
       }
       var notice =
         s.notice === 'update'
-          ? '<div class="mgp-notice" role="status">' + pi('sparkles') + '<span>Update MapsGrab to keep extracting. <a class="mgp-notice-link" href="#" data-proto-link>How to update</a></span></div>'
+          ? '<div class="mgp-notice" role="status">' + pi('sparkles') + '<span>Update MapExporter to keep extracting. <a class="mgp-notice-link" href="#" data-proto-link>How to update</a></span></div>'
           : s.notice === 'announce'
             ? '<div class="mgp-notice mgp-notice--announce" role="status">' + pi('megaphone') + '<span>New: export to XLSX — choose it in Settings.</span></div>'
             : ''
       return (
-        '<section class="mgp ' + (m.work ? 'mgp--work' : 'mgp--' + side) + '" role="region" aria-label="MapsGrab">' +
+        '<section class="mgp ' + (m.work ? 'mgp--work' : 'mgp--' + side) + '" role="region" aria-label="MapExporter">' +
         '<header class="mgp-head">' +
         '<img class="mgp-mark" src="assets/img/logo.svg" alt="" />' +
-        '<span class="mgp-title">MapsGrab</span>' +
+        '<span class="mgp-title">MapExporter</span>' +
         '<span class="mgp-mode">' + pi(m.icon) + m.tag + '</span>' +
         (m.work ? '' : '<button class="mgp-icon-btn" type="button" data-dock aria-label="Move panel to the ' + (side === 'left' ? 'right' : 'left') + '">' + pi(side === 'left' ? 'dock-right' : 'dock-left') + '</button>') +
         '</header>' +
@@ -880,7 +880,7 @@
       if (!t) return
       if (t.hasAttribute('data-proto-link')) {
         e.preventDefault()
-        UI.toast({ title: 'Opens in a new tab', desc: 'The real panel links to mapsgrab.com.', tone: 'primary', icon: 'external-link' })
+        UI.toast({ title: 'Opens in a new tab', desc: 'The real panel links to mapexporter.app.', tone: 'primary', icon: 'external-link' })
         return
       }
       if (t.hasAttribute('data-dock')) {
@@ -911,7 +911,7 @@
         if (live.msg) setMsg(null)
         UI.toast({
           title: 'Exported ' + fmt(live.n) + ' ' + unit(MODES[live.mode], live.n),
-          desc: 'MapsGrab-coffee-near-Manhattan-2026-10-18.' + live.format.toLowerCase(),
+          desc: 'MapExporter-coffee-near-Manhattan-2026-10-18.' + live.format.toLowerCase(),
           tone: 'ok',
           icon: 'download'
         })

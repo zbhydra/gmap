@@ -1,15 +1,16 @@
 /**
  * 搜索结果导出引擎单元测试（A8，U4）。
  *
- * 覆盖：36 列 schema（列序/Pro 12 列/驼峰化）、CSV 列序与转义、JSON 形状
+ * 覆盖：36 列 schema（列序/补全 2 列门控/驼峰化）、CSV 列序与转义、JSON 形状
  * （键驼峰化 + 数值类型保持）、XLSX 生成（SheetJS 读回校验）、Place Id
- * 导出去重、文件命名、Pro 门控剔除（exportConfig.proColumnsEnabled 语义）。
+ * 导出去重、文件命名、套餐权益与全局开关过滤。
  */
 
 import { describe, expect, it } from 'vitest'
 import * as XLSX from 'xlsx'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
 import type { MapsPlaceRow } from '@/sites/maps/content/parser'
+import type { MapsUsageSnapshot } from '@/sites/maps/usage/types'
 import {
   SEARCH_EXPORT_COLUMN_GROUPS,
   SEARCH_EXPORT_COLUMNS,
@@ -65,21 +66,17 @@ const EXPECTED_HEADERS = [
   'Kgmid'
 ]
 
-/** 12 个 Pro 列（逆向 04 PRO_FIELDS，按 36 列序排列）。 */
-const EXPECTED_PRO_HEADERS = [
-  'About',
-  'Plus Code',
-  'Price',
-  'Note',
-  'Hotel Class',
-  'Owner',
-  'Owner Id',
-  'Owner Link',
-  'Email',
-  'Social Medias',
-  'Google Knowledge URL',
-  'Kgmid'
-]
+/** 仅补全列受订阅门控。 */
+const EXPECTED_PRO_HEADERS = ['Email', 'Social Medias']
+const PRO_USAGE: MapsUsageSnapshot = {
+  plan_name: 'Pro',
+  used: 0,
+  total: 100_000,
+  period: '2026-11',
+  exhausted: false,
+  run_limits: { search: 99999, reviews: 250, photos: 100 }
+}
+const FREE_USAGE: MapsUsageSnapshot = { ...PRO_USAGE, plan_name: 'Free' }
 
 function makeRow(partial: Partial<MapsPlaceRow> = {}): MapsPlaceRow {
   return {
@@ -131,22 +128,34 @@ describe('36 列 schema', () => {
     expect(SEARCH_EXPORT_COLUMNS).toHaveLength(36)
   })
 
-  it('Pro 列恰为逆向 04 的 12 列，且列名不重复', () => {
+  it('仅 Email / Social Medias 是 Pro 列，且列名不重复', () => {
     const proHeaders = SEARCH_EXPORT_COLUMNS.filter(c => c.pro).map(c => c.header)
     expect(proHeaders).toEqual(EXPECTED_PRO_HEADERS)
     expect(new Set(SEARCH_EXPORT_COLUMNS.map(c => c.header)).size).toBe(36)
   })
 
-  it('门控开启全列可用，关闭剔除全部 Pro 列（免费 24 列）', () => {
-    expect(selectExportColumns(true)).toHaveLength(36)
-    const freeColumns = selectExportColumns(false)
-    expect(freeColumns).toHaveLength(24)
-    expect(freeColumns.map(c => c.header)).toEqual(
-      EXPECTED_HEADERS.filter(header => !EXPECTED_PRO_HEADERS.includes(header))
+  it.each([
+    { plan: '匿名或未知', usage: null, enabled: true, count: 34 },
+    { plan: 'Free', usage: FREE_USAGE, enabled: true, count: 34 },
+    { plan: 'Pro', usage: PRO_USAGE, enabled: true, count: 36 },
+    {
+      plan: 'Business',
+      usage: { ...PRO_USAGE, plan_name: 'Business' as const },
+      enabled: true,
+      count: 36
+    },
+    { plan: 'Pro 全局关闭', usage: PRO_USAGE, enabled: false, count: 34 }
+  ])('$plan：全局开关 $enabled 时导出 $count 列', ({ usage, enabled, count }) => {
+    const columns = selectExportColumns(enabled, usage)
+    expect(columns).toHaveLength(count)
+    expect(columns.map(column => column.header)).toEqual(
+      count === 36
+        ? EXPECTED_HEADERS
+        : EXPECTED_HEADERS.filter(header => !EXPECTED_PRO_HEADERS.includes(header))
     )
   })
 
-  it('默认契约 Pro 门控为全开（无账号体系期语义）', () => {
+  it('全局补全列开关默认开启，套餐权益独立判断', () => {
     expect(DEFAULT_MAPS_CONFIG.exportConfig.proColumnsEnabled).toBe(true)
   })
 
@@ -162,7 +171,7 @@ describe('36 列 schema', () => {
 
 describe('CSV 构建（36 列）', () => {
   it('表头与行值按列序一一对齐，衍生列现算', () => {
-    const columns = selectExportColumns(true)
+    const columns = selectExportColumns(true, PRO_USAGE)
     const csv = buildSearchCsv([makeRow()], columns)
     const lines = csv.split('\r\n')
     expect(lines[0]).toBe(`\uFEFF${EXPECTED_HEADERS.join(',')}`)
@@ -209,7 +218,7 @@ describe('CSV 构建（36 列）', () => {
   })
 
   it('cid 缺失时衍生列从 fid 重衍生；kgmid/ownerId 缺失衍生 URL 置空', () => {
-    const columns = selectExportColumns(true)
+    const columns = selectExportColumns(true, PRO_USAGE)
     const csv = buildSearchCsv(
       [makeRow({ cid: '', fid: '0xa:0xff', kgmid: '', ownerId: '' })],
       columns
@@ -223,7 +232,7 @@ describe('CSV 构建（36 列）', () => {
   })
 
   it('U8 enrich 数据列：Email 逗号分隔、Social Medias 多行文本写入列位；未补全为空', () => {
-    const columns = selectExportColumns(true)
+    const columns = selectExportColumns(true, PRO_USAGE)
     const csv = buildSearchCsv(
       [
         makeRow({
@@ -280,7 +289,7 @@ describe('CSV 构建（36 列）', () => {
   })
 
   it('含逗号/引号/换行的字段按 RFC4180 转义，BOM 与 CRLF 齐备', () => {
-    const csv = buildSearchCsv([makeRow({ name: 'Cafe, "Alpha"\nBeta' })], selectExportColumns(true))
+    const csv = buildSearchCsv([makeRow({ name: 'Cafe, "Alpha"\nBeta' })], selectExportColumns(true, PRO_USAGE))
     expect(csv.startsWith('\uFEFF')).toBe(true)
     expect(csv).toContain('"Cafe, ""Alpha""\nBeta"')
     expect(csv.endsWith('\r\n')).toBe(true)
@@ -295,7 +304,7 @@ describe('CSV 构建（36 列）', () => {
       phone: '+1 212-555-0000'
     })
     const original = structuredClone(row)
-    const columns = selectExportColumns(true)
+    const columns = selectExportColumns(true, PRO_USAGE)
     const csv = buildSearchCsv([row], columns)
     const cells = csvToRow(csv, columns.map(column => column.header))
 
@@ -312,14 +321,14 @@ describe('CSV 构建（36 列）', () => {
 
 describe('JSON 构建（36 列）', () => {
   it('键 = 驼峰化列名，全列导出时 36 键且顺序 = 列序', () => {
-    const records = buildSearchJsonRecords([makeRow()], selectExportColumns(true))
+    const records = buildSearchJsonRecords([makeRow()], selectExportColumns(true, PRO_USAGE))
     expect(Object.keys(records[0] as SearchRecord)).toEqual(EXPECTED_HEADERS.map(camelizeColumnHeader))
   })
 
   it('数值列类型保持（评分/评论数/经纬度），缺失保持空串，Cid 恒字符串', () => {
     const record = buildSearchJsonRecords(
       [makeRow({ rating: '', reviewCount: '261', latitude: '40.7597355' })],
-      selectExportColumns(true)
+      selectExportColumns(true, PRO_USAGE)
     )[0] as SearchRecord
     expect(record.averageRating).toBe('')
     expect(record.reviewCount).toBe(261)
@@ -329,18 +338,20 @@ describe('JSON 构建（36 列）', () => {
   })
 
   it('门控关闭时 Pro 列整体消失（键与值），文本列保持字符串', () => {
-    const records = buildSearchJsonRecords([makeRow()], selectExportColumns(false))
-    expect(Object.keys(records[0] as SearchRecord)).toHaveLength(24)
-    expect(records[0]).not.toHaveProperty('about')
-    expect(records[0]).not.toHaveProperty('price')
+    const records = buildSearchJsonRecords([makeRow()], selectExportColumns(false, PRO_USAGE))
+    expect(Object.keys(records[0] as SearchRecord)).toHaveLength(34)
+    expect(records[0]).not.toHaveProperty('email')
+    expect(records[0]).not.toHaveProperty('socialMedias')
+    expect(records[0]).toHaveProperty('about', 'Highlights: [Great coffee]')
+    expect(records[0]).toHaveProperty('price', '$1–10')
     expect(records[0]).toHaveProperty('name', 'Cafe')
   })
 
   it('buildSearchJson 输出紧凑 JSON 文本', () => {
-    const json = buildSearchJson([makeRow()], selectExportColumns(false))
+    const json = buildSearchJson([makeRow()], selectExportColumns(false, PRO_USAGE))
     const parsed = JSON.parse(json) as SearchRecord[]
     expect(parsed).toHaveLength(1)
-    expect(Object.keys(parsed[0] as SearchRecord)).toHaveLength(24)
+    expect(Object.keys(parsed[0] as SearchRecord)).toHaveLength(34)
     expect(parsed[0]).toHaveProperty('name', 'Cafe')
     expect(parsed[0]).toHaveProperty('cid', '123')
   })
@@ -350,19 +361,19 @@ describe('文件命名与导出去重', () => {
   it('命名：{前缀}-{条数}-{关键词}-{YYYY-MM-DD}.{扩展名}，非法字符替换', () => {
     const date = new Date(2026, 7, 30) // 2026-08-30（本地时区）
     expect(buildSearchExportFilename(20, 'coffee in manhattan', date, 'csv')).toBe(
-      'MapsGrab-Extractor-20-coffee+in+manhattan-2026-08-30.csv'
+      'MapExporter-20-coffee+in+manhattan-2026-08-30.csv'
     )
     expect(buildSearchExportFilename(3, 'a/b:c*d', date, 'csv')).toBe(
-      'MapsGrab-Extractor-3-a-b-c-d-2026-08-30.csv'
+      'MapExporter-3-a-b-c-d-2026-08-30.csv'
     )
     expect(buildSearchExportFilename(1, '', date, 'csv')).toBe(
-      'MapsGrab-Extractor-1-search-2026-08-30.csv'
+      'MapExporter-1-search-2026-08-30.csv'
     )
     expect(buildSearchExportFilename(2, 'kw', date, 'json')).toBe(
-      'MapsGrab-Extractor-2-kw-2026-08-30.json'
+      'MapExporter-2-kw-2026-08-30.json'
     )
     expect(buildSearchExportFilename(5, 'kw', date, 'xlsx')).toBe(
-      'MapsGrab-Extractor-5-kw-2026-08-30.xlsx'
+      'MapExporter-5-kw-2026-08-30.xlsx'
     )
   })
 
@@ -380,7 +391,7 @@ describe('文件命名与导出去重', () => {
 
 describe('XLSX 构建（SheetJS 读回校验）', () => {
   it('生成可读回的工作簿：首行 36 列表头，数据行按列序对齐', () => {
-    const aoa = readXlsxAoa(buildSearchXlsx([makeRow()], selectExportColumns(true)))
+    const aoa = readXlsxAoa(buildSearchXlsx([makeRow()], selectExportColumns(true, PRO_USAGE)))
     expect(aoa).toHaveLength(2)
     expect(aoa[0]).toEqual(EXPECTED_HEADERS)
     expect(aoa[1]).toEqual([
@@ -426,17 +437,18 @@ describe('XLSX 构建（SheetJS 读回校验）', () => {
   it('单元格全部文本化：Cid 19 位长数字读回不丢精度', () => {
     const bigCid = '11577869634268375885'
     const aoa = readXlsxAoa(
-      buildSearchXlsx([makeRow({ cid: bigCid, fid: '0xa:0xa0acdb1716592b4d' })], selectExportColumns(true))
+      buildSearchXlsx([makeRow({ cid: bigCid, fid: '0xa:0xa0acdb1716592b4d' })], selectExportColumns(true, PRO_USAGE))
     )
     const header = EXPECTED_HEADERS
     expect(aoa[1]?.[header.indexOf('Cid')]).toBe(bigCid)
     expect(aoa[1]?.[header.indexOf('Cid')]).not.toBe(Number(bigCid).toString())
   })
 
-  it('门控关闭：首行 24 列表头，Pro 列整体不出现', () => {
-    const aoa = readXlsxAoa(buildSearchXlsx([makeRow()], selectExportColumns(false)))
-    expect(aoa[0]).toHaveLength(24)
-    expect(aoa[0]).not.toContain('About')
+  it('全局开关关闭：首行 34 列，补全列不出现', () => {
+    const aoa = readXlsxAoa(buildSearchXlsx([makeRow()], selectExportColumns(false, PRO_USAGE)))
+    expect(aoa[0]).toHaveLength(34)
+    expect(aoa[0]).toContain('About')
+    expect(aoa[0]).not.toContain('Social Medias')
     expect(aoa[0]).not.toContain('Email')
     expect(aoa[0]).toContain('Name')
   })
@@ -452,21 +464,26 @@ describe('导出列分组与用户字段勾选（U6）', () => {
 
   it('selectEnabledExportColumns：门控与用户勾选取交集，Pro 列不因勾选复活', () => {
     const all = SEARCH_EXPORT_COLUMNS.map(c => c.header)
-    expect(selectEnabledExportColumns(true, all)).toHaveLength(36)
+    expect(selectEnabledExportColumns(true, all, PRO_USAGE)).toHaveLength(36)
 
     // 只勾 3 列 → 只出 3 列，且保持 schema 列序
-    const picked = selectEnabledExportColumns(true, ['Kgmid', 'Name', 'Cid'])
+    const picked = selectEnabledExportColumns(true, ['Kgmid', 'Name', 'Cid'], PRO_USAGE)
     expect(picked.map(c => c.header)).toEqual(['Name', 'Cid', 'Kgmid'])
 
     // 免费档勾选含 Pro 列 → Pro 列在门控层先剔除
-    const freeWithPro = selectEnabledExportColumns(false, ['Name', 'Price', 'Cid'])
-    expect(freeWithPro.map(c => c.header)).toEqual(['Name', 'Cid'])
+    const freeWithPro = selectEnabledExportColumns(
+      true,
+      ['Name', 'Price', 'Email', 'Social Medias', 'Cid'],
+      FREE_USAGE
+    )
+    expect(freeWithPro.map(c => c.header)).toEqual(['Name', 'Price', 'Cid'])
   })
 
   it('buildSearchExport 按勾选子集输出（CSV 表头与 JSON 键同步收窄）', () => {
     const artifact = buildSearchExport([makeRow()], 'kw', new Date(2026, 7, 30), {
       format: 'csv',
       proColumnsEnabled: true,
+      usage: PRO_USAGE,
       enabledHeaders: ['Name', 'Cid']
     })
     expect(artifact.rowCount).toBe(1)
@@ -478,36 +495,56 @@ describe('导出列分组与用户字段勾选（U6）', () => {
 })
 
 describe('导出引擎（buildSearchExport）', () => {
+  it('全局开关关闭时，即使 Pro 已有补全数据也不输出补全列', () => {
+    const artifact = buildSearchExport(
+      [makeRow({ email: 'info@cafe.com', socialMedias: 'instagram: https://instagram.com/cafe' })],
+      'kw',
+      new Date(2026, 7, 30),
+      { format: 'json', proColumnsEnabled: false, usage: PRO_USAGE, enabledHeaders: enabledHeaders() }
+    )
+    if (typeof artifact.content !== 'string') {
+      throw new Error('json 产物内容应为文本')
+    }
+    const record = (JSON.parse(artifact.content) as SearchRecord[])[0]!
+    expect(Object.keys(record)).toHaveLength(34)
+    expect(record).not.toHaveProperty('email')
+    expect(record).not.toHaveProperty('socialMedias')
+    expect(record).toHaveProperty('about', 'Highlights: [Great coffee]')
+  })
+
   it('csv 产物：内容、文件名、MIME、去重后条数', () => {
     const artifact = buildSearchExport(
       [makeRow({ placeId: 'p1' }), makeRow({ placeId: 'p1' }), makeRow({ placeId: 'p2' })],
       'kw with space',
       new Date(2026, 7, 30),
-      { format: 'csv', proColumnsEnabled: false, enabledHeaders: enabledHeaders() }
+      { format: 'csv', proColumnsEnabled: true, usage: FREE_USAGE, enabledHeaders: enabledHeaders() }
     )
     expect(artifact.format).toBe('csv')
     expect(artifact.rowCount).toBe(2)
-    expect(artifact.filename).toBe('MapsGrab-Extractor-2-kw+with+space-2026-08-30.csv')
+    expect(artifact.filename).toBe('MapExporter-2-kw+with+space-2026-08-30.csv')
     expect(artifact.mime).toBe('text/csv')
     if (typeof artifact.content !== 'string') {
       throw new Error('csv 产物内容应为文本')
     }
     expect(artifact.content.startsWith('\uFEFFName,Description')).toBe(true)
+    expect(artifact.content.split('\r\n')[0]?.slice(1).split(',')).toHaveLength(34)
   })
 
   it('json 产物：扩展名与 MIME 随格式切换', () => {
     const artifact = buildSearchExport([makeRow()], 'kw', new Date(2026, 7, 30), {
       format: 'json',
       proColumnsEnabled: true,
+      usage: PRO_USAGE,
       enabledHeaders: enabledHeaders()
     })
     expect(artifact.format).toBe('json')
-    expect(artifact.filename).toBe('MapsGrab-Extractor-1-kw-2026-08-30.json')
+    expect(artifact.filename).toBe('MapExporter-1-kw-2026-08-30.json')
     expect(artifact.mime).toBe('application/json')
     if (typeof artifact.content !== 'string') {
       throw new Error('json 产物内容应为文本')
     }
     expect(JSON.parse(artifact.content)).toHaveLength(1)
+    expect(Object.keys((JSON.parse(artifact.content) as SearchRecord[])[0]!)).toHaveLength(36)
   })
 
   it('xlsx 产物：二进制内容可读回，扩展名与 MIME 正确，命名含去重条数', () => {
@@ -515,10 +552,10 @@ describe('导出引擎（buildSearchExport）', () => {
       [makeRow({ placeId: 'p1' }), makeRow({ placeId: 'p1' })],
       'kw',
       new Date(2026, 7, 30),
-      { format: 'xlsx', proColumnsEnabled: true, enabledHeaders: enabledHeaders() }
+      { format: 'xlsx', proColumnsEnabled: true, usage: PRO_USAGE, enabledHeaders: enabledHeaders() }
     )
     expect(artifact.format).toBe('xlsx')
-    expect(artifact.filename).toBe('MapsGrab-Extractor-1-kw-2026-08-30.xlsx')
+    expect(artifact.filename).toBe('MapExporter-1-kw-2026-08-30.xlsx')
     expect(artifact.mime).toBe(
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )

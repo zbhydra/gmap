@@ -416,7 +416,7 @@
       await MG.wait(160)
       exportBtn.classList.remove('is-pressed')
       // 与插件 export/csv.ts 的 buildSearchExportFilename 同格式：前缀-条数-关键词（空格转 +）-日期
-      toastFile.textContent = 'MapsGrab-Extractor-' + ds.total + '-' + ds.keyword.replace(/ /g, '+') + '-' + today() + '.csv'
+      toastFile.textContent = 'MapExporter-' + ds.total + '-' + ds.keyword.replace(/ /g, '+') + '-' + today() + '.csv'
       toast.classList.add('is-on')
       await MG.wait(2800)
       if (!alive()) return
@@ -758,9 +758,9 @@
     var FID = '0x54950a2291f60bf1:0xbeb4a5f2c3d1e0ab'
     var post = function (path, body, pyBody, jsBody, pyOut, jsOut) {
       return [
-        'curl https://api.mapsgrab.com/v1/' + path + ' \\\n  -H "Authorization: Bearer $MAPSGRAB_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d \'' + body + '\'',
-        'import os\nimport requests\n\nAPI_KEY = os.environ["MAPSGRAB_API_KEY"]\n\nresp = requests.post(\n    "https://api.mapsgrab.com/v1/' + path + '",\n    headers={"Authorization": f"Bearer {API_KEY}"},\n    json=' + pyBody + ',\n)\n' + pyOut,
-        'const res = await fetch("https://api.mapsgrab.com/v1/' + path + '", {\n  method: "POST",\n  headers: {\n    Authorization: `Bearer ${process.env.MAPSGRAB_API_KEY}`,\n    "Content-Type": "application/json",\n  },\n  body: JSON.stringify(' + jsBody + '),\n});\n' + jsOut
+        'curl https://api.mapexporter.app/v1/' + path + ' \\\n  -H "Authorization: Bearer $MAPEXPORTER_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d \'' + body + '\'',
+        'import os\nimport requests\n\nAPI_KEY = os.environ["MAPEXPORTER_API_KEY"]\n\nresp = requests.post(\n    "https://api.mapexporter.app/v1/' + path + '",\n    headers={"Authorization": f"Bearer {API_KEY}"},\n    json=' + pyBody + ',\n)\n' + pyOut,
+        'const res = await fetch("https://api.mapexporter.app/v1/' + path + '", {\n  method: "POST",\n  headers: {\n    Authorization: `Bearer ${process.env.MAPEXPORTER_API_KEY}`,\n    "Content-Type": "application/json",\n  },\n  body: JSON.stringify(' + jsBody + '),\n});\n' + jsOut
       ]
     }
 
@@ -857,9 +857,9 @@
       mcp: {
         langs: ['Claude Code', 'Cursor', 'VS Code'],
         req: [
-          '# Add the MapsGrab MCP server to Claude Code\nclaude mcp add --transport http mapsgrab \\\n  https://mcp.mapsgrab.com/mcp \\\n  --header "Authorization: Bearer $MAPSGRAB_API_KEY"',
-          '// .cursor/mcp.json\n{\n  "mcpServers": {\n    "mapsgrab": {\n      "url": "https://mcp.mapsgrab.com/mcp",\n      "headers": { "Authorization": "Bearer YOUR_API_KEY" }\n    }\n  }\n}',
-          '// .vscode/mcp.json\n{\n  "servers": {\n    "mapsgrab": {\n      "type": "http",\n      "url": "https://mcp.mapsgrab.com/mcp",\n      "headers": { "Authorization": "Bearer ${input:mapsgrab-key}" }\n    }\n  }\n}'
+          '# Add the MapExporter MCP server to Claude Code\nclaude mcp add --transport http mapexporter \\\n  https://mcp.mapexporter.app/mcp \\\n  --header "Authorization: Bearer $MAPEXPORTER_API_KEY"',
+          '// .cursor/mcp.json\n{\n  "mcpServers": {\n    "mapexporter": {\n      "url": "https://mcp.mapexporter.app/mcp",\n      "headers": { "Authorization": "Bearer YOUR_API_KEY" }\n    }\n  }\n}',
+          '// .vscode/mcp.json\n{\n  "servers": {\n    "mapexporter": {\n      "type": "http",\n      "url": "https://mcp.mapexporter.app/mcp",\n      "headers": { "Authorization": "Bearer ${input:mapexporter-key}" }\n    }\n  }\n}'
         ],
         status: 'Tool call · search_businesses · 200 OK',
         res: [

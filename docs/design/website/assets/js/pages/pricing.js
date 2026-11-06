@@ -30,7 +30,7 @@
         eyebrow: 'Online Scraper plans',
         title: 'Cloud extraction, priced by records',
         description:
-          'Run the MapsGrab engine on our infrastructure. A record is one business row collected. Paid plans include optional email and social media enrichment at no extra record cost.',
+          'Run the MapExporter engine on our infrastructure. A record is one business row collected. Paid plans include optional email and social media enrichment at no extra record cost.',
         // 计费方式：plans.billingOneTime + quotaNote / features 中的原句片段
         billing: [
           ['calendar', 'One-time payment'],
@@ -274,7 +274,7 @@
             id: 'business',
             productId: 'api_business',
             name: 'Business',
-            tagline: 'For products built on MapsGrab data',
+            tagline: 'For products built on MapExporter data',
             price: '$115',
             periodLabel: 'one-time · 1 month',
             quota: '10,000 requests / month',

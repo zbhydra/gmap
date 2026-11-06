@@ -4,7 +4,7 @@
  * - 商户名虚构，电话一律 555-01xx 号段；Place ID / CID 仅作展示。
  * - 字段格式与插件导出一致：美国号码为国内格式 (xxx) xxx-xxxx，官网保留协议，
  *   Google Maps URL 为 https://www.google.com/maps?cid={cid}（export/columns.ts）。
- * - 导出文件名与插件 export/csv.ts 同格式：MapsGrab-Extractor-{行数}-{关键词}-{YYYY-MM-DD}.{扩展名}。
+ * - 导出文件名与插件 export/csv.ts 同格式：MapExporter-{行数}-{关键词}-{YYYY-MM-DD}.{扩展名}。
  * - tone 是缩略图 / 头像取色的叙事色 token 名（插画用，不做行动色）。
  * 界面文案不在这里，走 i18n 的 pages.extension。
  */
@@ -106,7 +106,7 @@ export function exportDate(date: Date): string {
 
 /** 插件导出文件名（与 extension export/csv.ts 同格式，关键词空格换成 +）。 */
 export function exportFileName(rows: number, keyword: string, date: Date): string {
-  return `MapsGrab-Extractor-${rows}-${keyword.replace(/ /g, '+')}-${exportDate(date)}.csv`
+  return `MapExporter-${rows}-${keyword.replace(/ /g, '+')}-${exportDate(date)}.csv`
 }
 
 /** ③ 三种视图卡：搜索计数、商家页评论 / 照片计数、保存列表。 */
@@ -263,4 +263,4 @@ export const BATCH_HISTORY = [
 export const BATCH_LINE_LIMIT = 500
 
 /** 插件 Dashboard 页地址栏（mock）。 */
-export const BATCH_DASHBOARD_URL = 'extension://mapsgrab/dashboard'
+export const BATCH_DASHBOARD_URL = 'extension://mapexporter/dashboard'

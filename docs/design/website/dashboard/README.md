@@ -1,4 +1,4 @@
-# MapsGrab Dashboard 设计稿 · Atlas 基础层
+# MapExporter Dashboard 设计稿 · Atlas 基础层
 
 官网 Dashboard（`/dashboard/`、`/dashboard/history/`、`/dashboard/api/`、`/dashboard/subscriptions/`）重做的**静态可交互原型**：一个 HTML 页面加原生 CSS / JS，零依赖。直接引用上级目录的 Atlas 资源（`../assets/css/` 下的 tokens / base / motion / components、`../assets/img/icons.svg`、`../assets/js/theme-boot.js`），本目录不复制 token。原型是落地的目标参考，不是生产代码。
 
@@ -407,7 +407,7 @@ combobox：
 | 首屏加载               | 进入或刷新页面，会话正在恢复            | 导航可用；用户卡显示骨架                   | 当前视图的骨架，尺寸与真实布局一致；读屏播报「Loading your workspace...」                                                                                                                                      |
 | 会话就绪、数据加载中   | auth/me 返回                            | 用户卡出现；额度等 options 返回后补上      | 各区块显示自己的骨架，数据到达后各自淡入（只淡入，不位移）                                                                                                                                                     |
 | 未登录                 | 会话请求返回 401                        | 用户卡位置显示 Sign in                     | 门槛卡：按视图给出登录提示和 Sign in，点击打开全站登录弹窗                                                                                                                                                     |
-| 网络失败               | 会话请求失败                            | 用户卡位置显示「无法连接」说明             | 门槛卡：「Could not reach MapsGrab right now.」+ Retry                                                                                                                                                        |
+| 网络失败               | 会话请求失败                            | 用户卡位置显示「无法连接」说明             | 门槛卡：「Could not reach MapExporter right now.」+ Retry                                                                                                                                                        |
 | 空态                   | 没有任务 / 没有 Key / 没有已连接应用    | —                                          | Recent tasks 显示紧凑空态；History 隐藏工具栏，显示 No exports yet 与 Go to Online Scraper；没有 Key 时 Generate API key 为 primary；No apps are connected.                                                       |
 | 无匹配结果             | History 有筛选但结果为 0                | —                                          | 工具栏保留，列表区显示 No matching tasks 与 Clear filters                                                                                                                                                      |
 | 局部失败               | 任一接口失败                            | —                                          | 在出错的区块内就地提示，并给 Retry；重试时按钮转圈，已加载的内容保留不清空。覆盖：options、最近任务、History 列表、详情、下载、轮询、提交、API 访问信息、API 用量、授权列表、生成 Key、断开应用、管理链接、地区数据 |
@@ -482,7 +482,7 @@ combobox：
   - 收起时被隐藏的可聚焦项（品牌链接、套餐区的 Upgrade）退出 Tab 序列；焦点原本在这里时交给收起按钮。
 - **切换视图**：
   - 焦点移到视图的 `h1`（`tabindex="-1"`）。
-  - `document.title` 更新为「{视图} · Dashboard | MapsGrab」。
+  - `document.title` 更新为「{视图} · Dashboard | MapExporter」。
   - 前进 / 后退时恢复各视图自己的滚动位置（`history.scrollRestoration = 'manual'`）。
 - **组合区**：
   - 模式 tab 完整实现 `tablist` / `tab` / `tabpanel`，并用 roving tabindex。
@@ -662,7 +662,7 @@ combobox：
 | 键                                                                       | 值                                                                                    |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
 | `shell.skipToContent`                                                    | Skip to content                                                                       |
-| `shell.sideLabel` / `shell.homeLabel` / `shell.navLabel`                 | Workspace / MapsGrab home / Workspace menu（`aria-label`）                            |
+| `shell.sideLabel` / `shell.homeLabel` / `shell.navLabel`                 | Workspace / MapExporter home / Workspace menu（`aria-label`）                            |
 | `shell.navJobHistory`                                                    | History                                                                               |
 | `shell.collapseSidebar` / `shell.expandSidebar`                          | Collapse sidebar / Expand sidebar                                                     |
 | `shell.back`                                                             | Back（浮层子面板返回按钮的 `aria-label`）                                             |
@@ -774,7 +774,7 @@ History 的搜索与筛选是本稿新画进主流程的能力，原接口不支
 - **示意内容**：
   - 地图是程序生成的示意 SVG，不是 OSM 瓦片；舞台宽高比变化时以 `slice` 方式铺满。
   - 地区数据：国家清单与 `website/src/data/gmap-regions/countries.json` 一致，共 252 个。只有 US / CA / GB / AU 带完整的州 / 省清单，州代码与 GeoNames 一致，例如 CA 的 `02` 是 British Columbia。城市只取示意子集；其余国家没有州和城市数据。
-  - 连接地址 `https://api.mapsgrab.com/api/external/maps`、`https://mcp.mapsgrab.com/mcp` 是示意值，落地以接口返回为准。
+  - 连接地址 `https://api.mapexporter.app/api/external/maps`、`https://mcp.mapexporter.app/mcp` 是示意值，落地以接口返回为准。
   - 管理链接固定返回 null，所以只演示指引弹窗，没有演示跳转渠道和「弹窗被拦截」两条分支。
   - 过期文件是模拟的：列表里 `has_file` 仍为 true，点下载才返回 404，显示现有的 `downloadUnavailable` 文案。涉及 9 天前的一个任务，以及 60 天以前约三分之一的任务。
   - 「完整任务号」在原型里按 34 位十六进制判断；后端任务号是 32 位 UUID hex 加两位 owner 槽号（`00`–`09`，接口校验 `^[0-9a-f]{32}0[0-9]$`），落地按这个格式判断。

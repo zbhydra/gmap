@@ -40,7 +40,7 @@ const pricingHref = (medium: string) =>
   `${prefix}/pricing/?product_kind=maps_api&utm_source=website&utm_medium=${pageId}-${medium}&utm_campaign=pricing`
 
 /** 014 合同里的 MCP 服务名（客户端连接后显示的名称）。 */
-const SERVER_NAME = 'MapsGrab'
+const SERVER_NAME = 'MapExporter'
 const mcpHost = new URL(MCP_URL).host
 const [connectedBefore, connectedAfter = ''] = page.agent.connected.split('{server}')
 
@@ -50,10 +50,10 @@ const CLIENT_ICONS: Record<McpClientId, string> = { claude: 'sparkles', cursor: 
 
 /** 各客户端的接入配置（远程 Streamable HTTP，只写端点 URL，由客户端走 MCP 授权完成 OAuth 登录）。 */
 const CONFIGS: Record<McpClientId, { lang: 'bash' | 'json'; code: string }> = {
-  claude: { lang: 'bash', code: `claude mcp add --transport http mapsgrab ${MCP_URL}` },
-  cursor: { lang: 'json', code: JSON.stringify({ mcpServers: { mapsgrab: { url: MCP_URL } } }, null, 2) },
-  vscode: { lang: 'json', code: JSON.stringify({ servers: { mapsgrab: { type: 'http', url: MCP_URL } } }, null, 2) },
-  codex: { lang: 'bash', code: `codex mcp add mapsgrab --url ${MCP_URL}\ncodex mcp login mapsgrab` }
+  claude: { lang: 'bash', code: `claude mcp add --transport http mapexporter ${MCP_URL}` },
+  cursor: { lang: 'json', code: JSON.stringify({ mcpServers: { mapexporter: { url: MCP_URL } } }, null, 2) },
+  vscode: { lang: 'json', code: JSON.stringify({ servers: { mapexporter: { type: 'http', url: MCP_URL } } }, null, 2) },
+  codex: { lang: 'bash', code: `codex mcp add mapexporter --url ${MCP_URL}\ncodex mcp login mapexporter` }
 }
 
 /** API Key 兜底：通用的远程 HTTP + 请求头配置，各客户端按自己的配置格式套用。 */

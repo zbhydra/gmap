@@ -5,7 +5,7 @@
  *   ④ 能力展台：6 组能力自动轮播（进度条走完切下一项；悬停 / 聚焦暂停；离屏暂停）
  *   ⑤ 批量任务：任务名与关键词打字 → Start Extracting → 逐项状态 → 完成并自动导出（循环）
  *   ⑦ 安装区：tab 切换时同步说明文字
- * 导出文件名沿用真实插件格式 MapsGrab-Extractor-{行数}-{关键词}-{YYYY-MM-DD}.{ext}。
+ * 导出文件名沿用真实插件格式 MapExporter-{行数}-{关键词}-{YYYY-MM-DD}.{ext}。
  * 原型数据均为虚构（555-01xx 号段、虚构商户名）。
  */
 ;(function () {
@@ -21,7 +21,7 @@
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())
   }
   var exportName = function (rows, keyword, ext) {
-    return 'MapsGrab-Extractor-' + rows + '-' + keyword.replace(/ /g, '+') + '-' + today() + '.' + ext
+    return 'MapExporter-' + rows + '-' + keyword.replace(/ /g, '+') + '-' + today() + '.' + ext
   }
 
   // 可见性门控：离屏时循环停在下一个 nap 处，回到视口继续

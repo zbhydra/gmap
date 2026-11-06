@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Chrome ウェブストア拡張機能名"
   },
   "extensionDescription": {
@@ -8,19 +8,19 @@
     "description": "Chrome ウェブストア拡張機能説明 - 132文字まで"
   },
   "actionTitle": {
-    "message": "MapsGrab を開く",
+    "message": "MapExporter を開く",
     "description": "ブラウザアクションのタイトル"
   },
   "popupDescription": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "ポップアップページの説明"
   },
   "optionsTitle": {
-    "message": "MapsGrab Settings",
+    "message": "MapExporter Settings",
     "description": "Options page title"
   },
   "dashboardTitle": {
-    "message": "MapsGrab Bulk Tasks",
+    "message": "MapExporter Bulk Tasks",
     "description": "Dashboard page title"
   }
 }

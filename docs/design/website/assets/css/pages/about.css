@@ -72,7 +72,7 @@
   cursor: grabbing;
 }
 
-/* 顶部的 MapsGrab 节点：光束汇入点 */
+/* 顶部的 MapExporter 节点：光束汇入点 */
 .globe-node {
   position: absolute;
   top: 2%;

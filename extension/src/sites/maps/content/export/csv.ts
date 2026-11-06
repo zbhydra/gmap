@@ -2,8 +2,8 @@
  * 搜索结果 CSV 导出构建（A5 字段字典 36 列，U4）。
  *
  * 列名/列序由 columns.ts 的 SEARCH_EXPORT_COLUMNS 驱动（36 列固定顺序）；
- * 文件名 `MapsGrab-Extractor-{条数}-{关键词}-{YYYY-MM-DD}.{扩展名}`（竞品
- * `G-Maps-Extractor-…` 前缀随产品名「MapsGrab」）。CSV 采用 RFC4180：
+ * 文件名 `MapExporter-{条数}-{关键词}-{YYYY-MM-DD}.{扩展名}`（竞品
+ * `G-Maps-Extractor-…` 前缀随产品名「MapExporter」）。CSV 采用 RFC4180：
  * CRLF 行尾、双引号转义，并加 UTF-8 BOM 保证 Excel 中文不乱码。
  */
 
@@ -11,8 +11,8 @@ import type { MapsPlaceRow } from '../parser'
 import { buildExportRowCells, type SearchExportColumn } from './columns'
 import { buildCsvText, csvDateSegment, sanitizeFilenamePart } from './csvText'
 
-/** 导出文件名前缀（产品名「MapsGrab」的文件系统安全形态）。 */
-export const CSV_FILENAME_PREFIX = 'MapsGrab-Extractor'
+/** 导出文件名前缀（产品名「MapExporter」的文件系统安全形态）。 */
+export const CSV_FILENAME_PREFIX = 'MapExporter'
 
 /**
  * 构建完整 CSV 文本（BOM + 表头 + 数据行，RFC4180 转义）。

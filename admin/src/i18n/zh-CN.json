@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "MapsGrab 管理后台"
+    "title": "MapExporter 管理后台"
   },
   "login": {
     "title": "管理员登录",
@@ -12,7 +12,8 @@
     "clickToRefresh": "点击刷新验证码",
     "submit": "登 录",
     "success": "登录成功",
-    "failed": "登录失败"
+    "failed": "登录失败",
+    "sessionChanged": "登录状态已变化，本次请求已取消，请重试。"
   },
   "layout": {
     "dashboard": "数据看板",
@@ -23,6 +24,9 @@
     "logoutConfirm": "确定要退出登录吗？",
     "systemSettings": "系统设置",
     "openMenu": "打开菜单",
+    "language": "语言",
+    "languageChinese": "中文",
+    "languageEnglish": "English",
     "theme": "主题",
     "themeSystem": "跟随系统",
     "themeLight": "浅色",

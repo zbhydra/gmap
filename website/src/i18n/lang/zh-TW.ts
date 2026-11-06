@@ -2,15 +2,16 @@ import type { SiteContent, McpOAuthContent, ClinkReturnContent } from '../schema
 import type { CompanyContent } from '../../company/companyContent'
 import type { LegalContent } from '../../legal/legalContent'
 
+// TODO: 首页 MCP 工具集描述译文（pages.home.products.cards.mcp.body、pages.home.developers.items.mcp.description）由 AI 翻译，尚未经专业校对，校对前不视为定稿；工具集口径见 website/src/i18n/mcp.ts。
 export const site: SiteContent = {
   "site": {
-    "name": "MapsGrab",
-    "description": "MapsGrab 是一個地圖資料工具包：使用瀏覽器擴充功能和網路工具從地圖、評論連結、地點 ID 等中獲取公開的商家資訊。",
+    "name": "MapExporter",
+    "description": "MapExporter 是一個地圖資料工具包：使用瀏覽器擴充功能和網路工具從地圖、評論連結、地點 ID 等中獲取公開的商家資訊。",
     "keywords": "地圖資料、Google地圖擷取器、地點 ID 查找器、評論連結產生器、地圖工具"
   },
   "layout": {
     "nav": {
-      "brand": "MapsGrab",
+      "brand": "MapExporter",
       "primaryLabel": "主要導航",
       "mobileLabel": "手機導航",
       "extension": "擴充功能",
@@ -35,7 +36,7 @@ export const site: SiteContent = {
       "legalLabel": "法律資訊",
       "resources": "免費工具",
       "product": "產品",
-      "rights": "©2026MapsGrab。版權所有。",
+      "rights": "©2026MapExporter。版權所有。",
       "tools": [
         {
           "id": "place-id-finder",
@@ -171,13 +172,13 @@ export const site: SiteContent = {
       }
     },
     "seo": {
-      "title": "儀表板 | MapsGrab",
-      "description": "在一個工作區中管理您的 MapsGrab 匯出、API 存取和訂閱。"
+      "title": "儀表板 | MapExporter",
+      "description": "在一個工作區中管理您的 MapExporter 匯出、API 存取和訂閱。"
     },
     "shell": {
       "skipToContent": "跳至主要內容",
       "sideLabel": "工作區",
-      "homeLabel": "MapsGrab 首頁",
+      "homeLabel": "MapExporter 首頁",
       "navLabel": "工作區選單",
       "loading": "正在加載您的工作區...",
       "retry": "重試",
@@ -301,7 +302,7 @@ export const site: SiteContent = {
       "downloadFailed": "無法開始下載。請再試一次。",
       "signInPrompt": "登入以查看您的線上匯出歷史記錄。",
       "signInCta": "登入",
-      "unreachable": "目前無法達到 MapsGrab。"
+      "unreachable": "目前無法達到 MapExporter。"
     },
     "api": {
       "description": "管理您的 API 金鑰、每月請求限額和連接的 AI 應用程式。",
@@ -403,14 +404,14 @@ export const site: SiteContent = {
           "steps": [
             "登入 PayPal 並開啟「設定」。",
             "轉到“付款”，然後轉到“自動付款”。",
-            "選擇 MapsGrab，然後選擇取消。"
+            "選擇 MapExporter，然後選擇取消。"
           ]
         },
         {
           "provider": "ClinkBill",
           "steps": [
             "從您的購買電子郵件中開啟客戶入口網站連結。",
-            "登入並選擇您的 MapsGrab 訂閱。",
+            "登入並選擇您的 MapExporter 訂閱。",
             "選擇取消。"
           ]
         }
@@ -421,8 +422,8 @@ export const site: SiteContent = {
   "pages": {
     "home": {
       "seo": {
-        "title": "MapsGrab — 將 Google Maps 商家資料抓取到 CSV 和 JSON",
-        "description": "MapsGrab 是一個瀏覽器擴充功能和 Web 工具包，可從 Google Maps 收集公開可用的商家資訊（姓名、電話、評論、照片、電子郵件），並將其匯出至 CSV 或 JSON。"
+        "title": "MapExporter — 將 Google Maps 商家資料抓取到 CSV 和 JSON",
+        "description": "MapExporter 是一個瀏覽器擴充功能和 Web 工具包，可從 Google Maps 收集公開可用的商家資訊（姓名、電話、評論、照片、電子郵件），並將其匯出至 CSV 或 JSON。"
       },
       "hero": {
         "announce": {
@@ -461,8 +462,8 @@ export const site: SiteContent = {
         ],
         "dashboard": "打開線上採集器",
         "theater": {
-          "panelLabel": "MapsGrab 面板預覽",
-          "extensionActive": "MapsGrab 擴充功能已激活",
+          "panelLabel": "MapExporter 面板預覽",
+          "extensionActive": "MapExporter 擴充功能已激活",
           "mapFilters": [
             "現已開放",
             "評價最高",
@@ -504,7 +505,7 @@ export const site: SiteContent = {
         }
       },
       "facts": {
-        "caption": "MapsGrab 透過數字",
+        "caption": "MapExporter 透過數字",
         "items": [
           {
             "value": 36,
@@ -537,7 +538,7 @@ export const site: SiteContent = {
             "accent": "電子錶格",
             "tail": "，只需三步"
           },
-          "lead": "沒有程式碼，也沒有複製貼上。 MapsGrab 讀取 Google Maps 已顯示的內容並將其轉換為結構化行。"
+          "lead": "沒有程式碼，也沒有複製貼上。 MapExporter 讀取 Google Maps 已顯示的內容並將其轉換為結構化行。"
         },
         "steps": [
           {
@@ -546,7 +547,7 @@ export const site: SiteContent = {
           },
           {
             "title": "開始採集",
-            "body": "點選 {action}。MapsGrab 會捲動搜尋結果、收集商家資料，並在啟用此功能時補全聯絡資訊。",
+            "body": "點選 {action}。MapExporter 會捲動搜尋結果、收集商家資料，並在啟用此功能時補全聯絡資訊。",
             "action": "開始採集"
           },
           {
@@ -590,7 +591,7 @@ export const site: SiteContent = {
           "mcp": {
             "badge": "MCP 伺服器",
             "title": "為您的人工智慧代理提供即時地圖數據",
-            "body": "作為 MCP 工具搜尋和評論 Claude Code、Cursor、VS Code 和 Codex。",
+            "body": "透過 MCP 工具，讓 Claude Code、Cursor、VS Code 和 Codex 搜尋商家、讀取評論並取得照片。",
             "link": "探索 MCP 伺服器"
           }
         },
@@ -696,7 +697,7 @@ export const site: SiteContent = {
             "accent": "發郵件",
             "tail": "聯繫的人"
           },
-          "lead": "啟用聯絡資訊補全時，MapsGrab 會在採集過程中查看各家商家的官方網站，補上可直接聯絡的管道。"
+          "lead": "啟用聯絡資訊補全時，MapExporter 會在採集過程中查看各家商家的官方網站，補上可直接聯絡的管道。"
         },
         "points": [
           "在企業網站上找到的電子郵件地址",
@@ -731,7 +732,7 @@ export const site: SiteContent = {
           },
           "mcp": {
             "title": "MCP 伺服器",
-            "description": "適用於任何 MCP 客戶的搜尋和評論工具"
+            "description": "適用於任何 MCP 用戶端的搜尋、評論和照片工具"
           }
         },
         "langLabel": "語言",
@@ -847,16 +848,16 @@ export const site: SiteContent = {
         "contact": "聯繫支援人員",
         "items": [
           {
-            "question": "MapsGrab 可以免費使用嗎？",
+            "question": "MapExporter 可以免費使用嗎？",
             "answer": "是的。該擴充功能無需帳戶即可使用，並包含每月免費的記錄配額。當您需要更多時，定價頁面上的付費方案會提高限制。"
           },
           {
             "question": "支援哪些瀏覽器？",
-            "answer": "從擴充頁面下載 MapsGrab。 Chrome、Edge和Brave載入解壓縮後的ZIP；Firefox 使用單獨的臨時加載項，必須在重新啟動後重新載入。此頁麵包含安裝和更新說明。"
+            "answer": "從擴充頁面下載 MapExporter。 Chrome、Edge和Brave載入解壓縮後的ZIP；Firefox 使用單獨的臨時加載項，必須在重新啟動後重新載入。此頁麵包含安裝和更新說明。"
           },
           {
             "question": "資料從哪裡來，收集是否合法？",
-            "answer": "MapsGrab 僅收集您造訪的 Google Maps 頁面上公開顯示的資訊 - 任何訪客都可以閱讀的相同詳細資訊。我們不會存取私人帳戶、封閉內容或非公開資料。"
+            "answer": "MapExporter 僅收集您造訪的 Google Maps 頁面上公開顯示的資訊 - 任何訪客都可以閱讀的相同詳細資訊。我們不會存取私人帳戶、封閉內容或非公開資料。"
           },
           {
             "question": "我需要為網路工具安裝任何東西嗎？",
@@ -867,7 +868,7 @@ export const site: SiteContent = {
             "answer": "匯出為 CSV 或 JSON 以及您選擇的欄位選擇，並透過 Place ID 進行重複資料刪除。"
           },
           {
-            "question": "MapsGrab 能否看到我收集的資料？",
+            "question": "MapExporter 能否看到我收集的資料？",
             "answer": "您的設定和結果儲存在本機瀏覽器中。我們的伺服器僅處理遠端配置、帳戶和配額狀態、可選的電子郵件／社群資訊補全以及最少的使用日誌。"
           }
         ]
@@ -880,14 +881,14 @@ export const site: SiteContent = {
           "tail": "即可開始採集"
         },
         "lead": "安裝擴充程序，打開 Google Maps，搜尋並匯出您的第一個清單 - 無需帳戶。",
-        "install": "免費安裝 MapsGrab",
+        "install": "免費安裝 MapExporter",
         "online": "嘗試線上抓取",
         "note": "包括免費的每月配額。沒有信用卡。"
       }
     },
     "extension": {
       "seo": {
-        "title": "MapsGrab 適用於 Chrome、Edge 和 Firefox — Google Maps 提取器擴充功能",
+        "title": "MapExporter 適用於 Chrome、Edge 和 Firefox — Google Maps 提取器擴充功能",
         "description": "從 Google Maps 擷取 36 個商家資料欄位、評論與照片，補全電子郵件和社群連結，執行批次任務，並匯出為 CSV 或 JSON。"
       },
       "hero": {
@@ -909,8 +910,8 @@ export const site: SiteContent = {
           "匯出保留在您的機器上"
         ],
         "theater": {
-          "panelLabel": "MapsGrab 面板預覽",
-          "extensionActive": "MapsGrab 在此頁面上處於活動狀態",
+          "panelLabel": "MapExporter 面板預覽",
+          "extensionActive": "MapExporter 在此頁面上處於活動狀態",
           "dock": "停靠左/右",
           "filters": [
             "現已開放",
@@ -975,11 +976,11 @@ export const site: SiteContent = {
             "accent": "地圖視圖",
             "tail": ""
           },
-          "lead": "MapsGrab 面板出現在 Google Maps 的右側。搜尋結果、商家頁面和已儲存的清單都具有正確的提取模式 - 無需複製貼上，無需使用選項卡。"
+          "lead": "MapExporter 面板出現在 Google Maps 的右側。搜尋結果、商家頁面和已儲存的清單都具有正確的提取模式 - 無需複製貼上，無需使用選項卡。"
         },
         "search": {
           "title": "搜尋結果",
-          "description": "在任何搜尋中按“開始提取”。 MapsGrab 以人性化的速度滾動結果列表，並在加載時收集每個列表。"
+          "description": "在任何搜尋中按“開始提取”。 MapExporter 以人性化的速度滾動結果列表，並在加載時收集每個列表。"
         },
         "place": {
           "title": "商家頁面",
@@ -995,7 +996,7 @@ export const site: SiteContent = {
         },
         "saved": {
           "title": "已儲存的列表",
-          "description": "開啟已儲存的清單並按一次「開始」。 MapsGrab 依序開啟每個位置並收集它 - 無需點擊每個項目。",
+          "description": "開啟已儲存的清單並按一次「開始」。 MapExporter 依序開啟每個位置並收集它 - 無需點擊每個項目。",
           "listName": "收藏夾·{count} 地點"
         }
       },
@@ -1112,7 +1113,7 @@ export const site: SiteContent = {
             "accent": "放心離開",
             "tail": ""
           },
-          "lead": "將最多 500 關鍵字或評論 URLs 貼到一項任務中。 MapsGrab 透過即時進度逐項瀏覽它們，跳過任何停滯的內容，並在任務完成時自動匯出。"
+          "lead": "將最多 500 關鍵字或評論 URLs 貼到一項任務中。 MapExporter 透過即時進度逐項瀏覽它們，跳過任何停滯的內容，並在任務完成時自動匯出。"
         },
         "checks": [
           "關鍵字任務對每個關鍵字運行一次地圖搜索",
@@ -1170,10 +1171,10 @@ export const site: SiteContent = {
         ],
         "diagram": {
           "browser": "您的瀏覽器",
-          "servers": "MapsGrab 伺服器",
+          "servers": "MapExporter 伺服器",
           "nodes": {
             "mapsTab": "Google Maps 選項卡",
-            "panel": "MapsGrab 面板",
+            "panel": "MapExporter 面板",
             "storage": "本地儲存",
             "exports": "您的匯出",
             "config": "遠端配置",
@@ -1193,7 +1194,7 @@ export const site: SiteContent = {
           "kicker": "安裝",
           "title": {
             "lead": "安裝 ",
-            "accent": "MapsGrab",
+            "accent": "MapExporter",
             "tail": ""
           },
           "lead": "在此下載 ZIP 並按照適合您的瀏覽器的步驟進行操作。 Chrome、Edge 和 Brave 載入解壓縮的資料夾。 Firefox 使用單獨的臨時加載項，必須在重新啟動後重新載入。點擊任何圖像即可查看其完整尺寸。"
@@ -1217,11 +1218,11 @@ export const site: SiteContent = {
                 "description": [
                   "下載 ",
                   {
-                    "code": "mapsgrab.zip"
+                    "code": "mapexporter.zip"
                   },
                   "。在Windows上，右鍵單擊它並選擇“全部提取”。在 macOS 上，雙擊它。保留提取的資料夾。"
                 ],
-                "shot": "MapsGrab ZIP 下載到 Chrome"
+                "shot": "MapExporter ZIP 下載到 Chrome"
               },
               {
                 "title": "開啟擴充頁面",
@@ -1252,9 +1253,9 @@ export const site: SiteContent = {
               {
                 "title": "載入解壓縮後的資料夾",
                 "description": [
-                  "點擊“載入解壓縮”並選擇解壓縮的資料夾。 MapsGrab 出現在擴充清單中。打開 Google Maps 搜尋即可使用它。"
+                  "點擊“載入解壓縮”並選擇解壓縮的資料夾。 MapExporter 出現在擴充清單中。打開 Google Maps 搜尋即可使用它。"
                 ],
-                "shot": "加載已添加 MapsGrab 卡的解壓縮包裝"
+                "shot": "加載已添加 MapExporter 卡的解壓縮包裝"
               }
             ]
           },
@@ -1268,11 +1269,11 @@ export const site: SiteContent = {
                 "description": [
                   "下載 ",
                   {
-                    "code": "mapsgrab-firefox.zip"
+                    "code": "mapexporter-firefox.zip"
                   },
                   "。在Windows上，右鍵單擊它並選擇“全部提取”。在 macOS 上，雙擊它。保留提取的資料夾。"
                 ],
-                "shot": "MapsGrab Firefox ZIP 下載到 Firefox"
+                "shot": "MapExporter Firefox ZIP 下載到 Firefox"
               },
               {
                 "title": "開啟調試頁面",
@@ -1294,7 +1295,7 @@ export const site: SiteContent = {
                   },
                   " 在解壓縮後的文件夾裡面。 Firefox 重新啟動時會卸載臨時附加元件；重複此步驟再次載入。"
                 ],
-                "shot": "MapsGrab 作為臨時 Firefox 擴充功能加載，其後台腳本正在運行"
+                "shot": "MapExporter 作為臨時 Firefox 擴充功能加載，其後台腳本正在運行"
               }
             ]
           }
@@ -1310,7 +1311,7 @@ export const site: SiteContent = {
           "status": "預發布",
           "date": "八月 2026",
           "items": [
-            "MapsGrab 擴充功能的首次預發布",
+            "MapExporter 擴充功能的首次預發布",
             "使用自動捲動和 36 欄位架構的 Google Maps 搜尋擷取",
             "從商家頁面提取評論和照片",
             "每個企業的電子郵件與社群資訊補全",
@@ -1364,12 +1365,12 @@ export const site: SiteContent = {
             "answer": "提取規則作為遠端配置提供，因此無需重新安裝擴充功能即可修復到達面板。如果無法讀取頁面，面板會顯示錯誤，而不是默默地失敗。"
           },
           {
-            "question": "MapsGrab 能否看到我收集的資料？",
+            "question": "MapExporter 能否看到我收集的資料？",
             "answer": "您的設定和結果儲存在本機瀏覽器中。我們的伺服器僅處理遠端配置、帳戶和配額狀態、可選電子郵件與社群資訊補全以及最少的使用日誌。"
           },
           {
             "question": "資料從哪裡來，收集是否合法？",
-            "answer": "MapsGrab 僅收集您造訪的 Google Maps 頁面上公開顯示的資訊 - 任何訪客都可以閱讀的相同詳細資訊。我們不會存取私人帳戶、封閉內容或非公開資料。"
+            "answer": "MapExporter 僅收集您造訪的 Google Maps 頁面上公開顯示的資訊 - 任何訪客都可以閱讀的相同詳細資訊。我們不會存取私人帳戶、封閉內容或非公開資料。"
           }
         ]
       },
@@ -1381,7 +1382,7 @@ export const site: SiteContent = {
           "tail": "就採集你的第一份列表"
         },
         "lead": "安裝擴充程序，搜尋 Google Maps，然後匯出乾淨的電子表格 - 無需帳戶。",
-        "primary": "安裝 MapsGrab",
+        "primary": "安裝 MapExporter",
         "secondary": "比較方案",
         "note": "包括免費的每月配額。沒有信用卡。"
       }
@@ -1429,7 +1430,7 @@ export const site: SiteContent = {
         "confirmedCreditsTitle": "點數已入帳",
         "confirmedCreditsMessage": "您的 PayPal 付款已確認，帳戶點數已新增。您可以關閉此選項卡並在原始視窗中繼續。",
         "confirmedSubscriptionTitle": "訂閱已激活",
-        "confirmedSubscriptionMessage": "您的 PayPal 付款已確認，您的 MapsGrab 方案已啟用。您可以關閉此選項卡並在原始視窗中繼續。",
+        "confirmedSubscriptionMessage": "您的 PayPal 付款已確認，您的 MapExporter 方案已啟用。您可以關閉此選項卡並在原始視窗中繼續。",
         "failedTitle": "付款需要注意",
         "failedMessage": "我們無法自動確認此訂單。返回原始視窗或嘗試刷新您的付款狀態。"
       },
@@ -1478,13 +1479,13 @@ export const site: SiteContent = {
         "orderExpired": "訂單已過期。請再次購買。",
         "fulfillmentFailed": "已收到付款，但尚未添加帳戶點數。請稍後重試。",
         "authExpired": "登入已過期。重新登入以繼續。",
-        "popupBlocked": "您的瀏覽器阻止了新視窗。允許 MapsGrab 開啟彈出視窗並重試。"
+        "popupBlocked": "您的瀏覽器阻止了新視窗。允許 MapExporter 開啟彈出視窗並重試。"
       }
     },
     "pricing": {
       "seo": {
-        "title": "定價 — 線上、擴充與 API 方案 | MapsGrab",
-        "description": "MapsGrab 方案適用於每個表面：來自 $19, 的線上採集器來自 $39, 的瀏覽器擴充功能和來自 $15 的 API。每個產品都包含免費套餐 - Online 和 API 上的一次性自然月方案，Extension 上的每月訂閱。"
+        "title": "定價 — 線上、擴充與 API 方案 | MapExporter",
+        "description": "MapExporter 方案適用於每個表面：來自 $19, 的線上採集器來自 $39, 的瀏覽器擴充功能和來自 $15 的 API。每個產品都包含免費套餐 - Online 和 API 上的一次性自然月方案，Extension 上的每月訂閱。"
       },
       "hero": {
         "kicker": "定價",
@@ -1510,7 +1511,7 @@ export const site: SiteContent = {
           "unit": "記錄",
           "eyebrow": "線上採集器方案",
           "title": "雲端擷取，按記錄定價",
-          "description": "在我們的基礎設施上運行 MapsGrab 引擎。一筆記錄是收集的一個商家行。付費方案包括可選的電子郵件與社群資訊補全功能，無需額外的記錄費用。",
+          "description": "在我們的基礎設施上運行 MapExporter 引擎。一筆記錄是收集的一個商家行。付費方案包括可選的電子郵件與社群資訊補全功能，無需額外的記錄費用。",
           "billingChips": [
             "一次付款",
             "涵蓋一個自然月",
@@ -1678,7 +1679,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "適用於 MapsGrab 線上採集器月記錄配額。",
+            "usageNotice": "適用於 MapExporter 線上採集器月記錄配額。",
             "successTitle": "方案已啟動",
             "successDescription": "您的一次性 1 個月方案已生效。線上抓取工具會在下一次配額刷新時拾取它。"
           }
@@ -1826,7 +1827,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "適用於 MapsGrab 瀏覽器擴充功能每月配額。",
+            "usageNotice": "適用於 MapExporter 瀏覽器擴充功能每月配額。",
             "successTitle": "方案已啟動",
             "successDescription": "您的一次性 1 個月方案已生效。擴充功能會在下一次配額刷新時選擇它。"
           }
@@ -1904,7 +1905,7 @@ export const site: SiteContent = {
               "id": "business",
               "productId": "api_business",
               "name": "商務版",
-              "tagline": "對於基於 MapsGrab 資料建構的產品",
+              "tagline": "對於基於 MapExporter 資料建構的產品",
               "price": "$115",
               "periodLabel": "一次性 · 1 個月",
               "quota": "10,000 請求數/月",
@@ -2015,7 +2016,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "適用於 MapsGrab API 每月請求配額。",
+            "usageNotice": "適用於 MapExporter API 每月請求配額。",
             "successTitle": "方案已啟動",
             "successDescription": "您的一次性 1 個月方案已生效。您的 API 金鑰將在下一個請求時取得新配額。"
           }
@@ -2115,7 +2116,7 @@ export const site: SiteContent = {
         "loading": "正在載入付款選項...",
         "loadFailed": "無法載入付款選項。刷新頁面重試。",
         "noChannels": "目前該方案沒有可用的付款方式。",
-        "productTitlePrefix": "MapsGrab",
+        "productTitlePrefix": "MapExporter",
         "failedTitle": "付款未完成",
         "billingPeriodMonthly": "1 個月",
         "billingAutoRenew": "自動續訂至取消",
@@ -2156,7 +2157,7 @@ export const site: SiteContent = {
             "answer": "一筆記錄代表採集到的一列資料，與免費方案的計量單位相同。線上採集器以一家商家為一筆記錄；擴充功能採集的每家商家、每則評論或每張照片都算作一筆記錄。補全電子郵件與社群資訊不會增加記錄數。API 分頁則按成功請求數計算用量。"
           },
           {
-            "question": "我需要付費方案才能嘗試 MapsGrab 嗎？",
+            "question": "我需要付費方案才能嘗試 MapExporter 嗎？",
             "answer": "不會。每個產品都有一個沒有時間限制的免費套餐：線上採集器 和擴充功能包括每月 1,000 記錄，API 包括每月 20 請求。線上抓取和擴充功能免費方案不包括電子郵件或社交媒體資訊補全。付費線上計畫預設包含它，您可以為每個任務將其關閉。"
           },
           {
@@ -2187,8 +2188,8 @@ export const site: SiteContent = {
       }
     },
     "extensionLogin": {
-      "title": "擴充功能登入 | MapsGrab",
-      "description": "登入以將您的 MapsGrab 網站會話連接到瀏覽器擴充功能。",
+      "title": "擴充功能登入 | MapExporter",
+      "description": "登入以將您的 MapExporter 網站會話連接到瀏覽器擴充功能。",
       "eyebrow": "瀏覽器擴充",
       "heading": "擴充功能登入",
       "checkingState": "檢查",
@@ -2221,7 +2222,7 @@ export const site: SiteContent = {
     },
     "online": {
       "seo": {
-        "title": "線上 Google Maps Scraper — 在雲端運行提取 | MapsGrab",
+        "title": "線上 Google Maps Scraper — 在雲端運行提取 | MapExporter",
         "description": "在雲端運行 Google Maps 關鍵字搜索，收集商家數據，每個任務下載一個 CSV。"
       },
       "hero": {
@@ -2484,7 +2485,7 @@ export const site: SiteContent = {
             "accent": "按記錄定價",
             "tail": ""
           },
-          "lead": "在我們的基礎架構上執行 MapsGrab 引擎。一筆記錄就是下發的一個商家行；付費方案包括電子郵件與社群資訊補全功能，無需額外的記錄費用。"
+          "lead": "在我們的基礎架構上執行 MapExporter 引擎。一筆記錄就是下發的一個商家行；付費方案包括電子郵件與社群資訊補全功能，無需額外的記錄費用。"
         },
         "specs": {
           "keywords": "每個任務的關鍵字",
@@ -2511,7 +2512,7 @@ export const site: SiteContent = {
           },
           {
             "question": "資料從哪裡來，收集是否合法？",
-            "answer": "MapsGrab 僅收集 Google Maps 上公開顯示的資訊 - 任何訪客都可以閱讀的相同詳細資訊。我們不會存取私人帳戶、封閉內容或非公開資料。"
+            "answer": "MapExporter 僅收集 Google Maps 上公開顯示的資訊 - 任何訪客都可以閱讀的相同詳細資訊。我們不會存取私人帳戶、封閉內容或非公開資料。"
           },
           {
             "question": "我可以匯出為哪些格式？",
@@ -2519,7 +2520,7 @@ export const site: SiteContent = {
           },
           {
             "question": "它要多少錢？",
-            "answer": "線上採集器 遵循定價頁面上的 MapsGrab 方案，包括每月免費記錄配額。當您需要更多時，付費方案會提高限制。"
+            "answer": "線上採集器 遵循定價頁面上的 MapExporter 方案，包括每月免費記錄配額。當您需要更多時，付費方案會提高限制。"
           },
           {
             "question": "我需要電子郵件和社群資料的付費方案嗎？",
@@ -2695,8 +2696,8 @@ export const site: SiteContent = {
     },
     "scraperApi": {
       "seo": {
-        "title": "Google Maps 採集器 API — JSON 中的商家資料 | MapsGrab",
-        "description": "MapsGrab 採集 API 將 Google Maps 搜尋結果傳回為 JSON：姓名、地址、電話、網站、評分、時間、座標、Place ID 和 fid — 也可根據要求提供電子郵件和社交資料。"
+        "title": "Google Maps 採集器 API — JSON 中的商家資料 | MapExporter",
+        "description": "MapExporter 採集 API 將 Google Maps 搜尋結果傳回為 JSON：姓名、地址、電話、網站、評分、時間、座標、Place ID 和 fid — 也可根據要求提供電子郵件和社交資料。"
       },
       "hero": {
         "title": {
@@ -3018,7 +3019,7 @@ export const site: SiteContent = {
           },
           {
             "question": "我如何進行身份驗證？",
-            "answer": "將您的 MapsGrab API 金鑰作為不記名令牌傳送至 Authorization 標頭中。每個帳戶都有一把金鑰。只有當您產生它時，它才會完整顯示，並且產生新金鑰會立即停用舊金鑰。"
+            "answer": "將您的 MapExporter API 金鑰作為不記名令牌傳送至 Authorization 標頭中。每個帳戶都有一把金鑰。只有當您產生它時，它才會完整顯示，並且產生新金鑰會立即停用舊金鑰。"
           },
           {
             "question": "請求是如何計算的？",
@@ -3045,8 +3046,8 @@ export const site: SiteContent = {
     },
     "reviewsApi": {
       "seo": {
-        "title": "Google Maps 評論採集器 API — JSON 中的評論 | MapsGrab",
-        "description": "MapsGrab 評論 API 將 Google Maps 商家的公共評論返回為 JSON：評級、文本和翻譯、作者、日期、評論照片和所有者回复 — 每頁最多 60（帶遊標）。"
+        "title": "Google Maps 評論採集器 API — JSON 中的評論 | MapExporter",
+        "description": "MapExporter 評論 API 將 Google Maps 商家的公共評論返回為 JSON：評級、文本和翻譯、作者、日期、評論照片和所有者回复 — 每頁最多 60（帶遊標）。"
       },
       "hero": {
         "title": {
@@ -3292,7 +3293,7 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "相片 API — 公開商家照片 URL | MapsGrab",
+        "title": "相片 API — 公開商家照片 URL | MapExporter",
         "description": "透過商家的 fid 取得公開照片 URL，以 JSON 傳回。max_results 限制本次交付數量；結果為部分交付，不保證完整相簿。"
       },
       "hero": {
@@ -3447,7 +3448,7 @@ export const site: SiteContent = {
     },
     "scraperMcp": {
       "seo": {
-        "title": "Google Maps 採集器 MCP 伺服器 | MapsGrab",
+        "title": "Google Maps 採集器 MCP 伺服器 | MapExporter",
         "description": "透過一個 MCP 連線搜尋 Google Maps 地點、讀取評論並取得公開商家照片 URL。"
       },
       "clients": {
@@ -3482,7 +3483,7 @@ export const site: SiteContent = {
         ]
       },
       "agent": {
-        "label": "代理會話範例：有關本地企業的問題、具有結構化結果的 MapsGrab 工具呼叫以及代理的答案",
+        "label": "代理會話範例：有關本地企業的問題、具有結構化結果的 MapExporter 工具呼叫以及代理的答案",
         "session": "代理會話",
         "connected": "MCP 伺服器 {server} 已連接",
         "placeholder": "詢問 Google Maps 上的任何地方...",
@@ -3743,7 +3744,7 @@ export const site: SiteContent = {
         "clientsLabel": "MCP 用戶端",
         "anyClient": "任何 MCP 客戶端",
         "toolsLabel": "工具",
-        "hub": "MapsGrab MCP",
+        "hub": "MapExporter MCP",
         "publicData": "公共 Google Maps 數據",
         "resultLabel": "結果",
         "results": [
@@ -3754,11 +3755,11 @@ export const site: SiteContent = {
         "steps": [
           {
             "title": "連接",
-            "description": "將端點新增至您的用戶端，然後透過瀏覽器登入 MapsGrab。"
+            "description": "將端點新增至您的用戶端，然後透過瀏覽器登入 MapExporter。"
           },
           {
             "title": "發現",
-            "description": "您的代理程式列出了 MapsGrab 工具及其輸入模式。"
+            "description": "您的代理程式列出了 MapExporter 工具及其輸入模式。"
           },
           {
             "title": "呼叫",
@@ -3773,7 +3774,7 @@ export const site: SiteContent = {
           "accent": "每個客戶端",
           "tail": "只需一段配置"
         },
-        "lead": "將您的用戶端指向 MapsGrab 端點並透過瀏覽器登入 - 無需複製 API 金鑰，無需 SDK，無需執行本機進程。",
+        "lead": "將您的用戶端指向 MapExporter 端點並透過瀏覽器登入 - 無需複製 API 金鑰，無需 SDK，無需執行本機進程。",
         "tabsLabel": "MCP 用戶端",
         "copy": "複製配置",
         "clients": {
@@ -3782,15 +3783,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "新增伺服器",
-                "description": "執行指令將 `mapsgrab` 註冊到 HTTP 上。"
+                "description": "執行指令將 `mapexporter` 註冊到 HTTP 上。"
               },
               {
                 "title": "登入",
-                "description": "在 Claude Code 中，執行 `/mcp`，選擇 `mapsgrab` 並進行驗證 — MapsGrab 在瀏覽器中開啟供您批准。"
+                "description": "在 Claude Code 中，執行 `/mcp`，選擇 `mapexporter` 並進行驗證 — MapExporter 在瀏覽器中開啟供您批准。"
               },
               {
                 "title": "詢問地圖數據",
-                "description": "Claude Code 列出 MapsGrab 工具並在提示需要時呼叫它們。"
+                "description": "Claude Code 列出 MapExporter 工具並在提示需要時呼叫它們。"
               }
             ]
           },
@@ -3803,11 +3804,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "登入",
-                "description": "在 Cursor 設定 → MCP 中，按一下 `mapsgrab` 旁的連線並在瀏覽器中核准它。"
+                "description": "在 Cursor 設定 → MCP 中，按一下 `mapexporter` 旁的連線並在瀏覽器中核准它。"
               },
               {
                 "title": "使用工具",
-                "description": "`mapsgrab` 在 MCP 伺服器清單中顯示其工具，為代理做好準備。"
+                "description": "`mapexporter` 在 MCP 伺服器清單中顯示其工具，為代理做好準備。"
               }
             ]
           },
@@ -3820,11 +3821,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "登入",
-                "description": "啟動伺服器。 VS Code 要求透過 MapsGrab 進行驗證並開啟瀏覽器進行批准。"
+                "description": "啟動伺服器。 VS Code 要求透過 MapExporter 進行驗證並開啟瀏覽器進行批准。"
               },
               {
                 "title": "使用代理模式",
-                "description": "在代理模式下開啟聊天並啟用 MapsGrab 工具。"
+                "description": "在代理模式下開啟聊天並啟用 MapExporter 工具。"
               }
             ]
           },
@@ -3833,15 +3834,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "新增伺服器",
-                "description": "執行`codex mcp add`，透過URL註冊`mapsgrab`。"
+                "description": "執行`codex mcp add`，透過URL註冊`mapexporter`。"
               },
               {
                 "title": "登入",
-                "description": "執行 `codex mcp login mapsgrab` 並在瀏覽器中核准 MapsGrab。"
+                "description": "執行 `codex mcp login mapexporter` 並在瀏覽器中核准 MapExporter。"
               },
               {
                 "title": "開始 Codex",
-                "description": "新會話載入 `mapsgrab` 及其工具。"
+                "description": "新會話載入 `mapexporter` 及其工具。"
               }
             ]
           }
@@ -3870,7 +3871,7 @@ export const site: SiteContent = {
           "accent": "獲得數據表格",
           "tail": ""
         },
-        "lead": "勘探、本地市場研究、評論監控—描述工作，然後您的代理人決定呼叫哪個 MapsGrab 工具。",
+        "lead": "勘探、本地市場研究、評論監控—描述工作，然後您的代理人決定呼叫哪個 MapExporter 工具。",
         "rows": [
           [
             {
@@ -4059,7 +4060,7 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "MapsGrab MCP 伺服器是什麼？",
+            "question": "MapExporter MCP 伺服器是什麼？",
             "answer": "透過一個 MCP 連線搜尋 Google Maps 地點、讀取評論並取得公開商家照片 URL。 search_places / list_reviews / list_photos."
           },
           {
@@ -4068,7 +4069,7 @@ export const site: SiteContent = {
           },
           {
             "question": "它是如何認證的？",
-            "answer": "使用 OAuth 登入時，Claude Code、Cursor、VS Code、Codex 及其他支援 MCP 授權的用戶端會在瀏覽器中開啟 MapsGrab；你核准用戶端後，隨時可在控制台 → API 撤銷授權。只有在用戶端無法登入時，才需要將 API 金鑰作為 bearer token 放入 Authorization 標頭。"
+            "answer": "使用 OAuth 登入時，Claude Code、Cursor、VS Code、Codex 及其他支援 MCP 授權的用戶端會在瀏覽器中開啟 MapExporter；你核准用戶端後，隨時可在控制台 → API 撤銷授權。只有在用戶端無法登入時，才需要將 API 金鑰作為 bearer token 放入 Authorization 標頭。"
           },
           {
             "question": "工具呼叫是如何計數的？",
@@ -4117,7 +4118,7 @@ export const site: SiteContent = {
         },
         "cta": {
           "kicker": "大量擷取",
-          "primary": "安裝 MapsGrab",
+          "primary": "安裝 MapExporter",
           "secondary": "查看定價",
           "note": "包括免費的每月配額。沒有信用卡。"
         },
@@ -4129,7 +4130,7 @@ export const site: SiteContent = {
       },
       "placeIdFinder": {
         "seo": {
-          "title": "Place ID 查找器 — 從 URL 取得 Google Maps Place ID | MapsGrab",
+          "title": "Place ID 查找器 — 從 URL 取得 Google Maps Place ID | MapExporter",
           "description": "貼上 Google Maps 位置 URL 並立即取得其 Place ID、CID 和 FID。基於瀏覽器的免費 Place ID 查找器 — 無需登錄，您的 URL 永遠不會離開您的裝置。"
         },
         "hero": {
@@ -4276,12 +4277,12 @@ export const site: SiteContent = {
             "accent": "批量",
             "tail": "獲取地點 ID？"
           },
-          "lead": "MapsGrab 會採集每家商家的 Place ID、CID 與 FID，以及另外 33 個資料欄位，並直接匯出為 CSV 或 JSON。"
+          "lead": "MapExporter 會採集每家商家的 Place ID、CID 與 FID，以及另外 33 個資料欄位，並直接匯出為 CSV 或 JSON。"
         }
       },
       "reviewLinkGenerator": {
         "seo": {
-          "title": "Google 評論連結產生器 — 免費直接評論 URL | MapsGrab",
+          "title": "Google 評論連結產生器 — 免費直接評論 URL | MapExporter",
           "description": "將 Google Maps 地點 URL 轉換為可與客戶共享的直接 Google 評論連結。免費，基於瀏覽器，無需上傳任何內容。"
         },
         "hero": {
@@ -4315,7 +4316,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "地點 ID 的來源",
-            "body": "此工具重複使用與 Place ID Finder 相同的本機解碼：識別碼已存在於地圖 URL 中，並且到「ChIJ…」形式的轉換完全發生在您的瀏覽器中。如果您管理多個地點，請對每個地點重複此過程，或讓 MapsGrab 在每次匯出中攜帶 Place ID 列，以便可以從電子表格大量產生評論連結。"
+            "body": "此工具重複使用與 Place ID Finder 相同的本機解碼：識別碼已存在於地圖 URL 中，並且到「ChIJ…」形式的轉換完全發生在您的瀏覽器中。如果您管理多個地點，請對每個地點重複此過程，或讓 MapExporter 在每次匯出中攜帶 Place ID 列，以便可以從電子表格大量產生評論連結。"
           }
         ],
         "faq": {
@@ -4349,12 +4350,12 @@ export const site: SiteContent = {
             "accent": "獲得",
             "tail": "的每一條評論"
           },
-          "lead": "MapsGrab 提取任何商家頁面的評論（評級、文字、日期和所有者回應），以便您可以查看回饋並更快地回答。"
+          "lead": "MapExporter 提取任何商家頁面的評論（評級、文字、日期和所有者回應），以便您可以查看回饋並更快地回答。"
         }
       },
       "emailChecker": {
         "seo": {
-          "title": "電子郵件檢查器 — 免費驗證電子郵件地址能否收信 | MapsGrab",
+          "title": "電子郵件檢查器 — 免費驗證電子郵件地址能否收信 | MapExporter",
           "description": "檢查電子郵件地址能否正常收信。這款免費電子郵件檢查器會向郵件伺服器確認，並列出狀態、可投遞性、MX 記錄與帳號類型。"
         },
         "hero": {
@@ -4435,7 +4436,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "如何解讀結果",
-            "body": "「可安全寄送」表示信箱存在且能接收郵件。「無效」與「已停用」的地址會退信，「垃圾郵件陷阱」絕不應寄送。全收網域會接受任何地址，因此無法確認信箱本身是否存在；角色信箱、拋棄式信箱與收件匣已滿的地址用於開發客戶都有風險。「未知」表示郵件伺服器沒有給出明確答覆，可稍後再試。MapsGrab 從每家商家的官方網站採集電子郵件，聯繫前可以用本工具快速抽查。"
+            "body": "「可安全寄送」表示信箱存在且能接收郵件。「無效」與「已停用」的地址會退信，「垃圾郵件陷阱」絕不應寄送。全收網域會接受任何地址，因此無法確認信箱本身是否存在；角色信箱、拋棄式信箱與收件匣已滿的地址用於開發客戶都有風險。「未知」表示郵件伺服器沒有給出明確答覆，可稍後再試。MapExporter 從每家商家的官方網站採集電子郵件，聯繫前可以用本工具快速抽查。"
           }
         ],
         "faq": {
@@ -4473,12 +4474,12 @@ export const site: SiteContent = {
             "accent": "驗證",
             "tail": "的電子郵件"
           },
-          "lead": "MapsGrab 直接從每個企業自己的網站中尋找其提取的每個企業背後的電子郵件地址和社交資料。"
+          "lead": "MapExporter 直接從每個企業自己的網站中尋找其提取的每個企業背後的電子郵件地址和社交資料。"
         }
       },
       "latLongToDms": {
         "seo": {
-          "title": "將經緯度轉換為 DMS — 十進制度數轉度分秒 | MapsGrab",
+          "title": "將經緯度轉換為 DMS — 十進制度數轉度分秒 | MapExporter",
           "description": "立即將十進制緯度和經度轉換為度、分、秒 (DMS) 格式。基於瀏覽器的免費座標轉換器，無需上傳任何內容。"
         },
         "hero": {
@@ -4511,7 +4512,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "為什麼這對地圖資料工作很重要",
-            "body": "在工具之間移動商家資料時，協調往返是一個日常摩擦點：Google Maps 匯出小數，而地籍和列印工作流程需要 DMS。 MapsGrab 使這種摩擦在規模上保持較低水平 - 每個提取的商家都已在匯出中攜帶其緯度和經度，並且可以使用此頁面使用的相同公式離線運行批量坐標轉換。"
+            "body": "在工具之間移動商家資料時，協調往返是一個日常摩擦點：Google Maps 匯出小數，而地籍和列印工作流程需要 DMS。 MapExporter 使這種摩擦在規模上保持較低水平 - 每個提取的商家都已在匯出中攜帶其緯度和經度，並且可以使用此頁面使用的相同公式離線運行批量坐標轉換。"
           }
         ],
         "faq": {
@@ -4545,12 +4546,12 @@ export const site: SiteContent = {
             "accent": "採集",
             "tail": ""
           },
-          "lead": "MapsGrab 將緯度和經度寫入其匯出的每一行 - 無需為您的下一個路線或區域項目手動找到座標。"
+          "lead": "MapExporter 將緯度和經度寫入其匯出的每一行 - 無需為您的下一個路線或區域項目手動找到座標。"
         }
       },
       "dmsToDd": {
         "seo": {
-          "title": "將 DMS 轉換為 DD — 度分秒轉十進制度數 | MapsGrab",
+          "title": "將 DMS 轉換為 DD — 度分秒轉十進制度數 | MapExporter",
           "description": "立即將度、分、秒座標轉換為十進位。免費的基於瀏覽器的 DMS 到 DD 轉換器，無需上傳任何內容。"
         },
         "hero": {
@@ -4559,7 +4560,7 @@ export const site: SiteContent = {
             "accent": "（緯度、經度）",
             "tail": ""
           },
-          "description": "輸入兩個軸的度、分和秒，並獲得乾淨的十進制度數 — Google Maps、電子表格和 MapsGrab 可以理解的格式。"
+          "description": "輸入兩個軸的度、分和秒，並獲得乾淨的十進制度數 — Google Maps、電子表格和 MapExporter 可以理解的格式。"
         },
         "form": {
           "latitudeHeading": "緯度（南北）",
@@ -4586,7 +4587,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "保持座標數據一致",
-            "body": "混合符號是導入後位置最終進入錯誤海洋的常見原因。確定一次十進制並在邊界處轉換所有內容可以保持管道的正常運作。 MapsGrab 已以十進制度匯出座標，因此使用擴充功能收集的資料會直接放入 GIS 和 BI 工具中，而無需任何轉換步驟。"
+            "body": "混合符號是導入後位置最終進入錯誤海洋的常見原因。確定一次十進制並在邊界處轉換所有內容可以保持管道的正常運作。 MapExporter 已以十進制度匯出座標，因此使用擴充功能收集的資料會直接放入 GIS 和 BI 工具中，而無需任何轉換步驟。"
           }
         ],
         "faq": {
@@ -4620,12 +4621,12 @@ export const site: SiteContent = {
             "accent": "批量",
             "tail": "處理坐標，省去手工操作"
           },
-          "lead": "MapsGrab 匯出其收集的每個企業的十進位緯度和經度，位於地址、電話和 Place ID 欄位旁邊。"
+          "lead": "MapExporter 匯出其收集的每個企業的十進位緯度和經度，位於地址、電話和 Place ID 欄位旁邊。"
         }
       },
       "bulkKeywords": {
         "seo": {
-          "title": "批次關鍵字產生器 - 關鍵字 + 位置組合 | MapsGrab",
+          "title": "批次關鍵字產生器 - 關鍵字 + 位置組合 | MapExporter",
           "description": "批量生成關鍵字和位置組合，用於本地 SEO 和地圖抓取任務。貼上兩個列表，取得每個組合，下載為 CSV。自由的。"
         },
         "hero": {
@@ -4660,7 +4661,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "從關鍵字清單到收集的數據",
-            "body": "經典的下一步是將每個組合作為 Google Maps 搜尋運行並收集結果。這個循環正是 MapsGrab 自動化的：擴充功能程序接受關鍵字列表作為批處理任務，逐一遍歷搜索，並匯出它找到的每個商家 - 因此您在此處生成的組合成為結構化行，無需手動複製。"
+            "body": "經典的下一步是將每個組合作為 Google Maps 搜尋運行並收集結果。這個循環正是 MapExporter 自動化的：擴充功能程序接受關鍵字列表作為批處理任務，逐一遍歷搜索，並匯出它找到的每個商家 - 因此您在此處生成的組合成為結構化行，無需手動複製。"
           }
         ],
         "faq": {
@@ -4694,12 +4695,12 @@ export const site: SiteContent = {
             "accent": "採集結果",
             "tail": ""
           },
-          "lead": "MapsGrab 批次任務將每個關鍵字作為地圖搜尋運行，並匯出其背後的商家 — CSV 或 JSON，以及評論、照片和聯絡資訊補全。"
+          "lead": "MapExporter 批次任務將每個關鍵字作為地圖搜尋運行，並匯出其背後的商家 — CSV 或 JSON，以及評論、照片和聯絡資訊補全。"
         }
       },
       "mergeCsv": {
         "seo": {
-          "title": "線上合併 CSV 檔案 — 免費合併多個 CSV 檔案 | MapsGrab",
+          "title": "線上合併 CSV 檔案 — 免費合併多個 CSV 檔案 | MapExporter",
           "description": "將多個 CSV 檔案線上合併為一個檔案。列標題透過 union 自動對齊 — 免費、私有且完全基於瀏覽器。"
         },
         "hero": {
@@ -4732,7 +4733,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "專為多次運行資料收集而設計",
-            "body": "典型的用例是附加運行：每個 MapsGrab 提取會話匯出其自己的 CSV，並且在重複資料刪除和清理之前合併將一周的會話合併到一個資料集中。解析器處理引用欄位、嵌入逗號和儲存格內的換行符 (RFC 4180)，因此具有多行位址的匯出或評論片段可以正確合併。"
+            "body": "典型的用例是附加運行：每個 MapExporter 提取會話匯出其自己的 CSV，並且在重複資料刪除和清理之前合併將一周的會話合併到一個資料集中。解析器處理引用欄位、嵌入逗號和儲存格內的換行符 (RFC 4180)，因此具有多行位址的匯出或評論片段可以正確合併。"
           }
         ],
         "faq": {
@@ -4766,7 +4767,7 @@ export const site: SiteContent = {
             "accent": "一個數據集",
             "tail": ""
           },
-          "lead": "MapsGrab 在每個會話中匯出乾淨的 CSV/JSON 並進行欄位選擇和 Place ID 重複資料刪除，因此多運行資料集幾乎已經開始合併。"
+          "lead": "MapExporter 在每個會話中匯出乾淨的 CSV/JSON 並進行欄位選擇和 Place ID 重複資料刪除，因此多運行資料集幾乎已經開始合併。"
         }
       }
     }
@@ -4777,16 +4778,16 @@ export const company: CompanyContent = {
   "footerGroupLabel": "公司",
   "about": {
     "navLabel": "關於",
-    "seoTitle": "關於 MapsGrab |產品與邊界",
-    "seoDescription": "MapsGrab 是一個用於公共商家資料的地圖資料工具包：瀏覽器擴充功能、雲端線上抓取工具、API 和 MCP 伺服器以及免費的網路工具。了解資料邊界在哪裡。",
+    "seoTitle": "關於 MapExporter |產品與邊界",
+    "seoDescription": "MapExporter 是一個用於公共商家資料的地圖資料工具包：瀏覽器擴充功能、雲端線上抓取工具、API 和 MCP 伺服器以及免費的網路工具。了解資料邊界在哪裡。",
     "hero": {
-      "eyebrow": "關於 MapsGrab",
+      "eyebrow": "關於 MapExporter",
       "title": {
         "lead": "",
         "accent": "直接",
         "tail": "採集地圖數據"
       },
-      "intro": "MapsGrab 提供從 Google Maps 採集公開商家資訊並整理為清晰結構化資料的工具：適用於 Edge 與 Firefox 的瀏覽器擴充功能、雲端線上採集器、API 與 MCP 伺服器，以及免費網頁工具，其中大多數完全在瀏覽器中執行。",
+      "intro": "MapExporter 提供從 Google Maps 採集公開商家資訊並整理為清晰結構化資料的工具：適用於 Edge 與 Firefox 的瀏覽器擴充功能、雲端線上採集器、API 與 MCP 伺服器，以及免費網頁工具，其中大多數完全在瀏覽器中執行。",
       "contactLabel": "聯繫支援人員",
       "extensionLabel": "探索擴充功能",
       "stageLabel": "搶先體驗",
@@ -4817,7 +4818,7 @@ export const company: CompanyContent = {
       },
       "lead": "選擇瀏覽器擴充功能、基於雲端的 線上採集器 或 API。此擴充功能可以在您自己的瀏覽器中運作； 線上採集器 和 API 共用一個雲端引擎，而 MCP 伺服器將 API 提供給 AI 代理程式。",
       "hub": {
-        "title": "MapsGrab 資料工具包",
+        "title": "MapExporter 資料工具包",
         "detail": "商家數據·評論·照片·電子郵件與社群資訊補全"
       },
       "tags": {
@@ -4853,7 +4854,7 @@ export const company: CompanyContent = {
         "accent": "邊界",
         "tail": "在哪裡"
       },
-      "lead": "MapsGrab 對資料故意保守。這些是我們堅持的產品規則。",
+      "lead": "MapExporter 對資料故意保守。這些是我們堅持的產品規則。",
       "publicData": {
         "title": "僅公開數據",
         "text": "僅公開可用的商家資訊——該頁面的任何訪客都可以看到的資訊。",
@@ -4920,7 +4921,7 @@ export const company: CompanyContent = {
         "badge": "儲存在您的瀏覽器中"
       },
       "backend": {
-        "label": "MapsGrab 後端·四個用途",
+        "label": "MapExporter 後端·四個用途",
         "lanes": [
           {
             "title": "遠端配置",
@@ -4978,19 +4979,19 @@ export const company: CompanyContent = {
   },
   "contact": {
     "navLabel": "聯絡我們",
-    "seoTitle": "聯絡 MapsGrab 支持",
-    "seoDescription": "有關帳戶、瀏覽器擴充功能、計費、工具或隱私請求的信息，請聯絡 MapsGrab。",
-    "eyebrow": "聯絡方式 MapsGrab",
+    "seoTitle": "聯絡 MapExporter 支持",
+    "seoDescription": "有關帳戶、瀏覽器擴充功能、計費、工具或隱私請求的信息，請聯絡 MapExporter。",
+    "eyebrow": "聯絡方式 MapExporter",
     "title": {
       "lead": "聯繫",
       "accent": "真人",
       "tail": "支持"
     },
-    "intro": "寫信給我們，就會有人閱讀。目前，支援由建構 MapsGrab 的團隊直接處理。",
+    "intro": "寫信給我們，就會有人閱讀。目前，支援由建構 MapExporter 的團隊直接處理。",
     "emailCardLabel": "支援電子郵件",
     "copyEmail": "複製 {email}",
     "emailLabel": "電子郵件支援",
-    "emailSubject": "MapsGrab 支援請求",
+    "emailSubject": "MapExporter 支援請求",
     "responseTimes": "我們會在一個工作天內回覆支援電子郵件，通常會更快。當我們需要先驗證帳戶所有權時，隱私權請求可能需要幾天的時間。",
     "include": {
       "title": "包括什麼",
@@ -5018,6 +5019,7 @@ export const company: CompanyContent = {
   }
 }
 
+// TODO: Email Checker 披露译文（terms 的 what-the-service-does；privacy 的 intro、前两张 glance、where-data-is-stored、what-our-backend-processes）由 AI 翻译，尚未经专业法务校对，校对前不视为定稿；合同见 docs/feat/015.工具与增长/tech-Email验证.md。
 export const legal: LegalContent = {
   "page": {
     "crumbHome": "首頁",
@@ -5036,13 +5038,13 @@ export const legal: LegalContent = {
   },
   "terms": {
     "navLabel": "條款",
-    "seoTitle": "服務條款 | MapsGrab",
-    "seoDescription": "MapsGrab 服務條款：可接受的使用、使用者對收集的資料的責任、購買、免責聲明、如何聯絡我們。",
+    "seoTitle": "服務條款 | MapExporter",
+    "seoDescription": "MapExporter 服務條款：可接受的使用、使用者對收集的資料的責任、購買、免責聲明、如何聯絡我們。",
     "title": "服務條款",
-    "intro": "本條款管轄您對 MapsGrab 的使用：瀏覽器擴充功能、本網站和免費網路工具。請在使用服務前閱讀它們。",
+    "intro": "本條款管轄您對 MapExporter 的使用：瀏覽器擴充功能、本網站和免費網路工具。請在使用服務前閱讀它們。",
     "updatedLabel": "最後更新",
-    "updatedAt": "八月 31, 2026",
-    "updatedAtISO": "2026-08-31",
+    "updatedAt": "十一月 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "可接受的使用、使用者對收集的資料的責任、購買、免責聲明以及如何聯絡我們。",
     "helpTitle": "對這些條款有疑問嗎？",
     "glance": [
@@ -5078,14 +5080,14 @@ export const legal: LegalContent = {
         "id": "acceptance-of-terms",
         "title": "接受條款",
         "paragraphs": [
-          "造訪或使用 MapsGrab 即表示您同意這些條款。如果您不同意它們，請不要安裝擴充功能或使用網站和工具。"
+          "造訪或使用 MapExporter 即表示您同意這些條款。如果您不同意它們，請不要安裝擴充功能或使用網站和工具。"
         ]
       },
       {
         "id": "what-the-service-does",
         "title": "服務的作用",
         "paragraphs": [
-          "MapsGrab 可協助您收集您造訪的 Google Maps 頁面上公開顯示的資訊（商家詳細資訊、評論、照片和相關聯絡資訊）並將其匯出。本服務由 Microsoft Edge 和 Firefox 的瀏覽器擴充功能、本網站以及在您的瀏覽器中執行的免費網路工具組成。"
+          "MapExporter 可協助您收集您造訪的 Google Maps 頁面上公開顯示的資訊（商家詳細資訊、評論、照片和相關聯絡資訊）並將其匯出。本服務由 Microsoft Edge 和 Firefox 的瀏覽器擴充功能、本網站以及免費網路工具組成。大多數免費網路工具在您的瀏覽器中執行；部分工具（例如電子郵件檢查器）會將您輸入的內容提交到我們的伺服器，再由伺服器交給第三方驗證服務處理。"
         ]
       },
       {
@@ -5129,7 +5131,7 @@ export const legal: LegalContent = {
         "id": "the-service-is-provided-as-is",
         "title": "該服務按原樣提供",
         "paragraphs": [
-          "該服務按“原樣”和“可用”提供。平台經常變化，收集功能可能隨時部分或全部停止運作。 MapsGrab 對所收集資料的不間斷可用性、完整性或特定用途的適用性不作任何明示或暗示的保證。",
+          "該服務按“原樣”和“可用”提供。平台經常變化，收集功能可能隨時部分或全部停止運作。 MapExporter 對所收集資料的不間斷可用性、完整性或特定用途的適用性不作任何明示或暗示的保證。",
           "我們可能會變更、暫停或終止服務的任何部分，我們可能會更新這些條款。當變更重大時，我們將在本網站上公佈。更改生效後繼續使用即表示您接受更新後的條款。"
         ]
       },
@@ -5137,14 +5139,14 @@ export const legal: LegalContent = {
         "id": "limitation-of-liability",
         "title": "責任限制",
         "paragraphs": [
-          "在法律允許的最大範圍內，MapsGrab 及其運營商不對因您使用或無法使用服務而造成的間接、偶然、特殊或後果性損害（包括利潤或資料損失）承擔責任。"
+          "在法律允許的最大範圍內，MapExporter 及其運營商不對因您使用或無法使用服務而造成的間接、偶然、特殊或後果性損害（包括利潤或資料損失）承擔責任。"
         ]
       },
       {
         "id": "contact",
         "title": "聯絡我們",
         "paragraphs": [
-          "有關這些條款的問題可以發送至 support@mapsgrab.com。"
+          "有關這些條款的問題可以發送至 support@mapexporter.app。"
         ]
       }
     ],
@@ -5157,13 +5159,13 @@ export const legal: LegalContent = {
   },
   "privacy": {
     "navLabel": "隱私",
-    "seoTitle": "隱私權政策 | MapsGrab",
-    "seoDescription": "MapsGrab 隱私權政策：擴充功能和網站處理哪些資料、儲存在何處、我們的後端用途以及我們遵循的邊界。",
+    "seoTitle": "隱私權政策 | MapExporter",
+    "seoDescription": "MapExporter 隱私權政策：擴充功能和網站處理哪些資料、儲存在何處、我們的後端用途以及我們遵循的邊界。",
     "title": "隱私權政策",
-    "intro": "本政策解釋了 MapsGrab 處理哪些資料、儲存在何處以及哪些資料到達我們的伺服器。簡短版本：該擴充功能適用於公開顯示的資料並將結果保留在您的瀏覽器中；除了我們的雲端服務之外，我們的後端僅支援配置、配額、可選資訊補全和最小使用日誌；我們在擴充功能中不運行廣告，也沒有第三方追蹤器。對我們的雲端服務（線上採集器、API 和 MCP 伺服器）的請求均在我們的伺服器上處理，並且 線上採集器 結果連結到您的帳戶，以便您下載它們。",
+    "intro": "本政策解釋了 MapExporter 處理哪些資料、儲存在何處以及哪些資料到達我們的伺服器。簡短版本：該擴充功能適用於公開顯示的資料並將結果保留在您的瀏覽器中；除了我們的雲端服務之外，我們的後端僅支援配置、配額、可選資訊補全、電子郵件檢查器的電子郵件驗證和最小使用日誌；我們在擴充功能中不運行廣告，也沒有第三方追蹤器。電子郵件檢查器會將您輸入的地址傳送到我們的伺服器，再由伺服器交給第三方電子郵件驗證服務處理。對我們的雲端服務（線上採集器、API 和 MCP 伺服器）的請求均在我們的伺服器上處理，並且 線上採集器 結果連結到您的帳戶，以便您下載它們。",
     "updatedLabel": "最後更新",
-    "updatedAt": "十月 16, 2026",
-    "updatedAtISO": "2026-10-16",
+    "updatedAt": "十一月 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "擴充功能和網站處理哪些資料、儲存在哪裡、我們的後端用於什麼以及我們遵循的邊界。",
     "helpTitle": "對這項政策有疑問嗎？",
     "glance": [
@@ -5172,13 +5174,13 @@ export const legal: LegalContent = {
         "icon": "lock",
         "tone": "ok",
         "title": "結果儲存位置",
-        "text": "該擴充功能和免費網路工具將您的資料保存在瀏覽器中；線上抓取結果連結到您的帳戶。"
+        "text": "該擴充功能和免費網路工具將您的資料保存在瀏覽器中（電子郵件檢查器例外：您輸入的地址會傳送到我們的伺服器和第三方電子郵件驗證服務）；線上抓取結果連結到您的帳戶。"
       },
       {
         "section": "what-our-backend-processes",
         "icon": "database",
         "title": "什麼到達我們的伺服器",
-        "text": "對 線上採集器、API 和 MCP 伺服器的請求，以及設定、帳戶和配額、可選的資訊補全和最小使用日誌。"
+        "text": "對 線上採集器、API 和 MCP 伺服器的請求，以及設定、帳戶和配額、可選的資訊補全、電子郵件檢查器提交的地址和最小使用日誌。"
       },
       {
         "section": "what-we-never-do",
@@ -5212,7 +5214,7 @@ export const legal: LegalContent = {
         "id": "where-data-is-stored",
         "title": "資料儲存位置",
         "paragraphs": [
-          "使用擴充程序，設定、擷取結果和批次任務狀態都儲存在瀏覽器本機（擴充程式本機儲存和 IndexedDB）。除非您觸發匯出或下面描述的可選整合之一，否則它們永遠不會離開您的裝置。免費網頁工具也會處理您在瀏覽器中輸入的內容。",
+          "使用擴充程序，設定、擷取結果和批次任務狀態都儲存在瀏覽器本機（擴充程式本機儲存和 IndexedDB）。除非您觸發匯出或下面描述的可選整合之一，否則它們永遠不會離開您的裝置。免費網頁工具也會處理您在瀏覽器中輸入的內容。電子郵件檢查器例外：它會將您輸入的地址傳送到我們的伺服器，再由伺服器交給第三方電子郵件驗證服務處理。",
           "Google Drive 和 HubSpot OAuth 令牌（如果您連接它們）也僅儲存在您的瀏覽器中。",
           "線上抓取任務在我們的伺服器上運行。他們的結果儲存在您的帳戶中，因此您可以從儀表板下載它們。"
         ]
@@ -5223,12 +5225,13 @@ export const legal: LegalContent = {
         "paragraphs": [
           "您向我們的雲端服務（線上採集器、API 和 MCP 伺服器）發出的請求將在我們的伺服器上處理。我們的伺服器還管理對這些服務的訪問，包括您批准的 API 金鑰和 MCP 用戶端授權，並保存您的使用記錄。",
           "您授權的 MCP 用戶端會收到其發出的請求的結果。您可以從儀表板撤銷授權。",
-          "除了這些雲端服務之外，擴充功能和本網站還出於以下四個目的聯絡我們自己的伺服器："
+          "除了這些雲端服務之外，擴充功能和本網站還出於以下五個目的聯絡我們自己的伺服器："
         ],
         "items": [
           "遠端配置 - 頁面結構預設，可在 Google 變更其頁面時保持擷取工作。",
           "帳戶和配額服務 - 登入、方案狀態和每月使用統計。",
           "電子郵件與社群資訊補全－使用該功能時，在收集的商家網站上尋找公開列出的聯絡資訊。",
+          "電子郵件驗證－使用電子郵件檢查器時，您輸入的地址會傳送到我們的伺服器，再由伺服器交給第三方電子郵件驗證服務，以檢查該地址能否收信。",
           "使用日誌記錄－用於維護和改進服務的功能使用情況和錯誤的最少記錄。"
         ]
       },
@@ -5264,7 +5267,7 @@ export const legal: LegalContent = {
         "id": "data-removal",
         "title": "資料刪除",
         "paragraphs": [
-          "刪除擴充功能會刪除所有本機儲存的資料。如果您希望刪除後端帳戶數據，請透過 support@mapsgrab.com 與我們聯繫，我們會將其刪除。"
+          "刪除擴充功能會刪除所有本機儲存的資料。如果您希望刪除後端帳戶數據，請透過 support@mapexporter.app 與我們聯繫，我們會將其刪除。"
         ]
       },
       {
@@ -5278,7 +5281,7 @@ export const legal: LegalContent = {
         "id": "contact",
         "title": "聯絡我們",
         "paragraphs": [
-          "有關隱私的問題或請求可以發送至 support@mapsgrab.com。"
+          "有關隱私的問題或請求可以發送至 support@mapexporter.app。"
         ]
       }
     ]
@@ -5286,9 +5289,9 @@ export const legal: LegalContent = {
 }
 
 export const mcpOAuth: McpOAuthContent = {
-  "seoTitle": "授權人工智慧應用 | MapsGrab",
+  "seoTitle": "授權人工智慧應用 | MapExporter",
   "title": "將 AI 應用程式連接到您的帳戶",
-  "intro": "應用程式要求存取您的 MapsGrab 帳戶。僅當您自己啟動此連接時才允許它。",
+  "intro": "應用程式要求存取您的 MapExporter 帳戶。僅當您自己啟動此連接時才允許它。",
   "loading": "正在載入連線請求...",
   "hostLabel": "應用程式位址",
   "selfDeclared": "應用程式給自己取的名字：{name}",
@@ -5316,12 +5319,12 @@ export const mcpOAuth: McpOAuthContent = {
     "invalid_redirect_uri": "應用程式發送的返回地址與其註冊的地址不符。",
     "unsupported_response_type": "該應用程式請求的授權類型不受支援。",
     "invalid_pkce": "應用程式未傳送所需的安全性檢查（PKCE 和 S256）。",
-    "invalid_resource": "該應用程式未要求存取 MapsGrab MCP 伺服器，或請求其他伺服器。",
-    "server_error": "MapsGrab 目前無法儲存此要求。請稍後重試。"
+    "invalid_resource": "該應用程式未要求存取 MapExporter MCP 伺服器，或請求其他伺服器。",
+    "server_error": "MapExporter 目前無法儲存此要求。請稍後重試。"
   },
   "errorHint": "從您的 AI 應用程式重新啟動連線。如果問題仍然存在，請聯絡應用程式的開發人員。",
   "signInTitle": "登入以繼續",
-  "signInText": "登入您要連線的 MapsGrab 帳戶。此請求將等待您。",
+  "signInText": "登入您要連線的 MapExporter 帳戶。此請求將等待您。",
   "signIn": "登入",
   "loadFailed": "無法載入連線請求。檢查您的網路並重試。",
   "decideFailed": "無法完成此操作。檢查您的網路並重試。",
@@ -5340,7 +5343,7 @@ export const clink: ClinkReturnContent = {
     },
     "confirmedSubscription": {
       "title": "方案已啟動",
-      "description": "您的 ClinkBill 付款已確認，且您的 MapsGrab 計畫已生效。您可以返回原始選項卡。"
+      "description": "您的 ClinkBill 付款已確認，且您的 MapExporter 計畫已生效。您可以返回原始選項卡。"
     },
     "failed": {
       "title": "付款需要注意",

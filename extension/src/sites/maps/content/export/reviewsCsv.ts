@@ -2,8 +2,8 @@
  * 评论导出构建（013 A2，11 列；簿记 2 起支持用户设置的三格式）。
  *
  * 列名/列序 = A5 评论区字段字典（竞品 rsScript exportToFile 的 11 列）；
- * 文件名 `MapsGrab-Extractor-Reviews-{页面标题}-{条数}-{YYYY-MM-DD}.{扩展名}`
- * （竞品 `G-Maps-Extractor-Reviews-…` 前缀随产品名「MapsGrab」，
+ * 文件名 `MapExporter-Reviews-{页面标题}-{条数}-{YYYY-MM-DD}.{扩展名}`
+ * （竞品 `G-Maps-Extractor-Reviews-…` 前缀随产品名「MapExporter」，
  * 前缀规则不随格式变化）。格式语义与 U4 搜索导出引擎同构：CSV 走 BOM +
  * RFC4180，JSON 键驼峰化（值恒为字符串），XLSX 单元格全文本化。
  */

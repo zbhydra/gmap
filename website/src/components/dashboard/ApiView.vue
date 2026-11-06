@@ -152,7 +152,7 @@ function curlSample(meta: UserApiKeyMeta, conn: MapsApiConnection): string {
 /** MCP 客户端配置：通用 mcpServers 写法；OAuth 只写地址，API Key 方式加 Authorization 请求头（同 MCP 产品页兜底配置）。 */
 function mcpSample(meta: UserApiKeyMeta, mcpUrl: string, withKey: boolean): string {
   const server = withKey ? { url: mcpUrl, headers: { Authorization: `Bearer ${sampleKey(meta)}` } } : { url: mcpUrl }
-  return JSON.stringify({ mcpServers: { mapsgrab: server } }, null, 2)
+  return JSON.stringify({ mcpServers: { mapexporter: server } }, null, 2)
 }
 
 /** 当前 tab 的连接地址与示例；MCP 两个 tab 在没有 MCP 地址时为 null，显示不可用说明。 */

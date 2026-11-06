@@ -182,7 +182,7 @@
       '<div class="mcp-call mcp-in' + (done ? ' is-done' : '') + (collapsed ? ' is-collapsed' : '') + '">' +
       '<div class="mcp-call-head">' +
       '<span class="mcp-call-ic">' + icon('plug') + '</span>' +
-      '<span class="mcp-call-name"><span>mapsgrab ·</span> ' + c.tool + '</span>' +
+      '<span class="mcp-call-name"><span>mapexporter ·</span> ' + c.tool + '</span>' +
       '<span class="mcp-call-state">' + (done ? c.state : 'running') + '</span>' +
       '</div>' +
       '<div class="mcp-call-fold"><div class="mcp-call-io"><div class="mcp-call-code">' +

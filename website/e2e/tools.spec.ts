@@ -21,6 +21,26 @@ const SAMPLE_PLACE_ID = 'ChIJZzUZI5yAhYAR5cCp4aJwTqY'
 const SAMPLE_CID = '11983639503352479973'
 const SAMPLE_FID = '0x8085809c23193567:0xa64e70a2e1a9c0e5'
 
+const MAPS_HOSTS = [
+  'www.google.com',
+  'www.google.co.uk',
+  'maps.google.de',
+  'www.google.com.au',
+  'google.co.jp',
+  'www.google.co.jp',
+  'maps.google.co.uk',
+  'google.de',
+  'google.fr',
+  'google.com.br'
+]
+const INVALID_MAPS_HOSTS = [
+  'example.com',
+  'google.com.evil.com',
+  'evilgoogle.com',
+  'google.evil.com',
+  'google.com@evil.com'
+]
+
 /** 7 个工具的页脚/互链注册表（与 i18n tools 键段同源口径）。 */
 const TOOL_LINKS = [
   { id: 'place-id-finder', label: 'Place ID Finder', path: '/tools/place-id-finder/' },
@@ -134,38 +154,53 @@ test.describe('Tool Matrix', () => {
     }
   })
 
-  test('place id finder decodes a full Maps URL into Place ID, CID and FID', async ({ page }) => {
-    await page.goto('/tools/place-id-finder/')
-    await page.locator('[data-tool-input]').fill(SAMPLE_PLACE_URL)
-    await page.locator('[data-tool-form] button[type="submit"]').click()
-
-    await expect(page.locator('[data-place-id]')).toHaveText(SAMPLE_PLACE_ID)
-    await expect(page.locator('[data-cid]')).toHaveText(SAMPLE_CID)
-    await expect(page.locator('[data-fid]')).toHaveText(SAMPLE_FID)
-  })
-
-  test('place id finder rejects short links and non-Maps URLs inline', async ({ page }) => {
+  test('Place ID Finder 解析 Google 主域与国家域名，输出相同的 Place ID、CID、FID', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/tools/place-id-finder/')
 
-    await page.locator('[data-tool-input]').fill('https://maps.app.goo.gl/8f9xAbCdEfGh')
-    await page.locator('[data-tool-form] button[type="submit"]').click()
-    await expect(page.locator('[data-tool-error]')).toBeVisible()
-    await expect(page.locator('[data-tool-error]')).toContainText(/short link/i)
+    for (const host of MAPS_HOSTS) {
+      await page.locator('[data-tool-input]').fill(SAMPLE_PLACE_URL.replace('www.google.com', host))
+      await page.locator('[data-tool-form] button[type="submit"]').click()
 
-    await page.locator('[data-tool-input]').fill('https://example.com/maps/place/foo')
-    await page.locator('[data-tool-form] button[type="submit"]').click()
-    await expect(page.locator('[data-tool-error]')).toContainText(/Google Maps place URL/i)
+      await expect(page.locator('[data-tool-error]'), host).toBeHidden()
+      await expect(page.locator('[data-place-id]'), host).toHaveText(SAMPLE_PLACE_ID)
+      await expect(page.locator('[data-cid]'), host).toHaveText(SAMPLE_CID)
+      await expect(page.locator('[data-fid]'), host).toHaveText(SAMPLE_FID)
+    }
   })
 
-  test('review link generator builds the direct search.google.com reviews URL', async ({ page }) => {
+  for (const tool of ['place-id-finder', 'review-link-generator']) {
+    test(`${tool} 拒绝短链、非 Maps 域名与仿冒域名`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto(`/tools/${tool}/`)
+
+      await page.locator('[data-tool-input]').fill('https://maps.app.goo.gl/8f9xAbCdEfGh')
+      await page.locator('[data-tool-form] button[type="submit"]').click()
+      await expect(page.locator('[data-tool-error]')).toBeVisible()
+      await expect(page.locator('[data-tool-error]')).toContainText(/short link/i)
+
+      for (const host of INVALID_MAPS_HOSTS) {
+        await page.locator('[data-tool-input]').fill(SAMPLE_PLACE_URL.replace('www.google.com', host))
+        await page.locator('[data-tool-form] button[type="submit"]').click()
+        await expect(page.locator('[data-tool-error]'), host).toBeVisible()
+        await expect(page.locator('[data-tool-error]'), host).toContainText(/Google Maps place URL/i)
+      }
+    })
+  }
+
+  test('Review Link Generator 解析 Google 主域与国家域名，生成相同评论直链', async ({ page }) => {
     await page.goto('/tools/review-link-generator/')
-    await page.locator('[data-tool-input]').fill(SAMPLE_PLACE_URL)
-    await page.locator('[data-tool-form] button[type="submit"]').click()
 
-    await expect(page.locator('[data-review-link]')).toHaveText(
-      `https://search.google.com/local/reviews?placeid=${SAMPLE_PLACE_ID}`
-    )
-    await expect(page.locator('[data-review-open]')).toHaveAttribute('href', /placeid=/)
+    const reviewLink = `https://search.google.com/local/reviews?placeid=${SAMPLE_PLACE_ID}`
+    for (const host of MAPS_HOSTS) {
+      await page.locator('[data-tool-input]').fill(SAMPLE_PLACE_URL.replace('www.google.com', host))
+      await page.locator('[data-tool-form] button[type="submit"]').click()
+
+      await expect(page.locator('[data-tool-error]'), host).toBeHidden()
+      await expect(page.locator('[data-review-link]'), host).toBeVisible()
+      await expect(page.locator('[data-review-link]'), host).toHaveText(reviewLink)
+      await expect(page.locator('[data-review-open]'), host).toHaveAttribute('href', reviewLink)
+    }
   })
 
   test('email checker lists format problems in place without calling the backend', async ({ page }) => {
@@ -412,7 +447,7 @@ test.describe('Tool Matrix', () => {
 })
 
 test.describe('Pricing Page', () => {
-  test('renders hero, three MapsGrab tier cards and quota facts', async ({ page }) => {
+  test('renders hero, three MapExporter tier cards and quota facts', async ({ page }) => {
     const response = await page.goto('/pricing/')
     expect(response?.status()).toBe(200)
     await expect(page.locator('h1')).toContainText('Plans for three ways to grab Maps data')
@@ -426,7 +461,7 @@ test.describe('Pricing Page', () => {
     }
     await expect(onlinePanel.locator('[data-plan-card="online_basic"] .price-flag')).toContainText('Most Popular')
 
-    // Extension tab：MapsGrab 三档 Free / Pro / Business（C2 口径）；价格数字切换时滚动到终值
+    // Extension tab：MapExporter 三档 Free / Pro / Business（C2 口径）；价格数字切换时滚动到终值
     await page.locator('[data-pricing-tab="extension"]').click()
     const extensionPanel = page.locator('[data-pricing-panel="extension"]')
     await expect(extensionPanel).toBeVisible()

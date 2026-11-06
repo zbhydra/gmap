@@ -12,9 +12,9 @@ import type { PricingPageContent } from './schema'
  */
 export const pricingContent: PricingPageContent = {
   seo: {
-    title: 'Pricing — Online, Extension and API Plans | MapsGrab',
+    title: 'Pricing — Online, Extension and API Plans | MapExporter',
     description:
-      'MapsGrab plans for every surface: Online Scraper from $19, browser Extension from $39, and API from $15. Free tiers included with every product — one-time natural-month plans on Online and API, monthly subscriptions on Extension.'
+      'MapExporter plans for every surface: Online Scraper from $19, browser Extension from $39, and API from $15. Free tiers included with every product — one-time natural-month plans on Online and API, monthly subscriptions on Extension.'
   },
   hero: {
     kicker: 'Pricing',
@@ -34,7 +34,7 @@ export const pricingContent: PricingPageContent = {
       eyebrow: 'Online Scraper plans',
       title: 'Cloud extraction, priced by records',
       description:
-        'Run the MapsGrab engine on our infrastructure. A record is one business row collected. Paid plans include optional email and social media enrichment at no extra record cost.',
+        'Run the MapExporter engine on our infrastructure. A record is one business row collected. Paid plans include optional email and social media enrichment at no extra record cost.',
       billingChips: ['One-time payment', 'Covers one natural month', 'No auto-renewal'],
       cards: [
         {
@@ -163,7 +163,7 @@ export const pricingContent: PricingPageContent = {
         ]
       },
       checkout: {
-        usageNotice: 'Applies to the MapsGrab Online Scraper monthly record quota.',
+        usageNotice: 'Applies to the MapExporter Online Scraper monthly record quota.',
         successTitle: 'Plan activated',
         successDescription:
           'Your one-time 1-month plan is live. The Online Scraper picks it up on the next quota refresh.'
@@ -261,7 +261,7 @@ export const pricingContent: PricingPageContent = {
         ]
       },
       checkout: {
-        usageNotice: 'Applies to the MapsGrab browser extension monthly quota.',
+        usageNotice: 'Applies to the MapExporter browser extension monthly quota.',
         successTitle: 'Plan activated',
         successDescription:
           'Your one-time 1-month plan is live. The extension picks it up on the next quota refresh.'
@@ -337,7 +337,7 @@ export const pricingContent: PricingPageContent = {
           id: 'business',
           productId: 'api_business',
           name: 'Business',
-          tagline: 'For products built on MapsGrab data',
+          tagline: 'For products built on MapExporter data',
           price: '$115',
           periodLabel: 'one-time · 1 month',
           quota: '10,000 requests / month',
@@ -395,7 +395,7 @@ export const pricingContent: PricingPageContent = {
         ]
       },
       checkout: {
-        usageNotice: 'Applies to the MapsGrab API monthly request quota.',
+        usageNotice: 'Applies to the MapExporter API monthly request quota.',
         successTitle: 'Plan activated',
         successDescription:
           'Your one-time 1-month plan is live. Your API key picks up the new quota on the next request.'
@@ -486,7 +486,7 @@ export const pricingContent: PricingPageContent = {
     loading: 'Loading payment options...',
     loadFailed: 'Failed to load payment options. Refresh the page to retry.',
     noChannels: 'No payment method is available for this plan right now.',
-    productTitlePrefix: 'MapsGrab',
+    productTitlePrefix: 'MapExporter',
     failedTitle: 'Payment incomplete',
     billingPeriodMonthly: '1 month',
     billingAutoRenew: 'Auto-renews until canceled',
@@ -524,7 +524,7 @@ export const pricingContent: PricingPageContent = {
           'A record is one collected row — the same unit the free plans count. On the Online Scraper that is one business; in the extension, each business, review or photo it collects is one record. Email and social enrichment does not add records. On the API tab, usage is counted in successful requests instead.'
       },
       {
-        question: 'Do I need a paid plan to try MapsGrab?',
+        question: 'Do I need a paid plan to try MapExporter?',
         answer:
           'No. Every product has a free tier with no time limit: the Online Scraper and the extension include 1,000 records per month, and the API includes 20 requests per month. The Online Scraper and extension free plans do not include email or social media enrichment. Paid Online plans include it by default, and you can turn it off for each task.'
       },

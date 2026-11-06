@@ -66,7 +66,7 @@ describe('面板运营区渲染（renderOperations）', () => {
     await panel.mount('body', 'div[role=main]')
 
     panel.renderOperations({
-      announcementHtml: '<p class="gme-test-announcement">Welcome to MapsGrab!</p>',
+      announcementHtml: '<p class="gme-test-announcement">Welcome to MapExporter!</p>',
       newVersionAvailable: true
     })
 

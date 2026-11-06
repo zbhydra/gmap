@@ -1,5 +1,5 @@
 /* =========================================================================
-   MapsGrab · 页内面板（注入 Google Maps 的 Shadow DOM，自含样式）
+   MapExporter · 页内面板（注入 Google Maps 的 Shadow DOM，自含样式）
    -------------------------------------------------------------------------
    约束（README §8）：
    - 自含：:host { all: initial } 切断宿主样式继承；只消费本文件 :host 上声明的 token，
@@ -10,7 +10,7 @@
      循环只有「采集中」的 live 圆点与扫描弧（合成线程）和短暂的加载圈，
      环形进度只在数值变化时过渡描边。
    - 主题（L11）：默认跟随系统；宿主元素 <… data-theme="light|dark"> 跟随扩展主题设置覆盖。
-   - 类名一律 mgp- 前缀（MapsGrab panel），状态写在 data-state 上，Vue 落地时直接绑定。
+   - 类名一律 mgp- 前缀（MapExporter panel），状态写在 data-state 上，Vue 落地时直接绑定。
    - 参考标记：design-system.html#panel（pages/system.js panelHTML）与 panel.html（pages/maps.js panelHTML）。
    ========================================================================= */
 

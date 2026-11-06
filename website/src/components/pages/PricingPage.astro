@@ -34,13 +34,13 @@ const faqSchema = {
 const plansSchema = {
   '@context': 'https://schema.org',
   '@type': 'Product',
-  name: 'MapsGrab Plans',
+  name: 'MapExporter Plans',
   description: pricing.seo.description,
-  brand: { '@type': 'Brand', name: 'MapsGrab' },
+  brand: { '@type': 'Brand', name: 'MapExporter' },
   offers: Object.values(pricing.tabs).flatMap(tab =>
     tab.cards.map(card => ({
       '@type': 'Offer',
-      name: `MapsGrab ${tab.name} ${card.name}`,
+      name: `MapExporter ${tab.name} ${card.name}`,
       price: card.price.replace('$', ''),
       priceCurrency: 'USD',
       category: card.quota

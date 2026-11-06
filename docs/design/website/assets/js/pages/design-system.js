@@ -267,7 +267,7 @@
     document.querySelectorAll('[data-ds-toast]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         if (btn.dataset.dsToast === 'info') MG.toast('Prototype note', 'Payments open the real checkout once this page ships.', 'info')
-        else MG.toast('Export ready', 'MapsGrab-Extractor-48-coffee+shop+in+Portland-2026-10-13.csv was saved.')
+        else MG.toast('Export ready', 'MapExporter-48-coffee+shop+in+Portland-2026-10-13.csv was saved.')
       })
     })
 

@@ -15,7 +15,7 @@ website 真实回归 / Maps 双插件真实 e2e 的用户种子脚本。
   ``/auth/extension-login/exchange`` 完全同构的 access+refresh token 对并注册
   Redis 白名单。插件 e2e 不测登录流程（2026-09-02 hydra 拍板），登录态经本
   脚本签发 token 后由 Playwright 直接注入 ``chrome.storage.local`` 三键。
-- ``maps-extension-pro``：Maps Extractor 插件（013 域）e2e 账号，种子逻辑与
+- ``maps-extension-pro``：MapExporter 插件（013 域）e2e 账号，种子逻辑与
   ``bing-extension-pro`` 同构（同 maps_extension 产品线 Pro 订阅 + exchange
   同构 token 对），独立固定账号避免双插件 e2e 互改状态。
 - ``seed``：按所选场景准备业务状态并签 token，把结果单行 JSON 打到 stdout
@@ -110,12 +110,12 @@ SEED_SCENARIO_CONFIGS: dict[SeedScenario, SeedScenarioConfig] = {
         full_name="E2E Pricing Review Reward Smoke",
     ),
     SeedScenario.BING_EXTENSION_PRO: SeedScenarioConfig(
-        email="e2e-bing-extension-pro@mapsgrab.test",
+        email="e2e-bing-extension-pro@mapexporter.test",
         password="E2eBingExtensionProSmoke!2026",
         full_name="E2E Bing Extension Pro",
     ),
     SeedScenario.MAPS_EXTENSION_PRO: SeedScenarioConfig(
-        email="e2e-maps-extension-pro@mapsgrab.test",
+        email="e2e-maps-extension-pro@mapexporter.test",
         password="E2eMapsExtensionProSmoke!2026",
         full_name="E2E Maps Extension Pro",
     ),
@@ -188,7 +188,7 @@ async def _seed_extension_pro(
 ) -> dict[str, object]:
     """造 maps_extension Pro 订阅并签发与插件 exchange 同构的 token 对。
 
-    Bing 插件（016）与 Maps Extractor 插件（013）共用 maps_extension 产品线，
+    Bing 插件（016）与 MapExporter 插件（013）共用 maps_extension 产品线，
     种子逻辑同构；仅账号身份与 operation 打标随场景区分。
     """
 

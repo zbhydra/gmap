@@ -1,5 +1,5 @@
 /* =========================================================================
-   MapsGrab Dashboard · 设计稿样式（Atlas 基础层）
+   MapExporter Dashboard · 设计稿样式（Atlas 基础层）
    -------------------------------------------------------------------------
    加载顺序：../assets/css/tokens.css → base.css → motion.css → components.css → 本文件。
    只用基础层：不用 --grad-* / --glow-* / --aurora-* / --contour / 玻璃；动效只用 T1 / T2。

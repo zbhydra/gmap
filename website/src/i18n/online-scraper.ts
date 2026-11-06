@@ -9,7 +9,7 @@ import type { OnlineScraperPageContent } from './schema'
  */
 export const onlineScraperContent: OnlineScraperPageContent = {
   seo: {
-    title: 'Online Google Maps Scraper — Run Extraction in the Cloud | MapsGrab',
+    title: 'Online Google Maps Scraper — Run Extraction in the Cloud | MapExporter',
     description:
       'Run Google Maps keyword searches in the cloud, collect business data, and download one CSV per task.'
   },
@@ -213,7 +213,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
     head: {
       kicker: 'Online Scraper plans',
       title: { lead: 'Cloud extraction, ', accent: 'priced by records', tail: '' },
-      lead: 'Run the MapsGrab engine on our infrastructure. A record is one business row delivered; paid plans include email and social enrichment at no extra record cost.'
+      lead: 'Run the MapExporter engine on our infrastructure. A record is one business row delivered; paid plans include email and social enrichment at no extra record cost.'
     },
     specs: {
       keywords: 'Keywords per task',
@@ -238,7 +238,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
       {
         question: 'Where does the data come from, and is it legal to collect?',
         answer:
-          'MapsGrab only collects information that is publicly displayed on Google Maps — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.'
+          'MapExporter only collects information that is publicly displayed on Google Maps — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.'
       },
       {
         question: 'What formats can I export to?',
@@ -248,7 +248,7 @@ export const onlineScraperContent: OnlineScraperPageContent = {
       {
         question: 'How much does it cost?',
         answer:
-          'The Online Scraper follows the MapsGrab plans on the Pricing page, including the free monthly quota of records. Paid plans raise the limits when you need more.'
+          'The Online Scraper follows the MapExporter plans on the Pricing page, including the free monthly quota of records. Paid plans raise the limits when you need more.'
       },
       {
         question: 'Do I need a paid plan for emails and social profiles?',

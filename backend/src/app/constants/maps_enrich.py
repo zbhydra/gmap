@@ -1,4 +1,4 @@
-"""Maps Extractor Email/社媒补全常量（013 A4，U8）。
+"""MapExporter Email/社媒补全常量（013 A4，U8）。
 
 enrich 为服务端自研（基线 #4）：fetch 商家官网 + 正则抽取 Email、按外链
 域名抽取社媒链接，不依赖第三方数据源。同 domain 结果 Redis 缓存（复用

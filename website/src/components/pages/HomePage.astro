@@ -96,20 +96,17 @@ const REVIEW_COLUMNS = [
 // ⑥ 补全轨道：节点均分圆周，从正上方开始
 const orbitAngle = (index: number) => -90 + (360 / ORBIT_NODES.length) * index
 
-// ⑦ 代码台：Photos 端点未实现，没有示例，列表项只读展示
+// ⑦ 代码台：能力表决定列表项形态，已开放的进 tab 并带示例；未交付的只读灰化并带 Coming soon，不展示调用示例
 const apiBase = getApiBaseUrl()
-const devSamples: Partial<Record<'search' | 'reviews' | 'photos' | 'mcp', DeveloperSample>> = developerSamples(apiBase)
+const devSamples = developerSamples(apiBase)
 const DEV_ITEMS = [
   { id: 'search', icon: 'database', available: capabilities.scraperApi },
   { id: 'reviews', icon: 'review', available: capabilities.scraperApi },
-  { id: 'mcp', icon: 'bot', available: capabilities.mcp },
-  { id: 'photos', icon: 'image', available: capabilities.photosApi }
+  { id: 'photos', icon: 'image', available: capabilities.photosApi },
+  { id: 'mcp', icon: 'bot', available: capabilities.mcp }
 ] as const
-const devTabs = DEV_ITEMS.flatMap(item => {
-  const sample = devSamples[item.id]
-  return sample ? [{ ...item, sample }] : []
-})
-const devReadOnly = DEV_ITEMS.filter(item => !devSamples[item.id])
+const devTabs = DEV_ITEMS.filter(item => item.available).map(item => ({ ...item, sample: devSamples[item.id] }))
+const devReadOnly = DEV_ITEMS.filter(item => !item.available)
 const devStatus = (sample: DeveloperSample) =>
   sample.tool ? fill(developers.toolCall, { tool: sample.tool }) : fill(developers.response, { ms: sample.latencyMs ?? 0 })
 const INTEGRATION_ICONS = ['terminal', 'cursor', 'code', 'sparkles', 'search', 'table', 'file-sheet', 'braces', 'archive']
@@ -332,7 +329,7 @@ const faqSchema = {
                 <i class="ev-pin" style="--x: 60%; --y: 80%"></i>
               </div>
               <div class="ev-panel">
-                <div class="ev-head"><span class="ev-logo"></span>MapsGrab<span class="ev-count mono">{fill(products.extracting, { count: 24 })}</span></div>
+                <div class="ev-head"><span class="ev-logo"></span>MapExporter<span class="ev-count mono">{fill(products.extracting, { count: 24 })}</span></div>
                 <div class="progress"><i style="--p: 64%"></i></div>
                 <div class="ev-rows">
                   {['4.8', '4.6', '4.9', '4.5'].map(rating => (
@@ -414,7 +411,7 @@ const faqSchema = {
             </div>
             <div class="bento-visual chat" aria-hidden="true">
               <div class="chat-msg user">{products.chat.prompt}</div>
-              <div class="chat-tool"><Icon name="plug" class="icon--sm" />mapsgrab · search_places</div>
+              <div class="chat-tool"><Icon name="plug" class="icon--sm" />mapexporter · search_places</div>
               <div class="chat-msg bot">
                 {chatAnswer.before}<b>{CHAT_MATCHES.count}</b>{chatAnswer.after}
                 <span class="chat-list">
@@ -500,7 +497,7 @@ const faqSchema = {
             </div>
           </div>
           <div class="photo-strip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-          <a class="link-arrow" href={sampleCsvDataUri()} download="MapsGrab-sample.csv" data-cta="home-fields-sample-csv">
+          <a class="link-arrow" href={sampleCsvDataUri()} download="MapExporter-sample.csv" data-cta="home-fields-sample-csv">
             {fields.sampleCsv} <Icon name="download" />
           </a>
         </div>
@@ -571,7 +568,7 @@ const faqSchema = {
                 >
                   <span class:list={['icon-tile', { 'icon-tile--ai': item.id === 'mcp' }]}><Icon name={item.icon} /></span>
                   <span class="dev-item-text">
-                    <b>{developers.items[item.id].title}{!item.available && <SoonBadge locale={locale} />}</b>
+                    <b>{developers.items[item.id].title}</b>
                     <small>{developers.items[item.id].description}</small>
                   </span>
                 </button>
@@ -581,7 +578,7 @@ const faqSchema = {
               <div class="dev-item is-unavailable">
                 <span class="icon-tile"><Icon name={item.icon} /></span>
                 <span class="dev-item-text">
-                  <b>{developers.items[item.id].title}{!item.available && <SoonBadge locale={locale} />}</b>
+                  <b>{developers.items[item.id].title}<SoonBadge locale={locale} /></b>
                   <small>{developers.items[item.id].description}</small>
                 </span>
               </div>

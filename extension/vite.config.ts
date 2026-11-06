@@ -17,6 +17,10 @@ type ExtensionBuildTarget = 'chrome' | 'edge' | 'firefox'
 
 const BUILD_TARGETS: readonly ExtensionBuildTarget[] = ['chrome', 'edge', 'firefox']
 
+// 固定 Chromium 解压加载身份，供 Drive / HubSpot 登记；私钥不入库。
+const CHROMIUM_PUBLIC_KEY =
+  'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8nDR1eighc5ygA7Wyx6AkeMua7DJ038mmH29yE92HEKVnZiq0W816jzz6qMtqAukzQU9+V2bfmztcGRWowgUtpWbEt+bI8SMlbnrYY/3I4Zud2SoI9g3MIQ4DGTl7NRHhaLHz0TEK65V30McrYyZLJkrV4BAvxJKGmSg9NiF9bmvx4NyN9iQ4zzi4+CcUeS2uLX7egtaV+XGL5Wv/v7Sip3XtIZiGj+aJvo1AqPvmA06hvuUslis/XSYqtXOzNo7nS7mEzoXvZfCK2QIvL7EQXvdWj7mSjA4G6h1GdnYanBK+HvmzuwhUz3eS9PqXu+QW2T5JFXnUPAj5Upl7RTOyQIDAQAB'
+
 /** `scripts/dev-edge-current.mjs` 注入的开发浏览器模式标识。 */
 const EDGE_CURRENT_DEV_BROWSER = 'edge-current'
 
@@ -72,7 +76,7 @@ interface ExtensionBuildProcessEnv {
 export interface ExtensionBuildEnvConfig {
   /** 当前构建是否使用生产环境默认域名和压缩策略。 */
   isProductionBuild: boolean
-  /** Manifest 使用商店身份还是独立预发布身份。 */
+  /** 发布渠道；Chromium 各渠道共用固定扩展身份。 */
   releaseChannel: 'store' | 'pre-release'
   /** 插件运行时请求的后端 API base URL。 */
   apiBaseUrl: string
@@ -252,7 +256,7 @@ interface FirefoxManifestExtras {
 }
 
 // TODO(maps): gecko.id 为上架永久身份，占位待 hydra 拍板后替换。
-const FIREFOX_GECKO_ID = 'mapsgrab@example.com'
+const FIREFOX_GECKO_ID = 'mapexporter@example.com'
 
 function buildFirefoxManifestExtras(): FirefoxManifestExtras {
   return {
@@ -307,7 +311,9 @@ export default defineConfig({
         default_locale: 'en',
         description: '__MSG_extensionDescription__',
         // 商店主页（官网，占位域名）；Firefox 忽略该键，渠道差异见下方 firefox 分支
-        ...(buildTarget === 'firefox' ? {} : { homepage_url: extensionBuildEnv.websiteBaseUrl }),
+        ...(buildTarget === 'firefox'
+          ? {}
+          : { key: CHROMIUM_PUBLIC_KEY, homepage_url: extensionBuildEnv.websiteBaseUrl }),
         // alarms：批量任务兜底扫描（013 A6 步进状态机的恢复/卡死判定通道）
         // identity：Drive 直传授权（013 A10，chrome.identity.getAuthToken），
         // client_id/scopes 由下方 oauth2 段声明（占位 client_id，待 hydra 申请）

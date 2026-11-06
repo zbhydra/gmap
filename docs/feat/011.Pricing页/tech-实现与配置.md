@@ -1,6 +1,6 @@
 # 011 · Pricing 实现与配置
 
-> 技术说明,以现役 MapsGrab 站(website/)三产品线 tab 版 Pricing 页为口径。
+> 技术说明,以现役 MapExporter 站(website/)三产品线 tab 版 Pricing 页为口径。
 > 分工:本页对后端接口的消费合同、下单参数、支付渠道与回跳、渠道管理入口的唯一 owner 是 `@tech-pricing与自动续费.md`;本文只记录前端文件责任与商品配置命令。
 
 ## 前端结构

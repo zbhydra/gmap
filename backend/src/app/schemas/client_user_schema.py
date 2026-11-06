@@ -21,13 +21,13 @@ class CurrentUserInfo(UserInfo):
 
     # 产品线扩展（006）：各产品线的订阅状态；None 表示该线无有效订阅展示。
     maps_extension_subscription: SubscriptionStatusData | None = Field(
-        None, description="MapsGrab 插件采集产品线订阅状态"
+        None, description="MapExporter 插件采集产品线订阅状态"
     )
     maps_online_subscription: SubscriptionStatusData | None = Field(
-        None, description="MapsGrab Online 产品线订阅状态"
+        None, description="MapExporter Online 产品线订阅状态"
     )
     maps_api_subscription: SubscriptionStatusData | None = Field(
-        None, description="MapsGrab API 产品线订阅状态"
+        None, description="MapExporter API 产品线订阅状态"
     )
 
 

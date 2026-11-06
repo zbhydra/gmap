@@ -1,5 +1,5 @@
 /*
- * MapsGrab 动效运行时（原生 JS，零依赖）。
+ * MapExporter 动效运行时（原生 JS，零依赖）。
  * 声明式：HTML 上写 data-* 属性，本文件负责驱动；页面私有动画通过 window.MG 复用工具函数。
  *
  *   data-reveal[=fade-up|fade|zoom|blur|left|right|rise|clip]  进入视口显现一次

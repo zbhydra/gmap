@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- MapsGrab 品牌标（与 website favicon 同形）：「水域 → 绿地」渐变方块 + 白色 pin + 下载箭头（从地点抓取数据） -->
+  <!-- MapExporter 品牌标（与 website favicon 同形）：「水域 → 绿地」渐变方块 + 白色 pin + 下载箭头（从地点抓取数据） -->
   <defs>
     <linearGradient id="mg-logo-grad" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#1a73e8"/>

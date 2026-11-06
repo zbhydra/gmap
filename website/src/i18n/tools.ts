@@ -29,7 +29,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     },
     cta: {
       kicker: 'Bulk extraction',
-      primary: 'Install MapsGrab',
+      primary: 'Install MapExporter',
       secondary: 'View pricing',
       note: 'Free monthly quota included. No credit card.'
     },
@@ -41,7 +41,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
   },
   placeIdFinder: {
     seo: {
-      title: 'Place ID Finder — Get a Google Maps Place ID from a URL | MapsGrab',
+      title: 'Place ID Finder — Get a Google Maps Place ID from a URL | MapExporter',
       description:
         'Paste a Google Maps place URL and get its Place ID, CID, and FID instantly. Free browser-based Place ID finder — no sign-in, your URL never leaves your device.'
     },
@@ -168,12 +168,12 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     },
     cta: {
       title: { lead: 'Need Place IDs ', accent: 'at scale?', tail: '' },
-      lead: 'MapsGrab extracts the Place ID, CID, and FID for every business it collects — alongside 33 other columns — and exports straight to CSV or JSON.'
+      lead: 'MapExporter extracts the Place ID, CID, and FID for every business it collects — alongside 33 other columns — and exports straight to CSV or JSON.'
     }
   },
   reviewLinkGenerator: {
     seo: {
-      title: 'Google Review Link Generator — Free Direct Review URL | MapsGrab',
+      title: 'Google Review Link Generator — Free Direct Review URL | MapExporter',
       description:
         'Turn a Google Maps place URL into a direct Google review link you can share with customers. Free, browser-based, and nothing is uploaded.'
     },
@@ -205,7 +205,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       },
       {
         heading: 'Where the place ID comes from',
-        body: 'The tool reuses the same local decoding as the Place ID Finder: the identifier is already present in the Maps URL, and the conversion to the "ChIJ…" form happens entirely in your browser. If you manage several locations, repeat the process per place — or let MapsGrab carry the Place ID column in every export so review links can be generated in bulk from a spreadsheet.'
+        body: 'The tool reuses the same local decoding as the Place ID Finder: the identifier is already present in the Maps URL, and the conversion to the "ChIJ…" form happens entirely in your browser. If you manage several locations, repeat the process per place — or let MapExporter carry the Place ID column in every export so review links can be generated in bulk from a spreadsheet.'
       }
     ],
     faq: {
@@ -235,12 +235,12 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     },
     cta: {
       title: { lead: 'Track every review you ', accent: 'earn', tail: '' },
-      lead: 'MapsGrab pulls the reviews of any business page — rating, text, date, and owner replies — so you can watch feedback land and answer it faster.'
+      lead: 'MapExporter pulls the reviews of any business page — rating, text, date, and owner replies — so you can watch feedback land and answer it faster.'
     }
   },
   emailChecker: {
     seo: {
-      title: 'Email Checker — Verify an Email Address for Free | MapsGrab',
+      title: 'Email Checker — Verify an Email Address for Free | MapExporter',
       description:
         'Find out whether an email address can receive mail. This free email checker asks the mail server and reports status, deliverability, MX records and account type.'
     },
@@ -319,7 +319,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       },
       {
         heading: 'How to read the result',
-        body: 'Safe means the mailbox exists and accepts mail. Invalid and disabled addresses will bounce, and spam traps should never be mailed. A catch-all domain accepts every address, so the mailbox itself cannot be confirmed; role accounts, disposable addresses and full inboxes are risky for outreach. Unknown means the mail server gave no definite answer — try again later. MapsGrab collects email addresses from each business\'s own website, and this checker is a quick way to spot-check one before you reach out.'
+        body: 'Safe means the mailbox exists and accepts mail. Invalid and disabled addresses will bounce, and spam traps should never be mailed. A catch-all domain accepts every address, so the mailbox itself cannot be confirmed; role accounts, disposable addresses and full inboxes are risky for outreach. Unknown means the mail server gave no definite answer — try again later. MapExporter collects email addresses from each business\'s own website, and this checker is a quick way to spot-check one before you reach out.'
       }
     ],
     faq: {
@@ -354,12 +354,12 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     },
     cta: {
       title: { lead: 'Collect emails that are worth ', accent: 'verifying', tail: '' },
-      lead: 'MapsGrab finds the email addresses and social profiles behind every business it extracts — straight from each business\'s own website.'
+      lead: 'MapExporter finds the email addresses and social profiles behind every business it extracts — straight from each business\'s own website.'
     }
   },
   latLongToDms: {
     seo: {
-      title: 'Convert Lat Long to DMS — Decimal Degrees to Degrees Minutes Seconds | MapsGrab',
+      title: 'Convert Lat Long to DMS — Decimal Degrees to Degrees Minutes Seconds | MapExporter',
       description:
         'Convert decimal latitude and longitude to degrees, minutes, seconds (DMS) format instantly. Free browser-based coordinate converter, nothing uploaded.'
     },
@@ -390,7 +390,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       },
       {
         heading: 'Why this matters for maps data work',
-        body: 'Coordinate round-trips are a daily friction point when moving business data between tools: Google Maps exports decimals, while cadastral and print workflows expect DMS. MapsGrab keeps this friction low at scale — every extracted business already carries its latitude and longitude in the export, and batch coordinate conversions can be run offline with the same formula this page uses.'
+        body: 'Coordinate round-trips are a daily friction point when moving business data between tools: Google Maps exports decimals, while cadastral and print workflows expect DMS. MapExporter keeps this friction low at scale — every extracted business already carries its latitude and longitude in the export, and batch coordinate conversions can be run offline with the same formula this page uses.'
       }
     ],
     faq: {
@@ -420,19 +420,19 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     },
     cta: {
       title: { lead: 'Coordinates for every business, already ', accent: 'extracted', tail: '' },
-      lead: 'MapsGrab writes latitude and longitude into each row it exports — no manual coordinate lookup for your next routing or territory project.'
+      lead: 'MapExporter writes latitude and longitude into each row it exports — no manual coordinate lookup for your next routing or territory project.'
     }
   },
   dmsToDd: {
     seo: {
-      title: 'Convert DMS to DD — Degrees Minutes Seconds to Decimal Degrees | MapsGrab',
+      title: 'Convert DMS to DD — Degrees Minutes Seconds to Decimal Degrees | MapExporter',
       description:
         'Convert degrees, minutes, seconds coordinates to decimal degrees instantly. Free browser-based DMS to DD converter, nothing uploaded.'
     },
     hero: {
       title: { lead: 'Convert DMS to DD ', accent: '(Lat, Long)', tail: '' },
       description:
-        'Enter degrees, minutes, and seconds for both axes and get clean decimal degrees — the format Google Maps, spreadsheets, and MapsGrab understand.'
+        'Enter degrees, minutes, and seconds for both axes and get clean decimal degrees — the format Google Maps, spreadsheets, and MapExporter understand.'
     },
     form: {
       latitudeHeading: 'Latitude (N/S)',
@@ -459,7 +459,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       },
       {
         heading: 'Keeping coordinate data consistent',
-        body: 'Mixed notations are the usual reason locations end up in the wrong ocean after an import. Deciding on decimal degrees once and converting everything at the boundary keeps pipelines sane. MapsGrab exports coordinates in decimal degrees already, so data collected with the extension drops into GIS and BI tools without any conversion step.'
+        body: 'Mixed notations are the usual reason locations end up in the wrong ocean after an import. Deciding on decimal degrees once and converting everything at the boundary keeps pipelines sane. MapExporter exports coordinates in decimal degrees already, so data collected with the extension drops into GIS and BI tools without any conversion step.'
       }
     ],
     faq: {
@@ -489,12 +489,12 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     },
     cta: {
       title: { lead: 'Skip manual coordinate work ', accent: 'at scale', tail: '' },
-      lead: 'MapsGrab exports decimal latitude and longitude for every business it collects, next to the address, phone, and Place ID columns.'
+      lead: 'MapExporter exports decimal latitude and longitude for every business it collects, next to the address, phone, and Place ID columns.'
     }
   },
   bulkKeywords: {
     seo: {
-      title: 'Bulk Keywords Generator — Keyword + Location Combinations | MapsGrab',
+      title: 'Bulk Keywords Generator — Keyword + Location Combinations | MapExporter',
       description:
         'Generate keyword and location combinations in bulk for local SEO and maps scraping tasks. Paste two lists, get every combination, download as CSV. Free.'
     },
@@ -527,7 +527,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       },
       {
         heading: 'From keyword list to collected data',
-        body: 'The classic next step is running each combination as a Google Maps search and collecting the results. That loop is exactly what MapsGrab automates: the extension accepts a keyword list as a batch task, walks through the searches one by one, and exports every business it finds — so the combinations you generate here become structured rows without manual copying.'
+        body: 'The classic next step is running each combination as a Google Maps search and collecting the results. That loop is exactly what MapExporter automates: the extension accepts a keyword list as a batch task, walks through the searches one by one, and exports every business it finds — so the combinations you generate here become structured rows without manual copying.'
       }
     ],
     faq: {
@@ -557,12 +557,12 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     },
     cta: {
       title: { lead: 'Turn the keyword list into ', accent: 'results', tail: '' },
-      lead: 'MapsGrab batch tasks run every keyword as a Maps search and export the businesses behind them — CSV or JSON, with reviews, photos, and contact enrichment.'
+      lead: 'MapExporter batch tasks run every keyword as a Maps search and export the businesses behind them — CSV or JSON, with reviews, photos, and contact enrichment.'
     }
   },
   mergeCsv: {
     seo: {
-      title: 'Merge CSV Files Online — Combine Multiple CSV Files Free | MapsGrab',
+      title: 'Merge CSV Files Online — Combine Multiple CSV Files Free | MapExporter',
       description:
         'Merge multiple CSV files online into one file. Column headers are aligned automatically by union — free, private, and entirely browser-based.'
     },
@@ -593,7 +593,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
       },
       {
         heading: 'Built for multi-run data collection',
-        body: 'The typical use case is appending runs: each MapsGrab extraction session exports its own CSV, and merging brings the week\'s sessions into one dataset before deduplication and cleaning. The parser handles quoted fields, embedded commas, and newlines inside cells (RFC 4180), so exports with multi-line addresses or review snippets merge correctly.'
+        body: 'The typical use case is appending runs: each MapExporter extraction session exports its own CSV, and merging brings the week\'s sessions into one dataset before deduplication and cleaning. The parser handles quoted fields, embedded commas, and newlines inside cells (RFC 4180), so exports with multi-line addresses or review snippets merge correctly.'
       }
     ],
     faq: {
@@ -623,7 +623,7 @@ export const toolsContent: SiteContent['pages']['tools'] = {
     },
     cta: {
       title: { lead: 'One export per run — or ', accent: 'one dataset', tail: '' },
-      lead: 'MapsGrab exports clean CSV/JSON per session with field selection and Place ID deduplication, so multi-run datasets start almost merged already.'
+      lead: 'MapExporter exports clean CSV/JSON per session with field selection and Place ID deduplication, so multi-run datasets start almost merged already.'
     }
   }
 }

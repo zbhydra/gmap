@@ -180,12 +180,13 @@ test.describe('真实 Google Maps 登录态采集(Pro,token 直注)', () => {
       const download = await readDownload(page, () => exportButton(page).click())
       const filenameMatch = download
         .suggestedFilename()
-        .match(/^MapsGrab-Extractor-(\d+)-.+-\d{4}-\d{2}-\d{2}\.csv$/)
+        .match(/^MapExporter-(\d+)-.+-\d{4}-\d{2}-\d{2}\.csv$/)
       expect(filenameMatch, `导出文件名形态不符: ${download.suggestedFilename()}`).toBeTruthy()
       const exportCount = Number(filenameMatch?.[1] ?? 0)
       expect(exportCount).toBe(buttonCount)
 
       const rows = parseCsv(readFileSync((await download.path()) ?? '', 'utf-8'))
+      expect(rows[0]).toHaveLength(36)
       expect(rows[0]).toEqual(EXPECTED_HEADERS)
       expect(rows).toHaveLength(1 + buttonCount)
       await download.saveAs(test.info().outputPath(download.suggestedFilename()))

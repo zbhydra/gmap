@@ -12,15 +12,15 @@ import { onlineScraperContent } from '../online-scraper'
 
 export const site: SiteContent = {
   site: {
-    name: 'MapsGrab',
+    name: 'MapExporter',
     description:
-      'MapsGrab is a maps data toolkit: grab publicly available business information from maps, review links, place IDs, and more with a browser extension and web tools.',
+      'MapExporter is a maps data toolkit: grab publicly available business information from maps, review links, place IDs, and more with a browser extension and web tools.',
     keywords:
       'maps data, google maps extractor, place id finder, review link generator, maps tools'
   },
   layout: {
     nav: {
-      brand: 'MapsGrab',
+      brand: 'MapExporter',
       primaryLabel: 'Primary navigation',
       mobileLabel: 'Mobile navigation',
       extension: 'Extension',
@@ -45,7 +45,7 @@ export const site: SiteContent = {
       legalLabel: 'Legal',
       resources: 'Free tools',
       product: 'Product',
-      rights: '© 2026 MapsGrab. All rights reserved.',
+      rights: '© 2026 MapExporter. All rights reserved.',
       tools: [
         { id: 'place-id-finder', label: 'Place ID Finder', path: '/tools/place-id-finder/' },
         { id: 'review-link-generator', label: 'Review Link Generator', path: '/tools/review-link-generator/' },
@@ -76,9 +76,9 @@ export const site: SiteContent = {
   pages: {
     home: {
       seo: {
-        title: 'MapsGrab — Grab Google Maps Business Data into CSV & JSON',
+        title: 'MapExporter — Grab Google Maps Business Data into CSV & JSON',
         description:
-          'MapsGrab is a browser extension and web toolkit that collects publicly available business information from Google Maps — names, phones, reviews, photos, emails — and exports it to CSV or JSON.'
+          'MapExporter is a browser extension and web toolkit that collects publicly available business information from Google Maps — names, phones, reviews, photos, emails — and exports it to CSV or JSON.'
       },
       hero: {
         announce: { badge: 'New', text: 'MCP server for AI agents' },
@@ -102,8 +102,8 @@ export const site: SiteContent = {
         trust: ['No credit card required', '{records} free records / month', 'CSV & JSON export'],
         dashboard: 'Open Online Scraper',
         theater: {
-          panelLabel: 'MapsGrab panel preview',
-          extensionActive: 'MapsGrab extension active',
+          panelLabel: 'MapExporter panel preview',
+          extensionActive: 'MapExporter extension active',
           mapFilters: ['Open now', 'Top rated', 'Price'],
           live: 'Live',
           done: 'Done',
@@ -130,7 +130,7 @@ export const site: SiteContent = {
         }
       },
       facts: {
-        caption: 'MapsGrab by the numbers',
+        caption: 'MapExporter by the numbers',
         items: [
           { value: 36, label: 'data columns per business' },
           { value: 11, label: 'review fields, owner replies included' },
@@ -143,7 +143,7 @@ export const site: SiteContent = {
         head: {
           kicker: 'How it works',
           title: { lead: 'From a map search to a ', accent: 'spreadsheet', tail: ' in three steps' },
-          lead: 'No code and no copy-paste. MapsGrab reads what Google Maps already shows you and turns it into structured rows.'
+          lead: 'No code and no copy-paste. MapExporter reads what Google Maps already shows you and turns it into structured rows.'
         },
         steps: [
           {
@@ -152,7 +152,7 @@ export const site: SiteContent = {
           },
           {
             title: 'Start extracting',
-            body: 'Click {action}. MapsGrab scrolls the results, collects the listings and, when enabled, enriches contacts.',
+            body: 'Click {action}. MapExporter scrolls the results, collects the listings and, when enabled, enriches contacts.',
             action: 'Start Extracting'
           },
           {
@@ -192,7 +192,7 @@ export const site: SiteContent = {
           mcp: {
             badge: 'MCP server',
             title: 'Live Maps data for your AI agents',
-            body: 'Search and reviews as MCP tools for Claude Code, Cursor, VS Code and Codex.',
+            body: 'Search, reviews and photos as MCP tools for Claude Code, Cursor, VS Code and Codex.',
             link: 'Explore the MCP server'
           }
         },
@@ -272,7 +272,7 @@ export const site: SiteContent = {
         head: {
           kicker: 'Enrichment',
           title: { lead: 'From a pin to a person you can ', accent: 'email', tail: '' },
-          lead: 'When enrichment is on, MapsGrab checks the official website of each business and fills in direct contact channels while it extracts.'
+          lead: 'When enrichment is on, MapExporter checks the official website of each business and fills in direct contact channels while it extracts.'
         },
         points: [
           'Email addresses found on the business website',
@@ -292,7 +292,7 @@ export const site: SiteContent = {
           search: { title: 'Scraper API', description: 'Businesses for any keyword and location' },
           reviews: { title: 'Reviews API', description: 'Ratings, text and owner replies' },
           photos: { title: 'Photos API', description: 'Public photo URLs per business' },
-          mcp: { title: 'MCP server', description: 'Search and reviews tools for any MCP client' }
+          mcp: { title: 'MCP server', description: 'Search, reviews and photos tools for any MCP client' }
         },
         langLabel: 'Language',
         copyLabel: 'Copy request',
@@ -374,19 +374,19 @@ export const site: SiteContent = {
         contact: 'Contact support',
         items: [
           {
-            question: 'Is MapsGrab free to use?',
+            question: 'Is MapExporter free to use?',
             answer:
               'Yes. The extension works without an account and includes a free monthly quota of records. Paid plans on the Pricing page raise the limits when you need more.'
           },
           {
             question: 'Which browsers are supported?',
             answer:
-              'Download MapsGrab from the Extension page. Chrome, Edge and Brave load the unpacked ZIP; Firefox uses a separate temporary add-on that must be reloaded after a restart. The page includes installation and update instructions.'
+              'Download MapExporter from the Extension page. Chrome, Edge and Brave load the unpacked ZIP; Firefox uses a separate temporary add-on that must be reloaded after a restart. The page includes installation and update instructions.'
           },
           {
             question: 'Where does the data come from, and is it legal to collect?',
             answer:
-              'MapsGrab only collects information that is publicly displayed on the Google Maps pages you visit — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.'
+              'MapExporter only collects information that is publicly displayed on the Google Maps pages you visit — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.'
           },
           {
             question: 'Do I need to install anything for the web tools?',
@@ -399,7 +399,7 @@ export const site: SiteContent = {
               'Exports come as CSV or JSON with the field selection you choose, deduplicated by Place ID.'
           },
           {
-            question: 'Does MapsGrab see the data I collect?',
+            question: 'Does MapExporter see the data I collect?',
             answer:
               'Your settings and results are stored locally in your browser. Our servers only handle remote configuration, account and quota status, optional email/social enrichment, and minimal usage logs.'
           }
@@ -409,7 +409,7 @@ export const site: SiteContent = {
         kicker: 'Get started',
         title: { lead: 'Start grabbing in ', accent: 'minutes', tail: '' },
         lead: 'Install the extension, open Google Maps, search, and export your first list — no account required.',
-        install: 'Install MapsGrab free',
+        install: 'Install MapExporter free',
         online: 'Try the Online Scraper',
         note: 'Free monthly quota included. No credit card.'
       }
@@ -462,7 +462,7 @@ export const site: SiteContent = {
           'Your PayPal payment is confirmed and the Credits have been added. You can close this tab and continue in the original window.',
         confirmedSubscriptionTitle: 'Subscription activated',
         confirmedSubscriptionMessage:
-          'Your PayPal payment is confirmed and your MapsGrab plan is active. You can close this tab and continue in the original window.',
+          'Your PayPal payment is confirmed and your MapExporter plan is active. You can close this tab and continue in the original window.',
         failedTitle: 'Payment needs attention',
         failedMessage:
           'We could not confirm this order automatically. Return to the original window or try refreshing your payment status there.'
@@ -512,13 +512,13 @@ export const site: SiteContent = {
         orderExpired: 'Order expired. Please buy again.',
         fulfillmentFailed: 'Payment was received but Credits were not added yet. Please retry later.',
         authExpired: 'Sign-in expired. Sign in again to continue.',
-        popupBlocked: 'Your browser blocked the new window. Allow MapsGrab to open pop-ups and try again.'
+        popupBlocked: 'Your browser blocked the new window. Allow MapExporter to open pop-ups and try again.'
       },
     },
     pricing: pricingContent,
     extensionLogin: {
-      title: 'Extension Sign-in | MapsGrab',
-      description: 'Sign in to connect your MapsGrab website session to the browser extension.',
+      title: 'Extension Sign-in | MapExporter',
+      description: 'Sign in to connect your MapExporter website session to the browser extension.',
       eyebrow: 'Browser Extension',
       heading: 'Extension Sign-in',
       checkingState: 'Checking',
@@ -565,14 +565,14 @@ export const company: CompanyContent = {
   footerGroupLabel: 'Company',
   about: {
     navLabel: 'About',
-    seoTitle: 'About MapsGrab | Product and Boundaries',
+    seoTitle: 'About MapExporter | Product and Boundaries',
     seoDescription:
-      'MapsGrab is a maps data toolkit for public business data: a browser extension, a cloud Online Scraper, API and MCP server, and free web tools. Learn where the data boundary is.',
+      'MapExporter is a maps data toolkit for public business data: a browser extension, a cloud Online Scraper, API and MCP server, and free web tools. Learn where the data boundary is.',
     hero: {
-      eyebrow: 'About MapsGrab',
+      eyebrow: 'About MapExporter',
       title: { lead: 'Maps data, grabbed the ', accent: 'straightforward', tail: ' way' },
       intro:
-        'MapsGrab builds tools that collect publicly available business information from Google Maps and turn it into clean, structured data — a browser extension for Edge and Firefox, a cloud-based Online Scraper, API and MCP server, plus free web tools, most of which run entirely in your browser.',
+        'MapExporter builds tools that collect publicly available business information from Google Maps and turn it into clean, structured data — a browser extension for Edge and Firefox, a cloud-based Online Scraper, API and MCP server, plus free web tools, most of which run entirely in your browser.',
       contactLabel: 'Contact Support',
       extensionLabel: 'Explore the Extension',
       stageLabel: 'Early access',
@@ -590,7 +590,7 @@ export const company: CompanyContent = {
       title: { lead: 'One toolkit, ', accent: 'four', tail: ' ways in' },
       lead: 'Pick the browser extension, the cloud-based Online Scraper, or the API. The extension works inside your own browser; the Online Scraper and the API share one cloud engine, and the MCP server brings that API to AI agents.',
       hub: {
-        title: 'MapsGrab data toolkit',
+        title: 'MapExporter data toolkit',
         detail: 'Business data · reviews · photos · email & social enrichment'
       },
       tags: {
@@ -607,7 +607,7 @@ export const company: CompanyContent = {
     principles: {
       kicker: 'Principles',
       title: { lead: 'Where the ', accent: 'boundary', tail: ' is' },
-      lead: 'MapsGrab is deliberately conservative about data. These are the product rules we hold ourselves to.',
+      lead: 'MapExporter is deliberately conservative about data. These are the product rules we hold ourselves to.',
       publicData: {
         title: 'Public data only',
         text: 'Only publicly available business information — what any visitor to the page can already see.',
@@ -653,7 +653,7 @@ export const company: CompanyContent = {
         badge: 'Stored in your browser'
       },
       backend: {
-        label: 'MapsGrab backend · four purposes',
+        label: 'MapExporter backend · four purposes',
         lanes: [
           { title: 'Remote configuration', text: 'Page-structure presets that keep extraction working' },
           { title: 'Account & quota', text: 'Sign-in, plan status, monthly usage accounting' },
@@ -695,15 +695,15 @@ export const company: CompanyContent = {
   },
   contact: {
     navLabel: 'Contact',
-    seoTitle: 'Contact MapsGrab Support',
-    seoDescription: 'Contact MapsGrab about accounts, the browser extension, billing, tools, or privacy requests.',
-    eyebrow: 'Contact MapsGrab',
+    seoTitle: 'Contact MapExporter Support',
+    seoDescription: 'Contact MapExporter about accounts, the browser extension, billing, tools, or privacy requests.',
+    eyebrow: 'Contact MapExporter',
     title: { lead: 'Talk to a ', accent: 'human', tail: '' },
-    intro: 'Write to us and a person will read it. Support is currently handled directly by the team that builds MapsGrab.',
+    intro: 'Write to us and a person will read it. Support is currently handled directly by the team that builds MapExporter.',
     emailCardLabel: 'Support email',
     copyEmail: 'Copy {email}',
     emailLabel: 'Email Support',
-    emailSubject: 'MapsGrab support request',
+    emailSubject: 'MapExporter support request',
     responseTimes:
       'We answer support email within one business day, usually faster. Privacy requests may take a few days when we need to verify account ownership first.',
     include: {
@@ -732,9 +732,9 @@ export const company: CompanyContent = {
   }
 }
 
-const termsLastUpdatedISO = '2026-08-31'
-const privacyLastUpdatedISO = '2026-10-16'
-const serviceName = 'MapsGrab'
+const termsLastUpdatedISO = '2026-11-05'
+const privacyLastUpdatedISO = '2026-11-05'
+const serviceName = 'MapExporter'
 const supportEmail = DEVELOPER_EMAIL
 
 export const legal: LegalContent = {
@@ -757,11 +757,11 @@ export const legal: LegalContent = {
     navLabel: 'Terms',
     seoTitle: `Terms of Service | ${serviceName}`,
     seoDescription:
-      'The MapsGrab Terms of Service: acceptable use, user responsibility for collected data, purchases, disclaimers, and how to contact us.',
+      'The MapExporter Terms of Service: acceptable use, user responsibility for collected data, purchases, disclaimers, and how to contact us.',
     title: 'Terms of Service',
     intro: `These Terms govern your use of ${serviceName}: the browser extension, this website, and the free web tools. Please read them before using the service.`,
     updatedLabel: 'Last updated',
-    updatedAt: 'August 31, 2026',
+    updatedAt: 'November 5, 2026',
     updatedAtISO: termsLastUpdatedISO,
     summary: 'Acceptable use, user responsibility for collected data, purchases, disclaimers, and how to contact us.',
     helpTitle: 'Questions about these Terms?',
@@ -805,7 +805,7 @@ export const legal: LegalContent = {
         id: 'what-the-service-does',
         title: 'What the service does',
         paragraphs: [
-          `${serviceName} helps you collect information that is publicly displayed on Google Maps pages you visit — business details, reviews, photos, and related contact information — and export it. The service consists of a browser extension for Microsoft Edge and Firefox, this website, and free web tools that run in your browser.`
+          `${serviceName} helps you collect information that is publicly displayed on Google Maps pages you visit — business details, reviews, photos, and related contact information — and export it. The service consists of a browser extension for Microsoft Edge and Firefox, this website, and free web tools. Most free web tools run in your browser; some, such as the Email Checker, submit what you enter to our servers, which pass it to a third-party verification service for processing.`
         ]
       },
       {
@@ -879,11 +879,11 @@ export const legal: LegalContent = {
     navLabel: 'Privacy',
     seoTitle: `Privacy Policy | ${serviceName}`,
     seoDescription:
-      'The MapsGrab Privacy Policy: what data the extension and website process, where it is stored, what our backend is used for, and the boundaries we follow.',
+      'The MapExporter Privacy Policy: what data the extension and website process, where it is stored, what our backend is used for, and the boundaries we follow.',
     title: 'Privacy Policy',
-    intro: `This policy explains what data ${serviceName} handles, where it is stored, and what reaches our servers. The short version: the extension works on publicly displayed data and keeps results in your browser; apart from our cloud services, our backend only powers configuration, quotas, optional enrichment, and minimal usage logs; and we run no ads and no third-party trackers in the extension. Requests to our cloud services — the Online Scraper, the API and the MCP server — are processed on our servers, and Online Scraper results are linked to your account so you can download them.`,
+    intro: `This policy explains what data ${serviceName} handles, where it is stored, and what reaches our servers. The short version: the extension works on publicly displayed data and keeps results in your browser; apart from our cloud services, our backend only powers configuration, quotas, optional enrichment, email verification for the Email Checker, and minimal usage logs; and we run no ads and no third-party trackers in the extension. The Email Checker sends the address you enter to our server, which passes it to a third-party email verification service. Requests to our cloud services — the Online Scraper, the API and the MCP server — are processed on our servers, and Online Scraper results are linked to your account so you can download them.`,
     updatedLabel: 'Last updated',
-    updatedAt: 'October 16, 2026',
+    updatedAt: 'November 5, 2026',
     updatedAtISO: privacyLastUpdatedISO,
     summary: 'What data the extension and website process, where it is stored, what our backend is used for, and the boundaries we follow.',
     helpTitle: 'Questions about this policy?',
@@ -893,13 +893,13 @@ export const legal: LegalContent = {
         icon: 'lock',
         tone: 'ok',
         title: 'Where results are stored',
-        text: 'The extension and the free web tools keep your data in your browser; Online Scraper results are linked to your account.'
+        text: 'The extension and the free web tools keep your data in your browser, except the Email Checker, which sends the address you enter to our server and a third-party email verification service; Online Scraper results are linked to your account.'
       },
       {
         section: 'what-our-backend-processes',
         icon: 'database',
         title: 'What reaches our servers',
-        text: 'Requests to the Online Scraper, API and MCP server, plus configuration, account and quotas, optional enrichment and minimal usage logs.'
+        text: 'Requests to the Online Scraper, API and MCP server, plus configuration, account and quotas, optional enrichment, addresses entered in the Email Checker and minimal usage logs.'
       },
       {
         section: 'what-we-never-do',
@@ -931,7 +931,7 @@ export const legal: LegalContent = {
         id: 'where-data-is-stored',
         title: 'Where data is stored',
         paragraphs: [
-          'With the extension, settings, extraction results, and batch task state are stored locally in your browser (extension local storage and IndexedDB). They never leave your device unless you trigger an export or one of the optional integrations described below. The free web tools also process what you enter in your browser.',
+          'With the extension, settings, extraction results, and batch task state are stored locally in your browser (extension local storage and IndexedDB). They never leave your device unless you trigger an export or one of the optional integrations described below. The free web tools also process what you enter in your browser. The exception is the Email Checker: it sends the address you enter to our server, which passes it to a third-party email verification service.',
           'Google Drive and HubSpot OAuth tokens, if you connect them, are also stored only in your browser.',
           'Online Scraper tasks run on our servers. Their results are stored with your account so you can download them from your Dashboard.'
         ]
@@ -942,12 +942,13 @@ export const legal: LegalContent = {
         paragraphs: [
           'Requests you make to our cloud services — the Online Scraper, the API and the MCP server — are processed on our servers. Our servers also manage access to these services, including your API key and the MCP client authorizations you approve, and keep records of your usage.',
           'An MCP client you authorize receives the results of the requests it makes. You can revoke an authorization from your Dashboard.',
-          'Apart from these cloud services, the extension and this website contact our own servers for four purposes:'
+          'Apart from these cloud services, the extension and this website contact our own servers for five purposes:'
         ],
         items: [
           'Remote configuration — page-structure presets that keep extraction working when Google changes its pages.',
           'Account and quota services — sign-in, plan status, and monthly usage accounting.',
           'Email and social media enrichment — looking up publicly listed contact details on collected business websites when the feature is used.',
+          'Email verification — when you use the Email Checker, the address you enter is sent to our server, which passes it to a third-party email verification service to check whether it can receive mail.',
           'Usage logging — minimal records of feature usage and errors used to maintain and improve the service.'
         ]
       },
@@ -1003,9 +1004,9 @@ export const legal: LegalContent = {
 }
 
 export const mcpOAuth: McpOAuthContent = {
-  seoTitle: 'Authorize an AI app | MapsGrab',
+  seoTitle: 'Authorize an AI app | MapExporter',
   title: 'Connect an AI app to your account',
-  intro: 'An app is asking to access your MapsGrab account. Allow it only if you started this connection yourself.',
+  intro: 'An app is asking to access your MapExporter account. Allow it only if you started this connection yourself.',
   loading: 'Loading the connection request...',
   hostLabel: 'App address',
   selfDeclared: 'Name the app gives itself: {name}',
@@ -1033,12 +1034,12 @@ export const mcpOAuth: McpOAuthContent = {
     invalid_redirect_uri: 'The return address sent by the app does not match the one it registered.',
     unsupported_response_type: 'The app asked for an authorization type that is not supported.',
     invalid_pkce: 'The app did not send the required security check (PKCE with S256).',
-    invalid_resource: 'The app did not ask for access to the MapsGrab MCP server, or asked for a different server.',
-    server_error: 'MapsGrab could not save this request right now. Please try again shortly.'
+    invalid_resource: 'The app did not ask for access to the MapExporter MCP server, or asked for a different server.',
+    server_error: 'MapExporter could not save this request right now. Please try again shortly.'
   },
   errorHint: 'Start the connection again from your AI app. If the problem continues, contact the app’s developer.',
   signInTitle: 'Sign in to continue',
-  signInText: 'Sign in to the MapsGrab account you want to connect. This request will wait for you.',
+  signInText: 'Sign in to the MapExporter account you want to connect. This request will wait for you.',
   signIn: 'Sign in',
   loadFailed: 'Could not load the connection request. Check your network and try again.',
   decideFailed: 'Could not complete this action. Check your network and try again.',
@@ -1060,7 +1061,7 @@ export const clink: ClinkReturnContent = {
     confirmedSubscription: {
       title: 'Plan activated',
       description:
-        'Your ClinkBill payment is confirmed and your MapsGrab plan is active. You can return to the original tab.'
+        'Your ClinkBill payment is confirmed and your MapExporter plan is active. You can return to the original tab.'
     },
     failed: {
       title: 'Payment needs attention',

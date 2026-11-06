@@ -1,4 +1,4 @@
-# 插件端测试(Maps Extractor 插件,013 域)
+# 插件端测试(MapExporter 插件,013 域)
 
 单元测试(vitest)+ e2e(Playwright,真实 Google Maps 界面主验收)。
 

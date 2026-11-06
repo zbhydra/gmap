@@ -131,7 +131,7 @@ async def call_tool(
 
 
 mcp_server: Server[object] = Server(
-    "MapsGrab", on_list_tools=list_tools, on_call_tool=call_tool
+    "MapExporter", on_list_tools=list_tools, on_call_tool=call_tool
 )
 _security_settings = TransportSecuritySettings(
     allowed_hosts=settings.app.mcp_allowed_hosts,

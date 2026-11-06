@@ -17,7 +17,7 @@
   var variant = requested === 'reviews' || requested === 'photos' ? requested : 'search'
 
   var FID = '0x54950a2291f60bf1:0xbeb4a5f2c3d1e0ab'
-  var BASE = 'https://api.mapsgrab.com'
+  var BASE = 'https://api.mapexporter.app'
 
   // 三种语言的请求样例。b = 各语言的请求体写法；out = 各语言取结果的末行；pre = 请求前的变量行
   var requestSamples = function (path, b, out, pre) {
@@ -25,12 +25,12 @@
     return {
       curl:
         'curl ' + BASE + path + ' \\\n' +
-        '  -H "Authorization: Bearer $MAPSGRAB_API_KEY" \\\n' +
+        '  -H "Authorization: Bearer $MAPEXPORTER_API_KEY" \\\n' +
         '  -H "Content-Type: application/json" \\\n' +
         "  -d '" + b.curl + "'",
       python:
         'import os\nimport requests\n\n' +
-        'API_KEY = os.environ["MAPSGRAB_API_KEY"]\n' +
+        'API_KEY = os.environ["MAPEXPORTER_API_KEY"]\n' +
         (p.python || '') +
         '\nresp = requests.post(\n' +
         '    "' + BASE + path + '",\n' +
@@ -43,7 +43,7 @@
         'const res = await fetch("' + BASE + path + '", {\n' +
         '  method: "POST",\n' +
         '  headers: {\n' +
-        '    Authorization: `Bearer ${process.env.MAPSGRAB_API_KEY}`,\n' +
+        '    Authorization: `Bearer ${process.env.MAPEXPORTER_API_KEY}`,\n' +
         '    "Content-Type": "application/json",\n' +
         '  },\n' +
         '  body: JSON.stringify(' + b.node + '),\n' +
@@ -68,9 +68,9 @@
      ===================================================================== */
   var VARIANTS = {
     search: {
-      seoTitle: 'Google Maps Scraper API — Business Data in JSON | MapsGrab',
+      seoTitle: 'Google Maps Scraper API — Business Data in JSON | MapExporter',
       seoDesc:
-        'The MapsGrab Scraper API returns Google Maps business data as clean JSON: names, phones, ratings, hours, coordinates, Place IDs, emails, and social profiles — powered by the same engine as the extension.',
+        'The MapExporter Scraper API returns Google Maps business data as clean JSON: names, phones, ratings, hours, coordinates, Place IDs, emails, and social profiles — powered by the same engine as the extension.',
       title: 'Google Maps <span class="accent text-grad">Scraper</span> API',
       lead:
         'Query Google Maps business data over a simple HTTP API and get clean JSON back: name, address, phone, website, rating, opening hours, coordinates, Place ID, plus email and social enrichment.',
@@ -84,7 +84,7 @@
         ['mail', 'Email and social enrichment', 'Responses include email addresses and social profiles found on each business website — no separate enrichment step.'],
         ['braces', 'Clean JSON responses', 'Structured, predictable field names ready for your CRM, spreadsheet pipeline, or backend — no HTML to parse.'],
         ['shield', 'Public data only', 'The API returns only what is publicly displayed on Google Maps — the same details any visitor can read.'],
-        ['zap', 'Same engine as the extension', 'The API is backed by the MapsGrab extraction engine, tuned against the current Google Maps interface and updated remotely when Google changes.']
+        ['zap', 'Same engine as the extension', 'The API is backed by the MapExporter extraction engine, tuned against the current Google Maps interface and updated remotely when Google changes.']
       ],
       path: '/v1/search',
       shape: '{ places: place[] }',
@@ -140,8 +140,8 @@
       ],
       faqTitle: 'Scraper API <span class="accent">questions</span>',
       faq: [
-        ['What does the Scraper API return?', 'Structured JSON with the MapsGrab 36-column business schema: name, address, phone, website, rating, review count, opening hours, coordinates, Place ID, and email / social enrichment where available.'],
-        ['How do I authenticate?', 'Requests are authorized with a MapsGrab API key sent as a bearer token. Keys are issued per account and follow the API plans on the Pricing page, including 20 free requests per month.'],
+        ['What does the Scraper API return?', 'Structured JSON with the MapExporter 36-column business schema: name, address, phone, website, rating, review count, opening hours, coordinates, Place ID, and email / social enrichment where available.'],
+        ['How do I authenticate?', 'Requests are authorized with a MapExporter API key sent as a bearer token. Keys are issued per account and follow the API plans on the Pricing page, including 20 free requests per month.'],
         COMMON_FAQ.legal,
         ['Can I also get reviews and photos?', 'Yes — pass the fid from any Scraper API result to the Reviews API or the Photos API, using the same API key.'],
         COMMON_FAQ.counted
@@ -186,9 +186,9 @@
     },
 
     reviews: {
-      seoTitle: 'Google Maps Reviews Scraper API — Reviews in JSON | MapsGrab',
+      seoTitle: 'Google Maps Reviews Scraper API — Reviews in JSON | MapExporter',
       seoDesc:
-        'The MapsGrab Reviews API returns the reviews of any Google Maps business as clean JSON: reviewer names, ratings, review text, dates, photos, and owner replies.',
+        'The MapExporter Reviews API returns the reviews of any Google Maps business as clean JSON: reviewer names, ratings, review text, dates, photos, and owner replies.',
       title: 'Google Maps <span class="accent text-grad">Reviews</span> Scraper API',
       lead:
         'Request the reviews of any Google Maps business and get structured JSON back: author, rating, review text, date, review photos, and owner replies — page by page with a cursor.',
@@ -284,9 +284,9 @@
     },
 
     photos: {
-      seoTitle: 'Google Maps Photos API — Business Photos as URLs | MapsGrab',
+      seoTitle: 'Google Maps Photos API — Business Photos as URLs | MapExporter',
       seoDesc:
-        'The MapsGrab Photos API returns the public photo galleries of Google Maps businesses as ready-to-use URL lists, with Street View imagery filtered out.',
+        'The MapExporter Photos API returns the public photo galleries of Google Maps businesses as ready-to-use URL lists, with Street View imagery filtered out.',
       title: 'Google Maps <span class="accent text-grad">Photos</span> API',
       lead:
         'Request the photo gallery of any Google Maps business and get a clean list of image URLs back — public album photos only, with Street View imagery filtered out.',

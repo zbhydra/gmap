@@ -6,10 +6,9 @@
  * - 36 列字段样例是插件搜索结果导出：列序、表头与取值格式都按插件实际导出（extension/src/sites/maps/content/
  *   export/columns.ts、content/parser/placeParser.ts）——Website 带协议，About 每组一行，Opening Hours 24 小时制
  *   每天一行，Amenities 逗号无空格拼接，电话为美国国内写法。
- * - 代码台按 014 tech-API与MCP.md：REST `/api/external/maps/{search,reviews}` + Bearer 用户 Key，
- *   业务响应为 `{code,data,msg}` 信封；MCP 入口 `/mcp/`，工具 search_places / list_reviews；
- *   响应字段与取值格式取自 Provider DTO（GmapPlaceEntry / GmapReview，rpc/entry.py：Website 不带协议）。
- *   Photos 未实现，不提供示例。
+ * - 代码台按 014 tech-API与MCP.md：REST `/api/external/maps/{search,reviews,photos}` + Bearer 用户 Key，
+ *   业务响应为 `{code,data,msg}` 信封；MCP 入口 `/mcp/`，工具 search_places / list_reviews / list_photos；
+ *   响应字段与取值格式取自 Provider DTO（GmapPlaceEntry / GmapReview / GmapPhotosResult，rpc/entry.py：Website 不带协议）。
  * 界面文案不在这里，走 i18n 的 pages.home。
  */
 import type { HomeFieldColumn, HomeFieldGroup } from '../../i18n/schema'
@@ -249,21 +248,21 @@ function restRequests(url: string, body: { json: string; python: string; js: str
   return [
     {
       lang: 'bash',
-      code: `curl ${url} \\\n  -H "Authorization: Bearer $MAPSGRAB_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${body.json}'`
+      code: `curl ${url} \\\n  -H "Authorization: Bearer $MAPEXPORTER_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${body.json}'`
     },
     {
       lang: 'python',
-      code: `import os\nimport requests\n\nAPI_KEY = os.environ["MAPSGRAB_API_KEY"]\n\nresp = requests.post(\n    "${url}",\n    headers={"Authorization": f"Bearer {API_KEY}"},\n    json=${body.python},\n)\n${pythonOut}`
+      code: `import os\nimport requests\n\nAPI_KEY = os.environ["MAPEXPORTER_API_KEY"]\n\nresp = requests.post(\n    "${url}",\n    headers={"Authorization": f"Bearer {API_KEY}"},\n    json=${body.python},\n)\n${pythonOut}`
     },
     {
       lang: 'js',
-      code: `const res = await fetch("${url}", {\n  method: "POST",\n  headers: {\n    Authorization: \`Bearer \${process.env.MAPSGRAB_API_KEY}\`,\n    "Content-Type": "application/json",\n  },\n  body: JSON.stringify(${body.js}),\n});\n${jsOut}`
+      code: `const res = await fetch("${url}", {\n  method: "POST",\n  headers: {\n    Authorization: \`Bearer \${process.env.MAPEXPORTER_API_KEY}\`,\n    "Content-Type": "application/json",\n  },\n  body: JSON.stringify(${body.js}),\n});\n${jsOut}`
     }
   ]
 }
 
 /** 代码台样例；apiBase 为部署注入的 PUBLIC_API_BASE_URL（与 /connection 的 api_base_url、mcp.public_url 同源）。 */
-export function developerSamples(apiBase: string): Record<'search' | 'reviews' | 'mcp', DeveloperSample> {
+export function developerSamples(apiBase: string): Record<'search' | 'reviews' | 'photos' | 'mcp', DeveloperSample> {
   const restBase = `${apiBase}/api/external/maps`
   const mcpUrl = `${apiBase}/mcp/`
   return {
@@ -357,20 +356,54 @@ export function developerSamples(apiBase: string): Record<'search' | 'reviews' |
       latencyMs: 538,
       tool: null
     },
+    photos: {
+      langs: ['cURL', 'Python', 'Node.js'],
+      requests: restRequests(
+        `${restBase}/photos`,
+        {
+          json: `{"fid": "${SAMPLE_FID}", "max_results": 2}`,
+          python: `{"fid": "${SAMPLE_FID}", "max_results": 2}`,
+          js: `{ fid: "${SAMPLE_FID}", max_results: 2 }`
+        },
+        'photos = resp.json()["data"]["photos"]',
+        'const { data } = await res.json();'
+      ),
+      response: {
+        lang: 'json',
+        code: [
+          '{',
+          '  "code": 10000,',
+          '  "data": {',
+          '    "photos": [',
+          '      { "url": "https://lh5.googleusercontent.com/p/AF1QipM…" },',
+          '      { "url": "https://lh5.googleusercontent.com/p/AF1QipO…" }',
+          '    ],',
+          '    "returned_count": 2,',
+          '    "reported_total": 178,',
+          '    "status": "partial",',
+          '    "reason": "limit_reached"',
+          '  },',
+          '  "msg": ""',
+          '}'
+        ].join('\n')
+      },
+      latencyMs: 296,
+      tool: null
+    },
     mcp: {
       langs: ['Claude Code', 'Cursor', 'VS Code'],
       requests: [
         {
           lang: 'bash',
-          code: `claude mcp add --transport http mapsgrab \\\n  ${mcpUrl}`
+          code: `claude mcp add --transport http mapexporter \\\n  ${mcpUrl}`
         },
         {
           lang: 'jsonc',
-          code: `// .cursor/mcp.json\n{\n  "mcpServers": {\n    "mapsgrab": {\n      "url": "${mcpUrl}"\n    }\n  }\n}`
+          code: `// .cursor/mcp.json\n{\n  "mcpServers": {\n    "mapexporter": {\n      "url": "${mcpUrl}"\n    }\n  }\n}`
         },
         {
           lang: 'jsonc',
-          code: `// .vscode/mcp.json\n{\n  "servers": {\n    "mapsgrab": {\n      "type": "http",\n      "url": "${mcpUrl}"\n    }\n  }\n}`
+          code: `// .vscode/mcp.json\n{\n  "servers": {\n    "mapexporter": {\n      "type": "http",\n      "url": "${mcpUrl}"\n    }\n  }\n}`
         }
       ],
       response: {

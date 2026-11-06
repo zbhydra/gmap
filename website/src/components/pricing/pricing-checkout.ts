@@ -1,5 +1,5 @@
 /**
- * Pricing 订阅商品接口客户端（MapsGrab 三产品类别购买链路）。
+ * Pricing 订阅商品接口客户端（MapExporter 三产品类别购买链路）。
  *
  * 订单创建/状态接口与支付协议由公共 OrderCheckout 维护；本模块只消费订阅
  * checkout 配置、验参和展示价格式化。
@@ -15,7 +15,7 @@ import type {
 /** 订阅商品类别。 */
 export const SUBSCRIPTION_PRODUCT_CLASS = 1
 
-/** Extension（MapsGrab 插件）产品类别标识（与后端 product_kind 常量对齐）。 */
+/** Extension（MapExporter 插件）产品类别标识（与后端 product_kind 常量对齐）。 */
 export const MAPS_EXTENSION_PRODUCT_KIND = 'maps_extension'
 /** Online Scraper 产品类别标识。 */
 export const MAPS_ONLINE_PRODUCT_KIND = 'maps_online'

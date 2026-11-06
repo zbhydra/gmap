@@ -71,8 +71,8 @@
   // 样例：Proto.places 前 3 家 + 解析层格式的补充字段（全部虚构）
   var ROWS = 3
   var KEYWORD = 'coffee+near+Manhattan'
-  var FILE_BASE = 'MapsGrab-Extractor-' + Proto.places.length + '-' + KEYWORD + '-2026-10-18'
-  var DL_BASE = 'MapsGrab-Extractor-48-' + KEYWORD + '-2026-10-18'
+  var FILE_BASE = 'MapExporter-' + Proto.places.length + '-' + KEYWORD + '-2026-10-18'
+  var DL_BASE = 'MapExporter-48-' + KEYWORD + '-2026-10-18'
   var EXTRA = [
     { zip: '10011', desc: 'House-roasted espresso and fresh pastries.', cats: 'Coffee shop, Espresso bar', amen: 'Wi-Fi, Restroom', claimed: 'YES', phones: '(212) 555-0143', lat: '40.7449', lng: '-73.9963', site: 'emberandoak.example', mail: 'hello@emberandoak.example', social: 'Instagram: https://instagram.com/emberandoak', owner: '104857392018465730281', fid: '0x89c259b4f1e8a1d3:0x445c2e1f9a3b7d1a', place: 'ChIJ8f3kqZBZwokR7xq1Lm2pTQA', kg: '/g/11c4kq7v2r', img: 'AF1QipMx3kq7Vb2Lr9', hours: 'Saturday(2026-10-17): [07:00-19:00]' },
     { zip: '10002', desc: 'Single-origin roastery with a tasting bar.', cats: 'Coffee roasters, Coffee shop', amen: 'Wi-Fi, Outdoor seating', claimed: 'YES', phones: '', lat: '40.7178', lng: '-73.9902', site: 'halfmoonroasters.example', mail: 'shop@halfmoonroasters.example', social: 'Instagram: https://instagram.com/halfmoonroasters', owner: '113920485716203948572', fid: '0x89c25987d2c4a6b1:0x9b3e1f04c8d27a65', place: 'ChIJ2Wq0yXRZwokRmT8bQe5vC1M', kg: '/g/11h0f3r9xk', img: 'AF1QipNa8Rt2Wm5Kd1', hours: 'Saturday(2026-10-17): [08:00-18:00]' },
@@ -1257,7 +1257,7 @@
   }
 
   var openPlans = function () {
-    UI.toast({ title: 'Opens Pricing on the MapsGrab website', desc: 'Prototype only — no page opens here.', tone: 'primary', icon: 'external' })
+    UI.toast({ title: 'Opens Pricing on the MapExporter website', desc: 'Prototype only — no page opens here.', tone: 'primary', icon: 'external' })
   }
   $$('[data-op-plans]').forEach(function (a) {
     a.addEventListener('click', function (e) {

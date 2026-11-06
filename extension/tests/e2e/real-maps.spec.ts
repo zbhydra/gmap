@@ -3,7 +3,7 @@
  *
  * 真实 www.google.com/maps 界面采集真实数据(2026-09-02 hydra 拍板,零 mock):
  * 打开搜索词 → 同意页自动接受 → 面板挂载 → Start → 首批真实 RPC 解析 →
- * 免费档 10 行截断自动完成 → 完成态(导出按钮计数 10)→ CSV 导出(36 列表头 +
+ * 免费档 10 行截断自动完成 → 完成态(导出按钮计数 10)→ CSV 导出(34 列表头 +
  * 10 数据行,行数与文件名计数一致)→ Reset 回待命。
  *
  * 断言分界:环境/上游问题(网络不可达、同意页无法通过、人机验证、DOM 改版)
@@ -17,7 +17,7 @@
 import { readFileSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
 import {
-  EXPECTED_HEADERS,
+  EXPECTED_FREE_HEADERS,
   FREE_ROW_LIMIT,
   MAPS_URL,
   detectChallenge,
@@ -37,7 +37,7 @@ import {
 } from './harness'
 
 test.describe('真实 Google Maps 匿名采集(免费 10 行截断)', () => {
-  test('真实界面采集 → 免费 10 截断完成 → CSV 导出(36 列)→ Reset', async () => {
+  test('真实界面采集 → 免费 10 截断完成 → CSV 导出(34 列)→ Reset', async () => {
     // 打开 45s + 面板 30s + 首批 RPC/截断收敛 60s + 导出,全链路有界
     test.setTimeout(240_000)
     const context = await launchRealMapsContext()
@@ -104,17 +104,18 @@ test.describe('真实 Google Maps 匿名采集(免费 10 行截断)', () => {
         FREE_ROW_LIMIT
       )
 
-      // 导出并断言下载文件:文件名 / 36 列表头 / 数据行数与文件名计数一致
+      // 导出并断言下载文件:文件名 / 34 列表头 / 数据行数与文件名计数一致
       const download = await readDownload(page, () => exportButton(page).click())
       const filenameMatch = download
         .suggestedFilename()
-        .match(/^MapsGrab-Extractor-(\d+)-.+-\d{4}-\d{2}-\d{2}\.csv$/)
+        .match(/^MapExporter-(\d+)-.+-\d{4}-\d{2}-\d{2}\.csv$/)
       expect(filenameMatch, `导出文件名形态不符: ${download.suggestedFilename()}`).toBeTruthy()
       const exportCount = Number(filenameMatch?.[1] ?? 0)
       expect(exportCount).toBe(FREE_ROW_LIMIT)
 
       const rows = parseCsv(readFileSync((await download.path()) ?? '', 'utf-8'))
-      expect(rows[0]).toEqual(EXPECTED_HEADERS)
+      expect(rows[0]).toHaveLength(34)
+      expect(rows[0]).toEqual(EXPECTED_FREE_HEADERS)
       expect(rows).toHaveLength(1 + FREE_ROW_LIMIT)
 
       // 行值抽检:名称非空;稳定短链按 cid 衍生(存在即真实解析链生效)

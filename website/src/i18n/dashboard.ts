@@ -83,13 +83,13 @@ export const dashboardContent: DashboardContent = {
     }
   },
   seo: {
-    title: 'Dashboard | MapsGrab',
-    description: 'Manage your MapsGrab exports, API access and subscriptions in one workspace.'
+    title: 'Dashboard | MapExporter',
+    description: 'Manage your MapExporter exports, API access and subscriptions in one workspace.'
   },
   shell: {
     skipToContent: 'Skip to content',
     sideLabel: 'Workspace',
-    homeLabel: 'MapsGrab home',
+    homeLabel: 'MapExporter home',
     navLabel: 'Workspace menu',
     loading: 'Loading your workspace...',
     retry: 'Retry',
@@ -213,7 +213,7 @@ export const dashboardContent: DashboardContent = {
     downloadFailed: 'The download could not be started. Please try again.',
     signInPrompt: 'Sign in to see your Online export history.',
     signInCta: 'Sign in',
-    unreachable: 'Could not reach MapsGrab right now.'
+    unreachable: 'Could not reach MapExporter right now.'
   },
   api: {
     description:
@@ -309,14 +309,14 @@ export const dashboardContent: DashboardContent = {
         steps: [
           'Sign in to PayPal and open Settings.',
           'Go to Payments, then Automatic Payments.',
-          'Select MapsGrab and choose Cancel.'
+          'Select MapExporter and choose Cancel.'
         ]
       },
       {
         provider: 'ClinkBill',
         steps: [
           'Open the Customer Portal link from your purchase email.',
-          'Sign in and select your MapsGrab subscription.',
+          'Sign in and select your MapExporter subscription.',
           'Choose Cancel.'
         ]
       }

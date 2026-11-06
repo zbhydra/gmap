@@ -2,15 +2,16 @@ import type { SiteContent, McpOAuthContent, ClinkReturnContent } from '../schema
 import type { CompanyContent } from '../../company/companyContent'
 import type { LegalContent } from '../../legal/legalContent'
 
+// TODO: 首页 MCP 工具集描述译文（pages.home.products.cards.mcp.body、pages.home.developers.items.mcp.description）由 AI 翻译，尚未经专业校对，校对前不视为定稿；工具集口径见 website/src/i18n/mcp.ts。
 export const site: SiteContent = {
   "site": {
-    "name": "MapsGrab",
-    "description": "MapsGrab ist ein Kartendaten-Toolkit: Rufen Sie öffentlich verfügbare Geschäftsinformationen aus Karten ab, überprüfen Sie Links, Orts-IDs und mehr mit einer Browsererweiterung und Web-Tools.",
+    "name": "MapExporter",
+    "description": "MapExporter ist ein Kartendaten-Toolkit: Rufen Sie öffentlich verfügbare Geschäftsinformationen aus Karten ab, überprüfen Sie Links, Orts-IDs und mehr mit einer Browsererweiterung und Web-Tools.",
     "keywords": "Kartendaten, Google Maps-Extraktor, Orts-ID-Finder, Bewertungslink-Generator, Karten-Tools"
   },
   "layout": {
     "nav": {
-      "brand": "MapsGrab",
+      "brand": "MapExporter",
       "primaryLabel": "Primäre Navigation",
       "mobileLabel": "Mobile Navigation",
       "extension": "Erweiterung",
@@ -35,7 +36,7 @@ export const site: SiteContent = {
       "legalLabel": "Legal",
       "resources": "Kostenlose Tools",
       "product": "Produkt",
-      "rights": "© 2026 MapsGrab. Alle Rechte vorbehalten.",
+      "rights": "© 2026 MapExporter. Alle Rechte vorbehalten.",
       "tools": [
         {
           "id": "place-id-finder",
@@ -171,13 +172,13 @@ export const site: SiteContent = {
       }
     },
     "seo": {
-      "title": "Dashboard | MapsGrab",
-      "description": "Verwalten Sie Ihre MapsGrab-Exporte, API-Zugriffe und Abonnements in einem Arbeitsbereich."
+      "title": "Dashboard | MapExporter",
+      "description": "Verwalten Sie Ihre MapExporter-Exporte, API-Zugriffe und Abonnements in einem Arbeitsbereich."
     },
     "shell": {
       "skipToContent": "Zum Inhalt springen",
       "sideLabel": "Arbeitsbereich",
-      "homeLabel": "MapsGrab-Startseite",
+      "homeLabel": "MapExporter-Startseite",
       "navLabel": "Menü des Arbeitsbereichs",
       "loading": "Ihr Arbeitsbereich wird geladen...",
       "retry": "Wiederholen",
@@ -301,7 +302,7 @@ export const site: SiteContent = {
       "downloadFailed": "Der Download konnte nicht gestartet werden. Bitte versuchen Sie es erneut.",
       "signInPrompt": "Melden Sie sich an, um Ihren Online-Exportverlauf anzuzeigen.",
       "signInCta": "Anmelden",
-      "unreachable": "MapsGrab konnte derzeit nicht erreicht werden."
+      "unreachable": "MapExporter konnte derzeit nicht erreicht werden."
     },
     "api": {
       "description": "Verwalten Sie Ihren API-Schlüssel, Ihr monatliches Anforderungskontingent und verbundene KI-Apps.",
@@ -403,14 +404,14 @@ export const site: SiteContent = {
           "steps": [
             "Melden Sie sich bei PayPal an und öffnen Sie Einstellungen.",
             "Gehen Sie zu Zahlungen und dann zu Automatische Zahlungen.",
-            "Wählen Sie MapsGrab und wählen Sie Abbrechen."
+            "Wählen Sie MapExporter und wählen Sie Abbrechen."
           ]
         },
         {
           "provider": "ClinkBill",
           "steps": [
             "Öffnen Sie den Link zum Kundenportal in Ihrer Kauf-E-Mail.",
-            "Melden Sie sich an und wählen Sie Ihr MapsGrab-Abonnement aus.",
+            "Melden Sie sich an und wählen Sie Ihr MapExporter-Abonnement aus.",
             "Wählen Sie Abbrechen."
           ]
         }
@@ -421,8 +422,8 @@ export const site: SiteContent = {
   "pages": {
     "home": {
       "seo": {
-        "title": "MapsGrab – Erfassen Sie Google Maps-Geschäftsdaten in CSV und JSON",
-        "description": "MapsGrab ist eine Browser-Erweiterung und ein Web-Toolkit, das öffentlich verfügbare Geschäftsinformationen von Google Maps sammelt – Namen, Telefone, Bewertungen, Fotos, E-Mails – und sie nach CSV oder JSON exportiert."
+        "title": "MapExporter – Erfassen Sie Google Maps-Geschäftsdaten in CSV und JSON",
+        "description": "MapExporter ist eine Browser-Erweiterung und ein Web-Toolkit, das öffentlich verfügbare Geschäftsinformationen von Google Maps sammelt – Namen, Telefone, Bewertungen, Fotos, E-Mails – und sie nach CSV oder JSON exportiert."
       },
       "hero": {
         "announce": {
@@ -461,8 +462,8 @@ export const site: SiteContent = {
         ],
         "dashboard": "Öffnen Sie den Online-Scraper",
         "theater": {
-          "panelLabel": "Vorschau des MapsGrab-Panels",
-          "extensionActive": "MapsGrab-Erweiterung aktiv",
+          "panelLabel": "Vorschau des MapExporter-Panels",
+          "extensionActive": "MapExporter-Erweiterung aktiv",
           "mapFilters": [
             "Jetzt geöffnet",
             "Bestbewertet",
@@ -504,7 +505,7 @@ export const site: SiteContent = {
         }
       },
       "facts": {
-        "caption": "MapsGrab in Zahlen",
+        "caption": "MapExporter in Zahlen",
         "items": [
           {
             "value": 36,
@@ -537,7 +538,7 @@ export const site: SiteContent = {
             "accent": "Tabelle",
             "tail": " in drei Schritten"
           },
-          "lead": "Kein Code und kein Kopieren und Einfügen. MapsGrab liest, was Google Maps Ihnen bereits anzeigt, und wandelt es in strukturierte Zeilen um."
+          "lead": "Kein Code und kein Kopieren und Einfügen. MapExporter liest, was Google Maps Ihnen bereits anzeigt, und wandelt es in strukturierte Zeilen um."
         },
         "steps": [
           {
@@ -546,7 +547,7 @@ export const site: SiteContent = {
           },
           {
             "title": "Datenerfassung starten",
-            "body": "Klicken Sie auf {action}. MapsGrab scrollt durch die Ergebnisse, sammelt die Einträge und bereichert bei Aktivierung die Kontakte.",
+            "body": "Klicken Sie auf {action}. MapExporter scrollt durch die Ergebnisse, sammelt die Einträge und bereichert bei Aktivierung die Kontakte.",
             "action": "Datenerfassung starten"
           },
           {
@@ -590,7 +591,7 @@ export const site: SiteContent = {
           "mcp": {
             "badge": "MCP-Server",
             "title": "Live-Kartendaten für Ihre KI-Agenten",
-            "body": "Suchen und bewerten Sie als MCP-Tools für Claude Code, Cursor, VS Code und Codex.",
+            "body": "Suche, Bewertungen und Fotos als MCP-Tools für Claude Code, Cursor, VS Code und Codex.",
             "link": "Entdecken Sie den MCP-Server"
           }
         },
@@ -696,7 +697,7 @@ export const site: SiteContent = {
             "accent": " per E-Mail an ",
             "tail": " senden"
           },
-          "lead": "Wenn die Anreicherung aktiviert ist, überprüft MapsGrab die offizielle Website jedes Unternehmens und füllt während der Extraktion direkte Kontaktkanäle aus."
+          "lead": "Wenn die Anreicherung aktiviert ist, überprüft MapExporter die offizielle Website jedes Unternehmens und füllt während der Extraktion direkte Kontaktkanäle aus."
         },
         "points": [
           "Auf der Unternehmenswebsite gefundene E-Mail-Adressen",
@@ -731,7 +732,7 @@ export const site: SiteContent = {
           },
           "mcp": {
             "title": "MCP-Server",
-            "description": "Such- und Bewertungstools für jeden MCP-Kunden"
+            "description": "Such-, Bewertungs- und Foto-Tools für jeden MCP-Client"
           }
         },
         "langLabel": "Sprache",
@@ -847,16 +848,16 @@ export const site: SiteContent = {
         "contact": "Kontaktieren Sie den Support",
         "items": [
           {
-            "question": "Ist die Nutzung von MapsGrab kostenlos?",
+            "question": "Ist die Nutzung von MapExporter kostenlos?",
             "answer": "Ja. Die Erweiterung funktioniert ohne Konto und beinhaltet ein kostenloses monatliches Kontingent an Datensätzen. Bezahlte Pläne auf der Seite „Preise“ erhöhen die Limits, wenn Sie mehr benötigen."
           },
           {
             "question": "Welche Browser werden unterstützt?",
-            "answer": "Laden Sie MapsGrab von der Erweiterungsseite herunter. Chrome, Edge und Brave laden das entpackte ZIP; Firefox verwendet ein separates temporäres Add-on, das nach einem Neustart neu geladen werden muss. Die Seite enthält Installations- und Aktualisierungsanweisungen."
+            "answer": "Laden Sie MapExporter von der Erweiterungsseite herunter. Chrome, Edge und Brave laden das entpackte ZIP; Firefox verwendet ein separates temporäres Add-on, das nach einem Neustart neu geladen werden muss. Die Seite enthält Installations- und Aktualisierungsanweisungen."
           },
           {
             "question": "Woher kommen die Daten und ist ihre Erhebung legal?",
-            "answer": "MapsGrab sammelt nur Informationen, die auf den von Ihnen besuchten Google Maps-Seiten öffentlich angezeigt werden – dieselben Details, die jeder Besucher lesen kann. Wir greifen nicht auf private Konten, geschützte Inhalte oder nicht öffentliche Daten zu."
+            "answer": "MapExporter sammelt nur Informationen, die auf den von Ihnen besuchten Google Maps-Seiten öffentlich angezeigt werden – dieselben Details, die jeder Besucher lesen kann. Wir greifen nicht auf private Konten, geschützte Inhalte oder nicht öffentliche Daten zu."
           },
           {
             "question": "Muss ich etwas für die Webtools installieren?",
@@ -867,7 +868,7 @@ export const site: SiteContent = {
             "answer": "Exporte erfolgen als CSV oder JSON mit der von Ihnen gewählten Feldauswahl, dedupliziert durch Place ID."
           },
           {
-            "question": "Sieht MapsGrab die von mir erfassten Daten?",
+            "question": "Sieht MapExporter die von mir erfassten Daten?",
             "answer": "Ihre Einstellungen und Ergebnisse werden lokal in Ihrem Browser gespeichert. Unsere Server verarbeiten nur Remote-Konfiguration, Konto- und Kontingentstatus, optionale E-Mail-/soziale Anreicherung und minimale Nutzungsprotokolle."
           }
         ]
@@ -880,14 +881,14 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "Installieren Sie die Erweiterung, öffnen Sie Google Maps, suchen Sie und exportieren Sie Ihre erste Liste – kein Konto erforderlich.",
-        "install": "Installieren Sie MapsGrab kostenlos",
+        "install": "Installieren Sie MapExporter kostenlos",
         "online": "Probieren Sie den Online Scraper aus",
         "note": "Kostenloses monatliches Kontingent inklusive. Keine Kreditkarte."
       }
     },
     "extension": {
       "seo": {
-        "title": "MapsGrab für Chrome, Edge und Firefox – Google Maps Extractor Extension",
+        "title": "MapExporter für Chrome, Edge und Firefox – Google Maps Extractor Extension",
         "description": "Extrahieren Sie 36-Spalten mit Geschäftsdaten, Bewertungen und Fotos aus Google Maps, reichern Sie Datensätze mit E-Mails und sozialen Links an, führen Sie Batch-Aufgaben aus und exportieren Sie nach CSV oder JSON."
       },
       "hero": {
@@ -909,8 +910,8 @@ export const site: SiteContent = {
           "Exporte bleiben auf Ihrem Computer"
         ],
         "theater": {
-          "panelLabel": "Vorschau des MapsGrab-Panels",
-          "extensionActive": "MapsGrab ist auf dieser Seite aktiv",
+          "panelLabel": "Vorschau des MapExporter-Panels",
+          "extensionActive": "MapExporter ist auf dieser Seite aktiv",
           "dock": "Links/rechts andocken",
           "filters": [
             "Jetzt geöffnet",
@@ -975,11 +976,11 @@ export const site: SiteContent = {
             "accent": " Kartenansicht ",
             "tail": ""
           },
-          "lead": "Das Bedienfeld MapsGrab erscheint direkt auf Google Maps. Suchergebnisse, Geschäftsseiten und gespeicherte Listen erhalten jeweils den richtigen Extraktionsmodus – kein Kopieren und Einfügen, kein Tab-Jonglieren."
+          "lead": "Das Bedienfeld MapExporter erscheint direkt auf Google Maps. Suchergebnisse, Geschäftsseiten und gespeicherte Listen erhalten jeweils den richtigen Extraktionsmodus – kein Kopieren und Einfügen, kein Tab-Jonglieren."
         },
         "search": {
           "title": "Suchergebnisse",
-          "description": "Drücken Sie bei jeder Suche auf „Extrahieren starten“. MapsGrab scrollt im menschlichen Tempo durch die Ergebnisliste und sammelt jede Auflistung, während sie geladen wird."
+          "description": "Drücken Sie bei jeder Suche auf „Extrahieren starten“. MapExporter scrollt im menschlichen Tempo durch die Ergebnisliste und sammelt jede Auflistung, während sie geladen wird."
         },
         "place": {
           "title": "Geschäftsseiten",
@@ -995,7 +996,7 @@ export const site: SiteContent = {
         },
         "saved": {
           "title": "Gespeicherte Listen",
-          "description": "Öffnen Sie eine gespeicherte Liste und drücken Sie einmal Start. MapsGrab öffnet nacheinander jeden Ort und sammelt ihn ein – keine Klicks pro Artikel.",
+          "description": "Öffnen Sie eine gespeicherte Liste und drücken Sie einmal Start. MapExporter öffnet nacheinander jeden Ort und sammelt ihn ein – keine Klicks pro Artikel.",
           "listName": "Favoriten · {count} Orte"
         }
       },
@@ -1112,7 +1113,7 @@ export const site: SiteContent = {
             "accent": " Geh weg. ",
             "tail": ""
           },
-          "lead": "Fügen Sie bis zu 500-Schlüsselwörter ein oder überprüfen Sie URLs in einer Aufgabe. MapsGrab geht sie Element für Element mit Live-Fortschritt durch, überspringt alles, was ins Stocken gerät, und exportiert automatisch, wenn die Aufgabe abgeschlossen ist."
+          "lead": "Fügen Sie bis zu 500-Schlüsselwörter ein oder überprüfen Sie URLs in einer Aufgabe. MapExporter geht sie Element für Element mit Live-Fortschritt durch, überspringt alles, was ins Stocken gerät, und exportiert automatisch, wenn die Aufgabe abgeschlossen ist."
         },
         "checks": [
           "Schlüsselwortaufgaben führen eine Maps-Suche pro Schlüsselwort durch",
@@ -1170,10 +1171,10 @@ export const site: SiteContent = {
         ],
         "diagram": {
           "browser": "Ihr Browser",
-          "servers": "MapsGrab-Server",
+          "servers": "MapExporter-Server",
           "nodes": {
             "mapsTab": "Registerkarte Google Maps",
-            "panel": "MapsGrab-Panel",
+            "panel": "MapExporter-Panel",
             "storage": "Lokaler Speicher",
             "exports": "Ihre Exporte",
             "config": "Remote-Konfiguration",
@@ -1193,7 +1194,7 @@ export const site: SiteContent = {
           "kicker": "Installieren",
           "title": {
             "lead": "Installieren Sie ",
-            "accent": " MapsGrab ",
+            "accent": " MapExporter ",
             "tail": ""
           },
           "lead": "Laden Sie hier ZIP herunter und befolgen Sie die Schritte für Ihren Browser. Chrome, Edge und Brave laden den entpackten Ordner. Firefox verwendet ein separates temporäres Add-on, das nach einem Neustart neu geladen werden muss. Klicken Sie auf ein Bild, um es in voller Größe anzuzeigen."
@@ -1217,11 +1218,11 @@ export const site: SiteContent = {
                 "description": [
                   "Herunterladen ",
                   {
-                    "code": "mapsgrab.zip"
+                    "code": "mapexporter.zip"
                   },
                   ". Klicken Sie auf Windows mit der rechten Maustaste und wählen Sie „Alle extrahieren“. Doppelklicken Sie auf macOS. Behalten Sie den extrahierten Ordner."
                 ],
-                "shot": "MapsGrab ZIP heruntergeladen in Chrome"
+                "shot": "MapExporter ZIP heruntergeladen in Chrome"
               },
               {
                 "title": "Öffnen Sie die Erweiterungsseite",
@@ -1252,9 +1253,9 @@ export const site: SiteContent = {
               {
                 "title": "Laden Sie den entpackten Ordner",
                 "description": [
-                  "Klicken Sie auf „Entpackt laden“ und wählen Sie den extrahierten Ordner aus. MapsGrab erscheint in der Erweiterungsliste. Öffnen Sie eine Google Maps-Suche, um sie zu verwenden."
+                  "Klicken Sie auf „Entpackt laden“ und wählen Sie den extrahierten Ordner aus. MapExporter erscheint in der Erweiterungsliste. Öffnen Sie eine Google Maps-Suche, um sie zu verwenden."
                 ],
-                "shot": "Laden Sie es ausgepackt mit hinzugefügter MapsGrab-Karte"
+                "shot": "Laden Sie es ausgepackt mit hinzugefügter MapExporter-Karte"
               }
             ]
           },
@@ -1268,11 +1269,11 @@ export const site: SiteContent = {
                 "description": [
                   "Herunterladen ",
                   {
-                    "code": "mapsgrab-firefox.zip"
+                    "code": "mapexporter-firefox.zip"
                   },
                   ". Klicken Sie auf Windows mit der rechten Maustaste und wählen Sie „Alle extrahieren“. Doppelklicken Sie auf macOS. Behalten Sie den extrahierten Ordner."
                 ],
-                "shot": "MapsGrab Firefox ZIP heruntergeladen in Firefox"
+                "shot": "MapExporter Firefox ZIP heruntergeladen in Firefox"
               },
               {
                 "title": "Öffnen Sie die Debugging-Seite",
@@ -1294,7 +1295,7 @@ export const site: SiteContent = {
                   },
                   " im entpackten Ordner. Beim Neustart von Firefox wird ein temporäres Add-on entladen. Wiederholen Sie diesen Schritt, um es erneut zu laden."
                 ],
-                "shot": "MapsGrab wird als temporäre Firefox-Erweiterung geladen, wobei das Hintergrundskript ausgeführt wird"
+                "shot": "MapExporter wird als temporäre Firefox-Erweiterung geladen, wobei das Hintergrundskript ausgeführt wird"
               }
             ]
           }
@@ -1310,7 +1311,7 @@ export const site: SiteContent = {
           "status": "Vorabversion",
           "date": "August 2026",
           "items": [
-            "Erste Vorabversion der MapsGrab-Erweiterung",
+            "Erste Vorabversion der MapExporter-Erweiterung",
             "Google Maps-Suchextraktion mit automatischem Scrollen und dem 36-Spaltenschema",
             "Überprüfung und Fotoextraktion von Unternehmensseiten",
             "E-Mail- und Social-Media-Anreicherung pro Unternehmen",
@@ -1364,12 +1365,12 @@ export const site: SiteContent = {
             "answer": "Extraktionsregeln werden als Remote-Konfiguration ausgeliefert, sodass Korrekturen das Panel erreichen, ohne dass die Erweiterung neu installiert werden muss. Wenn eine Seite nicht gelesen werden kann, zeigt das Panel einen Fehler an, anstatt stillschweigend auszufallen."
           },
           {
-            "question": "Sieht MapsGrab die von mir erfassten Daten?",
+            "question": "Sieht MapExporter die von mir erfassten Daten?",
             "answer": "Ihre Einstellungen und Ergebnisse werden lokal in Ihrem Browser gespeichert. Unsere Server verarbeiten nur die Remote-Konfiguration, den Konto- und Kontingentstatus, optionale E-Mail- und soziale Bereicherung sowie minimale Nutzungsprotokolle."
           },
           {
             "question": "Woher kommen die Daten und ist ihre Erhebung legal?",
-            "answer": "MapsGrab sammelt nur Informationen, die auf den von Ihnen besuchten Google Maps-Seiten öffentlich angezeigt werden – dieselben Details, die jeder Besucher lesen kann. Wir greifen nicht auf private Konten, geschützte Inhalte oder nicht öffentliche Daten zu."
+            "answer": "MapExporter sammelt nur Informationen, die auf den von Ihnen besuchten Google Maps-Seiten öffentlich angezeigt werden – dieselben Details, die jeder Besucher lesen kann. Wir greifen nicht auf private Konten, geschützte Inhalte oder nicht öffentliche Daten zu."
           }
         ]
       },
@@ -1381,7 +1382,7 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "Installieren Sie die Erweiterung, suchen Sie nach Google Maps und exportieren Sie eine saubere Tabelle – kein Konto erforderlich.",
-        "primary": "Installieren Sie MapsGrab",
+        "primary": "Installieren Sie MapExporter",
         "secondary": "Tarife vergleichen",
         "note": "Kostenloses monatliches Kontingent inklusive. Keine Kreditkarte."
       }
@@ -1429,7 +1430,7 @@ export const site: SiteContent = {
         "confirmedCreditsTitle": "Guthaben hinzugefügt",
         "confirmedCreditsMessage": "Ihre PayPal-Zahlung ist bestätigt und die Credits wurden hinzugefügt. Sie können diese Registerkarte schließen und im ursprünglichen Fenster fortfahren.",
         "confirmedSubscriptionTitle": "Abonnement aktiviert",
-        "confirmedSubscriptionMessage": "Ihre PayPal-Zahlung ist bestätigt und Ihr MapsGrab-Plan ist aktiv. Sie können diese Registerkarte schließen und im ursprünglichen Fenster fortfahren.",
+        "confirmedSubscriptionMessage": "Ihre PayPal-Zahlung ist bestätigt und Ihr MapExporter-Plan ist aktiv. Sie können diese Registerkarte schließen und im ursprünglichen Fenster fortfahren.",
         "failedTitle": "Die Bezahlung braucht Aufmerksamkeit",
         "failedMessage": "Wir konnten diese Bestellung nicht automatisch bestätigen. Kehren Sie zum ursprünglichen Fenster zurück oder versuchen Sie dort, Ihren Zahlungsstatus zu aktualisieren."
       },
@@ -1478,13 +1479,13 @@ export const site: SiteContent = {
         "orderExpired": "Bestellung abgelaufen. Bitte kaufen Sie erneut.",
         "fulfillmentFailed": "Die Zahlung ist eingegangen, aber es wurden noch keine Credits hinzugefügt. Bitte versuchen Sie es später noch einmal.",
         "authExpired": "Anmeldung abgelaufen. Melden Sie sich erneut an, um fortzufahren.",
-        "popupBlocked": "Ihr Browser hat das neue Fenster blockiert. Erlauben Sie MapsGrab, Pop-ups zu öffnen, und versuchen Sie es erneut."
+        "popupBlocked": "Ihr Browser hat das neue Fenster blockiert. Erlauben Sie MapExporter, Pop-ups zu öffnen, und versuchen Sie es erneut."
       }
     },
     "pricing": {
       "seo": {
-        "title": "Preise – Online-, Erweiterungs- und API-Pläne | MapsGrab",
-        "description": "MapsGrab-Pläne für jede Oberfläche: Online Scraper ab $19, Browser-Erweiterung ab $39, und API ab $15. Kostenlose Stufen sind in jedem Produkt enthalten – einmalige natürliche Monatspläne für Online und API, monatliche Abonnements für Extension."
+        "title": "Preise – Online-, Erweiterungs- und API-Pläne | MapExporter",
+        "description": "MapExporter-Pläne für jede Oberfläche: Online Scraper ab $19, Browser-Erweiterung ab $39, und API ab $15. Kostenlose Stufen sind in jedem Produkt enthalten – einmalige natürliche Monatspläne für Online und API, monatliche Abonnements für Extension."
       },
       "hero": {
         "kicker": "Preise",
@@ -1510,7 +1511,7 @@ export const site: SiteContent = {
           "unit": "Aufzeichnungen",
           "eyebrow": "Online-Scraper-Pläne",
           "title": "Cloud-Extraktion, Preis nach Datensätzen",
-          "description": "Führen Sie die MapsGrab-Engine in unserer Infrastruktur aus. Ein Datensatz ist eine erfasste Geschäftszeile. Bezahlte Pläne beinhalten optionale E-Mail- und Social-Media-Anreicherung ohne zusätzliche Aufzeichnungskosten.",
+          "description": "Führen Sie die MapExporter-Engine in unserer Infrastruktur aus. Ein Datensatz ist eine erfasste Geschäftszeile. Bezahlte Pläne beinhalten optionale E-Mail- und Social-Media-Anreicherung ohne zusätzliche Aufzeichnungskosten.",
           "billingChips": [
             "Einmalige Zahlung",
             "Deckt einen natürlichen Monat ab",
@@ -1678,7 +1679,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "Gilt für das monatliche Rekordkontingent MapsGrab Online Scraper.",
+            "usageNotice": "Gilt für das monatliche Rekordkontingent MapExporter Online Scraper.",
             "successTitle": "Plan aktiviert",
             "successDescription": "Ihr einmaliger 1-Monatsplan ist live. Der Online Scraper holt es bei der nächsten Kontingentaktualisierung ab."
           }
@@ -1826,7 +1827,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "Gilt für das monatliche Kontingent der Browsererweiterung MapsGrab.",
+            "usageNotice": "Gilt für das monatliche Kontingent der Browsererweiterung MapExporter.",
             "successTitle": "Plan aktiviert",
             "successDescription": "Ihr einmaliger 1-Monatsplan ist live. Die Erweiterung übernimmt es bei der nächsten Kontingentaktualisierung."
           }
@@ -1904,7 +1905,7 @@ export const site: SiteContent = {
               "id": "business",
               "productId": "api_business",
               "name": "Geschäft",
-              "tagline": "Für Produkte, die auf MapsGrab-Daten basieren",
+              "tagline": "Für Produkte, die auf MapExporter-Daten basieren",
               "price": "$115",
               "periodLabel": "einmalig · 1 Monat",
               "quota": "10,000 Anfragen/Monat",
@@ -2015,7 +2016,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "Gilt für das monatliche Anforderungskontingent MapsGrab API.",
+            "usageNotice": "Gilt für das monatliche Anforderungskontingent MapExporter API.",
             "successTitle": "Plan aktiviert",
             "successDescription": "Ihr einmaliger 1-Monatsplan ist live. Ihr API-Schlüssel übernimmt das neue Kontingent bei der nächsten Anfrage."
           }
@@ -2115,7 +2116,7 @@ export const site: SiteContent = {
         "loading": "Zahlungsoptionen werden geladen...",
         "loadFailed": "Die Zahlungsoptionen konnten nicht geladen werden. Aktualisieren Sie die Seite, um es erneut zu versuchen.",
         "noChannels": "Für diesen Plan ist derzeit keine Zahlungsmethode verfügbar.",
-        "productTitlePrefix": "MapsGrab",
+        "productTitlePrefix": "MapExporter",
         "failedTitle": "Zahlung unvollständig",
         "billingPeriodMonthly": "1 Monat",
         "billingAutoRenew": "Automatische Verlängerung bis zur Kündigung",
@@ -2156,7 +2157,7 @@ export const site: SiteContent = {
             "answer": "Ein Datensatz ist eine gesammelte Zeile – dieselbe Einheit, die auch die kostenlosen Pläne zählen. Auf dem Online Scraper ist das ein Geschäft; In der Erweiterung ist jedes erfasste Unternehmen, jede Bewertung oder jedes erfasste Foto ein Datensatz. Durch E-Mail- und soziale Bereicherung werden keine Datensätze hinzugefügt. Auf der Registerkarte API wird die Nutzung stattdessen in erfolgreichen Anfragen gezählt."
           },
           {
-            "question": "Benötige ich einen kostenpflichtigen Plan, um MapsGrab auszuprobieren?",
+            "question": "Benötige ich einen kostenpflichtigen Plan, um MapExporter auszuprobieren?",
             "answer": "Nein. Für jedes Produkt gibt es ein kostenloses Kontingent ohne zeitliche Begrenzung: Der Online Scraper und die Erweiterung umfassen 1,000-Datensätze pro Monat, und API umfasst 20-Anfragen pro Monat. Die kostenlosen Online-Scraper- und Erweiterungspläne beinhalten keine E-Mail- oder Social-Media-Anreicherung. Bezahlte Online-Pläne beinhalten es standardmäßig und Sie können es für jede Aufgabe deaktivieren."
           },
           {
@@ -2187,8 +2188,8 @@ export const site: SiteContent = {
       }
     },
     "extensionLogin": {
-      "title": "Erweiterungsanmeldung | MapsGrab",
-      "description": "Melden Sie sich an, um Ihre MapsGrab-Websitesitzung mit der Browsererweiterung zu verbinden.",
+      "title": "Erweiterungsanmeldung | MapExporter",
+      "description": "Melden Sie sich an, um Ihre MapExporter-Websitesitzung mit der Browsererweiterung zu verbinden.",
       "eyebrow": "Browser-Erweiterung",
       "heading": "Erweiterungsanmeldung",
       "checkingState": "Überprüfung",
@@ -2221,7 +2222,7 @@ export const site: SiteContent = {
     },
     "online": {
       "seo": {
-        "title": "Online Google Maps Scraper – Extraktion in der Cloud ausführen | MapsGrab",
+        "title": "Online Google Maps Scraper – Extraktion in der Cloud ausführen | MapExporter",
         "description": "Führen Sie Google Maps-Stichwortsuchen in der Cloud durch, sammeln Sie Geschäftsdaten und laden Sie einen CSV pro Aufgabe herunter."
       },
       "hero": {
@@ -2484,7 +2485,7 @@ export const site: SiteContent = {
             "accent": ", Preis nach Datensätzen ",
             "tail": ""
           },
-          "lead": "Führen Sie die MapsGrab-Engine in unserer Infrastruktur aus. Ein Datensatz besteht aus einer gelieferten Geschäftszeile; Bezahlte Pläne beinhalten E-Mail und Social Enrichment ohne zusätzliche Aufzeichnungskosten."
+          "lead": "Führen Sie die MapExporter-Engine in unserer Infrastruktur aus. Ein Datensatz besteht aus einer gelieferten Geschäftszeile; Bezahlte Pläne beinhalten E-Mail und Social Enrichment ohne zusätzliche Aufzeichnungskosten."
         },
         "specs": {
           "keywords": "Schlüsselwörter pro Aufgabe",
@@ -2511,7 +2512,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Woher kommen die Daten und ist ihre Erhebung legal?",
-            "answer": "MapsGrab sammelt nur Informationen, die öffentlich auf Google Maps angezeigt werden – dieselben Details, die jeder Besucher lesen kann. Wir greifen nicht auf private Konten, geschützte Inhalte oder nicht öffentliche Daten zu."
+            "answer": "MapExporter sammelt nur Informationen, die öffentlich auf Google Maps angezeigt werden – dieselben Details, die jeder Besucher lesen kann. Wir greifen nicht auf private Konten, geschützte Inhalte oder nicht öffentliche Daten zu."
           },
           {
             "question": "In welche Formate kann ich exportieren?",
@@ -2519,7 +2520,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Wie viel kostet es?",
-            "answer": "Der Online Scraper folgt den MapsGrab-Plänen auf der Preisseite, einschließlich des kostenlosen monatlichen Kontingents an Datensätzen. Bezahlte Pläne erhöhen die Limits, wenn Sie mehr benötigen."
+            "answer": "Der Online Scraper folgt den MapExporter-Plänen auf der Preisseite, einschließlich des kostenlosen monatlichen Kontingents an Datensätzen. Bezahlte Pläne erhöhen die Limits, wenn Sie mehr benötigen."
           },
           {
             "question": "Benötige ich einen kostenpflichtigen Plan für E-Mails und soziale Profile?",
@@ -2695,8 +2696,8 @@ export const site: SiteContent = {
     },
     "scraperApi": {
       "seo": {
-        "title": "Google Maps Scraper API – Geschäftsdaten in JSON | MapsGrab",
-        "description": "Der MapsGrab-Scraper API gibt Google Maps-Suchergebnisse als JSON zurück: Name, Adresse, Telefon, Website, Bewertung, Öffnungszeiten, Koordinaten, Place ID und FID – plus E-Mails und soziale Profile auf Anfrage."
+        "title": "Google Maps Scraper API – Geschäftsdaten in JSON | MapExporter",
+        "description": "Der MapExporter-Scraper API gibt Google Maps-Suchergebnisse als JSON zurück: Name, Adresse, Telefon, Website, Bewertung, Öffnungszeiten, Koordinaten, Place ID und FID – plus E-Mails und soziale Profile auf Anfrage."
       },
       "hero": {
         "title": {
@@ -3018,7 +3019,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Wie authentifiziere ich mich?",
-            "answer": "Senden Sie Ihren MapsGrab API-Schlüssel als Bearer-Token im Authorization-Header. Jedes Konto hat einen Schlüssel. Erst wenn Sie ihn generieren, wird er vollständig angezeigt. Durch die Generierung eines neuen Schlüssels wird der alte sofort deaktiviert."
+            "answer": "Senden Sie Ihren MapExporter API-Schlüssel als Bearer-Token im Authorization-Header. Jedes Konto hat einen Schlüssel. Erst wenn Sie ihn generieren, wird er vollständig angezeigt. Durch die Generierung eines neuen Schlüssels wird der alte sofort deaktiviert."
           },
           {
             "question": "Wie werden Anfragen gezählt?",
@@ -3045,8 +3046,8 @@ export const site: SiteContent = {
     },
     "reviewsApi": {
       "seo": {
-        "title": "Google Maps Bewertungen Scraper API — Bewertungen in JSON | MapsGrab",
-        "description": "Die MapsGrab-Bewertungen API gibt die öffentlichen Bewertungen eines Google Maps-Unternehmens als JSON zurück: Bewertung, Text und Übersetzung, Autor, Datum, Bewertungsfotos und Eigentümerantworten – bis zu 60 pro Seite mit einem Cursor."
+        "title": "Google Maps Bewertungen Scraper API — Bewertungen in JSON | MapExporter",
+        "description": "Die MapExporter-Bewertungen API gibt die öffentlichen Bewertungen eines Google Maps-Unternehmens als JSON zurück: Bewertung, Text und Übersetzung, Autor, Datum, Bewertungsfotos und Eigentümerantworten – bis zu 60 pro Seite mit einem Cursor."
       },
       "hero": {
         "title": {
@@ -3292,7 +3293,7 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "Fotos API — URLs öffentlicher Unternehmensfotos | MapsGrab",
+        "title": "Fotos API — URLs öffentlicher Unternehmensfotos | MapExporter",
         "description": "Rufe öffentliche Foto-URLs eines Unternehmens per fid als JSON ab. max_results begrenzt die Lieferung; die Ergebnisse sind unvollständig und garantieren kein vollständiges Album."
       },
       "hero": {
@@ -3447,7 +3448,7 @@ export const site: SiteContent = {
     },
     "scraperMcp": {
       "seo": {
-        "title": "Google Maps Scraper MCP Server | MapsGrab",
+        "title": "Google Maps Scraper MCP Server | MapExporter",
         "description": "Suche Google-Maps-Orte, lies Bewertungen und rufe öffentliche Unternehmensfotos über eine MCP-Verbindung ab."
       },
       "clients": {
@@ -3482,7 +3483,7 @@ export const site: SiteContent = {
         ]
       },
       "agent": {
-        "label": "Beispiel einer Agentensitzung: eine Frage zu lokalen Unternehmen, ein MapsGrab-Tool-Aufruf mit strukturierten Ergebnissen und die Antwort des Agenten",
+        "label": "Beispiel einer Agentensitzung: eine Frage zu lokalen Unternehmen, ein MapExporter-Tool-Aufruf mit strukturierten Ergebnissen und die Antwort des Agenten",
         "session": "Agentensitzung",
         "connected": "MCP Server {server} verbunden",
         "placeholder": "Fragen Sie nach einem Ort auf Google Maps…",
@@ -3743,7 +3744,7 @@ export const site: SiteContent = {
         "clientsLabel": "MCP Kunden",
         "anyClient": "Jeder MCP-Client",
         "toolsLabel": "Werkzeuge",
-        "hub": "MapsGrab MCP",
+        "hub": "MapExporter MCP",
         "publicData": "Öffentliche Google Maps-Daten",
         "resultLabel": "Ergebnis",
         "results": [
@@ -3754,11 +3755,11 @@ export const site: SiteContent = {
         "steps": [
           {
             "title": "Verbinden",
-            "description": "Fügen Sie den Endpunkt zu Ihrem Client hinzu und melden Sie sich dann über Ihren Browser bei MapsGrab an."
+            "description": "Fügen Sie den Endpunkt zu Ihrem Client hinzu und melden Sie sich dann über Ihren Browser bei MapExporter an."
           },
           {
             "title": "Entdecken",
-            "description": "Ihr Agent listet die MapsGrab-Tools und ihre Eingabeschemata auf."
+            "description": "Ihr Agent listet die MapExporter-Tools und ihre Eingabeschemata auf."
           },
           {
             "title": "Anruf",
@@ -3773,7 +3774,7 @@ export const site: SiteContent = {
           "accent": " pro Client ",
           "tail": ""
         },
-        "lead": "Richten Sie Ihren Client auf den Endpunkt MapsGrab und melden Sie sich über Ihren Browser an – kein API-Schlüssel zum Kopieren, kein SDK, kein lokaler Prozess zum Ausführen.",
+        "lead": "Richten Sie Ihren Client auf den Endpunkt MapExporter und melden Sie sich über Ihren Browser an – kein API-Schlüssel zum Kopieren, kein SDK, kein lokaler Prozess zum Ausführen.",
         "tabsLabel": "MCP Kunde",
         "copy": "Konfiguration kopieren",
         "clients": {
@@ -3782,15 +3783,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "Fügen Sie den Server hinzu",
-                "description": "Führen Sie den Befehl aus, um `mapsgrab` über HTTP zu registrieren."
+                "description": "Führen Sie den Befehl aus, um `mapexporter` über HTTP zu registrieren."
               },
               {
                 "title": "anmelden",
-                "description": "Führen Sie in Claude Code `/mcp` aus, wählen Sie `mapsgrab` und authentifizieren Sie sich – MapsGrab wird in Ihrem Browser geöffnet, damit Sie es genehmigen können."
+                "description": "Führen Sie in Claude Code `/mcp` aus, wählen Sie `mapexporter` und authentifizieren Sie sich – MapExporter wird in Ihrem Browser geöffnet, damit Sie es genehmigen können."
               },
               {
                 "title": "Fragen Sie nach Kartendaten",
-                "description": "Claude Code listet die MapsGrab-Tools auf und ruft sie auf, wenn eine Eingabeaufforderung sie benötigt."
+                "description": "Claude Code listet die MapExporter-Tools auf und ruft sie auf, wenn eine Eingabeaufforderung sie benötigt."
               }
             ]
           },
@@ -3803,11 +3804,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "anmelden",
-                "description": "Klicken Sie in den Cursor-Einstellungen → MCP auf „Verbinden“ neben `mapsgrab` und genehmigen Sie es in Ihrem Browser."
+                "description": "Klicken Sie in den Cursor-Einstellungen → MCP auf „Verbinden“ neben `mapexporter` und genehmigen Sie es in Ihrem Browser."
               },
               {
                 "title": "Benutzen Sie die Werkzeuge",
-                "description": "`mapsgrab` zeigt seine Tools in der Serverliste MCP an, bereit für den Agenten."
+                "description": "`mapexporter` zeigt seine Tools in der Serverliste MCP an, bereit für den Agenten."
               }
             ]
           },
@@ -3820,11 +3821,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "anmelden",
-                "description": "Starten Sie den Server. VS Code fordert zur Authentifizierung mit MapsGrab auf und öffnet Ihren Browser zur Genehmigung."
+                "description": "Starten Sie den Server. VS Code fordert zur Authentifizierung mit MapExporter auf und öffnet Ihren Browser zur Genehmigung."
               },
               {
                 "title": "Verwenden Sie den Agentenmodus",
-                "description": "Öffnen Sie Chat im Agentenmodus und aktivieren Sie die Tools MapsGrab."
+                "description": "Öffnen Sie Chat im Agentenmodus und aktivieren Sie die Tools MapExporter."
               }
             ]
           },
@@ -3833,15 +3834,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "Fügen Sie den Server hinzu",
-                "description": "Führen Sie `codex mcp add` aus, um `mapsgrab` von URL zu registrieren."
+                "description": "Führen Sie `codex mcp add` aus, um `mapexporter` von URL zu registrieren."
               },
               {
                 "title": "anmelden",
-                "description": "Führen Sie `codex mcp login mapsgrab` aus und genehmigen Sie MapsGrab in Ihrem Browser."
+                "description": "Führen Sie `codex mcp login mapexporter` aus und genehmigen Sie MapExporter in Ihrem Browser."
               },
               {
                 "title": "Starten Sie Codex",
-                "description": "Neue Sitzungen laden `mapsgrab` und seine Tools."
+                "description": "Neue Sitzungen laden `mapexporter` und seine Tools."
               }
             ]
           }
@@ -3870,7 +3871,7 @@ export const site: SiteContent = {
           "accent": " Zeilen zurückholen. ",
           "tail": ""
         },
-        "lead": "Kundengewinnung, lokale Marktforschung, Bewertungsüberwachung – beschreiben Sie den Auftrag, und Ihr Agent entscheidet, welches MapsGrab-Tool er anruft.",
+        "lead": "Kundengewinnung, lokale Marktforschung, Bewertungsüberwachung – beschreiben Sie den Auftrag, und Ihr Agent entscheidet, welches MapExporter-Tool er anruft.",
         "rows": [
           [
             {
@@ -4059,7 +4060,7 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "Was ist der Server MapsGrab MCP?",
+            "question": "Was ist der Server MapExporter MCP?",
             "answer": "Suche Google-Maps-Orte, lies Bewertungen und rufe öffentliche Unternehmensfotos über eine MCP-Verbindung ab. search_places / list_reviews / list_photos."
           },
           {
@@ -4068,7 +4069,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Wie erfolgt die Authentifizierung?",
-            "answer": "Mit OAuth-Anmeldung: Claude Code, Cursor, VS Code, Codex und anderen Clients, die die MCP-Autorisierung unterstützen, öffnen Sie MapsGrab in Ihrem Browser. Sie genehmigen den Kunden und können ihn später im Dashboard → API widerrufen. Nur wenn sich Ihr Kunde nicht anmelden kann, übergeben Sie Ihren Schlüssel API als Inhabertoken im Header Authorization."
+            "answer": "Mit OAuth-Anmeldung: Claude Code, Cursor, VS Code, Codex und anderen Clients, die die MCP-Autorisierung unterstützen, öffnen Sie MapExporter in Ihrem Browser. Sie genehmigen den Kunden und können ihn später im Dashboard → API widerrufen. Nur wenn sich Ihr Kunde nicht anmelden kann, übergeben Sie Ihren Schlüssel API als Inhabertoken im Header Authorization."
           },
           {
             "question": "Wie werden Werkzeugaufrufe gezählt?",
@@ -4117,7 +4118,7 @@ export const site: SiteContent = {
         },
         "cta": {
           "kicker": "Massenextraktion",
-          "primary": "Installieren Sie MapsGrab",
+          "primary": "Installieren Sie MapExporter",
           "secondary": "Preise anzeigen",
           "note": "Kostenloses monatliches Kontingent inklusive. Keine Kreditkarte."
         },
@@ -4129,7 +4130,7 @@ export const site: SiteContent = {
       },
       "placeIdFinder": {
         "seo": {
-          "title": "Place ID Finder – Holen Sie sich einen Google Maps Place ID von einem URL | MapsGrab",
+          "title": "Place ID Finder – Holen Sie sich einen Google Maps Place ID von einem URL | MapExporter",
           "description": "Fügen Sie einen Google Maps Ort URL ein und erhalten Sie sofort dessen Place ID, CID und FID. Kostenloser browserbasierter Place ID-Finder – keine Anmeldung, Ihr URL verlässt nie Ihr Gerät."
         },
         "hero": {
@@ -4276,12 +4277,12 @@ export const site: SiteContent = {
             "accent": " im Maßstab? ",
             "tail": ""
           },
-          "lead": "MapsGrab extrahiert Place ID, CID und FID für jedes erfasste Unternehmen – zusammen mit 33 anderen Spalten – und exportiert direkt nach CSV oder JSON."
+          "lead": "MapExporter extrahiert Place ID, CID und FID für jedes erfasste Unternehmen – zusammen mit 33 anderen Spalten – und exportiert direkt nach CSV oder JSON."
         }
       },
       "reviewLinkGenerator": {
         "seo": {
-          "title": "Google Review Link Generator – Kostenlose direkte Bewertung URL | MapsGrab",
+          "title": "Google Review Link Generator – Kostenlose direkte Bewertung URL | MapExporter",
           "description": "Verwandeln Sie einen Google Maps Ort URL in einen direkten Google Bewertungslink, den Sie mit Kunden teilen können. Kostenlos, browserbasiert und es wird nichts hochgeladen."
         },
         "hero": {
@@ -4315,7 +4316,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Woher die Orts-ID kommt",
-            "body": "Das Tool verwendet dieselbe lokale Dekodierung wie der Finder Place ID: Die Kennung ist bereits in den Karten URL vorhanden und die Konvertierung in die Form „ChIJ…“ erfolgt vollständig in Ihrem Browser. Wenn Sie mehrere Standorte verwalten, wiederholen Sie den Vorgang für jeden Ort – oder lassen Sie MapsGrab die Spalte Place ID bei jedem Export übernehmen, damit Bewertungslinks in großen Mengen aus einer Tabelle generiert werden können."
+            "body": "Das Tool verwendet dieselbe lokale Dekodierung wie der Finder Place ID: Die Kennung ist bereits in den Karten URL vorhanden und die Konvertierung in die Form „ChIJ…“ erfolgt vollständig in Ihrem Browser. Wenn Sie mehrere Standorte verwalten, wiederholen Sie den Vorgang für jeden Ort – oder lassen Sie MapExporter die Spalte Place ID bei jedem Export übernehmen, damit Bewertungslinks in großen Mengen aus einer Tabelle generiert werden können."
           }
         ],
         "faq": {
@@ -4349,12 +4350,12 @@ export const site: SiteContent = {
             "accent": " ",
             "tail": " verdienen"
           },
-          "lead": "MapsGrab ruft die Bewertungen jeder Unternehmensseite ab – Bewertung, Text, Datum und Eigentümerantworten –, sodass Sie sehen können, wie Feedback eintrifft, und schneller darauf antworten können."
+          "lead": "MapExporter ruft die Bewertungen jeder Unternehmensseite ab – Bewertung, Text, Datum und Eigentümerantworten –, sodass Sie sehen können, wie Feedback eintrifft, und schneller darauf antworten können."
         }
       },
       "emailChecker": {
         "seo": {
-          "title": "E-Mail-Checker – E-Mail-Adresse kostenlos prüfen | MapsGrab",
+          "title": "E-Mail-Checker – E-Mail-Adresse kostenlos prüfen | MapExporter",
           "description": "Finden Sie heraus, ob eine E-Mail-Adresse E-Mails empfangen kann. Der kostenlose E-Mail-Checker fragt beim Mailserver nach und zeigt Status, Zustellbarkeit, MX-Einträge und Kontotyp."
         },
         "hero": {
@@ -4435,7 +4436,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "So lesen Sie das Ergebnis",
-            "body": "„Sicher“ bedeutet, dass das Postfach existiert und E-Mails annimmt. Ungültige und deaktivierte Adressen führen zu Bounces, und an Spamfallen sollte nie gesendet werden. Eine Catch-all-Domain nimmt jede Adresse an, daher lässt sich das Postfach selbst nicht bestätigen; Rollenadressen, Wegwerfadressen und volle Postfächer sind für die Kontaktaufnahme riskant. „Unbekannt“ bedeutet, dass der Mailserver keine eindeutige Antwort gegeben hat – versuchen Sie es später erneut. MapsGrab sammelt E-Mail-Adressen von der Website jedes Unternehmens, und mit diesem Checker prüfen Sie eine davon schnell, bevor Sie Kontakt aufnehmen."
+            "body": "„Sicher“ bedeutet, dass das Postfach existiert und E-Mails annimmt. Ungültige und deaktivierte Adressen führen zu Bounces, und an Spamfallen sollte nie gesendet werden. Eine Catch-all-Domain nimmt jede Adresse an, daher lässt sich das Postfach selbst nicht bestätigen; Rollenadressen, Wegwerfadressen und volle Postfächer sind für die Kontaktaufnahme riskant. „Unbekannt“ bedeutet, dass der Mailserver keine eindeutige Antwort gegeben hat – versuchen Sie es später erneut. MapExporter sammelt E-Mail-Adressen von der Website jedes Unternehmens, und mit diesem Checker prüfen Sie eine davon schnell, bevor Sie Kontakt aufnehmen."
           }
         ],
         "faq": {
@@ -4473,12 +4474,12 @@ export const site: SiteContent = {
             "accent": " wert sind, indem Sie ",
             "tail": " verifizieren"
           },
-          "lead": "MapsGrab findet die E-Mail-Adressen und sozialen Profile hinter jedem extrahierten Unternehmen – direkt von der eigenen Website des jeweiligen Unternehmens."
+          "lead": "MapExporter findet die E-Mail-Adressen und sozialen Profile hinter jedem extrahierten Unternehmen – direkt von der eigenen Website des jeweiligen Unternehmens."
         }
       },
       "latLongToDms": {
         "seo": {
-          "title": "Konvertieren Sie Lat Long in DMS – Dezimalgrad in Grad, Minuten, Sekunden | MapsGrab",
+          "title": "Konvertieren Sie Lat Long in DMS – Dezimalgrad in Grad, Minuten, Sekunden | MapExporter",
           "description": "Konvertieren Sie dezimale Breiten- und Längengrade sofort in das Format Grad, Minuten, Sekunden (DMS). Kostenloser browserbasierter Koordinatenkonverter, nichts hochgeladen."
         },
         "hero": {
@@ -4511,7 +4512,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Warum dies für die Arbeit mit Kartendaten wichtig ist",
-            "body": "Koordinaten-Roundtrips sind ein täglicher Reibungspunkt beim Verschieben von Geschäftsdaten zwischen Tools: Google Maps exportiert Dezimalzahlen, während Kataster- und Druck-Workflows DMS erwarten. MapsGrab hält diese Reibung im Maßstab gering – jedes extrahierte Unternehmen trägt bereits seinen Breiten- und Längengrad im Export, und Batch-Koordinatenkonvertierungen können offline mit derselben Formel ausgeführt werden, die diese Seite verwendet."
+            "body": "Koordinaten-Roundtrips sind ein täglicher Reibungspunkt beim Verschieben von Geschäftsdaten zwischen Tools: Google Maps exportiert Dezimalzahlen, während Kataster- und Druck-Workflows DMS erwarten. MapExporter hält diese Reibung im Maßstab gering – jedes extrahierte Unternehmen trägt bereits seinen Breiten- und Längengrad im Export, und Batch-Koordinatenkonvertierungen können offline mit derselben Formel ausgeführt werden, die diese Seite verwendet."
           }
         ],
         "faq": {
@@ -4545,12 +4546,12 @@ export const site: SiteContent = {
             "accent": " extrahiert, ",
             "tail": ""
           },
-          "lead": "MapsGrab schreibt Breiten- und Längengrade in jede exportierte Zeile – keine manuelle Koordinatensuche für Ihr nächstes Routen- oder Gebietsprojekt."
+          "lead": "MapExporter schreibt Breiten- und Längengrade in jede exportierte Zeile – keine manuelle Koordinatensuche für Ihr nächstes Routen- oder Gebietsprojekt."
         }
       },
       "dmsToDd": {
         "seo": {
-          "title": "Konvertieren Sie DMS in DD – Grad Minuten Sekunden in Dezimalgrad | MapsGrab",
+          "title": "Konvertieren Sie DMS in DD – Grad Minuten Sekunden in Dezimalgrad | MapExporter",
           "description": "Konvertieren Sie Grad-, Minuten- und Sekundenkoordinaten sofort in Dezimalgrade. Kostenloser browserbasierter DMS-zu-DD-Konverter, nichts hochgeladen."
         },
         "hero": {
@@ -4559,7 +4560,7 @@ export const site: SiteContent = {
             "accent": " (Lat, Long) ",
             "tail": ""
           },
-          "description": "Geben Sie Grad, Minuten und Sekunden für beide Achsen ein und erhalten Sie reine Dezimalgrade – das Format Google Maps, Tabellenkalkulationen und MapsGrab verstehen."
+          "description": "Geben Sie Grad, Minuten und Sekunden für beide Achsen ein und erhalten Sie reine Dezimalgrade – das Format Google Maps, Tabellenkalkulationen und MapExporter verstehen."
         },
         "form": {
           "latitudeHeading": "Breitengrad (N/S)",
@@ -4586,7 +4587,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Koordinatendaten konsistent halten",
-            "body": "Gemischte Notationen sind der übliche Grund dafür, dass Standorte nach einem Import im falschen Ozean landen. Wenn man sich einmal für Dezimalgrade entscheidet und alles an der Grenze umrechnet, bleiben die Pipelines in Ordnung. MapsGrab exportiert Koordinaten bereits in Dezimalgraden, sodass die mit der Erweiterung erfassten Daten ohne Konvertierungsschritt in GIS- und BI-Tools übernommen werden."
+            "body": "Gemischte Notationen sind der übliche Grund dafür, dass Standorte nach einem Import im falschen Ozean landen. Wenn man sich einmal für Dezimalgrade entscheidet und alles an der Grenze umrechnet, bleiben die Pipelines in Ordnung. MapExporter exportiert Koordinaten bereits in Dezimalgraden, sodass die mit der Erweiterung erfassten Daten ohne Konvertierungsschritt in GIS- und BI-Tools übernommen werden."
           }
         ],
         "faq": {
@@ -4620,12 +4621,12 @@ export const site: SiteContent = {
             "accent": " im Maßstab ",
             "tail": ""
           },
-          "lead": "MapsGrab exportiert den dezimalen Breiten- und Längengrad für jedes erfasste Unternehmen neben den Spalten Adresse, Telefon und Place ID."
+          "lead": "MapExporter exportiert den dezimalen Breiten- und Längengrad für jedes erfasste Unternehmen neben den Spalten Adresse, Telefon und Place ID."
         }
       },
       "bulkKeywords": {
         "seo": {
-          "title": "Massen-Keyword-Generator – Keyword-+Standort-Kombinationen | MapsGrab",
+          "title": "Massen-Keyword-Generator – Keyword-+Standort-Kombinationen | MapExporter",
           "description": "Generieren Sie in großen Mengen Schlüsselwort- und Standortkombinationen für lokale SEO- und Karten-Scraping-Aufgaben. Fügen Sie zwei Listen ein, erhalten Sie jede Kombination und laden Sie sie als CSV herunter. Frei."
         },
         "hero": {
@@ -4660,7 +4661,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Von der Keyword-Liste bis zu den gesammelten Daten",
-            "body": "Der klassische nächste Schritt besteht darin, jede Kombination als Google Maps-Suche auszuführen und die Ergebnisse zu sammeln. Diese Schleife ist genau das, was MapsGrab automatisiert: Die Erweiterung akzeptiert eine Keyword-Liste als Batch-Aufgabe, geht die Suchanfragen einzeln durch und exportiert jedes gefundene Unternehmen – so werden die hier generierten Kombinationen zu strukturierten Zeilen, ohne dass sie manuell kopiert werden müssen."
+            "body": "Der klassische nächste Schritt besteht darin, jede Kombination als Google Maps-Suche auszuführen und die Ergebnisse zu sammeln. Diese Schleife ist genau das, was MapExporter automatisiert: Die Erweiterung akzeptiert eine Keyword-Liste als Batch-Aufgabe, geht die Suchanfragen einzeln durch und exportiert jedes gefundene Unternehmen – so werden die hier generierten Kombinationen zu strukturierten Zeilen, ohne dass sie manuell kopiert werden müssen."
           }
         ],
         "faq": {
@@ -4694,12 +4695,12 @@ export const site: SiteContent = {
             "accent": "Ergebnisse",
             "tail": ""
           },
-          "lead": "MapsGrab Batch-Aufgaben führen jedes Schlüsselwort als Maps-Suche aus und exportieren die Unternehmen dahinter – CSV oder JSON, mit Bewertungen, Fotos und Kontaktanreicherung."
+          "lead": "MapExporter Batch-Aufgaben führen jedes Schlüsselwort als Maps-Suche aus und exportieren die Unternehmen dahinter – CSV oder JSON, mit Bewertungen, Fotos und Kontaktanreicherung."
         }
       },
       "mergeCsv": {
         "seo": {
-          "title": "CSV-Dateien online zusammenführen – Mehrere CSV-Dateien kostenlos kombinieren | MapsGrab",
+          "title": "CSV-Dateien online zusammenführen – Mehrere CSV-Dateien kostenlos kombinieren | MapExporter",
           "description": "Mehrere CSV-Dateien online zu einer Datei zusammenführen. Spaltenüberschriften werden automatisch nach Vereinigung ausgerichtet – kostenlos, privat und vollständig browserbasiert."
         },
         "hero": {
@@ -4732,7 +4733,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Entwickelt für die Datenerfassung in mehreren Durchläufen",
-            "body": "Der typische Anwendungsfall ist das Anhängen von Läufen: Jede MapsGrab-Extraktionssitzung exportiert ihre eigene CSV, und durch das Zusammenführen werden die Sitzungen der Woche vor der Deduplizierung und Bereinigung in einem Datensatz zusammengeführt. Der Parser verarbeitet Felder in Anführungszeichen, eingebettete Kommas und Zeilenumbrüche in Zellen (RFC 4180), sodass Exporte mit mehrzeiligen Adressen oder Rezensionsausschnitten korrekt zusammengeführt werden."
+            "body": "Der typische Anwendungsfall ist das Anhängen von Läufen: Jede MapExporter-Extraktionssitzung exportiert ihre eigene CSV, und durch das Zusammenführen werden die Sitzungen der Woche vor der Deduplizierung und Bereinigung in einem Datensatz zusammengeführt. Der Parser verarbeitet Felder in Anführungszeichen, eingebettete Kommas und Zeilenumbrüche in Zellen (RFC 4180), sodass Exporte mit mehrzeiligen Adressen oder Rezensionsausschnitten korrekt zusammengeführt werden."
           }
         ],
         "faq": {
@@ -4766,7 +4767,7 @@ export const site: SiteContent = {
             "accent": " ein Datensatz ",
             "tail": ""
           },
-          "lead": "MapsGrab exportiert saubere CSV/JSON pro Sitzung mit Feldauswahl und Place ID Deduplizierung, sodass Datensätze mit mehreren Durchläufen bereits fast zusammengeführt beginnen."
+          "lead": "MapExporter exportiert saubere CSV/JSON pro Sitzung mit Feldauswahl und Place ID Deduplizierung, sodass Datensätze mit mehreren Durchläufen bereits fast zusammengeführt beginnen."
         }
       }
     }
@@ -4777,16 +4778,16 @@ export const company: CompanyContent = {
   "footerGroupLabel": "Unternehmen",
   "about": {
     "navLabel": "Um",
-    "seoTitle": "Über MapsGrab | Produkt und Grenzen",
-    "seoDescription": "MapsGrab ist ein Kartendaten-Toolkit für öffentliche Geschäftsdaten: eine Browsererweiterung, ein Cloud-Online-Scraper, API- und MCP-Server sowie kostenlose Web-Tools. Erfahren Sie, wo die Datengrenze liegt.",
+    "seoTitle": "Über MapExporter | Produkt und Grenzen",
+    "seoDescription": "MapExporter ist ein Kartendaten-Toolkit für öffentliche Geschäftsdaten: eine Browsererweiterung, ein Cloud-Online-Scraper, API- und MCP-Server sowie kostenlose Web-Tools. Erfahren Sie, wo die Datengrenze liegt.",
     "hero": {
-      "eyebrow": "Über MapsGrab",
+      "eyebrow": "Über MapExporter",
       "title": {
         "lead": "Kartendaten – ",
         "accent": "einfach",
         "tail": " erfasst"
       },
-      "intro": "MapsGrab erstellt Tools, die öffentlich verfügbare Geschäftsinformationen von Google Maps sammeln und in saubere, strukturierte Daten umwandeln – eine Browser-Erweiterung für Edge und Firefox, einen cloudbasierten Online-Scraper, API und MCP Server sowie kostenlose Web-Tools, von denen die meisten vollständig in Ihrem Browser ausgeführt werden.",
+      "intro": "MapExporter erstellt Tools, die öffentlich verfügbare Geschäftsinformationen von Google Maps sammeln und in saubere, strukturierte Daten umwandeln – eine Browser-Erweiterung für Edge und Firefox, einen cloudbasierten Online-Scraper, API und MCP Server sowie kostenlose Web-Tools, von denen die meisten vollständig in Ihrem Browser ausgeführt werden.",
       "contactLabel": "Kontaktieren Sie den Support",
       "extensionLabel": "Entdecken Sie die Erweiterung",
       "stageLabel": "Frühzeitiger Zugang",
@@ -4817,7 +4818,7 @@ export const company: CompanyContent = {
       },
       "lead": "Wählen Sie die Browsererweiterung, den cloudbasierten Online Scraper oder API. Die Erweiterung funktioniert in Ihrem eigenen Browser; Der Online Scraper und der API teilen sich eine Cloud-Engine, und der Server MCP bringt diesen API zu KI-Agenten.",
       "hub": {
-        "title": "MapsGrab Daten-Toolkit",
+        "title": "MapExporter Daten-Toolkit",
         "detail": "Geschäftsdaten · Bewertungen · Fotos · E-Mail und soziale Bereicherung"
       },
       "tags": {
@@ -4853,7 +4854,7 @@ export const company: CompanyContent = {
         "accent": "Grenze",
         "tail": " liegt"
       },
-      "lead": "MapsGrab geht bewusst konservativ mit Daten um. Dies sind die Produktregeln, an die wir uns halten.",
+      "lead": "MapExporter geht bewusst konservativ mit Daten um. Dies sind die Produktregeln, an die wir uns halten.",
       "publicData": {
         "title": "Nur öffentliche Daten",
         "text": "Nur öffentlich verfügbare Geschäftsinformationen – was jeder Besucher der Seite bereits sehen kann.",
@@ -4920,7 +4921,7 @@ export const company: CompanyContent = {
         "badge": "Wird in Ihrem Browser gespeichert"
       },
       "backend": {
-        "label": "MapsGrab Backend · vier Zwecke",
+        "label": "MapExporter Backend · vier Zwecke",
         "lanes": [
           {
             "title": "Remote-Konfiguration",
@@ -4978,19 +4979,19 @@ export const company: CompanyContent = {
   },
   "contact": {
     "navLabel": "Kontakt",
-    "seoTitle": "Kontaktieren Sie den MapsGrab-Support",
-    "seoDescription": "Kontaktieren Sie MapsGrab bezüglich Konten, der Browsererweiterung, Abrechnung, Tools oder Datenschutzanfragen.",
-    "eyebrow": "Kontakt MapsGrab",
+    "seoTitle": "Kontaktieren Sie den MapExporter-Support",
+    "seoDescription": "Kontaktieren Sie MapExporter bezüglich Konten, der Browsererweiterung, Abrechnung, Tools oder Datenschutzanfragen.",
+    "eyebrow": "Kontakt MapExporter",
     "title": {
       "lead": "Sprechen Sie mit einem ",
       "accent": "Menschen",
       "tail": ""
     },
-    "intro": "Schreiben Sie uns und jemand wird es lesen. Der Support wird derzeit direkt vom Team übernommen, das MapsGrab erstellt.",
+    "intro": "Schreiben Sie uns und jemand wird es lesen. Der Support wird derzeit direkt vom Team übernommen, das MapExporter erstellt.",
     "emailCardLabel": "Support-E-Mail",
     "copyEmail": "Kopieren Sie {email}",
     "emailLabel": "E-Mail-Support",
-    "emailSubject": "MapsGrab Supportanfrage",
+    "emailSubject": "MapExporter Supportanfrage",
     "responseTimes": "Wir beantworten Support-E-Mails innerhalb eines Werktages, normalerweise schneller. Datenschutzanfragen können einige Tage dauern, wenn wir zunächst die Kontoinhaberschaft bestätigen müssen.",
     "include": {
       "title": "Was einzuschließen ist",
@@ -5018,6 +5019,7 @@ export const company: CompanyContent = {
   }
 }
 
+// TODO: Email Checker 披露译文（terms 的 what-the-service-does；privacy 的 intro、前两张 glance、where-data-is-stored、what-our-backend-processes）由 AI 翻译，尚未经专业法务校对，校对前不视为定稿；合同见 docs/feat/015.工具与增长/tech-Email验证.md。
 export const legal: LegalContent = {
   "page": {
     "crumbHome": "Heim",
@@ -5036,13 +5038,13 @@ export const legal: LegalContent = {
   },
   "terms": {
     "navLabel": "Bedingungen",
-    "seoTitle": "Nutzungsbedingungen | MapsGrab",
-    "seoDescription": "Die Nutzungsbedingungen von MapsGrab: akzeptable Nutzung, Verantwortung des Benutzers für gesammelte Daten, Einkäufe, Haftungsausschluss und wie Sie uns kontaktieren können.",
+    "seoTitle": "Nutzungsbedingungen | MapExporter",
+    "seoDescription": "Die Nutzungsbedingungen von MapExporter: akzeptable Nutzung, Verantwortung des Benutzers für gesammelte Daten, Einkäufe, Haftungsausschluss und wie Sie uns kontaktieren können.",
     "title": "Nutzungsbedingungen",
-    "intro": "Diese Bedingungen regeln Ihre Nutzung von MapsGrab: der Browsererweiterung, dieser Website und den kostenlosen Webtools. Bitte lesen Sie diese, bevor Sie den Dienst nutzen.",
+    "intro": "Diese Bedingungen regeln Ihre Nutzung von MapExporter: der Browsererweiterung, dieser Website und den kostenlosen Webtools. Bitte lesen Sie diese, bevor Sie den Dienst nutzen.",
     "updatedLabel": "Zuletzt aktualisiert",
-    "updatedAt": "August 31, 2026",
-    "updatedAtISO": "2026-08-31",
+    "updatedAt": "November 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "Akzeptable Nutzung, Verantwortung des Benutzers für gesammelte Daten, Käufe, Haftungsausschluss und wie Sie uns kontaktieren können.",
     "helpTitle": "Fragen zu diesen Bedingungen?",
     "glance": [
@@ -5078,14 +5080,14 @@ export const legal: LegalContent = {
         "id": "acceptance-of-terms",
         "title": "Akzeptanz der Bedingungen",
         "paragraphs": [
-          "Durch den Zugriff auf oder die Nutzung von MapsGrab stimmen Sie diesen Bedingungen zu. Wenn Sie damit nicht einverstanden sind, installieren Sie die Erweiterung nicht und nutzen Sie die Website und Tools nicht."
+          "Durch den Zugriff auf oder die Nutzung von MapExporter stimmen Sie diesen Bedingungen zu. Wenn Sie damit nicht einverstanden sind, installieren Sie die Erweiterung nicht und nutzen Sie die Website und Tools nicht."
         ]
       },
       {
         "id": "what-the-service-does",
         "title": "Was der Dienst leistet",
         "paragraphs": [
-          "MapsGrab hilft Ihnen, Informationen zu sammeln, die auf Google Maps von Ihnen besuchten Seiten öffentlich angezeigt werden – Geschäftsdetails, Bewertungen, Fotos und zugehörige Kontaktinformationen – und diese zu exportieren. Der Dienst besteht aus einer Browsererweiterung für Microsoft Edge und Firefox, dieser Website und kostenlosen Webtools, die in Ihrem Browser ausgeführt werden."
+          "MapExporter hilft Ihnen, Informationen zu sammeln, die auf Google Maps von Ihnen besuchten Seiten öffentlich angezeigt werden – Geschäftsdetails, Bewertungen, Fotos und zugehörige Kontaktinformationen – und diese zu exportieren. Der Dienst besteht aus einer Browsererweiterung für Microsoft Edge und Firefox, dieser Website und kostenlosen Webtools. Die meisten kostenlosen Webtools werden in Ihrem Browser ausgeführt; einige, etwa der E-Mail-Checker, übermitteln Ihre Eingaben an unsere Server, die sie zur Verarbeitung an einen Prüfdienst eines Drittanbieters weitergeben."
         ]
       },
       {
@@ -5129,7 +5131,7 @@ export const legal: LegalContent = {
         "id": "the-service-is-provided-as-is",
         "title": "Der Service wird so bereitgestellt, wie er ist",
         "paragraphs": [
-          "Der Dienst wird „wie besehen“ und „wie verfügbar“ bereitgestellt. Plattformen ändern sich häufig und Sammlungsfunktionen funktionieren jederzeit teilweise oder vollständig nicht mehr. MapsGrab übernimmt keine Garantien, weder ausdrücklich noch stillschweigend, für die ununterbrochene Verfügbarkeit, Vollständigkeit der gesammelten Daten oder Eignung für einen bestimmten Zweck.",
+          "Der Dienst wird „wie besehen“ und „wie verfügbar“ bereitgestellt. Plattformen ändern sich häufig und Sammlungsfunktionen funktionieren jederzeit teilweise oder vollständig nicht mehr. MapExporter übernimmt keine Garantien, weder ausdrücklich noch stillschweigend, für die ununterbrochene Verfügbarkeit, Vollständigkeit der gesammelten Daten oder Eignung für einen bestimmten Zweck.",
           "Wir können jeden Teil des Dienstes ändern, aussetzen oder einstellen und diese Bedingungen aktualisieren. Wenn die Änderungen wesentlich sind, werden wir sie auf dieser Website bekannt geben. Die fortgesetzte Nutzung nach Inkrafttreten der Änderungen bedeutet, dass Sie die aktualisierten Bedingungen akzeptieren."
         ]
       },
@@ -5137,14 +5139,14 @@ export const legal: LegalContent = {
         "id": "limitation-of-liability",
         "title": "Haftungsbeschränkung",
         "paragraphs": [
-          "Soweit gesetzlich zulässig, haften MapsGrab und seine Betreiber nicht für indirekte, zufällige, besondere oder Folgeschäden – einschließlich entgangener Gewinne oder Daten –, die sich aus Ihrer Nutzung oder Unmöglichkeit der Nutzung des Dienstes ergeben."
+          "Soweit gesetzlich zulässig, haften MapExporter und seine Betreiber nicht für indirekte, zufällige, besondere oder Folgeschäden – einschließlich entgangener Gewinne oder Daten –, die sich aus Ihrer Nutzung oder Unmöglichkeit der Nutzung des Dienstes ergeben."
         ]
       },
       {
         "id": "contact",
         "title": "Kontakt",
         "paragraphs": [
-          "Fragen zu diesen Bedingungen können an support@mapsgrab.com gesendet werden."
+          "Fragen zu diesen Bedingungen können an support@mapexporter.app gesendet werden."
         ]
       }
     ],
@@ -5157,13 +5159,13 @@ export const legal: LegalContent = {
   },
   "privacy": {
     "navLabel": "Privatsphäre",
-    "seoTitle": "Datenschutzrichtlinie | MapsGrab",
-    "seoDescription": "Die MapsGrab-Datenschutzrichtlinie: Welche Daten die Erweiterung und die Website verarbeiten, wo sie gespeichert werden, wofür unser Backend verwendet wird und welche Grenzen wir einhalten.",
+    "seoTitle": "Datenschutzrichtlinie | MapExporter",
+    "seoDescription": "Die MapExporter-Datenschutzrichtlinie: Welche Daten die Erweiterung und die Website verarbeiten, wo sie gespeichert werden, wofür unser Backend verwendet wird und welche Grenzen wir einhalten.",
     "title": "Datenschutzrichtlinie",
-    "intro": "Diese Richtlinie erläutert, welche Daten MapsGrab verarbeitet, wo sie gespeichert werden und was unsere Server erreicht. Die Kurzversion: Die Erweiterung arbeitet mit öffentlich angezeigten Daten und speichert die Ergebnisse in Ihrem Browser; Abgesehen von unseren Cloud-Diensten ermöglicht unser Backend nur die Konfiguration, Kontingente, optionale Anreicherung und minimale Nutzungsprotokolle. und wir schalten in der Erweiterung keine Werbung und keine Tracker von Drittanbietern. Anfragen an unsere Cloud-Dienste – den Online Scraper-, den API- und den MCP-Server – werden auf unseren Servern verarbeitet und die Online Scraper-Ergebnisse werden mit Ihrem Konto verknüpft, sodass Sie sie herunterladen können.",
+    "intro": "Diese Richtlinie erläutert, welche Daten MapExporter verarbeitet, wo sie gespeichert werden und was unsere Server erreicht. Die Kurzversion: Die Erweiterung arbeitet mit öffentlich angezeigten Daten und speichert die Ergebnisse in Ihrem Browser; Abgesehen von unseren Cloud-Diensten ermöglicht unser Backend nur die Konfiguration, Kontingente, optionale Anreicherung, die E-Mail-Verifizierung des E-Mail-Checkers und minimale Nutzungsprotokolle. und wir schalten in der Erweiterung keine Werbung und keine Tracker von Drittanbietern. Der E-Mail-Checker sendet die eingegebene Adresse an unseren Server, der sie an einen E-Mail-Verifizierungsdienst eines Drittanbieters weitergibt. Anfragen an unsere Cloud-Dienste – den Online Scraper-, den API- und den MCP-Server – werden auf unseren Servern verarbeitet und die Online Scraper-Ergebnisse werden mit Ihrem Konto verknüpft, sodass Sie sie herunterladen können.",
     "updatedLabel": "Zuletzt aktualisiert",
-    "updatedAt": "Oktober 16, 2026",
-    "updatedAtISO": "2026-10-16",
+    "updatedAt": "November 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "Welche Daten die Erweiterung und die Website verarbeiten, wo sie gespeichert werden, wofür unser Backend verwendet wird und welche Grenzen wir einhalten.",
     "helpTitle": "Fragen zu dieser Richtlinie?",
     "glance": [
@@ -5172,13 +5174,13 @@ export const legal: LegalContent = {
         "icon": "lock",
         "tone": "ok",
         "title": "Wo Ergebnisse gespeichert werden",
-        "text": "Die Erweiterung und die kostenlosen Webtools behalten Ihre Daten in Ihrem Browser; Online-Scraper-Ergebnisse sind mit Ihrem Konto verknüpft."
+        "text": "Die Erweiterung und die kostenlosen Webtools behalten Ihre Daten in Ihrem Browser, mit Ausnahme des E-Mail-Checkers, der die eingegebene Adresse an unseren Server und einen E-Mail-Verifizierungsdienst eines Drittanbieters sendet; Online-Scraper-Ergebnisse sind mit Ihrem Konto verknüpft."
       },
       {
         "section": "what-our-backend-processes",
         "icon": "database",
         "title": "Was unsere Server erreicht",
-        "text": "Anfragen an den Online Scraper, die Server API und MCP sowie Konfiguration, Konto und Kontingente, optionale Anreicherung und minimale Nutzungsprotokolle."
+        "text": "Anfragen an den Online Scraper, die Server API und MCP sowie Konfiguration, Konto und Kontingente, optionale Anreicherung, im E-Mail-Checker eingegebene Adressen und minimale Nutzungsprotokolle."
       },
       {
         "section": "what-we-never-do",
@@ -5212,7 +5214,7 @@ export const legal: LegalContent = {
         "id": "where-data-is-stored",
         "title": "Wo Daten gespeichert werden",
         "paragraphs": [
-          "Mit der Erweiterung werden Einstellungen, Extraktionsergebnisse und Batch-Task-Status lokal in Ihrem Browser gespeichert (Erweiterung Local Storage und IndexedDB). Sie verlassen niemals Ihr Gerät, es sei denn, Sie lösen einen Export oder eine der unten beschriebenen optionalen Integrationen aus. Die kostenlosen Webtools verarbeiten auch Ihre Eingaben in Ihrem Browser.",
+          "Mit der Erweiterung werden Einstellungen, Extraktionsergebnisse und Batch-Task-Status lokal in Ihrem Browser gespeichert (Erweiterung Local Storage und IndexedDB). Sie verlassen niemals Ihr Gerät, es sei denn, Sie lösen einen Export oder eine der unten beschriebenen optionalen Integrationen aus. Die kostenlosen Webtools verarbeiten auch Ihre Eingaben in Ihrem Browser. Ausnahme ist der E-Mail-Checker: Er sendet die eingegebene Adresse an unseren Server, der sie an einen E-Mail-Verifizierungsdienst eines Drittanbieters weitergibt.",
           "Die Token Google Drive und HubSpot OAuth werden, wenn Sie sie verbinden, ebenfalls nur in Ihrem Browser gespeichert.",
           "Online-Scraper-Aufgaben laufen auf unseren Servern. Ihre Ergebnisse werden in Ihrem Konto gespeichert, sodass Sie sie von Ihrem Dashboard herunterladen können."
         ]
@@ -5223,12 +5225,13 @@ export const legal: LegalContent = {
         "paragraphs": [
           "Anfragen, die Sie an unsere Cloud-Dienste – den Online Scraper, den API- und den MCP-Server – stellen, werden auf unseren Servern verarbeitet. Unsere Server verwalten auch den Zugriff auf diese Dienste, einschließlich Ihres API-Schlüssels und der von Ihnen genehmigten MCP-Client-Autorisierungen, und führen Aufzeichnungen über Ihre Nutzung.",
           "Ein MCP-Client, den Sie autorisieren, erhält die Ergebnisse der von ihm gestellten Anfragen. Sie können eine Autorisierung über Ihr Dashboard widerrufen.",
-          "Abgesehen von diesen Cloud-Diensten kontaktieren die Erweiterung und diese Website unsere eigenen Server für vier Zwecke:"
+          "Abgesehen von diesen Cloud-Diensten kontaktieren die Erweiterung und diese Website unsere eigenen Server für fünf Zwecke:"
         ],
         "items": [
           "Remote-Konfiguration – Voreinstellungen für die Seitenstruktur, die dafür sorgen, dass die Extraktion funktioniert, wenn Google seine Seiten ändert.",
           "Konto- und Kontingentdienste – Anmeldung, Planstatus und monatliche Nutzungsabrechnung.",
           "E-Mail- und Social-Media-Anreicherung – Suche nach öffentlich aufgeführten Kontaktdaten auf gesammelten Unternehmenswebsites, wenn die Funktion verwendet wird.",
+          "E-Mail-Verifizierung – Wenn Sie den E-Mail-Checker verwenden, wird die eingegebene Adresse an unseren Server gesendet, der sie an einen E-Mail-Verifizierungsdienst eines Drittanbieters weitergibt, um zu prüfen, ob sie E-Mails empfangen kann.",
           "Nutzungsprotokollierung – minimale Aufzeichnungen der Funktionsnutzung und Fehler, die zur Wartung und Verbesserung des Dienstes verwendet werden."
         ]
       },
@@ -5264,7 +5267,7 @@ export const legal: LegalContent = {
         "id": "data-removal",
         "title": "Datenentfernung",
         "paragraphs": [
-          "Durch das Entfernen der Erweiterung werden alle lokal gespeicherten Daten gelöscht. Wenn Sie möchten, dass Ihre Back-End-Kontodaten gelöscht werden, kontaktieren Sie uns unter support@mapsgrab.com und wir werden sie entfernen."
+          "Durch das Entfernen der Erweiterung werden alle lokal gespeicherten Daten gelöscht. Wenn Sie möchten, dass Ihre Back-End-Kontodaten gelöscht werden, kontaktieren Sie uns unter support@mapexporter.app und wir werden sie entfernen."
         ]
       },
       {
@@ -5278,7 +5281,7 @@ export const legal: LegalContent = {
         "id": "contact",
         "title": "Kontakt",
         "paragraphs": [
-          "Fragen oder Wünsche zum Datenschutz können an support@mapsgrab.com gesendet werden."
+          "Fragen oder Wünsche zum Datenschutz können an support@mapexporter.app gesendet werden."
         ]
       }
     ]
@@ -5286,9 +5289,9 @@ export const legal: LegalContent = {
 }
 
 export const mcpOAuth: McpOAuthContent = {
-  "seoTitle": "Autorisieren Sie eine KI-App | MapsGrab",
+  "seoTitle": "Autorisieren Sie eine KI-App | MapExporter",
   "title": "Verbinden Sie eine KI-App mit Ihrem Konto",
-  "intro": "Eine App bittet um Zugriff auf Ihr MapsGrab-Konto. Erlauben Sie es nur, wenn Sie diese Verbindung selbst hergestellt haben.",
+  "intro": "Eine App bittet um Zugriff auf Ihr MapExporter-Konto. Erlauben Sie es nur, wenn Sie diese Verbindung selbst hergestellt haben.",
   "loading": "Verbindungsanfrage wird geladen...",
   "hostLabel": "App-Adresse",
   "selfDeclared": "Name, den sich die App gibt: {name}",
@@ -5316,12 +5319,12 @@ export const mcpOAuth: McpOAuthContent = {
     "invalid_redirect_uri": "Die von der App gesendete Absenderadresse stimmt nicht mit der registrierten überein.",
     "unsupported_response_type": "Die App hat nach einem Autorisierungstyp gefragt, der nicht unterstützt wird.",
     "invalid_pkce": "Die App hat die erforderliche Sicherheitsüberprüfung (PKCE mit S256) nicht gesendet.",
-    "invalid_resource": "Die App hat nicht nach Zugriff auf den Server MapsGrab MCP oder nach einem anderen Server gefragt.",
-    "server_error": "MapsGrab konnte diese Anfrage derzeit nicht speichern. Bitte versuchen Sie es in Kürze noch einmal."
+    "invalid_resource": "Die App hat nicht nach Zugriff auf den Server MapExporter MCP oder nach einem anderen Server gefragt.",
+    "server_error": "MapExporter konnte diese Anfrage derzeit nicht speichern. Bitte versuchen Sie es in Kürze noch einmal."
   },
   "errorHint": "Starten Sie die Verbindung erneut über Ihre AI-App. Wenn das Problem weiterhin besteht, wenden Sie sich an den Entwickler der App.",
   "signInTitle": "Melden Sie sich an, um fortzufahren",
-  "signInText": "Melden Sie sich bei dem MapsGrab-Konto an, das Sie verbinden möchten. Diese Anfrage wartet auf Sie.",
+  "signInText": "Melden Sie sich bei dem MapExporter-Konto an, das Sie verbinden möchten. Diese Anfrage wartet auf Sie.",
   "signIn": "anmelden",
   "loadFailed": "Die Verbindungsanfrage konnte nicht geladen werden. Überprüfen Sie Ihr Netzwerk und versuchen Sie es erneut.",
   "decideFailed": "Diese Aktion konnte nicht abgeschlossen werden. Überprüfen Sie Ihr Netzwerk und versuchen Sie es erneut.",
@@ -5340,7 +5343,7 @@ export const clink: ClinkReturnContent = {
     },
     "confirmedSubscription": {
       "title": "Plan aktiviert",
-      "description": "Ihre ClinkBill-Zahlung wurde bestätigt und Ihr MapsGrab-Plan ist aktiv. Sie können zur ursprünglichen Registerkarte zurückkehren."
+      "description": "Ihre ClinkBill-Zahlung wurde bestätigt und Ihr MapExporter-Plan ist aktiv. Sie können zur ursprünglichen Registerkarte zurückkehren."
     },
     "failed": {
       "title": "Die Bezahlung braucht Aufmerksamkeit",

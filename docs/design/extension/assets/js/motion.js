@@ -1,5 +1,5 @@
 /*
- * MapsGrab 扩展动效运行时（原生 JS，零依赖；移植自 website motion.js，删掉营销页专用行为）。
+ * MapExporter 扩展动效运行时（原生 JS，零依赖；移植自 website motion.js，删掉营销页专用行为）。
  * 声明式：HTML 上写 data-* 属性，本文件负责驱动；页面私有动画通过 window.MG 复用工具函数。
  *
  *   data-reveal[=fade-up|fade|zoom|left|right]   进入视口显现一次（长页面用；首屏用 CSS 的 .enter / .enter-group）

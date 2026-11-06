@@ -1,5 +1,5 @@
 /* =========================================================================
-   MapsGrab Extension · Motion —— 关键帧、入场编排、滚动显现、离屏暂停、减弱动效
+   MapExporter Extension · Motion —— 关键帧、入场编排、滚动显现、离屏暂停、减弱动效
    分级（时长 token 见 tokens.css §9，规则见 README §5）：
      T1 微交互 ≤ 180ms：hover / press / focus
      T2 过渡 280ms：菜单、tab、弹窗、按钮状态形变

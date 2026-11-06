@@ -34,7 +34,7 @@ MAPS_EXTENSION_PRODUCT_KIND = "maps_extension"
 MAPS_EXTENSION_PRO_PRODUCT_ID = "maps_extension_pro"
 MAPS_EXTENSION_BUSINESS_PRODUCT_ID = "maps_extension_business"
 
-# MapsGrab 新增订阅产品线（006 扩展）：online = 网页采集套餐（records/月），
+# MapExporter 新增订阅产品线（006 扩展）：online = 网页采集套餐（records/月），
 # api = API 调用套餐（requests/月）。均为一次性支付月度套餐。
 MAPS_ONLINE_PRODUCT_KIND = "maps_online"
 MAPS_API_PRODUCT_KIND = "maps_api"

@@ -82,6 +82,8 @@ export interface ExtensionEvents extends EventDefinition {
    * 重置卡死时钟（90s 判定 = 自上次进展以来）。
    */
   mapsBulkItemProgress: BulkItemProgressPayload
+  /** 批量工作页开始前额度耗尽，调度器核验 owner 后暂停任务。 */
+  mapsBulkQuotaBlocked: BulkQuotaBlockedPayload
   /** 批量任务状态已落盘（013 A6，background → dashboard 重读快照的通知）。 */
   mapsBulkStateChanged: BulkStateChangedPayload
   /**
@@ -106,6 +108,8 @@ export interface ExtensionEvents extends EventDefinition {
 
 /** 采集会话配额上报 payload。 */
 export interface MapsUsageReportPayload {
+  /** 初始工作页上下文；Google 清参后仍交由调度器核验 owner。 */
+  bulk?: { taskId: string; itemIndex: number }
   /** 本会话采集记录数（搜索行/评论条/照片张）。 */
   records: number
   /** 会话幂等 ID（会话发起时生成，同 ID 重放服务端只扣一次）。 */
@@ -120,7 +124,7 @@ export interface MapsUsageReportPayload {
 export interface MapsAutoSaveExportPayload {
   /** 集成产物 CSV 全文（BOM + 表头 + 数据行，格式固定 CSV 与用户导出格式无关）。 */
   csvContent: string
-  /** 产物文件名（`MapsGrab-Extractor-{条数}-{关键词}-{日期}.csv`）。 */
+  /** 产物文件名（`MapExporter-{条数}-{关键词}-{日期}.csv`）。 */
   filename: string
   /** 搜索关键词。 */
   keyword: string
@@ -151,6 +155,12 @@ export interface BulkItemProgressPayload {
   /** 进展中的条目下标（防陈旧回报：游标不匹配即丢弃）。 */
   itemIndex: number
   /** 回报页面 URL（日志定位用）。 */
+  pageUrl: string
+}
+
+export interface BulkQuotaBlockedPayload {
+  taskId: string
+  itemIndex: number
   pageUrl: string
 }
 

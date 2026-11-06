@@ -9,6 +9,7 @@
  * 2. History 视图：列表、分页（地址同步）、明细展开、整 Job CSV 下载与无文件就地提示、无匹配时清除筛选。
  * 3. 订阅视图：三线状态（免费 / 有效 / 不可用）、Pricing tab 跳转、渠道管理 portal。
  * 4. API 接入空态、生成中离开视图不留明文、工作区 noindex、退出回主页与移动视口可达性。
+ * 5. 设备可信：工作区四个视图与语言路由自身发起图标请求，不渲染营销外壳；直达工作区可邮箱登录；营销页页脚机制不变。
  */
 import { expect, test } from '@playwright/test'
 import type { ExportJobSummary } from '../src/scripts/dashboard/api'
@@ -79,7 +80,7 @@ function mockAuthMe(page: import('@playwright/test').Page): void {
   page.route('**/api/client/auth/me', route =>
     route.fulfill({
       json: envelope({
-        email: 'hydra@mapsgrab.test',
+        email: 'hydra@mapexporter.test',
         full_name: 'Hydra',
         credits_balance: 0,
         created_at: Date.parse('2026-01-01T00:00:00Z'),
@@ -126,7 +127,7 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
       json: envelope({
         access_token: 'e2e-dashboard-token',
         user: {
-          email: 'hydra@mapsgrab.test',
+          email: 'hydra@mapexporter.test',
           full_name: 'Hydra',
           credits_balance: 0
         }
@@ -168,7 +169,7 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
   await navSignIn.click()
   await expect(modal).toBeVisible()
   await page.locator('[data-download-email-entry-button]').click()
-  await page.locator('[data-download-login-email]').fill('hydra@mapsgrab.test')
+  await page.locator('[data-download-login-email]').fill('hydra@mapexporter.test')
   await page.locator('[data-download-continue-email]').click()
   await page.locator('[data-download-login-code]').fill('123456')
   await page.locator('[data-download-login-submit]').click()
@@ -184,7 +185,7 @@ test('dashboard anonymous entry: site modal opens, cancel returns home, email lo
   // 默认视图是 Online：新建任务 + 最近任务（紧凑行，没有展开）
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Online Scraper')
   await expect(page.locator('.jobs-list [data-job]').first()).toBeVisible()
-  await expect(page.locator('[data-dashboard-account-button]')).toContainText('hydra@mapsgrab.test')
+  await expect(page.locator('[data-dashboard-account-button]')).toContainText('hydra@mapexporter.test')
 })
 
 test('dashboard history: pagination, item facts, CSV / Excel download with unavailable feedback', async ({ page }, testInfo) => {
@@ -292,7 +293,7 @@ test('dashboard history: pagination, item facts, CSV / Excel download with unava
 test('dashboard popovers: rows per page, history time range or filters, account menu', async ({ page, isMobile }) => {
   await page.route('**/api/client/auth/me', route => route.fulfill({
     json: envelope({
-      email: 'hydra@mapsgrab.test',
+      email: 'hydra@mapexporter.test',
       full_name: 'Hydra',
       credits_balance: 0,
       created_at: Date.parse('2026-01-01T00:00:00Z'),
@@ -399,7 +400,7 @@ test('dashboard popovers: rows per page, history time range or filters, account 
   await expect(onlineRow).toHaveAttribute('href', '/pricing/?product_kind=maps_online')
   await expect(accountMenu.getByRole('menuitem', { name: /^Browser Extension/ })).toHaveAttribute('href', '/dashboard/subscriptions/')
   await expect(accountMenu.getByRole('menuitem', { name: /^API/ })).toHaveAttribute('aria-disabled', 'true')
-  await expect(page.locator('#account-menu-pop .menu-id')).toContainText('hydra@mapsgrab.test')
+  await expect(page.locator('#account-menu-pop .menu-id')).toContainText('hydra@mapexporter.test')
   await expect(accountMenu.locator('.menu-id')).toHaveCount(0)
   // 主题横排单选：Space 生效并保持打开，Enter 生效并关闭，焦点回到用户卡
   for (let step = 0; step < 4; step++) await page.keyboard.press('ArrowDown')
@@ -462,7 +463,7 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
     }
     return route.fulfill({
       json: envelope({
-        email: 'hydra@mapsgrab.test',
+        email: 'hydra@mapexporter.test',
         full_name: 'Hydra',
         credits_balance: 0
       })
@@ -473,7 +474,7 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
   )
   await signInByStoredToken(page, 'e2e-edge-token')
   await page.goto('/dashboard/history/')
-  await expect(page.locator('main').getByText('Could not reach MapsGrab right now.')).toBeVisible()
+  await expect(page.locator('main').getByText('Could not reach MapExporter right now.')).toBeVisible()
   await expect(page.locator('[data-history-expand]')).toHaveCount(0)
   authMeFail = false
   await page.getByRole('button', { name: 'Retry' }).click()
@@ -493,7 +494,7 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
     route.fulfill({
       json: envelope({
         access_token: 'e2e-relogin-token',
-        user: { email: 'hydra@mapsgrab.test', full_name: 'Hydra', credits_balance: 0 }
+        user: { email: 'hydra@mapexporter.test', full_name: 'Hydra', credits_balance: 0 }
       })
     })
   )
@@ -503,12 +504,12 @@ test('dashboard session edge: unreachable retry recovers and 401 returns to sign
   await page.locator('main [data-site-auth-entry]').click()
   await expect(page.locator('[data-download-auth-modal]')).toBeVisible()
   await page.locator('[data-download-email-entry-button]').click()
-  await page.locator('[data-download-login-email]').fill('hydra@mapsgrab.test')
+  await page.locator('[data-download-login-email]').fill('hydra@mapexporter.test')
   await page.locator('[data-download-continue-email]').click()
   await page.locator('[data-download-login-code]').fill('123456')
   await page.locator('[data-download-login-submit]').click()
   await expect(page.locator('[data-history-expand]').first()).toBeVisible()
-  await expect(page.locator('[data-dashboard-account-button]')).toContainText('hydra@mapsgrab.test')
+  await expect(page.locator('[data-dashboard-account-button]')).toContainText('hydra@mapexporter.test')
 })
 
 test('google same-origin redirect keeps the dashboard destination through exchange and email verification', async ({ page, isMobile }) => {
@@ -517,7 +518,7 @@ test('google same-origin redirect keeps the dashboard destination through exchan
     route.fulfill({
       json: envelope({
         access_token: 'e2e-google-exchange-token',
-        user: { email: 'hydra@mapsgrab.test', full_name: 'Hydra', credits_balance: 0 }
+        user: { email: 'hydra@mapexporter.test', full_name: 'Hydra', credits_balance: 0 }
       })
     })
   )
@@ -526,7 +527,7 @@ test('google same-origin redirect keeps the dashboard destination through exchan
     route.fulfill({
       json: envelope({
         access_token: 'e2e-google-verify-token',
-        user: { email: 'hydra@mapsgrab.test', full_name: 'Hydra', credits_balance: 0 }
+        user: { email: 'hydra@mapexporter.test', full_name: 'Hydra', credits_balance: 0 }
       })
     })
   )
@@ -547,10 +548,10 @@ test('google same-origin redirect keeps the dashboard destination through exchan
   await page.goto('/')
   await openNavSignIn(page, isMobile)
   await expect(page.locator('[data-download-auth-modal]')).toBeVisible()
-  await page.goto('/?google_email_verification=hydra%40mapsgrab.test')
+  await page.goto('/?google_email_verification=hydra%40mapexporter.test')
   const modal = page.locator('[data-download-auth-modal]')
   await expect(modal).toBeVisible()
-  await expect(page.locator('[data-download-login-email]')).toHaveValue('hydra@mapsgrab.test')
+  await expect(page.locator('[data-download-login-email]')).toHaveValue('hydra@mapexporter.test')
   await page.locator('[data-download-login-code]').fill('654321')
   await page.locator('[data-download-login-submit]').click()
   await expect(page).toHaveURL(/\/dashboard\/$/)
@@ -608,7 +609,7 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
     json: envelope({ used: 0, total: 20, period: '2026-10', exhausted: false })
   }))
   await page.route('**/api/client/maps-api/connection', route => route.fulfill({
-    json: envelope({ api_base_url: 'https://api.mapsgrab.test/api/external/maps', mcp_url: '' })
+    json: envelope({ api_base_url: 'https://api.mapexporter.test/api/external/maps', mcp_url: '' })
   }))
   await page.route('**/api/client/mcp-oauth/grants?*', route => route.fulfill({
     json: envelope({ items: [], total: 0 })
@@ -622,7 +623,7 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
   await expect(page.getByRole('link', { name: 'View API products' })).toHaveAttribute('href', '/google-maps-scraper-api/')
   // 默认 API tab 的 curl 快速上手：地址取连接信息；没有 Key 时用 YOUR_API_KEY 占位
   const curl = page.locator('[data-connect-sample]')
-  await expect(curl).toContainText('https://api.mapsgrab.test/api/external/maps/search')
+  await expect(curl).toContainText('https://api.mapexporter.test/api/external/maps/search')
   await expect(curl).toContainText('Bearer YOUR_API_KEY')
   const docs = page.locator('[data-connect-docs]')
   await expect(docs).toHaveAttribute('href', '/google-maps-scraper-api/#reference')
@@ -705,4 +706,93 @@ test('dashboard api view, logout returns home and mobile workspace reachability'
   await page.locator('[data-dashboard-logout]').click()
   await expect(page).toHaveURL(url => new URL(url).pathname === '/')
   await expect(page.locator('[data-nav] [data-site-auth-entry]')).toBeVisible()
+})
+
+/**
+ * 记录每次品牌图标请求携带的 client_uuid（后端正是按这个 Cookie 写 device_trust）。
+ * mock 跑没有后端，这里按后端真实响应回放透明 SVG。
+ */
+async function recordBrandIconUuids(page: import('@playwright/test').Page): Promise<string[]> {
+  const uuids: string[] = []
+  await page.route('**/assets/icons/logo.svg*', async route => {
+    const cookies = await page.context().cookies()
+    uuids.push(cookies.find(cookie => cookie.name === 'client_uuid')?.value ?? '')
+    await route.fulfill({
+      contentType: 'image/svg+xml; charset=utf-8',
+      headers: { 'Cache-Control': 'no-store' },
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"></svg>\n'
+    })
+  })
+  return uuids
+}
+
+test('device trust: every workspace view requests the icon once, without marketing chrome', async ({ page }) => {
+  const uuids = await recordBrandIconUuids(page)
+  const mount = page.locator('[data-footer-brand-icon]')
+  const visited = ['/dashboard/', '/dashboard/history/', '/dashboard/api/', '/dashboard/subscriptions/', '/zh-cn/dashboard/']
+
+  for (const [index, path] of visited.entries()) {
+    await page.goto(path)
+    // 水合结束后再断言：岛内 slot 水合时会重建，挂载点留在岛外才不会多发请求。
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0)
+    await expect(mount).toHaveCount(1)
+    await expect(page.locator('astro-island [data-footer-brand-icon]')).toHaveCount(0)
+    await expect(mount.locator('img')).toHaveAttribute('src', /^\/assets\/icons\/logo\.svg/)
+    await expect(mount.locator('img')).toHaveJSProperty('complete', true)
+    expect(uuids).toHaveLength(index + 1)
+
+    // 挂载点不占布局，侧栏品牌标不变，工作区不出现营销页眉页脚。
+    await expect(mount).toBeHidden()
+    await expect(page.locator('.side-brand .brand-mark img')).toHaveCount(0)
+    await expect(page.locator('[data-nav]')).toHaveCount(0)
+    await expect(page.locator('.site-footer')).toHaveCount(0)
+  }
+
+  // Cookie 先于图片请求写入，且各视图复用同一设备 UUID。
+  expect(uuids[0]).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+  expect(new Set(uuids).size).toBe(1)
+})
+
+test('device trust: visiting the workspace directly is enough to sign in by email', async ({ page }) => {
+  mockAuthMe(page)
+  const uuids = await recordBrandIconUuids(page)
+  // 按后端受保护入口回放：X-Device-Id 没有对应的图标请求就要求刷新页面（AUTH_PAGE_REFRESH_REQUIRED）。
+  const behindDeviceCheck = <T extends object>(data: T) => async (route: import('@playwright/test').Route) => {
+    const trusted = uuids.includes((await route.request().headerValue('x-device-id')) ?? '')
+    await route.fulfill({ json: trusted ? envelope(data) : { code: 10015, msg: 'Please refresh the page and try again.' } })
+  }
+  await page.route('**/api/client/auth/send-email-code', behindDeviceCheck({}))
+  await page.route('**/api/client/auth/email-verify-login', behindDeviceCheck({
+    access_token: 'e2e-device-trust-token',
+    user: { email: 'hydra@mapexporter.test', full_name: 'Hydra', credits_balance: 0 }
+  }))
+  await page.route(/\/api\/client\/export\/jobs\?/, route =>
+    route.fulfill({ json: envelope({ jobs: buildJobs().slice(0, 3), total: 3, offset: 0, limit: 20 }) })
+  )
+
+  await page.goto('/dashboard/')
+  await expect(page.locator('[data-footer-brand-icon] img')).toHaveJSProperty('complete', true)
+  await page.locator('main [data-site-auth-entry]').click()
+  await page.locator('[data-download-email-entry-button]').click()
+  await page.locator('[data-download-login-email]').fill('hydra@mapexporter.test')
+  await page.locator('[data-download-continue-email]').click()
+  await page.locator('[data-download-login-code]').fill('123456')
+  await page.locator('[data-download-login-submit]').click()
+
+  await expect(page).toHaveURL(/\/dashboard\/$/)
+  await expect(page.locator('.jobs-list [data-job]').first()).toBeVisible()
+  await expect(page.locator('[data-dashboard-account-button]')).toContainText('hydra@mapexporter.test')
+})
+
+test('device trust: marketing pages keep the icon on the footer brand mark', async ({ page }) => {
+  const uuids = await recordBrandIconUuids(page)
+
+  await page.goto('/')
+  await expect(page.locator('[data-footer-brand-icon]')).toHaveCount(1)
+  const footerMount = page.locator('.site-footer .brand-mark[data-footer-brand-icon]')
+  await expect(footerMount).toBeVisible()
+  await expect(footerMount.locator('img')).toHaveAttribute('src', /^\/assets\/icons\/logo\.svg/)
+  await expect(footerMount.locator('img')).toHaveJSProperty('complete', true)
+  expect(uuids).toHaveLength(1)
+  expect(uuids[0]).not.toBe('')
 })

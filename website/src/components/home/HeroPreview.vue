@@ -262,7 +262,7 @@ async function playExtraction(m: Motion, dataset: TheaterDataset, id: number): P
   await m.wait(160)
   exportState.value = ''
   // 与插件 export/csv.ts 的 buildSearchExportFilename 同格式：前缀-条数-关键词（空格转 +）-日期
-  toastFile.value = `MapsGrab-Extractor-${dataset.total}-${dataset.keyword.replace(/ /g, '+')}-${today()}.csv`
+  toastFile.value = `MapExporter-${dataset.total}-${dataset.keyword.replace(/ /g, '+')}-${today()}.csv`
   toastOn.value = true
   await m.wait(2800)
   if (!isAlive()) return
@@ -587,7 +587,7 @@ onBeforeUnmount(() => {
             <aside class="mgp stage-panel" :class="panelClass" :aria-label="copy.theater.panelLabel">
               <div class="mgp-head">
                 <slot name="brand" />
-                <span class="mgp-title">MapsGrab</span>
+                <span class="mgp-title">MapExporter</span>
                 <span class="badge badge--ok panel-live"><span class="dot dot--live"></span><span>{{ badge }}</span></span>
               </div>
               <div class="mgp-status">

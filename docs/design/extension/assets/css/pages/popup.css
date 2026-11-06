@@ -126,7 +126,7 @@
   height: 24px;
 }
 
-/* 套餐徽章（已登录才出现）：跟在品牌名后，读作「MapsGrab Pro」；登录成功时弹出 */
+/* 套餐徽章（已登录才出现）：跟在品牌名后，读作「MapExporter Pro」；登录成功时弹出 */
 .pp-plan {
   margin-left: -2px;
   transform-origin: left center;

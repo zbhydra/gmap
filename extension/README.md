@@ -1,6 +1,6 @@
-# extension-maps-extractor
+# extension-mapexporter
 
-Google Maps Extractor 浏览器插件(013 域)。由原 Telegram 下载插件工程改造而来:删除了下载业务与 TG 绑定,保留完整可复用底座。
+MapExporter 浏览器插件(013 域)。由原 Telegram 下载插件工程改造而来:删除了下载业务与 TG 绑定,保留完整可复用底座。
 
 - 产品合同与逐功能竞品调研:`docs/feat/013.Maps插件/`
 - 实施顺序与已拍板决策:同域 `feat.md`;架构决策记录在 `docs/scratch/G-MAPS-EXTRACTOR-v2.5.1/research/11-复刻问题清单与决策.md`

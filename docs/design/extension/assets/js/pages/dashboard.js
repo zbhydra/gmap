@@ -88,7 +88,7 @@
       icon: 'review',
       list: 'Review tasks',
       emptyTitle: 'No review tasks yet',
-      emptyDesc: 'Paste up to 500 Google Maps place links in New task. MapsGrab opens each place’s reviews and collects them one place at a time.',
+      emptyDesc: 'Paste up to 500 Google Maps place links in New task. MapExporter opens each place’s reviews and collects them one place at a time.',
       emptyErr: 'Paste at least one review URL.',
       tab: 'tab',
       retryUnit: 'place'
@@ -238,7 +238,7 @@
   }
 
   var link = function (label) {
-    UI.toast({ title: label + ' opens in a new tab', desc: 'In the extension this goes to the MapsGrab website. The prototype stays on this page.', tone: 'primary', icon: 'external' })
+    UI.toast({ title: label + ' opens in a new tab', desc: 'In the extension this goes to the MapExporter website. The prototype stays on this page.', tone: 'primary', icon: 'external' })
   }
 
   // 状态 chip：同一个元素换语气与文案。形变 = 宽度补间 + 文案自下而上 + 字形弹一下（T2，一次性）

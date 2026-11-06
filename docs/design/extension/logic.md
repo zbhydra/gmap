@@ -1,4 +1,4 @@
-# MapsGrab 插件 · 界面逻辑全景
+# MapExporter 插件 · 界面逻辑全景
 
 > Atlas Field 重设计已于 2026-10-18 落地。§1–§7 保留重设计前的界面逻辑快照作为设计输入；§8 记录闭环，§9 记录已落实的调整。当前产品合同见 [013 feat](../../feat/013.Maps插件/feat.md)，实现边界见 [采集与批量技术合同](../../feat/013.Maps插件/tech-采集与批量.md)。
 
@@ -29,7 +29,7 @@ flowchart LR
 
 ## 2 · Popup
 
-固定区：品牌头（图标 + MapsGrab、Settings、语言切换 14 语）→ 引导文案 → 主按钮 Open Google Maps → 两个批量入口 → 账号与用量区 → 套餐链接（View plans、Manage subscription）→ 页脚（Help & FAQ、Contact support、版本号）。打开即上报 `popup_open`。
+固定区：品牌头（图标 + MapExporter、Settings、语言切换 14 语）→ 引导文案 → 主按钮 Open Google Maps → 两个批量入口 → 账号与用量区 → 套餐链接（View plans、Manage subscription）→ 页脚（Help & FAQ、Contact support、版本号）。打开即上报 `popup_open`。
 
 **运营提示**（远程配置下发，读取失败则隐藏）：新版本提示（当前版本低于最低版本）、公告（HTML）。
 
@@ -175,12 +175,14 @@ stateDiagram-v2
 | 组 | 控件 | 取值（默认） |
 | --- | --- | --- |
 | 采集 | 滚动间隔 | 5 / 6 / 8 / 9 / 10 秒（8） |
-| 采集 | 提取 Email、提取社媒（Pro 标记，代码不拦） | 开关（关） |
+| 采集 | 提取 Email、提取社媒（需有效插件订阅） | 开关（关） |
 | 导出 | 导出格式 | CSV / JSON / XLSX（CSV） |
-| 导出 | 导出字段 | 36 列分 6 组（全选），12 列带 Pro 标记 |
+| 导出 | 导出字段 | 36 列分 6 组（全选），仅 Email / Social Medias 两列带 Pro 标记 |
 | 自动化 | 完成后自动下载 | 开关（关），开启后显示下载目录说明 |
 | 自动化 | Google Drive / HubSpot 自动保存 | A10 未决：未配置凭据时禁用占位 |
 | 自动化 | 卡死重试次数 | 0–9（1），与 Dashboard 同一设置 |
+
+导出与预览共用权益选列：全选时免费/匿名 34 列、Pro 36 列；全局补全列开关关闭时 Pro 也剔除 Email / Social Medias，仅保留 34 列。规则见 [A8 导出](../../feat/013.Maps插件/references/A8-导出.md#我方落地要点)。
 
 ## 7 · 跨界面联动
 

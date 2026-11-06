@@ -525,7 +525,7 @@ export interface ExtensionPageContent {
     installCta: string
     /** 信任行。 */
     meta: readonly string[]
-    /** 浏览器剧场：Maps 结果侧栏 + MapsGrab 面板，面板文案与真实插件面板一致。 */
+    /** 浏览器剧场：Maps 结果侧栏 + MapExporter 面板，面板文案与真实插件面板一致。 */
     theater: {
       /** 面板的无障碍名称。 */
       panelLabel: string
@@ -2857,7 +2857,7 @@ export interface SiteContent {
     extension: ExtensionPageContent
     /** Pricing 页共用的账户区文案（登录弹窗、支付弹窗、账户菜单）。 */
     account: AccountContent
-    /** Pricing 页面内容（MapsGrab 三档套餐，W5）。 */
+    /** Pricing 页面内容（MapExporter 三档套餐，W5）。 */
     pricing: PricingPageContent
     /** Online Scraper 介绍页（/online-scraper/）。 */
     online: OnlineScraperPageContent

@@ -64,7 +64,7 @@
     '<div class="scroll-progress" data-scroll-progress aria-hidden="true"></div>' +
     '<header class="site-nav" data-nav>' +
     '<div class="nav-inner">' +
-    '<a class="brand" href="index.html" aria-label="MapsGrab home">' + logoMark() + '<span>MapsGrab</span></a>' +
+    '<a class="brand" href="index.html" aria-label="MapExporter home">' + logoMark() + '<span>MapExporter</span></a>' +
     '<nav class="nav-links" aria-label="Primary" data-nav-links>' +
     '<span class="nav-pill" aria-hidden="true"></span>' +
     '<a class="nav-link" href="extension.html"' + current('extension') + '>Extension</a>' +
@@ -111,7 +111,7 @@
       })
       .join('') +
     '<button class="btn btn-secondary btn-lg" type="button" data-signin>Sign in</button>' +
-    '<a class="btn btn-primary btn-lg" href="extension.html#install">Install MapsGrab free</a>' +
+    '<a class="btn btn-primary btn-lg" href="extension.html#install">Install MapExporter free</a>' +
     '</nav>'
 
   /* --------------------------------------------------------------- footer */
@@ -131,7 +131,7 @@
     '<footer class="site-footer">' +
     '<div class="container footer-grid" data-stagger="60">' +
     '<div class="footer-brand" data-reveal>' +
-    '<a class="brand" href="index.html">' + logoMark() + '<span>MapsGrab</span></a>' +
+    '<a class="brand" href="index.html">' + logoMark() + '<span>MapExporter</span></a>' +
     '<p>Turn public Google Maps listings into clean, export-ready data — with a browser extension, a cloud scraper, and an API.</p>' +
     '<div class="footer-meta"><span class="chip chip--mono"><span class="dot dot--live" style="color:var(--ok)"></span>Early access</span>' +
     '<span class="chip chip--mono">' + icon('globe') + 'English</span></div>' +
@@ -157,9 +157,9 @@
       ['Design system', 'design-system.html']
     ]) + '</div>' +
     '</div>' +
-    '<div class="footer-wordmark" aria-hidden="true" data-reveal="blur">MapsGrab</div>' +
+    '<div class="footer-wordmark" aria-hidden="true" data-reveal="blur">MapExporter</div>' +
     '<div class="container footer-bottom">' +
-    '<span>© 2026 MapsGrab. All rights reserved.</span>' +
+    '<span>© 2026 MapExporter. All rights reserved.</span>' +
     '<nav aria-label="Legal"><a href="privacy.html?doc=terms">Terms</a><a href="privacy.html">Privacy</a><a href="about.html#contact">Contact</a></nav>' +
     '</div></footer>'
 
@@ -169,7 +169,7 @@
     '<div class="modal-body">' +
     '<button class="icon-btn modal-close" type="button" aria-label="Close" data-modal-close>' + icon('x') + '</button>' +
     '<div class="modal-hero">' + logoMark() +
-    '<h2 class="modal-title" id="signin-title">Sign in to MapsGrab</h2>' +
+    '<h2 class="modal-title" id="signin-title">Sign in to MapExporter</h2>' +
     '<p class="modal-sub">Sync your plan and quota across the extension, Online Scraper and API.</p></div>' +
     '<div data-signin-step="1">' +
     '<button class="btn btn-google btn-lg" type="button">' +

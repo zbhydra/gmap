@@ -16,7 +16,7 @@ import {
 } from '../../src/sites/maps/config/pricing'
 
 /** 已知配置值（与 backend MAPS_OPERATIONS_CONFIG 同形）。 */
-const CONFIGURED_PRICING_URL = 'https://mapsgrab.com/pricing/'
+const CONFIGURED_PRICING_URL = 'https://mapexporter.app/pricing/'
 
 /** 注入生效配置的 operations.pricingUrl（loader 语义：活对象，消费方现读）。 */
 function setPricingUrl(pricingUrl: string): void {
@@ -30,19 +30,19 @@ beforeEach(() => {
 describe('pricingUrl 消费（buildMapsPricingUrl）', () => {
   it('已配置时选择插件产品线并追加归因参数', () => {
     expect(buildMapsPricingUrl(CONFIGURED_PRICING_URL)).toBe(
-      'https://mapsgrab.com/pricing/?product_kind=maps_extension&utm_source=extension'
+      'https://mapexporter.app/pricing/?product_kind=maps_extension&utm_source=extension'
     )
   })
 
   it('原 URL 已带 query 时保留原参数并追加归因', () => {
     expect(
-      buildMapsPricingUrl('https://mapsgrab.com/pricing/?utm_campaign=launch&product_kind=maps_online')
-    ).toBe('https://mapsgrab.com/pricing/?utm_campaign=launch&product_kind=maps_extension&utm_source=extension')
+      buildMapsPricingUrl('https://mapexporter.app/pricing/?utm_campaign=launch&product_kind=maps_online')
+    ).toBe('https://mapexporter.app/pricing/?utm_campaign=launch&product_kind=maps_extension&utm_source=extension')
   })
 
   it('空白包裹的远程值按 trim 后解析', () => {
     expect(buildMapsPricingUrl(`  ${CONFIGURED_PRICING_URL}  `)).toBe(
-      'https://mapsgrab.com/pricing/?product_kind=maps_extension&utm_source=extension'
+      'https://mapexporter.app/pricing/?product_kind=maps_extension&utm_source=extension'
     )
   })
 })
@@ -157,7 +157,7 @@ describe('openMapsPricingPage（打开路径）', () => {
       expect(sendSpy).toHaveBeenCalledTimes(1)
       const request = sendSpy.mock.calls[0]?.[0] as RpcRequest<{ url: string }>
       expect(request.method).toBe('openPricingPage')
-      expect(request.params?.url).toBe('https://mapsgrab.com/pricing/?product_kind=maps_extension&utm_source=extension')
+      expect(request.params?.url).toBe('https://mapexporter.app/pricing/?product_kind=maps_extension&utm_source=extension')
     } finally {
       sendSpy.mockRestore()
     }

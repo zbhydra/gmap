@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Nama ekstensi Chrome Web Store"
   },
   "extensionDescription": {
@@ -8,19 +8,19 @@
     "description": "Deskripsi ekstensi Chrome Web Store - maks 132 karakter"
   },
   "actionTitle": {
-    "message": "Buka MapsGrab",
+    "message": "Buka MapExporter",
     "description": "Browser action title"
   },
   "popupDescription": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Popup page description"
   },
   "optionsTitle": {
-    "message": "MapsGrab Settings",
+    "message": "MapExporter Settings",
     "description": "Options page title"
   },
   "dashboardTitle": {
-    "message": "MapsGrab Bulk Tasks",
+    "message": "MapExporter Bulk Tasks",
     "description": "Dashboard page title"
   }
 }

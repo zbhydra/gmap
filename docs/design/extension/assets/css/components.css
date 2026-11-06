@@ -1,5 +1,5 @@
 /* =========================================================================
-   MapsGrab Extension · Components —— 扩展页面共享组件库（Popup / Dashboard / Options）
+   MapExporter Extension · Components —— 扩展页面共享组件库（Popup / Dashboard / Options）
    页内面板不用本文件（Shadow DOM 自含，见 panel.css）；页面私有样式写 pages/<page>.css，不回写本文件。
 
    目录

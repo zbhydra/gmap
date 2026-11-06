@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Online Scraper · Dashboard | MapsGrab</title>
-    <meta name="description" content="Manage your MapsGrab exports, API access and subscriptions in one workspace." />
+    <title>Online Scraper · Dashboard | MapExporter</title>
+    <meta name="description" content="Manage your MapExporter exports, API access and subscriptions in one workspace." />
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml" />
     <!-- 首帧前恢复手动主题（与全站共用 localStorage['mg-theme']） -->
@@ -25,7 +25,7 @@
     <script src="dashboard.js" defer></script>
   </head>
   <!--
-    MapsGrab Dashboard 设计稿（单页）：
+    MapExporter Dashboard 设计稿（单页）：
     - 外壳（侧栏 + 顶栏）静态输出，对应落地时 SSG 的公共壳；四个视图常驻 DOM，切换只动主区。
     - ?view=online|history|api|subscriptions 模拟 /dashboard/、/dashboard/history/、/dashboard/api/、/dashboard/subscriptions/；
       History 的筛选与页码同步到 q / status / range / from / to / page / size 参数。
@@ -51,14 +51,14 @@
          ================================================================ -->
     <aside class="dash-side" id="dash-side" aria-label="Workspace">
       <div class="side-head">
-        <a class="side-brand" href="../index.html" aria-label="MapsGrab home">
+        <a class="side-brand" href="../index.html" aria-label="MapExporter home">
           <span class="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 32 32">
               <path class="brand-mark-pin" d="M16 6.2c-4.42 0-8 3.36-8 7.66 0 5.5 6.64 11.04 7.4 11.66.35.28.85.28 1.2 0 .76-.62 7.4-6.16 7.4-11.66 0-4.3-3.58-7.66-8-7.66Z" />
               <path class="brand-mark-arrow" d="M16 10.1v6.2m-2.9-2.9 2.9 2.9 2.9-2.9" />
             </svg>
           </span>
-          <span class="side-brand-name">MapsGrab</span>
+          <span class="side-brand-name">MapExporter</span>
         </a>
         <!-- 宽屏收起 / 展开：贴品牌行右缘，收起后正好落在图标栏中线（窄屏隐藏，抽屉行为不变） -->
         <button class="icon-btn side-toggle" type="button" aria-controls="dash-side" aria-expanded="true" aria-label="Collapse sidebar" data-side-toggle>
@@ -462,7 +462,7 @@
               <path class="brand-mark-arrow" d="M16 10.1v6.2m-2.9-2.9 2.9 2.9 2.9-2.9" />
             </svg>
           </span>
-          <h2 class="modal-title" id="signin-title">Sign in to MapsGrab</h2>
+          <h2 class="modal-title" id="signin-title">Sign in to MapExporter</h2>
           <p class="modal-sub">Sync your plan and quota across the extension, Online Scraper and API.</p>
         </div>
         <div data-signin-step="1">
@@ -526,14 +526,14 @@
             <ol class="guide-steps">
               <li>Sign in to PayPal and open Settings.</li>
               <li>Go to Payments, then Automatic Payments.</li>
-              <li>Select MapsGrab and choose Cancel.</li>
+              <li>Select MapExporter and choose Cancel.</li>
             </ol>
           </section>
           <section class="guide-provider" aria-labelledby="guide-clink">
             <h3 id="guide-clink">ClinkBill</h3>
             <ol class="guide-steps">
               <li>Open the Customer Portal link from your purchase email.</li>
-              <li>Sign in and select your MapsGrab subscription.</li>
+              <li>Sign in and select your MapExporter subscription.</li>
               <li>Choose Cancel.</li>
             </ol>
           </section>

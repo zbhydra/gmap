@@ -3,7 +3,7 @@
  * - Drive 授权状态机（getAuthToken 成功/失败/静默取 token/revoke）；
  * - HubSpot 授权状态机（launchWebAuthFlow 授权码换 token / refresh token 刷新）；
  * - Drive multipart 请求体构造与上传（REST multipart，竞品 mod_176 同构）；
- * - background 同步服务的单路失败不阻断（Drive 失败 HubSpot 仍同步）。
+ * - background 同步服务按开关隔离两路，且单路失败不阻断（Drive 失败 HubSpot 仍同步）。
  *
  * chrome.identity 与 fetch 均为 mock（占位 client_id 无法真跑授权）。
  */
@@ -297,7 +297,7 @@ describe('HubSpot 授权状态机', () => {
 
 describe('Drive multipart 构造与上传', () => {
   it('multipart 请求体：metadata 段 + CSV 段 + 终止符，CRLF 连接', () => {
-    const body = buildDriveMultipartBody('gme-boundary', 'MapsGrab-Extractor-2-kw-2026-08-30.csv', 'Name\nA\nB')
+    const body = buildDriveMultipartBody('gme-boundary', 'MapExporter-2-kw-2026-08-30.csv', 'Name\nA\nB')
 
     expect(body).toBe(
       [
@@ -305,7 +305,7 @@ describe('Drive multipart 构造与上传', () => {
         'Content-Type: application/json; charset=UTF-8',
         '',
         JSON.stringify({
-          name: 'MapsGrab-Extractor-2-kw-2026-08-30.csv',
+          name: 'MapExporter-2-kw-2026-08-30.csv',
           mimeType: 'text/csv'
         }),
         '--gme-boundary',
@@ -383,7 +383,7 @@ describe('HubSpot 商家映射', () => {
   })
 })
 
-describe('background 同步服务（单路失败不阻断）', () => {
+describe('background 同步服务（按开关隔离，单路失败不阻断）', () => {
   /** 从全局 mock 提取已注册的事件监听器（与 storageChangeListeners 同构）。 */
   function runtimeMessageListeners(): Array<(message: unknown) => void> {
     return (chrome.runtime.onMessage.addListener as ReturnType<typeof vi.fn>).mock.calls.map(
@@ -398,7 +398,7 @@ describe('background 同步服务（单路失败不阻断）', () => {
       event: 'mapsAutoSaveExport',
       data: {
         csvContent: 'Name\nLe Cafe\n',
-        filename: 'MapsGrab-Extractor-1-kw-2026-08-30.csv',
+        filename: 'MapExporter-1-kw-2026-08-30.csv',
         keyword: 'kw',
         rowCount: 1,
         businesses: [{ name: 'Le Cafe', domain: 'le.cafe', phone: '', address: '1 St', city: 'NY' }],
@@ -407,11 +407,72 @@ describe('background 同步服务（单路失败不阻断）', () => {
     }
   }
 
-  it('Drive 上传失败时 HubSpot 同步仍执行（单路失败不阻断）', async () => {
-    await seedAuth()
+  /** 预写两侧自动保存开关（真实设置管理器读取的同一 storage 键）。 */
+  function seedAutoSaveSwitches(drive: boolean, hubspot: boolean): void {
+    storageData[STORAGE_KEYS.MAPS_USER_SETTINGS] = {
+      autoSaveToGoogleDrive: drive,
+      autoSaveToHubspot: hubspot
+    }
+  }
+
+  /** 当前用例启动的服务；统一在 afterEach 释放，失败用例残留的订阅不会串到下一条。 */
+  let activeService: { destroy: () => void } | null = null
+
+  afterEach(() => {
+    activeService?.destroy()
+    activeService = null
+  })
+
+  /** 启动真实同步服务并注入一次 auto_save 事件。 */
+  async function startServiceAndEmit(): Promise<void> {
     const { MapsIntegrationSyncService } = await import(
       '../../src/background/services/MapsIntegrationSyncService'
     )
+    const service = new MapsIntegrationSyncService()
+    activeService = service
+    service.setup()
+    for (const listener of runtimeMessageListeners()) {
+      listener(autoSaveMessage())
+    }
+  }
+
+  /** Drive、HubSpot 代理与 SLS 打点全部应答成功的 fetch stub。 */
+  function stubSyncTargetsSuccess(): ReturnType<typeof vi.fn> {
+    return stubFetch([
+      {
+        match: url => url.includes('googleapis.com'),
+        respond: () => jsonResponse({ id: 'file-1' })
+      },
+      {
+        match: url => url.endsWith('/api/client/maps/hubspot/sync'),
+        respond: () => jsonResponse({ code: 10000, msg: '', data: { synced: 1 } })
+      },
+      {
+        match: url => url.includes('/logstores/') && url.endsWith('/track'),
+        respond: () => new Response('', { status: 200 })
+      }
+    ])
+  }
+
+  /** 把 fetch 调用归类成外发目的地，未识别的保留原 URL，断言可精确到「只发生了哪些请求」。 */
+  function requestedTargets(fetchMock: ReturnType<typeof vi.fn>): string[] {
+    return fetchMock.mock.calls.map(call => {
+      const url = String(call[0])
+      if (url.includes('googleapis.com')) return 'drive'
+      if (url.endsWith('/api/client/maps/hubspot/sync')) return 'hubspot'
+      if (url.includes('/logstores/')) return 'mark'
+      return url
+    })
+  }
+
+  /** 让已触发的异步链路跑完，负向断言才不会抢在另一路发请求之前。 */
+  async function settleAsyncWork(): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 0))
+  }
+
+  it('Drive 上传失败时 HubSpot 同步仍执行（单路失败不阻断）', async () => {
+    await seedAuth()
+    seedAutoSaveSwitches(true, true)
     const fetchMock = stubFetch([
       {
         match: url => url.includes('googleapis.com'),
@@ -427,11 +488,7 @@ describe('background 同步服务（单路失败不阻断）', () => {
       }
     ])
 
-    const service = new MapsIntegrationSyncService()
-    service.setup()
-    for (const listener of runtimeMessageListeners()) {
-      listener(autoSaveMessage())
-    }
+    await startServiceAndEmit()
 
     await vi.waitFor(() => {
       const syncCalls = fetchMock.mock.calls.filter(call =>
@@ -460,23 +517,67 @@ describe('background 同步服务（单路失败不阻断）', () => {
     expect(markUrl.searchParams.get('mark_type')).toBe('sync_to_google_drive')
     expect(markUrl.searchParams.get('mark_msg')).toContain('outcome=failed')
 
-    service.destroy()
   })
 
-  it('未授权（storage 无记录）时双路均跳过，不发起任何上传请求', async () => {
-    const { MapsIntegrationSyncService } = await import(
-      '../../src/background/services/MapsIntegrationSyncService'
-    )
+  it('开关开启但未授权（storage 无授权记录）时双路均跳过，不发起任何上传请求', async () => {
+    seedAutoSaveSwitches(true, true)
     const fetchMock = stubFetch([])
 
-    const service = new MapsIntegrationSyncService()
-    service.setup()
-    for (const listener of runtimeMessageListeners()) {
-      listener(autoSaveMessage())
-    }
-    await new Promise(resolve => setTimeout(resolve, 0))
+    await startServiceAndEmit()
+    // 读过授权才说明走到了授权门控，而不是被开关挡在前面
+    await vi.waitFor(() => {
+      expect(chrome.storage.local.get).toHaveBeenCalledWith(STORAGE_KEYS.MAPS_INTEGRATION_AUTH)
+    })
+    await settleAsyncWork()
 
+    expect(chrome.identity.getAuthToken).not.toHaveBeenCalled()
     expect(fetchMock).not.toHaveBeenCalled()
-    service.destroy()
+  })
+
+  it('双授权仅开 Drive：只上传 Drive，不写 HubSpot', async () => {
+    await seedAuth()
+    seedAutoSaveSwitches(true, false)
+    const fetchMock = stubSyncTargetsSuccess()
+
+    await startServiceAndEmit()
+    // 打点是 Drive 一路的最后一步
+    await vi.waitFor(() => {
+      expect(requestedTargets(fetchMock)).toContain('mark')
+    })
+    await settleAsyncWork()
+
+    expect(requestedTargets(fetchMock)).toEqual(['drive', 'mark'])
+  })
+
+  it('双授权仅开 HubSpot：只同步 HubSpot，不取 Drive token、不上传 Drive', async () => {
+    await seedAuth()
+    seedAutoSaveSwitches(false, true)
+    const fetchMock = stubSyncTargetsSuccess()
+
+    await startServiceAndEmit()
+    await vi.waitFor(() => {
+      expect(requestedTargets(fetchMock)).toContain('hubspot')
+    })
+    await settleAsyncWork()
+
+    expect(chrome.identity.getAuthToken).not.toHaveBeenCalled()
+    expect(requestedTargets(fetchMock)).toEqual(['hubspot'])
+  })
+
+  it('双授权双关：不读授权、不取 token、不发任何请求', async () => {
+    await seedAuth()
+    seedAutoSaveSwitches(false, false)
+    const fetchMock = stubFetch([])
+
+    await startServiceAndEmit()
+    // 先确认事件已消费到开关读取，避免事件没到也「无请求」的假通过
+    await vi.waitFor(() => {
+      expect(chrome.storage.local.get).toHaveBeenCalledWith(STORAGE_KEYS.MAPS_USER_SETTINGS)
+    })
+    await settleAsyncWork()
+
+    expect(chrome.storage.local.get).not.toHaveBeenCalledWith(STORAGE_KEYS.MAPS_INTEGRATION_AUTH)
+    expect(chrome.identity.getAuthToken).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })

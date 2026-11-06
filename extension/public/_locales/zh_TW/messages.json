@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Chrome 線上應用程式商店擴充功能名稱"
   },
   "extensionDescription": {
@@ -8,19 +8,19 @@
     "description": "Chrome 線上應用程式商店擴充功能描述 - 最多132字元"
   },
   "actionTitle": {
-    "message": "開啟 MapsGrab",
+    "message": "開啟 MapExporter",
     "description": "瀏覽器動作標題"
   },
   "popupDescription": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Popup 頁面描述"
   },
   "optionsTitle": {
-    "message": "MapsGrab Settings",
+    "message": "MapExporter Settings",
     "description": "Options page title"
   },
   "dashboardTitle": {
-    "message": "MapsGrab Bulk Tasks",
+    "message": "MapExporter Bulk Tasks",
     "description": "Dashboard page title"
   }
 }

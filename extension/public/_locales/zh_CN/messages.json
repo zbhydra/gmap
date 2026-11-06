@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Chrome 网上应用店扩展名称"
   },
   "extensionDescription": {
@@ -8,19 +8,19 @@
     "description": "Chrome 网上应用店扩展描述 - 最多132字符"
   },
   "actionTitle": {
-    "message": "打开 MapsGrab",
+    "message": "打开 MapExporter",
     "description": "浏览器动作标题"
   },
   "popupDescription": {
-    "message": "MapsGrab",
+    "message": "MapExporter",
     "description": "Popup 页面描述"
   },
   "optionsTitle": {
-    "message": "MapsGrab 设置",
+    "message": "MapExporter 设置",
     "description": "Options page title"
   },
   "dashboardTitle": {
-    "message": "MapsGrab 批量任务",
+    "message": "MapExporter 批量任务",
     "description": "Dashboard page title"
   }
 }

@@ -2,15 +2,16 @@ import type { SiteContent, McpOAuthContent, ClinkReturnContent } from '../schema
 import type { CompanyContent } from '../../company/companyContent'
 import type { LegalContent } from '../../legal/legalContent'
 
+// TODO: 首页 MCP 工具集描述译文（pages.home.products.cards.mcp.body、pages.home.developers.items.mcp.description）由 AI 翻译，尚未经专业校对，校对前不视为定稿；工具集口径见 website/src/i18n/mcp.ts。
 export const site: SiteContent = {
   "site": {
-    "name": "MapsGrab",
-    "description": "MapsGrab là bộ công cụ dữ liệu bản đồ: lấy thông tin doanh nghiệp có sẵn công khai từ bản đồ, liên kết đánh giá, ID địa điểm, v.v. bằng tiện ích mở rộng trình duyệt và công cụ web.",
+    "name": "MapExporter",
+    "description": "MapExporter là bộ công cụ dữ liệu bản đồ: lấy thông tin doanh nghiệp có sẵn công khai từ bản đồ, liên kết đánh giá, ID địa điểm, v.v. bằng tiện ích mở rộng trình duyệt và công cụ web.",
     "keywords": "dữ liệu bản đồ, trình trích xuất bản đồ của google, công cụ tìm id địa điểm, trình tạo liên kết đánh giá, công cụ bản đồ"
   },
   "layout": {
     "nav": {
-      "brand": "MapsGrab",
+      "brand": "MapExporter",
       "primaryLabel": "Điều hướng chính",
       "mobileLabel": "Điều hướng trên thiết bị di động",
       "extension": "Tiện ích",
@@ -35,7 +36,7 @@ export const site: SiteContent = {
       "legalLabel": "Hợp pháp",
       "resources": "Công cụ miễn phí",
       "product": "Sản phẩm",
-      "rights": "© 2026 MapsGrab. Mọi quyền được bảo lưu.",
+      "rights": "© 2026 MapExporter. Mọi quyền được bảo lưu.",
       "tools": [
         {
           "id": "place-id-finder",
@@ -171,13 +172,13 @@ export const site: SiteContent = {
       }
     },
     "seo": {
-      "title": "Trang tổng quan | MapsGrab",
-      "description": "Quản lý các lần xuất MapsGrab, quyền truy cập và đăng ký API của bạn trong một không gian làm việc."
+      "title": "Trang tổng quan | MapExporter",
+      "description": "Quản lý các lần xuất MapExporter, quyền truy cập và đăng ký API của bạn trong một không gian làm việc."
     },
     "shell": {
       "skipToContent": "Chuyển đến nội dung chính",
       "sideLabel": "Không gian làm việc",
-      "homeLabel": "Trang chủ MapsGrab",
+      "homeLabel": "Trang chủ MapExporter",
       "navLabel": "Menu không gian làm việc",
       "loading": "Đang tải không gian làm việc của bạn...",
       "retry": "Thử lại",
@@ -301,7 +302,7 @@ export const site: SiteContent = {
       "downloadFailed": "Không thể bắt đầu tải xuống. Vui lòng thử lại.",
       "signInPrompt": "Đăng nhập để xem lịch sử xuất trực tuyến của bạn.",
       "signInCta": "Đăng nhập",
-      "unreachable": "Không thể đạt tới MapsGrab ngay bây giờ."
+      "unreachable": "Không thể đạt tới MapExporter ngay bây giờ."
     },
     "api": {
       "description": "Quản lý khóa API, trợ cấp yêu cầu hàng tháng và các ứng dụng AI được kết nối của bạn.",
@@ -403,14 +404,14 @@ export const site: SiteContent = {
           "steps": [
             "Đăng nhập vào PayPal và mở Cài đặt.",
             "Chuyển đến Thanh toán, sau đó đến Thanh toán tự động.",
-            "Chọn MapsGrab và chọn Hủy."
+            "Chọn MapExporter và chọn Hủy."
           ]
         },
         {
           "provider": "ClinkBill",
           "steps": [
             "Mở liên kết Cổng thông tin khách hàng từ email mua hàng của bạn.",
-            "Đăng nhập và chọn đăng ký MapsGrab của bạn.",
+            "Đăng nhập và chọn đăng ký MapExporter của bạn.",
             "Chọn Hủy."
           ]
         }
@@ -421,8 +422,8 @@ export const site: SiteContent = {
   "pages": {
     "home": {
       "seo": {
-        "title": "MapsGrab — Lấy Google Maps Dữ liệu doanh nghiệp vào CSV & JSON",
-        "description": "MapsGrab là tiện ích mở rộng của trình duyệt và bộ công cụ web thu thập thông tin doanh nghiệp có sẵn công khai từ Google Maps — tên, điện thoại, đánh giá, ảnh, email — và xuất thông tin đó sang CSV hoặc JSON."
+        "title": "MapExporter — Lấy Google Maps Dữ liệu doanh nghiệp vào CSV & JSON",
+        "description": "MapExporter là tiện ích mở rộng của trình duyệt và bộ công cụ web thu thập thông tin doanh nghiệp có sẵn công khai từ Google Maps — tên, điện thoại, đánh giá, ảnh, email — và xuất thông tin đó sang CSV hoặc JSON."
       },
       "hero": {
         "announce": {
@@ -461,8 +462,8 @@ export const site: SiteContent = {
         ],
         "dashboard": "Mở Scraper trực tuyến",
         "theater": {
-          "panelLabel": "MapsGrab xem trước bảng điều khiển",
-          "extensionActive": "MapsGrab tiện ích mở rộng đang hoạt động",
+          "panelLabel": "MapExporter xem trước bảng điều khiển",
+          "extensionActive": "MapExporter tiện ích mở rộng đang hoạt động",
           "mapFilters": [
             "Mở ngay bây giờ",
             "Được đánh giá cao nhất",
@@ -504,7 +505,7 @@ export const site: SiteContent = {
         }
       },
       "facts": {
-        "caption": "MapsGrab theo những con số",
+        "caption": "MapExporter theo những con số",
         "items": [
           {
             "value": 36,
@@ -537,7 +538,7 @@ export const site: SiteContent = {
             "accent": " ",
             "tail": " theo ba bước"
           },
-          "lead": "Không có mã và không sao chép-dán. MapsGrab đọc những gì Google Maps đã hiển thị cho bạn và biến nó thành các hàng có cấu trúc."
+          "lead": "Không có mã và không sao chép-dán. MapExporter đọc những gì Google Maps đã hiển thị cho bạn và biến nó thành các hàng có cấu trúc."
         },
         "steps": [
           {
@@ -546,7 +547,7 @@ export const site: SiteContent = {
           },
           {
             "title": "Bắt đầu thu thập",
-            "body": "Nhấp vào {action}. MapsGrab cuộn kết quả, thu thập danh sách và khi được bật sẽ làm phong phú thêm địa chỉ liên hệ.",
+            "body": "Nhấp vào {action}. MapExporter cuộn kết quả, thu thập danh sách và khi được bật sẽ làm phong phú thêm địa chỉ liên hệ.",
             "action": "Bắt đầu thu thập"
           },
           {
@@ -590,7 +591,7 @@ export const site: SiteContent = {
           "mcp": {
             "badge": "MCP máy chủ",
             "title": "Dữ liệu Bản đồ trực tiếp cho các đại lý AI của bạn",
-            "body": "Tìm kiếm và đánh giá dưới dạng công cụ MCP cho Claude Code, Cursor, VS Code và Codex.",
+            "body": "Tìm kiếm, đánh giá và ảnh dưới dạng công cụ MCP cho Claude Code, Cursor, VS Code và Codex.",
             "link": "Khám phá máy chủ MCP"
           }
         },
@@ -696,7 +697,7 @@ export const site: SiteContent = {
             "accent": " gửi email cho ",
             "tail": ""
           },
-          "lead": "Khi tính năng làm giàu được bật, MapsGrab sẽ kiểm tra trang web chính thức của từng doanh nghiệp và điền vào các kênh liên hệ trực tiếp trong khi trích xuất."
+          "lead": "Khi tính năng làm giàu được bật, MapExporter sẽ kiểm tra trang web chính thức của từng doanh nghiệp và điền vào các kênh liên hệ trực tiếp trong khi trích xuất."
         },
         "points": [
           "Địa chỉ email được tìm thấy trên trang web doanh nghiệp",
@@ -731,7 +732,7 @@ export const site: SiteContent = {
           },
           "mcp": {
             "title": "MCP máy chủ",
-            "description": "Công cụ tìm kiếm và đánh giá cho bất kỳ khách hàng MCP nào"
+            "description": "Công cụ tìm kiếm, đánh giá và ảnh cho mọi ứng dụng khách MCP"
           }
         },
         "langLabel": "Ngôn ngữ",
@@ -847,16 +848,16 @@ export const site: SiteContent = {
         "contact": "Liên hệ hỗ trợ",
         "items": [
           {
-            "question": "MapsGrab có được sử dụng miễn phí không?",
+            "question": "MapExporter có được sử dụng miễn phí không?",
             "answer": "Đúng. Tiện ích mở rộng hoạt động mà không cần tài khoản và bao gồm hạn mức hồ sơ miễn phí hàng tháng. Các gói trả phí trên trang Định giá sẽ tăng giới hạn khi bạn cần thêm."
           },
           {
             "question": "Những trình duyệt nào được hỗ trợ?",
-            "answer": "Tải xuống MapsGrab từ trang Tiện ích mở rộng. Chrome, Edge và Brave tải ZIP đã giải nén; Firefox sử dụng một tiện ích bổ sung tạm thời riêng biệt phải được tải lại sau khi khởi động lại. Trang này bao gồm hướng dẫn cài đặt và cập nhật."
+            "answer": "Tải xuống MapExporter từ trang Tiện ích mở rộng. Chrome, Edge và Brave tải ZIP đã giải nén; Firefox sử dụng một tiện ích bổ sung tạm thời riêng biệt phải được tải lại sau khi khởi động lại. Trang này bao gồm hướng dẫn cài đặt và cập nhật."
           },
           {
             "question": "Dữ liệu đến từ đâu và việc thu thập có hợp pháp không?",
-            "answer": "MapsGrab chỉ thu thập thông tin được hiển thị công khai trên các trang Google Maps bạn truy cập — những thông tin tương tự mà bất kỳ khách truy cập nào cũng có thể đọc. Chúng tôi không truy cập các tài khoản riêng tư, nội dung bị kiểm soát hoặc dữ liệu không công khai."
+            "answer": "MapExporter chỉ thu thập thông tin được hiển thị công khai trên các trang Google Maps bạn truy cập — những thông tin tương tự mà bất kỳ khách truy cập nào cũng có thể đọc. Chúng tôi không truy cập các tài khoản riêng tư, nội dung bị kiểm soát hoặc dữ liệu không công khai."
           },
           {
             "question": "Tôi có cần cài đặt bất cứ thứ gì cho các công cụ web không?",
@@ -867,7 +868,7 @@ export const site: SiteContent = {
             "answer": "Dữ liệu xuất có dạng CSV hoặc JSON với lựa chọn trường bạn chọn, được loại bỏ trùng lặp bởi Place ID."
           },
           {
-            "question": "MapsGrab có thấy dữ liệu tôi thu thập không?",
+            "question": "MapExporter có thấy dữ liệu tôi thu thập không?",
             "answer": "Cài đặt và kết quả của bạn được lưu trữ cục bộ trong trình duyệt của bạn. Máy chủ của chúng tôi chỉ xử lý cấu hình từ xa, trạng thái tài khoản và hạn ngạch, email/làm phong phú mạng xã hội tùy chọn và nhật ký sử dụng tối thiểu."
           }
         ]
@@ -880,14 +881,14 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "Cài đặt tiện ích mở rộng, mở Google Maps, tìm kiếm và xuất danh sách đầu tiên của bạn — không cần tài khoản.",
-        "install": "Cài đặt MapsGrab miễn phí",
+        "install": "Cài đặt MapExporter miễn phí",
         "online": "Hãy dùng thử Công cụ thu thập dữ liệu trực tuyến",
         "note": "Bao gồm hạn ngạch hàng tháng miễn phí. Không có thẻ tín dụng."
       }
     },
     "extension": {
       "seo": {
-        "title": "MapsGrab cho Chrome, Edge & Firefox — Google Maps Tiện ích mở rộng trình trích xuất",
+        "title": "MapExporter cho Chrome, Edge & Firefox — Google Maps Tiện ích mở rộng trình trích xuất",
         "description": "Trích xuất 36 cột dữ liệu doanh nghiệp, đánh giá và ảnh từ Google Maps, làm phong phú hồ sơ bằng email và liên kết xã hội, chạy tác vụ hàng loạt và xuất sang CSV hoặc JSON."
       },
       "hero": {
@@ -909,8 +910,8 @@ export const site: SiteContent = {
           "Xuất khẩu vẫn còn trên máy của bạn"
         ],
         "theater": {
-          "panelLabel": "MapsGrab xem trước bảng điều khiển",
-          "extensionActive": "MapsGrab đang hoạt động trên trang này",
+          "panelLabel": "MapExporter xem trước bảng điều khiển",
+          "extensionActive": "MapExporter đang hoạt động trên trang này",
           "dock": "Gắn trái / phải",
           "filters": [
             "Mở ngay bây giờ",
@@ -975,11 +976,11 @@ export const site: SiteContent = {
             "accent": " ",
             "tail": ""
           },
-          "lead": "Bảng MapsGrab xuất hiện ngay trên Google Maps. Mỗi kết quả tìm kiếm, trang kinh doanh và danh sách đã lưu đều có chế độ trích xuất phù hợp — không cần sao chép-dán, không cần chuyển đổi tab."
+          "lead": "Bảng MapExporter xuất hiện ngay trên Google Maps. Mỗi kết quả tìm kiếm, trang kinh doanh và danh sách đã lưu đều có chế độ trích xuất phù hợp — không cần sao chép-dán, không cần chuyển đổi tab."
         },
         "search": {
           "title": "Kết quả tìm kiếm",
-          "description": "Nhấn Bắt đầu giải nén trên bất kỳ tìm kiếm nào. MapsGrab cuộn danh sách kết quả theo tốc độ của con người và thu thập từng danh sách khi nó tải."
+          "description": "Nhấn Bắt đầu giải nén trên bất kỳ tìm kiếm nào. MapExporter cuộn danh sách kết quả theo tốc độ của con người và thu thập từng danh sách khi nó tải."
         },
         "place": {
           "title": "Trang kinh doanh",
@@ -995,7 +996,7 @@ export const site: SiteContent = {
         },
         "saved": {
           "title": "Danh sách đã lưu",
-          "description": "Mở danh sách đã lưu và nhấn Bắt đầu một lần. MapsGrab lần lượt mở từng địa điểm và thu thập nó - không cần nhấp chuột vào từng vật phẩm.",
+          "description": "Mở danh sách đã lưu và nhấn Bắt đầu một lần. MapExporter lần lượt mở từng địa điểm và thu thập nó - không cần nhấp chuột vào từng vật phẩm.",
           "listName": "Yêu thích · {count} địa điểm"
         }
       },
@@ -1112,7 +1113,7 @@ export const site: SiteContent = {
             "accent": " Bỏ đi. ",
             "tail": ""
           },
-          "lead": "Dán tối đa 500 từ khóa hoặc xem xét URLs vào một tác vụ. MapsGrab xem qua từng mục với tiến trình trực tiếp, bỏ qua bất kỳ thứ gì bị đình trệ và tự động xuất khi nhiệm vụ kết thúc."
+          "lead": "Dán tối đa 500 từ khóa hoặc xem xét URLs vào một tác vụ. MapExporter xem qua từng mục với tiến trình trực tiếp, bỏ qua bất kỳ thứ gì bị đình trệ và tự động xuất khi nhiệm vụ kết thúc."
         },
         "checks": [
           "Tác vụ từ khóa chạy một tìm kiếm trên Bản đồ cho mỗi từ khóa",
@@ -1170,10 +1171,10 @@ export const site: SiteContent = {
         ],
         "diagram": {
           "browser": "Trình duyệt của bạn",
-          "servers": "MapsGrab máy chủ",
+          "servers": "MapExporter máy chủ",
           "nodes": {
             "mapsTab": "tab Google Maps",
-            "panel": "bảng MapsGrab",
+            "panel": "bảng MapExporter",
             "storage": "Bộ nhớ cục bộ",
             "exports": "Xuất khẩu của bạn",
             "config": "Cấu hình từ xa",
@@ -1193,7 +1194,7 @@ export const site: SiteContent = {
           "kicker": "Cài đặt",
           "title": {
             "lead": "Cài đặt ",
-            "accent": " MapsGrab ",
+            "accent": " MapExporter ",
             "tail": ""
           },
           "lead": "Tải xuống ZIP tại đây và làm theo các bước cho trình duyệt của bạn. Chrome, Edge và Brave tải thư mục đã giải nén. Firefox sử dụng một tiện ích bổ sung tạm thời riêng biệt phải được tải lại sau khi khởi động lại. Nhấp vào bất kỳ hình ảnh nào để xem kích thước đầy đủ."
@@ -1217,11 +1218,11 @@ export const site: SiteContent = {
                 "description": [
                   "Tải xuống ",
                   {
-                    "code": "mapsgrab.zip"
+                    "code": "mapexporter.zip"
                   },
                   ". Trên Windows, nhấp chuột phải vào nó và chọn “Trích xuất tất cả”. Trên macOS, nhấp đúp vào nó. Giữ thư mục đã giải nén."
                 ],
-                "shot": "MapsGrab ZIP được tải xuống trong Chrome"
+                "shot": "MapExporter ZIP được tải xuống trong Chrome"
               },
               {
                 "title": "Mở trang tiện ích mở rộng",
@@ -1252,9 +1253,9 @@ export const site: SiteContent = {
               {
                 "title": "Tải thư mục đã giải nén",
                 "description": [
-                  "Nhấp vào “Tải đã giải nén” và chọn thư mục đã giải nén. MapsGrab xuất hiện trong danh sách tiện ích mở rộng. Mở tìm kiếm Google Maps để sử dụng nó."
+                  "Nhấp vào “Tải đã giải nén” và chọn thư mục đã giải nén. MapExporter xuất hiện trong danh sách tiện ích mở rộng. Mở tìm kiếm Google Maps để sử dụng nó."
                 ],
-                "shot": "Tải giải nén có thêm thẻ MapsGrab"
+                "shot": "Tải giải nén có thêm thẻ MapExporter"
               }
             ]
           },
@@ -1268,11 +1269,11 @@ export const site: SiteContent = {
                 "description": [
                   "Tải xuống ",
                   {
-                    "code": "mapsgrab-firefox.zip"
+                    "code": "mapexporter-firefox.zip"
                   },
                   ". Trên Windows, nhấp chuột phải vào nó và chọn “Trích xuất tất cả”. Trên macOS, nhấp đúp vào nó. Giữ thư mục đã giải nén."
                 ],
-                "shot": "MapsGrab Firefox ZIP được tải xuống trong Firefox"
+                "shot": "MapExporter Firefox ZIP được tải xuống trong Firefox"
               },
               {
                 "title": "Mở trang gỡ lỗi",
@@ -1294,7 +1295,7 @@ export const site: SiteContent = {
                   },
                   " bên trong thư mục đã giải nén. Tiện ích bổ sung tạm thời sẽ không tải khi Firefox khởi động lại; lặp lại bước này để tải lại."
                 ],
-                "shot": "MapsGrab được tải dưới dạng tiện ích mở rộng Firefox tạm thời với tập lệnh nền đang chạy"
+                "shot": "MapExporter được tải dưới dạng tiện ích mở rộng Firefox tạm thời với tập lệnh nền đang chạy"
               }
             ]
           }
@@ -1310,7 +1311,7 @@ export const site: SiteContent = {
           "status": "Phát hành trước",
           "date": "Tháng 8 2026",
           "items": [
-            "Bản phát hành trước đầu tiên của tiện ích mở rộng MapsGrab",
+            "Bản phát hành trước đầu tiên của tiện ích mở rộng MapExporter",
             "Google Maps trích xuất tìm kiếm bằng cách cuộn tự động và lược đồ cột 36",
             "Đánh giá và trích xuất ảnh từ các trang kinh doanh",
             "Làm phong phú email và phương tiện truyền thông xã hội cho mỗi doanh nghiệp",
@@ -1364,12 +1365,12 @@ export const site: SiteContent = {
             "answer": "Quy tắc trích xuất được cung cấp dưới dạng cấu hình từ xa, do đó, các bản sửa lỗi sẽ đến được bảng điều khiển mà không cần cài đặt lại tiện ích mở rộng. Nếu không thể đọc được một trang, bảng điều khiển sẽ hiển thị lỗi thay vì lỗi âm thầm."
           },
           {
-            "question": "MapsGrab có thấy dữ liệu tôi thu thập không?",
+            "question": "MapExporter có thấy dữ liệu tôi thu thập không?",
             "answer": "Cài đặt và kết quả của bạn được lưu trữ cục bộ trong trình duyệt của bạn. Máy chủ của chúng tôi chỉ xử lý cấu hình từ xa, trạng thái tài khoản và hạn ngạch, email tùy chọn và nội dung phong phú trên mạng xã hội cũng như nhật ký sử dụng tối thiểu."
           },
           {
             "question": "Dữ liệu đến từ đâu và việc thu thập có hợp pháp không?",
-            "answer": "MapsGrab chỉ thu thập thông tin được hiển thị công khai trên các trang Google Maps bạn truy cập — những thông tin tương tự mà bất kỳ khách truy cập nào cũng có thể đọc. Chúng tôi không truy cập các tài khoản riêng tư, nội dung bị kiểm soát hoặc dữ liệu không công khai."
+            "answer": "MapExporter chỉ thu thập thông tin được hiển thị công khai trên các trang Google Maps bạn truy cập — những thông tin tương tự mà bất kỳ khách truy cập nào cũng có thể đọc. Chúng tôi không truy cập các tài khoản riêng tư, nội dung bị kiểm soát hoặc dữ liệu không công khai."
           }
         ]
       },
@@ -1381,7 +1382,7 @@ export const site: SiteContent = {
           "tail": ""
         },
         "lead": "Cài đặt tiện ích mở rộng, tìm kiếm Google Maps và xuất bảng tính sạch — không cần tài khoản.",
-        "primary": "Cài đặt MapsGrab",
+        "primary": "Cài đặt MapExporter",
         "secondary": "So sánh các kế hoạch",
         "note": "Bao gồm hạn ngạch hàng tháng miễn phí. Không có thẻ tín dụng."
       }
@@ -1429,7 +1430,7 @@ export const site: SiteContent = {
         "confirmedCreditsTitle": "Đã thêm tín dụng",
         "confirmedCreditsMessage": "Khoản thanh toán PayPal của bạn đã được xác nhận và Tín dụng đã được thêm vào. Bạn có thể đóng tab này và tiếp tục trong cửa sổ ban đầu.",
         "confirmedSubscriptionTitle": "Đã kích hoạt đăng ký",
-        "confirmedSubscriptionMessage": "Khoản thanh toán PayPal của bạn đã được xác nhận và gói MapsGrab của bạn đang hoạt động. Bạn có thể đóng tab này và tiếp tục trong cửa sổ ban đầu.",
+        "confirmedSubscriptionMessage": "Khoản thanh toán PayPal của bạn đã được xác nhận và gói MapExporter của bạn đang hoạt động. Bạn có thể đóng tab này và tiếp tục trong cửa sổ ban đầu.",
         "failedTitle": "Thanh toán cần chú ý",
         "failedMessage": "Chúng tôi không thể tự động xác nhận đơn đặt hàng này. Quay lại cửa sổ ban đầu hoặc thử làm mới trạng thái thanh toán của bạn ở đó."
       },
@@ -1478,13 +1479,13 @@ export const site: SiteContent = {
         "orderExpired": "Đơn hàng đã hết hạn. Hãy mua lại.",
         "fulfillmentFailed": "Đã nhận được thanh toán nhưng Tín dụng chưa được thêm vào. Vui lòng thử lại sau.",
         "authExpired": "Đăng nhập đã hết hạn. Đăng nhập lại để tiếp tục.",
-        "popupBlocked": "Trình duyệt của bạn đã chặn cửa sổ mới. Cho phép MapsGrab mở cửa sổ bật lên và thử lại."
+        "popupBlocked": "Trình duyệt của bạn đã chặn cửa sổ mới. Cho phép MapExporter mở cửa sổ bật lên và thử lại."
       }
     },
     "pricing": {
       "seo": {
-        "title": "Định giá - Gói trực tuyến, tiện ích mở rộng và API | MapsGrab",
-        "description": "MapsGrab lên kế hoạch cho mọi bề mặt: Trình quét trực tuyến từ trình duyệt $19, Tiện ích mở rộng từ $39, và API từ $15. Các bậc miễn phí đi kèm với mọi sản phẩm — gói một tháng tự nhiên trên Trực tuyến và API, đăng ký hàng tháng trên Tiện ích mở rộng."
+        "title": "Định giá - Gói trực tuyến, tiện ích mở rộng và API | MapExporter",
+        "description": "MapExporter lên kế hoạch cho mọi bề mặt: Trình quét trực tuyến từ trình duyệt $19, Tiện ích mở rộng từ $39, và API từ $15. Các bậc miễn phí đi kèm với mọi sản phẩm — gói một tháng tự nhiên trên Trực tuyến và API, đăng ký hàng tháng trên Tiện ích mở rộng."
       },
       "hero": {
         "kicker": "Định giá",
@@ -1510,7 +1511,7 @@ export const site: SiteContent = {
           "unit": "hồ sơ",
           "eyebrow": "Kế hoạch Scraper trực tuyến",
           "title": "Khai thác đám mây, định giá theo hồ sơ",
-          "description": "Chạy công cụ MapsGrab trên cơ sở hạ tầng của chúng tôi. Một bản ghi là một hàng kinh doanh được thu thập. Các gói trả phí bao gồm email tùy chọn và làm giàu phương tiện truyền thông xã hội mà không phải trả thêm phí kỷ lục.",
+          "description": "Chạy công cụ MapExporter trên cơ sở hạ tầng của chúng tôi. Một bản ghi là một hàng kinh doanh được thu thập. Các gói trả phí bao gồm email tùy chọn và làm giàu phương tiện truyền thông xã hội mà không phải trả thêm phí kỷ lục.",
           "billingChips": [
             "Thanh toán một lần",
             "Bao gồm một tháng tự nhiên",
@@ -1678,7 +1679,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "Áp dụng cho hạn ngạch bản ghi hàng tháng của MapsGrab Trình thu thập trực tuyến.",
+            "usageNotice": "Áp dụng cho hạn ngạch bản ghi hàng tháng của MapExporter Trình thu thập trực tuyến.",
             "successTitle": "Đã kích hoạt gói",
             "successDescription": "Gói 1 một tháng của bạn đã có hiệu lực. Công cụ quét trực tuyến sẽ chọn nó trong lần làm mới hạn ngạch tiếp theo."
           }
@@ -1826,7 +1827,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "Áp dụng cho hạn ngạch hàng tháng của tiện ích mở rộng trình duyệt MapsGrab.",
+            "usageNotice": "Áp dụng cho hạn ngạch hàng tháng của tiện ích mở rộng trình duyệt MapExporter.",
             "successTitle": "Đã kích hoạt gói",
             "successDescription": "Gói 1 một tháng của bạn đã có hiệu lực. Tiện ích mở rộng sẽ nhận nó vào lần làm mới hạn ngạch tiếp theo."
           }
@@ -1904,7 +1905,7 @@ export const site: SiteContent = {
               "id": "business",
               "productId": "api_business",
               "name": "Việc kinh doanh",
-              "tagline": "Đối với các sản phẩm được xây dựng trên dữ liệu MapsGrab",
+              "tagline": "Đối với các sản phẩm được xây dựng trên dữ liệu MapExporter",
               "price": "$115",
               "periodLabel": "một lần · 1 tháng",
               "quota": "Yêu cầu 10,000 / tháng",
@@ -2015,7 +2016,7 @@ export const site: SiteContent = {
             ]
           },
           "checkout": {
-            "usageNotice": "Áp dụng cho hạn ngạch yêu cầu hàng tháng MapsGrab API.",
+            "usageNotice": "Áp dụng cho hạn ngạch yêu cầu hàng tháng MapExporter API.",
             "successTitle": "Đã kích hoạt gói",
             "successDescription": "Gói 1 một tháng của bạn đã có hiệu lực. Khóa API của bạn sẽ nhận hạn ngạch mới cho yêu cầu tiếp theo."
           }
@@ -2115,7 +2116,7 @@ export const site: SiteContent = {
         "loading": "Đang tải các tùy chọn thanh toán...",
         "loadFailed": "Không thể tải các tùy chọn thanh toán. Hãy làm mới trang để thử lại.",
         "noChannels": "Hiện tại không có phương thức thanh toán nào cho gói này.",
-        "productTitlePrefix": "MapsGrab",
+        "productTitlePrefix": "MapExporter",
         "failedTitle": "Thanh toán chưa hoàn tất",
         "billingPeriodMonthly": "1 tháng",
         "billingAutoRenew": "Tự động gia hạn cho đến khi bị hủy",
@@ -2156,7 +2157,7 @@ export const site: SiteContent = {
             "answer": "Một bản ghi là một hàng được thu thập — cùng đơn vị tính với các gói miễn phí. Trên Trình thu thập dữ liệu trực tuyến đó là một doanh nghiệp; trong tiện ích mở rộng, mỗi doanh nghiệp, bài đánh giá hoặc ảnh mà nó thu thập là một bản ghi. Email và làm giàu xã hội không thêm hồ sơ. Thay vào đó, trên tab API, việc sử dụng được tính vào các yêu cầu thành công."
           },
           {
-            "question": "Tôi có cần gói trả phí để dùng thử MapsGrab không?",
+            "question": "Tôi có cần gói trả phí để dùng thử MapExporter không?",
             "answer": "Không. Mọi sản phẩm đều có cấp độ miễn phí không giới hạn thời gian: Công cụ quét trực tuyến và tiện ích mở rộng bao gồm các bản ghi 1,000 mỗi tháng và API bao gồm các yêu cầu 20 mỗi tháng. Các gói miễn phí của Trình quét trực tuyến và tiện ích mở rộng không bao gồm email hoặc nội dung phong phú trên mạng xã hội. Các gói Trực tuyến trả phí bao gồm nó theo mặc định và bạn có thể tắt nó cho từng tác vụ."
           },
           {
@@ -2187,8 +2188,8 @@ export const site: SiteContent = {
       }
     },
     "extensionLogin": {
-      "title": "Đăng nhập tiện ích | MapsGrab",
-      "description": "Đăng nhập để kết nối phiên trang web MapsGrab của bạn với tiện ích mở rộng trình duyệt.",
+      "title": "Đăng nhập tiện ích | MapExporter",
+      "description": "Đăng nhập để kết nối phiên trang web MapExporter của bạn với tiện ích mở rộng trình duyệt.",
       "eyebrow": "Tiện ích mở rộng trình duyệt",
       "heading": "Đăng nhập tiện ích mở rộng",
       "checkingState": "Kiểm tra",
@@ -2221,7 +2222,7 @@ export const site: SiteContent = {
     },
     "online": {
       "seo": {
-        "title": "Trình thu thập dữ liệu Google Maps trực tuyến — Chạy trích xuất trên đám mây | MapsGrab",
+        "title": "Trình thu thập dữ liệu Google Maps trực tuyến — Chạy trích xuất trên đám mây | MapExporter",
         "description": "Chạy tìm kiếm từ khóa Google Maps trên đám mây, thu thập dữ liệu kinh doanh và tải xuống một CSV cho mỗi tác vụ."
       },
       "hero": {
@@ -2484,7 +2485,7 @@ export const site: SiteContent = {
             "accent": " được định giá theo bản ghi ",
             "tail": ""
           },
-          "lead": "Chạy công cụ MapsGrab trên cơ sở hạ tầng của chúng tôi. Một bản ghi là một hàng kinh doanh được phân phối; gói trả phí bao gồm email và làm giàu xã hội mà không phải trả thêm phí kỷ lục."
+          "lead": "Chạy công cụ MapExporter trên cơ sở hạ tầng của chúng tôi. Một bản ghi là một hàng kinh doanh được phân phối; gói trả phí bao gồm email và làm giàu xã hội mà không phải trả thêm phí kỷ lục."
         },
         "specs": {
           "keywords": "Từ khóa cho mỗi nhiệm vụ",
@@ -2511,7 +2512,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Dữ liệu đến từ đâu và việc thu thập có hợp pháp không?",
-            "answer": "MapsGrab chỉ thu thập thông tin được hiển thị công khai trên Google Maps — thông tin tương tự mà bất kỳ khách truy cập nào cũng có thể đọc được. Chúng tôi không truy cập các tài khoản riêng tư, nội dung bị kiểm soát hoặc dữ liệu không công khai."
+            "answer": "MapExporter chỉ thu thập thông tin được hiển thị công khai trên Google Maps — thông tin tương tự mà bất kỳ khách truy cập nào cũng có thể đọc được. Chúng tôi không truy cập các tài khoản riêng tư, nội dung bị kiểm soát hoặc dữ liệu không công khai."
           },
           {
             "question": "Tôi có thể xuất sang những định dạng nào?",
@@ -2519,7 +2520,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Nó có giá bao nhiêu?",
-            "answer": "Công cụ quét trực tuyến tuân theo các gói MapsGrab trên trang Định giá, bao gồm cả hạn ngạch hồ sơ miễn phí hàng tháng. Các gói trả phí sẽ tăng giới hạn khi bạn cần nhiều hơn."
+            "answer": "Công cụ quét trực tuyến tuân theo các gói MapExporter trên trang Định giá, bao gồm cả hạn ngạch hồ sơ miễn phí hàng tháng. Các gói trả phí sẽ tăng giới hạn khi bạn cần nhiều hơn."
           },
           {
             "question": "Tôi có cần gói trả phí cho email và hồ sơ mạng xã hội không?",
@@ -2695,8 +2696,8 @@ export const site: SiteContent = {
     },
     "scraperApi": {
       "seo": {
-        "title": "Máy cạp Google Maps API — Dữ liệu kinh doanh trong JSON | MapsGrab",
-        "description": "Công cụ quét MapsGrab API trả về kết quả tìm kiếm Google Maps dưới dạng JSON: tên, địa chỉ, số điện thoại, trang web, xếp hạng, giờ, tọa độ, Place ID và fid — cùng với email và hồ sơ mạng xã hội theo yêu cầu."
+        "title": "Máy cạp Google Maps API — Dữ liệu kinh doanh trong JSON | MapExporter",
+        "description": "Công cụ quét MapExporter API trả về kết quả tìm kiếm Google Maps dưới dạng JSON: tên, địa chỉ, số điện thoại, trang web, xếp hạng, giờ, tọa độ, Place ID và fid — cùng với email và hồ sơ mạng xã hội theo yêu cầu."
       },
       "hero": {
         "title": {
@@ -3018,7 +3019,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Làm cách nào để xác thực?",
-            "answer": "Gửi khóa MapsGrab API của bạn dưới dạng mã thông báo mang trong tiêu đề Authorization. Mỗi tài khoản có một chìa khóa. Nó chỉ được hiển thị đầy đủ khi bạn tạo nó và việc tạo khóa mới sẽ vô hiệu hóa khóa cũ ngay lập tức."
+            "answer": "Gửi khóa MapExporter API của bạn dưới dạng mã thông báo mang trong tiêu đề Authorization. Mỗi tài khoản có một chìa khóa. Nó chỉ được hiển thị đầy đủ khi bạn tạo nó và việc tạo khóa mới sẽ vô hiệu hóa khóa cũ ngay lập tức."
           },
           {
             "question": "Các yêu cầu được tính như thế nào?",
@@ -3045,8 +3046,8 @@ export const site: SiteContent = {
     },
     "reviewsApi": {
       "seo": {
-        "title": "Google Maps Đánh giá API thu thập dữ liệu — Các đánh giá trong JSON | MapsGrab",
-        "description": "Đánh giá MapsGrab API trả về các đánh giá công khai về doanh nghiệp Google Maps dưới dạng JSON: xếp hạng, văn bản và bản dịch, tác giả, ngày tháng, đánh giá ảnh và trả lời của chủ sở hữu - tối đa 60 trên mỗi trang bằng một con trỏ."
+        "title": "Google Maps Đánh giá API thu thập dữ liệu — Các đánh giá trong JSON | MapExporter",
+        "description": "Đánh giá MapExporter API trả về các đánh giá công khai về doanh nghiệp Google Maps dưới dạng JSON: xếp hạng, văn bản và bản dịch, tác giả, ngày tháng, đánh giá ảnh và trả lời của chủ sở hữu - tối đa 60 trên mỗi trang bằng một con trỏ."
       },
       "hero": {
         "title": {
@@ -3292,7 +3293,7 @@ export const site: SiteContent = {
     },
     "photosApi": {
       "seo": {
-        "title": "API ảnh — URL ảnh công khai của doanh nghiệp | MapsGrab",
+        "title": "API ảnh — URL ảnh công khai của doanh nghiệp | MapExporter",
         "description": "Lấy URL ảnh công khai của doanh nghiệp dưới dạng JSON bằng fid. max_results giới hạn số ảnh trả về; kết quả chỉ là một phần và không bảo đảm toàn bộ album."
       },
       "hero": {
@@ -3447,7 +3448,7 @@ export const site: SiteContent = {
     },
     "scraperMcp": {
       "seo": {
-        "title": "Máy cạp Google Maps Máy chủ MCP | MapsGrab",
+        "title": "Máy cạp Google Maps Máy chủ MCP | MapExporter",
         "description": "Tìm địa điểm Google Maps, đọc đánh giá và lấy URL ảnh công khai của doanh nghiệp qua một kết nối MCP."
       },
       "clients": {
@@ -3482,7 +3483,7 @@ export const site: SiteContent = {
         ]
       },
       "agent": {
-        "label": "Phiên tổng đài viên mẫu: câu hỏi về doanh nghiệp địa phương, lệnh gọi công cụ MapsGrab với kết quả có cấu trúc và câu trả lời của tổng đài viên",
+        "label": "Phiên tổng đài viên mẫu: câu hỏi về doanh nghiệp địa phương, lệnh gọi công cụ MapExporter với kết quả có cấu trúc và câu trả lời của tổng đài viên",
         "session": "Phiên đại lý",
         "connected": "Máy chủ MCP {server} được kết nối",
         "placeholder": "Hỏi về bất kỳ địa điểm nào trên Google Maps…",
@@ -3743,7 +3744,7 @@ export const site: SiteContent = {
         "clientsLabel": "Khách hàng MCP",
         "anyClient": "Bất kỳ khách hàng MCP nào",
         "toolsLabel": "Công cụ",
-        "hub": "MapsGrab MCP",
+        "hub": "MapExporter MCP",
         "publicData": "Dữ liệu Google Maps công khai",
         "resultLabel": "kết quả",
         "results": [
@@ -3754,11 +3755,11 @@ export const site: SiteContent = {
         "steps": [
           {
             "title": "Kết nối",
-            "description": "Thêm điểm cuối vào ứng dụng khách của bạn, sau đó đăng nhập vào MapsGrab thông qua trình duyệt của bạn."
+            "description": "Thêm điểm cuối vào ứng dụng khách của bạn, sau đó đăng nhập vào MapExporter thông qua trình duyệt của bạn."
           },
           {
             "title": "Phát hiện",
-            "description": "Tác nhân của bạn liệt kê các công cụ MapsGrab và lược đồ đầu vào của chúng."
+            "description": "Tác nhân của bạn liệt kê các công cụ MapExporter và lược đồ đầu vào của chúng."
           },
           {
             "title": "Gọi",
@@ -3773,7 +3774,7 @@ export const site: SiteContent = {
           "accent": " cho mỗi khách hàng ",
           "tail": ""
         },
-        "lead": "Trỏ ứng dụng khách của bạn đến điểm cuối MapsGrab và đăng nhập thông qua trình duyệt của bạn — không cần khóa API để sao chép, không cần SDK, không cần chạy quy trình cục bộ.",
+        "lead": "Trỏ ứng dụng khách của bạn đến điểm cuối MapExporter và đăng nhập thông qua trình duyệt của bạn — không cần khóa API để sao chép, không cần SDK, không cần chạy quy trình cục bộ.",
         "tabsLabel": "Máy khách MCP",
         "copy": "Sao chép cấu hình",
         "clients": {
@@ -3782,15 +3783,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "Thêm máy chủ",
-                "description": "Chạy lệnh để đăng ký `mapsgrab` trên HTTP."
+                "description": "Chạy lệnh để đăng ký `mapexporter` trên HTTP."
               },
               {
                 "title": "Đăng nhập",
-                "description": "Trong Claude Code, chạy `/mcp`, chọn `mapsgrab` và xác thực — MapsGrab mở trong trình duyệt của bạn để bạn phê duyệt."
+                "description": "Trong Claude Code, chạy `/mcp`, chọn `mapexporter` và xác thực — MapExporter mở trong trình duyệt của bạn để bạn phê duyệt."
               },
               {
                 "title": "Yêu cầu dữ liệu Maps",
-                "description": "Claude Code liệt kê các công cụ MapsGrab và gọi chúng khi có lời nhắc cần đến chúng."
+                "description": "Claude Code liệt kê các công cụ MapExporter và gọi chúng khi có lời nhắc cần đến chúng."
               }
             ]
           },
@@ -3803,11 +3804,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "Đăng nhập",
-                "description": "Trong Cài đặt Cursor → MCP, nhấp vào Kết nối bên cạnh `mapsgrab` và phê duyệt nó trong trình duyệt của bạn."
+                "description": "Trong Cài đặt Cursor → MCP, nhấp vào Kết nối bên cạnh `mapexporter` và phê duyệt nó trong trình duyệt của bạn."
               },
               {
                 "title": "Sử dụng các công cụ",
-                "description": "`mapsgrab` hiển thị các công cụ của mình trong danh sách máy chủ MCP, sẵn sàng cho đại lý."
+                "description": "`mapexporter` hiển thị các công cụ của mình trong danh sách máy chủ MCP, sẵn sàng cho đại lý."
               }
             ]
           },
@@ -3820,11 +3821,11 @@ export const site: SiteContent = {
               },
               {
                 "title": "Đăng nhập",
-                "description": "Khởi động máy chủ. VS Code yêu cầu xác thực bằng MapsGrab và mở trình duyệt của bạn để phê duyệt."
+                "description": "Khởi động máy chủ. VS Code yêu cầu xác thực bằng MapExporter và mở trình duyệt của bạn để phê duyệt."
               },
               {
                 "title": "Sử dụng chế độ đại lý",
-                "description": "Mở Trò chuyện ở chế độ tổng đài viên và bật công cụ MapsGrab."
+                "description": "Mở Trò chuyện ở chế độ tổng đài viên và bật công cụ MapExporter."
               }
             ]
           },
@@ -3833,15 +3834,15 @@ export const site: SiteContent = {
             "steps": [
               {
                 "title": "Thêm máy chủ",
-                "description": "Chạy `codex mcp add` để đăng ký `mapsgrab` bằng URL."
+                "description": "Chạy `codex mcp add` để đăng ký `mapexporter` bằng URL."
               },
               {
                 "title": "Đăng nhập",
-                "description": "Chạy `codex mcp login mapsgrab` và phê duyệt MapsGrab trong trình duyệt của bạn."
+                "description": "Chạy `codex mcp login mapexporter` và phê duyệt MapExporter trong trình duyệt của bạn."
               },
               {
                 "title": "Bắt đầu Codex",
-                "description": "Phiên mới tải `mapsgrab` và các công cụ của nó."
+                "description": "Phiên mới tải `mapexporter` và các công cụ của nó."
               }
             ]
           }
@@ -3870,7 +3871,7 @@ export const site: SiteContent = {
           "accent": " Lấy lại hàng. ",
           "tail": ""
         },
-        "lead": "Tìm kiếm khách hàng tiềm năng, nghiên cứu thị trường địa phương, giám sát đánh giá - mô tả công việc và đại lý của bạn sẽ quyết định nên gọi công cụ MapsGrab nào.",
+        "lead": "Tìm kiếm khách hàng tiềm năng, nghiên cứu thị trường địa phương, giám sát đánh giá - mô tả công việc và đại lý của bạn sẽ quyết định nên gọi công cụ MapExporter nào.",
         "rows": [
           [
             {
@@ -4059,7 +4060,7 @@ export const site: SiteContent = {
         },
         "items": [
           {
-            "question": "Máy chủ MapsGrab MCP là gì?",
+            "question": "Máy chủ MapExporter MCP là gì?",
             "answer": "Tìm địa điểm Google Maps, đọc đánh giá và lấy URL ảnh công khai của doanh nghiệp qua một kết nối MCP. search_places / list_reviews / list_photos."
           },
           {
@@ -4068,7 +4069,7 @@ export const site: SiteContent = {
           },
           {
             "question": "Nó được xác thực như thế nào?",
-            "answer": "Với đăng nhập OAuth: Claude Code, Cursor, VS Code, Codex và các ứng dụng khách khác hỗ trợ ủy quyền MCP, hãy mở MapsGrab trong trình duyệt của bạn; bạn phê duyệt khách hàng và có thể thu hồi nó sau trong Bảng điều khiển → API. Chỉ khi khách hàng của bạn không thể đăng nhập, hãy chuyển khóa API của bạn làm mã thông báo mang trong tiêu đề Authorization."
+            "answer": "Với đăng nhập OAuth: Claude Code, Cursor, VS Code, Codex và các ứng dụng khách khác hỗ trợ ủy quyền MCP, hãy mở MapExporter trong trình duyệt của bạn; bạn phê duyệt khách hàng và có thể thu hồi nó sau trong Bảng điều khiển → API. Chỉ khi khách hàng của bạn không thể đăng nhập, hãy chuyển khóa API của bạn làm mã thông báo mang trong tiêu đề Authorization."
           },
           {
             "question": "Các cuộc gọi công cụ được tính như thế nào?",
@@ -4117,7 +4118,7 @@ export const site: SiteContent = {
         },
         "cta": {
           "kicker": "Khai thác hàng loạt",
-          "primary": "Cài đặt MapsGrab",
+          "primary": "Cài đặt MapExporter",
           "secondary": "Xem giá",
           "note": "Bao gồm hạn ngạch hàng tháng miễn phí. Không có thẻ tín dụng."
         },
@@ -4129,7 +4130,7 @@ export const site: SiteContent = {
       },
       "placeIdFinder": {
         "seo": {
-          "title": "Công cụ tìm Place ID - Nhận Google Maps Place ID từ URL | MapsGrab",
+          "title": "Công cụ tìm Place ID - Nhận Google Maps Place ID từ URL | MapExporter",
           "description": "Dán Google Maps vào vị trí URL và nhận Place ID, CID và FID ngay lập tức. Công cụ tìm Place ID dựa trên trình duyệt miễn phí - không cần đăng nhập, URL không bao giờ rời khỏi thiết bị của bạn."
         },
         "hero": {
@@ -4276,12 +4277,12 @@ export const site: SiteContent = {
             "accent": " trên quy mô lớn? ",
             "tail": ""
           },
-          "lead": "MapsGrab trích xuất Place ID, CID và FID cho mọi doanh nghiệp mà nó thu thập — cùng với các cột 33 khác — và xuất thẳng sang CSV hoặc JSON."
+          "lead": "MapExporter trích xuất Place ID, CID và FID cho mọi doanh nghiệp mà nó thu thập — cùng với các cột 33 khác — và xuất thẳng sang CSV hoặc JSON."
         }
       },
       "reviewLinkGenerator": {
         "seo": {
-          "title": "Trình tạo liên kết đánh giá Google - Đánh giá trực tiếp miễn phí URL | MapsGrab",
+          "title": "Trình tạo liên kết đánh giá Google - Đánh giá trực tiếp miễn phí URL | MapExporter",
           "description": "Biến địa điểm Google Maps URL thành liên kết đánh giá Google trực tiếp mà bạn có thể chia sẻ với khách hàng. Miễn phí, dựa trên trình duyệt và không có gì được tải lên."
         },
         "hero": {
@@ -4315,7 +4316,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "ID địa điểm đến từ đâu",
-            "body": "Công cụ này sử dụng lại giải mã cục bộ giống như Trình tìm kiếm Place ID: mã định danh đã có trong Maps URL và việc chuyển đổi sang biểu mẫu \"ChIJ...\" diễn ra hoàn toàn trong trình duyệt của bạn. Nếu bạn quản lý một số vị trí, hãy lặp lại quy trình cho mỗi vị trí — hoặc để MapsGrab mang cột Place ID trong mỗi lần xuất để có thể tạo hàng loạt liên kết đánh giá từ bảng tính."
+            "body": "Công cụ này sử dụng lại giải mã cục bộ giống như Trình tìm kiếm Place ID: mã định danh đã có trong Maps URL và việc chuyển đổi sang biểu mẫu \"ChIJ...\" diễn ra hoàn toàn trong trình duyệt của bạn. Nếu bạn quản lý một số vị trí, hãy lặp lại quy trình cho mỗi vị trí — hoặc để MapExporter mang cột Place ID trong mỗi lần xuất để có thể tạo hàng loạt liên kết đánh giá từ bảng tính."
           }
         ],
         "faq": {
@@ -4349,12 +4350,12 @@ export const site: SiteContent = {
             "accent": " kiếm được ",
             "tail": ""
           },
-          "lead": "MapsGrab lấy các bài đánh giá của bất kỳ trang kinh doanh nào — xếp hạng, văn bản, ngày tháng và câu trả lời của chủ sở hữu — để bạn có thể xem vùng phản hồi và trả lời nhanh hơn."
+          "lead": "MapExporter lấy các bài đánh giá của bất kỳ trang kinh doanh nào — xếp hạng, văn bản, ngày tháng và câu trả lời của chủ sở hữu — để bạn có thể xem vùng phản hồi và trả lời nhanh hơn."
         }
       },
       "emailChecker": {
         "seo": {
-          "title": "Trình kiểm tra email — Xác minh địa chỉ email miễn phí | MapsGrab",
+          "title": "Trình kiểm tra email — Xác minh địa chỉ email miễn phí | MapExporter",
           "description": "Tìm hiểu xem một địa chỉ email có nhận được thư hay không. Trình kiểm tra email miễn phí này hỏi trực tiếp máy chủ thư và cho biết trạng thái, khả năng gửi đến, bản ghi MX và loại tài khoản."
         },
         "hero": {
@@ -4435,7 +4436,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Cách đọc kết quả",
-            "body": "\"An toàn\" nghĩa là hộp thư tồn tại và nhận thư. Địa chỉ không hợp lệ và đã vô hiệu hóa sẽ bị trả lại thư, còn bẫy thư rác thì tuyệt đối không nên gửi. Tên miền catch-all chấp nhận mọi địa chỉ nên không thể xác nhận chính hộp thư; email theo vai trò, địa chỉ dùng một lần và hộp thư đầy đều rủi ro khi tiếp cận khách hàng. \"Không xác định\" nghĩa là máy chủ thư không đưa ra câu trả lời rõ ràng — hãy thử lại sau. MapsGrab thu thập địa chỉ email từ trang web chính thức của từng doanh nghiệp, và công cụ này giúp bạn kiểm tra nhanh một địa chỉ trước khi liên hệ."
+            "body": "\"An toàn\" nghĩa là hộp thư tồn tại và nhận thư. Địa chỉ không hợp lệ và đã vô hiệu hóa sẽ bị trả lại thư, còn bẫy thư rác thì tuyệt đối không nên gửi. Tên miền catch-all chấp nhận mọi địa chỉ nên không thể xác nhận chính hộp thư; email theo vai trò, địa chỉ dùng một lần và hộp thư đầy đều rủi ro khi tiếp cận khách hàng. \"Không xác định\" nghĩa là máy chủ thư không đưa ra câu trả lời rõ ràng — hãy thử lại sau. MapExporter thu thập địa chỉ email từ trang web chính thức của từng doanh nghiệp, và công cụ này giúp bạn kiểm tra nhanh một địa chỉ trước khi liên hệ."
           }
         ],
         "faq": {
@@ -4473,12 +4474,12 @@ export const site: SiteContent = {
             "accent": " xác minh ",
             "tail": ""
           },
-          "lead": "MapsGrab tìm thấy địa chỉ email và hồ sơ xã hội đằng sau mỗi doanh nghiệp mà nó trích xuất — trực tiếp từ trang web riêng của mỗi doanh nghiệp."
+          "lead": "MapExporter tìm thấy địa chỉ email và hồ sơ xã hội đằng sau mỗi doanh nghiệp mà nó trích xuất — trực tiếp từ trang web riêng của mỗi doanh nghiệp."
         }
       },
       "latLongToDms": {
         "seo": {
-          "title": "Chuyển đổi Lat Long sang DMS — Độ thập phân thành Độ Phút Giây | MapsGrab",
+          "title": "Chuyển đổi Lat Long sang DMS — Độ thập phân thành Độ Phút Giây | MapExporter",
           "description": "Chuyển đổi vĩ độ và kinh độ thập phân sang định dạng độ, phút, giây (DMS) ngay lập tức. Trình chuyển đổi tọa độ dựa trên trình duyệt miễn phí, không có gì được tải lên."
         },
         "hero": {
@@ -4511,7 +4512,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Tại sao điều này lại quan trọng đối với hoạt động của dữ liệu bản đồ",
-            "body": "Các chuyến đi khứ hồi phối hợp là điểm xung đột hàng ngày khi di chuyển dữ liệu kinh doanh giữa các công cụ: Google Maps xuất số thập phân, trong khi quy trình địa chính và quy trình in yêu cầu DMS. MapsGrab giữ cho ma sát này ở mức thấp — mọi doanh nghiệp được trích xuất đều mang theo vĩ độ và kinh độ trong quá trình xuất và chuyển đổi tọa độ hàng loạt có thể chạy ngoại tuyến với cùng một công thức mà trang này sử dụng."
+            "body": "Các chuyến đi khứ hồi phối hợp là điểm xung đột hàng ngày khi di chuyển dữ liệu kinh doanh giữa các công cụ: Google Maps xuất số thập phân, trong khi quy trình địa chính và quy trình in yêu cầu DMS. MapExporter giữ cho ma sát này ở mức thấp — mọi doanh nghiệp được trích xuất đều mang theo vĩ độ và kinh độ trong quá trình xuất và chuyển đổi tọa độ hàng loạt có thể chạy ngoại tuyến với cùng một công thức mà trang này sử dụng."
           }
         ],
         "faq": {
@@ -4545,12 +4546,12 @@ export const site: SiteContent = {
             "accent": " đã trích xuất ",
             "tail": ""
           },
-          "lead": "MapsGrab ghi vĩ độ và kinh độ vào mỗi hàng mà nó xuất — không cần tra cứu tọa độ thủ công cho dự án định tuyến hoặc lãnh thổ tiếp theo của bạn."
+          "lead": "MapExporter ghi vĩ độ và kinh độ vào mỗi hàng mà nó xuất — không cần tra cứu tọa độ thủ công cho dự án định tuyến hoặc lãnh thổ tiếp theo của bạn."
         }
       },
       "dmsToDd": {
         "seo": {
-          "title": "Chuyển đổi DMS sang DD — Độ Phút Giây thành Độ thập phân | MapsGrab",
+          "title": "Chuyển đổi DMS sang DD — Độ Phút Giây thành Độ thập phân | MapExporter",
           "description": "Chuyển đổi độ, phút, giây tọa độ sang độ thập phân ngay lập tức. Trình chuyển đổi DMS sang DD miễn phí dựa trên trình duyệt, không có gì được tải lên."
         },
         "hero": {
@@ -4559,7 +4560,7 @@ export const site: SiteContent = {
             "accent": " (Lat, Long) ",
             "tail": ""
           },
-          "description": "Nhập độ, phút và giây cho cả hai trục và nhận được độ thập phân rõ ràng — định dạng Google Maps, bảng tính và MapsGrab đều được hiểu."
+          "description": "Nhập độ, phút và giây cho cả hai trục và nhận được độ thập phân rõ ràng — định dạng Google Maps, bảng tính và MapExporter đều được hiểu."
         },
         "form": {
           "latitudeHeading": "Vĩ độ (N/S)",
@@ -4586,7 +4587,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Giữ dữ liệu tọa độ nhất quán",
-            "body": "Các ký hiệu hỗn hợp là lý do thông thường khiến các vị trí bị đưa vào nhầm đại dương sau khi nhập. Quyết định độ thập phân một lần và chuyển đổi mọi thứ ở ranh giới giúp đường ống luôn hoạt động tốt. MapsGrab đã xuất tọa độ theo độ thập phân, do đó dữ liệu được thu thập bằng tiện ích mở rộng sẽ được đưa vào các công cụ GIS và BI mà không cần bất kỳ bước chuyển đổi nào."
+            "body": "Các ký hiệu hỗn hợp là lý do thông thường khiến các vị trí bị đưa vào nhầm đại dương sau khi nhập. Quyết định độ thập phân một lần và chuyển đổi mọi thứ ở ranh giới giúp đường ống luôn hoạt động tốt. MapExporter đã xuất tọa độ theo độ thập phân, do đó dữ liệu được thu thập bằng tiện ích mở rộng sẽ được đưa vào các công cụ GIS và BI mà không cần bất kỳ bước chuyển đổi nào."
           }
         ],
         "faq": {
@@ -4620,12 +4621,12 @@ export const site: SiteContent = {
             "accent": " ở tỷ lệ ",
             "tail": ""
           },
-          "lead": "MapsGrab xuất vĩ độ và kinh độ thập phân cho mọi doanh nghiệp mà nó thu thập, bên cạnh các cột địa chỉ, số điện thoại và Place ID."
+          "lead": "MapExporter xuất vĩ độ và kinh độ thập phân cho mọi doanh nghiệp mà nó thu thập, bên cạnh các cột địa chỉ, số điện thoại và Place ID."
         }
       },
       "bulkKeywords": {
         "seo": {
-          "title": "Trình tạo từ khóa hàng loạt — Kết hợp từ khóa + vị trí | MapsGrab",
+          "title": "Trình tạo từ khóa hàng loạt — Kết hợp từ khóa + vị trí | MapExporter",
           "description": "Tạo hàng loạt kết hợp từ khóa và vị trí cho các tác vụ tìm kiếm bản đồ và SEO địa phương. Dán hai danh sách, nhận mọi kết hợp, tải xuống dưới dạng CSV. Miễn phí."
         },
         "hero": {
@@ -4660,7 +4661,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Từ danh sách từ khóa đến dữ liệu được thu thập",
-            "body": "Bước cổ điển tiếp theo là chạy từng kết hợp dưới dạng tìm kiếm Google Maps và thu thập kết quả. Vòng lặp đó chính xác là những gì MapsGrab tự động hóa: tiện ích mở rộng chấp nhận danh sách từ khóa dưới dạng tác vụ hàng loạt, duyệt từng tìm kiếm một và xuất mọi doanh nghiệp mà nó tìm thấy — vì vậy, các kết hợp bạn tạo ở đây trở thành các hàng có cấu trúc mà không cần sao chép thủ công."
+            "body": "Bước cổ điển tiếp theo là chạy từng kết hợp dưới dạng tìm kiếm Google Maps và thu thập kết quả. Vòng lặp đó chính xác là những gì MapExporter tự động hóa: tiện ích mở rộng chấp nhận danh sách từ khóa dưới dạng tác vụ hàng loạt, duyệt từng tìm kiếm một và xuất mọi doanh nghiệp mà nó tìm thấy — vì vậy, các kết hợp bạn tạo ở đây trở thành các hàng có cấu trúc mà không cần sao chép thủ công."
           }
         ],
         "faq": {
@@ -4694,12 +4695,12 @@ export const site: SiteContent = {
             "accent": " ",
             "tail": ""
           },
-          "lead": "Nhiệm vụ hàng loạt của MapsGrab chạy mọi từ khóa dưới dạng tìm kiếm trên Bản đồ và xuất các doanh nghiệp đằng sau chúng — CSV hoặc JSON, cùng với các bài đánh giá, ảnh và thông tin liên hệ phong phú."
+          "lead": "Nhiệm vụ hàng loạt của MapExporter chạy mọi từ khóa dưới dạng tìm kiếm trên Bản đồ và xuất các doanh nghiệp đằng sau chúng — CSV hoặc JSON, cùng với các bài đánh giá, ảnh và thông tin liên hệ phong phú."
         }
       },
       "mergeCsv": {
         "seo": {
-          "title": "Hợp nhất các tệp CSV trực tuyến - Kết hợp nhiều tệp CSV miễn phí | MapsGrab",
+          "title": "Hợp nhất các tệp CSV trực tuyến - Kết hợp nhiều tệp CSV miễn phí | MapExporter",
           "description": "Hợp nhất nhiều tệp CSV trực tuyến thành một tệp. Tiêu đề cột được căn chỉnh tự động theo liên kết - miễn phí, riêng tư và hoàn toàn dựa trên trình duyệt."
         },
         "hero": {
@@ -4732,7 +4733,7 @@ export const site: SiteContent = {
           },
           {
             "heading": "Được xây dựng để thu thập dữ liệu nhiều lần",
-            "body": "Trường hợp sử dụng điển hình là nối thêm các lần chạy: mỗi phiên trích xuất MapsGrab xuất CSV của riêng nó và việc hợp nhất sẽ đưa các phiên trong tuần vào một tập dữ liệu trước khi loại bỏ trùng lặp và làm sạch. Trình phân tích cú pháp xử lý các trường được trích dẫn, dấu phẩy được nhúng và dòng mới bên trong các ô (RFC 4180), do đó các bản xuất có địa chỉ nhiều dòng hoặc đoạn đánh giá sẽ hợp nhất một cách chính xác."
+            "body": "Trường hợp sử dụng điển hình là nối thêm các lần chạy: mỗi phiên trích xuất MapExporter xuất CSV của riêng nó và việc hợp nhất sẽ đưa các phiên trong tuần vào một tập dữ liệu trước khi loại bỏ trùng lặp và làm sạch. Trình phân tích cú pháp xử lý các trường được trích dẫn, dấu phẩy được nhúng và dòng mới bên trong các ô (RFC 4180), do đó các bản xuất có địa chỉ nhiều dòng hoặc đoạn đánh giá sẽ hợp nhất một cách chính xác."
           }
         ],
         "faq": {
@@ -4766,7 +4767,7 @@ export const site: SiteContent = {
             "accent": " một tập dữ liệu ",
             "tail": ""
           },
-          "lead": "MapsGrab xuất CSV/JSON sạch mỗi phiên với lựa chọn trường và chống trùng lặp Place ID, do đó, các bộ dữ liệu nhiều lần chạy gần như đã được hợp nhất."
+          "lead": "MapExporter xuất CSV/JSON sạch mỗi phiên với lựa chọn trường và chống trùng lặp Place ID, do đó, các bộ dữ liệu nhiều lần chạy gần như đã được hợp nhất."
         }
       }
     }
@@ -4777,16 +4778,16 @@ export const company: CompanyContent = {
   "footerGroupLabel": "Công ty",
   "about": {
     "navLabel": "Về",
-    "seoTitle": "Giới thiệu về MapsGrab | Sản phẩm và ranh giới",
-    "seoDescription": "MapsGrab là bộ công cụ dữ liệu bản đồ dành cho dữ liệu doanh nghiệp công cộng: tiện ích mở rộng trình duyệt, Trình quét trực tuyến trên đám mây, máy chủ API và MCP cũng như các công cụ web miễn phí. Tìm hiểu ranh giới dữ liệu ở đâu.",
+    "seoTitle": "Giới thiệu về MapExporter | Sản phẩm và ranh giới",
+    "seoDescription": "MapExporter là bộ công cụ dữ liệu bản đồ dành cho dữ liệu doanh nghiệp công cộng: tiện ích mở rộng trình duyệt, Trình quét trực tuyến trên đám mây, máy chủ API và MCP cũng như các công cụ web miễn phí. Tìm hiểu ranh giới dữ liệu ở đâu.",
     "hero": {
-      "eyebrow": "Giới thiệu về MapsGrab",
+      "eyebrow": "Giới thiệu về MapExporter",
       "title": {
         "lead": "Dữ liệu bản đồ, lấy ",
         "accent": " theo cách ",
         "tail": " đơn giản"
       },
-      "intro": "MapsGrab xây dựng các công cụ thu thập thông tin doanh nghiệp có sẵn công khai từ Google Maps và biến nó thành dữ liệu có cấu trúc, rõ ràng — tiện ích mở rộng trình duyệt cho Edge và Firefox, Trình quét trực tuyến dựa trên đám mây, máy chủ API và MCP, cùng với các công cụ web miễn phí, phần lớn chạy hoàn toàn trong trình duyệt của bạn.",
+      "intro": "MapExporter xây dựng các công cụ thu thập thông tin doanh nghiệp có sẵn công khai từ Google Maps và biến nó thành dữ liệu có cấu trúc, rõ ràng — tiện ích mở rộng trình duyệt cho Edge và Firefox, Trình quét trực tuyến dựa trên đám mây, máy chủ API và MCP, cùng với các công cụ web miễn phí, phần lớn chạy hoàn toàn trong trình duyệt của bạn.",
       "contactLabel": "Liên hệ hỗ trợ",
       "extensionLabel": "Khám phá tiện ích mở rộng",
       "stageLabel": "Quyền truy cập sớm",
@@ -4817,7 +4818,7 @@ export const company: CompanyContent = {
       },
       "lead": "Chọn tiện ích mở rộng của trình duyệt, Công cụ quét trực tuyến dựa trên đám mây hoặc API. Tiện ích mở rộng hoạt động bên trong trình duyệt của riêng bạn; Công cụ quét trực tuyến và API chia sẻ một công cụ đám mây và máy chủ MCP mang API đó đến các đại lý AI.",
       "hub": {
-        "title": "Bộ công cụ dữ liệu MapsGrab",
+        "title": "Bộ công cụ dữ liệu MapExporter",
         "detail": "Dữ liệu doanh nghiệp · đánh giá · ảnh · email & làm giàu xã hội"
       },
       "tags": {
@@ -4853,7 +4854,7 @@ export const company: CompanyContent = {
         "accent": " ",
         "tail": " là"
       },
-      "lead": "MapsGrab cố tình bảo thủ về dữ liệu. Đây là những quy tắc sản phẩm mà chúng tôi tuân thủ.",
+      "lead": "MapExporter cố tình bảo thủ về dữ liệu. Đây là những quy tắc sản phẩm mà chúng tôi tuân thủ.",
       "publicData": {
         "title": "Chỉ dữ liệu công khai",
         "text": "Chỉ thông tin doanh nghiệp được cung cấp công khai — thông tin mà bất kỳ khách truy cập nào vào trang đều có thể thấy.",
@@ -4920,7 +4921,7 @@ export const company: CompanyContent = {
         "badge": "Được lưu trữ trong trình duyệt của bạn"
       },
       "backend": {
-        "label": "Phần phụ trợ MapsGrab · bốn mục đích",
+        "label": "Phần phụ trợ MapExporter · bốn mục đích",
         "lanes": [
           {
             "title": "Cấu hình từ xa",
@@ -4978,19 +4979,19 @@ export const company: CompanyContent = {
   },
   "contact": {
     "navLabel": "Liên hệ",
-    "seoTitle": "Liên hệ Hỗ trợ MapsGrab",
-    "seoDescription": "Liên hệ với MapsGrab về tài khoản, tiện ích mở rộng trình duyệt, thanh toán, công cụ hoặc yêu cầu về quyền riêng tư.",
-    "eyebrow": "Liên hệ MapsGrab",
+    "seoTitle": "Liên hệ Hỗ trợ MapExporter",
+    "seoDescription": "Liên hệ với MapExporter về tài khoản, tiện ích mở rộng trình duyệt, thanh toán, công cụ hoặc yêu cầu về quyền riêng tư.",
+    "eyebrow": "Liên hệ MapExporter",
     "title": {
       "lead": "Nói chuyện với con người ",
       "accent": " ",
       "tail": ""
     },
-    "intro": "Viết thư cho chúng tôi và một người sẽ đọc nó. Hỗ trợ hiện được xử lý trực tiếp bởi nhóm xây dựng MapsGrab.",
+    "intro": "Viết thư cho chúng tôi và một người sẽ đọc nó. Hỗ trợ hiện được xử lý trực tiếp bởi nhóm xây dựng MapExporter.",
     "emailCardLabel": "Email hỗ trợ",
     "copyEmail": "Sao chép {email}",
     "emailLabel": "Hỗ trợ qua email",
-    "emailSubject": "Yêu cầu hỗ trợ MapsGrab",
+    "emailSubject": "Yêu cầu hỗ trợ MapExporter",
     "responseTimes": "Chúng tôi trả lời email hỗ trợ trong vòng một ngày làm việc, thường là nhanh hơn. Yêu cầu về quyền riêng tư có thể mất vài ngày khi chúng tôi cần xác minh quyền sở hữu tài khoản trước tiên.",
     "include": {
       "title": "Những gì cần bao gồm",
@@ -5018,6 +5019,7 @@ export const company: CompanyContent = {
   }
 }
 
+// TODO: Email Checker 披露译文（terms 的 what-the-service-does；privacy 的 intro、前两张 glance、where-data-is-stored、what-our-backend-processes）由 AI 翻译，尚未经专业法务校对，校对前不视为定稿；合同见 docs/feat/015.工具与增长/tech-Email验证.md。
 export const legal: LegalContent = {
   "page": {
     "crumbHome": "Trang chủ",
@@ -5036,13 +5038,13 @@ export const legal: LegalContent = {
   },
   "terms": {
     "navLabel": "Điều khoản",
-    "seoTitle": "Điều khoản dịch vụ | MapsGrab",
-    "seoDescription": "Điều khoản dịch vụ của MapsGrab: cách sử dụng được chấp nhận, trách nhiệm của người dùng đối với dữ liệu được thu thập, giao dịch mua, tuyên bố từ chối trách nhiệm và cách liên hệ với chúng tôi.",
+    "seoTitle": "Điều khoản dịch vụ | MapExporter",
+    "seoDescription": "Điều khoản dịch vụ của MapExporter: cách sử dụng được chấp nhận, trách nhiệm của người dùng đối với dữ liệu được thu thập, giao dịch mua, tuyên bố từ chối trách nhiệm và cách liên hệ với chúng tôi.",
     "title": "Điều khoản dịch vụ",
-    "intro": "Các Điều khoản này chi phối việc bạn sử dụng MapsGrab: tiện ích mở rộng trình duyệt, trang web này và các công cụ web miễn phí. Vui lòng đọc chúng trước khi sử dụng dịch vụ.",
+    "intro": "Các Điều khoản này chi phối việc bạn sử dụng MapExporter: tiện ích mở rộng trình duyệt, trang web này và các công cụ web miễn phí. Vui lòng đọc chúng trước khi sử dụng dịch vụ.",
     "updatedLabel": "Cập nhật lần cuối",
-    "updatedAt": "Tháng Tám 31, 2026",
-    "updatedAtISO": "2026-08-31",
+    "updatedAt": "Tháng 11 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "Việc sử dụng được chấp nhận, trách nhiệm của người dùng đối với dữ liệu được thu thập, giao dịch mua, tuyên bố từ chối trách nhiệm và cách liên hệ với chúng tôi.",
     "helpTitle": "Bạn có câu hỏi về các Điều khoản này?",
     "glance": [
@@ -5078,14 +5080,14 @@ export const legal: LegalContent = {
         "id": "acceptance-of-terms",
         "title": "Chấp nhận các điều khoản",
         "paragraphs": [
-          "Bằng cách truy cập hoặc sử dụng MapsGrab, bạn đồng ý với các Điều khoản này. Nếu bạn không đồng ý với họ, đừng cài đặt tiện ích mở rộng hoặc sử dụng trang web và công cụ."
+          "Bằng cách truy cập hoặc sử dụng MapExporter, bạn đồng ý với các Điều khoản này. Nếu bạn không đồng ý với họ, đừng cài đặt tiện ích mở rộng hoặc sử dụng trang web và công cụ."
         ]
       },
       {
         "id": "what-the-service-does",
         "title": "Dịch vụ làm gì",
         "paragraphs": [
-          "MapsGrab giúp bạn thu thập thông tin được hiển thị công khai trên các trang Google Maps mà bạn truy cập — chi tiết doanh nghiệp, đánh giá, ảnh và thông tin liên hệ có liên quan — và xuất thông tin đó. Dịch vụ này bao gồm phần mở rộng trình duyệt cho Microsoft Edge và Firefox, trang web này và các công cụ web miễn phí chạy trong trình duyệt của bạn."
+          "MapExporter giúp bạn thu thập thông tin được hiển thị công khai trên các trang Google Maps mà bạn truy cập — chi tiết doanh nghiệp, đánh giá, ảnh và thông tin liên hệ có liên quan — và xuất thông tin đó. Dịch vụ này bao gồm phần mở rộng trình duyệt cho Microsoft Edge và Firefox, trang web này và các công cụ web miễn phí. Hầu hết công cụ web miễn phí chạy trong trình duyệt của bạn; một số công cụ, như Trình kiểm tra email, gửi nội dung bạn nhập đến máy chủ của chúng tôi, rồi máy chủ chuyển nội dung đó cho dịch vụ xác minh của bên thứ ba để xử lý."
         ]
       },
       {
@@ -5129,7 +5131,7 @@ export const legal: LegalContent = {
         "id": "the-service-is-provided-as-is",
         "title": "Dịch vụ được cung cấp như hiện tại",
         "paragraphs": [
-          "Dịch vụ được cung cấp \"nguyên trạng\" và \"có sẵn\". Nền tảng thay đổi thường xuyên và các tính năng thu thập có thể ngừng hoạt động một phần hoặc toàn bộ bất kỳ lúc nào. MapsGrab không đảm bảo, rõ ràng hay ngụ ý, về tính khả dụng không bị gián đoạn, tính đầy đủ của dữ liệu được thu thập hoặc sự phù hợp cho một mục đích cụ thể.",
+          "Dịch vụ được cung cấp \"nguyên trạng\" và \"có sẵn\". Nền tảng thay đổi thường xuyên và các tính năng thu thập có thể ngừng hoạt động một phần hoặc toàn bộ bất kỳ lúc nào. MapExporter không đảm bảo, rõ ràng hay ngụ ý, về tính khả dụng không bị gián đoạn, tính đầy đủ của dữ liệu được thu thập hoặc sự phù hợp cho một mục đích cụ thể.",
           "Chúng tôi có thể thay đổi, tạm dừng hoặc ngừng bất kỳ phần nào của dịch vụ và chúng tôi có thể cập nhật các Điều khoản này. Khi có những thay đổi quan trọng, chúng tôi sẽ công bố chúng trên trang web này. Việc tiếp tục sử dụng sau khi các thay đổi có hiệu lực nghĩa là bạn chấp nhận Điều khoản đã cập nhật."
         ]
       },
@@ -5137,14 +5139,14 @@ export const legal: LegalContent = {
         "id": "limitation-of-liability",
         "title": "Giới hạn trách nhiệm pháp lý",
         "paragraphs": [
-          "Trong phạm vi tối đa được pháp luật cho phép, MapsGrab và các nhà khai thác của nó không chịu trách nhiệm về các thiệt hại gián tiếp, ngẫu nhiên, đặc biệt hoặc do hậu quả - bao gồm mất lợi nhuận hoặc dữ liệu - phát sinh từ việc bạn sử dụng hoặc không thể sử dụng dịch vụ."
+          "Trong phạm vi tối đa được pháp luật cho phép, MapExporter và các nhà khai thác của nó không chịu trách nhiệm về các thiệt hại gián tiếp, ngẫu nhiên, đặc biệt hoặc do hậu quả - bao gồm mất lợi nhuận hoặc dữ liệu - phát sinh từ việc bạn sử dụng hoặc không thể sử dụng dịch vụ."
         ]
       },
       {
         "id": "contact",
         "title": "Liên hệ",
         "paragraphs": [
-          "Các câu hỏi về các Điều khoản này có thể được gửi tới support@mapsgrab.com."
+          "Các câu hỏi về các Điều khoản này có thể được gửi tới support@mapexporter.app."
         ]
       }
     ],
@@ -5157,13 +5159,13 @@ export const legal: LegalContent = {
   },
   "privacy": {
     "navLabel": "Sự riêng tư",
-    "seoTitle": "Chính sách bảo mật | MapsGrab",
-    "seoDescription": "Chính sách quyền riêng tư của MapsGrab: tiện ích và trang web xử lý dữ liệu gì, nơi lưu trữ dữ liệu, chương trình phụ trợ của chúng tôi được sử dụng để làm gì và các ranh giới mà chúng tôi tuân theo.",
+    "seoTitle": "Chính sách bảo mật | MapExporter",
+    "seoDescription": "Chính sách quyền riêng tư của MapExporter: tiện ích và trang web xử lý dữ liệu gì, nơi lưu trữ dữ liệu, chương trình phụ trợ của chúng tôi được sử dụng để làm gì và các ranh giới mà chúng tôi tuân theo.",
     "title": "Chính sách bảo mật",
-    "intro": "Chính sách này giải thích dữ liệu nào MapsGrab xử lý, nơi lưu trữ dữ liệu và nội dung nào đến máy chủ của chúng tôi. Phiên bản ngắn: tiện ích mở rộng hoạt động trên dữ liệu được hiển thị công khai và lưu kết quả trong trình duyệt của bạn; ngoài các dịch vụ đám mây của chúng tôi, chương trình phụ trợ của chúng tôi chỉ hỗ trợ cấu hình, hạn ngạch, nội dung phong phú tùy chọn và nhật ký sử dụng tối thiểu; và chúng tôi không chạy quảng cáo cũng như không có trình theo dõi của bên thứ ba trong tiện ích mở rộng. Các yêu cầu đối với dịch vụ đám mây của chúng tôi — Máy quét trực tuyến, API và máy chủ MCP — được xử lý trên máy chủ của chúng tôi và các kết quả của Máy quét trực tuyến được liên kết với tài khoản của bạn để bạn có thể tải chúng xuống.",
+    "intro": "Chính sách này giải thích dữ liệu nào MapExporter xử lý, nơi lưu trữ dữ liệu và nội dung nào đến máy chủ của chúng tôi. Phiên bản ngắn: tiện ích mở rộng hoạt động trên dữ liệu được hiển thị công khai và lưu kết quả trong trình duyệt của bạn; ngoài các dịch vụ đám mây của chúng tôi, chương trình phụ trợ của chúng tôi chỉ hỗ trợ cấu hình, hạn ngạch, nội dung phong phú tùy chọn, xác minh email cho Trình kiểm tra email và nhật ký sử dụng tối thiểu; và chúng tôi không chạy quảng cáo cũng như không có trình theo dõi của bên thứ ba trong tiện ích mở rộng. Trình kiểm tra email gửi địa chỉ bạn nhập đến máy chủ của chúng tôi, rồi máy chủ chuyển địa chỉ đó cho dịch vụ xác minh email của bên thứ ba. Các yêu cầu đối với dịch vụ đám mây của chúng tôi — Máy quét trực tuyến, API và máy chủ MCP — được xử lý trên máy chủ của chúng tôi và các kết quả của Máy quét trực tuyến được liên kết với tài khoản của bạn để bạn có thể tải chúng xuống.",
     "updatedLabel": "Cập nhật lần cuối",
-    "updatedAt": "Tháng 10 16, 2026",
-    "updatedAtISO": "2026-10-16",
+    "updatedAt": "Tháng 11 5, 2026",
+    "updatedAtISO": "2026-11-05",
     "summary": "Dữ liệu nào trong tiện ích mở rộng và quy trình trang web, nơi nó được lưu trữ, phần phụ trợ của chúng tôi được sử dụng để làm gì và các ranh giới mà chúng tôi tuân theo.",
     "helpTitle": "Câu hỏi về chính sách này?",
     "glance": [
@@ -5172,13 +5174,13 @@ export const legal: LegalContent = {
         "icon": "lock",
         "tone": "ok",
         "title": "Nơi lưu trữ kết quả",
-        "text": "Tiện ích mở rộng và các công cụ web miễn phí sẽ lưu giữ dữ liệu của bạn trong trình duyệt; Kết quả Scraper trực tuyến được liên kết với tài khoản của bạn."
+        "text": "Tiện ích mở rộng và các công cụ web miễn phí sẽ lưu giữ dữ liệu của bạn trong trình duyệt, trừ Trình kiểm tra email, công cụ này gửi địa chỉ bạn nhập đến máy chủ của chúng tôi và dịch vụ xác minh email của bên thứ ba; Kết quả Scraper trực tuyến được liên kết với tài khoản của bạn."
       },
       {
         "section": "what-our-backend-processes",
         "icon": "database",
         "title": "Điều gì đến được với máy chủ của chúng tôi",
-        "text": "Yêu cầu tới Máy quét trực tuyến, máy chủ API và MCP, cùng với cấu hình, tài khoản và hạn ngạch, nội dung phong phú tùy chọn và nhật ký sử dụng tối thiểu."
+        "text": "Yêu cầu tới Máy quét trực tuyến, máy chủ API và MCP, cùng với cấu hình, tài khoản và hạn ngạch, nội dung phong phú tùy chọn, địa chỉ nhập vào Trình kiểm tra email và nhật ký sử dụng tối thiểu."
       },
       {
         "section": "what-we-never-do",
@@ -5212,7 +5214,7 @@ export const legal: LegalContent = {
         "id": "where-data-is-stored",
         "title": "Nơi dữ liệu được lưu trữ",
         "paragraphs": [
-          "Với tiện ích mở rộng, cài đặt, kết quả trích xuất và trạng thái tác vụ hàng loạt được lưu trữ cục bộ trong trình duyệt của bạn (bộ nhớ cục bộ tiện ích mở rộng và IndexedDB). Chúng không bao giờ rời khỏi thiết bị của bạn trừ khi bạn kích hoạt xuất hoặc một trong các tích hợp tùy chọn được mô tả bên dưới. Các công cụ web miễn phí cũng xử lý những gì bạn nhập vào trình duyệt của mình.",
+          "Với tiện ích mở rộng, cài đặt, kết quả trích xuất và trạng thái tác vụ hàng loạt được lưu trữ cục bộ trong trình duyệt của bạn (bộ nhớ cục bộ tiện ích mở rộng và IndexedDB). Chúng không bao giờ rời khỏi thiết bị của bạn trừ khi bạn kích hoạt xuất hoặc một trong các tích hợp tùy chọn được mô tả bên dưới. Các công cụ web miễn phí cũng xử lý những gì bạn nhập vào trình duyệt của mình. Ngoại lệ là Trình kiểm tra email: công cụ này gửi địa chỉ bạn nhập đến máy chủ của chúng tôi, rồi máy chủ chuyển địa chỉ đó cho dịch vụ xác minh email của bên thứ ba.",
           "Mã thông báo Google Drive và HubSpot OAuth, nếu bạn kết nối chúng, cũng chỉ được lưu trữ trong trình duyệt của bạn.",
           "Nhiệm vụ Scraper trực tuyến chạy trên máy chủ của chúng tôi. Kết quả của họ được lưu trữ cùng với tài khoản của bạn để bạn có thể tải chúng xuống từ Trang tổng quan của mình."
         ]
@@ -5223,12 +5225,13 @@ export const legal: LegalContent = {
         "paragraphs": [
           "Các yêu cầu bạn thực hiện đối với các dịch vụ đám mây của chúng tôi — Máy quét trực tuyến, máy chủ API và MCP — được xử lý trên máy chủ của chúng tôi. Máy chủ của chúng tôi cũng quản lý quyền truy cập vào các dịch vụ này, bao gồm khóa API của bạn và ủy quyền ứng dụng khách MCP mà bạn phê duyệt và lưu giữ hồ sơ về việc sử dụng của bạn.",
           "Máy khách MCP mà bạn ủy quyền sẽ nhận được kết quả của các yêu cầu mà nó đưa ra. Bạn có thể thu hồi ủy quyền từ Trang tổng quan của mình.",
-          "Ngoài các dịch vụ đám mây này, tiện ích mở rộng và trang web này còn liên hệ với máy chủ của chúng tôi vì bốn mục đích:"
+          "Ngoài các dịch vụ đám mây này, tiện ích mở rộng và trang web này còn liên hệ với máy chủ của chúng tôi vì năm mục đích:"
         ],
         "items": [
           "Cấu hình từ xa - cài đặt trước cấu trúc trang giúp quá trình trích xuất tiếp tục hoạt động khi Google thay đổi trang của nó.",
           "Dịch vụ tài khoản và hạn ngạch — đăng nhập, trạng thái gói và tính toán mức sử dụng hàng tháng.",
           "Làm phong phú email và mạng xã hội — tra cứu chi tiết liên hệ được liệt kê công khai trên các trang web doanh nghiệp được thu thập khi tính năng này được sử dụng.",
+          "Xác minh email — khi bạn sử dụng Trình kiểm tra email, địa chỉ bạn nhập được gửi đến máy chủ của chúng tôi, rồi máy chủ chuyển địa chỉ đó cho dịch vụ xác minh email của bên thứ ba để kiểm tra xem địa chỉ có thể nhận thư hay không.",
           "Ghi nhật ký sử dụng - bản ghi tối thiểu về việc sử dụng tính năng và lỗi được sử dụng để duy trì và cải thiện dịch vụ."
         ]
       },
@@ -5264,7 +5267,7 @@ export const legal: LegalContent = {
         "id": "data-removal",
         "title": "Xóa dữ liệu",
         "paragraphs": [
-          "Việc xóa tiện ích mở rộng sẽ xóa tất cả dữ liệu được lưu trữ cục bộ. Nếu bạn muốn xóa dữ liệu tài khoản phụ trợ của mình, hãy liên hệ với chúng tôi theo địa chỉ support@mapsgrab.com và chúng tôi sẽ xóa dữ liệu đó."
+          "Việc xóa tiện ích mở rộng sẽ xóa tất cả dữ liệu được lưu trữ cục bộ. Nếu bạn muốn xóa dữ liệu tài khoản phụ trợ của mình, hãy liên hệ với chúng tôi theo địa chỉ support@mapexporter.app và chúng tôi sẽ xóa dữ liệu đó."
         ]
       },
       {
@@ -5278,7 +5281,7 @@ export const legal: LegalContent = {
         "id": "contact",
         "title": "Liên hệ",
         "paragraphs": [
-          "Các câu hỏi hoặc yêu cầu về quyền riêng tư có thể được gửi tới support@mapsgrab.com."
+          "Các câu hỏi hoặc yêu cầu về quyền riêng tư có thể được gửi tới support@mapexporter.app."
         ]
       }
     ]
@@ -5286,9 +5289,9 @@ export const legal: LegalContent = {
 }
 
 export const mcpOAuth: McpOAuthContent = {
-  "seoTitle": "Ủy quyền cho ứng dụng AI | MapsGrab",
+  "seoTitle": "Ủy quyền cho ứng dụng AI | MapExporter",
   "title": "Kết nối ứng dụng AI với tài khoản của bạn",
-  "intro": "Một ứng dụng đang yêu cầu truy cập vào tài khoản MapsGrab của bạn. Chỉ cho phép nó nếu bạn tự mình bắt đầu kết nối này.",
+  "intro": "Một ứng dụng đang yêu cầu truy cập vào tài khoản MapExporter của bạn. Chỉ cho phép nó nếu bạn tự mình bắt đầu kết nối này.",
   "loading": "Đang tải yêu cầu kết nối...",
   "hostLabel": "Địa chỉ ứng dụng",
   "selfDeclared": "Tên ứng dụng tự đặt: {name}",
@@ -5316,12 +5319,12 @@ export const mcpOAuth: McpOAuthContent = {
     "invalid_redirect_uri": "Địa chỉ trả lại do ứng dụng gửi không khớp với địa chỉ mà ứng dụng đã đăng ký.",
     "unsupported_response_type": "Ứng dụng đã yêu cầu loại ủy quyền không được hỗ trợ.",
     "invalid_pkce": "Ứng dụng không gửi yêu cầu kiểm tra bảo mật (PKCE với S256).",
-    "invalid_resource": "Ứng dụng không yêu cầu quyền truy cập vào máy chủ MapsGrab MCP hoặc yêu cầu một máy chủ khác.",
-    "server_error": "MapsGrab không thể lưu yêu cầu này ngay bây giờ. Vui lòng thử lại trong thời gian ngắn."
+    "invalid_resource": "Ứng dụng không yêu cầu quyền truy cập vào máy chủ MapExporter MCP hoặc yêu cầu một máy chủ khác.",
+    "server_error": "MapExporter không thể lưu yêu cầu này ngay bây giờ. Vui lòng thử lại trong thời gian ngắn."
   },
   "errorHint": "Bắt đầu kết nối lại từ ứng dụng AI của bạn. Nếu sự cố vẫn tiếp diễn, hãy liên hệ với nhà phát triển ứng dụng.",
   "signInTitle": "Đăng nhập để tiếp tục",
-  "signInText": "Đăng nhập vào tài khoản MapsGrab mà bạn muốn kết nối. Yêu cầu này sẽ chờ bạn.",
+  "signInText": "Đăng nhập vào tài khoản MapExporter mà bạn muốn kết nối. Yêu cầu này sẽ chờ bạn.",
   "signIn": "Đăng nhập",
   "loadFailed": "Không thể tải yêu cầu kết nối. Hãy kiểm tra mạng của bạn và thử lại.",
   "decideFailed": "Không thể hoàn tất hành động này. Hãy kiểm tra mạng của bạn và thử lại.",
@@ -5340,7 +5343,7 @@ export const clink: ClinkReturnContent = {
     },
     "confirmedSubscription": {
       "title": "Đã kích hoạt gói",
-      "description": "Khoản thanh toán ClinkBill của bạn đã được xác nhận và gói MapsGrab của bạn đang hoạt động. Bạn có thể quay lại tab ban đầu."
+      "description": "Khoản thanh toán ClinkBill của bạn đã được xác nhận và gói MapExporter của bạn đang hoạt động. Bạn có thể quay lại tab ban đầu."
     },
     "failed": {
       "title": "Thanh toán cần chú ý",

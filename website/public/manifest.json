@@ -1,6 +1,6 @@
 {
-  "name": "MapsGrab",
-  "short_name": "MapsGrab",
+  "name": "MapExporter",
+  "short_name": "MapExporter",
   "description": "Maps data toolkit: browser extension and web tools for publicly available maps business information.",
   "start_url": "/",
   "display": "standalone",

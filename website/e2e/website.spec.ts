@@ -143,7 +143,7 @@ async function mockPurchaseBackend(page: Page): Promise<{ state: PurchaseMockSta
   await page.route('**/api/client/auth/me', route =>
     route.fulfill({
       json: envelope({
-        email: 'hydra@mapsgrab.test',
+        email: 'hydra@mapexporter.test',
         full_name: 'Hydra',
         credits_balance: 0,
         created_at: ORDER_SUCCESS_EPOCH,
@@ -381,7 +381,7 @@ test('site structure: nav, API dropdown, home cards, extension install and legal
 
   // —— 首页核心：hero 关键词预览入口与四产品卡 ——
   await page.goto('/')
-  await expect(page).toHaveTitle(/MapsGrab/)
+  await expect(page).toHaveTitle(/MapExporter/)
   await expect(page.locator('h1')).toContainText('Grab Google Maps data')
   const hero = page.locator('[data-home-page] .hero')
   await expect(hero.getByLabel('Search keyword')).toBeVisible()
@@ -428,7 +428,7 @@ test('插件确认页接受 Chromium 与 Firefox 回调，显式确认后交回�
     const previousIssued = issued
     await page.goto(`/extension-login/?${params}`)
     await expect(page.locator('[data-extension-login-confirm]')).toBeVisible()
-    await expect(page.locator('[data-extension-login-account-email]')).toHaveText('hydra@mapsgrab.test')
+    await expect(page.locator('[data-extension-login-account-email]')).toHaveText('hydra@mapexporter.test')
     expect(issued).toBe(previousIssued)
 
     await page.locator('[data-extension-login-continue]').click()

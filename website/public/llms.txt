@@ -1,41 +1,41 @@
-# MapsGrab
+# MapExporter
 
-> MapsGrab is a maps data toolkit: a browser extension that grabs publicly available Google Maps business data (business details, reviews, photos, emails) into CSV/JSON, plus seven free web tools: six run entirely in the browser, and the Email Checker verifies addresses with the recipient's mail server.
+> MapExporter is a maps data toolkit: a browser extension that grabs publicly available Google Maps business data (business details, reviews, photos, emails) into CSV/JSON, plus seven free web tools: six run entirely in the browser, and the Email Checker verifies addresses with the recipient's mail server.
 
 ## Product
 
-- [MapsGrab Home](https://mapsgrab.com/): Product overview with a hero keyword search that previews the first Google Maps results page without signing in (business count plus up to three sample rows; full collection and one deduplicated CSV per task run in Online Scraper after sign-in), extension, Online and API entries, free tools, and FAQ; the extension is available as a direct ZIP download.
-- [Extension](https://mapsgrab.com/extension/): Google Maps extractor product page — 36-column extraction schema, reviews, photos, email and social enrichment, batch tasks, CSV/JSON export, release notes, and a step-by-step install guide; browser-specific ZIP downloads and an installation guide are available, including the Firefox temporary-loading limitation.
-- [Pricing](https://mapsgrab.com/pricing/): Three independent product lines, each with a free tier. Online Scraper — Free (1,000 records/month), Lite ($19, 20,000 records), Basic ($49, 80,000), Growth ($99, 250,000) and Professional ($149, 500,000), one-time payments covering one natural month. Extension — Free (1,000 records/month), Pro ($39, 100,000 records) and Business ($99, 500,000), each a one-time payment covering one natural month. API & MCP — Free (20 requests/month), Basic ($15, 1,000 requests), Professional ($65, 5,000), Business ($115, 10,000) and Scale ($365, 50,000), one-time per month. All paid plans use one-time PayPal payments and do not auto-renew.
-- [Online Scraper](https://mapsgrab.com/online-scraper/): Cloud-based Google Maps extraction in the Dashboard — enter keywords line by line, sample a map area around a center point, or turn regions into queries; download one 37-column CSV per task, with continuous row numbers and businesses deduplicated across searches. Completed tasks with zero results have no file. Billed by delivered records (Free: 1,000 per month); paid plans add email and social profile enrichment.
-- [Scraper API](https://mapsgrab.com/google-maps-scraper-api/): HTTP API returning Google Maps search results as JSON — 29 fields per place (name, address, phone, website, rating, hours, coordinates, Place ID, fid) plus optional email and social profile enrichment.
-- [Reviews API](https://mapsgrab.com/google-maps-reviews-scraper-api/): HTTP API returning the public reviews of a Google Maps business by fid as JSON — ratings, text and translation, authors, dates, review photos and owner replies, up to 60 per page with a cursor.
-- [Photos API](https://mapsgrab.com/google-maps-photos-api/): POST /api/external/maps/photos returns public business photo URLs by fid, with an optional max_results limit (default 200). Delivery is partial, with returned_count, an unverified upstream reported_total or null, and a reason; a complete album is not guaranteed. Each successful delivery counts as one API request, regardless of photo count; failed calls are not counted.
-- [Scraper MCP](https://mapsgrab.com/google-maps-scraper-mcp/): Streamable HTTP MCP server with three tools, search_places, list_reviews and list_photos, for AI agents (Claude Code, Cursor, VS Code, Codex, any MCP client); OAuth sign-in or API key, sharing the API request quota.
+- [MapExporter Home](https://mapexporter.app/): Product overview with a hero keyword search that previews the first Google Maps results page without signing in (business count plus up to three sample rows; full collection and one deduplicated CSV per task run in Online Scraper after sign-in), extension, Online and API entries, free tools, and FAQ; the extension is available as a direct ZIP download.
+- [Extension](https://mapexporter.app/extension/): Google Maps extractor product page — 36-column extraction schema, reviews, photos, email and social enrichment, batch tasks, CSV/JSON export, release notes, and a step-by-step install guide; browser-specific ZIP downloads and an installation guide are available, including the Firefox temporary-loading limitation.
+- [Pricing](https://mapexporter.app/pricing/): Three independent product lines, each with a free tier. Online Scraper — Free (1,000 records/month), Lite ($19, 20,000 records), Basic ($49, 80,000), Growth ($99, 250,000) and Professional ($149, 500,000), one-time payments covering one natural month. Extension — Free (1,000 records/month), Pro ($39, 100,000 records) and Business ($99, 500,000), each a one-time payment covering one natural month. API & MCP — Free (20 requests/month), Basic ($15, 1,000 requests), Professional ($65, 5,000), Business ($115, 10,000) and Scale ($365, 50,000), one-time per month. All paid plans use one-time PayPal payments and do not auto-renew.
+- [Online Scraper](https://mapexporter.app/online-scraper/): Cloud-based Google Maps extraction in the Dashboard — enter keywords line by line, sample a map area around a center point, or turn regions into queries; download one 37-column CSV per task, with continuous row numbers and businesses deduplicated across searches. Completed tasks with zero results have no file. Billed by delivered records (Free: 1,000 per month); paid plans add email and social profile enrichment.
+- [Scraper API](https://mapexporter.app/google-maps-scraper-api/): HTTP API returning Google Maps search results as JSON — 29 fields per place (name, address, phone, website, rating, hours, coordinates, Place ID, fid) plus optional email and social profile enrichment.
+- [Reviews API](https://mapexporter.app/google-maps-reviews-scraper-api/): HTTP API returning the public reviews of a Google Maps business by fid as JSON — ratings, text and translation, authors, dates, review photos and owner replies, up to 60 per page with a cursor.
+- [Photos API](https://mapexporter.app/google-maps-photos-api/): POST /api/external/maps/photos returns public business photo URLs by fid, with an optional max_results limit (default 200). Delivery is partial, with returned_count, an unverified upstream reported_total or null, and a reason; a complete album is not guaranteed. Each successful delivery counts as one API request, regardless of photo count; failed calls are not counted.
+- [Scraper MCP](https://mapexporter.app/google-maps-scraper-mcp/): Streamable HTTP MCP server with three tools, search_places, list_reviews and list_photos, for AI agents (Claude Code, Cursor, VS Code, Codex, any MCP client); OAuth sign-in or API key, sharing the API request quota.
 
 ## Free Tools
 
-- [Place ID Finder](https://mapsgrab.com/tools/place-id-finder/): Paste a Google Maps place URL to extract its Place ID, CID, and FID in the browser.
-- [Review Link Generator](https://mapsgrab.com/tools/review-link-generator/): Build a direct Google reviews URL (search.google.com/local/reviews) from a Maps place URL.
-- [Email Checker](https://mapsgrab.com/tools/email-checker/): Check whether an email address can receive mail by asking its mail server, without sending a message: status, deliverability, MX records, account type (standard, role-based, disposable, free email), catch-all and a 0-100 score. Format and common-typo checks run in the browser; a well-formed address is sent to the MapsGrab server for verification. Free, up to 5 checks per day.
-- [Lat Long to DMS](https://mapsgrab.com/tools/lat-long-to-dms/): Convert decimal degrees to degrees-minutes-seconds with hemisphere letters.
-- [DMS to Decimal](https://mapsgrab.com/tools/dms-to-dd/): Convert degrees-minutes-seconds back to signed decimal degrees.
-- [Bulk Keywords Generator](https://mapsgrab.com/tools/bulk-keywords-generator/): Generate keyword × location combinations in bulk, with keyword-first or location-first ordering.
-- [Merge CSV Files Online](https://mapsgrab.com/tools/merge-csv-files-online/): Union two or more CSV files with merged headers, entirely in the browser.
+- [Place ID Finder](https://mapexporter.app/tools/place-id-finder/): Paste a Google Maps place URL to extract its Place ID, CID, and FID in the browser.
+- [Review Link Generator](https://mapexporter.app/tools/review-link-generator/): Build a direct Google reviews URL (search.google.com/local/reviews) from a Maps place URL.
+- [Email Checker](https://mapexporter.app/tools/email-checker/): Check whether an email address can receive mail by asking its mail server, without sending a message: status, deliverability, MX records, account type (standard, role-based, disposable, free email), catch-all and a 0-100 score. Format and common-typo checks run in the browser; a well-formed address is sent to the MapExporter server for verification. Free, up to 5 checks per day.
+- [Lat Long to DMS](https://mapexporter.app/tools/lat-long-to-dms/): Convert decimal degrees to degrees-minutes-seconds with hemisphere letters.
+- [DMS to Decimal](https://mapexporter.app/tools/dms-to-dd/): Convert degrees-minutes-seconds back to signed decimal degrees.
+- [Bulk Keywords Generator](https://mapexporter.app/tools/bulk-keywords-generator/): Generate keyword × location combinations in bulk, with keyword-first or location-first ordering.
+- [Merge CSV Files Online](https://mapexporter.app/tools/merge-csv-files-online/): Union two or more CSV files with merged headers, entirely in the browser.
 
 ## Company
 
-- [About](https://mapsgrab.com/about/): What MapsGrab is and the data boundaries it keeps (public business data only, local processing).
-- [Contact](https://mapsgrab.com/contact/): Support contact (support@mapsgrab.com).
+- [About](https://mapexporter.app/about/): What MapExporter is and the data boundaries it keeps (public business data only, local processing).
+- [Contact](https://mapexporter.app/contact/): Support contact (support@mapexporter.app).
 
 ## Legal
 
-- [Terms of Service](https://mapsgrab.com/terms/): Service terms and user responsibilities.
-- [Privacy Policy](https://mapsgrab.com/privacy/): What is collected, backend processing purposes, optional integrations, and what is never done (no ads, no third-party tracking; GA4 site analytics is the only third-party script).
+- [Terms of Service](https://mapexporter.app/terms/): Service terms and user responsibilities.
+- [Privacy Policy](https://mapexporter.app/privacy/): What is collected, backend processing purposes, optional integrations, and what is never done (no ads, no third-party tracking; GA4 site analytics is the only third-party script).
 
 ## Key Facts
 
 - Platform type: Marketing website (static) plus browser extension for data extraction.
 - Default language: English (multi-language architecture in place).
-- Tool privacy: Six tools run client-side and their inputs never leave the browser; the Email Checker sends the address to the MapsGrab server, which checks it through an email verification provider.
-- Sitemap: [XML sitemap index](https://mapsgrab.com/sitemap.xml).
+- Tool privacy: Six tools run client-side and their inputs never leave the browser; the Email Checker sends the address to the MapExporter server, which checks it through an email verification provider.
+- Sitemap: [XML sitemap index](https://mapexporter.app/sitemap.xml).

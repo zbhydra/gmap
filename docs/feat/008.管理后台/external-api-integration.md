@@ -1,4 +1,4 @@
-# MapsGrab 外部 API 接入说明
+# MapExporter 外部 API 接入说明
 
 > 面向外部系统的接入入口。接口字段、状态枚举和统计口径以 `@tech-外部API.md` 为唯一权威。
 

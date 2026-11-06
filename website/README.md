@@ -1,6 +1,6 @@
-# MapsGrab Marketing Website
+# MapExporter Marketing Website
 
-MapsGrab 的营销页、用户 Dashboard、插件官网下载与支付回跳页面。
+MapExporter 的营销页、用户 Dashboard、插件官网下载与支付回跳页面。
 
 ## 技术栈
 

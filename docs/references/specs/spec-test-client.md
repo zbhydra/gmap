@@ -62,7 +62,7 @@
   `--load-extension` 的完整 Chromium headed 模式，并在任何站点页面创建前安装身份 init
   script。新版稳定 Google Chrome 不允许这条 unpacked extension 启动链路，禁止用于插件 E2E。
 - 目录与测试发现以各端 `playwright.config.ts` 的 `testDir` / `testIgnore` / project 为准。
-- **extension（013 Maps Extractor）e2e 为真实界面单层（2026-09-02 起）**：禁止 route mock 站点页面、本地 fixture 页与本地 mock 服务，直接打开真实 `www.google.com/maps` 采集真实数据。Google 同意页自动接受；环境波动（人机验证/落地域偏离/DOM 改版）条件化 skip 并记 skip-reason，插件自身行为（三态/暂停/计数/导出）失败照常 fail。Playwright 必须做反自动化身份处理（去 `--enable-automation` + `--disable-blink-features=AutomationControlled` + 身份兜底 init script，website browser-identity 同款）。登录流程不做 e2e：登录态由 `backend/scripts/e2e_seed_user.py`（`maps-extension-pro` 场景）签发真实 token 对，spec 经扩展 service worker 直写 `chrome.storage.local` auth 三键；本地 backend（127.0.0.1:7600）不可达时登录态用例 skip，匿名用例不受影响。采集间隔等用户设置经同一 `chrome.storage` 通道直注（真实用户可设的同一通道，压有界时长）。构建变体 `dist-real`（API 指向本地 backend、SLS 构建期禁用）随 `pnpm test:e2e` 前置产出。
+- **extension（013 MapExporter）e2e 为真实界面单层（2026-09-02 起）**：禁止 route mock 站点页面、本地 fixture 页与本地 mock 服务，直接打开真实 `www.google.com/maps` 采集真实数据。Google 同意页自动接受；环境波动（人机验证/落地域偏离/DOM 改版）条件化 skip 并记 skip-reason，插件自身行为（三态/暂停/计数/导出）失败照常 fail。Playwright 必须做反自动化身份处理（去 `--enable-automation` + `--disable-blink-features=AutomationControlled` + 身份兜底 init script，website browser-identity 同款）。登录流程不做 e2e：登录态由 `backend/scripts/e2e_seed_user.py`（`maps-extension-pro` 场景）签发真实 token 对，spec 经扩展 service worker 直写 `chrome.storage.local` auth 三键；本地 backend（127.0.0.1:7600）不可达时登录态用例 skip，匿名用例不受影响。采集间隔等用户设置经同一 `chrome.storage` 通道直注（真实用户可设的同一通道，压有界时长）。构建变体 `dist-real`（API 指向本地 backend、SLS 构建期禁用）随 `pnpm test:e2e` 前置产出。
 - Playwright 配置使用 `fullyParallel=false`、`workers=1`；执行范围以各端配置中的 project 与 `tests/e2e/` 为准。
 - 不得增加生产测试开关、第二套启动框架或组件级假 E2E。
 - **chrome.* 是真实浏览器实现**，不 mock；`chrome.storage` 直接在 page 里操作。
@@ -75,8 +75,9 @@
   service worker 直写 `chrome.storage.local` auth 三键；本地 backend 不可达时登录态用例 skip。
   构建变体 `dist-real`（API 指向本地 backend、SLS 构建期禁用）随 `pnpm test:e2e` 前置产出。
   合同见 `docs/feat/016.Bing插件/references/T1-技术设计.md` §6。
-  随 v3 移除 manifest 固定 key，扩展 ID 不可预知：service worker 定位、事件 origin 过滤一律从
-  `context.serviceWorkers()` 动态提取，禁止写死 `EXTENSION_ID` 常量。
+- Maps/Bing 测试中的 service worker 定位、事件 origin 过滤一律从
+  `context.serviceWorkers()` 的 URL 动态提取实际扩展 ID，禁止写死 `EXTENSION_ID` 常量。
+  Maps 的 Chrome/Edge 构建注入固定 manifest `key`，不改变测试动态读取身份的要求。
 - 外部环境导致的挑战页、网络不可达或落地域偏离可以带明确原因 skip；插件自身行为失败必须 fail。报告必须区分通过、失败、环境 skip 与未执行，必需验收不足不能因退出码 0 判为完成。
 
 | 命令 | 说明 |

@@ -6,7 +6,7 @@
 
 ## 1 · 项目目标
 
-**MapsGrab**(全称 "MapsGrab — Google Maps Scraper & Extractor")是本仓现役产品:Maps 浏览器插件、云端 Online Scraper、API 与营销站共享后端和商业化基建,Google Maps 与 Bing 共享插件订阅类别。对标 `gmapsextractor.com`,命名依据见 `research/google-maps-品牌命名调研.md`。营销站为 `website/`,域名配置仍待上线。
+**MapExporter**(全称 "MapExporter — Google Maps Scraper & Extractor",主域名 `mapexporter.app`)是本仓现役产品:Maps 浏览器插件、云端 Online Scraper、API 与营销站共享后端和商业化基建,Google Maps 与 Bing 共享插件订阅类别。对标 `gmapsextractor.com`;2026-11-05 由 MapsGrab 更名,历史命名依据见 `research/google-maps-品牌命名调研.md`。营销站为 `website/`;DNS、邮箱与生产部署尚未配置。
 
 TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存量数据保留。Telegram Stars 是共享支付基建,Provider、回调、渠道及运维支持继续保留。生产 API 的历史域名不代表本仓仍运营 TG 下载产品。
 
@@ -20,7 +20,7 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 | A2  | 评论抓取(独立页 RPC + 翻页)                                              | 逆向 03/09                  | 🔍   | ✅ (2026-08-30)                                                                                                      |
 | A3  | 照片抓取(uv 页)                                                          | 逆向 01/03                  | 🔍   | ✅ (2026-08-30)                                                                                                      |
 | A4  | Email / 社媒链接补全(服务端代抓,付费墙落点)                              | 逆向 06                     | 🔍   | ✅ (2026-08-30)                                                                                                      |
-| A5  | 36 列字段字典(含 Pro 门控字段)                                           | 逆向 04                     | 🔍   | ✅ (2026-08-30)                                                                                                      |
+| A5  | 36 列字段字典(含 Pro 门控字段)                                           | 逆向 04                     | 🔍   | ✅ (2026-08-30)；Plus Code 预留，数据源后置（当前恒空）                                                                             |
 | A6  | 批量任务 dashboard(关键词队列 / 评论 URL 队列,IndexedDB)                 | 逆向 01/09                  | 🔍   | ✅ (2026-08-30)                                                                                                      |
 | A7  | 保存列表(saved lists)抓取                                                | 官网 FAQ 提及               | 🔍浅 | ✅ (2026-08-30)                                                                                                      |
 | A8  | 导出 CSV / JSON / XLSX + 字段勾选 + 命名规则                             | 逆向 07                     | 🔍   | ✅ (2026-08-30)                                                                                                      |
@@ -104,6 +104,8 @@ TG 下载产品已退出本仓现役商品与客户端合同;工程来源和存�
 - 估时假设:单人 + AI 助手;插件全量(阶段 1)约 7–9 周,加云端与增长完整对标约 3–4 个月。
 
 ## 5 · 变更记录
+
+- 2026-11-05 **产品更名 MapExporter**：品牌 `MapsGrab` → `MapExporter`，主域名改为 `mapexporter.app`（DNS、邮箱、SSL 与生产部署待配置）。插件、官网、Admin、后端品牌字段、i18n、SEO 元数据、导出文件名前缀与现役文档/设计稿同步；`docs/research` 与 `docs/scratch` 的历史材料保持原貌。测试环境 `gmap-test.hydrai.cc` 及其部署路径不变。
 
 - 2026-10-20 **官网直装与 PayPal 单次购买**：网站按环境联合构建并分发 Chromium / Firefox ZIP，安装教程补齐 7 张真实截图；三条产品线均为 PayPal 单次商品，补齐内网回跳后的收款确认与共享幂等履约。验收与未覆盖范围见 [交付记录](feat/015.工具与增长/plans/004.官网直装与PayPal单次购买.md)。
 

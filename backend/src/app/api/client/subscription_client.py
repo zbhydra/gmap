@@ -270,7 +270,7 @@ async def get_subscription_status(
     - 已登录：返回当前订阅配置
     - 未登录：返回游客免费订阅（user_id=0）
 
-    product_kind 用于多产品线客户端按线查询（MapsGrab 插件传
+    product_kind 用于多产品线客户端按线查询（MapExporter 插件传
     maps_extension）；值必须在 SUBSCRIPTION_PRODUCT_KINDS 白名单内。
     """
 

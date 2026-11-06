@@ -50,8 +50,8 @@ const GA4_MEASUREMENT_ID = import.meta.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
 
 const {
   locale,
-  title = 'MapsGrab',
-  description = 'MapsGrab is a maps data toolkit: grab publicly available business information from Google Maps — business data, reviews, photos, emails — with a browser extension and free web tools.',
+  title = 'MapExporter',
+  description = 'MapExporter is a maps data toolkit: grab publicly available business information from Google Maps — business data, reviews, photos, emails — with a browser extension and free web tools.',
   ogType = 'website',
   // OG/Twitter 卡片不渲染 SVG，默认分享图用品牌 pin 图位图（public/og-image.png，512×512）。
   ogImage = `${BASE}og-image.png`,
@@ -95,7 +95,7 @@ const alternateLinks = Object.entries(localePaths).map(([key, path]) => {
   return { locale: key as Locale, url: fullUrl.href };
 });
 
-const schemaName = 'MapsGrab';
+const schemaName = 'MapExporter';
 const siteHomeUrl = new URL('/', Astro.site).href;
 const organizationId = new URL('/#organization', Astro.site).href;
 const supportContactId = new URL('/#support', Astro.site).href;
@@ -197,7 +197,7 @@ const structuredDataItems = [
     <meta name="description" content={description} />
     <!-- keywords 留空：现代搜索引擎忽略该标签，由引擎自行从正文提取关键词（与 Cloudflare 等站点做法一致） -->
     <meta name="keywords" content="" />
-    <meta name="author" content="MapsGrab" />
+    <meta name="author" content="MapExporter" />
     <meta name="robots" content={robots} />
 
     <!-- Open Graph / Facebook -->
@@ -242,7 +242,8 @@ const structuredDataItems = [
       </main>
     )}
 
-    {!workspaceMode && <SiteFooter locale={locale} />}
+    {/* 工作区没有页脚，device_trust 图标改挂这个节点。它必须在 Vue 岛之外：岛内 slot 水合时按 innerHTML 重建，图片会被重新解析、多发一次请求。hidden 不占布局，也不影响 img 发起请求。 */}
+    {workspaceMode ? <span data-footer-brand-icon hidden></span> : <SiteFooter locale={locale} />}
 
     <SiteConfirmModal locale={locale} />
     {/* 站级登录弹窗全站唯一装配；插件授权桥页自带认证 owner（含 Google 回跳消费），不重复装配 */}

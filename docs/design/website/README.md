@@ -1,4 +1,4 @@
-# MapsGrab Website 设计稿 · Atlas
+# MapExporter Website 设计稿 · Atlas
 
 本目录是 `website/`（Astro 营销站）改版的**高保真可运行设计稿**：静态 HTML + 原生 CSS / JS，零依赖，在浏览器中直接运行。它是视觉、交互与动效的**目标参考**，不是生产代码；落地时按 §9 映射到 Astro 组件与 i18n。
 
@@ -178,7 +178,7 @@ python3 -c "import importlib.util as u; s=u.spec_from_file_location('l','scripts
 
 | # | 区块 | 内容与动效 |
 | --- | --- | --- |
-| ① | Hero | 公告胶囊 → 逐词标题 → 搜索命令条（placeholder 打字循环）+ 建议词 → 信任条 → **产品剧场**：浏览器里的 Google Maps + MapsGrab 面板，循环演示「输入关键词 → pin 落点 → 扫描光束逐个命中 → 行数据入列 → KPI 计数 → 导出文件卡」；离屏暂停 |
+| ① | Hero | 公告胶囊 → 逐词标题 → 搜索命令条（placeholder 打字循环）+ 建议词 → 信任条 → **产品剧场**：浏览器里的 Google Maps + MapExporter 面板，循环演示「输入关键词 → pin 落点 → 扫描光束逐个命中 → 行数据入列 → KPI 计数 → 导出文件卡」；离屏暂停 |
 | — | 匿名预览 | 提交搜索或点建议词：剧场切到预览态，只出 3 行，其余行锁定，面板给出登录引导（对应真实的首页匿名预览闭环） |
 | ② | 事实条 | 36 列 / 11 个评论字段 / 6 个社媒 / 每月 1,000 条免费 / 3 种产品形态 + MCP；数字滚动 |
 | ③ | 三步流程 | 搜索 → 采集 → 导出，三张循环小插画 + 连线箭头 |
@@ -240,7 +240,7 @@ Hero 是 token → 组件 → 页面三层平面的 3D 叠层；正文为左侧�
 
 | # | 区块 | 内容与动效 |
 | --- | --- | --- |
-| ① | Hero | 定位文案 + **经纬网地球**：城市落 pin、光束飞向顶部 MapsGrab 标志；可拖拽旋转；离屏 / 标签页隐藏时停止绘制，减弱动效下只画静帧 |
+| ① | Hero | 定位文案 + **经纬网地球**：城市落 pin、光束飞向顶部 MapExporter 标志；可拖拽旋转；离屏 / 标签页隐藏时停止绘制，减弱动效下只画静帧 |
 | ② | What we build | 一个引擎卡 → 4 个产品卡（插件 / 云端 / API / MCP），SVG 连线 + 流动光点；免费工具胶囊复用 `MGChrome.tools` |
 | ③ | Principles | 5 条产品规则卡 + 一张「书面承诺」卡（链接隐私政策），各带小动画 |
 | ④ | 数据流向（暗色岛） | Maps 页面 → 浏览器本地 → 后端 4 类用途，另有可选的 Drive / HubSpot；连线方向区分下发 / 上报 / 双向；「Never」清单与 GA4 说明；1080 以下改为纵向箭头 |
@@ -297,7 +297,7 @@ Hero 是 token → 组件 → 页面三层平面的 3D 叠层；正文为左侧�
 | --- | --- | --- |
 | ① | Hero + Agent 会话（主动效） | 轮换 4 个客户端、4 个场景：打字 → 思考 → tool call 卡片从运行到完成 → 结果行 → 答案表或缩略图；agent 拿到结果后自行筛选，不虚构过滤参数 |
 | ② | Tools | `search_businesses` / `get_reviews` / `get_photos` 三张工具卡（名称为示意，参数沿用 API） |
-| ③ | 连接拓扑（暗色岛） | 客户端 → MapsGrab MCP → 工具，请求 / 响应数据包沿曲线飞行；移动端改为竖向流动 |
+| ③ | 连接拓扑（暗色岛） | 客户端 → MapExporter MCP → 工具，请求 / 响应数据包沿曲线飞行；移动端改为竖向流动 |
 | ④ | Setup | Claude Code / Cursor / VS Code / Codex 四个 tab，三步指引 + 配置代码窗；「Any other MCP client」规格条 |
 | ⑤ | Example prompts | 双行反向滚动的提示词墙（减弱动效时为静态网格） |
 | ⑥ | Security | 请求检查器：扫描线、鉴权头高亮、JSON-RPC 请求与响应 + 4 张要点卡 |
@@ -358,19 +358,19 @@ docs/design/website/
 - **不虚报**：没有用户量、客户 logo、评价或引言式证言（匿名引言同样视为证言，不做）。用例区写成用法描述；事实条只写产品事实（36 列、11 个评论字段、6 个社媒、免费额度、产品形态）。
 - **事实来源**：价格、额度、方案名逐字来自 `website/src/i18n/pricing.ts`；功能描述以 `website/src/i18n/lang/en-US.ts` 与 `docs/feat/` 对应域文档为准；导出列以 `extension/src/sites/maps/content/export/columns.ts` 为准。
 - **虚构样例**：商户名虚构；电话一律 `555-01xx` 号段。主样例 Ember & Oak Coffee 的 FID / CID / Place ID 按 `placeUrl.ts` 算法互相自洽（FID `0x54950a2291f60bf1:0xbeb4a5f2c3d1e0ab` → CID `13741790825100206251` → Place ID `ChIJ8Qv2kSIKlVQRq-DRw_KltL4`）；剧场里其余商户的 Place ID 由名称哈希生成，仅作展示。
-- **示意接口**：端点路径与 MCP 地址（`api.mapsgrab.com/v1/*`、`mcp.mapsgrab.com/mcp`）是示意写法，**参数按 014 已确认合同**：同步 REST，POST + JSON body；Search 接受 `q` / `pages` / `hl`（可选 `ll`），其中 `pages` 是抓取页数 1–10（对应 Provider 的 `max_depth`，每页最多 20 条、一次返回），不是页码，Email 与社媒补全直接包含在响应里；Reviews 以 `fid` 为键、`sort_by` 排序（1 相关 / 2 最新 / 3 最高 / 4 最低）、`cursor` 翻页，响应带 `next_cursor`；无 webhook。响应字段名取自 `tech-引擎Provider层.md` 的 DTO，首页代码台与 API 页使用同一份示例。MCP 工具名（`search_businesses` / `get_reviews` / `get_photos`）同为示意。
+- **示意接口**：端点路径与 MCP 地址（`api.mapexporter.app/v1/*`、`mcp.mapexporter.app/mcp`）是示意写法，**参数按 014 已确认合同**：同步 REST，POST + JSON body；Search 接受 `q` / `pages` / `hl`（可选 `ll`），其中 `pages` 是抓取页数 1–10（对应 Provider 的 `max_depth`，每页最多 20 条、一次返回），不是页码，Email 与社媒补全直接包含在响应里；Reviews 以 `fid` 为键、`sort_by` 排序（1 相关 / 2 最新 / 3 最高 / 4 最低）、`cursor` 翻页，响应带 `next_cursor`；无 webhook。响应字段名取自 `tech-引擎Provider层.md` 的 DTO，首页代码台与 API 页使用同一份示例。MCP 工具名（`search_businesses` / `get_reviews` / `get_photos`）同为示意。
 - **事实差距**（原型按现网文案写，以下需要决策）：
   - **Photos API 尚未实现**：`docs/feat/014.Maps云端/feat.md` 写明「Photos 待实现，不提供占位接口」，但现网路由 `/google-maps-photos-api`、定价卖点「Reviews and photo endpoints」与 MCP 文案都在宣传。原型保留了 Photos 页与示例，是否改为「即将上线」或下线需要产品决定。
   - **插件定价文案自相矛盾**：`pricing.ts` 插件说明写「the ceiling is the only thing that changes」，但 Pro 卖点又列了跨次去重与 Drive / HubSpot 投递（Free 没有）。原型在插件页与定价页统一改写为「Pro and Business add cross-run deduplication and Google Drive & HubSpot delivery」，`pricing.ts` 需同步。
   - 插件设置页支持 XLSX 导出（`extension/src/options/App.vue`），但站点文案只写 CSV / JSON；原型按文案。
   - 导出中的 Plus Code 列位已锁但当前恒为空；字段浏览器如实标注为保留列。
-  - `contact.ts` 的 `support@mapsgrab.com` 仍是占位邮箱；真实 `/contact` 只有 mailto，原型里的联系表单是设计提案，要么接后端，要么去掉。
+  - `contact.ts` 的 `support@mapexporter.app` 仍是占位邮箱；真实 `/contact` 只有 mailto，原型里的联系表单是设计提案，要么接后端，要么去掉。
   - 隐私政策已补 Online / API / MCP 数据流最小事实（I2a）；服务条款仍只覆盖插件、网站与免费工具，条款页保留 TBD，待法务补稿。
   - **现网 API 文案与合同不符**（`en-US.ts`）：740 / 924 / 1006 行写 API 额度是「quota of records」，实际按 requests 计量；822 / 914 行说 Reviews / Photos 用 Place ID 或 Maps URL 定位商家，合同用 `fid`；272 / 795 / 827 行宣传评论 likes 与 review URL，Provider DTO 没有这两个字段。原型 API 页按合同与 DTO 写。
   - Online 方案卖点以 014 合同为准（关键词 / 地图 / 地区任务、整任务去重的单份 37 列 CSV、付费档补全默认开启可关闭、每任务关键词上限 2 / 5 / 10 / 20 / 50）；原型定价页的 Online 卖点与对比行逐字取自 `pricing.ts`。
   - Online CSV 第二行的字段说明随创建任务时的界面语言变化，说明文字取自 `backend/src/app/provider/export/gmap_columns.py` 的 `GMAP_DESCRIPTIONS`（14 种语言）。
   - 公司页「one engine, four ways in」与「MCP 把同一引擎带给 AI agent」是根据首页和 MCP 文案推导的措辞，现有 About 原文只提到插件与网页工具。
-- 建议在页脚补充「MapsGrab 与 Google 无关联」声明（需法务确认措辞）。
+- 建议在页脚补充「MapExporter 与 Google 无关联」声明（需法务确认措辞）。
 
 ## 11 · 已知限制与后续
 

@@ -55,12 +55,12 @@ apply_environment() {
         prod)
             DEPLOY_ENV="prod"
             BUILD_MODE="production"
-            NGINX_CONF_PATH="$SCRIPT_DIR/mapsgrab.conf"
+            NGINX_CONF_PATH="$SCRIPT_DIR/mapexporter.conf"
             ;;
         test)
             DEPLOY_ENV="test"
             BUILD_MODE="test"
-            NGINX_CONF_PATH="$SCRIPT_DIR/mapsgrab-test.conf"
+            NGINX_CONF_PATH="$SCRIPT_DIR/mapexporter-test.conf"
             ;;
         *)
             echo "错误: 不支持的部署环境: $env_name"

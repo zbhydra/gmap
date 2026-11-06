@@ -24,7 +24,7 @@ export interface HomepageUserInfo {
   avatar_url?: string | null
   /** 账号创建时间，后端可能返回秒或毫秒时间戳。 */
   created_at?: number | null
-  /** MapsGrab 插件产品类别订阅摘要；后端缺省时为空。 */
+  /** MapExporter 插件产品类别订阅摘要；后端缺省时为空。 */
   maps_extension_subscription?: HomepageUserSubscription | null
   /** Online Scraper 产品类别订阅摘要；后端缺省时为空。 */
   maps_online_subscription?: HomepageUserSubscription | null

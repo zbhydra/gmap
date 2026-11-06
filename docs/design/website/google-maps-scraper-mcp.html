@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Google Maps Scraper MCP Server | MapsGrab</title>
+    <title>Google Maps Scraper MCP Server | MapExporter</title>
     <meta
       name="description"
-      content="Connect AI agents to live Google Maps data with the MapsGrab MCP server: search businesses, collect reviews, and retrieve photos over one secure MCP connection."
+      content="Connect AI agents to live Google Maps data with the MapExporter MCP server: search businesses, collect reviews, and retrieve photos over one secure MCP connection."
     />
     <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
     <script src="assets/js/theme-boot.js"></script>
@@ -25,7 +25,7 @@
   </head>
   <!--
     MCP 落地页：/google-maps-scraper-mcp/
-    工具名（search_businesses / get_reviews / get_photos）与端点 https://mcp.mapsgrab.com/mcp 为示意，以 014 B3 合同为准；
+    工具名（search_businesses / get_reviews / get_photos）与端点 https://mcp.mapexporter.app/mcp 为示意，以 014 B3 合同为准；
     参数沿用 API 口径：search_businesses q / pages / hl / ll，get_reviews fid / sort_by / cursor，get_photos fid / page。
     Photos 按 014 仍待实现，差距由主线程写入 README 交 hydra 裁决；原型按现网文案呈现三个工具。
     计费为合理假设：B3 定义 MCP 为 B2 三端点的包装并复用 API 密钥，故工具调用计入 API 月度请求额度。
@@ -58,7 +58,7 @@
             </h1>
 
             <p class="lead" data-enter style="--enter-delay: 180ms">
-              The MapsGrab MCP server exposes Google Maps search, reviews, and photos to AI agents over one secure MCP
+              The MapExporter MCP server exposes Google Maps search, reviews, and photos to AI agents over one secure MCP
               connection — live, structured data for Claude Code, Cursor, VS Code, and any MCP client.
             </p>
 
@@ -80,7 +80,7 @@
             <div
               class="mcp-agent"
               role="img"
-              aria-label="Example agent session: a question about local businesses, a MapsGrab tool call with structured results, and the agent's answer"
+              aria-label="Example agent session: a question about local businesses, a MapExporter tool call with structured results, and the agent's answer"
               data-agent
             >
               <div class="mcp-agent-bar">
@@ -91,7 +91,7 @@
                 <span class="mcp-agent-model">Agent session</span>
               </div>
               <div class="mcp-agent-log" data-a-log>
-                <p class="mcp-sys"><span class="dot dot--live"></span>MCP server <b>mapsgrab</b> connected</p>
+                <p class="mcp-sys"><span class="dot dot--live"></span>MCP server <b>mapexporter</b> connected</p>
               </div>
               <div class="mcp-agent-input" data-a-input>
                 <span class="mcp-draft" data-a-draft>Ask about any place on Google Maps…</span>
@@ -199,7 +199,7 @@
           <div
             class="mcp-net"
             role="img"
-            aria-label="Claude Code, Cursor, VS Code, Codex and other MCP clients connect to the MapsGrab MCP endpoint, which serves the search_businesses, get_reviews and get_photos tools"
+            aria-label="Claude Code, Cursor, VS Code, Codex and other MCP clients connect to the MapExporter MCP endpoint, which serves the search_businesses, get_reviews and get_photos tools"
             data-net
             data-reveal="fade"
           >
@@ -218,8 +218,8 @@
               <div class="mcp-hub" data-hub>
                 <span class="mcp-hub-rings" aria-hidden="true"><i></i><i></i></span>
                 <span class="mcp-hub-mark" data-hub-mark></span>
-                <b>MapsGrab MCP</b>
-                <code>mcp.mapsgrab.com/mcp</code>
+                <b>MapExporter MCP</b>
+                <code>mcp.mapexporter.app/mcp</code>
                 <span class="mcp-hub-auth"><svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg>Authorization: Bearer</span>
               </div>
               <span class="mcp-hub-call" data-hub-call><span>tools/list</span></span>
@@ -241,7 +241,7 @@
             </li>
             <li data-reveal>
               <span class="mcp-flow-num">02</span>
-              <div><b>Discover</b><p>Your agent lists the MapsGrab tools and their parameters.</p></div>
+              <div><b>Discover</b><p>Your agent lists the MapExporter tools and their parameters.</p></div>
             </li>
             <li data-reveal>
               <span class="mcp-flow-num">03</span>
@@ -259,7 +259,7 @@
           <header class="section-head" data-stagger="80">
             <span class="kicker kicker--ai" data-reveal>Setup</span>
             <h2 class="h2" data-split>One config block <span class="accent">per client</span></h2>
-            <p class="lead" data-reveal>Point your client at the MapsGrab endpoint and pass your API key in the Authorization header. No SDK, no local process to run.</p>
+            <p class="lead" data-reveal>Point your client at the MapExporter endpoint and pass your API key in the Authorization header. No SDK, no local process to run.</p>
           </header>
 
           <div class="mcp-setup" data-tabs data-reveal>
@@ -282,8 +282,8 @@
             <div class="mcp-setup-panel card" role="tabpanel" id="setup-claude" aria-labelledby="tab-claude">
               <ol class="mcp-steps">
                 <li><b>Get your API key</b><span>Copy it from Dashboard → API.</span></li>
-                <li><b>Add the server</b><span>Run the command in your terminal. It registers <code>mapsgrab</code> over HTTP with your key in the header.</span></li>
-                <li><b>Ask for Maps data</b><span>Start a session — Claude Code lists the MapsGrab tools and calls them when a prompt needs them.</span></li>
+                <li><b>Add the server</b><span>Run the command in your terminal. It registers <code>mapexporter</code> over HTTP with your key in the header.</span></li>
+                <li><b>Ask for Maps data</b><span>Start a session — Claude Code lists the MapExporter tools and calls them when a prompt needs them.</span></li>
               </ol>
               <div class="codewin mcp-cfg">
                 <div class="codewin-bar">
@@ -293,7 +293,7 @@
                     <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
                   </button>
                 </div>
-                <pre id="cfg-claude" data-highlight>claude mcp add --transport http mapsgrab https://mcp.mapsgrab.com/mcp \
+                <pre id="cfg-claude" data-highlight>claude mcp add --transport http mapexporter https://mcp.mapexporter.app/mcp \
   --header "Authorization: Bearer YOUR_API_KEY"</pre>
               </div>
             </div>
@@ -302,7 +302,7 @@
               <ol class="mcp-steps">
                 <li><b>Get your API key</b><span>Copy it from Dashboard → API.</span></li>
                 <li><b>Edit mcp.json</b><span>Add the block to <code>~/.cursor/mcp.json</code> for every project, or <code>.cursor/mcp.json</code> for one.</span></li>
-                <li><b>Reload Cursor</b><span><code>mapsgrab</code> appears in the MCP server list with its tools.</span></li>
+                <li><b>Reload Cursor</b><span><code>mapexporter</code> appears in the MCP server list with its tools.</span></li>
               </ol>
               <div class="codewin mcp-cfg">
                 <div class="codewin-bar">
@@ -314,8 +314,8 @@
                 </div>
                 <pre id="cfg-cursor" data-highlight>{
   "mcpServers": {
-    "mapsgrab": {
-      "url": "https://mcp.mapsgrab.com/mcp",
+    "mapexporter": {
+      "url": "https://mcp.mapexporter.app/mcp",
       "headers": {
         "Authorization": "Bearer YOUR_API_KEY"
       }
@@ -329,7 +329,7 @@
               <ol class="mcp-steps">
                 <li><b>Get your API key</b><span>Copy it from Dashboard → API.</span></li>
                 <li><b>Add .vscode/mcp.json</b><span>VS Code asks for the key once and stores it securely — it never lands in the file.</span></li>
-                <li><b>Use agent mode</b><span>Open Chat in agent mode and enable the MapsGrab tools.</span></li>
+                <li><b>Use agent mode</b><span>Open Chat in agent mode and enable the MapExporter tools.</span></li>
               </ol>
               <div class="codewin mcp-cfg">
                 <div class="codewin-bar">
@@ -343,17 +343,17 @@
   "inputs": [
     {
       "type": "promptString",
-      "id": "mapsgrab-api-key",
-      "description": "MapsGrab API key",
+      "id": "mapexporter-api-key",
+      "description": "MapExporter API key",
       "password": true
     }
   ],
   "servers": {
-    "mapsgrab": {
+    "mapexporter": {
       "type": "http",
-      "url": "https://mcp.mapsgrab.com/mcp",
+      "url": "https://mcp.mapexporter.app/mcp",
       "headers": {
-        "Authorization": "Bearer ${input:mapsgrab-api-key}"
+        "Authorization": "Bearer ${input:mapexporter-api-key}"
       }
     }
   }
@@ -363,9 +363,9 @@
 
             <div class="mcp-setup-panel card" role="tabpanel" id="setup-codex" aria-labelledby="tab-codex" hidden>
               <ol class="mcp-steps">
-                <li><b>Export your key</b><span>Set <code>MAPSGRAB_API_KEY</code> in your shell. Codex reads the bearer token from it.</span></li>
+                <li><b>Export your key</b><span>Set <code>MAPEXPORTER_API_KEY</code> in your shell. Codex reads the bearer token from it.</span></li>
                 <li><b>Add the server</b><span>Paste the block into <code>~/.codex/config.toml</code>.</span></li>
-                <li><b>Start Codex</b><span>New sessions load <code>mapsgrab</code> and its tools.</span></li>
+                <li><b>Start Codex</b><span>New sessions load <code>mapexporter</code> and its tools.</span></li>
               </ol>
               <div class="codewin mcp-cfg">
                 <div class="codewin-bar">
@@ -375,10 +375,10 @@
                     <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
                   </button>
                 </div>
-                <pre id="cfg-codex" data-highlight># export MAPSGRAB_API_KEY=YOUR_API_KEY
-[mcp_servers.mapsgrab]
-url = "https://mcp.mapsgrab.com/mcp"
-bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
+                <pre id="cfg-codex" data-highlight># export MAPEXPORTER_API_KEY=YOUR_API_KEY
+[mcp_servers.mapexporter]
+url = "https://mcp.mapexporter.app/mcp"
+bearer_token_env_var = "MAPEXPORTER_API_KEY"</pre>
               </div>
             </div>
           </div>
@@ -393,7 +393,7 @@ bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
               <div>
                 <dt>Endpoint</dt>
                 <dd>
-                  <span id="mcp-endpoint">https://mcp.mapsgrab.com/mcp</span>
+                  <span id="mcp-endpoint">https://mcp.mapexporter.app/mcp</span>
                   <button class="mcp-spec-copy" type="button" aria-label="Copy endpoint" data-copy data-copy-target="#mcp-endpoint">
                     <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
                   </button>
@@ -414,7 +414,7 @@ bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
             <span class="kicker kicker--ai" data-reveal>Example prompts</span>
             <h2 class="h2" data-split>Ask in plain language. <span class="accent">Get rows back.</span></h2>
             <p class="lead" data-reveal>
-              Prospecting, local market research, listing enrichment — describe the job, and your agent decides which MapsGrab
+              Prospecting, local market research, listing enrichment — describe the job, and your agent decides which MapExporter
               tool to call.
             </p>
           </header>
@@ -507,7 +507,7 @@ bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
             <span class="kicker kicker--ai" data-reveal>Auth &amp; data</span>
             <h2 class="h2" data-split>One key in one header. <span class="accent">Public data only.</span></h2>
             <p class="lead" data-reveal>
-              Every call to the MCP endpoint is authorized with your MapsGrab API key, and every result comes from what Google
+              Every call to the MCP endpoint is authorized with your MapExporter API key, and every result comes from what Google
               Maps shows publicly.
             </p>
           </header>
@@ -521,7 +521,7 @@ bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
               </div>
               <div class="mcp-inspect-body">
                 <p><span class="tok-fn">POST</span> /mcp HTTP/1.1</p>
-                <p><span class="tok-key">Host</span><span class="tok-punc">:</span> mcp.mapsgrab.com</p>
+                <p><span class="tok-key">Host</span><span class="tok-punc">:</span> mcp.mapexporter.app</p>
                 <p class="mcp-inspect-auth"><span class="tok-key">Authorization</span><span class="tok-punc">:</span> Bearer <span class="mcp-inspect-key">••••••••••••••••••••</span></p>
                 <p><span class="tok-key">Content-Type</span><span class="tok-punc">:</span> application/json</p>
                 <p><span class="tok-key">Accept</span><span class="tok-punc">:</span> application/json, text/event-stream</p>
@@ -543,12 +543,12 @@ bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
               <article class="feature card card--lift" data-reveal>
                 <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-key" /></svg></span>
                 <h3>One key, one header</h3>
-                <p>Calls carry your MapsGrab API key as a bearer token — the same key that covers the Scraper, Reviews and Photos APIs.</p>
+                <p>Calls carry your MapExporter API key as a bearer token — the same key that covers the Scraper, Reviews and Photos APIs.</p>
               </article>
               <article class="feature card card--lift" data-reveal>
                 <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-eye" /></svg></span>
                 <h3>Retrieval only</h3>
-                <p>The tools search and read. None of them change your MapsGrab account or anything on Google Maps.</p>
+                <p>The tools search and read. None of them change your MapExporter account or anything on Google Maps.</p>
               </article>
               <article class="feature card card--lift" data-reveal>
                 <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-lock" /></svg></span>
@@ -574,7 +574,7 @@ bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
             <span class="kicker kicker--ai" data-reveal>Pricing</span>
             <h2 class="h2" data-split>Covered by your <span class="accent">API plan</span></h2>
             <p class="lead" data-reveal>
-              The MCP server runs on your MapsGrab API key, so tool calls draw from the same monthly request quota as the Scraper,
+              The MCP server runs on your MapExporter API key, so tool calls draw from the same monthly request quota as the Scraper,
               Reviews and Photos APIs.
             </p>
             <div class="cluster" style="--cluster-gap: 12px" data-reveal>
@@ -607,7 +607,7 @@ bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
               <div class="mcp-rung-price"><b>$65</b><small>one-time · 1 month</small></div>
             </div>
             <div class="mcp-rung" style="--w: 0.85; --i: 3">
-              <div class="mcp-rung-name"><b>Business</b><small>For products built on MapsGrab data</small></div>
+              <div class="mcp-rung-name"><b>Business</b><small>For products built on MapExporter data</small></div>
               <div class="mcp-rung-quota"><span class="mcp-meter"><i></i></span><span>10,000 requests / month</span></div>
               <div class="mcp-rung-price"><b>$115</b><small>one-time · 1 month</small></div>
             </div>
@@ -643,16 +643,16 @@ bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
           </div>
           <div class="faq-list" data-stagger="60">
             <details class="acc" data-reveal>
-              <summary>What is the MapsGrab MCP server?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
-              <div class="acc-body"><p>It is an MCP (Model Context Protocol) server that lets AI agents query live Google Maps data — business search, reviews, and photos — through the same MapsGrab extraction engine used by the extension and the APIs.</p></div>
+              <summary>What is the MapExporter MCP server?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
+              <div class="acc-body"><p>It is an MCP (Model Context Protocol) server that lets AI agents query live Google Maps data — business search, reviews, and photos — through the same MapExporter extraction engine used by the extension and the APIs.</p></div>
             </details>
             <details class="acc" data-reveal>
               <summary>Which clients can connect?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
-              <div class="acc-body"><p>Any MCP-compatible client: Claude Code, Cursor, VS Code, Codex, MCP Inspector, and others. Connection is a standard config block pointing at the MapsGrab MCP endpoint with your API key.</p></div>
+              <div class="acc-body"><p>Any MCP-compatible client: Claude Code, Cursor, VS Code, Codex, MCP Inspector, and others. Connection is a standard config block pointing at the MapExporter MCP endpoint with your API key.</p></div>
             </details>
             <details class="acc" data-reveal>
               <summary>How is it authenticated?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
-              <div class="acc-body"><p>With a MapsGrab API key passed as a bearer token — the same key the API plans on the Pricing page cover, including the free monthly request quota.</p></div>
+              <div class="acc-body"><p>With a MapExporter API key passed as a bearer token — the same key the API plans on the Pricing page cover, including the free monthly request quota.</p></div>
             </details>
             <details class="acc" data-reveal>
               <summary>What data can my agent retrieve?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
@@ -660,7 +660,7 @@ bearer_token_env_var = "MAPSGRAB_API_KEY"</pre>
             </details>
             <details class="acc" data-reveal>
               <summary>How are tool calls counted?<span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
-              <div class="acc-body"><p>Tool calls run on the MapsGrab API, so each one that returns data counts as a request against your monthly API quota. Usage resets on the 1st and unused requests do not roll over.</p></div>
+              <div class="acc-body"><p>Tool calls run on the MapExporter API, so each one that returns data counts as a request against your monthly API quota. Usage resets on the 1st and unused requests do not roll over.</p></div>
             </details>
           </div>
         </div>

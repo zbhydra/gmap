@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "MapsGrab Admin"
+    "title": "MapExporter Admin"
   },
   "login": {
     "title": "Admin Login",
@@ -12,7 +12,8 @@
     "clickToRefresh": "Click to refresh captcha",
     "submit": "Login",
     "success": "Login successful",
-    "failed": "Login failed"
+    "failed": "Login failed",
+    "sessionChanged": "Your session changed. This request was canceled. Please try again."
   },
   "layout": {
     "dashboard": "Dashboard",
@@ -23,6 +24,9 @@
     "logoutConfirm": "Are you sure you want to logout?",
     "systemSettings": "System Settings",
     "openMenu": "Open menu",
+    "language": "Language",
+    "languageChinese": "中文",
+    "languageEnglish": "English",
     "theme": "Theme",
     "themeSystem": "System",
     "themeLight": "Light",

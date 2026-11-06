@@ -625,7 +625,7 @@ class PayPalPaymentProvider(PaymentBase):
                 "paypal": {
                     "experience_context": {
                         "payment_method_preference": "IMMEDIATE_PAYMENT_REQUIRED",
-                        "brand_name": "MapsGrab",
+                        "brand_name": "MapExporter",
                         "locale": "en-US",
                         "landing_page": "LOGIN",
                         "shipping_preference": "NO_SHIPPING",
@@ -662,7 +662,7 @@ class PayPalPaymentProvider(PaymentBase):
             "plan_id": plan_id,
             "custom_id": request.order_no,
             "application_context": {
-                "brand_name": "MapsGrab",
+                "brand_name": "MapExporter",
                 "locale": "en-US",
                 "shipping_preference": "NO_SHIPPING",
                 "user_action": "SUBSCRIBE_NOW",

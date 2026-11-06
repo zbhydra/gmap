@@ -1,5 +1,5 @@
 /* =========================================================================
-   MapsGrab Website · Components
+   MapExporter Website · Components
    站级组件库：导航、页脚、按钮、徽章、卡片、表单、分段 tab、手风琴、
    数据表、代码窗、浏览器框、插件面板 mock、素材占位、定价卡、弹窗、Toast。
    页面私有样式放 assets/css/pages/*.css，不回写本文件。
@@ -1632,7 +1632,7 @@ label.seg-btn {
   height: 13px;
 }
 
-/* 插件面板（mgp = MapsGrab panel），文案与真实插件面板一致 */
+/* 插件面板（mgp = MapExporter panel），文案与真实插件面板一致 */
 .mgp {
   display: flex;
   flex-direction: column;

@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Google Maps Scraper API — Business Data in JSON | MapsGrab</title>
+    <title>Google Maps Scraper API — Business Data in JSON | MapExporter</title>
     <meta
       name="description"
-      content="The MapsGrab Scraper API returns Google Maps business data as clean JSON: names, phones, ratings, hours, coordinates, Place IDs, emails, and social profiles — powered by the same engine as the extension."
+      content="The MapExporter Scraper API returns Google Maps business data as clean JSON: names, phones, ratings, hours, coordinates, Place IDs, emails, and social profiles — powered by the same engine as the extension."
     />
     <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
     <script src="assets/js/theme-boot.js"></script>
@@ -102,8 +102,8 @@
                   <svg class="icon icon--sm" aria-hidden="true"><use href="assets/img/icons.svg#i-copy" /></svg>
                 </button>
               </div>
-              <pre class="api-req" data-c-request>curl https://api.mapsgrab.com/v1/search \
-  -H "Authorization: Bearer $MAPSGRAB_API_KEY" \
+              <pre class="api-req" data-c-request>curl https://api.mapexporter.app/v1/search \
+  -H "Authorization: Bearer $MAPEXPORTER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"q": "coffee shop in Portland", "hl": "en"}'</pre>
               <div class="codewin-label api-status" data-c-statusbar>
@@ -190,7 +190,7 @@
             <span class="icon-tile icon-tile--ai"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-bot" /></svg></span>
             <span class="api-mcp-text">
               <b>Building with AI agents?</b>
-              <span>The same key powers the MapsGrab MCP server — search, reviews and photos as tools for Claude Code, Cursor, VS Code and Codex.</span>
+              <span>The same key powers the MapExporter MCP server — search, reviews and photos as tools for Claude Code, Cursor, VS Code and Codex.</span>
             </span>
             <span class="link-arrow api-mcp-go">Explore MCP <svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-arrow-right" /></svg></span>
           </a>
@@ -240,7 +240,7 @@
             <article class="feature card card--lift" data-spotlight data-reveal>
               <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg></span>
               <h3>Same engine as the extension</h3>
-              <p>The API is backed by the MapsGrab extraction engine, tuned against the current Google Maps interface and updated remotely when Google changes.</p>
+              <p>The API is backed by the MapExporter extraction engine, tuned against the current Google Maps interface and updated remotely when Google changes.</p>
             </article>
           </div>
         </div>
@@ -493,7 +493,7 @@
             <article class="price-card api-plan" data-reveal>
               <div>
                 <h3 class="price-name">Business</h3>
-                <p class="price-tagline">For products built on MapsGrab data</p>
+                <p class="price-tagline">For products built on MapExporter data</p>
               </div>
               <div class="price-amount"><b>$115</b><span class="price-period">one-time · 1 month</span></div>
               <div class="price-quota"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-zap" /></svg>10,000 requests / month</div>
@@ -551,11 +551,11 @@
           <div class="faq-list" data-stagger="60" data-faq>
             <details class="acc" data-reveal>
               <summary><span data-q>What does the Scraper API return?</span><span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
-              <div class="acc-body"><p data-a>Structured JSON with the MapsGrab 36-column business schema: name, address, phone, website, rating, review count, opening hours, coordinates, Place ID, and email / social enrichment where available.</p></div>
+              <div class="acc-body"><p data-a>Structured JSON with the MapExporter 36-column business schema: name, address, phone, website, rating, review count, opening hours, coordinates, Place ID, and email / social enrichment where available.</p></div>
             </details>
             <details class="acc" data-reveal>
               <summary><span data-q>How do I authenticate?</span><span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>
-              <div class="acc-body"><p data-a>Requests are authorized with a MapsGrab API key sent as a bearer token. Keys are issued per account and follow the API plans on the Pricing page, including 20 free requests per month.</p></div>
+              <div class="acc-body"><p data-a>Requests are authorized with a MapExporter API key sent as a bearer token. Keys are issued per account and follow the API plans on the Pricing page, including 20 free requests per month.</p></div>
             </details>
             <details class="acc" data-reveal>
               <summary><span data-q>Is the data legal to collect?</span><span class="acc-icon"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-plus" /></svg></span></summary>

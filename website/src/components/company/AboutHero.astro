@@ -1,6 +1,6 @@
 ---
 /**
- * About 首屏（设计稿 about.html ①）：定位文案 + 经纬网地球（pin 被「抓取」，数据光束汇入 MapsGrab 节点）。
+ * About 首屏（设计稿 about.html ①）：定位文案 + 经纬网地球（pin 被「抓取」，数据光束汇入 MapExporter 节点）。
  *
  * 主按钮去 Contact 页（沿用原 GA / CTA 标记）；插件介绍页照常可达，插件尚未开放安装时带 Coming soon。
  * 地球由 about-globe.ts 绘制，地球外的三张浮卡与节点是普通 DOM。
@@ -165,7 +165,7 @@ const [publicChip, localChip, exportChip] = hero.chips
     cursor: grabbing;
   }
 
-  /* 顶部的 MapsGrab 节点：标签在上、品牌标在下，光束自下而上汇入品牌标 */
+  /* 顶部的 MapExporter 节点：标签在上、品牌标在下，光束自下而上汇入品牌标 */
   .globe-node {
     position: absolute;
     top: 2%;

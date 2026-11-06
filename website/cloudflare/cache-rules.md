@@ -13,7 +13,7 @@ Cloudflare 位置：
 表达式：
 
 ```text
-(http.host in {"mapsgrab.com" "www.mapsgrab.com"} and (
+(http.host in {"mapexporter.app" "www.mapexporter.app"} and (
   http.request.uri.path eq "/assets/icons/logo.svg" or
   http.request.uri.path eq "/assets/icons/credits.svg"
 ))
@@ -32,10 +32,10 @@ Cache eligibility: Bypass cache
 部署后清理缓存：
 
 ```bash
-curl -I "https://mapsgrab.com/assets/icons/logo.svg"
-curl -I "https://mapsgrab.com/assets/icons/logo.svg"
-curl -I "https://mapsgrab.com/assets/icons/credits.svg"
-curl -I "https://mapsgrab.com/assets/icons/logo.svg"
+curl -I "https://mapexporter.app/assets/icons/logo.svg"
+curl -I "https://mapexporter.app/assets/icons/logo.svg"
+curl -I "https://mapexporter.app/assets/icons/credits.svg"
+curl -I "https://mapexporter.app/assets/icons/logo.svg"
 ```
 
 预期响应头：

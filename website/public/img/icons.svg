@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg">
   <!--
-    MapsGrab 图标 sprite：24px 网格、1.75 描边、圆角端点（样式由使用处 .icon 类继承）。
+    MapExporter 图标 sprite：24px 网格、1.75 描边、圆角端点（样式由使用处 .icon 类继承）。
     用法：<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#i-pin"/></svg>
     实心图形在 path 上自带 fill="currentColor"。
   -->

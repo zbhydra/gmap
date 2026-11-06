@@ -10,7 +10,7 @@ monorepo，各前端子项目独立用 pnpm 管理（无根 workspace），后�
 | 端 | 目录 | 技术栈 | 职责 |
 | --- | --- | --- | --- |
 | **backend** | `backend/` | Python 3 + FastAPI + SQLAlchemy(async) + aiomysql + Redis | 业务服务器（`business` 角色）与执行节点（`download` 角色）共用同一份代码；API、调度、crons、支付、节点管理全在这。详见 `@tech-backend.md` |
-| **website** | `website/` | Astro，nginx 部署；依赖以本端 package.json 为准 | MapsGrab 主站，提供产品页、Pricing 与工具；站点配置见本端 README，工程职责见 `@tech-website.md` |
+| **website** | `website/` | Astro，nginx 部署；依赖以本端 package.json 为准 | MapExporter 主站，提供产品页、Pricing 与工具；站点配置见本端 README，工程职责见 `@tech-website.md` |
 | **extension** | `extension/` | Vue 3 + Pinia + vue-i18n，**Chrome Manifest V3** | Google Maps 采集插件，跨上下文 RPC、与 backend 共用 HTTP 契约。详见 `@tech-extension.md` |
 | **extension-bing** | `extension-bing/` | Vue 3，**Chrome Manifest V3** | Bing Maps 采集插件，与 Google Maps 插件共享 `maps_extension` 订阅类别。详见 `@../016.Bing插件/feat.md` |
 | **admin** | `admin/` | Vue 3 + Naive UI + vue-router + Pinia | 独立 SPA 管理后台，展示用户、订单、三类订阅和用量，走 `/api/admin/*`。详见 `@../008.管理后台/feat.md` |

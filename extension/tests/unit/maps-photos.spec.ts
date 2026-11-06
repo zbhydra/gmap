@@ -76,7 +76,7 @@ describe('照片导出两列', () => {
     expect(artifact.content).toBe(
       '\uFEFFPhoto URL,Video URL\r\nhttps://photo.example/a,https://video.example/a\r\nhttps://photo.example/b,\r\n'
     )
-    expect(artifact.filename).toBe('MapsGrab-Extractor-Photos-Gold coffee-2-2026-08-30.csv')
+    expect(artifact.filename).toBe('MapExporter-Photos-Gold coffee-2-2026-08-30.csv')
   })
 
   it('JSON 与 XLSX 保持同一组媒体字段', () => {

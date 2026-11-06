@@ -87,7 +87,7 @@ function requestSamples(spec: RequestSpec): Record<Lang, string> {
   return {
     curl: [
       `curl ${url} \\`,
-      '  -H "Authorization: Bearer $MAPSGRAB_API_KEY" \\',
+      '  -H "Authorization: Bearer $MAPEXPORTER_API_KEY" \\',
       '  -H "Content-Type: application/json" \\',
       `  -d '${spec.body.curl}'`
     ].join('\n'),
@@ -98,7 +98,7 @@ function requestSamples(spec: RequestSpec): Record<Lang, string> {
       ...(spec.setup ? [spec.setup.python, ''] : []),
       'resp = requests.post(',
       `    "${url}",`,
-      '    headers={"Authorization": f"Bearer {os.environ[\'MAPSGRAB_API_KEY\']}"},',
+      '    headers={"Authorization": f"Bearer {os.environ[\'MAPEXPORTER_API_KEY\']}"},',
       `    json=${spec.body.python},`,
       ')',
       'body = resp.json()',
@@ -111,7 +111,7 @@ function requestSamples(spec: RequestSpec): Record<Lang, string> {
       `const res = await fetch("${url}", {`,
       '  method: "POST",',
       '  headers: {',
-      '    Authorization: `Bearer ${process.env.MAPSGRAB_API_KEY}`,',
+      '    Authorization: `Bearer ${process.env.MAPEXPORTER_API_KEY}`,',
       '    "Content-Type": "application/json",',
       '  },',
       `  body: JSON.stringify(${spec.body.node}),`,

@@ -9,7 +9,7 @@ import type { McpPageContent } from './schema'
  */
 export const scraperMcpContent: McpPageContent = {
   seo: {
-    title: 'Google Maps Scraper MCP Server | MapsGrab',
+    title: 'Google Maps Scraper MCP Server | MapExporter',
     description:
       'Connect AI agents to Google Maps data: search places, read reviews and get public business photo URLs from Claude Code, Cursor, VS Code, Codex or any MCP client.'
   },
@@ -32,7 +32,7 @@ export const scraperMcpContent: McpPageContent = {
   },
   agent: {
     label:
-      'Example agent session: a question about local businesses, a MapsGrab tool call with structured results, and the agent’s answer',
+      'Example agent session: a question about local businesses, a MapExporter tool call with structured results, and the agent’s answer',
     session: 'Agent session',
     connected: 'MCP server {server} connected',
     placeholder: 'Ask about any place on Google Maps…',
@@ -204,41 +204,41 @@ export const scraperMcpContent: McpPageContent = {
     title: { lead: 'One endpoint between your agent and ', accent: 'live Maps data', tail: '' },
     lead: 'Your client connects over Streamable HTTP and signs in through your browser. The agent discovers the tools, calls them when a prompt needs Maps data, and reads structured JSON back.',
     label:
-      'MCP clients connect to MapsGrab and call search_places, list_reviews and list_photos for structured Google Maps data.',
+      'MCP clients connect to MapExporter and call search_places, list_reviews and list_photos for structured Google Maps data.',
     clientsLabel: 'MCP clients',
     anyClient: 'Any MCP client',
     toolsLabel: 'Tools',
-    hub: 'MapsGrab MCP',
+    hub: 'MapExporter MCP',
     publicData: 'Public Google Maps data',
     resultLabel: 'result',
     results: ['20 places', '60 reviews', '2 photos'],
     steps: [
       {
         title: 'Connect',
-        description: 'Add the endpoint to your client, then sign in to MapsGrab through your browser.'
+        description: 'Add the endpoint to your client, then sign in to MapExporter through your browser.'
       },
-      { title: 'Discover', description: 'Your agent lists the MapsGrab tools and their input schemas.' },
+      { title: 'Discover', description: 'Your agent lists the MapExporter tools and their input schemas.' },
       { title: 'Call', description: 'When a prompt needs Maps data, the agent calls a tool and reads the JSON result.' }
     ]
   },
   setup: {
     kicker: 'Setup',
     title: { lead: 'One config block ', accent: 'per client', tail: '' },
-    lead: 'Point your client at the MapsGrab endpoint and sign in through your browser — no API key to copy, no SDK, no local process to run.',
+    lead: 'Point your client at the MapExporter endpoint and sign in through your browser — no API key to copy, no SDK, no local process to run.',
     tabsLabel: 'MCP client',
     copy: 'Copy configuration',
     clients: {
       claude: {
         file: 'Terminal',
         steps: [
-          { title: 'Add the server', description: 'Run the command to register `mapsgrab` over HTTP.' },
+          { title: 'Add the server', description: 'Run the command to register `mapexporter` over HTTP.' },
           {
             title: 'Sign in',
-            description: 'In Claude Code, run `/mcp`, choose `mapsgrab` and authenticate — MapsGrab opens in your browser for you to approve.'
+            description: 'In Claude Code, run `/mcp`, choose `mapexporter` and authenticate — MapExporter opens in your browser for you to approve.'
           },
           {
             title: 'Ask for Maps data',
-            description: 'Claude Code lists the MapsGrab tools and calls them when a prompt needs them.'
+            description: 'Claude Code lists the MapExporter tools and calls them when a prompt needs them.'
           }
         ]
       },
@@ -251,9 +251,9 @@ export const scraperMcpContent: McpPageContent = {
           },
           {
             title: 'Sign in',
-            description: 'In Cursor Settings → MCP, click Connect next to `mapsgrab` and approve it in your browser.'
+            description: 'In Cursor Settings → MCP, click Connect next to `mapexporter` and approve it in your browser.'
           },
-          { title: 'Use the tools', description: '`mapsgrab` shows its tools in the MCP server list, ready for the agent.' }
+          { title: 'Use the tools', description: '`mapexporter` shows its tools in the MCP server list, ready for the agent.' }
         ]
       },
       vscode: {
@@ -262,17 +262,17 @@ export const scraperMcpContent: McpPageContent = {
           { title: 'Add .vscode/mcp.json', description: 'Paste the block — it only holds the endpoint URL, nothing secret.' },
           {
             title: 'Sign in',
-            description: 'Start the server. VS Code asks to authenticate with MapsGrab and opens your browser to approve.'
+            description: 'Start the server. VS Code asks to authenticate with MapExporter and opens your browser to approve.'
           },
-          { title: 'Use agent mode', description: 'Open Chat in agent mode and enable the MapsGrab tools.' }
+          { title: 'Use agent mode', description: 'Open Chat in agent mode and enable the MapExporter tools.' }
         ]
       },
       codex: {
         file: 'Terminal',
         steps: [
-          { title: 'Add the server', description: 'Run `codex mcp add` to register `mapsgrab` by URL.' },
-          { title: 'Sign in', description: 'Run `codex mcp login mapsgrab` and approve MapsGrab in your browser.' },
-          { title: 'Start Codex', description: 'New sessions load `mapsgrab` and its tools.' }
+          { title: 'Add the server', description: 'Run `codex mcp add` to register `mapexporter` by URL.' },
+          { title: 'Sign in', description: 'Run `codex mcp login mapexporter` and approve MapExporter in your browser.' },
+          { title: 'Start Codex', description: 'New sessions load `mapexporter` and its tools.' }
         ]
       }
     },
@@ -297,7 +297,7 @@ export const scraperMcpContent: McpPageContent = {
   prompts: {
     kicker: 'Example prompts',
     title: { lead: 'Ask in plain language. ', accent: 'Get rows back.', tail: '' },
-    lead: 'Prospecting, local market research, review monitoring — describe the job, and your agent decides which MapsGrab tool to call.',
+    lead: 'Prospecting, local market research, review monitoring — describe the job, and your agent decides which MapExporter tool to call.',
     rows: [
       [
         {
@@ -448,7 +448,7 @@ export const scraperMcpContent: McpPageContent = {
     title: { lead: 'MCP server ', accent: 'questions', tail: '' },
     items: [
       {
-        question: 'What is the MapsGrab MCP server?',
+        question: 'What is the MapExporter MCP server?',
         answer:
           'An MCP server with search_places, list_reviews and list_photos. AI agents get the same structured data as the Search, Reviews and Photos APIs.'
       },
@@ -460,7 +460,7 @@ export const scraperMcpContent: McpPageContent = {
       {
         question: 'How is it authenticated?',
         answer:
-          'With OAuth sign-in: Claude Code, Cursor, VS Code, Codex and other clients that support MCP authorization open MapsGrab in your browser; you approve the client and can revoke it later in Dashboard → API. Only if your client can’t sign in, pass your API key as a bearer token in the Authorization header.'
+          'With OAuth sign-in: Claude Code, Cursor, VS Code, Codex and other clients that support MCP authorization open MapExporter in your browser; you approve the client and can revoke it later in Dashboard → API. Only if your client can’t sign in, pass your API key as a bearer token in the Authorization header.'
       },
       {
         question: 'How are tool calls counted?',

@@ -1,4 +1,4 @@
-# MapsGrab 插件设计稿 · Atlas Field
+# MapExporter 插件设计稿 · Atlas Field
 
 Maps 插件（`extension/`）Atlas Field UI 已于 **2026-10-18 落地到仓库实现**。本目录保留可运行设计原型：纯 HTML + 原生 CSS / JS，零依赖、无构建、无 CDN。逻辑调整见 [logic.md §9](logic.md#9--已落地逻辑调整2026-10-18)，当前产品合同见 [013 feat](../../feat/013.Maps插件/feat.md)；此处不表示已部署或商店发布。
 
@@ -221,7 +221,7 @@ motion.js 与 ui.js 执行时已对 `document` 初始化一次；页面脚本动
 
 两个场景：浏览器框里从工具栏图标下展开的**实时 Popup**（状态坞驱动；Popup 内的 Sign in / Sign out / Retry 也能点，官网链接只弹 Toast 提示去向，Open Google Maps / 批量入口 / Settings 打开 panel / dashboard / options 原型）；下方**状态矩阵**把 12 个典型状态排成静态缩略图（同一份 HTML 克隆后 `apply(root, state, { instant })`），点任一格载入上方 Popup，最后两格是与页面相反的主题。
 
-**结构**按 logic.md §2 顺序：品牌头（MapsGrab + 套餐徽章、语言、Settings）→ 运营提示槽 → 引导文案 + Open Google Maps（唯一 primary）→ 批量入口两块并排 → 账号与用量卡（账号行 / 用量 / View plans · Manage subscription）→ 页脚（Help & FAQ · Contact support · 版本号）。常态高 528；单条提示、用尽、不可用都 ≤ 598，不出滚动条；两条提示同时出现时中段滚动，页头出现分隔线。
+**结构**按 logic.md §2 顺序：品牌头（MapExporter + 套餐徽章、语言、Settings）→ 运营提示槽 → 引导文案 + Open Google Maps（唯一 primary）→ 批量入口两块并排 → 账号与用量卡（账号行 / 用量 / View plans · Manage subscription）→ 页脚（Help & FAQ · Contact support · 版本号）。常态高 528；单条提示、用尽、不可用都 ≤ 598，不出滚动条；两条提示同时出现时中段滚动，页头出现分隔线。
 
 | 状态组 | 取值 | 画法 |
 | --- | --- | --- |
@@ -237,7 +237,7 @@ motion.js 与 ui.js 执行时已对 `document` 初始化一次；页面脚本动
 
 1. **主题（L11）不进 Popup**：只跟随共享设置（默认跟随系统），在 Settings 修改后即时同步。L11 批准的入口是设置页，单一写入口避免多处切换；主题是一次性偏好；400 宽页头已有语言与设置，德语 / 俄语伸长后再加控件会挤；齿轮一键可达。
 2. **用尽时升级成为唯一 primary**（L3）：Open Google Maps 退为 secondary（仍可打开、导出已有结果），用量区出现 Upgrade plan；Business 用尽时按钮文案为 View plans，同样指向 Pricing。
-3. **套餐徽章跟在品牌名后**（读作「MapsGrab Pro」），账号行只放名字 + 邮箱，长名字不被徽章挤掉；访客不显示徽章。
+3. **套餐徽章跟在品牌名后**（读作「MapExporter Pro」），账号行只放名字 + 邮箱，长名字不被徽章挤掉；访客不显示徽章。
 4. 运营提示放在页头下方：槽位高度展开 + 提示自上滑入；公告不加关闭按钮（logic 没有这项能力，不新增功能）。
 5. 用量读数是等宽数字滚轮：打开、加载完成时从 0 滚到终值，数值变化时从旧值滚到新值；进度条底层恒为品牌渐变，警示色作叠层淡入（渐变与纯色之间无法直接过渡），光束只在数值变化时扫过一次。
 6. 语言触发器显示当前语言代码（EN / DE / ZH-TW…），读屏名为「Language: EN (English)」；菜单两列纵向流，方向键按列走。
@@ -272,7 +272,7 @@ motion.js 与 ui.js 执行时已对 `document` 初始化一次；页面脚本动
 **设计决定**
 
 1. **Start 即重读额度**（L3）：主按钮原位变加载圈「Checking records…」约 0.5 秒，再进入采集或被挡住。被挡住后 Start 真 disabled，「每次重查」落在升级卡的 Check again：仍用尽时提示刚查过、仍无余额；可用则回到 Ready 并提示 Records available again。
-2. **一个按钮形变到底**：主按钮 Start → Checking → Export N · CSV（采集中随时可导出，0 条时 aria-disabled）→ 导出后按钮内「Exported」回执 1.6 秒 + Toast（文件名沿用 `MapsGrab-Extractor-{n}-{query}-{date}.csv`）；次按钮 Pause ↔ Resume → Reset。按钮元素不换，读屏与焦点不跳。
+2. **一个按钮形变到底**：主按钮 Start → Checking → Export N · CSV（采集中随时可导出，0 条时 aria-disabled）→ 导出后按钮内「Exported」回执 1.6 秒 + Toast（文件名沿用 `MapExporter-{n}-{query}-{date}.csv`）；次按钮 Pause ↔ Resume → Reset。按钮元素不换，读屏与焦点不跳。
 3. **原因消息放在状态与按钮之间，下一次成功动作清除**（L2）：not-searched 留在 Ready（首页没有结果列表）；parse 不中断采集，读到下一批即清除，消息内带 reload 入口；google 自动暂停，Resume 即清除；地点无法识别只落在 This place 区。说明行只讲发生了什么，下一步交给消息，同一句话不说两遍。
 4. **工作页两个新终态**：Google 中断 → `stopped`「Stopped early」（琥珀 + 叹号，保留已采集，Export + Reset）；无评论 → `empty`「No reviews found」（横线、环不填充、无 Export），不把「没东西」画成成功。
 5. **收尾补全期间 Export 等待**：主按钮显示「Adding contact details…」，避免导出缺列的文件；自动下载在补全之后触发。
@@ -290,7 +290,7 @@ motion.js 与 ui.js 执行时已对 `document` 初始化一次；页面脚本动
 
 一个整页场景，带实时调度模拟（`pages/dashboard-sim.js`：样例任务、单任务调度、卡死判定压缩为 3.6 秒）：表单、开始 / 暂停 / 续跑 / 重跑、More 菜单的复制与删除都能操作；Help、View plans 只弹 Toast 说明去向，Settings 以新标签打开 options.html。未给 `s.view` 时：有任务在跑落在它的详情（§5.1），给了 `s.form` 落在新建，`?embed=1` 落在历史（调度冻结、数字直接写终值，作 hub 缩略图）。
 
-**结构**：页头（MapsGrab | Bulk tasks · 运行胶囊 · Settings · Help）→ 工具标题与说明 + 工具分段 Keywords / Review URLs（在跑任务所属工具带脉冲点）→ 视图栏：标签 New task / Task history (n)（墨条滑动）+ 任务位读数「n / 150 tasks saved on this device · both tools」与细条（≥ 140 琥珀、满额红）→ 吸顶提示槽 → 视图。内容宽 1120。
+**结构**：页头（MapExporter | Bulk tasks · 运行胶囊 · Settings · Help）→ 工具标题与说明 + 工具分段 Keywords / Review URLs（在跑任务所属工具带脉冲点）→ 视图栏：标签 New task / Task history (n)（墨条滑动）+ 任务位读数「n / 150 tasks saved on this device · both tools」与细条（≥ 140 琥珀、满额红）→ 吸顶提示槽 → 视图。内容宽 1120。
 
 - **新建**：表单卡 + 右侧 340 吸顶摘要栏。表单：任务名 → 列表（等宽多行，角上计数胶囊 `n / 500`，超过 500 变主色「1,240 / 500 · 3 tasks」，不算错误）→ 清理回执（n duplicates removed、n empty lines removed；评论再加「n links aren’t Google Maps place or review links — they will be skipped」）→ Reviews per place（仅评论，100–2,500 步长 100，默认 300）→ Stuck retry 只读块（L9：「Set in Settings」徽章、`1 2 → Skip` 读数、卡死定义、Change in Settings 指向 options.html#automation）→ 页脚（按钮旁一句原因 · Clear · Create task · Start extracting）。摘要栏：Summary「n keywords → k tasks」+ 拆分预览（分段条、`name_1…_k` 与各自条数）；Quota check（规则「10 per keyword / N per place」、需要的额度、本月已用 + 本任务叠条、Left after，不够时红色原因 + 下一步 + View plans）。
 - **历史**：当前工具的任务，新的在上。列：# · 任务（名称 + 条数 · 每店上限 · 创建时间）· 状态 chip · 进度（已处理 / 总数滚轮 + 细条，运行中有光束 + `try · complete · stuck · skip`）· 操作（View、主操作、More）。运行中的行高亮并实时更新；空态给 New task 与名额说明。
@@ -332,7 +332,9 @@ motion.js 与 ui.js 执行时已对 `document` 初始化一次；页面脚本动
 
 一个整页场景：所有控件可操作、即改即存；Privacy Policy 与 View plans 只弹 Toast 说明去向。`?embed=1` 首屏即缩略图。
 
-**结构**：页头（MapsGrab | Settings + 保存胶囊）→ 两栏：左 224 吸顶分区导航（图标 + 名称 + 一行当前取值，如「CSV · 36 / 36」），右 680 内容列（保存失败提示吸顶在列首）→ 页脚（品牌 · 版本号 · Privacy Policy）。舞台由 §9 表中的 `.page.page--narrow` 改为 `.op-shell`（导航 224 + 间距 48 + 内容 680）；≤ 1040 导航收成页头下的吸顶横向标签条，≤ 640 设置行上下堆叠。
+**权益差异**：`options.html` 与 `assets/js/pages/options.js` 仍为 12 列 Pro 探索稿，尚未同步两列门控。原型的皇冠、套餐文案及预览列数不能用于验收当前权益；运行实现以 [设置页合同](../../feat/013.Maps插件/feat.md#设置页options) 为准。
+
+**结构**：页头（MapExporter | Settings + 保存胶囊）→ 两栏：左 224 吸顶分区导航（图标 + 名称 + 一行当前取值，如「CSV · 36 / 36」），右 680 内容列（保存失败提示吸顶在列首）→ 页脚（品牌 · 版本号 · Privacy Policy）。舞台由 §9 表中的 `.page.page--narrow` 改为 `.op-shell`（导航 224 + 间距 48 + 内容 680）；≤ 1040 导航收成页头下的吸顶横向标签条，≤ 640 设置行上下堆叠。
 
 - Extraction：滚动间隔分段 5 / 6 / 8 / 9 / 10s（默认 8）；提取邮箱、提取社媒两个开关（PRO 徽章 + 套餐说明行，社媒行列出六个平台图标）。
 - Export：格式分段（带文件类型小图标）→ 导出预览托盘 → 字段卡（n / 36 滚轮计数、图例 + Select all / Clear、6 组勾选，组头全选 / 半选 + 组计数）。
@@ -342,7 +344,7 @@ motion.js 与 ui.js 执行时已对 `document` 初始化一次；页面脚本动
 | 状态组 | 取值 | 画法 |
 | --- | --- | --- |
 | `save` | `idle` · `saving` · `saved` · `failed` | 页头胶囊 All changes saved / Saving… / Saved / Not saved（`role=status`）；saved：刚改的行在控件旁画出 ✓ Saved；failed：控件回滚、行内 ✕ Not saved、列首吸顶提示「Couldn’t save “X”」+ 原因 + 当前仍生效的值 + Try again / Reload page。坞里直接选 Failed 时以滚动间隔为代表 |
-| `plan` | `free` · `gated` · `pro` | free = 现状「Pro feature — free for now.」；pro =「Included in your Pro plan.」；gated = 未来门控探索：两开关禁用 + 锁、12 个 Pro 字段未选且禁用、预览剔除并注明、View plans |
+| `plan` | `free` · `gated` · `pro` | 原型旧套餐状态：free / pro 全选预览均保留 36 列；gated 禁用两补全开关、锁定并剔除 12 个 Pro 字段，全选预览 24 列。正式权益见上方权益差异 |
 | `format` | `csv` · `json` · `xlsx` | 与页内分段双向同步，预览换版式 |
 | `fields` | `all` · `custom` · `none` | 全选 36 / 混合半选（含 Pro 列）/ 全空（计数变警示色，预览空态） |
 | `download` | `off` · `on` | on 展开下载目录说明 |
@@ -354,16 +356,16 @@ motion.js 与 ui.js 执行时已对 `document` 初始化一次；页面脚本动
 
 1. **两栏 + 吸顶导航**：设置页以整页标签打开（`open_in_tab`），Export 分区有 36 个字段很长；导航兼作各区取值摘要，scroll-spy 墨块随滚动滑动，点击平滑滚动并把焦点交给分区标题。内容列仍是 680。
 2. **即改即存分两层反馈**：胶囊说明整体状态，行内回执说明刚保存的是哪一行；回执与 Not saved 叠在同一格且常驻占位，出现时说明文字不重排。失败按 L2 写原因与下一步，并写明当前仍生效的值；控件回滚，界面不显示未生效的值。
-3. **导出预览托盘**：夹在格式卡与字段卡之间，滚到字段时吸顶在页头下，勾选效果就在眼前。CSV / XLSX 是表头 + 3 行样例（XLSX 带列字母与行号），JSON 是第一条记录（键 = 表头驼峰化、数值列保持数字，与 `columns.ts` 的 `camelizeColumnHeader` / `buildExportJsonValue` 一致）。注记解释样例里的空列：Email / Social Media 要先打开对应开关（可点，跳到开关并高亮），Plus Code 数据源尚未采集。文件名沿用 `MapsGrab-Extractor-{n}-{query}-{date}.{ext}`，过长时省略主干、保留扩展名。
+3. **导出预览托盘**：夹在格式卡与字段卡之间，滚到字段时吸顶在页头下，勾选效果就在眼前。运行实现的预览与实际导出共用权益选列，全选时免费/匿名 34 列、Pro 36 列；仅 Email / Social Medias 受订阅与全局补全列开关门控。原型权益尚未同步，见上方权益差异。CSV / XLSX 是表头 + 3 行样例（XLSX 带列字母与行号），JSON 是第一条记录（键 = 表头驼峰化、数值列保持数字，与 `columns.ts` 的 `camelizeColumnHeader` / `buildExportJsonValue` 一致）。注记解释样例里的空列：Email / Social Media 在列可导出时要先打开对应补全开关（可点，跳到开关并高亮），Plus Code 数据源尚未采集。文件名沿用 `MapExporter-{n}-{query}-{date}.{ext}`，过长时省略主干、保留扩展名。
 4. **勾选项用显示名，预览用表头原文**：勾选项取 `options.column.*`（Full address、Owner ID、Social Media、CID…），预览与文件里是表头原文（Fulladdress、Owner Id、Social Medias、Cid…），与 `columns.ts` 一致。
-5. **Pro 标记两级**：设置行用 PRO 徽章；字段格用皇冠小圆章，图例写明含义，避免 12 个徽章挤占三列网格；gated 时皇冠换锁。
+5. **Pro 标记两级**：补全设置行用 PRO 徽章；运行实现仅 Email / Social Medias 两个字段格用皇冠小圆章，图例说明这两列需有效插件订阅。免费用户仍可勾选，导出与预览按权益剔除；原型仍标记旧的 12 个 Pro 字段。
 6. **重试读数**：步进器下画出「1 2 … → Skipped」与整句「Up to N attempts per item, then it’s skipped.」，说明写清卡死定义（90 秒无进展或标签被关，logic §5），并注明 Dashboard 只读展示（L9）。
 7. **主题卡复用 `[data-theme-switch]`**（MG.theme，与其他页同一写入口）：选中即从所点卡片发起圆形揭示；System 卡左右分屏亮 / 暗，并标出系统当前是亮还是暗（随系统切换形变）。
 8. **集成连接中不禁用开关**：用 `aria-busy` / `aria-disabled` 保留焦点；只有 unavailable 是真 disabled。
 
 **动效**（减弱动效下全部给终态；循环只有 Saving 加载圈与 Connecting 状态点，都只在该状态出现时运行）：分区入场错峰 70ms；导航墨块平移 + 读数换值轻跳；分段 / 开关沿用组件弹簧；回执对勾按笔画画出 + 文字上浮；胶囊宽度补间 + 换词；失败行控件轻摆、提示上浮；预览换格式交叉淡化 + 舞台高度补间，增删列 / 键做 FLIP（留下的平移归位、新来的落入并闪一下底色、离开的原地淡出），并自动滚到变化处；值变化（如打开 Email）单元格闪一下；计数滚轮；下载说明展开；重试圆点弹入 / 缩出；主题圆形揭示与「Now light / dark」形变。
 
-**生产范围**：预览、分区摘要与重试读数已实现；保存失败回滚到当前生效值，用户重新修改即可重试。字段全空继续允许，仅在预览显示空态。gated 套餐态与 Drive / HubSpot 未来态仍为原型探索，不属于产品交付；A10 沿用未决与不可用占位边界。正式行为见 [设置页合同](../../feat/013.Maps插件/feat.md#设置页options)。
+**生产范围**：预览、分区摘要与重试读数已实现；保存失败回滚到当前生效值，用户重新修改即可重试。字段全空继续允许，仅在预览显示空态。锁定字段控件的套餐态与 Drive / HubSpot 未来态仍为原型探索，不属于产品交付；A10 沿用未决与不可用占位边界。正式行为见 [设置页合同](../../feat/013.Maps插件/feat.md#设置页options)。
 
 **交付说明**：共享基础文件零改动，只改 options.html、pages/options.css、pages/options.js 与本节。
 

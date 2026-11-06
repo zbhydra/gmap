@@ -418,7 +418,7 @@
     if (link) {
       e.preventDefault()
       UI.toast({
-        title: 'Opens ' + LINKS[link.dataset.ppLink] + ' on mapsgrab.com',
+        title: 'Opens ' + LINKS[link.dataset.ppLink] + ' on mapexporter.app',
         desc: 'In a new tab — outside this prototype.',
         tone: 'primary',
         icon: 'external-link',

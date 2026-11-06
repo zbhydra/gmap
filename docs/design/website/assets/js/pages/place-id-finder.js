@@ -20,7 +20,7 @@
         'Paste a full Google Maps place URL and read out its Place ID, CID, and FID in one click. Everything is decoded in your browser — the URL is never uploaded.',
       cta: [
         'Need Place IDs at scale?',
-        'MapsGrab extracts the Place ID, CID, and FID for every business it collects — alongside 33 other columns — and exports straight to CSV or JSON.'
+        'MapExporter extracts the Place ID, CID, and FID for every business it collects — alongside 33 other columns — and exports straight to CSV or JSON.'
       ]
     },
     'review-link-generator': {
@@ -29,7 +29,7 @@
         'Paste a Google Maps place URL and get the direct "write a review" link for that business — the shortest path from a happy customer to a Google review.',
       cta: [
         'Track every review you earn',
-        'MapsGrab pulls the reviews of any business page — rating, text, date, and owner replies — so you can watch feedback land and answer it faster.'
+        'MapExporter pulls the reviews of any business page — rating, text, date, and owner replies — so you can watch feedback land and answer it faster.'
       ]
     },
     'email-checker': {
@@ -38,7 +38,7 @@
         'Type an email address and instantly see whether its format is valid — plus hints for the most common typos. Everything runs in your browser.',
       cta: [
         'Collect emails that are worth verifying',
-        "MapsGrab finds the email addresses and social profiles behind every business it extracts — straight from each business's own website."
+        "MapExporter finds the email addresses and social profiles behind every business it extracts — straight from each business's own website."
       ]
     },
     'lat-long-to-dms': {
@@ -47,16 +47,16 @@
         'Enter decimal latitude and longitude and read the same coordinates in degrees, minutes, seconds — with hemisphere letters, ready to copy.',
       cta: [
         'Coordinates for every business, already extracted',
-        'MapsGrab writes latitude and longitude into each row it exports — no manual coordinate lookup for your next routing or territory project.'
+        'MapExporter writes latitude and longitude into each row it exports — no manual coordinate lookup for your next routing or territory project.'
       ]
     },
     'dms-to-dd': {
       title: 'Convert DMS to DD (Lat, Long)',
       description:
-        'Enter degrees, minutes, and seconds for both axes and get clean decimal degrees — the format Google Maps, spreadsheets, and MapsGrab understand.',
+        'Enter degrees, minutes, and seconds for both axes and get clean decimal degrees — the format Google Maps, spreadsheets, and MapExporter understand.',
       cta: [
         'Skip manual coordinate work at scale',
-        'MapsGrab exports decimal latitude and longitude for every business it collects, next to the address, phone, and Place ID columns.'
+        'MapExporter exports decimal latitude and longitude for every business it collects, next to the address, phone, and Place ID columns.'
       ]
     },
     'bulk-keywords-generator': {
@@ -65,7 +65,7 @@
         'Paste your keywords and your locations, and get every "keyword + location" combination as a ready-to-paste list or CSV — the fastest way to seed a local search campaign.',
       cta: [
         'Turn the keyword list into results',
-        'MapsGrab batch tasks run every keyword as a Maps search and export the businesses behind them — CSV or JSON, with reviews, photos, and contact enrichment.'
+        'MapExporter batch tasks run every keyword as a Maps search and export the businesses behind them — CSV or JSON, with reviews, photos, and contact enrichment.'
       ]
     },
     'merge-csv': {
@@ -74,7 +74,7 @@
         'Upload two or more CSV files and download a single merged file. Columns are aligned by header — missing fields are left empty. Files never leave your browser.',
       cta: [
         'One export per run — or one dataset',
-        'MapsGrab exports clean CSV/JSON per session with field selection and Place ID deduplication, so multi-run datasets start almost merged already.'
+        'MapExporter exports clean CSV/JSON per session with field selection and Place ID deduplication, so multi-run datasets start almost merged already.'
       ]
     }
   }
@@ -244,7 +244,7 @@
       return t[2] === variant
     })
     var copy = TOOL_COPY[variant]
-    document.title = copy.title + ' — Free tool | MapsGrab'
+    document.title = copy.title + ' — Free tool | MapExporter'
     replaceSplit(document.querySelector('[data-tool-title]'), accentTail(copy.title, false))
     document.querySelector('[data-tool-desc]').textContent = copy.description
     document.querySelector('[data-tool-crumb]').textContent = meta[0]

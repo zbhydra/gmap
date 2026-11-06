@@ -6,7 +6,7 @@ import type { OnlineCsvField } from '../../i18n/schema'
 import { gridViewports } from '../../scripts/dashboard/map-grid'
 
 /** 剧场浏览器地址栏显示的 Dashboard 路径。 */
-export const DASHBOARD_URL = 'mapsgrab.com/dashboard/'
+export const DASHBOARD_URL = 'mapexporter.app/dashboard/'
 
 /** 各 Online 档每个任务的关键词上限（014；键为 pricing.ts online 卡片 id）。 */
 export const KEYWORD_LIMITS = { free: 2, lite: 5, basic: 10, growth: 20, professional: 50 } as const

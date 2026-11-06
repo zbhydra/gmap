@@ -11,7 +11,7 @@ import type { ExtensionPageContent } from './schema'
  */
 export const extensionContent: ExtensionPageContent = {
   seo: {
-    title: 'MapsGrab for Chrome, Edge & Firefox — Google Maps Extractor Extension',
+    title: 'MapExporter for Chrome, Edge & Firefox — Google Maps Extractor Extension',
     description:
       'Extract 36 columns of business data, reviews, and photos from Google Maps, enrich records with emails and social links, run batch tasks, and export to CSV or JSON.'
   },
@@ -23,8 +23,8 @@ export const extensionContent: ExtensionPageContent = {
     installCta: 'Installation guide',
     meta: ['No account required', '1,000 free records / month', 'Exports stay on your machine'],
     theater: {
-      panelLabel: 'MapsGrab panel preview',
-      extensionActive: 'MapsGrab is active on this page',
+      panelLabel: 'MapExporter panel preview',
+      extensionActive: 'MapExporter is active on this page',
       dock: 'Dock left / right',
       filters: ['Open now', 'Top rated', 'Price'],
       open: 'Open',
@@ -56,12 +56,12 @@ export const extensionContent: ExtensionPageContent = {
     head: {
       kicker: 'Where it works',
       title: { lead: 'One panel for every ', accent: 'Maps view', tail: '' },
-      lead: 'The MapsGrab panel appears right on Google Maps. Search results, business pages and saved lists each get the right extraction mode — no copy-paste, no tab juggling.'
+      lead: 'The MapExporter panel appears right on Google Maps. Search results, business pages and saved lists each get the right extraction mode — no copy-paste, no tab juggling.'
     },
     search: {
       title: 'Search results',
       description:
-        'Press Start Extracting on any search. MapsGrab scrolls the results list at a human pace and collects each listing as it loads.'
+        'Press Start Extracting on any search. MapExporter scrolls the results list at a human pace and collects each listing as it loads.'
     },
     place: {
       title: 'Business pages',
@@ -76,7 +76,7 @@ export const extensionContent: ExtensionPageContent = {
     saved: {
       title: 'Saved lists',
       description:
-        'Open a saved list and press Start once. MapsGrab opens each place in turn and collects it — no per-item clicks.',
+        'Open a saved list and press Start once. MapExporter opens each place in turn and collects it — no per-item clicks.',
       listName: 'Favorites · {count} places'
     }
   },
@@ -144,7 +144,7 @@ export const extensionContent: ExtensionPageContent = {
     head: {
       kicker: 'Batch tasks',
       title: { lead: 'Queue the list. ', accent: 'Walk away.', tail: '' },
-      lead: 'Paste up to 500 keywords or review URLs into one task. MapsGrab walks through them item by item with live progress, skips anything that stalls, and exports automatically when the task finishes.'
+      lead: 'Paste up to 500 keywords or review URLs into one task. MapExporter walks through them item by item with live progress, skips anything that stalls, and exports automatically when the task finishes.'
     },
     checks: [
       'Keyword tasks run one Maps search per keyword',
@@ -184,10 +184,10 @@ export const extensionContent: ExtensionPageContent = {
     ],
     diagram: {
       browser: 'Your browser',
-      servers: 'MapsGrab servers',
+      servers: 'MapExporter servers',
       nodes: {
         mapsTab: 'Google Maps tab',
-        panel: 'MapsGrab panel',
+        panel: 'MapExporter panel',
         storage: 'Local storage',
         exports: 'Your exports',
         config: 'Remote config',
@@ -205,7 +205,7 @@ export const extensionContent: ExtensionPageContent = {
   install: {
     head: {
       kicker: 'Install',
-      title: { lead: 'Install ', accent: 'MapsGrab', tail: '' },
+      title: { lead: 'Install ', accent: 'MapExporter', tail: '' },
       lead: 'Download the ZIP here and follow the steps for your browser. Chrome, Edge and Brave load the unpacked folder. Firefox uses a separate temporary add-on that must be reloaded after a restart. Click any image to view it full size.'
     },
     zip: {
@@ -225,8 +225,8 @@ export const extensionContent: ExtensionPageContent = {
         steps: [
           {
             title: 'Download and unzip',
-            description: ['Download ', { code: 'mapsgrab.zip' }, '. On Windows, right-click it and choose “Extract All”. On macOS, double-click it. Keep the extracted folder.'],
-            shot: 'MapsGrab ZIP downloaded in Chrome'
+            description: ['Download ', { code: 'mapexporter.zip' }, '. On Windows, right-click it and choose “Extract All”. On macOS, double-click it. Keep the extracted folder.'],
+            shot: 'MapExporter ZIP downloaded in Chrome'
           },
           {
             title: 'Open the extensions page',
@@ -241,9 +241,9 @@ export const extensionContent: ExtensionPageContent = {
           {
             title: 'Load the unpacked folder',
             description: [
-              'Click “Load unpacked” and select the extracted folder. MapsGrab appears in the extensions list. Open a Google Maps search to use it.'
+              'Click “Load unpacked” and select the extracted folder. MapExporter appears in the extensions list. Open a Google Maps search to use it.'
             ],
-            shot: 'Load unpacked with the MapsGrab card added'
+            shot: 'Load unpacked with the MapExporter card added'
           }
         ]
       },
@@ -254,8 +254,8 @@ export const extensionContent: ExtensionPageContent = {
         steps: [
           {
             title: 'Download and unzip',
-            description: ['Download ', { code: 'mapsgrab-firefox.zip' }, '. On Windows, right-click it and choose “Extract All”. On macOS, double-click it. Keep the extracted folder.'],
-            shot: 'MapsGrab Firefox ZIP downloaded in Firefox'
+            description: ['Download ', { code: 'mapexporter-firefox.zip' }, '. On Windows, right-click it and choose “Extract All”. On macOS, double-click it. Keep the extracted folder.'],
+            shot: 'MapExporter Firefox ZIP downloaded in Firefox'
           },
           {
             title: 'Open the debugging page',
@@ -269,7 +269,7 @@ export const extensionContent: ExtensionPageContent = {
               { code: 'manifest.json' },
               ' inside the unzipped folder. A temporary add-on unloads when Firefox restarts; repeat this step to load it again.'
             ],
-            shot: 'MapsGrab loaded as a temporary Firefox extension with its background script running'
+            shot: 'MapExporter loaded as a temporary Firefox extension with its background script running'
           }
         ]
       }
@@ -285,7 +285,7 @@ export const extensionContent: ExtensionPageContent = {
       status: 'Pre-release',
       date: 'August 2026',
       items: [
-        'First pre-release of the MapsGrab extension',
+        'First pre-release of the MapExporter extension',
         'Google Maps search extraction with automatic scrolling and the 36-column schema',
         'Review and photo extraction from business pages',
         'Email and social media enrichment per business',
@@ -336,14 +336,14 @@ export const extensionContent: ExtensionPageContent = {
           'Extraction rules ship as remote configuration, so fixes reach the panel without reinstalling the extension. If a page can’t be read, the panel shows an error instead of failing silently.'
       },
       {
-        question: 'Does MapsGrab see the data I collect?',
+        question: 'Does MapExporter see the data I collect?',
         answer:
           'Your settings and results are stored locally in your browser. Our servers only handle remote configuration, account and quota status, optional email and social enrichment, and minimal usage logs.'
       },
       {
         question: 'Where does the data come from, and is it legal to collect?',
         answer:
-          'MapsGrab only collects information that is publicly displayed on the Google Maps pages you visit — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.'
+          'MapExporter only collects information that is publicly displayed on the Google Maps pages you visit — the same details any visitor can read. We do not access private accounts, gated content, or non-public data.'
       }
     ]
   },
@@ -351,7 +351,7 @@ export const extensionContent: ExtensionPageContent = {
     kicker: 'Get started',
     title: { lead: 'Grab your first list ', accent: 'today', tail: '' },
     lead: 'Install the extension, search Google Maps, and export a clean spreadsheet — no account required.',
-    primary: 'Install MapsGrab',
+    primary: 'Install MapExporter',
     secondary: 'Compare plans',
     note: 'Free monthly quota included. No credit card.'
   }

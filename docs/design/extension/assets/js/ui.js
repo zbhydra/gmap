@@ -1,5 +1,5 @@
 /*
- * MapsGrab 扩展组件行为（原生 JS，零依赖）。依赖 theme.js、motion.js 先执行。
+ * MapExporter 扩展组件行为（原生 JS，零依赖）。依赖 theme.js、motion.js 先执行。
  * 声明式绑定在 UI.init(scope) 里（页面加载时对 document 调用一次；动态渲染后对容器再调用）。
  *
  *   [data-tabs]                 role=tablist 容器：按钮 role=tab（aria-controls 指向面板），.seg-thumb / .tab-ink 自动跟随
