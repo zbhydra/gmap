@@ -36,15 +36,18 @@ importers:
       '@playwright/test':
         specifier: ^1.60.0
         version: 1.60.0
+      '@types/node':
+        specifier: 24.4.0
+        version: 24.4.0
       '@vitejs/plugin-vue':
         specifier: ^6.0.7
-        version: 6.0.7(vite@7.3.5)(vue@3.5.35(typescript@5.8.3))
+        version: 6.0.7(vite@7.3.5(@types/node@24.4.0))(vue@3.5.35(typescript@5.8.3))
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.3.5
-        version: 7.3.5
+        version: 7.3.5(@types/node@24.4.0)
       vue-tsc:
         specifier: ^2.2.12
         version: 2.2.12(typescript@5.8.3)
@@ -400,6 +403,9 @@ packages:
 
   '@types/lodash@4.17.24':
     resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
+
+  '@types/node@24.4.0':
+    resolution: {integrity: sha512-gUuVEAK4/u6F9wRLznPUU4WGUacSEBDPoC2TrBkw3GAnOLHBL45QdfHOXp1kJ4ypBGLxTOB+t7NJLpKoC3gznQ==}
 
   '@vicons/antd@0.13.0':
     resolution: {integrity: sha512-yrUGoUSz2BbGupk9ghQOahc04n5H3MwUDM9pVPsLh9U1uqB47oRWZvYRiZaT1JKPqgTgSE6BXcVw4i9MOF4M+g==}
@@ -781,6 +787,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  undici-types@7.11.0:
+    resolution: {integrity: sha512-kt1ZriHTi7MU+Z/r9DOdAI3ONdaR3M3csEaRc6ewa4f4dTvX4cQCbJ4NkEn0ohE4hHtq85+PhPSTY+pO/1PwgA==}
+
   vdirs@0.1.8:
     resolution: {integrity: sha512-H9V1zGRLQZg9b+GdMk8MXDN2Lva0zx72MPahDKc30v+DtwKjfyOSXWRIX4t2mhDubM1H09gPhWeth/BJWPHGUw==}
     peerDependencies:
@@ -1081,12 +1090,16 @@ snapshots:
 
   '@types/lodash@4.17.24': {}
 
+  '@types/node@24.4.0':
+    dependencies:
+      undici-types: 7.11.0
+
   '@vicons/antd@0.13.0': {}
 
-  '@vitejs/plugin-vue@6.0.7(vite@7.3.5)(vue@3.5.35(typescript@5.8.3))':
+  '@vitejs/plugin-vue@6.0.7(vite@7.3.5(@types/node@24.4.0))(vue@3.5.35(typescript@5.8.3))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 7.3.5
+      vite: 7.3.5(@types/node@24.4.0)
       vue: 3.5.35(typescript@5.8.3)
 
   '@volar/language-core@2.4.15':
@@ -1522,12 +1535,14 @@ snapshots:
 
   typescript@5.8.3: {}
 
+  undici-types@7.11.0: {}
+
   vdirs@0.1.8(vue@3.5.35(typescript@5.8.3)):
     dependencies:
       evtd: 0.2.4
       vue: 3.5.35(typescript@5.8.3)
 
-  vite@7.3.5:
+  vite@7.3.5(@types/node@24.4.0):
     dependencies:
       esbuild: 0.27.7
       fdir: 6.5.0(picomatch@4.0.4)
@@ -1536,6 +1551,7 @@ snapshots:
       rollup: 4.61.0
       tinyglobby: 0.2.17
     optionalDependencies:
+      '@types/node': 24.4.0
       fsevents: 2.3.3
 
   vooks@0.2.12(vue@3.5.35(typescript@5.8.3)):

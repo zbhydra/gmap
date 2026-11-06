@@ -121,7 +121,11 @@ interface UserOrdersMockData {
 }
 
 /** 本文件 route.fulfill 可返回的数据联合。 */
-type MockResponseData = AdminUsersListMockData | UserProfileMockData | UserOrdersMockData;
+type MockResponseData =
+  | AdminUsersListMockData
+  | UserProfileMockData
+  | UserOrdersMockData
+  | { summary: Record<string, number>; mark_types: string[]; rows: [] };
 
 /** 最近一次用户列表请求参数。 */
 interface UsersRequestParams {

@@ -144,37 +144,39 @@ describe('openMapsPricingPage（打开路径）', () => {
 
   it('已配置时经 background 发送 openPricingPage（URL 含归因参数）', async () => {
     setPricingUrl(CONFIGURED_PRICING_URL)
-    const sendSpy = vi.spyOn(chrome.runtime, 'sendMessage').mockImplementation(async message => {
-      const request = message as RpcRequest<{ url: string }>
+    const originalSendMessage = chrome.runtime.sendMessage
+    const sendSpy = vi.fn(async (request: RpcRequest<{ url: string }>) => {
       return {
         id: request.id,
         success: true,
         data: { opened: true }
       } satisfies RpcResponse<{ opened: boolean }>
     })
+    Object.assign(chrome.runtime, { sendMessage: sendSpy })
     try {
       await openMapsPricingPage()
       expect(sendSpy).toHaveBeenCalledTimes(1)
-      const request = sendSpy.mock.calls[0]?.[0] as RpcRequest<{ url: string }>
+      const request = sendSpy.mock.calls[0]![0]
       expect(request.method).toBe('openPricingPage')
       expect(request.params?.url).toBe('https://mapexporter.app/pricing/?product_kind=maps_extension&utm_source=extension')
     } finally {
-      sendSpy.mockRestore()
+      Object.assign(chrome.runtime, { sendMessage: originalSendMessage })
     }
   })
 })
 
  it('面板默认 Pricing 通过已有 RPC 打开官网', async () => {
-   const sendSpy = vi.spyOn(chrome.runtime, 'sendMessage').mockImplementation(async message => {
-     const request = message as RpcRequest<{ url: string }>
+   const originalSendMessage = chrome.runtime.sendMessage
+   const sendSpy = vi.fn(async (request: RpcRequest<{ url: string }>) => {
      return { id: request.id, success: true, data: { opened: true } } satisfies RpcResponse<{ opened: boolean }>
    })
+   Object.assign(chrome.runtime, { sendMessage: sendSpy })
    try {
      setPricingUrl('')
      await openPanelPricing()
-     const request = sendSpy.mock.calls[0]?.[0] as RpcRequest<{ url: string }>
+     const request = sendSpy.mock.calls[0]![0]
      expect(request.method).toBe('openPricingPage')
      expect(new URL(request.params!.url).pathname).toBe('/pricing/')
      expect(new URL(request.params!.url).searchParams.get('product_kind')).toBe('maps_extension')
-   } finally { sendSpy.mockRestore() }
+   } finally { Object.assign(chrome.runtime, { sendMessage: originalSendMessage }) }
  })

@@ -7,7 +7,7 @@
  * 10 数据行,行数与文件名计数一致)→ Reset 回待命。
  *
  * 断言分界:环境/上游问题(网络不可达、同意页无法通过、人机验证、DOM 改版)
- * → skipSmoke 条件跳过;插件自身行为(计数/截断/导出)→ 失败即 fail。
+ * → Start 前 skipSmoke 条件跳过;Start 后完成态超时、计数/截断/导出失败均 fail。
  * 匿名态配额语义:usage 查询不可得时 fail-open 放行(013 A11),Start 可用。
  * Pause/Resume 挂起语义由单测覆盖(截断使真实采集中态窗口只有首批 RPC
  * 往返,headful 下无法稳定命中)。面板文案用英文基线定位(vue-i18n
@@ -38,7 +38,7 @@ import {
 
 test.describe('真实 Google Maps 匿名采集(免费 10 行截断)', () => {
   test('真实界面采集 → 免费 10 截断完成 → CSV 导出(34 列)→ Reset', async () => {
-    // 打开 45s + 面板 30s + 首批 RPC/截断收敛 60s + 导出,全链路有界
+    // 打开 45s + 面板 30s + 首批 RPC/截断收敛 90s + 导出,全链路有界
     test.setTimeout(240_000)
     const context = await launchRealMapsContext()
     const page = context.pages()[0] ?? (await context.newPage())
@@ -89,13 +89,9 @@ test.describe('真实 Google Maps 匿名采集(免费 10 行截断)', () => {
 
       // 首批真实 RPC 解析(≥10 行)→ 免费档截断自动完成;解析失败会停在
       // 采集中态或显示解析错误,由完成态超时/计数断言兜底暴露
-      try {
-        await expect(page.getByRole('button', { name: 'Reset', exact: true })).toBeVisible({
-          timeout: 90_000
-        })
-      } catch {
-        skipSmoke('90s 内未达完成态:首批 RPC 未达或解析未命中(疑似协议改版,需人工归因)')
-      }
+      await expect(page.getByRole('button', { name: 'Reset', exact: true })).toBeVisible({
+        timeout: 90_000
+      })
 
       // 截断语义:完成计数恒等于免费上限
       const buttonText = (await exportButton(page).innerText()).replace(/\s+/g, ' ').trim()

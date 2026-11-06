@@ -239,16 +239,17 @@ async function mockSystemSettingsApi(page: Page) {
 
     expect(route.request().method()).toBe("POST");
     generateCallCount += 1;
+    const apiKeyCreatedAt = 1780977700000;
     apiKeyMeta = {
       has_api_key: true,
       api_key_prefix: "tdm_test_ful",
-      api_key_created_at: 1780977700000,
+      api_key_created_at: apiKeyCreatedAt,
     };
     await route.fulfill(
       successResponse({
         api_key: fullApiKey,
         api_key_prefix: apiKeyMeta.api_key_prefix,
-        api_key_created_at: apiKeyMeta.api_key_created_at,
+        api_key_created_at: apiKeyCreatedAt,
       }),
     );
   });

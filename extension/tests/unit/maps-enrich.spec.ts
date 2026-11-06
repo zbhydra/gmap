@@ -14,7 +14,8 @@ import type { ExtensionEvents } from '../../src/core/events/types'
 import type { MapsPlaceRow } from '../../src/sites/maps/content/parser'
 import type {
   MapsEnrichBusinessInput,
-  MapsEnrichResponse
+  MapsEnrichResponse,
+  MapsEnrichResult
 } from '../../src/sites/maps/enrich/types'
 import { STORAGE_KEYS } from '../../src/core/api/config'
 import {
@@ -232,7 +233,7 @@ describe('enrichRows', () => {
 
   it('结果按官网写回行：Email 逗号分隔、Social Medias 多行；无官网行不动', async () => {
     rpcState.respond = async businesses => ({
-      results: businesses.map(business =>
+      results: businesses.map((business): MapsEnrichResult =>
         business.website === 'https://cafe.com'
           ? {
               key: 'cafe.com',

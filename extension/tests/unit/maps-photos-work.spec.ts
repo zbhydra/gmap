@@ -20,8 +20,8 @@ describe('照片跨跳转采集意图', () => {
     vi.mocked(chrome.tabs.get).mockImplementation(() => {
       throw new Error('本功能不具备读取 Tab.url 的权限')
     })
-    vi.mocked(chrome.tabs.create).mockResolvedValue({ id: 2 } as chrome.tabs.Tab)
-    vi.mocked(chrome.tabs.update).mockResolvedValue({ id: 2 } as chrome.tabs.Tab)
+    vi.mocked(chrome.tabs.create).mockImplementation(async () => ({ id: 2 }))
+    vi.mocked(chrome.tabs.update).mockImplementation(async () => ({ id: 2 }))
     const registration = serve('background', { photosWorkPage }, {
       methodTargets: { photosWorkPage: ['content'] },
       requestLimits: { photosWorkPage: 1024 },

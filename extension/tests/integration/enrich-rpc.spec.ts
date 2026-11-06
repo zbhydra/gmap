@@ -10,7 +10,9 @@ import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
 import { parsePlaceRow } from '@/sites/maps/content/parser'
 import { enrichRows } from '@/sites/maps/enrich/enrichClient'
 
-it('只提交官网字段即可经真实 background 解析器访问 HTTP 并按位置写回', async () => {
+it.each([0, 25_000])('官网响应延迟 %ims 时经真实 RPC 写回补全结果', async delayMs => {
+  vi.useFakeTimers()
+  const timeoutSpy = vi.spyOn(globalThis, 'setTimeout')
   const rows = ['First', 'Second'].map(name => ({
     ...parsePlaceRow([], DEFAULT_MAPS_CONFIG.parseSchema),
     name,
@@ -22,21 +24,38 @@ it('只提交官网字段即可经真实 background 解析器访问 HTTP 并按�
     name: row.name,
     address: row.fullAddress
   }))
-  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-    new Response(
-      JSON.stringify({
-        code: 10000,
-        data: {
-          results: businesses.map(business => ({
-            key: 'facebook.com',
-            emails: [],
-            medias: { facebook: business.website }
-          })),
-          partial: false
-        }
-      }),
-      { headers: { 'Content-Type': 'application/json' } }
-    )
+  const fetchMock = vi.fn<typeof fetch>().mockImplementation(
+    (_input, init) =>
+      new Promise((resolve, reject) => {
+        const responseTimer = setTimeout(
+          () =>
+            resolve(
+              new Response(
+                JSON.stringify({
+                  code: 10000,
+                  data: {
+                    results: businesses.map(business => ({
+                      key: 'facebook.com',
+                      emails: [],
+                      medias: { facebook: business.website }
+                    })),
+                    partial: delayMs > 0
+                  }
+                }),
+                { headers: { 'Content-Type': 'application/json' } }
+              )
+            ),
+          delayMs
+        )
+        init?.signal?.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(responseTimer)
+            reject(new DOMException('官网补全请求已中止', 'AbortError'))
+          },
+          { once: true }
+        )
+      })
   )
   vi.stubGlobal('fetch', fetchMock)
   await chrome.storage.local.set({ [STORAGE_KEYS.ACCESS_TOKEN]: 'enrich-rpc-token' })
@@ -44,6 +63,7 @@ it('只提交官网字段即可经真实 background 解析器访问 HTTP 并按�
   router.setupListener()
   const listener = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls.at(-1)?.[0]
   if (!listener) throw new Error('真实 background RPC listener 未注册')
+  const tab = await chrome.tabs.get(1)
   const originalSendMessage = chrome.runtime.sendMessage
   Object.assign(chrome.runtime, {
     sendMessage: vi.fn(
@@ -51,23 +71,28 @@ it('只提交官网字段即可经真实 background 解析器访问 HTTP 并按�
         new Promise<RpcResponse<RpcServeResult> | undefined>(resolve => {
           const handled = listener(
             message,
-            { id: chrome.runtime.id, tab: { id: 1 }, url: 'https://www.google.com/maps' },
+            { id: chrome.runtime.id, tab, url: 'https://www.google.com/maps' },
             resolve
           )
-          if (!handled) resolve(undefined)
+          if (!Object.is(handled, true)) resolve(undefined)
         })
     )
   })
   try {
-    const summary = await enrichRows(rows, new ChromeEventEmitter<ExtensionEvents>())
+    const pending = enrichRows(rows, new ChromeEventEmitter<ExtensionEvents>())
+    await vi.advanceTimersByTimeAsync(delayMs)
+    const summary = await pending
 
-    expect(summary).toEqual({ totalTargets: 2, writtenRows: 2, partial: false, ok: true })
+    expect(summary).toEqual({ totalTargets: 2, writtenRows: 2, partial: delayMs > 0, ok: true })
+    expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 28_000)
+    expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 35_000)
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/api/client/maps/enrich',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ businesses }),
-        headers: expect.objectContaining({ Authorization: 'Bearer enrich-rpc-token' })
+        headers: expect.objectContaining({ Authorization: 'Bearer enrich-rpc-token' }),
+        signal: expect.objectContaining({ aborted: false })
       })
     )
     expect(rows.map(row => row.socialMedias)).toEqual([
@@ -78,6 +103,9 @@ it('只提交官网字段即可经真实 background 解析器访问 HTTP 并按�
     router.destroy()
     await chrome.storage.local.remove(STORAGE_KEYS.ACCESS_TOKEN)
     Object.assign(chrome.runtime, { sendMessage: originalSendMessage })
+    vi.clearAllTimers()
+    timeoutSpy.mockRestore()
+    vi.useRealTimers()
     vi.unstubAllGlobals()
   }
 })

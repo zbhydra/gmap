@@ -70,6 +70,8 @@ extend-exclude = '''
   | build
   | dist
 )/
+# 竞品调研脚本，非应用/测试代码，不参与后端格式与 lint 门禁。
+| ^/tests/fixtures/gmap/scripts/
 '''
 
 [tool.isort]
@@ -95,6 +97,8 @@ explicit_package_bases = true
 
 [tool.ruff]
 target-version = "py311"
+# 竞品调研脚本，非应用/测试代码，不参与后端格式与 lint 门禁。
+extend-exclude = ["tests/fixtures/gmap/scripts"]
 
 [tool.ruff.lint]
 ignore = ["E402"]  # Ignore module level import not at top of file

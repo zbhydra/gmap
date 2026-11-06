@@ -1,0 +1,109 @@
+name: 快速质量门禁
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.11'
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --locked
+      - run: uv run black --check src tests
+      - run: uv run ruff check src tests
+      - run: uv run mypy src
+      - name: 准备免基础设施测试配置
+        run: |
+          cat > config.yaml <<'YAML'
+          smtp:
+            - host: 127.0.0.1
+              username: ci
+              password: ci
+              from_email: ci@example.com
+          YAML
+      # 唯一现存的免基础设施测试；禁用根 conftest 的数据库清理。
+      - run: uv run pytest tests/test_i18n_contract.py --noconftest -q -rs
+
+  extensions:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [extension, extension-bing]
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm test
+
+  admin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: admin/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm type-check:tests
+      - run: pnpm build
+
+  website:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    env:
+      PUBLIC_SITE_URL: https://mapexporter.app
+      PUBLIC_API_BASE_URL: http://127.0.0.1:7600
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec astro check
+      - run: pnpm exec vue-tsc --noEmit
+      - run: pnpm type-check:tests
+      # module-scripts 同时检查静态 HTML 与 sitemap，需要本次源码的构建产物。
+      - run: pnpm exec astro build
+      - run: pnpm test:module-scripts

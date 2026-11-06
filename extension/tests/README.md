@@ -23,6 +23,6 @@ pnpm test:e2e        # = 构建前置 pnpm build:real + playwright test --projec
 ## 运行前提
 
 - Playwright 浏览器二进制:`pnpm exec playwright install chromium`(本机缺省时执行一次)。
-- headful 真实出网:本机可访问 www.google.com;同意页自动接受,人机验证/落地域偏离/DOM 改版按 skipSmoke 条件降级。
+- headful 真实出网:本机可访问 www.google.com;同意页自动接受,Start 前人机验证/落地域偏离/DOM 改版按 skipSmoke 条件降级。Start 后 90 秒内未出现 Reset 完成态必须 fail,不得 skip。
 - 登录态(Pro)用例需本地 backend:`cd backend && uv run server`(MySQL/Redis 就绪);匿名用例无此前置。
 - 登录流程不做 e2e(v3 登录链路由单测覆盖,真实回流走 unpacked 人工终验)。

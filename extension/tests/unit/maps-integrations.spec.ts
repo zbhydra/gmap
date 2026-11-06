@@ -11,6 +11,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { STORAGE_KEYS } from '../../src/core/api/config'
+import { DEFAULT_MAPS_CONFIG } from '../../src/sites/maps/config/contract'
+import { parsePlaceRow } from '../../src/sites/maps/content/parser'
 import type { MapsIntegrationAuth } from '../../src/sites/maps/settings/integrations'
 import {
   DRIVE_FILE_SCOPE,
@@ -245,8 +247,8 @@ describe('HubSpot 授权状态机', () => {
   })
 
   it('authorizeHubspot 回调缺 code（用户拒绝授权）：抛错', async () => {
-    chrome.identity.launchWebAuthFlow = vi.fn(
-      (_options: chrome.identity.WebAuthFlowDetails, callback: (redirectUrl?: string) => void) => {
+    vi.mocked(chrome.identity.launchWebAuthFlow).mockImplementation(
+      (_options, callback) => {
         callback('https://test-extension-id.chromiumapp.org/?error=access_denied')
       }
     )
@@ -359,6 +361,7 @@ describe('HubSpot 商家映射', () => {
   it('buildHubspotBusinesses：缺街道回退完整地址', () => {
     const rows = [
       {
+        ...parsePlaceRow([], DEFAULT_MAPS_CONFIG.parseSchema),
         name: 'Cafe A',
         domain: 'cafea.com',
         phone: '+1 555 010',
@@ -367,6 +370,7 @@ describe('HubSpot 商家映射', () => {
         municipality: 'New York'
       },
       {
+        ...parsePlaceRow([], DEFAULT_MAPS_CONFIG.parseSchema),
         name: 'Cafe B',
         domain: '',
         phone: '',
@@ -374,7 +378,7 @@ describe('HubSpot 商家映射', () => {
         fullAddress: '5 Elm St, Boston',
         municipality: 'Boston'
       }
-    ] as Parameters<typeof buildHubspotBusinesses>[0]
+    ]
 
     expect(buildHubspotBusinesses(rows)).toEqual([
       { name: 'Cafe A', domain: 'cafea.com', phone: '+1 555 010', address: '12 Main St', city: 'New York' },

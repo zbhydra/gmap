@@ -12,9 +12,9 @@ const enabledSlsConfig = {
 }
 
 function stubDeviceId(deviceId: string): void {
-  chrome.storage.local.get = vi.fn((key: string) =>
-    Promise.resolve({ [key]: deviceId })
-  ) as typeof chrome.storage.local.get
+  Object.assign(chrome.storage.local, {
+    get: vi.fn((key: string) => Promise.resolve({ [key]: deviceId }))
+  })
 }
 
 function stubRuntimeGlobals(slsConfig: typeof enabledSlsConfig): void {
