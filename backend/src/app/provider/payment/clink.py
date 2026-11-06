@@ -482,11 +482,7 @@ class ClinkPaymentProvider(PaymentBase):
             "merchantReferenceId",
             context=f"clink.order_succeeded: event_id={event_id}",
         )
-        customer_email = self._string_field(
-            event_object,
-            "customerEmail",
-            context=f"clink.order_succeeded: event_id={event_id}",
-        )
+        customer_email = event_object.get("customerEmail")
         clink_order_id = self._string_field(
             event_object,
             "orderId",

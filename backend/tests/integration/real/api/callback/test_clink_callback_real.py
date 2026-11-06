@@ -340,7 +340,7 @@ async def test_real_clink_purchase_then_onetime_order_fulfills_natural_month(
             "type": "onetime",
             "orderId": f"ord_{cleanup.test_run_id}",
             "merchantReferenceId": order_no,
-            "customerEmail": email,
+            "customerEmail": None,
             "sessionId": session_id,
             "amountTotal": float(format_normalized_amount(cast(int, price["amount"]))),
             "paymentCurrency": str(price["currency"]),
@@ -355,7 +355,7 @@ async def test_real_clink_purchase_then_onetime_order_fulfills_natural_month(
     assert response.status_code == 200
     assert payload["object"] == "event"
     assert payload["type"] == "account.reloaded"
-    assert payload["data"]["customerEmail"] == email
+    assert payload["data"]["customerEmail"] is None
     assert payload["data"]["userId"] == str(user_id)
     assert payload["data"]["amount"] == float(
         format_normalized_amount(cast(int, price["amount"]))
