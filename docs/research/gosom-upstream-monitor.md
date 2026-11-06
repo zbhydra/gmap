@@ -35,8 +35,8 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-11-05`
-- 本地仓库提交:`2bb50f5892e3b558fab88c281aa45af959d28f8a`
+- 检查时间:`2026-11-06`
+- 本地仓库提交:`06b6d109a205ea0d3ea817670ba890f6f0431df9`
 - GOSOM 最新提交:`903b96d7aa8863188022c04db220e44f3218c860`
 - SCRAPEMATE 最新提交:`859d15f56ba5ed3851587edc305fab6ee956cc71`
 - 结论:题设限定无网络,未执行 `git ls-remote`;提供的两个 `main` HEAD 均与本地 `.upstream/` 的 `main` 一致,且分别等于当前基线,完整 `git diff --name-status` 均为空,`git diff --check` 均通过。GOSOM `go.mod` 已跟进 `github.com/gosom/scrapemate v1.4.0`,两仓库 playwright-go 均为 `v0.6100.0`。复核「待确认项」、`docs/ROADMAP.md` B4 与 `docs/feat/014.Maps云端/plans/010.Export服务端实施.md` §18/§19 的验收记录后,仍未见 GOSOM worker 健康服务与 Maps URL 解析修复两项预发验证的完成证据;`010` 的 Collector 开发服验证不覆盖这两项。当前 `backend/src`、`admin/src` 已无 gosom 配置或调用入口,`docs/feat/014.Maps云端/tech-引擎Provider层.md` 也记载旧引擎退役;本仓事实不能证明部署机已移除旧镜像或完成历史预发验证。两项继续待确认,由人工核对部署机 digest 与旧镜像是否仍需运行,再决定是否按原条件评估更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。本轮两仓库均无新增影响,不建议仅因本次巡检主动更新镜像;两条基线不变,不追加变更记录。
