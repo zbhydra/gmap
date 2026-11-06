@@ -823,7 +823,7 @@ class ClinkPaymentProvider(PaymentBase):
         if not 200 <= response.status_code < 300 or code != 200:
             raise PaymentProviderError(
                 f"{context}: Clink API rejected request: path={path}, "
-                f"status={response.status_code}, code={code}",
+                f"status={response.status_code}, code={code}, msg={data.get('msg')}",
                 category=payment_http_failure_category(
                     status=response.status_code, is_write=method != "GET"
                 ),
