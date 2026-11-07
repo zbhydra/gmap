@@ -1,8 +1,8 @@
 # 004 · ClinkBill 支付渠道
 
-> 状态:已随「004 同步支付系统-计费模型与 ClinkBill」实施(backend 侧)。
+> 本文定义 ClinkBill 渠道的 Hosted Checkout、发票与 Customer Portal 合同；实施与验收进度见 [接入计划](plans/001.Stripe支付接入.md)。
 >
-> 本文是 ClinkBill Hosted Checkout 对接的最终合同,与上游实现(2d2f6f82 + 渠道订阅管理)对齐。实现以源码 `backend/src/app/provider/payment/clink.py`、`api/callback/clink_callback.py` 为唯一真相。
+> 稳定实现入口为 `backend/src/app/provider/payment/clink.py` 的 `ClinkPaymentProvider` 与 `backend/src/app/api/callback/clink_callback.py` 的 `clink_payment_callback`。共享订单规则见 [支付与履约](tech-支付与履约.md)。
 
 ## 1. 目标与边界
 
@@ -18,7 +18,7 @@
 ### 1.2 非目标
 
 - 不实现退款、部分退款、争议处理或对账系统。
-- 不实现用户对已生效订阅开启/关闭自动续费。运营修改订阅商品配置只影响之后创建的订单。
+- 不在本站直接取消或恢复渠道协议；用户通过 Customer Portal 管理。运营修改订阅商品配置只影响之后创建的订单。
 - 不新建支付订单、支付尝试或 Webhook Inbox 表。
 - 不改写现有订单状态机、履约事务或补偿任务。
 - 不引入 Clink SDK 或新 Web 框架；使用项目已有 `httpx`。
@@ -86,7 +86,7 @@ Provider 根据 `environment` 选择官方固定 API 根地址，不允许从前
 
 ### 4.2 一次性分支
 
-Credits 和 Online/API 一次性订阅商品发送：
+Credits 和 `auto_renew=false` 的订阅商品发送：
 
 ```json
 {
@@ -105,7 +105,7 @@ Credits 和 Online/API 一次性订阅商品发送：
 
 ### 4.3 自动续费分支
 
-`auto_renew=true` 的 Maps 插件订阅商品发送：
+`auto_renew=true` 的订阅商品发送：
 
 ```json
 {
@@ -143,8 +143,8 @@ POST /api/callback/clink/payment
 
 注册以下已消费事件：
 
-- `order.succeeded`：Credits 和 Online/API 一次性订阅商品。
-- `invoice.paid`：Maps 插件自动续费商品的首期与后续每期扣款。
+- `order.succeeded`：Credits 和一次性订阅商品。
+- `invoice.paid`：自动续费订阅商品的首期、换档折算与后续每期扣款。
 - `subscription.updated.plan_changed`：交订阅服务查询渠道当前价并同步本地档位，不进入订单履约。升级等待页读取本地档位，必须订阅该终态事件；`invoice.paid` 不承担换档，详见 [统一升级结果与动作](../006.订阅系统/tech-订阅升级.md#confirm-结果与动作)。
 
 Clink 可能同时发送 recurring `order.succeeded`；该事件验签并核对本地订单后按账户事件应答(见 §5.3),不触发履约。自动续费只认 `invoice.paid`，避免同一账期被 Order 和 Invoice 两种事件各履约一次。
@@ -185,7 +185,7 @@ order_no = data.object.merchantReferenceId
 
 Provider 把已验证金额/币种的结果交给现有 `handle_payment_callback`。`orderId + 订单 CAS` 负责重复投递幂等，不新增 Redis 或数据库 Inbox。
 
-所有已验签 `order.succeeded`(含 `type=recurring`)的应答按官方 Order Webhook 合同返回 account 事件:`{object:"event", type:"account.reloaded", data:{customerEmail(原样回传请求值), webSite(服务端配置的网站根地址), userId(本地订单 user_id), amount(amountTotal 原值), currency(paymentCurrency)}}`。本地下单要求登录,订单用户必然已存在,固定 `account.reloaded`;recurring 事件核对通过但 processed=false,不触发订单履约(履约只认 `invoice.paid`),一次性事件 processed=true 才进入 `handle_payment_callback`;重复事件复用现有订单幂等结果回传同一应答。`invoice.paid` 核对通过即 processed=true 并进入 `handle_payment_callback`,履约后返回项目统一成功 envelope;未支持事件确认接收,返回 `processed=false` envelope。
+所有已验签 `order.succeeded`(含 `type=recurring`)的应答按官方 Order Webhook 合同返回 account 事件:`{object:"event", type:"account.reloaded", data:{customerEmail(允许缺省或 null，仅作审计与账户应答，不参与归属核对), webSite(服务端配置的网站根地址), userId(本地订单 user_id), amount(amountTotal 原值), currency(paymentCurrency)}}`。本地下单要求登录,订单用户必然已存在,固定 `account.reloaded`;recurring 事件核对通过但 processed=false,不触发订单履约(履约只认 `invoice.paid`),一次性事件 processed=true 才进入 `handle_payment_callback`;重复事件复用现有订单幂等结果回传同一应答。`invoice.paid` 核对通过即 processed=true 并进入 `handle_payment_callback`,履约后返回项目统一成功 envelope;未支持事件确认接收,返回 `processed=false` envelope。
 
 ### 5.4 自动续费对账与成功映射
 

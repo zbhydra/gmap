@@ -104,7 +104,7 @@
 
 ### 续费履约档位保护（随本特性一并落地的履约规则修正）
 
-自动续费履约（同步方案中的 `_fulfill_auto_renew` 路径）**只在首购单上覆盖行内 `product_id`**：
+自动续费履约入口为 `SubscriptionService._fulfill_auto_renew_in_session`，**只在首购单上覆盖行内 `product_id`**：
 回调解析出的 `provider_subscription.original_order_no` 等于当前回调单号时才写档位；
 续费/折算发票回调只推进 `expires_at` 等账期事实，不覆盖档位。否则升级后下一期续费会把档位快照打回首购档。
 
@@ -171,7 +171,7 @@ wait/redirect 后，客户端轮询同一 `upgrade-quote`，仅以 `current_prod
 1. 一次性线：旧档剩余价值抵扣后收取新档整期净价，成功后同时换档与重开完整账期；旧剩余时间不再叠加。
 2. 自动续费线：Stripe / Clink 按相同业务模型开票，只有付款且协议换档成功才更新权益与新到期日；关闭页面后仍能收敛，后续按新账期、新档扣款，重复事件不重复延长，续费不回退档位。
 3. 不可升级场景（无订阅/已是最高档/补差≤0/过期行）全部被报价接口拒绝，前端有对应文案。
-4. 升级订单在管理后台订单详情可见升级快照（`extra_metadata.product_snapshot.purpose=upgrade`，复用现有 JSON 渲染，无 admin 改动）。
+4. 一次性升级订单在管理后台订单详情可见升级快照（`extra_metadata.product_snapshot.purpose=upgrade`，复用现有 JSON 渲染，无 admin 改动）。
 
 ## 对既有文档的修订点
 

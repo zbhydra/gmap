@@ -16,15 +16,15 @@
 
 ## 后端接口
 
-| 接口 | 用途 |
-| --- | --- |
-| `GET /api/client/auth/me` | 已登录用户摘要:用户信息、Credits、各产品线订阅状态(六字段) |
-| `GET /api/client/subscription/checkout-configs` | 全部启用订阅商品、商品级 `auto_renew`/`period`、渠道价(响应含好评赠送合同字段,页面不消费) |
-| `POST /api/client/order/create` | 创建订阅订单(请求含 `auto_renew + period`) |
-| `GET /api/client/order/status/{order_no}` | 支付后轮询订单状态 |
-| `POST /api/client/order/cancel` | cancel 回跳页把用户取消落到本地订单 |
-| `POST /api/client/order/paypal/confirm` | 登录用户回跳后确认本人单次付款；合同见 004 支付与履约 §1.7 |
-| `POST /api/client/subscription/management` | 请求只含 `product_kind`,返回当前线自动续费订阅的渠道管理 URL(可空);Dashboard 订阅页消费,Pricing 不调用 |
+| 接口                                            | 用途                                                                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `GET /api/client/auth/me`                       | 已登录用户摘要:用户信息、Credits、各产品线订阅状态(六字段)                                             |
+| `GET /api/client/subscription/checkout-configs` | 全部启用订阅商品、商品级 `auto_renew`/`period`、渠道价(响应含好评赠送合同字段,页面不消费)              |
+| `POST /api/client/order/create`                 | 创建订阅订单(请求含 `auto_renew + period`)                                                             |
+| `GET /api/client/order/status/{order_no}`       | 支付后轮询订单状态                                                                                     |
+| `POST /api/client/order/cancel`                 | PayPal / Clink cancel 回跳落本地取消；Stripe 保留待支付                                                |
+| `POST /api/client/order/paypal/confirm`         | 登录用户回跳后确认本人单次付款；合同见 004 支付与履约 §1.7                                             |
+| `POST /api/client/subscription/management`      | 请求只含 `product_kind`,返回当前线自动续费订阅的渠道管理 URL(可空);Dashboard 订阅页消费,Pricing 不调用 |
 
 `/api/client/subscription/status` 继续保留给插件兼容,Pricing 不使用。`POST /api/client/subscription/review-reward/claim` 为 006 域合同(入口已下线),现役页面不调用。
 
@@ -48,7 +48,7 @@ Pricing 订阅下单调用 `POST /api/client/order/create`,请求核心字段:
 - `openUpgradeCheckout` 将报价金额、币种与当前订阅渠道交给公共 checkout,隐藏渠道选择,展示旧权益抵扣、新档完整周期应付和重开账期说明。当前订阅的 `auto_renew` 决定一次性订单或协议内确认。三个升级接口的字段与原因合同由 006 升级 tech 维护；报价中的到期时间是预计值，成功后刷新账户摘要读取实际新到期时间。
 - 一次性净应付订单由 `order-checkout-controller.ts` 创建、打开外部支付页并轮询订单；本次对接 Stripe / Clink 回跳。后端计算新档整期价减旧权益抵扣，网站提交的升级请求只含产品线与目标档位。
 - 自动续费确认统一消费 `status/action`。`succeeded` 展示成功;`failed` 展示失败;`requires_action` 复用 `pending_payment`,按 `wait` 等待或按 `redirect` 打开 HTTPS 地址,随后只轮询 quote。仅 `current_product_id === target_product_id` 结束等待,不重复 POST confirm、不以无档位 ID 的 `auth/me` 或 `subscription/status` 判定升级成功。
-- 自动续费升级不产生订单,公共成功事件的 `orderNo/orderStatus` 为空;Pricing 沿用成功事件刷新 `auth/me` 与报价。关闭弹窗停止页面轮询,服务端渠道事件继续负责最终档位。
+- 自动续费确认不预建订单，公共成功事件的 `orderNo/orderStatus` 为空；Pricing 沿用成功事件刷新 `auth/me` 与报价。关闭弹窗停止页面轮询，服务端渠道事件继续负责最终档位；已付发票的实付订单与账期处理见 [自动续费升级](../006.订阅系统/tech-订阅升级.md#路径-b自动续费)。
 - PayPal 新购与新建升档入口本次暂不开放，仅保留已有订单和协议处理。Stripe / Clink 的升级交互消费同一结果与文案合同。
 - `upgrade_quote_shown` 在当前 tab 的可升级卡片曝光时上报;`upgrade_confirmed` 在共享 checkout 确认履约或新档生效时上报,提交按钮点击不算成功。
 
