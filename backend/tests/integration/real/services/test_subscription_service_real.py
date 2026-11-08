@@ -385,7 +385,7 @@ async def test_real_dual_product_kind_renewal_keeps_lines_isolated(
         payment_method="paypal",
         paid_amount=12_990_000,
         paid_currency="USD",
-        paid_at=now_ms,
+        paid_at=now_ms - _DAY_MS,
         expired_at=now_ms + _DAY_MS,
         extra_metadata=json.dumps(
             {
@@ -405,7 +405,9 @@ async def test_real_dual_product_kind_renewal_keeps_lines_isolated(
         updated_at=now_ms,
     )
     stored_order = await order_service.create(order)
+    fulfillment_started_at = timestamp_now()
     assert await order_service.fulfill_paid_order(stored_order) is True
+    fulfillment_finished_at = timestamp_now()
 
     async def _status(product_kind: str) -> dict[str, object]:
         response = await real_async_client.get(
@@ -422,6 +424,15 @@ async def test_real_dual_product_kind_renewal_keeps_lines_isolated(
         user_id, MAPS_ONLINE_PRODUCT_KIND
     )
     assert extension_row_before is not None
+    assert extension_row_before.start_at is not None
+    assert (
+        fulfillment_started_at
+        <= extension_row_before.start_at
+        <= fulfillment_finished_at
+    )
+    assert extension_row_before.expires_at == add_natural_months(
+        extension_row_before.start_at, 1
+    )
     status_ext_before = await _status(MAPS_ONLINE_PRODUCT_KIND)
     status_maps_before = await _status(MAPS_EXTENSION_PRODUCT_KIND)
     assert status_ext_before["auto_renew"] is False

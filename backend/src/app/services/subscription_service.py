@@ -1325,13 +1325,12 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         product_id = self._assert_order_product_id(order)
         now_ms = timestamp_now()
         current = await db.get(UserSubscriptionModel, (order.user_id, product_kind))
-        assert order.paid_at is not None
         base_expires_at = (
             current.expires_at
             if current is not None
             and current.expires_at is not None
-            and current.expires_at > order.paid_at
-            else order.paid_at
+            and current.expires_at > now_ms
+            else now_ms
         )
         renewed_expires_at = add_natural_months(base_expires_at, months)
         stmt = mysql_insert(UserSubscriptionModel).values(
