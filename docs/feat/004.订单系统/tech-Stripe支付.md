@@ -137,7 +137,7 @@ Provider 优先从已验签发票快照读取首单引用、协议、Customer、
 - 新增本地化 `/stripe/success/`、`/stripe/cancel/`，复用现有支付回跳控制器、订单轮询和成功文案。
 - success 页只轮询既有本地订单状态，到账由 Webhook 驱动；不新增 Stripe 主动付款确认接口。Webhook 投递延迟时页面保持等待，瞬时失败依靠渠道重试。
 - 回跳参数与前端通知只触发查询；页面到账状态仍以本地订单已付且履约成功为准。Stripe cancel 页只表示退出收银台，通知原页查询状态，不调用本地取消订单接口；文案明确订单仍可继续付款。
-- 通用 `POST /api/client/order/cancel` 拒绝直接取消 Stripe 待支付单。`cancel_url` 不会关闭 Stripe Session，直接把本地订单置为取消会导致随后到账无法履约；真正关闭渠道支付入口另需 Session expire 与付款结果核对。
+- 通用 `POST /api/client/order/cancel` 通过 `StripePaymentProvider.validate_order_cancellation()` 拒绝直接取消 Stripe 待支付单。`cancel_url` 不会关闭 Stripe Session，直接把本地订单置为取消会导致随后到账无法履约；真正关闭渠道支付入口另需 Session expire 与付款结果核对。
 - Dashboard 通过现有 `POST /api/client/subscription/management` 获取 Stripe Customer Portal Session。Customer ID 从当前用户的有效订阅实例读取，前端不传入客户或订阅 ID；返回地址由本站配置构造。
 - Stripe Portal 的默认配置允许更新付款方式和期末取消续费，关闭套餐与数量变更。取消不提前撤销本期已付权益。
 

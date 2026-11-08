@@ -40,6 +40,7 @@ from app.models.subscription_model import UserSubscriptionModel
 from app.provider.payment.payment_base import (
     PaymentBase,
     PaymentProviderError,
+    RecurringPaymentReference,
     SubscriptionUpdateResult,
     SubscriptionState,
     SubscriptionRenewalResumeRequired,
@@ -98,6 +99,67 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
     def __init__(self) -> None:
         super().__init__(UserSubscriptionModel)
+
+    async def prepare_recurring_order(
+        self,
+        original_order: OrderModel,
+        create_param: OrderCreateParam,
+        reference: RecurringPaymentReference,
+    ) -> OrderCreateParam:
+        """按已付发票确定续费商品快照，订单金额保留本次净实付。"""
+
+        if reference.provider_sku is None:
+            return create_param
+
+        config = await payment_config_service.get_snapshot()
+        product_kind = self.get_order_product_kind(original_order)
+        matches = [
+            (product, price)
+            for price in config.prices.values()
+            if price.channel_code == create_param.payment_method
+            and price.provider_sku == reference.provider_sku
+            for product in config.products_by_id[price.product_id]
+            if product.product_kind == product_kind
+        ]
+        if len(matches) != 1:
+            raise PaymentProcessingError(
+                "payment_callback_recurring: 渠道发票价格缺少唯一商品映射: "
+                f"payment_method={create_param.payment_method}, "
+                f"invoice={create_param.payment_channel_order_no}, "
+                f"provider_sku={reference.provider_sku}"
+            )
+        product, price = matches[0]
+        metadata: dict[str, object] = json.loads(create_param.extra_metadata or "{}")
+        metadata["product_snapshot"] = {
+            "product_kind": product.product_kind,
+            "product_price_id": price.id,
+            "auto_renew": True,
+            "period": product.period,
+            "currency": create_param.currency,
+            "amount": reference.period_amount,
+            "provider_sku": reference.provider_sku,
+        }
+        create_param.product_id = product.product_id
+        create_param.product_name = product.name
+        create_param.extra_metadata = json.dumps(metadata, ensure_ascii=False)
+        return create_param
+
+    def get_order_product_kind(self, order: OrderModel) -> str | None:
+        """读取订单订阅产品类别；缺失或坏快照返回空值。"""
+
+        try:
+            metadata = json.loads(order.extra_metadata or "{}")
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(metadata, dict):
+            return None
+        snapshot = metadata.get("product_snapshot")
+        if not isinstance(snapshot, dict):
+            return None
+        product_kind = snapshot.get("product_kind")
+        if isinstance(product_kind, str) and product_kind in SUBSCRIPTION_PRODUCT_KINDS:
+            return product_kind
+        return None
 
     async def check_product(self, param: OrderCheckProductParam) -> OrderCreateParam:
         """校验订阅商品下单参数，并生成订单快照参数。"""

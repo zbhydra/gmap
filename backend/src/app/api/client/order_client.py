@@ -30,6 +30,7 @@ from app.schemas.order_schema import (
 )
 from app.services.order_service import order_service
 from app.services.payment_service import payment_service
+from app.services.subscription_service import subscription_service
 from app.provider.payment.payment_base import PaymentProviderError
 from app.provider.payment.paypal import PayPalPaymentProvider
 from app.utils.response import ResponseUtils
@@ -160,7 +161,7 @@ async def get_order_status(
             "order_no": order.order_no,
             "product_class": order.product_class,
             "product_id": order.product_id,
-            "product_kind": order_service.get_order_product_kind(order),
+            "product_kind": subscription_service.get_order_product_kind(order),
             "product_name": order.product_name,
             "amount": order.amount,
             "currency": order.currency,

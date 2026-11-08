@@ -267,19 +267,14 @@ order_success(order_no, channel_order_no, channel_uid, payment_method, paid_*)
 
 ### 8.3 履约发货分发(`_fulfill_order_product`)
 
-```python
-if order.product_class == ProductClass.SUBSCRIPTION.value:
-    await subscription_service.fulfill_paid_order(db, order)  # 订阅域:给 user_subscriptions 加时间
-elif order.product_class == ProductClass.RECHARGE.value:
-    credits_amount = self._recharge_order_credits_amount(order) # 从订单快照读 credits_amount
-    await user_credit_service.add_balance_in_session(...)       # 积分域:加 Credits 余额
-else:
-    raise ValueError(f"No fulfillment handler for product_class: {order.product_class}")
-```
+| 商品类别       | 同事务履约入口                                       |
+| -------------- | ---------------------------------------------------- |
+| `SUBSCRIPTION` | `subscription_service.fulfill_paid_order(db, order)` |
+| `RECHARGE`     | `user_credit_service.fulfill_paid_order(db, order)`  |
 
 - 订单侧只负责"按商品类别分发到对应业务域的发货能力 + 同事务抢占状态";具体发货实现不在订单域。
 - `SUBSCRIPTION` 的 `product_kind/auto_renew/period/product_price_id` 从订单 `extra_metadata.product_snapshot` 读取,自动续费履约再读 `extra_metadata.payment_callback.provider_subscription`(渠道订阅 ID / 本地首单号 / 账期起止),不从当前订阅配置重读,避免改价或改周期后历史订单履约漂移。
-- `RECHARGE` 的 `credits_amount` 从订单 `extra_metadata.product_snapshot.credits_amount` 读取(下单时由积分域 `check_product` 写入快照),不从当前积分配置重读,避免改价后到账数量漂移。
+- `RECHARGE` 的积分快照解析、到账数量与流水内容由积分域处理,见 [充值履约](../003.积分系统/tech-购买.md#23-履约加积分credits-侧契约)。
 
 ### 8.4 取消订单幂等(`cancel_user_order`)
 

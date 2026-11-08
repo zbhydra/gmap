@@ -126,6 +126,8 @@ Maps 商品与渠道价由 `backend/scripts/seed_subscription_products.py` 的 `
 
 订阅购买统一走 `orders`。
 
+商品参数由 `backend/src/app/services/subscription_service.py` 的 `SubscriptionService.check_product()` 与 `prepare_recurring_order()` 生成,统一返回 `OrderCreateParam`;订单域只分发和落单。续费发票提供新 SKU 时由订阅域按原单产品线匹配目标商品,冻结整期价,订单金额保留净实付;未提供新 SKU 时沿用原商品快照。首期和已存在订单不经过续费商品参数生成。
+
 订阅订单创建时在 `orders.extra_metadata.product_snapshot` 保存快照:
 
 | 字段                                   | 说明                                                                                             |
@@ -166,7 +168,7 @@ Maps 商品与渠道价由 `backend/scripts/seed_subscription_products.py` 的 `
 
 `/api/client/subscription/status` 保持给插件使用；website Pricing 读取 `/api/client/auth/me` 展示账户状态。两者均无档位 ID，升级判定与终态读源见 [升级接口合同](tech-订阅升级.md#接口合同)。
 
-订单状态的 `product_kind` 为 `string | null`:订阅订单从快照返回合法产品类别,Credits 订单为空;不从缺失快照推导默认订阅产品。
+订单状态的 `product_kind` 为 `string | null`,由 `SubscriptionService.get_order_product_kind()` 读取:订阅订单从快照返回合法产品类别,Credits 订单为空;不从缺失快照推导默认订阅产品。
 
 好评赠送的 Counter、锁、加时与失败语义见 `@tech-好评赠送订阅.md`。
 

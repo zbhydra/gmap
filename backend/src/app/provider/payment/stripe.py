@@ -11,7 +11,9 @@ from fastapi import Request
 
 from app.constants.payment import STRIPE_PAYMENT_METHOD, channel_amount_unit
 from app.core.config import settings
+from app.exceptions.common_exception import AppCommonException
 from app.exceptions.payment_exception import payment_http_failure_category
+from app.i18n.common_code import CommonCode
 from app.provider.payment.payment_base import (
     CallbackVerificationResult,
     PaymentBase,
@@ -36,6 +38,13 @@ class StripePaymentProvider(PaymentBase):
     provider_name = STRIPE_PAYMENT_METHOD
     supports_upgrade_checkout = True
     supports_subscription_update = True
+
+    @classmethod
+    def validate_order_cancellation(cls, *, order_no: str) -> None:
+        raise AppCommonException(
+            CommonCode.ORDER_CANNOT_CANCEL,
+            ext_msg=f"order_cancel: Stripe 收银台仍可到账: order_no={order_no}",
+        )
 
     def __init__(self, config: dict[str, object] | None = None) -> None:
         config = config or {}

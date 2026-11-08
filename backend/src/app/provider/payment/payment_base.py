@@ -130,6 +130,10 @@ class PaymentBase(ABC):
     def __init__(self, config: dict | None = None) -> None:
         pass
 
+    @classmethod
+    def validate_order_cancellation(cls, *, order_no: str) -> None:
+        """校验本地取消是否符合渠道约束，默认无需额外动作。"""
+
     async def preview_subscription_update(
         self,
         *,

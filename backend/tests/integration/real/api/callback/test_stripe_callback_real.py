@@ -404,6 +404,7 @@ async def test_real_stripe_onetime_callback_keeps_pending_and_fulfills_once(
         _WEBHOOK, content=wrong_body, headers=wrong_headers
     )
     assert rejected.status_code == 200 and rejected.json()["code"] != CommonCode.SUCCESS
+    before_fulfillment = timestamp_now()
     for _ in range(2):
         result = await real_async_client.post(_WEBHOOK, content=body, headers=headers)
         assert result.status_code == 200 and result.json()["code"] == CommonCode.SUCCESS
@@ -414,8 +415,9 @@ async def test_real_stripe_onetime_callback_keeps_pending_and_fulfills_once(
     )
     async with get_async_session() as db:
         subscription = await db.get(UserSubscriptionModel, (user_id, "maps_online"))
-    assert subscription is not None and subscription.start_at == paid_at * 1000
-    assert subscription.expires_at == add_natural_months(paid_at * 1000, 1)
+    assert subscription is not None and subscription.start_at is not None
+    assert before_fulfillment <= subscription.start_at <= timestamp_now()
+    assert subscription.expires_at == add_natural_months(subscription.start_at, 1)
 
 
 async def test_real_stripe_paid_invoices_and_applied_plan_keep_separate_facts(
