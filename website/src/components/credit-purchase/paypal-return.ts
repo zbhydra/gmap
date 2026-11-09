@@ -1,8 +1,8 @@
 /**
  * 通用支付回跳页脚本。
  *
- * success 页轮询本地订单状态确认到账；cancel 页调用现有取消订单接口并通知
- * 原购买弹窗。文案支持两种来源：优先使用回跳页内 data-payment-return-copy
+ * success 页轮询本地订单状态确认到账；Stripe 退出收银台只通知原页查询，
+ * 其余 cancel 页沿用取消订单接口。文案支持两种来源：优先使用回跳页内 data-payment-return-copy
  * 钩子（Clink 等新页面），否则回退 PayPal 页的 JSON 载荷并按订单类别分发。
  */
 
@@ -36,7 +36,7 @@ export interface PayPalReturnOptions {
 /** 通用支付回跳页初始化参数。 */
 export interface PaymentReturnOptions extends PayPalReturnOptions {
   /** 支付渠道。 */
-  provider: 'paypal' | 'clink'
+  provider: 'paypal' | 'clink' | 'stripe'
 }
 
 const PAYPAL_RETURN_CHANNEL = 'credit_purchase_paypal_return'
@@ -79,7 +79,7 @@ export function initPaymentReturnPage(options: PaymentReturnOptions): void {
     return
   }
 
-  if (!normalizedOptions.orderNo) {
+  if (normalizedOptions.provider === 'stripe' || !normalizedOptions.orderNo) {
     notifyOpener(normalizedOptions)
     return
   }

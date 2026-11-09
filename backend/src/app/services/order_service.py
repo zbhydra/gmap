@@ -29,7 +29,6 @@ from app.exceptions.payment_exception import (
     database_failure_category,
     payment_failure_category,
 )
-from app.constants.subscription import SUBSCRIPTION_PRODUCT_KINDS
 from app.i18n.common_code import CommonCode
 from app.core.database import get_async_session
 from app.models.order_model import OrderModel
@@ -56,7 +55,6 @@ class OrderSuccessError(PaymentProcessingError):
 
 
 ORDER_FULFILLMENT_TIMEOUT_SECONDS = 10
-RECHARGE_PURCHASE_REASON = "recharge_purchase"
 _SUPPORT_MAIL_CONFIG_KEY = "support_mail"
 # 续费建单临界区 Redis 锁：ttl 覆盖一次建单正常耗时，timeout 内指数退避抢锁。
 _RECURRING_PAYMENT_LOCK_TTL_SECONDS = 10
@@ -65,6 +63,7 @@ _RECURRING_PAYMENT_LOCK_TIMEOUT_SECONDS = 5
 OrderListOrder = Literal[
     "created_at_asc",
     "created_at_desc",
+    "paid_at_desc",
     "updated_at_asc",
     "updated_at_desc",
     "id_asc",
@@ -202,6 +201,7 @@ class OrderService(BaseService[OrderModel]):
                     user_id=order.user_id,
                     auto_renew=param.auto_renew,
                     provider_sku=param.provider_sku,
+                    period=param.period,
                 )
             )
         except PaymentProviderError as exc:
@@ -484,6 +484,7 @@ class OrderService(BaseService[OrderModel]):
                     original_order_no=original_order_no,
                     paid_amount=paid_amount,
                     paid_currency=paid_currency,
+                    callback=callback,
                 )
                 user_created_order = False
             else:
@@ -637,6 +638,7 @@ class OrderService(BaseService[OrderModel]):
         original_order_no: str,
         paid_amount: int,
         paid_currency: str,
+        callback: CallbackVerificationResult,
     ) -> OrderModel:
         """用 Redis 短锁减少同一次自动续费的建单竞争。"""
 
@@ -667,6 +669,7 @@ class OrderService(BaseService[OrderModel]):
                 original_order_no=original_order_no,
                 paid_amount=paid_amount,
                 paid_currency=paid_currency,
+                callback=callback,
             )
 
         if lock_value is None:
@@ -684,6 +687,7 @@ class OrderService(BaseService[OrderModel]):
                 original_order_no=original_order_no,
                 paid_amount=paid_amount,
                 paid_currency=paid_currency,
+                callback=callback,
             )
 
         try:
@@ -693,6 +697,7 @@ class OrderService(BaseService[OrderModel]):
                 original_order_no=original_order_no,
                 paid_amount=paid_amount,
                 paid_currency=paid_currency,
+                callback=callback,
             )
         finally:
             await lock.release(lock_key, lock_value)
@@ -705,6 +710,7 @@ class OrderService(BaseService[OrderModel]):
         original_order_no: str,
         paid_amount: int,
         paid_currency: str,
+        callback: CallbackVerificationResult,
     ) -> OrderModel:
         """在锁内或 fail-open 路径重查流水和原订单，再按需创建续费订单。"""
 
@@ -728,21 +734,25 @@ class OrderService(BaseService[OrderModel]):
                 f"status={original_order.order_status}"
             )
 
-        return await self.create_order(
-            OrderCreateParam(
-                user_id=original_order.user_id,
-                product_class=original_order.product_class,
-                product_id=original_order.product_id,
-                product_name=original_order.product_name,
-                amount=paid_amount,
-                payment_method=payment_method,
-                currency=paid_currency,
-                client_ip=original_order.client_ip,
-                extra_metadata=original_order.extra_metadata,
-                auto_renew=True,
-                payment_channel_order_no=channel_order_no,
-            )
+        create_param = OrderCreateParam(
+            user_id=original_order.user_id,
+            product_class=original_order.product_class,
+            product_id=original_order.product_id,
+            product_name=original_order.product_name,
+            amount=paid_amount,
+            payment_method=payment_method,
+            currency=paid_currency,
+            client_ip=original_order.client_ip,
+            extra_metadata=original_order.extra_metadata,
+            payment_channel_order_no=channel_order_no,
         )
+        if original_order.product_class == ProductClass.SUBSCRIPTION.value:
+            from app.services.subscription_service import subscription_service
+
+            create_param = await subscription_service.prepare_recurring_order(
+                original_order, create_param, callback.recurring_reference
+            )
+        return await self.create_order(create_param)
 
     async def _complete_payment_callback(
         self,
@@ -766,6 +776,7 @@ class OrderService(BaseService[OrderModel]):
             paid_amount=paid_amount,
             paid_currency=paid_currency,
             transaction_id=callback.transaction_id,
+            paid_at=callback.paid_at,
         )
         result = PaymentCallbackResult(
             order_no=cast(str, raw_result["order_no"]),
@@ -920,6 +931,13 @@ class OrderService(BaseService[OrderModel]):
                 data={"order_no": order_no, "order_status": order.order_status},
             )
 
+        # 延迟导入避免 PaymentService -> Provider -> OrderService 初始化环。
+        from app.services.payment_service import payment_service
+
+        payment_service.validate_order_cancellation(
+            order.payment_method, order_no=order_no
+        )
+
         updated = await self._cas_update_order(
             order_no=order_no,
             expected_status=OrderStatus.PENDING,
@@ -984,6 +1002,7 @@ class OrderService(BaseService[OrderModel]):
         paid_amount: int,
         paid_currency: str,
         transaction_id: str | None = None,
+        paid_at: int | None = None,
     ) -> dict[str, object]:
         """统一处理支付渠道确认成功后的订单落库与业务回调。
 
@@ -1028,7 +1047,7 @@ class OrderService(BaseService[OrderModel]):
         update_data: dict[str, object] = {
             "order_status": OrderStatus.PAID.value,
             "payment_channel_order_no": channel_order_no,
-            "paid_at": timestamp_now(),
+            "paid_at": paid_at if paid_at is not None else timestamp_now(),
             "payment_method": payment_method,
             "callback_status": CallbackStatus.PENDING.value,
             "paid_amount": paid_amount,
@@ -1126,6 +1145,7 @@ class OrderService(BaseService[OrderModel]):
         order_clauses: dict[OrderListOrder, tuple[Any, ...]] = {
             "created_at_asc": (OrderModel.created_at.asc(), OrderModel.id.asc()),
             "created_at_desc": (OrderModel.created_at.desc(), OrderModel.id.desc()),
+            "paid_at_desc": (OrderModel.paid_at.desc(), OrderModel.id.desc()),
             "updated_at_asc": (OrderModel.updated_at.asc(), OrderModel.id.asc()),
             "updated_at_desc": (OrderModel.updated_at.desc(), OrderModel.id.desc()),
             "id_asc": (OrderModel.id.asc(),),
@@ -1478,92 +1498,11 @@ class OrderService(BaseService[OrderModel]):
         if order.product_class == ProductClass.RECHARGE.value:
             from app.services.user_credit_service import user_credit_service
 
-            credits_amount = self._recharge_order_credits_amount(order)
-            await user_credit_service.add_balance_in_session(
-                db,
-                user_id=order.user_id,
-                amount=credits_amount,
-                reason=RECHARGE_PURCHASE_REASON,
-                metadata_json=self._recharge_credit_metadata_json(
-                    order,
-                    credits_amount=credits_amount,
-                ),
-            )
+            await user_credit_service.fulfill_paid_order(db, order)
             return
 
         raise OrderSuccessError(
             f"No fulfillment handler for product_class: {order.product_class}"
-        )
-
-    def get_order_product_kind(self, order: OrderModel) -> str | None:
-        """读取订单产品类别；非订阅订单没有产品类别。"""
-        try:
-            metadata = json.loads(order.extra_metadata or "{}")
-        except json.JSONDecodeError:
-            return None
-        if not isinstance(metadata, dict):
-            return None
-        snapshot = metadata.get("product_snapshot")
-        if not isinstance(snapshot, dict):
-            return None
-        product_kind = snapshot.get("product_kind")
-        if isinstance(product_kind, str) and product_kind in SUBSCRIPTION_PRODUCT_KINDS:
-            return product_kind
-        return None
-
-    def _recharge_order_credits_amount(self, order: OrderModel) -> int:
-        """从订单商品快照中读取到账 Credits 数量。"""
-
-        metadata = self._load_recharge_order_snapshot(order)
-        snapshot = metadata.get("product_snapshot")
-        if not isinstance(snapshot, dict):
-            raise OrderSuccessError(
-                "credit_recharge_fulfillment: product_snapshot missing: "
-                f"order_no={order.order_no}, user_id={order.user_id}"
-            )
-        credits_amount = snapshot.get("credits_amount")
-        if not isinstance(credits_amount, int) or credits_amount <= 0:
-            raise OrderSuccessError(
-                "credit_recharge_fulfillment: invalid credits_amount: "
-                f"order_no={order.order_no}, user_id={order.user_id}, "
-                f"credits_amount={credits_amount!r}"
-            )
-        return credits_amount
-
-    def _load_recharge_order_snapshot(self, order: OrderModel) -> dict[str, object]:
-        """解析 Credits 充值订单快照 JSON。"""
-
-        try:
-            metadata = json.loads(order.extra_metadata or "{}")
-        except json.JSONDecodeError as exc:
-            raise OrderSuccessError(
-                "credit_recharge_fulfillment: invalid order extra_metadata json: "
-                f"order_no={order.order_no}, user_id={order.user_id}"
-            ) from exc
-        if not isinstance(metadata, dict):
-            raise OrderSuccessError(
-                "credit_recharge_fulfillment: extra_metadata must be object: "
-                f"order_no={order.order_no}, user_id={order.user_id}"
-            )
-        return cast(dict[str, object], metadata)
-
-    def _recharge_credit_metadata_json(
-        self,
-        order: OrderModel,
-        *,
-        credits_amount: int,
-    ) -> str:
-        """生成充值到账流水 JSON 快照。"""
-
-        return json.dumps(
-            {
-                "order_no": order.order_no,
-                "product_id": order.product_id,
-                "product_name": order.product_name,
-                "credits_amount": credits_amount,
-            },
-            ensure_ascii=False,
-            separators=(",", ":"),
         )
 
     async def _is_order_callback_success(self, order_no: str) -> bool:

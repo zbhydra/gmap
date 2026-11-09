@@ -1485,7 +1485,7 @@ export const site: SiteContent = {
     "pricing": {
       "seo": {
         "title": "Định giá - Gói trực tuyến, tiện ích mở rộng và API | MapExporter",
-        "description": "MapExporter lên kế hoạch cho mọi bề mặt: Trình quét trực tuyến từ trình duyệt $19, Tiện ích mở rộng từ $39, và API từ $15. Các bậc miễn phí đi kèm với mọi sản phẩm — gói một tháng tự nhiên trên Trực tuyến và API, đăng ký hàng tháng trên Tiện ích mở rộng."
+        "description": "Gói MapExporter: thu thập trực tuyến từ $19, tiện ích từ $39 và API từ $15. Mọi sản phẩm đều có gói miễn phí. Xem điều kiện thanh toán và gia hạn trước khi mua."
       },
       "hero": {
         "kicker": "Định giá",
@@ -1497,8 +1497,8 @@ export const site: SiteContent = {
         "lead": "Chọn bề mặt phù hợp với quy trình làm việc của bạn — Cloud Trình thu thập trực tuyến, Tiện ích mở rộng trình duyệt hoặc HTTP API — sau đó chọn số lượng hàng tháng. Nâng cấp hoặc mua từ trang này trong vài phút.",
         "meta": [
           "Cấp miễn phí trên mỗi sản phẩm",
-          "Thanh toán bằng PayPal",
-          "Nâng cấp bằng cách trả tiền chênh lệch"
+          "Stripe / ClinkBill",
+          "Nâng cấp kế hoạch của bạn"
         ],
         "switchLabel": "Dòng sản phẩm"
       },
@@ -1507,16 +1507,12 @@ export const site: SiteContent = {
         "online": {
           "name": "Trình thu thập trực tuyến",
           "shortName": "Trực tuyến",
-          "switchMeta": "Từ {price} · một lần",
+          "switchMeta": "Từ {price}",
           "unit": "hồ sơ",
           "eyebrow": "Kế hoạch Scraper trực tuyến",
           "title": "Khai thác đám mây, định giá theo hồ sơ",
           "description": "Chạy công cụ MapExporter trên cơ sở hạ tầng của chúng tôi. Một bản ghi là một hàng kinh doanh được thu thập. Các gói trả phí bao gồm email tùy chọn và làm giàu phương tiện truyền thông xã hội mà không phải trả thêm phí kỷ lục.",
-          "billingChips": [
-            "Thanh toán một lần",
-            "Bao gồm một tháng tự nhiên",
-            "Không tự động gia hạn"
-          ],
+          "billingChips": ["Cấp miễn phí trên mỗi sản phẩm","Đặt lại trên 1st","Xem cách tính phí trước khi thanh toán"],
           "cards": [
             {
               "id": "free",
@@ -1543,12 +1539,11 @@ export const site: SiteContent = {
               "name": "Lite",
               "tagline": "Đối với trường hợp xuất dữ liệu một lần",
               "price": "$19",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Bản ghi 20,000/tháng",
               "features": [
                 "Mọi thứ đều miễn phí",
                 "Bản ghi 20,000 cho tháng 1",
-                "Thanh toán một lần - không tự động gia hạn",
                 "Tối đa từ khóa 5 cho mỗi nhiệm vụ",
                 "Email và hoạt động phong phú trên mạng xã hội, được bật theo mặc định và không bắt buộc"
               ],
@@ -1562,12 +1557,11 @@ export const site: SiteContent = {
               "name": "Nền tảng",
               "tagline": "Để thu thập khách hàng tiềm năng ổn định hàng tuần",
               "price": "$49",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Bản ghi 80,000/tháng",
               "features": [
                 "Mọi thứ trong Lite",
                 "Bản ghi 80,000 cho tháng 1",
-                "Thanh toán một lần - không tự động gia hạn",
                 "Tối đa từ khóa 10 cho mỗi nhiệm vụ"
               ],
               "ctaLabel": "Nhận cơ bản",
@@ -1580,12 +1574,11 @@ export const site: SiteContent = {
               "name": "Sự phát triển",
               "tagline": "Để phát triển đường ống dẫn chì",
               "price": "$99",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Bản ghi 250,000/tháng",
               "features": [
                 "Mọi thứ ở mức cơ bản",
                 "Bản ghi 250,000 cho tháng 1",
-                "Thanh toán một lần - không tự động gia hạn",
                 "Tối đa từ khóa 20 cho mỗi nhiệm vụ"
               ],
               "ctaLabel": "Nhận tăng trưởng",
@@ -1598,12 +1591,11 @@ export const site: SiteContent = {
               "name": "Chuyên nghiệp",
               "tagline": "Dành cho các cơ quan và nhóm nặng về dữ liệu",
               "price": "$149",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Bản ghi 500,000/tháng",
               "features": [
                 "Mọi thứ đang tăng trưởng",
                 "Bản ghi 500,000 cho tháng 1",
-                "Thanh toán một lần - không tự động gia hạn",
                 "Tối đa từ khóa 50 cho mỗi nhiệm vụ"
               ],
               "ctaLabel": "Trở nên chuyên nghiệp",
@@ -1611,7 +1603,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Thanh toán một lần trong một tháng tự nhiên — các gói trên tab này không tự động gia hạn. Bản ghi là một hàng kinh doanh được thu thập từ Google Maps; việc đặt lại mức sử dụng trên 1st và các bản ghi không sử dụng sẽ không được chuyển đổi.",
+          "quotaNote": "Bản ghi là một hàng kinh doanh được thu thập từ Google Maps; việc đặt lại mức sử dụng trên 1st và các bản ghi không sử dụng sẽ không được chuyển đổi.",
           "compare": {
             "lead": "Các gói Scraper trực tuyến — trích xuất trên đám mây, được định giá theo hồ sơ.",
             "volume": "Kỷ lục mỗi tháng",
@@ -1681,22 +1673,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Áp dụng cho hạn ngạch bản ghi hàng tháng của MapExporter Trình thu thập trực tuyến.",
             "successTitle": "Đã kích hoạt gói",
-            "successDescription": "Gói 1 một tháng của bạn đã có hiệu lực. Công cụ quét trực tuyến sẽ chọn nó trong lần làm mới hạn ngạch tiếp theo."
+            "successDescription": "Gói đã có hiệu lực. Bạn có thể tiếp tục với hạn mức mới."
           }
         },
         "extension": {
           "name": "Tiện ích",
           "shortName": "Tiện ích",
-          "switchMeta": "Từ {price} · một lần",
+          "switchMeta": "Từ {price}",
           "unit": "hồ sơ",
           "eyebrow": "Kế hoạch mở rộng",
           "title": "Trích xuất trình duyệt, được định giá theo bản ghi",
           "description": "Mỗi hàng mà tiện ích mở rộng thu thập — một doanh nghiệp, một bài đánh giá hoặc một bức ảnh — được tính là một bản ghi. Tất cả các kế hoạch đều bao gồm đánh giá, hình ảnh và nhiệm vụ hàng loạt; gói trả phí xuất tất cả các cột 36, bao gồm email và nội dung phong phú trên mạng xã hội.",
-          "billingChips": [
-            "Thanh toán một lần",
-            "1 tháng truy cập",
-            "Không tự động gia hạn"
-          ],
+          "billingChips": ["Cấp miễn phí trên mỗi sản phẩm","Đặt lại trên 1st","Xem cách tính phí trước khi thanh toán"],
           "cards": [
             {
               "id": "free",
@@ -1722,7 +1710,7 @@ export const site: SiteContent = {
               "name": "Pro",
               "tagline": "Dành cho người làm việc tự do và các kênh dẫn đầu đang phát triển",
               "price": "$39",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Bản ghi 100,000/tháng",
               "features": [
                 "Mọi thứ đều miễn phí",
@@ -1740,7 +1728,7 @@ export const site: SiteContent = {
               "name": "Việc kinh doanh",
               "tagline": "Dành cho các cơ quan và nhóm nặng về dữ liệu",
               "price": "$99",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Bản ghi 500,000/tháng",
               "features": [
                 "Mọi thứ trong Pro",
@@ -1829,22 +1817,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Áp dụng cho hạn ngạch hàng tháng của tiện ích mở rộng trình duyệt MapExporter.",
             "successTitle": "Đã kích hoạt gói",
-            "successDescription": "Gói 1 một tháng của bạn đã có hiệu lực. Tiện ích mở rộng sẽ nhận nó vào lần làm mới hạn ngạch tiếp theo."
+            "successDescription": "Gói đã có hiệu lực. Bạn có thể tiếp tục với hạn mức mới."
           }
         },
         "api": {
           "name": "API & MCP",
           "shortName": "API & MCP",
-          "switchMeta": "Từ {price} · một lần",
+          "switchMeta": "Từ {price}",
           "unit": "yêu cầu",
           "eyebrow": "Gói API",
           "title": "Quyền truy cập có lập trình, được định giá theo yêu cầu",
           "description": "Tìm kiếm các doanh nghiệp Google Maps và lấy đánh giá của họ từ các ứng dụng của riêng bạn qua HTTP API đơn giản. Mỗi cuộc gọi thành công được tính là một yêu cầu, ngay cả khi nó không trả về kết quả hoặc một phần dữ liệu.",
-          "billingChips": [
-            "Thanh toán một lần",
-            "Bao gồm một tháng tự nhiên",
-            "Không tự động gia hạn"
-          ],
+          "billingChips": ["Cấp miễn phí trên mỗi sản phẩm","Đặt lại trên 1st","Xem cách tính phí trước khi thanh toán"],
           "cards": [
             {
               "id": "free",
@@ -1871,12 +1855,11 @@ export const site: SiteContent = {
               "name": "Nền tảng",
               "tagline": "Dành cho nguyên mẫu và tích hợp ánh sáng",
               "price": "$15",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Yêu cầu 1,000 / tháng",
               "features": [
                 "Mọi thứ đều miễn phí",
                 "Yêu cầu 1,000 cho tháng 1",
-                "Thanh toán một lần - không tự động gia hạn",
                 "Phản hồi JSON"
               ],
               "ctaLabel": "Nhận cơ bản",
@@ -1889,12 +1872,11 @@ export const site: SiteContent = {
               "name": "Chuyên nghiệp",
               "tagline": "Để tích hợp sản xuất",
               "price": "$65",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Yêu cầu 5,000 / tháng",
               "features": [
                 "Mọi thứ ở mức cơ bản",
                 "Yêu cầu 5,000 cho tháng 1",
-                "Thanh toán một lần - không tự động gia hạn",
                 "Phản hồi JSON"
               ],
               "ctaLabel": "Trở nên chuyên nghiệp",
@@ -1907,12 +1889,11 @@ export const site: SiteContent = {
               "name": "Việc kinh doanh",
               "tagline": "Đối với các sản phẩm được xây dựng trên dữ liệu MapExporter",
               "price": "$115",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Yêu cầu 10,000 / tháng",
               "features": [
                 "Mọi thứ chuyên nghiệp",
                 "Yêu cầu 10,000 cho tháng 1",
-                "Thanh toán một lần - không tự động gia hạn",
                 "Phản hồi JSON"
               ],
               "ctaLabel": "Nhận doanh nghiệp",
@@ -1925,12 +1906,11 @@ export const site: SiteContent = {
               "name": "Tỉ lệ",
               "tagline": "Đối với các hoạt động dữ liệu khối lượng lớn",
               "price": "$365",
-              "periodLabel": "một lần · 1 tháng",
+              "periodLabel": "1 tháng",
               "quota": "Yêu cầu 50,000 / tháng",
               "features": [
                 "Mọi thứ trong kinh doanh",
                 "Yêu cầu 50,000 cho tháng 1",
-                "Thanh toán một lần - không tự động gia hạn",
                 "Phản hồi JSON"
               ],
               "ctaLabel": "Nhận quy mô",
@@ -1938,7 +1918,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Thanh toán một lần trong một tháng tự nhiên — các gói trên tab này không tự động gia hạn. Mỗi cuộc gọi API hoặc MCP thành công được tính là một yêu cầu, bao gồm cả kết quả trống và một phần; cuộc gọi thất bại không được tính. Việc đặt lại mức sử dụng trên 1st và các yêu cầu không sử dụng sẽ không được chuyển tiếp.",
+          "quotaNote": "Mỗi cuộc gọi API hoặc MCP thành công được tính là một yêu cầu, bao gồm cả kết quả trống và một phần; cuộc gọi thất bại không được tính. Việc đặt lại mức sử dụng trên 1st và các yêu cầu không sử dụng sẽ không được chuyển tiếp.",
           "compare": {
             "lead": "Gói API — quyền truy cập theo chương trình, được định giá theo yêu cầu.",
             "volume": "Yêu cầu mỗi tháng",
@@ -2018,7 +1998,7 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Áp dụng cho hạn ngạch yêu cầu hàng tháng MapExporter API.",
             "successTitle": "Đã kích hoạt gói",
-            "successDescription": "Gói 1 một tháng của bạn đã có hiệu lực. Khóa API của bạn sẽ nhận hạn ngạch mới cho yêu cầu tiếp theo."
+            "successDescription": "Gói đã có hiệu lực. Bạn có thể tiếp tục với hạn mức mới."
           }
         }
       },
@@ -2095,16 +2075,16 @@ export const site: SiteContent = {
         },
         "items": {
           "channels": {
-            "title": "PayPal",
-            "body": "Thanh toán cho bất kỳ gói nào thông qua PayPal. Hoàn tất thanh toán của bạn trên PayPal và quay lại đây để kích hoạt gói của bạn."
+            "title": "Stripe / ClinkBill",
+            "body": "Chọn phương thức Stripe hoặc ClinkBill được cung cấp cho gói của bạn."
           },
           "cadence": {
-            "title": "Thanh toán một lần",
-            "body": "Mỗi gói trả phí bao gồm một tháng tự nhiên. Thanh toán một lần mà không bị tính phí tự động; mua lại khi bạn cần một tháng nữa."
+            "title": "Thanh toán và gia hạn",
+            "body": "Mỗi gói cho biết thanh toán một lần hay tự động gia hạn. Quản lý gia hạn và phương thức thanh toán tại Dashboard → Đăng ký. Khi hủy gia hạn, quyền lợi đã trả phí vẫn còn đến hết hạn."
           },
           "upgrade": {
             "title": "Nâng cấp bằng cách trả tiền chênh lệch",
-            "body": "Chuyển gói đang hoạt động sang cấp cao hơn đủ điều kiện thông qua nhà cung cấp thanh toán hiện tại của bạn. Ngày hết hạn và cách sử dụng của bạn cho đến nay vẫn không thay đổi."
+            "body": "Giá trị còn lại của gói cũ được trừ vào giá trọn kỳ của gói cao hơn. Kỳ mới bắt đầu sau khi thanh toán và đổi gói thành công. Mức sử dụng trong tháng được giữ nguyên."
           },
           "independent": {
             "title": "Kế hoạch độc lập",
@@ -2127,19 +2107,20 @@ export const site: SiteContent = {
         "button": "Nâng cấp · {amount}",
         "title": "Nâng cấp kế hoạch của bạn",
         "confirm": "Xác nhận nâng cấp",
-        "oneTime": "Chênh lệch một lần qua {channel}. Ngày hết hạn của bạn vẫn là {date}.",
-        "autoRenew": "Khoản chênh lệch sẽ được tính ngay qua {channel}. Ngày hết hạn của bạn vẫn là {date}; những lần gia hạn trong tương lai sẽ sử dụng giá gói mới.",
+        "oneTime": "Thanh toán trọn kỳ mới qua {channel}, trừ giá trị còn lại của gói cũ. Ngày hết hạn mới dự kiến: {date}. Mức sử dụng tháng này được giữ nguyên.",
+        "autoRenew": "Sẽ thu ngay qua {channel} giá trọn kỳ mới trừ giá trị còn lại. Ngày hết hạn mới dự kiến: {date}. Các lần gia hạn dùng giá mới; mức sử dụng tháng này được giữ nguyên.",
         "pendingTitle": "Đang chờ nâng cấp của bạn",
         "pendingDescription": "Nhà cung cấp dịch vụ thanh toán của bạn đang áp dụng bản nâng cấp. Gói hiện tại của bạn vẫn hoạt động cho đến khi được xác nhận.",
         "successTitle": "Đã nâng cấp gói",
-        "successDescription": "Hạn ngạch mới của bạn đang hoạt động. Ngày hết hạn của bạn vẫn là {date}.",
+        "successDescription": "Hạn mức mới đã có hiệu lực. Kỳ mới kết thúc vào {date}. Mức sử dụng tháng này được giữ nguyên.",
         "quoteFailed": "Không thể tải giá nâng cấp của bạn. Hãy làm mới trang để thử lại.",
         "failed": "Không thể xác nhận nâng cấp của bạn. Hãy làm mới trang để kiểm tra gói của bạn trước khi thử lại.",
         "reasons": {
           "no_active_subscription": "Kế hoạch của bạn không còn hoạt động. Làm mới trang để chọn một kế hoạch.",
           "not_higher_tier": "Chọn cấp cao hơn để nâng cấp hoặc đợi cho đến khi gói của bạn hết hạn rồi mới thay đổi cấp.",
           "non_positive_diff": "Giá trị gói còn lại của bạn không thấp hơn cấp này. Bạn có thể thay đổi cấp độ sau khi gói của bạn hết hạn.",
-          "channel_unavailable": "Việc nâng cấp không khả dụng với phương thức thanh toán hiện tại của bạn. Bạn có thể thay đổi gói sau khi hết hạn."
+          "channel_unavailable": "Phương thức thanh toán hiện tại không hỗ trợ nâng cấp. Với PayPal, hãy đợi hết hạn rồi chọn Stripe hoặc ClinkBill.",
+          renewal_resume_required: "Khôi phục tự động gia hạn tại nhà cung cấp thanh toán, rồi tải lại trang này để nâng cấp."
         }
       },
       "faq": {
@@ -2166,11 +2147,11 @@ export const site: SiteContent = {
           },
           {
             "question": "Gói của tôi có tự động gia hạn không?",
-            "answer": "Không. Tất cả các gói đều là khoản thanh toán PayPal một lần trong một tháng tự nhiên. Khi gói của bạn hết hạn, bạn sẽ quay trở lại cấp độ miễn phí. Mua lại để tiếp tục với gói trả phí."
+            "answer": "Xem điều kiện trước khi thanh toán. Gói trả một lần không gia hạn. Gói tự động gia hạn tiếp tục cho đến khi bạn hủy tại Dashboard → Đăng ký → Quản lý đăng ký. Quyền lợi đã trả phí được giữ đến hết hạn."
           },
           {
             "question": "Tôi có thể chuyển đổi giữa các tầng không?",
-            "answer": "Bạn có thể nâng cấp gói đang hoạt động lên cấp cao hơn đủ điều kiện bằng cách thanh toán phần chênh lệch thông qua PayPal. Ngày hết hạn và cách sử dụng của bạn cho đến nay vẫn không thay đổi. Các kế hoạch trên các tab khác nhau là độc lập."
+            "answer": "Nâng cấp đủ điều kiện trừ giá trị còn lại vào giá trọn kỳ mới qua nhà cung cấp hiện tại. Hạn mức và kỳ mới chỉ có hiệu lực sau khi thanh toán và đổi gói thành công; mức sử dụng tháng được giữ nguyên. Nếu đã hủy gia hạn, hãy khôi phục tại nhà cung cấp trước. Đăng ký PayPal không được nâng cấp trong kỳ này; sau khi hết hạn, chọn Stripe hoặc ClinkBill."
           }
         ]
       },
@@ -5353,5 +5334,30 @@ export const clink: ClinkReturnContent = {
   "cancel": {
     "title": "Đã hủy thanh toán",
     "description": "Không có khoản thanh toán nào được hoàn thành. Bạn có thể quay lại và chọn phương thức thanh toán khác."
+  }
+}
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "Đã gửi thanh toán",
+      "description": "Chúng tôi đang xác nhận thanh toán của bạn. Tab gốc sẽ tự động cập nhật."
+    },
+    "confirmedCredits": {
+      "title": "Đã thêm tín dụng",
+      "description": "Khoản thanh toán Stripe của bạn đã được xác nhận và Tín dụng đã được thêm vào. Bạn có thể quay lại tab ban đầu."
+    },
+    "confirmedSubscription": {
+      "title": "Đã kích hoạt gói",
+      "description": "Khoản thanh toán Stripe của bạn đã được xác nhận và gói MapExporter của bạn đang hoạt động. Bạn có thể quay lại tab ban đầu."
+    },
+    "failed": {
+      "title": "Thanh toán cần chú ý",
+      "description": "Chúng tôi không thể xác nhận đơn đặt hàng này. Quay lại tab ban đầu và thử lại."
+    }
+  },
+  "cancel": {
+    "title": "Đã đóng trang thanh toán",
+    "description": "Đơn hàng vẫn đang chờ thanh toán. Quay lại thẻ ban đầu để kiểm tra trạng thái. Bạn vẫn có thể thanh toán trong Stripe Checkout."
   }
 }

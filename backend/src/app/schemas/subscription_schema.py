@@ -101,8 +101,7 @@ class SubscriptionStatusResponse(BaseModel):
 class SubscriptionUpgradeQuoteData(BaseModel):
     """订阅升级报价 data。
 
-    amount：一次性线补差或 Clink preview 净差额（6 位精度整数）；
-    PayPal 自动续费线为空。expires_at 仅可升级时返回（到期日不变）。
+    amount 为新档整期价减旧权益抵扣的净应付；expires_at 是预计新账期到期时间。
     """
 
     available: bool = Field(..., description="是否可升级")
@@ -110,7 +109,7 @@ class SubscriptionUpgradeQuoteData(BaseModel):
         default=None,
         description=(
             "不可升级原因：no_active_subscription / not_higher_tier / "
-            "non_positive_diff / channel_unavailable；可升级时为空"
+            "non_positive_diff / channel_unavailable / renewal_resume_required；可升级时为空"
         ),
     )
     current_product_id: str | None = Field(
@@ -123,7 +122,7 @@ class SubscriptionUpgradeQuoteData(BaseModel):
         default=None, description="补差金额，统一 6 位精度整数；不可折算时为空"
     )
     expires_at: int | None = Field(
-        default=None, description="升级后到期时间（毫秒时间戳）；到期日不变"
+        default=None, description="预计新账期到期时间（毫秒时间戳）"
     )
 
 

@@ -19,6 +19,8 @@ from app.constants.config_cache import (
 )
 from app.constants.payment import (
     DISPLAY_PRICE_CHANNEL_CODE,
+    NEW_SALE_PAYMENT_METHODS,
+    STRIPE_PAYMENT_METHOD,
     PAYPAL_CURRENCY,
     PAYPAL_PAYMENT_METHOD,
     PAYPAL_USD_AMOUNT_UNIT,
@@ -26,6 +28,7 @@ from app.constants.payment import (
     TELEGRAM_STARS_CURRENCY,
     TELEGRAM_STARS_PAYMENT_METHOD,
     payment_currency_matches_channel,
+    recurring_provider_sku_parts,
 )
 from app.constants.subscription import SubscriptionPeriodEnum
 from app.exceptions.common_exception import AppCommonException
@@ -209,6 +212,8 @@ class PaymentConfigService:
         channel_groups: dict[str, list[SubscriptionCheckoutPaymentChannelConfig]] = {}
 
         for price in snapshot.prices.values():
+            if price.channel_code not in NEW_SALE_PAYMENT_METHODS:
+                continue
             if (
                 normalized_channel_code is not None
                 and price.channel_code != normalized_channel_code
@@ -221,6 +226,8 @@ class PaymentConfigService:
             # product_id 必须唯一归属一个商品才能挂渠道价：孤儿价格行直接跳过；
             # 付费 SKU 跨线重名属于 seed 合同破坏，列表链路跳过、下单链路报错。
             if len(matched_products) != 1:
+                continue
+            if not self._is_price_available(matched_products[0].auto_renew, price):
                 continue
             channel_groups.setdefault(price.product_id, []).append(
                 SubscriptionCheckoutPaymentChannelConfig(
@@ -280,9 +287,10 @@ class PaymentConfigService:
             product is None
             or channel is None
             or price is None
+            or normalized_channel_code not in NEW_SALE_PAYMENT_METHODS
             or product.auto_renew != auto_renew
             or product.period != period
-            or not self._is_price_available(product, price)
+            or not self._is_price_available(product.auto_renew, price)
         ):
             raise AppCommonException(
                 CommonCode.PAYMENT_PRICE_UPDATED,
@@ -381,9 +389,6 @@ class PaymentConfigService:
                 amount=price_row.amount,
                 provider_sku=price_row.provider_sku,
             )
-            # 按商品当前计费模式过滤后，价格行才进入快照。
-            if not self._is_price_available(matched_products[0], price):
-                continue
             self._assert_config_amount_valid(
                 product_id=product_id,
                 channel_code=channel_code,
@@ -511,14 +516,14 @@ class PaymentConfigService:
                 ),
             )
         if (
-            channel_code == PAYPAL_PAYMENT_METHOD
+            channel_code in {PAYPAL_PAYMENT_METHOD, STRIPE_PAYMENT_METHOD}
             and currency == PAYPAL_CURRENCY
             and amount % PAYPAL_USD_AMOUNT_UNIT != 0
         ):
             raise AppCommonException(
                 CommonCode.PAYMENT_GATEWAY_ERROR,
                 ext_msg=(
-                    "payment_config: paypal USD amount must have 2 decimal places: "
+                    f"payment_config: {channel_code} USD amount must have 2 decimal places: "
                     f"product_id={product_id}, amount={amount}"
                 ),
             )
@@ -550,16 +555,20 @@ class PaymentConfigService:
 
     def _is_price_available(
         self,
-        product: SubscriptionProductConfig,
+        auto_renew: bool,
         price: SubscriptionProductPriceConfig,
     ) -> bool:
-        """按商品当前计费模式判断渠道价格是否可用于新订单。"""
+        """按调用方指定的新售或实例计费方式核对渠道价格。"""
 
         if not payment_currency_matches_channel(price.channel_code, price.currency):
             return False
-        if not product.auto_renew:
+        if not auto_renew:
             return True
-        return price.auto_renew_supported
+        return (
+            price.auto_renew_supported
+            and recurring_provider_sku_parts(price.channel_code, price.provider_sku)
+            is not None
+        )
 
     def _product_sort_key(
         self,

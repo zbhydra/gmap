@@ -17,13 +17,14 @@ import * as viVN from './lang/vi-VN'
 import * as thTH from './lang/th-TH'
 import * as idID from './lang/id-ID'
 
-/** 同一语言的五类静态文案；页面保留各自领域 getter。 */
+/** 同一语言的静态文案；页面保留各自领域 getter。 */
 export interface LocaleContent {
   site: SiteContent
   company: CompanyContent
   legal: LegalContent
   mcpOAuth: McpOAuthContent
   clink: ClinkReturnContent
+  stripe: ClinkReturnContent
 }
 
 export const localizedContent: Record<Locale, LocaleContent> = {

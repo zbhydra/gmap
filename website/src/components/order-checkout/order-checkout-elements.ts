@@ -17,6 +17,8 @@ export interface OrderCheckoutElements {
   orderDialog: HTMLElement
   /** 支付方式弹窗错误文案。 */
   paymentError: HTMLElement
+  /** 升级被渠道拒绝后打开续费管理。 */
+  resumeRenewalButton: HTMLButtonElement
   /** 支付方式弹窗标题。 */
   paymentTitle: HTMLElement
   /** 普通购买的支付方式选择说明；固定渠道升级时隐藏。 */
@@ -79,6 +81,7 @@ export function getOrderCheckoutElements(root: HTMLElement): OrderCheckoutElemen
     paymentDialog: query<HTMLElement>('[data-order-checkout-payment-dialog]'),
     orderDialog: query<HTMLElement>('[data-order-checkout-order-dialog]'),
     paymentError: query<HTMLElement>('[data-order-checkout-payment-error]'),
+    resumeRenewalButton: query<HTMLButtonElement>('[data-order-checkout-resume]'),
     paymentTitle: query<HTMLElement>('[data-order-checkout-payment-title]'),
     paymentKicker: query<HTMLElement>('[data-order-checkout-payment-kicker]'),
     selectedTitle: query<HTMLElement>('[data-order-checkout-selected-title]'),

@@ -12,11 +12,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
 from app.constants.order import (
+    CallbackStatus,
+    OrderStatus,
     OrderCheckProductParam,
     OrderCreateParam,
     ProductClass,
 )
 from app.constants.payment import (
+    NEW_SALE_PAYMENT_METHODS,
     channel_amount_unit,
 )
 from app.constants.subscription import (
@@ -37,7 +40,10 @@ from app.models.subscription_model import UserSubscriptionModel
 from app.provider.payment.payment_base import (
     PaymentBase,
     PaymentProviderError,
+    RecurringPaymentReference,
     SubscriptionUpdateResult,
+    SubscriptionState,
+    SubscriptionRenewalResumeRequired,
 )
 from app.services.base_service import BaseService
 from app.services.payment_config_service import (
@@ -94,6 +100,67 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
     def __init__(self) -> None:
         super().__init__(UserSubscriptionModel)
 
+    async def prepare_recurring_order(
+        self,
+        original_order: OrderModel,
+        create_param: OrderCreateParam,
+        reference: RecurringPaymentReference,
+    ) -> OrderCreateParam:
+        """按已付发票确定续费商品快照，订单金额保留本次净实付。"""
+
+        if reference.provider_sku is None:
+            return create_param
+
+        config = await payment_config_service.get_snapshot()
+        product_kind = self.get_order_product_kind(original_order)
+        matches = [
+            (product, price)
+            for price in config.prices.values()
+            if price.channel_code == create_param.payment_method
+            and price.provider_sku == reference.provider_sku
+            for product in config.products_by_id[price.product_id]
+            if product.product_kind == product_kind
+        ]
+        if len(matches) != 1:
+            raise PaymentProcessingError(
+                "payment_callback_recurring: 渠道发票价格缺少唯一商品映射: "
+                f"payment_method={create_param.payment_method}, "
+                f"invoice={create_param.payment_channel_order_no}, "
+                f"provider_sku={reference.provider_sku}"
+            )
+        product, price = matches[0]
+        metadata: dict[str, object] = json.loads(create_param.extra_metadata or "{}")
+        metadata["product_snapshot"] = {
+            "product_kind": product.product_kind,
+            "product_price_id": price.id,
+            "auto_renew": True,
+            "period": product.period,
+            "currency": create_param.currency,
+            "amount": reference.period_amount,
+            "provider_sku": reference.provider_sku,
+        }
+        create_param.product_id = product.product_id
+        create_param.product_name = product.name
+        create_param.extra_metadata = json.dumps(metadata, ensure_ascii=False)
+        return create_param
+
+    def get_order_product_kind(self, order: OrderModel) -> str | None:
+        """读取订单订阅产品类别；缺失或坏快照返回空值。"""
+
+        try:
+            metadata = json.loads(order.extra_metadata or "{}")
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(metadata, dict):
+            return None
+        snapshot = metadata.get("product_snapshot")
+        if not isinstance(snapshot, dict):
+            return None
+        product_kind = snapshot.get("product_kind")
+        if isinstance(product_kind, str) and product_kind in SUBSCRIPTION_PRODUCT_KINDS:
+            return product_kind
+        return None
+
     async def check_product(self, param: OrderCheckProductParam) -> OrderCreateParam:
         """校验订阅商品下单参数，并生成订单快照参数。"""
         checkout_config = await self.validate_client_price(
@@ -144,6 +211,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             language=param.language,
             auto_renew=checkout_config.product.auto_renew,
             provider_sku=checkout_config.price.provider_sku,
+            period=checkout_config.product.period,
         )
 
     async def validate_client_price(
@@ -266,8 +334,10 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         # 判定链保证订阅行有效，expires_at 必为毫秒时间戳，auto_renew 为明确 bool。
         base_expires_at = cast(int, resolved.subscription.expires_at)
         if resolved.subscription.auto_renew is False:
+            current_amount = await self._paid_period_amount(resolved.subscription)
             amount = self._prorated_upgrade_amount(
-                diff=resolved.target_price.amount - resolved.current_price.amount,
+                current_amount=current_amount,
+                target_amount=resolved.target_price.amount,
                 expires_at=base_expires_at,
                 start_at=resolved.subscription.start_at,
                 now_ms=resolved.now_ms,
@@ -287,7 +357,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 payment_method=resolved.payment_method,
                 currency=resolved.currency,
                 amount=amount,
-                expires_at=base_expires_at,
+                expires_at=add_natural_months(resolved.now_ms, 1),
             )
 
         channel_subscription_id = resolved.subscription.channel_subscription_id
@@ -303,6 +373,15 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             preview = await resolved.provider.preview_subscription_update(
                 channel_subscription_id=channel_subscription_id,
                 target_provider_sku=resolved.target_price.provider_sku,
+                currency=resolved.currency,
+                target_amount=resolved.target_price.amount,
+            )
+        except SubscriptionRenewalResumeRequired:
+            return self._upgrade_quote_unavailable(
+                SubscriptionUpgradeQuoteReason.RENEWAL_RESUME_REQUIRED,
+                target_product_id=target_id,
+                current_product_id=resolved.current_product.product_id,
+                payment_method=resolved.payment_method,
                 currency=resolved.currency,
             )
         except PaymentProviderError as exc:
@@ -333,7 +412,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             payment_method=resolved.payment_method,
             currency=resolved.currency,
             amount=amount,
-            expires_at=base_expires_at,
+            expires_at=add_natural_months(resolved.now_ms, 1),
         )
 
     async def _resolve_upgrade(
@@ -401,7 +480,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             )
 
         payment_method = (subscription.payment_method or "").strip()
-        if not payment_service.is_supported_method(payment_method):
+        if payment_method not in NEW_SALE_PAYMENT_METHODS:
             return _UpgradeUnavailable(
                 SubscriptionUpgradeQuoteReason.CHANNEL_UNAVAILABLE,
                 current_product_id=current_product.product_id,
@@ -430,6 +509,12 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
             current_price is None
             or target_price is None
             or current_price.currency != target_price.currency
+            or not payment_config_service._is_price_available(
+                subscription.auto_renew, target_price
+            )
+            or not payment_config_service._is_price_available(
+                subscription.auto_renew, current_price
+            )
         ):
             return _UpgradeUnavailable(
                 SubscriptionUpgradeQuoteReason.CHANNEL_UNAVAILABLE,
@@ -501,8 +586,10 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
 
         base_expires_at = cast(int, resolved.subscription.expires_at)
         period_start = cast(int, resolved.subscription.start_at)
+        current_amount = await self._paid_period_amount(resolved.subscription)
         amount = self._prorated_upgrade_amount(
-            diff=resolved.target_price.amount - resolved.current_price.amount,
+            current_amount=current_amount,
+            target_amount=resolved.target_price.amount,
             expires_at=base_expires_at,
             start_at=period_start,
             now_ms=resolved.now_ms,
@@ -539,12 +626,14 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 base_expires_at=base_expires_at,
                 period_start=period_start,
                 remaining_ratio=remaining_ratio,
-                amount=amount,
+                current_amount=current_amount,
+                credit=resolved.target_price.amount - amount,
                 currency=resolved.currency,
             ),
             language=language,
             auto_renew=False,
             provider_sku=resolved.target_price.provider_sku,
+            period=resolved.target_product.period,
         )
 
     async def confirm_upgrade(
@@ -610,6 +699,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                     channel_subscription_id=channel_subscription_id,
                     target_provider_sku=resolved.target_price.provider_sku,
                     currency=resolved.currency,
+                    target_amount=resolved.target_price.amount,
                 )
                 if preview.net_amount <= 0:
                     raise AppCommonException(
@@ -625,8 +715,16 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 result = await resolved.provider.confirm_subscription_update(
                     channel_subscription_id=channel_subscription_id,
                     target_provider_sku=resolved.target_price.provider_sku,
-                    price_snapshot_id=preview.price_snapshot_id,
+                    price_reference=preview.price_reference,
                 )
+        except SubscriptionRenewalResumeRequired as exc:
+            raise AppCommonException(
+                CommonCode.INVALID_REQUEST,
+                ext_msg=str(exc),
+                data={
+                    "reason": SubscriptionUpgradeQuoteReason.RENEWAL_RESUME_REQUIRED.value
+                },
+            ) from exc
         except PaymentProviderError as exc:
             raise AppCommonException(
                 CommonCode.PAYMENT_GATEWAY_ERROR,
@@ -672,24 +770,15 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         *,
         payment_method: str,
         channel_subscription_id: str,
+        state: SubscriptionState | None = None,
     ) -> bool:
-        """计划变更事件终态收敛 owner（005 路径B，仅由两渠道 webhook 调用）。
+        """按渠道已付生效价定位本人协议并换档；已解析的 snapshot 不再远程重查。"""
 
-        流程：① 查渠道订阅取得当前完整价与本地首单引用（Clink
-        merchantReference / PayPal custom_id，均为创建时的首购订单号）；
-        ② 按首单订单号定位用户与产品线，再按 (user_id, product_kind) 主键
-        读取订阅行并核对行内 channel_subscription_id；③ 渠道当前价在同渠道
-        唯一映射一个启用渠道价（Clink 完整比较 productId:priceId，PayPal
-        比较 plan_id），命中且与行内档位不同才更新 product_id，expires_at、
-        渠道引用与续费快照保持。返回是否发生换档：唯一映射且本地已同档
-        返回 False（重复事件幂等）；零映射（渠道价与任何启用价不符）与
-        其他核对失败抛 PaymentProviderError，由错误中间件按支付失败分类应答。
-        """
-
-        provider = await payment_service.get_provider_for_existing_payment(
-            payment_method
-        )
-        state = await provider.get_subscription_state(channel_subscription_id)
+        if state is None:
+            provider = await payment_service.get_provider_for_existing_payment(
+                payment_method
+            )
+            state = await provider.get_subscription_state(channel_subscription_id)
         original_order_no = state.original_order_no
 
         # 延迟导入：order_service 反向依赖 subscription_service 履约，
@@ -752,7 +841,11 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 f"plan={state.provider_sku}"
             )
         target_product_id = next(iter(matched_products))
-        if target_product_id == row.product_id:
+        # 旧 snapshot 可能晚到，站内只允许升档，同档或低档事件不能回退权益。
+        if (
+            snapshot.products[(product_kind, target_product_id)].tier_rank
+            <= snapshot.products[(product_kind, cast(str, row.product_id))].tier_rank
+        ):
             return False
         await self._sync_local_tier(
             user_id=order.user_id,
@@ -761,25 +854,61 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         )
         return True
 
+    async def _paid_period_amount(self, subscription: UserSubscriptionModel) -> int:
+        # 订单与订阅服务互相调用，延迟导入避免模块初始化环。
+        from app.services.order_service import order_service
+
+        assert (
+            subscription.product_id is not None
+            and subscription.payment_method is not None
+        )
+        orders = await order_service.order_lists(
+            user_ids=[subscription.user_id],
+            product_classes=[ProductClass.SUBSCRIPTION],
+            product_ids=[subscription.product_id],
+            payment_methods=[subscription.payment_method],
+            order_statuses=[OrderStatus.PAID],
+            callback_statuses=[CallbackStatus.SUCCESS],
+            order_by="paid_at_desc",
+            limit=1,
+        )
+        if not orders:
+            raise AppCommonException(
+                CommonCode.PAYMENT_GATEWAY_ERROR,
+                ext_msg=f"subscription_upgrade: 本期已履约订单缺失: user_id={subscription.user_id}",
+            )
+        amount = self._order_product_snapshot(orders[0]).get("amount")
+        if type(amount) is not int or amount <= 0:
+            raise AppCommonException(
+                CommonCode.PAYMENT_GATEWAY_ERROR,
+                ext_msg=f"subscription_upgrade: 整期金额快照无效: order_no={orders[0].order_no}",
+            )
+        return amount
+
     def _prorated_upgrade_amount(
         self,
         *,
-        diff: int,
+        current_amount: int,
+        target_amount: int,
         expires_at: int,
         start_at: int | None,
         now_ms: int,
         unit: int,
     ) -> int | None:
-        """一次性线补差折算：(档差) × (expires_at − now) / (expires_at − start_at)。
+        """新整期价扣除旧期剩余价值，净应付向下取整到渠道最小单位。
 
         Returns:
             6 位精度整数金额，向下取整到渠道最小单位倍数；账期起点缺失或
-            非法、档差与折算结果非正时返回 None（不可升级）。
+            非法或折算结果非正时返回 None（不可升级）。
         """
-        if diff <= 0 or start_at is None or start_at >= expires_at:
+        if start_at is None or start_at >= expires_at:
             return None
-        amount = diff * (expires_at - now_ms) // (expires_at - start_at)
-        amount = amount // unit * unit
+        duration = expires_at - start_at
+        amount = (
+            (target_amount * duration - current_amount * (expires_at - now_ms))
+            // (duration * unit)
+            * unit
+        )
         return amount if amount > 0 else None
 
     def _upgrade_quote_available(
@@ -962,14 +1091,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         order: OrderModel,
         snapshot: dict[str, object],
     ) -> None:
-        """升级差额单履约：快照条件命中才换档，未命中报错转人工。
-
-        单条原子 UPDATE 按 (user_id, product_kind, product_id=源档,
-        expires_at=base_expires_at, expires_at > now) 条件换档：订阅在支付
-        等待期内被续费、加时或换档时旧快照不覆盖当前权益。命中时只写
-        product_id 与 updated_at，到期时间、账期起点、渠道与续费快照保持；
-        rowcount 未命中抛错，由订单 service 统一走履约失败/人工路径。
-        """
+        """快照条件命中才换档，以已存付款时刻重开完整账期；未命中转人工。"""
 
         product_kind = self._snapshot_product_kind(order, snapshot)
         source_product_id = snapshot.get("source_product_id")
@@ -988,6 +1110,11 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 f"snapshot={snapshot!r}"
             )
         now_ms = timestamp_now()
+        assert order.paid_at is not None
+        expires_at = add_natural_months(
+            order.paid_at,
+            _PERIOD_MONTHS[self._parse_paid_period(snapshot.get("period"))],
+        )
         stmt = (
             update(UserSubscriptionModel)
             .where(
@@ -997,7 +1124,12 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                 UserSubscriptionModel.expires_at == base_expires_at,
                 UserSubscriptionModel.expires_at > now_ms,
             )
-            .values(product_id=target_product_id, updated_at=now_ms)
+            .values(
+                product_id=target_product_id,
+                start_at=order.paid_at,
+                expires_at=expires_at,
+                updated_at=now_ms,
+            )
         )
         result = cast(CursorResult[Any], await db.execute(stmt))
         if result.rowcount != 1:
@@ -1162,7 +1294,8 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         base_expires_at: int,
         period_start: int,
         remaining_ratio: float,
-        amount: int,
+        current_amount: int,
+        credit: int,
         currency: str,
     ) -> str:
         """生成升级差额订单快照：冻结折算输入供履约条件更新与人工审计。
@@ -1181,7 +1314,7 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                     "auto_renew": False,
                     "period": target_product.period,
                     "currency": currency,
-                    "amount": amount,
+                    "amount": target_price.amount,
                     "provider_sku": target_price.provider_sku,
                     "source_product_id": source_product_id,
                     "target_product_id": target_product.product_id,
@@ -1189,6 +1322,8 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
                     "upgrade_inputs": {
                         "period_start": period_start,
                         "remaining_ratio": remaining_ratio,
+                        "current_period_amount": current_amount,
+                        "credit": credit,
                     },
                 }
             },
@@ -1296,10 +1431,9 @@ class SubscriptionService(BaseService[UserSubscriptionModel]):
         advances 守卫：本地 expires_at 为空或早于渠道到期时间才推进，
         乱序回调不会回退权益；实例字段全部 case 保护，被旧事件覆盖时保持原值。
 
-        档位保护（005）：行内 product_id 只在首购回调（provider_subscription
-        的 original_order_no 等于当前履约订单号）时覆盖；续费/折算发票履约
-        用的续费订单复制的是首购档快照，覆盖会把升级后的档位打回，因此
-        续费履约只推进 expires_at 等账期事实。
+        行内 product_id 只在首购回调（provider_subscription 的 original_order_no
+        等于当前履约订单号）时覆盖；后续发票只推进账期，避免乱序历史发票
+        覆盖已同步的当前档位。
         """
 
         # 快照 period 仅用于校验合法账期；实例不保存 period，账期由 expires_at 表达。

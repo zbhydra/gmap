@@ -1,8 +1,8 @@
 # 004 · ClinkBill 支付渠道
 
-> 状态:已随「004 同步支付系统-计费模型与 ClinkBill」实施(backend 侧)。
+> 本文定义 ClinkBill 渠道的 Hosted Checkout、发票与 Customer Portal 合同；实施与验收进度见 [接入计划](plans/001.Stripe支付接入.md)。
 >
-> 本文是 ClinkBill Hosted Checkout 对接的最终合同,与上游实现(2d2f6f82 + 渠道订阅管理)对齐。实现以源码 `backend/src/app/provider/payment/clink.py`、`api/callback/clink_callback.py` 为唯一真相。
+> 稳定实现入口为 `backend/src/app/provider/payment/clink.py` 的 `ClinkPaymentProvider` 与 `backend/src/app/api/callback/clink_callback.py` 的 `clink_payment_callback`。共享订单规则见 [支付与履约](tech-支付与履约.md)。
 
 ## 1. 目标与边界
 
@@ -18,7 +18,7 @@
 ### 1.2 非目标
 
 - 不实现退款、部分退款、争议处理或对账系统。
-- 不实现用户对已生效订阅开启/关闭自动续费。运营修改订阅商品配置只影响之后创建的订单。
+- 不在本站直接取消或恢复渠道协议；用户通过 Customer Portal 管理。运营修改订阅商品配置只影响之后创建的订单。
 - 不新建支付订单、支付尝试或 Webhook Inbox 表。
 - 不改写现有订单状态机、履约事务或补偿任务。
 - 不引入 Clink SDK 或新 Web 框架；使用项目已有 `httpx`。
@@ -86,7 +86,7 @@ Provider 根据 `environment` 选择官方固定 API 根地址，不允许从前
 
 ### 4.2 一次性分支
 
-Credits 和 Online/API 一次性订阅商品发送：
+Credits 和 `auto_renew=false` 的订阅商品发送：
 
 ```json
 {
@@ -105,7 +105,7 @@ Credits 和 Online/API 一次性订阅商品发送：
 
 ### 4.3 自动续费分支
 
-`auto_renew=true` 的 Maps 插件订阅商品发送：
+`auto_renew=true` 的订阅商品发送：
 
 ```json
 {
@@ -143,8 +143,8 @@ POST /api/callback/clink/payment
 
 注册以下已消费事件：
 
-- `order.succeeded`：Credits 和 Online/API 一次性订阅商品。
-- `invoice.paid`：Maps 插件自动续费商品的首期与后续每期扣款。
+- `order.succeeded`：Credits 和一次性订阅商品。
+- `invoice.paid`：自动续费订阅商品的首期、换档折算与后续每期扣款。
 - `subscription.updated.plan_changed`：交订阅服务查询渠道当前价并同步本地档位，不进入订单履约。升级等待页读取本地档位，必须订阅该终态事件；`invoice.paid` 不承担换档，详见 [统一升级结果与动作](../006.订阅系统/tech-订阅升级.md#confirm-结果与动作)。
 
 Clink 可能同时发送 recurring `order.succeeded`；该事件验签并核对本地订单后按账户事件应答(见 §5.3),不触发履约。自动续费只认 `invoice.paid`，避免同一账期被 Order 和 Invoice 两种事件各履约一次。
@@ -185,7 +185,7 @@ order_no = data.object.merchantReferenceId
 
 Provider 把已验证金额/币种的结果交给现有 `handle_payment_callback`。`orderId + 订单 CAS` 负责重复投递幂等，不新增 Redis 或数据库 Inbox。
 
-所有已验签 `order.succeeded`(含 `type=recurring`)的应答按官方 Order Webhook 合同返回 account 事件:`{object:"event", type:"account.reloaded", data:{customerEmail(原样回传请求值), webSite(服务端配置的网站根地址), userId(本地订单 user_id), amount(amountTotal 原值), currency(paymentCurrency)}}`。本地下单要求登录,订单用户必然已存在,固定 `account.reloaded`;recurring 事件核对通过但 processed=false,不触发订单履约(履约只认 `invoice.paid`),一次性事件 processed=true 才进入 `handle_payment_callback`;重复事件复用现有订单幂等结果回传同一应答。`invoice.paid` 核对通过即 processed=true 并进入 `handle_payment_callback`,履约后返回项目统一成功 envelope;未支持事件确认接收,返回 `processed=false` envelope。
+所有已验签 `order.succeeded`(含 `type=recurring`)的应答按官方 Order Webhook 合同返回 account 事件:`{object:"event", type:"account.reloaded", data:{customerEmail(允许缺省或 null，仅作审计与账户应答，不参与归属核对), webSite(服务端配置的网站根地址), userId(本地订单 user_id), amount(amountTotal 原值), currency(paymentCurrency)}}`。本地下单要求登录,订单用户必然已存在,固定 `account.reloaded`;recurring 事件核对通过但 processed=false,不触发订单履约(履约只认 `invoice.paid`),一次性事件 processed=true 才进入 `handle_payment_callback`;重复事件复用现有订单幂等结果回传同一应答。`invoice.paid` 核对通过即 processed=true 并进入 `handle_payment_callback`,履约后返回项目统一成功 envelope;未支持事件确认接收,返回 `processed=false` envelope。
 
 ### 5.4 自动续费对账与成功映射
 
@@ -194,7 +194,7 @@ Provider 把已验证金额/币种的结果交给现有 `handle_payment_callback
 1. 从 Invoice 事件取得 `subscriptionId`、`invoiceId`、`orderId`、金额和币种。
 2. 服务端调用 `GET /subscription/{subscriptionId}`，取得该订阅的 `merchantReference`、`sessionId` 和 `customerId`。
 3. 用 `merchantReference` 精确定位首笔本地订单，再比对本地 `payment_data.sessionId` 与 `payment_method=clink`(自动续费商品在 session 创建链路已锚定,webhook 不重复核对)。
-4. 核对 Invoice 币种与首单币种，按渠道实付金额记账；折算发票不与首单或新档整月金额比较。换档与实付订单的关系见 [订阅升级](../006.订阅系统/tech-订阅升级.md#路径-b自动续费线maps_extension渠道协议内换价)。
+4. 核对 Invoice 币种与首单币种，按渠道实付金额记账；折算发票不与首单或新档整月金额比较。换档与实付订单的关系见 [订阅升级](../006.订阅系统/tech-订阅升级.md#路径-b自动续费)。
 5. 查询或核对失败按[支付失败分类](tech-支付与履约.md#81-失败分类与恢复边界)抛业务异常，回调 HTTP 应答由该分类统一映射。
 
 核对通过后映射为：
@@ -210,8 +210,8 @@ recurring_reference.original_order_no = subscription.merchantReference
 - `customerId` 沿订单成功与订阅履约链路保存到 `user_subscriptions.channel_uid`,渠道订阅管理用它调用 `POST /billing/session` 创建 Customer Portal Session(带服务端生成的 Pricing `returnUrl`);Portal URL 只接受当前环境官方 HTTPS 主机:Sandbox `uat-portal.clinkbill.com`,正式 `portal.clinkbill.com`。
 - Clink `subscriptionId`、`orderId`、`invoiceId`、`sessionId`、`event.id` 保存在订单支付扩展元数据中用于排查;本地订阅实例只保存 `channel_subscription_id/账期起止`,自动续费本地首单号(`original_order_no`)仅保存在订单回调元数据,不复制渠道实时状态。
 - 首期支付时首单仍为 `PENDING`，现有链路直接将首单置为已支付并按快照周期履约。
-- 后续扣款时首单已为 `PAID`，按新 `invoiceId` 创建本地实付订单并沿首单快照履约；本地到期只向后推进，续费与折算发票不覆盖已升级档位。
-- 运营之后把 `auto_renew` 修改为 `false` 不影响已存在的 Clink 周期协议；续费订单继续使用首单快照。
+- 后续扣款时首单已为 `PAID`，按新 `invoiceId` 创建本地实付订单。商品与 Price 引用取本次发票唯一正计费行，整期金额取 `items.price.unitAmount` 的不可变发票快照，不能取净实付或当前配置标价；缺少 `items` 时在同一解析入口查询官方 Invoice。订单快照合同见 [订阅订单履约](../006.订阅系统/tech-订阅商品与状态.md#订单履约)。
+- 运营之后把商品 `auto_renew` 修改为 `false` 不影响已存在的 Clink 周期协议；续费订单保留实例的自动续费方式。本地到期只向后推进，续费与折算发票不覆盖已同步的当前档位。
 
 Clink 针对 `order.succeeded` 的 API 文档明确允许按 `event.id` 或 `orderId` 幂等；订阅指南要求每个 `invoiceId` 只履约一次。本方案分别使用 `orderId` 和 `invoiceId` 进入现有订单幂等链路，并复用自动续费已有 Redis 短锁，不增加 Clink 专用 Redis key 或持久 Inbox 真相源。
 

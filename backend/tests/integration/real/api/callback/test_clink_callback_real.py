@@ -34,6 +34,7 @@ from app.i18n.common_code import CommonCode
 from app.models.order_model import OrderModel
 from app.models.subscription_model import UserSubscriptionModel
 from app.services.order_service import order_service
+from app.services.payment_config_service import payment_config_service
 from app.utils.money import format_normalized_amount
 from app.utils.time import add_natural_months, timestamp_now
 
@@ -194,6 +195,7 @@ def _install_clink_http(
     *,
     checkout_host: str,
     subscription_payload: dict[str, object] | None = None,
+    invoice_payload: dict[str, object] | None = None,
 ) -> None:
     """替换 Clink 外部 HTTP 出口：Hosted Checkout 与可选订阅查询。"""
 
@@ -212,6 +214,9 @@ def _install_clink_http(
                 },
             )
         assert request.method == "GET"
+        if request.url.path.startswith("/api/subscription/invoice/"):
+            assert invoice_payload is not None
+            return httpx.Response(200, json={"code": 200, "data": invoice_payload})
         assert request.url.path.startswith("/api/subscription/")
         assert subscription_payload is not None
         return httpx.Response(200, json={"code": 200, "data": subscription_payload})
@@ -340,10 +345,11 @@ async def test_real_clink_purchase_then_onetime_order_fulfills_natural_month(
             "type": "onetime",
             "orderId": f"ord_{cleanup.test_run_id}",
             "merchantReferenceId": order_no,
-            "customerEmail": email,
+            "customerEmail": None,
             "sessionId": session_id,
-            "amountTotal": float(format_normalized_amount(int(price["amount"]))),
+            "amountTotal": float(format_normalized_amount(cast(int, price["amount"]))),
             "paymentCurrency": str(price["currency"]),
+            "paymentTime": timestamp_now() - 5000,
         },
     )
     response = await real_async_client.post(
@@ -354,10 +360,10 @@ async def test_real_clink_purchase_then_onetime_order_fulfills_natural_month(
     assert response.status_code == 200
     assert payload["object"] == "event"
     assert payload["type"] == "account.reloaded"
-    assert payload["data"]["customerEmail"] == email
+    assert payload["data"]["customerEmail"] is None
     assert payload["data"]["userId"] == str(user_id)
     assert payload["data"]["amount"] == float(
-        format_normalized_amount(int(price["amount"]))
+        format_normalized_amount(cast(int, price["amount"]))
     )
     assert payload["data"]["currency"] == "USD"
 
@@ -383,9 +389,21 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
     real_clink_cleanup_state: _CleanupState,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Invoice 回调经订阅双引用对账后创建续费订单并按渠道账期推进。"""
+    """折抵与收费行都标记 proration 时，按实付建单并冻结目标整期价。"""
 
     config, environment = await _load_clink_config()
+    prices = await payment_config_service.get_snapshot(force_refresh=True)
+    current = prices.prices.get(("api_basic", CLINK_PAYMENT_METHOD))
+    target = prices.prices.get(("api_professional", CLINK_PAYMENT_METHOD))
+    if (
+        current is None
+        or not current.provider_sku
+        or target is None
+        or not target.provider_sku
+    ):
+        pytest.skip("REAL_CLINK_CHANNEL_UNAVAILABLE: Clink 自动续费 Price 映射未配齐")
+    current_product, current_price = current.provider_sku.split(":")
+    target_product, target_price = target.provider_sku.split(":")
     webhook_key = str(config["webhook_signing_key"])
     cleanup = real_clink_cleanup_state
     now_ms = timestamp_now()
@@ -399,16 +417,16 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
         order_no=order_no,
         user_id=cleanup.phantom_user_id,
         product_class=ProductClass.SUBSCRIPTION.value,
-        product_id=MAPS_EXTENSION_PRO_PRODUCT_ID,
+        product_id="api_basic",
         product_name=f"pytest-clink-{cleanup.test_run_id}",
-        amount=12_340_000,
+        amount=15_000_000,
         currency="USD",
         order_status=OrderStatus.PAID.value,
         callback_status=CallbackStatus.PENDING.value,
         payment_method=CLINK_PAYMENT_METHOD,
         payment_channel_order_no=f"ord_{cleanup.test_run_id}",
         payment_channel_uid=customer_id,
-        paid_amount=12_340_000,
+        paid_amount=15_000_000,
         paid_currency="USD",
         paid_at=now_ms,
         payment_data=json.dumps({"sessionId": session_id}, separators=(",", ":")),
@@ -416,13 +434,13 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
         extra_metadata=json.dumps(
             {
                 "product_snapshot": {
-                    "product_kind": MAPS_EXTENSION_PRODUCT_KIND,
-                    "product_price_id": 999_002,
+                    "product_kind": "maps_api",
+                    "product_price_id": current.id,
                     "auto_renew": True,
                     "period": "month",
                     "currency": "USD",
-                    "amount": 12_340_000,
-                    "provider_sku": None,
+                    "amount": 15_000_000,
+                    "provider_sku": current.provider_sku,
                 },
                 "payment_callback": {
                     "provider_subscription": {
@@ -442,23 +460,57 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
     stored_order = await order_service.create(order)
     assert await order_service.fulfill_paid_order(stored_order) is True
 
-    subscription_before = await _subscription(
-        cleanup.phantom_user_id, MAPS_EXTENSION_PRODUCT_KIND
-    )
+    subscription_before = await _subscription(cleanup.phantom_user_id, "maps_api")
     assert subscription_before is not None
     assert subscription_before.expires_at == first_period_end
 
+    paid_invoice = {
+        "invoiceId": f"inv_{cleanup.test_run_id}",
+        "subscriptionId": subscription_id,
+        "orderId": f"ordr_{cleanup.test_run_id}",
+        "originalAmount": "50.07",
+        "originalCurrency": "USD",
+        "status": "paid",
+        "currentPeriodStart": first_period_end,
+        "currentPeriodEnd": renewal_period_end,
+        "items": [
+            {
+                "amount": "-14.93",
+                "currency": "USD",
+                "proration": True,
+                "price": {
+                    "productId": current_product,
+                    "priceId": current_price,
+                    "unitAmount": "15.00",
+                    "quantity": 1,
+                },
+            },
+            {
+                "amount": "65.00",
+                "currency": "USD",
+                "proration": True,
+                "price": {
+                    "productId": target_product,
+                    "priceId": target_price,
+                    "unitAmount": "65.00",
+                    "quantity": 1,
+                },
+            },
+        ],
+    }
     _install_clink_http(
         monkeypatch,
         checkout_host=_CLINK_CHECKOUT_HOSTS[environment],
+        invoice_payload=paid_invoice,
         subscription_payload={
             "subscriptionId": subscription_id,
             "merchantReference": order_no,
             "customerId": customer_id,
             "sessionId": session_id,
+            "status": "past_due",
             "recurringInvoiceItem": {
-                "periodStart": first_period_end,
-                "periodEnd": renewal_period_end,
+                "periodStart": renewal_period_end,
+                "periodEnd": renewal_period_end + 30 * _DAY_MS,
             },
         },
     )
@@ -467,13 +519,7 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
         webhook_key,
         f"event_invoice_{cleanup.test_run_id}",
         "invoice.paid",
-        {
-            "invoiceId": f"inv_{cleanup.test_run_id}",
-            "subscriptionId": subscription_id,
-            "orderId": f"ordr_{cleanup.test_run_id}",
-            "originalAmount": "12.34",
-            "originalCurrency": "USD",
-        },
+        paid_invoice,
     )
     response = await real_async_client.post(
         _WEBHOOK_PATH,
@@ -490,10 +536,16 @@ async def test_real_clink_invoice_paid_fulfills_renewal_once(
     assert renewal_orders[0].order_status == OrderStatus.PAID.value
     assert renewal_orders[0].callback_status == CallbackStatus.SUCCESS.value
     assert renewal_orders[0].payment_transaction_id == f"ordr_{cleanup.test_run_id}"
+    assert renewal_orders[0].product_id == "api_professional"
+    assert renewal_orders[0].amount == 50_070_000
+    paid_snapshot = json.loads(renewal_orders[0].extra_metadata or "{}")[
+        "product_snapshot"
+    ]
+    assert paid_snapshot["amount"] == 65_000_000
+    assert paid_snapshot["product_price_id"] == target.id
+    assert paid_snapshot["provider_sku"] == target.provider_sku
 
-    subscription_after = await _subscription(
-        cleanup.phantom_user_id, MAPS_EXTENSION_PRODUCT_KIND
-    )
+    subscription_after = await _subscription(cleanup.phantom_user_id, "maps_api")
     assert subscription_after is not None
     assert subscription_after.expires_at == renewal_period_end
     assert subscription_after.channel_uid == customer_id

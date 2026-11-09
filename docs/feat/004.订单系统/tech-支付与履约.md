@@ -18,7 +18,7 @@
 具体商品的定价读取与发货实现不在本文件:
 
 - 自动续费订阅走本订单系统。首期订单由用户点击创建,后续每次 provider 自动扣款成功时由 webhook 创建续费订单;订阅域负责订单对应的权益与档位履约，见 [订阅升级](../006.订阅系统/tech-订阅升级.md)。
-- 积分包商品:定价读取在积分域;履约发货(`user_credit_service.add_balance_in_session`,加 Credits 余额)在积分域。本文件只描述"订单侧 `check_product` 按积分包类别分发到积分域"的契约面。
+- 积分包商品:定价、商品快照与履约发货由积分域负责;订单侧按商品类别调用 `user_credit_service.check_product` 和 `fulfill_paid_order`。
 - 下载消费积分(下载扣 Credits)不在本域,见 `@../003.积分系统/feat.md`。
 
 ## 1. 客户端接口规格
@@ -142,6 +142,8 @@ POST /api/client/order/cancel
 
 规则:只能取消当前用户自己的 `PENDING` 订单;已支付 / 已取消 / 已退款返回 `ORDER_CANNOT_CANCEL`(`20005`);并发抢占失败也返回 `ORDER_CANNOT_CANCEL`。
 
+渠道额外校验通过 `payment_service.validate_order_cancellation()` 路由到 `PaymentBase.validate_order_cancellation()` 类方法。默认无额外动作,未知历史渠道同样直接沿用本地取消;不构造 Provider、不读渠道配置、不请求远端。
+
 ### 1.6 Telegram webhook 回调
 
 ```text
@@ -184,8 +186,9 @@ POST /api/callback/paypal/payment
 - 创建续费订单前先按 `(payment_method, payment_channel_order_no)` 查重;命中则按已有订单幂等返回。
 - 并发查重均未命中时，由[渠道流水唯一约束](tech-订单数据与状态机.md#31-索引)拒绝重复插入；失败请求返回 `ORDER_DUPLICATE`，成功建单的请求继续处理自己的订单。
 - 新续费订单创建后立即调用 `order_success`,再由订单履约分发到订阅域按 Provider 归一化账期推进(`user_subscriptions.expires_at` 只被更晚的渠道到期时间覆盖)。
+- 订单域查重、定位原单后,把通用 `OrderCreateParam` 交给订阅域生成商品参数再落单;商品映射入口见 [订阅订单履约](../006.订阅系统/tech-订阅商品与状态.md#订单履约)。
 - 续费订单不进入用户未完成订单列表;它是已发生扣款的服务端记录。
-- 自动续费升级确认不预建订单；折算发票复用此实付建单链。统一换档结果与具体引用核对见 [订阅升级合同](../006.订阅系统/tech-订阅升级.md#路径-b自动续费线maps_extension渠道协议内换价)。
+- 自动续费升级确认不预建订单；折算发票复用此实付建单链。统一换档结果与具体引用核对见 [订阅升级合同](../006.订阅系统/tech-订阅升级.md#路径-b自动续费)。
 
 ### 1.10 渠道订阅管理入口
 
@@ -212,7 +215,7 @@ POST /api/client/subscription/management
 | `config_json` | string(JSON) | | 渠道配置 |
 | `created_at / updated_at` | bigint | | 毫秒时间戳 |
 
-停用渠道只停止新销售。PayPal、ClinkBill webhook 和已有订单的收款确认通过 `payment_service.get_provider_for_existing_payment` 读取最新凭据,不受 `enabled` 限制;渠道配置与凭据必须保留。
+停用渠道只停止新销售。PayPal、ClinkBill、Stripe webhook 和已有订单的收款确认通过 `payment_service.get_provider_for_existing_payment` 读取最新凭据,不受 `enabled` 限制;渠道配置与凭据必须保留。
 
 `telegram_stars` 渠道的 `config_json` 必须是对象,必填字段:
 
@@ -352,6 +355,7 @@ class PaymentBase(ABC):
 
 - provider 创建入口:`payment_service.get_provider(payment_method) -> PaymentBase`(`backend/src/app/services/payment_service.py`)。
 - `payment_service` 从启用的渠道配置读取 `config_json`,用构造方式传给 provider;`is_supported_method` 判断是否已有 provider 实现。
+- 支付核心只处理渠道协议与统一结果,商品核价、档位、权益和积分快照由对应商品 service 负责。可选渠道动作由 `PaymentBase` 提供默认无动作的方法,具体渠道自行覆盖。
 - provider 实现:
   - `telegram_stars` → `TgStarPaymentProvider`
   - `paypal` → `PayPalPaymentProvider`
@@ -628,11 +632,11 @@ order_success (PENDING -> PAID, CAS, 独立事务)
                     └─ 影响 1 行 → 继续
                  2. _fulfill_order_product(db, order): 按商品类别发货(同事务)
                     ├─ SUBSCRIPTION → subscription_service.fulfill_paid_order(db, order)
-                    └─ RECHARGE → user_credit_service.add_balance_in_session(db, ...)
+                    └─ RECHARGE → user_credit_service.fulfill_paid_order(db, order)
                  3. db.commit()
 ```
 
-- 订阅快照 `purpose=upgrade` 的条件换档与账期保持见 [升级履约合同](../006.订阅系统/tech-订阅升级.md#路径-a一次性线maps_online--maps_api差额订单走收银台)。
+- 订阅快照 `purpose=upgrade` 的条件换档与账期履约见 [升级履约合同](../006.订阅系统/tech-订阅升级.md#路径-a非自动续费)。
 - 业务发货与 `callback_status=SUCCESS` 必须在同一事务内提交。
 - `fulfill_paid_order` 成功或确认已成功返回 `True`；失败抛带恢复分类的业务异常，不把异常伪装成 CAS 未命中。
 

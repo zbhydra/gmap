@@ -38,6 +38,7 @@ from app.provider.payment.payment_base import (
     SubscriptionUpdateAction,
     SubscriptionUpdatePreview,
     SubscriptionUpdateResult,
+    SubscriptionRenewalResumeRequired,
 )
 from app.services.order_service import order_service
 from app.utils.money import (
@@ -160,6 +161,7 @@ class ClinkPaymentProvider(PaymentBase):
         channel_subscription_id: str,
         target_provider_sku: str | None,
         currency: str,
+        target_amount: int,
     ) -> SubscriptionUpdatePreview:
         """preview 核对固定实例、完整目标价、币种与立即生效后交业务层定夺金额。"""
 
@@ -170,10 +172,22 @@ class ClinkPaymentProvider(PaymentBase):
         parts = recurring_provider_sku_parts(self.provider_name, target_provider_sku)
         if parts is None:
             raise PaymentProviderError(f"{context}: 目标渠道 SKU 无效")
+        self._assert_renewal_enabled(
+            await self._fetch_subscription_data(
+                channel_subscription_id, context=context
+            ),
+            context=context,
+        )
         response = await self._request_json(
             "POST",
             f"/subscription/{quote(channel_subscription_id, safe='')}/update/preview",
-            payload={"priceId": parts[1], "quantity": 1},
+            payload={
+                "priceId": parts[1],
+                "quantity": 1,
+                "immediate": True,
+                "billingCycleAnchor": "now",
+                "prorationBehavior": "always_invoice",
+            },
             context=context,
         )
         data = self._object_field(response, "data", context=context)
@@ -190,13 +204,19 @@ class ClinkPaymentProvider(PaymentBase):
             )
             != currency
             or data.get("immediate") is not True
+            or data.get("billingCycleAnchor") != "now"
+            or data.get("prorationBehavior") != "always_invoice"
+            or self._normalized_amount(
+                recurring_price.get("totalAmount"), context=context
+            )
+            != target_amount
         ):
             raise PaymentProviderError(
                 f"{context}: 预览不满足固定实例、目标价、币种或立即生效合同"
             )
         lines = self._object_field(data, "lines", context=context)
         return SubscriptionUpdatePreview(
-            price_snapshot_id=self._string_field(
+            price_reference=self._string_field(
                 recurring_price, "priceSnapshotId", context=context
             ),
             net_amount=self._signed_normalized_amount(
@@ -209,7 +229,7 @@ class ClinkPaymentProvider(PaymentBase):
         *,
         channel_subscription_id: str,
         target_provider_sku: str | None,
-        price_snapshot_id: str,
+        price_reference: str,
     ) -> SubscriptionUpdateResult:
         """官方 1/2/3/5 归一为成功、等待、失败、跳转；等待不再次扣款。"""
 
@@ -217,10 +237,22 @@ class ClinkPaymentProvider(PaymentBase):
             "clink.confirm_subscription_update: "
             f"subscription_id={channel_subscription_id}"
         )
+        self._assert_renewal_enabled(
+            await self._fetch_subscription_data(
+                channel_subscription_id, context=context
+            ),
+            context=context,
+        )
         response = await self._request_json(
             "POST",
             f"/subscription/{quote(channel_subscription_id, safe='')}/update/confirm",
-            payload={"priceSnapshotId": price_snapshot_id, "quantity": 1},
+            payload={
+                "priceSnapshotId": price_reference,
+                "quantity": 1,
+                "immediate": True,
+                "billingCycleAnchor": "now",
+                "prorationBehavior": "always_invoice",
+            },
             context=context,
         )
         data = self._object_field(response, "data", context=context)
@@ -249,15 +281,11 @@ class ClinkPaymentProvider(PaymentBase):
         if status != 1:
             raise PaymentProviderError(f"{context}: 未知换价结果 status={status!r}")
         subscription = self._object_field(data, "subscription", context=context)
-        actual_sku = (
-            self._string_field(subscription, "productId", context=context)
-            + ":"
-            + self._string_field(subscription, "priceId", context=context)
-        )
+        state = self._subscription_state(subscription, context=context)
         if (
             self._string_field(subscription, "subscriptionId", context=context)
             != channel_subscription_id
-            or actual_sku != target_provider_sku
+            or state.provider_sku != target_provider_sku
         ):
             raise PaymentProviderError(f"{context}: 生效订阅或价格不匹配目标")
         return SubscriptionUpdateResult("succeeded")
@@ -275,8 +303,19 @@ class ClinkPaymentProvider(PaymentBase):
         data = await self._fetch_subscription_data(
             channel_subscription_id, context=context
         )
-        status = self._string_field(data, "status", context=context).strip().lower()
-        if status in {"cancelled", "incomplete_expired"}:
+        return self._subscription_state(data, context=context)
+
+    @staticmethod
+    def _assert_renewal_enabled(data: dict[str, object], *, context: str) -> None:
+        if data.get("cancelAtPeriodEnd") is True or data.get("cancelAt"):
+            raise SubscriptionRenewalResumeRequired(f"{context}: 请先在渠道恢复续费")
+
+    def _subscription_state(
+        self, data: dict[str, object], *, context: str
+    ) -> SubscriptionState:
+        # 官方 active 表示协议有效且无欠付发票；仅价格变化不能授权益。
+        status = self._string_field(data, "status", context=context)
+        if status != "active":
             raise PaymentProviderError(f"{context}: 订阅不可履约 status={status}")
         return SubscriptionState(
             original_order_no=self._string_field(
@@ -443,11 +482,7 @@ class ClinkPaymentProvider(PaymentBase):
             "merchantReferenceId",
             context=f"clink.order_succeeded: event_id={event_id}",
         )
-        customer_email = self._string_field(
-            event_object,
-            "customerEmail",
-            context=f"clink.order_succeeded: event_id={event_id}",
-        )
+        customer_email = event_object.get("customerEmail")
         clink_order_id = self._string_field(
             event_object,
             "orderId",
@@ -510,6 +545,7 @@ class ClinkPaymentProvider(PaymentBase):
             amount=amount,
             currency=currency,
             transaction_id=clink_order_id,
+            paid_at=parse_timestamp_input(event_object.get("paymentTime")),
             extra_metadata=self._metadata_json(provider_data),
             provider_data=provider_data,
         )
@@ -524,6 +560,13 @@ class ClinkPaymentProvider(PaymentBase):
         invoice_id = self._string_field(
             invoice, "invoiceId", context=f"clink.invoice_paid: event_id={event_id}"
         )
+        if "items" not in invoice:
+            response = await self._request_json(
+                "GET",
+                f"/subscription/invoice/{invoice_id}",
+                context=f"clink.invoice_paid: invoice_id={invoice_id}",
+            )
+            invoice = self._object_field(response, "data", context="clink.invoice_paid")
         subscription_id = self._string_field(
             invoice,
             "subscriptionId",
@@ -566,16 +609,36 @@ class ClinkPaymentProvider(PaymentBase):
             "sessionId",
             context=f"clink.invoice_paid: event_id={event_id}, invoice_id={invoice_id}",
         )
-        recurring_item = self._object_field(
-            subscription,
-            "recurringInvoiceItem",
-            context=f"clink.invoice_paid: event_id={event_id}, invoice_id={invoice_id}",
-        )
-        period_end = recurring_item.get("periodEnd")
-        if type(period_end) not in {str, int}:
+        if invoice.get("status") != "paid":
             raise PaymentProviderError(
-                "clink.invoice_paid: subscription expiration missing: "
+                "clink.invoice_paid: 发票尚未付清: "
                 f"event_id={event_id}, subscription_id={subscription_id}"
+            )
+        items = invoice.get("items")
+        if not isinstance(items, list):
+            raise PaymentProviderError(
+                f"clink.invoice_paid: items must be array: invoice_id={invoice_id}"
+            )
+        lines = [
+            item
+            for item in items
+            if isinstance(item, dict)
+            and self._signed_normalized_amount(
+                item.get("amount"),
+                context=f"clink.invoice_paid: invoice_id={invoice_id}, item.amount",
+            )
+            > 0
+        ]
+        if len(lines) != 1:
+            raise PaymentProviderError(
+                f"clink.invoice_paid: 缺少唯一整期计费行: invoice_id={invoice_id}"
+            )
+        line = cast(dict[str, object], lines[0])
+        price = self._object_field(line, "price", context="clink.invoice_paid")
+        if price.get("quantity") != 1 or line.get("currency") != currency:
+            raise PaymentProviderError(
+                "clink.invoice_paid: 整期价格数量或币种不符: "
+                f"invoice_id={invoice_id}"
             )
         await self._validate_local_order(
             order_no=original_order_no,
@@ -601,12 +664,8 @@ class ClinkPaymentProvider(PaymentBase):
             "provider_subscription": {
                 "channel_subscription_id": subscription_id,
                 "original_order_no": original_order_no,
-                "start_at": (
-                    parse_timestamp_input(recurring_item["periodStart"])
-                    if type(recurring_item.get("periodStart")) in {str, int}
-                    else None
-                ),
-                "expires_at": parse_timestamp_input(period_end),
+                "start_at": parse_timestamp_input(invoice.get("currentPeriodStart")),
+                "expires_at": parse_timestamp_input(invoice.get("currentPeriodEnd")),
             },
         }
         return CallbackVerificationResult(
@@ -619,10 +678,23 @@ class ClinkPaymentProvider(PaymentBase):
             amount=amount,
             currency=currency,
             transaction_id=clink_order_id,
+            subscription_state=(
+                self._subscription_state(subscription, context="clink.invoice_paid")
+                if subscription.get("status") == "active"
+                else None
+            ),
             extra_metadata=self._metadata_json(provider_data),
             provider_data=provider_data,
             recurring_reference=RecurringPaymentReference(
-                original_order_no=original_order_no
+                original_order_no=original_order_no,
+                provider_sku=(
+                    self._string_field(price, "productId", context="clink.invoice_paid")
+                    + ":"
+                    + self._string_field(price, "priceId", context="clink.invoice_paid")
+                ),
+                period_amount=self._normalized_amount(
+                    price.get("unitAmount"), context="clink.invoice_paid.unitAmount"
+                ),
             ),
         )
 
@@ -897,9 +969,7 @@ class ClinkPaymentProvider(PaymentBase):
     def _signed_normalized_amount(value: object, *, context: str) -> int:
         """把 Clink 主币种金额转换为允许负数的 6 位精度整数。
 
-        仅供 update preview 使用：官方 preview 对折抵大于收费的换价会返回
-        负的 lines.totalAmount，原样转成负整数交由 service 按非正差额
-        映射为不可升级，不在 provider 层预判正负。
+        换价预览和发票抵扣行均可为负，由调用方判断收费或抵扣语义。
         """
 
         if isinstance(value, bool) or not isinstance(value, int | float | str):

@@ -10,6 +10,7 @@ import { ensureDeviceId } from '../../scripts/homepage/device'
 import { HomepageApiError, type RequestContext } from '../../scripts/homepage/api'
 import { extractFailureReason, reportGA4Event } from '../../scripts/homepage/ga4'
 import { trackCheckoutEvent } from '../../scripts/homepage/web-mark'
+import { createSubscriptionManagementUrl } from '../../scripts/dashboard/api'
 import {
   confirmSubscriptionUpgrade,
   createSubscriptionUpgradeCheckout,
@@ -375,6 +376,8 @@ function render(
     (state.status === 'pending_payment' || state.status === 'failed')
   const product = getCurrentProduct(state)
   const recurringUpgradeCopy = product?.autoRenew ? state.options?.upgrade?.copy : undefined
+  setOrderCheckoutHidden(elements.resumeRenewalButton, !showPaymentDialog || !recurringUpgradeCopy || !state.error)
+  elements.resumeRenewalButton.textContent = state.options?.upgrade?.managementCopy.manageSubscription ?? ''
 
   setOrderCheckoutHidden(elements.paymentDialog, !showPaymentDialog)
   setOrderCheckoutHidden(elements.orderDialog, !showOrderDialog)
@@ -730,7 +733,7 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
         const reason = error instanceof HomepageApiError ? error.data?.reason : null
         state.error = upgradeCopy
           ? reason === 'no_active_subscription' || reason === 'not_higher_tier' ||
-            reason === 'non_positive_diff' || reason === 'channel_unavailable'
+            reason === 'non_positive_diff' || reason === 'channel_unavailable' || reason === 'renewal_resume_required'
             ? upgradeCopy.reasons[reason]
             : isPaymentGatewayError(error) ? copy.gatewayFailed : upgradeCopy.failed
           : mapOrderCheckoutError(copy, error)
@@ -805,6 +808,33 @@ export function createOrderCheckoutController(root: HTMLElement): OrderCheckoutC
 
   elements.submitButton.addEventListener('click', () => {
     void createOrderForSelectedProduct()
+  })
+
+  elements.resumeRenewalButton.addEventListener('click', () => {
+    const upgrade = state.options?.upgrade
+    if (!upgrade) return
+    const popup = openPaymentWindow()
+    if (!popup) {
+      state.error = copy.popupBlocked
+      render(elements, copy, state)
+      return
+    }
+    elements.resumeRenewalButton.disabled = true
+    void buildRequestContext().then(async context => {
+      if (!context) {
+        popup.close()
+        handleAuthFailure(copy.authExpired)
+        return
+      }
+      const url = await createSubscriptionManagementUrl(context, upgrade.productKind)
+      if (!url) throw new Error('[order-checkout] 续费恢复管理入口未返回 URL。')
+      openPaymentUrl(popup, url)
+    }).catch(error => {
+      popup.close()
+      console.error(error)
+      state.error = upgrade.managementCopy.manageFailed
+      render(elements, copy, state)
+    }).finally(() => { elements.resumeRenewalButton.disabled = false })
   })
 
   document.addEventListener('keydown', event => {

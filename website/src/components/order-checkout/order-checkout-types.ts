@@ -10,7 +10,7 @@ import type {
   OrderCheckoutPeriod,
   OrderStatusResponse
 } from './order-checkout-api'
-import type { PricingPageContent } from '../../i18n/schema'
+import type { DashboardContent, PricingPageContent } from '../../i18n/schema'
 import type { SubscriptionProductKind } from '../pricing/pricing-checkout'
 
 /** 公共 checkout 的单个支付选项及其本地化摘要。 */
@@ -122,6 +122,7 @@ export interface OrderCheckoutOpenOptions {
     productKind: SubscriptionProductKind
     currentProductId: string | null
     copy: PricingPageContent['upgrade']
+    managementCopy: Pick<DashboardContent['subscriptions'], 'manageSubscription' | 'manageFailed'>
   }
 }
 

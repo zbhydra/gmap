@@ -1,0 +1,32 @@
+---
+import ClinkReturnPage from './ClinkReturnPage.astro'
+import { getStripeReturnContent } from '../../i18n/stripe-return'
+import { getContent, type Locale } from '../../i18n/content'
+import Layout from '../../layouts/Layout.astro'
+
+interface Props {
+  locale: Locale
+  status: 'success' | 'cancel'
+}
+
+const { locale, status } = Astro.props
+const content = getStripeReturnContent(locale)
+const copy = status === 'success' ? content.success.waiting : content.cancel
+const site = getContent(locale).site
+---
+
+<Layout
+  locale={locale}
+  title={`${copy.title} | ${site.name}`}
+  description={copy.description}
+  includeSoftwareApplicationSchema={false}
+  robots="noindex, nofollow, noarchive"
+  includeAlternateLanguageLinks={false}
+>
+  <ClinkReturnPage
+    provider="stripe"
+    status={status}
+    successCopy={content.success}
+    cancelCopy={content.cancel}
+  />
+</Layout>

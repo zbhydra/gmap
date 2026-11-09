@@ -16,7 +16,11 @@ from starlette.requests import Request
 
 from app.core.config import settings
 from app.provider.payment.clink import ClinkPaymentProvider
-from app.provider.payment.payment_base import PaymentProviderError, PaymentRequest
+from app.provider.payment.payment_base import (
+    PaymentProviderError,
+    PaymentRequest,
+    SubscriptionRenewalResumeRequired,
+)
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
@@ -35,6 +39,22 @@ def _provider() -> ClinkPaymentProvider:
     """构造不含真实密钥的 Sandbox Provider。"""
 
     return ClinkPaymentProvider(_PROVIDER_CONFIG)
+
+
+def _active_subscription_response() -> httpx.Response:
+    return httpx.Response(
+        200,
+        json={
+            "code": 200,
+            "data": {
+                "subscriptionId": "sub_test",
+                "status": "active",
+                "merchantReference": "ORDER-CLINK-1",
+                "productId": "prd_test",
+                "priceId": "price_test",
+            },
+        },
+    )
 
 
 def _payment_request(
@@ -178,9 +198,14 @@ async def test_real_clink_preview_subscription_update_returns_signed_proration(
     """preview 返回官方折算净额、生效时机、完整目标价与 confirm 所需快照。"""
 
     requests: list[httpx.Request] = []
+    cancelled = False
 
     def handler(request: httpx.Request) -> httpx.Response:
         requests.append(request)
+        if request.method == "GET":
+            data = _active_subscription_response().json()
+            data["data"]["cancelAtPeriodEnd"] = cancelled
+            return httpx.Response(200, json=data)
         return httpx.Response(
             200,
             json={
@@ -188,11 +213,14 @@ async def test_real_clink_preview_subscription_update_returns_signed_proration(
                 "data": {
                     "subscriptionId": "sub_test",
                     "immediate": True,
+                    "billingCycleAnchor": "now",
+                    "prorationBehavior": "always_invoice",
                     "recurringPrice": {
                         "productId": "prd_target",
                         "priceId": "price_target",
                         "currency": "USD",
                         "priceSnapshotId": "snapshot_target",
+                        "totalAmount": 50,
                     },
                     "lines": {"totalAmount": -3.505, "currency": "USD"},
                 },
@@ -204,15 +232,35 @@ async def test_real_clink_preview_subscription_update_returns_signed_proration(
         channel_subscription_id="sub_test",
         target_provider_sku="prd_target:price_target",
         currency="USD",
+        target_amount=50_000_000,
     )
 
-    assert requests[0].url.path == "/api/subscription/sub_test/update/preview"
-    assert json.loads(requests[0].content) == {
+    assert requests[1].url.path == "/api/subscription/sub_test/update/preview"
+    assert json.loads(requests[1].content) == {
         "priceId": "price_target",
         "quantity": 1,
+        "immediate": True,
+        "billingCycleAnchor": "now",
+        "prorationBehavior": "always_invoice",
     }
-    assert preview.price_snapshot_id == "snapshot_target"
+    assert preview.price_reference == "snapshot_target"
     assert preview.net_amount == -3_505_000
+
+    cancelled = True
+    with pytest.raises(SubscriptionRenewalResumeRequired):
+        await _provider().preview_subscription_update(
+            channel_subscription_id="sub_test",
+            target_provider_sku="prd_target:price_target",
+            currency="USD",
+            target_amount=50_000_000,
+        )
+    with pytest.raises(SubscriptionRenewalResumeRequired):
+        await _provider().confirm_subscription_update(
+            channel_subscription_id="sub_test",
+            target_provider_sku="prd_target:price_target",
+            price_reference="snapshot_target",
+        )
+    assert sum(r.method == "POST" for r in requests) == 1
 
 
 async def test_real_clink_confirm_subscription_update_applies_preview_snapshot(
@@ -224,6 +272,8 @@ async def test_real_clink_confirm_subscription_update_applies_preview_snapshot(
 
     def handler(request: httpx.Request) -> httpx.Response:
         requests.append(request)
+        if request.method == "GET":
+            return _active_subscription_response()
         if request.url.path.endswith("/update/preview"):
             return httpx.Response(
                 200,
@@ -232,11 +282,14 @@ async def test_real_clink_confirm_subscription_update_applies_preview_snapshot(
                     "data": {
                         "subscriptionId": "sub_test",
                         "immediate": True,
+                        "billingCycleAnchor": "now",
+                        "prorationBehavior": "always_invoice",
                         "recurringPrice": {
                             "productId": "prd_business",
                             "priceId": "price_business",
                             "currency": "USD",
                             "priceSnapshotId": "snapshot_business",
+                            "totalAmount": 100,
                         },
                         "lines": {"totalAmount": 60, "currency": "USD"},
                     },
@@ -252,6 +305,8 @@ async def test_real_clink_confirm_subscription_update_applies_preview_snapshot(
                     "code": "success",
                     "message": "success",
                     "subscription": {
+                        "status": "active",
+                        "merchantReference": "ORDER-CLINK-1",
                         "subscriptionId": "sub_test",
                         "productId": "prd_business",
                         "priceId": "price_business",
@@ -266,17 +321,21 @@ async def test_real_clink_confirm_subscription_update_applies_preview_snapshot(
         channel_subscription_id="sub_test",
         target_provider_sku="prd_business:price_business",
         currency="USD",
+        target_amount=100_000_000,
     )
     confirmed = await provider.confirm_subscription_update(
         channel_subscription_id="sub_test",
-        price_snapshot_id=preview.price_snapshot_id,
+        price_reference=preview.price_reference,
         target_provider_sku="prd_business:price_business",
     )
 
-    assert requests[1].url.path == "/api/subscription/sub_test/update/confirm"
-    assert json.loads(requests[1].content) == {
+    assert requests[3].url.path == "/api/subscription/sub_test/update/confirm"
+    assert json.loads(requests[3].content) == {
         "priceSnapshotId": "snapshot_business",
         "quantity": 1,
+        "immediate": True,
+        "billingCycleAnchor": "now",
+        "prorationBehavior": "always_invoice",
     }
     assert confirmed.status == "succeeded"
     assert confirmed.action is None
@@ -284,6 +343,8 @@ async def test_real_clink_confirm_subscription_update_applies_preview_snapshot(
     # 官方 status=2：处理中，返回 pending 且不携带价格或跳转，
     # 前端轮询、不得视为失败或重复扣款。
     def pending_handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "GET":
+            return _active_subscription_response()
         assert request.url.path.endswith("/update/confirm")
         return httpx.Response(
             200,
@@ -300,7 +361,7 @@ async def test_real_clink_confirm_subscription_update_applies_preview_snapshot(
     _install_transport(monkeypatch, pending_handler)
     pending = await _provider().confirm_subscription_update(
         channel_subscription_id="sub_test",
-        price_snapshot_id="snapshot_business",
+        price_reference="snapshot_business",
         target_provider_sku="prd_business:price_business",
     )
     assert pending.status == "requires_action"
@@ -309,6 +370,8 @@ async def test_real_clink_confirm_subscription_update_applies_preview_snapshot(
     assert pending.action.url is None
 
     def failed_handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "GET":
+            return _active_subscription_response()
         assert request.url.path.endswith("/update/confirm")
         return httpx.Response(
             200, json={"code": 200, "data": {"subscriptionId": "sub_test", "status": 3}}
@@ -318,7 +381,7 @@ async def test_real_clink_confirm_subscription_update_applies_preview_snapshot(
     failed = await _provider().confirm_subscription_update(
         channel_subscription_id="sub_test",
         target_provider_sku="prd_business:price_business",
-        price_snapshot_id="snapshot_business",
+        price_reference="snapshot_business",
     )
     assert failed.status == "failed"
     assert failed.action is None
@@ -330,6 +393,8 @@ async def test_real_clink_confirm_next_action_returns_official_redirect(
     """confirm status=5 时返回官方托管页跳转地址，非官方 host 拒绝。"""
 
     def handler(_request: httpx.Request) -> httpx.Response:
+        if _request.method == "GET":
+            return _active_subscription_response()
         return httpx.Response(
             200,
             json={
@@ -351,7 +416,7 @@ async def test_real_clink_confirm_next_action_returns_official_redirect(
     _install_transport(monkeypatch, handler)
     confirmed = await _provider().confirm_subscription_update(
         channel_subscription_id="sub_test",
-        price_snapshot_id="snapshot_test",
+        price_reference="snapshot_test",
         target_provider_sku="prd_business:price_business",
     )
     assert confirmed.status == "requires_action"
@@ -364,7 +429,7 @@ async def test_real_clink_confirm_next_action_returns_official_redirect(
     with pytest.raises(PaymentProviderError, match="host mismatch"):
         await _provider().confirm_subscription_update(
             channel_subscription_id="sub_test",
-            price_snapshot_id="snapshot_test",
+            price_reference="snapshot_test",
             target_provider_sku="prd_business:price_business",
         )
 

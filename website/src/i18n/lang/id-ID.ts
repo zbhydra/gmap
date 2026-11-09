@@ -1485,7 +1485,7 @@ export const site: SiteContent = {
     "pricing": {
       "seo": {
         "title": "Harga — Paket Online, Ekstensi, dan API | MapExporter",
-        "description": "MapExporter rencana untuk setiap permukaan: Scraper Online dari $19, Ekstensi browser dari $39, dan API dari $15. Tingkatan gratis disertakan dalam setiap produk — paket bulanan alami satu kali di Online dan API, langganan bulanan di Ekstensi."
+        "description": "Paket MapExporter: scraper online mulai $19, ekstensi $39, dan API $15. Setiap produk memiliki paket gratis. Periksa ketentuan pembayaran dan perpanjangan sebelum membeli."
       },
       "hero": {
         "kicker": "Harga",
@@ -1497,8 +1497,8 @@ export const site: SiteContent = {
         "lead": "Pilih permukaan yang sesuai dengan alur kerja Anda — cloud Pengumpul online, Ekstensi browser, atau HTTP API — lalu pilih volume bulanan. Tingkatkan atau beli dari halaman ini dalam hitungan menit.",
         "meta": [
           "Tingkat gratis di setiap produk",
-          "Bayar dengan PayPal",
-          "Tingkatkan dengan membayar selisihnya"
+          "Stripe / ClinkBill",
+          "Tingkatkan paket Anda"
         ],
         "switchLabel": "Lini produk"
       },
@@ -1507,16 +1507,12 @@ export const site: SiteContent = {
         "online": {
           "name": "Pengumpul online",
           "shortName": "Online",
-          "switchMeta": "Dari {price} · satu kali",
+          "switchMeta": "Mulai {price}",
           "unit": "catatan",
           "eyebrow": "Paket Scraper Online",
           "title": "Ekstraksi awan, dihargai berdasarkan catatan",
           "description": "Jalankan mesin MapExporter di infrastruktur kami. Catatan adalah satu baris bisnis yang dikumpulkan. Paket berbayar mencakup email opsional dan pengayaan media sosial tanpa biaya tambahan.",
-          "billingChips": [
-            "Pembayaran satu kali",
-            "Mencakup satu bulan alami",
-            "Tidak ada perpanjangan otomatis"
-          ],
+          "billingChips": ["Tingkat gratis di setiap produk","Direset pada tanggal 1","Ketentuan terlihat sebelum membayar"],
           "cards": [
             {
               "id": "free",
@@ -1543,12 +1539,11 @@ export const site: SiteContent = {
               "name": "Lite",
               "tagline": "Untuk ekspor satu kali saja",
               "price": "$19",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "20,000 catatan / bulan",
               "features": [
                 "Semuanya Gratis",
                 "20,000 catatan untuk 1 bulan",
-                "Pembayaran satu kali — tanpa perpanjangan otomatis",
                 "Hingga 5 kata kunci per tugas",
                 "Pengayaan email & sosial, diaktifkan secara default dan opsional"
               ],
@@ -1562,12 +1557,11 @@ export const site: SiteContent = {
               "name": "Dasar",
               "tagline": "Untuk pengumpulan prospek mingguan yang stabil",
               "price": "$49",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "80,000 catatan / bulan",
               "features": [
                 "Semuanya di Lite",
                 "80,000 catatan untuk 1 bulan",
-                "Pembayaran satu kali — tanpa perpanjangan otomatis",
                 "Hingga 10 kata kunci per tugas"
               ],
               "ctaLabel": "Dapatkan Dasar",
@@ -1580,12 +1574,11 @@ export const site: SiteContent = {
               "name": "Pertumbuhan",
               "tagline": "Untuk mengembangkan jaringan pipa timah",
               "price": "$99",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "250,000 catatan / bulan",
               "features": [
                 "Semuanya dalam Dasar",
                 "250,000 catatan untuk 1 bulan",
-                "Pembayaran satu kali — tanpa perpanjangan otomatis",
                 "Hingga 20 kata kunci per tugas"
               ],
               "ctaLabel": "Dapatkan Pertumbuhan",
@@ -1598,12 +1591,11 @@ export const site: SiteContent = {
               "name": "Profesional",
               "tagline": "Untuk agensi dan tim yang banyak data",
               "price": "$149",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "500,000 catatan / bulan",
               "features": [
                 "Segalanya dalam Pertumbuhan",
                 "500,000 catatan untuk 1 bulan",
-                "Pembayaran satu kali — tanpa perpanjangan otomatis",
                 "Hingga 50 kata kunci per tugas"
               ],
               "ctaLabel": "Jadilah Profesional",
@@ -1611,7 +1603,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Pembayaran satu kali mencakup satu bulan alami — paket pada tab ini tidak diperpanjang secara otomatis. Catatan adalah satu baris bisnis yang dikumpulkan dari Google Maps; penyetelan ulang penggunaan pada catatan 1 dan yang tidak terpakai tidak akan diperpanjang.",
+          "quotaNote": "Catatan adalah satu baris bisnis yang dikumpulkan dari Google Maps; penyetelan ulang penggunaan pada catatan 1 dan yang tidak terpakai tidak akan diperpanjang.",
           "compare": {
             "lead": "Paket Scraper Online — ekstraksi cloud, dihargai berdasarkan rekor.",
             "volume": "Catatan per bulan",
@@ -1681,22 +1673,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Berlaku untuk kuota catatan bulanan MapExporter Pengumpul online.",
             "successTitle": "Paket diaktifkan",
-            "successDescription": "Paket satu kali 1 bulan Anda sudah aktif. Scraper Online mengambilnya pada penyegaran kuota berikutnya."
+            "successDescription": "Paket Anda aktif. Anda dapat melanjutkan dengan kuota baru."
           }
         },
         "extension": {
           "name": "Ekstensi",
           "shortName": "Ekstensi",
-          "switchMeta": "Dari {price} · satu kali",
+          "switchMeta": "Mulai {price}",
           "unit": "catatan",
           "eyebrow": "Rencana perluasan",
           "title": "Ekstraksi browser, diberi harga berdasarkan catatan",
           "description": "Setiap baris yang dikumpulkan ekstensi — bisnis, ulasan, atau foto — dihitung sebagai satu catatan. Semua paket mencakup ulasan, foto, dan tugas batch; paket berbayar mengekspor semua kolom 36, termasuk email dan pengayaan sosial.",
-          "billingChips": [
-            "Pembayaran satu kali",
-            "1 bulan akses",
-            "Tidak ada perpanjangan otomatis"
-          ],
+          "billingChips": ["Tingkat gratis di setiap produk","Direset pada tanggal 1","Ketentuan terlihat sebelum membayar"],
           "cards": [
             {
               "id": "free",
@@ -1722,7 +1710,7 @@ export const site: SiteContent = {
               "name": "Pro",
               "tagline": "Untuk pekerja lepas dan saluran prospek yang sedang berkembang",
               "price": "$39",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "100,000 catatan / bulan",
               "features": [
                 "Semuanya Gratis",
@@ -1740,7 +1728,7 @@ export const site: SiteContent = {
               "name": "Bisnis",
               "tagline": "Untuk agensi dan tim yang banyak data",
               "price": "$99",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "500,000 catatan / bulan",
               "features": [
                 "Semuanya di Pro",
@@ -1829,22 +1817,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Berlaku untuk kuota bulanan ekstensi browser MapExporter.",
             "successTitle": "Paket diaktifkan",
-            "successDescription": "Paket satu kali 1 bulan Anda sudah aktif. Ekstensi mengambilnya pada penyegaran kuota berikutnya."
+            "successDescription": "Paket Anda aktif. Anda dapat melanjutkan dengan kuota baru."
           }
         },
         "api": {
           "name": "API & MCP",
           "shortName": "API & MCP",
-          "switchMeta": "Dari {price} · satu kali",
+          "switchMeta": "Mulai {price}",
           "unit": "permintaan",
           "eyebrow": "API rencana",
           "title": "Akses terprogram, diberi harga berdasarkan permintaan",
           "description": "Telusuri Google Maps bisnis dan ambil ulasannya dari aplikasi Anda melalui HTTP API sederhana. Setiap panggilan yang berhasil dihitung sebagai satu permintaan, meskipun tidak ada hasil atau sebagian data yang dikembalikan.",
-          "billingChips": [
-            "Pembayaran satu kali",
-            "Mencakup satu bulan alami",
-            "Tidak ada perpanjangan otomatis"
-          ],
+          "billingChips": ["Tingkat gratis di setiap produk","Direset pada tanggal 1","Ketentuan terlihat sebelum membayar"],
           "cards": [
             {
               "id": "free",
@@ -1871,12 +1855,11 @@ export const site: SiteContent = {
               "name": "Dasar",
               "tagline": "Untuk prototipe dan integrasi ringan",
               "price": "$15",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "1,000 permintaan / bulan",
               "features": [
                 "Semuanya Gratis",
                 "1,000 permintaan untuk 1 bulan",
-                "Pembayaran satu kali — tanpa perpanjangan otomatis",
                 "JSON tanggapan"
               ],
               "ctaLabel": "Dapatkan Dasar",
@@ -1889,12 +1872,11 @@ export const site: SiteContent = {
               "name": "Profesional",
               "tagline": "Untuk integrasi produksi",
               "price": "$65",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "5,000 permintaan / bulan",
               "features": [
                 "Semuanya dalam Dasar",
                 "5,000 permintaan untuk 1 bulan",
-                "Pembayaran satu kali — tanpa perpanjangan otomatis",
                 "JSON tanggapan"
               ],
               "ctaLabel": "Jadilah Profesional",
@@ -1907,12 +1889,11 @@ export const site: SiteContent = {
               "name": "Bisnis",
               "tagline": "Untuk produk yang dibuat berdasarkan data MapExporter",
               "price": "$115",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "10,000 permintaan / bulan",
               "features": [
                 "Semuanya Profesional",
                 "10,000 permintaan untuk 1 bulan",
-                "Pembayaran satu kali — tanpa perpanjangan otomatis",
                 "JSON tanggapan"
               ],
               "ctaLabel": "Dapatkan Bisnis",
@@ -1925,12 +1906,11 @@ export const site: SiteContent = {
               "name": "Skala",
               "tagline": "Untuk operasi data bervolume tinggi",
               "price": "$365",
-              "periodLabel": "satu kali · 1 bulan",
+              "periodLabel": "1 bulan",
               "quota": "50,000 permintaan / bulan",
               "features": [
                 "Segalanya dalam Bisnis",
                 "50,000 permintaan untuk 1 bulan",
-                "Pembayaran satu kali — tanpa perpanjangan otomatis",
                 "JSON tanggapan"
               ],
               "ctaLabel": "Dapatkan Skala",
@@ -1938,7 +1918,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Pembayaran satu kali mencakup satu bulan alami — paket pada tab ini tidak diperpanjang secara otomatis. Setiap panggilan API atau MCP yang berhasil dihitung sebagai satu permintaan, termasuk hasil yang kosong dan sebagian; panggilan gagal tidak dihitung. Penyetelan ulang penggunaan pada 1 dan permintaan yang tidak digunakan tidak akan diperpanjang.",
+          "quotaNote": "Setiap panggilan API atau MCP yang berhasil dihitung sebagai satu permintaan, termasuk hasil yang kosong dan sebagian; panggilan gagal tidak dihitung. Penyetelan ulang penggunaan pada 1 dan permintaan yang tidak digunakan tidak akan diperpanjang.",
           "compare": {
             "lead": "API paket — akses terprogram, diberi harga berdasarkan permintaan.",
             "volume": "Permintaan per bulan",
@@ -2018,7 +1998,7 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Berlaku untuk kuota permintaan bulanan MapExporter API.",
             "successTitle": "Paket diaktifkan",
-            "successDescription": "Paket satu kali 1 bulan Anda sudah aktif. Kunci API Anda mengambil kuota baru pada permintaan berikutnya."
+            "successDescription": "Paket Anda aktif. Anda dapat melanjutkan dengan kuota baru."
           }
         }
       },
@@ -2095,16 +2075,16 @@ export const site: SiteContent = {
         },
         "items": {
           "channels": {
-            "title": "PayPal",
-            "body": "Bayar paket apa pun melalui PayPal. Selesaikan pembayaran Anda di PayPal dan kembali ke sini untuk mengaktifkan paket Anda."
+            "title": "Stripe / ClinkBill",
+            "body": "Pilih metode Stripe atau ClinkBill yang tersedia untuk paket Anda."
           },
           "cadence": {
-            "title": "Pembayaran satu kali",
-            "body": "Setiap paket berbayar mencakup satu bulan alami. Bayar sekali tanpa biaya otomatis; beli lagi saat Anda membutuhkan satu bulan lagi."
+            "title": "Pembayaran dan perpanjangan",
+            "body": "Setiap paket menampilkan pembayaran sekali atau perpanjangan otomatis. Kelola perpanjangan dan metode pembayaran di Dashboard → Langganan. Setelah dibatalkan, akses berbayar tetap berlaku hingga kedaluwarsa."
           },
           "upgrade": {
             "title": "Tingkatkan dengan membayar selisihnya",
-            "body": "Pindahkan paket aktif ke tingkat lebih tinggi yang memenuhi syarat melalui penyedia pembayaran Anda saat ini. Tanggal kedaluwarsa dan penggunaan Anda sejauh ini tidak berubah."
+            "body": "Nilai sisa paket diperhitungkan sebagai potongan harga satu periode penuh paket lebih tinggi. Periode baru dimulai setelah pembayaran dan perubahan berhasil. Pemakaian bulan ini tetap dipertahankan."
           },
           "independent": {
             "title": "Rencana mandiri",
@@ -2127,19 +2107,20 @@ export const site: SiteContent = {
         "button": "Tingkatkan · {amount}",
         "title": "Tingkatkan paket Anda",
         "confirm": "Konfirmasikan peningkatan",
-        "oneTime": "Perbedaan satu kali melalui {channel}. Tanggal kedaluwarsa Anda tetap {date}.",
-        "autoRenew": "Selisihnya akan langsung dibebankan melalui {channel}. Tanggal kedaluwarsa Anda tetap {date}; pembaruan di masa mendatang menggunakan harga paket baru.",
+        "oneTime": "Bayar satu periode baru penuh melalui {channel}, dikurangi nilai sisa paket. Perkiraan kedaluwarsa baru: {date}. Pemakaian bulan ini tetap dipertahankan.",
+        "autoRenew": "Harga satu periode penuh dikurangi nilai sisa akan ditagih segera melalui {channel}. Perkiraan kedaluwarsa baru: {date}. Perpanjangan berikutnya memakai harga baru; pemakaian bulan ini tetap dipertahankan.",
         "pendingTitle": "Menunggu peningkatan Anda",
         "pendingDescription": "Penyedia pembayaran Anda sedang menerapkan peningkatan. Paket Anda saat ini tetap aktif hingga dikonfirmasi.",
         "successTitle": "Paket ditingkatkan",
-        "successDescription": "Kuota baru Anda sudah aktif. Tanggal kedaluwarsa Anda tetap {date}.",
+        "successDescription": "Kuota baru aktif. Periode baru berakhir pada {date}. Pemakaian bulan ini tetap dipertahankan.",
         "quoteFailed": "Tidak dapat memuat harga peningkatan Anda. Segarkan halaman untuk mencoba lagi.",
         "failed": "Peningkatan versi Anda tidak dapat dikonfirmasi. Segarkan halaman untuk memeriksa paket Anda sebelum mencoba lagi.",
         "reasons": {
           "no_active_subscription": "Paket Anda tidak lagi aktif. Segarkan halaman untuk memilih paket.",
           "not_higher_tier": "Pilih tingkatan yang lebih tinggi untuk ditingkatkan, atau tunggu hingga paket Anda habis masa berlakunya untuk mengubah tingkatan.",
           "non_positive_diff": "Nilai paket Anda yang tersisa tidak lebih rendah dari tingkatan ini. Anda dapat mengubah tingkatan setelah paket Anda berakhir.",
-          "channel_unavailable": "Peningkatan versi tidak tersedia dengan metode pembayaran Anda saat ini. Anda dapat mengubah rencana setelah habis masa berlakunya."
+          "channel_unavailable": "Metode pembayaran saat ini tidak mendukung upgrade. Untuk PayPal, tunggu hingga kedaluwarsa lalu pilih Stripe atau ClinkBill.",
+          renewal_resume_required: "Aktifkan kembali perpanjangan otomatis di penyedia pembayaran, lalu muat ulang halaman ini untuk upgrade."
         }
       },
       "faq": {
@@ -2166,11 +2147,11 @@ export const site: SiteContent = {
           },
           {
             "question": "Apakah paket saya akan diperpanjang secara otomatis?",
-            "answer": "Tidak. Semua paket adalah pembayaran satu kali PayPal yang mencakup satu bulan alami. Ketika paket Anda habis masa berlakunya, Anda kembali ke tingkat gratis. Beli lagi untuk melanjutkan dengan paket berbayar."
+            "answer": "Periksa ketentuan sebelum membayar. Paket sekali bayar tidak diperpanjang. Paket otomatis terus diperpanjang hingga dibatalkan di Dashboard → Langganan → Kelola langganan. Akses berbayar tetap berlaku hingga kedaluwarsa."
           },
           {
             "question": "Bisakah saya beralih antar tingkatan?",
-            "answer": "Anda dapat meningkatkan paket aktif ke tingkat lebih tinggi yang memenuhi syarat dengan membayar selisihnya melalui PayPal. Tanggal kedaluwarsa dan penggunaan Anda sejauh ini tidak berubah. Paket pada tab yang berbeda bersifat independen."
+            "answer": "Upgrade yang memenuhi syarat memotong nilai sisa dari harga satu periode penuh melalui penyedia saat ini. Kuota dan periode baru berlaku setelah pembayaran dan perubahan berhasil; pemakaian bulan ini tetap dipertahankan. Jika perpanjangan dibatalkan, aktifkan kembali di penyedia terlebih dahulu. Langganan PayPal tidak dapat di-upgrade periode ini; setelah kedaluwarsa, pilih Stripe atau ClinkBill."
           }
         ]
       },
@@ -5353,5 +5334,30 @@ export const clink: ClinkReturnContent = {
   "cancel": {
     "title": "Pembayaran dibatalkan",
     "description": "Tidak ada pembayaran yang diselesaikan. Anda dapat kembali dan memilih metode pembayaran lain."
+  }
+}
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "Pembayaran dikirimkan",
+      "description": "Kami sedang mengkonfirmasi pembayaran Anda. Tab asli akan diperbarui secara otomatis."
+    },
+    "confirmedCredits": {
+      "title": "Kredit ditambahkan",
+      "description": "Pembayaran Stripe Anda telah dikonfirmasi dan Kredit telah ditambahkan. Anda dapat kembali ke tab asli."
+    },
+    "confirmedSubscription": {
+      "title": "Paket diaktifkan",
+      "description": "Pembayaran Stripe Anda telah dikonfirmasi dan paket MapExporter Anda aktif. Anda dapat kembali ke tab asli."
+    },
+    "failed": {
+      "title": "Pembayaran perlu diperhatikan",
+      "description": "Kami tidak dapat mengkonfirmasi pesanan ini. Kembali ke tab asli dan coba lagi."
+    }
+  },
+  "cancel": {
+    "title": "Checkout ditutup",
+    "description": "Pesanan masih menunggu pembayaran. Kembali ke tab awal untuk memeriksa status. Anda masih dapat membayar di Stripe Checkout."
   }
 }

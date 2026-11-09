@@ -65,12 +65,13 @@ SUBSCRIPTION_UPGRADE_PURPOSE = "upgrade"
 
 
 class SubscriptionUpgradeQuoteReason(str, enum.Enum):
-    """升级报价不可升级原因（upgrade-quote 响应合同仅此四值）。"""
+    """升级报价不可升级原因。"""
 
     NO_ACTIVE_SUBSCRIPTION = "no_active_subscription"
     NOT_HIGHER_TIER = "not_higher_tier"
     NON_POSITIVE_DIFF = "non_positive_diff"
     CHANNEL_UNAVAILABLE = "channel_unavailable"
+    RENEWAL_RESUME_REQUIRED = "renewal_resume_required"
 
 
 class SubscriptionProductMetadata(BaseModel):

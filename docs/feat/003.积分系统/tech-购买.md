@@ -71,7 +71,7 @@ Credits 积分包作为 `ProductClass.RECHARGE = 2` 接入订单系统。商品�
 GET /api/client/credit/checkout-configs
 ```
 
-只服务前端展示与下单原样回传,不是订单最终落单快照。后端在 `check_product()` 内重新校验价格(订单侧职责,见 `@../004.订单系统`)。
+只服务前端展示与下单原样回传,不是订单最终落单快照。后端由 `OrderService.check_product()` 分发到 `UserCreditService.check_product()` 重新校验价格并生成快照。
 
 #### 顶层 `checkout_configs[]`
 
@@ -155,24 +155,24 @@ backend/src/app/services/credit_checkout_config_service.py
 
 - 从 `config_credit_product`、`config_credit_product_price`、`config_payment_channel` 读取启用配置。
 - 组装客户端需要的积分包列表。
-- 提供 `get_credit_checkout_config(product_id, channel_code)` 供订单侧 `check_product` 生成订单快照(订单侧调用,本域不实现 `check_product`)。
+- 提供 `get_credit_checkout_config(product_id, channel_code)` 供 `UserCreditService.check_product()` 核价并生成订单快照。
 - 缓存策略与现有支付配置一致,内存 TTL 3 分钟。
 
 ## 2. 与订单系统的契约面
 
-订单创建、`check_product` 校验、provider 创建支付、订单落库、履约加积分、回调幂等,均属 `@../004.订单系统`。本节只记录 Credits 商品接入订单系统的接口契约,便于商品侧与弹窗侧对齐。
+订单落库、支付渠道选择与回调幂等见 `@../004.订单系统`。Credits 域负责商品核价、订单商品快照和充值履约;本节记录其接入统一订单流程的接口契约。
 
 ### 2.1 下单请求字段(Credits 商品)
 
 下单走统一 `/api/client/order/create`(订单侧接口,不新建专用接口):
 
-| 字段 | 类型 | 必填 | 来源 | 作用 |
-| --- | --- | --- | --- | --- |
-| `product_class` | int | 是 | 前端写死 `2` | 声明本次下单是 Credits 充值商品 |
-| `product_id` | string | 是 | 当前选中的积分包 | 定位商品配置 |
-| `payment_method` | string | 是 | 当前选中渠道,`paypal` 或 `telegram_stars` | 定位渠道配置和 provider |
-| `currency` | string | 是 | `checkout-configs` 返回值 | 参与价格校验(订单侧) |
-| `amount` | int | 是 | `checkout-configs` 返回值 | 参与价格校验(订单侧) |
+| 字段             | 类型   | 必填 | 来源                                      | 作用                            |
+| ---------------- | ------ | ---- | ----------------------------------------- | ------------------------------- |
+| `product_class`  | int    | 是   | 前端写死 `2`                              | 声明本次下单是 Credits 充值商品 |
+| `product_id`     | string | 是   | 当前选中的积分包                          | 定位商品配置                    |
+| `payment_method` | string | 是   | 当前选中渠道,`paypal` 或 `telegram_stars` | 定位渠道配置和 provider         |
+| `currency`       | string | 是   | `checkout-configs` 返回值                 | 参与 Credits 商品核价           |
+| `amount`         | int    | 是   | `checkout-configs` 返回值                 | 参与 Credits 商品核价           |
 
 规则:
 
@@ -183,7 +183,7 @@ backend/src/app/services/credit_checkout_config_service.py
 
 ### 2.2 价格过期错误
 
-订单侧 `check_product()` 比较客户端提交的 `currency/amount` 与后端当前配置,不一致时返回 `PAYMENT_PRICE_UPDATED`(code `21005`),并把最新价格回给前端:
+`UserCreditService.check_product()` 比较客户端提交的 `currency/amount` 与后端当前配置,不一致时返回 `PAYMENT_PRICE_UPDATED`(code `21005`),并把最新价格回给前端:
 
 ```json
 {
@@ -201,14 +201,14 @@ backend/src/app/services/credit_checkout_config_service.py
 
 ### 2.3 履约加积分(Credits 侧契约)
 
-支付成功履约由订单侧 `OrderService` 解析订单商品快照,在订单事务内调用 Credits 侧的加余额方法。Credits 侧只提供加余额能力,不实现订单履约编排:
+支付成功后,`OrderService` 按商品类别调用 `UserCreditService.fulfill_paid_order(db, order)`。Credits 域在订单持有的同一事务内解析商品快照、确定到账积分和流水内容,再调用既有 `add_balance_in_session()`;订单域只负责状态抢占与提交。
 
-现役入口为 `UserCreditService.check_product` 与 `add_balance_in_session(db, *, user_id, amount, reason, metadata_json=None)`；后者不接收 `resource_key`，具体签名以 [user_credit_service.py](../../../backend/src/app/services/user_credit_service.py) 为准。
+公共余额方法的当前签名以 [user_credit_service.py](../../../backend/src/app/services/user_credit_service.py) 为准。
 
 规则:
 
 - `OrderService.check_product()` 遇到 `RECHARGE` 时调用 `user_credit_service.check_product()`。
-- 充值履约在订单事务内调用 `user_credit_service.add_balance_in_session()`。
+- 充值履约入口为 `backend/src/app/services/user_credit_service.py` 的 `UserCreditService.fulfill_paid_order()`。
 - 到账成功后 `user_credit_accounts.balance += credits_amount`;账户缺失时在履约内补建再加积分。
 - `user_credit_logs` 只记录本次余额变化,不保存 `dedupe_key`。
 - 订单回调重复到达由 `orders.callback_status` 抢占保证不重复加积分(订单侧机制)。

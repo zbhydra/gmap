@@ -23,6 +23,8 @@ const NOINDEX_ROUTES = [
   'paypal/success/',
   'clink/cancel/',
   'clink/success/',
+  'stripe/cancel/',
+  'stripe/success/',
   'extension-login/',
   'dashboard/',
   'dashboard/history/',
@@ -292,21 +294,21 @@ test('Pricing copy keeps the three product-line tabs and checkout shell fields d
     // Free 引导安装，Pro/Business 接购买链路
     assert.deepEqual(extensionCards.map(card => card.status), ['free', 'buyable', 'buyable'])
     assert.deepEqual(extensionCards.map(card => card.productId), [null, 'maps_extension_pro', 'maps_extension_business'])
-    // Online 线五档 SKU 与一次性口径
+    // Online 线五档 SKU；静态周期不推断商品续费方式
     assert.deepEqual(
       content.tabs.online.cards.map(card => card.productId),
       [null, 'online_lite', 'online_basic', 'online_growth', 'online_pro']
     )
     for (const card of content.tabs.online.cards.filter(item => item.status === 'buyable')) {
-      assert.match(card.periodLabel, /one-time/)
+      assert.equal(card.periodLabel, content.plans.billingPeriodMonthly)
     }
-    // API 线五档 SKU 与一次性口径
+    // API 线五档 SKU；运行时按商品配置展示计费方式
     assert.deepEqual(
       content.tabs.api.cards.map(card => card.productId),
       [null, 'api_basic', 'api_professional', 'api_business', 'api_scale']
     )
     for (const card of content.tabs.api.cards.filter(item => item.status === 'buyable')) {
-      assert.match(card.periodLabel, /one-time/)
+      assert.equal(card.periodLabel, content.plans.billingPeriodMonthly)
     }
     assert.ok(content.faq.items.length > 0)
   } finally {
@@ -3219,6 +3221,13 @@ test('Order checkout protocol parses payment URLs and classifies paid callback s
       null
     )
 
+    const stripeUrl = 'https://checkout.stripe.com/c/pay/cs_test_1'
+    assert.equal(module.readPaymentUrl({ checkoutUrl: stripeUrl }, 'stripe'), stripeUrl)
+    for (const checkoutUrl of ['http://checkout.stripe.com/pay', 'https://checkout.stripe.com.evil.test/pay', 'https://pay.stripe.com/pay', 'https://t.me/pay']) {
+      assert.equal(module.readPaymentUrl({ checkoutUrl }, 'stripe'), null)
+    }
+    assert.equal(module.readPaymentUrl({ url: stripeUrl }, 'stripe'), null)
+
     const baseStatus = {
       order_no: 'ORD-CREDIT-1',
       product_class: 2,
@@ -3386,9 +3395,10 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
   })
   const buyableCards = new Map()
   for (const productId of ['maps_extension_pro', 'maps_extension_business']) {
-    buyableCards.set(productId, { line: 'extension', buy: makeElement(), error: makeElement() })
+    buyableCards.set(productId, { line: 'extension', buy: makeElement(), error: makeElement(), resume: makeElement() })
   }
   const elements = {
+    billingLabels: [],
     accountError: makeElement(),
     plansStatus: makeElement(),
     buyableCards
@@ -3405,6 +3415,7 @@ test('Pricing maps loader rejects bad configs and ignores stale anonymous respon
     token: null,
     user: null,
     plans: new Map(),
+    upgradeQuotes: new Map(),
     loadVersion: 0,
     isExtensionSource: false
   }

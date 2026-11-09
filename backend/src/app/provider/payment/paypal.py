@@ -121,7 +121,6 @@ class PayPalPaymentProvider(PaymentBase):
     """PayPal Checkout 支付 provider。"""
 
     provider_name = PAYPAL_PAYMENT_METHOD
-    supports_upgrade_checkout = True
 
     def __init__(self, config: dict[str, object] | None = None) -> None:
         self.config = self._parse_provider_config(config)

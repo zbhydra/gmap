@@ -1485,7 +1485,7 @@ export const site: SiteContent = {
     "pricing": {
       "seo": {
         "title": "Preços – Planos Online, Extensão e API | MapExporter",
-        "description": "MapExporter planos para todas as superfícies: Extrator Online de $19, Extensão do navegador de $39, e API de $15. Camadas gratuitas incluídas em todos os produtos – planos mensais naturais únicos no Online e API, assinaturas mensais no Extension."
+        "description": "Planos MapExporter: extrator online a partir de $19, extensão de $39 e API de $15. Todos incluem uma opção gratuita. Confira as condições de pagamento e renovação antes de comprar."
       },
       "hero": {
         "kicker": "Preços",
@@ -1497,8 +1497,8 @@ export const site: SiteContent = {
         "lead": "Escolha a superfície que se adapta ao seu fluxo de trabalho - extrator on-line na nuvem, extensão do navegador ou HTTP API - e escolha o volume mensal. Atualize ou compre nesta página em minutos.",
         "meta": [
           "Nível gratuito em todos os produtos",
-          "Pague com PayPal",
-          "Faça upgrade pagando a diferença"
+          "Stripe / ClinkBill",
+          "Atualize seu plano"
         ],
         "switchLabel": "Linha de produtos"
       },
@@ -1507,16 +1507,12 @@ export const site: SiteContent = {
         "online": {
           "name": "Extrator online",
           "shortName": "Online",
-          "switchMeta": "De {price} · único",
+          "switchMeta": "A partir de {price}",
           "unit": "registros",
           "eyebrow": "Planos de extrator on-line",
           "title": "Extração de nuvem, precificada por registros",
           "description": "Execute o mecanismo MapExporter em nossa infraestrutura. Um registro é uma linha comercial coletada. Os planos pagos incluem enriquecimento opcional de e-mail e mídia social sem custo extra de registro.",
-          "billingChips": [
-            "Pagamento único",
-            "Cobre um mês natural",
-            "Sem renovação automática"
-          ],
+          "billingChips": ["Nível gratuito em todos os produtos","Reinicia no 1st","Condições exibidas antes do pagamento"],
           "cards": [
             {
               "id": "free",
@@ -1543,12 +1539,11 @@ export const site: SiteContent = {
               "name": "Lite",
               "tagline": "Para exportações pontuais ocasionais",
               "price": "$19",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "20,000 registros/mês",
               "features": [
                 "Tudo de graça",
                 "20,000 registros para 1 mês",
-                "Pagamento único – sem renovação automática",
                 "Até 5 palavras-chave por tarefa",
                 "E-mail e enriquecimento social, ativado por padrão e opcional"
               ],
@@ -1562,12 +1557,11 @@ export const site: SiteContent = {
               "name": "Básico",
               "tagline": "Para coleta semanal constante de leads",
               "price": "$49",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "80,000 registros/mês",
               "features": [
                 "Tudo em Lite",
                 "80,000 registros para 1 mês",
-                "Pagamento único – sem renovação automática",
                 "Até 10 palavras-chave por tarefa"
               ],
               "ctaLabel": "Obtenha o básico",
@@ -1580,12 +1574,11 @@ export const site: SiteContent = {
               "name": "Crescimento",
               "tagline": "Para o crescimento de pipelines de leads",
               "price": "$99",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "250,000 registros/mês",
               "features": [
                 "Tudo em Básico",
                 "250,000 registros para 1 mês",
-                "Pagamento único – sem renovação automática",
                 "Até 20 palavras-chave por tarefa"
               ],
               "ctaLabel": "Obtenha crescimento",
@@ -1598,12 +1591,11 @@ export const site: SiteContent = {
               "name": "Profissional",
               "tagline": "Para agências e equipes com muitos dados",
               "price": "$149",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "500,000 registros/mês",
               "features": [
                 "Tudo em crescimento",
                 "500,000 registros para 1 mês",
-                "Pagamento único – sem renovação automática",
                 "Até 50 palavras-chave por tarefa"
               ],
               "ctaLabel": "Torne-se profissional",
@@ -1611,7 +1603,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Pagamento único cobrindo um mês natural – os planos nesta guia não são renovados automaticamente. Um registro é uma linha comercial coletada de Google Maps; as redefinições de uso no 1st e os registros não utilizados não são transferidos.",
+          "quotaNote": "Um registro é uma linha comercial coletada de Google Maps; as redefinições de uso no 1st e os registros não utilizados não são transferidos.",
           "compare": {
             "lead": "Planos Extrator online – extração em nuvem, precificados por registros.",
             "volume": "Registros por mês",
@@ -1681,22 +1673,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Aplica-se à cota de registro mensal do Extrator online MapExporter.",
             "successTitle": "Plano ativado",
-            "successDescription": "Seu plano único de 1 meses está ativo. O Extrator online o pega na próxima atualização de cota."
+            "successDescription": "Seu plano está ativo. Você pode continuar com sua nova cota."
           }
         },
         "extension": {
           "name": "Extensão",
           "shortName": "Extensão",
-          "switchMeta": "De {price} · único",
+          "switchMeta": "A partir de {price}",
           "unit": "registros",
           "eyebrow": "Planos de extensão",
           "title": "Extração do navegador, precificada por registros",
           "description": "Cada linha coletada pela extensão – uma empresa, um comentário ou uma foto – conta como um registro. Todos os planos incluem avaliações, fotos e tarefas em lote; planos pagos exportam todas as colunas 36, incluindo e-mail e enriquecimento social.",
-          "billingChips": [
-            "Pagamento único",
-            "1 mês de acesso",
-            "Sem renovação automática"
-          ],
+          "billingChips": ["Nível gratuito em todos os produtos","Reinicia no 1st","Condições exibidas antes do pagamento"],
           "cards": [
             {
               "id": "free",
@@ -1722,7 +1710,7 @@ export const site: SiteContent = {
               "name": "Pro",
               "tagline": "Para freelancers e pipelines de leads em crescimento",
               "price": "$39",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "100,000 registros/mês",
               "features": [
                 "Tudo de graça",
@@ -1740,7 +1728,7 @@ export const site: SiteContent = {
               "name": "Negócios",
               "tagline": "Para agências e equipes com muitos dados",
               "price": "$99",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "500,000 registros/mês",
               "features": [
                 "Tudo em Pró",
@@ -1829,22 +1817,18 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Aplica-se à cota mensal de extensão do navegador MapExporter.",
             "successTitle": "Plano ativado",
-            "successDescription": "Seu plano único de 1 meses está ativo. A extensão o seleciona na próxima atualização de cota."
+            "successDescription": "Seu plano está ativo. Você pode continuar com sua nova cota."
           }
         },
         "api": {
           "name": "API & MCP",
           "shortName": "API & MCP",
-          "switchMeta": "De {price} · único",
+          "switchMeta": "A partir de {price}",
           "unit": "solicitações",
           "eyebrow": "API planos",
           "title": "Acesso programático, cobrado por solicitações",
           "description": "Pesquise Google Maps empresas e obtenha suas avaliações em seus próprios aplicativos por meio de um simples HTTP API. Cada chamada bem-sucedida conta como uma solicitação, mesmo quando não retorna resultados ou dados parciais.",
-          "billingChips": [
-            "Pagamento único",
-            "Cobre um mês natural",
-            "Sem renovação automática"
-          ],
+          "billingChips": ["Nível gratuito em todos os produtos","Reinicia no 1st","Condições exibidas antes do pagamento"],
           "cards": [
             {
               "id": "free",
@@ -1871,12 +1855,11 @@ export const site: SiteContent = {
               "name": "Básico",
               "tagline": "Para protótipos e integrações leves",
               "price": "$15",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "1,000 solicitações/mês",
               "features": [
                 "Tudo de graça",
                 "1,000 solicitações para 1 mês",
-                "Pagamento único – sem renovação automática",
                 "JSON respostas"
               ],
               "ctaLabel": "Obtenha o básico",
@@ -1889,12 +1872,11 @@ export const site: SiteContent = {
               "name": "Profissional",
               "tagline": "Para integrações de produção",
               "price": "$65",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "5,000 solicitações/mês",
               "features": [
                 "Tudo em Básico",
                 "5,000 solicitações para 1 mês",
-                "Pagamento único – sem renovação automática",
                 "JSON respostas"
               ],
               "ctaLabel": "Torne-se profissional",
@@ -1907,12 +1889,11 @@ export const site: SiteContent = {
               "name": "Negócios",
               "tagline": "Para produtos baseados em dados MapExporter",
               "price": "$115",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "10,000 solicitações/mês",
               "features": [
                 "Tudo em Profissional",
                 "10,000 solicitações para 1 mês",
-                "Pagamento único – sem renovação automática",
                 "JSON respostas"
               ],
               "ctaLabel": "Faça negócios",
@@ -1925,12 +1906,11 @@ export const site: SiteContent = {
               "name": "Escala",
               "tagline": "Para operações de dados de alto volume",
               "price": "$365",
-              "periodLabel": "único · 1 mês",
+              "periodLabel": "1 mês",
               "quota": "50,000 solicitações/mês",
               "features": [
                 "Tudo nos negócios",
                 "50,000 solicitações para 1 mês",
-                "Pagamento único – sem renovação automática",
                 "JSON respostas"
               ],
               "ctaLabel": "Obtenha escala",
@@ -1938,7 +1918,7 @@ export const site: SiteContent = {
               "featured": false
             }
           ],
-          "quotaNote": "Pagamento único cobrindo um mês natural – os planos nesta guia não são renovados automaticamente. Cada chamada API ou MCP bem-sucedida conta como uma solicitação, incluindo resultados vazios e parciais; chamadas com falha não são contadas. As redefinições de uso no 1st e as solicitações não utilizadas não são transferidas.",
+          "quotaNote": "Cada chamada API ou MCP bem-sucedida conta como uma solicitação, incluindo resultados vazios e parciais; chamadas com falha não são contadas. As redefinições de uso no 1st e as solicitações não utilizadas não são transferidas.",
           "compare": {
             "lead": "Planos API — acesso programático, com preços por solicitação.",
             "volume": "Solicitações por mês",
@@ -2018,7 +1998,7 @@ export const site: SiteContent = {
           "checkout": {
             "usageNotice": "Aplica-se à cota de solicitação mensal MapExporter API.",
             "successTitle": "Plano ativado",
-            "successDescription": "Seu plano único de 1 meses está ativo. Sua chave API pega a nova cota na próxima solicitação."
+            "successDescription": "Seu plano está ativo. Você pode continuar com sua nova cota."
           }
         }
       },
@@ -2095,16 +2075,16 @@ export const site: SiteContent = {
         },
         "items": {
           "channels": {
-            "title": "PayPal",
-            "body": "Pague qualquer plano através de PayPal. Conclua seu pagamento em PayPal e retorne aqui para ativar seu plano."
+            "title": "Stripe / ClinkBill",
+            "body": "Escolha entre os métodos Stripe e ClinkBill disponíveis para seu plano."
           },
           "cadence": {
-            "title": "Pagamento único",
-            "body": "Cada plano pago cobre um mês natural. Pague uma vez sem cobranças automáticas; compre novamente quando precisar de mais um mês."
+            "title": "Pagamento e renovação",
+            "body": "Cada plano informa se o pagamento é único ou se há renovação automática. Gerencie a renovação e a forma de pagamento em Dashboard → Assinaturas. Ao cancelar, o acesso pago continua até o vencimento."
           },
           "upgrade": {
             "title": "Faça upgrade pagando a diferença",
-            "body": "Mova um plano ativo para um nível superior elegível por meio de seu provedor de pagamento atual. Sua data de validade e uso até agora permanecem inalterados."
+            "body": "O valor restante do plano é descontado do preço de um período completo do plano superior. O novo período começa após a confirmação do pagamento e da mudança. O uso deste mês é mantido."
           },
           "independent": {
             "title": "Planos independentes",
@@ -2127,19 +2107,20 @@ export const site: SiteContent = {
         "button": "Atualizar · {amount}",
         "title": "Atualize seu plano",
         "confirm": "Confirmar atualização",
-        "oneTime": "Diferença única via {channel}. Sua data de validade permanece {date}.",
-        "autoRenew": "A diferença será cobrada imediatamente via {channel}. Sua data de validade permanece {date}; renovações futuras usam o novo preço do plano.",
+        "oneTime": "Pague um período completo via {channel}, com desconto do valor restante do plano. Novo vencimento estimado: {date}. O uso deste mês é mantido.",
+        "autoRenew": "Será cobrado imediatamente via {channel} o período completo menos o valor restante do plano. Novo vencimento estimado: {date}. As renovações usarão o novo preço e o uso deste mês é mantido.",
         "pendingTitle": "Aguardando sua atualização",
         "pendingDescription": "Seu provedor de pagamento está aplicando a atualização. Seu plano atual permanece ativo até ser confirmado.",
         "successTitle": "Plano atualizado",
-        "successDescription": "Sua nova cota está ativa. Sua data de validade permanece {date}.",
+        "successDescription": "Sua nova cota está ativa. O novo período termina em {date}. O uso deste mês é mantido.",
         "quoteFailed": "Não foi possível carregar o preço do upgrade. Atualize a página para tentar novamente.",
         "failed": "Não foi possível confirmar sua atualização. Atualize a página para verificar seu plano antes de tentar novamente.",
         "reasons": {
           "no_active_subscription": "Seu plano não está mais ativo. Atualize a página para escolher um plano.",
           "not_higher_tier": "Escolha um nível mais alto para atualizar ou espere até que seu plano expire para alterar os níveis.",
           "non_positive_diff": "O valor restante do seu plano não é inferior a este nível. Você pode alterar os níveis depois que seu plano expirar.",
-          "channel_unavailable": "Os upgrades não estão disponíveis com sua forma de pagamento atual. Você pode alterar os planos após o vencimento."
+          "channel_unavailable": "Seu método de pagamento não permite upgrades. Para PayPal, aguarde o vencimento e escolha Stripe ou ClinkBill.",
+          renewal_resume_required: "Reative a renovação automática no provedor e atualize esta página para fazer o upgrade."
         }
       },
       "faq": {
@@ -2166,11 +2147,11 @@ export const site: SiteContent = {
           },
           {
             "question": "Meu plano será renovado automaticamente?",
-            "answer": "Não. Todos os planos são pagamentos únicos de PayPal cobrindo um mês natural. Quando seu plano expirar, você retornará ao nível gratuito. Compre novamente para continuar com um plano pago."
+            "answer": "Confira as condições antes de pagar. Planos de pagamento único não são renovados. Planos com renovação automática continuam até o cancelamento em Dashboard → Assinaturas → Gerenciar assinatura. O acesso pago permanece até o vencimento."
           },
           {
             "question": "Posso alternar entre níveis?",
-            "answer": "Você pode atualizar um plano ativo para um nível superior qualificado pagando a diferença através de PayPal. Sua data de validade e uso até agora permanecem inalterados. Os planos em guias diferentes são independentes."
+            "answer": "Upgrades elegíveis descontam o valor restante do preço de um período completo pelo provedor atual. A nova cota e o período só entram em vigor após o pagamento e a mudança; o uso do mês é mantido. Se cancelou a renovação, reative-a primeiro no provedor. Assinaturas PayPal não podem mudar neste período; após o vencimento, escolha Stripe ou ClinkBill."
           }
         ]
       },
@@ -5353,5 +5334,30 @@ export const clink: ClinkReturnContent = {
   "cancel": {
     "title": "Pagamento cancelado",
     "description": "Nenhum pagamento foi concluído. Você pode devolver e escolher outra forma de pagamento."
+  }
+}
+
+export const stripe: ClinkReturnContent = {
+  "success": {
+    "waiting": {
+      "title": "Pagamento enviado",
+      "description": "Estamos confirmando seu pagamento. A guia original será atualizada automaticamente."
+    },
+    "confirmedCredits": {
+      "title": "Créditos adicionados",
+      "description": "Seu pagamento Stripe foi confirmado e os créditos foram adicionados. Você pode retornar à guia original."
+    },
+    "confirmedSubscription": {
+      "title": "Plano ativado",
+      "description": "Seu pagamento Stripe está confirmado e seu plano MapExporter está ativo. Você pode retornar à guia original."
+    },
+    "failed": {
+      "title": "Pagamento precisa de atenção",
+      "description": "Não foi possível confirmar este pedido. Volte para a guia original e tente novamente."
+    }
+  },
+  "cancel": {
+    "title": "Checkout encerrado",
+    "description": "O pedido continua aguardando pagamento. Volte à aba original para consultar o status. Você ainda pode pagar no Stripe Checkout."
   }
 }

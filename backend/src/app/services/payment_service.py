@@ -7,7 +7,11 @@
 import json
 from typing import Any
 
-from app.constants.payment import CLINK_PAYMENT_METHOD, PAYPAL_PAYMENT_METHOD
+from app.constants.payment import (
+    CLINK_PAYMENT_METHOD,
+    PAYPAL_PAYMENT_METHOD,
+    STRIPE_PAYMENT_METHOD,
+)
 from app.exceptions.common_exception import AppCommonException
 from app.exceptions.payment_exception import (
     PaymentProcessingError,
@@ -17,6 +21,7 @@ from app.i18n.common_code import CommonCode
 from app.provider.payment.clink import ClinkPaymentProvider
 from app.provider.payment.payment_base import PaymentBase, PaymentProviderError
 from app.provider.payment.paypal import PayPalPaymentProvider
+from app.provider.payment.stripe import StripePaymentProvider
 from app.provider.payment.tg_star import (
     TELEGRAM_STARS_PAYMENT_METHOD,
     TgStarPaymentProvider,
@@ -25,9 +30,24 @@ from app.services.config_payment_channel_service import (
     config_payment_channel_service,
 )
 
+_PROVIDER_TYPES: dict[str, type[PaymentBase]] = {
+    TELEGRAM_STARS_PAYMENT_METHOD: TgStarPaymentProvider,
+    PAYPAL_PAYMENT_METHOD: PayPalPaymentProvider,
+    CLINK_PAYMENT_METHOD: ClinkPaymentProvider,
+    STRIPE_PAYMENT_METHOD: StripePaymentProvider,
+}
+
 
 class PaymentService:
     """支付 provider 服务。"""
+
+    def validate_order_cancellation(
+        self, payment_method: str | None, *, order_no: str
+    ) -> None:
+        """本地取消不读取凭据；未知历史渠道沿用默认无额外动作。"""
+
+        provider_type = _PROVIDER_TYPES.get(payment_method or "", PaymentBase)
+        provider_type.validate_order_cancellation(order_no=order_no)
 
     async def get_provider(self, payment_method: str) -> PaymentBase:
         """读取渠道配置并创建支付 provider。"""
@@ -80,11 +100,7 @@ class PaymentService:
         """用已解析渠道配置构造对应 provider。"""
 
         try:
-            if channel_code == CLINK_PAYMENT_METHOD:
-                return ClinkPaymentProvider(channel_config)
-            if channel_code == TELEGRAM_STARS_PAYMENT_METHOD:
-                return TgStarPaymentProvider(channel_config)
-            return PayPalPaymentProvider(channel_config)
+            return _PROVIDER_TYPES[channel_code](channel_config)
         except PaymentProviderError as exc:
             raise PaymentProcessingError(
                 code=CommonCode.PAYMENT_GATEWAY_ERROR,
@@ -97,11 +113,7 @@ class PaymentService:
 
     def is_supported_method(self, payment_method: str) -> bool:
         """判断支付方式是否已有 provider 实现。"""
-        return payment_method.strip() in {
-            TELEGRAM_STARS_PAYMENT_METHOD,
-            PAYPAL_PAYMENT_METHOD,
-            CLINK_PAYMENT_METHOD,
-        }
+        return payment_method.strip() in _PROVIDER_TYPES
 
     def _assert_supported_method(self, channel_code: str) -> None:
         """拒绝没有 provider 实现的支付渠道。"""

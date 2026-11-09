@@ -1,11 +1,4 @@
-"""用户 Credits 余额底座服务。
-
-本模块只负责用户 Credits 账户和余额流水：
-1. `get_balance` 读取当前余额。
-2. `add_balance` 独立事务增加余额并写正向流水。
-3. `cut_balance` 独立事务扣减余额并写负向流水。
-4. `add_balance_in_session` / `cut_balance_in_session` 供业务事务复用。
-"""
+"""用户 Credits 商品校验、充值履约与余额流水服务。"""
 
 from dataclasses import dataclass
 import json
@@ -19,7 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.constants.order import OrderCheckProductParam, OrderCreateParam, ProductClass
 from app.core.database import get_async_session
 from app.exceptions.common_exception import AppCommonException
+from app.exceptions.payment_exception import PaymentProcessingError
 from app.i18n.common_code import CommonCode
+from app.models.order_model import OrderModel
 from app.models.user_credit_account_model import UserCreditAccountModel
 from app.models.user_credit_log_model import UserCreditLogModel
 from app.services.credit_checkout_config_service import (
@@ -28,6 +23,8 @@ from app.services.credit_checkout_config_service import (
 )
 from app.utils.money import normalize_currency
 from app.utils.time import timestamp_now
+
+RECHARGE_PURCHASE_REASON = "recharge_purchase"
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,7 +45,7 @@ class CreditBalanceCutResult:
 
 
 class UserCreditService:
-    """用户 Credits 公共余额服务。"""
+    """用户 Credits 商品与公共余额服务。"""
 
     async def check_product(self, param: OrderCheckProductParam) -> OrderCreateParam:
         """校验 Credits 充值下单参数，并生成订单快照参数。"""
@@ -73,6 +70,76 @@ class UserCreditService:
             language=param.language,
             auto_renew=False,
             provider_sku=checkout_config.price.provider_sku,
+        )
+
+    async def fulfill_paid_order(self, db: AsyncSession, order: OrderModel) -> None:
+        """在订单事务内解析充值快照并增加余额、记录流水。"""
+
+        credits_amount = self._recharge_order_credits_amount(order)
+        await self.add_balance_in_session(
+            db,
+            user_id=order.user_id,
+            amount=credits_amount,
+            reason=RECHARGE_PURCHASE_REASON,
+            metadata_json=self._recharge_credit_metadata_json(
+                order,
+                credits_amount=credits_amount,
+            ),
+        )
+
+    def _recharge_order_credits_amount(self, order: OrderModel) -> int:
+        """从订单商品快照中读取到账 Credits 数量。"""
+
+        metadata = self._load_recharge_order_snapshot(order)
+        snapshot = metadata.get("product_snapshot")
+        if not isinstance(snapshot, dict):
+            raise PaymentProcessingError(
+                "credit_recharge_fulfillment: product_snapshot missing: "
+                f"order_no={order.order_no}, user_id={order.user_id}"
+            )
+        credits_amount = snapshot.get("credits_amount")
+        if not isinstance(credits_amount, int) or credits_amount <= 0:
+            raise PaymentProcessingError(
+                "credit_recharge_fulfillment: invalid credits_amount: "
+                f"order_no={order.order_no}, user_id={order.user_id}, "
+                f"credits_amount={credits_amount!r}"
+            )
+        return credits_amount
+
+    def _load_recharge_order_snapshot(self, order: OrderModel) -> dict[str, object]:
+        """解析 Credits 充值订单快照 JSON。"""
+
+        try:
+            metadata = json.loads(order.extra_metadata or "{}")
+        except json.JSONDecodeError as exc:
+            raise PaymentProcessingError(
+                "credit_recharge_fulfillment: invalid order extra_metadata json: "
+                f"order_no={order.order_no}, user_id={order.user_id}"
+            ) from exc
+        if not isinstance(metadata, dict):
+            raise PaymentProcessingError(
+                "credit_recharge_fulfillment: extra_metadata must be object: "
+                f"order_no={order.order_no}, user_id={order.user_id}"
+            )
+        return cast(dict[str, object], metadata)
+
+    def _recharge_credit_metadata_json(
+        self,
+        order: OrderModel,
+        *,
+        credits_amount: int,
+    ) -> str:
+        """生成充值到账流水 JSON 快照。"""
+
+        return json.dumps(
+            {
+                "order_no": order.order_no,
+                "product_id": order.product_id,
+                "product_name": order.product_name,
+                "credits_amount": credits_amount,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
         )
 
     async def get_balance(self, user_id: int) -> int:

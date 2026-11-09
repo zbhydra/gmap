@@ -16,7 +16,7 @@ import CapabilityAction from '../site/CapabilityAction.astro'
 import Icon from '../site/Icon.astro'
 import SoonBadge from '../site/SoonBadge.astro'
 import SplitWords from '../site/SplitWords.astro'
-import type { Locale } from '../../i18n/content'
+import { getContent, type Locale } from '../../i18n/content'
 import type {
   AccountContent,
   PricingBillingFactId,
@@ -46,6 +46,7 @@ interface Props {
 }
 
 const { locale, copy, accountCopy } = Astro.props
+const managementCopy = getContent(locale).dashboard.subscriptions
 const { hero, plansSection, compare, usage, billing, faq, cta } = copy
 
 const localePrefix = localePaths[locale] ? `/${localePaths[locale]}` : ''
@@ -189,6 +190,7 @@ const controllerCopy = {
   tabs: Object.fromEntries(TAB_IDS.map(tabId => [tabId, { checkout: copy.tabs[tabId].checkout }])),
   plans: copy.plans,
   upgrade: copy.upgrade,
+  management: { manageSubscription: managementCopy.manageSubscription, manageFailed: managementCopy.manageFailed },
   popupBlocked: accountCopy.creditPurchase.popupBlocked
 }
 ---
@@ -335,7 +337,7 @@ const controllerCopy = {
                     <div class="plan-price">
                       <span class="plan-cur">{price.symbol}</span>
                       <b data-price={price.amount}>{price.amount}</b>
-                      <span class="price-period">{card.periodLabel}</span>
+                      <span class="price-period" data-pricing-billing={card.productId}>{card.periodLabel}</span>
                     </div>
                     <div class="price-quota"><Icon name={line.quotaIcon} />{card.quota}</div>
                     <div class="plan-cta">
@@ -376,7 +378,10 @@ const controllerCopy = {
                           {card.ctaLabel}<SoonBadge locale={locale} />
                         </button>
                       )}
-                      {!isFree && buyAvailable && <p class="plan-error" data-plan-error={card.productId} hidden />}
+                      {!isFree && buyAvailable && <>
+                        <p class="plan-error" data-plan-error={card.productId} hidden />
+                        <button type="button" class="btn btn-secondary btn-block" data-pricing-resume={card.productId} hidden>{managementCopy.manageSubscription}</button>
+                      </>}
                     </div>
                     <ul class="check-list check-list--sm" role="list">
                       {card.features.map(feature => <li>{feature}</li>)}
@@ -440,7 +445,7 @@ const controllerCopy = {
                         <th scope="col" class:list={['cmp-plan', { 'is-featured': card.featured }]}>
                           {card.featured && <span class="badge badge--solid">{copy.popularLabel}</span>}
                           <span class="cmp-name">{card.name}</span>
-                          <span class="cmp-price">{card.price} <small>{card.periodLabel}</small></span>
+                          <span class="cmp-price">{card.price} <small data-pricing-billing={card.productId}>{card.periodLabel}</small></span>
                         </th>
                       ))}
                     </tr>
@@ -454,7 +459,7 @@ const controllerCopy = {
                       <tr style={`--r: ${rowIndex++}`}>
                         <th scope="row">{row.label}</th>
                         {row.cells.map((cell, cellIndex) => (
-                          <td class:list={{ 'is-featured': tab.cards[cellIndex].featured }}>
+                          <td class:list={{ 'is-featured': tab.cards[cellIndex].featured }} data-pricing-billing={row.label === compare.billing ? tab.cards[cellIndex].productId : undefined}>
                             <CompareCell cell={cell} included={compare.included} notIncluded={compare.notIncluded} />
                           </td>
                         ))}
@@ -474,7 +479,7 @@ const controllerCopy = {
                     {cards.plans[cardIndex].length > 0 && (
                       <ul class="cmp-lines">
                         {cards.plans[cardIndex].map(line => (
-                          <li><span class="cmp-line-label">{line.label}</span><CompareCell cell={line.cell} included={compare.included} notIncluded={compare.notIncluded} /></li>
+                          <li><span class="cmp-line-label">{line.label}</span><span data-pricing-billing={line.label === compare.billing ? card.productId : undefined}><CompareCell cell={line.cell} included={compare.included} notIncluded={compare.notIncluded} /></span></li>
                         ))}
                       </ul>
                     )}

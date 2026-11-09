@@ -1,6 +1,6 @@
 # 006 · 订阅商品与状态
 
-> 当前源码实现口径。覆盖订阅商品配置、用户订阅状态、订单履约续期与渠道订阅管理。
+> 订阅领域合同。覆盖订阅商品配置、用户订阅状态、订单履约续期与渠道订阅管理；升档规则以 [订阅升级](tech-订阅升级.md) 为准，实施与验证见对应计划。
 > 已随「004 同步支付系统-计费模型与 ClinkBill」实施:商品单一计费模式 + 订阅实例账期(自然月/渠道归一)+ ClinkBill 渠道 + 渠道订阅管理入口。
 > 订阅按 `product_kind` 隔离:`maps_extension`(Google Maps 与 Bing 插件共享)、`maps_online`(Online Scraper)与 `maps_api`(Scraper API)。同一账号可同时持有不同类别的有效订阅。
 > 关联:`@../000.架构/tech-额度基建.md` `@../011.Pricing页/tech-pricing与自动续费.md` `@../011.Pricing页/tech-实现与配置.md`
@@ -12,7 +12,9 @@
 - 一次性支付按快照 `period` 的**自然月**续期(month=1/quarter=3/year=12,业务时区,缺日取月末),不再使用 `duration_days` 天数累加;好评赠送按天加时保留(`extend_subscription_days`)。
 - 普通购买和续费只按 `expires_at` 判断账期;实例 `start_at` 只供升级折算。
 
-## 当前订阅档位
+## 商品播种档位
+
+下表为播种初值。环境售卖模式以商品配置为准，重复播种不覆盖已有 `auto_renew`；渠道能力与 SKU 由运维配置。
 
 | product_id | product_kind | period | auto_renew | 名称 | 权益 |
 | --- | --- | --- | --- | --- | --- |
@@ -34,7 +36,7 @@
 
 ## 配置表
 
-Maps 商品与渠道价由 `backend/scripts/seed_subscription_products.py` 的 `_SEED_ROWS` 幂等播种；新销售只启用 PayPal 单次价，同批关闭这些商品的其他渠道价，保留历史订单、协议与渠道凭据。结构变更走 `sync_database_schema.py`。
+Maps 商品与渠道价由 `backend/scripts/seed_subscription_products.py` 的 `_SEED_ROWS` 播种；新价格默认停用，环境配置渠道能力及 SKU 后启用。新销售仅展示已配置的 Stripe / Clink，PayPal 暂不开放。实施进度由 [接入计划](../004.订单系统/plans/001.Stripe支付接入.md) 跟踪；保留历史订单、协议与渠道凭据。结构变更走 `sync_database_schema.py`。
 
 ### config_subscription_product
 
@@ -59,14 +61,14 @@ Maps 商品与渠道价由 `backend/scripts/seed_subscription_products.py` 的 `
 
 订阅商品渠道价按 `(product_id, channel_code)` 唯一:
 
-| 字段 | 说明 |
-| --- | --- |
-| `product_id` | 商品标识 |
-| `channel_code` | 支付渠道 |
-| `auto_renew_supported` | 是否允许当前商品以渠道自动续费方式下单(商品 `auto_renew=true` 时渠道价必须为 true) |
-| `currency` | 币种;须通过渠道币种合同(`payment_currency_matches_channel`) |
-| `amount` | 渠道金额,统一 6 位精度整数 |
-| `provider_sku` | 渠道侧标识:PayPal 自动续费为 Plan ID(`P-...`),Clink 自动续费为 `productId:priceId`;一次性支付可为空 |
+| 字段                   | 说明                                                                                                                                      |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `product_id`           | 商品标识                                                                                                                                  |
+| `channel_code`         | 支付渠道                                                                                                                                  |
+| `auto_renew_supported` | 是否允许当前商品以渠道自动续费方式下单(商品 `auto_renew=true` 时渠道价必须为 true)                                                        |
+| `currency`             | 币种;须通过渠道币种合同(`payment_currency_matches_channel`)                                                                               |
+| `amount`               | 渠道金额,统一 6 位精度整数                                                                                                                |
+| `provider_sku`         | 渠道侧标识:PayPal 自动续费为 Plan ID(`P-...`),Clink 自动续费为 `productId:priceId`，Stripe 自动续费为 recurring Price ID;一次性支付可为空 |
 
 价格行 `id` 即 `product_price_id`,随 checkout-configs 透出并冻结进订单快照。
 
@@ -78,17 +80,17 @@ Maps 商品与渠道价由 `backend/scripts/seed_subscription_products.py` 的 `
 
 `user_subscriptions` 按**复合主键 `(user_id, product_kind)`** 一行保存用户在一条产品线上的当前订阅实例;Free 不落库。行内 `product_id` 记录购买/续期时的档位 SKU(同产品线多档位时唯一能说明当前权益的字段,履约续期时刷新)。实例字段:
 
-| 字段 | 说明 |
-| --- | --- |
-| `user_id` / `product_kind` | 复合主键 |
-| `product_id` | 当前生效档位 SKU,无默认付费档 |
-| `auto_renew` | 购买时续费方式快照;状态响应的 `auto_renew` 还要求 `expires_at > now` |
-| `payment_method` | 最近一次生效订阅的支付渠道 |
-| `channel_subscription_id` | 渠道侧订阅协议/取消句柄;PayPal 为 Billing Subscription id,Clink 为 subscriptionId,Telegram Stars 为 `telegram_payment_charge_id` |
-| `channel_uid` | 渠道付款用户标识;Telegram Stars 为付款 user id,Clink 为 `customerId`(供 Customer Portal 复用) |
-| `start_at` | 当前账期开始(毫秒时间戳),只供升级折算,不参与账期判断 |
-| `expires_at` | 订阅到期时间,毫秒时间戳;唯一账期真相,upsert 时最后写入 |
-| `created_at` / `updated_at` | 毫秒时间戳 |
+| 字段                        | 说明                                                                                                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_id` / `product_kind`  | 复合主键                                                                                                                                                   |
+| `product_id`                | 当前生效档位 SKU,无默认付费档                                                                                                                              |
+| `auto_renew`                | 购买时续费方式快照;状态响应的 `auto_renew` 还要求 `expires_at > now`                                                                                       |
+| `payment_method`            | 最近一次生效订阅的支付渠道                                                                                                                                 |
+| `channel_subscription_id`   | 渠道侧订阅协议/取消句柄;Stripe 为 Subscription ID,PayPal 为 Billing Subscription id,Clink 为 subscriptionId,Telegram Stars 为 `telegram_payment_charge_id` |
+| `channel_uid`               | 渠道付款用户标识;Telegram Stars 为付款 user id,Stripe 为 Customer ID,Clink 为 `customerId`(供 Customer Portal 复用)                                        |
+| `start_at`                  | 当前账期开始(毫秒时间戳),只供升级折算,不参与账期判断                                                                                                       |
+| `expires_at`                | 订阅到期时间,毫秒时间戳;唯一账期真相,upsert 时最后写入                                                                                                     |
+| `created_at` / `updated_at` | 毫秒时间戳                                                                                                                                                 |
 
 不保留 `period/product_price_id/original_order_no/cancelled_at` 实例列:`period` 由当前商品配置提供,`product_price_id` 冻结在订单快照,自动续费本地首单号留在订单元数据,取消状态不落库(取消续费只打开渠道管理入口,不推测渠道实时状态)。
 
@@ -124,23 +126,25 @@ Maps 商品与渠道价由 `backend/scripts/seed_subscription_products.py` 的 `
 
 订阅购买统一走 `orders`。
 
+商品参数由 `backend/src/app/services/subscription_service.py` 的 `SubscriptionService.check_product()` 与 `prepare_recurring_order()` 生成,统一返回 `OrderCreateParam`;订单域只分发和落单。续费发票提供新 SKU 时由订阅域按原单产品线匹配目标商品,冻结整期价,订单金额保留净实付;未提供新 SKU 时沿用原商品快照。首期和已存在订单不经过续费商品参数生成。
+
 订阅订单创建时在 `orders.extra_metadata.product_snapshot` 保存快照:
 
-| 字段 | 说明 |
-| --- | --- |
-| `product_kind` | 订阅履约必须显式读取合法类别,定位 `(user_id, product_kind)` 行;缺失或非法时拒绝履约,不补默认类别 |
-| `product_price_id` | 付款时渠道价行 ID；升级折算按订阅实例的商品与渠道读取当前价 |
-| `auto_renew` | 购买时计费模式快照,决定履约走哪条路径 |
-| `period` | 商品配置周期快照,决定一次性购买的自然月数,并校验非法周期不能发货 |
-| `currency` / `amount` / `provider_sku` | 冻结该笔购买使用的渠道价资源 |
+| 字段                                   | 说明                                                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `product_kind`                         | 订阅履约必须显式读取合法类别,定位 `(user_id, product_kind)` 行;缺失或非法时拒绝履约,不补默认类别 |
+| `product_price_id`                     | 付款时渠道价行 ID；一次性升级的旧权益价值取已生效整期快照，目标价取当前渠道配置                  |
+| `auto_renew`                           | 购买时计费模式快照,决定履约走哪条路径                                                            |
+| `period`                               | 商品配置周期快照,决定一次性购买的自然月数,并校验非法周期不能发货                                 |
+| `currency` / `amount` / `provider_sku` | 冻结该笔购买使用的渠道价资源；`amount` 为目标整期价，净应付保存在订单金额中                      |
 
 订阅履约按快照写入 `(user_id, product_kind)` 行：
 
-| 路径 | 触发 | 行为 |
-| --- | --- | --- |
-| 一次性升级 | 快照 `purpose=upgrade` | 条件换档与账期保持见 [升级合同](tech-订阅升级.md#路径-a一次性线maps_online--maps_api差额订单走收银台) |
-| 一次性 | 快照 `auto_renew=false` 且非升级 | 按快照 `period` 自然月续期(活动行从当前 `expires_at` 起算,否则从 now),显式覆盖实例事实(`auto_renew=false`、渠道引用清空),`start_at` 写入本次账期起点 |
-| 自动续费 | 快照 `auto_renew=true` | 只按回调 `payment_callback.provider_subscription` 里 Provider 归一化的 `expires_at` 推进;`advances` 守卫(本地到期更晚不回退),实例字段按账期推进保护；仅首购单写档位，续费或折算发票只推进账期事实；账期推进时写入 `channel_subscription_id/channel_uid/start_at` |
+| 路径       | 触发                             | 行为                                                                                                                                                                                                                                                             |
+| ---------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 一次性升级 | 快照 `purpose=upgrade`           | 条件换档、旧权益抵扣与完整新账期见 [升级合同](tech-订阅升级.md#路径-a非自动续费)                                                                                                                                                                                 |
+| 一次性     | 快照 `auto_renew=false` 且非升级 | 按快照 `period` 自然月续期(活动行从当前 `expires_at` 起算,否则从 now),显式覆盖实例事实(`auto_renew=false`、渠道引用清空),`start_at` 写入本次账期起点                                                                                                             |
+| 自动续费   | 快照 `auto_renew=true`           | 只按回调 `payment_callback.provider_subscription` 里 Provider 归一化的 `expires_at` 推进;`advances` 守卫(本地到期更晚不回退),实例字段按账期推进保护；仅首购单写档位，续费或折算发票只推进账期事实；账期推进时写入 `channel_subscription_id/channel_uid/start_at` |
 
 | 支付渠道 | `channel_subscription_id` 来源 | `channel_uid` 来源 |
 | --- | --- | --- |
@@ -164,11 +168,11 @@ Maps 商品与渠道价由 `backend/scripts/seed_subscription_products.py` 的 `
 
 `/api/client/subscription/status` 保持给插件使用；website Pricing 读取 `/api/client/auth/me` 展示账户状态。两者均无档位 ID，升级判定与终态读源见 [升级接口合同](tech-订阅升级.md#接口合同)。
 
-订单状态的 `product_kind` 为 `string | null`:订阅订单从快照返回合法产品类别,Credits 订单为空;不从缺失快照推导默认订阅产品。
+订单状态的 `product_kind` 为 `string | null`,由 `SubscriptionService.get_order_product_kind()` 读取:订阅订单从快照返回合法产品类别,Credits 订单为空;不从缺失快照推导默认订阅产品。
 
 好评赠送的 Counter、锁、加时与失败语义见 `@tech-好评赠送订阅.md`。
 
-订阅管理由订阅域读取当前实例并通过统一 Payment Provider 能力处理:Clink 用 `channel_uid`(customerId)创建 Customer Portal Session;PayPal 返回固定官方 Automatic Payments 页面;Telegram Stars 不提供 Web URL。业务层和客户端不按渠道分支;站内不做取消、退款或渠道状态同步。
+订阅管理由订阅域读取当前实例并通过统一 Payment Provider 能力处理:Stripe / Clink 用当前实例的 `channel_uid`(Customer ID)创建 Customer Portal Session;PayPal 返回固定官方 Automatic Payments 页面;Telegram Stars 不提供 Web URL。业务层和客户端不按渠道分支;站内不做取消、退款或渠道状态同步。
 
 订阅商品配置异常时,`/api/client/auth/me` 和 `/api/client/subscription/status` 仍返回成功响应;六字段合同的 `status` 为 `unavailable`、`period` 为 `unavailable`。该状态只表示订阅展示不可用,不能阻断登录态、Credits 或插件初始化等正常业务。
 

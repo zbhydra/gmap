@@ -26,13 +26,16 @@ class PaymentRequest:
     user_id: int | None = None
     auto_renew: bool = False
     provider_sku: str | None = None
+    period: str = "none"
 
 
 @dataclass(frozen=True, slots=True)
 class RecurringPaymentReference:
-    """支付渠道回调携带的统一续费引用。"""
+    """首购引用及本次已付发票冻结的渠道整期价。"""
 
     original_order_no: str | None = None
+    provider_sku: str | None = None
+    period_amount: int | None = None
 
 
 @dataclass
@@ -48,6 +51,8 @@ class CallbackVerificationResult:
     amount: int | None = None
     currency: str | None = None
     transaction_id: str | None = None
+    paid_at: int | None = None
+    subscription_state: "SubscriptionState | None" = None
     extra_metadata: str | None = None
     provider_data: dict[str, object] | None = None
     # 渠道续费引用：订阅类回调由 Provider 填充首期本地订单号，
@@ -80,6 +85,10 @@ class PaymentProviderError(PaymentProcessingError):
     """支付 provider 创建支付或校验回调失败。"""
 
 
+class SubscriptionRenewalResumeRequired(PaymentProviderError):
+    """渠道已安排取消，恢复续费后才可再次发起升档。"""
+
+
 SubscriptionUpdateStatus = Literal["succeeded", "requires_action", "failed"]
 
 
@@ -99,7 +108,7 @@ class SubscriptionUpdateResult:
 class SubscriptionUpdatePreview:
     """渠道已核对目标 SKU、币种与立即生效条件的扣款快照。"""
 
-    price_snapshot_id: str
+    price_reference: str
     net_amount: int
 
 
@@ -121,12 +130,17 @@ class PaymentBase(ABC):
     def __init__(self, config: dict | None = None) -> None:
         pass
 
+    @classmethod
+    def validate_order_cancellation(cls, *, order_no: str) -> None:
+        """校验本地取消是否符合渠道约束，默认无需额外动作。"""
+
     async def preview_subscription_update(
         self,
         *,
         channel_subscription_id: str,
         target_provider_sku: str | None,
         currency: str,
+        target_amount: int,
     ) -> SubscriptionUpdatePreview:
         raise PaymentProviderError(
             f"{self.provider_name}.preview_subscription_update: 不支持订阅换价"
@@ -137,7 +151,7 @@ class PaymentBase(ABC):
         *,
         channel_subscription_id: str,
         target_provider_sku: str | None,
-        price_snapshot_id: str,
+        price_reference: str,
     ) -> SubscriptionUpdateResult:
         raise PaymentProviderError(
             f"{self.provider_name}.confirm_subscription_update: 不支持订阅换价"

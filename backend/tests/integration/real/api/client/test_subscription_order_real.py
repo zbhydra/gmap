@@ -23,16 +23,12 @@ from app.i18n.common_code import CommonCode
 from app.models.order_model import OrderModel
 from app.models.subscription_model import UserSubscriptionModel
 from app.models.user_model import UserModel
-from app.services.payment_config_service import payment_config_service
 from app.services.order_service import order_service
-from app.services.subscription_service import subscription_service
 from app.utils.time import timestamp_now
 
 pytestmark = [pytest.mark.real, pytest.mark.asyncio]
 
 _DAY_MS = 24 * 3600 * 1000
-# PayPal 只接受两位小数（美分），对应 6 位精度整数下的最小倍数。
-_PAYPAL_CENT_UNIT = 10_000
 
 
 class _CheckoutPrice(TypedDict):
@@ -88,10 +84,10 @@ async def real_subscription_order_schema_ready(
         pytest.skip(f"REAL_SCHEMA_UNAVAILABLE: 数据库缺少 {','.join(missing)} 表")
 
 
-def _online_basic_paypal_price(
+def _online_basic_price(
     plans: list[_CheckoutPlan],
 ) -> tuple[_CheckoutPlan, _CheckoutPrice]:
-    """从 checkout 方案里取 maps_online 类别 online_basic 的 PayPal 渠道价。"""
+    """从 checkout 方案里取 maps_online 类别 online_basic 的当前可售渠道价。"""
 
     plan = next(
         item
@@ -100,8 +96,17 @@ def _online_basic_paypal_price(
         and item["product_id"] == "online_basic"
     )
     channel = next(
-        item for item in plan["payment_channels"] if item["payment_method"] == "paypal"
+        (
+            item
+            for item in plan["payment_channels"]
+            if item["payment_method"] in {"stripe", "clink"}
+        ),
+        None,
     )
+    if channel is None:
+        pytest.skip(
+            "REAL_PAYMENT_CHANNEL_UNAVAILABLE: online_basic 缺少 Stripe/Clink 可售价"
+        )
     return plan, channel
 
 
@@ -119,7 +124,7 @@ async def test_real_subscription_checkout_configs_serialize_product_level_billin
     plans = body["data"]["checkout_configs"]
     if not plans:
         pytest.skip("REAL_SCHEMA_UNAVAILABLE: 订阅商品展示配置尚未初始化")
-    plan, paypal = _online_basic_paypal_price(plans)
+    plan, paypal = _online_basic_price(plans)
 
     assert plan["product_class"] == ProductClass.SUBSCRIPTION.value
     assert plan["period"] == "month"
@@ -149,7 +154,7 @@ async def test_real_subscription_order_rejects_mismatched_billing_mode_without_o
     plans = config_response.json()["data"]["checkout_configs"]
     if not plans:
         pytest.skip("REAL_SCHEMA_UNAVAILABLE: 订阅商品展示配置尚未初始化")
-    _plan, paypal = _online_basic_paypal_price(plans)
+    _plan, paypal = _online_basic_price(plans)
 
     response = await real_async_client.post(
         "/api/client/order/create",
@@ -189,22 +194,10 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
     real_subscription_order_schema_ready,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """真实下单、回跳与回调重投的 HTTP 边界及幂等履约；仅替换 PayPal HTTP。"""
+    """历史待支付订单的回跳与重投仍可幂等履约；仅替换 PayPal HTTP。"""
     user_id, token = await real_user_factory(make_test_email("paypal-one-time"))
     _, other_token = await real_user_factory(make_test_email("paypal-other"))
     headers = {"Authorization": f"Bearer {token}"}
-    configs = await real_async_client.get("/api/client/subscription/checkout-configs")
-    assert configs.status_code == 200
-    assert configs.json()["code"] == CommonCode.SUCCESS
-    plans = configs.json()["data"]["checkout_configs"]
-    assert len(plans) == 10
-    for plan in plans:
-        assert plan["auto_renew"] is False
-        assert [item["payment_method"] for item in plan["payment_channels"]] == [
-            "paypal"
-        ]
-    plan = next(item for item in plans if item["product_id"] == "maps_extension_pro")
-    price = plan["payment_channels"][0]
     paypal_order_id = f"PP{user_id}"
     order_no = ""
     captured = False
@@ -215,28 +208,10 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
     original_client = httpx.AsyncClient
 
     def handler(request: httpx.Request) -> httpx.Response:
-        nonlocal order_no, captured, capture_calls
+        nonlocal captured, capture_calls
         path = request.url.path
         if path == "/v1/oauth2/token":
             return httpx.Response(200, json={"access_token": "test", "expires_in": 30})
-        if path == "/v2/checkout/orders":
-            payload = json.loads(request.content)
-            assert payload["intent"] == "CAPTURE"
-            unit = payload["purchase_units"][0]
-            order_no = unit["reference_id"]
-            assert unit["amount"] == {"currency_code": "USD", "value": "39.00"}
-            return httpx.Response(
-                201,
-                json={
-                    "id": paypal_order_id,
-                    "links": [
-                        {
-                            "rel": "approve",
-                            "href": f"https://www.sandbox.paypal.com/checkoutnow?token={paypal_order_id}",
-                        }
-                    ],
-                },
-            )
         if path == "/v1/notifications/verify-webhook-signature":
             return httpx.Response(
                 verification_http_status, json={"verification_status": "SUCCESS"}
@@ -249,7 +224,7 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
             assert request.method == "GET"
             if query_http_status != 200:
                 return httpx.Response(query_http_status, json={})
-        unit = {"reference_id": order_no}
+        unit: dict[str, object] = {"reference_id": order_no}
         if captured:
             unit["payments"] = {
                 "captures": [
@@ -273,22 +248,35 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
         return original_client(timeout=timeout, transport=httpx.MockTransport(handler))
 
     monkeypatch.setattr("app.provider.payment.paypal.httpx.AsyncClient", client_factory)
-    created = await real_async_client.post(
-        "/api/client/order/create",
-        headers=headers,
-        json={
-            "product_class": ProductClass.SUBSCRIPTION.value,
-            "product_id": plan["product_id"],
-            "payment_method": "paypal",
-            "currency": price["currency"],
-            "amount": price["amount"],
-            "auto_renew": False,
-            "period": "month",
+    historical = await order_service.create_order(
+        OrderCreateParam(
+            user_id=user_id,
+            product_class=ProductClass.SUBSCRIPTION.value,
+            product_id="maps_extension_pro",
+            product_name="历史 PayPal 订单",
+            amount=39_000_000,
+            currency="USD",
+            payment_method="paypal",
+            extra_metadata=json.dumps(
+                {
+                    "product_snapshot": {
+                        "product_kind": "maps_extension",
+                        "auto_renew": False,
+                        "period": "month",
+                        "amount": 39_000_000,
+                    }
+                }
+            ),
+        )
+    )
+    order_no = historical.order_no
+    assert await order_service.save_order_payment_data(
+        order_no=order_no,
+        payment_data={
+            "channel_order_id": paypal_order_id,
+            "paypal_order_id": paypal_order_id,
         },
     )
-    assert created.status_code == 200
-    assert created.json()["code"] == CommonCode.SUCCESS
-    assert created.json()["data"]["order_no"] == order_no
 
     denied = await real_async_client.post(
         "/api/client/order/paypal/confirm",
@@ -405,13 +393,13 @@ async def test_real_paypal_one_time_return_fulfills_once_without_public_webhook(
         )
 
 
-async def test_real_subscription_upgrade_quote_prorates_one_time_diff(
+async def test_real_paypal_existing_subscription_cannot_upgrade(
     real_async_client,
     make_test_email,
     real_user_factory,
     real_subscription_order_schema_ready,
 ) -> None:
-    """一次性线升级报价主路径：tier 判高、剩余占比折算与美分向下取整。"""
+    """旧 PayPal 实例本期拒绝两条升档入口。"""
 
     email = make_test_email("sub-upgrade-quote")
     user_id, token = await real_user_factory(email)
@@ -453,50 +441,28 @@ async def test_real_subscription_upgrade_quote_prorates_one_time_diff(
         "amount",
         "expires_at",
     }
-    assert data["available"] is True
-    assert data["reason"] is None
-    assert data["current_product_id"] == "online_lite"
-    assert data["target_product_id"] == "online_growth"
+    assert data["available"] is False
+    assert data["reason"] == "channel_unavailable"
     assert data["payment_method"] == "paypal"
-    assert data["currency"] == "USD"
-    assert data["expires_at"] == expires_at
-
-    snapshot = await payment_config_service.get_snapshot()
-    current_price = snapshot.prices.get(("online_lite", "paypal"))
-    target_price = snapshot.prices.get(("online_growth", "paypal"))
-    if current_price is None or target_price is None:
-        pytest.skip("REAL_SCHEMA_UNAVAILABLE: maps_online 渠道价配置尚未初始化")
-    diff = target_price.amount - current_price.amount
-    # 剩余 10/30 期；服务端 own now 比测试 now 晚几毫秒，允许一个美分内的取整漂移。
-    upper = diff * 10 * _DAY_MS // (30 * _DAY_MS)
-    upper = upper // _PAYPAL_CENT_UNIT * _PAYPAL_CENT_UNIT
-    assert data["amount"] is not None
-    assert upper - _PAYPAL_CENT_UNIT < data["amount"] <= upper
-    assert data["amount"] % _PAYPAL_CENT_UNIT == 0
-
-    # 渠道白名单直接调用证明：stars 等非 PayPal/Clink 渠道不看价目配置，
-    # 直接 channel_unavailable（maps_extension 两档 tier 满足，可触达渠道判定）。
-    async with get_async_session() as db:
-        db.add(
-            UserSubscriptionModel(  # type: ignore[call-arg]
-                user_id=user_id,
-                product_kind="maps_extension",
-                product_id="maps_extension_pro",
-                auto_renew=True,
-                payment_method="telegram_stars",
-                start_at=now,
-                expires_at=expires_at,
-            )
+    assert data["amount"] is None
+    for endpoint in ("checkout", "confirm"):
+        rejected = await real_async_client.post(
+            f"/api/client/subscription/upgrade/{endpoint}",
+            json={"product_kind": "maps_online", "target_product_id": "online_growth"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        await db.commit()
-    quote = await subscription_service.get_upgrade_quote(
-        user_id=user_id,
-        product_kind="maps_extension",
-        target_product_id="maps_extension_business",
-    )
-    assert quote["available"] is False
-    assert quote["reason"] == "channel_unavailable"
-    assert quote["amount"] is None
+        assert rejected.status_code == 200
+        assert rejected.json()["code"] == CommonCode.INVALID_REQUEST
+        assert rejected.json()["data"]["reason"] == "channel_unavailable"
+    async with get_async_session() as db:
+        assert (
+            await db.scalar(
+                select(func.count())
+                .select_from(OrderModel)
+                .where(OrderModel.user_id == user_id)
+            )
+            == 0
+        )
 
 
 @pytest.mark.parametrize("confirmation_succeeds", [True, False])
