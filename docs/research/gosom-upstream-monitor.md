@@ -17,12 +17,13 @@
 
 ## 上游与当前基线
 
-| 上游 | 仓库 | 分支 | 最后完整检查提交 | 提交时间 | 最新 release |
+| 上游 | 仓库 | 分支 | 最后完整检查提交 | 提交时间 | 最近已核实 release |
 | --- | --- | --- | --- | --- | --- |
-| GOSOM | `https://github.com/gosom/google-maps-scraper.git` | `main` | `903b96d7aa8863188022c04db220e44f3218c860` | `2026-10-21T13:24:30+03:00` | `v1.17.4` |
-| SCRAPEMATE | `https://github.com/gosom/scrapemate.git` | `main` | `859d15f56ba5ed3851587edc305fab6ee956cc71` | `2026-09-13T09:51:23+03:00` | `v1.3.0` |
+| GOSOM | `https://github.com/gosom/google-maps-scraper.git` | `main` | `723e8af09af91a0f31ccadc8a08966e79797b653` | `2026-11-08T12:29:48+02:00` | `v1.17.4` |
+| SCRAPEMATE | `https://github.com/gosom/scrapemate.git` | `main` | `1d7c7bf762391c7d3c73548be98a70d359c44183` | `2026-11-08T10:43:41+02:00` | `v1.3.0` |
 
 基线语义:提交必须已完成重点路径 diff、解析 / 合同生成点核对和影响映射。检查失败或 diff 不完整时不得推进基线。检查成功后可以推进基线,但新发现必须继续保留在「待确认项」,不能因基线推进而消失。
+本次无网络,release 列沿用既有已核实记录,不代表远端当前最新 release。
 
 ### 线上部署镜像
 
@@ -32,14 +33,15 @@
 | 对接配置 | 后端 `system_data` 的 `gosom_api`(base_url + api_key),见 `docs/feat/008.管理后台/tech-系统设置.md`;引擎部署进度见 `docs/ROADMAP.md` B4 |
 
 `latest` 是漂移 tag,不对应固定 commit;确认线上实际运行版本以部署机镜像 digest 为准。「是否建议更新线上镜像」是每次巡检的固定结论项;拉取新镜像、重启 serve / worker、回归验证属部署域,不在巡检自动化范围内。
+本仓当前 `backend/src`、`admin/src` 已无 gosom 配置或调用入口,旧引擎已由 Collector 替代;部署机上的旧镜像是否仍运行尚未核实。上表对接配置与下节消费入口为历史合同,用于判断旧镜像仍在使用时的上游变化影响。
 
 ## 最近巡检
 
-- 检查时间:`2026-10-28`
-- 本地仓库提交:`f16cf902cedabc1a619626926747fdfbc0c793d7`
-- GOSOM 最新提交:`903b96d7aa8863188022c04db220e44f3218c860`
-- SCRAPEMATE 最新提交:`859d15f56ba5ed3851587edc305fab6ee956cc71`
-- 结论:题设限定无网络,未执行 `git ls-remote`;提供的两个 `main` HEAD 均与本地 `.upstream/` 的 `main` 一致,且分别等于当前基线,完整 `git diff --name-status` 均为空,`git diff --check` 均通过。GOSOM `go.mod` 仍已跟进 `github.com/gosom/scrapemate v1.4.0`,两仓库 playwright-go 均为 `v0.6100.0`。复核「待确认项」、`docs/ROADMAP.md` B4 与 `docs/feat/014.Maps云端/plans/001.Provider采集基建.md`、`002.Online任务与结果基建.md`、`003.可选联系方式与独立采集库.md`、`005.CAS改进参考清单.md`、`010.Export服务端实施.md` 的验收记录后,仍未见 GOSOM worker 健康服务与 Maps URL 解析修复两项预发验证的完成证据;`010` 记录的 Collector 开发服联调不覆盖这两项。两项继续待确认,须按原条件预发评估并由人工按部署机 digest 决定是否更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。本轮两仓库均无新增影响,不建议仅因本次巡检主动更新镜像;两条基线不变,不追加变更记录。
+- 检查时间:`2026-11-08`
+- 本地仓库提交:`befcf322253c3afe1307af9d10a9bca4bdc2e564`
+- GOSOM 最新提交:`723e8af09af91a0f31ccadc8a08966e79797b653`
+- SCRAPEMATE 最新提交:`1d7c7bf762391c7d3c73548be98a70d359c44183`
+- 结论:题设限定无网络,未执行远端 `git ls-remote`;提供的两个 `main` HEAD 均与本地 `.upstream/` 的 `main` 一致,旧基线均为新 HEAD 的祖先。两仓库完整 `git diff --name-status`、重点路径和生成点已检查,`git diff --check` 均通过。GOSOM `53f146b` 将 `Dockerfile.saas` 的 Go builder 从 `1.27.1` 升至 `1.27.3`,并在 `go.mod` 升级 scrapemate `v1.4.0`→`v1.4.1` 及运行依赖;SCRAPEMATE `1d7c7bf` 在 `go.mod` 升级 Go、`x/net` 与 `x/sync`,后两者进入代理和并发路径。依赖源码差异及本地缺失的 scrapemate `v1.4.1` 标签映射无法核实,按「无法判断」计两仓库新增影响。GOSOM `scraper/scraper.go` 仅增加退出/重启告警日志,独立 Web UI 的 HTMX 修复不改变 SaaS serve/worker 合同。两仓库 playwright-go 均维持 `v0.6100.0`;GOSOM 已在 `go.mod` 跟进 scrapemate `v1.4.1`。既有两项预发待确认仍无完成证据,当前项目已退役 gosom 入口,部署机旧镜像是否仍运行及 digest 未确认。若仍运行,建议评估候选镜像更新并按下节待确认项回归;不自动部署。检查完整,两条基线已推进,新增影响项见本次变更记录。
 
 该区只保留最近一次结果。只有上游提交变化、检查失败或待确认项状态变化时,才在「变更记录」追加事件,避免每天写入无信息量的记录。
 
@@ -116,10 +118,19 @@ SCRAPEMATE 至少检查:
 
 ## 待确认项
 
+- GOSOM `53f146b95b5a8632e2276f5aa4ce0836b2c6552e` 的候选镜像构建与运行依赖升级:先核对部署机 digest 和旧 gosom 镜像是否仍承担任务;若仍使用,以 `Dockerfile.saas` 的 Go `1.27.3` 与 `go.mod` 的 scrapemate `v1.4.1`、`x/crypto`、`x/net`、`x/sync` 等版本构建候选镜像,在预发验证 `POST /api/v1/scrape`、任务查询、结果写入、代理抓取及 worker 取消/重启。`scrapemate v1.4.1` 标签未随本地上游仓库提供,其精确源码对应关系待人工核对;通过后再按部署机 digest 人工决定是否更新漂移 tag `ghcr.io/gosom/google-maps-scraper-saas:latest`。
+- SCRAPEMATE `1d7c7bf762391c7d3c73548be98a70d359c44183` 的代理与并发依赖升级:在 GOSOM 候选镜像中验证 `adapters/fetchers/jshttp/local_proxy.go` 的 HTTP/SOCKS5 代理和 `scrapemateapp/scrapemateapp.go` 的 `errgroup` 取消/错误传递,确认任务完成和 worker 重启行为;源码路径本身无 diff,`go.mod` 将 `x/net` 从 `v0.58.0` 升至 `v0.61.0`、`x/sync` 从 `v0.22.0` 升至 `v0.24.0`,依赖内部行为尚未核实。GOSOM `go.mod` 已跟进 scrapemate `v1.4.1`,且其 `x/net` 为 `v0.62.0`、`x/sync` 为 `v0.24.0`;本项不单独部署。
 - GOSOM `cfb0440472ad1547b87cae8e1f43240a112b2c7b` 的线上镜像升级评估:预发构建 / 拉取候选镜像后,以实际 `gosom_api` 配置验证 `POST /api/v1/scrape`、任务查询和结果写入链路,并向 worker 发送终止信号,确认 `cmd/gmapssaas/cmdworker.runHealthServer()` 在根 context 已取消时仍可于 5 秒窗口内正常关闭健康服务。通过后再由人工按部署机 digest 决定是否更新漂移 tag `ghcr.io/gosom/google-maps-scraper-saas:latest`。2026-09-14 已复核最新 `2b8616d0ccf7d3c578b42a7440e3c13bb22e5083` 未触及该 SaaS 路径;2026-09-24 新提交 `d0b51bc` 也未触及,且本仓库内未见预发完成证据;2026-10-10 再次复核当前 HEAD 未触及该 SaaS 路径,原验证条件与待人工决策状态不变;2026-10-11 复核当前 HEAD 与 `docs/feat/014.Maps云端/plans/001.Provider采集基建.md`、`002.Online任务与结果基建.md`、`003.可选联系方式与独立采集库.md` 后,仍未见预发完成证据,本项继续待确认;2026-10-22 复核新 HEAD 未触及该路径,项目验收记录仍无完成证据,继续待确认。
 - GOSOM `ce4908e025453789e70b0acbe0888985ed3949a4` 的 Maps URL 解析修复:预发候选镜像须经实际 `gosom_api` 向 `POST /api/v1/scrape` 提交 `https://www.google.com/maps/place/../data=` 形式的 `keyword`,轮询任务至终态并核对详情结果写入;同时以常规关键词确认搜索结果中同类 href 不再因 URL 规范化丢失详情任务。通过后再结合上一项 worker 健康服务验证,由人工按部署机 digest 决定是否更新漂移 tag `ghcr.io/gosom/google-maps-scraper-saas:latest`。2026-09-24 新提交 `d0b51bc` 未触及 Maps 解析路径,且本仓库内未见预发完成证据;2026-10-10 再次复核当前 HEAD 未触及 Maps 解析路径,本项继续待确认;2026-10-11 复核当前 HEAD 与 `docs/feat/014.Maps云端/plans/001.Provider采集基建.md`、`002.Online任务与结果基建.md`、`003.可选联系方式与独立采集库.md` 后,仍未见预发完成证据,本项继续待确认;2026-10-22 复核新 HEAD 未触及 Maps 解析路径,项目验收记录仍无完成证据,继续待确认。
 
 ## 变更记录
+
+### 2026-11-08:GOSOM 升级 SaaS 构建链与依赖,SCRAPEMATE 升级代理/并发依赖,建议评估镜像更新
+
+- GOSOM 从 `903b96d7aa8863188022c04db220e44f3218c860` 推进至 `723e8af09af91a0f31ccadc8a08966e79797b653`,旧基线是新 HEAD 的祖先;完整 diff 共 16 个文件,`git diff --check` 通过。`53f146b95b5a8632e2276f5aa4ce0836b2c6552e` 将 `Dockerfile.saas` 的 Go builder 从 `1.27.1` 升至 `1.27.3`,`Dockerfile` 同步升级,直接影响镜像构建;`go.mod` 将 scrapemate 从 `v1.4.0` 升至 `v1.4.1`,并升级 `x/crypto`、`x/net`、`x/sync` 等运行依赖。`scraper/scraper.go:ScraperManager.runCycle()` 仍在同一取消/重启分支等待 `scraperDone` 并返回 `nil`,新增的是错误告警日志,不另计 worker 合同变化。依赖内部行为和 scrapemate `v1.4.1` 标签对应源码在本地无法核实,按规则计运行依赖影响,建议先核对旧镜像是否仍运行,若仍运行则构建候选镜像并预发回归。
+- GOSOM `73721397a9e04a479da30bff6b45c14981b322c3` 只为独立 Web UI 的 `web/static/templates/index.html` 加 HTMX 配置及测试,不改变 SaaS serve/worker 合同;`0cec9e3bc61f0b0567338b2b251ed5e230414b2a` 只改 Makefile 版本号,其余提交仅改赞助商资料与测试。已核对 `gmaps/`(含 `entry.go` 的 `Entry` / `MarshalJSON()` / `CsvHeaders()` / `CsvRow()`)、`runner/`、`main.go`、`web/`、`api/`、`saas/`、`rqueue/`、`admin/`、`cmd/gmapssaas/`、`cryptoext/`、`Dockerfile`、`Dockerfile.saas`、`go.mod` 和实际 worker 使用的 `scraper/`;除上列文件外范围 diff 为空。解析列集、Maps 页面 / RPC、REST / 鉴权、Playwright 版本及浏览器资源保护源码未变;GOSOM playwright-go 仍为 `v0.6100.0`。
+- SCRAPEMATE 从 `859d15f56ba5ed3851587edc305fab6ee956cc71` 推进至 `1d7c7bf762391c7d3c73548be98a70d359c44183`,旧基线是新 HEAD 的祖先;完整 diff 为单个提交、7 个文件,`git diff --check` 通过。`go.mod` 将 Go 从 `1.27.1` 升至 `1.27.3`、`x/net` 从 `v0.58.0` 升至 `v0.61.0`、`x/sync` 从 `v0.22.0` 升至 `v0.24.0`;`adapters/fetchers/jshttp/local_proxy.go` 使用 `x/net/proxy`,`scrapemateapp/scrapemateapp.go` 使用 `x/sync/errgroup`,依赖内部变化对代理与并发合同的影响无法在本地核实,按规则计新增影响。已核对 `browser.go`、`adapters/`、`scrapemate.go`、`scrapemateapp/`、`job.go`、`request_hooks.go`、`response.go`、`result.go`、`services.go`、`proxy.go`、`context.go`、`constants.go` 的源码范围 diff 均为空;playwright-go 仍为 `v0.6100.0`。GOSOM `go.mod` 已跟进 scrapemate `v1.4.1`,但本地无 `v1.4.1` 标签,不能证明其与 SCRAPEMATE 新 HEAD 的精确对应关系;若旧镜像仍运行,建议随 GOSOM 候选镜像验证代理与 worker 取消/重启,不单独更新镜像。
+- 既有 GOSOM worker 健康服务与 Maps URL 解析两项预发待确认项仍无完成证据;`docs/feat/014.Maps云端/plans/010.Export服务端实施.md` §18/§19 的 Collector 验收不覆盖旧 gosom 镜像。当前 `backend/src`、`admin/src` 已无 gosom 调用入口,`docs/feat/014.Maps云端/tech-引擎Provider层.md` 记载旧引擎退役;部署机 digest 与旧镜像是否仍运行待人工确认。题设限定无网络,未执行远端 `git ls-remote`;本次只用题设 HEAD 与本地 `.upstream/` 的 `main` 完成检查,两条基线均已推进。
 
 ### 2026-10-22:GOSOM 更新赞助商推荐链接,无新增线上影响
 
