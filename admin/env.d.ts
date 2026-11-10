@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** 后端业务 API 根地址（deploy.sh build 时注入 VITE_API_BASE_URL）；开发不注入，走 vite proxy。 */
+  /** 后端业务 API 根地址（生产从 deploy/production.conf 编译）；开发未配置时走 Vite proxy。 */
   readonly VITE_API_BASE_URL?: string;
 }
 

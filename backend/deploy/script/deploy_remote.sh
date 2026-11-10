@@ -18,37 +18,51 @@ set -e
 # 8. 健康检查
 ###############################################################################
 
-# 所有环境配置一律由调用方显式传入，脚本不做任何默认值回退。
-DEPLOY_DIR="$1"
-BACKUP_DIR="${2%/}"
-KEEP_VERSIONS="$3"
-GIT_SSH_KEY_PATH="$4"
-DB_HOST="$5"
-DB_USER="$6"
-DB_PASSWD="$7"
-SMTP_CONFIG_B64="$8"
-PUBLIC_API_BASE_URL="$9"
-GOOGLE_CLIENT_ID="${10}"
-GOOGLE_CLIENT_SECRET="${11}"
-PUBLIC_WEBSITE_BASE_URL="${12}"
-BACKEND_PORT_PY="${13}"
-NGINX_SERVER_NAME="${14}"
-APP_NAME="${15}"
-DB_NAME="${16}"
-LOGGER_LEVEL="${17}"
-# REDIS_PASSWORD 走 base64 透传，避免特殊字符破坏 sed；留空表示无密码 Redis。
-REDIS_HOST="${18}"
-REDIS_PORT="${19}"
-REDIS_PASSWORD_B64="${20}"
-BRANCH="${21}"
-JWT_SECRET_KEY="${22}"
-APP_ENV="${23}"
-FEISHU_ALARM_ENABLED="${24}"
-FEISHU_ALARM_WEBHOOK_URL_B64="${25}"
-EXPORT_RUN_CONCURRENCY="${26}"
-DB_POOL_SIZE="${27}"
-DB_MAX_OVERFLOW="${28}"
-REDIS_POOL_SIZE="${29}"
+if [ "$1" = "--config-file" ]; then
+    # shellcheck disable=SC1090
+    source "${BASH_SOURCE[0]}.config.sh"
+    load_file_config /dev/stdin remote
+    GIT_SSH_KEY_PATH="$2"
+    shift 2
+    configure_file_commands
+    SMTP_CONFIG_B64=$(printf '%s' "$SMTP_CONFIG" | base64 | tr -d '\n')
+    REDIS_PASSWORD_B64=$(printf '%s' "$REDIS_PASSWORD" | base64 | tr -d '\n')
+    FEISHU_ALARM_WEBHOOK_URL_B64=$(printf '%s' "$FEISHU_ALARM_WEBHOOK_URL" | base64 | tr -d '\n')
+else
+    FILE_CONFIG_MODE=""
+    DB_PORT="3306"
+    # 所有环境配置一律由调用方显式传入，脚本不做任何默认值回退。
+    DEPLOY_DIR="$1"
+    BACKUP_DIR="${2%/}"
+    KEEP_VERSIONS="$3"
+    GIT_SSH_KEY_PATH="$4"
+    DB_HOST="$5"
+    DB_USER="$6"
+    DB_PASSWD="$7"
+    SMTP_CONFIG_B64="$8"
+    PUBLIC_API_BASE_URL="$9"
+    GOOGLE_CLIENT_ID="${10}"
+    GOOGLE_CLIENT_SECRET="${11}"
+    PUBLIC_WEBSITE_BASE_URL="${12}"
+    BACKEND_PORT_PY="${13}"
+    NGINX_SERVER_NAME="${14}"
+    APP_NAME="${15}"
+    DB_NAME="${16}"
+    LOGGER_LEVEL="${17}"
+    # REDIS_PASSWORD 走 base64 透传，避免特殊字符破坏 sed；留空表示无密码 Redis。
+    REDIS_HOST="${18}"
+    REDIS_PORT="${19}"
+    REDIS_PASSWORD_B64="${20}"
+    BRANCH="${21}"
+    JWT_SECRET_KEY="${22}"
+    APP_ENV="${23}"
+    FEISHU_ALARM_ENABLED="${24}"
+    FEISHU_ALARM_WEBHOOK_URL_B64="${25}"
+    EXPORT_RUN_CONCURRENCY="${26}"
+    DB_POOL_SIZE="${27}"
+    DB_MAX_OVERFLOW="${28}"
+    REDIS_POOL_SIZE="${29}"
+fi
 SKIP_BACKUP=""
 SKIP_HEALTH_CHECK=""
 
@@ -218,6 +232,10 @@ yaml_double_quoted_scalar() {
 }
 
 generate_config_from_example() {
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        render_file_config
+        return
+    fi
     local db_host_escaped
     local db_user_escaped
     local db_passwd_escaped
@@ -269,6 +287,7 @@ generate_config_from_example() {
 
     sed \
         -e "s|{DB_HOST}|$db_host_escaped|g" \
+        -e "s|{DB_PORT}|$DB_PORT|g" \
         -e "s|{DB_USER}|$db_user_escaped|g" \
         -e "s|{DB_PASSWD}|$db_passwd_escaped|g" \
         -e "s|{DB_NAME}|$db_name_escaped|g" \
@@ -488,6 +507,9 @@ configure_supervisor() {
     command -v supervisorctl &> /dev/null || error_exit "未找到 supervisorctl，请手动配置 supervisor"
 
     local supervisor_conf_dir="/etc/supervisor/conf.d"
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        supervisor_conf_dir="$SUPERVISOR_CONF_DIR"
+    fi
     local target_conf="$supervisor_conf_dir/$APP_NAME.conf"
     local template_conf="${DEPLOY_DIR}backend/deploy/supervisor/gmap-server.conf"
     local backend_dir="${DEPLOY_DIR%/}/backend"
@@ -506,7 +528,11 @@ configure_supervisor() {
         "$template_conf" > "$target_conf"
 
     supervisorctl reread
-    supervisorctl update
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        supervisorctl update "$APP_NAME"
+    else
+        supervisorctl update
+    fi
     log_info "supervisor 配置完成: $target_conf"
 }
 
@@ -519,24 +545,34 @@ configure_nginx() {
 
     local nginx_conf_dir="/usr/local/nginx/vhost"
     local target_conf="$nginx_conf_dir/$APP_NAME.conf"
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        target_conf="$NGINX_VHOST_FILE"
+    fi
     local legacy_conf="$nginx_conf_dir/$NGINX_SERVER_NAME.conf"
     local template_conf="${DEPLOY_DIR}backend/deploy/nginx/nginx.conf"
     local backend_port_escaped
     local nginx_server_name_escaped
 
-    mkdir -p "$nginx_conf_dir"
+    mkdir -p "$(dirname "$target_conf")"
     backend_port_escaped=$(escape_sed_replacement "$BACKEND_PORT_PY")
     nginx_server_name_escaped=$(escape_sed_replacement "$NGINX_SERVER_NAME")
-    sed \
-        -e "s|{BACKEND_PORT_PY}|$backend_port_escaped|g" \
-        -e "s|{NGINX_SERVER_NAME}|$nginx_server_name_escaped|g" \
-        "$template_conf" > "$target_conf"
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        render_file_nginx_config "$template_conf" > "$target_conf"
+    else
+        sed \
+            -e "s|{BACKEND_PORT_PY}|$backend_port_escaped|g" \
+            -e "s|{NGINX_SERVER_NAME}|$nginx_server_name_escaped|g" \
+            -e '/^{TLS_CONFIG}$/d' \
+            "$template_conf" > "$target_conf"
+    fi
 
     if [ "$target_conf" != "$legacy_conf" ] && [ -f "$legacy_conf" ]; then
         rm -f "$legacy_conf"
     fi
     nginx -t
-    if command -v systemctl &> /dev/null; then
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        nginx -s reload
+    elif command -v systemctl &> /dev/null; then
         systemctl reload nginx
     else
         nginx -s reload

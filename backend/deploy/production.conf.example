@@ -1,0 +1,62 @@
+# 正式部署参数；复制为同目录 production.conf，chmod 600 后填写空值。
+# 仅填写本文件；*.conf 入口不从调用进程环境补齐字段。
+SERVER_HOST="8.216.50.123"
+SERVER_PORT="22"
+SERVER_USER="root"
+# 留空使用已验证可登录的标准 SSH 默认配置与密钥选择。
+SSH_PRIVATE_KEY_PATH=""
+# 填写本地 Git 仓库拉取私钥的绝对路径；不复用服务器登录私钥。
+GIT_PRIVATE_KEY_PATH=""
+
+REPO_URL="git@github.com:zbhydra/gmap.git"
+BRANCH="main"
+DEPLOY_DIR="/data/mapexporter/"
+BACKUP_DIR="/data/mapexporter/.backups/"
+KEEP_VERSIONS="5"
+APP_NAME="mapexporter-server"
+APP_ENV="production"
+LOGGER_LEVEL="WARNING"
+BACKEND_PORT_PY="9600"
+PUBLIC_API_BASE_URL="https://api.mapexporter.app"
+PUBLIC_WEBSITE_BASE_URL="https://mapexporter.app"
+
+# 连接与认证由部署者填写；数据库和 Redis 必须与测试环境隔离。
+DB_HOST=""
+DB_PORT=""
+DB_USER=""
+DB_PASSWD=""
+DB_NAME=""
+REDIS_HOST=""
+REDIS_PORT=""
+# 留空表示明确使用无密码 Redis。
+REDIS_PASSWORD=""
+JWT_SECRET_KEY=""
+GOOGLE_CLIENT_ID=""
+# Google 自定义按钮的 OAuth code flow 使用此字段。
+GOOGLE_CLIENT_SECRET=""
+
+# 填写完整 smtp: YAML 账号列表。账号字段：host、port、username、password、
+# use_tls、from_email、from_name、timeout、weight；from_name 可用 MapExporter。
+SMTP_CONFIG=""
+FEISHU_ALARM_ENABLED="false"
+FEISHU_ALARM_WEBHOOK_URL=""
+
+# 沿用现有后端配置容量，不在本次部署中调优。
+EXPORT_RUN_CONCURRENCY="8"
+DB_POOL_SIZE="50"
+DB_MAX_OVERFLOW="100"
+REDIS_POOL_SIZE="5000"
+
+UV_BIN="/root/.local/bin/uv"
+NGINX_BIN="/usr/local/sbin/nginx"
+NGINX_PREFIX="/usr/local/nginx"
+NGINX_CONFIG="/usr/local/nginx/conf/nginx.conf"
+NGINX_SERVER_NAME="api.mapexporter.app"
+NGINX_VHOST_FILE="/usr/local/nginx/vhost/mapexporter-api.conf"
+NGINX_HTTPS_PORT="443"
+# 填写远端证书与私钥绝对路径；证书须覆盖 api.mapexporter.app。
+TLS_CERTIFICATE=""
+TLS_CERTIFICATE_KEY=""
+SUPERVISORCTL_BIN="/usr/local/bin/supervisorctl"
+SUPERVISOR_CONFIG="/etc/supervisord.conf"
+SUPERVISOR_CONF_DIR="/etc/supervisor/conf.d"

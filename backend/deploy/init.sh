@@ -5,15 +5,16 @@ set -e
 # 远程初始化脚本（hydra 2026-04-30 重构：参数化 .env）
 #
 # 用法:
-#   ./backend/deploy/init.sh <env_file> [--force]
+#   ./backend/deploy/init.sh <config_file> [--force]
 #
 # 示例:
 #   ./backend/deploy/init.sh backend/deploy/.env.test
+#   ./backend/deploy/init.sh backend/deploy/production.conf --check
 #   ./backend/deploy/init.sh backend/deploy/.env.prod --force
 #
 # 说明:
 #   通过 SSH 连接到远程服务器，传输并执行 deploy_init.sh；环境配置（SSH host /
-#   DB / SMTP / Git 仓库 / 部署目录）从 .env.* 读取，防硬编码 secret 入 git。
+#   DB / SMTP / Git 仓库 / 部署目录）从首参文件读取，防硬编码 secret 入 git。
 ###############################################################################
 
 # 脚本路径
@@ -26,19 +27,19 @@ PROJECT_GIT_KEY_PATH="$SCRIPT_DIR/key/git_key"
 
 ENV_FILE="$1"
 if [ -z "$ENV_FILE" ]; then
-    echo "ERROR: 请传入 .env.* 文件路径作为首参" >&2
+    echo "ERROR: 请传入部署配置文件路径作为首参" >&2
     echo "用法：bash $0 backend/deploy/.env.test [--force]" >&2
-    echo "  模板：backend/deploy/.env.example" >&2
+    echo "  正式模板：backend/deploy/production.conf.example；测试模板：backend/deploy/.env.example" >&2
     exit 1
 fi
 if [ ! -f "$ENV_FILE" ]; then
-    echo "ERROR: .env 文件不存在: $ENV_FILE" >&2
+    echo "ERROR: 部署配置文件不存在: $ENV_FILE" >&2
     exit 1
 fi
 shift
 
-# shellcheck disable=SC1090
-source "$ENV_FILE"
+source "$SCRIPT_DIR/script/file_config.sh"
+load_deploy_config "$ENV_FILE"
 
 # 必填校验
 : "${SERVER_HOST:?ERROR: SERVER_HOST 未定义}"
@@ -80,6 +81,14 @@ FEISHU_ALARM_WEBHOOK_URL_B64=$(printf '%s' "$FEISHU_ALARM_WEBHOOK_URL" | base64 
 
 # .env 内 DB_PASSWD 字段映射到老脚本 DB_PASSWD（不变；保 deploy_init.sh 兼容）
 
+if [ -n "$FILE_CONFIG_MODE" ]; then
+    case "$*" in
+        "") ;;
+        --check) echo "正式配置预检通过（未连接服务器）"; exit 0 ;;
+        *) echo "ERROR: *.conf 部署入口只接受可选 --check；部署参数请写入配置文件" >&2; exit 1 ;;
+    esac
+fi
+
 #===============================================================================
 # 以下内容无需修改
 #===============================================================================
@@ -120,7 +129,7 @@ require_project_git_key() {
 
 cleanup_remote_git_key() {
     if [ -n "$REMOTE_GIT_KEY" ] && [ "${#SSH_CMD[@]}" -gt 0 ]; then
-        if ! "${SSH_CMD[@]}" "rm -f $REMOTE_GIT_KEY" >/dev/null 2>&1; then
+        if ! "${SSH_CMD[@]}" "rm -f $REMOTE_GIT_KEY ${REMOTE_FILE_HELPER:-}" >/dev/null 2>&1; then
             log_warn "远程 Git 私钥清理失败，请手动删除: $REMOTE_GIT_KEY"
         fi
     fi
@@ -145,6 +154,15 @@ build_ssh_command() {
         -o ConnectTimeout=10
         -o LogLevel=ERROR
     )
+
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        local identity=()
+        if [ -n "$SSH_PRIVATE_KEY_PATH" ]; then
+            identity=(-i "$SSH_PRIVATE_KEY_PATH" -o IdentitiesOnly=yes)
+        fi
+        SSH_CMD=(ssh "${identity[@]}" -p "$SERVER_PORT" "${ssh_opts[@]}" "${SERVER_USER}@${SERVER_HOST}")
+        return
+    fi
 
     # 优先使用环境变量指定的私钥
     if [ -n "$SSH_PRIVATE_KEY_PATH" ] && [ -f "$SSH_PRIVATE_KEY_PATH" ]; then
@@ -172,6 +190,15 @@ build_scp_command() {
         -o ConnectTimeout=10
         -o LogLevel=ERROR
     )
+
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        local identity=()
+        if [ -n "$SSH_PRIVATE_KEY_PATH" ]; then
+            identity=(-i "$SSH_PRIVATE_KEY_PATH" -o IdentitiesOnly=yes)
+        fi
+        SCP_CMD=(scp "${identity[@]}" -P "$SERVER_PORT" "${ssh_opts[@]}")
+        return
+    fi
 
     if [ -n "$SSH_PRIVATE_KEY_PATH" ] && [ -f "$SSH_PRIVATE_KEY_PATH" ]; then
         SCP_CMD=(scp -i "$SSH_PRIVATE_KEY_PATH" -P "$SERVER_PORT" "${ssh_opts[@]}")
@@ -208,6 +235,7 @@ main() {
     build_ssh_command
     build_scp_command
     REMOTE_GIT_KEY=""
+    REMOTE_FILE_HELPER=""
     trap cleanup_remote_git_key EXIT
 
     # 测试连接
@@ -238,7 +266,12 @@ main() {
     # 传输 Git 私钥到远程
     log_step "传输 Git 私钥到远程服务器..."
     REMOTE_GIT_KEY="/tmp/remote-git-key-$$-git_key"
-    "${SCP_CMD[@]}" "$PROJECT_GIT_KEY_PATH" "${SERVER_USER}@${SERVER_HOST}:${REMOTE_GIT_KEY}" || error_exit "传输 Git 私钥失败"
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        REMOTE_GIT_KEY=$("${SSH_CMD[@]}" "mktemp /tmp/remote-git-key.XXXXXX") || error_exit "创建远程 Git 私钥文件失败"
+        "${SSH_CMD[@]}" "cat > $REMOTE_GIT_KEY" < "$PROJECT_GIT_KEY_PATH" || error_exit "传输 Git 私钥失败"
+    else
+        "${SCP_CMD[@]}" "$PROJECT_GIT_KEY_PATH" "${SERVER_USER}@${SERVER_HOST}:${REMOTE_GIT_KEY}" || error_exit "传输 Git 私钥失败"
+    fi
     "${SSH_CMD[@]}" "chmod 600 $REMOTE_GIT_KEY" >/dev/null 2>&1 || error_exit "设置远程 Git 私钥权限失败"
     log_info "Git 私钥传输完成"
 
@@ -246,17 +279,23 @@ main() {
     log_step "在远程服务器执行初始化..."
     echo ""
 
-    # 使用环境变量设置密码（如果使用密码认证）
-    REMOTE_EXEC=""
-    if [ -n "$SSH_PASSWORD" ]; then
-        REMOTE_EXEC="export SSHPASS='$SSH_PASSWORD'; "
+    if [ -n "$FILE_CONFIG_MODE" ]; then
+        REMOTE_FILE_HELPER="${REMOTE_INIT}.config.sh"
+        "${SCP_CMD[@]}" "$SCRIPT_DIR/script/file_config.sh" "${SERVER_USER}@${SERVER_HOST}:${REMOTE_FILE_HELPER}" || error_exit "传输配置读取脚本失败"
+        "${SSH_CMD[@]}" "bash $REMOTE_INIT --config-file $REMOTE_GIT_KEY" < "$ENV_FILE" || error_exit "正式配置部署失败"
+    else
+        # 使用环境变量设置密码（如果使用密码认证）
+        REMOTE_EXEC=""
+        if [ -n "$SSH_PASSWORD" ]; then
+            REMOTE_EXEC="export SSHPASS='$SSH_PASSWORD'; "
+        fi
+
+        # 构建远程命令
+        REMOTE_CMD="${REMOTE_EXEC}bash $REMOTE_INIT \"$REPO_URL\" \"$BRANCH\" \"$DEPLOY_DIR\" \"$REMOTE_GIT_KEY\" \"$DB_HOST\" \"$DB_USER\" \"$DB_PASSWD\" \"$SMTP_CONFIG_B64\" \"$PUBLIC_API_BASE_URL\" \"$GOOGLE_CLIENT_ID\" \"$GOOGLE_CLIENT_SECRET\" \"$PUBLIC_WEBSITE_BASE_URL\" \"$BACKEND_PORT_PY\" \"$NGINX_SERVER_NAME\" \"$APP_NAME\" \"$DB_NAME\" \"$BACKUP_DIR\" \"$LOGGER_LEVEL\" \"$REDIS_HOST\" \"$REDIS_PORT\" \"$REDIS_PASSWORD_B64\" \"$JWT_SECRET_KEY\" \"$APP_ENV\" \"$FEISHU_ALARM_ENABLED\" \"$FEISHU_ALARM_WEBHOOK_URL_B64\" \"$EXPORT_RUN_CONCURRENCY\" \"$DB_POOL_SIZE\" \"$DB_MAX_OVERFLOW\" \"$REDIS_POOL_SIZE\" $FORCE"
+
+        # 执行远程脚本
+        "${SSH_CMD[@]}" "$REMOTE_CMD" || error_exit "远程初始化失败 (临时文件: $REMOTE_INIT)"
     fi
-
-    # 构建远程命令
-    REMOTE_CMD="${REMOTE_EXEC}bash $REMOTE_INIT \"$REPO_URL\" \"$BRANCH\" \"$DEPLOY_DIR\" \"$REMOTE_GIT_KEY\" \"$DB_HOST\" \"$DB_USER\" \"$DB_PASSWD\" \"$SMTP_CONFIG_B64\" \"$PUBLIC_API_BASE_URL\" \"$GOOGLE_CLIENT_ID\" \"$GOOGLE_CLIENT_SECRET\" \"$PUBLIC_WEBSITE_BASE_URL\" \"$BACKEND_PORT_PY\" \"$NGINX_SERVER_NAME\" \"$APP_NAME\" \"$DB_NAME\" \"$BACKUP_DIR\" \"$LOGGER_LEVEL\" \"$REDIS_HOST\" \"$REDIS_PORT\" \"$REDIS_PASSWORD_B64\" \"$JWT_SECRET_KEY\" \"$APP_ENV\" \"$FEISHU_ALARM_ENABLED\" \"$FEISHU_ALARM_WEBHOOK_URL_B64\" \"$EXPORT_RUN_CONCURRENCY\" \"$DB_POOL_SIZE\" \"$DB_MAX_OVERFLOW\" \"$REDIS_POOL_SIZE\" $FORCE"
-
-    # 执行远程脚本
-    "${SSH_CMD[@]}" "$REMOTE_CMD" || error_exit "远程初始化失败 (临时文件: $REMOTE_INIT)"
 
     echo ""
 

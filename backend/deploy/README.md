@@ -3,7 +3,37 @@
 这套脚本用于把 `backend`（Python）服务通过 SSH 部署到远端 Linux 服务器，并由
 `supervisor` 管理进程。
 
-## 关键决策（hydra 2026-04-30）
+## 正式配置
+
+正式参数以 [`production.conf.example`](production.conf.example) 为模板，真实文件使用同目录 `production.conf`，由本目录 `.gitignore` 忽略：
+
+```bash
+cp backend/deploy/production.conf.example backend/deploy/production.conf
+chmod 600 backend/deploy/production.conf
+# 编辑 production.conf，填写空的连接与认证字段后，仅执行本地预检：
+bash backend/deploy/init.sh backend/deploy/production.conf --check
+bash backend/deploy/deploy.sh backend/deploy/production.conf --check
+```
+
+`*.conf` 入口清除部署字段的同名进程变量后读取文件；所有字段均须在文件中声明，必填空值会列出字段名并停止，预检不会连接服务器。SSH 私钥路径留空时使用标准 SSH 默认配置与密钥选择；Git 拉取私钥由文件中的 `GIT_PRIVATE_KEY_PATH` 单独指定。部署工具、Supervisor 主配置和 API vhost 路径同样来自文件。正式入口只接受可选 `--check`，备份保留数量等部署参数直接修改文件。
+
+运行 `bash backend/deploy/check_file_config.sh` 可在本地检查文件输入、SSH 传输与配置渲染；检查使用临时目录和外部命令替身。
+
+准备好参数并确认发布后，首次部署、日常更新和只读健康检查分别运行：
+
+```bash
+bash backend/deploy/init.sh backend/deploy/production.conf
+bash backend/deploy/deploy.sh backend/deploy/production.conf
+bash backend/deploy/health_check.sh backend/deploy/production.conf
+```
+
+正式配置经 SSH 标准输入传给远端脚本，不写入远程命令参数或另存远程 profile。生成的 `backend/config.yaml` 及包含凭据的渲染临时文件权限为 `600`；公开脚本与构建产物不使用私密权限。Supervisor 更新只作用于本文件的 `APP_NAME`。
+
+正式 API 的 HTTPS 端口、远端证书和私钥路径分别由 `NGINX_HTTPS_PORT`、`TLS_CERTIFICATE`、`TLS_CERTIFICATE_KEY` 指定。证书或私钥路径为空时，本地预检在首次 SSH/SCP 前停止；远端会先检查路径可读，再沿既有流程渲染 API Nginx 的 TLS 入口并执行 `nginx -t`。证书须覆盖 API 域名，DNS 也须由部署者配置。
+
+健康脚本检查远端回环 HTTP 存活及服务状态，不代表公网 HTTPS 可达。脚本不会签发证书；数据库、Redis、邮件、Google OAuth 与业务配置表须由部署者完成配置。
+
+## 测试配置
 
 **deploy 脚本接受 `.env.*` 文件作为参数**——部署配置（SSH host / DB / Redis /
 deploy dir / port / SMTP / JWT）从 `.env.test` / `.env.prod` 等读取，
@@ -110,10 +140,12 @@ backend/deploy/
 
 本地 `ssh/scp` 连接服务器时使用，优先级如下：
 
-1. 环境变量 `SSH_PRIVATE_KEY_PATH`
+1. `.env` 字段或环境变量 `SSH_PRIVATE_KEY_PATH`
 2. `~/.ssh/id_ed25519`
 3. `~/.ssh/id_rsa`
-4. 环境变量 `SSH_PASSWORD`
+4. `.env` 字段或环境变量 `SSH_PASSWORD`
+
+以上回退顺序用于旧 `.env` 入口；正式配置规则见[正式配置](#正式配置)。
 
 注意：
 这里不会使用 `backend/deploy/key/git_key` 作为服务器登录私钥。

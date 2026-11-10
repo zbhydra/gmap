@@ -76,6 +76,7 @@ website/
 - `cloudflare/retired-page-redirects.csv`：当前为空，未携带旧 TG 页的 14 语言 301 清单。仓库空表不代表线上 Cloudflare 状态；外部规则需另行查询。Pricing 是当前有效购买页。
 - `cloudflare/README.md`：使用说明。
 - `deploy/mapexporter.conf` / `deploy/mapexporter-test.conf`：nginx 配置——仅对构建产物中真实存在的目录执行「无尾斜杠 → HTTPS 尾斜杠」单跳 301，不维护第二份路由白名单；不据旧站文档恢复退役 URL 映射。
+- 生产构建与部署统一读取 `website/deploy/production.conf`，字段见 [production.conf.example](../../../website/deploy/production.conf.example)；网站与官网下载插件共用文件中的公开 API、官网地址，进程变量与旧 `.env.production` 不覆盖或补充生产参数。生产 Nginx 模板按该文件渲染，缺少 TLS 证书路径时只允许输出本地候选，发布预检停止。
 - `deploy/deploy.sh`：发布静态版本后将对应环境的 vhost 安装到 `/usr/local/nginx/vhost/`，执行 `nginx -t`，失败恢复原配置，通过后 reload；静态资源使用 30 天 immutable 缓存。
 
 ## 6. SEO 基建

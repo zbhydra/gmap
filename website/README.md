@@ -23,8 +23,10 @@ pnpm --dir ../extension install
 pnpm build:test
 pnpm preview --host 0.0.0.0 --port 7620
 
-# 生产环境使用 .env.production；模板为 .env.production.example
-pnpm build
+# 生产环境：配置文件同时提供网站、下载包与 SSH/Nginx 参数
+cp deploy/production.conf.example deploy/production.conf
+chmod 600 deploy/production.conf
+pnpm build:prod
 
 # e2e（四浏览器 project；E2E_WEB_PORT 可覆盖端口）
 pnpm test:e2e
@@ -36,7 +38,7 @@ pnpm test:e2e:identity   # 浏览器身份门禁
 ```
 website/
 ├── public/            # 静态资源（favicon/manifest/robots/payment-icons；fonts 自托管字体 + OFL，img 图标 sprite 与等高线）
-├── deploy/            # Nginx conf + 按环境文件读取连接配置的部署脚本
+├── deploy/            # Nginx 模板、生产参数文件与部署脚本
 ├── cloudflare/        # Cloudflare 配置记录（cache rules / 退役重定向 CSV）
 ├── e2e/               # Playwright 冒烟 + 浏览器身份门禁
 ├── scripts/           # 网站/插件联合构建与 Playwright 浏览器身份工具
@@ -63,12 +65,15 @@ website/
 
 ## 环境与官网下载
 
-`pnpm build:test` 读取 `.env.test`，`pnpm build` 读取 `.env.production`；同名进程环境变量优先。`scripts/build.mjs` 完成两端类型检查、按浏览器构建插件 ZIP，再构建静态网站。下载资产自动进入 `dist/downloads/`，不手工提交二进制文件。
+`pnpm build:test` 读取 `.env.test`，保留测试环境既有的同名进程变量优先规则。`pnpm build` / `pnpm build:prod` 只读取 [deploy/production.conf.example](deploy/production.conf.example) 对应的本地 `production.conf`；生产文件中的空值不会由进程变量或旧 `.env.production` 补充。`scripts/build.mjs` 完成两端类型检查、按浏览器构建插件 ZIP，再构建静态网站。下载资产自动进入 `dist/downloads/`，不手工提交二进制文件。
 
 - `PUBLIC_API_BASE_URL`：网站请求和下载包共用的后端地址。
 - `PUBLIC_SITE_URL`：网站 canonical 地址与插件登录回跳入口。
 - `PUBLIC_SHARED_COOKIE_DOMAIN`：测试环境可留空，使用当前主机 Cookie。
-- `DEPLOY_*`：部署脚本的 SSH、目录与 Nginx 配置；域名配置仍需和对应 Nginx 文件保持一致。
+- `EXTENSION_GOOGLE_OAUTH_CLIENT_ID`：插件的 Google OAuth 客户端，与网站客户端分别配置。
+- `DEPLOY_*`：SSH、目录、Nginx 及 TLS 参数；生产 Nginx 域名从 `PUBLIC_SITE_URL` 推导。
+
+生产构建只向框架和插件传递公开构建字段。SSH 私钥路径为空时使用 SSH 的默认认证选择。发布前填写实际存在且覆盖官网域名的 TLS 证书与私钥路径；缺少证书时生产部署预检失败。`bash deploy/deploy.sh --render-nginx` 只输出本地候选；未配置证书时该候选只含 HTTP 监听。确认配置后以 `bash deploy/deploy.sh prod` 发布；测试入口仍为 `bash deploy/deploy.sh test`。
 
 内网其他设备安装时，将测试环境的两个 URL 改成可访问的内网 IP 或域名，后端监听地址与 `app.public_website_base_url` 同步匹配；后端部署由 `backend/deploy/.env.example` 的 `PUBLIC_WEBSITE_BASE_URL` 渲染该字段。PayPal 凭据继续由 `config_payment_channel` 的 `paypal` 配置管理，渠道读取入口是 `backend/src/app/services/payment_service.py` 的 `get_provider`，不写入前端环境文件。
 
@@ -76,14 +81,14 @@ website/
 
 ## 待回填占位清单
 
-- 正式 API / 网站地址：`.env.production`；公开索引地址另见 `public/robots.txt`、`public/llms.txt` 与 `cloudflare/`。
-- GA4 measurement ID：env `PUBLIC_GA4_MEASUREMENT_ID`（`.env.production` 或部署环境注入，G- 开头）。
+- 正式 API / 网站地址及 TLS 路径：`deploy/production.conf`；公开索引地址另见 `public/robots.txt`、`public/llms.txt` 与 `cloudflare/`。
+- GA4 measurement ID：生产文件的 `PUBLIC_GA4_MEASUREMENT_ID`（G- 开头）。
   为空时全站**零注入** gtag（构建期守卫）；配置后 Layout 注入 gtag，事件通道自动生效：
   `tool_view`（工具页进入）/ `tool_use`（功能使用，data-ga-event 委派）/ `cta_click`（data-cta
   统一漏斗事件，带 cta_id 与 utm）。全站唯一豁免的第三方运行时脚本。
 - Google Search Console：无真实资产。部署正式域名后在 GSC 添加 Domain 资源，优先 DNS 记录验证；
   若走 HTML 文件验证，把 `google<hash>.html` 放入 `public/` 重新构建部署即可，无需改代码。
-- Google OAuth client：`PUBLIC_GOOGLE_CLIENT_ID` env（购买链路接入时）
+- Google OAuth client：生产文件的 `PUBLIC_GOOGLE_CLIENT_ID`
 - 样式按 Atlas 合同（`docs/references/specs/design-website.md`）消费 `src/styles/tokens.css`；sitemap XSL
   构建时注入同一份 tokens.css。`python3 ../scripts/ui_token_lint.py` 的 website 为 enforced，
   违规即失败。
