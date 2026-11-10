@@ -37,11 +37,11 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-11-09`
-- 本地仓库提交:`1e434e394147450c63a627e518d452c88430641f`
+- 检查时间:`2026-11-10`
+- 本地仓库提交:`8c2c7497a141972a1c0114aa27ba8c0524a0b499`
 - GOSOM 最新提交:`e0c1d501e49cdcd5c6b2cecd2a032831f6ee9ba8`
 - SCRAPEMATE 最新提交:`1d7c7bf762391c7d3c73548be98a70d359c44183`
-- 结论:题设限定无网络,未执行远端 `git ls-remote`;两个给定 HEAD 均与本地 `.upstream/` 的 `main` 一致。GOSOM 旧基线是新 HEAD 的祖先,完整 diff 仅含 `e0c1d501e49cdcd5c6b2cecd2a032831f6ee9ba8` 修改的 `README.md` 和新增的 11 个 `img/sponsors/*.svg`:赞助商展示调整与 LeadsDB 说明删除,不改变线上抓取行为合同。重点运行路径、`gmaps/entry.go` 的 `Entry` / `MarshalJSON()` / `CsvHeaders()` / `CsvRow()`、SaaS REST / worker 和镜像构建均无 diff;GOSOM `go.mod` 仍为 scrapemate `v1.4.1`、playwright-go `v0.6100.0`。SCRAPEMATE HEAD 等于基线,完整 diff 为空,playwright-go 仍为 `v0.6100.0`;GOSOM 侧已跟进 scrapemate `v1.4.1`,其与 SCRAPEMATE HEAD 的精确标签映射仍待人工核对。两仓库 `git diff --check` 均通过,本轮无新增影响,不建议因本轮变化主动更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。既有四项待确认继续保留,部署机旧镜像是否仍运行及 digest 未确认;检查完整,仅推进 GOSOM 基线。
+- 结论:题设限定无网络,未执行远端 `git ls-remote`;两个给定 HEAD 均与本地 `.upstream/` 的 `main` 及既有基线一致。两仓库从基线至 HEAD 的完整 `git diff --name-status` 均为空,`git diff --check` 均通过,上游重点路径和解析 / 合同生成点无新变化。GOSOM `go.mod` 仍锁 scrapemate `v1.4.1`、playwright-go `v0.6100.0`;SCRAPEMATE playwright-go 仍为 `v0.6100.0`。GOSOM 侧已跟进 scrapemate `v1.4.1`,但本地仍无该标签,与 SCRAPEMATE HEAD 的精确对应关系待人工核对。复核既有四项待确认:本仓仍无旧 gosom 镜像的预发完成证据,部署机旧镜像是否仍运行及 digest 未确认;状态不变,不计本轮新增影响。本轮不推进基线、不追加变更记录,不建议因本轮变化主动更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。
 
 该区只保留最近一次结果。只有上游提交变化、检查失败或待确认项状态变化时,才在「变更记录」追加事件,避免每天写入无信息量的记录。
 
