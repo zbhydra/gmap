@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.core.config import settings
 from app.provider.export.export_base import ExportCellValue, ExportColumn
 from app.provider.export.gmap_columns import gmap_identity
+from app.schemas.export_run_schema import ExportRunResult
 from app.schemas.gmap_collector_schema import GmapCollectorInstance
 
 FileArgs = ParamSpec("FileArgs")
@@ -26,7 +27,7 @@ CollectorOperation = Literal["search_item", "enrich_sites"]
 
 
 class ExportFileError(RuntimeError):
-    """本地工作文件或定位无效。"""
+    """本地工作文件、发布产物或定位无效。"""
 
 
 class ExportCheckpointError(ExportFileError):
@@ -218,6 +219,42 @@ class ExportFileService:
     def content_hash(path: Path) -> str:
         with path.open("rb") as source:
             return hashlib.file_digest(source, "sha256").hexdigest()
+
+    def verify_prepared(
+        self,
+        *,
+        path: Path,
+        result: ExportRunResult,
+        descriptions: tuple[str, ...],
+    ) -> None:
+        """独立核对固定产物身份与内容，核验通过后才允许准备发布。"""
+        context = f"export_file.verify_prepared: path={path}"
+        try:
+            if (
+                self.file_size(path) != result.size_bytes
+                or self.content_hash(path) != result.sha256
+            ):
+                raise ExportFileError(f"{context} 大小或 SHA256 不符")
+            with path.open("r", encoding="utf-8-sig", newline="") as source:
+                reader = csv.reader(source, strict=True)
+                if next(reader, None) != result.columns:
+                    raise ExportFileError(f"{context} 列名不符")
+                if next(reader, None) != list(descriptions):
+                    raise ExportFileError(f"{context} 说明行不符")
+                count = 0
+                for count, row in enumerate(reader, 1):
+                    if len(row) != len(result.columns):
+                        raise ExportFileError(f"{context} 数据行列数不符 row={count}")
+                    if row[0] != str(count):
+                        raise ExportFileError(f"{context} 行号不连续 row={count}")
+        except (OSError, UnicodeError, csv.Error) as exc:
+            raise ExportFileError(
+                f"{context} 无法读取 CSV error={type(exc).__name__}"
+            ) from exc
+        if count != result.output_count:
+            raise ExportFileError(
+                f"{context} 数据行数不符 expected={result.output_count} actual={count}"
+            )
 
     def read_csv_facts(
         self,

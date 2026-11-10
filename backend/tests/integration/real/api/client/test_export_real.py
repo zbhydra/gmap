@@ -791,6 +791,81 @@ async def _clear_exports(state: _CleanupState) -> None:
         await db.commit()
 
 
+async def _prove_prepared_count_mismatch_blocks_publication_and_usage(
+    real_export_state: _CleanupState,
+    real_async_client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state = real_export_state
+    job, run = await _new_job(state, ["committed", "tamper"])
+    await _commit_first_row(job, run)
+    path = export_file_service.run_path(
+        job_no=job.job_no, run_no=run.run_no, name="increment.csv"
+    )
+    calls: list[str] = []
+
+    def sdk(_self: BaseClient, operation_name: str, api_params: dict) -> dict:
+        calls.append(operation_name)
+        return {}
+
+    monkeypatch.setattr(BaseClient, "_make_api_call", sdk)
+
+    async def respond(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        assert request.method == "POST" and request.url.path == "/tasks"
+        assert payload["operation"] == "search_item" and payload["keyword"] == "tamper"
+        # 恢复扫描之后追加真实文件行，使投影仍是合法 CSV，但行数偏离检查点。
+        with path.open(encoding="utf-8-sig", newline="") as source:
+            rows = list(csv.reader(source))
+        assert len(rows) == 2
+        with path.open("a", encoding="utf-8", newline="") as output:
+            csv.writer(output, lineterminator="\n").writerow(rows[1])
+        return httpx.Response(
+            200,
+            json={
+                "task_id": payload["task_id"],
+                "state": 30,
+                "response": {
+                    "http_status": 200,
+                    "body": {"status": "ok", "entries": []},
+                },
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as http:
+        gmap_collector_client._client = http
+        await export_job_runtime.start()
+        _, failed_run = await _wait_job(state, job.job_no)
+        failed_job = await export_job_service.export_job_info(
+            user_id=state.user_id, job_no=job.job_no
+        )
+        assert failed_job is not None
+        assert failed_job.status == failed_run.status == ExportRunStatus.FAILED
+        assert failed_run.error_code == CommonCode.EXPORT_TARGET_FAILED
+        assert (
+            failed_run.prepared_result_json is None and failed_job.result_json is None
+        )
+        assert failed_run.checkpoint.output_count == 1 and not calls
+        prepared = path.with_name("prepared.csv")
+        with prepared.open(encoding="utf-8-sig", newline="") as source:
+            assert len(list(csv.reader(source))) == 4
+        async with get_async_session() as db:
+            assert not (
+                await db.scalars(
+                    select(UserUsageLogModel).where(
+                        UserUsageLogModel.user_id == state.user_id
+                    )
+                )
+            ).all()
+        denied = await real_async_client.get(
+            BASE + "/" + job.job_no + "/download",
+            headers={"Authorization": f"Bearer {state.token}"},
+        )
+        assert (
+            denied.status_code == 200 and denied.json()["code"] == CommonCode.NOT_FOUND
+        )
+
+
 async def test_real_export_csv_recovery_and_atomic_usage(
     real_export_state: _CleanupState,
     real_async_client: httpx.AsyncClient,
@@ -798,7 +873,7 @@ async def test_real_export_csv_recovery_and_atomic_usage(
     monkeypatch: pytest.MonkeyPatch,
     real_user_factory,
 ) -> None:
-    # Runtime 的生命周期属于同一应用事件循环，三个阶段共用真实资源与清理边界。
+    # Runtime 的生命周期属于同一应用事件循环，各阶段共用真实资源与清理边界。
     await _prove_csv_contacts_permissions_and_single_failed_publish(
         real_export_state,
         real_async_client,
@@ -813,4 +888,8 @@ async def test_real_export_csv_recovery_and_atomic_usage(
     await _clear_exports(real_export_state)
     await _prove_success_and_usage_commit_atomically_and_publishing_is_not_retried(
         real_export_state, monkeypatch
+    )
+    await _clear_exports(real_export_state)
+    await _prove_prepared_count_mismatch_blocks_publication_and_usage(
+        real_export_state, real_async_client, monkeypatch
     )

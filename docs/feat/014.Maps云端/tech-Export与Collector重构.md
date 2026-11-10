@@ -81,13 +81,15 @@ Run 采用 CAS 的 `QUEUED → COLLECTING → PUBLISHING → COMPLETED / PARTIAL
 
 公开 CSV 由 [ExportFileService.project_gmap_csv](../../../backend/src/app/services/export_file_service.py) 投影时应用 [CSV 文本规则](../013.Maps插件/tech-采集与批量.md#csv-文本规则)；用于恢复和去重的工作 CSV 保留原值。网站 Excel 下载从同一份公开 CSV 转换，前置单引号作为 XLSX 字符串内容保留。
 
+投影完成并固定结果后，由同一文件服务的 `verify_prepared` 在 `prepare_run` 与上传之前独立核验：实际大小与 SHA256、首行列名、第二行语言说明、每行列数、从字符串 `"1"` 开始的连续行号，以及实际数据行数等于固定结果的 `output_count`。按 UTF-8-SIG 严格解码并解析 CSV；缺行、非法编码或结构错误统一抛 `ExportFileError`，沿现有失败收口结束，不上传、不公开下载、不写用量。核验沿用 `run_io` 与 Job 文件锁；核验至上传之间没有其他产物写入路径。
+
 采集阶段恢复同一 Run：按 DB 已确认字节数恢复工作 CSV 与去重集合，跳过已提交 item；未提交 item 按 §3.3 先查原 Collector 调用，不默认重新采集。已提交的错误 item 不自动重试；已提交文件缺失或变短时失败，不创建空文件伪装恢复。仅同节点恢复，不新增跨节点接管、持久队列或租约。发布阶段的失败与中断按 §4.2 结束，不恢复发布。
 
 为避免问题任务在重启后反复续期，采集与查询总预算使用 Run 首次持久化 `started_at` 加既有一小时预算计算；恢复、查询、切换阶段和重复提交都不刷新截止时间。到期后停止等待及新提交，沿既有局部成功/失败规则收口；官网补全的既有接收余量只接收结果，不增加执行预算。CAS 异步计划仍允许 Server 恢复时刷新业务期限，本项目不沿用该建议。
 
 Runtime 启动只建立后台调度与发现任务，不在 FastAPI 启动流程等待恢复任务全部入队。后台发现本节点 QUEUED/COLLECTING Run，并通过原有有界队列调度；PUBLISHING 仅按 §4.2 失败收口。一个仍在等待 Collector 的任务不能阻止后端进入服务；超过总期限或已结束的任务不通过详情读取、重启或唤醒重新采集。
 
-PUBLISHING 持有固定对象 key、hash、列和行数。上传成功后，用量流水、Job/Run 终态与本人下载引用在同一短事务提交；上传期间不持有数据库事务。上传或结算失败按 §4.2 结束执行，不增加 `uploaded_at` 或发布重试调度。Server执行取消继续传播并释放本地名额，已受理Collector调用按§3.3遵守原执行期限。
+核验通过后才进入 PUBLISHING，持有固定对象 key、hash、列和行数。上传成功后，用量流水、Job/Run 终态与本人下载引用在同一短事务提交；上传期间不持有数据库事务。上传或结算失败按 §4.2 结束执行，不增加 `uploaded_at` 或发布重试调度。Server执行取消继续传播并释放本地名额，已受理Collector调用按§3.3遵守原执行期限。
 
 ### 3.3 Collector 异步调用与恢复
 
@@ -119,7 +121,7 @@ Collector 在首次受理时固定执行期限，任务脱离 HTTP 连接生命�
 
 同步预览及 API/MCP 使用同一执行器，也提供每次逻辑调用的 ID，但不建立 Online Run 定位文件。评论每一页、照片每次独立调用使用不同 ID。Server 取消仍停止本次等待；已受理 Collector 调用可能运行到原期限，不承诺随请求断连取消。CSV 检查点只解决本地已交付进度，不用于恢复 Collector 内部任务。
 
-HTTP 边界归 `provider/gmap/collector_client.py`。`search_item/enrich_sites/list_reviews/list_photos` 提供同步业务结果；`submit_task/query_task` 接收已确定的实例与调用 ID，返回 `None` 表示进行中，终态返回解包后的原正文 bytes，并先按原 HTTP 状态分类失败。`wait_for_task` 在固定接收截止时间内按原实例查询，不提交新任务；短查询超时或断连只在该预算内继续观察。Search 与官网补全分别由 `parse_search_response/parse_contacts_response` 收窄到共享 DTO，失败 Search 不伪装合法零结果，官网补全失败保留基础行由 Provider 负责。定位文件写入、原 URL 对应当前 Key 的选择、Run 固定总期限及 CSV 恢复由 Export 接续，不能直接拿同步方法替代持久调用恢复。
+HTTP 边界归 `provider/gmap/collector_client.py`。`search_item/enrich_sites/list_reviews/list_photos` 提供同步业务结果；`submit_task/query_task` 接收已确定的实例与调用 ID，返回 `None` 表示进行中，终态返回解包后的原正文 bytes，并先按原 HTTP 状态分类失败。`wait_for_task` 在固定接收截止时间内按原实例查询，不提交新任务；短查询超时、断连或外层 5xx 只在该预算内继续观察，持续外层 5xx 耗尽预算后抛最后错误，`deadline_exceeded` 仍直接失败。Search 与官网补全分别由 `parse_search_response/parse_contacts_response` 收窄到共享 DTO，失败 Search 不伪装合法零结果，官网补全失败保留基础行由 Provider 负责。定位文件写入、原 URL 对应当前 Key 的选择、Run 固定总期限及 CSV 恢复由 Export 接续，不能直接拿同步方法替代持久调用恢复。
 
 ## 4. 本项目收费衔接
 

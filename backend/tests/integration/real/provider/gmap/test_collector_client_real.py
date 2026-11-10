@@ -66,7 +66,17 @@ async def test_real_four_operations_validate_results_budget_and_cancellation(
     async def respond(request: httpx.Request) -> httpx.Response:
         if request.method == "GET":
             assert request.url == f"http://collector.test/tasks/{calls[-1]['task_id']}"
-            return httpx.Response(response_status, json=response_body)
+            return httpx.Response(
+                200,
+                json={
+                    "task_id": calls[-1]["task_id"],
+                    "state": 30,
+                    "response": {
+                        "http_status": response_status,
+                        "body": response_body,
+                    },
+                },
+            )
         assert request.url == "http://collector.test/"
         assert request.headers["X-API-Key"] == "test-key"
         payload = json.loads(request.content)
@@ -185,10 +195,11 @@ async def test_real_four_operations_validate_results_budget_and_cancellation(
     assert client._client is None
 
 
-async def test_real_unknown_query_failure_does_not_resubmit_on_another_collector(
+async def test_real_transient_query_502_recovers_without_resubmitting_on_another_collector(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(settings, "root_path", str(tmp_path))
+    monkeypatch.setattr(collector_client, "GMAP_COLLECTOR_POLL_SECONDS", 0.005)
     config = GmapCollectorConfig(
         collectors=[
             *CONFIG.collectors,
@@ -204,9 +215,10 @@ async def test_real_unknown_query_failure_does_not_resubmit_on_another_collector
     first_payload: dict[str, object] = {}
     terminal = False
     unknown_submission = False
+    query_count = 0
 
     async def respond(request: httpx.Request) -> httpx.Response:
-        nonlocal first_url, task_id, first_payload
+        nonlocal first_url, task_id, first_payload, query_count
         calls.append((request.method, str(request.url)))
         if request.method == "POST":
             if request.url.path == "/tasks" and not unknown_submission:
@@ -238,31 +250,46 @@ async def test_real_unknown_query_failure_does_not_resubmit_on_another_collector
                     },
                 },
             )
-        return httpx.Response(502, json={"error": "bad_gateway"})
+        query_count += 1
+        if query_count == 1:
+            return httpx.Response(502, json={"error": "bad_gateway"})
+        return httpx.Response(
+            200,
+            json={
+                "task_id": task_id,
+                "state": 30,
+                "response": {
+                    "http_status": 200,
+                    "body": {"status": "ok", "reviews": [], "next_cursor": None},
+                },
+            },
+        )
 
     client = GmapCollectorClient()
     client._client = httpx.AsyncClient(transport=httpx.MockTransport(respond))
     try:
-        with pytest.raises(GmapCollectorError, match="http_502") as unknown:
-            await client.list_reviews(
-                config,
-                request_id="query-failure",
-                fid=FID,
-                sort_by=1,
-                cursor=None,
-                hl="en",
-            )
-        assert not unknown.value.switchable
+        result = await client.list_reviews(
+            config,
+            request_id="query-failure",
+            fid=FID,
+            sort_by=1,
+            cursor=None,
+            hl="en",
+        )
+        assert not result.reviews and result.next_cursor is None
         assert calls == [
             ("POST", f"{first_url}/"),
+            ("GET", f"{first_url}/tasks/{task_id}"),
             ("GET", f"{first_url}/tasks/{task_id}"),
         ]
         original = next(item for item in config.collectors if item.url == first_url)
         deadline = asyncio.get_running_loop().time() + 10
         terminal = True
+        count = len(calls)
         with pytest.raises(GmapCollectorError, match="result_write_failed") as finished:
-            await client.query_task(original, task_id=task_id, deadline=deadline)
+            await client.wait_for_task(original, task_id=task_id, deadline=deadline)
         assert finished.value.switchable
+        assert len(calls) == count + 1
         with pytest.raises(GmapCollectorError, match="overloaded") as rejected:
             await client.submit_task(
                 original,
@@ -305,6 +332,72 @@ async def test_real_unknown_query_failure_does_not_resubmit_on_another_collector
                 assert location is not None
                 assert location.task_id == task_id
                 assert location.collector_url == first_url
+    finally:
+        await client.aclose()
+
+
+async def test_real_query_5xx_exhausts_budget_with_last_error_without_resubmitting(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    budget_seconds = 0.1
+    monkeypatch.setattr(collector_client, "GMAP_MEDIA_BUDGET_SECONDS", budget_seconds)
+    monkeypatch.setattr(collector_client, "GMAP_COLLECTOR_POLL_SECONDS", 0.005)
+    config = GmapCollectorConfig(
+        collectors=[
+            *CONFIG.collectors,
+            GmapCollectorInstance(
+                url="http://second-collector.test", api_key="test-key"
+            ),
+        ],
+        proxies=CONFIG.proxies,
+    )
+    calls: list[tuple[str, str]] = []
+    first_url = ""
+    task_id = ""
+    query_failures: list[tuple[int, str | None]] = [
+        (500, None),
+        (502, None),
+        (503, None),
+        (503, "overloaded"),
+        (503, "collector_unavailable"),
+        (504, None),
+    ]
+
+    async def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal first_url, task_id
+        calls.append((request.method, str(request.url)))
+        if request.method == "POST":
+            assert len(calls) == 1
+            first_url = str(request.url.copy_with(path="/")).rstrip("/")
+            task_id = json.loads(request.content)["task_id"]
+            raise httpx.ReadError("submission response lost", request=request)
+        assert str(request.url) == f"{first_url}/tasks/{task_id}"
+        status, error = query_failures[min(len(calls) - 2, len(query_failures) - 1)]
+        return httpx.Response(status, json={"error": error})
+
+    client = GmapCollectorClient()
+    client._client = httpx.AsyncClient(transport=httpx.MockTransport(respond))
+    try:
+        started = asyncio.get_running_loop().time()
+        with pytest.raises(GmapCollectorError, match="^http_504$") as exhausted:
+            await asyncio.wait_for(
+                client.list_reviews(
+                    config,
+                    request_id="query-budget-exhausted",
+                    fid=FID,
+                    sort_by=1,
+                    cursor=None,
+                    hl="en",
+                ),
+                timeout=1,
+            )
+        assert asyncio.get_running_loop().time() - started >= budget_seconds
+        assert not exhausted.value.switchable
+        assert len(calls) > len(query_failures)
+        assert calls == [
+            ("POST", f"{first_url}/"),
+            *[("GET", f"{first_url}/tasks/{task_id}")] * (len(calls) - 1),
+        ]
     finally:
         await client.aclose()
 
@@ -380,8 +473,10 @@ async def test_real_async_protocol_keeps_id_instance_and_inner_status(
             == result
         )
         inner_status = 503
+        count = len(calls)
         with pytest.raises(GmapCollectorDeadlineError):
-            await client.query_task(collector, task_id=task_id, deadline=deadline)
+            await client.wait_for_task(collector, task_id=task_id, deadline=deadline)
+        assert len(calls) == count + 1
         inner_status, returned_id = 200, uuid4().hex
         with pytest.raises(GmapCollectorError, match="task_id_mismatch"):
             await client.query_task(collector, task_id=task_id, deadline=deadline)

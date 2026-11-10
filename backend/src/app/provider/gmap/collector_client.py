@@ -40,9 +40,12 @@ from app.services.export_file_service import (
 class GmapCollectorError(RuntimeError):
     """稳定失败分类，不保留可能含凭据的 HTTP 异常或上游正文。"""
 
-    def __init__(self, reason: str, *, switchable: bool = False) -> None:
+    def __init__(
+        self, reason: str, *, switchable: bool = False, retryable: bool = False
+    ) -> None:
         self.reason = reason
         self.switchable = switchable
+        self.retryable = retryable
         super().__init__(reason)
 
 
@@ -330,7 +333,7 @@ class GmapCollectorClient:
         task_id: str,
         deadline: float,
     ) -> bytes:
-        """deadline 是固定接收截止时间；网络暂时失败仍只查原地址。"""
+        """deadline 是固定接收截止时间；查询暂时失败仍只查原地址。"""
         while True:
             self._remaining(deadline)
             try:
@@ -340,6 +343,15 @@ class GmapCollectorClient:
                 if body is not None:
                     return body
             except GmapCollectorError as exc:
+                if exc.retryable:
+                    try:
+                        await asyncio.sleep(
+                            min(GMAP_COLLECTOR_POLL_SECONDS, self._remaining(deadline))
+                        )
+                        self._remaining(deadline)
+                    except GmapCollectorDeadlineError:
+                        raise exc from None
+                    continue
                 if exc.reason not in {"timeout", "transport"}:
                     raise
             await asyncio.sleep(
@@ -604,6 +616,7 @@ class GmapCollectorClient:
             reason,
             switchable=allow_switch
             and (error in {"overloaded", "collector_unavailable"} or status >= 500),
+            retryable=not allow_switch and status >= 500,
         )
 
     @staticmethod

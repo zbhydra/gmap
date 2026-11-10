@@ -239,7 +239,7 @@ async def test_real_usage_report_accumulates_across_requests(
 async def test_real_usage_report_rejects_invalid_records(
     real_async_client, real_redis_ready
 ) -> None:
-    """records<=0 走 pydantic 校验（422），不产生扣减。"""
+    """records<=0 返回统一校验业务码，不产生扣减。"""
     headers = _device_header()
     response = await real_async_client.post(
         "/api/client/maps/usage/report",
@@ -247,7 +247,7 @@ async def test_real_usage_report_rejects_invalid_records(
         headers=headers,
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 200
     assert response.json()["code"] == CommonCode.VALIDATION_ERROR
     after = _usage_payload(
         await real_async_client.get("/api/client/maps/usage", headers=headers)
@@ -386,7 +386,7 @@ async def test_real_usage_expected_user_rejects_expired_token_before_anonymous_d
     real_async_client, real_usage_api_cleanup
 ) -> None:
     """默认仍可降级匿名；显式归属失配返回 401，恢复凭据后只写账号账本一次。"""
-    email = f"maps-usage-identity-{uuid4().hex}@test.mapexporter.app"
+    email = f"usage-id-{uuid4().hex}@mapexporter.test"
     user, valid_headers = await _create_user_and_headers(email, real_usage_api_cleanup)
     device_headers = _device_header()
     valid_headers.update(device_headers)

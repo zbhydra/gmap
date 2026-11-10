@@ -333,6 +333,12 @@ class ExportJobRuntime:
             ),
             columns=[column.header for column in GMAP_PUBLIC_COLUMNS],
         )
+        await export_file_service.run_io(
+            export_file_service.verify_prepared,
+            path=prepared,
+            result=result,
+            descriptions=GMAP_DESCRIPTIONS[options.export_locale],
+        )
         await export_job_service.prepare_run(run, result)
         storage = await object_storage_config_service.get_item(job.storage_id)
         if storage is None:

@@ -4,7 +4,7 @@ import asyncio
 from typing import Protocol
 
 import pytest
-from sqlalchemy import func, select, text
+from sqlalchemy import event, func, select, text
 
 from app.constants.counter import (
     COUNTER_DEFINITIONS,
@@ -12,7 +12,9 @@ from app.constants.counter import (
     CounterId,
     get_counter_definition,
 )
-from app.core.database import get_async_session
+from app.core.database import get_async_session, get_engine
+from app.exceptions.common_exception import AppCommonException
+from app.i18n.common_code import CommonCode
 from app.models.counter_user_daily_model import CounterUserDailyModel
 from app.services.counter_service import counter_service
 from app.utils.time import get_current_ymd
@@ -79,6 +81,38 @@ async def test_real_add_twice_and_get_list_reads_all_cycles(
     assert await counter_service.get_list(
         user_id, [_DAILY_ID, _MONTHLY_ID, _LIFETIME_ID]
     ) == {_DAILY_ID: 7, _MONTHLY_ID: 10, _LIFETIME_ID: 24}
+    assert await counter_service.get(user_id, _DAILY_ID) == 7
+
+
+@pytest.mark.parametrize("number", [0, -1])
+async def test_real_add_rejects_nonpositive_number_before_database_access(
+    real_counter_cleanup_state: _CleanupState,
+    number: int,
+) -> None:
+    """零或负增量不获取数据库连接，且既有计数保持不变。"""
+
+    user_id = real_counter_cleanup_state.user_id
+    await counter_service.add(user_id, _DAILY_ID, 7)
+
+    database_checkouts = 0
+
+    def _record_checkout(*_args: object) -> None:
+        nonlocal database_checkouts
+        database_checkouts += 1
+
+    engine = get_engine().sync_engine
+    event.listen(engine, "checkout", _record_checkout)
+    try:
+        with pytest.raises(AppCommonException) as exc_info:
+            await counter_service.add(user_id, _DAILY_ID, number)
+    finally:
+        event.remove(engine, "checkout", _record_checkout)
+
+    assert database_checkouts == 0
+    assert exc_info.value.code == CommonCode.INVALID_REQUEST
+    assert f"user_id={user_id}" in exc_info.value.ext_msg
+    assert f"counter_id={_DAILY_ID}" in exc_info.value.ext_msg
+    assert f"number={number}" in exc_info.value.ext_msg
     assert await counter_service.get(user_id, _DAILY_ID) == 7
 
 

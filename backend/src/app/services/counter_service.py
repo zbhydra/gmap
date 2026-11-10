@@ -5,6 +5,8 @@ from sqlalchemy.dialects.mysql import insert as mysql_insert
 
 from app.constants.counter import CounterCycle, get_counter_definition
 from app.core.database import get_async_session
+from app.exceptions.common_exception import AppCommonException
+from app.i18n.common_code import CommonCode
 from app.models.counter_user_daily_model import CounterUserDailyModel
 from app.models.counter_user_lifetime_model import CounterUserLifetimeModel
 from app.models.counter_user_monthly_model import CounterUserMonthlyModel
@@ -16,6 +18,15 @@ class CounterService:
 
     async def add(self, user_id: int, counter_id: int, number: int) -> None:
         """将正增量原子累加到用户当前周期 Counter。"""
+
+        if number <= 0:
+            raise AppCommonException(
+                CommonCode.INVALID_REQUEST,
+                ext_msg=(
+                    "counter_service.add: 增量必须大于 0，"
+                    f"user_id={user_id}, counter_id={counter_id}, number={number}"
+                ),
+            )
 
         definition = get_counter_definition(counter_id)
         now_ms = timestamp_now()
