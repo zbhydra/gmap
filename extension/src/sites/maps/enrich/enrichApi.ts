@@ -24,6 +24,8 @@ export async function enrichMapsBusinesses(
     API.ENDPOINTS.MAPS_ENRICH,
     { businesses },
     {
+      // 等待服务端批量预算结束，并为响应往返预留余量。
+      timeout: 28_000,
       skipErrorToast: true
     }
   )

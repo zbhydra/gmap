@@ -31,7 +31,7 @@ import {
 import { downloadFile } from '../export/download'
 import { ExtractionPanel, waitForBody } from '../panel/extractionPanel'
 import { isReviewsPageUrl, readReviewsWorkFid } from '../extractionUrl'
-import { readBulkReviewsMax, readBulkWorkParams } from '../bulkAuto'
+import { checkBulkWorkOwner, readBulkReviewsMax, readBulkWorkParams } from '../bulkAuto'
 import { BULK_LIMITS } from '@/background/batch/types'
 import {
   createUsageSessionReporter,
@@ -269,7 +269,7 @@ export async function bootReviewsPage(
   if (bulk !== null || options.autoStart === false) void panel.checkVersion()
   let previousStatus: ReviewsScraperStatus = 'extracting'
   // 配额会话上报器（U7）：boot 自动开始即首个会话；Reset 重启换新幂等 ID
-  const usageReporter = createUsageSessionReporter(markEmitter, 'reviews')
+  const usageReporter = createUsageSessionReporter(markEmitter, 'reviews', bulk)
   const scraper = new ReviewsScraper(place, markEmitter, {
     onStateChanged: (status, count) => {
       panel.render({
@@ -327,8 +327,16 @@ export async function bootReviewsPage(
       panel.setUsage(snapshot, pageLimit)
       if (pageLimit === 0) {
         panel.setError('quota')
+        if (bulk !== null) {
+          markEmitter.emit('mapsBulkQuotaBlocked', {
+            taskId: bulk.taskId,
+            itemIndex: bulk.itemIndex,
+            pageUrl: location.href
+          })
+        }
         return
       }
+      if (bulk !== null && !(await checkBulkWorkOwner(bulk))) return
       panel.setError(null)
       if (reset) {
         scraper.reset(pageLimit)

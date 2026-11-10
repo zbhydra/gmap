@@ -43,7 +43,7 @@ export const FREE_ROW_LIMIT = 10
 /** 面板宿主(light DOM 唯一锚点,面板本体在其 open shadow DOM 内)。 */
 const PANEL_HOST_SELECTOR = '#gmap-extractor-panel-host'
 
-/** 36 列表头基线(columns.ts SEARCH_EXPORT_COLUMNS 固定列序,默认全列导出)。 */
+/** Pro 全选的 36 列表头基线，独立锁定导出列序。 */
 export const EXPECTED_HEADERS = [
   'Name',
   'Description',
@@ -82,6 +82,11 @@ export const EXPECTED_HEADERS = [
   'Place Id',
   'Kgmid'
 ]
+
+/** 免费/匿名仅剔除 Email / Social Medias，其他列保持原序。 */
+export const EXPECTED_FREE_HEADERS = EXPECTED_HEADERS.filter(
+  header => header !== 'Email' && header !== 'Social Medias'
+)
 
 /**
  * 文档开始前执行的身份兜底脚本(website playwright-browser-identity.mjs 同款):
@@ -231,10 +236,7 @@ export async function waitForExtensionServiceWorker(context: BrowserContext): Pr
   })
 }
 
-/**
- * 从扩展 service worker URL 反解扩展 ID。manifest 无固定 key,unpacked
- * 安装的扩展 ID 按 profile 派生不可预知,一律动态提取。
- */
+/** 从实际 service worker URL 动态提取扩展 ID，测试不耦合构建身份。 */
 export function extensionIdFromServiceWorker(worker: Worker): string {
   return new URL(worker.url()).host
 }

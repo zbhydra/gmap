@@ -148,6 +148,16 @@ export const Handler = {
     return declarationOnly('background.authorizeBulkWorkPage')
   },
 
+  /** 中转页请求后台核验其初始身份后关闭当前标签页。 */
+  closeBulkWorkPage(): Promise<void> {
+    return declarationOnly('background.closeBulkWorkPage')
+  },
+
+  /** Google 工作页开始采集前复核当前条目的 owner。 */
+  checkBulkWorkPage(_params: { taskId: string; itemIndex: number }): Promise<boolean> {
+    return declarationOnly('background.checkBulkWorkPage')
+  },
+
   /** 创建批量任务（关键词/评论 URL 队列）。 */
   createBulkTask(
     _params: BackgroundCreateBulkTaskRequest
@@ -203,11 +213,18 @@ export const METHOD_TARGETS = {
   getBulkTaskPage: ['popup'],
   getBulkTask: ['popup'],
   authorizeBulkWorkPage: ['popup'],
+  closeBulkWorkPage: ['popup'],
+  checkBulkWorkPage: ['content'],
   createBulkTask: ['popup'],
   startBulkTask: ['popup'],
   stopBulkTask: ['popup'],
   deleteBulkTask: ['popup']
 } as const satisfies Record<keyof BackgroundHandler, readonly ('content' | 'popup')[]>
+
+/** 补全 RPC 为 HTTP 响应往返及短暂重试预留余量，单位毫秒。 */
+export const METHOD_TIMEOUTS = {
+  enrichMapsBusinesses: 35_000
+} as const satisfies Partial<Record<keyof BackgroundHandler, number>>
 
 /** background 方法请求体限制，单位字节。 */
 export const METHOD_REQUEST_LIMITS = {
@@ -237,6 +254,8 @@ export const METHOD_REQUEST_LIMITS = {
   getBulkTaskPage: 1024,
   getBulkTask: 1024,
   authorizeBulkWorkPage: 1024,
+  closeBulkWorkPage: 1024,
+  checkBulkWorkPage: 1024,
   /** 创建任务：500 条目（关键词/URL 原文）最坏形态上界。 */
   createBulkTask: 262144,
   /** 任务 id 命令入参。 */
@@ -273,6 +292,8 @@ export const METHOD_RESPONSE_LIMITS = {
   getBulkTaskPage: 8_388_608,
   getBulkTask: 8_388_608,
   authorizeBulkWorkPage: 1024,
+  closeBulkWorkPage: 1024,
+  checkBulkWorkPage: 1024,
   createBulkTask: 1024,
   startBulkTask: 1024,
   stopBulkTask: 1024,

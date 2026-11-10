@@ -160,6 +160,17 @@ export class BackgroundChannel {
     )
   }
 
+  /** 调用 closeBulkWorkPage 能力。 */
+  closeBulkWorkPage(
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'closeBulkWorkPage'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'closeBulkWorkPage'>>(
+      'closeBulkWorkPage',
+      undefined,
+      options
+    )
+  }
+
   /** 调用 createBulkTask 能力。 */
   createBulkTask(
     params: RpcMethodParams<BackgroundHandler, 'createBulkTask'>,

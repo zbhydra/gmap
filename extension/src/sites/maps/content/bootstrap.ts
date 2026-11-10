@@ -23,7 +23,11 @@ import {
   type MapsUserSettings
 } from '../settings/userSettings'
 import { detectMapsListMode, recordListModeState } from './listMode'
-import { MAPS_RPC_RESPONSE_EVENT, type MapsRpcResponseDetail } from './rpcEvents'
+import {
+  MAPS_RPC_RESPONSE_EVENT,
+  MAPS_RPC_RESPONSE_SENTINEL,
+  type MapsRpcResponseDetail
+} from './rpcEvents'
 import { MapsSearchScraper, type MapsScraperStatus } from './scraper/searchScraper'
 import { buildSearchExport, dedupeRowsForExport } from './export/engine'
 import { buildHubspotBusinesses } from '../settings/integrations'
@@ -34,13 +38,20 @@ import { extractPlaceUrlIds, derivePlaceIdFromFid } from './parser/placeId'
 import { buildReviewsPageUrl, isPhotosPageUrl, isReviewsPageUrl } from './extractionUrl'
 import { bootReviewsPage } from './reviews/reviewsScraper'
 import { bootPhotosPage } from './photos/photosScraper'
-import { readBulkWorkParams, type BulkWorkParams } from './bulkAuto'
+import {
+  checkBulkWorkOwner,
+  readBulkWorkParams,
+  registerBulkWorkIdentity,
+  type BulkWorkParams
+} from './bulkAuto'
 import { createUsageSessionReporter, getRunLimit } from '../usage/usageClient'
 import { isUsageExhausted, type MapsUsageSnapshot } from '../usage/types'
 import { collectEnrichTargets, ENRICH_BATCH_SIZE, enrichRows } from '../enrich/enrichClient'
 
 /** 构建产物中 injected 入口的路径（与 vite additionalInputs 的输出文件名一致）。 */
 const INJECTED_SCRIPT_PATH = 'src/injected/index.js'
+
+const EARLY_SEARCH_RESPONSE_LIMIT = 8
 
 /** 业务事件广播器（content 只广播，background 统一写 SLS）。 */
 const markEmitter = new ChromeEventEmitter<ExtensionEvents>()
@@ -51,6 +62,8 @@ export function bootstrapMapsContent(): void {
   if (!isReviewsPageUrl(url) && !isPhotosPageUrl(url) && !url.pathname.startsWith('/maps')) {
     return
   }
+  const bulkWork = readBulkWorkParams(url)
+  registerBulkWorkIdentity(bulkWork)
 
   // content_open（feat.md 埋点表）：任意命中页初始化即报；失败由广播通道静默。
   // 带上页面形态与列表模式，新用户首次触达的入口类型可直接按此分组。
@@ -78,10 +91,10 @@ export function bootstrapMapsContent(): void {
     return
   }
 
+  // 异步装配的首段同步注册响应入口，必须先于主世界 hook 注入。
+  void mountMapsExtractionUi(bulkWork)
   injectMapsInjectedScript()
   logger.info(`[MapsContent] 列表模式标记: ${String(recordListModeState())}`)
-
-  void mountMapsExtractionUi()
 }
 
 /** 经 web_accessible_resources 通道把 injected 入口注入页面主世界。 */
@@ -104,12 +117,30 @@ function injectMapsInjectedScript(): void {
  * 在远程覆盖之后应用用户覆盖层（用户设置优先）并建立设置快照；运营区随挂载
  * 渲染（公告 + 新版本提示，远端免发版触达）。
  */
-async function mountMapsExtractionUi(): Promise<void> {
+async function mountMapsExtractionUi(bulkWork: BulkWorkParams | null): Promise<void> {
   try {
     const isMapsPage = location.pathname.startsWith('/maps') && location.pathname !== '/maps/uv'
     if (!isMapsPage || document.getElementById(PANEL_HOST_ID)) {
       return
     }
+
+    const pendingResponses: string[] = []
+    let responseHandlerReady = false
+    document.addEventListener(MAPS_RPC_RESPONSE_EVENT, event => {
+      const detail = (event as CustomEvent<MapsRpcResponseDetail>).detail
+      if (!detail || typeof detail.str !== 'string') return
+      if (!responseHandlerReady || (bulkWork !== null && scraper.getStatus() === 'idle')) {
+        if (
+          detail.str.endsWith(MAPS_RPC_RESPONSE_SENTINEL) &&
+          !pendingResponses.includes(detail.str)
+        ) {
+          pendingResponses.push(detail.str)
+          if (pendingResponses.length > EARLY_SEARCH_RESPONSE_LIMIT) pendingResponses.shift()
+        }
+        return
+      }
+      scraper.handleRpcResponse(detail.str)
+    })
 
     await loadMapsConfig()
     await i18nReady
@@ -150,7 +181,12 @@ async function mountMapsExtractionUi(): Promise<void> {
       },
       onResume: () => {
         markPanelAction('resume')
-        scraper.resume()
+        if (bulkWork === null) scraper.resume()
+        else {
+          void checkBulkWorkOwner(bulkWork).then(allowed => {
+            if (allowed) scraper.resume()
+          })
+        }
       },
       onExport: () => {
         markPanelAction('export')
@@ -175,14 +211,12 @@ async function mountMapsExtractionUi(): Promise<void> {
         void openPanelPricing()
       }
     })
-    // 批量模式参数（URL 携带 gme_bulk）：自动开始 + 完成强制导出 + 回报调度器
-    const bulkWork = readBulkWorkParams(new URL(location.href))
     // 面板态缓存：设置变更时据此重放渲染（无新采集事件也能刷新格式后缀）
     let lastStatus: MapsScraperStatus = 'idle'
     let lastCount = 0
     let lastLimit = getRunLimit(null, 'search')
     // 配额（U7）：会话上报器（每个 start→complete 会话一个幂等 ID）+ 门控
-    const usageReporter = createUsageSessionReporter(markEmitter, 'search')
+    const usageReporter = createUsageSessionReporter(markEmitter, 'search', bulkWork)
     const guardStartThen = async (
       start: (snapshot: MapsUsageSnapshot | null) => void | Promise<void>,
       source: 'search' | 'reviews' | 'photos' | 'bulk' = 'search'
@@ -197,8 +231,16 @@ async function mountMapsExtractionUi(): Promise<void> {
           markMsg: `action=quota_blocked, source=${source}`,
           pageUrl: location.href
         })
+        if (bulkWork !== null) {
+          markEmitter.emit('mapsBulkQuotaBlocked', {
+            taskId: bulkWork.taskId,
+            itemIndex: bulkWork.itemIndex,
+            pageUrl: location.href
+          })
+        }
         return
       }
+      if (bulkWork !== null && !(await checkBulkWorkOwner(bulkWork))) return
       panel.setSearchError(null)
       await start(snapshot)
     }
@@ -251,6 +293,10 @@ async function mountMapsExtractionUi(): Promise<void> {
             logger.error('[MapsContent] 采集收尾失败:', error)
           })
         }
+        // 开始已清空旧会话且建立用量会话，再用实时入口消费初始化期间的响应。
+        if (bulkWork !== null && status === 'extracting' && previousStatus === 'idle') {
+          for (const raw of pendingResponses.splice(0)) scraper.handleRpcResponse(raw)
+        }
       },
       // 批量模式：每批新数据回报调度器重置卡死时钟（90s = 自上次进展以来）
       onProgress:
@@ -274,12 +320,8 @@ async function mountMapsExtractionUi(): Promise<void> {
     // 挂载即门控预检（U7）：已耗尽则直接禁用 Start 并显示额度用尽提示，
     // 用户无需点击后才被发现；查询失败不门控（放行，Start 点击时再校验）
     if (bulkWork === null) await panel.checkQuota(false)
-    document.addEventListener(MAPS_RPC_RESPONSE_EVENT, event => {
-      const detail = (event as CustomEvent<MapsRpcResponseDetail>).detail
-      if (detail && typeof detail.str === 'string') {
-        scraper.handleRpcResponse(detail.str)
-      }
-    })
+    responseHandlerReady = true
+    if (bulkWork === null) pendingResponses.length = 0
     // 批量模式：面板就绪后自动开始（无需用户点击 Start）
     if (bulkWork !== null) {
       await guardStartThen(snapshot => {
@@ -308,6 +350,7 @@ function exportRows(scraper: MapsSearchScraper, usage: MapsUsageSnapshot | null)
   const artifact = buildSearchExport(scraper.getRows(), scraper.getKeyword(), new Date(), {
     format: settings.exportFormat,
     proColumnsEnabled: getMapsConfig().exportConfig.proColumnsEnabled,
+    usage,
     enabledHeaders: settings.exportFieldHeaders
   })
   downloadFile(artifact.content, artifact.filename, artifact.mime)
@@ -332,6 +375,7 @@ function dispatchAutoSaveExport(scraper: MapsSearchScraper, usage: MapsUsageSnap
     const artifact = buildSearchExport(scraper.getRows(), scraper.getKeyword(), new Date(), {
       format: 'csv',
       proColumnsEnabled: getMapsConfig().exportConfig.proColumnsEnabled,
+      usage,
       enabledHeaders: settings.exportFieldHeaders
     })
     const csvContent = artifact.content
@@ -350,7 +394,6 @@ function dispatchAutoSaveExport(scraper: MapsSearchScraper, usage: MapsUsageSnap
     logger.error('[MapsContent] auto_save 集成产物构建失败:', error)
   }
 }
-    usage,
 
 /**
  * 采集完成边沿收尾（013 A4，U8：补全 + 导出 + 集成 + 批量回报）。
@@ -378,7 +421,6 @@ async function finalizeCompleteSession(
     usage.plan_name !== 'Free'
   ) {
     const total = collectEnrichTargets(scraper.getRows()).length
-      usage,
     let done = 0
     panel.setFinishing({ done, total })
     try {

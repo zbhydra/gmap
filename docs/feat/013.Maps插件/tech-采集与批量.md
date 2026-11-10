@@ -35,6 +35,14 @@ Google 插件套餐名与单次权益由 [maps_client.py](../../../backend/src/a
 
 ## 批量与导出边界
 
+搜索页的 [bootstrap.ts](../../../extension/src/sites/maps/content/bootstrap.ts) 在首个异步初始化与 injected 注入前注册响应入口；初始化和 owner 复核期间，完整格式 B 响应在 content 内有界去重缓存。批量采集开始后，经 `MapsSearchScraper.handleRpcResponse` 与实时响应共用解析、行去重管线；普通单页仍只采集用户开始后的实时响应。
+
+批量搜索仅在已有解析行时跳过重放；零解析时，无论 feed 是否已有卡片，[searchScraper.ts](../../../extension/src/sites/maps/content/scraper/searchScraper.ts) 的 `triggerSearchReplay` 都按配置选择器有界等待按钮并点击一次，再等待解析行。按钮未就绪、点击失败或响应超时且仍无解析行时，按 `dom.feedCardSelector` 定位 feed 内卡片：有卡片则显示现有解析错误并继续滚动，无卡片则暂停并显示现有 Google 错误，交给后台无进展重试；空容器或结束提示不算卡片。卡片选择器随 DOM 配置走远程稀疏覆盖。Resume 使用相同门控。
+
+feed 有卡片但持续零条时，无增长达限显示现有解析错误，保持响应入口接收后续批次；即使出现结束结构也不回报零条完成。后续有效响应正常入库、清除错误并回报进展；持续无进展则交给后台既有 90s 重试/跳过。有效响应触发的不足两条直接完成语义保持不变。
+
+批量关键词已有至少两条结果且未达本次上限时，无增长达限须由 [feedScroll.ts](../../../extension/src/sites/maps/content/scraper/feedScroll.ts) 的 `isFeedEndVisible` 同时确认 feed 视口非零、距底不超过 1px，以及 feed 内存在结束结构，再完成并导出；加载中的临时底部继续等待后台既有的无进展重试。结束节点由 [配置合同](../../../extension/src/sites/maps/config/contract.ts) 的 `dom.feedEndSelector` 定位，经现有远程稀疏覆盖通道调整；未登录 Google 的 limited view 可在该节点之后追加提示。英文 marker 仅匹配此结束节点，并须满足相同触底条件，命中后无需等待无增长达限。普通搜索沿用无增长达限完成。
+
 [Dashboard](../../../extension/src/dashboard/App.vue) 的 `createTasks` 只在输入边界去重和拆分；每个拆分任务继续使用既有持久模型与 background 调度器。创建时选择启动只启动首个任务，其余保留在历史中，由用户继续。
 
 [批量预检](../../../extension/src/background/batch/quota.ts) 的 `estimateBulkRecords` 保留关键词包内默认估算与评论每店目标估算。付费单次最大权益用于实际采集上限，不作为每个关键词预期返回数；实际工作页仍按开始时的月余额截断。
@@ -71,7 +79,15 @@ Dashboard 的受限调用沿用[插件 RPC 的扩展页身份合同](../000.架�
 
 [BackgroundMessageRouter.authorizeBulkWorkPage](../../../extension/src/background/services/BackgroundMessageRouter.ts) 只接受浏览器确认来自本扩展中转页的请求，标签页 ID 取真实 sender，不接收页面自报 ID。[BulkSchedulerController.authorizeWorkPage](../../../extension/src/background/batch/controller.ts) 核对任务、条目与规范工作页目标，再经现有串行状态机登记 owner，成功落盘后才返回许可；同页重复确认幂等，其他中转页不能覆盖已有 owner。
 
-后台在创建页后、登记前停止时，旧页仍未获采集许可；恢复扫描可以补发中转页，最终只有登记成功的 owner 能开始采集。许可失败或被拒绝的中转页关闭自身。正常超时重试仍先关闭已登记的旧工作页，再创建新中转页；暂停、续跑与重试计数沿用既有状态机规则。
+任务队列与进度保留在 IndexedDB；`storage.session` 标记当前浏览器会话是否已解除旧 owner。读取任务、恢复扫描和处理命令或工作页回报共用初始化屏障：新会话先清空旧 `activeTabId` 并落盘，再发布就绪标记；不查询或关闭旧 ID，恢复扫描重开当前条目。同一浏览器会话内的 SW 重启保留 owner。
+
+搜索与评论工作页开始采集前，经 `checkBulkWorkPage` RPC 复核初始任务 / 条目是否仍由真实 sender 标签页持有；批量 Resume、Reset 同样复核。`progress`、`done` 与带初始批量上下文的 `usage` 只接受当前 owner；用量在调度器串行队列中先核验再交给配额服务，随后处理完成回报，避免合法用量被已前进的游标丢弃。Google 清参后继续使用初始上下文。
+
+后台在创建页后、登记前停止时，旧页仍未获采集许可；恢复扫描可以补发中转页，最终只有登记成功的 owner 能开始采集。许可失败或被拒绝的中转页经 `closeBulkWorkPage` RPC 请求 background 核验关闭；该 RPC 只接受本扩展顶层中转文档，待关闭 tabId 取真实 sender。正常超时重试在核验关页后创建新中转页；暂停、续跑与重试计数沿用既有状态机规则。
+
+[bulkAuto.ts](../../../extension/src/sites/maps/content/bulkAuto.ts) 的 `registerBulkWorkIdentity` 在批量工作页入口、首个异步等待前同步注册顶层 frame 的身份 listener；搜索与评论工作页读取初始 URL，中转页读取初始目标 URL。只响应本扩展 sender 的 `{ __bulkWorkIdentity__: true }` 查询，同步返回初始快照 `{ taskId, itemIndex }`；普通页与子 frame 不注册。Google 同文档清参或 SPA 跳转不改变任务工作页身份，任务结束时仍可关闭该页。
+
+所有关页副作用保留推进前的 `tabId`、`taskId` 和 `itemIndex`，由 [workPage.ts](../../../extension/src/background/batch/workPage.ts) 的 `closeBulkWorkPage` 统一向目标 tab 的顶层 frame 发送身份查询，只有两个字段完全匹配才删除。查询超时、无回复、不匹配或连接失败时保留并记录；查询限时 2 秒，避免页面不回复时阻塞串行调度。不依赖标签页 URL 或额外的 tabs / Google host 权限。清参后刷新、跨文档导航或页面消失导致身份不可确认时保留页面。
 
 ## 评论工作页与 Google 协议
 
@@ -92,6 +108,10 @@ Dashboard 的受限调用沿用[插件 RPC 的扩展页身份合同](../000.架�
 ## 暂停与重跑
 
 [machine.ts](../../../extension/src/background/batch/machine.ts) 的停止路径把运行中条目本次增加的 try 退回，再置为待处理；先前因卡死累计的尝试保留。离开 Dashboard 详情只切视图，不触发停止。
+
+[bootstrap.ts](../../../extension/src/sites/maps/content/bootstrap.ts) 的 `guardStartThen` 与 [reviewsScraper.ts](../../../extension/src/sites/maps/content/reviews/reviewsScraper.ts) 的零额度入口，仅在初始上下文为批量工作页时发送 `mapsBulkQuotaBlocked`，携带任务与条目身份。controller 在同一串行操作内核验浏览器真实 sender 与当前 owner，再复用 `stop-task`：任务转 paused，当前条目回 pending 并退回本次 try，保留游标、已处理项与剩余队列，核验关闭工作页并重算 alarm。旧 owner、非工作页或伪造 sender 不改变任务；重复事件不再回退 try 或关页。
+
+补额后由用户 Resume，经既有额度预检后从当前 pending 条目继续；已完成或已跳过的条目保持原状。
 
 [controller.ts](../../../extension/src/background/batch/controller.ts) 的 `startTask` 对 completed 任务先按 `items.length` 做额度预检，通过后才重置条目；首次启动和暂停续跑仍按待处理条目计算。额度不足拒绝重跑，并保留原进度。
 

@@ -55,6 +55,15 @@ function createAndStart(
   return started.state
 }
 
+function withOwner(state: BulkState, tabId = 10): BulkState {
+  const task = state.tasks[0]!
+  return reduceBulkEvent(
+    state,
+    { kind: 'item-launched', taskId: task.id, itemIndex: task.cursor, tabId },
+    T0 + 1500
+  ).state
+}
+
 /** 内存 store：save 时 JSON 序列化，模拟真实持久化边界。 */
 class MemoryBulkStateStore implements BulkStateStore {
   private data: BulkState | null = null
@@ -173,8 +182,8 @@ describe('状态机：启动与互斥', () => {
 
     // 完成第一个任务全部条目
     const done = reduceBulkEvent(
-      startedFirst.state,
-      { kind: 'item-done', taskId: startedFirst.state.tasks[0]!.id, itemIndex: 0, collected: 5 },
+      withOwner(startedFirst.state),
+      { kind: 'item-done', tabId: 10, taskId: startedFirst.state.tasks[0]!.id, itemIndex: 0, collected: 5 },
       T0 + 3000
     )
 
@@ -191,8 +200,8 @@ describe('状态机：启动与互斥', () => {
     const started = createAndStart(['k1'])
     const task = started.tasks[0]!
     const done = reduceBulkEvent(
-      started,
-      { kind: 'item-done', taskId: task.id, itemIndex: 0, collected: 3 },
+      withOwner(started),
+      { kind: 'item-done', tabId: 10, taskId: task.id, itemIndex: 0, collected: 3 },
       T0 + 2000
     )
     expect(done.state.tasks[0]?.status).toBe('completed')
@@ -224,7 +233,7 @@ describe('状态机：完成推进', () => {
 
     const done = reduceBulkEvent(
       launched.state,
-      { kind: 'item-done', taskId: task.id, itemIndex: 0, collected: 20 },
+      { kind: 'item-done', tabId: 11, taskId: task.id, itemIndex: 0, collected: 20 },
       T0 + 3000
     )
     const after = done.state.tasks[0]!
@@ -232,7 +241,7 @@ describe('状态机：完成推进', () => {
     expect(after.cursor).toBe(1)
     expect(after.items[1]?.status).toBe('running')
     expect(after.activeTabId).toBeNull()
-    expect(done.effects.closeTabIds).toEqual([11])
+    expect(done.effects.closeTabs).toEqual([{ tabId: 11, taskId: task.id, itemIndex: 0 }])
     expect(done.effects.launches).toHaveLength(1)
     expect(new URL(done.effects.launches[0]?.url ?? '').searchParams.get('gme_bulk_item')).toBe('1')
     expect(done.effects.scanAlarm).toBe('on')
@@ -241,8 +250,8 @@ describe('状态机：完成推进', () => {
   it('最后一条完成 → 任务 completed + 关闭兜底 alarm', () => {
     const { state, task } = runningTwoItems()
     const step1 = reduceBulkEvent(
-      state,
-      { kind: 'item-done', taskId: task.id, itemIndex: 0, collected: 20 },
+      withOwner(state),
+      { kind: 'item-done', tabId: 10, taskId: task.id, itemIndex: 0, collected: 20 },
       T0 + 2000
     )
     const launched = reduceBulkEvent(
@@ -252,20 +261,20 @@ describe('状态机：完成推进', () => {
     )
     const step2 = reduceBulkEvent(
       launched.state,
-      { kind: 'item-done', taskId: task.id, itemIndex: 1, collected: 8 },
+      { kind: 'item-done', tabId: 12, taskId: task.id, itemIndex: 1, collected: 8 },
       T0 + 3000
     )
-    // tab 12 在 item1 完成时已关（step2）；item2 尚无 tab 回执
-    expect(step2.effects.closeTabIds).toEqual([12])
+    // item1 完成时保留其关页目标，item2 登记新 owner 后才能回报。
+    expect(step2.effects.closeTabs).toEqual([{ tabId: 12, taskId: task.id, itemIndex: 1 }])
     const step3 = reduceBulkEvent(
-      step2.state,
-      { kind: 'item-done', taskId: task.id, itemIndex: 2, collected: 0 },
+      withOwner(step2.state),
+      { kind: 'item-done', tabId: 10, taskId: task.id, itemIndex: 2, collected: 0 },
       T0 + 4000
     )
     const after = step3.state.tasks[0]!
     expect(after.status).toBe('completed')
     expect(after.cursor).toBe(3)
-    expect(step3.effects.closeTabIds).toEqual([])
+    expect(step3.effects.closeTabs).toEqual([{ tabId: 10, taskId: task.id, itemIndex: 2 }])
     expect(step3.effects.scanAlarm).toBe('off')
   })
 
@@ -273,7 +282,7 @@ describe('状态机：完成推进', () => {
     const { state, task } = runningTwoItems()
     const stale = reduceBulkEvent(
       state,
-      { kind: 'item-done', taskId: task.id, itemIndex: 1, collected: 99 },
+      { kind: 'item-done', tabId: 10, taskId: task.id, itemIndex: 1, collected: 99 },
       T0 + 2000
     )
     expect(stale.state).toBe(state)
@@ -281,7 +290,7 @@ describe('状态机：完成推进', () => {
     const stopped = reduceBulkEvent(state, { kind: 'stop-task', taskId: task.id }, T0 + 2000)
     const afterStop = reduceBulkEvent(
       stopped.state,
-      { kind: 'item-done', taskId: task.id, itemIndex: 0, collected: 1 },
+      { kind: 'item-done', tabId: 10, taskId: task.id, itemIndex: 0, collected: 1 },
       T0 + 3000
     )
     expect(afterStop.state).toBe(stopped.state)
@@ -322,7 +331,7 @@ describe('状态机：卡死跳过（消费 stuckMaxRetry）', () => {
     const after = stuck.state.tasks[0]!
     expect(after.cursor).toBe(0)
     expect(after.items[0]).toMatchObject({ status: 'running', tries: 2 })
-    expect(stuck.effects.closeTabIds).toEqual([21])
+    expect(stuck.effects.closeTabs).toEqual([{ tabId: 21, taskId: task.id, itemIndex: 0 }])
     expect(stuck.effects.launches).toHaveLength(1)
     expect(new URL(stuck.effects.launches[0]!.url).searchParams.get('gme_bulk_item')).toBe('0')
     expect(after.activeStartedAt).toBe(T0 + 2000 + BULK_LIMITS.stuckMs + 1000)
@@ -361,7 +370,7 @@ describe('状态机：卡死跳过（消费 stuckMaxRetry）', () => {
     expect(after.items[1]?.status).toBe('running')
     expect(after.cursor).toBe(1)
     // 旧页 23 被关
-    expect(skip.effects.closeTabIds).toEqual([23])
+    expect(skip.effects.closeTabs).toEqual([{ tabId: 23, taskId: task.id, itemIndex: 0 }])
   })
 
   it('stuckMaxRetry=0：首次卡死直接跳过（重试次数为 0 的语义）', () => {
@@ -459,7 +468,7 @@ describe('状态机：进展回报重置卡死时钟（item-progress，评论任
     // t=+60s 第一批评论页解析完成 → 进展重置时钟
     const p1 = reduceBulkEvent(
       state,
-      { kind: 'item-progress', taskId: task.id, itemIndex: 0 },
+      { kind: 'item-progress', tabId: 81, taskId: task.id, itemIndex: 0 },
       T0 + 61_000
     )
     expect(p1.state.tasks[0]?.activeStartedAt).toBe(T0 + 61_000)
@@ -468,12 +477,12 @@ describe('状态机：进展回报重置卡死时钟（item-progress，评论任
     const tick1 = reduceBulkEvent(p1.state, { kind: 'scan-tick', stuckMaxRetry: 1 }, T0 + 91_000)
     expect(tick1.state.tasks[0]?.items[0]).toMatchObject({ status: 'running', tries: 1 })
     expect(tick1.effects.launches).toHaveLength(0)
-    expect(tick1.effects.closeTabIds).toHaveLength(0)
+    expect(tick1.effects.closeTabs).toHaveLength(0)
 
     // t=+120s 又一批进展；t=+150s 再扫描 → 仍不杀（总时长 150s ≫ 90s）
     const p2 = reduceBulkEvent(
       tick1.state,
-      { kind: 'item-progress', taskId: task.id, itemIndex: 0 },
+      { kind: 'item-progress', tabId: 81, taskId: task.id, itemIndex: 0 },
       T0 + 121_000
     )
     const tick2 = reduceBulkEvent(p2.state, { kind: 'scan-tick', stuckMaxRetry: 1 }, T0 + 151_000)
@@ -487,7 +496,7 @@ describe('状态机：进展回报重置卡死时钟（item-progress，评论任
     // t=+60s 最后一次进展，其后评论 RPC 再无响应
     const p1 = reduceBulkEvent(
       state,
-      { kind: 'item-progress', taskId: task.id, itemIndex: 0 },
+      { kind: 'item-progress', tabId: 81, taskId: task.id, itemIndex: 0 },
       T0 + 61_000
     )
     // t=+60s+91s 扫描 → 卡死 → 关页重跑（tries=2）
@@ -499,7 +508,7 @@ describe('状态机：进展回报重置卡死时钟（item-progress，评论任
     const after = stuck.state.tasks[0]!
     expect(after.items[0]).toMatchObject({ status: 'running', tries: 2 })
     expect(after.activeTabId).toBeNull()
-    expect(stuck.effects.closeTabIds).toEqual([81])
+    expect(stuck.effects.closeTabs).toEqual([{ tabId: 81, taskId: task.id, itemIndex: 0 }])
     expect(stuck.effects.launches).toHaveLength(1)
   })
 
@@ -507,7 +516,7 @@ describe('状态机：进展回报重置卡死时钟（item-progress，评论任
     const { state, task } = runningReviewItem()
     const stale = reduceBulkEvent(
       state,
-      { kind: 'item-progress', taskId: task.id, itemIndex: 1 },
+      { kind: 'item-progress', tabId: 81, taskId: task.id, itemIndex: 1 },
       T0 + 2000
     )
     expect(stale.state).toBe(state)
@@ -515,7 +524,7 @@ describe('状态机：进展回报重置卡死时钟（item-progress，评论任
     const stopped = reduceBulkEvent(state, { kind: 'stop-task', taskId: task.id }, T0 + 2000)
     const afterStop = reduceBulkEvent(
       stopped.state,
-      { kind: 'item-progress', taskId: task.id, itemIndex: 0 },
+      { kind: 'item-progress', tabId: 81, taskId: task.id, itemIndex: 0 },
       T0 + 3000
     )
     expect(afterStop.state).toBe(stopped.state)
@@ -538,7 +547,7 @@ describe('状态机：停止与删除', () => {
     expect(after.activeTabId).toBeNull()
     expect(after.activeStartedAt).toBeNull()
     expect(after.items[0]?.status).toBe('pending')
-    expect(stopped.effects.closeTabIds).toEqual([41])
+    expect(stopped.effects.closeTabs).toEqual([{ tabId: 41, taskId: task.id, itemIndex: 0 }])
     expect(stopped.effects.scanAlarm).toBe('off')
 
     // 续跑：从游标（k1）重新启动
@@ -565,7 +574,7 @@ describe('状态机：停止与删除', () => {
     const deleted = reduceBulkEvent(launched.state, { kind: 'delete-task', taskId: first.id }, T0 + 3000)
     expect(deleted.state.tasks).toHaveLength(1)
     expect(deleted.state.tasks[0]?.id).not.toBe(first.id)
-    expect(deleted.effects.closeTabIds).toEqual([51])
+    expect(deleted.effects.closeTabs).toEqual([{ tabId: 51, taskId: first.id, itemIndex: 0 }])
     expect(deleted.effects.scanAlarm).toBe('off')
 
     // 互斥解除：第二个任务立即可启动
@@ -672,7 +681,7 @@ describe('持久化与恢复', () => {
     // 工作页完成回报照常推进
     const done = reduceBulkEvent(
       restored,
-      { kind: 'item-done', taskId: restored.tasks[0]!.id, itemIndex: 0, collected: 7 },
+      { kind: 'item-done', tabId: 61, taskId: restored.tasks[0]!.id, itemIndex: 0, collected: 7 },
       T0 + 5000
     )
     expect(done.state.tasks[0]?.items[0]).toMatchObject({ status: 'complete', collected: 7 })
@@ -730,7 +739,7 @@ describe('持久化与恢复', () => {
     const after = tick.state.tasks[0]!
     expect(after.activeStartedAt).toBe(T0 + 60_000)
     expect(tick.effects.launches).toHaveLength(0)
-    expect(tick.effects.closeTabIds).toHaveLength(0)
+    expect(tick.effects.closeTabs).toHaveLength(0)
   })
 
   it('normalizeBulkState：空/损坏输入回空状态，running 原样保留交给恢复扫描', () => {

@@ -1,8 +1,8 @@
 /**
- * feed 滚动驱动原语（滚动到底动画、步进滚动、可中断等待、末项结束判定）。
+ * feed 滚动驱动原语（滚动到底动画、步进滚动、可中断等待、结束判定）。
  *
  * 依据（013 逆向 02 阶段 3 / A1）：Maps 每次滚到底自动发起新一批
- * `/search?tbm=` XHR；动画时长随机 1.5~3.5s 拟人；feed 末项出现结束
+ * `/search?tbm=` XHR；动画时长随机 1.5~3.5s 拟人；feed 内出现结束
  * 提示文字即采集完成。A7 列表模式复用同一套原语（步进滚动）。
  */
 
@@ -20,16 +20,27 @@ export function findFeed(selector: string): HTMLElement | null {
 }
 
 /**
- * 末项结束判定：feed 最后一个子元素的文字包含配置的结束提示片段
+ * 结束节点的文字包含配置的结束提示片段
  * （小写包含匹配；配置为空时永不命中）。
  */
-export function isFeedEndReached(feed: HTMLElement, endMarker: string): boolean {
+export function isFeedEndReached(endElement: Element | null, endMarker: string): boolean {
   const marker = endMarker.trim().toLowerCase()
   if (marker.length === 0) {
     return false
   }
-  const last = feed.lastElementChild
-  return (last?.textContent ?? '').toLowerCase().includes(marker)
+  return (endElement?.textContent ?? '').toLowerCase().includes(marker)
+}
+
+/**
+ * limited view 的结束节点后仍有提示；加载中也会物理触底，必须同时确认结束节点。
+ * scrollTop 实测有 0.5px 小数，与整数高度比较时容许 1px 舍入差。
+ */
+export function isFeedEndVisible(feed: HTMLElement, endSelector: string): boolean {
+  return (
+    feed.clientHeight > 0 &&
+    Math.abs(feed.scrollHeight - feed.clientHeight - feed.scrollTop) <= 1 &&
+    Boolean(feed.querySelector(endSelector))
+  )
 }
 
 /**

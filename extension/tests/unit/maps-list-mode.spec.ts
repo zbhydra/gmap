@@ -147,11 +147,11 @@ describe('列表容器选择与终止判定', () => {
   it('结束判定：容器末子元素（提示位）含提示片段命中；空串配置永不命中', () => {
     document.body.innerHTML =
       '<div id="c"><div>place A</div><div>You\'ve reached the end.</div></div>'
-    const container = document.querySelector('#c') as HTMLElement
-    expect(isFeedEndReached(container, 'reached the end')).toBe(true)
-    expect(isFeedEndReached(container, 'REACHED THE END')).toBe(true)
-    expect(isFeedEndReached(container, 'no match')).toBe(false)
-    expect(isFeedEndReached(container, '')).toBe(false)
+    const endElement = document.querySelector('#c')!.lastElementChild
+    expect(isFeedEndReached(endElement, 'reached the end')).toBe(true)
+    expect(isFeedEndReached(endElement, 'REACHED THE END')).toBe(true)
+    expect(isFeedEndReached(endElement, 'no match')).toBe(false)
+    expect(isFeedEndReached(endElement, '')).toBe(false)
   })
 
   it('步进滚动：无可滚量时快速完成且不抛错（happy-dom 无布局）', async () => {

@@ -11,3 +11,6 @@ dist-firefox.zip
 
 # Playwright 本地运行输出
 tests/logs/
+
+# 扩展签名私钥（公钥写入 vite.config.ts）
+.keys/

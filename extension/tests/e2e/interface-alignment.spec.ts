@@ -36,7 +36,8 @@ test('Popup 入口、设置持久化与批量拆分保存可实际操作', async
     await options.reload()
     await expect(options.getByRole('radio', { name: 'JSON', exact: true })).toHaveAttribute('aria-checked', 'true')
     await expect(options.getByLabel('Auto download on completion', { exact: true })).toBeChecked()
-    await expect(options.getByLabel('Auto save to HubSpot', { exact: true })).toBeDisabled()
+    await expect(options.getByLabel('Auto save to Google Drive', { exact: true })).toHaveCount(0)
+    await expect(options.getByLabel('Auto save to HubSpot', { exact: true })).toHaveCount(0)
 
     const dashboard = await context.newPage()
     await dashboard.goto(`chrome-extension://${extensionId}/src/dashboard.html?type=0`)
@@ -55,6 +56,47 @@ test('Popup 入口、设置持久化与批量拆分保存可实际操作', async
     await dashboard.getByRole('button', { name: 'View task', exact: true }).first().click()
     await expect(dashboard.getByRole('cell', { name: 'coffee area 500', exact: true })).toBeVisible()
     await expect(dashboard.getByText('Pending', { exact: true })).toHaveCount(1)
+  } finally {
+    await context.close()
+  }
+})
+
+test('A10 集成区隐藏且其他设置可持久化', async ({}, testInfo) => {
+  const context = await launchRealMapsContext()
+  const pageErrors: string[] = []
+  context.on('page', page => page.on('pageerror', error => pageErrors.push(error.message)))
+  try {
+    const worker = await waitForExtensionServiceWorker(context)
+    const extensionId = extensionIdFromServiceWorker(worker)
+    const options = await context.newPage()
+    await options.goto(`chrome-extension://${extensionId}/src/options.html`)
+    await options.getByRole('radio', { name: 'JSON', exact: true }).click()
+    await options.getByLabel('Auto download on completion', { exact: true }).check()
+    await options.reload()
+    await expect(options.getByRole('radio', { name: 'JSON', exact: true })).toHaveAttribute('aria-checked', 'true')
+    await expect(options.getByLabel('Auto download on completion', { exact: true })).toBeChecked()
+    await expect(options.getByRole('heading', { name: 'Integrations', exact: true })).toHaveCount(0)
+    await expect(options.getByLabel('Auto save to Google Drive', { exact: true })).toHaveCount(0)
+    await expect(options.getByLabel('Auto save to HubSpot', { exact: true })).toHaveCount(0)
+    await expect(options.locator('.op-integration, .op-integrations-title')).toHaveCount(0)
+    await expect(options.locator('body')).not.toContainText(/Google Drive|HubSpot/)
+    await options.getByRole('link', { name: /^Automation/ }).click()
+    await expect(options.getByRole('heading', { name: 'Automation', exact: true })).toBeFocused()
+    await options.screenshot({
+      path: testInfo.outputPath('options-a10-hidden.png'),
+      fullPage: true,
+      animations: 'disabled'
+    })
+
+    const popup = await context.newPage()
+    await popup.goto(`chrome-extension://${extensionId}/src/popup.html`)
+    await expect(popup.getByRole('button', { name: 'Open Google Maps', exact: true })).toBeVisible()
+    await expect(popup.locator('body')).not.toContainText(/Google Drive|HubSpot/)
+    const dashboard = await context.newPage()
+    await dashboard.goto(`chrome-extension://${extensionId}/src/dashboard.html?type=0`)
+    await expect(dashboard.getByLabel('Task name', { exact: true })).toBeVisible()
+    await expect(dashboard.locator('body')).not.toContainText(/Google Drive|HubSpot/)
+    expect(pageErrors).toEqual([])
   } finally {
     await context.close()
   }

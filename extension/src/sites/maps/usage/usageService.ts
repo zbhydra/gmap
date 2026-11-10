@@ -18,6 +18,7 @@ import type { ExtensionEvents, MapsUsageReportPayload } from '@/core/events/type
 import { ChromeEventSubscriber } from '@/core/rpc/ChromeEventBus'
 import { fetchMapsUsage, reportMapsUsage } from './usageApi'
 import type { MapsUsageSnapshot } from './types'
+import { BULK_PARAM } from '../content/bulkAuto'
 
 /** 快照缓存有效期：窗口内重复消费（多页面板/批量校验/popup）不重复打服务端。 */
 const SNAPSHOT_TTL_MS = 60_000
@@ -38,7 +39,15 @@ export class MapsUsageService {
     if (this.unsubscribeReport !== null) {
       return
     }
-    this.unsubscribeReport = this.eventSubscriber.on('mapsUsageReport', payload => {
+    this.unsubscribeReport = this.eventSubscriber.on('mapsUsageReport', (payload, sender) => {
+      // 批量上报由调度器串行核验 owner 后调用 handleReport。
+      if (
+        payload.bulk !== undefined ||
+        [sender.url, payload.pageUrl].some(
+          url => url && URL.canParse(url) && new URL(url).searchParams.get(BULK_PARAM) === '1'
+        )
+      )
+        return
       void this.handleReport(payload)
     })
     logger.info('[MapsUsage] 配额服务已注册')

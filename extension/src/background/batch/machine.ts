@@ -31,7 +31,28 @@ import { buildKeywordWorkUrl, buildReviewWorkUrl } from './workUrl'
 
 /** 空副作用。 */
 function emptyEffects(): BulkEffects {
-  return { launches: [], closeTabIds: [], scanAlarm: 'keep' }
+  return { launches: [], closeTabs: [], scanAlarm: 'keep' }
+}
+
+function closeWorkPage(task: BulkTask, effects: BulkEffects): void {
+  if (task.activeTabId !== null) {
+    effects.closeTabs.push({ tabId: task.activeTabId, taskId: task.id, itemIndex: task.cursor })
+  }
+}
+
+export function isBulkWorkOwner(
+  state: BulkState,
+  taskId: string,
+  itemIndex: number,
+  tabId: number
+): boolean {
+  const task = state.tasks.find(candidate => candidate.id === taskId)
+  return (
+    task?.status === 'running' &&
+    task.cursor === itemIndex &&
+    task.items[itemIndex]?.status === 'running' &&
+    task.activeTabId === tabId
+  )
 }
 
 /** 深拷贝任务（items 逐项浅拷贝，避免步进污染持久化快照）。 */
@@ -138,9 +159,7 @@ function handleInterrupt(
     return
   }
 
-  if (task.activeTabId !== null) {
-    effects.closeTabIds.push(task.activeTabId)
-  }
+  closeWorkPage(task, effects)
 
   if (item.tries >= stuckMaxRetry + 1) {
     item.status = 'skipped'
@@ -247,9 +266,7 @@ export function reduceBulkEvent(
       }
 
       const nextTask = cloneTask(task)
-      if (nextTask.activeTabId !== null) {
-        effects.closeTabIds.push(nextTask.activeTabId)
-      }
+      closeWorkPage(nextTask, effects)
       const current = nextTask.items[nextTask.cursor]
       if (current && current.status === 'running') {
         current.status = 'pending'
@@ -269,7 +286,7 @@ export function reduceBulkEvent(
         return rejected('not-found')
       }
       if (task.status === 'running' && task.activeTabId !== null) {
-        effects.closeTabIds.push(task.activeTabId)
+        closeWorkPage(task, effects)
       }
       const next: BulkState = { ...state, tasks: state.tasks.filter(other => other.id !== task.id) }
       effects.scanAlarm = scanAlarmFor(next)
@@ -297,14 +314,7 @@ export function reduceBulkEvent(
 
     case 'item-progress': {
       const task = state.tasks.find(candidate => candidate.id === event.taskId)
-      const item = task?.items[event.itemIndex]
-      if (
-        !task ||
-        task.status !== 'running' ||
-        !item ||
-        task.cursor !== event.itemIndex ||
-        item.status !== 'running'
-      ) {
+      if (!task || !isBulkWorkOwner(state, event.taskId, event.itemIndex, event.tabId)) {
         // 陈旧回报（重跑前的旧页 / 游标已前进）：忽略
         return { state, effects, error: null }
       }
@@ -316,14 +326,7 @@ export function reduceBulkEvent(
 
     case 'item-done': {
       const task = state.tasks.find(candidate => candidate.id === event.taskId)
-      const item = task?.items[event.itemIndex]
-      if (
-        !task ||
-        task.status !== 'running' ||
-        !item ||
-        task.cursor !== event.itemIndex ||
-        item.status !== 'running'
-      ) {
+      if (!task || !isBulkWorkOwner(state, event.taskId, event.itemIndex, event.tabId)) {
         // 陈旧回报（重跑后的旧页完成 / 游标已前进）：忽略
         return { state, effects, error: null }
       }
@@ -335,9 +338,7 @@ export function reduceBulkEvent(
       }
       doneItem.status = 'complete'
       doneItem.collected = Math.max(event.collected, 0)
-      if (nextTask.activeTabId !== null) {
-        effects.closeTabIds.push(nextTask.activeTabId)
-      }
+      closeWorkPage(nextTask, effects)
       nextTask.activeTabId = null
       nextTask.activeStartedAt = null
       launchFrom(nextTask, nextTask.cursor + 1, now, effects)
@@ -373,7 +374,7 @@ export function reduceBulkEvent(
         if (!item || item.status === 'pending') {
           // 启动丢失（advance 与 tabs.create 之间 SW 被杀）：补一次启动
           if (nextTask.activeTabId !== null) {
-            effects.closeTabIds.push(nextTask.activeTabId)
+            closeWorkPage(nextTask, effects)
             nextTask.activeTabId = null
           }
           launchFrom(nextTask, nextTask.cursor, now, effects)

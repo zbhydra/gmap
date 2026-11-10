@@ -5,7 +5,7 @@
  * extracting ⇄ paused（Pause/Resume）。
  *
  * 双形态滚动循环（同一采集引擎，A7 列表模式为 A1 的列表分支）：
- * - 搜索形态：start 时重放当前搜索（触发首批 RPC），滚 feed 到底换新一批；
+ * - 搜索形态：start 时重放当前搜索（批量已有解析行时跳过），滚 feed 到底换新一批；
  * - 列表形态（start 时 URL 命中 dom.listModeUrlMark，A7/U10）：不重放搜索，
  *   逐项点击列表项打开详情（详情 RPC 仍走 injected 拦截的同一条通道），
  *   列表容器每轮 +500px 触发加载更多；该形态禁用「结果 <2 条直接完成」
@@ -13,7 +13,8 @@
  *
  * 采集闭环：injected 捕获的响应经 handleRpcResponse 进入解析 → 去重 →
  * 计数 → 完成判定。完成判定：结果 <2 条直接完成（仅搜索形态）、达到本次
- * 有效行数上限截断完成、末项结束提示或连续无增长轮数达限完成。
+ * 有效行数上限截断完成、feed 结束提示或连续无增长轮数达限完成；批量搜索
+ * 已有 ≥2 条时，无增长须确认到底结构；持续零条显示错误，交后台卡死扫描处理。
  */
 
 import { logger } from '@/core/utils/logger'
@@ -29,6 +30,7 @@ import {
   findFeed,
   interruptibleDelay,
   isFeedEndReached,
+  isFeedEndVisible,
   nextScrollDelayMs,
   randomBetween
 } from './feedScroll'
@@ -36,6 +38,10 @@ import { findListContainer, findListItems } from './listScroll'
 
 /** 列表模式每轮滚动步进（竞品 scrollPlaceListToNext 同款 +500px）。 */
 const LIST_SCROLL_STEP_PX = 500
+
+const SEARCH_BUTTON_READY_TIMEOUT_MS = 3000
+const SEARCH_REPLAY_RESPONSE_TIMEOUT_MS = 5000
+const SEARCH_REPLAY_POLL_MS = 100
 
 /** 采集状态。 */
 export type MapsScraperStatus = 'idle' | 'extracting' | 'paused' | 'complete'
@@ -130,8 +136,8 @@ export class MapsSearchScraper {
     // complete 边缘窗口内的残留循环）在下一个检查点自行退出，防双循环
     this.loopGeneration += 1
     this.setStatus('extracting')
-    if (!this.listSession) {
-      this.triggerSearchReplay()
+    if (!this.listSession && this.callbacks.onProgress === undefined) {
+      this.replaySinglePageSearch()
     }
     void this.runScrollLoop()
   }
@@ -218,8 +224,8 @@ export class MapsSearchScraper {
 
   /**
    * 滚动驱动循环：按会话形态分支——列表形态走逐项点击 + 步进滚动，
-   * 搜索形态滚 feed 到底，直到出现结束提示、达到无增长轮数上限或状态
-   * 离开 extracting。
+   * 搜索形态滚 feed 到底；批量已有 ≥2 条时无增长须确认到底结构，
+   * 持续零条显示错误并保留响应入口，等待后续批次或后台卡死扫描。
    */
   private async runScrollLoop(): Promise<void> {
     if (this.listSession) {
@@ -231,6 +237,11 @@ export class MapsSearchScraper {
     const isCancelled = (): boolean =>
       this.status !== 'extracting' || this.loopGeneration !== generation
 
+    const isBulkSearch = this.callbacks.onProgress !== undefined
+    if (isBulkSearch && !(await this.triggerSearchReplay(isCancelled))) {
+      return
+    }
+
     let noGrowthRounds = 0
     let lastCount = this.rows.length
 
@@ -238,7 +249,12 @@ export class MapsSearchScraper {
       const { dom, scrape } = getMapsConfig()
       const feed = findFeed(dom.feed)
 
-      if (feed && isFeedEndReached(feed, dom.feedEndMarker)) {
+      if (
+        feed &&
+        (!isBulkSearch || this.rows.length > 0) &&
+        isFeedEndVisible(feed, dom.feedEndSelector) &&
+        isFeedEndReached(feed.querySelector(dom.feedEndSelector), dom.feedEndMarker)
+      ) {
         this.complete()
         return
       }
@@ -256,7 +272,7 @@ export class MapsSearchScraper {
         return
       }
 
-      // 连续无增长达限：结果容器仍缺失时暂停报错，其余视为到底。
+      // 连续无增长达限：结果容器仍缺失时暂停报错。
       if (this.rows.length === lastCount) {
         noGrowthRounds += 1
         if (noGrowthRounds >= scrape.noGrowthRetryLimit) {
@@ -268,8 +284,18 @@ export class MapsSearchScraper {
             )
             return
           }
-          this.complete()
-          return
+          // 零条不代表真实空结果；保留响应入口，晚到批次仍可入库并重置 90s 时钟。
+          if (isBulkSearch && this.rows.length === 0) {
+            if (noGrowthRounds === scrape.noGrowthRetryLimit) {
+              this.callbacks.onError(
+                `[MapsScraper] 搜索结果持续未解析出数据: selector=${dom.feed}`,
+                'parse'
+              )
+            }
+          } else if (!isBulkSearch || isFeedEndVisible(feed, dom.feedEndSelector)) {
+            this.complete()
+            return
+          }
         }
       } else {
         noGrowthRounds = 0
@@ -305,7 +331,7 @@ export class MapsSearchScraper {
 
         // 结束判定与 feed 同构：容器末子元素（结束提示位，被列表项选择器排除）
         // 出现提示文字；可见列表项全部点击过后才允许完成（先清完再终止）
-        if (isFeedEndReached(container, dom.listEndMarker)) {
+        if (isFeedEndReached(container.lastElementChild, dom.listEndMarker)) {
           const hasUnclicked = items.some(item => !this.clickedListItems.has(item))
           if (!hasUnclicked) {
             this.complete()
@@ -356,8 +382,54 @@ export class MapsSearchScraper {
     item.click()
   }
 
-  /** 点击搜索提交按钮重放当前搜索，触发 Maps 首批 RPC。 */
-  private triggerSearchReplay(): void {
+  /** 批量首批依赖重放产生的格式 B；仅已有解析行可跳过。 */
+  private async triggerSearchReplay(isCancelled: () => boolean): Promise<boolean> {
+    if (isCancelled()) return false
+    if (this.rows.length > 0) return true
+    const selector = getMapsConfig().dom.searchSubmitButton
+    try {
+      const buttonDeadline = Date.now() + SEARCH_BUTTON_READY_TIMEOUT_MS
+      let button = document.querySelector(selector)
+      while (
+        !isCancelled() &&
+        this.rows.length === 0 &&
+        !(button instanceof HTMLElement) &&
+        Date.now() < buttonDeadline
+      ) {
+        await interruptibleDelay(SEARCH_REPLAY_POLL_MS, isCancelled)
+        button = document.querySelector(selector)
+      }
+      if (isCancelled()) return false
+      if (this.rows.length > 0) return true
+      if (!(button instanceof HTMLElement)) {
+        throw new Error(`搜索按钮等待超时: timeoutMs=${SEARCH_BUTTON_READY_TIMEOUT_MS}`)
+      }
+      button.click()
+
+      const responseDeadline = Date.now() + SEARCH_REPLAY_RESPONSE_TIMEOUT_MS
+      while (!isCancelled() && this.rows.length === 0 && Date.now() < responseDeadline) {
+        await interruptibleDelay(SEARCH_REPLAY_POLL_MS, isCancelled)
+      }
+      if (isCancelled()) return false
+      if (this.rows.length === 0) {
+        throw new Error(`点击后无有效搜索响应: timeoutMs=${SEARCH_REPLAY_RESPONSE_TIMEOUT_MS}`)
+      }
+      return true
+    } catch (error) {
+      if (isCancelled()) return false
+      if (this.rows.length > 0) return true
+      const message = `[MapsScraper] 搜索重放失败: selector=${selector}`
+      logger.error(message, error)
+      const { dom } = getMapsConfig()
+      const hasFeedCards = Boolean(findFeed(dom.feed)?.querySelector(dom.feedCardSelector))
+      if (!hasFeedCards) this.pause()
+      this.callbacks.onError(message, hasFeedCards ? 'parse' : 'google')
+      return hasFeedCards
+    }
+  }
+
+  /** 普通单页沿用即时重放和滚动路径。 */
+  private replaySinglePageSearch(): void {
     const selector = getMapsConfig().dom.searchSubmitButton
     const button = document.querySelector(selector)
     if (button instanceof HTMLElement) {

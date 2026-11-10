@@ -17,6 +17,7 @@ import type { ExtensionEvents } from '@/core/events/types'
 import type { MapsUsageSnapshot, MapsUsageSource } from './types'
 import { isUsageExhausted } from './types'
 import { getMapsConfig } from '../config/loader'
+import type { BulkWorkParams } from '../content/bulkAuto'
 
 /** 拉取 usage 快照；任何失败返回 null（fail-open，门控放行）。 */
 export async function fetchUsageSnapshot(): Promise<MapsUsageSnapshot | null> {
@@ -63,7 +64,8 @@ export interface UsageSessionReporter {
 /** 构造指定来源的会话上报器（构造即生成首个会话 ID）。 */
 export function createUsageSessionReporter(
   emitter: ChromeEventEmitter<ExtensionEvents>,
-  source: MapsUsageSource
+  source: MapsUsageSource,
+  bulk: Pick<BulkWorkParams, 'taskId' | 'itemIndex'> | null = null
 ): UsageSessionReporter {
   let requestId = crypto.randomUUID()
   return {
@@ -75,6 +77,7 @@ export function createUsageSessionReporter(
         return
       }
       emitter.emit('mapsUsageReport', {
+        ...(bulk === null ? {} : { bulk: { taskId: bulk.taskId, itemIndex: bulk.itemIndex } }),
         records,
         requestId,
         source,

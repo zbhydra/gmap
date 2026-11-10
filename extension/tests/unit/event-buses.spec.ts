@@ -23,7 +23,7 @@ describe('ChromeEventBus', () => {
   })
 
   it('发布到 runtime、指定 tab 和所有有效 tab', async () => {
-    vi.mocked(chrome.tabs.query).mockResolvedValue([
+    vi.mocked(chrome.tabs.query).mockImplementation(async () => [
       { id: 7 },
       { id: 0 },
       { url: 'https://example.com/no-id' }
@@ -66,7 +66,7 @@ describe('ChromeEventBus', () => {
     dispatchRuntimeMessage(listener, { __event__: true, event: 'missing', data: null })
     dispatchRuntimeMessage(listener, { __event__: true, event: 'changed', data: { value: 4 } })
 
-    expect(handler).toHaveBeenCalledWith({ value: 4 })
+    expect(handler).toHaveBeenCalledWith({ value: 4 }, {})
     expect(failingHandler).toHaveBeenCalledOnce()
     expect(console.error).toHaveBeenCalled()
 

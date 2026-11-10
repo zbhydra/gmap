@@ -168,6 +168,21 @@ describe('usage HTTP 权益边界', () => {
 })
 
 describe('MapsUsageService（background 配额服务）', () => {
+  it('批量用量只交给调度器核验，普通采集仍由配额服务直接上报', async () => {
+    const service = new MapsUsageService()
+    const listener = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls.at(-1)![0]
+    const handleReport = vi.spyOn(service, 'handleReport').mockResolvedValue()
+    const report = { records: 3, requestId: 'bulk', source: 'reviews', pageUrl: 'https://www.google.com/maps/place/Tea' }
+    service.setup()
+    listener({ __event__: true, event: 'mapsUsageReport', data: { ...report, bulk: { taskId: 't1', itemIndex: 0 } } }, {}, vi.fn())
+    expect(handleReport).not.toHaveBeenCalled()
+    listener({ __event__: true, event: 'mapsUsageReport', data: report }, { url: 'https://www.google.com/maps?gme_bulk=1' }, vi.fn())
+    listener({ __event__: true, event: 'mapsUsageReport', data: { ...report, pageUrl: 'https://www.google.com/maps?gme_bulk=1' } }, {}, vi.fn())
+    expect(handleReport).not.toHaveBeenCalled()
+    listener({ __event__: true, event: 'mapsUsageReport', data: report }, {}, vi.fn())
+    expect(handleReport).toHaveBeenCalledWith(report)
+    service.destroy()
+  })
   it('首次拉取后 60s 内走缓存，force 跳过缓存现拉', async () => {
     mockFetch.mockResolvedValueOnce(snapshot({ used: 10 }))
     mockFetch.mockResolvedValueOnce(snapshot({ used: 20 }))

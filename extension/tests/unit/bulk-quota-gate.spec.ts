@@ -45,6 +45,7 @@ function snapshot(overrides: Partial<MapsUsageSnapshot>): MapsUsageSnapshot {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(chrome.storage.session.get).mockImplementation(async () => ({ bulk_session_ready: true }))
   vi.mocked(bulkStateStore.load).mockResolvedValue(null)
 })
 

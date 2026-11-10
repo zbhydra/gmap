@@ -95,7 +95,12 @@ afterEach(() => {
 describe('Maps 远程配置通道', () => {
   it('远程稀疏覆盖默认值：缺键保留包内值，未知键原样进入', async () => {
     stubRpcGetMapsConfig({
-      dom: { searchInput: 'div[role=search] input.new', brandNewSelector: 'div.new-node' },
+      dom: {
+        searchInput: 'div[role=search] input.new',
+        feedCardSelector: '[data-remote-place]',
+        feedEndSelector: 'p > span > span.remote-end',
+        brandNewSelector: 'div.new-node'
+      },
       scrape: { scrollIntervalSec: 5 }
     })
 
@@ -103,6 +108,8 @@ describe('Maps 远程配置通道', () => {
 
     const config = getMapsConfig()
     expect(config.dom.searchInput).toBe('div[role=search] input.new')
+    expect(config.dom.feedCardSelector).toBe('[data-remote-place]')
+    expect(config.dom.feedEndSelector).toBe('p > span > span.remote-end')
     expect(config.dom.brandNewSelector).toBe('div.new-node')
     expect(config.scrape.scrollIntervalSec).toBe(5)
     // 未覆盖的键保留包内默认
@@ -110,6 +117,9 @@ describe('Maps 远程配置通道', () => {
     expect(config.parseSchema.fields.name).toEqual(DEFAULT_MAPS_CONFIG.parseSchema.fields.name)
     // 默认值本体不被覆盖污染
     expect(DEFAULT_MAPS_CONFIG.dom.searchInput).toBe('div[role=search] input[name=q]')
+    expect(DEFAULT_MAPS_CONFIG.dom.feedCardSelector).toBe(
+      '[role="article"], a[href*="/maps/place/"]'
+    )
     expect(chrome.storage.local.get).not.toHaveBeenCalled()
     expect(chrome.storage.local.set).not.toHaveBeenCalled()
   })

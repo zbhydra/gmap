@@ -30,6 +30,8 @@ import { enrichMapsBusinesses } from '@/sites/maps/enrich/enrichApi'
 import type { MapsEnrichBusinessInput } from '@/sites/maps/enrich/types'
 import { openExtensionLogin } from '../services/extensionLogin'
 import { bulkScheduler } from '../batch/controller'
+import { closeBulkWorkPage } from '../batch/workPage'
+import { readBulkWorkParams } from '@/sites/maps/content/bulkAuto'
 import type { BulkCreateTaskParams, BulkTaskPageQuery } from '../batch/types'
 import { photosWorkPage } from '../photosWorkPage'
 import { openBulkDashboard } from '@/core/utils/navigation'
@@ -77,6 +79,38 @@ export class BackgroundMessageRouter {
       }),
       photosWorkPage,
       authorizeBulkWorkPage: (_params, context) => this.authorizeBulkWorkPage(context),
+      closeBulkWorkPage: async (_params, context) => {
+        const { tabId, workUrl } = this.readBulkLauncher(context)
+        const identity = readBulkWorkParams(new URL(workUrl))
+        if (identity !== null) {
+          await closeBulkWorkPage({ tabId, taskId: identity.taskId, itemIndex: identity.itemIndex })
+        }
+      },
+      checkBulkWorkPage: (params, context) => {
+        const taskId = parseBulkTaskIdRequest(params)
+        if (
+          !isJsonObject(params) ||
+          typeof params.itemIndex !== 'number' ||
+          !Number.isInteger(params.itemIndex) ||
+          params.itemIndex < 0
+        ) {
+          throw new Error('[BulkScheduler] owner 复核 itemIndex 必须为非负整数')
+        }
+        if (
+          context.tabId === undefined ||
+          context.tabId < 0 ||
+          (context.frameId !== undefined && context.frameId !== 0) ||
+          !context.senderUrl ||
+          !URL.canParse(context.senderUrl)
+        ) {
+          return false
+        }
+        const source = new URL(context.senderUrl)
+        if (source.origin !== 'https://www.google.com' || !source.pathname.startsWith('/maps')) {
+          return false
+        }
+        return bulkScheduler.checkWorkPageOwner(taskId, params.itemIndex, context.tabId)
+      },
       getBulkTaskPage: params => bulkScheduler.getTaskPage(parseBulkTaskPageRequest(params)),
       getBulkTask: params => bulkScheduler.getTask(parseBulkTaskIdRequest(params)),
       createBulkTask: params => bulkScheduler.createTask(parseCreateBulkTaskRequest(params)),
@@ -88,6 +122,14 @@ export class BackgroundMessageRouter {
 
   /** 许可只发给本扩展中转文档，标签页身份由浏览器提供。 */
   private async authorizeBulkWorkPage(context: RpcContext): Promise<boolean> {
+    const { tabId, workUrl } = this.readBulkLauncher(context)
+    return bulkScheduler.authorizeWorkPage(workUrl, tabId)
+  }
+
+  private readBulkLauncher(context: RpcContext): { tabId: number; workUrl: string } {
+    if (context.frameId !== undefined && context.frameId !== 0) {
+      throw new Error('[BulkScheduler] 中转页请求只接受顶层 frame')
+    }
     const launcherUrl = chrome.runtime.getURL('src/bulk-launch.html')
     if (!context.senderUrl?.startsWith(`${launcherUrl}?`)) {
       throw new Error('[BulkScheduler] 采集许可只能由本扩展批量中转页申请')
@@ -101,7 +143,7 @@ export class BackgroundMessageRouter {
     if (tabId === undefined || tabId < 0) {
       throw new Error('[BulkScheduler] 中转页许可请求缺少浏览器标签页身份')
     }
-    return bulkScheduler.authorizeWorkPage(workUrl, tabId)
+    return { tabId, workUrl }
   }
 
   /**

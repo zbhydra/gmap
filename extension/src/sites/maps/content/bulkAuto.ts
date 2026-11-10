@@ -9,6 +9,11 @@
  * 参数名常量以本模块为唯一事实来源；background 构造工作页 URL 时从这里导入。
  */
 
+import { BackgroundChannel } from '@/content/rpc/background.rpc'
+import { logger } from '@/core/utils/logger'
+import type { JsonValue } from '@/core/rpc/types'
+import type { BulkWorkIdentity } from '@/background/batch/types'
+
 /** 批量模式激活标记（值必须为 `1`）。 */
 export const BULK_PARAM = 'gme_bulk'
 
@@ -24,12 +29,50 @@ export const BULK_TOTAL_PARAM = 'gme_bulk_total'
 export const BULK_MAX_PARAM = 'gme_bulk_max'
 
 /** 工作页批量参数（从 URL 解析）。 */
-export interface BulkWorkParams {
-  /** 批量任务 id。 */
-  taskId: string
-  /** 条目下标（任务队列内）。 */
-  itemIndex: number
+export interface BulkWorkParams extends BulkWorkIdentity {
   itemCount: number
+}
+
+/** 同步注册初始身份；Google 同文档清参后仍能确认该任务工作页。 */
+export function registerBulkWorkIdentity(work: BulkWorkIdentity | null): (() => void) | undefined {
+  if (work === null || window.top !== window) return
+  const { taskId, itemIndex } = work
+  const listener = (
+    message: JsonValue | undefined,
+    sender: chrome.runtime.MessageSender,
+    sendResponse: (identity: BulkWorkIdentity) => void
+  ): void => {
+    if (
+      typeof message !== 'object' ||
+      message === null ||
+      !('__bulkWorkIdentity__' in message) ||
+      message.__bulkWorkIdentity__ !== true ||
+      sender.id !== chrome.runtime.id ||
+      (sender.frameId !== undefined && sender.frameId !== 0)
+    )
+      return
+    sendResponse({ taskId, itemIndex })
+  }
+  chrome.runtime.onMessage.addListener(listener)
+  return () => chrome.runtime.onMessage.removeListener(listener)
+}
+
+/** 复核只读初始上下文，避免 Google 同文档清参后丢失任务身份。 */
+export async function checkBulkWorkOwner(
+  work: Pick<BulkWorkParams, 'taskId' | 'itemIndex'>
+): Promise<boolean> {
+  const background = new BackgroundChannel()
+  try {
+    return await background.checkBulkWorkPage({ taskId: work.taskId, itemIndex: work.itemIndex })
+  } catch (error) {
+    logger.error(
+      `[MapsBulk] 复核工作页 owner 失败: task=${work.taskId}, item=${work.itemIndex}`,
+      error
+    )
+    return false
+  } finally {
+    background.destroy()
+  }
 }
 
 /**

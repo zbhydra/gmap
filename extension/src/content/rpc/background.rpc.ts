@@ -75,7 +75,7 @@ export class BackgroundChannel {
     return this.transport.call<
       RpcMethodResult<BackgroundHandler, 'enrichMapsBusinesses'>,
       RpcMethodParams<BackgroundHandler, 'enrichMapsBusinesses'>
-    >('enrichMapsBusinesses', params, options)
+    >('enrichMapsBusinesses', params, { ...options, timeout: options?.timeout ?? 35000 })
   }
 
   /** 调用 openPricingPage 能力。 */
@@ -109,6 +109,17 @@ export class BackgroundChannel {
       RpcMethodResult<BackgroundHandler, 'photosWorkPage'>,
       RpcMethodParams<BackgroundHandler, 'photosWorkPage'>
     >('photosWorkPage', params, options)
+  }
+
+  /** 调用 checkBulkWorkPage 能力。 */
+  checkBulkWorkPage(
+    params: RpcMethodParams<BackgroundHandler, 'checkBulkWorkPage'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'checkBulkWorkPage'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'checkBulkWorkPage'>,
+      RpcMethodParams<BackgroundHandler, 'checkBulkWorkPage'>
+    >('checkBulkWorkPage', params, options)
   }
 
   /** 销毁 RPC transport。 */

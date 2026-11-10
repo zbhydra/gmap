@@ -1,12 +1,18 @@
 /** 分页摘要、单任务详情和轻量命令通过真实 RPC/router/controller 合同。 */
 
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
 import { BackgroundMessageRouter } from '@/background/services/BackgroundMessageRouter'
+import { BulkSchedulerController } from '@/background/batch/controller'
 import { reduceBulkEvent } from '@/background/batch/machine'
 import { bulkStateStore, emptyBulkState } from '@/background/batch/store'
 import { BULK_TASK_PAGE_SIZE, type BulkState } from '@/background/batch/types'
+import Dashboard from '@/dashboard/App.vue'
+import TRANSLATIONS from '@/locales/messages'
 import { BackgroundChannel } from '@/popup/rpc/background.rpc'
-import type { JsonValue, RpcResponse, RpcServeResult } from '@/core/rpc/types'
+import type { EventMessage, ExtensionEvents } from '@/core/events/types'
+import type { RpcRequest, RpcResponse, RpcServeResult } from '@/core/rpc/types'
 
 vi.mock('@/core/api/plugin-version/api', () => ({
   checkPluginVersion: vi.fn(async () => ({ status: 'current', update: null }))
@@ -28,6 +34,7 @@ const originalAlarms = chrome.alarms
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(chrome.storage.session.get).mockImplementation(async () => ({ bulk_session_ready: true }))
   Object.assign(chrome, { alarms: { create: vi.fn(), clear: vi.fn() } })
   state = emptyBulkState()
   for (let index = 0; index < BULK_TASK_PAGE_SIZE + 3; index++) {
@@ -66,17 +73,20 @@ beforeEach(() => {
   const listener = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls.at(-1)?.[0]
   if (!listener) throw new Error('真实 background RPC listener 未注册')
   Object.assign(chrome.runtime, {
-    sendMessage: (message: JsonValue) =>
+    sendMessage: (message: RpcRequest | EventMessage<ExtensionEvents>) =>
       new Promise<RpcResponse<RpcServeResult> | undefined>(resolve => {
-        if (
-          !listener(
-            message,
-            { id: chrome.runtime.id, url: chrome.runtime.getURL('src/dashboard.html') },
-            resolve
-          )
-        ) {
+        if ('__event__' in message) {
+          for (const [eventListener] of vi.mocked(chrome.runtime.onMessage.addListener).mock.calls) {
+            eventListener(message, { id: chrome.runtime.id }, vi.fn())
+          }
           resolve(undefined)
+          return
         }
+        listener(
+          message,
+          { id: chrome.runtime.id, url: chrome.runtime.getURL('src/dashboard.html') },
+          resolve
+        )
       })
   })
 })
@@ -154,5 +164,77 @@ it('删除末页最后一项后返回有效末页；页码在 RPC 入口校验',
     await expect(background.getBulkTaskPage({ type: 'keywords', page: invalid })).rejects.toThrow(
       'page 必须为正整数'
     )
+  }
+})
+
+it.each([
+  ['列表', '.db-cell-progress b'],
+  ['已选详情', '.db-big']
+])('Dashboard 持续可见时，后台完成条目自动更新%s', async (view, progressSelector) => {
+  const task = state.tasks[0]!
+  state.tasks = [task]
+  const originalOnRemoved = chrome.tabs.onRemoved
+  Object.assign(chrome.alarms, { onAlarm: { addListener: vi.fn(), removeListener: vi.fn() } })
+  Object.assign(chrome.tabs, { onRemoved: { addListener: vi.fn(), removeListener: vi.fn() } })
+  Object.defineProperty(document, 'fonts', {
+    configurable: true,
+    value: { ready: Promise.resolve() }
+  })
+  const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+  vi.spyOn(media, 'matches', 'get').mockReturnValue(true)
+  vi.spyOn(window, 'matchMedia').mockReturnValue(media)
+  const controller = new BulkSchedulerController()
+  const workListener = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls.at(-1)![0]
+  const wrapper = mount(Dashboard, {
+    attachTo: document.body,
+    global: {
+      plugins: [createI18n({ legacy: false, locale: 'en-US', messages: TRANSLATIONS })]
+    }
+  })
+
+  try {
+    controller.setup()
+    await vi.waitFor(() => expect(chrome.alarms.create).toHaveBeenCalled())
+    await flushPromises()
+    expect(wrapper.get('#db-task-title').text()).toBe(task.name)
+    if (view === '列表') await wrapper.get('.db-back').trigger('click')
+    expect(wrapper.get(progressSelector).text()).toBe('3')
+    expect(document.visibilityState).toBe('visible')
+    vi.mocked(chrome.tabs.query).mockClear()
+
+    workListener(
+      {
+        __event__: true,
+        event: 'mapsBulkItemDone',
+        data: { taskId: task.id, itemIndex: 3, collected: 11, pageUrl: 'https://www.google.com/maps' }
+      },
+      {
+        id: chrome.runtime.id,
+        tab: await chrome.tabs.get(71),
+        frameId: 0,
+        url: 'https://www.google.com/maps'
+      },
+      vi.fn()
+    )
+    await controller.checkWorkPageOwner(task.id, 3, 71)
+    await flushPromises()
+
+    expect(state.tasks[0]?.items[3]).toMatchObject({ status: 'complete', collected: 11 })
+    expect(wrapper.get(progressSelector).text()).toBe('4')
+    if (view === '已选详情') {
+      expect(wrapper.find('tr[data-index="3"] .status--completed').exists()).toBe(true)
+      expect(wrapper.get('tr[data-index="3"] .cell-num').text()).toBe('11')
+      expect(wrapper.get('tr[data-index="4"]').classes()).toContain('is-active')
+      expect(wrapper.get('.db-stats .db-stat:nth-child(2) dd').text()).toBe('18')
+    }
+    expect(document.visibilityState).toBe('visible')
+    expect(chrome.tabs.query).not.toHaveBeenCalled()
+  } finally {
+    wrapper.unmount()
+    wrapper.element.remove()
+    controller.destroy()
+    vi.restoreAllMocks()
+    Object.assign(chrome.tabs, { onRemoved: originalOnRemoved })
+    Reflect.deleteProperty(document, 'fonts')
   }
 })

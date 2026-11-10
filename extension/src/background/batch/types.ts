@@ -68,7 +68,7 @@ export interface BulkTask {
   items: BulkTaskItem[]
   /** 处理游标：运行中 = 当前条目下标；暂停/待开始 = 下一个待处理条目下标。 */
   cursor: number
-  /** 已获采集许可的工作标签页 id（null = 尚未登记，由 alarm 补启动）。 */
+  /** 当前浏览器会话的工作页 owner；新会话先清空，null 由 alarm 补启动。 */
   activeTabId: number | null
   /** 当前条目启动时间（卡死判定基准；null = 尚未启动）。 */
   activeStartedAt: number | null
@@ -155,12 +155,12 @@ export type BulkMachineEvent =
   | { kind: 'delete-task'; taskId: string }
   /** 中转页申请采集许可（回填 activeTabId，落盘后才允许导航）。 */
   | { kind: 'item-launched'; taskId: string; itemIndex: number; tabId: number }
-  | { kind: 'item-done'; taskId: string; itemIndex: number; collected: number }
+  | { kind: 'item-done'; taskId: string; itemIndex: number; collected: number; tabId: number }
   /**
    * 条目进展回报（工作页每页/每批采到新数据）：仅重置卡死时钟——90s 判定
    * 语义是「自上次进展以来」，慢而有进展的采集不被误杀。
    */
-  | { kind: 'item-progress'; taskId: string; itemIndex: number }
+  | { kind: 'item-progress'; taskId: string; itemIndex: number; tabId: number }
   /** 工作标签页被关闭（用户手关/崩溃）：立即走重试或跳过，不等 90s。 */
   | { kind: 'tab-gone'; tabId: number; stuckMaxRetry: number }
   /** alarm 兜底扫描（30s 级）：卡死判定 + 启动丢失恢复。 */
@@ -171,12 +171,17 @@ export interface BulkLaunchPlan {
   url: string
 }
 
+export interface BulkWorkIdentity {
+  taskId: string
+  itemIndex: number
+}
+
 /** 状态机产出的副作用（controller 执行；reducer 保持纯函数）。 */
 export interface BulkEffects {
   /** 打开工作标签页的计划。 */
   launches: BulkLaunchPlan[]
-  /** 需要关闭的标签页 id。 */
-  closeTabIds: number[]
+  /** 保留推进前的任务身份，删除任务或前进游标后仍可核验关页归属。 */
+  closeTabs: (BulkWorkIdentity & { tabId: number })[]
   /** 兜底扫描 alarm 开关：on 创建、off 清除、keep 不动。 */
   scanAlarm: 'on' | 'off' | 'keep'
 }

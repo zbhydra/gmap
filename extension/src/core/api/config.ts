@@ -119,6 +119,8 @@ export const HTTP_HEADERS = {
 
 /** Storage 键常量 */
 export const STORAGE_KEYS = {
+  /** 当前浏览器会话已清理批量任务旧 owner（仅存 storage.session）。 */
+  BULK_SESSION_READY: 'bulk_session_ready',
   /** 访问令牌 */
   ACCESS_TOKEN: 'auth_access_token',
   /** 刷新令牌 */

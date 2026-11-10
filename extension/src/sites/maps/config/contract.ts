@@ -28,6 +28,8 @@ export interface MapsDomConfig {
   searchSubmitButton: string
   /** 搜索结果列表滚动容器。 */
   feed: string
+  /** 商家卡片（相对 feed），重放失败时据此决定是否继续滚动。 */
+  feedCardSelector: string
   /** Maps 主渲染区（UI 挂载前的存在性检测）。 */
   main: string
   /** 详情页"下一页"翻页按钮（辅助翻页路径）。 */
@@ -36,7 +38,9 @@ export interface MapsDomConfig {
   dragCheckbox: string
   /** 插件面板挂载点。 */
   panelMount: string
-  /** feed 末项的结束提示文字片段（小写包含匹配；空串表示不启用该判定）。 */
+  /** 搜索结果结束节点（相对 feed）；limited view 会在其后追加提示。 */
+  feedEndSelector: string
+  /** 结束节点的提示文字片段（小写包含匹配；空串表示不启用该判定）。 */
   feedEndMarker: string
   /**
    * 列表模式 URL 触发子串（013 A7，U10）。
@@ -271,11 +275,10 @@ export interface MapsParseSchemaConfig {
 /**
  * 导出行为配置组（A8，U4 契约扩展）。
  *
- * 当前无账号体系：proColumnsEnabled 默认 true（全列可用）；U7/U8 接入
- * 凭证与订阅后由服务端按账号态下发覆盖，免费用户导出时静默剔除 Pro 列。
+ * 套餐权益来自 usage 快照；本组只提供全局开关，不授予账号权益。
  */
 export interface MapsExportConfig {
-  /** Pro 专属列是否随导出生成；false 时 12 个 Pro 列在导出层剔除。 */
+  /** Email / Social Medias 的全局开关；false 时包括 Pro 在内均剔除这两列。 */
   proColumnsEnabled: boolean
   /** 允许服务端下发客户端未声明的导出配置键。 */
   [key: string]: string | boolean | number
@@ -402,10 +405,12 @@ export const DEFAULT_MAPS_CONFIG: MapsRemoteConfig = {
     searchInput: 'div[role=search] input[name=q]',
     searchSubmitButton: 'div[role=search] button[aria-label="Search"]',
     feed: 'div[role=feed]',
+    feedCardSelector: '[role="article"], a[href*="/maps/place/"]',
     main: 'div[role=main]',
     paginationButton: 'button[jsaction="pane.paginationSection.nextPage"]',
     dragCheckbox: 'button[role=checkbox][aria-checked]',
     panelMount: 'body',
+    feedEndSelector: 'p > span > span.HlvSq',
     // 实测结束提示 "You've reached the end of the list"，取稳定片段做小写包含匹配
     feedEndMarker: 'reached the end',
     // —— A7 列表模式（U10）：触发与容器选择器（依据见各字段注释）——
@@ -509,7 +514,7 @@ export const DEFAULT_MAPS_CONFIG: MapsRemoteConfig = {
     photosNextIndex: 1,
     placeIdHexMaxLength: 20
   },
-  // 当前无账号体系，Pro 门控默认全开（剔除逻辑由导出引擎实现，单测覆盖）
+  // 开关开启后仍由 usage 套餐决定是否导出补全列。
   exportConfig: {
     proColumnsEnabled: true
   },

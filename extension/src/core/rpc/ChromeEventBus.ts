@@ -127,11 +127,14 @@ export class ChromeEventEmitter<TEvents extends EventDefinition> {
  * ```
  */
 export class ChromeEventSubscriber<TEvents extends EventDefinition> {
-  private handlers: Map<string, Set<(data: EventPayload) => void>> = new Map()
+  private handlers: Map<
+    string,
+    Set<(data: EventPayload, sender: chrome.runtime.MessageSender) => void>
+  > = new Map()
   private listener: ChromeRuntimeMessageListener | null = null
 
   constructor() {
-    this.listener = message => {
+    this.listener = (message, sender) => {
       if (!isEventMessage(message)) {
         return
       }
@@ -142,7 +145,7 @@ export class ChromeEventSubscriber<TEvents extends EventDefinition> {
       if (handlers) {
         for (const handler of handlers) {
           try {
-            handler(eventMessage.data)
+            handler(eventMessage.data, sender)
           } catch (error) {
             logger.error(
               `[ChromeEventSubscriber] Handler error for ${String(eventMessage.event)}:`,
@@ -165,7 +168,7 @@ export class ChromeEventSubscriber<TEvents extends EventDefinition> {
    */
   on<E extends EventNames<TEvents>>(
     event: E,
-    handler: (data: EventData<TEvents, E>) => void
+    handler: (data: EventData<TEvents, E>, sender: chrome.runtime.MessageSender) => void
   ): () => void {
     const eventName = event as string
     let handlers = this.handlers.get(eventName)
@@ -175,7 +178,10 @@ export class ChromeEventSubscriber<TEvents extends EventDefinition> {
       this.handlers.set(eventName, handlers)
     }
 
-    const storedHandler = handler as (data: EventPayload) => void
+    const storedHandler = handler as (
+      data: EventPayload,
+      sender: chrome.runtime.MessageSender
+    ) => void
     handlers.add(storedHandler)
 
     // 返回取消订阅函数

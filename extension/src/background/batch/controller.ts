@@ -21,7 +21,12 @@ import { checkPluginVersion } from '@/core/api/plugin-version/api'
 import { canStartWithPluginVersion } from '@/core/api/plugin-version/types'
 import { logger } from '@/core/utils/logger'
 import { ChromeEventEmitter, ChromeEventSubscriber } from '@/core/rpc/ChromeEventBus'
-import type { ExtensionEvents } from '@/core/events/types'
+import type {
+  BulkQuotaBlockedPayload,
+  ExtensionEvents,
+  MapsUsageReportPayload
+} from '@/core/events/types'
+import { STORAGE_KEYS } from '@/core/api/config'
 import { MapsUserSettingsManager } from '@/sites/maps/settings/userSettings'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
 import { mapsUsageService } from '@/sites/maps/usage/usageService'
@@ -30,9 +35,10 @@ import { MARK_TYPE } from '@/core/api/mark/types'
 import { clearPhotosWorkIntent } from '../photosWorkPage'
 import { checkBulkQuota, estimateBulkRecords } from './quota'
 import { bulkStateStore, emptyBulkState } from './store'
-import { buildWorkUrlForItem, reduceBulkEvent } from './machine'
+import { buildWorkUrlForItem, isBulkWorkOwner, reduceBulkEvent } from './machine'
 import { readBulkWorkParams } from '@/sites/maps/content/bulkAuto'
 import { BULK_TASK_PAGE_SIZE } from './types'
+import { closeBulkWorkPage } from './workPage'
 import type {
   BulkCommandResult,
   BulkCreateTaskParams,
@@ -64,6 +70,8 @@ export class BulkSchedulerController {
   /** 步进串行队列：读状态 → reduce → 落盘 → 执行副作用，全程不交错。 */
   private queue: Promise<void> = Promise.resolve()
 
+  private sessionReady: Promise<void> | null = null
+
   /** 已注册的 chrome 监听清理函数。 */
   private unsubscribeAlarms: (() => void) | null = null
 
@@ -73,31 +81,59 @@ export class BulkSchedulerController {
 
   private unsubscribeItemProgress: (() => void) | null = null
 
+  private unsubscribeQuotaBlocked: (() => void) | null = null
+
+  private unsubscribeUsage: (() => void) | null = null
+
   /** 注册全部监听并做一次恢复扫描（SW 冷启动/浏览器重启后的收尾入口）。 */
   setup(): void {
     if (this.unsubscribeAlarms !== null) {
       return
     }
 
-    this.unsubscribeItemDone = this.subscriber.on('mapsBulkItemDone', payload => {
+    this.unsubscribeItemDone = this.subscriber.on('mapsBulkItemDone', (payload, sender) => {
+      const tabId = bulkWorkSenderTabId(sender)
+      if (tabId === null) return
       void this.dispatch({
         kind: 'item-done',
         taskId: payload.taskId,
         itemIndex: payload.itemIndex,
-        collected: payload.collected
+        collected: payload.collected,
+        tabId
       }).catch(error => {
         logger.error('[BulkScheduler] 处理工作页完成回报失败:', error)
       })
     })
 
     // 进展回报：每页/每批新数据重置卡死时钟（慢而有进展不被误杀）
-    this.unsubscribeItemProgress = this.subscriber.on('mapsBulkItemProgress', payload => {
+    this.unsubscribeItemProgress = this.subscriber.on('mapsBulkItemProgress', (payload, sender) => {
+      const tabId = bulkWorkSenderTabId(sender)
+      if (tabId === null) return
       void this.dispatch({
         kind: 'item-progress',
         taskId: payload.taskId,
-        itemIndex: payload.itemIndex
+        itemIndex: payload.itemIndex,
+        tabId
       }).catch(error => {
         logger.error('[BulkScheduler] 处理工作页进展回报失败:', error)
+      })
+    })
+
+    this.unsubscribeQuotaBlocked = this.subscriber.on('mapsBulkQuotaBlocked', (payload, sender) => {
+      void this.pauseQuotaBlocked(payload, sender).catch(error => {
+        logger.error(
+          `[BulkScheduler] 额度耗尽自动暂停失败: task=${payload.taskId}, item=${payload.itemIndex}`,
+          error
+        )
+      })
+    })
+
+    this.unsubscribeUsage = this.subscriber.on('mapsUsageReport', (payload, sender) => {
+      if (payload.bulk === undefined) return
+      const tabId = bulkWorkSenderTabId(sender)
+      if (tabId === null) return
+      void this.reportBulkUsage(payload, tabId).catch(error => {
+        logger.error('[BulkScheduler] 核验批量用量 owner 失败:', error)
       })
     })
 
@@ -124,17 +160,40 @@ export class BulkSchedulerController {
   destroy(): void {
     this.unsubscribeItemDone?.()
     this.unsubscribeItemProgress?.()
+    this.unsubscribeQuotaBlocked?.()
+    this.unsubscribeUsage?.()
     this.unsubscribeAlarms?.()
     this.unsubscribeTabsRemoved?.()
     this.unsubscribeItemDone = null
     this.unsubscribeItemProgress = null
+    this.unsubscribeQuotaBlocked = null
+    this.unsubscribeUsage = null
     this.unsubscribeAlarms = null
     this.unsubscribeTabsRemoved = null
     this.subscriber.destroy()
   }
 
   private async getState(): Promise<BulkState> {
+    await (this.sessionReady ??= this.initializeSession().catch(error => {
+      this.sessionReady = null
+      throw error
+    }))
     return (await bulkStateStore.load()) ?? emptyBulkState()
+  }
+
+  private async initializeSession(): Promise<void> {
+    const session = await chrome.storage.session.get(STORAGE_KEYS.BULK_SESSION_READY)
+    if (session[STORAGE_KEYS.BULK_SESSION_READY] === true) return
+
+    const state = (await bulkStateStore.load()) ?? emptyBulkState()
+    // tabId 只在浏览器会话内唯一；先落盘解除旧 owner，再发布会话就绪标记。
+    if (state.tasks.some(task => task.activeTabId !== null)) {
+      await bulkStateStore.save({
+        ...state,
+        tasks: state.tasks.map(task => ({ ...task, activeTabId: null }))
+      })
+    }
+    await chrome.storage.session.set({ [STORAGE_KEYS.BULK_SESSION_READY]: true })
   }
 
   async getTaskPage(query: BulkTaskPageQuery): Promise<BulkTaskPage> {
@@ -225,6 +284,37 @@ export class BulkSchedulerController {
     )
   }
 
+  async checkWorkPageOwner(taskId: string, itemIndex: number, tabId: number): Promise<boolean> {
+    return this.enqueue(async () =>
+      isBulkWorkOwner(await this.getState(), taskId, itemIndex, tabId)
+    )
+  }
+
+  private pauseQuotaBlocked(
+    payload: BulkQuotaBlockedPayload,
+    sender: chrome.runtime.MessageSender
+  ): Promise<void> {
+    return this.enqueue(async () => {
+      const tabId = bulkWorkSenderTabId(sender)
+      if (tabId === null) return
+      const state = await this.getState()
+      if (!isBulkWorkOwner(state, payload.taskId, payload.itemIndex, tabId)) return
+      // owner 核验和停止必须同队列执行，避免旧页事件暂停已续跑的条目。
+      await this.process({ kind: 'stop-task', taskId: payload.taskId })
+    })
+  }
+
+  private reportBulkUsage(payload: MapsUsageReportPayload, tabId: number): Promise<void> {
+    return this.enqueue(async () => {
+      const bulk = payload.bulk
+      const state = await this.getState()
+      if (bulk && isBulkWorkOwner(state, bulk.taskId, bulk.itemIndex, tabId)) {
+        // 与 done 同队列接纳用量；HTTP 不阻塞下一条目的调度。
+        void mapsUsageService.handleReport(payload)
+      }
+    })
+  }
+
   /**
    * 配额前置校验（U5 遗留补口）：预估消耗（条目数 × 单批上限）超过剩余额度
    * 时拒绝并返回 quota-exceeded。usage 不可得（服务端/网络故障）时放行——
@@ -293,7 +383,11 @@ export class BulkSchedulerController {
 
   /** 串行化步进：返回 reducer 结果（含拒绝码）；副作用在落盘后执行。 */
   private dispatch(event: BulkMachineEvent): Promise<BulkReduceResult> {
-    const run = this.queue.then(() => this.process(event))
+    return this.enqueue(() => this.process(event))
+  }
+
+  private enqueue<T>(action: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(action)
     this.queue = run.then(
       () => undefined,
       () => undefined
@@ -329,7 +423,7 @@ export class BulkSchedulerController {
             state: paused.state,
             effects: {
               ...paused.effects,
-              closeTabIds: [...result.effects.closeTabIds, ...paused.effects.closeTabIds]
+              closeTabs: [...result.effects.closeTabs, ...paused.effects.closeTabs]
             },
             error: version === null ? 'version-check-failed' : 'plugin-disabled'
           }
@@ -375,13 +469,8 @@ export class BulkSchedulerController {
 
   /** 执行副作用：关页 → 开中转页 → alarm 开关 → 广播（顺序即依赖序）。 */
   private async applyEffects(effects: BulkReduceResult['effects']): Promise<void> {
-    for (const tabId of effects.closeTabIds) {
-      try {
-        await chrome.tabs.remove(tabId)
-      } catch (error) {
-        // 页可能已被用户关掉：忽略（失败不静默）
-        logger.error(`[BulkScheduler] 关闭工作页失败: tabId=${tabId}`, error)
-      }
+    for (const work of effects.closeTabs) {
+      await closeBulkWorkPage(work)
     }
 
     for (const launch of effects.launches) {
@@ -405,6 +494,25 @@ export class BulkSchedulerController {
 
 /** 导出控制器单例：background/index 装配监听，RPC router 调用命令方法。 */
 export const bulkScheduler = new BulkSchedulerController()
+
+function bulkWorkSenderTabId(sender: chrome.runtime.MessageSender): number | null {
+  const tabId = sender.tab?.id
+  if (
+    sender.id !== chrome.runtime.id ||
+    (sender.frameId !== undefined && sender.frameId !== 0) ||
+    tabId === undefined ||
+    !Number.isInteger(tabId) ||
+    tabId < 0 ||
+    !sender.url ||
+    !URL.canParse(sender.url)
+  ) {
+    return null
+  }
+  const source = new URL(sender.url)
+  return source.origin === 'https://www.google.com' && source.pathname.startsWith('/maps')
+    ? tabId
+    : null
+}
 
 /**
  * 中转页必须先获得 owner 落盘许可，避免创建回执丢失后两页同时采集。
