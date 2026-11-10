@@ -169,12 +169,12 @@ describe('AuthStore 订阅态与门控判定', () => {
     expect(mocks.subscriptionStatus).toHaveBeenCalledTimes(3)
   })
 
-  it('订阅查询失败回退上次缓存（可能过期），无缓存返回 null', async () => {
+  it('订阅查询失败回退上次缓存（可能过期），无缓存抛错以保留 content 快照', async () => {
     const store = await loggedInStore()
 
-    // 无缓存即失败 → null（调用方按免费计权）
+    // 未登录的 null 与查询失败不同：失败必须穿透门控 RPC。
     mocks.subscriptionStatus.mockRejectedValue(new Error('network down'))
-    await expect(store.refreshSubscription()).resolves.toBeNull()
+    await expect(store.refreshSubscription({ force: true })).rejects.toThrow('network down')
 
     // 有缓存后失败 → 回退缓存
     mocks.subscriptionStatus.mockResolvedValue(subscriptionOf('month'))
@@ -192,6 +192,46 @@ describe('AuthStore 订阅态与门控判定', () => {
 
     await Promise.all([store.refreshSubscription(), store.refreshSubscription()])
     expect(mocks.subscriptionStatus).toHaveBeenCalledTimes(1)
+  })
+
+  it('force 不复用在途普通请求，旧免费响应结束后重新查询 Pro', async () => {
+    const store = await loggedInStore()
+    let resolveOld!: (status: SubscriptionStatus) => void
+    mocks.subscriptionStatus
+      .mockReturnValueOnce(
+        new Promise(resolve => {
+          resolveOld = resolve
+        })
+      )
+      .mockResolvedValueOnce(subscriptionOf('month'))
+
+    const first = store.refreshSubscription()
+    const forced = store.refreshSubscription({ force: true })
+    resolveOld(subscriptionOf('free'))
+
+    expect((await first)?.period).toBe('free')
+    expect((await forced)?.period).toBe('month')
+    expect(mocks.subscriptionStatus).toHaveBeenCalledTimes(2)
+    expect(store.isPro).toBe(true)
+  })
+
+  it('在途普通请求失败后，force 仍另发请求获取 Pro', async () => {
+    const store = await loggedInStore()
+    let rejectOld!: (error: Error) => void
+    mocks.subscriptionStatus
+      .mockReturnValueOnce(
+        new Promise((_resolve, reject) => {
+          rejectOld = reject
+        })
+      )
+      .mockResolvedValueOnce(subscriptionOf('month'))
+    const first = expect(store.refreshSubscription()).rejects.toThrow('network down')
+    const forced = store.refreshSubscription({ force: true })
+    rejectOld(new Error('network down'))
+
+    await first
+    expect((await forced)?.period).toBe('month')
+    expect(mocks.subscriptionStatus).toHaveBeenCalledTimes(2)
   })
 
   it('applyExtensionLogin 有效：三键落 storage、账号态生效、订阅缓存失效重拉', async () => {
@@ -278,9 +318,7 @@ describe('AuthStore 订阅态与门控判定', () => {
       return Promise.resolve(null)
     })
 
-    await expect(store.applyExtensionLogin('code-2', 'verifier-2')).rejects.toThrow(
-      /登录态已变化/
-    )
+    await expect(store.applyExtensionLogin('code-2', 'verifier-2')).rejects.toThrow(/登录态已变化/)
     expect(mocks.storageSetMany).toHaveBeenCalledTimes(1)
     expect(mocks.clearLocalAuth).not.toHaveBeenCalled()
     expect(store.isAuthenticated).toBe(true)

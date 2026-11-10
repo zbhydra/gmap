@@ -47,13 +47,35 @@ export class BackgroundChannel {
 
   /** 调用 getGateState 能力。 */
   getGateState(
+    params: RpcMethodParams<BackgroundHandler, 'getGateState'>,
     options?: RpcCallOptions
   ): Promise<RpcMethodResult<BackgroundHandler, 'getGateState'>> {
-    return this.transport.call<RpcMethodResult<BackgroundHandler, 'getGateState'>>(
-      'getGateState',
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'getGateState'>,
+      RpcMethodParams<BackgroundHandler, 'getGateState'>
+    >('getGateState', params, options)
+  }
+
+  /** 调用 getBingUsage 能力。 */
+  getBingUsage(
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'getBingUsage'>> {
+    return this.transport.call<RpcMethodResult<BackgroundHandler, 'getBingUsage'>>(
+      'getBingUsage',
       undefined,
-      options
+      { ...options, timeout: options?.timeout ?? 60000 }
     )
+  }
+
+  /** 调用 reportBingUsage 能力。 */
+  reportBingUsage(
+    params: RpcMethodParams<BackgroundHandler, 'reportBingUsage'>,
+    options?: RpcCallOptions
+  ): Promise<RpcMethodResult<BackgroundHandler, 'reportBingUsage'>> {
+    return this.transport.call<
+      RpcMethodResult<BackgroundHandler, 'reportBingUsage'>,
+      RpcMethodParams<BackgroundHandler, 'reportBingUsage'>
+    >('reportBingUsage', params, { ...options, timeout: options?.timeout ?? 60000 })
   }
 
   /** 调用 openExtensionLogin 能力。 */
@@ -86,7 +108,7 @@ export class BackgroundChannel {
     return this.transport.call<
       RpcMethodResult<BackgroundHandler, 'enrichBusinesses'>,
       RpcMethodParams<BackgroundHandler, 'enrichBusinesses'>
-    >('enrichBusinesses', params, options)
+    >('enrichBusinesses', params, { ...options, timeout: options?.timeout ?? 35000 })
   }
 
   /** 销毁 RPC transport。 */

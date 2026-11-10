@@ -10,7 +10,8 @@
   - 采集中：加载指示、进度文案（免费 "Exporting N..." / Pro "Have found N
     businesses and still going..."，按门控态切换）、区域提示、Stop（ghost）；
   - 完成：完成/手动停止文案、免费达限警告条 + Upgrade to Pro Now（打开官网
-    订阅页）、Export Leads List 下拉（csv / xlsx）、Go Back。
+    订阅页）、Export Leads List 下拉（csv / xlsx）、Go Back；补全中（collector
+    finishing 非 null）显示进度，Export / Go Back 等待结束。
 
   视觉 = design.md / design.dark.md Material You token 合同（scoped CSS 内定义
   同名 CSS 变量并随系统亮暗切换；直插宿主页无法复用全局注入，token 就地声明）。
@@ -117,6 +118,17 @@
         {{ stoppedManually ? t(K.MANUALLY_STOPPED) : t(K.SEARCH_COMPLETE) }}
       </p>
       <p class="done-count">{{ doneCountText }}</p>
+      <div v-if="finishing" class="collecting-row" role="status">
+        <span class="spinner" aria-hidden="true"></span>
+        <!-- total=0 时门控未确认是否补全，不能向免费用户宣称正在补全联系方式 -->
+        <span v-if="finishing.total === 0" class="progress-text">{{ t(K.FINISHING) }}</span>
+        <span v-else class="finishing-text">
+          <span class="progress-text">{{ t(K.CONTACTS_TITLE) }}</span>
+          <span class="finishing-count">
+            {{ t(K.CONTACTS_PROGRESS, { done: finishing.done, total: finishing.total }) }}
+          </span>
+        </span>
+      </div>
       <div v-if="freeLimitReached" class="limit-alert" role="alert">
         <span class="alert-icon" aria-hidden="true"></span>
         <span class="alert-text">{{ t(K.FREE_LIMIT_NOTE) }}</span>
@@ -128,7 +140,7 @@
         <button
           class="button button-outline"
           type="button"
-          :disabled="foundCount === 0"
+          :disabled="foundCount === 0 || finishing !== null"
           :aria-expanded="menuOpen"
           @click="toggleMenu"
         >
@@ -144,10 +156,27 @@
           </button>
         </div>
       </div>
-      <button class="button button-ghost" type="button" @click="onGoBack">
+      <button
+        class="button button-ghost"
+        type="button"
+        :disabled="finishing !== null"
+        @click="onGoBack"
+      >
         {{ t(K.GO_BACK) }}
       </button>
     </template>
+    <p v-if="state.usageNotice" class="hint-row" role="alert">
+      {{ t(usageNoticeKey) }}
+      <button
+        v-if="state.usageNotice === 'reportFailed'"
+        class="text-link"
+        type="button"
+        :disabled="finishing !== null"
+        @click="collector.retryUsageReport()"
+      >
+        {{ t(I18N_KEYS.APP_ERROR.RETRY) }}
+      </button>
+    </p>
   </section>
 </template>
 
@@ -184,6 +213,17 @@ const listDetected = computed(() => state.value.listDetected)
 const foundCount = computed(() => state.value.foundCount)
 const freeLimitReached = computed(() => state.value.freeLimitReached)
 const stoppedManually = computed(() => state.value.stoppedManually)
+const finishing = computed(() => state.value.finishing)
+const usageNoticeKey = computed(() => {
+  switch (state.value.usageNotice) {
+    case 'exhausted':
+      return K.MONTHLY_EXHAUSTED
+    case 'reportFailed':
+      return K.USAGE_REPORT_FAILED
+    default:
+      return K.USAGE_UNAVAILABLE
+  }
+})
 
 // —— 门控态绑定（账号/订阅快照，background 判定 + 采集轮增量刷新） ——
 const gate = ref<BingGateState>(getGateState())
@@ -302,12 +342,19 @@ function onStop(): void {
 }
 
 function onGoBack(): void {
+  if (finishing.value !== null) {
+    return
+  }
   recordContentAction('go_back')
   menuOpen.value = false
   props.collector.reset()
 }
 
 function toggleMenu(): void {
+  // 下拉只能在放行后打开，导出项无需再守卫
+  if (finishing.value !== null) {
+    return
+  }
   menuOpen.value = !menuOpen.value
 }
 
@@ -481,7 +528,7 @@ function onOpenPricingPage(): void {
   color: var(--gme-text);
 }
 
-.button-ghost:hover {
+.button-ghost:hover:not(:disabled) {
   background: var(--gme-surface-2);
 }
 
@@ -563,6 +610,17 @@ function onOpenPricingPage(): void {
 }
 
 .done-count {
+  color: var(--gme-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.finishing-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.finishing-count {
   color: var(--gme-text-2);
   font-variant-numeric: tabular-nums;
 }

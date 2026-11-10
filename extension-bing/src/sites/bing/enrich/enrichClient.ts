@@ -111,6 +111,8 @@ function applyResultToRows(
 export interface EnrichRunOptions {
   /** 批大小（默认 50；测试注入小值验证分批）。 */
   batchSize?: number
+  /** 目标确定后及每批结束（含失败）时回报已结束目标数与总数，驱动面板补全进度。 */
+  onProgress?: (done: number, total: number) => void
 }
 
 /**
@@ -141,6 +143,7 @@ export async function enrichRows(
     partial: false,
     ok: true
   }
+  options.onProgress?.(0, targets.length)
 
   const channel = new BackgroundChannel()
   try {
@@ -160,6 +163,7 @@ export async function enrichRows(
         summary.ok = false
         logger.error('[BingEnrich] 批次补全失败（该批按空结果跳过，继续剩余批次）:', error)
       }
+      options.onProgress?.(start + batch.length, targets.length)
     }
   } finally {
     channel.destroy()

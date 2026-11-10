@@ -13,11 +13,11 @@
  *   零增长自动完成。
  * - 停止：手动 Stop → completed（stoppedManually）；行数上限经
  *   BingStopPolicy 读取点每轮现读判定（U4 门控：免费档 freeRowLimit
- *   截断，Pro 订阅态有效 = null 无上限，见 ./gate）。
+ *   截断，Pro 无单次上限；两者均受共享月余额限制。
+ * - 收尾：完成态的补全中子状态（013 同源交互）。进入完成即锁定 Export / Go Back，
+ *   门控确认后 Pro 补全写回、免费/匿名跳过，结束或失败都放行。
  */
 
-import { BackgroundChannel } from '@/content/rpc/background.rpc'
-import { parsePluginVersionCheck, type PluginVersionCheck } from '@/core/api/plugin-version/types'
 import { logger } from '@/core/utils/logger'
 import { MARK_TYPE } from '@/core/api/mark/types'
 import { getBingConfig } from '@/sites/bing/config/loader'
@@ -25,9 +25,22 @@ import type { BingAdapterConfig } from '@/sites/bing/config/contract'
 import { detectAdapter, resolveElement, resolveItems } from './detector'
 import { parseBingRow, type BingExportRow } from './parser'
 import { recordContentMark } from './marks'
+import { getGateState, refreshGateState } from './gate'
+import { enrichRows } from '../enrich/enrichClient'
+import { BackgroundChannel } from '@/content/rpc/background.rpc'
+import type { BingUsageReport } from '../usage/types'
+import { parsePluginVersionCheck, type PluginVersionCheck } from '@/core/api/plugin-version/types'
 
 /** 面板主状态（三态）。 */
 export type BingPanelPhase = 'idle' | 'collecting' | 'completed'
+
+/** 完成态收尾进度（单位：按 website 去重后的补全目标数）。 */
+export interface BingFinishingProgress {
+  /** 已结束（含失败）的目标数。 */
+  done: number
+  /** 目标总数；0 = 门控确认中或无补全目标，面板不显示批次进度。 */
+  total: number
+}
 
 /** 采集状态快照（面板渲染的唯一数据源）。 */
 export interface BingCollectState {
@@ -44,10 +57,16 @@ export interface BingCollectState {
   foundCount: number
   /** 是否因免费上限截断停止（完成态警告条依据）。 */
   freeLimitReached: boolean
+  usageNotice: 'exhausted' | 'unavailable' | 'reportFailed' | null
   /** 是否手动停止（完成态文案依据）。 */
   stoppedManually: boolean
   /** 主循环连续零增长轮数（采集中区域提示依据）。 */
   failureStreak: number
+  /**
+   * 完成态收尾进度；非 null 时 Export / Go Back 等待（补全中）。与 phase=completed
+   * 同一快照置位，面板不会渲染「已完成且可导出」的中间帧。
+   */
+  finishing: BingFinishingProgress | null
 }
 
 /** 停止条件读取点（实现见 ./gate 的 createBingStopPolicy；免费/Pro 门控经此注入）。 */
@@ -78,8 +97,10 @@ export class BingCollector {
     listDetected: false,
     foundCount: 0,
     freeLimitReached: false,
+    usageNotice: null,
     stoppedManually: false,
-    failureStreak: 0
+    failureStreak: 0,
+    finishing: null
   }
 
   /** 去重后的累计行（导出数据源）。 */
@@ -99,6 +120,9 @@ export class BingCollector {
    * 不再写状态（Stop 的即时生效机制）。
    */
   private generation = 0
+
+  private monthlyRemaining = 0
+  private usageReport: BingUsageReport | null = null
 
   /** 停止条件读取点。 */
   private readonly stopPolicy: BingStopPolicy
@@ -131,14 +155,20 @@ export class BingCollector {
     }
   }
 
-  /** 进入采集中：列表就绪等待 → search 打点 → 主循环。 */
+  /** 进入采集中：列表就绪等待 → 门控强刷 → search 打点 → 主循环。 */
   async start(): Promise<void> {
     if (this.state.phase !== 'idle' || this.state.checkingVersion) {
       return
     }
     const generation = ++this.generation
     if (!(await this.checkPluginVersion()) || generation !== this.generation) return
-    this.updateState({ phase: 'collecting', stoppedManually: false, freeLimitReached: false })
+    this.usageReport = null
+    this.updateState({
+      phase: 'collecting',
+      stoppedManually: false,
+      freeLimitReached: false,
+      usageNotice: null
+    })
 
     const ready = await this.waitListReady(generation)
     if (generation !== this.generation) {
@@ -149,6 +179,36 @@ export class BingCollector {
       logger.error('[BingCollector] 列表就绪等待超时，回到待命')
       this.updateState({ phase: 'idle', listDetected: false })
       return
+    }
+
+    await refreshGateState({ force: true })
+    if (generation !== this.generation) {
+      return
+    }
+
+    const channel = new BackgroundChannel()
+    try {
+      const usage = await channel.getBingUsage()
+      if (generation !== this.generation) return
+      this.monthlyRemaining = Math.max(0, usage.total - usage.used)
+      if (usage.exhausted || this.monthlyRemaining === 0) {
+        this.updateState({ phase: 'idle', usageNotice: 'exhausted' })
+        return
+      }
+      this.usageReport = {
+        identity: usage.identity,
+        requestId: crypto.randomUUID(),
+        records: 0,
+        createdAt: Date.now()
+      }
+    } catch (error) {
+      logger.error('[BingCollector] 开始前月用量查询/补报失败，拒绝本次采集:', error)
+      if (generation === this.generation) {
+        this.updateState({ phase: 'idle', usageNotice: 'unavailable' })
+      }
+      return
+    } finally {
+      channel.destroy()
     }
 
     const adapterName = detectAdapter(getBingConfig().adapters)?.name ?? 'unknown'
@@ -183,11 +243,15 @@ export class BingCollector {
       return
     }
     this.generation += 1
-    this.updateState({ phase: 'completed', stoppedManually: true, failureStreak: 0 })
+    this.complete({ stoppedManually: true, failureStreak: 0 })
   }
 
   /** 返回待命（Go Back）：清空本轮数据并恢复检测轮询。 */
   reset(): void {
+    // 补全写回期间不能换代：旧会话的放行会提前解锁新一轮
+    if (this.state.finishing !== null) {
+      return
+    }
     this.generation += 1
     this.rows = []
     this.seenIds.clear()
@@ -196,7 +260,8 @@ export class BingCollector {
       foundCount: 0,
       freeLimitReached: false,
       stoppedManually: false,
-      failureStreak: 0
+      failureStreak: 0,
+      usageNotice: null
     })
     this.detectTick()
   }
@@ -270,9 +335,11 @@ export class BingCollector {
         return
       }
       if (round.limitHit) {
-        this.updateState({
-          phase: 'completed',
-          freeLimitReached: true,
+        const singleLimit = this.stopPolicy.getRowLimit()
+        const monthlyLimitHit = this.rows.length >= this.monthlyRemaining
+        this.complete({
+          freeLimitReached: singleLimit !== null && this.rows.length >= singleLimit,
+          usageNotice: monthlyLimitHit ? 'exhausted' : null,
           failureStreak: 0
         })
         return
@@ -298,9 +365,74 @@ export class BingCollector {
     }
     if (generation === this.generation) {
       logger.error(`[BingCollector] 连续 ${failureStreak} 轮零增长，自动完成`)
-      this.updateState({ phase: 'completed' })
+      this.complete()
     }
     return true
+  }
+
+  /**
+   * 进入完成态并启动收尾（手动停止 / 行数上限 / 连续失败三个入口共用）。
+   *
+   * 收尾归状态机而不是外部订阅者：phase 与 finishing 必须同一快照广播，放行也必须
+   * 与置位同一所有者，否则订阅顺序变化会露出可导出的中间帧，订阅者缺席会永久禁用。
+   */
+  private complete(partial: Partial<BingCollectState> = {}): void {
+    if (this.state.phase !== 'collecting') return
+    if (this.usageReport) this.usageReport.records = this.rows.length
+    this.updateState({ ...partial, phase: 'completed', finishing: { done: 0, total: 0 } })
+    void this.finishSession()
+  }
+
+  /**
+   * 完成收尾（016 E6）：先刷新门控再判 Pro，免费/匿名跳过补全，行保持 ###PRO### 占位。
+   *
+   * 门控与批次失败已在各自边界收敛（保留快照 / 空列），RPC 均有超时上界，这里的 finally
+   * 是补全中的唯一放行点；Go Back 在此期间被锁定，收尾不会跨会话写状态。
+   */
+  private async finishSession(): Promise<void> {
+    try {
+      await this.reportUsage()
+      await refreshGateState()
+      if (getGateState().isPro) {
+        await enrichRows(this.rows, {
+          onProgress: (done, total) => this.updateState({ finishing: { done, total } })
+        })
+      }
+    } catch (error) {
+      logger.error(`[BingCollector] 完成收尾异常，按当前行放行: rows=${this.rows.length}`, error)
+    } finally {
+      this.updateState({ finishing: null })
+    }
+  }
+
+  /** 只重试同一份用量，不重新采集或补全。 */
+  async retryUsageReport(): Promise<void> {
+    if (this.state.finishing !== null || this.state.usageNotice !== 'reportFailed') return
+    this.updateState({ finishing: { done: 0, total: 0 } })
+    try {
+      await this.reportUsage()
+    } finally {
+      this.updateState({ finishing: null })
+    }
+  }
+
+  private async reportUsage(): Promise<void> {
+    if (!this.usageReport || this.usageReport.records === 0) return
+    const channel = new BackgroundChannel()
+    try {
+      await channel.reportBingUsage(this.usageReport)
+      this.updateState({
+        usageNotice: this.rows.length >= this.monthlyRemaining ? 'exhausted' : null
+      })
+    } catch (error) {
+      logger.error(
+        `[BingCollector] 月用量上报失败: requestId=${this.usageReport.requestId}, records=${this.usageReport.records}`,
+        error
+      )
+      this.updateState({ usageNotice: 'reportFailed' })
+    } finally {
+      channel.destroy()
+    }
   }
 
   /**
@@ -318,11 +450,11 @@ export class BingCollector {
 
     const staticDoc = new DOMParser().parseFromString(container.outerHTML, 'text/html')
     const items = resolveItems(staticDoc, adapter)
-    const rowLimit = this.stopPolicy.getRowLimit()
+    const rowLimit = Math.min(this.stopPolicy.getRowLimit() ?? Infinity, this.monthlyRemaining)
     let newRows = 0
 
     // 上轮已触及行数上限（含远程调小 freeRowLimit 的中途生效）：立即按截断完成
-    if (rowLimit !== null && this.rows.length >= rowLimit) {
+    if (this.rows.length >= rowLimit) {
       return { newRows: 0, limitHit: true }
     }
 
@@ -332,7 +464,7 @@ export class BingCollector {
         if (this.seenIds.has(row.id)) {
           continue
         }
-        if (rowLimit !== null && this.rows.length >= rowLimit) {
+        if (this.rows.length >= rowLimit) {
           break
         }
         this.seenIds.add(row.id)
@@ -347,7 +479,7 @@ export class BingCollector {
     if (newRows > 0) {
       this.updateState({ foundCount: this.rows.length })
     }
-    return { newRows, limitHit: rowLimit !== null && this.rows.length >= rowLimit }
+    return { newRows, limitHit: this.rows.length >= rowLimit }
   }
 
   /**

@@ -69,6 +69,9 @@ export const I18N_KEYS = {
 
   /** Bing Maps 采集面板（016 U3，sites/bing/content/panel） */
   BING_PANEL: {
+    MONTHLY_EXHAUSTED: 'bingPanel.monthlyExhausted',
+    USAGE_UNAVAILABLE: 'bingPanel.usageUnavailable',
+    USAGE_REPORT_FAILED: 'bingPanel.usageReportFailed',
     /** 面板标题 */
     TITLE: 'bingPanel.title',
     /** Start Extraction 主按钮 */
@@ -95,6 +98,12 @@ export const I18N_KEYS = {
     MANUALLY_STOPPED: 'bingPanel.manuallyStopped',
     /** 完成态采集计数（主流程「完成:显示计数」） */
     DONE_COUNT: 'bingPanel.doneCount',
+    /** 完成态收尾提示（门控确认中，尚未确定是否补全） */
+    FINISHING: 'bingPanel.finishing',
+    /** 完成态补全中标题 */
+    CONTACTS_TITLE: 'bingPanel.contactsTitle',
+    /** 完成态补全批次进度（done/total 为网站数） */
+    CONTACTS_PROGRESS: 'bingPanel.contactsProgress',
     /** 免费达限警告条说明 */
     FREE_LIMIT_NOTE: 'bingPanel.freeLimitNote',
     /** Upgrade to Pro Now 按钮 */

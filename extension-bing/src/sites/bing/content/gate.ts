@@ -3,17 +3,17 @@
  *
  * 职责：把 background 的账号/订阅判定（getGateState RPC，缓存口径在
  * background authStore）镜像为模块级快照，供两处同步消费：
- * - 采集停止策略（createBingStopPolicy）：Pro 无上限（null），免费取
+ * - 采集停止策略（createBingStopPolicy）：Pro 无单次上限（null），免费取
  *   scrape.freeRowLimit（可被远程稀疏覆盖）；
  * - 面板 UI（Pro 徽标 / 进度文案变体）。
  *
- * 即时生效机制（T1 §7 U4「下一轮循环读取」）：采集主循环每轮经
- * getRowLimit() 同步读快照，同时触发一次后台刷新（单飞去重）——快照
- * 最迟滞后一轮（轮距 ≤2s）反映登录/订阅切换。RPC 失败保留上次快照，
- * 初始匿名快照恒为免费档（宁严勿松，不闪断采集中会话）。
+ * Start 首轮前强刷，auth 三键变化时同步刷新；后续每轮 getRowLimit()
+ * 同步读快照并触发后台刷新。RPC 失败保留上次快照，初始快照为匿名免费。
  */
 
 import { logger } from '@/core/utils/logger'
+import { STORAGE_KEYS } from '@/core/api/config'
+import { storageManager } from '@/core/storage'
 import { BackgroundChannel } from '@/content/rpc/background.rpc'
 import { recordContentMark } from './marks'
 import { MARK_TYPE } from '@/core/api/mark/types'
@@ -57,20 +57,47 @@ export function subscribeGateState(listener: (state: BingGateState) => void): ()
 }
 
 /**
- * 经 background 刷新快照（单飞去重；失败保留当前快照）。
+ * 普通刷新单飞去重；force 等在途请求结束后重新查询，失败保留当前快照。
  */
-export function refreshGateState(): Promise<BingGateState> {
-  refreshPromise ??= doRefresh().finally(() => {
+export function refreshGateState(options: { force?: boolean } = {}): Promise<BingGateState> {
+  if (options.force && refreshPromise) {
+    return refreshPromise.then(() => refreshGateState(options))
+  }
+  refreshPromise ??= doRefresh(options).finally(() => {
     refreshPromise = null
   })
   return refreshPromise.then(() => gateState)
 }
 
+/** 同批认证变更合并刷新；同会话资料回写由当前 RPC 收敛，避免自触发循环。 */
+export function watchGateAuthStorage(): () => void {
+  let scheduled = false
+  const unwatch = [
+    STORAGE_KEYS.ACCESS_TOKEN,
+    STORAGE_KEYS.REFRESH_TOKEN,
+    STORAGE_KEYS.USER_INFO
+  ].map(key =>
+    storageManager.onChanged(key, () => {
+      if (scheduled || (key === STORAGE_KEYS.USER_INFO && refreshPromise)) {
+        return
+      }
+      scheduled = true
+      queueMicrotask(() => {
+        scheduled = false
+        void refreshGateState({ force: true })
+      })
+    })
+  )
+  return () => {
+    for (const stop of unwatch) stop()
+  }
+}
+
 /** 执行一次刷新：RPC 成功覆盖快照并广播，失败仅记日志（匿名/上次快照兜底）。 */
-async function doRefresh(): Promise<void> {
+async function doRefresh(options: { force?: boolean }): Promise<void> {
   const channel = new BackgroundChannel()
   try {
-    const next = await channel.getGateState()
+    const next = await channel.getGateState(options)
     const previous = gateState
     gateState = next
     for (const listener of listeners) {
@@ -94,9 +121,9 @@ async function doRefresh(): Promise<void> {
 /**
  * 门控停止条件（016 §5 U4 读取点实现）：
  *
- * Pro（订阅态有效）返回 null = 无上限；免费/匿名返回 scrape.freeRowLimit。
+ * Pro（订阅态有效）返回 null = 无单次上限；免费/匿名返回 scrape.freeRowLimit。
  * 每次读取同步返回当前快照并触发后台刷新——登录/订阅切换在下一轮采集
- * 循环生效；导出末行提示复用同一读取点（hasRowLimit），口径同源。
+ * 循环生效；collector 另取共享月余额的最小值。导出免费提示只消费单次权益。
  */
 export function createBingStopPolicy(): BingStopPolicy {
   return {

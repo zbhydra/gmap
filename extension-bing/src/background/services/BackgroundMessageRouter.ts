@@ -26,10 +26,16 @@ import { MARK_TYPE, type MarkType } from '@/core/api/mark/types'
 import { fetchBingRemoteConfig } from '@/sites/bing/config/remoteFetch'
 import { enrichBusinesses } from '@/sites/bing/enrich/enrichApi'
 import type { EnrichBusinessInput } from '@/sites/bing/enrich/types'
-import { getBackgroundAuthStore, ensureAuthStoreHydrated } from './backgroundStores'
+import {
+  getBackgroundAuthStore,
+  ensureAuthStoreHydrated,
+  syncBackgroundAuthState
+} from './backgroundStores'
 import { handleOpenExtensionLogin } from './openExtensionLogin'
 import type { BackgroundGetGateStateResponse } from '../types'
 import { getRuntimeConfig } from '../runtimeConfig'
+import { getBingUsageSession, completeBingUsageSession } from '@/sites/bing/usage/usageService'
+import type { BingUsageReport } from '@/sites/bing/usage/types'
 
 const MARK_TYPE_VALUES: readonly string[] = Object.values(MARK_TYPE)
 
@@ -51,7 +57,9 @@ export class BackgroundMessageRouter {
       getState: () => this.getState(),
       getRuntimeConfig: () => getRuntimeConfig(),
       getBingConfig: () => fetchBingRemoteConfig(),
-      getGateState: () => this.getGateState(),
+      getGateState: params => this.getGateState(parseGateForce(params)),
+      getBingUsage: () => getBingUsageSession(),
+      reportBingUsage: params => completeBingUsageSession(parseUsageReport(params)),
       getAuthState: () => authApi.getAuthState(),
       logout: () => authApi.logout(),
       openExtensionLogin: (params, context) => handleOpenExtensionLogin(params, context),
@@ -84,15 +92,16 @@ export class BackgroundMessageRouter {
    * 由 store 内 TTL 决定）；未登录直接匿名免费，不发订阅请求。SW 冷启动
    * 先从持久化恢复账号态，避免内存态丢失误判为匿名。
    */
-  private async getGateState(): Promise<BackgroundGetGateStateResponse> {
+  private async getGateState(force: boolean): Promise<BackgroundGetGateStateResponse> {
     await ensureAuthStoreHydrated()
     const store = getBackgroundAuthStore()
     if (!store.isAuthenticated) {
       return { authenticated: false, isPro: false }
     }
-    await store.refreshSubscription()
+    await store.refreshSubscription({ force })
+    await syncBackgroundAuthState()
     return {
-      authenticated: true,
+      authenticated: store.isAuthenticated,
       isPro: store.isPro
     }
   }
@@ -136,6 +145,16 @@ export class BackgroundMessageRouter {
     this.rpcRegistration = null
     logger.info('[BackgroundMessageRouter] 消息监听器已移除')
   }
+}
+
+function parseGateForce(params: JsonValue | undefined): boolean {
+  if (params === undefined) {
+    return false
+  }
+  if (!isJsonObject(params) || (params.force !== undefined && typeof params.force !== 'boolean')) {
+    throw new Error('[BackgroundMessageRouter] getGateState 的 force 必须是布尔值')
+  }
+  return params.force === true
 }
 
 /**
@@ -196,4 +215,32 @@ function requireEnrichString(source: JsonObject, field: string): string {
     throw new Error(`[BackgroundMessageRouter] enrichBusinesses 商家项 ${field} 必须是字符串`)
   }
   return value
+}
+
+function parseUsageReport(params: JsonValue | undefined): BingUsageReport {
+  if (
+    !isJsonObject(params) ||
+    typeof params.records !== 'number' ||
+    !Number.isSafeInteger(params.records) ||
+    params.records <= 0 ||
+    params.records > 1_000_000 ||
+    typeof params.requestId !== 'string' ||
+    !/^[A-Za-z0-9_-]{8,64}$/.test(params.requestId) ||
+    typeof params.identity !== 'string' ||
+    !/^(user|device):.+$/.test(params.identity) ||
+    typeof params.createdAt !== 'number' ||
+    !Number.isSafeInteger(params.createdAt) ||
+    params.createdAt < 0 ||
+    params.createdAt > Date.now()
+  ) {
+    throw new Error(
+      '[BackgroundMessageRouter] reportBingUsage 请求缺少合法 records/requestId/identity/createdAt'
+    )
+  }
+  return {
+    records: params.records,
+    requestId: params.requestId,
+    identity: params.identity,
+    createdAt: params.createdAt
+  }
 }

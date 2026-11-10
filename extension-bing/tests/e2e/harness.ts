@@ -97,6 +97,7 @@ const IDENTITY_INIT_SCRIPT = `
  */
 export interface BingE2eAuth {
   access_token: string
+  expired_access_token: string
   refresh_token: string
   user: {
     user_id: number
@@ -276,4 +277,30 @@ export async function describeLandingHost(page: Page): Promise<string> {
   } catch {
     return ''
   }
+}
+
+/** 真实共享账本验收：使用扩展同一身份，不替换生产查询或上报链路。 */
+async function usageHeaders(worker: Worker, anonymous = false): Promise<Record<string, string>> {
+  const stored = await worker.evaluate(() => chrome.storage.local.get(['counter_device_id', 'auth_access_token']))
+  const headers: Record<string, string> = { 'X-Device-Id': String(stored.counter_device_id) }
+  if (!anonymous && typeof stored.auth_access_token === 'string') headers.Authorization = `Bearer ${stored.auth_access_token}`
+  return headers
+}
+
+export async function readMonthlyUsage(context: BrowserContext, worker: Worker, anonymous = false) {
+  const response = await context.request.get('http://127.0.0.1:7600/api/client/maps/usage', {
+    headers: await usageHeaders(worker, anonymous)
+  })
+  const body = await response.json() as { code: number; data: { used: number; total: number; exhausted: boolean } }
+  if (!response.ok() || body.code !== 10000) throw new Error(`共享用量查询失败: status=${response.status()}, code=${body.code}`)
+  return body.data
+}
+
+export async function reportMonthlyUsage(context: BrowserContext, worker: Worker, records: number, requestId: string) {
+  const response = await context.request.post('http://127.0.0.1:7600/api/client/maps/usage/report', {
+    headers: await usageHeaders(worker), data: { records, request_id: requestId }
+  })
+  const body = await response.json() as { code: number; data: { deducted: boolean } }
+  if (!response.ok() || body.code !== 10000) throw new Error(`共享用量上报失败: status=${response.status()}, code=${body.code}`)
+  return body.data
 }

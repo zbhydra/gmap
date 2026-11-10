@@ -81,8 +81,15 @@ export default async function globalSetup(): Promise<void> {
 
   try {
     const seed = runSeed()
+    const expiredAccessToken = execFileSync(BACKEND_PYTHON, ['-c', [
+      'import sys',
+      'from datetime import timedelta',
+      'from app.utils.jwt import JwtData, JwtUnit',
+      'print(JwtUnit.create_access_token(JwtData(int(sys.argv[1]), None), timedelta(seconds=-1))[0])'
+    ].join('\n'), String(seed.user_id)], { cwd: BACKEND_DIR, encoding: 'utf-8' }).trim()
     process.env.E2E_BING_AUTH = JSON.stringify({
       access_token: seed.token,
+      expired_access_token: expiredAccessToken,
       refresh_token: seed.refresh_token,
       user: seed.user
     })

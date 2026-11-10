@@ -13,6 +13,8 @@ export type HttpMethod = 'GET' | 'POST'
 /** 请求配置选项 */
 export interface RequestOptions {
   cache?: RequestCache
+  /** 请求开始前固定身份；首次注入及重试沿用已有会话校验。 */
+  expectedAuthTokens?: AuthTokens
   /** URL 参数 */
   params?: Record<string, string | number>
   /** 请求体 */

@@ -100,7 +100,8 @@ export class HttpClient {
       url: this.buildUrl(endpoint, options.params),
       method,
       options,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      _authTokens: options.expectedAuthTokens
     }
 
     // 执行请求（带重试）

@@ -9,14 +9,14 @@
  * 的真实验证链。
  *
  * 断言链:PRO 徽标(真实订阅判定生效)→ Start → Pro 进度文案 → 采集无
- * 20 条截断(计数 > 20)→ 中途手动 Stop → E6 补全(Emails/社媒 5 列脱离
- * ###PRO### 占位,本地真实 backend /maps/enrich 回填)→ 部分数据导出
- * (末行为数据行,无免费提示)。真实免费档首轮解析即达限,手动 Stop 只在
- * Pro 长窗口内可测。
+ * 20 条截断(计数 > 20)→ 中途手动 Stop → 补全中首帧锁定 Export/Go Back
+ * 并显示进度(本地真实 backend /maps/enrich 回填)→ 放行 → 部分数据导出
+ * (Emails/社媒 5 列脱离 ###PRO### 占位,末行为数据行,无免费提示)。真实免费档
+ * 首轮解析即达限,手动 Stop 只在 Pro 长窗口内可测。
  */
 
 import { readFileSync } from 'node:fs'
-import { expect, test, type Response } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
 import {
   EXPECTED_HEADERS,
   FREE_LIMIT_NOTE,
@@ -30,6 +30,8 @@ import {
   panel,
   parseCsvLine,
   readDownload,
+  readMonthlyUsage,
+  reportMonthlyUsage,
   skipSmoke,
   startButton,
   waitForExtensionServiceWorker,
@@ -45,6 +47,61 @@ const PRO_PLACEHOLDER = '###PRO###'
 
 /** 云端挖掘列在 18 列表头中的下标(Emails / Social Medias / FB / IG / Twitter)。 */
 const ENRICH_COLUMN_INDEXES = [13, 14, 15, 16, 17]
+
+/** Website 列在 18 列表头中的下标。 */
+const WEBSITE_COLUMN_INDEX = 11
+
+/** Stop 到放行之间的面板轨迹。 */
+interface FinishingTrace {
+  /** 完成态首帧 Export 是否已禁用。 */
+  exportDisabledOnFirstFrame: boolean
+  /** 完成态首帧 Go Back 是否已禁用。 */
+  goBackDisabledOnFirstFrame: boolean
+  /** 补全中状态行依次出现过的文本。 */
+  statusTexts: string[]
+}
+
+/**
+ * 在 Stop 前挂页内观察器,放行时返回轨迹。真实后端有共享缓存,补全窗口可能被压到
+ * 毫秒级,locator 轮询会错过首帧;这里要证明的正是「第一帧就已锁定」。
+ */
+function traceFinishing(panelRoot: Locator): Promise<FinishingTrace> {
+  return panelRoot.evaluate(
+    root =>
+      new Promise<FinishingTrace>(resolve => {
+        const buttonByLabel = (label: string): HTMLButtonElement | undefined =>
+          [...root.querySelectorAll('button')].find(item => item.textContent?.includes(label))
+        const statusTexts: string[] = []
+        let firstFrame: { exportDisabled: boolean; goBackDisabled: boolean } | null = null
+        const observer = new MutationObserver(() => {
+          const exportButton = buttonByLabel('Export Leads List')
+          const goBackButton = buttonByLabel('Go Back')
+          if (!exportButton || !goBackButton) {
+            return
+          }
+          firstFrame ??= {
+            exportDisabled: exportButton.disabled,
+            goBackDisabled: goBackButton.disabled
+          }
+          const status = root.querySelector('[role="status"]')
+          if (status === null) {
+            observer.disconnect()
+            resolve({
+              exportDisabledOnFirstFrame: firstFrame.exportDisabled,
+              goBackDisabledOnFirstFrame: firstFrame.goBackDisabled,
+              statusTexts
+            })
+            return
+          }
+          const text = status.textContent ?? ''
+          if (statusTexts.at(-1) !== text) {
+            statusTexts.push(text)
+          }
+        })
+        observer.observe(root, { childList: true, subtree: true, characterData: true })
+      })
+  )
+}
 
 test.describe('真实 Bing 登录态采集(Pro,token 直注)', () => {
   test('token 注入 → PRO 徽标 → 采集无 20 截断 → 手动 Stop → 部分导出', async () => {
@@ -94,25 +151,29 @@ test.describe('真实 Bing 登录态采集(Pro,token 直注)', () => {
       const start = startButton(page)
       await expect(start).toBeEnabled({ timeout: 60_000 })
 
-      // E6 补全信号(先于 Stop 注册,防错过):completed 边沿的 enrichRows 先同步
-      // 清占位再发批次请求,故任一 /maps/enrich 请求到达即证明 5 列已脱离占位。
-      // 行全无 website 时不发请求,超时兜底后照常导出(清占位仍已完成)。
-      const enrichSettled = context
-        .waitForEvent('response', {
-          predicate: (response: Response) =>
-            response.url().includes('/api/client/maps/enrich'),
-          timeout: 45_000
-        })
-        .catch(() => null)
-
+      const usageBefore = await readMonthlyUsage(context, serviceWorker)
+      const anonymousBefore = await readMonthlyUsage(context, serviceWorker, true)
       await start.click()
 
-      // Pro 进度文案变体(feat.md 采集中态);翻页持续,窗口充足
-      await expect(
-        panelRoot.getByText(/Have found \d+ businesses and still going\.\.\./)
-      ).toBeVisible({ timeout: 30_000 })
+      // Pro 进度文案变体(feat.md 采集中态);首屏条数随落地形态变化,越过免费上限后再
+      // Stop,否则「无 20 条截断」无从证明
+      const progress = panelRoot.getByText(/Have found \d+ businesses and still going\.\.\./)
+      await expect(progress).toBeVisible({ timeout: 30_000 })
+      await expect
+        .poll(async () => Number((await progress.innerText()).match(/\d+/)?.[0] ?? 0), {
+          timeout: 60_000
+        })
+        .toBeGreaterThan(FREE_ROW_LIMIT)
 
-      // 中途手动 Stop:Pro 无上限,采集处于滚动翻页长窗口内
+      // 用真实签名的过期 token 模拟采集中到期，必须在扣量前 401 并刷新。
+      await serviceWorker.evaluate(token => chrome.storage.local.set({ auth_access_token: token }), auth.expired_access_token)
+      const rejectedReport = context.waitForEvent('response', { predicate: response =>
+        new URL(response.url()).pathname === '/api/client/maps/usage/report' && response.status() === 401
+      })
+      const reportedRequest = context.waitForEvent('request', { predicate: request =>
+        new URL(request.url()).pathname === '/api/client/maps/usage/report' && request.method() === 'POST'
+      })
+      const finishingTrace = traceFinishing(panelRoot)
       await panelRoot.getByRole('button', { name: 'Stop', exact: true }).click()
       await expect(panelRoot.getByText('Manually stopped.')).toBeVisible({ timeout: 30_000 })
 
@@ -122,12 +183,27 @@ test.describe('真实 Bing 登录态采集(Pro,token 直注)', () => {
       expect(found, `采集计数应超免费上限 20,实际 ${found}`).toBeGreaterThan(FREE_ROW_LIMIT)
       await expect(panelRoot.getByText(FREE_LIMIT_NOTE)).toHaveCount(0)
 
-      // E6:等补全信号(响应到达后写回在 SW 内同步执行,1s 跨进程时序缓冲)
-      await enrichSettled
-      await page.waitForTimeout(1_000)
+      // 补全中:完成边沿首帧即锁定;放行由面板状态决定,不再猜测响应到达后的时序
+      const trace = await finishingTrace
+      expect(trace.exportDisabledOnFirstFrame, '完成态首帧 Export 应禁用').toBe(true)
+      expect(trace.goBackDisabledOnFirstFrame, '完成态首帧 Go Back 应禁用').toBe(true)
+      expect(trace.statusTexts[0]).toContain('Finishing up…')
+      const exportButton = panelRoot.getByRole('button', { name: 'Export Leads List' })
+      await expect(exportButton).toBeEnabled()
+      await expect(panelRoot.getByRole('button', { name: 'Go Back', exact: true })).toBeEnabled()
+      await expect(panelRoot.getByRole('status')).toHaveCount(0)
+      expect((await rejectedReport).status()).toBe(401)
+      expect((await readMonthlyUsage(context, serviceWorker)).used).toBe(usageBefore.used + found)
+      expect((await readMonthlyUsage(context, serviceWorker, true)).used).toBe(anonymousBefore.used)
+      expect(await serviceWorker.evaluate(() => chrome.storage.local.get('bing_usage_pending'))).toEqual({ bing_usage_pending: [] })
+      expect(new URL((await reportedRequest).url()).searchParams.get('expected_user_id')).toBe(String(auth.user.user_id))
+      const report = (await reportedRequest).postDataJSON() as { records: number; request_id: string }
+      expect(report.records).toBe(found)
+      expect((await reportMonthlyUsage(context, serviceWorker, found, report.request_id)).deducted).toBe(false)
+      expect((await readMonthlyUsage(context, serviceWorker)).used).toBe(usageBefore.used + found)
 
       // 部分导出:1+N 行,末行为数据行而非免费提示
-      await panelRoot.getByRole('button', { name: 'Export Leads List' }).click()
+      await exportButton.click()
       const download = await readDownload(page, () =>
         panelRoot.getByRole('menuitem', { name: 'Download data to csv' }).click()
       )
@@ -140,13 +216,20 @@ test.describe('真实 Bing 登录态采集(Pro,token 直注)', () => {
       expect(lines[lines.length - 1]).not.toBe(FREE_LIMIT_NOTE)
 
       // E6 断言:Pro 行云端挖掘 5 列脱离 ###PRO### 占位(有数据回填/无数据留空)
-      for (const line of lines.slice(1)) {
-        const columns = parseCsvLine(line)
+      const rows = lines.slice(1).map(parseCsvLine)
+      for (const columns of rows) {
         for (const index of ENRICH_COLUMN_INDEXES) {
-          expect(columns[index], `Pro 导出行第 ${index + 1} 列应脱离占位: ${line}`).not.toBe(
+          expect(columns[index], `Pro 导出行第 ${index + 1} 列应脱离占位: ${columns}`).not.toBe(
             PRO_PLACEHOLDER
           )
         }
+      }
+
+      // 真实结果有官网时才有补全目标,此时补全中必须显示过批次进度
+      if (rows.some(columns => columns[WEBSITE_COLUMN_INDEX].length > 0)) {
+        expect(trace.statusTexts.join('\n')).toMatch(
+          /Adding emails & social links.*\d+ of \d+ websites checked/
+        )
       }
     } finally {
       await context.close()

@@ -81,13 +81,17 @@ total 链：`(await get_user_subscription_config(user_id, line))[1].metadata.mon
 
 公共形态：`UsageSnapshot` / `UsageConsumeResult`（NamedTuple）、`usage_identity(user_id, device_id)`（`u:{id}` / `d:{id}`）、`usage_payload(snapshot)`（竞品同构 used/total/period/exhausted）。
 
-失败语义（spec-redis §7，正确性优先 fail-closed）：Redis / MySQL 故障三原语统一抛 `EXTENSION_USAGE_UNAVAILABLE`（31102），错误消息带 product_kind 与上下文字段；配置合同破裂（行缺失 / monthly_quota 空）抛 `PAYMENT_GATEWAY_ERROR`。插件侧对 usage 失败自行 fail-open（采集可用性优先），两侧互补。
+失败语义（spec-redis §7，正确性优先 fail-closed）：Redis / MySQL 故障三原语统一抛 `EXTENSION_USAGE_UNAVAILABLE`（31102），错误消息带 product_kind 与上下文字段；配置合同破裂（行缺失 / monthly_quota 空）抛 `PAYMENT_GATEWAY_ERROR`。Maps 插件侧 fail-open（采集可用性优先）；Bing 查询或补报失败时拒绝开始，见 [Bing 计量合同](../016.Bing插件/references/T1-技术设计.md#共享月-records-计量)。
 
 跨模块事务使用 `consume_in_session(db, *, user_id, records, request_id)`：沿原流水构造与产品线、业务月份写入，不自行 commit，也不查询套餐或用量快照。持有 session 的调用方统一提交并负责异常收口；Online 接线见 §5。
 
 ### 4.1 接口边界与不可变合同
 
 用量流水遵守「只插入 + 唯一键幂等」合同：一条 UPDATE 即可篡改历史用量，一条 DELETE 即可凭空恢复额度。因此只按真实调用需求提供插入（consume、refund 与 consume_in_session 内部）与聚合读（get_usage/SUM），不提供任意更新或删除接口。
+
+### 4.2 插件 HTTP 身份约束
+
+`GET /api/client/maps/usage` 与 `POST /api/client/maps/usage/report` 接受可选查询参数 `expected_user_id`（非负整数，0 表示匿名）。传入时，`maps_client._get_usage_user` 在查询或扣量前核对 `get_current_user_optional` 解析的 user_id；不一致返回 HTTP 401 / `AUTH_INVALID_TOKEN`，不产生计量副作用。未传时保留既有可选认证与匿名降级行为。参数只约束身份，不改变响应字段、额度、账期或存储幂等规则。
 
 ## 5. Online 完成后计量（014 落地约定）
 
@@ -146,7 +150,7 @@ backend/tests/integration/real/api/client/test_maps_usage_real.py
 
 ## 11. 失败语义
 
-- Redis 故障：三原语抛 `EXTENSION_USAGE_UNAVAILABLE`（fail-closed），插件侧 fail-open 降级放行（013 既有口径）。
+- Redis 故障：三原语抛 `EXTENSION_USAGE_UNAVAILABLE`（fail-closed），客户端失败策略见 §4。
 - MySQL 故障：自提交的三原语同上 fail-closed，唯一键保持消费幂等；Online 同事务发布按 §5 收口。
 - 配置合同破裂（商品行缺失 / monthly_quota 空）：`PAYMENT_GATEWAY_ERROR`，不静默兜底。
 - 插件上报 consume 失败时由插件按既有可用性口径处理。

@@ -31,8 +31,8 @@ export const API = {
     AUTH_LOGOUT: '/api/client/auth/logout',
 
     // ========== 配额 ==========
-    /** 检查并消耗配额 */
-    QUOTA_CHECK: '/api/client/quota/check',
+    MAPS_USAGE: '/api/client/maps/usage',
+    MAPS_USAGE_REPORT: '/api/client/maps/usage/report',
 
     // ========== Bing Config ==========
     /** 获取 Bing 远程配置（adapters/parse/scrape/export/panel 五组稀疏覆盖） */
@@ -115,5 +115,7 @@ export const STORAGE_KEYS = {
   /** 扩展通用设置 */
   SETTINGS: 'settings',
   /** Bing 远程配置缓存（时间戳 + 稀疏覆盖载荷） */
-  BING_REMOTE_CONFIG: 'bing_remote_config'
+  BING_REMOTE_CONFIG: 'bing_remote_config',
+  /** 持久化失败上报，刷新后以原幂等键补报。 */
+  BING_USAGE_PENDING: 'bing_usage_pending'
 } as const

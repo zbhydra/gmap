@@ -15,7 +15,7 @@ pnpm test:e2e        # = 构建前置 pnpm build:real + playwright test --projec
 - `e2e/`:真实界面层(2026-09-02 hydra 拍板,零 mock——原离线 fixture 页与全部 route mock / 登录 mock 已删除)。
   - `harness.ts`:stealth 启动(去 `--enable-automation` + `--disable-blink-features=AutomationControlled` + 身份兜底 init script)、token 直注(经 SW 写 chrome.storage auth 三键)、人机验证探测与条件降级共用件。
   - `real-bing.spec.ts`:匿名免费全链路(真实采集 → 20 条截断 → 完成态 → CSV 导出 18 列 + 末行提示)。
-  - `real-bing-signed-in.spec.ts`:Pro 登录态(token 注入 → PRO 徽标 → 采集无 20 截断 → 手动 Stop → 部分导出);依赖本地 backend,不可达时条件 skip。
+  - `real-bing-signed-in.spec.ts`:Pro 登录态(token 注入 → PRO 徽标 → 采集无 20 截断 → 手动 Stop → 补全中首帧锁定 Export/Go Back 并显示进度 → 放行 → 部分导出);依赖本地 backend,不可达时条件 skip。
   - `manifest.spec.ts`:dist-real 产物 manifest 形态核验(离线)。
   - `global-setup.ts`:校验 dist-real 产物 + 探测本地 backend(127.0.0.1:7600)可达时 spawn `backend/scripts/e2e_seed_user.py --scenario bing-extension-pro` 签发真实 token 对(`E2E_BACKEND_PYTHON` 可覆盖 python 路径)。
 - `mocks/chrome-api.ts`:chrome.* 全局 mock(单元测试用)。

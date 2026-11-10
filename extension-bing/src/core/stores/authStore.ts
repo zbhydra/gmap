@@ -37,8 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   /** 订阅状态（登录态下经 subscriptionApi 查询；null = 未查询/无缓存） */
   const subscription = ref<SubscriptionStatus | null>(null)
-  /** 初始化中标志（防止并发调用） */
-  let isInitializing = false
+  let initializationPromise: Promise<void> | null = null
 
   /** 订阅缓存拉取时间戳（0 = 无缓存）。 */
   let subscriptionFetchedAt = 0
@@ -88,31 +87,27 @@ export const useAuthStore = defineStore('auth', () => {
    * 初始化 Store
    * 从本地存储恢复认证状态
    */
-  async function initialize(): Promise<void> {
-    // 防止并发调用
-    if (isInitializing) {
-      logger.debug('[AuthStore] Already initializing, skipping')
-      return
-    }
+  function initialize(): Promise<void> {
+    initializationPromise ??= (async () => {
+      try {
+        logger.info('[AuthStore] Initializing')
 
-    try {
-      isInitializing = true
-      logger.info('[AuthStore] Initializing')
-
-      const currentUser = await authApi.getAuthState()
-      const currentToken = await authApi.getAccessToken()
-      if (currentUser && currentToken) {
-        user.value = currentUser
-        token.value = currentToken
-      } else {
+        const currentUser = await authApi.getAuthState()
+        const currentToken = await authApi.getAccessToken()
+        if (currentUser && currentToken) {
+          user.value = currentUser
+          token.value = currentToken
+        } else {
+          clearAuth()
+        }
+      } catch (err) {
+        logger.error('[AuthStore] Initialization failed:', err)
         clearAuth()
       }
-    } catch (err) {
-      logger.error('[AuthStore] Initialization failed:', err)
-      clearAuth()
-    } finally {
-      isInitializing = false
-    }
+    })().finally(() => {
+      initializationPromise = null
+    })
+    return initializationPromise
   }
 
   /**
@@ -163,7 +158,7 @@ export const useAuthStore = defineStore('auth', () => {
    * 查询订阅状态（缓存 TTL 内直读缓存；登录态下才查询）。
    *
    * 查询失败回退上一次缓存（可能过期）：门控判定宁可慢半拍不闪断，
-   * 完全无缓存时返回 null（调用方按免费计权）。
+   * 无缓存时抛出查询错误，让 content 保留自己的门控快照。
    *
    * @param options.force true = 跳过 TTL 强制重拉（登录事件等场景）
    */
@@ -172,6 +167,12 @@ export const useAuthStore = defineStore('auth', () => {
   ): Promise<SubscriptionStatus | null> {
     if (!isAuthenticated.value) {
       return null
+    }
+
+    // 强刷必须另发请求；串行等待避免旧响应在强刷后覆盖新订阅。
+    if (options.force && subscriptionPromise) {
+      await subscriptionPromise.catch(() => undefined)
+      return refreshSubscription(options)
     }
 
     const cached = subscription.value
@@ -189,6 +190,9 @@ export const useAuthStore = defineStore('auth', () => {
         return status
       })
       .catch(err => {
+        if (subscription.value === null) {
+          throw err
+        }
         logger.error('[AuthStore] 订阅状态查询失败，回退缓存:', err)
         return subscription.value
       })

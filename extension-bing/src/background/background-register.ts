@@ -19,6 +19,7 @@ import type {
   BackgroundRecordMarkResponse
 } from './types'
 
+import type { BingUsageSession, BingUsageReport } from '@/sites/bing/usage/types'
 import type { JsonValue } from '@/core/rpc/types'
 
 /** background provider channel。 */
@@ -53,8 +54,17 @@ export const Handler = {
   },
 
   /** 查询免费/Pro 门控态（账号 + 订阅，016 §5；background 缓存口径）。 */
-  getGateState(): Promise<BackgroundGetGateStateResponse> {
+  getGateState(_params: { force?: boolean }): Promise<BackgroundGetGateStateResponse> {
     return declarationOnly('background.getGateState')
+  },
+
+  /** 开始前补报待结算记录并查询共享月额度。 */
+  getBingUsage(): Promise<BingUsageSession> {
+    return declarationOnly('background.getBingUsage')
+  },
+
+  reportBingUsage(_params: BingUsageReport): Promise<void> {
+    return declarationOnly('background.reportBingUsage')
   },
 
   /** 校验当前插件会话并返回展示资料。 */
@@ -104,6 +114,8 @@ export const METHOD_TARGETS = {
   getBingConfig: ['content'],
   /** getGateState 允许 content script 调用（面板与采集停止策略读取账号/订阅态）。 */
   getGateState: ['content'],
+  getBingUsage: ['content'],
+  reportBingUsage: ['content'],
   getAuthState: ['popup'],
   logout: ['popup'],
   /** openExtensionLogin 允许 popup / content 调用（两处登录入口，同一 background RPC）。 */
@@ -113,6 +125,13 @@ export const METHOD_TARGETS = {
   /** enrichBusinesses 仅允许 content 调用（采集行在 content 侧，E6 二期）。 */
   enrichBusinesses: ['content']
 } as const satisfies Record<keyof BackgroundHandler, readonly ('content' | 'popup')[]>
+
+/** 补全 RPC 为 HTTP 响应往返及短暂重试预留余量，单位毫秒。 */
+export const METHOD_TIMEOUTS = {
+  enrichBusinesses: 35_000,
+  getBingUsage: 60_000,
+  reportBingUsage: 60_000
+} as const satisfies Partial<Record<keyof BackgroundHandler, number>>
 
 /** background 方法请求体限制，单位字节。 */
 export const METHOD_REQUEST_LIMITS = {
@@ -125,8 +144,10 @@ export const METHOD_REQUEST_LIMITS = {
   getRuntimeConfig: 1024,
   /** getBingConfig 无业务参数。 */
   getBingConfig: 1024,
-  /** getGateState 无业务参数。 */
+  /** getGateState 携带可选 force 标志。 */
   getGateState: 1024,
+  getBingUsage: 1024,
+  reportBingUsage: 1024,
   getAuthState: 1024,
   logout: 1024,
   /** openExtensionLogin 无业务参数。 */
@@ -150,6 +171,8 @@ export const METHOD_RESPONSE_LIMITS = {
   getBingConfig: 16384,
   /** getGateState 返回账号/订阅判定三元组。 */
   getGateState: 1024,
+  getBingUsage: 1024,
+  reportBingUsage: 1024,
   getAuthState: 16384,
   logout: 1024,
   /** openExtensionLogin 返回是否提交完成。 */

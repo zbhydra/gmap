@@ -12,6 +12,7 @@
  * en-US 保证演示词结果形态稳定。
  */
 
+import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
 import {
@@ -27,6 +28,8 @@ import {
   panel,
   parseCsvLine,
   readDownload,
+  readMonthlyUsage,
+  reportMonthlyUsage,
   skipSmoke,
   startButton,
   waitForExtensionServiceWorker
@@ -91,12 +94,18 @@ test.describe('真实 Bing 匿名采集(免费 20 条截断)', () => {
       }
 
       // ===== 以下为插件行为硬断言(失败即 fail,不降级) =====
+      const usageBefore = await readMonthlyUsage(context, serviceWorker)
       await start.click()
 
       // 真实页面首屏结果即超 20 条,免费档达限自动停止(完成态收敛有界)
       await expect(panelRoot.getByText('Search complete.')).toBeVisible({ timeout: 90_000 })
       await expect(panelRoot.getByText(`${FREE_ROW_LIMIT} businesses found.`)).toBeVisible()
       await expect(panelRoot.getByText(FREE_LIMIT_NOTE)).toBeVisible()
+      // 门控确认后放行:免费档不触发补全,Export 与 Go Back 不得停留禁用(RPC 超时上界 30s)
+      await expect(panelRoot.getByRole('status')).toHaveCount(0, { timeout: 35_000 })
+      await expect(panelRoot.getByRole('button', { name: 'Export Leads List' })).toBeEnabled()
+      await expect(panelRoot.getByRole('button', { name: 'Go Back', exact: true })).toBeEnabled()
+      expect((await readMonthlyUsage(context, serviceWorker)).used).toBe(usageBefore.used + FREE_ROW_LIMIT)
       const upgradeButton = panelRoot.getByRole('button', { name: 'Upgrade to Pro Now' })
       await expect(upgradeButton).toBeVisible()
 
@@ -135,6 +144,35 @@ test.describe('真实 Bing 匿名采集(免费 20 条截断)', () => {
           )
         }
       }
+      // 用真实接口预消耗同一账本，再验证 Bing 使用剩余额度，而非免费 20 条。
+      const currentUsage = await readMonthlyUsage(context, serviceWorker)
+      await reportMonthlyUsage(context, serviceWorker, currentUsage.total - currentUsage.used - 3, randomUUID())
+      const expiredRequestId = randomUUID()
+      const oldReports: string[] = []
+      context.on('request', request => {
+        if (new URL(request.url()).pathname === '/api/client/maps/usage/report' && request.postDataJSON()?.request_id === expiredRequestId) oldReports.push(request.url())
+      })
+      await serviceWorker.evaluate(async requestId => {
+        const stored = await chrome.storage.local.get('counter_device_id')
+        await chrome.storage.local.set({ bing_usage_pending: [{
+          identity: `device:${stored.counter_device_id}`, requestId, records: 7,
+          createdAt: Date.now() - 8 * 24 * 60 * 60 * 1000
+        }] })
+      }, expiredRequestId)
+      await panelRoot.getByRole('button', { name: 'Go Back', exact: true }).click()
+      await start.click()
+      await expect(panelRoot.getByText('3 businesses found.')).toBeVisible({ timeout: 30_000 })
+      await expect(panelRoot.getByRole('status')).toHaveCount(0, { timeout: 65_000 })
+      await expect(panelRoot.getByRole('alert')).toContainText('monthly record quota is used up')
+      await expect(panelRoot.getByText(FREE_LIMIT_NOTE)).toHaveCount(0)
+      expect((await readMonthlyUsage(context, serviceWorker)).exhausted).toBe(true)
+      expect(oldReports).toEqual([])
+      expect(await serviceWorker.evaluate(() => chrome.storage.local.get('bing_usage_pending'))).toEqual({ bing_usage_pending: [] })
+      await panelRoot.getByRole('button', { name: 'Go Back', exact: true }).click()
+      await start.click()
+      await expect(start).toBeVisible({ timeout: 30_000 })
+      await expect(panelRoot.getByRole('alert')).toContainText('monthly record quota is used up')
+      await expect(panelRoot.getByRole('button', { name: 'Stop', exact: true })).toHaveCount(0)
     } finally {
       await context.close()
     }
