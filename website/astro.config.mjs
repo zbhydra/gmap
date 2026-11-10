@@ -24,7 +24,6 @@ export default defineConfig({
     inlineStylesheets: 'always'
   },
   vite: {
-    envDir: process.env.NODE_ENV === 'production' ? false : undefined,
     server: {
       strictPort: true,
       proxy: {

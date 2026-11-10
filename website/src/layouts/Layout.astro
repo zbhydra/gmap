@@ -44,7 +44,7 @@ interface Props {
 // Base path for assets（根路径部署）
 const BASE = '/';
 
-// GA4 measurement ID 构建占位：读 PUBLIC_GA4_MEASUREMENT_ID（生产由 deploy/production.conf 提供，
+// GA4 measurement ID 构建占位：读 PUBLIC_GA4_MEASUREMENT_ID（.env.production 或部署环境注入，
 // hydra 后配）。为空零注入（全站唯一豁免的第三方运行时脚本），非空才渲染 gtag。
 const GA4_MEASUREMENT_ID = import.meta.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
 

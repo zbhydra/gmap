@@ -23,9 +23,6 @@ SERVER_CURRENT_LINK=""
 SERVER_RELEASE_DIR=""
 DEPLOY_DOMAIN=""
 TEMP_ARCHIVE_PATH=""
-RENDERED_NGINX_CONF=""
-SSH_OPTIONS=()
-SCP_OPTIONS=()
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -49,29 +46,6 @@ cleanup() {
         log_step "清理本地临时压缩包..."
         rm -f "$ARCHIVE_PATH"
     fi
-    if [ -n "$RENDERED_NGINX_CONF" ]; then
-        rm -f "$RENDERED_NGINX_CONF"
-    fi
-}
-
-render_production_nginx() {
-    node --input-type=commonjs - "$SCRIPT_DIR/production.conf" "$SCRIPT_DIR/mapexporter.conf" <<'NODE'
-const { readFileSync } = require('node:fs')
-const { parseEnv } = require('node:util')
-const config = parseEnv(readFileSync(process.argv[2], 'utf8'))
-const hasCertificate = Boolean(config.DEPLOY_TLS_CERTIFICATE && config.DEPLOY_TLS_CERTIFICATE_KEY)
-const values = {
-    ...config,
-    DEPLOY_DOMAIN: new URL(config.PUBLIC_SITE_URL).hostname,
-    TLS_CONFIG: hasCertificate
-        ? `    listen ${config.DEPLOY_HTTPS_PORT} ssl;\n    http2 on;\n    ssl_certificate ${config.DEPLOY_TLS_CERTIFICATE};\n    ssl_certificate_key ${config.DEPLOY_TLS_CERTIFICATE_KEY};`
-        : '    # TLS 待配置：生产发布前填写 DEPLOY_TLS_CERTIFICATE 与 DEPLOY_TLS_CERTIFICATE_KEY。'
-}
-process.stdout.write(readFileSync(process.argv[3], 'utf8').replace(/\{([A-Z_]+)\}/g, (_, key) => {
-    if (!values[key]) throw new Error(`官网 Nginx 渲染：${process.argv[2]} 缺少 ${key}`)
-    return values[key]
-}))
-NODE
 }
 
 apply_environment() {
@@ -95,47 +69,19 @@ apply_environment() {
     esac
 
     local env_file="$WEBSITE_DIR/.env.$BUILD_MODE"
-    if [ "$DEPLOY_ENV" = "prod" ]; then
-        env_file="$SCRIPT_DIR/production.conf"
-        local key
-        for key in ${!PUBLIC_@} ${!EXTENSION_@} DEPLOY_SERVER_HOST DEPLOY_SERVER_PORT DEPLOY_SERVER_USER \
-            DEPLOY_SSH_IDENTITY_FILE DEPLOY_SERVER_ROOT DEPLOY_NGINX_REMOTE_CONF DEPLOY_NGINX_BIN \
-            DEPLOY_NGINX_MAIN_CONF DEPLOY_HTTP_PORT DEPLOY_HTTPS_PORT DEPLOY_API_UPSTREAM \
-            DEPLOY_TLS_CERTIFICATE DEPLOY_TLS_CERTIFICATE_KEY INDEXNOW_KEY; do
-            unset "$key"
-        done
-    fi
     if [ ! -f "$env_file" ]; then
         echo "错误: 缺少 $env_file，请复制同名 .example 并配置"
         exit 1
     fi
+    set -a
     source "$env_file"
+    set +a
     SERVER_HOST="${DEPLOY_SERVER_HOST:?请配置 DEPLOY_SERVER_HOST}"
-    if [ "$DEPLOY_ENV" = "prod" ]; then
-        SERVER_PORT="${DEPLOY_SERVER_PORT:?请配置 DEPLOY_SERVER_PORT}"
-        SERVER_USER="${DEPLOY_SERVER_USER:?请配置 DEPLOY_SERVER_USER}"
-    else
-        SERVER_PORT="${DEPLOY_SERVER_PORT:-22}"
-        SERVER_USER="${DEPLOY_SERVER_USER:-root}"
-    fi
+    SERVER_PORT="${DEPLOY_SERVER_PORT:-22}"
+    SERVER_USER="${DEPLOY_SERVER_USER:-root}"
     SERVER_DEPLOY_ROOT="${DEPLOY_SERVER_ROOT:?请配置 DEPLOY_SERVER_ROOT}"
     NGINX_REMOTE_CONF_PATH="${DEPLOY_NGINX_REMOTE_CONF:?请配置 DEPLOY_NGINX_REMOTE_CONF}"
-    DEPLOY_DOMAIN=$(node -p 'new URL(process.argv[1]).host' "$PUBLIC_SITE_URL")
-
-    if [ "$DEPLOY_ENV" = "prod" ]; then
-        : "${DEPLOY_NGINX_BIN:?请配置 DEPLOY_NGINX_BIN}"
-        : "${DEPLOY_NGINX_MAIN_CONF:?请配置 DEPLOY_NGINX_MAIN_CONF}"
-        RENDERED_NGINX_CONF=$(mktemp)
-        render_production_nginx > "$RENDERED_NGINX_CONF"
-        NGINX_CONF_PATH="$RENDERED_NGINX_CONF"
-        if [ -n "${DEPLOY_SSH_IDENTITY_FILE:-}" ]; then
-            SSH_OPTIONS=(-i "$DEPLOY_SSH_IDENTITY_FILE")
-            SCP_OPTIONS=(-i "$DEPLOY_SSH_IDENTITY_FILE")
-        fi
-    else
-        DEPLOY_NGINX_BIN="nginx"
-        DEPLOY_NGINX_MAIN_CONF=""
-    fi
+    DEPLOY_DOMAIN=$(node -p 'new URL(process.env.PUBLIC_SITE_URL).host')
 
     SERVER_CURRENT_LINK="$SERVER_DEPLOY_ROOT/current"
     SERVER_RELEASE_DIR="$SERVER_DEPLOY_ROOT/$RELEASE_NAME"
@@ -146,19 +92,13 @@ install_nginx_config() {
     local remote_temp_path="/tmp/${DEPLOY_ENV}-${RELEASE_NAME}-nginx.conf"
     local remote_backup_path="${NGINX_REMOTE_CONF_PATH}.${RELEASE_NAME}.bak"
 
-    if ! scp "${SCP_OPTIONS[@]}" -P "$SERVER_PORT" "$NGINX_CONF_PATH" "${SERVER_USER}@${SERVER_HOST}:${remote_temp_path}"; then
+    if ! scp -P "$SERVER_PORT" "$NGINX_CONF_PATH" "${SERVER_USER}@${SERVER_HOST}:${remote_temp_path}"; then
         echo "错误: Nginx 配置上传失败: $NGINX_CONF_PATH -> ${SERVER_HOST}:${remote_temp_path}"
         exit 1
     fi
 
-    ssh "${SSH_OPTIONS[@]}" -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" << EOF
+    ssh -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" << EOF
 set -e
-NGINX_BIN="$DEPLOY_NGINX_BIN"
-NGINX_MAIN_CONF="$DEPLOY_NGINX_MAIN_CONF"
-NGINX_OPTIONS=()
-if [ -n "\$NGINX_MAIN_CONF" ]; then
-    NGINX_OPTIONS=(-c "\$NGINX_MAIN_CONF")
-fi
 NGINX_CONF_PATH="$NGINX_REMOTE_CONF_PATH"
 TEMP_CONF_PATH="$remote_temp_path"
 BACKUP_CONF_PATH="$remote_backup_path"
@@ -185,18 +125,18 @@ if [ -f "\$NGINX_CONF_PATH" ]; then
 fi
 
 install -m 0644 "\$TEMP_CONF_PATH" "\$NGINX_CONF_PATH"
-if ! "\$NGINX_BIN" "\${NGINX_OPTIONS[@]}" -t; then
+if ! nginx -t; then
     echo "错误: Nginx 配置校验失败，正在恢复原配置: \$NGINX_CONF_PATH"
     rollback_nginx_config
-    "\$NGINX_BIN" "\${NGINX_OPTIONS[@]}" -t
+    nginx -t
     exit 1
 fi
 
-if ! "\$NGINX_BIN" "\${NGINX_OPTIONS[@]}" -s reload; then
+if ! nginx -s reload; then
     echo "错误: Nginx reload 失败，正在恢复并重新加载原配置: \$NGINX_CONF_PATH"
     rollback_nginx_config
-    "\$NGINX_BIN" "\${NGINX_OPTIONS[@]}" -t
-    "\$NGINX_BIN" "\${NGINX_OPTIONS[@]}" -s reload
+    nginx -t
+    nginx -s reload
     exit 1
 fi
 
@@ -235,20 +175,7 @@ select_environment() {
 # 退出时自动清理临时文件
 trap cleanup EXIT
 
-case "${1:-}" in
-    --render-nginx)
-        render_production_nginx
-        exit 0
-        ;;
-    prod|test) apply_environment "$1" ;;
-    "") select_environment ;;
-    *) echo "用法: bash website/deploy/deploy.sh [prod|test|--render-nginx]"; exit 1 ;;
-esac
-
-if [ "$DEPLOY_ENV" = "prod" ] && { [ -z "${DEPLOY_TLS_CERTIFICATE:-}" ] || [ -z "${DEPLOY_TLS_CERTIFICATE_KEY:-}" ]; }; then
-    echo "错误: $SCRIPT_DIR/production.conf 缺少生产 TLS 证书路径，请填写 DEPLOY_TLS_CERTIFICATE 与 DEPLOY_TLS_CERTIFICATE_KEY"
-    exit 1
-fi
+select_environment
 
 echo ""
 log_step "开始部署"
@@ -274,7 +201,7 @@ log_info "网站构建完成: $DIST_DIR"
 
 # 步骤 2: 确保远程部署根目录存在
 log_step "步骤 2/7: 确保远程部署根目录存在..."
-if ! ssh "${SSH_OPTIONS[@]}" -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" "mkdir -p '$SERVER_DEPLOY_ROOT'"; then
+if ! ssh -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" "mkdir -p '$SERVER_DEPLOY_ROOT'"; then
     echo "错误: 无法创建远程部署根目录: ${SERVER_HOST}:${SERVER_DEPLOY_ROOT}"
     echo "请检查服务器连接和目录写入权限。"
     exit 1
@@ -291,7 +218,7 @@ log_info "压缩包已创建: $ARCHIVE_PATH ($ARCHIVE_SIZE)"
 
 # 步骤 4: 上传压缩包
 log_step "步骤 4/7: 上传压缩包到服务器..."
-if ! scp "${SCP_OPTIONS[@]}" -P "$SERVER_PORT" "$ARCHIVE_PATH" "${SERVER_USER}@${SERVER_HOST}:${TEMP_ARCHIVE_PATH}"; then
+if ! scp -P "$SERVER_PORT" "$ARCHIVE_PATH" "${SERVER_USER}@${SERVER_HOST}:${TEMP_ARCHIVE_PATH}"; then
     echo "错误: 上传失败，请检查服务器连接"
     exit 1
 fi
@@ -299,7 +226,7 @@ log_info "上传完成"
 
 # 步骤 5: 服务器端发布新版本
 log_step "步骤 5/7: 服务器端发布新版本..."
-ssh "${SSH_OPTIONS[@]}" -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" << EOF
+ssh -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" << EOF
 set -e
 RELEASE_ROOT="$SERVER_DEPLOY_ROOT"
 RELEASE_DIR="$SERVER_RELEASE_DIR"
@@ -350,18 +277,18 @@ install_nginx_config
 
 # 步骤 7: 验证
 log_step "步骤 7/7: 验证部署结果..."
-CURRENT_TARGET=$(ssh "${SSH_OPTIONS[@]}" -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" "readlink '$SERVER_CURRENT_LINK'")
+CURRENT_TARGET=$(ssh -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" "readlink '$SERVER_CURRENT_LINK'")
 if [ "$CURRENT_TARGET" != "$SERVER_RELEASE_DIR" ]; then
     echo "错误: current 指向异常: $SERVER_CURRENT_LINK -> $CURRENT_TARGET"
     exit 1
 fi
 
-FILE_COUNT=$(ssh "${SSH_OPTIONS[@]}" -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" "find '$SERVER_RELEASE_DIR' -type f | wc -l")
+FILE_COUNT=$(ssh -p "$SERVER_PORT" "${SERVER_USER}@${SERVER_HOST}" "find '$SERVER_RELEASE_DIR' -type f | wc -l")
 log_info "current 已切换: ${SERVER_CURRENT_LINK} -> ${CURRENT_TARGET}"
 log_info "部署验证完成: 共部署 $FILE_COUNT 个文件"
 
 # 部署完成后提交 IndexNow（仅生产环境）
-if [ "$DEPLOY_ENV" = "prod" ] && [ -n "${INDEXNOW_KEY:-}" ]; then
+if [ "$DEPLOY_ENV" = "prod" ]; then
     log_step "提交 IndexNow..."
     SITEMAP_URL="https://${DEPLOY_DOMAIN}/sitemap.xml"
     INDEXNOW_URL="https://api.indexnow.org/indexnow?url=${SITEMAP_URL}&key=${INDEXNOW_KEY}"

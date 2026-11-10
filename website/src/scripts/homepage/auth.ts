@@ -161,7 +161,7 @@ const GOOGLE_REDIRECT_EMAIL_VERIFY_PARAM = 'google_email_verification'
 const GOOGLE_AUTH_LOG_PREFIX = '[GoogleAuth]'
 const GOOGLE_BUTTON_DEFAULT_LABEL = 'Continue with Google'
 const GOOGLE_BUTTON_LOADING_LABEL = 'Connecting...'
-/** 网站默认 Google OAuth Client ID 占位；正式 client 建好后填入生产文件的 PUBLIC_GOOGLE_CLIENT_ID。 */
+/** 网站默认 Google OAuth Client ID 占位；正式 client 建好后配置到环境变量 PUBLIC_GOOGLE_CLIENT_ID。 */
 export const DEFAULT_PUBLIC_GOOGLE_CLIENT_ID = ''
 const GOOGLE_BUTTON_ICON_SVG =
   '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="12 10 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">' +

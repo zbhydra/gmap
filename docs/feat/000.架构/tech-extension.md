@@ -150,7 +150,6 @@ admin/deploy/       # deploy.sh + tg-admin.conf（nginx）+ .env.example
 ### B4. 与 backend 通信
 
 - `api/request.ts`：axios 实例 `baseURL` 为 `${API_BASE}/api/admin`，`API_BASE` 取自构建变量 `VITE_API_BASE_URL`（去掉尾部斜杠）；未配置时使用相对路径，由 Vite proxy（`vite.config.ts` 把 `/api` → `localhost:7600`）转发到后端 FastAPI。
-- Admin 生产构建由 `admin/vite.config.ts` 读取 `admin/deploy/production.conf` 的 `ADMIN_API_BASE_URL` 编译上述接口，字段见 [production.conf.example](../../../admin/deploy/production.conf.example)；进程变量与 `.env.production` 不覆盖或补充生产参数。显式 `.env.test` 部署使用 test 模式构建，保留测试文件的 API 地址。
 - 响应拦截器解包 `{ code, data, msg }` 信封：`code !== 10000` 抛 `BusinessError`；HTTP 401 在当前会话内用 refresh_token 续签并最多重试一次（同会话刷新通过 Promise 去重），续签失败清登录态并跳 `/login?redirect=...`；旧会话响应被拒绝。
 - 业务 api 文件为 `auth.ts / dashboard.ts / orders.ts / system-settings.ts / task-records.ts / users.ts`，均基于 `request.ts` 实例封装。
 

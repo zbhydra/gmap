@@ -199,7 +199,7 @@ export function isHomepageAuthFailure(error: Error): boolean {
 export function getApiBaseUrl(): string {
   const envBaseUrl = import.meta.env.PUBLIC_API_BASE_URL
   if (!envBaseUrl) {
-    throw new Error('homepage api: missing PUBLIC_API_BASE_URL build value; configure website/deploy/production.conf before building production assets')
+    throw new Error('homepage api: missing PUBLIC_API_BASE_URL build env; configure website/deploy/deploy.sh before building production assets')
   }
 
   return envBaseUrl.endsWith('/') ? envBaseUrl.slice(0, -1) : envBaseUrl
