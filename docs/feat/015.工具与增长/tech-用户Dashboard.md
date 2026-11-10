@@ -69,7 +69,7 @@
 - 视图切换由工作区内最小的 History API 路由承担，不引入 Vue Router：切换视图 `pushState`，History 的筛选与页码 `replaceState`；前进后退按地址恢复视图与滚动位置，切换后焦点移到视图标题。侧栏链接是真实地址，修饰键与中键点击交给浏览器。通用规则见 [website 规范](../../references/specs/spec-website.md) §8。
 - 静态营销区块继续用 Astro 组件；本轮因全站账号入口和工作区外壳产生的导航职责按需抽为站级组件。后续新增复杂交互优先用 Vue，不因组件化重写无关工具、Pricing 支付或插件登录桥。
 - 现有界面也允许按需要迁为 Vue 组件，不受原技术栈限制。迁移以本轮实际改动为依据：当保留命令式 DOM 会造成重复状态、重复渲染或 Vue 与旧控制器争用同一 DOM 时，将该界面的渲染与交互一并迁移，复用底层业务 API，并删除被替代的控制器及样式。静态内容的组件化仍由 Astro 承担；当前已核对的调用链尚不要求整体重写登录、Pricing 或工具页面。
-- 继续由 `website/src/layouts/Layout.astro` 唯一持有 HTML 外壳与全局运行时，并统一引入全局样式（token 唯一来源为 `styles/tokens.css`）；增加工作区展示模式以装配侧栏和正文，避免复制全局外壳。
+- 继续由 `website/src/layouts/Layout.astro` 唯一持有 HTML 外壳与全局运行时，并统一引入全局样式（token 唯一来源为 `styles/tokens.css`）；增加工作区展示模式以装配侧栏和正文，避免复制全局外壳。工作区不渲染营销页眉与页脚，设备可信图标由 Layout 在 Vue 岛外的隐藏挂载点加载，合同见 [设备可信校验 §3](../007.用户系统/tech-邮箱登录设备校验.md#3-website-流程)。
 - 路由：`/dashboard/` 为 Online（创建与最近任务），`/dashboard/history/` 为 History，`/dashboard/api/` 为 API，`/dashboard/subscriptions/` 为订阅；遵循现有默认语言根路径与非默认语言前缀规则。
 - 工作区输出 `noindex, nofollow`，四个地址均从现有 sitemap 生成集合排除并列入登录后跳转白名单；SSG 只产出公共壳，私有数据登录后请求，服务端认证与归属校验仍是权限边界。
 - 现有 Pricing 登录弹窗及控制器已迁到 `components/auth/`（`SiteAuthModal.astro` + `site-auth-controller.ts`），由 `Layout.astro` 全站唯一装配；`/extension-login/` 传 `includeSiteAuth=false` 保留插件授权桥独立 owner，不装配站级控制器也不重复消费 Google 回跳。事件为 `site-auth:success` / `site-auth:close`，全局对象为 `window.siteAuthController`。导航登录通过 `open({ redirectTo })` 声明 Dashboard 目的地（sessionStorage 持久化跨 OAuth 回跳，仅白名单本站路由）；Pricing 待购与工作区不带 redirect 留在原页。登录成功结果经 `scripts/site/session.ts` 的 `setSiteSession` 写入共享会话，导航入口、Pricing 与 Vue 工作区消费同一份数据，无第二次 auth/me。

@@ -72,7 +72,7 @@
 
 ### 邮箱验证码登录/注册
 
-1. 用户进入 website 页面后,页面运行时确保 `device_id` 存在,写入 `client_uuid` Cookie,并加载 footer 内的 `/assets/icons/credits.svg` 真实 Credits 图片。
+1. 用户进入 website 页面后,页面运行时确保 `device_id` 存在,写入 `client_uuid` Cookie,并加载品牌图标资源:营销页在 footer 内加载;Dashboard 工作区没有 footer,在工作区内以不占布局的方式加载,直达工作区无需先访问主站。
 2. 后端收到 SVG 请求后读取 Cookie 与客户端 IP,写入 7 天有效的设备可信关系;无论写入成功与否都返回 SVG,异常返回 404。
 3. 用户在 website 认证弹窗点击 `Continue with email`,展开邮箱子界面,输入邮箱。
 4. 点击发送验证码,后端先校验当前 `X-Device-Id` 与 IP 是否已有可信关系;未通过时返回"请刷新页面后重试"错误,不发送邮件。

@@ -15,9 +15,9 @@ website 在用户访问页面后,先通过一个真实图片请求建立"当前�
 
 | 场景 | 名称 |
 | --- | --- |
-| HTML 挂载点 | `data-footer-credits-icon` |
+| HTML 挂载点 | `data-footer-brand-icon` |
 | Cookie | `client_uuid` |
-| 图片路径 | `/assets/icons/credits.svg` |
+| 图片路径 | `/assets/icons/logo.svg`（`/assets/icons/credits.svg` 为后端兼容的旧路径，下文部署与接口示例沿用旧名时两者同义） |
 | 公开错误码 | `AUTH_PAGE_REFRESH_REQUIRED` |
 | Redis key | `device_trust:{device_id}` |
 | 后端 service | `device_service` |
@@ -25,7 +25,9 @@ website 在用户访问页面后,先通过一个真实图片请求建立"当前�
 
 ## 3. website 流程
 
-1. `Layout.astro` 的 footer 中增加普通挂载点:`<span data-footer-credits-icon></span>`。
+1. `Layout.astro` 保证每个页面有且只有一个 `data-footer-brand-icon` 挂载点:
+   - 营销页:footer 品牌标(`BrandMark` 的 `trustIcon`)。
+   - Dashboard 工作区:不渲染营销页眉与 footer,改由 Layout 输出一个 `hidden` 挂载点,直达工作区不依赖先访问主站。挂载点必须在 Vue 岛之外:岛内 slot 水合时按 `innerHTML` 重建,图片会被重新解析、多发一次请求,挂载时序还会与水合竞争。
 2. 页面运行时调用现有 `ensureDeviceId()` 获取 website `device_id`。
 3. JS 写入 Cookie:
    - name:`client_uuid`
@@ -35,12 +37,12 @@ website 在用户访问页面后,先通过一个真实图片请求建立"当前�
    - `SameSite=Lax`
    - HTTPS 下加 `Secure`
    - `telegramdownloadmedia.com` / `test.telegramdownloadmedia.com` 下设置 `Domain=.telegramdownloadmedia.com`;localhost 不设置 Domain。
-4. JS 在 `data-footer-credits-icon` 挂载点插入真实 `<img>`:
-   - `src="/assets/icons/credits.svg"`
+4. JS 在 `data-footer-brand-icon` 挂载点插入真实 `<img>`:
+   - `src="/assets/icons/logo.svg"`
    - `width="32" height="32"`
-   - 返回内容是真实 Credits SVG,不是 1px、空白、透明或 CSS 隐藏资源。
+   - 返回内容是 32×32 透明 SVG。
 5. 只有 Cookie 写入后才设置 `img.src`,避免图片请求先于 Cookie 发出。
-6. 如果 footer 视觉上无法自然容纳 32x32 Credits 图标,实现时应改挂到已有 Credits UI,不要做 1px、`display:none`、`hidden`、`aria-hidden` 之类的伪装。
+6. `<img>` 自身不做 1px、`display:none`、`hidden`、`aria-hidden` 之类的处理,也不加 `loading="lazy"`(懒加载会推迟或跳过请求);是否可见只由挂载点决定。工作区的 `hidden` 挂载点是唯一例外(2026-11-04 hydra 裁决):不影响布局,也不影响浏览器发起图片请求。
 
 本逻辑放在 `website/src/scripts/homepage/device.ts`。
 
@@ -217,7 +219,8 @@ location = /assets/icons/credits.svg {
 
 ## 10. 验收标准
 
-- footer 存在 `data-footer-credits-icon` 挂载点,页面 JS 写 Cookie 后插入真实图片。
+- 营销页 footer 与 Dashboard 工作区(四个视图及语言路由)各有且仅有一个 `data-footer-brand-icon` 挂载点,页面 JS 写 Cookie 后插入真实图片,每次页面加载只发一次请求。
+- Dashboard 工作区不渲染营销页眉与 footer,挂载点不改变工作区视觉;未访问过主站的设备直达工作区即可完成邮箱验证码登录。
 - `pnpm dev` 下 `/assets/icons/credits.svg` 通过 Vite proxy 命中本地后端,不是 Astro 静态文件。
 - `/assets/icons/credits.svg` 通过 website 主域访问时返回 `image/svg+xml` 和 `Cache-Control: no-store`。
 - SVG 请求带合法 Cookie 和 IP 时,Redis 写入 `device_trust:{device_id}` 且 TTL 为 7 天。

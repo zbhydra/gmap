@@ -177,7 +177,8 @@ function setupDeveloperConsole(dev: HTMLElement): void {
     const status = required(panel, '[data-dev-status]')
     const requestLines = Array.from(request.querySelectorAll<HTMLElement>('.line'))
     const responseLines = Array.from(required(panel, '[data-dev-response]').querySelectorAll<HTMLElement>('.line'))
-    required(panel, '[data-dev-copy]').dataset.copy = request.textContent ?? ''
+    // 代码块外层带模板空白：不去掉的话，复制出的 Python 示例首行缩进，粘贴运行直接 IndentationError
+    required(panel, '[data-dev-copy]').dataset.copy = (request.textContent ?? '').trim()
     status.dataset.done ??= status.textContent ?? ''
     if (!started) return
     if (reducedMotion()) {

@@ -3,8 +3,9 @@
  *
  * 用于生成和持久化唯一设备标识符，用于服务端识别和追踪用户设备。
  * 设备 ID 使用 UUID 生成，并缓存在 localStorage 中；页面启动后同步 `client_uuid`
- * Cookie，并在 footer 挂载品牌图标资源。图标是 32×32 透明 SVG：以普通可见
- * img 渲染，不做任何隐藏处理，请求打到后端写 device_trust。
+ * Cookie，并在 Layout 提供的挂载点加载品牌图标资源，请求打到后端写 device_trust。
+ * 图标是 32×32 透明 SVG：营销页挂在页脚品牌标上，以普通可见 img 渲染；工作区没有
+ * 页脚，挂在 Vue 岛外的 hidden 节点上（不影响 img 发起请求）。
  * 上线切到 v2 key 时会清理旧 key，
  * 避免继续沿用历史指纹或旧 UUID。
  */
@@ -25,7 +26,7 @@ const LEGACY_DEVICE_STORAGE_KEY = 'homepage_legacy_device_ids'
 
 /** `client_uuid` Cookie 的有效期，与服务端 Redis TTL 保持 7 天。 */
 const CLIENT_UUID_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
-/** footer 中承载品牌图标资源的挂载点；图标为透明资源，请求用于后端写 device_trust。 */
+/** 承载品牌图标资源的挂载点（营销页在页脚，工作区在 Layout 的 hidden 节点）；图标为透明资源，请求用于后端写 device_trust。 */
 const FOOTER_BRAND_ICON_SELECTOR = '[data-footer-brand-icon]'
 /** 后端提供的品牌图标 SVG 路径（透明内容）；旧 `/assets/icons/credits.svg` 仅后端兼容。 */
 // 固定版本号只用于绕开 CDN 旧 404 缓存；Nginx 用不含 query 的 URI 匹配，仍会反代到后端写 device_trust。
@@ -331,11 +332,11 @@ export function buildFooterBrandIconUrl(): string {
 }
 
 /**
- * 在 footer 挂载品牌图标。
+ * 在挂载点加载品牌图标。
  *
  * 调用方必须先写入 Cookie，再调用本方法；本方法只在设置 `img.src` 时触发资源请求。
- * 图标为 32×32 透明 SVG，img 保持普通可见渲染，不做隐藏处理；
- * 不要给图片加 `loading="lazy"`，懒加载可能推迟或跳过请求，导致 device_trust 写入丢失。
+ * 图标为 32×32 透明 SVG，img 自身不做隐藏处理，是否可见只由挂载点决定；
+ * 不要给图片加 `loading="lazy"`，懒加载可能推迟或跳过请求（hidden 挂载点下不会再发），导致 device_trust 写入丢失。
  */
 export function mountFooterBrandIcon(): HTMLImageElement | null {
   const mountPoint = document.querySelector<HTMLElement>(FOOTER_BRAND_ICON_SELECTOR)
@@ -359,7 +360,7 @@ export function mountFooterBrandIcon(): HTMLImageElement | null {
 }
 
 /**
- * 页面启动入口：确保 client_uuid Cookie 已写入后，再挂载 footer 品牌图标。
+ * 页面启动入口：确保 client_uuid Cookie 已写入后，再挂载品牌图标。
  */
 export async function initializeFooterBrandIcon(): Promise<void> {
   try {

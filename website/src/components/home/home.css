@@ -2204,7 +2204,7 @@
   color: var(--primary-fg);
 }
 
-/* 没有示例的未交付端点：只读列表项 */
+/* 能力表未开放的产品：只读列表项 */
 .dev-item.is-unavailable .dev-item-text b {
   color: var(--text-2);
 }

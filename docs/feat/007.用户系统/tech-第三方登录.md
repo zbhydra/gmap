@@ -178,7 +178,7 @@ http://localhost:7600/api/client/auth/google/oauth/callback
 
 extension 不直接实现 Google OAuth,也不内嵌登录表单。插件内登录入口(popup `Sign in`;Bing 面板未登录态另有入口)由插件 background 发起浏览器身份流程:打开官网确认页 `/extension-login`,用户复用 website 的 Google / 邮箱登录能力并**显式确认账号**后,官网签发一次性 code 经回调 URL fragment 回到插件,插件凭 code + PKCE verifier 换取**插件独立 token**。两个插件(Maps / Bing)共用同一确认页与同一合同。
 
-v2「官网推送」桥已整体删除:无 `externally_connectable`、无固定扩展 ID、无 `/extension-login-v2` 页,后端无 `POST /auth/extension-token`(请求 404)。website 任意页面登录成功只写网页登录态,不向插件推送。
+v2「官网推送」桥已整体删除:无 `externally_connectable`、无固定扩展 ID 推送、无 `/extension-login-v2` 页,后端无 `POST /auth/extension-token`(请求 404)。website 任意页面登录成功只写网页登录态,不向插件推送。
 
 ### 9.1 时序(`E`=插件 background,`W`=官网确认页,`B`=后端)
 
@@ -250,7 +250,7 @@ E: 校验响应合同 → 快照比对 → 原子写插件 storage 三键 → UI
 
 ### 9.6 安全边界
 
-- **public client 模型,不登记扩展 ID**:无 `externally_connectable`、无 manifest 固定 key、不注入官网 content script、不申请官网 host 权限。任何扩展都可为自己的回调发起登录,但只能拿到绑定其自身 verifier 的一次性 code;账号交接必须由用户在官网确认页显式点 Continue。
+- **public client 模型,不登记扩展 ID**:无 `externally_connectable`、不依赖 manifest 固定 key、不注入官网 content script、不申请官网 host 权限。任何扩展都可为自己的回调发起登录,但只能拿到绑定其自身 verifier 的一次性 code;账号交接必须由用户在官网确认页显式点 Continue。
 - code 短效(60 秒)+ 一次性 + 服务端只存 sha256 摘要 + 仅走 URL fragment(不进 server 日志 / referer);网页 token 与插件 token 均不进 URL、不进任何消息通道。
 - 网页登录态与插件登录态完全独立:website 登录、登出、换号不影响插件;两插件各自独立会话,互不覆盖。
 - 旧插件 token 撤销失败不阻断新登录;并发签发可能留下同账号孤立 token,按 access token TTL 自然过期。

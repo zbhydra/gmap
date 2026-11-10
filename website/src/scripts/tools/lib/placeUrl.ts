@@ -19,8 +19,7 @@ const HEX_MAX_LENGTH = 20
 /** base64url 字符表（RFC 4648 §5，无 padding）。 */
 export const BASE64URL_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 
-/** Google Maps 主域后缀（其余域一律视为非 Maps 地点页）。 */
-const MAPS_HOST_SUFFIXES = ['google.com', 'google.co', 'maps.google.com']
+const MAPS_HOST_REGEX = /^(?:(?:www|maps)\.)?google\.(?:com|[a-z]{2}|(?:co|com)\.[a-z]{2})$/
 
 /** 地点 URL 解析失败的稳定原因码（文案映射在页面层）。 */
 export type PlaceUrlErrorCode = 'short-link' | 'invalid-url' | 'no-ids'
@@ -82,10 +81,7 @@ export function parsePlaceUrl(input: string): PlaceUrlResult {
     // 跨域展开与纯前端约束冲突，短链明确不支持（plans N2 钉死）。
     return { ok: false, error: 'short-link' }
   }
-  const isMapsHost =
-    host === 'maps.google.com' ||
-    (host.endsWith('google.com') &&
-      MAPS_HOST_SUFFIXES.some(suffix => host === suffix || host.endsWith(`.${suffix}`)))
+  const isMapsHost = MAPS_HOST_REGEX.test(host)
   if (!isMapsHost || !parsed.pathname.toLowerCase().includes('/maps/')) {
     return { ok: false, error: 'invalid-url' }
   }

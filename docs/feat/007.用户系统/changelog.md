@@ -1,5 +1,15 @@
 # 007 · 用户系统 - 变更记录
 
+## 2026-11-04 Dashboard 工作区自身建立设备可信
+
+**为什么**: 工作区不渲染 footer,设备可信图标没有挂载点,只写 Cookie 不发请求。开启 `verify_device_id` 后,未访问过主站的设备在工作区发码与验证码登录都返回 `AUTH_PAGE_REFRESH_REQUIRED`,刷新也无法恢复。
+
+**变更**:
+
+- website: `Layout` 在工作区输出 Vue 岛外的 `hidden` 挂载点,复用同一选择器与启动脚本;Cookie、UUID 与后端校验语义不变,主站 footer 机制不变。
+- 不复用侧栏 `BrandMark`:它在 Vue 岛 slot 内,水合按 `innerHTML` 重建 slot,Chromium 下图片会请求两次。
+- 合同与验收见 [设备可信校验 §3、§10](tech-邮箱登录设备校验.md#3-website-流程)。
+
 ## 2026-10-29 验证码发送增加跨邮箱 IP 限流
 
 - 普通验证码发送与 Google 非权威邮箱补验证共用 IP 发送次数；保留单邮箱冷却，阻止轮换邮箱绕过发送频率限制。

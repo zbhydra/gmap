@@ -2,6 +2,7 @@
 /**
  * 品牌标：渐变方块 + 白色 pin + 下载箭头（插画，品牌原色按合同 §1 只在这里使用，样式见 site.css）。
  * trustIcon 只给页脚实例：device.ts 在 [data-footer-brand-icon] 内挂载 device_trust 透明图片，叠在品牌标上方。
+ * Vue 岛 slot 内的实例不能开（水合重建 slot 会多发一次请求），工作区的挂载点见 Layout。
  */
 interface Props {
   class?: string
