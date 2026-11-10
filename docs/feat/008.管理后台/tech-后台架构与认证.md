@@ -31,11 +31,12 @@ admin 是独立 SPA,不是 website 的一部分,独立仓库目录、独立构�
 ## 3. 请求封装与令牌自动续签
 
 - Axios `baseURL` 为 `/api/admin`;所有 admin API 统一前缀。
-- 请求拦截器:注入 `Authorization: Bearer <access_token>`。
+- 请求拦截器:注入 `Authorization: Bearer <access_token>`,并记录请求所属会话的令牌对与代际。
 - 响应拦截器:解包 `{ code, data, msg }` 结构;`code == 10000` 视为成功,否则按业务错误抛出并保留 `code` 与 `data`,供需要错误载荷的场景(如 Telegram 限流等待秒数、活跃请求数)使用。
 - Access Token 过期(HTTP 401):用 Refresh Token 调用续签接口,成功后重试原请求一次。
-- 续签并发去重:用一个挂起的 Promise 缓存正在进行的续签请求,避免多个并发请求同时触发续签。
-- 续签失败或无 Refresh Token:清空令牌对,跳 `/login`。
+- 会话边界由 `stores/auth.ts` 的 `epoch` 与会话快照维护:登录、退出和清理推进代际;续签保留代际,且只有发起时的令牌对与代际仍匹配时才能写回。
+- 续签并发去重按代际隔离;新会话不复用旧会话的 Promise,旧 Promise 结束也不能清掉新会话的刷新。原请求等待续签结束后核对代际与刷新结果的完整快照,重发进入请求拦截器时再次核对;会话变化则拒绝旧请求,保留当前会话。同代际中令牌已轮换时,迟到的 401 使用当前令牌重试一次。
+- 续签失败或无 Refresh Token:仅清理仍匹配发起快照的会话并跳 `/login`;旧会话的迟到成功响应或失败均不改动当前会话。普通请求的响应同样不得跨代际交付。
 - 实时推送类接口(批量验证 SSE):使用 `fetch` + `ReadableStream` 接收(POST 请求,Header 带 Authorization),逐行解析事件;不使用 `EventSource`(仅支持 GET)。
 
 ## 4. 管理员账号与登录
@@ -65,7 +66,7 @@ admin 是独立 SPA,不是 website 的一部分,独立仓库目录、独立构�
 
 `POST /api/admin/auth/refresh` 请求:`refresh_token`;响应:新的 `access_token`、`refresh_token`、`expires_in`、`refresh_expires_in`。Refresh Token 存 Redis ZSet,member 为 token 摘要,score 为 JWT `exp`;新 token 的 `exp` 不早于同 key 已有 score(大于或等于),同秒签发可相等。当前 ZSet 每次写入或轮换都在 transaction pipeline 内同步设置 `EXPIREAT` 为新 token 的 `exp`,成功后独立清理已过期 member。旧 token 仍保留约 30 秒宽限期以容忍续签并发,宽限期 ZSet 使用独立短 TTL。事务写入失败按 fail-closed 返回错误,后置过期 member 清理失败只记录日志。`admin` token 有效期配置只能保持或延长;若缩短,新 `EXPIREAT` 会让同 key 中按旧周期签发的 refresh token 提前失效,管理员需要重新登录。
 
-`GET /api/admin/auth/me` 响应:`admin_id`、`username`。前端用户名只放内存(`stores/auth.ts` 的 `username`),由侧边栏用户入口首次挂载时拉取,退出登录清空。
+`GET /api/admin/auth/me` 响应:`admin_id`、`username`。前端用户名只放内存(`stores/auth.ts` 的 `username`),由侧边栏用户入口首次挂载时拉取,仅在请求所属代际仍有效时写回;登录新会话、退出时清空。
 
 ### 4.2 admin JWT claims 与有效期
 

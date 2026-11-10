@@ -10,6 +10,12 @@ import { ref, computed } from "vue";
 const TOKEN_KEY = "admin_token";
 const REFRESH_TOKEN_KEY = "admin_refresh_token";
 
+export interface AdminSessionSnapshot {
+  token: string;
+  refreshToken: string;
+  epoch: number;
+}
+
 export const useAuthStore = defineStore("auth", () => {
   /** 管理员 Access Token */
   const token = ref<string>(localStorage.getItem(TOKEN_KEY) ?? "");
@@ -20,19 +26,46 @@ export const useAuthStore = defineStore("auth", () => {
   /** 当前管理员用户名，未加载时为空串 */
   const username = ref("");
 
+  // 退出后即使用相同 token 再登录，也属于不同会话。
+  const epoch = ref(0);
+
   /** 是否已登录 */
   const isLoggedIn = computed(() => token.value.length > 0);
 
-  /** 保存管理员 token pair */
-  function setTokens(newToken: string, newRefreshToken: string) {
+  function getSessionSnapshot(): AdminSessionSnapshot {
+    return { token: token.value, refreshToken: refreshToken.value, epoch: epoch.value };
+  }
+
+  function isCurrentSession(session: AdminSessionSnapshot): boolean {
+    return (
+      epoch.value === session.epoch &&
+      token.value === session.token &&
+      refreshToken.value === session.refreshToken
+    );
+  }
+
+  /** 登录开启新代际；续签仅允许写回捕获的会话，保留代际和用户名。 */
+  function setTokens(
+    newToken: string,
+    newRefreshToken: string,
+    session?: AdminSessionSnapshot,
+  ): boolean {
+    if (session) {
+      if (!isCurrentSession(session)) return false;
+    } else {
+      epoch.value++;
+      username.value = "";
+    }
     token.value = newToken;
     refreshToken.value = newRefreshToken;
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+    return true;
   }
 
   /** 清除管理员 token pair */
   function clearToken() {
+    epoch.value++;
     token.value = "";
     refreshToken.value = "";
     username.value = "";
@@ -40,5 +73,15 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem(REFRESH_TOKEN_KEY);
   }
 
-  return { token, refreshToken, username, isLoggedIn, setTokens, clearToken };
+  return {
+    token,
+    refreshToken,
+    username,
+    epoch,
+    isLoggedIn,
+    getSessionSnapshot,
+    isCurrentSession,
+    setTokens,
+    clearToken,
+  };
 });

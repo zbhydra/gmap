@@ -3,11 +3,11 @@
  *
  * - 请求拦截：注入 Authorization Bearer Token
  * - 响应拦截：解包 { code, data, msg }，code !== 10000 时 reject
- * - 401 自动清 Token 跳登录页
- * - Token 刷新：并发请求时通过 Promise 去重，只发一次刷新请求
+ * - 401 在当前会话内续签并重试一次，失败清 Token 跳登录页
+ * - 同代际刷新通过 Promise 去重，过期会话的响应和重试均拒绝
  */
 import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore, type AdminSessionSnapshot } from "@/stores/auth";
 import i18n from "@/i18n";
 
 /**
@@ -37,6 +37,7 @@ interface AdminApiEnvelope<T> {
 interface AdminAuthRetryRequestConfig extends InternalAxiosRequestConfig {
   /** 仅供 axios 响应拦截器内部判断，不能写入真实 HTTP header，避免跨域预检失败。 */
   adminAuthRetried?: boolean;
+  adminSession?: AdminSessionSnapshot;
 }
 
 /**
@@ -61,8 +62,10 @@ const request = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-/** Token 刷新去重：多个请求同时 401 时，只发一次刷新 */
-let refreshPromise: Promise<string | null> | null = null;
+let refreshPromise: {
+  epoch: number;
+  promise: Promise<AdminSessionSnapshot | null>;
+} | null = null;
 let isRedirectingToLogin = false;
 
 /** 当前页面作为登录后的回跳地址；登录页自身不需要再套 redirect。 */
@@ -85,47 +88,63 @@ function expireAdminSession() {
 }
 
 /** 刷新 Token */
-async function refreshToken(): Promise<string | null> {
+async function refreshToken(session: AdminSessionSnapshot): Promise<AdminSessionSnapshot | null> {
   const auth = useAuthStore();
-  if (!auth.refreshToken) {
+  if (!session.refreshToken) {
     expireAdminSession();
     return null;
   }
 
   try {
-    const res = await axios.post<AdminApiEnvelope<AdminTokenData>>(`${API_BASE}/api/admin/auth/refresh`, {
-      refresh_token: auth.refreshToken,
-    });
+    const res = await axios.post<AdminApiEnvelope<AdminTokenData>>(
+      `${API_BASE}/api/admin/auth/refresh`,
+      {
+        refresh_token: session.refreshToken,
+      },
+      { headers: { "Accept-Language": i18n.global.locale.value } },
+    );
     const newToken = res.data?.data?.access_token;
     const newRefreshToken = res.data?.data?.refresh_token;
     if (newToken && newRefreshToken) {
-      auth.setTokens(newToken, newRefreshToken);
-      return newToken;
+      if (!auth.setTokens(newToken, newRefreshToken, session)) return null;
+      return auth.getSessionSnapshot();
     }
   } catch (error) {
-    console.error(error);
-    // 刷新失败，强制登出
+    if (!auth.isCurrentSession(session)) return null;
+    if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+      console.error(
+        "request.refreshToken() 续签请求失败:",
+        error instanceof Error ? error.stack : "未知错误",
+      );
+    }
   }
 
-  expireAdminSession();
+  if (auth.isCurrentSession(session)) expireAdminSession();
   return null;
 }
 
 /** Access Token 被后端拒绝后，统一尝试续签；续签失败时清登录态并跳登录页。 */
-export async function refreshAdminTokenAfterUnauthorized(): Promise<string | null> {
-  if (!refreshPromise) {
-    refreshPromise = refreshToken().finally(() => {
-      refreshPromise = null;
+export async function refreshAdminTokenAfterUnauthorized(): Promise<AdminSessionSnapshot | null> {
+  const session = useAuthStore().getSessionSnapshot();
+  if (!refreshPromise || refreshPromise.epoch !== session.epoch) {
+    const promise = refreshToken(session).finally(() => {
+      // 旧代际结束时不能清掉新会话正在等待的刷新。
+      if (refreshPromise?.promise === promise) refreshPromise = null;
     });
+    refreshPromise = { epoch: session.epoch, promise };
   }
 
-  return refreshPromise;
+  return refreshPromise.promise;
 }
 
 // 请求拦截器
-request.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+request.interceptors.request.use((config: AdminAuthRetryRequestConfig) => {
   config.headers["Accept-Language"] = i18n.global.locale.value;
   const auth = useAuthStore();
+  if (config.adminSession && !auth.isCurrentSession(config.adminSession)) {
+    throw new Error(i18n.global.t("login.sessionChanged"));
+  }
+  config.adminSession = auth.getSessionSnapshot();
   if (auth.token) {
     config.headers.Authorization = `Bearer ${auth.token}`;
   }
@@ -135,6 +154,10 @@ request.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // 响应拦截器
 request.interceptors.response.use(
   (response: AxiosResponse) => {
+    const session = (response.config as AdminAuthRetryRequestConfig).adminSession;
+    if (session && session.epoch !== useAuthStore().epoch) {
+      return Promise.reject(new Error(i18n.global.t("login.sessionChanged")));
+    }
     const { code, data, msg } = response.data;
     if (code === 10000) {
       return data;
@@ -143,17 +166,33 @@ request.interceptors.response.use(
   },
   async (error) => {
     const retryConfig = error.config as AdminAuthRetryRequestConfig | undefined;
+    const auth = useAuthStore();
+    const session = retryConfig?.adminSession;
+    if (session && session.epoch !== auth.epoch) {
+      return Promise.reject(new Error(i18n.global.t("login.sessionChanged")));
+    }
     const requestUrl = typeof retryConfig?.url === "string" ? retryConfig.url : "";
     const isRefreshRequest = requestUrl.includes("/auth/refresh");
     const hasRetried = retryConfig?.adminAuthRetried === true;
 
     if (error.response?.status === 401 && !isRefreshRequest && !hasRetried) {
-      const newToken = await refreshAdminTokenAfterUnauthorized();
-      if (newToken && retryConfig) {
+      // 同一代际已完成续签时，迟到的 401 直接使用轮换后的令牌。
+      const refreshed =
+        session && !auth.isCurrentSession(session)
+          ? auth.getSessionSnapshot()
+          : await refreshAdminTokenAfterUnauthorized();
+      if (
+        (session && session.epoch !== auth.epoch) ||
+        (refreshed && !auth.isCurrentSession(refreshed))
+      ) {
+        return Promise.reject(new Error(i18n.global.t("login.sessionChanged")));
+      }
+      if (refreshed && retryConfig) {
         // 用新 Token 重发原请求
         retryConfig.adminAuthRetried = true;
+        retryConfig.adminSession = refreshed;
         retryConfig.headers = retryConfig.headers ?? {};
-        retryConfig.headers.Authorization = `Bearer ${newToken}`;
+        retryConfig.headers.Authorization = `Bearer ${refreshed.token}`;
         return request(retryConfig);
       }
     }

@@ -173,4 +173,12 @@ test("插件版本支持校验、失败保留、筛选分页和启停确认", as
   await expect(confirmation).toContainText("暂无更高的启用版本");
   await confirmation.getByRole("button", { name: "取消", exact: true }).click();
   expect(mutations).toHaveLength(0);
+
+  await page.getByRole("button", { name: "账户菜单", exact: true }).click();
+  await page.getByText("English", { exact: true }).click();
+  await expect(page.getByRole("button", { name: "Add version", exact: true })).toBeVisible();
+  await highRow.getByRole("button", { name: "Disable", exact: true }).click();
+  await expect(confirmation).toContainText("Disable Google Maps Plugin 1.10.0?");
+  await expect(confirmation).toContainText("No higher enabled version is available");
+  await confirmation.getByRole("button", { name: "Cancel", exact: true }).click();
 });

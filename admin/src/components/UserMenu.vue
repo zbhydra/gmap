@@ -1,5 +1,5 @@
 <!--
-  侧边栏底部用户入口：展示当前管理员用户名，点击弹出菜单切换主题（跟随系统 / 浅色 / 深色）与退出登录。
+  侧边栏底部用户入口：展示当前管理员用户名，点击弹出菜单切换语言、主题与退出登录。
   桌面侧边栏与移动端抽屉共用；侧边栏折叠时只显示头像图标。
 -->
 <template>
@@ -35,7 +35,7 @@ import { useTheme, type ThemeMode } from "@/composables/useTheme";
 
 defineProps<{ collapsed?: boolean }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const router = useRouter();
 const dialog = useDialog();
 const auth = useAuthStore();
@@ -52,8 +52,18 @@ function renderIcon(icon: Component) {
   return () => h(NIcon, null, { default: () => h(icon) });
 }
 
-/** 当前主题项带勾；其余项不给图标，图标列由 Naive UI 统一占位对齐。 */
+/** 当前语言与主题项带勾；图标列由 Naive UI 统一占位对齐。 */
 const options = computed<DropdownOption[]>(() => [
+  {
+    type: "group",
+    key: "language",
+    label: t("layout.language"),
+    children: ["zh-CN", "en-US"].map((key) => ({
+      key,
+      label: t(key === "zh-CN" ? "layout.languageChinese" : "layout.languageEnglish"),
+      icon: key === locale.value ? renderIcon(CheckOutlined) : undefined,
+    })),
+  },
   {
     type: "group",
     key: "theme",
@@ -69,6 +79,10 @@ const options = computed<DropdownOption[]>(() => [
 ]);
 
 function handleSelect(key: string) {
+  if (key === "zh-CN" || key === "en-US") {
+    locale.value = key;
+    return;
+  }
   if (key === LOGOUT_KEY) {
     handleLogout();
     return;
@@ -94,9 +108,10 @@ function handleLogout() {
 /** 用户名只在内存，桌面侧边栏与移动抽屉共用 store 里的同一份，已加载则不重复请求。 */
 onMounted(async () => {
   if (auth.username) return;
+  const epoch = auth.epoch;
   try {
     const profile = await getProfile();
-    auth.username = profile.username;
+    if (auth.epoch === epoch) auth.username = profile.username;
   } catch (err) {
     console.error("UserMenu.onMounted() 加载管理员信息失败:", err);
   }

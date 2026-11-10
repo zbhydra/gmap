@@ -27,6 +27,12 @@ function successResponse(data: Record<string, string | number | object>) {
   };
 }
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/admin/auth/me", (route) =>
+    route.fulfill(successResponse({ admin_id: 1, username: "hydra" })),
+  );
+});
+
 /** 后端错误响应 */
 function errorResponse(code: number, msg: string) {
   return {
@@ -111,6 +117,86 @@ async function mockRefresh(page: Page) {
 }
 
 // ========== 测试 ==========
+
+test.describe("中英文切换", () => {
+  test("菜单即时切换、刷新与重新登录后保持，并同步页面和请求语言", async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    await mockCaptcha(page);
+    await mockLoginSuccess(page);
+    await mockDashboard(page);
+
+    const initialCaptcha = page.waitForRequest("**/api/admin/auth/captcha");
+    await page.goto("/login");
+    expect((await initialCaptcha).headers()["accept-language"]).toBe("zh-CN");
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+    await page.getByPlaceholder("用户名", { exact: true }).fill("hydra");
+    await page.getByPlaceholder("密码", { exact: true }).fill("Hydra123$");
+    await page.getByPlaceholder("请输入验证码").fill("1234");
+    await page.getByRole("button", { name: "登 录" }).click();
+    await expect(page.getByText("总用户数", { exact: true })).toBeVisible();
+
+    const chineseOption = page.locator(".n-dropdown-option").filter({ hasText: /^中文$/ });
+    const englishOption = page.locator(".n-dropdown-option").filter({ hasText: /^English$/ });
+    await page.getByRole("button", { name: "账户菜单" }).click();
+    await expect(chineseOption.locator("svg")).toHaveCount(1);
+    await expect(englishOption.locator("svg")).toHaveCount(0);
+    await englishOption.click();
+    await expect(page.getByText("Total Users", { exact: true })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    expect(await page.evaluate(() => localStorage.getItem("admin_locale"))).toBe("en-US");
+
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await expect(englishOption.locator("svg")).toHaveCount(1);
+    await expect(chineseOption.locator("svg")).toHaveCount(0);
+    await page.getByText("Logout", { exact: true }).click();
+    const englishCaptcha = page.waitForRequest("**/api/admin/auth/captcha");
+    await page.getByRole("button", { name: "Confirm", exact: true }).click();
+    expect((await englishCaptcha).headers()["accept-language"]).toBe("en-US");
+    await expect(page.getByText("Admin Login", { exact: true })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByText("Admin Login", { exact: true })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await page.getByPlaceholder("Username", { exact: true }).fill("hydra");
+    await page.getByPlaceholder("Password", { exact: true }).fill("Hydra123$");
+    await page.getByPlaceholder("Enter captcha").fill("1234");
+    const englishLogin = page.waitForRequest("**/api/admin/auth/login");
+    await page.getByRole("button", { name: "Login", exact: true }).click();
+    expect((await englishLogin).headers()["accept-language"]).toBe("en-US");
+    await expect(page.getByText("Total Users", { exact: true })).toBeVisible();
+
+    const englishDashboard = page.waitForRequest("**/api/admin/dashboard");
+    await page.reload();
+    expect((await englishDashboard).headers()["accept-language"]).toBe("en-US");
+    await expect(page.getByText("Total Users", { exact: true })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await expect(englishOption.locator("svg")).toHaveCount(1);
+    await chineseOption.click();
+    await expect(page.getByText("总用户数", { exact: true })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+    expect(await page.evaluate(() => localStorage.getItem("admin_locale"))).toBe("zh-CN");
+    await page.getByRole("button", { name: "账户菜单" }).click();
+    await page.getByText("退出登录", { exact: true }).click();
+    const chineseCaptcha = page.waitForRequest("**/api/admin/auth/captcha");
+    await page.getByRole("button", { name: "确认", exact: true }).click();
+    expect((await chineseCaptcha).headers()["accept-language"]).toBe("zh-CN");
+    await expect(page.getByText("管理员登录", { exact: true })).toBeVisible();
+    expect(pageErrors).toEqual([]);
+  });
+
+  test("无效语言偏好回退中文", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("admin_locale", "fr-FR"));
+    await mockCaptcha(page);
+    const captcha = page.waitForRequest("**/api/admin/auth/captcha");
+    await page.goto("/login");
+    await expect(page.getByText("管理员登录", { exact: true })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+    expect((await captcha).headers()["accept-language"]).toBe("zh-CN");
+    expect(await page.evaluate(() => localStorage.getItem("admin_locale"))).toBe("zh-CN");
+  });
+});
 
 test.describe("登录页渲染", () => {
   test("表单所有元素可见：标题、用户名、密码、验证码输入框、验证码图片、登录按钮", async ({
@@ -250,49 +336,58 @@ test.describe("登录成功流程", () => {
     await expect(page.getByText("1024")).toBeVisible();
   });
 
-  test("Access Token 过期后使用 Refresh Token 续签并重试 Dashboard", async ({
-    page,
-  }) => {
-    let dashboardCallCount = 0;
-    const dashboardRetryHeaders: Array<string | undefined> = [];
-    await mockRefresh(page);
-    await page.addInitScript(() => {
-      window.localStorage.setItem("admin_token", "expired-admin-jwt-token");
-      window.localStorage.setItem("admin_refresh_token", "valid-admin-refresh-token");
-    });
-    await page.route("**/api/admin/dashboard", async (route) => {
-      dashboardCallCount++;
-      dashboardRetryHeaders.push(route.request().headers()["x-admin-auth-retry"]);
-      if (dashboardCallCount === 1) {
-        await route.fulfill({ status: 401, body: "" });
-        return;
-      }
-      await route.fulfill(
-        successResponse({
-          summary: {
-            total_users: 2048,
-            new_users: 64,
-            active_users_24h: 120,
-            active_users_7d: 512,
-          },
-          mark_types: ["tg_video"],
-          rows: [],
-        }),
-      );
-    });
+  test.describe("英文自动续签", () => {
+    test.use({ locale: "zh-CN" });
 
-    await page.goto("/");
-    await expect(page.getByText("2048")).toBeVisible();
-    expect(dashboardCallCount).toBe(2);
-    expect(dashboardRetryHeaders).toEqual([undefined, undefined]);
-    const token = await page.evaluate(() =>
-      window.localStorage.getItem("admin_token"),
-    );
-    const refreshToken = await page.evaluate(() =>
-      window.localStorage.getItem("admin_refresh_token"),
-    );
-    expect(token).toBe("mock-admin-jwt-token-refreshed");
-    expect(refreshToken).toBe("mock-admin-refresh-token-refreshed");
+    test("Access Token 过期后使用 Refresh Token 续签并重试 Dashboard", async ({ page }) => {
+      let dashboardCallCount = 0;
+      const dashboardRetryHeaders: Array<string | undefined> = [];
+      const dashboardLanguages: Array<string | undefined> = [];
+      await mockRefresh(page);
+      await page.addInitScript(() => {
+        window.localStorage.setItem("admin_locale", "en-US");
+        window.localStorage.setItem("admin_token", "expired-admin-jwt-token");
+        window.localStorage.setItem("admin_refresh_token", "valid-admin-refresh-token");
+      });
+      await page.route("**/api/admin/dashboard", async (route) => {
+        dashboardCallCount++;
+        dashboardRetryHeaders.push(route.request().headers()["x-admin-auth-retry"]);
+        dashboardLanguages.push(route.request().headers()["accept-language"]);
+        if (dashboardCallCount === 1) {
+          await route.fulfill({ status: 401, body: "" });
+          return;
+        }
+        await route.fulfill(
+          successResponse({
+            summary: {
+              total_users: 2048,
+              new_users: 64,
+              active_users_24h: 120,
+              active_users_7d: 512,
+            },
+            mark_types: ["tg_video"],
+            rows: [],
+          }),
+        );
+      });
+
+      const refreshRequest = page.waitForRequest("**/api/admin/auth/refresh");
+      await page.goto("/");
+      await expect(page.getByText("2048")).toBeVisible();
+      await expect(page.getByText("Total Users", { exact: true })).toBeVisible();
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      expect(await page.evaluate(() => navigator.language)).toBe("zh-CN");
+      expect((await refreshRequest).headers()["accept-language"]).toBe("en-US");
+      expect(dashboardLanguages).toEqual(["en-US", "en-US"]);
+      expect(dashboardCallCount).toBe(2);
+      expect(dashboardRetryHeaders).toEqual([undefined, undefined]);
+      const token = await page.evaluate(() => window.localStorage.getItem("admin_token"));
+      const refreshToken = await page.evaluate(() =>
+        window.localStorage.getItem("admin_refresh_token"),
+      );
+      expect(token).toBe("mock-admin-jwt-token-refreshed");
+      expect(refreshToken).toBe("mock-admin-refresh-token-refreshed");
+    });
   });
 
   test("Access Token 过期且没有 Refresh Token → 清理登录态并跳转登录页", async ({
@@ -344,13 +439,14 @@ test.describe("登录失败流程", () => {
     await page.locator('input[placeholder="用户名"]').fill("wrong");
     await page.locator('input[placeholder="密码"]').fill("wrong");
     await page.locator('input[placeholder="请输入验证码"]').fill("0000");
+    const captchaRefreshed = page.waitForResponse("**/api/admin/auth/captcha");
     await page.getByRole("button", { name: "登 录" }).click();
 
     // 错误提示 Toast
     await expect(page.getByText("账号或密码错误")).toBeVisible();
 
-    // 验证码自动刷新（多等一次 captcha 请求）
-    await page.waitForResponse("**/api/admin/auth/captcha");
+    await captchaRefreshed;
+    expect(captchaCallCount).toBe(2);
 
     // 仍在登录页
     await expect(page).toHaveURL(/\/login/);
@@ -364,13 +460,13 @@ test.describe("路由守卫", () => {
     await expect(page).toHaveURL(/\/login/, { timeout: 5000 });
   });
 
-  test("未登录访问 /tg-clients → 重定向到 /login（带 redirect 参数）", async ({
+  test("未登录访问 /orders → 重定向到 /login（带 redirect 参数）", async ({
     page,
   }) => {
     await mockCaptcha(page);
-    await page.goto("/tg-clients");
+    await page.goto("/orders");
     await expect(page).toHaveURL(/\/login/, { timeout: 5000 });
-    await expect(page).toHaveURL(/redirect=\/tg-clients/);
+    await expect(page).toHaveURL(/redirect=\/orders/);
   });
 
   test("已登录访问 /login → 重定向到 /", async ({ page }) => {
