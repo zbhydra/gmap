@@ -154,7 +154,7 @@ async function mountMapsExtractionUi(): Promise<void> {
       },
       onExport: () => {
         markPanelAction('export')
-        exportRows(scraper)
+        void panel.checkQuota(false).then(usage => exportRows(scraper, usage))
       },
       onReset: () => {
         markPanelAction('reset')
@@ -301,10 +301,9 @@ async function mountMapsExtractionUi(): Promise<void> {
  * 构建）→ 浏览器下载 → export_results 打点。打点失败不影响下载（局部可失败）。
  *
  * 格式与字段勾选来自用户设置（013 A9，options 页改动即时生效于下次导出）；
- * Pro 门控开关来自远程配置 exportConfig（无账号体系时默认全列可用），
- * 免费用户勾选的 Pro 列在导出层交集剔除。
+ * 补全列按 usage 套餐与远程配置开关过滤。
  */
-function exportRows(scraper: MapsSearchScraper): void {
+function exportRows(scraper: MapsSearchScraper, usage: MapsUsageSnapshot | null): void {
   const settings = getMapsUserSettingsSnapshot()
   const artifact = buildSearchExport(scraper.getRows(), scraper.getKeyword(), new Date(), {
     format: settings.exportFormat,
@@ -327,7 +326,7 @@ function exportRows(scraper: MapsSearchScraper): void {
  * 无关）；HubSpot 商家数组与 CSV 同一批去重行（竞品 syncTo(arr, fields) 同构）。
  * 空数据静默跳过（无内容可同步）；构建失败仅记录，不影响导出与采集状态。
  */
-function dispatchAutoSaveExport(scraper: MapsSearchScraper): void {
+function dispatchAutoSaveExport(scraper: MapsSearchScraper, usage: MapsUsageSnapshot | null): void {
   try {
     const settings = getMapsUserSettingsSnapshot()
     const artifact = buildSearchExport(scraper.getRows(), scraper.getKeyword(), new Date(), {
@@ -351,6 +350,7 @@ function dispatchAutoSaveExport(scraper: MapsSearchScraper): void {
     logger.error('[MapsContent] auto_save 集成产物构建失败:', error)
   }
 }
+    usage,
 
 /**
  * 采集完成边沿收尾（013 A4，U8：补全 + 导出 + 集成 + 批量回报）。
@@ -371,10 +371,14 @@ async function finalizeCompleteSession(
   count: number
 ): Promise<void> {
   const snapshot = getMapsUserSettingsSnapshot()
-  const usage =
-    snapshot.extractEmail || snapshot.extractSocialMedias ? await panel.checkQuota(false) : null
-  if (usage !== null && usage.plan_name !== 'Free') {
+  const usage = await panel.checkQuota(false)
+  if (
+    (snapshot.extractEmail || snapshot.extractSocialMedias) &&
+    usage !== null &&
+    usage.plan_name !== 'Free'
+  ) {
     const total = collectEnrichTargets(scraper.getRows()).length
+      usage,
     let done = 0
     panel.setFinishing({ done, total })
     try {
@@ -404,11 +408,11 @@ async function finalizeCompleteSession(
   // 下一关键词。auto_save（013 A10）在同一收尾构建集成产物并广播给 background
   // （单路失败不阻断导出）
   if (snapshot.autoDownload || bulkWork !== null) {
-    exportRows(scraper)
+    exportRows(scraper, usage)
     panel.showExported()
   }
   if (snapshot.autoSaveToGoogleDrive || snapshot.autoSaveToHubspot) {
-    dispatchAutoSaveExport(scraper)
+    dispatchAutoSaveExport(scraper, usage)
   }
   if (bulkWork !== null) {
     markEmitter.emit('mapsBulkItemDone', {

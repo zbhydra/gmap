@@ -2,7 +2,8 @@
  * Maps 用户设置单元测试（013 A9，U6 验收行为直接覆盖）：
  * - 默认值与默认回退（storage 缺失 / 形状非法 / 部分字段非法）；
  * - 读写 roundtrip 与清数据回默认；
- * - 用户覆盖层优先于远程配置（含档位校验回退）。
+ * - 稀疏存储：storage 只存用户表达过的字段，读取仍是完整设置；
+ * - 用户覆盖层优先于远程配置（含档位校验回退），未表达的间隔不顶掉远程治理。
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -54,6 +55,10 @@ function resetStorage(): void {
     set: vi.fn((items: Record<string, unknown>) => {
       Object.assign(storageData, items)
       return Promise.resolve()
+    }),
+    remove: vi.fn((key: string) => {
+      delete storageData[key]
+      return Promise.resolve()
     })
   })
 }
@@ -81,6 +86,15 @@ function emitStorageChanged(key: string, newValue: unknown): void {
   for (const listener of storageChangeListeners()) {
     listener({ [key]: { newValue } }, 'local')
   }
+}
+
+/** 模拟打开新 document：storage 保留，模块级配置与快照归零后按给定远程覆盖重新加载。 */
+async function openNewDocument(remote: unknown): Promise<void> {
+  resetMapsConfigForTests()
+  resetMapsUserSettingsForTests()
+  stubRpcGetMapsConfig(remote)
+  await loadMapsConfig()
+  await initializeMapsUserSettings()
 }
 
 beforeEach(() => {
@@ -128,7 +142,12 @@ describe('Maps 用户设置（默认值与回退）', () => {
     expect(settings.autoDownload).toBe(true)
     expect(settings.exportFieldHeaders).toHaveLength(36)
     expect(settings.stuckMaxRetry).toBe(1)
-    expect(storageData[STORAGE_KEYS.MAPS_USER_SETTINGS]).toBeDefined()
+    expect(storageData[STORAGE_KEYS.MAPS_USER_SETTINGS]).toEqual({
+      theme: 'dark',
+      requestIntervalSec: 5,
+      exportFormat: 'xlsx',
+      autoDownload: true
+    })
   })
 
   it('默认回退：间隔不在档位、格式非法、字段表非数组、重试为负各自回默认', async () => {
@@ -176,13 +195,62 @@ describe('Maps 用户设置（默认值与回退）', () => {
     expect(settings.exportFieldHeaders).toEqual(['Name', 'Cid'])
   })
 
-  it('resetSettings 显式回默认（清数据回默认语义）', async () => {
+  it('resetSettings 清空存储，读取与返回仍是完整默认值', async () => {
     await MapsUserSettingsManager.updateSettings({ requestIntervalSec: 5, autoDownload: true })
-    await MapsUserSettingsManager.resetSettings()
+    const returned = await MapsUserSettingsManager.resetSettings()
 
-    const settings = await MapsUserSettingsManager.getSettings()
-    expect(settings.requestIntervalSec).toBe(8)
-    expect(settings.autoDownload).toBe(false)
+    expect(storageData).not.toHaveProperty(STORAGE_KEYS.MAPS_USER_SETTINGS)
+    expect(returned).toEqual(DEFAULT_MAPS_USER_SETTINGS)
+    expect(await MapsUserSettingsManager.getSettings()).toEqual(DEFAULT_MAPS_USER_SETTINGS)
+  })
+})
+
+describe('稀疏存储（只落盘用户表达过的字段）', () => {
+  it('只改主题/自动下载：storage 不含其他字段，返回与读取仍是完整设置', async () => {
+    const afterTheme = await MapsUserSettingsManager.updateSettings({ theme: 'dark' })
+    expect(storageData[STORAGE_KEYS.MAPS_USER_SETTINGS]).toEqual({ theme: 'dark' })
+    expect(afterTheme).toEqual({ ...DEFAULT_MAPS_USER_SETTINGS, theme: 'dark' })
+
+    const afterDownload = await MapsUserSettingsManager.updateSettings({ autoDownload: true })
+    const expected = { ...DEFAULT_MAPS_USER_SETTINGS, theme: 'dark', autoDownload: true }
+    expect(storageData[STORAGE_KEYS.MAPS_USER_SETTINGS]).toEqual({
+      theme: 'dark',
+      autoDownload: true
+    })
+    expect(afterDownload).toEqual(expected)
+    expect(await MapsUserSettingsManager.getSettings()).toEqual(expected)
+  })
+
+  it('显式选择的默认值与假值也算表达过，原样落盘', async () => {
+    const explicit = {
+      requestIntervalSec: 8,
+      autoDownload: false,
+      stuckMaxRetry: 0,
+      exportFieldHeaders: []
+    }
+
+    const settings = await MapsUserSettingsManager.updateSettings(explicit)
+
+    expect(storageData[STORAGE_KEYS.MAPS_USER_SETTINGS]).toEqual(explicit)
+    expect(settings).toEqual({ ...DEFAULT_MAPS_USER_SETTINGS, ...explicit })
+  })
+
+  it('非法值不落盘也不写默认：patch 非法视为未表达，存量垃圾随写入清掉', async () => {
+    storageData[STORAGE_KEYS.MAPS_USER_SETTINGS] = {
+      theme: 'sepia',
+      requestIntervalSec: 5,
+      autoDownload: true
+    }
+
+    const settings = await MapsUserSettingsManager.updateSettings({
+      requestIntervalSec: 7,
+      stuckMaxRetry: -1,
+      exportFormat: 'json'
+    })
+
+    const expressed = { autoDownload: true, exportFormat: 'json' }
+    expect(storageData[STORAGE_KEYS.MAPS_USER_SETTINGS]).toEqual(expressed)
+    expect(settings).toEqual({ ...DEFAULT_MAPS_USER_SETTINGS, ...expressed })
   })
 })
 
@@ -208,6 +276,61 @@ describe('用户覆盖层（用户显式偏好优先于远程配置）', () => {
     // 用户设置优先：生效间隔 = 用户值
     expect(getMapsConfig().scrape.scrollIntervalSec).toBe(5)
     expect(getMapsUserSettingsSnapshot().requestIntervalSec).toBe(5)
+  })
+
+  it('只改其他设置不落间隔：已打开页面与后续页面都保持远程值', async () => {
+    stubRpcGetMapsConfig({ scrape: { scrollIntervalSec: 6 } })
+    await loadMapsConfig()
+    await initializeMapsUserSettings()
+
+    await MapsUserSettingsManager.updateSettings({ theme: 'dark' })
+    await MapsUserSettingsManager.updateSettings({ autoDownload: true })
+    emitStorageChanged(STORAGE_KEYS.MAPS_USER_SETTINGS, storageData[STORAGE_KEYS.MAPS_USER_SETTINGS])
+    await vi.waitFor(() => {
+      expect(getMapsUserSettingsSnapshot().autoDownload).toBe(true)
+    })
+
+    expect(storageData[STORAGE_KEYS.MAPS_USER_SETTINGS]).not.toHaveProperty('requestIntervalSec')
+    expect(getMapsConfig().scrape.scrollIntervalSec).toBe(6)
+
+    // 后续远程调参（风控治理）不被任何隐式落盘的默认值挡住
+    await openNewDocument({ scrape: { scrollIntervalSec: 10 } })
+    expect(getMapsConfig().scrape.scrollIntervalSec).toBe(10)
+    expect(getMapsUserSettingsSnapshot().theme).toBe('dark')
+  })
+
+  it('显式选默认档也覆盖远程，且不被后续其他设置冲掉', async () => {
+    await MapsUserSettingsManager.updateSettings({ requestIntervalSec: 8 })
+    await MapsUserSettingsManager.updateSettings({ theme: 'dark' })
+    expect(storageData[STORAGE_KEYS.MAPS_USER_SETTINGS]).toEqual({
+      requestIntervalSec: 8,
+      theme: 'dark'
+    })
+
+    await openNewDocument({ scrape: { scrollIntervalSec: 6 } })
+    expect(getMapsConfig().scrape.scrollIntervalSec).toBe(8)
+  })
+
+  it('reset 后恢复未表达：订阅方收到完整默认值，后续页面远程值生效', async () => {
+    stubRpcGetMapsConfig({ scrape: { scrollIntervalSec: 6 } })
+    await loadMapsConfig()
+    await MapsUserSettingsManager.updateSettings({ requestIntervalSec: 5, theme: 'dark' })
+    await initializeMapsUserSettings()
+    expect(getMapsConfig().scrape.scrollIntervalSec).toBe(5)
+    const subscriber = vi.fn()
+    MapsUserSettingsManager.onSettingsChanged(subscriber)
+
+    await MapsUserSettingsManager.resetSettings()
+    // chrome.storage.remove 的变更事件没有 newValue
+    emitStorageChanged(STORAGE_KEYS.MAPS_USER_SETTINGS, undefined)
+    await vi.waitFor(() => {
+      expect(getMapsUserSettingsSnapshot()).toEqual(DEFAULT_MAPS_USER_SETTINGS)
+    })
+    expect(subscriber).toHaveBeenCalledWith(DEFAULT_MAPS_USER_SETTINGS)
+    expect(storageData).not.toHaveProperty(STORAGE_KEYS.MAPS_USER_SETTINGS)
+
+    await openNewDocument({ scrape: { scrollIntervalSec: 6 } })
+    expect(getMapsConfig().scrape.scrollIntervalSec).toBe(6)
   })
 
   it('用户间隔不在远程生效档位时保留远程值（治理收紧优先）', async () => {

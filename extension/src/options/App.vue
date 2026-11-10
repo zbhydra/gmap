@@ -191,7 +191,12 @@
                 </div>
               </div>
             </div>
-            <ExportPreview :settings="settings" @jump="jumpToSetting" />
+            <ExportPreview
+              :settings="settings"
+              :usage="usage"
+              :pro-columns-enabled="getMapsConfig().exportConfig.proColumnsEnabled"
+              @jump="jumpToSetting"
+            />
             <div class="card op-card op-fields">
               <div class="op-row-head">
                 <div class="op-setting-text">
@@ -363,61 +368,6 @@
                 </div>
               </div>
             </div>
-            <div class="card op-card">
-              <h3 class="op-integrations-title">
-                <Icon :name="IconName.PUZZLE" />{{ t(K.INTEGRATIONS) }}
-              </h3>
-              <div
-                v-for="integration in integrationOptions"
-                :key="integration.side"
-                class="op-setting op-integration"
-              >
-                <span class="icon-tile icon-tile--sm"><Icon :name="integration.icon" /></span>
-                <div class="op-setting-text">
-                  <span :id="`${integration.side}-label`" class="op-setting-label">{{
-                    t(integration.label)
-                  }}</span
-                  ><span class="op-setting-hint">{{ t(integration.hint) }}</span
-                  ><span
-                    v-if="!integrationAvailability[integration.side]"
-                    class="op-setting-hint"
-                    >{{ t(K.INTEGRATION_UNAVAILABLE) }}</span
-                  ><template v-else
-                    ><span class="op-setting-hint">{{
-                      t(
-                        connected[integration.side]
-                          ? K.INTEGRATION_STATUS_CONNECTED
-                          : K.INTEGRATION_STATUS_NOT_CONNECTED
-                      )
-                    }}</span
-                    ><span v-if="integrationErrors[integration.side]" class="field-error">{{
-                      t(K.INTEGRATION_AUTH_FAILED)
-                    }}</span
-                    ><button
-                      v-if="connected[integration.side]"
-                      type="button"
-                      class="link"
-                      @click="disconnectIntegration(integration.side)"
-                    >
-                      {{ t(K.INTEGRATION_DISCONNECT) }}
-                    </button></template
-                  >
-                </div>
-                <div class="op-ctl">
-                  <SaveFeedback :state="feedback(integration.key)" /><button
-                    type="button"
-                    class="switch"
-                    role="switch"
-                    :disabled="!integrationAvailability[integration.side] || authorizing !== null"
-                    :aria-checked="settings[integration.key]"
-                    :aria-labelledby="`${integration.side}-label`"
-                    @click="toggleIntegration(integration.side)"
-                  >
-                    <span class="switch-knob"></span>
-                  </button>
-                </div>
-              </div>
-            </div>
           </section>
           <section id="appearance" class="op-section enter" aria-labelledby="heading-appearance">
             <header class="op-section-head">
@@ -516,25 +466,22 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { I18N_KEYS } from '@/core/constants/i18n'
-import { WEBSITE } from '@/core/api/config'
+import { STORAGE_KEYS, WEBSITE } from '@/core/api/config'
+import { storageManager } from '@/core/storage'
 import { Icon, IconName } from '@/core/components/icons'
 import { logger } from '@/core/utils/logger'
 import { markApi, MARK_TYPE } from '@/core/api/mark'
 import { LANGUAGES } from '@/core/services/languageService'
 import { I18nService } from '@/locales'
 import { DEFAULT_MAPS_CONFIG } from '@/sites/maps/config/contract'
+import { getMapsConfig, loadMapsConfig } from '@/sites/maps/config/loader'
+import { fetchUsageSnapshot } from '@/sites/maps/usage/usageClient'
+import type { MapsUsageSnapshot } from '@/sites/maps/usage/types'
 import {
   MapsUserSettingsManager,
   type MapsUserSettings,
   type ThemeMode
 } from '@/sites/maps/settings/userSettings'
-import {
-  MapsIntegrationAuthManager,
-  authorizeDrive,
-  authorizeHubspot,
-  getMapsIntegrationAvailability,
-  revokeDriveAuth
-} from '@/sites/maps/settings/integrations'
 import {
   SEARCH_EXPORT_COLUMN_GROUPS,
   SEARCH_EXPORT_COLUMNS,
@@ -551,6 +498,10 @@ const brandIconUrl = chrome.runtime.getURL('icons/32.png')
 const version = chrome.runtime.getManifest().version
 const MAX_STUCK_RETRY = 9
 const settings = ref<MapsUserSettings>(MapsUserSettingsManager.getDefaultSettings())
+const usage = ref<MapsUsageSnapshot | null>(null)
+async function refreshExportUsage(): Promise<void> {
+  usage.value = await fetchUsageSnapshot()
+}
 type Row = keyof MapsUserSettings | 'language'
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed'
 const saveState = ref<SaveState>('idle')
@@ -817,64 +768,14 @@ function onScroll(): void {
 function reloadPage(): void {
   window.location.reload()
 }
-const integrationAvailability = getMapsIntegrationAvailability()
-const integrationOptions = [
-  {
-    side: 'drive',
-    key: 'autoSaveToGoogleDrive',
-    label: K.DRIVE_AUTO_SAVE,
-    hint: K.INTEGRATION_HINT_DRIVE,
-    icon: IconName.CLOUD_UPLOAD
-  },
-  {
-    side: 'hubspot',
-    key: 'autoSaveToHubspot',
-    label: K.HUBSPOT_AUTO_SAVE,
-    hint: K.INTEGRATION_HINT_HUBSPOT,
-    icon: IconName.BUILDING
-  }
-] as const
-const connected = ref({ drive: false, hubspot: false })
-const integrationErrors = ref({ drive: false, hubspot: false })
-const authorizing = ref<'drive' | 'hubspot' | null>(null)
-async function toggleIntegration(side: 'drive' | 'hubspot'): Promise<void> {
-  const key = side === 'drive' ? 'autoSaveToGoogleDrive' : 'autoSaveToHubspot'
-  const checked = !settings.value[key]
-  integrationErrors.value[side] = false
-  if (checked && !connected.value[side]) {
-    authorizing.value = side
-    try {
-      if (side === 'drive') await authorizeDrive()
-      else await authorizeHubspot()
-      connected.value[side] = true
-    } catch (error) {
-      logger.error(`[Options] ${side} 授权失败:`, error)
-      integrationErrors.value[side] = true
-      return
-    } finally {
-      authorizing.value = null
-    }
-  }
-  await patch({ [key]: checked }, key)
-}
-async function disconnectIntegration(side: 'drive' | 'hubspot'): Promise<void> {
-  try {
-    if (side === 'drive') await revokeDriveAuth()
-    else await MapsIntegrationAuthManager.clearHubspotAuth()
-    connected.value[side] = false
-    const key = side === 'drive' ? 'autoSaveToGoogleDrive' : 'autoSaveToHubspot'
-    await patch({ [key]: false }, key)
-  } catch (error) {
-    logger.error(`[Options] ${side} 断开授权失败:`, error)
-    integrationErrors.value[side] = true
-  }
-}
 let unsubscribeSettings: (() => void) | undefined
 let unsubscribeLanguage: (() => void) | undefined
+let unsubscribeAuth: (() => void) | undefined
 onMounted(async () => {
+  void loadMapsConfig().then(refreshExportUsage)
+  unsubscribeAuth = storageManager.onChanged(STORAGE_KEYS.ACCESS_TOKEN, refreshExportUsage)
+  window.addEventListener('focus', refreshExportUsage)
   settings.value = await MapsUserSettingsManager.getSettings()
-  const auth = await MapsIntegrationAuthManager.getAuth()
-  connected.value = { drive: auth.drive !== null, hubspot: auth.hubspot !== null }
   unsubscribeSettings = MapsUserSettingsManager.onSettingsChanged(value => {
     settings.value = value
   })
@@ -892,6 +793,8 @@ onUnmounted(() => {
   clearTimeout(savedTimer)
   unsubscribeSettings?.()
   unsubscribeLanguage?.()
+  unsubscribeAuth?.()
+  window.removeEventListener('focus', refreshExportUsage)
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', onScroll)
   systemMedia.removeEventListener('change', onSystemChange)

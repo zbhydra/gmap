@@ -10,6 +10,7 @@
  */
 
 import type { MapsPlaceRow } from '../parser'
+import type { MapsUsageSnapshot } from '../../usage/types'
 import { selectEnabledExportColumns } from './columns'
 import { buildSearchCsv, buildSearchExportFilename } from './csv'
 import { buildSearchJson } from './json'
@@ -64,8 +65,9 @@ export interface SearchExportArtifact {
 export interface SearchExportOptions {
   /** 导出格式。 */
   format: SearchExportFormat
-  /** Pro 门控开关（exportConfig.proColumnsEnabled）；false 时剔除 12 个 Pro 列。 */
+  /** 全局补全列开关；false 时付费套餐也剔除 Email / Social Medias。 */
   proColumnsEnabled: boolean
+  usage: MapsUsageSnapshot | null
   /** 用户勾选的导出列 header 集合（用户设置 exportFieldHeaders，U6）。 */
   enabledHeaders: readonly string[]
 }
@@ -108,7 +110,11 @@ export function buildSearchExport(
   options: SearchExportOptions
 ): SearchExportArtifact {
   const deduped = dedupeRowsForExport(rows)
-  const columns = selectEnabledExportColumns(options.proColumnsEnabled, options.enabledHeaders)
+  const columns = selectEnabledExportColumns(
+    options.proColumnsEnabled,
+    options.enabledHeaders,
+    options.usage
+  )
   const mime = searchExportMime(options.format)
 
   if (options.format === 'json') {

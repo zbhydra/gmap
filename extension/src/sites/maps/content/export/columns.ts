@@ -1,10 +1,8 @@
 /**
  * 搜索结果导出列 schema（A5 字段字典 36 列，U4）。
  *
- * 单一事实来源：列名/列序 = CSV 表头序 = JSON 键序（驼峰化）；12 个 Pro 列
- * 在导出层按 exportConfig.proColumnsEnabled 剔除（与竞品 generateFields 一致，
- * 免费勾选 → 生成时静默剔除）。列名、Pro 划分、衍生规则逐列对照
- * docs/feat/013.Maps插件/references/竞品逆向/04-数据字段字典.md。
+ * 列名/列序 = CSV 表头序 = JSON 键序（驼峰化）。仅 Email / Social Medias
+ * 按 usage 套餐与 exportConfig.proColumnsEnabled 过滤，用户勾选不能绕过权益。
  *
  * 三列中 Email / Social Medias 的数据源归 U8 enrich（服务端官网代抓，采集
  * 完成边沿写回行，未补全为空值）；Plus Code 数据源后置（列位已锁，导出恒空、
@@ -14,6 +12,7 @@
 import type { MapsPlaceRow } from '../parser'
 import { deriveCidFromFid } from '../parser'
 import { I18N_KEYS } from '@/core/constants/i18n'
+import type { MapsUsageSnapshot } from '../../usage/types'
 
 const K = I18N_KEYS.OPTIONS.COLUMNS
 
@@ -63,9 +62,9 @@ export const SEARCH_EXPORT_COLUMNS: readonly SearchExportColumn[] = [
     numeric: false,
     value: row => row.categories.join(', ')
   },
-  { header: 'About', labelKey: K.ABOUT, pro: true, numeric: false, value: row => row.about },
-  // 后置：数据源未实现，列位与 Pro 门控已锁（当前恒空）
-  { header: 'Plus Code', labelKey: K.PLUS_CODE, pro: true, numeric: false, value: () => '' },
+  { header: 'About', labelKey: K.ABOUT, pro: false, numeric: false, value: row => row.about },
+  // 后置：数据源未实现，保留恒空列位。
+  { header: 'Plus Code', labelKey: K.PLUS_CODE, pro: false, numeric: false, value: () => '' },
   {
     header: 'Time Zone',
     labelKey: K.TIME_ZONE,
@@ -73,8 +72,8 @@ export const SEARCH_EXPORT_COLUMNS: readonly SearchExportColumn[] = [
     numeric: false,
     value: row => row.timeZone
   },
-  { header: 'Price', labelKey: K.PRICE, pro: true, numeric: false, value: row => row.price },
-  { header: 'Note', labelKey: K.NOTE, pro: true, numeric: false, value: row => row.note },
+  { header: 'Price', labelKey: K.PRICE, pro: false, numeric: false, value: row => row.price },
+  { header: 'Note', labelKey: K.NOTE, pro: false, numeric: false, value: row => row.note },
   {
     header: 'Amenities',
     labelKey: K.AMENITIES,
@@ -85,25 +84,25 @@ export const SEARCH_EXPORT_COLUMNS: readonly SearchExportColumn[] = [
   {
     header: 'Hotel Class',
     labelKey: K.HOTEL_CLASS,
-    pro: true,
+    pro: false,
     numeric: false,
     value: row => row.hotelClass
   },
   { header: 'Phone', labelKey: K.PHONE, pro: false, numeric: false, value: row => row.phone },
   { header: 'Phones', labelKey: K.PHONES, pro: false, numeric: false, value: row => row.phones },
   { header: 'Claimed', labelKey: K.CLAIMED, pro: false, numeric: false, value: row => row.claimed },
-  { header: 'Owner', labelKey: K.OWNER, pro: true, numeric: false, value: row => row.owner },
+  { header: 'Owner', labelKey: K.OWNER, pro: false, numeric: false, value: row => row.owner },
   {
     header: 'Owner Id',
     labelKey: K.OWNER_ID,
-    pro: true,
+    pro: false,
     numeric: false,
     value: row => row.ownerId
   },
   {
     header: 'Owner Link',
     labelKey: K.OWNER_LINK,
-    pro: true,
+    pro: false,
     numeric: false,
     // 衍生 contrib 链接（逆向 04）；ownerId 缺失置空
     value: row =>
@@ -154,7 +153,7 @@ export const SEARCH_EXPORT_COLUMNS: readonly SearchExportColumn[] = [
   {
     header: 'Google Knowledge URL',
     labelKey: K.GOOGLE_KNOWLEDGE_URL,
-    pro: true,
+    pro: false,
     numeric: false,
     // 衍生 `search?kgmid=`；kgmid 缺失置空
     value: row => (row.kgmid.length > 0 ? `https://www.google.com/search?kgmid=${row.kgmid}` : '')
@@ -205,7 +204,7 @@ export const SEARCH_EXPORT_COLUMNS: readonly SearchExportColumn[] = [
     numeric: false,
     value: row => row.placeId
   },
-  { header: 'Kgmid', labelKey: K.KGMID, pro: true, numeric: false, value: row => row.kgmid }
+  { header: 'Kgmid', labelKey: K.KGMID, pro: false, numeric: false, value: row => row.kgmid }
 ]
 
 /** 列名驼峰化（逆向 07：首词小写 + 去空格，`"Business Leads"→"businessLeads"`）。 */
@@ -269,27 +268,25 @@ export const SEARCH_EXPORT_COLUMN_GROUPS: readonly SearchExportColumnGroup[] = [
   }
 ]
 
-/** 按门控开关取生效列：proColumnsEnabled=false 时剔除全部 Pro 列。 */
-export function selectExportColumns(proColumnsEnabled: boolean): readonly SearchExportColumn[] {
-  return proColumnsEnabled ? SEARCH_EXPORT_COLUMNS : SEARCH_EXPORT_COLUMNS.filter(c => !c.pro)
+/** 付费套餐且全局开关开启时保留补全列；权益未知时按免费列导出。 */
+export function selectExportColumns(
+  proColumnsEnabled: boolean,
+  usage: MapsUsageSnapshot | null
+): readonly SearchExportColumn[] {
+  const isPro = usage !== null && usage.plan_name !== 'Free'
+  return proColumnsEnabled && isPro
+    ? SEARCH_EXPORT_COLUMNS
+    : SEARCH_EXPORT_COLUMNS.filter(c => !c.pro)
 }
 
-/**
- * 按门控开关 + 用户字段勾选取导出列（013 U6）。
- *
- * 过滤顺序（竞品 generateFields 语义）：先 Pro 门控剔除，再与用户勾选集
- * 取交集——免费用户勾选的 Pro 列不会因勾选而复活。enabledHeaders 缺省
- * （未初始化的设置快照场景不会发生，设置默认全选）按全选处理。
- *
- * @param proColumnsEnabled Pro 门控开关（远程 exportConfig）。
- * @param enabledHeaders 用户勾选的列 header 集合（用户设置 exportFieldHeaders）。
- */
+/** 权益列与用户勾选取交集，保持 schema 列序；导出与预览共用。 */
 export function selectEnabledExportColumns(
   proColumnsEnabled: boolean,
-  enabledHeaders: readonly string[]
+  enabledHeaders: readonly string[],
+  usage: MapsUsageSnapshot | null
 ): readonly SearchExportColumn[] {
   const selected = new Set(enabledHeaders)
-  return selectExportColumns(proColumnsEnabled).filter(column => selected.has(column.header))
+  return selectExportColumns(proColumnsEnabled, usage).filter(column => selected.has(column.header))
 }
 
 /** 单行各列取值（与传入列序对齐）。 */

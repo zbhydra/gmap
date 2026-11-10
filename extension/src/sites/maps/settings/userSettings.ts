@@ -37,6 +37,15 @@ const EXPORT_FORMATS: readonly SearchExportFormat[] = ['csv', 'json', 'xlsx']
 /** 全选时的导出列集合（36 列 header，从唯一事实来源 SEARCH_EXPORT_COLUMNS 派生）。 */
 const ALL_EXPORT_HEADERS: readonly string[] = SEARCH_EXPORT_COLUMNS.map(column => column.header)
 
+/** 只需校验布尔类型的开关字段。 */
+const BOOLEAN_SETTING_KEYS = [
+  'autoDownload',
+  'autoSaveToGoogleDrive',
+  'autoSaveToHubspot',
+  'extractEmail',
+  'extractSocialMedias'
+] as const
+
 export type ThemeMode = 'system' | 'light' | 'dark'
 
 /** Maps 用户设置（个人偏好）。 */
@@ -120,19 +129,23 @@ export class MapsUserSettingsManager {
     return normalizeStored(await readStoredSettings())
   }
 
-  /** 合并写入并返回新设置；监听器经 storage.onChanged 触发。 */
+  /**
+   * 把 patch 合并进 storage 原值后落盘，返回补全默认值的完整设置；监听器经 storage.onChanged 触发。
+   * 必须基于原值合并：基于 getSettings() 会把默认值写成显式偏好，顶掉远程间隔治理。
+   */
   static async updateSettings(updates: Partial<MapsUserSettings>): Promise<MapsUserSettings> {
-    const current = await this.getSettings()
-    const next = normalizeStored({ ...current, ...updates })
-    await storageManager.set(STORAGE_KEYS.MAPS_USER_SETTINGS, next)
-    return next
+    const stored = pickValidFields({ ...(await readStoredSettings()), ...updates })
+    await storageManager.set(STORAGE_KEYS.MAPS_USER_SETTINGS, stored)
+    return normalizeStored(stored)
   }
 
-  /** 重置回默认（清数据回默认语义的显式入口）。 */
+  /**
+   * 清空存储以恢复「未表达偏好」（清数据回默认语义的显式入口），返回完整默认值。
+   * 已打开页面的生效间隔不回滚：远程值每 document 只应用一次，刷新页面后才回到远程治理。
+   */
   static async resetSettings(): Promise<MapsUserSettings> {
-    const defaults = this.getDefaultSettings()
-    await storageManager.set(STORAGE_KEYS.MAPS_USER_SETTINGS, defaults)
-    return defaults
+    await storageManager.remove(STORAGE_KEYS.MAPS_USER_SETTINGS)
+    return this.getDefaultSettings()
   }
 
   /** 订阅设置变化（跨上下文经 chrome.storage.onChanged）。返回取消订阅函数。 */
@@ -169,58 +182,56 @@ export class MapsUserSettingsManager {
   }
 }
 
-/** 归一化：逐字段类型/取值校验，非法或缺失回默认（不做整体拒绝，保用户其余偏好）。 */
+/** 归一化：合法字段保留，非法或缺失回默认（不做整体拒绝，保用户其余偏好）。 */
 function normalizeStored(stored: StoredMapsUserSettings | null): MapsUserSettings {
-  const defaults: MapsUserSettings = {
+  return {
     ...DEFAULT_MAPS_USER_SETTINGS,
-    exportFieldHeaders: [...DEFAULT_MAPS_USER_SETTINGS.exportFieldHeaders]
+    exportFieldHeaders: [...DEFAULT_MAPS_USER_SETTINGS.exportFieldHeaders],
+    ...pickValidFields(stored)
   }
+}
+
+/** 逐字段类型/取值校验，只保留合法字段；结果就是落盘形状，默认值只在读取时补。 */
+function pickValidFields(stored: StoredMapsUserSettings | null): StoredMapsUserSettings {
   if (stored === null || typeof stored !== 'object') {
-    return defaults
+    return {}
   }
 
-  const options = DEFAULT_MAPS_CONFIG.scrape.scrollIntervalOptionsSec
-  return {
-    theme:
-      stored.theme === 'light' || stored.theme === 'dark' || stored.theme === 'system'
-        ? stored.theme
-        : defaults.theme,
-    requestIntervalSec:
-      typeof stored.requestIntervalSec === 'number' && options.includes(stored.requestIntervalSec)
-        ? stored.requestIntervalSec
-        : defaults.requestIntervalSec,
-    exportFormat:
-      typeof stored.exportFormat === 'string' && EXPORT_FORMATS.includes(stored.exportFormat)
-        ? stored.exportFormat
-        : defaults.exportFormat,
-    exportFieldHeaders:
-      Array.isArray(stored.exportFieldHeaders) &&
-      stored.exportFieldHeaders.every(header => typeof header === 'string')
-        ? stored.exportFieldHeaders.filter(header => ALL_EXPORT_HEADERS.includes(header))
-        : [...defaults.exportFieldHeaders],
-    autoDownload:
-      typeof stored.autoDownload === 'boolean' ? stored.autoDownload : defaults.autoDownload,
-    autoSaveToGoogleDrive:
-      typeof stored.autoSaveToGoogleDrive === 'boolean'
-        ? stored.autoSaveToGoogleDrive
-        : defaults.autoSaveToGoogleDrive,
-    autoSaveToHubspot:
-      typeof stored.autoSaveToHubspot === 'boolean'
-        ? stored.autoSaveToHubspot
-        : defaults.autoSaveToHubspot,
-    extractEmail:
-      typeof stored.extractEmail === 'boolean' ? stored.extractEmail : defaults.extractEmail,
-    extractSocialMedias:
-      typeof stored.extractSocialMedias === 'boolean'
-        ? stored.extractSocialMedias
-        : defaults.extractSocialMedias,
-    stuckMaxRetry:
-      typeof stored.stuckMaxRetry === 'number' &&
-      Number.isInteger(stored.stuckMaxRetry) &&
-      stored.stuckMaxRetry >= 0
-        ? stored.stuckMaxRetry
-        : defaults.stuckMaxRetry
+  const valid: StoredMapsUserSettings = {}
+  if (stored.theme === 'light' || stored.theme === 'dark' || stored.theme === 'system') {
+    valid.theme = stored.theme
   }
+  if (
+    typeof stored.requestIntervalSec === 'number' &&
+    DEFAULT_MAPS_CONFIG.scrape.scrollIntervalOptionsSec.includes(stored.requestIntervalSec)
+  ) {
+    valid.requestIntervalSec = stored.requestIntervalSec
+  }
+  if (typeof stored.exportFormat === 'string' && EXPORT_FORMATS.includes(stored.exportFormat)) {
+    valid.exportFormat = stored.exportFormat
+  }
+  if (
+    Array.isArray(stored.exportFieldHeaders) &&
+    stored.exportFieldHeaders.every(header => typeof header === 'string')
+  ) {
+    valid.exportFieldHeaders = stored.exportFieldHeaders.filter(header =>
+      ALL_EXPORT_HEADERS.includes(header)
+    )
+  }
+  for (const key of BOOLEAN_SETTING_KEYS) {
+    const value = stored[key]
+    if (typeof value === 'boolean') {
+      valid[key] = value
+    }
+  }
+  if (
+    typeof stored.stuckMaxRetry === 'number' &&
+    Number.isInteger(stored.stuckMaxRetry) &&
+    stored.stuckMaxRetry >= 0
+  ) {
+    valid.stuckMaxRetry = stored.stuckMaxRetry
+  }
+  return valid
 }
 
 /**

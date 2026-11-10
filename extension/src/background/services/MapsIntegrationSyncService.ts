@@ -6,6 +6,8 @@
  * SW 发起免 CORS）与 HubSpot 同步（经 backend 代理端点）——竞品同构（逆向 06/07：
  * background mod_176 / mod_187）。单路失败只记录错误，不影响另一路与导出。
  *
+ * 每路同时受本侧开关与本侧授权门控。开关规则集中在本服务：content 任一开关开启
+ * 就广播且 payload 不带目的地，关闭开关又不清授权，授权记录不能代表用户意图。
  * auto_save 开但未授权属异常态（options 页授权后才允许开），此处跳过并告警。
  */
 
@@ -21,6 +23,7 @@ import {
   syncBusinessesToHubspot,
   uploadCsvToDrive
 } from '@/sites/maps/settings/integrations'
+import { MapsUserSettingsManager } from '@/sites/maps/settings/userSettings'
 
 /** 统一的 Maps 集成同步服务。 */
 export class MapsIntegrationSyncService {
@@ -43,10 +46,20 @@ export class MapsIntegrationSyncService {
   }
 
   /**
-   * 双路同步：Promise.allSettled 保证单路失败不阻断另一路（局部可失败）。
+   * 只启动开关开启的一侧：两侧都关时不取 token、不发请求。
+   * 现读 storage 而非内存快照：SW 随时可能被终止重启，且广播后才关闭的开关也应生效。
+   * Promise.allSettled 保证单路失败不阻断另一路（局部可失败）。
    */
   private async handleAutoSave(payload: MapsAutoSaveExportPayload): Promise<void> {
-    await Promise.allSettled([this.syncDrive(payload), this.syncHubspot(payload)])
+    const settings = await MapsUserSettingsManager.getSettings()
+    const syncs: Array<Promise<void>> = []
+    if (settings.autoSaveToGoogleDrive) {
+      syncs.push(this.syncDrive(payload))
+    }
+    if (settings.autoSaveToHubspot) {
+      syncs.push(this.syncHubspot(payload))
+    }
+    await Promise.allSettled(syncs)
   }
 
   /**

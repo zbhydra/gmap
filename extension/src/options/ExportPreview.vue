@@ -107,6 +107,7 @@ import { useI18n } from 'vue-i18n'
 import { Icon, IconName } from '@/core/components/icons'
 import { I18N_KEYS } from '@/core/constants/i18n'
 import type { MapsUserSettings } from '@/sites/maps/settings/userSettings'
+import type { MapsUsageSnapshot } from '@/sites/maps/usage/types'
 import {
   selectEnabledExportColumns,
   camelizeColumnHeader,
@@ -114,7 +115,11 @@ import {
 } from '@/sites/maps/content/export/columns'
 import { buildSearchExportFilename } from '@/sites/maps/content/export/csv'
 import { PREVIEW_ROWS } from './preview'
-const props = defineProps<{ settings: MapsUserSettings }>()
+const props = defineProps<{
+  settings: MapsUserSettings
+  usage: MapsUsageSnapshot | null
+  proColumnsEnabled: boolean
+}>()
 const emit = defineEmits<{ jump: [key: 'extractEmail' | 'extractSocialMedias'] }>()
 const { t } = useI18n()
 const fileIcons = { csv: IconName.FILE_CSV, json: IconName.FILE_JSON, xlsx: IconName.FILE_XLSX }
@@ -162,7 +167,13 @@ onUpdated(() => {
     }
   }
 })
-const columns = computed(() => selectEnabledExportColumns(true, props.settings.exportFieldHeaders))
+const columns = computed(() =>
+  selectEnabledExportColumns(
+    props.proColumnsEnabled,
+    props.settings.exportFieldHeaders,
+    props.usage
+  )
+)
 /** 预览头第二行左侧：列数 + 格式说明（如「36 columns · UTF-8 · comma-separated」）。 */
 const columnCount = computed(() => {
   const count = columns.value.length
@@ -210,11 +221,11 @@ const jsonPreview = computed(() =>
   )
 )
 const showEmailNote = computed(
-  () => props.settings.exportFieldHeaders.includes('Email') && !props.settings.extractEmail
+  () => columns.value.some(column => column.header === 'Email') && !props.settings.extractEmail
 )
 const showSocialNote = computed(
   () =>
-    props.settings.exportFieldHeaders.includes('Social Medias') &&
+    columns.value.some(column => column.header === 'Social Medias') &&
     !props.settings.extractSocialMedias
 )
 function columnLetter(index: number): string {
