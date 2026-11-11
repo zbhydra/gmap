@@ -37,8 +37,8 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-11-10`
-- 本地仓库提交:`8c2c7497a141972a1c0114aa27ba8c0524a0b499`
+- 检查时间:`2026-11-11`
+- 本地仓库提交:`b01713ebea150a18c09da8bcc282695aa3338ab8`
 - GOSOM 最新提交:`e0c1d501e49cdcd5c6b2cecd2a032831f6ee9ba8`
 - SCRAPEMATE 最新提交:`1d7c7bf762391c7d3c73548be98a70d359c44183`
 - 结论:题设限定无网络,未执行远端 `git ls-remote`;两个给定 HEAD 均与本地 `.upstream/` 的 `main` 及既有基线一致。两仓库从基线至 HEAD 的完整 `git diff --name-status` 均为空,`git diff --check` 均通过,上游重点路径和解析 / 合同生成点无新变化。GOSOM `go.mod` 仍锁 scrapemate `v1.4.1`、playwright-go `v0.6100.0`;SCRAPEMATE playwright-go 仍为 `v0.6100.0`。GOSOM 侧已跟进 scrapemate `v1.4.1`,但本地仍无该标签,与 SCRAPEMATE HEAD 的精确对应关系待人工核对。复核既有四项待确认:本仓仍无旧 gosom 镜像的预发完成证据,部署机旧镜像是否仍运行及 digest 未确认;状态不变,不计本轮新增影响。本轮不推进基线、不追加变更记录,不建议因本轮变化主动更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。
