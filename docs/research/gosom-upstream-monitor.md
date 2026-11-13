@@ -37,11 +37,11 @@
 
 ## 最近巡检
 
-- 检查时间:`2026-11-12`
-- 本地仓库提交:`dcdd2717cb0abc22f9c509f24feca37df74c2b20`
+- 检查时间:`2026-11-13`
+- 本地仓库提交:`a407fa37243f9d27f26f3f723727a59779847113`
 - GOSOM 最新提交:`e0c1d501e49cdcd5c6b2cecd2a032831f6ee9ba8`
 - SCRAPEMATE 最新提交:`1d7c7bf762391c7d3c73548be98a70d359c44183`
-- 结论:题设限定无网络,未执行远端 `git ls-remote`;两个给定 HEAD 均与本地 `.upstream/` 的 `main` 及既有基线一致。两仓库从基线至 HEAD 的完整 `git diff --name-status` 均为空,`git diff --check` 均通过,上游重点路径和解析 / 合同生成点无新变化。GOSOM `go.mod` 仍锁 scrapemate `v1.4.1`、playwright-go `v0.6100.0`;SCRAPEMATE playwright-go 仍为 `v0.6100.0`。GOSOM 侧已跟进 scrapemate `v1.4.1`,但本地仍无该标签,与 SCRAPEMATE HEAD 的精确对应关系待人工核对。复核既有四项待确认:本仓仍无旧 gosom 镜像的预发完成证据,部署机旧镜像是否仍运行及 digest 未确认;状态不变,不计本轮新增影响。本轮不推进基线、不追加变更记录,不建议因本轮变化主动更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。
+- 结论:题设限定无网络,未执行远端 `git ls-remote`;两个给定 HEAD 均与本地 `.upstream/` 的 `main` 及既有基线一致。两仓库从基线至 HEAD 的完整 `git diff --name-status` 均为空,`git diff --check` 均通过,上游重点路径和解析 / 合同生成点无新变化。GOSOM `go.mod` 仍锁 scrapemate `v1.4.1`、playwright-go `v0.6100.0`;SCRAPEMATE playwright-go 仍为 `v0.6100.0`。GOSOM 侧已跟进 scrapemate `v1.4.1`,但本地仍无该标签,与 SCRAPEMATE HEAD 的精确对应关系待人工核对。复核既有四项待确认:当前项目文档仍无旧 gosom 镜像的预发完成证据,部署机旧镜像是否仍运行及 digest 未确认;状态不变,不计本轮新增影响。本轮不推进基线、不追加变更记录,不建议因本轮变化主动更新 `ghcr.io/gosom/google-maps-scraper-saas:latest`。
 
 该区只保留最近一次结果。只有上游提交变化、检查失败或待确认项状态变化时,才在「变更记录」追加事件,避免每天写入无信息量的记录。
 
